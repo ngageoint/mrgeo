@@ -1,6 +1,6 @@
 ##Origin
 
-MrGeo was developed at the National Geospatial-Intelligence Agency (NGA) in collaboration with [DigitalGlobe](https://www.digitalglobe.com/). The government has "unlimited rights" and is releasing this software to increase the impact of government investments by providing developers with the opportunity to take things in new directions. The software use, modification, and distribution rights are stipulated within the [Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0.html).
+MrGeo was developed at the National Geospatial-Intelligence Agency (NGA) in collaboration with [DigitalGlobe](https://www.digitalglobe.com/). The government has ["unlimited rights"](https://github.com/ngageoint/mrgeo/blob/master/NOTICE) and is releasing this software to increase the impact of government investments by providing developers with the opportunity to take things in new directions. The software use, modification, and distribution rights are stipulated within the [Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 ###Pull Requests
 
