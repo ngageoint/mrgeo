@@ -29,6 +29,6 @@ Unique features/solutions of MrGeo:
 
 Exemplar MrGeo Use Cases:
 
-*	Raster Storage and Provisioning:  MrGeo has been used to store, index, tile, and pyramid multi-terabyte scale image databases.  Once stored this data is  made available through simple Tiled Map Services (TMS) and or Web Mapping Services (WMS).
+*	Raster Storage and Provisioning:  MrGeo has been used to store, index, tile, and pyramid multi-terabyte scale image databases.  Once stored, this data is  made available through simple Tiled Map Services (TMS) and or Web Mapping Services (WMS).
 *	Large Scale Batch Processing and Serving:  MrGeo has been used to pre-compute global 1 ArcSecond (nominally 30 meters) elevation data (300+ GB) into derivative raster products : slope, aspect, relative elevation, terrain shaded relief (collectively terabytes in size)
 *	Global Computation of Cost Distance:  Given all pub locations in OpenStreetMap, compute 2 hour drive  times from each location.  The full resolution is  1 ArcSecond (30 meters nominally) 
