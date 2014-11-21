@@ -9,7 +9,7 @@ All pull request contributions to this project will be released under the Apache
 Software source code previously released under an open source license and then modified by NGA staff is considered a "joint work" (see 17 USC 101); it is partially copyrighted, partially public domain, and as a whole is protected by the copyrights of the non-government authors and must be released according to the terms of the original open source license.
 
 ###MrGeo in Action
-See [YouTube explainer](https://www.youtube.com/watch?v=Z3fPTTtZ60I&list=FLBRaZ-IsIB44ikg-9n1RKtw&index=1)
+See [YouTube explainer](http://youtu.be/Z3fPTTtZ60I?list=FLBRaZ-IsIB44ikg-9n1RKtw)
 
 ###MrGeo Overview
 
