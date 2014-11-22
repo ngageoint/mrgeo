@@ -22,7 +22,7 @@ Unique features/solutions of MrGeo:
 * A suite of robust suite of MapReduce analytics that that include algebraic math operations, focal operations(i.e. slope), and graph operations (cost distance)
 * A third generation data storage model that 
   * Maintains data locality via  spatial indexing. 
-  * An abstraction layer between the MapReduce analytics and storage methods to enable a diverse set of cloud based storage options such as HDFS, Accumulo, HBASE etc.
+  * An abstraction layer between the MapReduce analytics and storage methods to enable a diverse set of cloud storage options such as HDFS, Accumulo, HBASE etc.
 * A Map algebra interface that enables the development of custom algorithms in a simple scripting API
 *	A plugin architecture that facilitates a modular software development and deployment strategies
 *	Data and Analytic capabilities provisioned by OGC and REST service end points
