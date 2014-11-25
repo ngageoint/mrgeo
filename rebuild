@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# resets the getopts in case used prior
+OPTIND=1
+
+# help usage function
+function show_help {
+  echo "rebuild {-eh?} <hdfs_type>"
+  echo "-h,-? : help"
+  echo "-e    : run eclipse setup"
+  echo "<hdfs_type>: <blank>, apache104, apache103, etc." 
+}
+
+# init vars
+eclipse=no
+
+# process args
+while [ $# -gt 0 ] ; do
+    case $1 in
+    "-h" | "--help" | "-?" | "help")
+        show_help
+        exit 0
+        ;;
+    "-e")  
+        eclipse=true
+        ;;
+         *) 
+     ARGS=$ARGS" "$1
+     shift 1
+      ;;
+    esac
+done
+
+set -e 
+scripts/mvn-build clean $ARGS
+scripts/mvn-build build $ARGS
+
+if [ "$eclipse" = "true" ]
+then
+  echo "setting up eclipse"
+  scripts/mvn-build eclipse $ARGS
+fi

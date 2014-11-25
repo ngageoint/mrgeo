@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2009-2014 DigitalGlobe, Inc.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and limitations under the License.
+  -->
+
+<b:beans xmlns:b="http://www.springframework.org/schema/beans"
+         xmlns="http://www.springframework.org/schema/security"
+         xmlns:p="http://www.springframework.org/schema/p"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:context="http://www.springframework.org/schema/context"
+         xmlns:util="http://www.springframework.org/schema/util"
+         xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+
+  <http auto-config='true'>
+    <intercept-url pattern="/**" access="ROLE_USER" />
+  </http>
+  
+
+    <!-- http entry-point-ref="casEntryPoint" use-expressions="true">
+        <intercept-url pattern="/**" access="isAuthenticated()" requires-channel="https" />
+        <custom-filter ref="casFilter" position="CAS_FILTER" />
+    </http -->
+
+    <!-- authentication-manager alias="authManager">
+        <authentication-provider ref="casAuthProvider" />
+    </authentication-manager -->
+    <authentication-manager alias="authManager">
+      <authentication-provider user-service-ref='userService'/>
+    </authentication-manager> 
+
+    <!-- -->
+    <user-service id="userService">
+        <user name="rod" password="rod" authorities="ROLE_SUPERVISOR,ROLE_USER" />
+        <user name="dianne" password="dianne" authorities="ROLE_USER" />
+        <user name="scott" password="scott" authorities="ROLE_USER" />
+       <user name="andrew" password="andrew" authorities="ROLE_SUPERVISOR,ROLE_USER,U,A,B,C" />
+       <user name="tim" password="tim" authorities="ROLE_USER,U,A" />
+       <user name="dave" password="dave" authorities="ROLE_USER,U,C" />
+    </user-service>
+    <!-- -->
+
+    <b:bean id="serviceProperties"
+            class="org.springframework.security.cas.ServiceProperties"
+            p:service="https://localhost:8443/distribution-war/j_spring_cas_security_check"
+            p:authenticateAllArtifacts="true"/>
+
+    <b:bean id="casEntryPoint"
+            class="org.springframework.security.cas.web.CasAuthenticationEntryPoint"
+            p:serviceProperties-ref="serviceProperties"
+            p:loginUrl="https://localhost:8444/cas/login" />
+
+    <b:bean id="casFilter"
+            class="org.springframework.security.cas.web.CasAuthenticationFilter"
+            p:authenticationManager-ref="authManager"
+            p:serviceProperties-ref="serviceProperties">
+            <b:property name="authenticationDetailsSource">
+                <b:bean class="org.springframework.security.cas.web.authentication.ServiceAuthenticationDetailsSource"/>
+            </b:property>
+        <!--
+            <b:property name="authenticationFailureHandler">
+            <b:bean class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler"
+                    p:defaultFailureUrl="/casfailed.jsp"/>
+            </b:property> -->
+    </b:bean>
+    <!--
+        NOTE: In a real application you should not use an in memory implementation. You will also want
+              to ensure to clean up expired tickets by calling ProxyGrantingTicketStorage.cleanup()
+     -->
+    <b:bean id="casAuthProvider" class="org.springframework.security.cas.authentication.CasAuthenticationProvider"
+            p:serviceProperties-ref="serviceProperties"
+            p:key="casAuthProviderKey">
+            <b:property name="authenticationUserDetailsService">
+                <b:bean
+                        class="org.springframework.security.cas.userdetails.GrantedAuthorityFromAssertionAttributesUserDetailsService">
+
+                    <b:constructor-arg >
+                        <b:list>
+<!--                            <b:value>role</b:value> -->
+                     <!--
+                     The CAS server itself has to be configured to return attributes
+                     from its authentication service (e.g. LDAP). It can be configured
+                     to return any or all attributes defined for a user principal.
+                     This constructor arg is configured with the name of one or more
+                     of those attributes, and those attribute values become the
+                     authorities for that user when they log in. In our test environment,
+                     we are using the Redmine LDAP as the authentication service, and
+                     the LastName property is one of the attributes defined for each
+                     user, so we use it here for testing.
+                     -->
+                            <b:value>LastName</b:value>
+                        </b:list>
+                    </b:constructor-arg >
+                </b:bean>
+            <!--
+            <b:bean
+                 class="org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper">
+                <b:constructor-arg ref="userService" />
+            </b:bean>
+            -->
+        </b:property>
+        <b:property name="ticketValidator">
+            <b:bean class="org.jasig.cas.client.validation.Cas20ProxyTicketValidator"
+                    p:acceptAnyProxy="true">
+                <b:constructor-arg value="https://localhost:8444/cas" />
+            </b:bean>
+        </b:property>
+        <!-- b:property name="statelessTicketCache">
+            <b:bean class="org.springframework.security.cas.authentication.EhCacheBasedTicketCache">
+                <b:property name="cache">
+                    <b:bean id="ehcache" class="net.sf.ehcache.Cache"
+                            init-method="initialise"
+                            destroy-method="dispose">
+                        <b:constructor-arg value="casTickets"/>
+                        <b:constructor-arg value="50"/>
+                        <b:constructor-arg value="true"/>
+                        <b:constructor-arg value="false"/>
+                        <b:constructor-arg value="3600"/>
+                        <b:constructor-arg value="900"/>
+                    </b:bean>
+                </b:property>
+            </b:bean>
+        </b:property -->
+    </b:bean>
+
+
+</b:beans>
+

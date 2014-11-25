@@ -1,0 +1,15 @@
+<ColorMap name="Aspect">
+  <Scaling>MinMax</Scaling>
+  <!-- null values will be transparent -->
+  <NullColor color="0,0,0" opacity="0"/>
+  <!-- blue -->
+  <Color value="0.0" color="0,0,255" opacity="128"/>
+  <!-- yellow -->
+  <Color value="0.26" color="255,255,0" opacity="128"/>
+  <!-- green -->
+  <Color value="0.51" color="34,139,34" opacity="128"/>
+  <!-- red -->
+  <Color value="0.76" color="255,0,0" opacity="128"/>
+  <!-- blue -->
+  <Color value="1.0" color="0,0,255" opacity="128"/>
+</ColorMap>

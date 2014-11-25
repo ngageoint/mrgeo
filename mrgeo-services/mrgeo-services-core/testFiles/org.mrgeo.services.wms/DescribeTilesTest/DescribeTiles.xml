@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE WMS_DescribeTilesResponse SYSTEM "http://schemas.opengis.net/wms/1.4.0/WMS_MS_Capabilities.dtd">
+<WMS_DescribeTilesResponse xmlns="http://www.opengis.net/wms" xmlns:gml="http://www.opengis.net/gml"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.4.0"
+                           xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.4.0/capabilities_1_4_0.xsd">
+<!--1.4.0 isn't out yet, but it does have a preliminary protocol for tiling.-->
+<!--See http://www.opengeospatial.org/standards/wms for details.-->
+<Layer name="IslandsElevation-v2">
+<TiledStyles>
+<Value>default</Value>
+</TiledStyles>
+<TiledFormats>
+<Value>image/png</Value>
+<Value>image/jpeg</Value>
+<Value>image/tiff</Value>
+</TiledFormats>
+<TiledCrs name="CRS:84">
+<TiledMatrixSet>
+<TileWidth>512</TileWidth>
+<TileHeight>512</TileHeight>
+<TileMatrix scale="6.866455078125E-4">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>5</MatrixWidth>
+<MatrixHeight>4</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.001373291015625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>3</MatrixWidth>
+<MatrixHeight>2</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.00274658203125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0054931640625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.010986328125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.02197265625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0439453125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.087890625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.17578125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.3515625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+</TiledMatrixSet>
+</TiledCrs>
+</Layer>
+<Layer name="IslandsElevation-v2-color-scale">
+<TiledStyles>
+<Value>default</Value>
+</TiledStyles>
+<TiledFormats>
+<Value>image/png</Value>
+<Value>image/jpeg</Value>
+<Value>image/tiff</Value>
+</TiledFormats>
+<TiledCrs name="CRS:84">
+<TiledMatrixSet>
+<TileWidth>512</TileWidth>
+<TileHeight>512</TileHeight>
+<TileMatrix scale="6.866455078125E-4">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>5</MatrixWidth>
+<MatrixHeight>4</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.001373291015625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>3</MatrixWidth>
+<MatrixHeight>2</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.00274658203125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0054931640625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.010986328125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.02197265625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0439453125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.087890625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.17578125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.3515625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+</TiledMatrixSet>
+</TiledCrs>
+</Layer>
+<Layer name="IslandsElevation-v2-no-pyramid">
+<TiledStyles>
+<Value>default</Value>
+</TiledStyles>
+<TiledFormats>
+<Value>image/png</Value>
+<Value>image/jpeg</Value>
+<Value>image/tiff</Value>
+</TiledFormats>
+<TiledCrs name="CRS:84">
+<TiledMatrixSet>
+<TileWidth>512</TileWidth>
+<TileHeight>512</TileHeight>
+<TileMatrix scale="6.866455078125E-4">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>5</MatrixWidth>
+<MatrixHeight>4</MatrixHeight>
+</TileMatrix>
+</TiledMatrixSet>
+</TiledCrs>
+</Layer>
+<Layer name="IslandsElevation-v2-no-pyramid-extra-metadata">
+<TiledStyles>
+<Value>default</Value>
+</TiledStyles>
+<TiledFormats>
+<Value>image/png</Value>
+<Value>image/jpeg</Value>
+<Value>image/tiff</Value>
+</TiledFormats>
+<TiledCrs name="CRS:84">
+<TiledMatrixSet>
+<TileWidth>512</TileWidth>
+<TileHeight>512</TileHeight>
+<TileMatrix scale="6.866455078125E-4">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>5</MatrixWidth>
+<MatrixHeight>4</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.001373291015625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>3</MatrixWidth>
+<MatrixHeight>2</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.00274658203125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0054931640625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.010986328125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.02197265625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0439453125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.087890625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.17578125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.3515625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+</TiledMatrixSet>
+</TiledCrs>
+</Layer>
+<Layer name="IslandsElevation-v2-no-stats">
+<TiledStyles>
+<Value>default</Value>
+</TiledStyles>
+<TiledFormats>
+<Value>image/png</Value>
+<Value>image/jpeg</Value>
+<Value>image/tiff</Value>
+</TiledFormats>
+<TiledCrs name="CRS:84">
+<TiledMatrixSet>
+<TileWidth>512</TileWidth>
+<TileHeight>512</TileHeight>
+<TileMatrix scale="6.866455078125E-4">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>5</MatrixWidth>
+<MatrixHeight>4</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.001373291015625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>3</MatrixWidth>
+<MatrixHeight>2</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.00274658203125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0054931640625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.010986328125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.02197265625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0439453125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.087890625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.17578125">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.3515625">
+<gml:Point>161.250000 -10.083333</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+</TiledMatrixSet>
+</TiledCrs>
+</Layer>
+<Layer name="cost-distance">
+<TiledStyles>
+<Value>default</Value>
+</TiledStyles>
+<TiledFormats>
+<Value>image/png</Value>
+<Value>image/jpeg</Value>
+<Value>image/tiff</Value>
+</TiledFormats>
+<TiledCrs name="CRS:84">
+<TiledMatrixSet>
+<TileWidth>512</TileWidth>
+<TileHeight>512</TileHeight>
+<TileMatrix scale="1.71661376953125E-4">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>4</MatrixWidth>
+<MatrixHeight>3</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="3.4332275390625E-4">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>2</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="6.866455078125E-4">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.001373291015625">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.00274658203125">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0054931640625">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.010986328125">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.02197265625">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0439453125">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.087890625">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.17578125">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.3515625">
+<gml:Point>69.082031 35.068359</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+</TiledMatrixSet>
+</TiledCrs>
+</Layer>
+<Layer name="cost-distance-shift-2">
+<TiledStyles>
+<Value>default</Value>
+</TiledStyles>
+<TiledFormats>
+<Value>image/png</Value>
+<Value>image/jpeg</Value>
+<Value>image/tiff</Value>
+</TiledFormats>
+<TiledCrs name="CRS:84">
+<TiledMatrixSet>
+<TileWidth>512</TileWidth>
+<TileHeight>512</TileHeight>
+<TileMatrix scale="6.866455078125E-4">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>3</MatrixWidth>
+<MatrixHeight>3</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.001373291015625">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>2</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.00274658203125">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0054931640625">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.010986328125">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.02197265625">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0439453125">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.087890625">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.17578125">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.3515625">
+<gml:Point>-112.500000 36.562500</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+</TiledMatrixSet>
+</TiledCrs>
+</Layer>
+<Layer name="small-3band">
+<TiledStyles>
+<Value>default</Value>
+</TiledStyles>
+<TiledFormats>
+<Value>image/png</Value>
+<Value>image/jpeg</Value>
+<Value>image/tiff</Value>
+</TiledFormats>
+<TiledCrs name="CRS:84">
+<TiledMatrixSet>
+<TileWidth>512</TileWidth>
+<TileHeight>512</TileHeight>
+<TileMatrix scale="1.71661376953125E-4">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>4</MatrixWidth>
+<MatrixHeight>3</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="3.4332275390625E-4">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>3</MatrixWidth>
+<MatrixHeight>2</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="6.866455078125E-4">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.001373291015625">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.00274658203125">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0054931640625">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>2</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.010986328125">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.02197265625">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.0439453125">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.087890625">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.17578125">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+<TileMatrix scale="0.3515625">
+<gml:Point>8.174000 55.107422</gml:Point>
+<MatrixWidth>1</MatrixWidth>
+<MatrixHeight>1</MatrixHeight>
+</TileMatrix>
+</TiledMatrixSet>
+</TiledCrs>
+</Layer>
+</WMS_DescribeTilesResponse>

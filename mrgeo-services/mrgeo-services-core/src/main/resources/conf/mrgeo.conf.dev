@@ -1,0 +1,33 @@
+# These paths will probably stay the same
+image.base = /mrgeo/images
+vector.base = /mrgeo/vectors
+kml.base = /mrgeo/kml
+tsv.base = /mrgeo/tsv
+colorscale.base = /mrgeo/color-scales
+
+# This is the spot in HDFS where jars are distributed for the mappers/reducers
+distributed.base = /mrgeo/jars
+
+# This needs to be a location that MrGeo can write to.
+db.path = /tmp/mrgeo-services-db
+
+
+
+# Additional hadoop parameters as well as parameters needed for Giraph.
+# Either hadoop.params with -libjars and the path to <giraph-with-dependencies>, 
+# or zooservers pointing to existing zookeeper host/port(s) need to be set
+#zooservers=host1:port1,host2:port2,host3:port3
+hadoop.params=-libjars /home/<user>/.m2/repository/org/apache/giraph/giraph-core/1.0.0/giraph-core-1.0.0.jar
+
+# Modify this to match your server config. You may need to change the port, etc.  Do not remove 
+# the trailing forward slash. 
+base.url = http://localhost:8080/mrgeo-services/
+
+# The number of simultaneous WMS requests to process
+org.mrgeo.services.WmsGenerator.permits = 9999
+
+# Default Legion to use CPU or GPU computing for operations that can use both
+legion.processortype.preference = GPU
+
+# Size of a mrsimage tile (this should not be changed unless there is a great reason)
+mrsimage.tilesize = 512

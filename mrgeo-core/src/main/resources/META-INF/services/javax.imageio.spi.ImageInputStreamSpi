@@ -1,0 +1,2 @@
+org.mrgeo.imageio.SeekableImageInputStreamSpi
+org.mrgeo.imageio.HdfsImageInputStreamSpi

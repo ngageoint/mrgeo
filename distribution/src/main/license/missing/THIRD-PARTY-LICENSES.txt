@@ -1,0 +1,5 @@
+The generated list of 3rd party licenses has not been run.  While this is 
+not technically against the terms of any of the 3rd party packages, it is
+better to include it in the final built jars/wars.
+
+To generate the 3rd party license file, rebuild the project WITHOUT the -DskipLicenses

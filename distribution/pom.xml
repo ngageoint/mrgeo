@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2009-2014 DigitalGlobe, Inc.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.mrgeo</groupId>
+    <artifactId>mrgeo</artifactId>
+    <version>1.4.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>distribution</artifactId>
+  <packaging>pom</packaging>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+  <name>distribution</name>
+  <url>http://mrgeo.org</url>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <build>
+    <finalName>${project.parent.artifactId}</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>1.7</version>
+        <configuration>
+          <acceptPomPackaging>true</acceptPomPackaging>
+          <outputDirectory>${project.build.directory}/generated-sources/licenses</outputDirectory>
+          <thirdPartyFilename>THIRD-PARTY-LICENSES.txt</thirdPartyFilename>
+          <fileTemplate>${project.basedir}/src/main/license/third-party-file.ftl</fileTemplate>
+          <missingFile>${project.basedir}/src/main/license/missing-licenses.properties</missingFile>
+          <useMissingFile>true</useMissingFile>
+          <excludedScopes>test</excludedScopes>
+          <sortArtifactByName>true</sortArtifactByName>
+          <excludedGroups>org.mrgeo|com.digitalglobe</excludedGroups>
+          <quiet>true</quiet>
+          <!-- merge some of the names together -->
+          <licenseMerges>
+            <!-- Apache 2.0 -->
+            <licenseMerge>The Apache Software License, Version 2.0|Apache Software License - Version 2.0</licenseMerge>
+            <licenseMerge>The Apache Software License, Version 2.0|Apache License, Version 2.0</licenseMerge>
+            <licenseMerge>The Apache Software License, Version 2.0|Apache License Version 2.0</licenseMerge>
+            <licenseMerge>The Apache Software License, Version 2.0|Apache License 2.0</licenseMerge>
+            <licenseMerge>The Apache Software License, Version 2.0|Apache License</licenseMerge>
+            <licenseMerge>The Apache Software License, Version 2.0|Apache 2</licenseMerge>
+            <!-- BSD -->
+            <licenseMerge>Berkeley Software Distribution (BSD) License|BSD License</licenseMerge>
+            <licenseMerge>Berkeley Software Distribution (BSD) License|BSD</licenseMerge>
+            <licenseMerge>Berkeley Software Distribution (BSD) License|BSD licence</licenseMerge>
+            <licenseMerge>Berkeley Software Distribution (BSD) License|BSD style</licenseMerge>
+            <licenseMerge>Berkeley Software Distribution (BSD) License|New BSD license</licenseMerge>
+            <licenseMerge>Berkeley Software Distribution (BSD) License|Simplified BSD</licenseMerge>
+            <licenseMerge>Berkeley Software Distribution (BSD) License|The BSD License</licenseMerge>
+            <!-- BSD for HSQL -->
+            <licenseMerge>Berkeley Software Distribution (BSD) License for HSQL|BSD License for HSQL</licenseMerge>
+            <!-- CDDL 1.0 -->
+            <licenseMerge>Common Development and Distribution License (CDDL) v1.0|CDDL 1.0</licenseMerge>
+            <licenseMerge>Common Development and Distribution License (CDDL) v1.0|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0</licenseMerge>
+            <!-- CDDL 1.1 -->
+            <licenseMerge>Common Development and Distribution License (CDDL) v1.1|CDDL 1.1</licenseMerge>
+            <!-- Eclipse 1.0 -->
+            <licenseMerge>Eclipse Public License - Version 1.0|Eclipse Public License</licenseMerge>
+            <licenseMerge>Eclipse Public License - Version 1.0|Eclipse Public License v1.0</licenseMerge>
+            <!-- LGPL -->
+            <licenseMerge>GNU Lesser General Public License (LGPL), Version 2.1|LGPL 2.1</licenseMerge>
+            <licenseMerge>GNU Lesser General Public License (LGPL), Version 2.1|Lesser General Public License (LGPL)</licenseMerge>
+            <licenseMerge>GNU Lesser General Public License (LGPL), Version 2.1|lgpl</licenseMerge>
+            <!-- LGPL with classpath exception -->
+            <licenseMerge>GNU General Public Library, v2.0 w/ Classpath Exception|GPL2 w/ CPE</licenseMerge>
+            <!-- IU Extreme (fixed typo) -->
+            <licenseMerge>Indiana University Extreme! Lab Software License, version 1.1.1|Indiana University Extreme! Lab Software License, vesion 1.1.1</licenseMerge>
+          </licenseMerges>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-core</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-mapalgebra-image</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <!---->
+         <dependency>
+         <groupId>org.mrgeo</groupId>
+         <artifactId>mrgeo-dataprovider-accumulo</artifactId>
+         <version>${project.parent.version}</version>
+         </dependency>
+    <!---->
+  </dependencies>
+  <modules>
+    <module>distribution-tgz</module>
+    <module>distribution-war</module>
+  </modules>
+</project>

@@ -1,0 +1,353 @@
+/*
+ * Copyright 2009-2014 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
+package org.mrgeo.cmd.ingest;
+
+import junit.framework.Assert;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.junit.*;
+import org.junit.experimental.categories.Category;
+import org.junit.rules.TestName;
+import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.rasterops.OpImageRegistrar;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.test.TestUtils;
+import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LongRectangle;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Properties;
+
+/**
+ * @author jason.surratt
+ * 
+ */
+@SuppressWarnings("static-method")
+public class IngestImageTest
+{
+  @Rule public TestName testname = new TestName();
+
+  private static TestUtils testUtils;
+
+  private static String input;
+  private static Path inputHdfs;
+  private static Path outputHdfs;
+
+  private final static String all_ones = "all-ones";
+  private static String all_ones_input = Defs.INPUT + all_ones + ".tif";
+  private static String all_ones_output;
+  private final static String aster_sample = "AsterSample";
+
+  private static Configuration conf;
+  private Properties providerProperties;
+
+  @BeforeClass
+  public static void init() throws IOException
+  {
+    conf = HadoopUtils.createConfiguration();
+
+    testUtils = new TestUtils(IngestImageTest.class);
+
+    input = testUtils.getInputLocal();
+    inputHdfs = testUtils.getInputHdfs();
+    outputHdfs = testUtils.getOutputHdfs();
+
+    HadoopFileUtils.delete(inputHdfs);
+
+    // copy test files up to HDFS
+    //HadoopFileUtils.copyToHdfs(input, inputHdfs, "greece.tif");
+
+    HadoopFileUtils.copyToHdfs(input, inputHdfs, aster_sample);
+
+    File file = new File(all_ones_input);
+    all_ones_input = "file://" + file.getAbsolutePath();
+
+    all_ones_output = new Path(outputHdfs, all_ones).toString();
+  }
+
+  @Before 
+  public void setUp()
+  {
+    providerProperties = null;
+    OpImageRegistrar.registerMrGeoOps();
+    
+    // tack on the test name to the output
+    all_ones_output = new Path(outputHdfs, testname.getMethodName()).toString();
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void ingestSimple() throws Exception
+  {
+    String[] args = { all_ones_input, "-l","-o", all_ones_output };
+    int res = new IngestImage().run(args, conf, providerProperties);
+
+    Assert.assertEquals("IngestImage comand exited with error", 0, res);
+    
+    // now look at the files built.  We really not interested in the actual data, just that
+    // things were build. (this is testing the command, not the algorithms)
+    MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
+    Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
+    
+    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
+    Assert.assertEquals("", metadata.getProtectionLevel());
+    
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+    for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
+    {
+      MrsImage image = pyramid.getImage(level);
+      Assert.assertNotNull("MrsImage image missing for level " + level, image);
+      image.close();
+    }
+    
+    // check that we ingested the right number of tiles - in particular, that our maxTx/maxTy  
+    // is inclusive  
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
+    Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+  }
+  
+  @Test
+  @Category(IntegrationTest.class)
+  public void ingestSimpleWithDefaultProtectionLevel() throws Exception
+  {
+    String protectionLevel = "public";
+    Properties props = MrGeoProperties.getInstance();
+    String saveRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+    String saveDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
+    try
+    {
+      props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
+      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, protectionLevel);
+      String[] args = { all_ones_input, "-l","-o", all_ones_output };
+      int res = new IngestImage().run(args, conf, providerProperties);
+  
+      Assert.assertEquals("IngestImage comand exited with error", 0, res);
+      
+      // now look at the files built.  We really not interested in the actual data, just that
+      // things were build. (this is testing the command, not the algorithms)
+      MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
+      Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
+      
+      MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+      Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
+      Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
+      
+      Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+      for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
+      {
+        MrsImage image = pyramid.getImage(level);
+        Assert.assertNotNull("MrsImage image missing for level " + level, image);
+        image.close();
+      }
+      
+      // check that we ingested the right number of tiles - in particular, that our maxTx/maxTy  
+      // is inclusive  
+      LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+      long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
+      Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+    }
+    finally
+    {
+      // Restore MrGeoProperties
+      if (saveRequired == null)
+      {
+        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+      }
+      else
+      {
+        props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, saveRequired);
+      }
+      if (saveDefault == null)
+      {
+        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
+      }
+      else
+      {
+        props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, saveDefault);
+      }
+    }
+  }
+  
+  @Test
+  @Category(IntegrationTest.class)
+  public void ingestSimpleWithProtectionLevel() throws Exception
+  {
+    String protectionLevel = "private";
+    Properties props = MrGeoProperties.getInstance();
+    String saveRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+    String saveDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
+    try
+    {
+      props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
+      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, "public");
+      String[] args = { all_ones_input, "-l","-o", all_ones_output, "-pl", protectionLevel };
+      int res = new IngestImage().run(args, conf, providerProperties);
+  
+      Assert.assertEquals("IngestImage comand exited with error", 0, res);
+      
+      // now look at the files built.  We really not interested in the actual data, just that
+      // things were build. (this is testing the command, not the algorithms)
+      MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
+      Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
+      
+      MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+      Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
+      Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
+      
+      Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+      for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
+      {
+        MrsImage image = pyramid.getImage(level);
+        Assert.assertNotNull("MrsImage image missing for level " + level, image);
+        image.close();
+      }
+      
+      // check that we ingested the right number of tiles - in particular, that our maxTx/maxTy  
+      // is inclusive  
+      LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+      long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
+      Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+    }
+    finally
+    {
+      // Restore MrGeoProperties
+      if (saveRequired == null)
+      {
+        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+      }
+      else
+      {
+        props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, saveRequired);
+      }
+      if (saveDefault == null)
+      {
+        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
+      }
+      else
+      {
+        props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, saveDefault);
+      }
+    }
+  }
+  
+  @Test
+  @Category(IntegrationTest.class)
+  public void ingestSkipPyramids() throws Exception
+  {
+    String[] args = { all_ones_input, "-o", all_ones_output, "-sp" };
+    int res= new IngestImage().run(args, conf, providerProperties);
+
+    Assert.assertEquals("IngestImage comand exited with error", 0, res);
+    
+    // now look at the files built.  We really not interested in the actual data, just that
+    // things were build. (this is testing the command, not the algorithms)
+    MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
+    Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
+    
+    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
+    
+    Assert.assertEquals("Wrong max zoom level", 10, metadata.getMaxZoomLevel());
+    
+    MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("MrsImage image missing for level " + metadata.getMaxZoomLevel(), image);
+    image.close();
+    
+    for (int level = metadata.getMaxZoomLevel() - 1; level >= 1; level--)
+    {
+      image = pyramid.getImage(level);
+      Assert.assertNull("MrsImage found for level " + level, image);
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void ingestMissingDefaultProtectionLevel() throws Exception
+  {
+    ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    PrintStream saveOut = System.out;
+    System.setOut(new PrintStream(outContent));
+    Properties props = MrGeoProperties.getInstance();
+    String saveRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+    try
+    {
+      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
+      String[] args = { all_ones_input, "-o", all_ones_output, "-sp" };
+      int res = new IngestImage().run(args, conf, providerProperties);
+      Assert.assertEquals(-1, res);
+      Assert.assertTrue("Unexpected output: " + outContent.toString(),
+          outContent.toString().contains("Missing required option: pl"));
+    }
+    finally
+    {
+      System.setOut(saveOut);
+      // Restore MrGeoProperties
+      if (saveRequired == null)
+      {
+        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+      }
+      else
+      {
+        props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, saveRequired);
+      }
+    }
+  }
+
+  // ignored because it _always_ times out during the 0.20.2 integration tests...
+  @Ignore
+  @Test(timeout=250000)
+  @Category(IntegrationTest.class)
+  public void ingestPerformanceRegression() throws Exception
+  {
+    String inputAster = new Path(inputHdfs, aster_sample).toString();
+    String outputAster = new Path(outputHdfs, aster_sample).toString();
+    String[] args = { inputAster, "-o", outputAster, "-sp", "-l" };
+    int res= new IngestImage().run(args, conf, providerProperties);
+
+    Assert.assertEquals("IngestImageOld command exited with error", 0, res);
+    
+    MrsImagePyramid pyramid = MrsImagePyramid.open(outputAster, providerProperties);
+    Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
+    
+    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
+    
+    Assert.assertEquals("Wrong max zoom level", 12, metadata.getMaxZoomLevel());
+    
+    MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("MrsImage image missing for level " + metadata.getMaxZoomLevel(), image);
+    image.close();
+    
+    for (int level = metadata.getMaxZoomLevel() - 1; level >= 1; level--)
+    {
+      image = pyramid.getImage(level);
+      Assert.assertNull("MrsImage found for level " + level, image);
+    }
+  }
+
+}

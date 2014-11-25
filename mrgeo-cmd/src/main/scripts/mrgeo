@@ -1,0 +1,24 @@
+#!/bin/sh
+
+CMD_JAR=$MRGEO_HOME/mrgeo-cmd-core.jar
+if [ -e $CMD_JAR ]
+then
+    LIBS=$MRGEO_HOME/*:$MRGEO_HOME/lib/*
+else
+  # could this be a dev environment?
+  CMD_JAR=$MRGEO_HOME/mrgeo-cmd/mrgeo-cmd-distribution/target/mrgeo-cmd-distribution.jar
+  if [ -e $CMD_JAR ]
+  then
+    LIBS=$MRGEO_HOME/mrgeo-cmd/mrgeo-cmd-distribution/target/lib/*
+  else
+    echo "Can't find mrgeo-cmd-core jar file.  Make sure MRGEO_HOME is set properly"
+    exit -1
+  fi
+fi
+
+# set the hadoop user classpath and force it to be prefixed in the classpath
+export HADOOP_USER_CLASSPATH_FIRST=true
+export HADOOP_CLASSPATH=$CMD_JAR:$LIBS
+
+# run the command
+hadoop jar $CMD_JAR "$@"

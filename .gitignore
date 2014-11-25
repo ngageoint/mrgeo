@@ -1,0 +1,83 @@
+# top level conf directory
+conf
+
+# all eclipse generated files
+.classpath
+.project
+**/.classpath
+**/**/.classpath
+**/.project
+**/**/.project
+**/.settings
+**/**/.settings
+
+# all IntelliJ generated files
+.idea
+**/.idea
+**/**/.idea
+
+*.iml
+**/*.iml
+**/**/*.iml
+
+*.eml
+**/*.eml
+**/**/*.eml
+
+bin/
+
+# all swap files
+*.swp
+**/*.swp
+**/**/*.swp
+
+# unit test output files
+**/testFiles/output
+**/**/testFiles/output
+
+# build artifacts
+**/target
+**/**/target
+
+# build.info? files
+**/build.info
+**/**/build.info
+mrgeo-services/mrgeo-services-core/src/main/resources/org/mrgeo/services/build.info
+mrgeo-services/mrgeo-services-distribution/src/main/resources/org/mrgeo/services/build.info
+mrgeo-external-services/src/main/resources/org/mrgeo/external/services/build.info
+
+# META-INF files
+mrgeo-services/mrgeo-services-core/src/test/java/META-INF/
+mrgeo-services/mrgeo-services-tms/META-INF/
+mrgeo-services/mrgeo-services-wms/META-INF/
+
+# GWT launch files
+#monocle/*launch
+
+# User configured gwt.xml
+#monocle/src/main/java/org/mrgeo/monocle/Monocle.gwt.xml
+
+# User configured mrgeo.conf
+mrgeo-services/mrgeo-services-core/src/main/resources/conf/mrgeo.conf
+
+
+# misc file generated as unit test outputs
+mrgeo-core/output.png
+mrgeo-core/output.tfw
+mrgeo-core/output.tif
+mrgeo-core/output2.png
+mrgeo-core/output3.png
+mrgeo-core/output_a1c1.tif
+mrgeo-core/output_a1c2.tif
+mrgeo-core/output_a2c1.tif
+mrgeo-core/output_a2c2.tif
+
+# derby log file
+mrgeo-services/mrgeo-services-core/derby.log
+
+#compiled python code
+mrgeo-core/src/main/scripts/WpsTools.pyc
+
+/.nv
+#/monocle-2
+#/mrgeo-external-services

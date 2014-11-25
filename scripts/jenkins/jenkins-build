@@ -1,0 +1,146 @@
+#!/bin/bash
+
+usage() {
+    
+    echo "Usage: $0  <args>"
+    echo "-----------------------------"
+    echo "build type:"
+    echo "  apache    - apache hadoop"
+    echo "  cdh3u1    - cloudera hadoop 3 update 1"
+    echo "  cdh3u4    - cloudera hadoop 3 update 4"
+    echo "  cdh3u5    - cloudera hadoop 3 update 5"
+    echo "  cdh3u6    - cloudera hadoop 3 update 6"
+    echo "  cdh450    - Cloudera hadoop 4.5.0"
+    echo "  mapr      - mapr hadoop"
+    echo "args:"
+    echo "  -r  --revision <number>  - SVN revision number"
+    echo " "
+    echo "  -b  --big-files <path>  - location of big test files (/scratch)"
+    echo " "
+    echo "  --cobertura  - execute the Cobertura code-coverage plugin"
+    echo " "
+    echo "  all other args will be passed to mvn-build"
+    echo " "
+    $MRGEO_HOME/scripts/mvn-build help
+    echo " "
+    exit 1
+}
+
+set -e
+
+
+source /etc/profile
+source ~/.bashrc
+
+CWD=`pwd`
+export MRGEO_HOME=$CWD
+
+ARGS=""
+COBERTURA=false
+
+if [ $# -lt 1 ]; then
+  usage
+  exit 1
+fi
+
+TYPE=""
+REV=""
+GIRAPH_JAR="giraph-core-1.0.0.jar"
+BIGFILES="/scratch/"
+
+while [ $# -gt 0 ] ; do
+    case $1 in
+    "-r" | "--revision")
+        REV=$2
+        shift 2
+        ;;
+    "apache") 
+        TYPE="hadoop-0.20.2"
+        ARGS=$ARGS" "$1
+        shift 1
+        ;;
+    "mapr") 
+        TYPE="mapr"
+        ARGS=$ARGS" "$1
+        shift 1
+        ;;
+    "cdh3u1") 
+        TYPE="cdh3u1"
+        ARGS=$ARGS" "$1
+        shift 1
+        ;;
+    "cdh3u4")
+        TYPE="cdh3u4"
+        ARGS=$ARGS" "$1
+        shift 1
+        ;;
+    "cdh3u5")
+        TYPE="cdh3u5"
+        ARGS=$ARGS" "$1
+        shift 1
+        ;;
+    "cdh3u6")
+        TYPE="cdh3u6"
+        ARGS=$ARGS" "$1
+        shift 1
+        ;;
+    "cdh450")
+        TYPE="cdh450"
+        ARGS=$ARGS" "$1
+        shift 1
+        GIRAPH_JAR="giraph-core-1.0.0-for-hadoop-2.0.0-cdh4.1.2.jar"
+        ;;
+    "-b" | "--big-files")
+        BIGFILES=$2
+        shift 2
+        ;;
+    "--cobertura")
+        COBERTURA=true
+        shift 1
+        ;;
+     *)
+     ARGS=$ARGS" "$1
+     shift 1
+      ;;
+    esac
+done
+
+if [ "$REV" = "" ]; then
+  REV="UNKNOWN"
+fi
+
+VERSION=$TYPE"-"$REV
+
+echo "Version = "$VERSION
+ARGS=$ARGS" -Drevision="$REV
+ARGS=$ARGS" -Dhadoop-type="$TYPE
+ARGS=$ARGS" -jv 1.7"  #force java 7 by default
+
+if [ ! -e $MRGEO_HOME/conf ]; then
+  mkdir $MRGEO_HOME/conf
+fi
+
+#cp $MRGEO_HOME/mrgeo-services/mrgeo-services-core/src/main/resources/conf/mrgeo.conf.orig conf/mrgeo.conf
+#sed -i "s|jar.path = /usr/local/mrgeo/mrgeo-full.jar|jar.path = $MRGEO_HOME/mrgeo-core/target/mrgeo-core-full.jar|g" conf/mrgeo.conf
+#sed -i "s|# Test.BigFilesPath = file:///scratch/|Test.BigFilesPath = file://$BIGFILES|g" conf/mrgeo.conf
+#sed -i "s|#hadoop.params.*|hadoop.params=-libjars /home/ubuntu/.m2/repository/org/apache/giraph/giraph-core/1.0.0/$GIRAPH_JAR|g" conf/mrgeo.conf
+
+# cp $MRGEO_HOME/monocle/src/main/webapp/resources/local.properties.orig $MRGEO_HOME/monocle/src/main/webapp/resources/local.properties
+
+echo "env:"
+env
+echo " "
+echo "ARGS: " $ARGS
+echo " "
+
+$MRGEO_HOME/scripts/mvn-build clean $ARGS
+if [ ! -d $MRGEO_HOME/docs ]; then
+  mkdir $MRGEO_HOME/docs
+fi
+
+$MRGEO_HOME/scripts/UpdateAll.py
+
+$MRGEO_HOME/scripts/mvn-build test $ARGS
+if $COBERTURA; then
+  $MRGEO_HOME/scripts/mvn-build cobertura:cobertura $ARGS
+fi

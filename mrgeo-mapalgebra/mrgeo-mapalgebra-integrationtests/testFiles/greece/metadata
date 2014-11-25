@@ -1,0 +1,217 @@
+{
+  "bounds" : {
+    "minX" : 24.001007080078125,
+    "minY" : 40.560150146484375,
+    "maxX" : 25.000762939453125,
+    "maxY" : 41.5008544921875
+  },
+  "tilesize" : 512,
+  "bands" : 1,
+  "defaultValues" : [ -32768.0 ],
+  "tileType" : 2,
+  "maxZoomLevel" : 9,
+  "stats" : [ {
+    "min" : -4.0,
+    "max" : 2166.0,
+    "mean" : 517.8812861486847,
+    "sum" : 1.89556462E8,
+    "count" : 366023
+  } ],
+  "classification" : "Continuous",
+  "resamplingMethod" : "MEAN",
+  "imageMetadata" : [ {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 3,
+      "maxY" : 3
+    },
+    "tileBounds" : {
+      "minX" : 1,
+      "minY" : 0,
+      "maxX" : 1,
+      "maxY" : 0
+    },
+    "image" : "1",
+    "stats" : [ {
+      "min" : 15.0,
+      "max" : 1205.0,
+      "mean" : 529.2666666666667,
+      "sum" : 7939.0,
+      "count" : 15
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 6,
+      "maxY" : 6
+    },
+    "tileBounds" : {
+      "minX" : 2,
+      "minY" : 1,
+      "maxX" : 2,
+      "maxY" : 1
+    },
+    "image" : "2",
+    "stats" : [ {
+      "min" : 1.0,
+      "max" : 1319.0,
+      "mean" : 491.92857142857144,
+      "sum" : 20661.0,
+      "count" : 42
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 11,
+      "maxY" : 11
+    },
+    "tileBounds" : {
+      "minX" : 4,
+      "minY" : 2,
+      "maxX" : 4,
+      "maxY" : 2
+    },
+    "image" : "3",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 1464.0,
+      "mean" : 492.88235294117646,
+      "sum" : 58653.0,
+      "count" : 119
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 22,
+      "maxY" : 22
+    },
+    "tileBounds" : {
+      "minX" : 9,
+      "minY" : 5,
+      "maxX" : 9,
+      "maxY" : 5
+    },
+    "image" : "4",
+    "stats" : [ {
+      "min" : -1.0,
+      "max" : 1772.0,
+      "mean" : 493.8753056234719,
+      "sum" : 201995.0,
+      "count" : 409
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 45,
+      "maxY" : 43
+    },
+    "tileBounds" : {
+      "minX" : 18,
+      "minY" : 11,
+      "maxX" : 18,
+      "maxY" : 11
+    },
+    "image" : "5",
+    "stats" : [ {
+      "min" : -1.0,
+      "max" : 1886.0,
+      "mean" : 498.3458251150559,
+      "sum" : 757984.0,
+      "count" : 1521
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 91,
+      "maxY" : 86
+    },
+    "tileBounds" : {
+      "minX" : 36,
+      "minY" : 23,
+      "maxX" : 36,
+      "maxY" : 23
+    },
+    "image" : "6",
+    "stats" : [ {
+      "min" : -3.0,
+      "max" : 2072.0,
+      "mean" : 509.92482341069626,
+      "sum" : 3032013.0,
+      "count" : 5946
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 182,
+      "maxY" : 172
+    },
+    "tileBounds" : {
+      "minX" : 72,
+      "minY" : 46,
+      "maxX" : 72,
+      "maxY" : 46
+    },
+    "image" : "7",
+    "stats" : [ {
+      "min" : -3.0,
+      "max" : 2109.0,
+      "mean" : 512.4317416457992,
+      "sum" : 1.1868944E7,
+      "count" : 23162
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 364,
+      "maxY" : 343
+    },
+    "tileBounds" : {
+      "minX" : 145,
+      "minY" : 92,
+      "maxX" : 145,
+      "maxY" : 93
+    },
+    "image" : "8",
+    "stats" : [ {
+      "min" : -4.0,
+      "max" : 2145.0,
+      "mean" : 515.8872626367049,
+      "sum" : 4.740746E7,
+      "count" : 91895
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 728,
+      "maxY" : 685
+    },
+    "tileBounds" : {
+      "minX" : 290,
+      "minY" : 185,
+      "maxX" : 291,
+      "maxY" : 187
+    },
+    "image" : "9",
+    "stats" : [ {
+      "min" : -4.0,
+      "max" : 2166.0,
+      "mean" : 517.8812861486847,
+      "sum" : 1.89556462E8,
+      "count" : 366023
+    } ]
+  } ]
+}

@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+usage() {
+    echo "Usage: $0 <input dir> <outputdir>"
+}
+
+CWD=`pwd`
+
+ARGS=""
+
+if [ $# -lt 2 ]; then
+  usage
+  exit 1
+fi
+
+INPUT=$1
+OUTPUT=$2
+
+
+PROTOC=`which protoc`
+
+if [ -z PROTOC ]; then
+  echo "protoc not found.  Make sure it is installed and in the PATH"
+  exit 1
+fi
+
+echo "Running protoc on $INPUT, output to $OUTPUT"
+
+protoc $INPUT/*.proto --java_out=$OUTPUT

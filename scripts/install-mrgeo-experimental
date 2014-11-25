@@ -1,0 +1,563 @@
+#!/bin/bash
+
+usage() 
+{
+  echo
+  echo "Usage: $0 mrgeo-package mrgeo-directory hadoop-directory hadoop-user [-rc] [-ds]" 
+  echo "          [-t tomcat-directory] [-b mrgeo-base-url] [-l legion-directory] [-lc legion-cluster-nodes]"
+  echo
+  echo "Example: sudo -E $0 mrgeo-hadoop-0.20.2-SNAPSHOT-r766.tar.gz /usr/local/hadoop"
+  echo "                    hadoop /usr/local/mrgeo /usr/local/mrgeo"
+  echo "Example: sudo -E $0 mrgeo-hadoop-0.20.2-SNAPSHOT-r766.tar.gz /usr/local/hadoop"
+  echo "                    hadoop /usr/local/mrgeo /usr/local/mrgeo -t /usr/local/tomcat" 
+  echo "                    -b http://localhost:8080/mrgeo -l /usr/local/legion"
+  echo "                    -lc node1,node2,node3"
+  echo
+  echo "Parameters:"
+  echo "  mrgeo-package     - A MrGeo installation package tar.gz file"
+  echo "  mrgeo-directory   - Installs MrGeo at the specified location.  Any existing"
+  echo "                      versions of MrGeo will not be removed."
+  echo "  hadoop-directory  - Hadoop home directory"
+  echo "  hadoop-user       - Hadoop user name used to access DFS files and launch Tomcat"
+  echo "                      (if applicable); defaults to \"hadoop\""
+  echo "Options:"
+  echo "  -t   --tomcat-directory       - Root location of the Tomcat installation; Required only if"
+  echo "                                  --do-not-install-services is not specified."
+  echo "  -dc --default-configuration   - Reverts all MrGeo configuration settings to defaults; This"
+  echo "                                  setting overrides --mrgeo-base-url."
+  echo "  -ds --do-not-install-services - Skips installing the MrGeo Services and Monocle;"
+  echo "                                  --tomcat-directory is not required if this is specified."
+  echo "  -b  --mrgeo-base-url          - URL prefix where MrGeo is hosted within Tomcat;"
+  echo "                                  Defaults to http://localhost:8080/mrgeo/"
+  echo "  -l  --legion-directory        - Installs Legion at the specified location; Any existing"
+  echo "                                  versions of Legion will not be removed."
+  echo "  -lc --legion-cluster-nodes    - Comma delimited list with no spaces containing all"
+  echo "                                  nodes in the Hadoop cluster to which Legion should"
+  echo "                                  be installed, excluding the node this script is"
+  echo "                                  executed from.  If no list is specified, Legion will"
+  echo "                                  be installed to the machine where this script was"
+  echo "                                  executed from only."
+  echo
+  echo "This script will install a new version or upgrade an existing version of MrGeo and,"
+  echo "optionally, Legion from the specified MrGeo installation tar.gz package." 
+  echo
+  echo "THIS SCRIPT WILL NOT WORK IN THE RAINMAKER PUPPET ENVIRONMENT."
+  echo  
+  echo "PRE-REQUISITES:"
+  echo
+  echo "It is assumed that the following have already been installed and configured on the"
+  echo "target system:"
+  echo "- Sun JDK 6"
+  echo "- some supported variant of Hadoop matching the version required by the installation"
+  echo "package"
+  echo "- A user account with permissions to modify Hadoop DFS files"
+  echo "- Tomcat 6.x (if installing the MrGeo Services); may have been installed manually"
+  echo "  or as a service"
+  echo "- GPU drivers (if installing Legion)"
+  echo "- A firewall configured to allow port access to MrGeo (if installing the MrGeo Services)"
+  echo
+  echo "ENVIRONMENT VARIABLES:"
+  echo
+  echo "The following environment variables are managed internally by this script and no longer"
+  echo "need to be added to your profile: HADOOP_HOME, MRGEO_HOME, LEGION_HOME ." 
+  echo
+  echo "CONFIGURATION CHANGES:"
+  echo
+  echo "If MrGeo has been previously installed, all existing configuration settings will be retained"
+  echo "after the installation completes.  Any changes made to mrgeo.conf after running this script" 
+  echo "*WILL* require a restart of Tomcat if using the MrGeo Services.  Any changes made to Monocle's"
+  echo "local.properties after running this script *WILL NOT* require a Tomcat restart and will only" 
+  echo "require that the web browser is refreshed to pick up the changes in Monocle."
+  echo
+  echo "LEGION:"
+  echo
+  echo "The machine running this script must have write access to the directory passed in as" 
+  echo "mrgeo-directory on all the nodes listed in legion-cluster-nodes.  Because Legion expects"
+  echo "specific versions of certain dependencies which may not be installed automatically with a" 
+  echo "package installer, after running this script, those dependency files must be copied manually" 
+  echo "to the target environments.  See"
+  echo "https://duff.spadac.com/redmine/projects/mrgeo/wiki/AdminLegionInstallation for details."
+  echo
+  exit 1
+}
+
+#$1: variable to test for being a URL
+isValidUrl()
+{
+  URL_REGEX='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
+  if [[ $1 =~ $URL_REGEX ]]; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
+#$1: line to search for
+#$2: file to search in
+fileContainsText()
+{
+  if [ grep -q $1 $2 ]; then
+    echo "true"
+  else 
+    echo "false"
+  fi
+}
+
+#$1 line to insert
+#$2 file
+insertLineAtEndOfFile()
+{
+  cat $2 | sed '$a/$1' > $2
+}
+
+#This method will search for the input text, if it exists, it will be replaced with the 
+#replacement.  Otherwise, the text will be added to the end of the file.
+#$1: existing text line to search for
+#$2: line replacement text
+#$3: file to replace text in
+replaceInOrAddLineToEndOfFile()
+{
+  if [ `fileContainsText() $1 $3` == "true" ]; then
+    echo
+    #replace with $2
+    sed -i "s|$1|$2|g" $3
+  else
+    #insert replacement at the end
+    insertLineAtEndOfFile $2 $3
+  fi
+}
+
+#$1: existing text line wilcard to append to
+#$2: text to append
+#$3: file to append text in
+appendToLineInFile()
+{
+  echo "TODO"
+}
+
+getLocalIpAddress()
+{
+  echo `ifconfig | grep addr: | grep -v 127.0.0.1 | cut -f2 -d: | awk '{print $1}'`
+}
+
+# read a java properties file, renaming the variables from s.s to s_s
+#$1: file to read properties from
+readProperties()
+{
+  TEMPFILE=$(mktemp)
+  cat $1 | dos2unix |
+  awk 'BEGIN { FS="[ \t]*=[ \t]*"; } \
+  /^\#/ { print; } \
+  !/^\#/ { if (NF == 2) { n = $1; gsub(/[^A-Za-z0-9_]/,"_",n); print n "=\"" $2 "\""; } else { print; } }' \
+  >$TEMPFILE
+  source $TEMPFILE
+  rm $TEMPFILE        
+}
+
+###################################################
+
+[[ $# -eq 0 ]] && usage
+
+if [ `whoami` != 'root' ]; then
+  echo "Please run the MrGeo installation script as the root user."
+  exit 1
+fi
+
+source /etc/profile
+set -e
+export CWD=`pwd`
+
+#################################################
+
+MRGEO_PACKAGE=$1
+MRGEO_DIRECTORY=$2
+HADOOP_DIRECTORY=$3
+HADOOP_USER=$4
+DO_NOT_INSTALL_SERVICES="false"
+TOMCAT_INSTALLED_AS_SERVICE="false"
+DEFAULT_CONFIGURATION="false"
+while [ $# -gt 0 ] ; do
+  case $1 in
+    "-ds" | "--do-not-install-services")
+      DO_NOT_INSTALL_SERVICES="true"
+      shift 1
+      ;;
+    "-t" | "--tomcat-directory")
+      TOMCAT_DIRECTORY=$2
+      shift 1
+      ;;
+    "-b" | "--base-url")
+      BASE_URL=$2
+      shift 1
+      ;;
+    "-l" | "--legion-directory")
+      LEGION_DIRECTORY=$2
+      shift 1
+      ;;
+    "-lc" | "--legion-cluster-nodes")
+      LEGION_CLUSTER_NODES=$2
+      shift 1
+      ;;
+      "-dc" | "--default-configuration")
+      DEFAULT_CONFIGURATION="true"
+      shift 1
+      ;;
+    *)
+    shift 1
+    ;;
+  esac  
+done
+echo
+
+########################################################
+
+echo "Verifying Hadoop installation..."
+echo "  Verifying JAVA_HOME..."
+sleep 1
+if [ "$JAVA_HOME" == "" ]; then
+  echo "  ERROR: Please set JAVA_HOME before running the MrGeo installation script."
+  exit 1
+fi
+if [ ! -d $HADOOP_DIRECTORY ]; then
+  echo "  ERROR: Invalid Hadoop directory: " $HADOOP_DIRECTORY
+  exit 1
+fi
+if [ "$MRGEO_PACKAGE" =~ "*-hadoop-0\.20\.2-*" ]; then
+  HADOOP_VERSION="0.20.2"
+elif [ "$MRGEO_PACKAGE" =~ "cdh3u1" ]; then
+  HADOOP_VERSION="cdh3u1"
+elif [ "$MRGEO_PACKAGE" =~ "cdh3u3" ]; then
+  HADOOP_VERSION="cdh3u3"
+elif [ "$MRGEO_PACKAGE" =~ "mapr" ]; then
+  HADOOP_VERSION="mapr"
+else
+  echo "Unsupported Hadoop version or cannot determine Hadoop version from MrGeo package file name."
+  exit 1
+fi
+#TODO: 
+HADOOP_INSTALLED_FROM_PACKAGE="false"
+
+if [ `cat /etc/passwd |grep "$HADOOP_USER" |cut -d: -f1` != "$HADOOP_USER" ]; then
+  echo "  ERROR: Invalid Hadoop user: " $HADOOP_USER
+  exit 1
+fi
+echo
+
+if [ "$DO_NOT_INSTALL_SERVICES" == "false" ]; then
+  echo "Verifying Tomcat installation..."
+  sleep 1
+
+  if [ ! -d "$TOMCAT_DIRECTORY" ]; then
+    echo "  ERROR: Invalid Tomcat directory: " $TOMCAT_DIRECTORY
+    exit 1
+  fi
+  if [ "$TOMCAT_DIRECTORY" == "/var/lib/tomcat6" ]; then
+    TOMCAT_INSTALLED_AS_SERVICE="true"
+  fi
+  if [ $TOMCAT_INSTALLED_AS_SERVICE == "false" ]; then
+    if [ ! -d $TOMCAT_DIRECTORY/webapps -o ! -d $TOMCAT_DIRECTORY/conf -o ! -d $TOMCAT_DIRECTORY/bin ]; then
+      echo "  ERROR: Invalid Tomcat home directory: " $TOMCAT_DIRECTORY
+      exit 1
+    fi
+  else
+    if [ ! -d $TOMCAT_DIRECTORY/webapps -o ! -d $TOMCAT_DIRECTORY/conf -o ! -d /usr/share/tomcat6/bin ]; then
+      echo "  ERROR: Invalid Tomcat home directory: " $TOMCAT_DIRECTORY
+      exit 1
+    fi
+  fi
+  echo
+fi
+
+echo "Verifying MrGeo installation package..."
+sleep 1
+if [ ! -f $MRGEO_PACKAGE -o ! "$MRGEO_PACKAGE" == *.tar.gz ]; then
+  echo "  ERROR: Invalid MrGeo installation package file: " $MRGEO_PACKAGE
+  exit 1
+fi
+if [ "$MRGEO_DIRECTORY" == "" ]; then
+  echo "  ERROR: Invalid MrGeo directory: " $MRGEO_DIRECTORY
+  exit 1
+fi
+echo
+if [ "$BASE_URL" != "" ]; then
+  echo "  Verifying MrGeo base URL..."
+  if [ `isValidUrl $BASE_URL` == "false" ]; then
+    echo "  ERROR: Invalid MrGeo base URL: " $BASE_URL
+    exit 1   
+  fi
+  #make sure the base url ends with "/"
+  if [ "$BASE_URL" != "*/" ]; then
+    BASE_URL=$BASE_URL"/"
+  fi
+fi
+
+if [ "$LEGION_DIRECTORY" != "" ]; then
+  echo "Verifying Legion cluster node list..."
+  LOCALHOST=getLocalIpAddress
+  if [ "$LEGION_CLUSTER_NODES" == "" ]; then
+    LEGION_CLUSTER_NODES=$LOCALHOST","
+  elif [[ ! $LEGION_CLUSTER_NODES =~ "," ]]; then
+    LEGION_CLUSTER_NODES=$LOCALHOST","$LEGION_CLUSTER_NODES
+  fi
+  LEGION_CLUSTER_NODES=$(echo $LEGION_CLUSTER_NODES | tr "," "\n")
+  echo
+fi
+
+#########################################################3
+
+echo "INSTALLATION SUMMARY:"
+echo "  Installing MrGeo package " $MRGEO_PACKAGE " to " $MRGEO_DIRECTORY
+if [ "$DEFAULT_CONFIGURATION" == "true" ]; then
+  echo "  Using default configuration settings."
+elif [ "$BASE_URL" != "" ]; then
+  echo "  Using MrGeo base URL " $BASE_URL
+fi
+if [ "$LEGION_DIRECTORY" != "" ]; then
+  echo "  Installing Legion to " $LEGION_DIRECTORY
+  echo "  Installing Legion on node(s): " $LEGION_CLUSTER_NODES
+fi
+echo "  Using Hadoop version " $HADOOP_VERSION " at " $HADOOP_DIRECTORY " with user " $MRGEO_HADOOP_USER
+if [ "$DO_NOT_INSTALL_SERVICES" == "false" ]; then
+  echo "  Using Tomcat at " $TOMCAT_DIRECTORY "  Tomcat installed as a service?: " $TOMCAT_INSTALLED_AS_SERVICE
+fi
+sleep 3
+echo
+
+exit 1
+
+####################################################
+
+echo "Installing MrGeo..."
+#TODO: make this work when upgrade script and tar are in diff dirs??
+echo "  Installing mrgeo-core files..."
+sleep 1
+MRGEO_EXISTS="false"
+if [ -f $MRGEO_DIRECTORY/conf/mrgeo.conf ]; then
+  MRGEO_EXISTS="true"
+fi
+if [ "$DEFAULT_CONFIGURATION" == "false" -a "$MRGEO_EXISTS" == "true" ]; then
+  #backup the existing mrgeo.conf
+  readProperties $MRGEO_DIRECTORY/conf/mrgeo.conf
+fi
+BASENAME=`echo $MRGEO_PACKAGE | sed -e "s/.tar.gz//g" | sed -e "s/.*\\///g"`
+BASEDIR=${MRGEO_DIRECTORY%/*}
+# Unpack the new version
+cd $BASEDIR
+if [ -d $BASENAME ]; then
+  rm -r $BASENAME
+fi
+mkdir $BASENAME
+cd $BASENAME
+tar -xzf $CWD/$BASENAME.tar.gz
+cd ..
+# Remove the old link
+if [ -d mrgeo ]; then
+  rm -f mrgeo 
+fi
+# make a link to the new mrgeo
+ln -s $BASENAME mrgeo 
+chown -R $HADOOP_USER:$HADOOP_USER $MRGEO_DIRECTORY
+chmod -R g+w $MRGEO_DIRECTORY/bin
+echo "  Updating mrgeo-core configuration file environment variables..."
+sleep 1
+sed -i "s|export HADOOP_HOME=*|export HADOOP_HOME=$HADOOP_DIRECTORY|g" $MRGEO_DIRECTORY/bin/mrgeo
+sed -i "s|export MRGEO_HOME=*|export MRGEO_HOME=$MRGEO_DIRECTORY|g" $MRGEO_DIRECTORY/bin/mrgeo
+sed -i "s|jar.path = /usr/local/mrgeo/mrgeo-full.jar|jar.path = $MRGEO_DIRECTORY/mrgeo-full.jar|g" $MRGEO_DIRECTORY/conf/mrgeo.conf
+#also modify $MRGEO_HOME in TestShellProcesslet, WordCountProcesslet within $MRGEO_DIRECTORY/conf/wps/processes ??
+
+if [ "$BASE_URL" != "" ]; then
+  echo "  Updating specified MrGeo base URL in mrgeo-core config files..."
+  sleep 1
+  sed -i "s|base.url = http://localhost:8080/mrgeo/|base.url = $BASE_URL|g" $MRGEO_DIRECTORY/conf/mrgeo.conf
+  sed -i "s|mrgeoUrl = \"http://localhost:8080/mrgeo/services\"|mrgeoUrl = \"$BASE_URLservices\"|g" $MRGEO_DIRECTORY/bin/MapAlgebra.py
+fi
+if [ "$DEFAULT_CONFIGURATION" == "false" -a "$MRGEO_EXISTS" == "true" ]; then
+  echo "  Restoring previous mrgeo.conf configuration settings..."
+  sleep 1
+  ENV_VARS=$(echo env)
+  for env_var in $ENV_VARS
+  do
+    env_var_name=`echo $env_var | cut -d= -f2`
+    if [ `fileContainsText $env_var_name\ $MRGEO_DIRECTORY/conf/mrgeo.conf == "true" ]; then
+      existing_value=`cat $MRGEO_DIRECTORY/conf/mrgeo.conf | grep "$env_var_name" | cut -d= -f2`
+      previous_value=`grep "$env_var" | cut -d= -f2`
+      replaceInOrAddLineToEndOfFile $existing_value $previous_value $MRGEO_DIRECTORY/conf/mrgeo.conf
+    fi
+  done
+fi
+echo
+echo "  mrgeo-core file installation complete."
+
+#create mrgeo hadoop dirs if they dont already exist
+echo "  Verifying MrGeo Hadoop data directories..."
+sleep 1
+IMAGE_PROPS="image.base,kml.file.destination,colorscale.file.destination"
+image_props_arr=$(echo $IMAGE_PROPS | tr "," "\n")
+for image_prop in $image_props_arr
+do
+  echo $image_prop
+  #read prop value from prop line
+  image_prop_value=`cat $MRGEO_DIRECTORY/conf/mrgeo.conf | grep "$image_prop" | cut -d= -f2`
+  echo $image_prop_value
+  if [ hadoop fs -test -d $image_prop_value == "" ]
+    echo "Creating Hadoop directory " $image_prop_value " ..."
+    sudo -u $HADOOP_USER hadoop fs -mkdir $image_prop_value
+  fi
+done
+echo
+
+###############################################################
+
+if [ "$DO_NOT_INSTALL_SERVICES" == "false" ]; then
+
+  echo "Verifying Tomcat configuration..."
+  echo
+
+  TOMCAT_REQUIRES_RESTART="false"
+
+  echo "  Verifying Tomcat classpath..."
+  if [ `common.loader=*$HADOOP_HOME/lib/*.jar` == "false"]; then
+    appendToLineInFile "common.loader=*" ",$HADOOP_HOME/lib/*.jar" $TOMCAT_BIN/setenv.sh
+    TOMCAT_REQUIRES_RESTART="true"
+  fi
+  if [ `common.loader=*$HADOOP_HOME/*.jar` == "false"]; then
+    appendToLineInFile "common.loader=*" ",$HADOOP_HOME/*.jar" $TOMCAT_BIN/setenv.sh
+    TOMCAT_REQUIRES_RESTART="true"
+  fi
+  if [ `common.loader=*$HADOOP_HOME/conf` == "false"]; then
+    appendToLineInFile "common.loader=*" ",$HADOOP_HOME/conf" $TOMCAT_BIN/setenv.sh
+    TOMCAT_REQUIRES_RESTART="true"
+  fi
+    
+  echo "  Verifying Tomcat environment variables..."
+  sleep 1
+  if [ ! -f $TOMCAT_BIN/setenv.sh ]; then
+    cat > $TOMCAT_BIN/setenv.sh <<EOF
+    export CATALINA_OPTS="-Xmx2048m"
+    export MRGEO_HOME=$MRGEO_DIRECTORY
+    
+    if [ `whoami` != $HADOOP_USER ]; then
+      echo "WARNING: Starting Tomcat as `whoami`.  In order for MrGeo to run correctly, please start Tomcat as $HADOOP_USER i.e. sudo -u $HADOOP_USER /usr/local/tomcat/bin/startup.sh" 
+    fi
+    EOF
+    TOMCAT_REQUIRES_RESTART="true"
+  else
+    cp $TOMCAT_BIN/setenv.sh $TOMCAT_BIN/setenv.sh.mrgeo.bak
+    if [ `fileContainsText -Xmx` == "false" ]; then
+      insertLineAtEndOfFile "CATALINA_OPTS=\"$CATALINA_OPTS -Xmx2048m\"" $TOMCAT_BIN/setenv.sh
+      TOMCAT_REQUIRES_RESTART="true"
+    fi
+    #TODO: only update file here if necessary and mark tomcat as needing restarted
+    replaceInOrAddLineToEndOfFile "export MRGEO_HOME=*" "export MRGEO_HOME=$MRGEO_DIRECTORY" $TOMCAT_BIN/setenv.sh
+    insertLineAtEndOfFile "if [ `whoami` != $HADOOP_USER ]; then\necho \"WARNING: Starting Tomcat as `whoami`.  In order for MrGeo to run correctly, please start Tomcat as $HADOOP_USER i.e. sudo -u $HADOOP_USER /usr/local/tomcat/bin/startup.sh\"\nfi" $TOMCAT_BIN/setenv.sh
+  fi
+
+########################################################################
+
+  echo "  Installing MrGeo Services and Monocle..."
+  sleep 1
+  echo
+  if [ "$TOMCAT_INSTALLED_AS_SERVICE" == "false" ]; then
+    TOMCAT_BIN=$TOMCAT_DIRECTORY"/bin"
+  else
+    TOMCAT_BIN="/usr/share/tomcat6/bin"
+  fi
+  if [ "$TOMCAT_INSTALLED_AS_SERVICE" == "false" ]; then
+    TOMCAT_WEBAPPS=$TOMCAT_DIRECTORY/webapps/
+  else
+    TOMCAT_WEBAPPS=${TOMCAT_WEBAPPS:-"/var/lib/tomcat6/webapps"}
+  fi
+
+  MRGEO_WEB_EXISTS="false"
+  if [ -f $TOMCAT_WEBAPPS/mrgeo/resources/local.properties ]; then
+    MRGEO_WEB_EXISTS="true"
+  fi
+  if [ "$DEFAULT_CONFIGURATION" == "false" -a "$MRGEO_WEB_EXISTS" == "true" ]; then
+    #backup the existing local.properties
+    readProperties $TOMCAT_WEBAPPS/mrgeo/resources/local.properties
+  fi
+
+  #TODO: if tomcat isnt running, start it OR if Tomcat requires restart b/c of catalina.properties or setenv.sh change, restart it - TOMCAT_REQUIRES_RESTART
+  cp $MRGEO_DIRECTORY/mrgeo*.war $TOMCAT_WEBAPPS/mrgeo.war
+  echo "  Waiting for Tomcat deployment to complete..."
+  #TODO: change this to some sort of polling until tomcat is started??
+  sleep 10
+  
+  #if [ "$BASE_URL" != "" ]; then
+  #  echo "  Updating specified MrGeo base URL in Monocle config file..."
+  #  sed -i "s|# mrgeo.baseurl=./|mrgeo.baseurl=$BASE_URL|g" $TOMCAT_WEBAPPS/mrgeo/resources/local.properties
+  #fi
+
+  if [ "$DEFAULT_CONFIGURATION" == "false" -a "$MRGEO_WEB_EXISTS" == "true" ]; then
+    echo "  Restoring previous Monocle configuration settings..."
+    sleep 1
+    ENV_VARS=$(echo env)
+    for env_var in $ENV_VARS
+    do
+      env_var_name=`echo $env_var | cut -d= -f2`
+      if [ `fileContainsText $env_var_name\ $TOMCAT_WEBAPPS/mrgeo/resources/local.properties == "true" ]; then
+        existing_value=`cat $TOMCAT_WEBAPPS/mrgeo/resources/local.properties | grep "$env_var_name" | cut -d= -f2`
+        previous_value=`grep "$env_var" | cut -d= -f2`
+        replaceInOrAddLineToEndOfFile $existing_value $previous_value $TOMCAT_WEBAPPS/mrgeo/resources/local.properties
+      fi
+    done
+  fi
+
+  echo
+  echo "  MrGeo Services and Monocle installation complete."
+  echo
+  
+fi
+echo "MrGeo installation complete."
+echo
+
+##################################################################
+
+if [ "$LEGION_DIRECTORY" != "" ]; then
+
+  echo "Installing Legion..."
+  for node in $LEGION_CLUSTER_NODES
+    do
+
+      echo "  Copying Legion files to node: " $node " ..."
+      sleep 1
+      echo
+      if [ "$LOCALHOST" == "$node" ]; then
+        BASENAME="legion-7-18-12"
+        mv $MRGEO_DIRECTORY/$BASENAME $LEGION_DIRECTORY/..
+        cd $LEGION_DIRECTORY/..
+        # Remove the old link
+        if [ -d legion ]; then
+          rm -f legion 
+        fi
+        # make a link to the new legion
+        ln -s $BASENAME legion 
+        chown -R $HADOOP_USER:$HADOOP_USER $LEGION_DIRECTORY
+        chmod -R g+w $LEGION_DIRECTORY/bin
+        
+        echo "  Updating Legion environment variables..."
+        sleep 1
+        sed -i "s|export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64/jre|export JAVA_HOME=`echo $JAVA_HOME`|g" $LEGION_DIRECTORY/bin/LegionHdfs
+        sed -i "s|export HADOOP_HOME=/usr/local/hadoop|export HADOOP_HOME=`echo $HADOOP_DIRECTORY`|g" $LEGION_DIRECTORY/bin/LegionHdfs
+        sed -i "s|export MRGEO_HOME=/usr/local/mrgeo|export MRGEO_HOME=`echo $MRGEO_DIRECTORY`|g" $LEGION_DIRECTORY/bin/LegionHdfs
+        sed -i "s|export LEGION_HOME=/usr/local/legion|export LEGION_HOME=`echo $LEGION_DIRECTORY`|g" $LEGION_DIRECTORY/bin/LegionHdfs
+      else
+        scp -R $MRGEO_DIRECTORY root@$node:$MRGEO_DIRECTORY
+        #TODO: need sym links!
+      fi
+        
+    done
+  echo 
+  echo "Legion scripted installation complete."  
+  echo
+  echo "TO FINISH THE LEGION INSTALLATION, manually copy the Legion library dependencies to each"
+  echo "node in the cluster.  See"
+  echo "https://duff.spadac.com/redmine/projects/mrgeo/wiki/AdminLegionInstallation for details."
+  sleep 3
+  echo  
+
+fi
+
+echo "All MrGeo installation script tasks completed."
+
+exit 1

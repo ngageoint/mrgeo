@@ -1,0 +1,76 @@
+/*
+ * Copyright 2009-2014 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
+package org.mrgeo.data.adhoc;
+
+import java.io.IOException;
+import java.util.Properties;
+
+import org.apache.hadoop.conf.Configuration;
+
+
+/**
+ * Interface to be implemented by a data plugin that wishes to provide ad hoc
+ * data support. Ad hoc data is used for storing information that does not fit
+ * into the other data provider categories (e.g. it's not a raw image used for
+ * ingesting imagery, and it's not a MrsImage). This includes image metadata
+ * stored with a MrsImage, statistics that MrGeo collects about an image during
+ * processing, and color scales.
+ * 
+ * MrGeo uses the Java ServiceLoader to discover
+ * classes that implement this interface. In order for that to work, plugins need to
+ * include a text file in their JAR file in
+ * META-INF/services/org.mrgeo.data.adhoc.AdHocDataProviderFactory. That file
+ * must contain a single line with the full name of the class that implements this
+ * interface - for example org.mrgeo.hdfs.adhoc.HdfsAdHocDataProviderFactory
+ */
+public interface AdHocDataProviderFactory
+{
+  public String getPrefix();
+  /**
+   * Give back an ad hoc data provider for a named resource. The name is interpreted
+   * by the plugin itself. For example, in the HDFS plugin, that name is translated
+   * to a path.
+   * 
+   * @param name
+   * @return
+   */
+  public AdHocDataProvider createAdHocDataProvider(final String name,
+      final Configuration conf) throws IOException;
+  public AdHocDataProvider createAdHocDataProvider(final String name,
+      final Properties providerProperties) throws IOException;
+
+  /**
+   * Give back an ad hoc data provider for a resource that is named by this method.
+   * Callers use this if they need to store ad hoc data, but don't care where that
+   * data resides. The caller must keep the returned provider instance for as long
+   * as they wish to access that ad hoc data.
+   * 
+   * @return
+   */
+  public AdHocDataProvider createAdHocDataProvider(
+      final Configuration conf) throws IOException;
+  public AdHocDataProvider createAdHocDataProvider(
+      final Properties providerProperties) throws IOException;
+
+  public boolean canOpen(final String name, final Configuration conf) throws IOException;
+  public boolean canOpen(final String name, final Properties providerProperties) throws IOException;
+  public boolean canWrite(final String name, final Configuration conf) throws IOException;
+  public boolean canWrite(final String name, final Properties providerProperties) throws IOException;
+  public boolean exists(final String name, final Configuration conf) throws IOException;
+  public boolean exists(final String name, final Properties providerProperties) throws IOException;
+  public void delete(final String name, final Configuration conf) throws IOException;
+  public void delete(final String name, final Properties providerProperties) throws IOException;
+}

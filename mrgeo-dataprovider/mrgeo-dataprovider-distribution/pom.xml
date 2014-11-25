@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     ~ Copyright 2009-2014 DigitalGlobe, Inc.
+     ~
+     ~ Licensed under the Apache License, Version 2.0 (the "License");
+     ~ you may not use this file except in compliance with the License.
+     ~ You may obtain a copy of the License at
+     ~
+     ~ http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.mrgeo</groupId>
+    <artifactId>mrgeo-dataprovider</artifactId>
+    <version>1.4.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>mrgeo-dataprovider-distribution</artifactId>
+  <name>mrgeo-dataprovider-distribution</name>
+  <packaging>jar</packaging>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+      <!-- this is hokey, but we need to install the final jar as the parent -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>2.5.1</version>
+        <executions>
+          <execution>
+            <id>parent-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
+              <groupId>${project.parent.groupId}</groupId>
+              <artifactId>${project.parent.artifactId}</artifactId>
+              <version>${project.parent.version}</version>
+              <packaging>${project.packaging}</packaging>
+              <generatePom>false</generatePom>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Make some soft links for the generated products, for convenience -->
+      <plugin>
+        <groupId>com.pyx4j</groupId>
+        <artifactId>maven-junction-plugin</artifactId>
+        <version>1.0.3</version>
+        <executions>
+          <execution>
+            <id>link</id>
+            <phase>package</phase>
+            <goals>
+              <goal>link</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>unlink</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>unlink</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <links>
+            <link>
+              <src>${project.build.directory}/${project.build.finalName}.${project.packaging}</src>
+              <dst>${project.build.directory}/${project.artifactId}.${project.packaging}</dst>
+            </link>
+            <link>
+              <src>${project.build.directory}/${project.build.finalName}.${project.packaging}</src>
+              <dst>${project.parent.build.directory}/${project.parent.artifactId}.${project.packaging}</dst>
+            </link>
+          </links>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <profiles>
+    <profile>
+      <id>run-shading</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>2.3</version>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+                <configuration>
+                  <finalName>${project.artifactId}-${project.parent.version}-jar-with-dependencies</finalName>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+  <dependencies>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-dataprovider-accumulo</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+  </dependencies>
+</project>

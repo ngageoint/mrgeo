@@ -1,0 +1,12 @@
+<Root name="Rainbow">
+  <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->
+  <ReliefShading>0</ReliefShading>
+  <Interpolate>1</Interpolate>
+  <NullColor color="0,0,0" opacity="0"/>
+  <Color value="0.0" color="0,0,127" opacity="255"/>
+  <Color value="0.2" color="0,0,255"/> <!-- if not specified an opacity defaults to 255 -->
+  <Color value="0.4" color="0,255,255"/>
+  <Color value="0.6" color="0,255,0"/>
+  <Color value="0.8" color="255,255,0"/>
+  <Color value="1.0" color="255,0,0"/>
+</Root>

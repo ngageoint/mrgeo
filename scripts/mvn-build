@@ -1,0 +1,436 @@
+#!/bin/bash
+set -e
+
+usage() {
+    echo "Usage: $0 [module] [build type] [phase] <args>"
+    echo "-----------------------------"
+    echo "module:"
+    echo "  all          - all modules"
+    echo "  core         - mrgeo-core"
+    echo "  vector       - mrgeo-core/mrgeo-vector"
+    echo "  mapalgebra   - mrgeo-core/mrgeo-vector/mrgeo-mapalgebra"
+    echo "  cmd          - mrgeo-core/mrgeo-vector/mrgeo-cmd"
+    echo "  dataprovider - mrgeo-core/mrgeo-dataprovider"
+    echo "  pig          - mrgeo-core/mrgeo-vector/mrgeo-pig"
+    echo "  legion       - mrgeo-core/mrgeo-vector/megeo-legion"
+    echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-pig/mrgeo-legion/mrgeo-services"
+    echo "build type:"
+    echo "  apache    - apache hadoop"
+    echo "  apache204 - Apache hadoop, version 0.20.204.0"
+    echo "  apache103 - Apache hadoop, version 1.0.3"
+    echo "  apache104 - Apache hadoop, version 1.0.4"
+    echo "  apache112 - Apache hadoop, version 1.1.2"
+    echo "  apache220 - Apache hadoop, version 2.2.0"
+    echo "  cdh3u1    - Cloudera hadoop 3 update 1"
+    echo "  cdh3u4    - Cloudera hadoop 3 update 4"
+    echo "  cdh3u5    - Cloudera hadoop 3 update 5"
+    echo "  cdh3u6    - Cloudera hadoop 3 update 6"
+    echo "  cdh450    - Cloudera hadoop 4.5.0"
+    echo "  cdh460    - Cloudera hadoop 4.6.0"
+    echo "  cdh470    - Cloudera hadoop 4.7.0"
+    echo "  cdh510    - Cloudera hadoop 5.1.0"
+    echo "  cdh520    - Cloudera hadoop 5.2.0"
+    echo "  mapr      - mapr hadoop"
+    echo "phase:"
+    echo "  build     - build a deployable version"
+    echo "  test      - build, then run unit tests"
+    echo "  verify    - run integration tests"
+    echo "  deploy    - build and deploy"
+    echo "  clean     - clean the build"
+    echo "  version   - change the version within all poms"
+    echo "  eclipse   - build eclipse files for the project"
+    echo "args:"
+    echo "  -c  --conf <path>         - location of hadoop conf files (/usr/local/hadoop/conf)"
+    echo "  -f  --failfast            - fail fast tests (immediately stop on test failure)"
+    echo "  -j  --javadocs            - include javadocs of dependencies (if available)"
+    echo "  -jv  --javaversion <version>   - java version to use (1.7)"
+    echo "  -p  --profile             - turn on leak detection profiling"
+    echo "  -s  --source              - include source jars of dependencies (if available)"
+    echo "  -v  --version <version>   - hadoop version to use (0.20.2)"
+    echo "  -y  --yarn                - use hadoop YARN (for hadoop 2+, instead of mr1)"
+    echo "  -sh --shade               - generate the shaded (jar with dependencies) jars"
+    echo " "
+    echo "  all other args will be passed to maven directly"
+    echo " "
+}
+
+run-eclipse() {
+    
+    mvn -Denv=eclipse eclipse:clean $ARGS
+    mvn -Denv=eclipse eclipse:eclipse  $ARGS
+    
+    # don't need monocle anymore
+    # pushd monocle
+    # mvn -Denv=eclipse gwt:eclipse $ARGS
+    # mvn -Denv=eclipse war:exploded $ARGS
+    # popd
+
+    # This find & sed edits the .project file to add resource filters
+    # - ignore all .svn files
+    find . -name .project -exec sed -i 's|</projectDescription>|\
+        <filteredResources>\
+          <filter>\
+            <id>1345462274799</id>\
+            <name />\
+            <type>30</type>\
+            <matcher>\
+              <id>org.eclipse.ui.ide.multiFilter</id>\
+              <arguments>1.0-name-matches-false-false-*.svn*</arguments>\
+            </matcher>\
+          </filter>\
+        </filteredResources>\
+        </projectDescription>|' {} \;
+    
+    # This adds an "exported="true" to the jar libraries, so we can run from eclipse
+    find . -name .classpath -exec sed -i 's|kind="var" path="M2_REPO|kind="var" exported="true" path="M2_REPO|' {} \;
+    
+    CONF_LINK=`readlink -f $CONF`
+    echo $CONF_LINK
+    find . -name .classpath -exec sed -i 's|^.*path="'$CONF_LINK'".*|<classpathentry kind="lib" path="'$CONF_LINK'"/>|' {} \;
+
+    # This removes the warning: "Classpath entry M2_REPO/<xxx>.jar will not be exported or published. Runtime ClassNotFoundExceptions may result." 
+    pushd mrgeo-services/mrgeo-services-distribution
+    sed -i '/<classpathentry kind="var"/{s|/>$|><attributes><attribute name="org.eclipse.jst.component.nondependency" value=""\/\></attributes></classpathentry>|}' .classpath 
+    
+    # This removes the same warning for the CONF param (usually /usr/local/hadoop/conf)
+    REPLACED=${CONF//\//\\\/}    
+    sed  -i "/$REPLACED/{s|/>$|><attributes><attribute name=\"org.eclipse.jst.component.nondependency\" value=\"\"\/\></attributes></classpathentry>|}" .classpath 
+    popd
+
+}
+
+# for i in $*; do
+# echo $i
+# done;
+
+PHASE="test"
+MODULE="all"
+BUILD="CDH450"
+CONF="/etc/hadoop/conf"
+LICENSE="-DskipLicenses"
+
+# add any predefined options (for developer convencience)
+if [ -n "$MRGEO_BUILD_OPTIONS" ]; then
+    set -- $MRGEO_BUILD_OPTIONS "$@"
+fi
+
+CWD=`pwd`
+
+ARGS=""
+
+if [ $# -lt 1 ]; then
+  usage
+  exit 1
+fi
+
+
+SKIPCOREINTEGRATION="-Pskip-core-integration-tests"
+SKIPCOREUNIT="-Pskip-core-unit-tests"
+SKIPCORE="-Pskip-core-tests"
+
+SKIPVECTORINTEGRATION="-Pskip-vector-integration-tests"
+SKIPVECTORUNIT="-Pskip-vector-unit-tests"
+SKIPVECTOR="-Pskip-vector-tests"
+
+SKIPMAPALGEBRAINTEGRATION="-Pskip-mapalgebra-integration-tests"
+SKIPMAPALGEBRAUNIT="-Pskip-mapalgebra-unit-tests"
+SKIPMAPALGEBRA="-Pskip-mapalgebra-tests"
+
+SKIPDPINTEGRATION="-Pskip-dataprovider-integration-tests"
+SKIPDPUNIT="-Pskip-dataprovider-unit-tests"
+SKIPDP="-Pskip-dataprovider-tests"
+
+SKIPCMDINTEGRATION="-Pskip-cmd-integration-tests"
+SKIPCMDUNIT="-Pskip-cmd-unit-tests"
+SKIPCMD="-Pskip-cmd-tests"
+
+SKIPPIGINTEGRATION="-Pskip-pig-integration-tests"
+SKIPPIGUNIT="-Pskip-pig-unit-tests"
+SKIPPIG="-Pskip-pig-tests"
+
+SKIPLEGIONINTEGRATION="-Pskip-legion-integration-tests"
+SKIPLEGIONUNIT="-Pskip-legion-unit-tests"
+SKIPLEGION="-Pskip-legion-tests"
+
+SKIPSERVICESINTEGRATION="-Pskip-services-integration-tests"
+SKIPSERVICESUNIT="-Pskip-services-unit-tests"
+SKIPSERVICES="-Pskip-services-tests"
+
+SKIPALLINTEGRATION="-Pskip-all-integration-tests"
+SKIPALLUNIT="-Pskip-all-unit-tests"
+SKIPALL="-Pskip-all-tests"
+
+while [ $# -gt 0 ] ; do
+    case $1 in
+    "-h" | "--help" | "-?" | "help")
+        usage
+        exit 0
+        ;;
+    "all") 
+        MODULE="all"
+        ;;
+    "core" | "core-only")
+        MODULE="core"
+        ARGS="$SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ;;
+    "mapalgebra") 
+        MODULE="mapalgebra"
+        ;;
+    "mapalgebra-only") 
+        MODULE="mapalgebra"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ;;
+    "vector") 
+        MODULE="vector"
+        ;;
+    "vector-only") 
+        MODULE="vector"
+        ARGS="$SKIPCORE $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ;;
+    "dataprovider") 
+        MODULE="dataprovider"
+        ;;
+    "dataprovider-only") 
+        MODULE="dataprovider"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ;;
+    "cmd") 
+        MODULE="cmd"
+        ;;
+    "cmd-only") 
+        MODULE="cmd"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ;;
+    "pig") 
+        MODULE="pig"
+        ;;
+    "pig-only") 
+        MODULE="pig"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ;;
+    "legion") 
+        MODULE="legion"
+        ;;
+    "legion-only") 
+        MODULE="legion"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPNET $SKIPSERVICES $ARGS"
+        ;;
+    "services")
+        MODULE="services"
+        ;;
+    "services-only")
+        MODULE="services"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $ARGS"
+        ;;
+    "apache204") 
+        echo "*** Apache Hadoop 0.20.304 is no longer supported"
+        exit
+        ;;
+    "apache103") 
+        echo "*** Apache Hadoop 1.0.3 is no longer supported"
+        exit
+        ;;
+    "apache104") 
+        echo "*** Apache Hadoop 1.0.4 is no longer supported"
+        exit
+        ;;
+    "apache112") 
+        echo "*** Apache Hadoop 1.1,2 is no longer supported"
+        exit
+        ;;
+    "apache121")
+        echo "*** Apache Hadoop 1.2.1 is no longer supported"
+        exit
+        ;;
+    "apache220")
+        BUILD="apache2"
+        ;;
+    "mapr") 
+        echo "*** MapR Hadoop is no longer supported"
+        exit
+        ;;
+    "cdh3u1") 
+        echo "*** Cloudera Hadoop CDH3u1 is no longer supported"
+        exit
+        ;;
+    "cdh3u4")
+        echo "*** Cloudera Hadoop CDH3u4 is no longer supported"
+        exit
+        ;;
+    "cdh3u5")
+        echo "*** Cloudera Hadoop CDH3u5 is no longer supported"
+        exit
+        ;;
+    "cdh3u6")
+        echo "*** Cloudera Hadoop CDH3u6 is no longer supported"
+        exit
+        ;;
+    "cdh450")
+        BUILD="CDH450"
+        ARGS="-Pinclude-costdistance $ARGS"
+        ;;
+    "cdh460")
+        BUILD="CDH460"
+        ARGS="-Pinclude-costdistance $ARGS"
+        ;;
+    "cdh470")
+        BUILD="CDH470"
+        ARGS="-Pinclude-costdistance $ARGS"
+        ;;
+    "cdh510")
+        BUILD="CDH510"
+        ;;
+    "cdh520")
+        BUILD="CDH520"
+        ;;
+    "build")
+        PHASE="build"
+        ;;
+    "deploy")
+        PHASE="deploy"
+        SKIPLICENSE=
+        ;;
+    "test") 
+        PHASE="test"
+        ;;
+    "integration") 
+        PHASE="integration"
+        ;;        
+    "release") 
+        PHASE="release"
+        if [ $2 == "rollback" ]
+        then
+          RELEASEPHASE="rollback"
+          shift 1
+        fi
+        ;;        
+    "verify") 
+        PHASE="verify"
+        ;;        
+    "version") 
+        PHASE="version"
+        POMVERSION=$2
+        shift 1
+        ;;        
+    "cobertura:cobertura")
+        PHASE="cobertura:cobertura"
+        ;;
+    "clean")
+        PHASE="clean"
+        ;;
+    "eclipse") 
+        PHASE="eclipse"
+        ;;
+    "-c" | "--conf")
+        ARGS=$ARGS" --Dhadoop-config="$2
+        CONF=$2
+        shift 1
+        ;;
+    "-f" | "--failfast")
+        ARGS=$ARGS" -Dmrgeo.failfast=true"
+        ;;
+    "-j" | "--javadocs")
+        ARGS=$ARGS" -DdownloadJavadocs=true"
+        ;;
+    "-p" | "--profile")
+        ARGS=$ARGS" -Dmrgeo.profile=true"
+        ;;
+    "-s" | "--source")
+        ARGS=$ARGS" -DdownloadSources=true"
+        ;;
+    "-v" | "--version")
+        ARGS=$ARGS" -Dhadoop-version="$2
+        shift 1
+        ;;
+    "-jv" | "--javaversion")
+        ARGS=$ARGS" -Djava-version="$2
+        shift 1
+        ;;
+    "-y" | "--yarn")
+        USEYARN=true
+        ;;
+    "-l" | "--license")
+        LICENSE=
+        ;;
+    "-sh" | "--shade")
+        ARGS=$ARGS" -Prun-shading"
+        ;;
+     *) 
+     ARGS=$ARGS" "$1
+      ;;
+    esac
+    shift 1
+done
+
+if [ -n "$USEYARN" ]; then
+    BUILD=$BUILD-yarn
+fi
+
+export HOME=$CWD
+
+MODIFIED=`git diff --shortstat 2> /dev/null | awk '{ print $1 }'`
+
+
+echo " "
+echo "Phase: " $PHASE
+echo "Module: " $MODULE
+echo " "
+echo "Building for " $BUILD
+echo "  version:   " $VERSION
+echo "  conf:      " $CONF
+echo "-----------------------"
+echo "  JAVA_HOME:           " $JAVA_HOME
+echo "  HADOOP_HOME:         " $HADOOP_HOME
+echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
+echo "  MRGEO_HOME:          " $MRGEO_HOME
+echo "  LEGION_HOME:         " $LEGION_HOME
+echo "  Build:               " $HOME
+echo " "
+echo "  Additional maven args: " $ARGS
+echo " "
+
+
+ARGS="-P$BUILD -Dmodules=$MODULE -DfailIfNoTests=false -DscmModified=$MODIFIED $LICENSE $ARGS"
+
+
+case $PHASE in
+   "build")
+       ARGS="$SKIPALL $ARGS"
+   ;;
+   "deploy")
+       ARGS="$SKIPALL $ARGS deploy"
+   ;;
+   "test")
+       ARGS="$SKIPALLINTEGRATION $ARGS"
+   ;;
+   "integration")
+       ARGS="$SKIPALLUNIT $ARGS verify"
+   ;;
+   "verify")
+       ARGS="$ARGS verify"
+   ;;   
+   "version")
+       ARGS="$ARGS versions:set -DnewVersion=$POMVERSION"
+   ;;   
+   "release")
+       ARGS="$SKIPALL $ARGS"
+       ARGS="$ARGS \"-Drelease.arguments=$ARGS\" --batch-mode release:$RELEASEPHASE -DautoVersionSubmodules=true"
+   ;;
+   "cobertura:cobertura")
+       ARGS="$ARGS cobertura:cobertura"
+   ;;
+   "clean")
+       ARGS="$ARGS clean"
+   ;;
+   "eclipse")
+   run-eclipse
+   exit 1
+   ;;
+esac
+
+echo "-----------------------"
+echo "  Maven command: "
+echo "mvn $ARGS"
+echo " "
+
+mvn $ARGS

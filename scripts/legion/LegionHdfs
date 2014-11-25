@@ -1,0 +1,45 @@
+#!/bin/bash
+
+export LEGION_HADOOP_VERSION=0.20.2
+#export LEGION_HADOOP_VERSION=0.20.204.0
+#export LEGION_HADOOP_VERSION=0.20.2-cdh3u1
+#export LEGION_HADOOP_VERSION=0.20.2-cdh3u4
+#export LEGION_HADOOP_VERSION=0.20.2-cdh3u5
+#export LEGION_HADOOP_VERSION=0.20.2-cdh3u6
+export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64/jre
+export HADOOP_HOME=/usr/local/hadoop
+export MRGEO_HOME=/home/greg/workspace/mrgeo
+export LEGION_HOME=/usr/local/legion
+
+JAR_PATH="" 
+for jarf in $HADOOP_HOME/lib/*.jar
+do
+  JAR_PATH=$JAR_PATH":"$jarf  
+done
+for jarf in $HADOOP_HOME/*.jar
+do
+  JAR_PATH=$JAR_PATH":"$jarf  
+done
+for jarf in $HADOOP_HOME/contrib/streaming/*.jar
+do
+  JAR_PATH=$JAR_PATH":"$jarf  
+done
+
+#############################################################
+
+#for Hadoop 0.20.2, cdh3u6, cdh3u5, cdh3u4, and likely cdh3u1
+export CLASSPATH=$CLASSPATH:$HADOOP_HOME/conf:$JAR_PATH
+
+#############################################################
+
+export LD_LIBRARY_PATH=$LD_LIBARY_PATH:$JAVA_HOME/lib/amd64/server:$JAVA_HOME/lib/amd64:$LEGION_HOME/lib:$HADOOP_HOME/c++/Linux-amd64-64/lib:$LD_LIBRARY_PATH 
+
+commandLine=$LEGION_HOME'/bin/LegionHdfs.bin'
+while [ $# -gt 0 ]
+do
+  commandLine=$commandLine" "$1
+  shift
+done
+$commandLine
+
+exit

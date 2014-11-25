@@ -1,0 +1,1565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     ~ Copyright 2009-2014 DigitalGlobe, Inc.
+     ~
+     ~ Licensed under the Apache License, Version 2.0 (the "License");
+     ~ you may not use this file except in compliance with the License.
+     ~ You may obtain a copy of the License at
+     ~
+     ~ http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.mrgeo</groupId>
+  <artifactId>mrgeo</artifactId>
+  <name>MrGeo</name>
+  <version>1.4.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <properties>
+    <geotools.version>10.0-DG</geotools.version>
+  </properties>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Tim Tisler</name>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Jason Surratt</name>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Dave Johnson</name>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Ameet Kini</name>
+      <roles>
+        <role>developer</role>
+        <role>architect</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Brandon Witham</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Andrew Levine</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Ming Su</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Binh Tran</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Steve Ingram</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Brian Hatchl</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Neeta Nayak</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Jeff Erikson</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Greg Schmidt</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Bob Kazden</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Ray Conner</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Jason Goffeney</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+  </developers>
+  <contributors>
+    <contributor>
+      <name>Drew Bower</name>
+      <roles>
+        <role>project wrangler</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Ryan Smith</name>
+      <roles>
+        <role>project wrangler</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Peter Frank</name>
+      <roles>
+        <role>management</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Dave Grason</name>
+      <roles>
+        <role>project evangelizer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Kirk Steffensen</name>
+      <roles>
+        <role>build engineer</role>
+        <role>dev ops</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Andy Spohn</name>
+      <roles>
+        <role>build engineer</role>
+        <role>dev ops</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Bob Placious</name>
+      <roles>
+        <role>dev ops</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Steven Smith</name>
+      <roles>
+        <role>dev ops</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Christy Berman</name>
+      <roles>
+        <role>tester</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Erin Viel</name>
+      <roles>
+        <role>tester</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Tim O'Leary</name>
+      <roles>
+        <role>tester</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Dan Taylor</name>
+      <roles>
+        <role>dev ops</role>
+      </roles>
+    </contributor>
+  </contributors>
+  <scm>
+    <connection>scm:git:file://${project.basedir}</connection>
+  </scm>
+  <build>
+    <defaultGoal>install</defaultGoal>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources/properties</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.5.1</version>
+        <configuration>
+          <source>${java-version}</source>
+          <target>${java-version}</target>
+          <!-- this argument allows classes within rt.jar to be referenced... -->
+          <compilerArgument>-XDignore.symbol.file=true</compilerArgument>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <configuration>
+          <arguments>${release.arguments}</arguments>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>create</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <doCheck>false</doCheck>
+          <doUpdate>false</doUpdate>
+          <revisionOnScmFailure>unknown</revisionOnScmFailure>
+          <timestampFormat>{0,date,yyyy-MM-dd HH:mm:ss}</timestampFormat>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-eclipse-plugin</artifactId>
+        <version>2.9</version>
+        <configuration>
+          <sourceExcludes>
+            <sourceExclude>**/.svn*/**</sourceExclude>
+          </sourceExcludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <warSourceExcludes>**/.svn/**</warSourceExcludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>cobertura-maven-plugin</artifactId>
+        <version>2.5.2</version>
+        <configuration>
+          <check />
+          <formats>
+            <format>html</format>
+            <format>xml</format>
+          </formats>
+        </configuration>
+      </plugin>
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.14.1</version>
+          <configuration>
+            <groups>org.mrgeo.junit.UnitTest</groups>
+            <additionalClasspathElements>
+              <additionalClasspathElement>${hadoop-config}</additionalClasspathElement>
+            </additionalClasspathElements>
+            <excludes>
+              <exclude>**/*Allintegration.tests.class</exclude>
+              <exclude>**/*Suite.class</exclude>
+            </excludes>
+            <properties>
+              <property>
+                <name>listener</name>
+                <value>org.mrgeo.junit.TestListener</value>
+              </property>
+            </properties>
+          </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>2.14.1</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>2.14.1</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>2.14.1</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <groups>org.mrgeo.junit.IntegrationTest</groups>
+            <additionalClasspathElements>
+              <additionalClasspathElement>${hadoop-config}</additionalClasspathElement>
+            </additionalClasspathElements>
+            <properties>
+              <property>
+                <name>listener</name>
+                <value>org.mrgeo.junit.TestListener</value>
+              </property>
+            </properties>
+          </configuration>
+          <executions>
+            <execution>
+              <id>integration-test</id>
+              <goals>
+                <goal>integration-test</goal>
+              </goals>
+              <configuration>
+                <includes>
+                  <include>**/*.class</include>
+                  <include>**/*.properties</include>
+                </includes>
+                <excludes>
+                  <exclude>**/*Allintegration.tests.class</exclude>
+                  <exclude>**/*Suite.class</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+            <execution>
+              <id>verify</id>
+              <goals>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.4</version>
+          <configuration>
+            <excludes>
+              <exclude>lib/**</exclude>
+            </excludes>
+            <archive>
+              <addMavenDescriptor>false</addMavenDescriptor>
+              <manifest>
+                <addClasspath>false</addClasspath>
+              </manifest>
+            </archive>
+          </configuration>
+          <executions>
+            <!-- Package the unit test separately -->
+            <!-- this will make a jar with the unit integration.tests in it, so they can be referenced in other integration.tests
+                 Mainly used for some utility code in the mrgeo core integration.tests -->
+            <execution>
+              <id>test-jar</id>
+              <phase>test</phase>
+              <goals>
+                <goal>test-jar</goal>
+              </goals>
+              <configuration />
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>2.2.1</version>
+          <executions>
+            <execution>
+              <id>generate-sources</id>
+              <phase>deploy</phase>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${project.build.directory}</outputDirectory>
+                <attach>true</attach>
+              </configuration>
+            </execution>
+            <execution>
+              <id>generate-test-sources</id>
+              <phase>deploy</phase>
+              <goals>
+                <goal>test-jar</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${project.build.directory}</outputDirectory>
+                <attach>true</attach>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.9.1</version>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <phase>deploy</phase>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+	
+	<plugin>
+	  <groupId>org.apache.maven.plugins</groupId>
+	  <artifactId>maven-shade-plugin</artifactId>
+	  <version>2.3</version>
+	  <executions>
+	    <execution>
+	      <phase>package</phase>
+	      <goals>
+		<goal>shade</goal>
+	      </goals>
+	      <configuration>
+		<finalName>${project.artifactId}-${project.parent.version}-jar-with-dependencies</finalName>
+		<generateUniqueDependencyReducedPom>true</generateUniqueDependencyReducedPom>
+		<transformers>
+		  <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+		  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+		    <manifestEntries>
+		      <Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
+		      <Specification-Version>1.1</Specification-Version>
+		      <Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
+		      <Implementation-Title>com.sun.media.imageio</Implementation-Title>
+		      <Implementation-Version>1.1</Implementation-Version>
+		      <Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
+		      <Extension-Name>com.sun.media.imageio</Extension-Name>
+		      <Sealed>true</Sealed>
+		    </manifestEntries>
+		  </transformer>
+
+		  <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+		    <resource>META-INF/spring.handlers</resource>
+		  </transformer>
+		  <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+		    <resource>META-INF/spring.schemas</resource>
+		  </transformer>
+
+		</transformers>
+	      </configuration>
+	    </execution>
+	  </executions>
+	</plugin>
+
+      </plugins>
+    </pluginManagement>
+  </build>
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>cobertura-maven-plugin</artifactId>
+        <version>2.5.2</version>
+      </plugin>
+      <!--
+           <plugin>
+           <groupId>org.apache.maven.plugins</groupId>
+           <artifactId>maven-project-info-reports-plugin</artifactId>
+           <version>2.7</version>
+           </plugin>
+      -->
+    </plugins>
+  </reporting>
+  <profiles>
+    <!--
+         | Profiles defining the various build types.  The template for these are:
+         | <profile>
+         |   <id>CDH520-yarn</id>
+         |   <properties>
+         |     <java-version></java-version>
+         |     <hadoop-provider></hadoop-provider>
+         |     <hadoop-provider-groupId></hadoop-provider-groupId>
+         |     <hadoop-version></hadoop-version>
+         |     <mahout.version></mahout.version>
+         |     <pig.version></pig.version>
+         |     <hadoop-config></hadoop-config>
+         |     <slf4j.version></slf4j.version>
+         |     <final.classifier></final.classifier>
+         |     <release.arguments/>
+         |  </properties>
+         |</profile>
+         |
+         | java-version - java version to compile against (1.7, 1.8, etc.)  usually 1.7
+         |
+         | hadoop-provider - the "type" of hadoop build
+         |                     apache2          - Apache Hadoop, version 2.0+
+         |                     apache2-yarn     - Apache Hadoop, version 2.0+, using YARN
+         |                     cloudera4        - Cloudera Hadoop, 4 series
+         |                     cloudera4-yarn   - Cloudera Hadoop, 4 series, using YARN
+         |                     cloudera5        - Cloudera Hadoop, 5 series
+         |                     cloudera5-yarn   - Cloudera Hadoop, 5 series, using YARN
+         | hadoop-provider-groupid - the dependency groupid for the hadoop version, usually org.apache.hadoop
+         | hadoop-version - the dependency version number
+         | mahout.version - the apache mahout version corresponding to the hadoop version
+         | pig.version - the apache pig version corresponding to the hadoop version
+         | hadoop-config - the path to the hadoop config files (used for tests), usually /etc/hadoop/conf
+         | slf4j.version - the slf4j version to use, this version must not conflict with the hadoop slf4j version
+         | final.classifier - the classifier for the final (distribution) artifacts, usually the hadoop version without
+         |                    any punctuation (i.e CDH 4.5.0 becomes CDH450), used when ultimately build RPMs
+         | release.arguments - any arguments to use for releases, usually blank
+    -->
+    <profile>
+      <id>CDH520-yarn</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.5.0-cdh5.2.0</hadoop-version>
+        <mahout.version>0.9-cdh5.2.0</mahout.version>
+        <pig.version>0.12.0-cdh5.2.0</pig.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <slf4j.version>1.6.1</slf4j.version>
+        <final.classifier>CDH520</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH520</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.5.0-mr1-cdh5.2.0</hadoop-version>
+        <mahout.version>0.9-cdh5.2.0</mahout.version>
+        <pig.version>0.12.0-cdh5.2.0</pig.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <final.classifier>CDH520</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH510-yarn</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.3.0-cdh5.1.0</hadoop-version>
+        <mahout.version>0.9-cdh5.1.0</mahout.version>
+        <pig.version>0.12.0-cdh5.1.0</pig.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <slf4j.version>1.6.1</slf4j.version>
+        <final.classifier>CDH510</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+        <reuseTestVMs>true</reuseTestVMs>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH510</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.3.0-mr1-cdh5.1.0</hadoop-version>
+        <mahout.version>0.9-cdh5.1.0</mahout.version>
+        <pig.version>0.12.0-cdh5.1.0</pig.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <final.classifier>CDH510</final.classifier>
+        <release.arguments />
+        <slf4j.version>1.6.1</slf4j.version>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH470</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.0.0-mr1-cdh4.7.0</hadoop-version>
+        <mahout.version>0.7-cdh4.7.0</mahout.version>
+        <pig.version>0.11.0-cdh4.7.0</pig.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <final.classifier>CDH470</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+        <reuseTestVMs>true</reuseTestVMs>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH470-yarn</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.0.0-cdh4.7.0</hadoop-version>
+        <mahout.version>0.7-cdh4.7.0</mahout.version>
+        <pig.version>0.11.0-cdh4.7.0</pig.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <final.classifier>CDH470</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH460</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.0.0-mr1-cdh4.6.0</hadoop-version>
+        <mahout.version>0.7-cdh4.6.0</mahout.version>
+        <pig.version>0.11.0-cdh4.6.0</pig.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <final.classifier>CDH460</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH450</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.0.0-mr1-cdh4.5.0</hadoop-version>
+        <mahout.version>0.7-cdh4.5.0</mahout.version>
+        <pig.version>0.11.0-cdh4.5.0</pig.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <final.classifier>CDH450</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <!--
+         | Profiles defining the various build options.  The template for these are:
+         | <profile>
+         |   <id></id>
+         |   <properties>
+         |   </properties>
+         | </profile>
+         |
+         | properties - The property name to set for skipping, for example
+    -->
+    <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->
+    <profile>
+      <id>hadoop-conf-for-eclipse</id>
+      <activation>
+        <property>
+          <name>env</name>
+          <value>eclipse</value>
+        </property>
+      </activation>
+      <build>
+        <resources>
+          <resource>
+            <directory>${hadoop-config}</directory>
+          </resource>
+        </resources>
+      </build>
+    </profile>
+    <profile>
+      <id>defaults</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <modules>all</modules>
+      </properties>
+    </profile>
+    <!-- If we're using apache 2.0  hadoop, include hadoop-core as a regular dependency -->
+    <!-- for posterity...
+         <profile>
+         <id>apache2-hadoop</id>
+         <activation>
+         <property>
+         <name>hadoop-provider</name>
+         <value>apache2</value>
+         </property>
+         </activation>
+         <properties>
+         <mrunit.version>0.9.0-incubating</mrunit.version>
+         <mrunit.classifier>hadoop2</mrunit.classifier>
+         <slf4j.version>1.6.1</slf4j.version>
+         <reuseTestVMs>true</reuseTestVMs>
+         </properties>
+         <dependencies>
+         <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>4.8.2</version>
+         <scope>test</scope>
+         </dependency>
+         </dependencies>
+         </profile>
+    -->
+    <!-- If we're using apache 2.0 yarn hadoop, include hadoop-mapreduce-client as a regular dependency -->
+    <!-- for posterity...
+         <profile>
+         <id>apache2-hadoop-yarn</id>
+         <activation>
+         <property>
+         <name>hadoop-provider</name>
+         <value>apache2-yarn</value>
+         </property>
+         </activation>
+         <properties>
+         <mrunit.version>0.9.0-incubating</mrunit.version>
+         <mrunit.classifier>hadoop2</mrunit.classifier>
+         <giraph.version>1.0.0</giraph.version>
+         <giraph.classifier>for-hadoop-2.0.0-cdh4.1.2</giraph.classifier>
+         <giraph.classifier.test>${giraph.classifier}-tests</giraph.classifier.test>
+         <protobuf.version>2.4.1</protobuf.version>
+         <slf4j.version>1.6.1</slf4j.version>
+         <reuseTestVMs>false</reuseTestVMs>
+         </properties>
+         <dependencies>
+         <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>4.8.2</version>
+         <scope>test</scope>
+         </dependency>
+         </dependencies>
+         </profile>
+    -->
+    <!-- Module build profiles -->
+    <profile>
+      <id>build-all</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>all</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+        <module>mrgeo-mapalgebra</module>
+        <module>mrgeo-dataprovider</module>
+        <module>mrgeo-cmd</module>
+        <module>mrgeo-services</module>
+        <module>distribution</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-core</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>core</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-mapalgebra</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>mapalgebra</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+        <module>mrgeo-mapalgebra</module>
+        <module>mrgeo-dataprovider</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-dataprovider</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>dataprovider</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+        <module>mrgeo-dataprovider</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-cmd</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>cmd</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+        <module>mrgeo-mapalgebra</module>
+        <module>mrgeo-dataprovider</module>
+        <module>mrgeo-cmd</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-services</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>services</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+        <module>mrgeo-mapalgebra</module>
+        <module>mrgeo-dataprovider</module>
+        <module>mrgeo-services</module>
+      </modules>
+    </profile>
+  </profiles>
+  <!-- DependencyManagement is intended to maintain consistant dependency versioning across all the projects.
+       Put dependencies below with version number, then in the child pom, just add the groupId and artifactId
+       
+       ex.  (added below in dependencyManagement section)
+       <dependency>
+       <groupId>junit</groupId>
+       <artifactId>junit</artifactId>
+       <version>4.8.2</version>
+       <scope>test</scope>
+       </dependency>
+       
+       (added in the child pom's dependencies section)
+       <dependency>
+       <groupId>junit</groupId>
+       <artifactId>junit</artifactId>
+       </dependency>
+       
+       Remember!  if there is a <type></type>, put it in the child pom!
+  -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.8.2</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>cpsuite</groupId>
+        <artifactId>cpsuite</artifactId>
+        <version>1.2.5</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>httpunit</groupId>
+        <artifactId>httpunit</artifactId>
+        <version>1.7</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>xmlunit</groupId>
+        <artifactId>xmlunit</artifactId>
+        <version>1.5</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>1.9.5</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jul-to-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <!--  hadoop uses various versions, we need 1.9.2 -->
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>1.9.2</version>
+      </dependency>
+      <!--  hadoop uses various versions, we need 1.9.2 -->
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>1.9.2</version>
+      </dependency>
+      <dependency>
+        <groupId>xerces</groupId>
+        <artifactId>xercesImpl</artifactId>
+        <version>2.9.1</version>
+      </dependency>
+      <dependency>
+        <groupId>xml-apis</groupId>
+        <artifactId>xml-apis</artifactId>
+        <version>1.3.04</version>
+      </dependency>
+      <dependency>
+        <groupId>com.vividsolutions</groupId>
+        <artifactId>jts</artifactId>
+        <version>1.13</version>
+      </dependency>
+      <dependency>
+        <groupId>it.geosolutions.imageio-ext</groupId>
+        <artifactId>imageio-ext</artifactId>
+        <version>1.1.7</version>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-client</artifactId>
+        <version>${hadoop-version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.pig</groupId>
+        <artifactId>pig</artifactId>
+        <version>${pig.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <!-- hbase was including jruby-complete, which causes problems, we'll
+               exclude it here.  If hbase support is needed, we'll have to find a 
+               workaround -->
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+          </exclusion>
+          <!-- a later version of these Jackson dependencies are being used by Jersey in 
+               mrgeo-services, and these cause problems -->
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.accumulo</groupId>
+        <artifactId>accumulo-core</artifactId>
+        <version>1.5.1</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+        <!-- scope>provided</scope -->
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.4</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.4</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.5</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.7.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>java3d</groupId>
+        <artifactId>vecmath</artifactId>
+        <version>1.3.2</version>
+      </dependency>
+      <dependency>
+        <groupId>ar.com.hjg</groupId>
+        <artifactId>pngj</artifactId>
+        <version>2.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>14.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.2.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.reflections</groupId>
+        <artifactId>reflections</artifactId>
+        <version>0.9.9-RC1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-main</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-api</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-opengis</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-epsg-hsql</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-epsg-wkt</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-process</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-process-raster</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-image</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-imageio-ext-gdal</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-geotiff</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-coverage</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-shapefile</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-geometry</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-referencing</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-xml</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools.xsd</groupId>
+        <artifactId>gt-xsd-kml</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-process-feature</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>geotiff</groupId>
+        <artifactId>geotiff-jai</artifactId>
+        <version>0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>xtiff-jai</groupId>
+        <artifactId>xtiff-jai</artifactId>
+        <version>beta-0.3</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jai</groupId>
+            <artifactId>jai-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jai</groupId>
+            <artifactId>jai-codec</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>javax.media</groupId>
+        <artifactId>jai_codec</artifactId>
+        <version>1.1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.media</groupId>
+        <artifactId>jai_core</artifactId>
+        <version>1.1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.media</groupId>
+        <artifactId>jai_imageio</artifactId>
+        <version>1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jaitools</groupId>
+        <artifactId>jt-utils</artifactId>
+        <version>1.3.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jaitools</groupId>
+        <artifactId>jt-zonalstats</artifactId>
+        <version>1.3.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.carrotsearch</groupId>
+        <artifactId>hppc</artifactId>
+        <version>0.5.2</version>
+      </dependency>
+      <dependency>
+        <groupId>joda-time</groupId>
+        <artifactId>joda-time</artifactId>
+        <version>2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.mahout</groupId>
+        <artifactId>mahout-core</artifactId>
+        <version>${mahout.version}</version>
+        <!-- keep hadoop-core out of mahout, it may be the wrong version (mr1 vs. yarn) -->
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20090211</version>
+      </dependency>
+      <!-- annoys me that we have to add specific jboss dependencies -->
+      <dependency>
+        <groupId>org.jboss</groupId>
+        <artifactId>jboss-vfs</artifactId>
+        <version>3.1.0.Final</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-server</artifactId>
+        <version>1.16</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.contribs</groupId>
+        <artifactId>jersey-multipart</artifactId>
+        <version>1.16</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-servlet</artifactId>
+        <version>1.16</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-core</artifactId>
+        <version>1.16</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-json</artifactId>
+        <version>1.16</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.jersey-test-framework</groupId>
+        <artifactId>jersey-test-framework-grizzly2</artifactId>
+        <version>1.16</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.jersey-test-framework</groupId>
+        <artifactId>jersey-test-framework-inmemory</artifactId>
+        <version>1.16</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-core</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-beans</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-web</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-aop</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-expression</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.ldap</groupId>
+        <artifactId>spring-ldap-core</artifactId>
+        <version>1.3.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-core</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-web</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-config</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-cas-client</artifactId>
+        <version>3.0.8.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-cas</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-ldap</artifactId>
+        <version>3.2.1.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>net.sf.ehcache</groupId>
+        <artifactId>ehcache-core</artifactId>
+        <version>1.7.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jasig.cas.client</groupId>
+        <artifactId>cas-client-core</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jasig.cas.client</groupId>
+        <artifactId>cas-client</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>rhino</groupId>
+        <artifactId>js</artifactId>
+        <version>1.6R5</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.ws.commons.axiom</groupId>
+        <artifactId>axiom-impl</artifactId>
+        <version>1.2.9</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <!-- Jetty has dependencies for servlet-api...  We need to make the scope "provided" to make sure those
+           jars are not included in the final war (tomcat will provide it...)
+      -->
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>servlet-api-2.5</artifactId>
+        <version>6.1.14</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>2.5-20081211</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.1.1</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging-api</artifactId>
+        <version>1.0.4</version>
+        <scope>provided</scope>
+      </dependency>
+      <!-- Keep servlet-api.jar out of the system -->
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>2.5</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-jexl</artifactId>
+        <version>2.1.1</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <!-- everyone gets hadoop, whether they want it or not! -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <!-- and junit, mrunit, cpsuite in test... -->
+    <dependency>
+      <groupId>org.apache.mrunit</groupId>
+      <artifactId>mrunit</artifactId>
+      <version>0.9.0-incubating</version>
+      <classifier>hadoop2</classifier>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cpsuite</groupId>
+      <artifactId>cpsuite</artifactId>
+    </dependency>
+    <!-- NOTE!!!  Very important!
+         ========================
+         We have gone out of our way to eliminate apache's commons-logging (now stagnant) with
+         slf4j for our logging "facade."  As such, make sure when adding jars to exclude any dependencies to
+         commons-logging.
+         slf4j provides jcl-over-slf4j to bridge any 3rd party usages of commons logging into slf4j.
+    -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jul-to-slf4j</artifactId>
+    </dependency>
+    <!-- make sure we include geotools plugins in the final jars -->
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-wkt</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-referencing</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-imageio-ext-gdal</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-image</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-geotiff</artifactId>
+    </dependency>
+  </dependencies>
+</project>

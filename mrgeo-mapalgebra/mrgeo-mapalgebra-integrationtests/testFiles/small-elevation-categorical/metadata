@@ -1,0 +1,238 @@
+{
+  "bounds" : {
+    "minX" : 141.7071533203125,
+    "minY" : -18.371200561523438,
+    "maxX" : 142.56065368652344,
+    "maxY" : -17.519760131835938
+  },
+  "tilesize" : 512,
+  "bands" : 1,
+  "defaultValues" : [ -9999.0 ],
+  "tileType" : 4,
+  "maxZoomLevel" : 10,
+  "stats" : [ {
+    "min" : 41.0,
+    "max" : 314.0,
+    "mean" : 96.41058883282844,
+    "sum" : 1.49198857E8,
+    "count" : 1547536
+  } ],
+  "classification" : "Categorical",
+  "resamplingMethod" : "MODE",
+  "imageMetadata" : [ {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 2,
+      "maxY" : 3
+    },
+    "tileBounds" : {
+      "minX" : 1,
+      "minY" : 0,
+      "maxX" : 1,
+      "maxY" : 0
+    },
+    "image" : "1",
+    "stats" : [ {
+      "min" : 65.0,
+      "max" : 199.0,
+      "mean" : 109.16666666666667,
+      "sum" : 1310.0,
+      "count" : 12
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 5,
+      "maxY" : 5
+    },
+    "tileBounds" : {
+      "minX" : 3,
+      "minY" : 0,
+      "maxX" : 3,
+      "maxY" : 0
+    },
+    "image" : "2",
+    "stats" : [ {
+      "min" : 53.0,
+      "max" : 225.0,
+      "mean" : 105.5,
+      "sum" : 3798.0,
+      "count" : 36
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 10,
+      "maxY" : 10
+    },
+    "tileBounds" : {
+      "minX" : 7,
+      "minY" : 1,
+      "maxX" : 7,
+      "maxY" : 1
+    },
+    "image" : "3",
+    "stats" : [ {
+      "min" : 49.0,
+      "max" : 225.0,
+      "mean" : 100.60330578512396,
+      "sum" : 12173.0,
+      "count" : 121
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 20,
+      "maxY" : 20
+    },
+    "tileBounds" : {
+      "minX" : 14,
+      "minY" : 3,
+      "maxX" : 14,
+      "maxY" : 3
+    },
+    "image" : "4",
+    "stats" : [ {
+      "min" : 47.0,
+      "max" : 277.0,
+      "mean" : 97.86167800453515,
+      "sum" : 43157.0,
+      "count" : 441
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 39,
+      "maxY" : 39
+    },
+    "tileBounds" : {
+      "minX" : 28,
+      "minY" : 6,
+      "maxX" : 28,
+      "maxY" : 6
+    },
+    "image" : "5",
+    "stats" : [ {
+      "min" : 46.0,
+      "max" : 277.0,
+      "mean" : 97.684375,
+      "sum" : 156295.0,
+      "count" : 1600
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 78,
+      "maxY" : 78
+    },
+    "tileBounds" : {
+      "minX" : 57,
+      "minY" : 12,
+      "maxX" : 57,
+      "maxY" : 12
+    },
+    "image" : "6",
+    "stats" : [ {
+      "min" : 46.0,
+      "max" : 288.0,
+      "mean" : 96.8431341131229,
+      "sum" : 604398.0,
+      "count" : 6241
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 155,
+      "maxY" : 155
+    },
+    "tileBounds" : {
+      "minX" : 114,
+      "minY" : 25,
+      "maxX" : 114,
+      "maxY" : 25
+    },
+    "image" : "7",
+    "stats" : [ {
+      "min" : 43.0,
+      "max" : 307.0,
+      "mean" : 96.43912297893189,
+      "sum" : 2361987.0,
+      "count" : 24492
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 310,
+      "maxY" : 310
+    },
+    "tileBounds" : {
+      "minX" : 228,
+      "minY" : 50,
+      "maxX" : 229,
+      "maxY" : 51
+    },
+    "image" : "8",
+    "stats" : [ {
+      "min" : 43.0,
+      "max" : 307.0,
+      "mean" : 96.32998438527285,
+      "sum" : 9377146.0,
+      "count" : 97344
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 621,
+      "maxY" : 620
+    },
+    "tileBounds" : {
+      "minX" : 457,
+      "minY" : 101,
+      "maxX" : 458,
+      "maxY" : 103
+    },
+    "image" : "9",
+    "stats" : [ {
+      "min" : 43.0,
+      "max" : 314.0,
+      "mean" : 96.41966717251223,
+      "sum" : 3.7423269E7,
+      "count" : 388129
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 1243,
+      "maxY" : 1240
+    },
+    "tileBounds" : {
+      "minX" : 915,
+      "minY" : 203,
+      "maxX" : 917,
+      "maxY" : 206
+    },
+    "image" : "10",
+    "stats" : [ {
+      "min" : 41.0,
+      "max" : 314.0,
+      "mean" : 96.41058883282844,
+      "sum" : 1.49198857E8,
+      "count" : 1547536
+    } ]
+  } ]
+}
