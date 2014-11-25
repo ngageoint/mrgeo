@@ -208,4 +208,48 @@
       <version>${project.parent.version}</version>
     </dependency>
   </dependencies>
+  <profiles>
+    <profile>
+      <id>costdistance</id>
+      <activation>
+        <property>
+          <name>include.costdistance</name>
+          <value>!false</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-war-plugin</artifactId>
+            <version>2.4</version>
+            <configuration>
+              <packagingExcludes>WEB-INF/lib/mrgeo-services*</packagingExcludes>
+              <archive>
+                <manifest>
+                  <addClasspath>true</addClasspath>
+                  <classpathPrefix>lib/</classpathPrefix>
+                </manifest>
+              </archive>
+              <overlays combine.children="append">
+                <!-- Yuck, I've got to include these individually -->
+                <overlay>
+                  <groupId>org.mrgeo</groupId>
+                  <artifactId>mrgeo-services-junkyard</artifactId>
+                  <type>jar</type>
+                  <targetPath>WEB-INF/classes</targetPath>
+                </overlay>
+              </overlays>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-services-junkyard</artifactId>
+          <version>${project.parent.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>

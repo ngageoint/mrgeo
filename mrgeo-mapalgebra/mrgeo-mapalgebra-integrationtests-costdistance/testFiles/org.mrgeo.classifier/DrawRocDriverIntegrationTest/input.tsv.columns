@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>                    
+<AllColumns>                                              
+  <Column name="a" type="Numeric" min="-2" max="3"/>       
+  <Column name="b" type="Numeric" min="-1" max="4"/>       
+  <Column name="c" type="Numeric" min="1.5" max="2.5"/>       
+  <Column name="class" type="Nominal"/>       
+</AllColumns>

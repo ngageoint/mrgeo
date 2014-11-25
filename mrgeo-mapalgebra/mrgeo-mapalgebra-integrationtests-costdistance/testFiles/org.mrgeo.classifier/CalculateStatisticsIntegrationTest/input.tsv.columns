@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>                    
+<AllColumns>                                              
+  <Column name="number" type="Numeric"/>       
+  <Column name="letter" type="Nominal"/>       
+  <Column name="both" type="Nominal"/>       
+</AllColumns>

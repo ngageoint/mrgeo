@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AllColumns firstLineHeader="false">
+  <Column name="a" type="Nominal"/>
+  <Column name="b" type="Nominal"/>
+  <Column max="4.0" min="-1.0" name="b_numeric" type="Numeric"/>
+  <Column name="c" type="Nominal"/>
+  <Column max="2.5" min="1.5" name="c_numeric" type="Numeric"/>
+  <Column name="class" type="Nominal"/>
+  <Column name="apple" type="Numeric"/>
+  <Column name="orange" type="Numeric"/>
+  <Column name="predicted" type="Nominal"/>
+  <!--loaded = LOAD 'filename' USING PigStorage() AS (a, b, b_numeric, c, c_numeric, class, apple, orange, predicted);-->
+</AllColumns>

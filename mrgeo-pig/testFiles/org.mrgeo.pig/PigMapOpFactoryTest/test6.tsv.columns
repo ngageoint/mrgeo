@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AllColumns firstLineHeader="false">
+  <Column name="NAME" type="Nominal"/>
+  <Column name="HIGHWAY" type="Nominal"/>
+  <Column name="MAXSPEED" type="Numeric"/>
+  <Column name="GEOMETRY" type="Nominal"/>
+  <!--loaded = LOAD 'filename' USING PigStorage() AS (NAME, HIGHWAY, MAXSPEED, GEOMETRY);-->
+</AllColumns>

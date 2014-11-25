@@ -1,0 +1,24 @@
+<gml:Point>
+  <gml:coordinates>-77.04580166126667,38.90285391804483,0.0 </gml:coordinates>
+</gml:Point>
+<gml:Point>
+  <gml:coordinates>-76.95898548886728,38.86836187175523,0.0 </gml:coordinates>
+</gml:Point>
+<gml:Point>
+  <gml:coordinates>-77.04580166126667,38.90285391804483,0.0 </gml:coordinates>
+</gml:Point>
+<gml:Point>
+  <gml:coordinates>-77.04290553356678,38.905015373980795,0.0 </gml:coordinates>
+</gml:Point>
+<gml:Point>
+  <gml:coordinates>-77.04898184980034,38.9033044953776,0.0 </gml:coordinates>
+</gml:Point>
+<gml:Point>
+  <gml:coordinates>-77.02622201661075,38.98191588615346,0.0 </gml:coordinates>
+</gml:Point>
+<gml:Point>
+  <gml:coordinates>-77.02710708008587,38.9669191000715,0.0 </gml:coordinates>
+</gml:Point>
+<gml:Point>
+  <gml:coordinates>-77.03698118787904,38.904024019602225,0.0 </gml:coordinates>
+</gml:Point>

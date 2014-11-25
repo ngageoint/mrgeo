@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AllColumns firstLineHeader="false">
+  <Column name="tp" type="Numeric"/>
+  <Column name="fn" type="Numeric"/>
+  <Column name="fp" type="Numeric"/>
+  <Column name="tn" type="Numeric"/>
+  <Column max="1.0" min="0.0" name="tpr" type="Numeric"/>
+  <Column max="1.0" min="0.0" name="fpr" type="Numeric"/>
+  <Column max="1.0" min="0.0" name="ppv" type="Numeric"/>
+  <Column name="positives" type="Numeric"/>
+  <Column name="negatives" type="Numeric"/>
+  <Column name="class" type="Nominal"/>
+  <Column max="3.0" min="-2.0" name="a" type="Numeric"/>
+  <Column max="4.0" min="-1.0" name="b" type="Numeric"/>
+  <Column name="class_tp_sum" type="Numeric"/>
+  <Column name="a_tp_sum" type="Numeric"/>
+  <Column name="b_tp_sum" type="Numeric"/>
+</AllColumns>

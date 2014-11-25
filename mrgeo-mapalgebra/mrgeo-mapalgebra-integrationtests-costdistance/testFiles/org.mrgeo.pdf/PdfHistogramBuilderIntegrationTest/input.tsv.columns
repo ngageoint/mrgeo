@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AllColumns firstLineHeader="false">
+  <Column name="value1" type="Numeric"/>
+  <Column name="value2" type="Numeric"/>
+  <!--loaded = LOAD 'filename' USING PigStorage() AS (value);-->
+</AllColumns>

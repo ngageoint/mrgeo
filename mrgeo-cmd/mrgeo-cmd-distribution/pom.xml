@@ -159,6 +159,16 @@
   </build>
   <profiles>
     <profile>
+      <id>include-costdistance</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-cmd-junkyard</artifactId>
+          <version>${project.parent.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>run-shading</id>
       <build>
         <plugins>
@@ -210,7 +220,12 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-dataprovider-accumulo</artifactId>
+      <artifactId>mrgeo-cmd-ingestvector</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-cmd-developers</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
   </dependencies>

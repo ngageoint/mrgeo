@@ -1,0 +1,86 @@
+package org.mrgeo.mapalgebra;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
+import org.mrgeo.mapreduce.job.JobCancelledException;
+import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.progress.Progress;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.utils.HadoopUtils;
+
+import java.io.IOException;
+
+public class VectorReaderMapOp extends VectorMapOp
+{
+  public VectorReaderMapOp(String vectorName)
+  {
+    _outputName = vectorName;
+  }
+
+  // Declare the default constructor private so no one can use it
+  @SuppressWarnings("unused")
+  private VectorReaderMapOp()
+  {
+  }
+
+  @Override
+  public void addInput(MapOp n) throws IllegalArgumentException
+  {
+    throw new IllegalArgumentException("This ExecuteNode takes no arguments.");
+  }
+
+  @Override
+  public void build(Progress p) throws IOException, JobFailedException, JobCancelledException
+  {
+    if (p != null)
+    {
+      p.complete();
+    }
+    _output = new BasicInputFormatDescriptor(_outputName);
+  }
+
+  // TODO: This method should use DataProviderFactory to perform the move like the
+  // other map ops once we migrate all the vector map ops to use data providers
+  // instead of HDFS files directly.
+  @Override
+  public void moveOutput(String toName) throws IOException
+  {
+    Path toPath = new Path(toName);
+    Path sourcePath = new Path(_outputName);
+    Configuration conf = HadoopUtils.createConfiguration();
+    FileSystem sourceFs = HadoopFileUtils.getFileSystem(conf, sourcePath);
+    FileSystem destFs = HadoopFileUtils.getFileSystem(conf, toPath);
+    if (!FileUtil.copy(sourceFs, sourcePath, destFs, toPath, false, false, conf))
+    {
+      throw new IOException("Error copying '" + _outputName +
+          "' to '" + toName.toString() + "'");
+    }
+    // Now copy the 
+    Path sourceColumns = new Path(_outputName + ".columns");
+    if (sourceFs.exists(sourceColumns))
+    {
+      Path toColumns = new Path(toName.toString() + ".columns");
+      if (FileUtil.copy(sourceFs, sourceColumns, destFs, toColumns, false, false, conf) == false)
+      {
+        throw new IOException("Error copying columns file '" + sourceColumns.toString() +
+            "' to '" + toColumns.toString());
+      }
+    }
+    _outputName = toName;
+    _output = new BasicInputFormatDescriptor(_outputName);
+  }
+
+//  public void setPath(Path path)
+//  {
+//    _outputName = path;
+//  }
+  
+  @Override
+  public String toString()
+  {
+    return String.format("VectorReaderMapOp: %s", 
+        _outputName == null ? "null": _outputName.toString());
+  }
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AllColumns>
+  <Column count="20" max="6.370639244" min="3.267202181" name="diameter"
+    sum="90.58817625200001" type="Numeric"/>
+  <Column count="20" max="0.796603371" min="0.372155044" name="weight"
+    sum="11.247370067000002" type="Numeric"/>
+  <Column count="20" name="quality" type="Nominal"/>
+  <Column count="20" name="class" type="Nominal"/>
+</AllColumns>

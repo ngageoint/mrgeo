@@ -33,6 +33,8 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
+import org.mrgeo.test.MapOpTestVectorUtils;
+import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +43,9 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
-* @author jason.surratt
-*
-*/
+ * @author jason.surratt
+ *
+ */
 public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
   @Rule
@@ -93,53 +95,53 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Before
   public void setup()
   {
-    MrGeoProperties.getInstance().setProperty("image.base", testUtils.getInputHdfs().toUri().toString());
-    // Vector VectorFileMapOpLoader.setVectorBasePath(new Path(vector).getParent().toUri().toString());
+    MrGeoProperties.getInstance().setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
+    MrGeoProperties.getInstance().setProperty(HadoopUtils.VECTOR_BASE, testUtils.getInputHdfs().toUri().toString());
   }
 
   @BeforeClass
   public static void init() throws IOException
   {
-      if (GEN_BASELINE_DATA_ONLY)
-      {
-        log.warn("***MapAlgebraParserTest TESTS SET TO GENERATE BASELINE IMAGES ONLY***");
-      }
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      log.warn("***MapAlgebraParserTest TESTS SET TO GENERATE BASELINE IMAGES ONLY***");
+    }
 
-      testUtils = new MapOpTestUtils(MapAlgebraIntegrationTest.class);
-    // Vector vectorTestUtils = new MapOpTestVectorUtils(MapAlgebraIntegrationTest.class);
+    testUtils = new MapOpTestUtils(MapAlgebraIntegrationTest.class);
+    //MapOpTestVectorUtils vectorTestUtils = new MapOpTestVectorUtils(MapAlgebraIntegrationTest.class);
 
-      HadoopFileUtils.delete(testUtils.getInputHdfs());
+    HadoopFileUtils.delete(testUtils.getInputHdfs());
 
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
-          testUtils.getInputHdfs(),
-          pointsName + ".tsv");
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
-          testUtils.getInputHdfs(),
-          pointsName + ".tsv.columns");
-      pointsPath = testUtils.getInputHdfsFor(pointsName + ".tsv").toString();
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
+        testUtils.getInputHdfs(),
+        pointsName + ".tsv");
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
+        testUtils.getInputHdfs(),
+        pointsName + ".tsv.columns");
+    pointsPath = testUtils.getInputHdfsFor(pointsName + ".tsv").toString();
 
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-          testUtils.getInputHdfs(),
-          majorRoadShapeName + ".shp");
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-          testUtils.getInputHdfs(),
-          majorRoadShapeName + ".prj");
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-          testUtils.getInputHdfs(),
-          majorRoadShapeName + ".shx");
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-          testUtils.getInputHdfs(),
-          majorRoadShapeName + ".dbf");
-      majorRoadShapePath = testUtils.getInputHdfsFor(majorRoadShapeName + ".shp");
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+        testUtils.getInputHdfs(),
+        majorRoadShapeName + ".shp");
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+        testUtils.getInputHdfs(),
+        majorRoadShapeName + ".prj");
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+        testUtils.getInputHdfs(),
+        majorRoadShapeName + ".shx");
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+        testUtils.getInputHdfs(),
+        majorRoadShapeName + ".dbf");
+    majorRoadShapePath = testUtils.getInputHdfsFor(majorRoadShapeName + ".shp");
 
-      HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allones);
-      allonesPath = new Path(testUtils.getInputHdfs(), allones);
+    HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allones);
+    allonesPath = new Path(testUtils.getInputHdfs(), allones);
 
-      HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), alltwos);
-      //alltwosPath = new Path(testUtils.getInputHdfs(), allones);
+    HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), alltwos);
+    //alltwosPath = new Path(testUtils.getInputHdfs(), allones);
 
-      HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundreds);
-     // allhundredsPath = new Path(testUtils.getInputHdfs(), allones);
+    HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundreds);
+    // allhundredsPath = new Path(testUtils.getInputHdfs(), allones);
 
     HadoopFileUtils
         .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
@@ -151,16 +153,16 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     file = new File(greece);
     greece = new Path("file://" + file.getAbsolutePath()).toString();
 
-      vector = testUtils.getInputLocal() + "../" + vectorName;
-      file = new File(vector);
-      vector = new Path("file://" + file.getAbsolutePath()).toString();
+    vector = testUtils.getInputLocal() + "../" + vectorName;
+    file = new File(vector);
+    vector = new Path("file://" + file.getAbsolutePath()).toString();
 
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
-          factor1);
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
-          factor2);
-      HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
-          eventsPdfs);
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
+        factor1);
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
+        factor2);
+    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
+        eventsPdfs);
   }
 
   @Test
@@ -726,7 +728,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     parser.parse(ex);
   }
 
-//  @Test(expected = TokenMgrError.class)
+  //  @Test(expected = TokenMgrError.class)
   @Category(UnitTest.class)
   public void parseInvalidOperation() throws Exception
   {
@@ -916,6 +918,69 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
   }
 
+  @Test
+  @Category(IntegrationTest.class)
+  public void rasterizeVector1() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf,
+          testname.getMethodName(),
+          String
+              .format(
+                  "a = [%s]; RasterizeVector(a, \"MASK\", \"0.000092593\")",
+                  majorRoadShapePath.toString()), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf,
+          testname.getMethodName(),
+          String
+              .format(
+                  "a = [%s]; RasterizeVector(a, \"MASK\", \"0.000092593\")",
+                  majorRoadShapePath.toString()));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void rasterizeVector2() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils
+          .generateBaselineTif(
+              this.conf,
+              testname.getMethodName(),
+              String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ",
+                  pointsPath.toString()), -9999);
+    }
+    else
+    {
+      testUtils
+          .runRasterExpression(
+              this.conf,
+              testname.getMethodName(),
+              String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ",
+                  pointsPath.toString()));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void rasterizeVector3() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath.toString()), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath.toString()));
+    }
+  }
 
   // asserts the expected Mapop against the actual Mapop generated when parse is
   // called

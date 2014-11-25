@@ -1,0 +1,236 @@
+{
+  "bounds" : {
+    "minX" : -78.446622,
+    "minY" : 33.837335,
+    "maxX" : -77.274122,
+    "maxY" : 34.53900166666667
+  },
+  "tilesize" : 512,
+  "bands" : 1,
+  "defaultValues" : [ -9999.0 ],
+  "tileType" : 5,
+  "maxZoomLevel" : 10,
+  "stats" : [ {
+    "min" : 0.0,
+    "max" : 0.0,
+    "mean" : 0.0,
+    "sum" : 0.0,
+    "count" : 21
+  } ],
+  "imageMetadata" : [ {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 4,
+      "maxY" : 2
+    },
+    "tileBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 0,
+      "maxY" : 0
+    },
+    "image" : "1",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 6
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 7,
+      "maxY" : 4
+    },
+    "tileBounds" : {
+      "minX" : 1,
+      "minY" : 1,
+      "maxX" : 1,
+      "maxY" : 1
+    },
+    "image" : "2",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 10
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 13,
+      "maxY" : 8
+    },
+    "tileBounds" : {
+      "minX" : 2,
+      "minY" : 2,
+      "maxX" : 2,
+      "maxY" : 2
+    },
+    "image" : "3",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 12
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 27,
+      "maxY" : 16
+    },
+    "tileBounds" : {
+      "minX" : 4,
+      "minY" : 5,
+      "maxX" : 4,
+      "maxY" : 5
+    },
+    "image" : "4",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 12
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 54,
+      "maxY" : 32
+    },
+    "tileBounds" : {
+      "minX" : 9,
+      "minY" : 11,
+      "maxX" : 9,
+      "maxY" : 11
+    },
+    "image" : "5",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 12
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 107,
+      "maxY" : 64
+    },
+    "tileBounds" : {
+      "minX" : 18,
+      "minY" : 22,
+      "maxX" : 18,
+      "maxY" : 22
+    },
+    "image" : "6",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 12
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 213,
+      "maxY" : 128
+    },
+    "tileBounds" : {
+      "minX" : 36,
+      "minY" : 44,
+      "maxX" : 36,
+      "maxY" : 44
+    },
+    "image" : "7",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 12
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 427,
+      "maxY" : 256
+    },
+    "tileBounds" : {
+      "minX" : 72,
+      "minY" : 88,
+      "maxX" : 73,
+      "maxY" : 88
+    },
+    "image" : "8",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 13
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 854,
+      "maxY" : 511
+    },
+    "tileBounds" : {
+      "minX" : 144,
+      "minY" : 176,
+      "maxX" : 146,
+      "maxY" : 177
+    },
+    "image" : "9",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 14
+    } ]
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 1708,
+      "maxY" : 1022
+    },
+    "tileBounds" : {
+      "minX" : 288,
+      "minY" : 352,
+      "maxX" : 292,
+      "maxY" : 354
+    },
+    "image" : "10",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 0.0,
+      "mean" : 0.0,
+      "sum" : 0.0,
+      "count" : 21
+    } ]
+  } ]
+}

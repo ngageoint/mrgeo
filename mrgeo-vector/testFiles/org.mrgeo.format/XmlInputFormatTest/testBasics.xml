@@ -1,0 +1,10 @@
+<test>
+ <node k="1"/>
+ <node>
+  <k v="1"/>
+  <l v="2"/>
+ </node>
+ <node>
+  <m v="3"/>
+ </node>
+</test>

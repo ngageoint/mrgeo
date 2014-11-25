@@ -1,0 +1,32 @@
+{
+  "bounds" : {
+    "minX" : -180.0,
+    "minY" : -90.0,
+    "maxX" : 180.0,
+    "maxY" : 90.0
+  },
+  "tilesize" : 512,
+  "bands" : 1,
+  "defaultValues" : [ "NaN" ],
+  "tileType" : 5,
+  "maxZoomLevel" : 1,
+  "imageMetadata" : [ {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 1023,
+      "maxY" : 512
+    },
+    "tileBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 1,
+      "maxY" : 1
+    },
+    "image" : "1"
+  } ]
+}

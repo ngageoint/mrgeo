@@ -42,12 +42,22 @@
   </dependencyManagement>
   <modules>
     <module>mrgeo-cmd-core</module>
+    <module>mrgeo-cmd-developers</module>
     <module>mrgeo-cmd-distribution</module>
+    <module>mrgeo-cmd-ingestvector</module>
     <module>mrgeo-cmd-ingest</module>
     <module>mrgeo-cmd-buildpyramid</module>
     <module>mrgeo-cmd-export</module>
     <module>mrgeo-cmd-mapalgebra</module>
   </modules>
+  <profiles>
+    <profile>
+      <id>include-costdistance</id>
+      <modules>
+        <module>mrgeo-cmd-junkyard</module>
+      </modules>
+    </profile>
+  </profiles>
   <dependencies>
     <dependency>
       <groupId>org.mrgeo</groupId>

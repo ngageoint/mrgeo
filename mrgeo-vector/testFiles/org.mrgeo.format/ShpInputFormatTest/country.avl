@@ -1,0 +1,8329 @@
+/3.2
+(ODB.1
+	FirstRootClassName:	"Legend"
+	Roots:	2
+	Version:	32
+)
+
+(Legend.2
+	SymType:	0x02
+	LegType:	0x08
+	ClassType:	0x03
+	FieldNames:	3
+	Symbols:	4
+	Class:	1013
+	Class:	1014
+	Class:	1015
+	Class:	1016
+	Class:	1017
+	Class:	1018
+	Class:	1019
+	Class:	1020
+	Class:	1021
+	Class:	1022
+	Class:	1023
+	Class:	1024
+	Class:	1025
+	Class:	1026
+	Class:	1027
+	Class:	1028
+	Class:	1029
+	Class:	1030
+	Class:	1031
+	Class:	1032
+	Class:	1033
+	Class:	1034
+	Class:	1035
+	Class:	1036
+	Class:	1037
+	Class:	1038
+	Class:	1039
+	Class:	1040
+	Class:	1041
+	Class:	1042
+	Class:	1043
+	Class:	1044
+	Class:	1045
+	Class:	1046
+	Class:	1047
+	Class:	1048
+	Class:	1049
+	Class:	1050
+	Class:	1051
+	Class:	1052
+	Class:	1053
+	Class:	1054
+	Class:	1055
+	Class:	1056
+	Class:	1057
+	Class:	1058
+	Class:	1059
+	Class:	1060
+	Class:	1061
+	Class:	1062
+	Class:	1063
+	Class:	1064
+	Class:	1065
+	Class:	1066
+	Class:	1067
+	Class:	1068
+	Class:	1069
+	Class:	1070
+	Class:	1071
+	Class:	1072
+	Class:	1073
+	Class:	1074
+	Class:	1075
+	Class:	1076
+	Class:	1077
+	Class:	1078
+	Class:	1079
+	Class:	1080
+	Class:	1081
+	Class:	1082
+	Class:	1083
+	Class:	1084
+	Class:	1085
+	Class:	1086
+	Class:	1087
+	Class:	1088
+	Class:	1089
+	Class:	1090
+	Class:	1091
+	Class:	1092
+	Class:	1093
+	Class:	1094
+	Class:	1095
+	Class:	1096
+	Class:	1097
+	Class:	1098
+	Class:	1099
+	Class:	1100
+	Class:	1101
+	Class:	1102
+	Class:	1103
+	Class:	1104
+	Class:	1105
+	Class:	1106
+	Class:	1107
+	Class:	1108
+	Class:	1109
+	Class:	1110
+	Class:	1111
+	Class:	1112
+	Class:	1113
+	Class:	1114
+	Class:	1115
+	Class:	1116
+	Class:	1117
+	Class:	1118
+	Class:	1119
+	Class:	1120
+	Class:	1121
+	Class:	1122
+	Class:	1123
+	Class:	1124
+	Class:	1125
+	Class:	1126
+	Class:	1127
+	Class:	1128
+	Class:	1129
+	Class:	1130
+	Class:	1131
+	Class:	1132
+	Class:	1133
+	Class:	1134
+	Class:	1135
+	Class:	1136
+	Class:	1137
+	Class:	1138
+	Class:	1139
+	Class:	1140
+	Class:	1141
+	Class:	1142
+	Class:	1143
+	Class:	1144
+	Class:	1145
+	Class:	1146
+	Class:	1147
+	Class:	1148
+	Class:	1149
+	Class:	1150
+	Class:	1151
+	Class:	1152
+	Class:	1153
+	Class:	1154
+	Class:	1155
+	Class:	1156
+	Class:	1157
+	Class:	1158
+	Class:	1159
+	Class:	1160
+	Class:	1161
+	Class:	1162
+	Class:	1163
+	Class:	1164
+	Class:	1165
+	Class:	1166
+	Class:	1167
+	Class:	1168
+	Class:	1169
+	Class:	1170
+	Class:	1171
+	Class:	1172
+	Class:	1173
+	Class:	1174
+	Class:	1175
+	Class:	1176
+	Class:	1177
+	Class:	1178
+	Class:	1179
+	Class:	1180
+	Class:	1181
+	Class:	1182
+	Class:	1183
+	Class:	1184
+	Class:	1185
+	Class:	1186
+	Class:	1187
+	Class:	1188
+	Class:	1189
+	Class:	1190
+	Class:	1191
+	Class:	1192
+	Class:	1193
+	Class:	1194
+	Class:	1195
+	Class:	1196
+	Class:	1197
+	Class:	1198
+	Class:	1199
+	Class:	1200
+	Class:	1201
+	Class:	1202
+	Class:	1203
+	Class:	1204
+	Class:	1205
+	Class:	1206
+	Class:	1207
+	Class:	1208
+	Class:	1209
+	Class:	1210
+	Class:	1211
+	Class:	1212
+	Class:	1213
+	Class:	1214
+	Class:	1215
+	Class:	1216
+	Class:	1217
+	Class:	1218
+	Class:	1219
+	Class:	1220
+	Class:	1221
+	Class:	1222
+	Class:	1223
+	Class:	1224
+	Class:	1225
+	Class:	1226
+	Class:	1227
+	Class:	1228
+	Class:	1229
+	Class:	1230
+	Class:	1231
+	Class:	1232
+	Class:	1233
+	Class:	1234
+	Class:	1235
+	Class:	1236
+	Class:	1237
+	Class:	1238
+	Class:	1239
+	Class:	1240
+	Class:	1241
+	Class:	1242
+	Class:	1243
+	Class:	1244
+	Class:	1245
+	Class:	1246
+	Class:	1247
+	Class:	1248
+	Class:	1249
+	Class:	1250
+	Class:	1251
+	Class:	1252
+	Class:	1253
+	Class:	1254
+	Class:	1255
+	Class:	1256
+	Class:	1257
+	Class:	1258
+	Class:	1259
+	Class:	1260
+	Class:	1261
+	Class:	1262
+	Class:	1263
+	Class:	1264
+	StdDevs:	1.00000000000000
+	NullSym:	1265
+	NullValues:	1269
+	StatValues:	1270
+	Precision:	-3
+)
+
+(AVStr.3
+	S:	"Cntry_name"
+)
+
+(SymList.4
+	Child:	5
+	Child:	9
+	Child:	13
+	Child:	17
+	Child:	21
+	Child:	25
+	Child:	29
+	Child:	33
+	Child:	37
+	Child:	41
+	Child:	45
+	Child:	49
+	Child:	53
+	Child:	57
+	Child:	61
+	Child:	65
+	Child:	69
+	Child:	73
+	Child:	77
+	Child:	81
+	Child:	85
+	Child:	89
+	Child:	93
+	Child:	97
+	Child:	101
+	Child:	105
+	Child:	109
+	Child:	113
+	Child:	117
+	Child:	121
+	Child:	125
+	Child:	129
+	Child:	133
+	Child:	137
+	Child:	141
+	Child:	145
+	Child:	149
+	Child:	153
+	Child:	157
+	Child:	161
+	Child:	165
+	Child:	169
+	Child:	173
+	Child:	177
+	Child:	181
+	Child:	185
+	Child:	189
+	Child:	193
+	Child:	197
+	Child:	201
+	Child:	205
+	Child:	209
+	Child:	213
+	Child:	217
+	Child:	221
+	Child:	225
+	Child:	229
+	Child:	233
+	Child:	237
+	Child:	241
+	Child:	245
+	Child:	249
+	Child:	253
+	Child:	257
+	Child:	261
+	Child:	265
+	Child:	269
+	Child:	273
+	Child:	277
+	Child:	281
+	Child:	285
+	Child:	289
+	Child:	293
+	Child:	297
+	Child:	301
+	Child:	305
+	Child:	309
+	Child:	313
+	Child:	317
+	Child:	321
+	Child:	325
+	Child:	329
+	Child:	333
+	Child:	337
+	Child:	341
+	Child:	345
+	Child:	349
+	Child:	353
+	Child:	357
+	Child:	361
+	Child:	365
+	Child:	369
+	Child:	373
+	Child:	377
+	Child:	381
+	Child:	385
+	Child:	389
+	Child:	393
+	Child:	397
+	Child:	401
+	Child:	405
+	Child:	409
+	Child:	413
+	Child:	417
+	Child:	421
+	Child:	425
+	Child:	429
+	Child:	433
+	Child:	437
+	Child:	441
+	Child:	445
+	Child:	449
+	Child:	453
+	Child:	457
+	Child:	461
+	Child:	465
+	Child:	469
+	Child:	473
+	Child:	477
+	Child:	481
+	Child:	485
+	Child:	489
+	Child:	493
+	Child:	497
+	Child:	501
+	Child:	505
+	Child:	509
+	Child:	513
+	Child:	517
+	Child:	521
+	Child:	525
+	Child:	529
+	Child:	533
+	Child:	537
+	Child:	541
+	Child:	545
+	Child:	549
+	Child:	553
+	Child:	557
+	Child:	561
+	Child:	565
+	Child:	569
+	Child:	573
+	Child:	577
+	Child:	581
+	Child:	585
+	Child:	589
+	Child:	593
+	Child:	597
+	Child:	601
+	Child:	605
+	Child:	609
+	Child:	613
+	Child:	617
+	Child:	621
+	Child:	625
+	Child:	629
+	Child:	633
+	Child:	637
+	Child:	641
+	Child:	645
+	Child:	649
+	Child:	653
+	Child:	657
+	Child:	661
+	Child:	665
+	Child:	669
+	Child:	673
+	Child:	677
+	Child:	681
+	Child:	685
+	Child:	689
+	Child:	693
+	Child:	697
+	Child:	701
+	Child:	705
+	Child:	709
+	Child:	713
+	Child:	717
+	Child:	721
+	Child:	725
+	Child:	729
+	Child:	733
+	Child:	737
+	Child:	741
+	Child:	745
+	Child:	749
+	Child:	753
+	Child:	757
+	Child:	761
+	Child:	765
+	Child:	769
+	Child:	773
+	Child:	777
+	Child:	781
+	Child:	785
+	Child:	789
+	Child:	793
+	Child:	797
+	Child:	801
+	Child:	805
+	Child:	809
+	Child:	813
+	Child:	817
+	Child:	821
+	Child:	825
+	Child:	829
+	Child:	833
+	Child:	837
+	Child:	841
+	Child:	845
+	Child:	849
+	Child:	853
+	Child:	857
+	Child:	861
+	Child:	865
+	Child:	869
+	Child:	873
+	Child:	877
+	Child:	881
+	Child:	885
+	Child:	889
+	Child:	893
+	Child:	897
+	Child:	901
+	Child:	905
+	Child:	909
+	Child:	913
+	Child:	917
+	Child:	921
+	Child:	925
+	Child:	929
+	Child:	933
+	Child:	937
+	Child:	941
+	Child:	945
+	Child:	949
+	Child:	953
+	Child:	957
+	Child:	961
+	Child:	965
+	Child:	969
+	Child:	973
+	Child:	977
+	Child:	981
+	Child:	985
+	Child:	989
+	Child:	993
+	Child:	997
+	Child:	1001
+	Child:	1005
+	Child:	1009
+)
+
+(BShSym.5
+	Color:	6
+	Outline:	1
+	OutlineColor:	7
+	OutlineWidth:	0.10000000000000
+	BgColor:	8
+)
+
+(TClr.6
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.7
+)
+
+(TClr.8
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.9
+	Color:	10
+	Outline:	1
+	OutlineColor:	11
+	OutlineWidth:	0.10000000000000
+	BgColor:	12
+)
+
+(TClr.10
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.11
+)
+
+(TClr.12
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.13
+	Color:	14
+	Outline:	1
+	OutlineColor:	15
+	OutlineWidth:	0.10000000000000
+	BgColor:	16
+)
+
+(TClr.14
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.15
+)
+
+(TClr.16
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.17
+	Color:	18
+	Outline:	1
+	OutlineColor:	19
+	OutlineWidth:	0.10000000000000
+	BgColor:	20
+)
+
+(TClr.18
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.19
+)
+
+(TClr.20
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.21
+	Color:	22
+	Outline:	1
+	OutlineColor:	23
+	OutlineWidth:	0.10000000000000
+	BgColor:	24
+)
+
+(TClr.22
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.23
+)
+
+(TClr.24
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.25
+	Color:	26
+	Outline:	1
+	OutlineColor:	27
+	OutlineWidth:	0.10000000000000
+	BgColor:	28
+)
+
+(TClr.26
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.27
+)
+
+(TClr.28
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.29
+	Color:	30
+	Outline:	1
+	OutlineColor:	31
+	OutlineWidth:	0.10000000000000
+	BgColor:	32
+)
+
+(TClr.30
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.31
+)
+
+(TClr.32
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.33
+	Color:	34
+	Outline:	1
+	OutlineColor:	35
+	OutlineWidth:	0.10000000000000
+	BgColor:	36
+)
+
+(TClr.34
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.35
+)
+
+(TClr.36
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.37
+	Color:	38
+	Outline:	1
+	OutlineColor:	39
+	OutlineWidth:	0.10000000000000
+	BgColor:	40
+)
+
+(TClr.38
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.39
+)
+
+(TClr.40
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.41
+	Color:	42
+	Outline:	1
+	OutlineColor:	43
+	OutlineWidth:	0.10000000000000
+	BgColor:	44
+)
+
+(TClr.42
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.43
+)
+
+(TClr.44
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.45
+	Color:	46
+	Outline:	1
+	OutlineColor:	47
+	OutlineWidth:	0.10000000000000
+	BgColor:	48
+)
+
+(TClr.46
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.47
+)
+
+(TClr.48
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.49
+	Color:	50
+	Outline:	1
+	OutlineColor:	51
+	OutlineWidth:	0.10000000000000
+	BgColor:	52
+)
+
+(TClr.50
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.51
+)
+
+(TClr.52
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.53
+	Color:	54
+	Outline:	1
+	OutlineColor:	55
+	OutlineWidth:	0.10000000000000
+	BgColor:	56
+)
+
+(TClr.54
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.55
+)
+
+(TClr.56
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.57
+	Color:	58
+	Outline:	1
+	OutlineColor:	59
+	OutlineWidth:	0.10000000000000
+	BgColor:	60
+)
+
+(TClr.58
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.59
+)
+
+(TClr.60
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.61
+	Color:	62
+	Outline:	1
+	OutlineColor:	63
+	OutlineWidth:	0.10000000000000
+	BgColor:	64
+)
+
+(TClr.62
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.63
+)
+
+(TClr.64
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.65
+	Color:	66
+	Outline:	1
+	OutlineColor:	67
+	OutlineWidth:	0.10000000000000
+	BgColor:	68
+)
+
+(TClr.66
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.67
+)
+
+(TClr.68
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.69
+	Color:	70
+	Outline:	1
+	OutlineColor:	71
+	OutlineWidth:	0.10000000000000
+	BgColor:	72
+)
+
+(TClr.70
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.71
+)
+
+(TClr.72
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.73
+	Color:	74
+	Outline:	1
+	OutlineColor:	75
+	OutlineWidth:	0.10000000000000
+	BgColor:	76
+)
+
+(TClr.74
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.75
+)
+
+(TClr.76
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.77
+	Color:	78
+	Outline:	1
+	OutlineColor:	79
+	OutlineWidth:	0.10000000000000
+	BgColor:	80
+)
+
+(TClr.78
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.79
+)
+
+(TClr.80
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.81
+	Color:	82
+	Outline:	1
+	OutlineColor:	83
+	OutlineWidth:	0.10000000000000
+	BgColor:	84
+)
+
+(TClr.82
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.83
+)
+
+(TClr.84
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.85
+	Color:	86
+	Outline:	1
+	OutlineColor:	87
+	OutlineWidth:	0.10000000000000
+	BgColor:	88
+)
+
+(TClr.86
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.87
+)
+
+(TClr.88
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.89
+	Color:	90
+	Outline:	1
+	OutlineColor:	91
+	OutlineWidth:	0.10000000000000
+	BgColor:	92
+)
+
+(TClr.90
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.91
+)
+
+(TClr.92
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.93
+	Color:	94
+	Outline:	1
+	OutlineColor:	95
+	OutlineWidth:	0.10000000000000
+	BgColor:	96
+)
+
+(TClr.94
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.95
+)
+
+(TClr.96
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.97
+	Color:	98
+	Outline:	1
+	OutlineColor:	99
+	OutlineWidth:	0.10000000000000
+	BgColor:	100
+)
+
+(TClr.98
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.99
+)
+
+(TClr.100
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.101
+	Color:	102
+	Outline:	1
+	OutlineColor:	103
+	OutlineWidth:	0.10000000000000
+	BgColor:	104
+)
+
+(TClr.102
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.103
+)
+
+(TClr.104
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.105
+	Color:	106
+	Outline:	1
+	OutlineColor:	107
+	OutlineWidth:	0.10000000000000
+	BgColor:	108
+)
+
+(TClr.106
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.107
+)
+
+(TClr.108
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.109
+	Color:	110
+	Outline:	1
+	OutlineColor:	111
+	OutlineWidth:	0.10000000000000
+	BgColor:	112
+)
+
+(TClr.110
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.111
+)
+
+(TClr.112
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.113
+	Color:	114
+	Outline:	1
+	OutlineColor:	115
+	OutlineWidth:	0.10000000000000
+	BgColor:	116
+)
+
+(TClr.114
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.115
+)
+
+(TClr.116
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.117
+	Color:	118
+	Outline:	1
+	OutlineColor:	119
+	OutlineWidth:	0.10000000000000
+	BgColor:	120
+)
+
+(TClr.118
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.119
+)
+
+(TClr.120
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.121
+	Color:	122
+	Outline:	1
+	OutlineColor:	123
+	OutlineWidth:	0.10000000000000
+	BgColor:	124
+)
+
+(TClr.122
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.123
+)
+
+(TClr.124
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.125
+	Color:	126
+	Outline:	1
+	OutlineColor:	127
+	OutlineWidth:	0.10000000000000
+	BgColor:	128
+)
+
+(TClr.126
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.127
+)
+
+(TClr.128
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.129
+	Color:	130
+	Outline:	1
+	OutlineColor:	131
+	OutlineWidth:	0.10000000000000
+	BgColor:	132
+)
+
+(TClr.130
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.131
+)
+
+(TClr.132
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.133
+	Color:	134
+	Outline:	1
+	OutlineColor:	135
+	OutlineWidth:	0.10000000000000
+	BgColor:	136
+)
+
+(TClr.134
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.135
+)
+
+(TClr.136
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.137
+	Color:	138
+	Outline:	1
+	OutlineColor:	139
+	OutlineWidth:	0.10000000000000
+	BgColor:	140
+)
+
+(TClr.138
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.139
+)
+
+(TClr.140
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.141
+	Color:	142
+	Outline:	1
+	OutlineColor:	143
+	OutlineWidth:	0.10000000000000
+	BgColor:	144
+)
+
+(TClr.142
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.143
+)
+
+(TClr.144
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.145
+	Color:	146
+	Outline:	1
+	OutlineColor:	147
+	OutlineWidth:	0.10000000000000
+	BgColor:	148
+)
+
+(TClr.146
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.147
+)
+
+(TClr.148
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.149
+	Color:	150
+	Outline:	1
+	OutlineColor:	151
+	OutlineWidth:	0.10000000000000
+	BgColor:	152
+)
+
+(TClr.150
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.151
+)
+
+(TClr.152
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.153
+	Color:	154
+	Outline:	1
+	OutlineColor:	155
+	OutlineWidth:	0.10000000000000
+	BgColor:	156
+)
+
+(TClr.154
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.155
+)
+
+(TClr.156
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.157
+	Color:	158
+	Outline:	1
+	OutlineColor:	159
+	OutlineWidth:	0.10000000000000
+	BgColor:	160
+)
+
+(TClr.158
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.159
+)
+
+(TClr.160
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.161
+	Color:	162
+	Outline:	1
+	OutlineColor:	163
+	OutlineWidth:	0.10000000000000
+	BgColor:	164
+)
+
+(TClr.162
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.163
+)
+
+(TClr.164
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.165
+	Color:	166
+	Outline:	1
+	OutlineColor:	167
+	OutlineWidth:	0.10000000000000
+	BgColor:	168
+)
+
+(TClr.166
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.167
+)
+
+(TClr.168
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.169
+	Color:	170
+	Outline:	1
+	OutlineColor:	171
+	OutlineWidth:	0.10000000000000
+	BgColor:	172
+)
+
+(TClr.170
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.171
+)
+
+(TClr.172
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.173
+	Color:	174
+	Outline:	1
+	OutlineColor:	175
+	OutlineWidth:	0.10000000000000
+	BgColor:	176
+)
+
+(TClr.174
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.175
+)
+
+(TClr.176
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.177
+	Color:	178
+	Outline:	1
+	OutlineColor:	179
+	OutlineWidth:	0.10000000000000
+	BgColor:	180
+)
+
+(TClr.178
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.179
+)
+
+(TClr.180
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.181
+	Color:	182
+	Outline:	1
+	OutlineColor:	183
+	OutlineWidth:	0.10000000000000
+	BgColor:	184
+)
+
+(TClr.182
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.183
+)
+
+(TClr.184
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.185
+	Color:	186
+	Outline:	1
+	OutlineColor:	187
+	OutlineWidth:	0.10000000000000
+	BgColor:	188
+)
+
+(TClr.186
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.187
+)
+
+(TClr.188
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.189
+	Color:	190
+	Outline:	1
+	OutlineColor:	191
+	OutlineWidth:	0.10000000000000
+	BgColor:	192
+)
+
+(TClr.190
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.191
+)
+
+(TClr.192
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.193
+	Color:	194
+	Outline:	1
+	OutlineColor:	195
+	OutlineWidth:	0.10000000000000
+	BgColor:	196
+)
+
+(TClr.194
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.195
+)
+
+(TClr.196
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.197
+	Color:	198
+	Outline:	1
+	OutlineColor:	199
+	OutlineWidth:	0.10000000000000
+	BgColor:	200
+)
+
+(TClr.198
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.199
+)
+
+(TClr.200
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.201
+	Color:	202
+	Outline:	1
+	OutlineColor:	203
+	OutlineWidth:	0.10000000000000
+	BgColor:	204
+)
+
+(TClr.202
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.203
+)
+
+(TClr.204
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.205
+	Color:	206
+	Outline:	1
+	OutlineColor:	207
+	OutlineWidth:	0.10000000000000
+	BgColor:	208
+)
+
+(TClr.206
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.207
+)
+
+(TClr.208
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.209
+	Color:	210
+	Outline:	1
+	OutlineColor:	211
+	OutlineWidth:	0.10000000000000
+	BgColor:	212
+)
+
+(TClr.210
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.211
+)
+
+(TClr.212
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.213
+	Color:	214
+	Outline:	1
+	OutlineColor:	215
+	OutlineWidth:	0.10000000000000
+	BgColor:	216
+)
+
+(TClr.214
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.215
+)
+
+(TClr.216
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.217
+	Color:	218
+	Outline:	1
+	OutlineColor:	219
+	OutlineWidth:	0.10000000000000
+	BgColor:	220
+)
+
+(TClr.218
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.219
+)
+
+(TClr.220
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.221
+	Color:	222
+	Outline:	1
+	OutlineColor:	223
+	OutlineWidth:	0.10000000000000
+	BgColor:	224
+)
+
+(TClr.222
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.223
+)
+
+(TClr.224
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.225
+	Color:	226
+	Outline:	1
+	OutlineColor:	227
+	OutlineWidth:	0.10000000000000
+	BgColor:	228
+)
+
+(TClr.226
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.227
+)
+
+(TClr.228
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.229
+	Color:	230
+	Outline:	1
+	OutlineColor:	231
+	OutlineWidth:	0.10000000000000
+	BgColor:	232
+)
+
+(TClr.230
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.231
+)
+
+(TClr.232
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.233
+	Color:	234
+	Outline:	1
+	OutlineColor:	235
+	OutlineWidth:	0.10000000000000
+	BgColor:	236
+)
+
+(TClr.234
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.235
+)
+
+(TClr.236
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.237
+	Color:	238
+	Outline:	1
+	OutlineColor:	239
+	OutlineWidth:	0.10000000000000
+	BgColor:	240
+)
+
+(TClr.238
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.239
+)
+
+(TClr.240
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.241
+	Color:	242
+	Outline:	1
+	OutlineColor:	243
+	OutlineWidth:	0.10000000000000
+	BgColor:	244
+)
+
+(TClr.242
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.243
+)
+
+(TClr.244
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.245
+	Color:	246
+	Outline:	1
+	OutlineColor:	247
+	OutlineWidth:	0.10000000000000
+	BgColor:	248
+)
+
+(TClr.246
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.247
+)
+
+(TClr.248
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.249
+	Color:	250
+	Outline:	1
+	OutlineColor:	251
+	OutlineWidth:	0.10000000000000
+	BgColor:	252
+)
+
+(TClr.250
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.251
+)
+
+(TClr.252
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.253
+	Color:	254
+	Outline:	1
+	OutlineColor:	255
+	OutlineWidth:	0.10000000000000
+	BgColor:	256
+)
+
+(TClr.254
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.255
+)
+
+(TClr.256
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.257
+	Color:	258
+	Outline:	1
+	OutlineColor:	259
+	OutlineWidth:	0.10000000000000
+	BgColor:	260
+)
+
+(TClr.258
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.259
+)
+
+(TClr.260
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.261
+	Color:	262
+	Outline:	1
+	OutlineColor:	263
+	OutlineWidth:	0.10000000000000
+	BgColor:	264
+)
+
+(TClr.262
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.263
+)
+
+(TClr.264
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.265
+	Color:	266
+	Outline:	1
+	OutlineColor:	267
+	OutlineWidth:	0.10000000000000
+	BgColor:	268
+)
+
+(TClr.266
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.267
+)
+
+(TClr.268
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.269
+	Color:	270
+	Outline:	1
+	OutlineColor:	271
+	OutlineWidth:	0.10000000000000
+	BgColor:	272
+)
+
+(TClr.270
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.271
+)
+
+(TClr.272
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.273
+	Color:	274
+	Outline:	1
+	OutlineColor:	275
+	OutlineWidth:	0.10000000000000
+	BgColor:	276
+)
+
+(TClr.274
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.275
+)
+
+(TClr.276
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.277
+	Color:	278
+	Outline:	1
+	OutlineColor:	279
+	OutlineWidth:	0.10000000000000
+	BgColor:	280
+)
+
+(TClr.278
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.279
+)
+
+(TClr.280
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.281
+	Color:	282
+	Outline:	1
+	OutlineColor:	283
+	OutlineWidth:	0.10000000000000
+	BgColor:	284
+)
+
+(TClr.282
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.283
+)
+
+(TClr.284
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.285
+	Color:	286
+	Outline:	1
+	OutlineColor:	287
+	OutlineWidth:	0.10000000000000
+	BgColor:	288
+)
+
+(TClr.286
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.287
+)
+
+(TClr.288
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.289
+	Color:	290
+	Outline:	1
+	OutlineColor:	291
+	OutlineWidth:	0.10000000000000
+	BgColor:	292
+)
+
+(TClr.290
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.291
+)
+
+(TClr.292
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.293
+	Color:	294
+	Outline:	1
+	OutlineColor:	295
+	OutlineWidth:	0.10000000000000
+	BgColor:	296
+)
+
+(TClr.294
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.295
+)
+
+(TClr.296
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.297
+	Color:	298
+	Outline:	1
+	OutlineColor:	299
+	OutlineWidth:	0.10000000000000
+	BgColor:	300
+)
+
+(TClr.298
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.299
+)
+
+(TClr.300
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.301
+	Color:	302
+	Outline:	1
+	OutlineColor:	303
+	OutlineWidth:	0.10000000000000
+	BgColor:	304
+)
+
+(TClr.302
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.303
+)
+
+(TClr.304
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.305
+	Color:	306
+	Outline:	1
+	OutlineColor:	307
+	OutlineWidth:	0.10000000000000
+	BgColor:	308
+)
+
+(TClr.306
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.307
+)
+
+(TClr.308
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.309
+	Color:	310
+	Outline:	1
+	OutlineColor:	311
+	OutlineWidth:	0.10000000000000
+	BgColor:	312
+)
+
+(TClr.310
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.311
+)
+
+(TClr.312
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.313
+	Color:	314
+	Outline:	1
+	OutlineColor:	315
+	OutlineWidth:	0.10000000000000
+	BgColor:	316
+)
+
+(TClr.314
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.315
+)
+
+(TClr.316
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.317
+	Color:	318
+	Outline:	1
+	OutlineColor:	319
+	OutlineWidth:	0.10000000000000
+	BgColor:	320
+)
+
+(TClr.318
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.319
+)
+
+(TClr.320
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.321
+	Color:	322
+	Outline:	1
+	OutlineColor:	323
+	OutlineWidth:	0.10000000000000
+	BgColor:	324
+)
+
+(TClr.322
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.323
+)
+
+(TClr.324
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.325
+	Color:	326
+	Outline:	1
+	OutlineColor:	327
+	OutlineWidth:	0.10000000000000
+	BgColor:	328
+)
+
+(TClr.326
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.327
+)
+
+(TClr.328
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.329
+	Color:	330
+	Outline:	1
+	OutlineColor:	331
+	OutlineWidth:	0.10000000000000
+	BgColor:	332
+)
+
+(TClr.330
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.331
+)
+
+(TClr.332
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.333
+	Color:	334
+	Outline:	1
+	OutlineColor:	335
+	OutlineWidth:	0.10000000000000
+	BgColor:	336
+)
+
+(TClr.334
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.335
+)
+
+(TClr.336
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.337
+	Color:	338
+	Outline:	1
+	OutlineColor:	339
+	OutlineWidth:	0.10000000000000
+	BgColor:	340
+)
+
+(TClr.338
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.339
+)
+
+(TClr.340
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.341
+	Color:	342
+	Outline:	1
+	OutlineColor:	343
+	OutlineWidth:	0.10000000000000
+	BgColor:	344
+)
+
+(TClr.342
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.343
+)
+
+(TClr.344
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.345
+	Color:	346
+	Outline:	1
+	OutlineColor:	347
+	OutlineWidth:	0.10000000000000
+	BgColor:	348
+)
+
+(TClr.346
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.347
+)
+
+(TClr.348
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.349
+	Color:	350
+	Outline:	1
+	OutlineColor:	351
+	OutlineWidth:	0.10000000000000
+	BgColor:	352
+)
+
+(TClr.350
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.351
+)
+
+(TClr.352
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.353
+	Color:	354
+	Outline:	1
+	OutlineColor:	355
+	OutlineWidth:	0.10000000000000
+	BgColor:	356
+)
+
+(TClr.354
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.355
+)
+
+(TClr.356
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.357
+	Color:	358
+	Outline:	1
+	OutlineColor:	359
+	OutlineWidth:	0.10000000000000
+	BgColor:	360
+)
+
+(TClr.358
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.359
+)
+
+(TClr.360
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.361
+	Color:	362
+	Outline:	1
+	OutlineColor:	363
+	OutlineWidth:	0.10000000000000
+	BgColor:	364
+)
+
+(TClr.362
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.363
+)
+
+(TClr.364
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.365
+	Color:	366
+	Outline:	1
+	OutlineColor:	367
+	OutlineWidth:	0.10000000000000
+	BgColor:	368
+)
+
+(TClr.366
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.367
+)
+
+(TClr.368
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.369
+	Color:	370
+	Outline:	1
+	OutlineColor:	371
+	OutlineWidth:	0.10000000000000
+	BgColor:	372
+)
+
+(TClr.370
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.371
+)
+
+(TClr.372
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.373
+	Color:	374
+	Outline:	1
+	OutlineColor:	375
+	OutlineWidth:	0.10000000000000
+	BgColor:	376
+)
+
+(TClr.374
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.375
+)
+
+(TClr.376
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.377
+	Color:	378
+	Outline:	1
+	OutlineColor:	379
+	OutlineWidth:	0.10000000000000
+	BgColor:	380
+)
+
+(TClr.378
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.379
+)
+
+(TClr.380
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.381
+	Color:	382
+	Outline:	1
+	OutlineColor:	383
+	OutlineWidth:	0.10000000000000
+	BgColor:	384
+)
+
+(TClr.382
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.383
+)
+
+(TClr.384
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.385
+	Color:	386
+	Outline:	1
+	OutlineColor:	387
+	OutlineWidth:	0.10000000000000
+	BgColor:	388
+)
+
+(TClr.386
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.387
+)
+
+(TClr.388
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.389
+	Color:	390
+	Outline:	1
+	OutlineColor:	391
+	OutlineWidth:	0.10000000000000
+	BgColor:	392
+)
+
+(TClr.390
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.391
+)
+
+(TClr.392
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.393
+	Color:	394
+	Outline:	1
+	OutlineColor:	395
+	OutlineWidth:	0.10000000000000
+	BgColor:	396
+)
+
+(TClr.394
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.395
+)
+
+(TClr.396
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.397
+	Color:	398
+	Outline:	1
+	OutlineColor:	399
+	OutlineWidth:	0.10000000000000
+	BgColor:	400
+)
+
+(TClr.398
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.399
+)
+
+(TClr.400
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.401
+	Color:	402
+	Outline:	1
+	OutlineColor:	403
+	OutlineWidth:	0.10000000000000
+	BgColor:	404
+)
+
+(TClr.402
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.403
+)
+
+(TClr.404
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.405
+	Color:	406
+	Outline:	1
+	OutlineColor:	407
+	OutlineWidth:	0.10000000000000
+	BgColor:	408
+)
+
+(TClr.406
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.407
+)
+
+(TClr.408
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.409
+	Color:	410
+	Outline:	1
+	OutlineColor:	411
+	OutlineWidth:	0.10000000000000
+	BgColor:	412
+)
+
+(TClr.410
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.411
+)
+
+(TClr.412
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.413
+	Color:	414
+	Outline:	1
+	OutlineColor:	415
+	OutlineWidth:	0.10000000000000
+	BgColor:	416
+)
+
+(TClr.414
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.415
+)
+
+(TClr.416
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.417
+	Color:	418
+	Outline:	1
+	OutlineColor:	419
+	OutlineWidth:	0.10000000000000
+	BgColor:	420
+)
+
+(TClr.418
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.419
+)
+
+(TClr.420
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.421
+	Color:	422
+	Outline:	1
+	OutlineColor:	423
+	OutlineWidth:	0.10000000000000
+	BgColor:	424
+)
+
+(TClr.422
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.423
+)
+
+(TClr.424
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.425
+	Color:	426
+	Outline:	1
+	OutlineColor:	427
+	OutlineWidth:	0.10000000000000
+	BgColor:	428
+)
+
+(TClr.426
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.427
+)
+
+(TClr.428
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.429
+	Color:	430
+	Outline:	1
+	OutlineColor:	431
+	OutlineWidth:	0.10000000000000
+	BgColor:	432
+)
+
+(TClr.430
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.431
+)
+
+(TClr.432
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.433
+	Color:	434
+	Outline:	1
+	OutlineColor:	435
+	OutlineWidth:	0.10000000000000
+	BgColor:	436
+)
+
+(TClr.434
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.435
+)
+
+(TClr.436
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.437
+	Color:	438
+	Outline:	1
+	OutlineColor:	439
+	OutlineWidth:	0.10000000000000
+	BgColor:	440
+)
+
+(TClr.438
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.439
+)
+
+(TClr.440
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.441
+	Color:	442
+	Outline:	1
+	OutlineColor:	443
+	OutlineWidth:	0.10000000000000
+	BgColor:	444
+)
+
+(TClr.442
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.443
+)
+
+(TClr.444
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.445
+	Color:	446
+	Outline:	1
+	OutlineColor:	447
+	OutlineWidth:	0.10000000000000
+	BgColor:	448
+)
+
+(TClr.446
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.447
+)
+
+(TClr.448
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.449
+	Color:	450
+	Outline:	1
+	OutlineColor:	451
+	OutlineWidth:	0.10000000000000
+	BgColor:	452
+)
+
+(TClr.450
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.451
+)
+
+(TClr.452
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.453
+	Color:	454
+	Outline:	1
+	OutlineColor:	455
+	OutlineWidth:	0.10000000000000
+	BgColor:	456
+)
+
+(TClr.454
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.455
+)
+
+(TClr.456
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.457
+	Color:	458
+	Outline:	1
+	OutlineColor:	459
+	OutlineWidth:	0.10000000000000
+	BgColor:	460
+)
+
+(TClr.458
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.459
+)
+
+(TClr.460
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.461
+	Color:	462
+	Outline:	1
+	OutlineColor:	463
+	OutlineWidth:	0.10000000000000
+	BgColor:	464
+)
+
+(TClr.462
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.463
+)
+
+(TClr.464
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.465
+	Color:	466
+	Outline:	1
+	OutlineColor:	467
+	OutlineWidth:	0.10000000000000
+	BgColor:	468
+)
+
+(TClr.466
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.467
+)
+
+(TClr.468
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.469
+	Color:	470
+	Outline:	1
+	OutlineColor:	471
+	OutlineWidth:	0.10000000000000
+	BgColor:	472
+)
+
+(TClr.470
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.471
+)
+
+(TClr.472
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.473
+	Color:	474
+	Outline:	1
+	OutlineColor:	475
+	OutlineWidth:	0.10000000000000
+	BgColor:	476
+)
+
+(TClr.474
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.475
+)
+
+(TClr.476
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.477
+	Color:	478
+	Outline:	1
+	OutlineColor:	479
+	OutlineWidth:	0.10000000000000
+	BgColor:	480
+)
+
+(TClr.478
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.479
+)
+
+(TClr.480
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.481
+	Color:	482
+	Outline:	1
+	OutlineColor:	483
+	OutlineWidth:	0.10000000000000
+	BgColor:	484
+)
+
+(TClr.482
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.483
+)
+
+(TClr.484
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.485
+	Color:	486
+	Outline:	1
+	OutlineColor:	487
+	OutlineWidth:	0.10000000000000
+	BgColor:	488
+)
+
+(TClr.486
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.487
+)
+
+(TClr.488
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.489
+	Color:	490
+	Outline:	1
+	OutlineColor:	491
+	OutlineWidth:	0.10000000000000
+	BgColor:	492
+)
+
+(TClr.490
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.491
+)
+
+(TClr.492
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.493
+	Color:	494
+	Outline:	1
+	OutlineColor:	495
+	OutlineWidth:	0.10000000000000
+	BgColor:	496
+)
+
+(TClr.494
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.495
+)
+
+(TClr.496
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.497
+	Color:	498
+	Outline:	1
+	OutlineColor:	499
+	OutlineWidth:	0.10000000000000
+	BgColor:	500
+)
+
+(TClr.498
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.499
+)
+
+(TClr.500
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.501
+	Color:	502
+	Outline:	1
+	OutlineColor:	503
+	OutlineWidth:	0.10000000000000
+	BgColor:	504
+)
+
+(TClr.502
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.503
+)
+
+(TClr.504
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.505
+	Color:	506
+	Outline:	1
+	OutlineColor:	507
+	OutlineWidth:	0.10000000000000
+	BgColor:	508
+)
+
+(TClr.506
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.507
+)
+
+(TClr.508
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.509
+	Color:	510
+	Outline:	1
+	OutlineColor:	511
+	OutlineWidth:	0.10000000000000
+	BgColor:	512
+)
+
+(TClr.510
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.511
+)
+
+(TClr.512
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.513
+	Color:	514
+	Outline:	1
+	OutlineColor:	515
+	OutlineWidth:	0.10000000000000
+	BgColor:	516
+)
+
+(TClr.514
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.515
+)
+
+(TClr.516
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.517
+	Color:	518
+	Outline:	1
+	OutlineColor:	519
+	OutlineWidth:	0.10000000000000
+	BgColor:	520
+)
+
+(TClr.518
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.519
+)
+
+(TClr.520
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.521
+	Color:	522
+	Outline:	1
+	OutlineColor:	523
+	OutlineWidth:	0.10000000000000
+	BgColor:	524
+)
+
+(TClr.522
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.523
+)
+
+(TClr.524
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.525
+	Color:	526
+	Outline:	1
+	OutlineColor:	527
+	OutlineWidth:	0.10000000000000
+	BgColor:	528
+)
+
+(TClr.526
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.527
+)
+
+(TClr.528
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.529
+	Color:	530
+	Outline:	1
+	OutlineColor:	531
+	OutlineWidth:	0.10000000000000
+	BgColor:	532
+)
+
+(TClr.530
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.531
+)
+
+(TClr.532
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.533
+	Color:	534
+	Outline:	1
+	OutlineColor:	535
+	OutlineWidth:	0.10000000000000
+	BgColor:	536
+)
+
+(TClr.534
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.535
+)
+
+(TClr.536
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.537
+	Color:	538
+	Outline:	1
+	OutlineColor:	539
+	OutlineWidth:	0.10000000000000
+	BgColor:	540
+)
+
+(TClr.538
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.539
+)
+
+(TClr.540
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.541
+	Color:	542
+	Outline:	1
+	OutlineColor:	543
+	OutlineWidth:	0.10000000000000
+	BgColor:	544
+)
+
+(TClr.542
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.543
+)
+
+(TClr.544
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.545
+	Color:	546
+	Outline:	1
+	OutlineColor:	547
+	OutlineWidth:	0.10000000000000
+	BgColor:	548
+)
+
+(TClr.546
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.547
+)
+
+(TClr.548
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.549
+	Color:	550
+	Outline:	1
+	OutlineColor:	551
+	OutlineWidth:	0.10000000000000
+	BgColor:	552
+)
+
+(TClr.550
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.551
+)
+
+(TClr.552
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.553
+	Color:	554
+	Outline:	1
+	OutlineColor:	555
+	OutlineWidth:	0.10000000000000
+	BgColor:	556
+)
+
+(TClr.554
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.555
+)
+
+(TClr.556
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.557
+	Color:	558
+	Outline:	1
+	OutlineColor:	559
+	OutlineWidth:	0.10000000000000
+	BgColor:	560
+)
+
+(TClr.558
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.559
+)
+
+(TClr.560
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.561
+	Color:	562
+	Outline:	1
+	OutlineColor:	563
+	OutlineWidth:	0.10000000000000
+	BgColor:	564
+)
+
+(TClr.562
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.563
+)
+
+(TClr.564
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.565
+	Color:	566
+	Outline:	1
+	OutlineColor:	567
+	OutlineWidth:	0.10000000000000
+	BgColor:	568
+)
+
+(TClr.566
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.567
+)
+
+(TClr.568
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.569
+	Color:	570
+	Outline:	1
+	OutlineColor:	571
+	OutlineWidth:	0.10000000000000
+	BgColor:	572
+)
+
+(TClr.570
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.571
+)
+
+(TClr.572
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.573
+	Color:	574
+	Outline:	1
+	OutlineColor:	575
+	OutlineWidth:	0.10000000000000
+	BgColor:	576
+)
+
+(TClr.574
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.575
+)
+
+(TClr.576
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.577
+	Color:	578
+	Outline:	1
+	OutlineColor:	579
+	OutlineWidth:	0.10000000000000
+	BgColor:	580
+)
+
+(TClr.578
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.579
+)
+
+(TClr.580
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.581
+	Color:	582
+	Outline:	1
+	OutlineColor:	583
+	OutlineWidth:	0.10000000000000
+	BgColor:	584
+)
+
+(TClr.582
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.583
+)
+
+(TClr.584
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.585
+	Color:	586
+	Outline:	1
+	OutlineColor:	587
+	OutlineWidth:	0.10000000000000
+	BgColor:	588
+)
+
+(TClr.586
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.587
+)
+
+(TClr.588
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.589
+	Color:	590
+	Outline:	1
+	OutlineColor:	591
+	OutlineWidth:	0.10000000000000
+	BgColor:	592
+)
+
+(TClr.590
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.591
+)
+
+(TClr.592
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.593
+	Color:	594
+	Outline:	1
+	OutlineColor:	595
+	OutlineWidth:	0.10000000000000
+	BgColor:	596
+)
+
+(TClr.594
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.595
+)
+
+(TClr.596
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.597
+	Color:	598
+	Outline:	1
+	OutlineColor:	599
+	OutlineWidth:	0.10000000000000
+	BgColor:	600
+)
+
+(TClr.598
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.599
+)
+
+(TClr.600
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.601
+	Color:	602
+	Outline:	1
+	OutlineColor:	603
+	OutlineWidth:	0.10000000000000
+	BgColor:	604
+)
+
+(TClr.602
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.603
+)
+
+(TClr.604
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.605
+	Color:	606
+	Outline:	1
+	OutlineColor:	607
+	OutlineWidth:	0.10000000000000
+	BgColor:	608
+)
+
+(TClr.606
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.607
+)
+
+(TClr.608
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.609
+	Color:	610
+	Outline:	1
+	OutlineColor:	611
+	OutlineWidth:	0.10000000000000
+	BgColor:	612
+)
+
+(TClr.610
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.611
+)
+
+(TClr.612
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.613
+	Color:	614
+	Outline:	1
+	OutlineColor:	615
+	OutlineWidth:	0.10000000000000
+	BgColor:	616
+)
+
+(TClr.614
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.615
+)
+
+(TClr.616
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.617
+	Color:	618
+	Outline:	1
+	OutlineColor:	619
+	OutlineWidth:	0.10000000000000
+	BgColor:	620
+)
+
+(TClr.618
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.619
+)
+
+(TClr.620
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.621
+	Color:	622
+	Outline:	1
+	OutlineColor:	623
+	OutlineWidth:	0.10000000000000
+	BgColor:	624
+)
+
+(TClr.622
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.623
+)
+
+(TClr.624
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.625
+	Color:	626
+	Outline:	1
+	OutlineColor:	627
+	OutlineWidth:	0.10000000000000
+	BgColor:	628
+)
+
+(TClr.626
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.627
+)
+
+(TClr.628
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.629
+	Color:	630
+	Outline:	1
+	OutlineColor:	631
+	OutlineWidth:	0.10000000000000
+	BgColor:	632
+)
+
+(TClr.630
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.631
+)
+
+(TClr.632
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.633
+	Color:	634
+	Outline:	1
+	OutlineColor:	635
+	OutlineWidth:	0.10000000000000
+	BgColor:	636
+)
+
+(TClr.634
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.635
+)
+
+(TClr.636
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.637
+	Color:	638
+	Outline:	1
+	OutlineColor:	639
+	OutlineWidth:	0.10000000000000
+	BgColor:	640
+)
+
+(TClr.638
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.639
+)
+
+(TClr.640
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.641
+	Color:	642
+	Outline:	1
+	OutlineColor:	643
+	OutlineWidth:	0.10000000000000
+	BgColor:	644
+)
+
+(TClr.642
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.643
+)
+
+(TClr.644
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.645
+	Color:	646
+	Outline:	1
+	OutlineColor:	647
+	OutlineWidth:	0.10000000000000
+	BgColor:	648
+)
+
+(TClr.646
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.647
+)
+
+(TClr.648
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.649
+	Color:	650
+	Outline:	1
+	OutlineColor:	651
+	OutlineWidth:	0.10000000000000
+	BgColor:	652
+)
+
+(TClr.650
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.651
+)
+
+(TClr.652
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.653
+	Color:	654
+	Outline:	1
+	OutlineColor:	655
+	OutlineWidth:	0.10000000000000
+	BgColor:	656
+)
+
+(TClr.654
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.655
+)
+
+(TClr.656
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.657
+	Color:	658
+	Outline:	1
+	OutlineColor:	659
+	OutlineWidth:	0.10000000000000
+	BgColor:	660
+)
+
+(TClr.658
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.659
+)
+
+(TClr.660
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.661
+	Color:	662
+	Outline:	1
+	OutlineColor:	663
+	OutlineWidth:	0.10000000000000
+	BgColor:	664
+)
+
+(TClr.662
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.663
+)
+
+(TClr.664
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.665
+	Color:	666
+	Outline:	1
+	OutlineColor:	667
+	OutlineWidth:	0.10000000000000
+	BgColor:	668
+)
+
+(TClr.666
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.667
+)
+
+(TClr.668
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.669
+	Color:	670
+	Outline:	1
+	OutlineColor:	671
+	OutlineWidth:	0.10000000000000
+	BgColor:	672
+)
+
+(TClr.670
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.671
+)
+
+(TClr.672
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.673
+	Color:	674
+	Outline:	1
+	OutlineColor:	675
+	OutlineWidth:	0.10000000000000
+	BgColor:	676
+)
+
+(TClr.674
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.675
+)
+
+(TClr.676
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.677
+	Color:	678
+	Outline:	1
+	OutlineColor:	679
+	OutlineWidth:	0.10000000000000
+	BgColor:	680
+)
+
+(TClr.678
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.679
+)
+
+(TClr.680
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.681
+	Color:	682
+	Outline:	1
+	OutlineColor:	683
+	OutlineWidth:	0.10000000000000
+	BgColor:	684
+)
+
+(TClr.682
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.683
+)
+
+(TClr.684
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.685
+	Color:	686
+	Outline:	1
+	OutlineColor:	687
+	OutlineWidth:	0.10000000000000
+	BgColor:	688
+)
+
+(TClr.686
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.687
+)
+
+(TClr.688
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.689
+	Color:	690
+	Outline:	1
+	OutlineColor:	691
+	OutlineWidth:	0.10000000000000
+	BgColor:	692
+)
+
+(TClr.690
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.691
+)
+
+(TClr.692
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.693
+	Color:	694
+	Outline:	1
+	OutlineColor:	695
+	OutlineWidth:	0.10000000000000
+	BgColor:	696
+)
+
+(TClr.694
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.695
+)
+
+(TClr.696
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.697
+	Color:	698
+	Outline:	1
+	OutlineColor:	699
+	OutlineWidth:	0.10000000000000
+	BgColor:	700
+)
+
+(TClr.698
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.699
+)
+
+(TClr.700
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.701
+	Color:	702
+	Outline:	1
+	OutlineColor:	703
+	OutlineWidth:	0.10000000000000
+	BgColor:	704
+)
+
+(TClr.702
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.703
+)
+
+(TClr.704
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.705
+	Color:	706
+	Outline:	1
+	OutlineColor:	707
+	OutlineWidth:	0.10000000000000
+	BgColor:	708
+)
+
+(TClr.706
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.707
+)
+
+(TClr.708
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.709
+	Color:	710
+	Outline:	1
+	OutlineColor:	711
+	OutlineWidth:	0.10000000000000
+	BgColor:	712
+)
+
+(TClr.710
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.711
+)
+
+(TClr.712
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.713
+	Color:	714
+	Outline:	1
+	OutlineColor:	715
+	OutlineWidth:	0.10000000000000
+	BgColor:	716
+)
+
+(TClr.714
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.715
+)
+
+(TClr.716
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.717
+	Color:	718
+	Outline:	1
+	OutlineColor:	719
+	OutlineWidth:	0.10000000000000
+	BgColor:	720
+)
+
+(TClr.718
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.719
+)
+
+(TClr.720
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.721
+	Color:	722
+	Outline:	1
+	OutlineColor:	723
+	OutlineWidth:	0.10000000000000
+	BgColor:	724
+)
+
+(TClr.722
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.723
+)
+
+(TClr.724
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.725
+	Color:	726
+	Outline:	1
+	OutlineColor:	727
+	OutlineWidth:	0.10000000000000
+	BgColor:	728
+)
+
+(TClr.726
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.727
+)
+
+(TClr.728
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.729
+	Color:	730
+	Outline:	1
+	OutlineColor:	731
+	OutlineWidth:	0.10000000000000
+	BgColor:	732
+)
+
+(TClr.730
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.731
+)
+
+(TClr.732
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.733
+	Color:	734
+	Outline:	1
+	OutlineColor:	735
+	OutlineWidth:	0.10000000000000
+	BgColor:	736
+)
+
+(TClr.734
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.735
+)
+
+(TClr.736
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.737
+	Color:	738
+	Outline:	1
+	OutlineColor:	739
+	OutlineWidth:	0.10000000000000
+	BgColor:	740
+)
+
+(TClr.738
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.739
+)
+
+(TClr.740
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.741
+	Color:	742
+	Outline:	1
+	OutlineColor:	743
+	OutlineWidth:	0.10000000000000
+	BgColor:	744
+)
+
+(TClr.742
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.743
+)
+
+(TClr.744
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.745
+	Color:	746
+	Outline:	1
+	OutlineColor:	747
+	OutlineWidth:	0.10000000000000
+	BgColor:	748
+)
+
+(TClr.746
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.747
+)
+
+(TClr.748
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.749
+	Color:	750
+	Outline:	1
+	OutlineColor:	751
+	OutlineWidth:	0.10000000000000
+	BgColor:	752
+)
+
+(TClr.750
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.751
+)
+
+(TClr.752
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.753
+	Color:	754
+	Outline:	1
+	OutlineColor:	755
+	OutlineWidth:	0.10000000000000
+	BgColor:	756
+)
+
+(TClr.754
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.755
+)
+
+(TClr.756
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.757
+	Color:	758
+	Outline:	1
+	OutlineColor:	759
+	OutlineWidth:	0.10000000000000
+	BgColor:	760
+)
+
+(TClr.758
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.759
+)
+
+(TClr.760
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.761
+	Color:	762
+	Outline:	1
+	OutlineColor:	763
+	OutlineWidth:	0.10000000000000
+	BgColor:	764
+)
+
+(TClr.762
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.763
+)
+
+(TClr.764
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.765
+	Color:	766
+	Outline:	1
+	OutlineColor:	767
+	OutlineWidth:	0.10000000000000
+	BgColor:	768
+)
+
+(TClr.766
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.767
+)
+
+(TClr.768
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.769
+	Color:	770
+	Outline:	1
+	OutlineColor:	771
+	OutlineWidth:	0.10000000000000
+	BgColor:	772
+)
+
+(TClr.770
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.771
+)
+
+(TClr.772
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.773
+	Color:	774
+	Outline:	1
+	OutlineColor:	775
+	OutlineWidth:	0.10000000000000
+	BgColor:	776
+)
+
+(TClr.774
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.775
+)
+
+(TClr.776
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.777
+	Color:	778
+	Outline:	1
+	OutlineColor:	779
+	OutlineWidth:	0.10000000000000
+	BgColor:	780
+)
+
+(TClr.778
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.779
+)
+
+(TClr.780
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.781
+	Color:	782
+	Outline:	1
+	OutlineColor:	783
+	OutlineWidth:	0.10000000000000
+	BgColor:	784
+)
+
+(TClr.782
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.783
+)
+
+(TClr.784
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.785
+	Color:	786
+	Outline:	1
+	OutlineColor:	787
+	OutlineWidth:	0.10000000000000
+	BgColor:	788
+)
+
+(TClr.786
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.787
+)
+
+(TClr.788
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.789
+	Color:	790
+	Outline:	1
+	OutlineColor:	791
+	OutlineWidth:	0.10000000000000
+	BgColor:	792
+)
+
+(TClr.790
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.791
+)
+
+(TClr.792
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.793
+	Color:	794
+	Outline:	1
+	OutlineColor:	795
+	OutlineWidth:	0.10000000000000
+	BgColor:	796
+)
+
+(TClr.794
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.795
+)
+
+(TClr.796
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.797
+	Color:	798
+	Outline:	1
+	OutlineColor:	799
+	OutlineWidth:	0.10000000000000
+	BgColor:	800
+)
+
+(TClr.798
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.799
+)
+
+(TClr.800
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.801
+	Color:	802
+	Outline:	1
+	OutlineColor:	803
+	OutlineWidth:	0.10000000000000
+	BgColor:	804
+)
+
+(TClr.802
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.803
+)
+
+(TClr.804
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.805
+	Color:	806
+	Outline:	1
+	OutlineColor:	807
+	OutlineWidth:	0.10000000000000
+	BgColor:	808
+)
+
+(TClr.806
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.807
+)
+
+(TClr.808
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.809
+	Color:	810
+	Outline:	1
+	OutlineColor:	811
+	OutlineWidth:	0.10000000000000
+	BgColor:	812
+)
+
+(TClr.810
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.811
+)
+
+(TClr.812
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.813
+	Color:	814
+	Outline:	1
+	OutlineColor:	815
+	OutlineWidth:	0.10000000000000
+	BgColor:	816
+)
+
+(TClr.814
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.815
+)
+
+(TClr.816
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.817
+	Color:	818
+	Outline:	1
+	OutlineColor:	819
+	OutlineWidth:	0.10000000000000
+	BgColor:	820
+)
+
+(TClr.818
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.819
+)
+
+(TClr.820
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.821
+	Color:	822
+	Outline:	1
+	OutlineColor:	823
+	OutlineWidth:	0.10000000000000
+	BgColor:	824
+)
+
+(TClr.822
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.823
+)
+
+(TClr.824
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.825
+	Color:	826
+	Outline:	1
+	OutlineColor:	827
+	OutlineWidth:	0.10000000000000
+	BgColor:	828
+)
+
+(TClr.826
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.827
+)
+
+(TClr.828
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.829
+	Color:	830
+	Outline:	1
+	OutlineColor:	831
+	OutlineWidth:	0.10000000000000
+	BgColor:	832
+)
+
+(TClr.830
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.831
+)
+
+(TClr.832
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.833
+	Color:	834
+	Outline:	1
+	OutlineColor:	835
+	OutlineWidth:	0.10000000000000
+	BgColor:	836
+)
+
+(TClr.834
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.835
+)
+
+(TClr.836
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.837
+	Color:	838
+	Outline:	1
+	OutlineColor:	839
+	OutlineWidth:	0.10000000000000
+	BgColor:	840
+)
+
+(TClr.838
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.839
+)
+
+(TClr.840
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.841
+	Color:	842
+	Outline:	1
+	OutlineColor:	843
+	OutlineWidth:	0.10000000000000
+	BgColor:	844
+)
+
+(TClr.842
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.843
+)
+
+(TClr.844
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.845
+	Color:	846
+	Outline:	1
+	OutlineColor:	847
+	OutlineWidth:	0.10000000000000
+	BgColor:	848
+)
+
+(TClr.846
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.847
+)
+
+(TClr.848
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.849
+	Color:	850
+	Outline:	1
+	OutlineColor:	851
+	OutlineWidth:	0.10000000000000
+	BgColor:	852
+)
+
+(TClr.850
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.851
+)
+
+(TClr.852
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.853
+	Color:	854
+	Outline:	1
+	OutlineColor:	855
+	OutlineWidth:	0.10000000000000
+	BgColor:	856
+)
+
+(TClr.854
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.855
+)
+
+(TClr.856
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.857
+	Color:	858
+	Outline:	1
+	OutlineColor:	859
+	OutlineWidth:	0.10000000000000
+	BgColor:	860
+)
+
+(TClr.858
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.859
+)
+
+(TClr.860
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.861
+	Color:	862
+	Outline:	1
+	OutlineColor:	863
+	OutlineWidth:	0.10000000000000
+	BgColor:	864
+)
+
+(TClr.862
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.863
+)
+
+(TClr.864
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.865
+	Color:	866
+	Outline:	1
+	OutlineColor:	867
+	OutlineWidth:	0.10000000000000
+	BgColor:	868
+)
+
+(TClr.866
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.867
+)
+
+(TClr.868
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.869
+	Color:	870
+	Outline:	1
+	OutlineColor:	871
+	OutlineWidth:	0.10000000000000
+	BgColor:	872
+)
+
+(TClr.870
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.871
+)
+
+(TClr.872
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.873
+	Color:	874
+	Outline:	1
+	OutlineColor:	875
+	OutlineWidth:	0.10000000000000
+	BgColor:	876
+)
+
+(TClr.874
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.875
+)
+
+(TClr.876
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.877
+	Color:	878
+	Outline:	1
+	OutlineColor:	879
+	OutlineWidth:	0.10000000000000
+	BgColor:	880
+)
+
+(TClr.878
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.879
+)
+
+(TClr.880
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.881
+	Color:	882
+	Outline:	1
+	OutlineColor:	883
+	OutlineWidth:	0.10000000000000
+	BgColor:	884
+)
+
+(TClr.882
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.883
+)
+
+(TClr.884
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.885
+	Color:	886
+	Outline:	1
+	OutlineColor:	887
+	OutlineWidth:	0.10000000000000
+	BgColor:	888
+)
+
+(TClr.886
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.887
+)
+
+(TClr.888
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.889
+	Color:	890
+	Outline:	1
+	OutlineColor:	891
+	OutlineWidth:	0.10000000000000
+	BgColor:	892
+)
+
+(TClr.890
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.891
+)
+
+(TClr.892
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.893
+	Color:	894
+	Outline:	1
+	OutlineColor:	895
+	OutlineWidth:	0.10000000000000
+	BgColor:	896
+)
+
+(TClr.894
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.895
+)
+
+(TClr.896
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.897
+	Color:	898
+	Outline:	1
+	OutlineColor:	899
+	OutlineWidth:	0.10000000000000
+	BgColor:	900
+)
+
+(TClr.898
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.899
+)
+
+(TClr.900
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.901
+	Color:	902
+	Outline:	1
+	OutlineColor:	903
+	OutlineWidth:	0.10000000000000
+	BgColor:	904
+)
+
+(TClr.902
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.903
+)
+
+(TClr.904
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.905
+	Color:	906
+	Outline:	1
+	OutlineColor:	907
+	OutlineWidth:	0.10000000000000
+	BgColor:	908
+)
+
+(TClr.906
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.907
+)
+
+(TClr.908
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.909
+	Color:	910
+	Outline:	1
+	OutlineColor:	911
+	OutlineWidth:	0.10000000000000
+	BgColor:	912
+)
+
+(TClr.910
+	Red:	0xffff
+	Green:	0xd7d7
+)
+
+(TClr.911
+)
+
+(TClr.912
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.913
+	Color:	914
+	Outline:	1
+	OutlineColor:	915
+	OutlineWidth:	0.10000000000000
+	BgColor:	916
+)
+
+(TClr.914
+	Red:	0xbdbd
+	Green:	0xb7b7
+	Blue:	0x6b6b
+)
+
+(TClr.915
+)
+
+(TClr.916
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.917
+	Color:	918
+	Outline:	1
+	OutlineColor:	919
+	OutlineWidth:	0.10000000000000
+	BgColor:	920
+)
+
+(TClr.918
+	Red:	0xf7ff
+	Green:	0xb575
+	Blue:	0x67a7
+)
+
+(TClr.919
+)
+
+(TClr.920
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.921
+	Color:	922
+	Outline:	1
+	OutlineColor:	923
+	OutlineWidth:	0.10000000000000
+	BgColor:	924
+)
+
+(TClr.922
+	Red:	0xceff
+	Green:	0xc355
+	Blue:	0x9596
+)
+
+(TClr.923
+)
+
+(TClr.924
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.925
+	Color:	926
+	Outline:	1
+	OutlineColor:	927
+	OutlineWidth:	0.10000000000000
+	BgColor:	928
+)
+
+(TClr.926
+	Red:	0xcdcd
+	Green:	0x9b9b
+	Blue:	0x1d1d
+)
+
+(TClr.927
+)
+
+(TClr.928
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.929
+	Color:	930
+	Outline:	1
+	OutlineColor:	931
+	OutlineWidth:	0.10000000000000
+	BgColor:	932
+)
+
+(TClr.930
+	Red:	0xf0f0
+	Green:	0xe6e6
+	Blue:	0x8c8c
+)
+
+(TClr.931
+)
+
+(TClr.932
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.933
+	Color:	934
+	Outline:	1
+	OutlineColor:	935
+	OutlineWidth:	0.10000000000000
+	BgColor:	936
+)
+
+(TClr.934
+	Red:	0xa7b2
+	Green:	0xafff
+	Blue:	0x5e2f
+)
+
+(TClr.935
+)
+
+(TClr.936
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.937
+	Color:	938
+	Outline:	1
+	OutlineColor:	939
+	OutlineWidth:	0.10000000000000
+	BgColor:	940
+)
+
+(TClr.938
+	Red:	0xc0ff
+	Green:	0x90b1
+	Blue:	0x5834
+)
+
+(TClr.939
+)
+
+(TClr.940
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.941
+	Color:	942
+	Outline:	1
+	OutlineColor:	943
+	OutlineWidth:	0.10000000000000
+	BgColor:	944
+)
+
+(TClr.942
+	Red:	0x8b8b
+	Green:	0x4545
+	Blue:	0x1313
+)
+
+(TClr.943
+)
+
+(TClr.944
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.945
+	Color:	946
+	Outline:	1
+	OutlineColor:	947
+	OutlineWidth:	0.10000000000000
+	BgColor:	948
+)
+
+(TClr.946
+	Red:	0xacff
+	Green:	0x9619
+	Blue:	0xac
+)
+
+(TClr.947
+)
+
+(TClr.948
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.949
+	Color:	950
+	Outline:	1
+	OutlineColor:	951
+	OutlineWidth:	0.10000000000000
+	BgColor:	952
+)
+
+(TClr.950
+	Red:	0x6969
+	Green:	0x8b8b
+	Blue:	0x6969
+)
+
+(TClr.951
+)
+
+(TClr.952
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.953
+	Color:	954
+	Outline:	1
+	OutlineColor:	955
+	OutlineWidth:	0.10000000000000
+	BgColor:	956
+)
+
+(TClr.954
+	Red:	0x8b8b
+	Green:	0x6969
+	Blue:	0x1414
+)
+
+(TClr.955
+)
+
+(TClr.956
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.957
+	Color:	958
+	Outline:	1
+	OutlineColor:	959
+	OutlineWidth:	0.10000000000000
+	BgColor:	960
+)
+
+(TClr.958
+	Red:	0x8b8b
+	Green:	0x8b8b
+)
+
+(TClr.959
+)
+
+(TClr.960
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.961
+	Color:	962
+	Outline:	1
+	OutlineColor:	963
+	OutlineWidth:	0.10000000000000
+	BgColor:	964
+)
+
+(TClr.962
+	Red:	0xff00
+	Green:	0xfb42
+	Blue:	0xc33b
+)
+
+(TClr.963
+)
+
+(TClr.964
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.965
+	Color:	966
+	Outline:	1
+	OutlineColor:	967
+	OutlineWidth:	0.10000000000000
+	BgColor:	968
+)
+
+(TClr.966
+	Red:	0xbdff
+	Green:	0xb04a
+	Blue:	0x56d5
+)
+
+(TClr.967
+)
+
+(TClr.968
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.969
+	Color:	970
+	Outline:	1
+	OutlineColor:	971
+	OutlineWidth:	0.10000000000000
+	BgColor:	972
+)
+
+(TClr.970
+	Red:	0xdc00
+	Green:	0xce49
+	Blue:	0xdb
+)
+
+(TClr.971
+)
+
+(TClr.972
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.973
+	Color:	974
+	Outline:	1
+	OutlineColor:	975
+	OutlineWidth:	0.10000000000000
+	BgColor:	976
+)
+
+(TClr.974
+	Red:	0xfeff
+	Green:	0xea26
+	Blue:	0xc638
+)
+
+(TClr.975
+)
+
+(TClr.976
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.977
+	Color:	978
+	Outline:	1
+	OutlineColor:	979
+	OutlineWidth:	0.10000000000000
+	BgColor:	980
+)
+
+(TClr.978
+	Red:	0xffff
+	Green:	0xc7c7
+	Blue:	0xaeae
+)
+
+(TClr.979
+)
+
+(TClr.980
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.981
+	Color:	982
+	Outline:	1
+	OutlineColor:	983
+	OutlineWidth:	0.10000000000000
+	BgColor:	984
+)
+
+(TClr.982
+	Red:	0xa600
+	Green:	0xb600
+	Blue:	0x5500
+)
+
+(TClr.983
+)
+
+(TClr.984
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.985
+	Color:	986
+	Outline:	1
+	OutlineColor:	987
+	OutlineWidth:	0.10000000000000
+	BgColor:	988
+)
+
+(TClr.986
+	Red:	0xdb00
+	Green:	0x6700
+)
+
+(TClr.987
+)
+
+(TClr.988
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.989
+	Color:	990
+	Outline:	1
+	OutlineColor:	991
+	OutlineWidth:	0.10000000000000
+	BgColor:	992
+)
+
+(TClr.990
+	Red:	0xe500
+	Green:	0xa100
+)
+
+(TClr.991
+)
+
+(TClr.992
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.993
+	Color:	994
+	Outline:	1
+	OutlineColor:	995
+	OutlineWidth:	0.10000000000000
+	BgColor:	996
+)
+
+(TClr.994
+	Red:	0xf700
+	Green:	0xd300
+	Blue:	0xb300
+)
+
+(TClr.995
+)
+
+(TClr.996
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.997
+	Color:	998
+	Outline:	1
+	OutlineColor:	999
+	OutlineWidth:	0.10000000000000
+	BgColor:	1000
+)
+
+(TClr.998
+	Red:	0x7300
+	Green:	0x8300
+	Blue:	0x2500
+)
+
+(TClr.999
+)
+
+(TClr.1000
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.1001
+	Color:	1002
+	Outline:	1
+	OutlineColor:	1003
+	OutlineWidth:	0.10000000000000
+	BgColor:	1004
+)
+
+(TClr.1002
+	Red:	0xb100
+	Green:	0xba00
+	Blue:	0x8400
+)
+
+(TClr.1003
+)
+
+(TClr.1004
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.1005
+	Color:	1006
+	Outline:	1
+	OutlineColor:	1007
+	OutlineWidth:	0.10000000000000
+	BgColor:	1008
+)
+
+(TClr.1006
+	Red:	0xc0ff
+	Green:	0x6538
+	Blue:	0x4920
+)
+
+(TClr.1007
+)
+
+(TClr.1008
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.1009
+	Color:	1010
+	Outline:	1
+	OutlineColor:	1011
+	OutlineWidth:	0.10000000000000
+	BgColor:	1012
+)
+
+(TClr.1010
+	Name:	"Transparent"
+)
+
+(TClr.1011
+	Name:	"Transparent"
+)
+
+(TClr.1012
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(LClass.1013
+	IsText:	1
+	Label:	"Afghanistan"
+	MinStr:	"Afghanistan"
+	MaxStr:	"Afghanistan"
+	Precision:	-3
+)
+
+(LClass.1014
+	IsText:	1
+	Label:	"Albania"
+	MinStr:	"Albania"
+	MaxStr:	"Albania"
+	Precision:	-3
+)
+
+(LClass.1015
+	IsText:	1
+	Label:	"Algeria"
+	MinStr:	"Algeria"
+	MaxStr:	"Algeria"
+	Precision:	-3
+)
+
+(LClass.1016
+	IsText:	1
+	Label:	"American Samoa"
+	MinStr:	"American Samoa"
+	MaxStr:	"American Samoa"
+	Precision:	-3
+)
+
+(LClass.1017
+	IsText:	1
+	Label:	"Andorra"
+	MinStr:	"Andorra"
+	MaxStr:	"Andorra"
+	Precision:	-3
+)
+
+(LClass.1018
+	IsText:	1
+	Label:	"Angola"
+	MinStr:	"Angola"
+	MaxStr:	"Angola"
+	Precision:	-3
+)
+
+(LClass.1019
+	IsText:	1
+	Label:	"Anguilla"
+	MinStr:	"Anguilla"
+	MaxStr:	"Anguilla"
+	Precision:	-3
+)
+
+(LClass.1020
+	IsText:	1
+	Label:	"Antarctica"
+	MinStr:	"Antarctica"
+	MaxStr:	"Antarctica"
+	Precision:	-3
+)
+
+(LClass.1021
+	IsText:	1
+	Label:	"Antigua & Barbuda"
+	MinStr:	"Antigua & Barbuda"
+	MaxStr:	"Antigua & Barbuda"
+	Precision:	-3
+)
+
+(LClass.1022
+	IsText:	1
+	Label:	"Argentina"
+	MinStr:	"Argentina"
+	MaxStr:	"Argentina"
+	Precision:	-3
+)
+
+(LClass.1023
+	IsText:	1
+	Label:	"Armenia"
+	MinStr:	"Armenia"
+	MaxStr:	"Armenia"
+	Precision:	-3
+)
+
+(LClass.1024
+	IsText:	1
+	Label:	"Aruba"
+	MinStr:	"Aruba"
+	MaxStr:	"Aruba"
+	Precision:	-3
+)
+
+(LClass.1025
+	IsText:	1
+	Label:	"Australia"
+	MinStr:	"Australia"
+	MaxStr:	"Australia"
+	Precision:	-3
+)
+
+(LClass.1026
+	IsText:	1
+	Label:	"Austria"
+	MinStr:	"Austria"
+	MaxStr:	"Austria"
+	Precision:	-3
+)
+
+(LClass.1027
+	IsText:	1
+	Label:	"Azerbaijan"
+	MinStr:	"Azerbaijan"
+	MaxStr:	"Azerbaijan"
+	Precision:	-3
+)
+
+(LClass.1028
+	IsText:	1
+	Label:	"Bahrain"
+	MinStr:	"Bahrain"
+	MaxStr:	"Bahrain"
+	Precision:	-3
+)
+
+(LClass.1029
+	IsText:	1
+	Label:	"Baker I."
+	MinStr:	"Baker I."
+	MaxStr:	"Baker I."
+	Precision:	-3
+)
+
+(LClass.1030
+	IsText:	1
+	Label:	"Bangladesh"
+	MinStr:	"Bangladesh"
+	MaxStr:	"Bangladesh"
+	Precision:	-3
+)
+
+(LClass.1031
+	IsText:	1
+	Label:	"Barbados"
+	MinStr:	"Barbados"
+	MaxStr:	"Barbados"
+	Precision:	-3
+)
+
+(LClass.1032
+	IsText:	1
+	Label:	"Belarus"
+	MinStr:	"Belarus"
+	MaxStr:	"Belarus"
+	Precision:	-3
+)
+
+(LClass.1033
+	IsText:	1
+	Label:	"Belgium"
+	MinStr:	"Belgium"
+	MaxStr:	"Belgium"
+	Precision:	-3
+)
+
+(LClass.1034
+	IsText:	1
+	Label:	"Belize"
+	MinStr:	"Belize"
+	MaxStr:	"Belize"
+	Precision:	-3
+)
+
+(LClass.1035
+	IsText:	1
+	Label:	"Benin"
+	MinStr:	"Benin"
+	MaxStr:	"Benin"
+	Precision:	-3
+)
+
+(LClass.1036
+	IsText:	1
+	Label:	"Bermuda"
+	MinStr:	"Bermuda"
+	MaxStr:	"Bermuda"
+	Precision:	-3
+)
+
+(LClass.1037
+	IsText:	1
+	Label:	"Bhutan"
+	MinStr:	"Bhutan"
+	MaxStr:	"Bhutan"
+	Precision:	-3
+)
+
+(LClass.1038
+	IsText:	1
+	Label:	"Bolivia"
+	MinStr:	"Bolivia"
+	MaxStr:	"Bolivia"
+	Precision:	-3
+)
+
+(LClass.1039
+	IsText:	1
+	Label:	"Bosnia & Herzegovina"
+	MinStr:	"Bosnia & Herzegovina"
+	MaxStr:	"Bosnia & Herzegovina"
+	Precision:	-3
+)
+
+(LClass.1040
+	IsText:	1
+	Label:	"Botswana"
+	MinStr:	"Botswana"
+	MaxStr:	"Botswana"
+	Precision:	-3
+)
+
+(LClass.1041
+	IsText:	1
+	Label:	"Bouvet I."
+	MinStr:	"Bouvet I."
+	MaxStr:	"Bouvet I."
+	Precision:	-3
+)
+
+(LClass.1042
+	IsText:	1
+	Label:	"Brazil"
+	MinStr:	"Brazil"
+	MaxStr:	"Brazil"
+	Precision:	-3
+)
+
+(LClass.1043
+	IsText:	1
+	Label:	"British Indian Ocean Territory"
+	MinStr:	"British Indian Ocean Territory"
+	MaxStr:	"British Indian Ocean Territory"
+	Precision:	-3
+)
+
+(LClass.1044
+	IsText:	1
+	Label:	"British Virgin Is."
+	MinStr:	"British Virgin Is."
+	MaxStr:	"British Virgin Is."
+	Precision:	-3
+)
+
+(LClass.1045
+	IsText:	1
+	Label:	"Brunei"
+	MinStr:	"Brunei"
+	MaxStr:	"Brunei"
+	Precision:	-3
+)
+
+(LClass.1046
+	IsText:	1
+	Label:	"Bulgaria"
+	MinStr:	"Bulgaria"
+	MaxStr:	"Bulgaria"
+	Precision:	-3
+)
+
+(LClass.1047
+	IsText:	1
+	Label:	"Burkina Faso"
+	MinStr:	"Burkina Faso"
+	MaxStr:	"Burkina Faso"
+	Precision:	-3
+)
+
+(LClass.1048
+	IsText:	1
+	Label:	"Burundi"
+	MinStr:	"Burundi"
+	MaxStr:	"Burundi"
+	Precision:	-3
+)
+
+(LClass.1049
+	IsText:	1
+	Label:	"Cambodia"
+	MinStr:	"Cambodia"
+	MaxStr:	"Cambodia"
+	Precision:	-3
+)
+
+(LClass.1050
+	IsText:	1
+	Label:	"Cameroon"
+	MinStr:	"Cameroon"
+	MaxStr:	"Cameroon"
+	Precision:	-3
+)
+
+(LClass.1051
+	IsText:	1
+	Label:	"Canada"
+	MinStr:	"Canada"
+	MaxStr:	"Canada"
+	Precision:	-3
+)
+
+(LClass.1052
+	IsText:	1
+	Label:	"Cape Verde"
+	MinStr:	"Cape Verde"
+	MaxStr:	"Cape Verde"
+	Precision:	-3
+)
+
+(LClass.1053
+	IsText:	1
+	Label:	"Cayman Is."
+	MinStr:	"Cayman Is."
+	MaxStr:	"Cayman Is."
+	Precision:	-3
+)
+
+(LClass.1054
+	IsText:	1
+	Label:	"Central African Republic"
+	MinStr:	"Central African Republic"
+	MaxStr:	"Central African Republic"
+	Precision:	-3
+)
+
+(LClass.1055
+	IsText:	1
+	Label:	"Chad"
+	MinStr:	"Chad"
+	MaxStr:	"Chad"
+	Precision:	-3
+)
+
+(LClass.1056
+	IsText:	1
+	Label:	"Chile"
+	MinStr:	"Chile"
+	MaxStr:	"Chile"
+	Precision:	-3
+)
+
+(LClass.1057
+	IsText:	1
+	Label:	"China"
+	MinStr:	"China"
+	MaxStr:	"China"
+	Precision:	-3
+)
+
+(LClass.1058
+	IsText:	1
+	Label:	"Christmas I."
+	MinStr:	"Christmas I."
+	MaxStr:	"Christmas I."
+	Precision:	-3
+)
+
+(LClass.1059
+	IsText:	1
+	Label:	"Cocos Is."
+	MinStr:	"Cocos Is."
+	MaxStr:	"Cocos Is."
+	Precision:	-3
+)
+
+(LClass.1060
+	IsText:	1
+	Label:	"Colombia"
+	MinStr:	"Colombia"
+	MaxStr:	"Colombia"
+	Precision:	-3
+)
+
+(LClass.1061
+	IsText:	1
+	Label:	"Comoros"
+	MinStr:	"Comoros"
+	MaxStr:	"Comoros"
+	Precision:	-3
+)
+
+(LClass.1062
+	IsText:	1
+	Label:	"Congo"
+	MinStr:	"Congo"
+	MaxStr:	"Congo"
+	Precision:	-3
+)
+
+(LClass.1063
+	IsText:	1
+	Label:	"Congo, DRC"
+	MinStr:	"Congo, DRC"
+	MaxStr:	"Congo, DRC"
+	Precision:	-3
+)
+
+(LClass.1064
+	IsText:	1
+	Label:	"Cook Is."
+	MinStr:	"Cook Is."
+	MaxStr:	"Cook Is."
+	Precision:	-3
+)
+
+(LClass.1065
+	IsText:	1
+	Label:	"Costa Rica"
+	MinStr:	"Costa Rica"
+	MaxStr:	"Costa Rica"
+	Precision:	-3
+)
+
+(LClass.1066
+	IsText:	1
+	Label:	"Cote d'Ivory"
+	MinStr:	"Cote d'Ivory"
+	MaxStr:	"Cote d'Ivory"
+	Precision:	-3
+)
+
+(LClass.1067
+	IsText:	1
+	Label:	"Croatia"
+	MinStr:	"Croatia"
+	MaxStr:	"Croatia"
+	Precision:	-3
+)
+
+(LClass.1068
+	IsText:	1
+	Label:	"Cuba"
+	MinStr:	"Cuba"
+	MaxStr:	"Cuba"
+	Precision:	-3
+)
+
+(LClass.1069
+	IsText:	1
+	Label:	"Cyprus"
+	MinStr:	"Cyprus"
+	MaxStr:	"Cyprus"
+	Precision:	-3
+)
+
+(LClass.1070
+	IsText:	1
+	Label:	"Czech Republic"
+	MinStr:	"Czech Republic"
+	MaxStr:	"Czech Republic"
+	Precision:	-3
+)
+
+(LClass.1071
+	IsText:	1
+	Label:	"Denmark"
+	MinStr:	"Denmark"
+	MaxStr:	"Denmark"
+	Precision:	-3
+)
+
+(LClass.1072
+	IsText:	1
+	Label:	"Djibouti"
+	MinStr:	"Djibouti"
+	MaxStr:	"Djibouti"
+	Precision:	-3
+)
+
+(LClass.1073
+	IsText:	1
+	Label:	"Dominica"
+	MinStr:	"Dominica"
+	MaxStr:	"Dominica"
+	Precision:	-3
+)
+
+(LClass.1074
+	IsText:	1
+	Label:	"Dominican Republic"
+	MinStr:	"Dominican Republic"
+	MaxStr:	"Dominican Republic"
+	Precision:	-3
+)
+
+(LClass.1075
+	IsText:	1
+	Label:	"East Timor"
+	MinStr:	"East Timor"
+	MaxStr:	"East Timor"
+	Precision:	-3
+)
+
+(LClass.1076
+	IsText:	1
+	Label:	"Ecuador"
+	MinStr:	"Ecuador"
+	MaxStr:	"Ecuador"
+	Precision:	-3
+)
+
+(LClass.1077
+	IsText:	1
+	Label:	"Egypt"
+	MinStr:	"Egypt"
+	MaxStr:	"Egypt"
+	Precision:	-3
+)
+
+(LClass.1078
+	IsText:	1
+	Label:	"El Salvador"
+	MinStr:	"El Salvador"
+	MaxStr:	"El Salvador"
+	Precision:	-3
+)
+
+(LClass.1079
+	IsText:	1
+	Label:	"Equatorial Guinea"
+	MinStr:	"Equatorial Guinea"
+	MaxStr:	"Equatorial Guinea"
+	Precision:	-3
+)
+
+(LClass.1080
+	IsText:	1
+	Label:	"Eritrea"
+	MinStr:	"Eritrea"
+	MaxStr:	"Eritrea"
+	Precision:	-3
+)
+
+(LClass.1081
+	IsText:	1
+	Label:	"Estonia"
+	MinStr:	"Estonia"
+	MaxStr:	"Estonia"
+	Precision:	-3
+)
+
+(LClass.1082
+	IsText:	1
+	Label:	"Ethiopia"
+	MinStr:	"Ethiopia"
+	MaxStr:	"Ethiopia"
+	Precision:	-3
+)
+
+(LClass.1083
+	IsText:	1
+	Label:	"Falkland Is."
+	MinStr:	"Falkland Is."
+	MaxStr:	"Falkland Is."
+	Precision:	-3
+)
+
+(LClass.1084
+	IsText:	1
+	Label:	"Faroe Is."
+	MinStr:	"Faroe Is."
+	MaxStr:	"Faroe Is."
+	Precision:	-3
+)
+
+(LClass.1085
+	IsText:	1
+	Label:	"Fiji"
+	MinStr:	"Fiji"
+	MaxStr:	"Fiji"
+	Precision:	-3
+)
+
+(LClass.1086
+	IsText:	1
+	Label:	"Finland"
+	MinStr:	"Finland"
+	MaxStr:	"Finland"
+	Precision:	-3
+)
+
+(LClass.1087
+	IsText:	1
+	Label:	"France"
+	MinStr:	"France"
+	MaxStr:	"France"
+	Precision:	-3
+)
+
+(LClass.1088
+	IsText:	1
+	Label:	"French Guiana"
+	MinStr:	"French Guiana"
+	MaxStr:	"French Guiana"
+	Precision:	-3
+)
+
+(LClass.1089
+	IsText:	1
+	Label:	"French Polynesia"
+	MinStr:	"French Polynesia"
+	MaxStr:	"French Polynesia"
+	Precision:	-3
+)
+
+(LClass.1090
+	IsText:	1
+	Label:	"French Southern & Antarctic Lands"
+	MinStr:	"French Southern & Antarctic Lands"
+	MaxStr:	"French Southern & Antarctic Lands"
+	Precision:	-3
+)
+
+(LClass.1091
+	IsText:	1
+	Label:	"Gabon"
+	MinStr:	"Gabon"
+	MaxStr:	"Gabon"
+	Precision:	-3
+)
+
+(LClass.1092
+	IsText:	1
+	Label:	"Gaza Strip"
+	MinStr:	"Gaza Strip"
+	MaxStr:	"Gaza Strip"
+	Precision:	-3
+)
+
+(LClass.1093
+	IsText:	1
+	Label:	"Georgia"
+	MinStr:	"Georgia"
+	MaxStr:	"Georgia"
+	Precision:	-3
+)
+
+(LClass.1094
+	IsText:	1
+	Label:	"Germany"
+	MinStr:	"Germany"
+	MaxStr:	"Germany"
+	Precision:	-3
+)
+
+(LClass.1095
+	IsText:	1
+	Label:	"Ghana"
+	MinStr:	"Ghana"
+	MaxStr:	"Ghana"
+	Precision:	-3
+)
+
+(LClass.1096
+	IsText:	1
+	Label:	"Gibraltar"
+	MinStr:	"Gibraltar"
+	MaxStr:	"Gibraltar"
+	Precision:	-3
+)
+
+(LClass.1097
+	IsText:	1
+	Label:	"Glorioso Is."
+	MinStr:	"Glorioso Is."
+	MaxStr:	"Glorioso Is."
+	Precision:	-3
+)
+
+(LClass.1098
+	IsText:	1
+	Label:	"Greece"
+	MinStr:	"Greece"
+	MaxStr:	"Greece"
+	Precision:	-3
+)
+
+(LClass.1099
+	IsText:	1
+	Label:	"Greenland"
+	MinStr:	"Greenland"
+	MaxStr:	"Greenland"
+	Precision:	-3
+)
+
+(LClass.1100
+	IsText:	1
+	Label:	"Grenada"
+	MinStr:	"Grenada"
+	MaxStr:	"Grenada"
+	Precision:	-3
+)
+
+(LClass.1101
+	IsText:	1
+	Label:	"Guadeloupe"
+	MinStr:	"Guadeloupe"
+	MaxStr:	"Guadeloupe"
+	Precision:	-3
+)
+
+(LClass.1102
+	IsText:	1
+	Label:	"Guam"
+	MinStr:	"Guam"
+	MaxStr:	"Guam"
+	Precision:	-3
+)
+
+(LClass.1103
+	IsText:	1
+	Label:	"Guatemala"
+	MinStr:	"Guatemala"
+	MaxStr:	"Guatemala"
+	Precision:	-3
+)
+
+(LClass.1104
+	IsText:	1
+	Label:	"Guernsey"
+	MinStr:	"Guernsey"
+	MaxStr:	"Guernsey"
+	Precision:	-3
+)
+
+(LClass.1105
+	IsText:	1
+	Label:	"Guinea"
+	MinStr:	"Guinea"
+	MaxStr:	"Guinea"
+	Precision:	-3
+)
+
+(LClass.1106
+	IsText:	1
+	Label:	"Guinea-Bissau"
+	MinStr:	"Guinea-Bissau"
+	MaxStr:	"Guinea-Bissau"
+	Precision:	-3
+)
+
+(LClass.1107
+	IsText:	1
+	Label:	"Guyana"
+	MinStr:	"Guyana"
+	MaxStr:	"Guyana"
+	Precision:	-3
+)
+
+(LClass.1108
+	IsText:	1
+	Label:	"Haiti"
+	MinStr:	"Haiti"
+	MaxStr:	"Haiti"
+	Precision:	-3
+)
+
+(LClass.1109
+	IsText:	1
+	Label:	"Heard I. & McDonald Is."
+	MinStr:	"Heard I. & McDonald Is."
+	MaxStr:	"Heard I. & McDonald Is."
+	Precision:	-3
+)
+
+(LClass.1110
+	IsText:	1
+	Label:	"Honduras"
+	MinStr:	"Honduras"
+	MaxStr:	"Honduras"
+	Precision:	-3
+)
+
+(LClass.1111
+	IsText:	1
+	Label:	"Howland I."
+	MinStr:	"Howland I."
+	MaxStr:	"Howland I."
+	Precision:	-3
+)
+
+(LClass.1112
+	IsText:	1
+	Label:	"Hungary"
+	MinStr:	"Hungary"
+	MaxStr:	"Hungary"
+	Precision:	-3
+)
+
+(LClass.1113
+	IsText:	1
+	Label:	"Iceland"
+	MinStr:	"Iceland"
+	MaxStr:	"Iceland"
+	Precision:	-3
+)
+
+(LClass.1114
+	IsText:	1
+	Label:	"India"
+	MinStr:	"India"
+	MaxStr:	"India"
+	Precision:	-3
+)
+
+(LClass.1115
+	IsText:	1
+	Label:	"Indonesia"
+	MinStr:	"Indonesia"
+	MaxStr:	"Indonesia"
+	Precision:	-3
+)
+
+(LClass.1116
+	IsText:	1
+	Label:	"Iran"
+	MinStr:	"Iran"
+	MaxStr:	"Iran"
+	Precision:	-3
+)
+
+(LClass.1117
+	IsText:	1
+	Label:	"Iraq"
+	MinStr:	"Iraq"
+	MaxStr:	"Iraq"
+	Precision:	-3
+)
+
+(LClass.1118
+	IsText:	1
+	Label:	"Ireland"
+	MinStr:	"Ireland"
+	MaxStr:	"Ireland"
+	Precision:	-3
+)
+
+(LClass.1119
+	IsText:	1
+	Label:	"Isle of Man"
+	MinStr:	"Isle of Man"
+	MaxStr:	"Isle of Man"
+	Precision:	-3
+)
+
+(LClass.1120
+	IsText:	1
+	Label:	"Israel"
+	MinStr:	"Israel"
+	MaxStr:	"Israel"
+	Precision:	-3
+)
+
+(LClass.1121
+	IsText:	1
+	Label:	"Italy"
+	MinStr:	"Italy"
+	MaxStr:	"Italy"
+	Precision:	-3
+)
+
+(LClass.1122
+	IsText:	1
+	Label:	"Jamaica"
+	MinStr:	"Jamaica"
+	MaxStr:	"Jamaica"
+	Precision:	-3
+)
+
+(LClass.1123
+	IsText:	1
+	Label:	"Jan Mayen"
+	MinStr:	"Jan Mayen"
+	MaxStr:	"Jan Mayen"
+	Precision:	-3
+)
+
+(LClass.1124
+	IsText:	1
+	Label:	"Japan"
+	MinStr:	"Japan"
+	MaxStr:	"Japan"
+	Precision:	-3
+)
+
+(LClass.1125
+	IsText:	1
+	Label:	"Jarvis I."
+	MinStr:	"Jarvis I."
+	MaxStr:	"Jarvis I."
+	Precision:	-3
+)
+
+(LClass.1126
+	IsText:	1
+	Label:	"Jersey"
+	MinStr:	"Jersey"
+	MaxStr:	"Jersey"
+	Precision:	-3
+)
+
+(LClass.1127
+	IsText:	1
+	Label:	"Johnston Atoll"
+	MinStr:	"Johnston Atoll"
+	MaxStr:	"Johnston Atoll"
+	Precision:	-3
+)
+
+(LClass.1128
+	IsText:	1
+	Label:	"Jordan"
+	MinStr:	"Jordan"
+	MaxStr:	"Jordan"
+	Precision:	-3
+)
+
+(LClass.1129
+	IsText:	1
+	Label:	"Juan De Nova I."
+	MinStr:	"Juan De Nova I."
+	MaxStr:	"Juan De Nova I."
+	Precision:	-3
+)
+
+(LClass.1130
+	IsText:	1
+	Label:	"Kazakhstan"
+	MinStr:	"Kazakhstan"
+	MaxStr:	"Kazakhstan"
+	Precision:	-3
+)
+
+(LClass.1131
+	IsText:	1
+	Label:	"Kenya"
+	MinStr:	"Kenya"
+	MaxStr:	"Kenya"
+	Precision:	-3
+)
+
+(LClass.1132
+	IsText:	1
+	Label:	"Kiribati"
+	MinStr:	"Kiribati"
+	MaxStr:	"Kiribati"
+	Precision:	-3
+)
+
+(LClass.1133
+	IsText:	1
+	Label:	"Kuwait"
+	MinStr:	"Kuwait"
+	MaxStr:	"Kuwait"
+	Precision:	-3
+)
+
+(LClass.1134
+	IsText:	1
+	Label:	"Kyrgyzstan"
+	MinStr:	"Kyrgyzstan"
+	MaxStr:	"Kyrgyzstan"
+	Precision:	-3
+)
+
+(LClass.1135
+	IsText:	1
+	Label:	"Laos"
+	MinStr:	"Laos"
+	MaxStr:	"Laos"
+	Precision:	-3
+)
+
+(LClass.1136
+	IsText:	1
+	Label:	"Latvia"
+	MinStr:	"Latvia"
+	MaxStr:	"Latvia"
+	Precision:	-3
+)
+
+(LClass.1137
+	IsText:	1
+	Label:	"Lebanon"
+	MinStr:	"Lebanon"
+	MaxStr:	"Lebanon"
+	Precision:	-3
+)
+
+(LClass.1138
+	IsText:	1
+	Label:	"Lesotho"
+	MinStr:	"Lesotho"
+	MaxStr:	"Lesotho"
+	Precision:	-3
+)
+
+(LClass.1139
+	IsText:	1
+	Label:	"Liberia"
+	MinStr:	"Liberia"
+	MaxStr:	"Liberia"
+	Precision:	-3
+)
+
+(LClass.1140
+	IsText:	1
+	Label:	"Libya"
+	MinStr:	"Libya"
+	MaxStr:	"Libya"
+	Precision:	-3
+)
+
+(LClass.1141
+	IsText:	1
+	Label:	"Liechtenstein"
+	MinStr:	"Liechtenstein"
+	MaxStr:	"Liechtenstein"
+	Precision:	-3
+)
+
+(LClass.1142
+	IsText:	1
+	Label:	"Lithuania"
+	MinStr:	"Lithuania"
+	MaxStr:	"Lithuania"
+	Precision:	-3
+)
+
+(LClass.1143
+	IsText:	1
+	Label:	"Luxembourg"
+	MinStr:	"Luxembourg"
+	MaxStr:	"Luxembourg"
+	Precision:	-3
+)
+
+(LClass.1144
+	IsText:	1
+	Label:	"Macedonia"
+	MinStr:	"Macedonia"
+	MaxStr:	"Macedonia"
+	Precision:	-3
+)
+
+(LClass.1145
+	IsText:	1
+	Label:	"Madagascar"
+	MinStr:	"Madagascar"
+	MaxStr:	"Madagascar"
+	Precision:	-3
+)
+
+(LClass.1146
+	IsText:	1
+	Label:	"Malawi"
+	MinStr:	"Malawi"
+	MaxStr:	"Malawi"
+	Precision:	-3
+)
+
+(LClass.1147
+	IsText:	1
+	Label:	"Malaysia"
+	MinStr:	"Malaysia"
+	MaxStr:	"Malaysia"
+	Precision:	-3
+)
+
+(LClass.1148
+	IsText:	1
+	Label:	"Maldives"
+	MinStr:	"Maldives"
+	MaxStr:	"Maldives"
+	Precision:	-3
+)
+
+(LClass.1149
+	IsText:	1
+	Label:	"Mali"
+	MinStr:	"Mali"
+	MaxStr:	"Mali"
+	Precision:	-3
+)
+
+(LClass.1150
+	IsText:	1
+	Label:	"Malta"
+	MinStr:	"Malta"
+	MaxStr:	"Malta"
+	Precision:	-3
+)
+
+(LClass.1151
+	IsText:	1
+	Label:	"Marshall Is."
+	MinStr:	"Marshall Is."
+	MaxStr:	"Marshall Is."
+	Precision:	-3
+)
+
+(LClass.1152
+	IsText:	1
+	Label:	"Martinique"
+	MinStr:	"Martinique"
+	MaxStr:	"Martinique"
+	Precision:	-3
+)
+
+(LClass.1153
+	IsText:	1
+	Label:	"Mauritania"
+	MinStr:	"Mauritania"
+	MaxStr:	"Mauritania"
+	Precision:	-3
+)
+
+(LClass.1154
+	IsText:	1
+	Label:	"Mauritius"
+	MinStr:	"Mauritius"
+	MaxStr:	"Mauritius"
+	Precision:	-3
+)
+
+(LClass.1155
+	IsText:	1
+	Label:	"Mayotte"
+	MinStr:	"Mayotte"
+	MaxStr:	"Mayotte"
+	Precision:	-3
+)
+
+(LClass.1156
+	IsText:	1
+	Label:	"Mexico"
+	MinStr:	"Mexico"
+	MaxStr:	"Mexico"
+	Precision:	-3
+)
+
+(LClass.1157
+	IsText:	1
+	Label:	"Micronesia"
+	MinStr:	"Micronesia"
+	MaxStr:	"Micronesia"
+	Precision:	-3
+)
+
+(LClass.1158
+	IsText:	1
+	Label:	"Midway Is."
+	MinStr:	"Midway Is."
+	MaxStr:	"Midway Is."
+	Precision:	-3
+)
+
+(LClass.1159
+	IsText:	1
+	Label:	"Moldova"
+	MinStr:	"Moldova"
+	MaxStr:	"Moldova"
+	Precision:	-3
+)
+
+(LClass.1160
+	IsText:	1
+	Label:	"Monaco"
+	MinStr:	"Monaco"
+	MaxStr:	"Monaco"
+	Precision:	-3
+)
+
+(LClass.1161
+	IsText:	1
+	Label:	"Mongolia"
+	MinStr:	"Mongolia"
+	MaxStr:	"Mongolia"
+	Precision:	-3
+)
+
+(LClass.1162
+	IsText:	1
+	Label:	"Montserrat"
+	MinStr:	"Montserrat"
+	MaxStr:	"Montserrat"
+	Precision:	-3
+)
+
+(LClass.1163
+	IsText:	1
+	Label:	"Morocco"
+	MinStr:	"Morocco"
+	MaxStr:	"Morocco"
+	Precision:	-3
+)
+
+(LClass.1164
+	IsText:	1
+	Label:	"Mozambique"
+	MinStr:	"Mozambique"
+	MaxStr:	"Mozambique"
+	Precision:	-3
+)
+
+(LClass.1165
+	IsText:	1
+	Label:	"Myanmar"
+	MinStr:	"Myanmar"
+	MaxStr:	"Myanmar"
+	Precision:	-3
+)
+
+(LClass.1166
+	IsText:	1
+	Label:	"Namibia"
+	MinStr:	"Namibia"
+	MaxStr:	"Namibia"
+	Precision:	-3
+)
+
+(LClass.1167
+	IsText:	1
+	Label:	"Nauru"
+	MinStr:	"Nauru"
+	MaxStr:	"Nauru"
+	Precision:	-3
+)
+
+(LClass.1168
+	IsText:	1
+	Label:	"Nepal"
+	MinStr:	"Nepal"
+	MaxStr:	"Nepal"
+	Precision:	-3
+)
+
+(LClass.1169
+	IsText:	1
+	Label:	"Netherlands"
+	MinStr:	"Netherlands"
+	MaxStr:	"Netherlands"
+	Precision:	-3
+)
+
+(LClass.1170
+	IsText:	1
+	Label:	"Netherlands Antilles"
+	MinStr:	"Netherlands Antilles"
+	MaxStr:	"Netherlands Antilles"
+	Precision:	-3
+)
+
+(LClass.1171
+	IsText:	1
+	Label:	"New Caledonia"
+	MinStr:	"New Caledonia"
+	MaxStr:	"New Caledonia"
+	Precision:	-3
+)
+
+(LClass.1172
+	IsText:	1
+	Label:	"New Zealand"
+	MinStr:	"New Zealand"
+	MaxStr:	"New Zealand"
+	Precision:	-3
+)
+
+(LClass.1173
+	IsText:	1
+	Label:	"Nicaragua"
+	MinStr:	"Nicaragua"
+	MaxStr:	"Nicaragua"
+	Precision:	-3
+)
+
+(LClass.1174
+	IsText:	1
+	Label:	"Niger"
+	MinStr:	"Niger"
+	MaxStr:	"Niger"
+	Precision:	-3
+)
+
+(LClass.1175
+	IsText:	1
+	Label:	"Nigeria"
+	MinStr:	"Nigeria"
+	MaxStr:	"Nigeria"
+	Precision:	-3
+)
+
+(LClass.1176
+	IsText:	1
+	Label:	"Niue"
+	MinStr:	"Niue"
+	MaxStr:	"Niue"
+	Precision:	-3
+)
+
+(LClass.1177
+	IsText:	1
+	Label:	"Norfolk I."
+	MinStr:	"Norfolk I."
+	MaxStr:	"Norfolk I."
+	Precision:	-3
+)
+
+(LClass.1178
+	IsText:	1
+	Label:	"North Korea"
+	MinStr:	"North Korea"
+	MaxStr:	"North Korea"
+	Precision:	-3
+)
+
+(LClass.1179
+	IsText:	1
+	Label:	"Northern Mariana Is."
+	MinStr:	"Northern Mariana Is."
+	MaxStr:	"Northern Mariana Is."
+	Precision:	-3
+)
+
+(LClass.1180
+	IsText:	1
+	Label:	"Norway"
+	MinStr:	"Norway"
+	MaxStr:	"Norway"
+	Precision:	-3
+)
+
+(LClass.1181
+	IsText:	1
+	Label:	"Oman"
+	MinStr:	"Oman"
+	MaxStr:	"Oman"
+	Precision:	-3
+)
+
+(LClass.1182
+	IsText:	1
+	Label:	"Pakistan"
+	MinStr:	"Pakistan"
+	MaxStr:	"Pakistan"
+	Precision:	-3
+)
+
+(LClass.1183
+	IsText:	1
+	Label:	"Palau"
+	MinStr:	"Palau"
+	MaxStr:	"Palau"
+	Precision:	-3
+)
+
+(LClass.1184
+	IsText:	1
+	Label:	"Panama"
+	MinStr:	"Panama"
+	MaxStr:	"Panama"
+	Precision:	-3
+)
+
+(LClass.1185
+	IsText:	1
+	Label:	"Papua New Guinea"
+	MinStr:	"Papua New Guinea"
+	MaxStr:	"Papua New Guinea"
+	Precision:	-3
+)
+
+(LClass.1186
+	IsText:	1
+	Label:	"Paracel Is."
+	MinStr:	"Paracel Is."
+	MaxStr:	"Paracel Is."
+	Precision:	-3
+)
+
+(LClass.1187
+	IsText:	1
+	Label:	"Paraguay"
+	MinStr:	"Paraguay"
+	MaxStr:	"Paraguay"
+	Precision:	-3
+)
+
+(LClass.1188
+	IsText:	1
+	Label:	"Peru"
+	MinStr:	"Peru"
+	MaxStr:	"Peru"
+	Precision:	-3
+)
+
+(LClass.1189
+	IsText:	1
+	Label:	"Philippines"
+	MinStr:	"Philippines"
+	MaxStr:	"Philippines"
+	Precision:	-3
+)
+
+(LClass.1190
+	IsText:	1
+	Label:	"Pitcairn Is."
+	MinStr:	"Pitcairn Is."
+	MaxStr:	"Pitcairn Is."
+	Precision:	-3
+)
+
+(LClass.1191
+	IsText:	1
+	Label:	"Poland"
+	MinStr:	"Poland"
+	MaxStr:	"Poland"
+	Precision:	-3
+)
+
+(LClass.1192
+	IsText:	1
+	Label:	"Portugal"
+	MinStr:	"Portugal"
+	MaxStr:	"Portugal"
+	Precision:	-3
+)
+
+(LClass.1193
+	IsText:	1
+	Label:	"Puerto Rico"
+	MinStr:	"Puerto Rico"
+	MaxStr:	"Puerto Rico"
+	Precision:	-3
+)
+
+(LClass.1194
+	IsText:	1
+	Label:	"Qatar"
+	MinStr:	"Qatar"
+	MaxStr:	"Qatar"
+	Precision:	-3
+)
+
+(LClass.1195
+	IsText:	1
+	Label:	"Reunion"
+	MinStr:	"Reunion"
+	MaxStr:	"Reunion"
+	Precision:	-3
+)
+
+(LClass.1196
+	IsText:	1
+	Label:	"Romania"
+	MinStr:	"Romania"
+	MaxStr:	"Romania"
+	Precision:	-3
+)
+
+(LClass.1197
+	IsText:	1
+	Label:	"Russia"
+	MinStr:	"Russia"
+	MaxStr:	"Russia"
+	Precision:	-3
+)
+
+(LClass.1198
+	IsText:	1
+	Label:	"Rwanda"
+	MinStr:	"Rwanda"
+	MaxStr:	"Rwanda"
+	Precision:	-3
+)
+
+(LClass.1199
+	IsText:	1
+	Label:	"Samoa"
+	MinStr:	"Samoa"
+	MaxStr:	"Samoa"
+	Precision:	-3
+)
+
+(LClass.1200
+	IsText:	1
+	Label:	"San Marino"
+	MinStr:	"San Marino"
+	MaxStr:	"San Marino"
+	Precision:	-3
+)
+
+(LClass.1201
+	IsText:	1
+	Label:	"Sao Tome & Principe"
+	MinStr:	"Sao Tome & Principe"
+	MaxStr:	"Sao Tome & Principe"
+	Precision:	-3
+)
+
+(LClass.1202
+	IsText:	1
+	Label:	"Saudi Arabia"
+	MinStr:	"Saudi Arabia"
+	MaxStr:	"Saudi Arabia"
+	Precision:	-3
+)
+
+(LClass.1203
+	IsText:	1
+	Label:	"Senegal"
+	MinStr:	"Senegal"
+	MaxStr:	"Senegal"
+	Precision:	-3
+)
+
+(LClass.1204
+	IsText:	1
+	Label:	"Seychelles"
+	MinStr:	"Seychelles"
+	MaxStr:	"Seychelles"
+	Precision:	-3
+)
+
+(LClass.1205
+	IsText:	1
+	Label:	"Sierra Leone"
+	MinStr:	"Sierra Leone"
+	MaxStr:	"Sierra Leone"
+	Precision:	-3
+)
+
+(LClass.1206
+	IsText:	1
+	Label:	"Singapore"
+	MinStr:	"Singapore"
+	MaxStr:	"Singapore"
+	Precision:	-3
+)
+
+(LClass.1207
+	IsText:	1
+	Label:	"Slovakia"
+	MinStr:	"Slovakia"
+	MaxStr:	"Slovakia"
+	Precision:	-3
+)
+
+(LClass.1208
+	IsText:	1
+	Label:	"Slovenia"
+	MinStr:	"Slovenia"
+	MaxStr:	"Slovenia"
+	Precision:	-3
+)
+
+(LClass.1209
+	IsText:	1
+	Label:	"Solomon Is."
+	MinStr:	"Solomon Is."
+	MaxStr:	"Solomon Is."
+	Precision:	-3
+)
+
+(LClass.1210
+	IsText:	1
+	Label:	"Somalia"
+	MinStr:	"Somalia"
+	MaxStr:	"Somalia"
+	Precision:	-3
+)
+
+(LClass.1211
+	IsText:	1
+	Label:	"South Africa"
+	MinStr:	"South Africa"
+	MaxStr:	"South Africa"
+	Precision:	-3
+)
+
+(LClass.1212
+	IsText:	1
+	Label:	"South Georgia & the South Sandwich Is."
+	MinStr:	"South Georgia & the South Sandwich Is."
+	MaxStr:	"South Georgia & the South Sandwich Is."
+	Precision:	-3
+)
+
+(LClass.1213
+	IsText:	1
+	Label:	"South Korea"
+	MinStr:	"South Korea"
+	MaxStr:	"South Korea"
+	Precision:	-3
+)
+
+(LClass.1214
+	IsText:	1
+	Label:	"Spain"
+	MinStr:	"Spain"
+	MaxStr:	"Spain"
+	Precision:	-3
+)
+
+(LClass.1215
+	IsText:	1
+	Label:	"Spratly Is."
+	MinStr:	"Spratly Is."
+	MaxStr:	"Spratly Is."
+	Precision:	-3
+)
+
+(LClass.1216
+	IsText:	1
+	Label:	"Sri Lanka"
+	MinStr:	"Sri Lanka"
+	MaxStr:	"Sri Lanka"
+	Precision:	-3
+)
+
+(LClass.1217
+	IsText:	1
+	Label:	"St. Helena"
+	MinStr:	"St. Helena"
+	MaxStr:	"St. Helena"
+	Precision:	-3
+)
+
+(LClass.1218
+	IsText:	1
+	Label:	"St. Kitts & Nevis"
+	MinStr:	"St. Kitts & Nevis"
+	MaxStr:	"St. Kitts & Nevis"
+	Precision:	-3
+)
+
+(LClass.1219
+	IsText:	1
+	Label:	"St. Lucia"
+	MinStr:	"St. Lucia"
+	MaxStr:	"St. Lucia"
+	Precision:	-3
+)
+
+(LClass.1220
+	IsText:	1
+	Label:	"St. Pierre & Miquelon"
+	MinStr:	"St. Pierre & Miquelon"
+	MaxStr:	"St. Pierre & Miquelon"
+	Precision:	-3
+)
+
+(LClass.1221
+	IsText:	1
+	Label:	"St. Vincent & the Grenadines"
+	MinStr:	"St. Vincent & the Grenadines"
+	MaxStr:	"St. Vincent & the Grenadines"
+	Precision:	-3
+)
+
+(LClass.1222
+	IsText:	1
+	Label:	"Sudan"
+	MinStr:	"Sudan"
+	MaxStr:	"Sudan"
+	Precision:	-3
+)
+
+(LClass.1223
+	IsText:	1
+	Label:	"Suriname"
+	MinStr:	"Suriname"
+	MaxStr:	"Suriname"
+	Precision:	-3
+)
+
+(LClass.1224
+	IsText:	1
+	Label:	"Svalbard"
+	MinStr:	"Svalbard"
+	MaxStr:	"Svalbard"
+	Precision:	-3
+)
+
+(LClass.1225
+	IsText:	1
+	Label:	"Swaziland"
+	MinStr:	"Swaziland"
+	MaxStr:	"Swaziland"
+	Precision:	-3
+)
+
+(LClass.1226
+	IsText:	1
+	Label:	"Sweden"
+	MinStr:	"Sweden"
+	MaxStr:	"Sweden"
+	Precision:	-3
+)
+
+(LClass.1227
+	IsText:	1
+	Label:	"Switzerland"
+	MinStr:	"Switzerland"
+	MaxStr:	"Switzerland"
+	Precision:	-3
+)
+
+(LClass.1228
+	IsText:	1
+	Label:	"Syria"
+	MinStr:	"Syria"
+	MaxStr:	"Syria"
+	Precision:	-3
+)
+
+(LClass.1229
+	IsText:	1
+	Label:	"Taiwan"
+	MinStr:	"Taiwan"
+	MaxStr:	"Taiwan"
+	Precision:	-3
+)
+
+(LClass.1230
+	IsText:	1
+	Label:	"Tajikistan"
+	MinStr:	"Tajikistan"
+	MaxStr:	"Tajikistan"
+	Precision:	-3
+)
+
+(LClass.1231
+	IsText:	1
+	Label:	"Tanzania"
+	MinStr:	"Tanzania"
+	MaxStr:	"Tanzania"
+	Precision:	-3
+)
+
+(LClass.1232
+	IsText:	1
+	Label:	"Thailand"
+	MinStr:	"Thailand"
+	MaxStr:	"Thailand"
+	Precision:	-3
+)
+
+(LClass.1233
+	IsText:	1
+	Label:	"The Bahamas"
+	MinStr:	"The Bahamas"
+	MaxStr:	"The Bahamas"
+	Precision:	-3
+)
+
+(LClass.1234
+	IsText:	1
+	Label:	"The Gambia"
+	MinStr:	"The Gambia"
+	MaxStr:	"The Gambia"
+	Precision:	-3
+)
+
+(LClass.1235
+	IsText:	1
+	Label:	"Togo"
+	MinStr:	"Togo"
+	MaxStr:	"Togo"
+	Precision:	-3
+)
+
+(LClass.1236
+	IsText:	1
+	Label:	"Tokelau"
+	MinStr:	"Tokelau"
+	MaxStr:	"Tokelau"
+	Precision:	-3
+)
+
+(LClass.1237
+	IsText:	1
+	Label:	"Tonga"
+	MinStr:	"Tonga"
+	MaxStr:	"Tonga"
+	Precision:	-3
+)
+
+(LClass.1238
+	IsText:	1
+	Label:	"Trinidad & Tobago"
+	MinStr:	"Trinidad & Tobago"
+	MaxStr:	"Trinidad & Tobago"
+	Precision:	-3
+)
+
+(LClass.1239
+	IsText:	1
+	Label:	"Tunisia"
+	MinStr:	"Tunisia"
+	MaxStr:	"Tunisia"
+	Precision:	-3
+)
+
+(LClass.1240
+	IsText:	1
+	Label:	"Turkey"
+	MinStr:	"Turkey"
+	MaxStr:	"Turkey"
+	Precision:	-3
+)
+
+(LClass.1241
+	IsText:	1
+	Label:	"Turkmenistan"
+	MinStr:	"Turkmenistan"
+	MaxStr:	"Turkmenistan"
+	Precision:	-3
+)
+
+(LClass.1242
+	IsText:	1
+	Label:	"Turks & Caicos Is."
+	MinStr:	"Turks & Caicos Is."
+	MaxStr:	"Turks & Caicos Is."
+	Precision:	-3
+)
+
+(LClass.1243
+	IsText:	1
+	Label:	"Tuvalu"
+	MinStr:	"Tuvalu"
+	MaxStr:	"Tuvalu"
+	Precision:	-3
+)
+
+(LClass.1244
+	IsText:	1
+	Label:	"Uganda"
+	MinStr:	"Uganda"
+	MaxStr:	"Uganda"
+	Precision:	-3
+)
+
+(LClass.1245
+	IsText:	1
+	Label:	"Ukraine"
+	MinStr:	"Ukraine"
+	MaxStr:	"Ukraine"
+	Precision:	-3
+)
+
+(LClass.1246
+	IsText:	1
+	Label:	"United Arab Emirates"
+	MinStr:	"United Arab Emirates"
+	MaxStr:	"United Arab Emirates"
+	Precision:	-3
+)
+
+(LClass.1247
+	IsText:	1
+	Label:	"United Kingdom"
+	MinStr:	"United Kingdom"
+	MaxStr:	"United Kingdom"
+	Precision:	-3
+)
+
+(LClass.1248
+	IsText:	1
+	Label:	"United States"
+	MinStr:	"United States"
+	MaxStr:	"United States"
+	Precision:	-3
+)
+
+(LClass.1249
+	IsText:	1
+	Label:	"Uruguay"
+	MinStr:	"Uruguay"
+	MaxStr:	"Uruguay"
+	Precision:	-3
+)
+
+(LClass.1250
+	IsText:	1
+	Label:	"Uzbekistan"
+	MinStr:	"Uzbekistan"
+	MaxStr:	"Uzbekistan"
+	Precision:	-3
+)
+
+(LClass.1251
+	IsText:	1
+	Label:	"Vanuatu"
+	MinStr:	"Vanuatu"
+	MaxStr:	"Vanuatu"
+	Precision:	-3
+)
+
+(LClass.1252
+	IsText:	1
+	Label:	"Vatican City"
+	MinStr:	"Vatican City"
+	MaxStr:	"Vatican City"
+	Precision:	-3
+)
+
+(LClass.1253
+	IsText:	1
+	Label:	"Venezuela"
+	MinStr:	"Venezuela"
+	MaxStr:	"Venezuela"
+	Precision:	-3
+)
+
+(LClass.1254
+	IsText:	1
+	Label:	"Vietnam"
+	MinStr:	"Vietnam"
+	MaxStr:	"Vietnam"
+	Precision:	-3
+)
+
+(LClass.1255
+	IsText:	1
+	Label:	"Virgin Is."
+	MinStr:	"Virgin Is."
+	MaxStr:	"Virgin Is."
+	Precision:	-3
+)
+
+(LClass.1256
+	IsText:	1
+	Label:	"Wake I."
+	MinStr:	"Wake I."
+	MaxStr:	"Wake I."
+	Precision:	-3
+)
+
+(LClass.1257
+	IsText:	1
+	Label:	"Wallis & Futuna"
+	MinStr:	"Wallis & Futuna"
+	MaxStr:	"Wallis & Futuna"
+	Precision:	-3
+)
+
+(LClass.1258
+	IsText:	1
+	Label:	"West Bank"
+	MinStr:	"West Bank"
+	MaxStr:	"West Bank"
+	Precision:	-3
+)
+
+(LClass.1259
+	IsText:	1
+	Label:	"Western Sahara"
+	MinStr:	"Western Sahara"
+	MaxStr:	"Western Sahara"
+	Precision:	-3
+)
+
+(LClass.1260
+	IsText:	1
+	Label:	"Yemen"
+	MinStr:	"Yemen"
+	MaxStr:	"Yemen"
+	Precision:	-3
+)
+
+(LClass.1261
+	IsText:	1
+	Label:	"Yugoslavia"
+	MinStr:	"Yugoslavia"
+	MaxStr:	"Yugoslavia"
+	Precision:	-3
+)
+
+(LClass.1262
+	IsText:	1
+	Label:	"Zambia"
+	MinStr:	"Zambia"
+	MaxStr:	"Zambia"
+	Precision:	-3
+)
+
+(LClass.1263
+	IsText:	1
+	Label:	"Zimbabwe"
+	MinStr:	"Zimbabwe"
+	MaxStr:	"Zimbabwe"
+	Precision:	-3
+)
+
+(LClass.1264
+	IsNoData:	1
+	IsText:	1
+	Label:	"No Data"
+	Precision:	-3
+)
+
+(BShSym.1265
+	Color:	1266
+	Outline:	1
+	OutlineColor:	1267
+	OutlineWidth:	0.10000000000000
+	BgColor:	1268
+)
+
+(TClr.1266
+	Name:	"Transparent"
+)
+
+(TClr.1267
+	Name:	"Transparent"
+)
+
+(TClr.1268
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(NameDict.1269
+)
+
+(NameDict.1270
+)
+

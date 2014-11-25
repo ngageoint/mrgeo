@@ -433,48 +433,44 @@
             </execution>
           </executions>
         </plugin>
-	
-	<plugin>
-	  <groupId>org.apache.maven.plugins</groupId>
-	  <artifactId>maven-shade-plugin</artifactId>
-	  <version>2.3</version>
-	  <executions>
-	    <execution>
-	      <phase>package</phase>
-	      <goals>
-		<goal>shade</goal>
-	      </goals>
-	      <configuration>
-		<finalName>${project.artifactId}-${project.parent.version}-jar-with-dependencies</finalName>
-		<generateUniqueDependencyReducedPom>true</generateUniqueDependencyReducedPom>
-		<transformers>
-		  <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-		  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-		    <manifestEntries>
-		      <Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
-		      <Specification-Version>1.1</Specification-Version>
-		      <Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
-		      <Implementation-Title>com.sun.media.imageio</Implementation-Title>
-		      <Implementation-Version>1.1</Implementation-Version>
-		      <Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
-		      <Extension-Name>com.sun.media.imageio</Extension-Name>
-		      <Sealed>true</Sealed>
-		    </manifestEntries>
-		  </transformer>
-
-		  <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-		    <resource>META-INF/spring.handlers</resource>
-		  </transformer>
-		  <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-		    <resource>META-INF/spring.schemas</resource>
-		  </transformer>
-
-		</transformers>
-	      </configuration>
-	    </execution>
-	  </executions>
-	</plugin>
-
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>2.3</version>
+          <executions>
+            <execution>
+              <phase>package</phase>
+              <goals>
+                <goal>shade</goal>
+              </goals>
+              <configuration>
+                <finalName>${project.artifactId}-${project.parent.version}-jar-with-dependencies</finalName>
+                <generateUniqueDependencyReducedPom>true</generateUniqueDependencyReducedPom>
+                <transformers>
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                    <manifestEntries>
+                      <Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
+                      <Specification-Version>1.1</Specification-Version>
+                      <Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
+                      <Implementation-Title>com.sun.media.imageio</Implementation-Title>
+                      <Implementation-Version>1.1</Implementation-Version>
+                      <Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
+                      <Extension-Name>com.sun.media.imageio</Extension-Name>
+                      <Sealed>true</Sealed>
+                    </manifestEntries>
+                  </transformer>
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                    <resource>META-INF/spring.handlers</resource>
+                  </transformer>
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                    <resource>META-INF/spring.schemas</resource>
+                  </transformer>
+                </transformers>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
@@ -539,10 +535,12 @@
         <hadoop-version>2.5.0-cdh5.2.0</hadoop-version>
         <mahout.version>0.9-cdh5.2.0</mahout.version>
         <pig.version>0.12.0-cdh5.2.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
         <hadoop-config>/etc/hadoop/conf</hadoop-config>
         <slf4j.version>1.6.1</slf4j.version>
         <final.classifier>CDH520</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
+        <include.costdistance>false</include.costdistance>
         <release.arguments />
       </properties>
       <dependencies>
@@ -561,9 +559,11 @@
         <hadoop-version>2.5.0-mr1-cdh5.2.0</hadoop-version>
         <mahout.version>0.9-cdh5.2.0</mahout.version>
         <pig.version>0.12.0-cdh5.2.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
         <hadoop-config>/etc/hadoop/conf</hadoop-config>
         <final.classifier>CDH520</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
+        <include.costdistance>false</include.costdistance>
         <release.arguments />
       </properties>
       <dependencies>
@@ -589,11 +589,12 @@
         <hadoop-version>2.3.0-cdh5.1.0</hadoop-version>
         <mahout.version>0.9-cdh5.1.0</mahout.version>
         <pig.version>0.12.0-cdh5.1.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
         <hadoop-config>/etc/hadoop/conf</hadoop-config>
         <slf4j.version>1.6.1</slf4j.version>
         <final.classifier>CDH510</final.classifier>
-        <slf4j.version>1.6.1</slf4j.version>
         <reuseTestVMs>true</reuseTestVMs>
+        <include.costdistance>false</include.costdistance>
         <release.arguments />
       </properties>
       <dependencies>
@@ -612,10 +613,12 @@
         <hadoop-version>2.3.0-mr1-cdh5.1.0</hadoop-version>
         <mahout.version>0.9-cdh5.1.0</mahout.version>
         <pig.version>0.12.0-cdh5.1.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
         <hadoop-config>/etc/hadoop/conf</hadoop-config>
         <final.classifier>CDH510</final.classifier>
         <release.arguments />
         <slf4j.version>1.6.1</slf4j.version>
+        <include.costdistance>false</include.costdistance>
         <release.arguments />
       </properties>
       <dependencies>
@@ -634,6 +637,7 @@
         <hadoop-version>2.0.0-mr1-cdh4.7.0</hadoop-version>
         <mahout.version>0.7-cdh4.7.0</mahout.version>
         <pig.version>0.11.0-cdh4.7.0</pig.version>
+        <protobuf.version>2.4.1</protobuf.version>
         <hadoop-config>/etc/hadoop/conf</hadoop-config>
         <final.classifier>CDH470</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
@@ -662,9 +666,11 @@
         <hadoop-version>2.0.0-cdh4.7.0</hadoop-version>
         <mahout.version>0.7-cdh4.7.0</mahout.version>
         <pig.version>0.11.0-cdh4.7.0</pig.version>
+        <protobuf.version>2.4.1</protobuf.version>
         <hadoop-config>/etc/hadoop/conf</hadoop-config>
         <final.classifier>CDH470</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
+        <include.costdistance>false</include.costdistance>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
@@ -682,6 +688,7 @@
         <hadoop-version>2.0.0-mr1-cdh4.6.0</hadoop-version>
         <mahout.version>0.7-cdh4.6.0</mahout.version>
         <pig.version>0.11.0-cdh4.6.0</pig.version>
+        <protobuf.version>2.4.1</protobuf.version>
         <hadoop-config>/etc/hadoop/conf</hadoop-config>
         <final.classifier>CDH460</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
@@ -710,6 +717,7 @@
         <mahout.version>0.7-cdh4.5.0</mahout.version>
         <pig.version>0.11.0-cdh4.5.0</pig.version>
         <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <protobuf.version>2.4.1</protobuf.version>
         <final.classifier>CDH450</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
       </properties>
@@ -738,6 +746,7 @@
          | </profile>
          |
          | properties - The property name to set for skipping, for example
+         <skipShade>true</skipShade>
     -->
     <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->
     <profile>
@@ -832,9 +841,11 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
+        <module>mrgeo-vector</module>
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
+        <module>mrgeo-pig</module>
         <module>mrgeo-services</module>
         <module>distribution</module>
       </modules>
@@ -852,6 +863,18 @@
       </modules>
     </profile>
     <profile>
+      <id>build-vector</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>vector</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-vector</module>
+      </modules>
+    </profile>
+    <profile>
       <id>build-mapalgebra</id>
       <activation>
         <property>
@@ -861,6 +884,7 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
+        <module>mrgeo-vector</module>
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
       </modules>
@@ -888,9 +912,24 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
+        <module>mrgeo-vector</module>
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-pig</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>pig</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-vector</module>
+        <module>mrgeo-mapalgebra</module>
+        <module>mrgeo-pig</module>
       </modules>
     </profile>
     <profile>
@@ -1128,6 +1167,11 @@
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>2.2.2</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>${protobuf.version}</version>
       </dependency>
       <dependency>
         <groupId>org.reflections</groupId>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>                    
+<AllColumns>                                              
+  <Column name="id" type="Nominal"/>       
+  <Column name="num1" type="Numeric"/> 
+  <Column name="str1" type="Nominal"/>            
+  <Column name="date" type="Nominal"/>   
+  <Column name="date2" type="Nominal"/> 
+</AllColumns>
