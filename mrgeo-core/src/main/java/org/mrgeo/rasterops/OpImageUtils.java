@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.media.jai.OpImage;
+import javax.media.jai.PlanarImage;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
@@ -64,7 +65,7 @@ public class OpImageUtils
 //    return result;
 //  }
 
-  public static void setNoData(OpImage image, double noDataValue)
+  public static void setNoData(PlanarImage image, double noDataValue)
   {
     image.setProperty(OpImageUtils.NODATA_PROPERTY, noDataValue);
   }
