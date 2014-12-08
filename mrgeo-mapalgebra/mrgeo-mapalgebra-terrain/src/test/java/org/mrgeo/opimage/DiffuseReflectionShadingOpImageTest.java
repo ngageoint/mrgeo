@@ -39,17 +39,17 @@ public class DiffuseReflectionShadingOpImageTest extends LocalRunnerTest
       islandsElevation = f.getCanonicalPath();
       
       
-      colorScale = ColorScale.empty();
-      colorScale.put(-12, new Color(255, 0, 0));
-      colorScale.put(182, new Color(255, 255, 0));
-      colorScale.put(375, new Color(0, 255, 0));
-      colorScale.put(568, new Color(0, 255, 255));
-      colorScale.put(761, new Color(0, 0, 255));
-      colorScale.put(954, new Color(255, 0, 255));
-      colorScale.setForceValuesIntoRange(true);
-
-      csXML = ColorScale.loadFromXML(testUtils.getInputLocal() + "InterpolateReliefMinMax.xml");
-      csXML.setScaleRange(-12, 954);
+//      colorScale = ColorScale.empty();
+//      colorScale.put(-12, new Color(255, 0, 0));
+//      colorScale.put(182, new Color(255, 255, 0));
+//      colorScale.put(375, new Color(0, 255, 0));
+//      colorScale.put(568, new Color(0, 255, 255));
+//      colorScale.put(761, new Color(0, 0, 255));
+//      colorScale.put(954, new Color(255, 0, 255));
+//      colorScale.setForceValuesIntoRange(true);
+//
+//      csXML = ColorScale.loadFromXML(testUtils.getInputLocal() + "InterpolateReliefMinMax.xml");
+//      csXML.setScaleRange(-12, 954);
     }
     catch (Exception e)
     {
