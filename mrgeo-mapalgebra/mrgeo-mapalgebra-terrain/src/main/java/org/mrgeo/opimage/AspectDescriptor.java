@@ -56,14 +56,8 @@ public class AspectDescriptor extends OperationDescriptorImpl implements
   @SuppressWarnings("unchecked")
   public RenderedImage create(ParameterBlock paramBlock, RenderingHints hints)
   {
-    @SuppressWarnings("rawtypes")
-    Vector sources = new Vector();
-    sources.add(paramBlock.getRenderedSource(0));
-
-    AspectOpImage result;
-      result = AspectOpImage.create(paramBlock.getRenderedSource(0), hints);
-
-    return result;
+    RenderedImage normal = HornNormalDescriptor.create(paramBlock.getRenderedSource(0), null);
+    return AspectOpImage.create(normal, hints);
   }
 
 }

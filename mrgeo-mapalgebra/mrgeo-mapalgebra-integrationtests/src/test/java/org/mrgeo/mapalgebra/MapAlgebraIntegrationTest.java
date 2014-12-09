@@ -223,6 +223,24 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 
   @Test
   @Category(IntegrationTest.class)
+  public void aspect() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("aspect([%s])", smallElevation), Double.NaN);
+
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          String.format("aspect([%s])", smallElevation));
+
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
   public void complicated() throws Exception
   {
     if (GEN_BASELINE_DATA_ONLY)
@@ -848,6 +866,24 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
           String.format("sin([%s] / 0.01)", allones));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void slope() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("slope([%s])", smallElevation), Double.NaN);
+
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          String.format("slope([%s])", smallElevation));
+
     }
   }
 
