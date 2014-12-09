@@ -14,7 +14,6 @@
  */
 package org.mrgeo.test;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -25,19 +24,12 @@ import org.junit.Assert;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.RasterTileMerger;
-import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapreduce.job.JobCancelledException;
-import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.rasterops.GeoTiffExporter;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.FileUtils;
-import org.mrgeo.utils.TMSUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -49,10 +41,14 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Properties;
 
 public class TestUtils
 {
+  public interface ValueTranslator
+  {
+    public float translate(float value);
+  }
+
   public static final class DiffStats
   {
     // count, not including nan
@@ -70,9 +66,9 @@ public class TestUtils
     public long width = 0;
     public long height = 0;
     public double[] maxValue = {-Double.MAX_VALUE,-Double.MAX_VALUE,-Double.MAX_VALUE,
-        -Double.MAX_VALUE};
+      -Double.MAX_VALUE};
     public double[] minValue = {Double.MAX_VALUE, Double.MIN_VALUE, Double.MIN_VALUE,
-        Double.MIN_VALUE};
+      Double.MIN_VALUE};
     final long noDataValue = -9999;
     int numBands = 0;
 
@@ -188,7 +184,7 @@ public class TestUtils
       }
       return result;
     }
-  }
+  }  
 
   protected final String outputLocal;
   protected final String inputLocal;
@@ -209,7 +205,7 @@ public class TestUtils
 
     setJarLocation();
 
-  }
+}
 
   public static void setJarLocation() throws IOException
   {
@@ -264,12 +260,12 @@ public class TestUtils
 
   public static DiffStats calculateDiffStats(MrsImage baseMImg, MrsImage testMImg, double tolerance)
       throws IOException
-  {
+      {
     final int tileSize = baseMImg.getTilesize();
 
-    return calculateDiffStats(baseMImg.getRenderedImage(), testMImg.getRenderedImage(),
-        tolerance, tileSize);
-  }
+    return calculateDiffStats(baseMImg.getRenderedImage(), testMImg.getRenderedImage(), 
+      tolerance, tileSize);
+      }
 
   public static DiffStats calculateDiffStats(RenderedImage i1, RenderedImage i2, double tolerance)
   {
@@ -278,7 +274,7 @@ public class TestUtils
   }
 
   public static DiffStats calculateDiffStats(RenderedImage i1, RenderedImage i2, double tolerance,
-      int tileSize)
+    int tileSize)
   {
     // compare base and test params to be sure equivalent
     assert (i1.getWidth() == i2.getWidth());
@@ -464,7 +460,7 @@ public class TestUtils
 
     if (fs.exists(result))
     {
-      fs.delete(result, true);
+      fs.delete(result, true);      
     }
 
     if (fs.mkdirs(result) == false)
@@ -521,6 +517,21 @@ public class TestUtils
    */
   public static void compareRasters(Raster r1, Raster r2)
   {
+    compareRasters(r1, null, r2, null);
+  }
+
+  /**
+   * If no translation of values should occur for one or both rendered images,
+   * pass null for that translator parameter.
+   *
+   * @param r1
+   * @param r1Translator
+   * @param r2
+   * @param r2Translator
+   */
+  public static void compareRasters(Raster r1, ValueTranslator r1Translator,
+      Raster r2, ValueTranslator r2Translator)
+  {
     int dataType = r1.getDataBuffer().getDataType();
     boolean intish = dataType == DataBuffer.TYPE_BYTE || dataType == DataBuffer.TYPE_INT
         || dataType == DataBuffer.TYPE_SHORT;
@@ -538,18 +549,26 @@ public class TestUtils
         for (int band = 0; band < r1.getNumBands(); band++)
         {
           float v1 = r1.getSampleFloat(dx, dy, band);
+          if (r1Translator != null)
+          {
+            v1 = r1Translator.translate(v1);
+          }
           float v2 = r2.getSampleFloat(dx, dy, band);
+          if (r2Translator != null)
+          {
+            v2 = r2Translator.translate(v2);
+          }
 
-          Assert.assertEquals("Pixel NaN mismatch: px: " + dx + " py: " +  dy
-              + " b: " + band + " v1: " + v1 + " v2: " + v2,  Float.isNaN(v1), Float.isNaN(v2));
+          Assert.assertEquals("Pixel NaN mismatch: px: " + dx + " py: " +  dy 
+            + " b: " + band + " v1: " + v1 + " v2: " + v2,  Float.isNaN(v1), Float.isNaN(v2));
 
           // make delta something reasonable relative to the data
 
           //NOTE: this formula is not very reliable.  An error of 2e-3f for
           //  pixel v1=1 fails, but passes for v1=2.
           float delta = intish ? 1.0001f : Math.max(Math.abs(v1 * 1e-3f), 1e-3f);
-          Assert.assertEquals("Pixel value mismatch: px: " + dx + " py: " +  dy
-              + " b: " + band + " v1: " + v1 + " v2: " + v2,  v1, v2, delta);
+          Assert.assertEquals("Pixel value mismatch: px: " + dx + " py: " +  dy 
+            + " b: " + band + " v1: " + v1 + " v2: " + v2,  v1, v2, delta);
         }
       }
     }
@@ -577,27 +596,30 @@ public class TestUtils
 
           if ((nodataIsNan && (!Double.isNaN(v))) || (!nodataIsNan && (v != nodata)))
           {
-            Assert.assertEquals("Pixel value mismatch: px: " + dx + " py: " +  dy
-                + " v: " + v + " const: " + constant,  constant, v, delta);
+            Assert.assertEquals("Pixel value mismatch: px: " + dx + " py: " +  dy 
+              + " v: " + v + " const: " + constant,  constant, v, delta);
           }
         }
       }
     }
   }
 
-  public void compareRenderedImages(String testName, RenderedImage r2) throws IOException
-  {
-    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-    compareRenderedImages(baselineTif, r2);
-  }
-
-  public static void compareRenderedImages(File f1, RenderedImage r2) throws IOException
-  {
-    BufferedImage bi = ImageIO.read(f1);
-    compareRenderedImages(bi, r2);
-  }
-
   public static void compareRenderedImages(RenderedImage i1, RenderedImage i2)
+  {
+    compareRenderedImages(i1, null, i2, null);
+  }
+
+  /**
+   * If no translation of values should occur for one or both rendered images,
+   * pass null for that translator parameter.
+   * 
+   * @param i1
+   * @param i1Translator
+   * @param i2
+   * @param i2Translator
+   */
+  public static void compareRenderedImages(RenderedImage i1, ValueTranslator i1Translator,
+      RenderedImage i2, ValueTranslator i2Translator)
   {
     OpImageRegistrar.registerMrGeoOps();
 
@@ -624,7 +646,8 @@ public class TestUtils
         }
 
         Rectangle rect = new Rectangle(x, y, width, height);
-        TestUtils.compareRasters(i1.getData(rect), i2.getData(rect));
+        TestUtils.compareRasters(i1.getData(rect), i1Translator,
+            i2.getData(rect), i2Translator);
       }
     }
   }
@@ -688,7 +711,7 @@ public class TestUtils
         int pixelId = getPixelId(x, y, width);
 
         raster.setSample(x, y, 0,
-            ((pixelId % nodataFrequency) == 0) ? nodata : c);
+          ((pixelId % nodataFrequency) == 0) ? nodata : c);
       }
     }
 
@@ -724,56 +747,10 @@ public class TestUtils
         int pixelId = getPixelId(x, y, width);
 
         raster.setSample(x, y, 0,
-            ((pixelId % nodataFrequency) == 0) ? nodata : (double)pixelId);
+          ((pixelId % nodataFrequency) == 0) ? nodata : (double)pixelId);
       }
     }
 
     return raster;
   }
-
-  public void generateBaselineTif(final Configuration conf, final String testName,
-      final Raster raster, Bounds bounds)
-      throws IOException, JobFailedException, JobCancelledException, ParserException
-  {
-    BufferedImage image = RasterUtils.makeBufferedImage(raster);
-    generateBaselineTif(conf, testName, image, bounds, Double.NaN);
-  }
-
-  public void generateBaselineTif(final Configuration conf, final String testName, final Raster raster)
-      throws IOException, JobFailedException, JobCancelledException, ParserException
-  {
-    BufferedImage image = RasterUtils.makeBufferedImage(raster);
-    generateBaselineTif(conf, testName, image, Bounds.world, Double.NaN);
-  }
-  public void generateBaselineTif(final Configuration conf, final String testName,
-      final BufferedImage image, Bounds bounds)
-      throws IOException, JobFailedException, JobCancelledException, ParserException
-  {
-    generateBaselineTif(conf, testName, image, bounds, Double.NaN);
-  }
-
-  public void generateBaselineTif(final Configuration conf, final String testName, final RenderedImage image)
-      throws IOException, JobFailedException, JobCancelledException, ParserException
-  {
-    generateBaselineTif(conf, testName, image, Bounds.world, Double.NaN);
-  }
-
-
-  public void generateBaselineTif(final Configuration conf, final String testName,
-      final RenderedImage image, Bounds bounds, double nodata)
-      throws IOException, JobFailedException, JobCancelledException, ParserException
-  {
-
-    double pixelsize = bounds.getWidth() / image.getWidth();
-    int zoom = TMSUtils.zoomForPixelSize(pixelsize, image.getWidth());
-
-    TMSUtils.Bounds tb = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
-        bounds.getMaxY());
-    tb = TMSUtils.tileBounds(tb, zoom, image.getWidth());
-
-    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-
-    GeoTiffExporter.export(image, tb.asBounds(), baselineTif, false, nodata);
-  }
-
 }
