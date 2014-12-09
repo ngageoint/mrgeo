@@ -158,15 +158,30 @@ public class HornNormalOpImage extends OpImage implements TileLocator
         lastY = y;
       }
 
+      int elevWidth = elevation.getWidth();
+      int elevHeight = elevation.getHeight();
+      int elevMinX = elevation.getMinX();
+      int elevMinY = elevation.getMinY();
       // if any of the surrounding eight neighbors is null, set their value to
       // be the same as the center pixel. This is less hokie than making pixels
       // with null neighbors null.
       for (int i = 0; i < 9; i++)
       {
-        double v = elevation.getSampleDouble(x + dpx[i], y + dpy[i], 0);
-        if (OpImageUtils.isNoData(v, noDataValue, isNoDataNan))
+        int xNeighbor = x + dpx[i];
+        int yNeighbor = y + dpy[i];
+        double v = 0.0;
+        if ((xNeighbor < elevMinX) || (xNeighbor >= elevMinX + elevWidth) ||
+            (yNeighbor < elevMinY) || (yNeighbor >= elevMinY + elevHeight))
         {
           v = eo;
+        }
+        else
+        {
+          v = elevation.getSampleDouble(xNeighbor, yNeighbor, 0);
+          if (OpImageUtils.isNoData(v, noDataValue, isNoDataNan))
+          {
+            v = eo;
+          }
         }
         z[i] = v;
       }
