@@ -27,6 +27,9 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.mapalgebra.parser.ParserException;
+import org.mrgeo.mapreduce.job.JobCancelledException;
+import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.rasterops.OpImageUtils;
 import org.mrgeo.test.TestUtils;
@@ -66,8 +69,11 @@ public class HornNormalOpImageTest
   private static TestUtils.ValueTranslator nanTranslatorToMinus9999;
   private static TestUtils.ValueTranslator nanTranslatorToMinus32767;
 
+  private static TestUtils testUtils;
+
   public static class NaNTranslator implements TestUtils.ValueTranslator
   {
+
     private float translateTo;
 
     public NaNTranslator(float translateTo)
@@ -88,8 +94,10 @@ public class HornNormalOpImageTest
   }
 
   @BeforeClass
-  public static void init()
+  public static void init() throws IOException
   {
+    testUtils = new TestUtils(HornNormalOpImageTest.class);
+
     input = TestUtils.composeInputDir(HornNormalOpImageTest.class);
     // The baseline (golden) images have nodata values saved as -9999.0. We use the
     // following translators during image comparisons to convert nodata values in the
@@ -187,7 +195,7 @@ public class HornNormalOpImageTest
 
   @Test
   @Category(UnitTest.class)
-  public void testFlatSurfaceWithNoData() throws IOException, NoSuchAuthorityCodeException, FactoryException
+  public void testFlatSurfaceWithNoData() throws IOException, FactoryException
   {
     double noData = NON_NAN_NODATA_VALUE;
     RenderedImage ri = runHornNormal(twosWithNoData, noData, destRect, tx, ty, zoom, tileWidth, tileHeight);
@@ -212,61 +220,98 @@ public class HornNormalOpImageTest
 
   @Test
   @Category(UnitTest.class)
-  public void testNoNan() throws IOException, NoSuchAuthorityCodeException, FactoryException
+  public void testNoNan()
+      throws IOException, FactoryException, JobCancelledException, ParserException,
+      JobFailedException
   {
     double noData = Double.NaN;
     RenderedImage ri = runHornNormal(numbered, noData, destRect, tx, ty, zoom, tileWidth, tileHeight);
-    String resultOutputFile = input + testname.getMethodName();
+//    String resultOutputFile = input + testname.getMethodName();
+//    if (GENERATE_BASELINE_DATA)
+//    {
+//      GeotoolsRasterUtils.saveLocalGeotiff(resultOutputFile, ri.getData(destRect),
+//          tx, ty, zoom, tileWidth, noData);
+//    }
+//    else
+//    {
+//      TestUtils.compareRenderedImages(ImageIO.read(new File(resultOutputFile + ".tif")), ri);
+//    }
+
+    Raster r = ri.getData(destRect);
     if (GENERATE_BASELINE_DATA)
     {
-      GeotoolsRasterUtils.saveLocalGeotiff(resultOutputFile, ri.getData(destRect),
-          tx, ty, zoom, tileWidth, noData);
+      testUtils.generateBaselineTif( testname.getMethodName(), r);
     }
     else
     {
-      TestUtils.compareRenderedImages(ImageIO.read(new File(resultOutputFile + ".tif")), ri);
+      testUtils.compareRasters(testname.getMethodName(), r);
     }
+
   }
 
   @Test
   @Category(UnitTest.class)
-  public void testWithNanNoData() throws IOException, NoSuchAuthorityCodeException, FactoryException
+  public void testWithNanNoData()
+      throws IOException,  FactoryException, JobCancelledException, ParserException,
+      JobFailedException
   {
     double noData = Double.NaN;
     RenderedImage ri = runHornNormal(numberedWithNanNoData, noData, destRect, tx, ty, zoom, tileWidth, tileHeight);
-    String resultOutputFile = input + testname.getMethodName();
+//    String resultOutputFile = input + testname.getMethodName();
+//    if (GENERATE_BASELINE_DATA)
+//    {
+//      GeotoolsRasterUtils.saveLocalGeotiff(resultOutputFile, ri.getData(destRect),
+//          tx, ty, zoom, tileWidth, noData);
+//    }
+//    else
+//    {
+//      // Since tif's cannot store NaN values, the baseline image stores NaN as
+//      // -9999 instead.
+//      TestUtils.compareRenderedImages(ImageIO.read(new File(resultOutputFile + ".tif")),
+//          null,
+//          ri, nanTranslatorToMinus9999);
+//    }
+    Raster r = ri.getData(destRect);
     if (GENERATE_BASELINE_DATA)
     {
-      GeotoolsRasterUtils.saveLocalGeotiff(resultOutputFile, ri.getData(destRect),
-          tx, ty, zoom, tileWidth, noData);
+      testUtils.generateBaselineTif( testname.getMethodName(), r);
     }
     else
     {
-      // Since tif's cannot store NaN values, the baseline image stores NaN as
-      // -9999 instead.
-      TestUtils.compareRenderedImages(ImageIO.read(new File(resultOutputFile + ".tif")),
-          null,
-          ri, nanTranslatorToMinus9999);
+      testUtils.compareRasters(testname.getMethodName(), null, r, nanTranslatorToMinus9999);
     }
+
   }
 
   @Test
   @Category(UnitTest.class)
-  public void testWithNoData() throws IOException, NoSuchAuthorityCodeException, FactoryException
+  public void testWithNoData()
+      throws IOException, NoSuchAuthorityCodeException, FactoryException, JobCancelledException, ParserException,
+      JobFailedException
   {
     double noData = NON_NAN_NODATA_VALUE;
     RenderedImage ri = runHornNormal(numberedWithNoData, noData, destRect, tx, ty, zoom, tileWidth, tileHeight);
-    String resultOutputFile = input + testname.getMethodName();
+//    String resultOutputFile = input + testname.getMethodName();
+//    if (GENERATE_BASELINE_DATA)
+//    {
+//      GeotoolsRasterUtils.saveLocalGeotiff(resultOutputFile, ri.getData(destRect),
+//          tx, ty, zoom, tileWidth, noData);
+//    }
+//    else
+//    {
+//      TestUtils.compareRenderedImages(ImageIO.read(new File(resultOutputFile + ".tif")),
+//          null, ri, nanTranslatorToMinus32767 /*nonNanTranslator*/);
+//    }
+    Raster r = ri.getData(destRect);
     if (GENERATE_BASELINE_DATA)
     {
-      GeotoolsRasterUtils.saveLocalGeotiff(resultOutputFile, ri.getData(destRect),
-          tx, ty, zoom, tileWidth, noData);
+      testUtils.generateBaselineTif( testname.getMethodName(), r);
     }
     else
     {
-      TestUtils.compareRenderedImages(ImageIO.read(new File(resultOutputFile + ".tif")),
-          null, ri, nanTranslatorToMinus32767 /*nonNanTranslator*/);
+      testUtils.compareRasters(testname.getMethodName(), null, r, nanTranslatorToMinus32767);
     }
+
   }
 
   private static int getPixelId(int x, int y, int w, int tileWidth, int tileHeight)

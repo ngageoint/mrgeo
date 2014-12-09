@@ -145,10 +145,10 @@ public class TestUtils
     public void calculateDiffStats(Raster r1, Raster r2, double tolerance)
     {
       // compare params for base and test to be sure they are the same
-      assert (r1.getMinX() == r2.getMinX());
-      assert (r1.getMinY() == r2.getMinY());
-      assert (r1.getWidth() == r2.getWidth());
-      assert (r1.getHeight() == r2.getHeight());
+      Assert.assertEquals(r1.getMinX(), r2.getMinX());
+      Assert.assertEquals (r1.getMinY(),  r2.getMinY());
+      Assert.assertEquals (r1.getWidth(),  r2.getWidth());
+      Assert.assertEquals (r1.getHeight(),  r2.getHeight());
       Assert.assertEquals(r1.getNumBands(), r2.getNumBands());
 
       // var initialization, potential for improving code optimization by initializing upfront
@@ -286,10 +286,10 @@ public class TestUtils
       int tileSize)
   {
     // compare base and test params to be sure equivalent
-    assert (i1.getWidth() == i2.getWidth());
-    assert (i1.getHeight() == i2.getHeight());
-    assert (i1.getMinTileX() == i2.getMinTileX());
-    assert (i1.getMinTileY() == i2.getMinTileY());
+    Assert.assertEquals (i1.getWidth() , i2.getWidth());
+    Assert.assertEquals (i1.getHeight() , i2.getHeight());
+    Assert.assertEquals (i1.getMinTileX() , i2.getMinTileX());
+    Assert.assertEquals (i1.getMinTileY() , i2.getMinTileY());
 
     // initializations upfront to hopefully improve code optimization
     int width, height;
@@ -523,7 +523,19 @@ public class TestUtils
   public static void compareRasters(File r1, Raster r2) throws IOException
   {
     BufferedImage bi = ImageIO.read(r1);
-    compareRasters(bi.getData(), r2);
+    compareRasters(bi.getData(), null, r2, null);
+  }
+
+  public void compareRasters(String testName, ValueTranslator t1, Raster r2, ValueTranslator t2) throws IOException
+  {
+    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+    compareRasters(baselineTif, t1, r2, t2);
+  }
+
+  public static void compareRasters(File r1, ValueTranslator t1, Raster r2, ValueTranslator t2) throws IOException
+  {
+    BufferedImage bi = ImageIO.read(r1);
+    compareRasters(bi.getData(), t1, r2, t2);
   }
 
   /**
@@ -650,10 +662,10 @@ public class TestUtils
   {
     OpImageRegistrar.registerMrGeoOps();
 
-    assert (i1.getWidth() == i2.getWidth());
-    assert (i1.getHeight() == i2.getHeight());
-    assert (i1.getMinTileX() == i2.getMinTileX());
-    assert (i1.getMinTileY() == i2.getMinTileY());
+    Assert.assertEquals("Widths are different", i1.getWidth(), i2.getWidth());
+    Assert.assertEquals("Heights are different", i1.getHeight(), i2.getHeight());
+    Assert.assertEquals("MinTileX is different", i1.getMinTileX(), i2.getMinTileX());
+    Assert.assertEquals("MinTileY is different", i1.getMinTileY(),  i2.getMinTileY());
 
     final int TILE_SIZE = 2048;
 
@@ -780,35 +792,35 @@ public class TestUtils
     return raster;
   }
 
-  public void generateBaselineTif(final Configuration conf, final String testName,
+  public void generateBaselineTif(final String testName,
       final Raster raster, Bounds bounds)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
     BufferedImage image = RasterUtils.makeBufferedImage(raster);
-    generateBaselineTif(conf, testName, image, bounds, Double.NaN);
+    generateBaselineTif(testName, image, bounds, Double.NaN);
   }
 
-  public void generateBaselineTif(final Configuration conf, final String testName, final Raster raster)
+  public void generateBaselineTif(final String testName, final Raster raster)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
     BufferedImage image = RasterUtils.makeBufferedImage(raster);
-    generateBaselineTif(conf, testName, image, Bounds.world, Double.NaN);
+    generateBaselineTif( testName, image, Bounds.world, Double.NaN);
   }
-  public void generateBaselineTif(final Configuration conf, final String testName,
+  public void generateBaselineTif(final String testName,
       final BufferedImage image, Bounds bounds)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
-    generateBaselineTif(conf, testName, image, bounds, Double.NaN);
+    generateBaselineTif(testName, image, bounds, Double.NaN);
   }
 
-  public void generateBaselineTif(final Configuration conf, final String testName, final RenderedImage image)
+  public void generateBaselineTif(final String testName, final RenderedImage image)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
-    generateBaselineTif(conf, testName, image, Bounds.world, Double.NaN);
+    generateBaselineTif(testName, image, Bounds.world, Double.NaN);
   }
 
 
-  public void generateBaselineTif(final Configuration conf, final String testName,
+  public void generateBaselineTif(final String testName,
       final RenderedImage image, Bounds bounds, double nodata)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {

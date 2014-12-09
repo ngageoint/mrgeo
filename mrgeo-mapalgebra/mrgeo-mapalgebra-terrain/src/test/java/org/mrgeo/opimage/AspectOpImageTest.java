@@ -12,6 +12,7 @@ import org.mrgeo.junit.UnitTest;
 import org.mrgeo.rasterops.OpImageUtils;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
+import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.TMSUtils;
 import org.opengis.referencing.FactoryException;
 
@@ -33,7 +34,7 @@ public class AspectOpImageTest extends LocalRunnerTest
   @Rule
   public TestName testname = new TestName();
 
-  private static MapOpTestUtils testUtils;
+  private static TestUtils testUtils;
 
   private static TiledImage twos;
   private static TiledImage twosWithNoData;
@@ -53,7 +54,7 @@ public class AspectOpImageTest extends LocalRunnerTest
   @BeforeClass
   public static void init() throws IOException
   {
-    testUtils = new MapOpTestUtils(AspectOpImageTest.class);
+    testUtils = new TestUtils(AspectOpImageTest.class);
 
     width = 10;
 
@@ -174,7 +175,7 @@ public class AspectOpImageTest extends LocalRunnerTest
     Raster r = aspect.getData(destRect);
     if (GEN_BASELINE_DATA_ONLY)
     {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), r);
+      testUtils.generateBaselineTif(testname.getMethodName(), r);
     }
     else
     {
@@ -191,7 +192,7 @@ public class AspectOpImageTest extends LocalRunnerTest
     Raster r = aspect.getData(destRect);
     if (GEN_BASELINE_DATA_ONLY)
     {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), r);
+      testUtils.generateBaselineTif(testname.getMethodName(), r);
     }
     else
     {
@@ -208,7 +209,7 @@ public class AspectOpImageTest extends LocalRunnerTest
     Raster r = aspect.getData(destRect);
     if (GEN_BASELINE_DATA_ONLY)
     {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), r);
+      testUtils.generateBaselineTif(testname.getMethodName(), r);
     }
     else
     {
@@ -225,7 +226,7 @@ public class AspectOpImageTest extends LocalRunnerTest
     Raster r = aspect.getData(destRect);
     if (GEN_BASELINE_DATA_ONLY)
     {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), r);
+      testUtils.generateBaselineTif(testname.getMethodName(), r);
     }
     else
     {
@@ -241,7 +242,7 @@ public class AspectOpImageTest extends LocalRunnerTest
     Raster r = aspect.getData(destRect);
     if (GEN_BASELINE_DATA_ONLY)
     {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), r);
+      testUtils.generateBaselineTif(testname.getMethodName(), r);
     }
     else
     {
@@ -257,7 +258,7 @@ public class AspectOpImageTest extends LocalRunnerTest
     Raster r = aspect.getData(destRect);
     if (GEN_BASELINE_DATA_ONLY)
     {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), r);
+      testUtils.generateBaselineTif(testname.getMethodName(), r);
     }
     else
     {
