@@ -38,11 +38,26 @@ public class SlopeMapOp extends RenderedImageMapOp implements TileClusterInfoCal
   public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
-    if (children.size() != 1)
+
+    if (children.size() > 2)
     {
-      throw new IllegalArgumentException("slope takes one argument - single-band raster elevation");
+      throw new IllegalArgumentException(
+          "Slope takes one or two arguments. single-band raster elevation and optional unit format (\"deg\", \"rad\", \"gradient\", or \"percent\")");
     }
+
     result.add(children.get(0));
+
+    if (children.size() == 2)
+    {
+      String units = MapOp.parseChildString(children.get(1), "units", parser);
+      if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")
+          || units.equalsIgnoreCase("gradient") || units.equalsIgnoreCase("percent")))
+      {
+        throw new IllegalArgumentException("Units must be \"deg\", \"rad\", \"gradient\", or \"percent\".");
+      }
+      getParameters().add(units);
+    }
+
     return result;
   }
 

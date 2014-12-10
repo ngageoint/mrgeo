@@ -229,13 +229,27 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     {
       testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
           String.format("aspect([%s])", smallElevation), Double.NaN);
-
     }
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
           String.format("aspect([%s])", smallElevation));
+    }
+  }
 
+  @Test
+  @Category(IntegrationTest.class)
+  public void aspectRad() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("aspect([%s], \"rad\")", smallElevation), Double.NaN);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          String.format("aspect([%s], \"rad\")", smallElevation));
     }
   }
 
@@ -876,13 +890,64 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     if (GEN_BASELINE_DATA_ONLY)
     {
       testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-          String.format("slope([%s])", smallElevation), Double.NaN);
+          String.format("slope([%s], \"gradient\")", smallElevation), Double.NaN);
 
     }
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-          String.format("slope([%s])", smallElevation));
+          String.format("slope([%s], \"gradient\")", smallElevation));
+
+    }
+  }
+  @Test
+  @Category(IntegrationTest.class)
+  public void slopeRad() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("slope([%s], \"rad\")", smallElevation), Double.NaN);
+
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          String.format("slope([%s], \"rad\")", smallElevation));
+
+    }
+  }
+  @Test
+  @Category(IntegrationTest.class)
+  public void slopeDeg() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("slope([%s], \"deg\")", smallElevation), Double.NaN);
+
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          String.format("slope([%s], \"deg\")", smallElevation));
+
+    }
+  }
+  @Test
+  @Category(IntegrationTest.class)
+  public void slopePercent() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("slope([%s], \"percent\")", smallElevation), Double.NaN);
+
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          String.format("slope([%s], \"percent\")", smallElevation));
 
     }
   }
