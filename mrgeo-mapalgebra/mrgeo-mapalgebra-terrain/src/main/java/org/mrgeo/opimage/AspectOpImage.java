@@ -70,8 +70,8 @@ public class AspectOpImage extends MrGeoOpImage
   {
     this(sources, "deg", hints);
   }
-  @SuppressWar
-  nings("rawtypes")
+
+  @SuppressWarnings("rawtypes")
   private AspectOpImage(Vector sources, String units, RenderingHints hints)
   {
     super(sources, hints);
