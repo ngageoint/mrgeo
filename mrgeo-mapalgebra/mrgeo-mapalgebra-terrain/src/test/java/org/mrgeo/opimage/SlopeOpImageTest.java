@@ -33,7 +33,7 @@ public class SlopeOpImageTest
 
   private static OpImageTestUtils testUtils;
 
-  private static boolean GEN_BASELINE_DATA_ONLY = true;
+  private static boolean GEN_BASELINE_DATA_ONLY = false;
 
   @BeforeClass
   public static void init() throws IOException
