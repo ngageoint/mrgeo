@@ -258,6 +258,6 @@ public final class RawUnaryOpImage extends OpImage implements Serializable
   @Override
   public String toString()
   {
-    return String.format("RawCosOpImage");
+    return String.format("RawUnaryOpImage");
   }
 }

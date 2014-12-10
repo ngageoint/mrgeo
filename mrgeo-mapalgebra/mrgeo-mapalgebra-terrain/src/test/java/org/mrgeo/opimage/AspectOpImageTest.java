@@ -43,7 +43,7 @@ public class AspectOpImageTest extends LocalRunnerTest
   private static TiledImage numberedWithNoData;
   private static TiledImage numberedWithNanNoData;
 
-  private static boolean GEN_BASELINE_DATA_ONLY = false;
+  private static boolean GEN_BASELINE_DATA_ONLY = true;
 
   private static Rectangle destRect;
 
@@ -111,6 +111,10 @@ public class AspectOpImageTest extends LocalRunnerTest
 
   private static RenderedImage runAspect(TiledImage arg, double nodata) throws IOException, FactoryException
   {
+    return runAspect(arg, "deg", nodata);
+  }
+  private static RenderedImage runAspect(TiledImage arg, String units, double nodata) throws IOException, FactoryException
+  {
 
     int zoom = 4;
     TMSUtils.Tile tile = TMSUtils.latLonToTile(0.0, 0.0, zoom, width);
@@ -118,7 +122,7 @@ public class AspectOpImageTest extends LocalRunnerTest
     long ty = tile.ty;
 
 
-    RenderedImage op = AspectDescriptor.create(arg, null);
+    RenderedImage op = AspectDescriptor.create(arg, units, null);
 
     // Force the OpImage to be created - invokes create method on the descriptor for the op
     op.getMinX();
@@ -171,6 +175,23 @@ public class AspectOpImageTest extends LocalRunnerTest
   public void aspect() throws Exception
   {
     RenderedImage aspect = runAspect(numbered, Double.NaN);
+
+    Raster r = aspect.getData(destRect);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(testname.getMethodName(), r);
+    }
+    else
+    {
+      testUtils.compareRasters(testname.getMethodName(), r);
+    }
+  }
+
+  @Test
+  @Category(UnitTest.class)
+  public void aspectRad() throws Exception
+  {
+    RenderedImage aspect = runAspect(numbered, "rad", Double.NaN);
 
     Raster r = aspect.getData(destRect);
     if (GEN_BASELINE_DATA_ONLY)

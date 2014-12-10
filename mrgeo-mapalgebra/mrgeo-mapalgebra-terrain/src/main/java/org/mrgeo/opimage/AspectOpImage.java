@@ -1,5 +1,16 @@
 /*
- * Copyright (c) 2009-2010 by SPADAC Inc.  All rights reserved.
+ * Copyright 2009-2014 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.mrgeo.opimage;
@@ -31,7 +42,10 @@ import java.util.Vector;
 @SuppressWarnings("unchecked")
 public class AspectOpImage extends MrGeoOpImage
 {
+  private static final double DEG_2_RAD = 0.0174532925;
+
   RenderedImage src;
+  String units;
 
   public static AspectOpImage create(RenderedImage src, RenderingHints hints)
   {
@@ -42,11 +56,27 @@ public class AspectOpImage extends MrGeoOpImage
     return new AspectOpImage(sources, hints);
   }
 
+  public static AspectOpImage create(RenderedImage src, String units, RenderingHints hints)
+  {
+    @SuppressWarnings("rawtypes")
+    Vector sources = new Vector();
+    sources.add(src);
+
+    return new AspectOpImage(sources, units, hints);
+  }
+
   @SuppressWarnings("rawtypes")
   private AspectOpImage(Vector sources, RenderingHints hints)
   {
+    this(sources, "deg", hints);
+  }
+  @SuppressWar
+  nings("rawtypes")
+  private AspectOpImage(Vector sources, String units, RenderingHints hints)
+  {
     super(sources, hints);
     src = (RenderedImage) sources.get(0);
+    this.units = units;
 
     colorModel = new FloatDoubleColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false,
         false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
@@ -54,7 +84,6 @@ public class AspectOpImage extends MrGeoOpImage
         src.getSampleModel().getHeight());
   }
 
-  // TODO Break this into multiple functions
   @Override
   final protected void computeRect(PlanarImage[] sources, WritableRaster dest, Rectangle destRect)
   {
@@ -82,6 +111,11 @@ public class AspectOpImage extends MrGeoOpImage
           double theta = Math.atan2(vy, vx);
           double v = (-theta + 3 * Math.PI / 2) % (2 * Math.PI);
           aspect = 360 - v * (360 / (2 * Math.PI));
+
+          if (units.equalsIgnoreCase("rad"))
+          {
+            aspect *= DEG_2_RAD;
+          }
         }
         dest.setSample(x, y, 0, aspect);
       }
