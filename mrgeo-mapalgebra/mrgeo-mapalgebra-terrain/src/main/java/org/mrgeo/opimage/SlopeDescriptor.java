@@ -17,6 +17,7 @@ package org.mrgeo.opimage;
 
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptorImpl;
+import javax.media.jai.RenderedOp;
 import javax.media.jai.registry.RenderedRegistryMode;
 import java.awt.*;
 import java.awt.image.RenderedImage;
@@ -33,9 +34,16 @@ public class SlopeDescriptor extends OperationDescriptorImpl implements
   public static final String OPERATION_NAME = SlopeDescriptor.class.getName();
   private static final long serialVersionUID = 1L;
 
-  public static RenderedImage create(RenderedImage slope, RenderingHints hints)
+  public static RenderedOp create(RenderedImage slope, RenderingHints hints)
   {
     ParameterBlock paramBlock = (new ParameterBlock()).addSource(slope);
+    return JAI.create(OPERATION_NAME, paramBlock, hints);
+  }
+
+  public static RenderedOp create(RenderedImage slope, String units, RenderingHints hints)
+  {
+    ParameterBlock paramBlock = (new ParameterBlock()).addSource(slope);
+    paramBlock.add(units);
     return JAI.create(OPERATION_NAME, paramBlock, hints);
   }
 
@@ -49,9 +57,9 @@ public class SlopeDescriptor extends OperationDescriptorImpl implements
         { "DocURL", "http://www.spadac.com/" }, { "Version", "1.0" } },
         new String[] { RenderedRegistryMode.MODE_NAME },
         1,
-        new String[] { },
-        new Class[] { },
-        new Object[] { }, null);
+        new String[] { "units"},
+        new Class[] { String.class },
+        new Object[] { "deg" }, null);
   }
 
   /*
@@ -64,13 +72,14 @@ public class SlopeDescriptor extends OperationDescriptorImpl implements
   @Override
   public RenderedImage create(ParameterBlock paramBlock, RenderingHints hints)
   {
-    RenderedImage result;
-
     RenderedImage normal = HornNormalDescriptor.create(paramBlock.getRenderedSource(0), null);
-    result = SlopeFromNormalDescriptor.create(normal, SlopeFromNormalOpImage.SLOPE,
-        null);
 
-    return result;
+    if (paramBlock.getNumParameters() > 0)
+    {
+      return SlopeOpImage.create(normal, (String) paramBlock.getObjectParameter(0), hints);
+    }
+    return SlopeOpImage.create(normal, hints);
+
   }
 
 }
