@@ -1,5 +1,16 @@
 /*
- * Copyright (c) 2009-2010 by SPADAC Inc.  All rights reserved.
+ * Copyright 2009-2014 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.mrgeo.opimage;
@@ -30,6 +41,13 @@ public class AspectDescriptor extends OperationDescriptorImpl implements
     return JAI.create(OPERATION_NAME, paramBlock, hints);
   }
 
+  public static RenderedOp create(RenderedImage slope, String units, RenderingHints hints)
+  {
+    ParameterBlock paramBlock = (new ParameterBlock()).addSource(slope);
+    paramBlock.add(units);
+    return JAI.create(OPERATION_NAME, paramBlock, hints);
+  }
+
   public AspectDescriptor()
   {
     // I realize this formatting is horrendous, but Java won't let me assign
@@ -40,9 +58,9 @@ public class AspectDescriptor extends OperationDescriptorImpl implements
         { "DocURL", "http://www.spadac.com/" }, { "Version", "1.0" } },
         new String[] { RenderedRegistryMode.MODE_NAME }, 
         1, 
-        new String[] { },
-        new Class[] { }, 
-        new Object[] { }, null);
+        new String[] { "units"},
+        new Class[] { String.class },
+        new Object[] { "deg" }, null);
   }
 
   /*
@@ -56,7 +74,13 @@ public class AspectDescriptor extends OperationDescriptorImpl implements
   @SuppressWarnings("unchecked")
   public RenderedImage create(ParameterBlock paramBlock, RenderingHints hints)
   {
+
     RenderedImage normal = HornNormalDescriptor.create(paramBlock.getRenderedSource(0), null);
+
+    if (paramBlock.getNumParameters() > 0)
+    {
+      return AspectOpImage.create(normal, (String) paramBlock.getObjectParameter(0), hints);
+    }
     return AspectOpImage.create(normal, hints);
   }
 
