@@ -33,7 +33,6 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
-import org.mrgeo.test.MapOpTestVectorUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,41 +54,33 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   // tests won't be run when is set to true
   public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
-  private static String smallElevationName = "small-elevation";
+  private static final String smallElevationName = "small-elevation";
   private static String smallElevation = Defs.INPUT + smallElevationName;
   protected static Path smallElevationPath;
 
-  private static String greeceName = "greece";
+  private static final String greeceName = "greece";
   private static String greece = Defs.INPUT + greeceName;
 
-  private static String majorRoadShapeName = "major_road_intersections_exploded";
+  private static final String majorRoadShapeName = "major_road_intersections_exploded";
   protected static Path majorRoadShapePath;
 
 
-  private static String vectorName = "InputEllipse.tsv";
-  private static String vector = Defs.INPUT + vectorName;
-
-  protected static String pointsName = "input1"; // .tsv
+  protected static final String pointsName = "input1"; // .tsv
   protected static String pointsPath;
 
-  private static String allones = "all-ones";
+  private static final String allones = "all-ones";
   private static Path allonesPath;
-  private static String alltwos = "all-twos";
-  private static String allhundreds = "all-hundreds";
-
-
-  protected static String _positives;
-  protected static String _negatives;
-  protected static String _points;
+  private static final String alltwos = "all-twos";
+  private static final String allhundreds = "all-hundreds";
 
   private static MapOpTestUtils testUtils;
   // Vector private static MapOpTestVectorUtils vectorTestUtils;
 
   private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationTest.class);
 
-  private static String factor1 = "fs_Bazaars_v2";
-  private static String factor2 = "fs_Bus_Stations_v2";
-  private static String eventsPdfs = "eventsPdfs";
+//  private static String factor1 = "fs_Bazaars_v2";
+//  private static String factor2 = "fs_Bus_Stations_v2";
+//  private static String eventsPdfs = "eventsPdfs";
   private Properties props = null;
 
   @Before
@@ -153,16 +144,6 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     file = new File(greece);
     greece = new Path("file://" + file.getAbsolutePath()).toString();
 
-    vector = testUtils.getInputLocal() + "../" + vectorName;
-    file = new File(vector);
-    vector = new Path("file://" + file.getAbsolutePath()).toString();
-
-    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
-        factor1);
-    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
-        factor2);
-    HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()), testUtils.getInputHdfs(),
-        eventsPdfs);
   }
 
   @Test
@@ -529,6 +510,33 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 
   @Test
   @Category(IntegrationTest.class)
+  public void hillshade() throws Exception
+  {
+    double zen = 30.0 * 0.0174532925; // sun 30 deg above the horizon
+    double sunaz = 270.0 * 0.0174532925; // sun from 270 deg (west)
+
+    double coszen = Math.cos(zen);
+    double sinzen = Math.sin(zen);
+
+    // hillshading algorithm taken from:
+    // http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm
+    String exp = String.format("sl = slope([%s], \"rad\"); " +
+        "as = aspect([%s], \"rad\"); " +
+        "hill = 255.0 * ((%f * cos(sl)) + (%f * sin(sl) * cos(%f - as)))", smallElevation, smallElevation,
+        coszen, sinzen, sunaz);
+
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(), exp);
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
   public void log() throws Exception
   {
     if (GEN_BASELINE_DATA_ONLY)
@@ -624,7 +632,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
     expRoot.setFunctionName("+");
 
-    MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation.toString(),
+    MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
         AccessMode.READ, props);
     final MrsPyramidMapOp pyramidOp1 = new MrsPyramidMapOp();
     pyramidOp1.setDataProvider(elevationDataProvider);
@@ -650,7 +658,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
     expRoot.setFunctionName("*");
 
-    MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation.toString(),
+    MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
         AccessMode.READ, props);
     final MrsPyramidMapOp mapOp1 = new MrsPyramidMapOp();
     mapOp1.setDataProvider(elevationDataProvider);
@@ -678,7 +686,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     final LogarithmMapOp expRoot = new LogarithmMapOp();
     expRoot.getParameters().add(new Double(0));
 
-    MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation.toString(),
+    MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
         AccessMode.READ, props);
     final MrsPyramidMapOp pyramidOp = new MrsPyramidMapOp();
     pyramidOp.setDataProvider(elevationDataProvider);
@@ -691,8 +699,8 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     // now add a search path and see if you get the same results
     final String ex1 = String.format("log([%s])", smallElevation);
 
-    Path p = new Path(smallElevation);
-    p = p.getParent();
+//    Path p = new Path(smallElevation);
+//    p = p.getParent();
 //    uut.addPath(p.toString());
 
     final MapOp mo1 = uut.parse(ex1);
@@ -760,7 +768,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     parser.parse(ex);
   }
 
-  //  @Test(expected = TokenMgrError.class)
+   @Test(expected = ParserException.class)
   @Category(UnitTest.class)
   public void parseInvalidOperation() throws Exception
   {
@@ -829,7 +837,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     final LogarithmMapOp expRoot = new LogarithmMapOp();
     expRoot.getParameters().add(new Double(0));
 
-    MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation.toString(),
+    MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
         AccessMode.READ, props);
     final MrsPyramidMapOp pyramidOp = new MrsPyramidMapOp();
     pyramidOp.setDataProvider(elevationDataProvider);
@@ -838,7 +846,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 
     // add the parent path of the HDFS version to the search path, we shouldn't
     // find it...
-    final Path p = smallElevationPath.getParent();
+//    final Path p = smallElevationPath.getParent();
 //    uut.addPath(p.toString());
 
     final MapOp mo1 = uut.parse(ex);
@@ -1054,7 +1062,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
               this.conf,
               testname.getMethodName(),
               String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ",
-                  pointsPath.toString()), -9999);
+                  pointsPath), -9999);
     }
     else
     {
@@ -1063,7 +1071,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
               this.conf,
               testname.getMethodName(),
               String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ",
-                  pointsPath.toString()));
+                  pointsPath));
     }
   }
 
@@ -1074,12 +1082,12 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     if (GEN_BASELINE_DATA_ONLY)
     {
       testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-          String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath.toString()), -9999);
+          String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath), -9999);
     }
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-          String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath.toString()));
+          String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath));
     }
   }
 
