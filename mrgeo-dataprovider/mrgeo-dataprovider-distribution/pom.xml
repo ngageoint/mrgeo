@@ -18,7 +18,7 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo-dataprovider</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>0.5.0-SNAPSHOT</version>
   </parent>
   <artifactId>mrgeo-dataprovider-distribution</artifactId>
   <name>mrgeo-dataprovider-distribution</name>
