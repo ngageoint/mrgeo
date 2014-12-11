@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo-mapalgebra</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>0.5.0-SNAPSHOT</version>
   </parent>
   <artifactId>mrgeo-mapalgebra-integrationtests-costdistance</artifactId>
   <packaging>jar</packaging>
@@ -113,34 +113,7 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-mapalgebra-foresight</artifactId>
-      <version>${project.parent.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-mapalgebra-foresight</artifactId>
-      <version>${project.parent.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-image</artifactId>
-      <version>${project.parent.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-mapalgebra-junkyard</artifactId>
-      <version>${project.parent.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-mapalgebra-mrsvector</artifactId>
-      <version>${project.parent.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-mapalgebra-paintellipse</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>
@@ -151,6 +124,11 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-mapalgebra-terrain</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>
