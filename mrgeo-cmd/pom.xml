@@ -50,14 +50,6 @@
     <module>mrgeo-cmd-export</module>
     <module>mrgeo-cmd-mapalgebra</module>
   </modules>
-  <profiles>
-    <profile>
-      <id>include-costdistance</id>
-      <modules>
-        <module>mrgeo-cmd-junkyard</module>
-      </modules>
-    </profile>
-  </profiles>
   <dependencies>
     <dependency>
       <groupId>org.mrgeo</groupId>

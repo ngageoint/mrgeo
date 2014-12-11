@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>                    
-<AllColumns>                                              
-  <Column name="col1" type="Numeric"/>       
-  <Column name="col2" type="Numeric"/>       
-  <Column name="col3" type="Numeric"/>       
-  <Column name="col4" type="Numeric"/>
-</AllColumns>
