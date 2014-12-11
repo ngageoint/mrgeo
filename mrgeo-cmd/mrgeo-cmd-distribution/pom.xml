@@ -159,16 +159,6 @@
   </build>
   <profiles>
     <profile>
-      <id>include-costdistance</id>
-      <dependencies>
-        <dependency>
-          <groupId>org.mrgeo</groupId>
-          <artifactId>mrgeo-cmd-junkyard</artifactId>
-          <version>${project.parent.version}</version>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
       <id>run-shading</id>
       <build>
         <plugins>
