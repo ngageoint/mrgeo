@@ -21,6 +21,10 @@ import java.util.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramidDriver;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProtectionLevelUtils;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelFailedException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
@@ -42,13 +46,16 @@ public class MapAlgebraJob implements RunnableJob
   String _output;
   Progress _progress;
   JobListener jobListener = null;
+  private String protectionLevel;
   private Properties providerProperties;
 
   public MapAlgebraJob(String expression, String output,
+      final String protectionLevel,
       final Properties providerProperties)
   {
     _expression = expression;
     _output = output;
+    this.protectionLevel = protectionLevel;
     this.providerProperties = providerProperties;
   }
   
@@ -66,7 +73,10 @@ public class MapAlgebraJob implements RunnableJob
       OpImageRegistrar.registerMrGeoOps();
 
       Configuration conf = HadoopUtils.createConfiguration();
-      MapAlgebraParser parser = new MapAlgebraParser(conf, providerProperties);
+      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(_output, AccessMode.OVERWRITE, conf);
+      String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
+      MapAlgebraParser parser = new MapAlgebraParser(conf, useProtectionLevel,
+          providerProperties);
       MapOp op = null;
       try
       {

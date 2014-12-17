@@ -63,10 +63,15 @@ public class IngestImageTest
 
   private static Configuration conf;
   private Properties providerProperties;
+  private static String origProtectionLevelRequired;
+  private static String origProtectionLevelDefault;
 
   @BeforeClass
   public static void init() throws IOException
   {
+    Properties props = MrGeoProperties.getInstance();
+    origProtectionLevelRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+    origProtectionLevelDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
     conf = HadoopUtils.createConfiguration();
 
     testUtils = new TestUtils(IngestImageTest.class);
@@ -86,6 +91,15 @@ public class IngestImageTest
     all_ones_input = "file://" + file.getAbsolutePath();
 
     all_ones_output = new Path(outputHdfs, all_ones).toString();
+  }
+
+  @After
+  public void teardown()
+  {
+    // Restore the MrGeo properties since it's a static
+    Properties props = MrGeoProperties.getInstance();
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, origProtectionLevelRequired);
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, origProtectionLevelDefault);
   }
 
   @Before 
@@ -297,6 +311,7 @@ public class IngestImageTest
     try
     {
       props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
+      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, "");
       String[] args = { all_ones_input, "-o", all_ones_output, "-sp" };
       int res = new IngestImage().run(args, conf, providerProperties);
       Assert.assertEquals(-1, res);

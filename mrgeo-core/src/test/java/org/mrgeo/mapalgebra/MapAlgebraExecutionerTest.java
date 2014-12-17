@@ -93,7 +93,7 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     System.out.println("setup");
     executioner = new MapAlgebraExecutioner();
         
-    final MapAlgebraParser uut = new MapAlgebraParser(conf, null);
+    final MapAlgebraParser uut = new MapAlgebraParser(conf, "", null);
     mapop = uut.parse(copy);
     MapAlgebraExecutioner.setOverallTileClusterInfo(mapop, new TileClusterInfo());
 

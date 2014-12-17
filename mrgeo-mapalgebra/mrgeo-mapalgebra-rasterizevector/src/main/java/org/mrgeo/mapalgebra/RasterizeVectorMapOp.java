@@ -395,7 +395,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
       rvd.setValueColumn(column);
 
       rvd.run(job, _outputName, _aggregationType, zoomlevel, bounds, p, jobListener,
-          getProviderProperties());
+          getProtectionLevel(), getProviderProperties());
     }
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(_outputName,
         AccessMode.READ, getProviderProperties());

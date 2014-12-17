@@ -194,7 +194,7 @@ public class MapOpTestVectorUtils extends TestUtils
     HadoopFileUtils.delete(new Path(outputHdfs, testName));
 
     log.info(ex);
-    final MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    final MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
 //    parser.addPath(inputHdfs.toString());
     final MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
 

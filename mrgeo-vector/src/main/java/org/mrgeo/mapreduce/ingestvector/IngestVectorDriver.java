@@ -15,6 +15,16 @@
 
 package org.mrgeo.mapreduce.ingestvector;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Properties;
+import java.util.UUID;
+
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -25,32 +35,29 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.mapreduce.GeometryWritable;
-import org.mrgeo.mapreduce.MapGeometryToTiles;
-import org.mrgeo.mapreduce.MapReduceUtils;
-import org.mrgeo.vector.mrsvector.MrsVectorPyramid;
-import org.mrgeo.vector.mrsvector.VectorTileWritable;
-import org.mrgeo.tile.TileIdZoomWritable;
-import org.mrgeo.utils.geotools.GeotoolsVectorUtils;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator;
 import org.mrgeo.hdfs.partitioners.TileIdPartitioner;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.*;
+import org.mrgeo.mapreduce.GeometryWritable;
+import org.mrgeo.mapreduce.MapGeometryToTiles;
+import org.mrgeo.mapreduce.MapReduceUtils;
+import org.mrgeo.tile.TileIdZoomWritable;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.HadoopVectorUtils;
+import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.geotools.GeotoolsVectorUtils;
+import org.mrgeo.vector.mrsvector.MrsVectorPyramid;
+import org.mrgeo.vector.mrsvector.VectorTileWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Properties;
-import java.util.UUID;
 
 public class IngestVectorDriver
 {
@@ -70,24 +77,26 @@ public class IngestVectorDriver
   }
 
   public static boolean ingest(final String[] inputs, final String output,
-    final Configuration config, final Properties providerProperties) throws Exception
+    final Configuration config, final String protectionLevel, final Properties providerProperties) throws Exception
     {
-    return ingest(inputs, output, config, 0, providerProperties);
+    return ingest(inputs, output, config, 0, protectionLevel, providerProperties);
     }
 
   public static boolean ingest(final String[] inputs, final String output,
-    final Configuration config, int zoomlevel, Properties providerProperties) throws Exception
-    {
+    final Configuration config, int zoomlevel, String protectionLevel, Properties providerProperties) throws Exception
+  {
     if (zoomlevel <= 0)
     {
       zoomlevel = calculateZoomlevel(inputs, config);
     }
     
-    return runJob(inputs, output, config, zoomlevel, providerProperties);
-    }
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, config);
+    String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
+    return runJob(inputs, output, config, zoomlevel, useProtectionLevel, providerProperties);
+  }
 
   private static boolean runJob(String[] inputs, String output, Configuration config,
-      int zoomlevel, Properties providerProperties) throws IOException
+      int zoomlevel, String protectionLevel, Properties providerProperties) throws IOException
   {
     
     Bounds bounds = GeotoolsVectorUtils.calculateBounds(inputs, config);
@@ -124,7 +133,7 @@ public class IngestVectorDriver
     HadoopFileUtils.delete(output);
 
     MrsImageOutputFormatProvider ofProvider = MrsImageDataProvider.setupMrsPyramidOutputFormat(
-        job, output, bounds, zoomlevel, tilesize, providerProperties);
+        job, output, bounds, zoomlevel, tilesize, protectionLevel, providerProperties);
 
     job.setReducerClass(IngestGeometryReducer.class);
 
@@ -139,7 +148,8 @@ public class IngestVectorDriver
       if (success)
       {
         ofProvider.teardown(job);
-        MrsVectorPyramid.calculateMetadata(output, zoomlevel, tilesize, bounds);
+        MrsVectorPyramid.calculateMetadata(output, zoomlevel, tilesize, bounds,
+            protectionLevel);
         return true;
       }
 
@@ -158,7 +168,8 @@ public class IngestVectorDriver
 
 
   public static boolean localIngest(final String[] inputs, final String output,
-    final Configuration config, final int zoomlevel) throws Exception
+    final Configuration config, final int zoomlevel,
+    final String protectionLevel) throws Exception
     {
     throw new NotImplementedException("localIngest not implemented!");
     }

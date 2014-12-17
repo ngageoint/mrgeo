@@ -58,7 +58,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     double resolution = TMSUtils.resolution(pyramid.getMaximumLevel(),
         pyramid.getMetadata().getTilesize());
 
-    MapAlgebraParser uut = new MapAlgebraParser(this.conf, getProviderProperties());
+    MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     MapOp mo = uut.parse(ex);
@@ -128,7 +128,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     String testName = baseName + ".tsv";
     log.debug(ex);
 
-    MapAlgebraParser uut = new MapAlgebraParser(this.conf, getProviderProperties());
+    MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     MapOp mo = uut.parse(ex);
@@ -199,7 +199,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     String testName = baseName + ".tsv";
     log.debug(ex);
 
-    MapAlgebraParser uut = new MapAlgebraParser(this.conf, getProviderProperties());
+    MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     MapOp mo = uut.parse(ex);
@@ -275,7 +275,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     log.debug(ex);
     // Load the source raster so we can get its pixel height/width.
 
-    MapAlgebraParser uut = new MapAlgebraParser(this.conf, getProviderProperties());
+    MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     MapOp mo = uut.parse(ex);
@@ -304,7 +304,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     String testName = baseName + ".tsv";
     log.debug(ex);
 
-    MapAlgebraParser uut = new MapAlgebraParser(this.conf, getProviderProperties());
+    MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     //MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     try {
@@ -329,7 +329,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     String testName = baseName + ".tsv";
     log.debug(ex);
 
-    MapAlgebraParser uut = new MapAlgebraParser(this.conf, getProviderProperties());
+    MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     //MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     try {
@@ -362,7 +362,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     double resolution = TMSUtils.resolution(pyramid.getMaximumLevel(),
         pyramid.getMetadata().getTilesize());
 
-    MapAlgebraParser uut = new MapAlgebraParser(this.conf, getProviderProperties());
+    MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     MapOp mo = uut.parse(ex);

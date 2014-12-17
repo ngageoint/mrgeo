@@ -15,6 +15,11 @@
 
 package org.mrgeo.utils.geotools;
 
+import java.awt.image.Raster;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -22,13 +27,18 @@ import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.processing.CoverageProcessingException;
 import org.json.JSONObject;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.ImageMetadata;
 import org.mrgeo.image.geotools.GeotoolsRasterUtils;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.Bounds;
@@ -37,11 +47,6 @@ import org.mrgeo.utils.LongRectangle;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.operation.TransformException;
-
-import java.awt.image.Raster;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 
 @SuppressWarnings("static-method")
 public class GeotoolsRasterUtilsTest
@@ -153,31 +158,34 @@ public class GeotoolsRasterUtilsTest
   @Category(UnitTest.class)
   public void calculateMetaData() throws Exception
   {
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(localGreeceTif);
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(localGreeceTif, protectionLevel, 0.0);
 
     // haven't ingested the image, so the pyramid name should be ""
-    compareMetadata(metadata, "", false, 0.00001);
+    compareMetadata(metadata, "", false, 0.00001, protectionLevel);
   }
 
   @Test
   @Category(UnitTest.class)
   public void calculateMetaData2() throws Exception
   {
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(localGreeceTif, localGreeceTif);
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(localGreeceTif,
+        localGreeceTif, protectionLevel);
 
-    compareMetadata(metadata, localGreeceTif, false, 0.00001);
+    compareMetadata(metadata, localGreeceTif, false, 0.00001, protectionLevel);
   }
 
   @Test
   @Category(UnitTest.class)
   public void calculateMetaData3() throws Exception
   {
-
+    String protectionLevel = "abc";
     final String[] inputs = { localGreeceTif };
     final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(inputs, localGreeceTif,
-        true, false, false);
+        true, protectionLevel, false, false);
 
-    compareMetadata(metadata, localGreeceTif, false, 0.00001);
+    compareMetadata(metadata, localGreeceTif, false, 0.00001, protectionLevel);
 
     // Check the json serialized metadata
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -191,6 +199,7 @@ public class GeotoolsRasterUtilsTest
     Assert.assertEquals(2193d, m.getJSONArray("stats").getJSONObject(0).getDouble("max"), 0.0000001);
     Assert.assertEquals(521.14518385749d, m.getJSONArray("stats").getJSONObject(0).getDouble("mean"),
         0.0000001);
+    Assert.assertEquals(protectionLevel,  m.get("protectionLevel"));
   }
 
   @Test(expected = IOException.class)
@@ -198,57 +207,67 @@ public class GeotoolsRasterUtilsTest
   public void calculateMetaDataEPSG102031() throws Exception
   {
     // can't handle epsg:10231
-    GeotoolsRasterUtils.calculateMetaData(epsg102031);
+    GeotoolsRasterUtils.calculateMetaData(epsg102031, "abc", 0.0);
   }
 
   @Test
   @Category(UnitTest.class)
   public void calculateMetaDataEPSG2100() throws Exception
   {
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg2100);
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg2100,
+        protectionLevel, 0.0);
 
     // haven't ingested the image, so the pyramid name should be ""
-    compareMetadata(metadata, "", true, 0.1);
+    compareMetadata(metadata, "", true, 0.1, protectionLevel);
   }
 
   @Test
   @Category(UnitTest.class)
   public void calculateMetaDataEPSG32634() throws Exception
   {
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg32634);
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg32634,
+        protectionLevel, 0.0);
 
     // haven't ingested the image, so the pyramid name should be ""
-    compareMetadata(metadata, "", true, 0.1);
+    compareMetadata(metadata, "", true, 0.1, protectionLevel);
   }
 
   @Test
   @Category(UnitTest.class)
   public void calculateMetaDataEPSG3785() throws Exception
   {
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg3857);
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg3857,
+        protectionLevel, 0.0);
 
     // haven't ingested the image, so the pyramid name should be ""
-    compareMetadataEPSG3785(metadata, "", 0.1);
+    compareMetadataEPSG3785(metadata, "", 0.1, protectionLevel);
   }
 
   @Test
   @Category(UnitTest.class)
   public void calculateMetaDataEPSG4314() throws Exception
   {
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg4314);
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg4314,
+        protectionLevel, 0.0);
 
     // haven't ingested the image, so the pyramid name should be ""
-    compareMetadata(metadata, "", true, 0.1);
+    compareMetadata(metadata, "", true, 0.1, protectionLevel);
   }
 
   @Test
   @Category(UnitTest.class)
   public void calculateMetaDataEPSG4326() throws Exception
   {
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg4326);
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(epsg4326,
+        protectionLevel, 0.0);
 
     // haven't ingested the image, so the pyramid name should be ""
-    compareMetadata(metadata, "", true, 0.1);
+    compareMetadata(metadata, "", true, 0.1, protectionLevel);
   }
 
   @Ignore
@@ -258,9 +277,10 @@ public class GeotoolsRasterUtilsTest
   {
     final String filename = Defs.INPUT + "multiband.png";
 
+    String protectionLevel = "abc";
     final String[] inputs = { filename };
     final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(inputs, filename,
-        true, false, false);
+        true, protectionLevel, false, false);
 
     Assert.assertEquals("bad band count", 3, metadata.getBands());
     Assert.assertEquals("Bad stats min, band 1", 76, metadata.getStats(0).min, 0.0001);
@@ -269,6 +289,7 @@ public class GeotoolsRasterUtilsTest
     Assert.assertEquals("Bad stats max, band 3", 208, metadata.getStats(1).max, 0.0001);
     Assert.assertEquals("Bad stats min, band 3", 13, metadata.getStats(2).min, 0.0001);
     Assert.assertEquals("Bad stats max, band 3", 184, metadata.getStats(2).max, 0.0001);
+    Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
   }
 
   @Test
@@ -302,7 +323,9 @@ public class GeotoolsRasterUtilsTest
 
     final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
 
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString());
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString(),
+        protectionLevel, 0.0);
     final GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
 
     final double noData = metadata.getDefaultValue(0);
@@ -335,7 +358,9 @@ public class GeotoolsRasterUtilsTest
 
     final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
 
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString());
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString(),
+        protectionLevel, 0.0);
     final GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
 
     final LongRectangle rect = metadata.getTileBounds(zoom);
@@ -366,7 +391,9 @@ public class GeotoolsRasterUtilsTest
 
     final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
 
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString());
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString(),
+        protectionLevel, 0.0);
     final GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
 
     final double noData = metadata.getDefaultValue(0);
@@ -398,7 +425,9 @@ public class GeotoolsRasterUtilsTest
 
     final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
 
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsHighLatTif.toString());
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsHighLatTif.toString(),
+        protectionLevel, 0.0);
     final GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
 
     final LongRectangle rect = metadata.getTileBounds(zoom);
@@ -433,7 +462,9 @@ public class GeotoolsRasterUtilsTest
 
     final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
 
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString());
+    String protectionLevel = "abc";
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString(),
+        protectionLevel, 0.0);
     final GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
 
     final LongRectangle rect = metadata.getTileBounds(zoom);
@@ -532,7 +563,7 @@ public class GeotoolsRasterUtilsTest
   }
 
   private void compareMetadata(final MrsImagePyramidMetadata metadata, final String pyramidname,
-      final boolean skipPixelTest, final double boundsEpsilon)
+      final boolean skipPixelTest, final double boundsEpsilon, String protectionLevel)
   {
     Assert.assertNotNull("Bad metadata", metadata);
 
@@ -567,6 +598,7 @@ public class GeotoolsRasterUtilsTest
 
     metadata.getTileBounds(max);
 
+    Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
     final LongRectangle tb = metadata.getTileBounds(max);
     Assert.assertEquals("Bad tile bounds - min x", 290, tb.getMinX());
     Assert.assertEquals("Bad tile bounds - min y", 185, tb.getMinY());
@@ -584,7 +616,7 @@ public class GeotoolsRasterUtilsTest
   }
 
   private void compareMetadataEPSG3785(final MrsImagePyramidMetadata metadata, final String pyramidname,
-      final double boundsEpsilon)
+      final double boundsEpsilon, final String protectionLevel)
   {
     Assert.assertNotNull("Bad metadata", metadata);
 
@@ -615,6 +647,7 @@ public class GeotoolsRasterUtilsTest
     Assert.assertEquals("Bad pixel bounds - max y", 730, pb.getMaxY());
 
     metadata.getTileBounds(max);
+    Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
 
     final LongRectangle tb = metadata.getTileBounds(max);
     Assert.assertEquals("Bad tile bounds - min x", 290, tb.getMinX());

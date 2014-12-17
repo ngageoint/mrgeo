@@ -124,6 +124,7 @@ public class BoundsCropper
     croppedMetadata.setName(zoomLevel, "" + zoomLevel);  
     croppedMetadata.setTileBounds(zoomLevel, TileBounds.convertToLongRectangle(newTileBounds));
     croppedMetadata.setPixelBounds(zoomLevel, pixelBounds);
+    croppedMetadata.setProtectionLevel(origMetadata.getProtectionLevel());
     return croppedMetadata;
   }
 }

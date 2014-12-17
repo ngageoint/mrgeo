@@ -45,7 +45,18 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProtectionLevelUtils;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.image.MrsImageOutputFormatProvider;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.geometry.Geometry;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.HadoopVectorUtils;
+import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.DenseNodes;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.HeaderBBox;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Node;
@@ -53,14 +64,6 @@ import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Relation;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Relation.MemberType;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.StringTable;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Way;
-import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImageOutputFormatProvider;
-import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.HadoopVectorUtils;
-import org.mrgeo.utils.TMSUtils;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.google.protobuf.GeneratedMessage;
@@ -898,6 +901,7 @@ public class OSMTileIngester extends WritableVectorTile
   private Writer relationWriter;
 
   private int zoomlevel;
+  private String protectionLevel;
   private Properties providerProperties;
 
   // this is stolen from VectorTileCleaner...
@@ -970,8 +974,9 @@ public class OSMTileIngester extends WritableVectorTile
       // final Path unique = HadoopFileUtils.createUniqueTmpPath();
       final String output = "osm-ingest";
 
+      final String protectionLevel = "";
       Properties providerProperties = null;
-      ingestOsm(inputs, output, conf, 11, providerProperties);
+      ingestOsm(inputs, output, conf, 11, protectionLevel, providerProperties);
     }
     catch (final Exception ex)
     {
@@ -980,8 +985,9 @@ public class OSMTileIngester extends WritableVectorTile
   }
 
   public static void ingestOsm(final String[] inputs, final String output,
-    Configuration conf, int zoomLevel, Properties providerProperties) throws IOException
-    {
+    Configuration conf, int zoomLevel, String protectionLevel,
+    Properties providerProperties) throws Exception
+  {
     long start = System.currentTimeMillis();
 
     // final HeaderBlock header = readOSMHeader(dis);
@@ -999,11 +1005,14 @@ public class OSMTileIngester extends WritableVectorTile
     HadoopFileUtils.delete(output);
     HadoopFileUtils.delete(unique);
     // HadoopFileUtils.delete(unique + "/" + TILEIDS);
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf);
+    String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
     final OSMTileIngester osm = new OSMTileIngester();
-    osm.ingest(inputs, conf, output, zoomLevel, unique, providerProperties);
+    osm.ingest(inputs, conf, output, zoomLevel, unique, useProtectionLevel,
+        providerProperties);
 
     System.out.println("OSM ingest time: " + (System.currentTimeMillis() - start));
-    }
+  }
 
   private static void write(final Writer writer, final Node n)
   {
@@ -1199,12 +1208,14 @@ public class OSMTileIngester extends WritableVectorTile
 
   public void ingest(final String[] inputs, final Configuration conf, final String output,
     final int zoomlevel, final Path tmpDir,
+    final String protectionLevel,
     final Properties providerProperties) throws IOException
     {
     this.config = conf;
     this.providerProperties = providerProperties;
     this.tmpDir = tmpDir;
     this.zoomlevel = zoomlevel;
+    this.protectionLevel = protectionLevel;
 
     for (String input : inputs)
     {
@@ -1485,7 +1496,8 @@ public class OSMTileIngester extends WritableVectorTile
       HadoopFileUtils.delete(output);
 
       MrsImageOutputFormatProvider ofProvider = MrsImageDataProvider.setupMrsPyramidOutputFormat(
-          job, output.toString(), datasetBounds, zoomlevel, tilesize, providerProperties);
+          job, output.toString(), datasetBounds, zoomlevel, tilesize, protectionLevel,
+          providerProperties);
       //FileOutputFormat.setOutputPath(job, outputWithZoom);
 
       job.setMapOutputKeyClass(TileIdWritable.class);
@@ -1502,7 +1514,8 @@ public class OSMTileIngester extends WritableVectorTile
         if (success)
         {
           ofProvider.teardown(job);
-          MrsVectorPyramid.calculateMetadata(output.toString(), zoomlevel, tilesize, datasetBounds);
+          MrsVectorPyramid.calculateMetadata(output.toString(), zoomlevel, tilesize,
+              datasetBounds, protectionLevel);
           return true;
         }
 

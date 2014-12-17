@@ -15,12 +15,53 @@
 
 package org.mrgeo.image.geotools;
 
+import java.awt.RenderingHints;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.logging.LogManager;
+
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageInputStreamSpi;
+import javax.media.jai.BorderExtender;
+import javax.media.jai.FloatDoubleColorModel;
+import javax.media.jai.JAI;
+import javax.media.jai.PlanarImage;
+import javax.media.jai.TileCache;
+
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.coverage.grid.io.*;
+import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
+import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.coverage.grid.io.GridFormatFactorySpi;
+import org.geotools.coverage.grid.io.GridFormatFinder;
+import org.geotools.coverage.grid.io.OverviewPolicy;
+import org.geotools.coverage.grid.io.UnknownFormat;
 import org.geotools.coverage.processing.CoverageProcessingException;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.coverage.processing.Operations;
@@ -40,16 +81,15 @@ import org.jaitools.media.jai.zonalstats.ZonalStatsDescriptor;
 import org.jaitools.numeric.Range;
 import org.jaitools.numeric.Statistic;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ingest.ImageIngestDataProvider;
+import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.rasterops.GeoTiffExporter;
 import org.mrgeo.rasterops.SimpleTileCache;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
-import org.mrgeo.data.ingest.ImageIngestDataProvider;
-import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.imageio.HdfsImageInputStreamSpi;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LoggingUtils;
 import org.mrgeo.utils.LongRectangle;
@@ -68,22 +108,6 @@ import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-
-import javax.imageio.spi.IIORegistry;
-import javax.imageio.spi.ImageInputStreamSpi;
-import javax.media.jai.*;
-import java.awt.*;
-import java.awt.color.ColorSpace;
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.*;
-import java.util.List;
-import java.util.logging.LogManager;
 
 public class GeotoolsRasterUtils
 {
@@ -180,29 +204,33 @@ public class GeotoolsRasterUtils
   }
 
   public static MrsImagePyramidMetadata calculateMetaData(final InputStream stream, final String output, final boolean calcStats,
-      final boolean categorical) throws Exception
+      final String protectionLevel, final boolean categorical) throws Exception
   {
     final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
 
-    calculateMetaData(stream, metadata, output, calcStats, categorical, false);
+    calculateMetaData(stream, metadata, output, calcStats, protectionLevel,
+        categorical, false);
 
     return metadata;
 
   }
 
-  public static MrsImagePyramidMetadata calculateMetaData(final String input) throws Exception
+  public static MrsImagePyramidMetadata calculateMetaData(final String input,
+      final String protectionLevel, double delme) throws Exception
   {
     final String[] inputs = { input };
-    return calculateMetaData(inputs, "", false, false, false);
+    return calculateMetaData(inputs, "", false, protectionLevel, false, false);
   }
 
-  public static MrsImagePyramidMetadata calculateMetaData(final String input, final String output) throws Exception
+  public static MrsImagePyramidMetadata calculateMetaData(final String input, final String output,
+      final String protectionLevel) throws Exception
   {
     final String[] inputs = { input };
-    return calculateMetaData(inputs, output, false, false, false);
+    return calculateMetaData(inputs, output, false, protectionLevel, false, false);
   }
 
-  public static MrsImagePyramidMetadata calculateMetaData(final String[] inputs, final String output, final boolean calcStats, final boolean categorical,
+  public static MrsImagePyramidMetadata calculateMetaData(final String[] inputs, final String output, final boolean calcStats,
+      final String protectionLevel, final boolean categorical,
       final boolean overridenodata)
       throws Exception
   {
@@ -219,7 +247,8 @@ public class GeotoolsRasterUtils
       InputStream stream = provider.openImage();
       try
       {
-        calculateMetaData(stream, metadata, output, calcStats, categorical, overridenodata);
+        calculateMetaData(stream, metadata, output, calcStats, protectionLevel,
+            categorical, overridenodata);
       }
       finally
       {
@@ -942,7 +971,8 @@ public class GeotoolsRasterUtils
 
   private static void calculateMetaData(final InputStream stream,
       final MrsImagePyramidMetadata metadata, final String output, final boolean calcStats,
-      final boolean categorical, final boolean overridenodata) throws IOException
+      final String protectionLevel, final boolean categorical,
+      final boolean overridenodata) throws IOException
   {
     metadata.setPyramid(output);
 
@@ -1045,6 +1075,7 @@ public class GeotoolsRasterUtils
       metadata.setBounds(bounds);
     }
 
+    metadata.setProtectionLevel(protectionLevel);
     // get band count and make sure all the images have the same number
     int bands = metadata.getBands();
     if (bands <= 0)

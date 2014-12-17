@@ -74,6 +74,7 @@ public class OpChainDriver
     JobListener _jobListener = null;
     MrsImageOutputFormatProvider _ofProvider;
     AdHocDataProvider _statsProvider;
+    String protectionLevel;
     Properties providerProperties;
 
     public OpChainContext(final Set<String> inputs, final Bounds bounds, final String output,
@@ -82,6 +83,7 @@ public class OpChainDriver
         final MrsImageOutputFormatProvider ofProvider,
         final AdHocDataProvider statsProvider,
         final Progress progress, final JobListener jobListener,
+        final String protectionLevel,
         final Properties providerProperties)
     {
       _inputs = inputs;
@@ -95,6 +97,7 @@ public class OpChainDriver
       _jobListener = jobListener;
       _ofProvider = ofProvider;
       _statsProvider = statsProvider;
+      this.protectionLevel = protectionLevel;
       this.providerProperties = providerProperties;
     }
   }
@@ -215,7 +218,8 @@ public class OpChainDriver
       context._ofProvider.teardown(job);
       MrsImagePyramid.calculateMetadata(context._output, context._zoom,
           context._ofProvider.getMetadataWriter(), context._statsProvider,
-          context._defaults, context._bounds, context._userConf, context.providerProperties);
+          context._defaults, context._bounds, context._userConf,
+          context.protectionLevel, context.providerProperties);
       context._statsProvider.delete();
     }
     return result;
@@ -235,31 +239,36 @@ public class OpChainDriver
   public void run(final RenderedImageMapOp rimop, final Set<String> inputs, final String output,
       final int zoom,
       final Bounds bounds, final Configuration userConf, final Progress progress,
+      final String protectionLevel,
       final Properties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     final RenderedImage rop = ((RasterMapOp)rimop).getRasterOutput();
 
-    run(rop, inputs, output, zoom, bounds, userConf, progress, providerProperties);
+    run(rop, inputs, output, zoom, bounds, userConf, progress, protectionLevel,
+        providerProperties);
   }
 
   public void run(final RenderedImageMapOp rimop, final Set<String> inputs, final String output,
       final int zoom,
       final Configuration userConf, final Progress progress,
+      final String protectionLevel,
       final Properties providerProperties) throws IOException,
       JobFailedException, JobCancelledException
   {
-    run(rimop, inputs, output, zoom, Bounds.world, userConf, progress, providerProperties);
+    run(rimop, inputs, output, zoom, Bounds.world, userConf, progress, protectionLevel,
+        providerProperties);
   }
 
   public void run(final RenderedImage rop, final Set<String> inputs, final String output,
       final int zoom,
       final Bounds bounds, final Configuration userConf, final Progress progress,
+      final String protectionLevel,
       final Properties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     final OpChainContext context = _setUpJob(rop, inputs, output, zoom, bounds, userConf, progress,
-        null, providerProperties);
+        null, protectionLevel, providerProperties);
     // LongRectangle tileBounds = getTileBounds(bounds, zoom, context._tilesize);
     // Path splitFileTmp = TileIdPartitioner.setup(job,
     // new ImageSplitGenerator(tileBounds.getMinX(), tileBounds.getMinY(),
@@ -270,27 +279,31 @@ public class OpChainDriver
     context._ofProvider.teardown(job);
     MrsImagePyramid.calculateMetadata(output, zoom,
         context._ofProvider.getMetadataWriter(), context._statsProvider,
-        context._defaults, bounds, context._userConf, context.providerProperties);
+        context._defaults, bounds, context._userConf, context.protectionLevel,
+        context.providerProperties);
     context._statsProvider.delete();
   }
 
   public void run(final RenderedImage rop, final Set<String> inputs, final String output,
       final int zoom,
       final Configuration userConf, final Progress progress,
+      final String protectionLevel,
       final Properties providerProperties) throws IOException,
       JobFailedException, JobCancelledException
   {
-    run(rop, inputs, output, zoom, Bounds.world, userConf, progress, providerProperties);
+    run(rop, inputs, output, zoom, Bounds.world, userConf, progress, protectionLevel,
+        providerProperties);
   }
 
   public OpChainContext runAsynchronously(final RenderedImage rop, final Set<String> inputs,
       final String output, final int zoom,
       final Bounds bounds, final Configuration userConf, final Progress progress,
-      final JobListener jl, final Properties providerProperties) throws IOException, JobFailedException,
+      final JobListener jl, final String protectionLevel,
+      final Properties providerProperties) throws IOException, JobFailedException,
       JobCancelledException
   {
     final OpChainContext context = _setUpJob(rop, inputs, output, zoom, bounds, userConf, progress,
-        jl, providerProperties);
+        jl, protectionLevel, providerProperties);
     MapReduceUtils.runJobAsynchronously(job, jl);
     return context;
   }
@@ -303,7 +316,8 @@ public class OpChainDriver
   private OpChainContext _setUpJob(final RenderedImage rop, final Set<String> inputs,
       final String output, final int zoom,
       final Bounds bounds, final Configuration userConf, final Progress progress,
-      final JobListener jl, final Properties providerProperties)
+      final JobListener jl, final String protectionLevel,
+      final Properties providerProperties)
       throws IOException
   {
 
@@ -393,7 +407,7 @@ public class OpChainDriver
     SampleModel sm = rop.getSampleModel();
     MrsImageOutputFormatProvider ofProvider = MrsImageDataProvider.setupMrsPyramidOutputFormat(
         job, output, bounds, zoom, tilesize, sm.getDataType(), sm.getNumBands(),
-        providerProperties);
+        protectionLevel, providerProperties);
 
     // the keys are the string version of the ImageStats enum
     job.setOutputKeyClass(TileIdWritable.class);
@@ -433,7 +447,8 @@ public class OpChainDriver
     statsProvider.setupJob(job);
     conf.set(OpChainReducer.STATS_PROVIDER, statsProvider.getResourceName());
     final OpChainContext ocContext = new OpChainContext(inputs, bounds, output, zoom, conf,
-        tilesize, defaults, ofProvider, statsProvider, progress, null, providerProperties);
+        tilesize, defaults, ofProvider, statsProvider, progress, null,
+        protectionLevel, providerProperties);
 
 //    conf.setInt("io.sort.mb", 400);
 //    conf.set("mapred.child.java.opts", "-Xmx3500m");

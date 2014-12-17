@@ -625,7 +625,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parse1() throws Exception
   {
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, null);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", null);
     final String ex = String.format("[%s] + [%s]", smallElevation, smallElevation);
 
     // expected
@@ -651,7 +651,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parse2() throws Exception
   {
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, null);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", null);
     final String ex = String.format("[%s] * 15", smallElevation);
 
     // expected
@@ -680,7 +680,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   {
     final String ex = String.format("log([%s])", smallElevation);
 
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
 
     // expected
     final LogarithmMapOp expRoot = new LogarithmMapOp();
@@ -711,7 +711,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parse4() throws Exception
   {
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
     final String ex = String.format("log([%s/abc])", testUtils.getInputHdfs().toString());
 
     uut.parse(ex);
@@ -721,7 +721,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parse5() throws Exception
   {
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
     System.err.println(testUtils.getInputHdfs().toString());
     final String ex = String.format("[%s] * 15", testUtils.getInputHdfs().toString());
 
@@ -732,7 +732,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parseInvalidArguments1() throws Exception
   {
-    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
     final String ex = String.format("[%s] + ", smallElevation);
 
     parser.parse(ex);
@@ -742,7 +742,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parseInvalidArguments2() throws Exception
   {
-    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
     final String ex = String.format("abs [%s] [%s] ", smallElevation, smallElevation);
 
     parser.parse(ex);
@@ -752,7 +752,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parseInvalidArguments3() throws Exception
   {
-    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
     final String ex = String.format("con[%s] + ", smallElevation);
 
     parser.parse(ex);
@@ -762,7 +762,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parseInvalidArguments4() throws Exception
   {
-    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
     final String ex = String.format("costDistance");
 
     parser.parse(ex);
@@ -772,7 +772,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void parseInvalidOperation() throws Exception
   {
-    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
     // String ex = String.format("[%s] & [%s]", allones, _blur2);
     final String ex = String.format("[%s] & [%s]", smallElevation, smallElevation);
 
@@ -804,7 +804,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     MrGeoProperties.getInstance().setProperty("image.base", p.toString());
 
     final String expr = String.format("a = [%s] + [%s]", smallElevationName, smallElevationName);
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
 
     // expected
     final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
@@ -831,7 +831,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   {
     final String ex = String.format("log([%s])", smallElevation);
 
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
 
     // expected
     final LogarithmMapOp expRoot = new LogarithmMapOp();
@@ -859,7 +859,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   public void rasterNotExistsDefaultSearchPath() throws Exception
   {
     final String expr = String.format("a = ([something.tif])");
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
 
     uut.parse(expr);
   }
@@ -869,7 +869,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   public void rasterNotExistsUserDefinedSearchPath() throws Exception
   {
     final String expr = String.format("a = [thingone.tif] + " + "[thingtwo.tif];");
-    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, props);
+    final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
 //    uut.addPath(testUtils.getInputHdfs().toString());
     uut.parse(expr);
   }
