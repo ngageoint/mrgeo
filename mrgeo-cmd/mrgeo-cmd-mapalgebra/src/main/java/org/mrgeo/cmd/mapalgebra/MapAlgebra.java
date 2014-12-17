@@ -30,6 +30,12 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.cmd.Command;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProtectionLevelUtils;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramidDriver;
 import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
@@ -72,6 +78,26 @@ public class MapAlgebra extends Command
     Option local = new Option("l", "local-runner", false, "Use Hadoop's local runner (used for debugging)");
     local.setRequired(false);
     result.addOption(local);
+
+    Option protectionLevelOption = new Option("pl", "protectionLevel", true, "Protection level");
+    // If mrgeo.conf security.classification.required is true and there is no
+    // security.classification.default, then the security classification
+    // argument is required, otherwise it is not.
+    Properties props = MrGeoProperties.getInstance();
+    String protectionLevelRequired = props.getProperty(
+        MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "false").trim();
+    String protectionLevelDefault = props.getProperty(
+        MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, "");
+    if (protectionLevelRequired.equalsIgnoreCase("true") &&
+        protectionLevelDefault.isEmpty())
+    {
+      protectionLevelOption.setRequired(true);
+    }
+    else
+    {
+      protectionLevelOption.setRequired(false);
+    }
+    result.addOption(protectionLevelOption);
 
     result.addOption(new Option("v", "verbose", false, "Verbose logging"));
     result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
@@ -146,13 +172,17 @@ public class MapAlgebra extends Command
           HadoopUtils.setupLocalRunner(conf);
         }
 
+        String protectionLevel = line.getOptionValue("pl");
+
         log.debug("expression: " + expression);
         log.debug("output: " + output);
 
         Job job = new Job();
         job.setJobName("MapAlgebra");
 
-        MapAlgebraParser parser = new MapAlgebraParser(conf, providerProperties);
+        MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf);
+        String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
+        MapAlgebraParser parser = new MapAlgebraParser(conf, useProtectionLevel, providerProperties);
         MapOp root = parser.parse(expression);
 
         log.debug("inputs: " + root.getInputs().toString());

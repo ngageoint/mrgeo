@@ -144,7 +144,7 @@ public class LeastCostPathMapOpIntegrationTest
       ) 
           throws IOException, ParserException, JobFailedException, 
           JobCancelledException {
-    MapAlgebraParser uut = new MapAlgebraParser(conf, null);
+    MapAlgebraParser uut = new MapAlgebraParser(conf, "", null);
 
     Path testOutputPath = new Path(outputHdfs, testName);
     HadoopFileUtils.delete(testOutputPath);

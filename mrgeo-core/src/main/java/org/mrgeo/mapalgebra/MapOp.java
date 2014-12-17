@@ -64,6 +64,7 @@ public abstract class MapOp implements Cloneable, Configurable
   private final HashSet<String> tmpResources = new HashSet<String>();
   protected Configuration _conf = null;
   private Properties providerProperties;
+  private String protectionLevel;
   protected JobListener jobListener = null;
 
   private MapOp parent = null;
@@ -461,6 +462,16 @@ public abstract class MapOp implements Cloneable, Configurable
   public Properties getProviderProperties()
   {
     return providerProperties;
+  }
+
+  public void setProtectionLevel(final String protectionLevel)
+  {
+    this.protectionLevel = protectionLevel;
+  }
+
+  public String getProtectionLevel()
+  {
+    return protectionLevel;
   }
 
   /**

@@ -15,38 +15,6 @@
 
 package org.mrgeo.ingest;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
-import org.mrgeo.image.ImageStats;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
-import org.mrgeo.image.geotools.GeotoolsRasterUtils;
-import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
-import org.mrgeo.data.ProtectionLevelValidator;
-import org.mrgeo.data.adhoc.AdHocDataProvider;
-import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImageOutputFormatProvider;
-import org.mrgeo.data.ingest.ImageIngestDataProvider;
-import org.mrgeo.data.ingest.ImageIngestWriterContext;
-import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.MrsTileWriter;
-import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatProvider;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +25,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProtectionLevelUtils;
+import org.mrgeo.data.adhoc.AdHocDataProvider;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.image.MrsImageOutputFormatProvider;
+import org.mrgeo.data.ingest.ImageIngestDataProvider;
+import org.mrgeo.data.ingest.ImageIngestWriterContext;
+import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.MrsTileWriter;
+import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.data.tile.TiledInputFormatProvider;
+import org.mrgeo.image.ImageStats;
+import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
+import org.mrgeo.image.geotools.GeotoolsRasterUtils;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.TMSUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IngestImageDriver
 {
@@ -218,7 +216,11 @@ public class IngestImageDriver
       conf = HadoopUtils.createConfiguration();
     }
 
-    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(input,output, false, categorical);
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf);
+
+    String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
+    final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(input,
+        output, false, useProtectionLevel, categorical);
 
     if (overridenodata)
     {
@@ -232,11 +234,6 @@ public class IngestImageDriver
 
     //final String outputWithZoom = output + "/" + metadata.getMaxZoomLevel();
     //Path file = new Path(outputWithZoom, "part-00000");
-
-    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf);
-
-    String useProtectionLevel = getAndValidateProtectionLevel(dp, protectionLevel);
-    metadata.setProtectionLevel(useProtectionLevel);
 
     MrsTileWriter<Raster> writer = dp.getMrsTileWriter(metadata.getMaxZoomLevel());
 
@@ -277,57 +274,6 @@ public class IngestImageDriver
     return true;
   }
 
-  /**
-   * If the passed protection level is null or empty, then check to see
-   * if MrGeo is configured to require a protection level. If so, return
-   * the configured default protection level if it is non-null and non-empty.
-   * Otherwise, throw an exception indicating that the required protection
-   * level is missing.
-   * 
-   * If the passed protection level is null or empty, and MrGeo is configured
-   * such that protection level is not required, then return a blank string.
-   * 
-   * @param protectionLevel
-   * @return
-   * @throws Exception
-   */
-  private static String getAndValidateProtectionLevel(final ProtectionLevelValidator validator,
-      final String protectionLevel) throws Exception
-  {
-    String actualProtectionLevel = protectionLevel;
-    if (actualProtectionLevel == null || actualProtectionLevel.isEmpty())
-    {
-      // No protection level was passed in, so we need to check to see
-      // if it is required. If it is, then return the default protection
-      // level if it is defined or throw an exception.
-      Properties props = MrGeoProperties.getInstance();
-      String protectionLevelRequired = props.getProperty(
-          MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "false").trim();
-      if (protectionLevelRequired.equalsIgnoreCase("true"))
-      {
-        String protectionLevelDefault = props.getProperty(
-            MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, "");
-        if (protectionLevelDefault == null || protectionLevelDefault.isEmpty())
-        {
-          throw new Exception("Missing required protection level.");
-        }
-        actualProtectionLevel = protectionLevelDefault;
-      }
-      else
-      {
-        actualProtectionLevel = "";
-      }
-    }
-    if (actualProtectionLevel != null && !actualProtectionLevel.isEmpty())
-    {
-      if (!validator.validateProtectionLevel(protectionLevel))
-      {
-        throw new Exception("Invalid visibility " + protectionLevel);
-      }
-    }
-    return actualProtectionLevel;
-  }
-
   public static boolean quickIngest(final String input, final String output,
       final boolean categorical, final Configuration config, final boolean overridenodata,
       final Number nodata,
@@ -343,16 +289,14 @@ public class IngestImageDriver
       conf = HadoopUtils.createConfiguration();
     }
 
+    String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(provider, protectionLevel);
     final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(
-        new String[] { input }, output, false, categorical, overridenodata);
+        new String[] { input }, output, false, useProtectionLevel, categorical, overridenodata);
 
     if (tags != null)
     {
       metadata.setTags(tags);
     }
-
-    String useProtectionLevel = getAndValidateProtectionLevel(provider, protectionLevel);
-    metadata.setProtectionLevel(useProtectionLevel);
 
     if (overridenodata)
     {
@@ -580,12 +524,14 @@ public class IngestImageDriver
       conf.set("classification", Classification.Continuous.name());
     }
 
-    MrsImageOutputFormatProvider provider = MrsImageDataProvider.setupMrsPyramidOutputFormat(job,
-        output, bounds, zoomlevel, tilesize, providerProperties);
+    String useProtectionLevel = protectionLevel;
+    {
+      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf);
+      useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
+    }
 
-    // set the protection level of the image
-    String useProtectionLevel = getAndValidateProtectionLevel(provider, protectionLevel);
-    conf.set("protectionLevel", useProtectionLevel);
+    MrsImageOutputFormatProvider provider = MrsImageDataProvider.setupMrsPyramidOutputFormat(job,
+        output, bounds, zoomlevel, tilesize, useProtectionLevel, providerProperties);
 
     try
     {

@@ -333,7 +333,8 @@ public class FillRasterDriver
 
   public static void run(final Job job, final MrsImagePyramid input, final String output,
     final double value, final String fillType, final Bounds bounds, final Progress progress,
-    final JobListener jobListener, final Properties providerProperties) throws IOException, JobFailedException, JobCancelledException
+    final JobListener jobListener, final String protectionLevel,
+    final Properties providerProperties) throws IOException, JobFailedException, JobCancelledException
   {
     // create a new unique job name
     final String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
@@ -377,7 +378,8 @@ public class FillRasterDriver
     conf.set(STATS_PROVIDER, statsProvider.getResourceName());
     MrsImageOutputFormatProvider ofProvider = MrsImageDataProvider.setupMrsPyramidOutputFormat(
         job, output, bounds, zoomlevel, tilesize,
-        metadata.getTileType(), metadata.getBands(), providerProperties);
+        metadata.getTileType(), metadata.getBands(), protectionLevel,
+        providerProperties);
 
     if (MapReduceUtils.runJob(job, progress, jobListener))
     {
@@ -386,7 +388,8 @@ public class FillRasterDriver
       // save the metadata
       // TODO: Pass a non-null statsProvider
       MrsImagePyramid.calculateMetadata(output, zoomlevel, ofProvider.getMetadataWriter(),
-          statsProvider, metadata.getDefaultValues(), bounds, conf, providerProperties);
+          statsProvider, metadata.getDefaultValues(), bounds, conf, protectionLevel,
+          providerProperties);
     }
     statsProvider.delete();
   }

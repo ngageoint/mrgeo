@@ -92,7 +92,9 @@ public class RasterResource
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response createMapAlgebraJob(@PathParam("output") String outputId,
-      @QueryParam("basePath") String basePath, String expression)
+      @QueryParam("basePath") String basePath,
+      @QueryParam("protectionLevel") @DefaultValue("") String protectionLevel,
+      String expression)
   {
     try
     {
@@ -103,7 +105,7 @@ public class RasterResource
       // TODO: Need to construct provider properties from the WebRequest using
       // a new security layer and pass those properties to MapAlgebraJob.
       MapAlgebraJob job = new MapAlgebraJob(expression, outputId,
-          SecurityUtils.getProviderProperties());
+          protectionLevel, SecurityUtils.getProviderProperties());
       long jobId = service.getJobManager().submitJob("MapAlgebra job " + outputId, job);
       String jobUri = uriInfo.getBaseUri().toString() + "job/";
       jobUri = HttpUtil.updateSchemeFromHeaders(jobUri, request);

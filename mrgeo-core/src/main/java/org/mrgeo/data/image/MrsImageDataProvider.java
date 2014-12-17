@@ -22,6 +22,7 @@ import org.mrgeo.image.BoundsCropper;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.MapReduceUtils;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
@@ -98,7 +99,8 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
    */
   public static MrsImageOutputFormatProvider addMrsPyramidMultipleOutputFormat(final Job job, final String output,
     final String name,final Bounds bounds, final int zoomlevel, final int tilesize, final int tiletype,
-    final int bands, final Properties providerProperties) throws IOException
+    final int bands, final String protectionLevel,
+    final Properties providerProperties) throws IOException
   {
     TiledOutputFormatContext context = new TiledOutputFormatContext(output, name, bounds, zoomlevel,
       tilesize, tiletype, bands);
@@ -106,6 +108,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
     // The data provider _may_ exist (as in the case of BuildPyramid), but it is also OK that the
     // provider _doesn't_ exist.  So we try to open the provider as READ, then WRITE if that fails.
     MrsImageDataProvider provider = null;
+    job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
     try
     {
       provider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.READ,
@@ -150,7 +153,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
    */
   public static MrsImageOutputFormatProvider addMrsPyramidMultipleOutputFormat(final Job job, final String output,
     final String name,final Bounds bounds, final int zoomlevel, final int tilesize,
-    final Properties providerProperties) throws IOException
+    final String protectionLevel, final Properties providerProperties) throws IOException
   {
     TiledOutputFormatContext context = new TiledOutputFormatContext(output, name, bounds, zoomlevel,
       tilesize);
@@ -158,6 +161,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
     // The data provider _may_ exist (as in the case of BuildPyramid), but it is also OK that the
     // provider _doesn't_ exist.  So we try to open the provider as READ, then WRITE if that fails.
     MrsImageDataProvider provider = null;
+    job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
     try
     {
       provider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.READ,
@@ -441,11 +445,13 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
  */
   public static MrsImageOutputFormatProvider setupMrsPyramidOutputFormat(final Job job, final String output,
     final Bounds bounds, final int zoomlevel, final int tilesize,
+    final String protectionLevel,
     final Properties providerProperties) throws IOException
   {
     final TiledOutputFormatContext context = new TiledOutputFormatContext(output, bounds,
       zoomlevel, tilesize);
     
+    job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
     final MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(output,
         AccessMode.OVERWRITE, providerProperties);
     
@@ -480,10 +486,11 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
    */
   public static MrsImageOutputFormatProvider setupMrsPyramidOutputFormat(final Job job, final String output,
     final Bounds bounds, final int zoomlevel, final int tilesize, final int tiletype,
-    final int bands, final Properties providerProperties) throws IOException
+    final int bands, final String protectionLevel, final Properties providerProperties) throws IOException
   {
     final TiledOutputFormatContext context = new TiledOutputFormatContext(output, bounds,
       zoomlevel, tilesize, tiletype, bands);
+    job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
     final MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(output,
       AccessMode.OVERWRITE, providerProperties);
     if (provider == null)

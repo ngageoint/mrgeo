@@ -70,6 +70,7 @@ public class MapAlgebraParser implements MapOpFactory
   private TreeMap<Integer, MapAlgebraPreprocessor> _preprocessors = null;
   private Configuration conf;
   private Properties providerProperties;
+  private String protectionLevel;
 
   private ParserAdapter parser;
 
@@ -77,10 +78,12 @@ public class MapAlgebraParser implements MapOpFactory
   {
     init();
   }
-  public MapAlgebraParser(final Configuration conf, final Properties providerProps)
+  public MapAlgebraParser(final Configuration conf, final String protectionLevel,
+      final Properties providerProps)
   {
     init();
     this.conf = conf;
+    this.protectionLevel = protectionLevel;
     this.providerProperties = providerProps;
   }
 
@@ -422,6 +425,10 @@ public class MapAlgebraParser implements MapOpFactory
       if (mapOp.getProviderProperties() == null)
       {
         mapOp.setProviderProperties(providerProperties);
+      }
+      if (mapOp.getProtectionLevel() == null)
+      {
+        mapOp.setProtectionLevel(protectionLevel);
       }
       return mapOp;
     }

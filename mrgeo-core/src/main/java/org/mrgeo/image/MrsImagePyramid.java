@@ -96,6 +96,7 @@ public class MrsImagePyramid extends MrsPyramid
       final AdHocDataProvider statsProvider,
     final double[] defaultValues,
     final Bounds bounds, final Configuration conf,
+    final String protectionLevel,
     final Properties providerProperties) throws JsonGenerationException,
     JsonMappingException,
     IOException
@@ -144,7 +145,7 @@ public class MrsImagePyramid extends MrsPyramid
             tilesize);
         metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
   
-
+        metadata.setProtectionLevel(protectionLevel);
         metadata.setBands(raster.getNumBands());
         metadata.setTilesize(tilesize);
         metadata.setTileType(raster.getTransferType());

@@ -158,7 +158,8 @@ public class RasterizeVectorDriver
 
   public void run(final Job job, final String output, final RasterizeVectorPainter.AggregationType aggregationType,
       final int zoom, final Bounds bounds, final Progress progress,
-      final JobListener jobListener, final Properties providerProperties)
+      final JobListener jobListener, final String protectionLevel,
+      final Properties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     // create a new unique job name
@@ -203,6 +204,7 @@ public class RasterizeVectorDriver
     metadata.setTilesize(512);
     metadata.setBands(1);
     metadata.setTileType(DataBuffer.TYPE_DOUBLE);
+    metadata.setProtectionLevel(protectionLevel);
     HadoopUtils.setMetadata(job, metadata);
 
     final AdHocDataProvider statsProvider = DataProviderFactory.createAdHocDataProvider(
@@ -216,7 +218,7 @@ public class RasterizeVectorDriver
     conf.set(BOUNDS_PROVIDER, boundsProvider.getResourceName());
 
     MrsImageOutputFormatProvider provider = MrsImageDataProvider.setupMrsPyramidOutputFormat(job,
-        output, bounds, zoom, tilesize, providerProperties);
+        output, bounds, zoom, tilesize, protectionLevel, providerProperties);
     job.setOutputKeyClass(TileIdWritable.class);
     job.setOutputValueClass(RasterWritable.class);
     job.setReducerClass(PaintReduce.class);
@@ -236,7 +238,7 @@ public class RasterizeVectorDriver
       final Bounds outputBounds = MapReduceUtils.aggregateBounds(boundsProvider);
       MrsImagePyramid.calculateMetadata(output, zoom, provider.getMetadataWriter(),
           statsProvider, defaultValues,
-          outputBounds, conf, providerProperties);
+          outputBounds, conf, protectionLevel, providerProperties);
       statsProvider.delete();
       boundsProvider.delete();
     }
@@ -244,7 +246,8 @@ public class RasterizeVectorDriver
 
   public void run(final Path input, final String output, final RasterizeVectorPainter.AggregationType aggregationType,
       final int zoom, final Bounds bounds, final Progress progress,
-      final JobListener jobListener, final Properties providerProperties)
+      final JobListener jobListener, final String protectionLevel,
+      final Properties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     final Job job = new Job(HadoopUtils.createConfiguration());
@@ -255,7 +258,8 @@ public class RasterizeVectorDriver
     }
     job.setInputFormatClass(inputFormat);
     FileInputFormat.addInputPath(job, input);
-    run(job, output, aggregationType, zoom, bounds, progress, jobListener, providerProperties);
+    run(job, output, aggregationType, zoom, bounds, progress, jobListener, protectionLevel,
+        providerProperties);
   }
 
   public void setFeatureFilter(final FeatureFilter filter)
