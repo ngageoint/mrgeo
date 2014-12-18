@@ -405,7 +405,7 @@ public class BuildPyramidDriver
       final String l = Integer.toString(level);
       outputProviders[lo] = MrsImageDataProvider.addMrsPyramidMultipleOutputFormat(
         job, metadata.getPyramid(), l, bounds, level, tilesize, metadata.getTileType(), metadata
-          .getBands(), providerProperties);
+          .getBands(), metadata.getProtectionLevel(), providerProperties);
     }
     HadoopUtils.setJar(job, BuildPyramidDriver.class);
 

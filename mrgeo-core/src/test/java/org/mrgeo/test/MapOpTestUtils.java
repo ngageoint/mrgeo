@@ -192,11 +192,11 @@ public class MapOpTestUtils extends TestUtils
   public MapOp runMapAlgebraExpression(final Configuration conf, final String testName,
       final String ex)
           throws IOException, JobFailedException, JobCancelledException, ParserException
-          {
+  {
     HadoopFileUtils.delete(new Path(outputHdfs, testName));
 
     log.info(ex);
-    final MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    final MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
 //    parser.addPath(inputHdfs.toString());
     final MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     
@@ -208,5 +208,5 @@ public class MapOpTestUtils extends TestUtils
     mae.execute(conf, new ProgressHierarchy());
 
     return mapOp;
-          }
+  }
 }

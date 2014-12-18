@@ -189,7 +189,8 @@ public class MrsVectorPyramid extends MrsPyramid
     return metadata;
   }
 
-  public static void calculateMetadata(String pyramidname, int zoom, int tileSize, Bounds bounds)
+  public static void calculateMetadata(String pyramidname, int zoom, int tileSize,
+      Bounds bounds, String protectionLevel)
       throws JsonGenerationException, JsonMappingException, IOException
   {
     MrsVectorPyramidMetadata metadata = new MrsVectorPyramidMetadata();
@@ -199,6 +200,7 @@ public class MrsVectorPyramid extends MrsPyramid
     metadata.setBounds(bounds);
     metadata.setName(zoom);
     metadata.setTilesize(tileSize);
+    metadata.setProtectionLevel(protectionLevel);
 
     TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
         bounds.getMaxX(), bounds.getMaxY());

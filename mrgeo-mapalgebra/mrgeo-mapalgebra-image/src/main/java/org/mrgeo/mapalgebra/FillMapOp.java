@@ -194,7 +194,7 @@ public class FillMapOp extends RasterMapOp implements InputsCalculator, BoundsCa
     }
 
     FillRasterDriver.run(job, sourcepyramid, _outputName, fill, filltype, bounds, p,
-      jobListener, getProviderProperties());
+      jobListener, getProtectionLevel(), getProviderProperties());
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(_outputName,
         AccessMode.READ, getProviderProperties());
     _output = MrsPyramidDescriptor.create(dp);

@@ -57,7 +57,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenMaskWithBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"MASK\", 0.0001716614, 68.85, 34.25, 69.35, 34.75)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -73,7 +73,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenMaskWithQuotedNegativeBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"MASK\", 0.0001716614, \"-68.85\", 34.25, \"-69.35\", 34.75)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -89,7 +89,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenMaskWithoutBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"MASK\", 0.0001716614)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -105,7 +105,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenSumWithoutBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -121,7 +121,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenSumWithColumnWithoutBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\")";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -137,7 +137,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenLastWithBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"LAST\", 0.0001716614, \"column\", 68.85, 34.25, 69.35, 34.75)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -153,7 +153,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenSumWithBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 68.85, 34.25, 69.35, 34.75)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -169,7 +169,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenLastWithoutBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"LAST\", 0.0001716614, \"column\")";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -185,7 +185,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenLastWithoutColumn() throws Exception
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"LAST\", 0.0001716614)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     parser.parse(exp);
   }
 
@@ -194,7 +194,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenMaskWithColumn() throws Exception
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"MASK\", 0.0001716614, \"column\")";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     parser.parse(exp);
   }
 
@@ -203,7 +203,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenSumWithoutColumnWithBounds()
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, 68.85, 34.25, 69.35, 34.75)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
@@ -219,7 +219,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenSumWithBadBounds3() throws Exception
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 68.85, 34.25, 69.35)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     parser.parse(exp);
   }
 
@@ -228,7 +228,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenSumWithBadBounds2() throws Exception
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 34.25, 69.35)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     parser.parse(exp);
   }
 
@@ -237,7 +237,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenSumWithBadBounds1() throws Exception
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 68.85)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     parser.parse(exp);
   }
 
@@ -246,7 +246,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenBadAggregationType() throws Exception
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], \"BAD\", 0.0001716614, \"column\", 68.85, -34.25, 69.35, -34.75)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     parser.parse(exp);
   }
 
@@ -255,7 +255,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenMissingQuotesAggregationType() throws Exception
   {
     String exp = "RasterizeVector([" + hdfsShapefile + "], SUM, 0.0001716614, \"column\", 68.85, -34.25, 69.35, -34.75)";
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     parser.parse(exp);
   }
   
@@ -264,7 +264,7 @@ public class RasterizeVectorMapOpIntegrationTest
   public void testProcessChildrenVariable()
   {
     String exp = String.format("a = [%s]; RasterizeVector(a, \"LAST\", 1, \"c\") ", hdfsShapefile);
-    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), props);
+    MapAlgebraParser parser = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", props);
     try {
       parser.parse(exp);
     } catch (Exception e) {
