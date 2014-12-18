@@ -179,11 +179,6 @@
          jars are not included in the final war (tomcat will provide it...)
     -->
     <dependency>
-      <groupId>com.digitalglobe</groupId>
-      <artifactId>http-utils</artifactId>
-      <version>1.0.1</version>
-    </dependency>
-    <dependency>
       <groupId>org.jvnet</groupId>
       <artifactId>mimepull</artifactId>
       <version>1.6</version>

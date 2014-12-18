@@ -26,7 +26,6 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <geotools.version>10.0-DG</geotools.version>
     <generatedResources>${project.build.directory}/generated-resources</generatedResources>
   </properties>
   <name>mrgeo-dataprovider-accumulo</name>
