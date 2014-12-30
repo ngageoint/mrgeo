@@ -133,6 +133,8 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 		  auths = props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
 	  }
 	  queryProps.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, auths);
+
+	  //cv = new ColumnVisibility();
 	  
 	  if(props != null) {
 		  queryProps.putAll(props);
@@ -467,6 +469,10 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 
 	  return cv;
   } // end getColumnVisibility
+  
+  public Properties getQueryProperties(){
+	  return queryProps;
+  }
   
   
 } // end AccumuloMrsImageDataProvider

@@ -16,16 +16,19 @@
 package org.mrgeo.data.accumulo.metadata;
 
 import com.google.common.base.Predicates;
+
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
@@ -84,10 +87,20 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
       throw new IOException("Can not load metadata, resource name is empty!");
     }
 
-    if(metadata == null)    {
-      metadata = loadMetadata();
-      log.info("Read metadata for " + name + " with max zoom level at " + metadata.getMaxZoomLevel());
-      metadata.setPyramid(name);
+    if(metadata != null){
+    	return metadata;
+    }
+
+    metadata = loadMetadata();
+    
+    // what if the loadMetadata fails?
+    if(metadata == null){
+    	log.info("Did not read metadata for " + name);
+        throw new IOException("Can not load metadata, resource name is empty!");
+
+    } else {
+    	metadata.setPyramid(name);        
+    	log.info("Read metadata for " + name + " with max zoom level at " + metadata.getMaxZoomLevel());
     }
     
     return metadata;
@@ -180,26 +193,41 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
   } // end setConnector
 
   private MrsImagePyramidMetadata loadMetadata() throws IOException{
-//    if(metadata != null){
-////      metadata = new MrsImagePyramidMetadata();
-////    } else {
-//      return metadata;
-//    }
 
     Properties mrgeoAccProps;
 
     if(dataProvider == null){
+    	log.info("no data provider used");
       mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
     } else {
       String enc = dataProvider.getResolvedName();
       mrgeoAccProps = AccumuloConnector.decodeAccumuloProperties(enc);
+    
+      // get authorizations from dataProvider
+      Properties p1 = dataProvider.getProviderProperties();
+      Properties p2 = dataProvider.getQueryProperties();
+      if(p1 != null){
+    	  mrgeoAccProps.putAll(p1);
+      }
+//      log.info("loading with data provider auths = " + mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
+      if(p2 != null){
+    	  mrgeoAccProps.putAll(p2);
+      }
+
     }
     
     if(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) == null){
       auths = new Authorizations();
     } else {
-      auths = new Authorizations(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
+    	String authStr = mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
+    	if(authStr == null){
+    		authStr = mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    	}
+      auths = new Authorizations(authStr.split(","));
     }
+    
+    log.info("authorizations = " + auths);
+    log.info("");
     
     if(conn == null){
       try{

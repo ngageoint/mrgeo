@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 
+@Deprecated
 public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFormatProvider
 {
   private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidInputFormatProvider.class);
@@ -64,7 +65,8 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
       for(final String input : context.getInputs()){
         MrsImagePyramid pyramid;
         try{
-          pyramid = MrsImagePyramid.open(input, (Properties)null);
+          //pyramid = MrsImagePyramid.open(input, (Properties)null);
+          pyramid = MrsImagePyramid.open(input, providerProperties);
         } catch(IOException ioe){
           throw new DataProviderException("Failure opening input image pyramid: " + input, ioe);
         }

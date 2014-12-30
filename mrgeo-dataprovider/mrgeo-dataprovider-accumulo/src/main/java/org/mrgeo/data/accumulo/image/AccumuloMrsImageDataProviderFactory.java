@@ -157,7 +157,12 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
     if(input.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX)){
       table = table.replace(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX, "");
     }
-      
+    if(queryProps == null){
+    	queryProps = new Properties();
+    }
+    if(providerProperties != null){
+    	queryProps.putAll(providerProperties);
+    }
     // return a new interface to the accumulo data instance
     return new AccumuloMrsImageDataProvider(queryProps, table);
 
@@ -196,7 +201,10 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
     
     log.info("Asked to open: " + input + " ("+t+")");
         
+    
+    // TODO make sure we can work with this correctly - geotable vs just a table
     return ADPF_AllTables.contains(t);
+    //return ADPF_ImageToTable.contains(t);
     
   } // end canOpen
 

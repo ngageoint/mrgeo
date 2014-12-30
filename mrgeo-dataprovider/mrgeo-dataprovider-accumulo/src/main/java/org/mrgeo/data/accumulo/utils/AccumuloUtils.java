@@ -586,7 +586,7 @@ public class AccumuloUtils {
 
 		Properties props = AccumuloConnector.getAccumuloProperties();
 		if(properties != null){
-			props.putAll(props);
+			props.putAll(properties);
 			if(properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES) != null){
 				props.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, 
 						properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
