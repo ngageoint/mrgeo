@@ -35,7 +35,10 @@ import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Properties;
+import java.util.Set;
 
 public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFormatProvider
 {
@@ -102,6 +105,19 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     //zoomLevelsInPyramid = new ArrayList<Integer>();
 
     log.info("Setting up job " + job.getJobName());
+    
+    // lets look into the properties coming in
+    if(providerProperties != null){
+    	Set<Object> k1 = providerProperties.keySet();
+    	ArrayList<String> k2 = new ArrayList<String>();
+    	for(Object o : k1){
+    		k2.add(o.toString());
+    	}
+    	Collections.sort(k2);
+    	for(int x = 0; x < k2.size(); x++){
+    		log.info("provider property " + x + ": k='" + k2.get(x) + "' v='" + providerProperties.getProperty(k2.get(x)) + "'");
+    	}
+    }
     
     // set the needed information
     if(props == null){
@@ -229,11 +245,14 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     } // end for loop
     
 
-    log.info("setting column family to regex " + context.getZoomLevel());
+    log.info("setting column family to regex " + Integer.toString(context.getZoomLevel()));
     // think about scanners - set the zoom level of the job
     IteratorSetting regex = new IteratorSetting(51, "regex", RegExFilter.class);
     RegExFilter.setRegexs(regex, null, Integer.toString(context.getZoomLevel()), null, null, false);
     AccumuloMrsImagePyramidInputFormat.addIterator(job, regex);
+    //job.setJarByClass(this.getClass());
+    String cp = job.getConfiguration().get("mapred.job.classpath.files");
+    log.info("mapred.job.classpath.files = " + cp);
     
   } // end setupJob
 

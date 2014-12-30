@@ -447,6 +447,9 @@ public class DependencyLoader
       if (file.lastModified() <= status.getModificationTime())
       {
         log.debug(file.getName() + " up to date");
+        if(existsInClassPath(hdfsPath.toString(), conf)){
+        	return;
+        }        
         DistributedCache.addFileToClassPath(hdfsPath, conf);
 
         return;
@@ -457,9 +460,27 @@ public class DependencyLoader
     log.debug("Copying " + file.getName() + " to HDFS for distribution");
 
     fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
+    
+    // we need to check to make sure that we do not add a class multiple times
+    if(existsInClassPath(hdfsPath.toString(), conf)){
+    	return;
+    }
     DistributedCache.addFileToClassPath(hdfsPath, conf);
   }
 
+  
+  private static boolean existsInClassPath(String path, Configuration conf)
+  {
+	  String cpf = conf.get("mapred.job.classpath.files");
+	  if(cpf != null && cpf.length() > 0){
+		  ArrayList<String> cal = new ArrayList<String>(Arrays.asList(cpf.split(System.getProperty("path.separator"))));
+		  return cal.contains(path);
+	  }
+	  
+	  return false;
+  }
+  
+  
   private static Set<Dependency> loadDependenciesByReflection(Class clazz) throws IOException
   {
     String jar = ClassUtil.findContainingJar(clazz);

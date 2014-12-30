@@ -101,9 +101,12 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
 //    		this.cv = new ColumnVisibility(str);
 //    	}
 //    }
+    
     //TODO - program things to get rid of this
     if(this.cv == null){
-    	this.cv = new ColumnVisibility("C&D");
+    	log.info("setting blank column visibility");
+    	//this.cv = new ColumnVisibility("C&D");
+    	this.cv = new ColumnVisibility();
     }
     log.info("Have column visibility of: " + this.cv.toString());
     

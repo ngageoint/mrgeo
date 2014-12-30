@@ -324,7 +324,7 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
      * there needs to be a refresh of the information of what is there
      */
     ADPF_ImageToTable = AccumuloUtils.getGeoTables(null);
-
+    ADPF_AllTables = AccumuloUtils.getListOfTables(null);
     // clean off the prefix if needed
     String t = input;
     if(input.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX)){
@@ -360,7 +360,10 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
      * there needs to be a refresh of the information of what is there
      */
     ADPF_ImageToTable = AccumuloUtils.getGeoTables(providerProperties);
-
+    if(ADPF_AllTables == null){
+    	ADPF_AllTables = AccumuloUtils.getListOfTables(providerProperties);
+    }
+    
     // clean off the prefix if needed
     String t = input;
     if(input.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX)){
@@ -380,7 +383,11 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
       sb.append(k);
     }
     
-    log.info("search for '" + input + " -> " + t + "' was " + Boolean.toString(ADPF_ImageToTable.containsKey(t)) + " : " + sb.toString());
+    log.info("table " + t + " exists=" + 
+    		Boolean.toString(ADPF_AllTables.contains(t)) +
+    		" and is a map table=" +
+    		Boolean.toString(ADPF_ImageToTable.containsKey(t)));
+    //log.info("search for '" + input + " -> " + t + "' was " + Boolean.toString(ADPF_ImageToTable.containsKey(t)) + " : " + sb.toString());
 
     // does the table exist
     return ADPF_ImageToTable.containsKey(t);
@@ -393,6 +400,7 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
   @Override
   public void delete(String name, final Configuration conf) throws IOException
   {
+	  log.info("asked to delete " + name + " -- doing nothing.");
     return;
   } // end delete
 
