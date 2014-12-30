@@ -31,11 +31,15 @@ public class MapAlgebraParserTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testBadResourceName()
   {
-    final MapAlgebraParser parser = new MapAlgebraParser(getConfiguration(), null);
+    String protectionLevel = "abc";
+    final MapAlgebraParser parser = new MapAlgebraParser(getConfiguration(),
+        protectionLevel, null);
     String expr = "CostDistance([abc], [def]);";
     try
     {
-      parser.parse(expr);
+      MapOp root = parser.parse(expr);
+      Assert.assertNotNull(root);
+      Assert.assertEquals(protectionLevel, root.getProtectionLevel());
     }
     catch (FileNotFoundException e)
     {

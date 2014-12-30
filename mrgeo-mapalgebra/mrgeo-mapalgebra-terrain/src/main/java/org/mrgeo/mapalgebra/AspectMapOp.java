@@ -43,7 +43,7 @@ public class AspectMapOp extends RenderedImageMapOp implements TileClusterInfoCa
     if (children.size() > 2)
     {
       throw new IllegalArgumentException(
-          "Logarithm takes one or two arguments. single-band raster elevation and optional unit format (\"deg\" or \"rad\")");
+          "Aspect takes one or two arguments. single-band raster elevation and optional unit format (\"deg\" or \"rad\")");
     }
 
     result.add(children.get(0));
@@ -51,7 +51,7 @@ public class AspectMapOp extends RenderedImageMapOp implements TileClusterInfoCa
     if (children.size() == 2)
     {
       String units = MapOp.parseChildString(children.get(1), "units", parser);
-      if (!units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad"))
+      if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")))
       {
         throw new IllegalArgumentException("Units must be \"deg\" or \"rad\".");
       }

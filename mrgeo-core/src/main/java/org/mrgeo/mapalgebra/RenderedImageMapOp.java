@@ -96,7 +96,7 @@ public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor,
     new OpChainDriver().run(this, inputs, getOutputName(),
         MapAlgebraExecutioner.calculateMaximumZoomlevel(rootMapOp),
         MapAlgebraExecutioner.calculateBounds(rootMapOp),
-        getConf(), p, getProviderProperties());
+        getConf(), p, getProtectionLevel(), getProviderProperties());
   }
 
   @Override

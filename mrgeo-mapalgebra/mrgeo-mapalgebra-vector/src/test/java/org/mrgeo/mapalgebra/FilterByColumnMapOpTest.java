@@ -99,7 +99,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
   {
     String expression = 
       String.format("FilterByColumn([%s], 'id', '5', 'text')", _noColsFile).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     parser.parse(expression);
   }
   
@@ -109,7 +109,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
   {
     String expression = 
       String.format("FilterByColumn([%s], 'id', '5', 'text')", _nonVectorFile).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     parser.parse(expression);
   }
   
@@ -120,7 +120,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
   {
     String expression = 
       String.format("FilterByColumn([%s], 'id', '5')", _ellipse).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     parser.parse(expression);
   }
   
@@ -131,7 +131,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
   {
     String expression = 
       String.format("FilterByColumn([%s], '5', 'text')", _ellipse).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     parser.parse(expression);
   }
   
@@ -142,7 +142,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
   {
     String expression = 
       String.format("FilterByColumn([%s], 'id', 'text')", _ellipse).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     parser.parse(expression);
   }
   
@@ -154,7 +154,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
   {
     String expression = 
       String.format("FilterByColumn([%s], 'id', '5', 'text')", _ellipse).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     FilterByColumnMapOp mapOp = (FilterByColumnMapOp)parser.parse(expression);
     
     assertEquals(
@@ -174,7 +174,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
   {
     String expression = 
       String.format("FilterByColumn([%s], 'id', '5', 'text', '')", _ellipse).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     parser.parse(expression);
   }
   
@@ -187,7 +187,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
     String expression = 
       String.format(
         "FilterByColumn([%s], 'major', '52493', 'numeric')", _ellipse).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     FilterByColumnMapOp mapOp = (FilterByColumnMapOp)parser.parse(expression);
     
     assertEquals(
@@ -208,7 +208,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
     String expression = 
       String.format(
         "FilterByColumn([%s], 'major', '52493', 'numeric', '')", _ellipse).replace("'", "\"");
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     parser.parse(expression);
   }
   
@@ -220,7 +220,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
   {
     String expression = 
       String.format("FilterByColumn([%s], \"date\", \"2012-12-11T08:00:00\", \"Date\")", _ellipse);
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     FilterByColumnMapOp mapOp = (FilterByColumnMapOp)parser.parse(expression);
     
     assertEquals(
@@ -242,7 +242,7 @@ public class FilterByColumnMapOpTest extends LocalRunnerTest
     String expression = 
       String.format("FilterByColumn([%s], \"date\", \"2012-12-11T08:00:00\", \"Date\", \"\", \"\")", 
         _ellipse);
-    MapAlgebraParser parser = new MapAlgebraParser(conf, null);
+    MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
     parser.parse(expression);
   }
   

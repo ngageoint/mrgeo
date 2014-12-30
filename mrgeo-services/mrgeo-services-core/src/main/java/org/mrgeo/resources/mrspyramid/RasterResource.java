@@ -52,12 +52,11 @@ import org.mrgeo.services.mrspyramid.MrsPyramidService;
 //import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
+import org.mrgeo.services.utils.HttpUtil;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.digitalglobe.http.HttpUtil;
 
 @Path("/raster")
 public class RasterResource
@@ -92,7 +91,9 @@ public class RasterResource
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response createMapAlgebraJob(@PathParam("output") String outputId,
-      @QueryParam("basePath") String basePath, String expression)
+      @QueryParam("basePath") String basePath,
+      @QueryParam("protectionLevel") @DefaultValue("") String protectionLevel,
+      String expression)
   {
     try
     {
@@ -103,7 +104,7 @@ public class RasterResource
       // TODO: Need to construct provider properties from the WebRequest using
       // a new security layer and pass those properties to MapAlgebraJob.
       MapAlgebraJob job = new MapAlgebraJob(expression, outputId,
-          SecurityUtils.getProviderProperties());
+          protectionLevel, SecurityUtils.getProviderProperties());
       long jobId = service.getJobManager().submitJob("MapAlgebra job " + outputId, job);
       String jobUri = uriInfo.getBaseUri().toString() + "job/";
       jobUri = HttpUtil.updateSchemeFromHeaders(jobUri, request);

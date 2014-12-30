@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>0.5.0-SNAPSHOT</version>
   </parent>
   <artifactId>mrgeo-cmd</artifactId>
   <name>mrgeo-cmd</name>
@@ -50,14 +50,6 @@
     <module>mrgeo-cmd-export</module>
     <module>mrgeo-cmd-mapalgebra</module>
   </modules>
-  <profiles>
-    <profile>
-      <id>include-costdistance</id>
-      <modules>
-        <module>mrgeo-cmd-junkyard</module>
-      </modules>
-    </profile>
-  </profiles>
   <dependencies>
     <dependency>
       <groupId>org.mrgeo</groupId>

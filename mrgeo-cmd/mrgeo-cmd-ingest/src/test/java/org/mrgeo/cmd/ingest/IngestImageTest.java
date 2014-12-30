@@ -63,10 +63,17 @@ public class IngestImageTest
 
   private static Configuration conf;
   private Properties providerProperties;
+  private static String origProtectionLevelRequired;
+  private static String origProtectionLevelDefault;
+  private static String origProtectionLevel;
 
   @BeforeClass
   public static void init() throws IOException
   {
+    Properties props = MrGeoProperties.getInstance();
+    origProtectionLevelRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+    origProtectionLevelDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
+    origProtectionLevel = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL);
     conf = HadoopUtils.createConfiguration();
 
     testUtils = new TestUtils(IngestImageTest.class);
@@ -86,6 +93,39 @@ public class IngestImageTest
     all_ones_input = "file://" + file.getAbsolutePath();
 
     all_ones_output = new Path(outputHdfs, all_ones).toString();
+  }
+
+  @After
+  public void teardown()
+  {
+    // Restore MrGeoProperties
+    Properties props = MrGeoProperties.getInstance();
+    if (origProtectionLevelRequired == null)
+    {
+      props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+    }
+    else
+    {
+      props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, origProtectionLevelRequired);
+    }
+
+    if (origProtectionLevelDefault == null)
+    {
+      props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
+    }
+    else
+    {
+      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, origProtectionLevelDefault);
+    }
+
+    if (origProtectionLevel == null)
+    {
+      props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL);
+    }
+    else
+    {
+      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL, origProtectionLevel);
+    }
   }
 
   @Before 
@@ -137,60 +177,36 @@ public class IngestImageTest
   {
     String protectionLevel = "public";
     Properties props = MrGeoProperties.getInstance();
-    String saveRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
-    String saveDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
-    try
+    props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, protectionLevel);
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL, "");
+    String[] args = { all_ones_input, "-l","-o", all_ones_output };
+    int res = new IngestImage().run(args, conf, providerProperties);
+
+    Assert.assertEquals("IngestImage comand exited with error", 0, res);
+    
+    // now look at the files built.  We really not interested in the actual data, just that
+    // things were build. (this is testing the command, not the algorithms)
+    MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
+    Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
+    
+    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
+    Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
+    
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+    for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
-      props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
-      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, protectionLevel);
-      String[] args = { all_ones_input, "-l","-o", all_ones_output };
-      int res = new IngestImage().run(args, conf, providerProperties);
-  
-      Assert.assertEquals("IngestImage comand exited with error", 0, res);
-      
-      // now look at the files built.  We really not interested in the actual data, just that
-      // things were build. (this is testing the command, not the algorithms)
-      MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
-      Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
-      
-      MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-      Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
-      Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
-      
-      Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
-      for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
-      {
-        MrsImage image = pyramid.getImage(level);
-        Assert.assertNotNull("MrsImage image missing for level " + level, image);
-        image.close();
-      }
-      
-      // check that we ingested the right number of tiles - in particular, that our maxTx/maxTy  
-      // is inclusive  
-      LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
-      long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
-      Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+      MrsImage image = pyramid.getImage(level);
+      Assert.assertNotNull("MrsImage image missing for level " + level, image);
+      image.close();
     }
-    finally
-    {
-      // Restore MrGeoProperties
-      if (saveRequired == null)
-      {
-        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
-      }
-      else
-      {
-        props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, saveRequired);
-      }
-      if (saveDefault == null)
-      {
-        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
-      }
-      else
-      {
-        props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, saveDefault);
-      }
-    }
+    
+    // check that we ingested the right number of tiles - in particular, that our maxTx/maxTy  
+    // is inclusive  
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
+    Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
   }
   
   @Test
@@ -199,60 +215,36 @@ public class IngestImageTest
   {
     String protectionLevel = "private";
     Properties props = MrGeoProperties.getInstance();
-    String saveRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
-    String saveDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
-    try
+    props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, "public");
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL, "");
+    String[] args = { all_ones_input, "-l","-o", all_ones_output, "-pl", protectionLevel };
+    int res = new IngestImage().run(args, conf, providerProperties);
+
+    Assert.assertEquals("IngestImage comand exited with error", 0, res);
+    
+    // now look at the files built.  We really not interested in the actual data, just that
+    // things were build. (this is testing the command, not the algorithms)
+    MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
+    Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
+    
+    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
+    Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
+    
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+    for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
-      props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
-      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, "public");
-      String[] args = { all_ones_input, "-l","-o", all_ones_output, "-pl", protectionLevel };
-      int res = new IngestImage().run(args, conf, providerProperties);
-  
-      Assert.assertEquals("IngestImage comand exited with error", 0, res);
-      
-      // now look at the files built.  We really not interested in the actual data, just that
-      // things were build. (this is testing the command, not the algorithms)
-      MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
-      Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
-      
-      MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-      Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
-      Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
-      
-      Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
-      for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
-      {
-        MrsImage image = pyramid.getImage(level);
-        Assert.assertNotNull("MrsImage image missing for level " + level, image);
-        image.close();
-      }
-      
-      // check that we ingested the right number of tiles - in particular, that our maxTx/maxTy  
-      // is inclusive  
-      LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
-      long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
-      Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+      MrsImage image = pyramid.getImage(level);
+      Assert.assertNotNull("MrsImage image missing for level " + level, image);
+      image.close();
     }
-    finally
-    {
-      // Restore MrGeoProperties
-      if (saveRequired == null)
-      {
-        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
-      }
-      else
-      {
-        props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, saveRequired);
-      }
-      if (saveDefault == null)
-      {
-        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
-      }
-      else
-      {
-        props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, saveDefault);
-      }
-    }
+    
+    // check that we ingested the right number of tiles - in particular, that our maxTx/maxTy  
+    // is inclusive  
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
+    Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
   }
   
   @Test
@@ -293,29 +285,14 @@ public class IngestImageTest
     PrintStream saveOut = System.out;
     System.setOut(new PrintStream(outContent));
     Properties props = MrGeoProperties.getInstance();
-    String saveRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
-    try
-    {
-      props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
-      String[] args = { all_ones_input, "-o", all_ones_output, "-sp" };
-      int res = new IngestImage().run(args, conf, providerProperties);
-      Assert.assertEquals(-1, res);
-      Assert.assertTrue("Unexpected output: " + outContent.toString(),
-          outContent.toString().contains("Missing required option: pl"));
-    }
-    finally
-    {
-      System.setOut(saveOut);
-      // Restore MrGeoProperties
-      if (saveRequired == null)
-      {
-        props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
-      }
-      else
-      {
-        props.setProperty( MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, saveRequired);
-      }
-    }
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "true");
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, "");
+    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL, "");
+    String[] args = { all_ones_input, "-o", all_ones_output, "-sp" };
+    int res = new IngestImage().run(args, conf, providerProperties);
+    Assert.assertEquals(-1, res);
+    Assert.assertTrue("Unexpected output: " + outContent.toString(),
+        outContent.toString().contains("Missing required option: pl"));
   }
 
   // ignored because it _always_ times out during the 0.20.2 integration tests...

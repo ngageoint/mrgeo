@@ -67,7 +67,7 @@ public class OptimizerTest extends LocalRunnerTest
   @Before
   public void setup()
   {
-    parser = new MapAlgebraParser(conf, null);
+    parser = new MapAlgebraParser(conf, "", null);
   }
 
   @Test

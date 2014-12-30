@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
+
 package org.mrgeo.services;
 
 import org.mrgeo.mapalgebra.MapAlgebraParser;
@@ -118,7 +119,7 @@ public class About extends HttpServlet
       // constructed from calling a security layer with the web context. The security
       // layer should extract whatever it needs from the web request (like a PKI) and
       // set it into the properties so it can be used as needed by the providers.
-      MapAlgebraParser p = new MapAlgebraParser(HadoopUtils.createConfiguration(), null);
+      MapAlgebraParser p = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", null);
       for (String n : p.getMapOpNames())
       {
         xmlWriter.writeStartElement("Operation");

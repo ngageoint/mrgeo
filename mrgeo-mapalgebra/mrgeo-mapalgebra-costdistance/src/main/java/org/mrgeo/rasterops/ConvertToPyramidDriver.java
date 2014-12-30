@@ -1,7 +1,9 @@
 package org.mrgeo.rasterops;
 
+import java.util.Map;
+import java.util.Properties;
+
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -9,19 +11,14 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
-
-import java.io.OutputStream;
-import java.util.Map;
-import java.util.Properties;
 
 public class ConvertToPyramidDriver extends Configured implements Tool {
 	private static final Logger LOG = Logger.getLogger(ConvertToPyramidDriver.class);
@@ -58,6 +55,7 @@ public class ConvertToPyramidDriver extends Configured implements Tool {
         job, argOutputPyramid, 
       metadata.getBounds(), metadata.getMaxZoomLevel(), metadata.getTilesize(), metadata.getTileType(),
       metadata.getBands(),
+      metadata.getProtectionLevel(),
       (Properties)null);
 
 		boolean isVerbose = true;

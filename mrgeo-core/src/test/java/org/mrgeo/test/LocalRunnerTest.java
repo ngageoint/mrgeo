@@ -53,4 +53,9 @@ public class LocalRunnerTest {
   {
     return null;
   }
+
+  protected String getProtectionLevel()
+  {
+    return "";
+  }
 }

@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
+
 package org.mrgeo.cmd.ingestvector;
 
 import org.apache.commons.cli.*;
@@ -23,6 +24,8 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.cmd.Command;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.mapreduce.ingestvector.IngestVectorDriver;
 import org.mrgeo.vector.mrsvector.OSMTileIngester;
@@ -81,6 +84,26 @@ public class IngestVector extends Command
     Option osm = new Option("osm", false, "Input is an OSM pbf or xml file");
     osm.setRequired(false);
     result.addOption(osm);
+
+    Option protectionLevelOption = new Option("pl", "protectionLevel", true, "Protection level");
+    // If mrgeo.conf security.classification.required is true and there is no
+    // security.classification.default, then the security classification
+    // argument is required, otherwise it is not.
+    Properties props = MrGeoProperties.getInstance();
+    String protectionLevelRequired = props.getProperty(
+        MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, "false").trim();
+    String protectionLevelDefault = props.getProperty(
+        MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, "");
+    if (protectionLevelRequired.equalsIgnoreCase("true") &&
+        protectionLevelDefault.isEmpty())
+    {
+      protectionLevelOption.setRequired(true);
+    }
+    else
+    {
+      protectionLevelOption.setRequired(false);
+    }
+    result.addOption(protectionLevelOption);
 
     result.addOption(new Option("v", "verbose", false, "Verbose logging"));
     result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
@@ -334,6 +357,7 @@ public class IngestVector extends Command
         // need to initialize before looking for the files...
         GeotoolsVectorUtils.initialize();
 
+        String protectionLevel = line.getOptionValue("pl");
         if (line.hasOption("osm"))
         {
           String[] inputs = line.getArgs();
@@ -347,7 +371,8 @@ public class IngestVector extends Command
             System.out.println("Using local runner");
             HadoopUtils.setupLocalRunner(config);
           }
-          OSMTileIngester.ingestOsm(inputs, output, config, zoomlevel, providerProperties);
+          OSMTileIngester.ingestOsm(inputs, output, config, zoomlevel, protectionLevel,
+              providerProperties);
         }
         else
         {
@@ -373,12 +398,12 @@ public class IngestVector extends Command
               if (line.hasOption("lc"))
               {
                 success = IngestVectorDriver.localIngest(inputs.toArray(new String[inputs.size()]), 
-                  output, config, zoomlevel);
+                  output, config, zoomlevel, protectionLevel);
               }
               else
               {
                 success = IngestVectorDriver.ingest(inputs.toArray(new String[inputs.size()]), 
-                  output, config, zoomlevel, providerProperties);
+                  output, config, zoomlevel, protectionLevel, providerProperties);
               }
               if (!success)
               {
