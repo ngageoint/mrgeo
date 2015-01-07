@@ -31,6 +31,16 @@ import org.apache.hadoop.conf.Configuration;
  */
 public interface ImageIngestDataProviderFactory
 {
+  /**
+   * Provider implementations should perform any needed checks within this method
+   * to determine if the other functions defined in this interface can be called
+   * reliably. For example, if the implementation requires some configuration
+   * settings in order to work properly, it can use this method to determine if
+   * those settings have been defined. Returning false from this method will prevent
+   * the provider from being called thereafter.
+   * @return
+   */
+  public boolean isValid();
 
   public String getPrefix();
 

@@ -16,6 +16,7 @@
 package org.mrgeo.data.accumulo.ingest;
 
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.ingest.ImageIngestDataProvider;
 import org.mrgeo.data.ingest.ImageIngestDataProviderFactory;
@@ -25,6 +26,18 @@ import java.util.Properties;
 
 public class AccumuloImageIngestDataProviderFactory implements ImageIngestDataProviderFactory
 {
+  @Override
+  public boolean isValid()
+  {
+    // TODO: This is an initial guess at how this method should be
+    // implemented. We need to revisit.
+    Properties props = AccumuloConnector.getAccumuloProperties();
+    if (props == null)
+    {
+      return false;
+    }
+    return true;
+  }
 
   @Override
   public String getPrefix()

@@ -81,4 +81,16 @@ public class MrGeoProperties {
         }
         return properties;
     }
+    
+    public static boolean isDevelopmentMode()
+    {
+      boolean developmentMode = false; // default value
+      Properties props = getInstance();
+      String strDevelopmentMode = props.getProperty(MrGeoConstants.MRGEO_DEVELOPMENT_MODE);
+      if (strDevelopmentMode != null && strDevelopmentMode.equalsIgnoreCase("true"))
+      {
+        developmentMode = true;
+      }
+      return developmentMode;
+    }
 }

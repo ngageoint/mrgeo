@@ -1169,7 +1169,10 @@ public class DataProviderFactory
           .load(AdHocDataProviderFactory.class);
       for (final AdHocDataProviderFactory dp : dataProviderLoader)
       {
-        adHocProviderFactories.put(dp.getPrefix(), dp);
+        if (dp.isValid())
+        {
+          adHocProviderFactories.put(dp.getPrefix(), dp);
+        }
       }
     }
 
@@ -1184,15 +1187,18 @@ public class DataProviderFactory
       {
         try
         {
-          if (conf != null)
+          if (dp.isValid())
           {
-            dp.configure(conf);
+            if (conf != null)
+            {
+              dp.configure(conf);
+            }
+            else
+            {
+              dp.configure(p);
+            }
+            imageIngestProviderFactories.put(dp.getPrefix(), dp);
           }
-          else
-          {
-            dp.configure(p);
-          }
-          imageIngestProviderFactories.put(dp.getPrefix(), dp);
         }
         catch (Exception e)
         {
@@ -1212,7 +1218,10 @@ public class DataProviderFactory
       {
         try
         {
-          mrsImageProviderFactories.put(dp.getPrefix(), dp);
+          if (dp.isValid())
+          {
+            mrsImageProviderFactories.put(dp.getPrefix(), dp);
+          }
         }
         catch (Exception e)
         {
@@ -1231,15 +1240,18 @@ public class DataProviderFactory
       {
         try
         {
-          if (conf != null)
+          if (dp.isValid())
           {
-            dp.configure(conf);
+            if (conf != null)
+            {
+              dp.configure(conf);
+            }
+            else
+            {
+              dp.configure(p);
+            }
+            vectorProviderFactories.put(dp.getPrefix(), dp);
           }
-          else
-          {
-            dp.configure(p);
-          }
-          vectorProviderFactories.put(dp.getPrefix(), dp);
         }
         catch (Exception e)
         {
