@@ -195,7 +195,7 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ENCODED, enc);
 
 
-    job.setInputFormatClass(AccumuloMrsImagePyramidInputFormat.class);
+    //job.setInputFormatClass(AccumuloMrsImagePyramidInputFormat.class);
 
     // check for base64 encoded password
 //    AccumuloMrsImagePyramidInputFormat.setInputInfo(job.getConfiguration(),

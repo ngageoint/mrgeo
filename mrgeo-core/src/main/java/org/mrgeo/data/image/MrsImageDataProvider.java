@@ -319,9 +319,7 @@ public static void setupMrsPyramidInputFormat(final Job job, final Set<String> i
     throw new IOException("No input format provider available for " + firstInput);
   }
   ifProvider.setupJob(job, providerProperties);
-  /* -- this forces HDFS - this will stop Accumulo from working -- */
-  // job.setInputFormatClass(MrsImagePyramidInputFormat.class);
-  
+  job.setInputFormatClass(MrsImagePyramidInputFormat.class);
   // The following must be after the setupJob() call so that we overwrite the metadata
   // stored into the config during setupJob() with the cropped metadata.
   HadoopUtils.setMetadata(job, croppedMetadata);
