@@ -15,16 +15,12 @@
 
 package org.mrgeo.data.adhoc;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
-import org.mrgeo.data.DataProviderException;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.utils.HadoopUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Properties;
+
+import org.apache.hadoop.mapreduce.Job;
+import org.mrgeo.data.DataProviderException;
 
 /**
  * Abstract base class which a MrGeo data plugin will extend in order to
@@ -91,19 +87,6 @@ public abstract class AdHocDataProvider
    */
   public void setupJob(final Job job) throws DataProviderException
   {
-    setupJob(job.getConfiguration());
-  }
-
-  public void setupJob(final Configuration conf) throws DataProviderException
-  {
-    try
-    {
-      HadoopUtils.addJarCache(conf, getClass());
-    }
-    catch(IOException e)
-    {
-      throw new DataProviderException(e);
-    }
   }
 
   /**

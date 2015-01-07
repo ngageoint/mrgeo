@@ -57,7 +57,6 @@ public abstract class MrsImageInputFormatProvider implements TiledInputFormatPro
     try
     {
 
-    HadoopUtils.addJarCache(job, getClass());
     DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
         job.getConfiguration());
     context.save(job.getConfiguration());
