@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.ClassUtil;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -46,10 +47,6 @@ public class DependencyLoader
 {
   private static final Logger log = LoggerFactory.getLogger(DependencyLoader.class);
 
-//  static {
-//	  LoggingUtils.setLogLevel(DependencyLoader.class, LoggingUtils.DEBUG);
-//  }
-  
   public static Set<String> getDependencies(final Class clazz) throws IOException
   {
     Set<File> files = findDependencies(clazz);
@@ -183,12 +180,14 @@ public class DependencyLoader
     Path hdfsBase =
         new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
 
+    Set<String> existing = new HashSet<String>(conf.getStringCollection(MRJobConfig.CLASSPATH_FILES));
+
     Set<Dependency> properties = loadDependenciesByReflection(clazz);
     if (properties != null)
     {
       for (File p : getJarsFromProperties(properties))
       {
-        addFileToClasspath(conf, fs, hdfsBase, p);
+        addFileToClasspath(conf, existing, fs, hdfsBase, p);
       }
       for (Dependency d: properties)
       {
@@ -403,14 +402,18 @@ public class DependencyLoader
     // make sure the jar path exists
     HadoopFileUtils.create(job.getConfiguration(), hdfsBase);
 
+    Configuration conf = job.getConfiguration();
+
+    Set<String> existing = new HashSet<String>(conf.getStringCollection(MRJobConfig.CLASSPATH_FILES));
+
     String cpstr = System.getProperty("java.class.path");
     for (String env : cpstr.split(":"))
     {
-      addFilesToClassPath(job.getConfiguration(), fs, hdfsBase, env);
+      addFilesToClassPath(conf, existing, fs, hdfsBase, env);
     }
   }
 
-  private static void addFilesToClassPath(Configuration conf, FileSystem fs, Path hdfsBase, String base) throws IOException
+  private static void addFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
   {
     File f = new File(base);
     if (f.exists())
@@ -422,7 +425,7 @@ public class DependencyLoader
         {
           for (File file : files)
           {
-            addFilesToClassPath(conf, fs, hdfsBase, file.getCanonicalPath());
+            addFilesToClassPath(conf, existing, fs, hdfsBase, file.getCanonicalPath());
           }
         }
       }
@@ -430,34 +433,39 @@ public class DependencyLoader
       {
         if (f.getName().endsWith(".jar"))
         {
-          addFileToClasspath(conf, fs, hdfsBase, f);
+          addFileToClasspath(conf, existing, fs, hdfsBase, f);
         }
       }
     }
   }
 
-  private static void addFileToClasspath(Configuration conf, FileSystem fs, Path hdfsBase, File file) throws IOException
+  private static void addFileToClasspath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, File file) throws IOException
   {
     Path hdfsPath = new Path(hdfsBase, file.getName());
-    if (fs.exists(hdfsPath))
+    if (!existing.contains(hdfsPath.toString()))
     {
-      // check the timestamp and exit if the one in hdfs is "newer"
-      FileStatus status = fs.getFileStatus(hdfsPath);
-
-      if (file.lastModified() <= status.getModificationTime())
+      if (fs.exists(hdfsPath))
       {
-        log.debug(file.getName() + " up to date");
-        DistributedCache.addFileToClassPath(hdfsPath, conf);
+        // check the timestamp and exit if the one in hdfs is "newer"
+        FileStatus status = fs.getFileStatus(hdfsPath);
 
-        return;
+        if (file.lastModified() <= status.getModificationTime())
+        {
+          log.debug(file.getName() + " up to date");
+          DistributedCache.addFileToClassPath(hdfsPath, conf, fs);
+
+          existing.add(hdfsPath.toString());
+          return;
+        }
       }
+
+      // copy the file...
+      log.debug("Copying " + file.getName() + " to HDFS for distribution");
+
+      fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
+      DistributedCache.addFileToClassPath(hdfsPath, conf, fs);
+      existing.add(hdfsPath.toString());
     }
-
-    // copy the file...
-    log.debug("Copying " + file.getName() + " to HDFS for distribution");
-
-    fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
-    DistributedCache.addFileToClassPath(hdfsPath, conf);
   }
 
   private static Set<Dependency> loadDependenciesByReflection(Class clazz) throws IOException
