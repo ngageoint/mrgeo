@@ -30,6 +30,12 @@ public class HdfsImageIngestDataProviderFactory implements ImageIngestDataProvid
   private Properties props;
 
   @Override
+  public boolean isValid()
+  {
+    return true;
+  }
+
+  @Override
   public String getPrefix()
   {
     return "hdfs";

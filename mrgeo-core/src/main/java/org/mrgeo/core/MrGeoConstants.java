@@ -36,6 +36,7 @@ public class MrGeoConstants
   public static final String MRGEO_ENV_HOME = "MRGEO_HOME";
   public static final String MRGEO_SETTINGS = "settings.properties";
   public static final String MRGEO_CONF = "conf/mrgeo.conf";
+  public static final String MRGEO_DEVELOPMENT_MODE = "development.mode";
   
   /*
    * Accumulo configuration keys

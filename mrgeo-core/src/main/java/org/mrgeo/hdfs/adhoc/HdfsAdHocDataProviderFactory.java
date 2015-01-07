@@ -28,6 +28,12 @@ public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
   private static Configuration basicConf;
 
   @Override
+  public boolean isValid()
+  {
+    return true;
+  }
+
+  @Override
   public String getPrefix()
   {
     return "hdfs";
