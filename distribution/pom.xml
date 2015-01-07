@@ -107,6 +107,11 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-dataprovider-accumulo</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-image</artifactId>
       <version>${project.parent.version}</version>
     </dependency>

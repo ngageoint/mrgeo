@@ -61,6 +61,12 @@ public class HdfsMrsImageDataProviderFactory implements MrsImageDataProviderFact
   }
 
   @Override
+  public boolean isValid()
+  {
+    return true;
+  }
+
+  @Override
   public String getPrefix()
   {
     return "hdfs";

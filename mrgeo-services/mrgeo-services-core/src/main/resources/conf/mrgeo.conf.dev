@@ -8,6 +8,12 @@ colorscale.base = /mrgeo/color-scales
 # This is the spot in HDFS where jars are distributed for the mappers/reducers
 distributed.base = /mrgeo/jars
 
+# This flag is used to perform special processing when being run
+# on a developer's machine. For example, it changes the way we 
+# search for JAR dependencies to prevent recursing through each
+# element of the classpath that is a directory looking for JARs.
+development.mode=true
+
 # This needs to be a location that MrGeo can write to.
 db.path = /tmp/mrgeo-services-db
 
