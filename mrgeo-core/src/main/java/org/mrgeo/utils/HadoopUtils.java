@@ -829,30 +829,6 @@ public class HadoopUtils
     return null;
   }
 
-  public static void addJarCache(Job job, Class<?> clazz) throws IOException
-  {
-    addJarCache(job.getConfiguration(), clazz);
-  }
-
-  public static void addJarCache(Configuration conf, Class<?> clazz) throws IOException
-  {
-    try
-    {
-      String strJarPath = findContainingJar(clazz);
-      if (strJarPath != null && strJarPath.length() > 0)
-      {
-        Path jarPath = resolveName(strJarPath);
-        FileSystem fs = jarPath.getFileSystem(conf);
-        DistributedCache.addFileToClassPath(jarPath, conf, fs);
-      }
-    }
-    catch (URISyntaxException e)
-    {
-      throw new IOException(e);
-    }
-
-  }
-
   /**
    * Get the compression codec from the configuration.  The class org.apache.hadoop.io.compress.GzipCodec
    * is used.

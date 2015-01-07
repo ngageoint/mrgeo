@@ -172,6 +172,21 @@ public class DependencyLoader
     }
   }
 
+  private static Set<String> getClasspath(Configuration conf)
+  {
+    String cp = conf.get(CLASSPATH_FILES, "");
+    String[] entries = cp.split(System.getProperty("path.separator"));
+    Set<String> results = new HashSet<String>(entries.length);
+    if (entries.length > 0)
+    {
+      for (String entry : entries)
+      {
+        results.add(entry);
+      }
+    }
+    return results;
+  }
+
   public static void addDependencies(final Configuration conf, final Class<?> clazz) throws IOException
   {
     if (conf.get("mapred.job.tracker", "local") == "local")
@@ -182,7 +197,7 @@ public class DependencyLoader
     Path hdfsBase =
         new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
 
-    Set<String> existing = new HashSet<String>(conf.getStringCollection(CLASSPATH_FILES));
+    Set<String> existing = getClasspath(conf);
     boolean developmentMode = MrGeoProperties.isDevelopmentMode();
     Set<Dependency> properties = loadDependenciesByReflection(clazz);
     if (properties != null)
@@ -421,7 +436,7 @@ public class DependencyLoader
 
     Configuration conf = job.getConfiguration();
 
-    Set<String> existing = new HashSet<String>(conf.getStringCollection(CLASSPATH_FILES));
+    Set<String> existing = getClasspath(conf);
 
     String cpstr = System.getProperty("java.class.path");
     for (String env : cpstr.split(":"))

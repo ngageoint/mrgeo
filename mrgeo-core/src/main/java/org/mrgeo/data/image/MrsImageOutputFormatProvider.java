@@ -15,13 +15,12 @@
 
 package org.mrgeo.data.image;
 
+import java.io.IOException;
+
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.tile.TiledOutputFormatContext;
 import org.mrgeo.data.tile.TiledOutputFormatProvider;
-import org.mrgeo.utils.HadoopUtils;
-
-import java.io.IOException;
 
 /**
  * Data plugins that wish to provide storage for image pyramids must
@@ -42,13 +41,5 @@ public abstract class MrsImageOutputFormatProvider implements TiledOutputFormatP
   @Override
   public void setupJob(Job job) throws DataProviderException, IOException
   {
-    try
-    {
-      HadoopUtils.addJarCache(job, getClass());
-    }
-    catch(IOException e)
-    {
-      throw new DataProviderException(e);
-    }
   }
 }
