@@ -59,6 +59,18 @@ import java.util.*;
  */
 public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProviderFactory
 {
+  @Override
+  public boolean isValid()
+  {
+    // TODO: This is an initial guess at how this method should be
+    // implemented. We need to revisit.
+    Properties props = AccumuloConnector.getAccumuloProperties();
+    if (props == null)
+    {
+      return false;
+    }
+    return true;
+  }
 
   // logging for the class
   private static Logger log = LoggerFactory.getLogger(AccumuloMrsImageDataProviderFactory.class);

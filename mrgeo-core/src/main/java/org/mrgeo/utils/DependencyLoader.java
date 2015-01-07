@@ -22,7 +22,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.ClassUtil;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -46,8 +45,9 @@ import java.util.regex.Pattern;
 public class DependencyLoader
 {
   private static final Logger log = LoggerFactory.getLogger(DependencyLoader.class);
+  private static final String CLASSPATH_FILES = "mapred.job.classpath.files";
 
-  public static Set<String> getDependencies(final Class clazz) throws IOException
+  public static Set<String> getDependencies(final Class<?> clazz) throws IOException
   {
     Set<File> files = findDependencies(clazz);
 
@@ -60,11 +60,12 @@ public class DependencyLoader
     return deps;
   }
 
-  public static String getMasterJar(final Class clazz) throws IOException
+  public static String getMasterJar(final Class<?> clazz) throws IOException
   {
     Set<Dependency> properties = loadDependenciesByReflection(clazz);
     if (properties != null)
     {
+      boolean developmentMode = MrGeoProperties.isDevelopmentMode();
       for (Dependency d: properties)
       {
         if (d.master)
@@ -72,7 +73,7 @@ public class DependencyLoader
           Set<Dependency> master = new HashSet<Dependency>();
           master.add(d);
 
-          for (File m: getJarsFromProperties(master))
+          for (File m: getJarsFromProperties(master, !developmentMode))
           {
             return m.getCanonicalPath();
           }
@@ -83,14 +84,15 @@ public class DependencyLoader
     return null;
   }
 
-  private static Set<File> findDependencies(Class clazz) throws IOException
+  private static Set<File> findDependencies(Class<?> clazz) throws IOException
   {
     Set<File> files;
 
     Set<Dependency> properties = loadDependenciesByReflection(clazz);
     if (properties != null)
     {
-      files = getJarsFromProperties(properties);
+      boolean developmentMode = MrGeoProperties.isDevelopmentMode();
+      files = getJarsFromProperties(properties, !developmentMode);
     }
     else
     {
@@ -105,7 +107,7 @@ public class DependencyLoader
     return files;
   }
 
-  public static Set<String> getUnqualifiedDependencies(final Class clazz) throws IOException
+  public static Set<String> getUnqualifiedDependencies(final Class<?> clazz) throws IOException
   {
     Set<File> files = findDependencies(clazz);
 
@@ -147,7 +149,7 @@ public class DependencyLoader
     return files;
   }
 
-  public static void addDependencies(final Job job, final Class clazz) throws IOException
+  public static void addDependencies(final Job job, final Class<?> clazz) throws IOException
   {
     if (job.getConfiguration().get("mapred.job.tracker", "local") == "local")
     {
@@ -170,7 +172,7 @@ public class DependencyLoader
     }
   }
 
-  public static void addDependencies(final Configuration conf, final Class clazz) throws IOException
+  public static void addDependencies(final Configuration conf, final Class<?> clazz) throws IOException
   {
     if (conf.get("mapred.job.tracker", "local") == "local")
     {
@@ -180,12 +182,12 @@ public class DependencyLoader
     Path hdfsBase =
         new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
 
-    Set<String> existing = new HashSet<String>(conf.getStringCollection(MRJobConfig.CLASSPATH_FILES));
-
+    Set<String> existing = new HashSet<String>(conf.getStringCollection(CLASSPATH_FILES));
+    boolean developmentMode = MrGeoProperties.isDevelopmentMode();
     Set<Dependency> properties = loadDependenciesByReflection(clazz);
     if (properties != null)
     {
-      for (File p : getJarsFromProperties(properties))
+      for (File p : getJarsFromProperties(properties, !developmentMode))
       {
         addFileToClasspath(conf, existing, fs, hdfsBase, p);
       }
@@ -196,7 +198,7 @@ public class DependencyLoader
           Set<Dependency> master = new HashSet<Dependency>();
           master.add(d);
 
-          for (File m: getJarsFromProperties(master))
+          for (File m: getJarsFromProperties(master, !developmentMode))
           {
             log.debug("Setting map.reduce.jar to " + m.getCanonicalPath());
             conf.set("mapreduce.job.jar", m.getCanonicalPath());
@@ -210,7 +212,8 @@ public class DependencyLoader
     }
   }
 
-  private static Set<File> getJarsFromProperties(Set<Dependency> dependencies)
+  private static Set<File> getJarsFromProperties(Set<Dependency> dependencies,
+      boolean recurseDirectories)
       throws IOException
   {
     // now build a list of jars to search for
@@ -226,7 +229,7 @@ public class DependencyLoader
     }
 
     // find the jars in the classpath
-    return findJarsInClasspath(jars);
+    return findJarsInClasspath(jars, recurseDirectories);
   }
 
   private static String makeJarFromDependency(Dependency dep)
@@ -234,7 +237,7 @@ public class DependencyLoader
     return dep.artifact + "-" + dep.version + (dep.classifier == null ? "" : "-" + dep.classifier) + "." + dep.type;
   }
 
-  private static Set<File> findJarsInClasspath(final Set<String> jars) throws IOException
+  private static Set<File> findJarsInClasspath(final Set<String> jars, boolean recurseDirectories) throws IOException
   {
     Set<File> paths = new HashSet<File>();
 
@@ -285,7 +288,7 @@ public class DependencyLoader
       }
 
       File file = new File(cp);
-      findJars(file, paths, filesLeft);
+      findJars(file, paths, filesLeft, recurseDirectories);
 
       // check if we've found all the jars
       if (filesLeft.isEmpty())
@@ -302,23 +305,37 @@ public class DependencyLoader
     return paths;
   }
 
-  private static void findJars(File file, Set<File> paths, Set<String> filesLeft) throws IOException
+  private static void findJars(File file, Set<File> paths, Set<String> filesLeft,
+      boolean recurseDirectories) throws IOException
   {
     if (file.exists())
     {
       if (file.isDirectory())
       {
-        log.debug("In findJars recursing on dir: " + file.getName() + " with paths: " + paths.size() + " and filesLeft: " + filesLeft.size());
         File[] files = file.listFiles();
         if (files != null)
         {
           for (File f : files)
           {
-            findJars(f, paths, filesLeft);
-
-            if (filesLeft.isEmpty())
+            if (filesLeft.contains(f.getName()))
             {
-              return;
+              log.debug("Adding " + file.getName() + " to paths");
+              paths.add(file);
+              filesLeft.remove(file.getName());
+              if (filesLeft.isEmpty())
+              {
+                return;
+              }
+            }
+            if (recurseDirectories)
+            {
+              log.debug("In findJars recursing on dir: " + f.getPath() + " with paths: " + paths.size() + " and filesLeft: " + filesLeft.size());
+              findJars(f, paths, filesLeft, recurseDirectories);
+  
+              if (filesLeft.isEmpty())
+              {
+                return;
+              }
             }
           }
         }
@@ -332,45 +349,45 @@ public class DependencyLoader
     }
   }
 
-  private static void extractDependencies(Properties properties, Dependency master,
-      Map<String, Dependency> dependencies) throws IOException
-  {
-    for (Map.Entry<Object, Object> property : properties.entrySet())
-    {
-      String keystr = property.getKey().toString();
-      String[] key = keystr.split("/");
-
-      if (key.length == 1)
-      {
-        // this is probably the "master" for the entire jar
-        addToDependency(master, key[0], property.getValue().toString());
-      }
-      else if (key.length != 3)
-      {
-        throw new IOException("Error reading property: " + keystr);
-      }
-      else
-      {
-        String artifact = key[1];
-        Dependency dep;
-
-        if (dependencies.containsKey(artifact))
-        {
-          dep = dependencies.get(artifact);
-        }
-        else
-        {
-          dep = new Dependency();
-          addToDependency(dep, "groupId", key[0]);
-          addToDependency(dep, "artifactId", artifact);
-
-          dependencies.put(artifact, dep);
-        }
-
-        addToDependency(dep, key[2], property.getValue().toString());
-      }
-    }
-  }
+//  private static void extractDependencies(Properties properties, Dependency master,
+//      Map<String, Dependency> dependencies) throws IOException
+//  {
+//    for (Map.Entry<Object, Object> property : properties.entrySet())
+//    {
+//      String keystr = property.getKey().toString();
+//      String[] key = keystr.split("/");
+//
+//      if (key.length == 1)
+//      {
+//        // this is probably the "master" for the entire jar
+//        addToDependency(master, key[0], property.getValue().toString());
+//      }
+//      else if (key.length != 3)
+//      {
+//        throw new IOException("Error reading property: " + keystr);
+//      }
+//      else
+//      {
+//        String artifact = key[1];
+//        Dependency dep;
+//
+//        if (dependencies.containsKey(artifact))
+//        {
+//          dep = dependencies.get(artifact);
+//        }
+//        else
+//        {
+//          dep = new Dependency();
+//          addToDependency(dep, "groupId", key[0]);
+//          addToDependency(dep, "artifactId", artifact);
+//
+//          dependencies.put(artifact, dep);
+//        }
+//
+//        addToDependency(dep, key[2], property.getValue().toString());
+//      }
+//    }
+//  }
 
   private static void addToDependency(Dependency dependency, String property, String value)
   {
@@ -404,7 +421,7 @@ public class DependencyLoader
 
     Configuration conf = job.getConfiguration();
 
-    Set<String> existing = new HashSet<String>(conf.getStringCollection(MRJobConfig.CLASSPATH_FILES));
+    Set<String> existing = new HashSet<String>(conf.getStringCollection(CLASSPATH_FILES));
 
     String cpstr = System.getProperty("java.class.path");
     for (String env : cpstr.split(":"))
@@ -451,7 +468,7 @@ public class DependencyLoader
 
         if (file.lastModified() <= status.getModificationTime())
         {
-          log.debug(file.getName() + " up to date");
+          log.debug(file.getPath() + " up to date");
           DistributedCache.addFileToClassPath(hdfsPath, conf, fs);
 
           existing.add(hdfsPath.toString());
@@ -460,7 +477,7 @@ public class DependencyLoader
       }
 
       // copy the file...
-      log.debug("Copying " + file.getName() + " to HDFS for distribution");
+      log.debug("Copying " + file.getPath() + " to HDFS for distribution");
 
       fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
       DistributedCache.addFileToClassPath(hdfsPath, conf, fs);
@@ -468,7 +485,7 @@ public class DependencyLoader
     }
   }
 
-  private static Set<Dependency> loadDependenciesByReflection(Class clazz) throws IOException
+  private static Set<Dependency> loadDependenciesByReflection(Class<?> clazz) throws IOException
   {
     String jar = ClassUtil.findContainingJar(clazz);
 
@@ -642,7 +659,6 @@ public class DependencyLoader
           Set<Dependency> deps = readDependencies(is);
 
           is.close();
-
           return deps;
         }
       }
