@@ -15,31 +15,35 @@
 
 package org.mrgeo.mapalgebra;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
 import junit.framework.Assert;
 
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.mapalgebra.parser.ParserException;
+import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
+import org.mrgeo.test.OpImageTestUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
 
 /**
  * @author jason.surratt
@@ -49,6 +53,8 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
   @Rule
   public TestName testname = new TestName();
+
+  private static OpImageTestUtils opImageTestUtils;
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
   // tests won't be run when is set to true
@@ -99,6 +105,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
 
     testUtils = new MapOpTestUtils(MapAlgebraIntegrationTest.class);
+    opImageTestUtils = new OpImageTestUtils(MapAlgebraIntegrationTest.class);
     //MapOpTestVectorUtils vectorTestUtils = new MapOpTestVectorUtils(MapAlgebraIntegrationTest.class);
 
     HadoopFileUtils.delete(testUtils.getInputHdfs());
@@ -179,6 +186,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("[%s] + [%s] - 3", allhundreds, allones));
 
     }
@@ -197,6 +205,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("[%s] + [%s] + -3", allhundreds, allones));
 
     }
@@ -429,6 +438,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("[%s] / [%s] + 3", allones, allones));
 
     }
@@ -447,6 +457,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("a = [%s]; b = 3; a / [%s] + b", allones, allonesPath));
 
     }
@@ -464,6 +475,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("a = [%s];\nb = 3;\na / [%s] + b", allones, allonesPath));
 
     }
@@ -564,6 +576,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("[%s] * 5", allones));
 
     }
@@ -791,6 +804,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("pow([%s], 1.2)", allones));
 
     }
@@ -1006,6 +1020,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("\n\na = [%s];\n\nb = 3;\na \t\n+ [%s] \n- b\n\n", allones, allones));
     }
   }
@@ -1022,6 +1037,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
           String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
 
     }

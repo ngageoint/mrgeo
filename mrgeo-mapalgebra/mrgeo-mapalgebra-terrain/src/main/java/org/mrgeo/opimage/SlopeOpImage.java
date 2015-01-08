@@ -40,6 +40,7 @@ import java.util.Vector;
 public class SlopeOpImage extends OpImage
 {
   private double noDataValue;
+  private float outputNoData = Float.NaN;
   private boolean isNoDataNan;
 
   private static final double DEG_2_RAD = 0.0174532925;
@@ -88,7 +89,7 @@ public class SlopeOpImage extends OpImage
     isNoDataNan = Double.isNaN(noDataValue);
 
     colorModel = new FloatDoubleColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false,
-        false, Transparency.OPAQUE, DataBuffer.TYPE_DOUBLE);
+        false, Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
     sampleModel = colorModel.createCompatibleSampleModel(src.getSampleModel().getWidth(), src
         .getSampleModel().getHeight());
   }
@@ -110,7 +111,7 @@ public class SlopeOpImage extends OpImage
         double r;
         if (OpImageUtils.isNoData(v.x, noDataValue, isNoDataNan))
         {
-          r = noDataValue;
+          dest.setSample(x, y, 0, outputNoData);
         }
         else
         {
@@ -135,8 +136,8 @@ public class SlopeOpImage extends OpImage
           {
             r = Math.tan(theta);
           }
+          dest.setSample(x, y, 0, r);
         }
-        dest.setSample(x, y, 0, r);
       }
     }
   }

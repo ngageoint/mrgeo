@@ -97,6 +97,10 @@ public final class RawBinaryMathOpImage extends OpImage implements Serializable
     if (modelSource != null && modelSource.getSampleModel() != null)
     {
       layout = RasterUtils.createImageLayout(modelSource, modelSource.getSampleModel().getDataType(), 1);
+      // TODO: If there are two "int" type inputs, and neither of them has a nodata value specified,
+      // using Double.NaN below is not the right answer. The default nodata value passed below
+      // as the second argument should really be set differently based on the data type of the
+      // modelSource.
       double outNoData = OpImageUtils.getNoData(modelSource, Double.NaN);
       return new RawBinaryMathOpImage(sources, layout, op, outNoData);
     }
