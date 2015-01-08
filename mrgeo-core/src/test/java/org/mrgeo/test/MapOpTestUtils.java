@@ -108,12 +108,20 @@ public class MapOpTestUtils extends TestUtils
   public MapOp
   runRasterExpression(final Configuration conf, final String testName, final String ex)
       throws ParserException, IOException, JobFailedException, JobCancelledException
-      {
+  {
+    return runRasterExpression(conf, testName, null, ex);
+  }
+
+  public MapOp
+  runRasterExpression(final Configuration conf, final String testName,
+      final TestUtils.ValueTranslator baselineTranslator, final String ex)
+      throws ParserException, IOException, JobFailedException, JobCancelledException
+  {
     final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
 
-    compareRasterOutput(testName, (Properties)null);
+    compareRasterOutput(testName, baselineTranslator, (Properties)null);
     return mapOp;
-      }
+  }
 
   public MapOp runRasterExpressionMultipleOutputs(final Configuration conf,
       final String testName,
@@ -131,6 +139,12 @@ public class MapOpTestUtils extends TestUtils
 
   private void compareRasterOutput(final String testName, final Properties providerProperties) throws IOException
   {
+    compareRasterOutput(testName, null, providerProperties);
+  }
+
+  private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
+      final Properties providerProperties) throws IOException
+  {
     final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
         providerProperties);
     final MrsImage image = pyramid.getHighestResImage();
@@ -143,7 +157,7 @@ public class MapOpTestUtils extends TestUtils
       final File baselineTif = new File(file, testName + ".tif");
       if (baselineTif.exists())
       {
-        TestUtils.compareRasters(baselineTif, RasterTileMerger.mergeTiles(image));
+        TestUtils.compareRasters(baselineTif, baselineTranslator, RasterTileMerger.mergeTiles(image), null);
       }
       else
       {
@@ -189,8 +203,7 @@ public class MapOpTestUtils extends TestUtils
    * @throws JobCancelledException
    * @throws ParserException
    */
-  public MapOp runMapAlgebraExpression(final Configuration conf, final String testName,
-      final String ex)
+  public MapOp runMapAlgebraExpression(final Configuration conf, final String testName, final String ex)
           throws IOException, JobFailedException, JobCancelledException, ParserException
   {
     HadoopFileUtils.delete(new Path(outputHdfs, testName));
