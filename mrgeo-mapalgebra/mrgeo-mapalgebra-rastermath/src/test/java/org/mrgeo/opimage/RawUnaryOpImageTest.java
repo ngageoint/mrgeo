@@ -344,7 +344,7 @@ public class RawUnaryOpImageTest
       {
         double v = r.getSampleDouble(x, y, 0);
         int pixelId = getPixelId(x, y, width);
-        Assert.assertEquals(Math.sin(pixelId), v, EPSILON);
+        Assert.assertEquals((float)Math.sin(pixelId), v, EPSILON);
       }
     }
   }
@@ -367,7 +367,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.sin(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.sin(pixelId), v, EPSILON);
         }
       }
     }
@@ -391,7 +391,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.sin(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.sin(pixelId), v, EPSILON);
         }
       }
     }
@@ -415,7 +415,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.sin(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.sin(pixelId), v, EPSILON);
         }
       }
     }
@@ -436,7 +436,7 @@ public class RawUnaryOpImageTest
       {
         double v = r.getSampleDouble(x, y, 0);
         int pixelId = getPixelId(x, y, width);
-        Assert.assertEquals(Math.cos(pixelId), v, EPSILON);
+        Assert.assertEquals((float)Math.cos(pixelId), v, EPSILON);
       }
     }
   }
@@ -459,7 +459,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.cos(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.cos(pixelId), v, EPSILON);
         }
       }
     }
@@ -483,7 +483,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.cos(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.cos(pixelId), v, EPSILON);
         }
       }
     }
@@ -507,7 +507,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.cos(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.cos(pixelId), v, EPSILON);
         }
       }
     }
@@ -528,7 +528,7 @@ public class RawUnaryOpImageTest
       {
         double v = r.getSampleDouble(x, y, 0);
         int pixelId = getPixelId(x, y, width);
-        Assert.assertEquals(Math.tan(pixelId), v, EPSILON);
+        Assert.assertEquals((float)Math.tan(pixelId), v, EPSILON);
       }
     }
   }
@@ -551,7 +551,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.tan(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.tan(pixelId), v, EPSILON);
         }
       }
     }
@@ -575,7 +575,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.tan(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.tan(pixelId), v, EPSILON);
         }
       }
     }
@@ -599,7 +599,7 @@ public class RawUnaryOpImageTest
         }
         else
         {
-          Assert.assertEquals(Math.tan(pixelId), v, EPSILON);
+          Assert.assertEquals((float)Math.tan(pixelId), v, EPSILON);
         }
       }
     }

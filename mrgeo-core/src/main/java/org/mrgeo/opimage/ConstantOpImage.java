@@ -43,7 +43,7 @@ public class ConstantOpImage extends SourcelessOpImage implements Serializable
   {
     FloatDoubleColorModel colorModel = new FloatDoubleColorModel(
         ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, 
-        Transparency.OPAQUE, DataBuffer.TYPE_DOUBLE);
+        Transparency.OPAQUE, DataBuffer.TYPE_FLOAT);
     
     SampleModel sampleModel = colorModel.createCompatibleSampleModel(tilesize, tilesize);
 

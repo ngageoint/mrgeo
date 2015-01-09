@@ -108,7 +108,7 @@ public final class RawUnaryOpImage extends OpImage implements Serializable
     {
       // The output for sin, cos and tan will always be double. And because of the
       // nature of the these computations, we will use NaN for the output NoData value.
-      layout = RasterUtils.createImageLayout(src1, DataBuffer.TYPE_DOUBLE, 1);
+      layout = RasterUtils.createImageLayout(src1, DataBuffer.TYPE_FLOAT, 1);
       outNoData = Double.NaN;
     }
     return new RawUnaryOpImage(sources, op, layout, outNoData);
