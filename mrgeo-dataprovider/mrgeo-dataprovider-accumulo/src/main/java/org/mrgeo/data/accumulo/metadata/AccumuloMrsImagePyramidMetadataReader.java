@@ -60,19 +60,25 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
 
   private Connector conn = null;
   private Authorizations auths = null;
+  private ColumnVisibility cv = null;
+  	
   
   public AccumuloMrsImagePyramidMetadataReader(AccumuloMrsImageDataProvider dataProvider,
       MrsImagePyramidMetadataReaderContext context){
     this.dataProvider = dataProvider;
-    name = dataProvider.getResourceName();
-    
-    //TODO: need to get auths here - perhaps this is coming from the context object
-  
+    this.name = dataProvider.getResourceName();
+    if(dataProvider.getColumnVisibility() == null){
+    	this.cv = new ColumnVisibility();
+    } else {
+    	this.cv = dataProvider.getColumnVisibility();
+    }
+ 
   } // end constructor
   
   public AccumuloMrsImagePyramidMetadataReader(String name){
     this.dataProvider = null;
     this.name = name;
+    this.cv = new ColumnVisibility();
   }
   
   @Override
@@ -227,7 +233,6 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     }
     
     log.info("authorizations = " + auths);
-    log.info("");
     
     if(conn == null){
       try{
