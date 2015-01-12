@@ -15,8 +15,17 @@
 
 package org.mrgeo.mapalgebra;
 
-import org.apache.hadoop.conf.Configurable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Vector;
+
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapalgebra.parser.ParserNode;
@@ -24,13 +33,8 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Abstract base class for map algebra functions. When new map algebra
@@ -52,7 +56,7 @@ import java.util.*;
  * JAI functionality, and those operations are strung together into a
  * single chain of JAI operations and processed together.
  */
-public abstract class MapOp implements Cloneable, Configurable
+public abstract class MapOp implements Cloneable
 {
   private static final Logger log = LoggerFactory.getLogger(MapOp.class);
   protected ArrayList<MapOp> _inputs = new ArrayList<MapOp>();
@@ -62,7 +66,7 @@ public abstract class MapOp implements Cloneable, Configurable
   // eventually be migrated into tmpResources.
   private final HashSet<String> tmpPaths = new HashSet<String>();
   private final HashSet<String> tmpResources = new HashSet<String>();
-  protected Configuration _conf = null;
+  private Configuration defaultConf;
   private Properties providerProperties;
   private String protectionLevel;
   protected JobListener jobListener = null;
@@ -447,12 +451,37 @@ public abstract class MapOp implements Cloneable, Configurable
   }
 
   /**
-   * Returns the Hadoop job configuration to be used by this map op.
+   * Sets the configuration to use for cloning configurations when running
+   * Hadoop jobs. This method is invoked by the MapAlgebraParser on the root
+   * MapOp for the MapOp tree. MapOps call createConfiguration() in order to
+   * obtain a Hadoop Configuration they can use for running a Hadoop job.
+   * That will use the default configuration from the root of the MapOp tree
+   * and clone it, returning the result. This prevents different MapOps in
+   * the tree from modifying the same Configuration and "polluting" each others'
+   * jobs.
+   * @param conf
    */
-  @Override
-  public Configuration getConf()
+  public void setDefaultConfiguration(final Configuration conf)
   {
-    return _conf;
+    this.defaultConf = conf;
+  }
+
+  /**
+   * Return a cloned instance of the default Hadoop Configuration from the root
+   * of the MapOp tree. See setDefaultConfiguration for more information.
+   * 
+   * @return
+   */
+  public Configuration createConfiguration()
+  {
+    Configuration conf = this.defaultConf;
+    MapOp parent = getParent();
+    while (conf == null && parent != null)
+    {
+      conf = parent.defaultConf;
+      parent = parent.getParent();
+    }
+    return conf;
   }
 
   /**
@@ -542,16 +571,6 @@ public abstract class MapOp implements Cloneable, Configurable
       final ParserAdapter parser)
   {
     return children;
-  }
-
-  /**
-   * Sets the job configuration to be used during the execution of this map op
-   * if needed. It can be accessed later using getConf().
-   */
-  @Override
-  public void setConf(final Configuration conf)
-  {
-    _conf = conf;
   }
 
   public void setProviderProperties(final Properties props)

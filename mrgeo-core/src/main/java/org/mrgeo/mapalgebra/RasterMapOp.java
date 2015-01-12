@@ -102,7 +102,7 @@ public abstract class RasterMapOp extends MapOp implements OutputProducer
       {
         aggregator = new ModeAggregator();
       }
-      BuildPyramidDriver.build(_outputName, aggregator, getConf(), getProviderProperties());
+      BuildPyramidDriver.build(_outputName, aggregator, createConfiguration(), getProviderProperties());
     }
     p.complete();
   }

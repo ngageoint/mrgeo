@@ -78,7 +78,7 @@ public class BuildPyramidMapOp extends RasterMapOp
     String rasterInput = sourceRaster.getOutputName();
     try
     {
-      BuildPyramidDriver.build(rasterInput, aggregatorClass.newInstance(), getConf(),
+      BuildPyramidDriver.build(rasterInput, aggregatorClass.newInstance(), createConfiguration(),
           getProviderProperties());
     }
     catch (InstantiationException e)

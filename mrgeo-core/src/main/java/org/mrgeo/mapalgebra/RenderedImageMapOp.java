@@ -16,6 +16,7 @@
 package org.mrgeo.mapalgebra;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.mapreduce.OpChainDriver;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
@@ -49,6 +50,7 @@ public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor,
   String _opName = null;
   private boolean _useCache = false;
   private TileClusterInfo tileClusterInfo;
+  private Configuration conf;
 
   @Override
   public void addInput(MapOp n) throws IllegalArgumentException
@@ -248,5 +250,56 @@ public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor,
   public String getOperationId()
   {
     return RenderedImageMapOp.class.getCanonicalName();
+  }
+  
+  /**
+   * Return an instance of a Hadoop Configuration to use for executing the
+   * OpChainDriver. RenderedImageMapOp is a special type of MapOp in that it
+   * wraps a JAI OpImage. JAI is capable of executing a "chain" of OpImages,
+   * and so a sub-tree of the overall MapOp tree containing only
+   * instances of RenderedImageMapOps can be executed in JAI via a single
+   * Hadoop job using the OpChainDriver.
+   * 
+   * In order for that to work properly, the job setup performed for each
+   * of the MapOps in the sub-tree must use the same Hadoop Configuration
+   * instance. This is especially required for configuring the JAR dependencies
+   * for the Hadoop job to ensure that all the code needed to execute the
+   * sub-tree is included when the job is submitted.
+   * 
+   * In order to achieve a single Configuration instance for each sub-tree
+   * containing only RenderedImageMapOp instances, this method is called to
+   * get the Configuration instance. It runs through each of this MapOp's
+   * parents until it gets to the last one that is also a RenderedImageMapOp,
+   * and this MapOp is the root of the sub-tree. This method returns the private
+   * Configuration stored for that MapOp. If that configuration is null,
+   * it creates a new configuration and stores it in that "root" of the sub-tree,
+   * and returns it.
+   * 
+   * @return
+   */
+  private Configuration getConf()
+  {
+    if (conf != null)
+    {
+      return conf;
+    }
+
+    RenderedImageMapOp currRenderedImageMapOp = this;
+    MapOp parent = getParent();
+    while (parent != null && (parent instanceof RenderedImageMapOp))
+    {
+      currRenderedImageMapOp = (RenderedImageMapOp)parent;
+      Configuration c = currRenderedImageMapOp.conf;
+      if (c != null)
+      {
+        return c;
+      }
+      parent = parent.getParent();
+    }
+    // No existing configuration was found for this subtree of
+    // RenderedImageMapOps, so let's create a new configuration for
+    // the "root" of that sub-tree.
+    currRenderedImageMapOp.conf = createConfiguration();
+    return currRenderedImageMapOp.conf;
   }
 }
