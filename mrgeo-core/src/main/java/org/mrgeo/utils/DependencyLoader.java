@@ -334,7 +334,7 @@ public class DependencyLoader
           {
             if (filesLeft.contains(f.getName()))
             {
-              log.debug("Adding " + file.getName() + " to paths");
+              log.debug("Adding " + file.getName() + " to paths from " + file.getPath());
               paths.add(file);
               filesLeft.remove(file.getName());
               if (filesLeft.isEmpty())
@@ -357,7 +357,7 @@ public class DependencyLoader
       }
       else if (filesLeft.contains(file.getName()))
       {
-        log.debug("Adding " + file.getName() + " to paths");
+        log.debug("Adding " + file.getName() + " to paths from " + file.getPath());
         paths.add(file);
         filesLeft.remove(file.getName());
       }

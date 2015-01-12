@@ -160,7 +160,7 @@ public class ChangeClassificationMapOp extends RasterMapOp
         try
         {
           BuildPyramidDriver.build(sourcepyramid.getName(), 
-            aggregator, getConf(), p, jobListener, getProviderProperties());
+            aggregator, createConfiguration(), p, jobListener, getProviderProperties());
         }
         catch (Exception e)
         {

@@ -186,7 +186,7 @@ public class FillMapOp extends RasterMapOp implements InputsCalculator, BoundsCa
 
     log.info("FillMapOp output path: " + _outputName.toString());
 
-    final Job job = new Job(getConf());
+    final Job job = new Job(createConfiguration());
 
     if (bounds == null)
     {

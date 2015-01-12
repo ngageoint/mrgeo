@@ -85,7 +85,7 @@ public class CostDistanceMapOp extends RasterMapOp
 //      int statusJob = ToolRunner.run(getConf(), 
 //        new CostDistanceDriver(), 
 //        driverArgs);
-      if (ToolRunner.run(getConf(), new CostDistanceDriver(), driverArgs) < 0)
+      if (ToolRunner.run(createConfiguration(), new CostDistanceDriver(), driverArgs) < 0)
       {
         throw new JobFailedException("CostDistance job failed, see Hadoop logs for more information");
       }
