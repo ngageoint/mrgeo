@@ -59,8 +59,8 @@ public class FindHolesDriver {
 		conf = job.getConfiguration();
 
 		// how to fake out loading core dependencies
-		//HadoopUtils.setJar(job, FindHolesDriver.class);
-		HadoopUtils.setJar(job, HadoopUtils.class);
+		HadoopUtils.setJar(job, FindHolesDriver.class);
+		//HadoopUtils.setJar(job, HadoopUtils.class);
 		//DependencyLoader.getDependencies(FindHolesMapper.class);
 		//DependencyLoader.getDependencies(FindHolesReducer.class);
 		
