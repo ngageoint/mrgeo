@@ -42,7 +42,7 @@ public class LogWithBaseOpImage extends MrGeoOpImage
     @SuppressWarnings("rawtypes")
     Vector sources = new Vector();
     sources.add(src);
-    ImageLayout layout = RasterUtils.createImageLayout(src, DataBuffer.TYPE_DOUBLE, 1);
+    ImageLayout layout = RasterUtils.createImageLayout(src, DataBuffer.TYPE_FLOAT, 1);
     return new LogWithBaseOpImage(sources, layout, base, hints);
   }
   
