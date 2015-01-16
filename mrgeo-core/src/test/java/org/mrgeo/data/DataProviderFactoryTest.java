@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -37,6 +38,8 @@ import org.mrgeo.utils.HadoopUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class DataProviderFactoryTest extends LocalRunnerTest
@@ -55,8 +58,9 @@ public class DataProviderFactoryTest extends LocalRunnerTest
   @Before
   public void init()
   {
+    providerProperties = new Properties();
+    DataProviderFactory.initialize(HadoopUtils.createConfiguration(), providerProperties);
     DataProviderFactory.invalidateCache();
-    providerProperties = null;
   }
 
 
@@ -85,9 +89,9 @@ public class DataProviderFactoryTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetMrsImageDataProviderForReadWhenExists() throws IOException
   {
-      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(all_ones,
-          AccessMode.READ, providerProperties);
-      Assert.assertNotNull(dp);
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(all_ones,
+        AccessMode.READ, providerProperties);
+    Assert.assertNotNull(dp);
   }
 
   @Test
@@ -166,17 +170,17 @@ public class DataProviderFactoryTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetMrsImageDataProviderForWriteWhenExisting() throws IOException
   {
-      try
-      {
-        @SuppressWarnings("unused")
-        MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(all_ones,
-            AccessMode.WRITE, providerProperties);
-        Assert.fail("Should not be able to use WRITE with an existing resource");
-      }
-      catch(DataProviderNotFound e)
-      {
-        // expected
-      }
+    try
+    {
+      @SuppressWarnings("unused")
+      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(all_ones,
+          AccessMode.WRITE, providerProperties);
+      Assert.fail("Should not be able to use WRITE with an existing resource");
+    }
+    catch(DataProviderNotFound e)
+    {
+      // expected
+    }
   }
 
   @Test(expected = DataProviderNotFound.class)
@@ -582,11 +586,27 @@ public class DataProviderFactoryTest extends LocalRunnerTest
   }
 
 
+  Map<String, String> oldConfValues = null;
+  Map<String, String> oldPropValues = null;
+  Map<String, String> oldMrGeoValues = null;
+
   private void setupPreferred(Configuration conf, Properties p, String confVal,
       String pVal, String defVal, String mrgeoVal, String defMrgeoVal)
   {
+
     if (conf != null)
     {
+      oldConfValues = new HashMap<>();
+
+      oldConfValues.put(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME,
+          conf.get(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME, null));
+      oldConfValues.put(DataProviderFactory.PREFERRED_INGEST_PROVIDER_NAME,
+          conf.get(DataProviderFactory.PREFERRED_INGEST_PROVIDER_NAME, null));
+      oldConfValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME,
+          conf.get(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME, null));
+      oldConfValues.put(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME,
+          conf.get(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME, null));
+
       if (confVal == null)
       {
         conf.unset(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME);
@@ -605,6 +625,19 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     if (p != null)
     {
+      oldPropValues = new HashMap<>();
+
+      oldPropValues.put(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME,
+          p.getProperty(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME, null));
+      oldPropValues.put(DataProviderFactory.PREFERRED_INGEST_PROPERTYNAME,
+          p.getProperty(DataProviderFactory.PREFERRED_INGEST_PROPERTYNAME, null));
+      oldPropValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME,
+          p.getProperty(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME, null));
+      oldPropValues.put(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME,
+          p.getProperty(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME, null));
+      oldPropValues.put(DataProviderFactory.PREFERRED_PROPERTYNAME,
+          p.getProperty(DataProviderFactory.PREFERRED_PROPERTYNAME, null));
+
       if (pVal == null)
       {
         p.remove(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME);
@@ -631,6 +664,20 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     }
 
     Properties mp = MrGeoProperties.getInstance();
+
+    oldMrGeoValues = new HashMap<>();
+
+    oldMrGeoValues.put(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME,
+        mp.getProperty(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME, null));
+    oldMrGeoValues.put(DataProviderFactory.PREFERRED_INGEST_PROPERTYNAME,
+        mp.getProperty(DataProviderFactory.PREFERRED_INGEST_PROPERTYNAME, null));
+    oldMrGeoValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME,
+        mp.getProperty(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME, null));
+    oldMrGeoValues.put(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME,
+        mp.getProperty(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME, null));
+    oldMrGeoValues.put(DataProviderFactory.PREFERRED_PROPERTYNAME,
+        mp.getProperty(DataProviderFactory.PREFERRED_PROPERTYNAME, null));
+
     if (mrgeoVal == null)
     {
       mp.remove(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME);
@@ -657,12 +704,59 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
   }
 
+  private void teardownPreferred(Configuration conf, Properties p)
+  {
+    if (conf != null && oldConfValues != null)
+    {
+      for (Map.Entry<String, String> val : oldConfValues.entrySet())
+      {
+        if (val.getValue() == null)
+        {
+          conf.unset(val.getKey());
+        }
+        else
+        {
+          conf.set(val.getKey(), val.getValue());
+        }
+      }
+    }
+
+    if (p != null && oldPropValues != null)
+    {
+      for (Map.Entry<String, String> val : oldPropValues.entrySet())
+      {
+        if (val.getValue() == null)
+        {
+          p.remove(val.getKey());
+        }
+        else
+        {
+          p.setProperty(val.getKey(), val.getValue());
+        }
+      }
+    }
+
+    if (oldMrGeoValues != null)
+    {
+      Properties mp = MrGeoProperties.getInstance();
+      for (Map.Entry<String, String> val : oldMrGeoValues.entrySet())
+      {
+        if (val.getValue() == null)
+        {
+          mp.remove(val.getKey());
+        }
+        else
+        {
+          mp.setProperty(val.getKey(), val.getValue());
+        }
+      }
+    }
+  }
+
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromConf1() throws Exception
   {
-    providerProperties = new Properties();
-
     String good = "good";
     String bad = "bad";
 
@@ -674,14 +768,13 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
 
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromConf2() throws Exception
   {
-    providerProperties = new Properties();
 
     String good = "good";
     String bad = "bad";
@@ -694,14 +787,13 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
 
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromConf3() throws Exception
   {
-    providerProperties = new Properties();
 
     String good = "good";
     String bad = "bad";
@@ -714,15 +806,13 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
 
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromConf4() throws Exception
   {
-    providerProperties = new Properties();
-
     String good = "good";
     String bad = "bad";
 
@@ -734,15 +824,13 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
 
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromConf5() throws Exception
   {
-    providerProperties = new Properties();
-
     String good = "good";
     String bad = "bad";
 
@@ -754,15 +842,13 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
 
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromProp() throws Exception
   {
-    providerProperties = new Properties();
-
     String good = "good";
     String bad = "bad";
 
@@ -774,14 +860,13 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
 
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromDefProp() throws Exception
   {
-    providerProperties = new Properties();
 
     String good = "good";
 
@@ -793,14 +878,12 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromMrGeoProp() throws Exception
   {
-    providerProperties = new Properties();
-
     String good = "good";
 
     setupPreferred(conf, providerProperties, null, null, null, good, null);
@@ -811,16 +894,13 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
-
+    teardownPreferred(conf, providerProperties);
   }
 
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromDefMrGeoProp() throws Exception
   {
-    providerProperties = new Properties();
-
     String good = "good";
 
     setupPreferred(conf, providerProperties, null, null, null, null, good);
@@ -831,15 +911,13 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
 
   @Test
   @Category(UnitTest.class)
   public void testPreferredProviderFromDefault() throws Exception
   {
-    providerProperties = new Properties();
-
     String hdfs = "hdfs";
 
     setupPreferred(conf, providerProperties, null, null, null, null, null);
@@ -852,7 +930,7 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     // NOTE:  no vector providers at this time, so no default
     Assert.assertEquals("Bad vector preferred provider!", null, DataProviderFactory.preferredVectorProviderName);
 
-    providerProperties = null;
+    teardownPreferred(conf, providerProperties);
   }
 
 }
