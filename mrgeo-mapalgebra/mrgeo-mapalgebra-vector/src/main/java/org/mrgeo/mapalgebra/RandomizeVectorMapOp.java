@@ -72,7 +72,7 @@ public class RandomizeVectorMapOp extends VectorMapOp
       // defensive code since all inputs should be VectorMapOp's - see addInput()
       throw new IllegalArgumentException("Invalid value for vector argument to RandomizeVector");
     }
-    rvd.run(new Path(inputPath), new Path(_outputName), getConf(),  p, jobListener);
+    rvd.run(createConfiguration(), new Path(inputPath), new Path(_outputName), p, jobListener);
     _output = new BasicInputFormatDescriptor(_outputName);
   }
 

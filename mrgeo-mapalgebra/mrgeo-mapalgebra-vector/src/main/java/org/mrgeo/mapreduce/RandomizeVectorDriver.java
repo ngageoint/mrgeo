@@ -66,8 +66,8 @@ public class RandomizeVectorDriver
     MapReduceUtils.runJob(job, progress, jobListener);
   }
 
-  public void run(final Path input, final Path output, final Configuration conf,  final Progress progress,
-      final JobListener jobListener)
+  public void run(final Configuration conf, final Path input, final Path output,
+      final Progress progress, final JobListener jobListener)
       throws IOException, JobFailedException, JobCancelledException
   {
     final Job job = new Job(conf);

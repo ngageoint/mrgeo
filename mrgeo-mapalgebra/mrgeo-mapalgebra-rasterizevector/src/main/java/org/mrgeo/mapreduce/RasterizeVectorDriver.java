@@ -244,13 +244,14 @@ public class RasterizeVectorDriver
     }
   }
 
-  public void run(final Path input, final String output, final RasterizeVectorPainter.AggregationType aggregationType,
+  public void run(final Configuration conf,
+      final Path input, final String output, final RasterizeVectorPainter.AggregationType aggregationType,
       final int zoom, final Bounds bounds, final Progress progress,
       final JobListener jobListener, final String protectionLevel,
       final Properties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
-    final Job job = new Job(HadoopUtils.createConfiguration());
+    final Job job = new Job(conf);
 
     if (inputFormat == null)
     {
