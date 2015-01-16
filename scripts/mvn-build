@@ -12,7 +12,6 @@ usage() {
     echo "  cmd          - mrgeo-core/mrgeo-vector/mrgeo-cmd"
     echo "  dataprovider - mrgeo-core/mrgeo-dataprovider"
     echo "  pig          - mrgeo-core/mrgeo-vector/mrgeo-pig"
-    echo "  legion       - mrgeo-core/mrgeo-vector/megeo-legion"
     echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-pig/mrgeo-legion/mrgeo-services"
     echo "build type:"
     echo "  apache    - apache hadoop"
