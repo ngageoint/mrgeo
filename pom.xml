@@ -23,7 +23,6 @@
   <properties>
     <geotools.version>10.0</geotools.version>
     <scala.version>2.10.4</scala.version>
-    <spark.version>1.1.0</spark.version>
   </properties>
   <licenses>
     <license>
@@ -564,9 +563,48 @@
         <final.classifier>CDH530</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
         <include.costdistance>false</include.costdistance>
-        <spark.artifact>spark-yarn_2.10</spark.artifact>
         <release.arguments />
       </properties>
+      <!-- dependencies here can not have properties in them (no ${}!) -->
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-api</artifactId>
+            <version>2.5.0-cdh5.3.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-common</artifactId>
+            <version>2.5.0-cdh5.3.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-server-web-proxy</artifactId>
+            <version>2.5.0-cdh5.3.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-client</artifactId>
+            <version>2.5.0-cdh5.3.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-network-yarn_2.10</artifactId>
+            <version>1.2.0-cdh5.3.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.10</artifactId>
+            <version>1.2.0-cdh5.3.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.10</artifactId>
+            <version>1.2.0-cdh5.3.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -590,6 +628,26 @@
         <include.costdistance>false</include.costdistance>
         <release.arguments />
       </properties>
+      <!-- dependencies here can not have properties in them (no ${}!) -->
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-network-common_2.10</artifactId>
+            <version>1.2.0-cdh5.3.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.10</artifactId>
+            <version>1.2.0-cdh5.3.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.10</artifactId>
+            <version>1.2.0-cdh5.3.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -619,9 +677,48 @@
         <final.classifier>CDH520</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
         <include.costdistance>false</include.costdistance>
-        <spark.artifact>spark-yarn_2.10</spark.artifact>
         <release.arguments />
       </properties>
+      <!-- dependencies here can not have properties in them (no ${}!) -->
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-api</artifactId>
+            <version>2.5.0-cdh5.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-common</artifactId>
+            <version>2.5.0-cdh5.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-server-web-proxy</artifactId>
+            <version>2.5.0-cdh5.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-client</artifactId>
+            <version>2.5.0-cdh5.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-yarn_2.10</artifactId>
+            <version>1.1.0-cdh5.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.10</artifactId>
+            <version>1.1.0-cdh5.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.10</artifactId>
+            <version>1.1.0-cdh5.2.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -645,6 +742,21 @@
         <include.costdistance>false</include.costdistance>
         <release.arguments />
       </properties>
+      <!-- dependencies here can not have properties in them (no ${}!) -->
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.10</artifactId>
+            <version>1.1.0-cdh5.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.10</artifactId>
+            <version>1.1.0-cdh5.2.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -676,6 +788,46 @@
         <include.costdistance>false</include.costdistance>
         <release.arguments />
       </properties>
+      <!-- dependencies here can not have properties in them (no ${}!) -->
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-api</artifactId>
+            <version>2.3.0-cdh5.1.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-common</artifactId>
+            <version>2.3.0-cdh5.1.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-server-web-proxy</artifactId>
+            <version>2.3.0-cdh5.1.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-client</artifactId>
+            <version>2.3.0-cdh5.1.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-yarn_2.10</artifactId>
+            <version>1.0.0-cdh5.1.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.10</artifactId>
+            <version>1.0.0-cdh5.1.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.10</artifactId>
+            <version>1.0.0-cdh5.1.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -700,6 +852,21 @@
         <include.costdistance>false</include.costdistance>
         <release.arguments />
       </properties>
+      <!-- dependencies here can not have properties in them (no ${}!) -->
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.10</artifactId>
+            <version>1.0.0-cdh5.1.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.10</artifactId>
+            <version>1.0.0-cdh5.1.0</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -1669,6 +1836,34 @@
         <artifactId>commons-jexl</artifactId>
         <version>2.1.1</version>
       </dependency>
+      <!-- dependencies introduced for scala/spark -->
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-streaming_2.10</artifactId>
+        <version>${spark.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-graphx_2.10</artifactId>
+        <version>${spark.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest_2.10</artifactId>
+        <version>2.0</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.esotericsoftware.kryo</groupId>
+        <artifactId>kryo</artifactId>
+        <version>2.21</version>
+      </dependency>
+      <!-- end spark -->
     </dependencies>
   </dependencyManagement>
   <dependencies>
