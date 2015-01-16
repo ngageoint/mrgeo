@@ -15,6 +15,7 @@
 
 package org.mrgeo.mapreduce;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -23,7 +24,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.mrgeo.format.CsvOutputFormat;
 import org.mrgeo.format.PgQueryInputFormat;
-import org.mrgeo.geometry.Geometry;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
@@ -45,10 +45,10 @@ public class PgQueryDriver
   String _password;
   String _dbconnection;
  
-  public void run(Path sqlPath, Path outputPath, Progress progress,
+  public void run(Configuration conf, Path sqlPath, Path outputPath, Progress progress,
       JobListener jobListener) throws IOException, JobFailedException, JobCancelledException
   {
-    Job job = new Job(HadoopUtils.createConfiguration());
+    Job job = new Job(conf);
     job.setJobName(String.format("PgQuery %s", sqlPath.toString()));
 
     HadoopUtils.setJar(job, this.getClass());

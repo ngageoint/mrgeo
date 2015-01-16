@@ -64,7 +64,7 @@ public class VectorReaderMapOp extends VectorMapOp
   {
     Path toPath = new Path(toName);
     Path sourcePath = new Path(_outputName);
-    Configuration conf = HadoopUtils.createConfiguration();
+    Configuration conf = createConfiguration();
     FileSystem sourceFs = HadoopFileUtils.getFileSystem(conf, sourcePath);
     FileSystem destFs = HadoopFileUtils.getFileSystem(conf, toPath);
     if (!FileUtil.copy(sourceFs, sourcePath, destFs, toPath, false, false, conf))
