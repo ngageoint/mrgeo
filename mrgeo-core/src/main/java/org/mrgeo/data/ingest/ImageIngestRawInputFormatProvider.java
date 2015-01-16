@@ -33,17 +33,8 @@ public abstract class ImageIngestRawInputFormatProvider implements TiledInputFor
   public void setupJob(final Job job,
       final Properties providerProperties) throws DataProviderException
   {
-    try
-    {
-      HadoopUtils.addJarCache(job, getClass());
-      DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
-          job.getConfiguration());
-    }
-    catch(IOException e)
-    {
-      throw new DataProviderException(e);
-    }
-
+    DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
+        job.getConfiguration());
   }
 //  public abstract void teardown(final Job job) throws DataProviderException;
 

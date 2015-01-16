@@ -418,10 +418,6 @@ public class MapAlgebraParser implements MapOpFactory
     }
     if (mapOp != null)
     {
-      if (mapOp.getConf() == null)
-      {
-        mapOp.setConf(new Configuration(this.conf));
-      }
       if (mapOp.getProviderProperties() == null)
       {
         mapOp.setProviderProperties(providerProperties);
@@ -725,6 +721,7 @@ public class MapAlgebraParser implements MapOpFactory
       if (rootNode != null)
       {
         root = convertToMapOp(rootNode);
+        root.setDefaultConfiguration(conf);
       }
     }
     catch (ParserException e)

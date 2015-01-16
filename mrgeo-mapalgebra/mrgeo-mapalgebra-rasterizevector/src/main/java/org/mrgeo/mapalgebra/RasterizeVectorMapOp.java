@@ -15,15 +15,32 @@
 
 package org.mrgeo.mapalgebra;
 
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Vector;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.format.*;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.GeometryInputStream;
+import org.mrgeo.data.csv.CsvGeometryInputStreamOld;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.shp.ShapefileReader;
+import org.mrgeo.data.tsv.TsvGeometryInputStreamOld;
+import org.mrgeo.format.CsvInputFormat;
+import org.mrgeo.format.FeatureInputFormatFactory;
+import org.mrgeo.format.InlineCsvInputFormat;
+import org.mrgeo.format.PgQueryInputFormat;
+import org.mrgeo.format.ShpInputFormat;
+import org.mrgeo.format.TsvInputFormat;
 import org.mrgeo.geometry.WritableGeometry;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
@@ -32,29 +49,17 @@ import org.mrgeo.mapreduce.RasterizeVectorDriver;
 import org.mrgeo.mapreduce.RasterizeVectorPainter;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.vector.mrsvector.mapalgebra.HdfsMrsVectorPyramidInputFormatDescriptor;
 import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
-import org.mrgeo.data.GeometryInputStream;
-import org.mrgeo.data.csv.CsvGeometryInputStreamOld;
-import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.shp.ShapefileReader;
-import org.mrgeo.data.tsv.TsvGeometryInputStreamOld;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.StringUtils;
 import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.vector.mrsvector.mapalgebra.HdfsMrsVectorPyramidInputFormatDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
+import com.vividsolutions.jts.geom.Envelope;
 
 public class RasterizeVectorMapOp extends RasterMapOp
     implements InputsCalculator, BoundsCalculator, TileSizeCalculator, MaximumZoomLevelCalculator
@@ -159,7 +164,10 @@ public class RasterizeVectorMapOp extends RasterMapOp
           while (stream.hasNext())
           {
             WritableGeometry geom = stream.next();
-            bounds.expand(geom.getBounds());
+            if (geom != null)
+            {
+              bounds.expand(geom.getBounds());
+            }
           }
 
           stream.close();
@@ -389,7 +397,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
     {
       final RasterizeVectorDriver rvd = new RasterizeVectorDriver();
 
-      final Job job = new Job(getConf());
+      final Job job = new Job(createConfiguration());
 
       ifd.populateJobParameters(job);
       rvd.setValueColumn(column);

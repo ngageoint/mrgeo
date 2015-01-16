@@ -37,7 +37,7 @@ public class LeastCostPathMapOp extends VectorMapOp
     if (zoom < 0)
     {
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(costPyramidName,
-          AccessMode.READ, getConf());
+          AccessMode.READ, createConfiguration());
       if (dp != null)
       {
         MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();

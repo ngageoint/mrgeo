@@ -119,7 +119,7 @@ public class PigMapOp extends VectorMapOp
   //        MapAlgebraExecutionerv1.writeVectorOutput((InputFormatDescriptor) input.getOutput(),
   //          inputPath, getConf(), ph.getChild(pi++), jobListener);
           VectorMapOp.writeVectorOutput((InputFormatDescriptor) ((VectorMapOp)input).getVectorOutput(),
-            inputPath, getConf(), ph.getChild(pi++));
+            inputPath, createConfiguration(), ph.getChild(pi++));
         }
 
         _inputPaths.add(inputPath);
@@ -144,7 +144,7 @@ public class PigMapOp extends VectorMapOp
     PigQuerier pq = new PigQuerier();
     log.warn(_script);
     log.warn(_outputName.toString());
-    pq.query(_script, new Path(_outputName), getConf());
+    pq.query(_script, new Path(_outputName), createConfiguration());
     ph.getChild(1).complete();
     _output = new BasicInputFormatDescriptor(_outputName);
   }
