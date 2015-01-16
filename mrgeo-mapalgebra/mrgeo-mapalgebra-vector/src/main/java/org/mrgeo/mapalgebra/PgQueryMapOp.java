@@ -77,7 +77,7 @@ public class PgQueryMapOp extends VectorMapOp
     pgd.setUsername(_username);
     pgd.setPassword(_password);
     pgd.setDbConnection(_dbconnection);
-    pgd.run(new Path(inputPath), new Path(_outputName), p, jobListener);
+    pgd.run(createConfiguration(), new Path(inputPath), new Path(_outputName), p, jobListener);
     _output = new BasicInputFormatDescriptor(_outputName);
 
     if (p != null)
