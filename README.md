@@ -13,6 +13,7 @@ See [YouTube explainer](http://youtu.be/Z3fPTTtZ60I?list=FLBRaZ-IsIB44ikg-9n1RKt
 
 ###MrGeo in the News
 [NGA Press Release](https://www1.nga.mil/MediaRoom/PressReleases/Pages/2015-02.aspx)
+
 [DigitalGlobe Press Release](http://investor.digitalglobe.com/phoenix.zhtml?c=70788&p=RssLanding&cat=news&id=2007262)
 
 ###MrGeo Overview
