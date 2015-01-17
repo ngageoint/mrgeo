@@ -11,6 +11,10 @@ Software source code previously released under an open source license and then m
 ###MrGeo in Action
 See [YouTube explainer](http://youtu.be/Z3fPTTtZ60I?list=FLBRaZ-IsIB44ikg-9n1RKtw)
 
+###MrGeo in the News
+[NGA Press Release](https://www1.nga.mil/MediaRoom/PressReleases/Pages/2015-02.aspx)
+[DigitalGlobe Press Release](http://investor.digitalglobe.com/phoenix.zhtml?c=70788&p=RssLanding&cat=news&id=2007262)
+
 ###MrGeo Overview
 
 MrGeo (MapReduce Geo) is a geospatial toolkit designed to provide raster-based geospatial capabilities that can be performed at scale. MrGeo is built upon the Hadoop ecosystem to leverage the storage and processing of hundreds of commodity computers.  Functionally,  MrGeo stores large raster datasets as a collection of individual tiles stored in Hadoop to enable large-scale data and analytic services.  The co-location of data and analytics offers the advantage of minimizing the movement of data  in favor of bringing the computation to the data; a more favorable compute method for Geospatial Big Data. This framework has enabled the servicing of terabyte scale raster databases and  performed terrain analytics on databases exceeding hundreds of gigabytes in size.
