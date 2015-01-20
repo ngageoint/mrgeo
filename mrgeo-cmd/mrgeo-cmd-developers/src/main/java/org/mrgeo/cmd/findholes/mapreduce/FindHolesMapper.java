@@ -13,19 +13,22 @@ public class FindHolesMapper extends Mapper<TileIdWritable, RasterWritable, Long
 
 	private int zoomlevel = -1;	
 	
+
 	public void setup(Context context) throws IOException, InterruptedException{
+
 		// get zoom level and bounds(tile space)
 		Configuration conf = context.getConfiguration();
 		zoomlevel = conf.getInt("zoom", -1);
 		
 	} // end setup
+
 	
 	public void map(TileIdWritable key, RasterWritable value, Context context) throws IOException, InterruptedException{
-
 		
 		TMSUtils.Tile tile = TMSUtils.tileid(key.get(), zoomlevel);
 		context.write(new LongWritable(tile.ty), new LongWritable(tile.tx));
 
 	} // end map
+	
 	
 } // end FindHolesMapper

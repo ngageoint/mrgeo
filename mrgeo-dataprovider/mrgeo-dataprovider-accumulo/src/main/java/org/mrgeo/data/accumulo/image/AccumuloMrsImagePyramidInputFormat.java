@@ -28,6 +28,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
+import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.raster.RasterWritable;
@@ -99,7 +100,7 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
 
       // get the range
       Range r = ris.getRange();
-
+      
       log.info("Range: " + r.toString());
       
       // get the start
@@ -140,7 +141,10 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
           );
       retList.add(tis);
       
-      log.info("\tSplit starting at " + sl + " and ending at " + el);
+      TMSUtils.Tile tile1 = TMSUtils.tileid(sl, tifc.getZoomLevel());
+      TMSUtils.Tile tile2 = TMSUtils.tileid(el, tifc.getZoomLevel());
+      
+      log.info("\tSplit starting at " + sl + " ("+tile1.tx+","+tile1.ty+")" + " and ending at " + el + " ("+tile2.tx+","+tile2.ty+")");
       
     }
     

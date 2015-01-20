@@ -22,10 +22,10 @@ public class FindHolesReducer extends Reducer<LongWritable, LongWritable, Text, 
 	private LongRectangle lr = null;
 	private long minX, minY, maxX, maxY;
 	private long width;
-	//private String adhoc;
 	
 	private OutputStream os = null;
 	private PrintWriter pw = null;
+	
 	
 	public void setup(Context context) throws IOException, InterruptedException{
 		// get zoom level and bounds(tile space)
@@ -49,6 +49,7 @@ public class FindHolesReducer extends Reducer<LongWritable, LongWritable, Text, 
 		
 		
 	} // end setup
+
 	
 	public void cleanup(Context context) throws IOException, InterruptedException{
 		
@@ -58,22 +59,19 @@ public class FindHolesReducer extends Reducer<LongWritable, LongWritable, Text, 
 	} // cleanup
 	
 	
+	/**
+	 * output of this reducer is:
+	 * y: x x x x x x x x
+	 */
 	public void reduce(LongWritable key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException{
 		
-		
-		
 		int[] valid = new int[(int)width];
+		pw.print(key.toString() + ":");
 		for(LongWritable v : values){
 			int indx = (int)(v.get() - minX);
 			valid[indx]++;
-		}
-		pw.print(key.toString() + ": ");
-		for(int x = 0; x < width; x++){
-
-			if(valid[x] > 0){
-				pw.print(Long.toString(x + minX) + " ");
-				//context.write(new Text(key.toString()), new Text(Long.toString(x + minX)));
-			}
+			pw.print(" " + Long.toString(v.get()));
+			
 		}
 		pw.println();
 		

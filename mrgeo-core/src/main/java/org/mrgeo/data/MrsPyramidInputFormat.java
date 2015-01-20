@@ -27,6 +27,7 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.TMSUtils.TileBounds;
 
 import java.io.IOException;
 import java.util.*;
@@ -216,8 +217,10 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
     {
       cropBounds = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(ifContext.getBounds()), ifContext.getZoomLevel(), tileSize);;
       lastTile = new TMSUtils.Tile(cropBounds.w, cropBounds.s);
+      System.out.println("Last tile: " + lastTile.toString());
     }
 
+    int cnt = 0;
     for (TiledInputSplit tiledSplit : splits)
     {
       // If the caller requested bounds cropping, then check the tile bounds for intersection
@@ -226,14 +229,76 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
         // See if the split bounds intersects the crop
         TMSUtils.Tile splitStartTile = TMSUtils.tileid(tiledSplit.getStartTileId(), ifContext.getZoomLevel());
         TMSUtils.Tile splitEndTile = TMSUtils.tileid(tiledSplit.getEndTileId(), ifContext.getZoomLevel());
+
+        if(splitEndTile.ty < cropBounds.s){
+    		continue;
+    	} else if(splitStartTile.ty > cropBounds.n){
+    		continue;
+    	}
+        
+        // we know we are in the y range!
+        
+
+        boolean intersect = false;
+        long yDelta = splitEndTile.ty - splitStartTile.ty;
+        long minX, maxX, minY, maxY;
+
+        if(yDelta > 1){
+        	intersect = true;
+        	minX = cropBounds.w;
+    		maxX = cropBounds.e;
+    		minY = Math.max(splitStartTile.ty, cropBounds.s);
+    		maxY = Math.min(splitEndTile.ty, cropBounds.n);
+        	
+        } else if(yDelta == 0){
+        	// am out outside
+        	if(splitEndTile.tx < cropBounds.w || splitStartTile.tx > cropBounds.e){
+        		continue;
+        	} else {
+        		intersect = true;
+        		minX = Math.max(splitStartTile.tx, cropBounds.w);
+        		maxX = Math.min(splitEndTile.tx, cropBounds.e);
+        		minY = splitStartTile.ty;
+        		maxY = splitStartTile.ty;
+        	}
+        	
+        	
+        } else {
+        	// yDelta == 1 now
+        	// need image bounds
+        	if(splitStartTile.tx > cropBounds.e && splitEndTile.tx < cropBounds.w){
+        		continue;
+        	} else {
+        		intersect = true;
+
+        		// this is a lie
+        		minX = cropBounds.w;
+        		maxX = cropBounds.e;
+
+        		// this is right
+        		minY = Math.max(splitStartTile.ty, cropBounds.s);
+        		maxY = Math.min(splitEndTile.ty, cropBounds.n);
+        	}
+        	
+        }
+        
+        
+        
+//        TMSUtils.TileBounds splitTileBounds = new TMSUtils.TileBounds(
+//            splitStartTile.tx, splitStartTile.ty, splitEndTile.tx, splitEndTile.ty);
         TMSUtils.TileBounds splitTileBounds = new TMSUtils.TileBounds(
-            splitStartTile.tx, splitStartTile.ty, splitEndTile.tx, splitEndTile.ty);
+                minX, minY, maxX, maxY);
+            
 
-//        TMSUtils.Bounds splitBounds = TMSUtils.tileToBounds(splitTileBounds,
-//            zoomLevel, tileSize);
+        TMSUtils.Bounds splitBounds = TMSUtils.tileToBounds(splitTileBounds,
+            zoomLevel, tileSize);
 
+        System.out.println("Cropped bounds:    " + cropBounds.toString());
+        System.out.println("Split Tile bounds: " + splitTileBounds.toString());
+        
         TMSUtils.TileBounds intersection = cropBounds.intersection(splitTileBounds);
-        if (intersection != null)
+        //if (intersection != null)
+        if(intersect)
         {
           long startId = TMSUtils.tileid(intersection.w, intersection.s, ifContext.getZoomLevel());
           long endId = TMSUtils.tileid(intersection.e, intersection.n, ifContext.getZoomLevel());
@@ -258,12 +323,20 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
 
           result.add(new  TiledInputSplit(tiledSplit.getWrappedSplit(), startId,
               endId, tiledSplit.getZoomLevel(), tiledSplit.getTileSize()));
+        } else {
+        	//System.out.println("Filtered out split ("+cnt+") " + tiledSplit.getStartTileId() + " => " + tiledSplit.getEndTileId());
+        	System.out.println("Filtered out split ("+cnt+") " +
+        			splitStartTile.tx + ", " + 
+        			splitStartTile.ty + " => " +
+        			splitEndTile.tx + ", " +
+        			splitEndTile.ty);
         }
       }
       else
       {
         result.add(tiledSplit);
       }
+      cnt++;
     }
 
     // check if we need to add additional tiles to the last split...
@@ -289,6 +362,8 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
         }
       }
     }
+    
+    System.out.println("Number of result splits from format = " + result.size());
     return result;
   }
 }

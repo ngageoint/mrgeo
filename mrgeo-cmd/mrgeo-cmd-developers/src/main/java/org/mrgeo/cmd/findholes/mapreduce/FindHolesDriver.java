@@ -60,9 +60,6 @@ public class FindHolesDriver {
 
 		// how to fake out loading core dependencies
 		HadoopUtils.setJar(job, FindHolesDriver.class);
-		//HadoopUtils.setJar(job, HadoopUtils.class);
-		//DependencyLoader.getDependencies(FindHolesMapper.class);
-		//DependencyLoader.getDependencies(FindHolesReducer.class);
 		
 		job.setMapperClass(FindHolesMapper.class);
 		job.setReducerClass(FindHolesReducer.class);
@@ -102,6 +99,11 @@ public class FindHolesDriver {
 	    	miifp.teardown(job);
 	    	
 	    	boolean[][] valid = new boolean[(int)lr.getHeight()][(int)lr.getWidth()];
+	    	for(int y = 0; y < (int)lr.getHeight(); y++){
+	    		for(int x = 0; x < (int)lr.getWidth(); x++){
+	    			valid[y][x] = false;
+	    		}
+	    	}
 	    	
 	    	final int size = ahdp.size();
 	        for (int i = 0; i < size; i++)
@@ -111,8 +113,14 @@ public class FindHolesDriver {
 	          // read values out of stream
 	          String line;
 	          while((line = br.readLine()) != null){
+
+		          // format is "y: x x x x"
 	        	  String[] vals = line.split(":");
 	        	  int y = Integer.parseInt(vals[0]);
+	        	  
+	        	  if(vals.length == 1){
+	        		  continue;
+	        	  }
 	        	  vals = vals[1].trim().split(" ");
 	        	  for(String v : vals){
 	        		  valid[y - (int)lr.getMinY()][Integer.parseInt(v) - (int)lr.getMinX()] = true;
@@ -125,22 +133,35 @@ public class FindHolesDriver {
 	        ahdp.delete();
 	        File outFile = new File(output);
 	        PrintWriter pw = new PrintWriter(outFile);
+	        StringBuffer sbMissing = new StringBuffer();
 	        for(int y = 0; y < lr.getHeight(); y++){
-	        	// y + lr.getMinY()	        	
+	        	// y + lr.getMinY()
+	        	boolean m = false;
 	        	for(int x = 0; x < lr.getWidth(); x++){
 	        		// x + lr.getMinX()
-	        		if(!valid[y][x]){
-	        			pw.write("(" + (x+lr.getMinX()) + "," + (y+lr.getMinY()) + ") " );
+	        		if(valid[y][x]){
+	        			pw.write("+");
+	        		} else {
+	        			m = true;
+	        			sbMissing.append("(" + (x+lr.getMinX()) + "," + (y+lr.getMinY()) + ") ");
+	        			pw.write("-");
 	        		}
+	        		
 	        	}
+	        	pw.write("\n");
+	        	if(m){
+	        		sbMissing.append("\n");
+	        	}
+	        }
+	        if(sbMissing.length() > 0){
+	        	pw.write("\n\n");
+	        	pw.write(sbMissing.toString() + "\n");
 	        }
 	        pw.close();
 	        return true;
 	    }
 	    
-	    
 		return false;
 	} // end runJob
-	
 	
 } // end FindHolesDriver
