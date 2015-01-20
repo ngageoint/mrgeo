@@ -164,7 +164,10 @@ public class RasterizeVectorMapOp extends RasterMapOp
           while (stream.hasNext())
           {
             WritableGeometry geom = stream.next();
-            bounds.expand(geom.getBounds());
+            if (geom != null)
+            {
+              bounds.expand(geom.getBounds());
+            }
           }
 
           stream.close();
