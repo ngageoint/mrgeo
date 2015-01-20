@@ -21,7 +21,9 @@ import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.accumulo.core.util.Pair;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
@@ -36,7 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
 
@@ -249,6 +253,10 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     // think about scanners - set the zoom level of the job
     IteratorSetting regex = new IteratorSetting(51, "regex", RegExFilter.class);
     RegExFilter.setRegexs(regex, null, Integer.toString(context.getZoomLevel()), null, null, false);
+    Collection<Pair<Text, Text>> colFamColQual = new ArrayList<Pair<Text,Text>>();
+    Pair<Text, Text> p1 = new Pair<Text, Text>(new Text(Integer.toString(context.getZoomLevel())), null);
+    colFamColQual.add(p1);
+    AccumuloMrsImagePyramidInputFormat.fetchColumns(job, colFamColQual);
     AccumuloMrsImagePyramidInputFormat.addIterator(job, regex);
     //job.setJarByClass(this.getClass());
     String cp = job.getConfiguration().get("mapred.job.classpath.files");
