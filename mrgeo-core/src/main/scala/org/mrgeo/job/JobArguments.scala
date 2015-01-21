@@ -1,16 +1,20 @@
 package org.mrgeo.job
 
 import java.io.File
-import java.net.URI
+import java.net.{URL, URI}
 
 import org.apache.commons.lang3.SystemUtils
-import org.mrgeo.util.Memory
+import org.mrgeo.utils.Memory
 import scala.collection.mutable.ArrayBuffer
 
 class JobArguments(args: Seq[String]) {
   /**
    * Pattern for matching a Windows drive, which contains only a single alphabet character.
    */
+  final val YARN:String = "yarn"
+  final val LOCAL:String = "local"
+  final val SPARK:String = "spark://"
+
   val windowsDrive = "([a-zA-Z])".r
   /**
    * Whether the underlying operating system is Windows.
@@ -27,9 +31,10 @@ class JobArguments(args: Seq[String]) {
   var cores:Int = -1
   val params = collection.mutable.Map[String, String]()
 
-  parse(args.toList)
-  var jars: String = null
+  var jars: Array[String] = null
   var verbose: Boolean = false
+
+  parse(args.toList)
 
   def this() {
     this(List[String]())
@@ -41,6 +46,10 @@ class JobArguments(args: Seq[String]) {
 
   def getSetting(name: String): String = {
     return params(name)
+  }
+
+  def setJars(paths:String) = {
+    jars = resolveURLs(paths)
   }
 
   def toArgs: String = {
@@ -61,6 +70,24 @@ class JobArguments(args: Seq[String]) {
     str.toString()
   }
 
+  def toArgArray: Array[String] = {
+    val args = new ArrayBuffer[String]()
+    var ping: Boolean = true
+
+    for (s <- toArray) {
+      if (ping) {
+        args += ("--" + s)
+      }
+      else if (s != null) {
+        args += s
+      }
+
+      ping = !ping
+    }
+
+    args.toArray
+  }
+
   def toArray: Array[String] = {
     val args = new ArrayBuffer[String]()
     if (name != null) {
@@ -79,12 +106,12 @@ class JobArguments(args: Seq[String]) {
     }
 
     if (jars != null) {
-      args += "jars "
-      args += jars
+      args += "jars"
+      args += jars.mkString(",")
     }
 
     if (driverJar != null) {
-      args += "driverjar "
+      args += "driverjar"
       args += driverJar
     }
 
@@ -92,17 +119,30 @@ class JobArguments(args: Seq[String]) {
       args += "verbose"
     }
 
-    args += "cores"
-    args += cores.toString
+    if (cores > 0) {
+      args += "cores"
+      args += cores.toString
+    }
 
-    args += "executors"
-    args += executors.toString
+    if (executors > 0) {
+      args += "executors"
+      args += executors.toString
+    }
 
-    args += "executorMemory"
-    args += executorMem
+    if (executorMem != null) {
+      args += "executorMemory"
+      args += executorMem
+    }
 
-    args += "driverMemory"
-    args += driverMem
+    if (driverMem != null) {
+      args += "driverMemory"
+      args += driverMem
+    }
+
+    for (param <- params) {
+      args += param._1
+      args += param._2
+    }
 
     args.toArray
   }
@@ -112,7 +152,7 @@ class JobArguments(args: Seq[String]) {
     name = value
     parse(tail)
 
-    case ("--cluster") :: value :: tail =>
+  case ("--cluster") :: value :: tail =>
     value match  {
     case "yarn" => useYarn()
     case "debug" => useDebug()
@@ -121,57 +161,57 @@ class JobArguments(args: Seq[String]) {
     }
     parse(tail)
 
-    case ("--driver") :: value :: tail =>
-      driverClass = value
-      parse(tail)
+  case ("--driver") :: value :: tail =>
+    driverClass = value
+    parse(tail)
 
-    case ("--jars") :: value :: tail =>
-      jars = resolveURIs(value)
-      parse(tail)
+  case ("--jars") :: value :: tail =>
+    jars = resolveURLs(value)
+    parse(tail)
 
-    case ("--driverjar") :: value :: tail =>
-      driverJar = resolveURIs(value)
-      parse(tail)
+  case ("--driverjar") :: value :: tail =>
+    driverJar = resolveURL(value)
+    parse(tail)
 
-    case ("--help" | "-h") :: tail =>
-      printUsageAndExit(0)
+  case ("--help" | "-h") :: tail =>
+    printUsageAndExit(0)
 
-    case ("--verbose" | "-v") :: tail =>
-      verbose = true
-      parse(tail)
+  case ("--verbose" | "-v") :: tail =>
+    verbose = true
+    parse(tail)
 
-    case ("--cores") :: value :: tail =>
-      cores = value.toInt
-      parse(tail)
+  case ("--cores") :: value :: tail =>
+    cores = value.toInt
+    parse(tail)
 
-    case ("--executors") :: value :: tail =>
-      executors = value.toInt
-      parse(tail)
+  case ("--executors") :: value :: tail =>
+    executors = value.toInt
+    parse(tail)
 
-    case ("--executorMemory") :: value :: tail =>
-      executorMem = value
-      parse(tail)
+  case ("--executorMemory") :: value :: tail =>
+    executorMem = value
+    parse(tail)
 
-    case ("--driverMemory") :: value :: tail =>
-      driverMem = value
-      parse(tail)
+  case ("--driverMemory") :: value :: tail =>
+    driverMem = value
+    parse(tail)
 
-    case key :: value :: tail =>
-      if (key.startsWith("--")) {
-        if (value.startsWith("--")) {
-          // The key is an on/off switch because the value is not really
-          // a value, so continue parsing with the value
-          params(key.substring(2)) = null
-          parse(value :: tail)
-        }
-        else {
-          params(key.substring(2)) = value
-          parse(tail)
-        }
+  case key :: value :: tail =>
+    if (key.startsWith("--")) {
+      if (value.startsWith("--")) {
+        // The key is an on/off switch because the value is not really
+        // a value, so continue parsing with the value
+        params(key.substring(2)) = null
+        parse(value :: tail)
       }
       else {
-       throw new Exception("Invalid switch " + key + ": must start with --")
+        params(key.substring(2)) = value
+        parse(tail)
       }
+    }
+    else {
+      throw new Exception("Invalid switch " + key + ": must start with --")
+    }
   //      if (inSparkOpts) {
   //        value match {
   //          // convert --foo=bar to --foo bar
@@ -199,25 +239,25 @@ class JobArguments(args: Seq[String]) {
   //        parse(tail)
   //      }
 
-    case key :: Nil =>
-      if (key.startsWith("--")) {
-        params(key.substring(2)) = null
-      }
-      else {
-        throw new Exception("Invalid switch " + key + ": must start with --")
-      }
+  case key :: Nil =>
+    if (key.startsWith("--")) {
+      params(key.substring(2)) = null
+    }
+    else {
+      throw new Exception("Invalid switch " + key + ": must start with --")
+    }
 
-    case Nil =>
+  case Nil =>
   }
 
   def useYarn(): Unit = {
-    cluster = "yarn"
+    cluster = YARN
     println("Setting cluster to: " + cluster)
 
   }
 
   def useDebug(): Unit = {
-    cluster = "local[1]"
+    cluster = LOCAL + "[1]"
     println("Setting cluster to: " + cluster)
 
     setupMemory()
@@ -226,10 +266,10 @@ class JobArguments(args: Seq[String]) {
   def useLocal(): Unit = {
     val cores: Int = Runtime.getRuntime.availableProcessors()
     if (cores <= 2) {
-      cluster = "local"
+      cluster = LOCAL
     }
     else {
-      cluster = "local[" + (cores.toDouble * 0.75).round + "]"
+      cluster = LOCAL+"[" + (cores.toDouble * 0.75).round + "]"
     }
 
     println("Setting cluster to: " + cluster)
@@ -237,14 +277,26 @@ class JobArguments(args: Seq[String]) {
     setupMemory()
   }
 
+  def isYarn: Boolean = {
+    cluster.startsWith(YARN)
+  }
+
+  def isLocal: Boolean = {
+    cluster.startsWith(LOCAL)
+  }
+
+  def isSpark: Boolean = {
+    cluster.startsWith(SPARK)
+  }
+
   // taken from Spark:Utils (private methods)
 
   def useSpark(master: String): Unit = {
-    if (master.startsWith("spark://")) {
+    if (master.startsWith(SPARK)) {
       cluster = master
     }
     else {
-      cluster = "spark://" + master
+      cluster = SPARK + master
     }
 
     println("Setting cluster to: " + cluster)
@@ -282,7 +334,7 @@ class JobArguments(args: Seq[String]) {
    * If the supplied path does not contain a scheme, or is a relative path, it will be
    * converted into an absolute path with a file:// scheme.
    */
-  private def resolveURI(path: String, testWindows: Boolean = false): URI = {
+  private def resolveURL(path: String, testWindows: Boolean = false): String = {
 
     // In Windows, the file separator is a backslash, but this is inconsistent with the URI format
     val windows = isWindows || testWindows
@@ -294,25 +346,25 @@ class JobArguments(args: Seq[String]) {
     }
     uri.getScheme match {
     case windowsDrive(d) if windows =>
-      new URI("file:/" + uri.toString.stripPrefix("/"))
+      new URI("file:/" + uri.toString.stripPrefix("/")).toURL.toString
     case null =>
       // Preserve fragments for HDFS file name substitution (denoted by "#")
       // For instance, in "abc.py#xyz.py", "xyz.py" is the name observed by the application
       val fragment = uri.getFragment
       val part = new File(uri.getPath).toURI
-      new URI(part.getScheme, part.getPath, fragment)
+      new URI(part.getScheme, part.getPath, fragment).toURL.toString
     case _ =>
-      uri
+      uri.toURL.toString
     }
   }
 
   /** Resolve a comma-separated list of paths. */
-  private def resolveURIs(paths: String, testWindows: Boolean = false): String = {
+  private def resolveURLs(paths: String, testWindows: Boolean = false): Array[String] = {
     if (paths == null || paths.trim.isEmpty) {
-      ""
+      null
     }
     else {
-      paths.split(",").map { p => resolveURI(p, testWindows)}.mkString(",")
+      paths.split(",").map { p => resolveURL(p, testWindows)}
     }
   }
 
