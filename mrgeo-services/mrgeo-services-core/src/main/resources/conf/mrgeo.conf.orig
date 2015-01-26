@@ -13,6 +13,10 @@ db.path = /tmp/mrgeo-services-db
 
 
 
+# Additional classpath elements used for finding dependencies used in distributed 
+# processing.  These are added AFTER MRGEO_HOME dependencies, but before
+# any others on the classpath
+#dependency.classpath=
 
 # Additional hadoop parameters as well as parameters needed for Giraph.
 # Either hadoop.params with -libjars and the path to <giraph-with-dependencies>, 

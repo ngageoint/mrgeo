@@ -4,9 +4,11 @@ import java.io.File
 import java.net.URL
 
 import org.apache.hadoop.util.ClassUtil
+import org.apache.spark.deploy.yarn.ApplicationMaster
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.utils.DependencyLoader
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
 import scala.util.control.Breaks
 
@@ -44,12 +46,12 @@ abstract class MrGeoDriver {
 
     for (jar <- dependencies) {
       // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...
-      if (!jar.contains("spark-yarn")) {
+      //if (!jar.contains("spark-yarn")) {
         if (jars.length > 0) {
           jars ++= ","
         }
         jars ++= jar
-      }
+      //}
     }
     job.setJars(jars.toString())
 
@@ -149,6 +151,21 @@ abstract class MrGeoJob  {
       //conf.set("spark.yarn.jar","")
       conf.set("spark.executor.memory", if (job.executorMem != null) job.executorMem else "128m")
           .set("spark.cores.max", if (job.executors > 0) job.executors.toString else "1")
+      .setMaster(job.YARN + "-client")
+
+      System.setProperty("SPARK_YARN_MODE", "true")
+      // need to initialize the ApplicationMaster
+//      val appargs = new ArrayBuffer[String]()
+//
+//      appargs += "--jar"
+//      appargs += job.driverJar
+//
+//      appargs += "--class"
+//      appargs += job.driverClass
+//
+//      appargs +=
+      //ApplicationMaster.main(appargs.toArray)
+//      ApplicationMaster.main(job.toArgArray)
     }
     else if (job.isSpark) {
       conf.set("spark.driver.memory", if (job.driverMem != null) job.driverMem else "128m")

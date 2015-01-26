@@ -228,6 +228,7 @@
   </build>
   <profiles>
     <!-- for using Spark -->
+    <!--
     <profile>
       <id>CDH530-yarn</id>
       <dependencies>
@@ -249,10 +250,11 @@
         </dependency>
         <dependency>
           <groupId>org.apache.spark</groupId>
-          <artifactId>spark-network-yarn_2.10</artifactId>
+          <artifactId>spark-yarn_2.10</artifactId>
         </dependency>
       </dependencies>
     </profile>
+    -->
     <profile>
       <id>run-shading</id>
       <build>

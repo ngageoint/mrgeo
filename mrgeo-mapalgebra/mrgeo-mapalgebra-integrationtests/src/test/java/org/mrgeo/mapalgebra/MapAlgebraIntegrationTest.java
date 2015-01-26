@@ -571,13 +571,13 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     if (GEN_BASELINE_DATA_ONLY)
     {
       testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-          String.format("mosaic([%s], [%s])", allones, alltwos), -9999);
+          String.format("mosaic([%s], [%s])", allonesPath, smallElevationPath), -9999);
     }
     else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
           opImageTestUtils.nanTranslatorToMinus9999,
-          String.format("mosaic([%s], [%s])", allones, alltwos));
+          String.format("mosaic([%s], [%s])", allonesPath, smallElevationPath));
     }
   }
 

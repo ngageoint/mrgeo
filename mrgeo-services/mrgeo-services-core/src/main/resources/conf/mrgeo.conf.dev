@@ -14,6 +14,11 @@ distributed.base = /mrgeo/jars
 # element of the classpath that is a directory looking for JARs.
 development.mode=true
 
+# Additional classpath elements used for finding dependencies used in distributed 
+# processing.  These are added AFTER MRGEO_HOME dependencies, but before
+# any others on the classpath
+#dependency.classpath=
+
 # This needs to be a location that MrGeo can write to.
 db.path = /tmp/mrgeo-services-db
 

@@ -45,14 +45,14 @@ object MosaicDriver extends MrGeoDriver {
     args += output
 
     // not sure how to get these into the args
-    args += "--cluster"
-    args += "yarn"
-    args += "--executors"
-    args += "2"
-    args += "--executorMemory"
-    args += "20G"
-    args += "--cores"
-    args += "10"
+//    args += "--cluster"
+//    args += "yarn"
+//    args += "--executors"
+//    args += "2"
+//    args += "--executorMemory"
+//    args += "19G"
+//    args += "--cores"
+//    args += "10"
 
     run(args.toArray)
   }
@@ -96,7 +96,6 @@ class MosaicDriver extends MrGeoJob {
       // check for the same max zooms
       if (zoom < 0) {
         zoom = pyramid._2.getMaxZoomLevel
-        tilesize = pyramid._2.getTilesize
       }
       else if (zoom != pyramid._2.getMaxZoomLevel) {
         throw new IllegalArgumentException("All images must have the same max zoom level. " +
@@ -112,7 +111,7 @@ class MosaicDriver extends MrGeoJob {
       }
 
       if (tiletype < 0) {
-        tiletype = pyramid._2.getTilesize
+        tiletype = pyramid._2.getTileType
       }
       else if (tiletype != pyramid._2.getTileType) {
         throw new IllegalArgumentException("All images must have the same tile type. " +
@@ -120,7 +119,7 @@ class MosaicDriver extends MrGeoJob {
       }
 
       if (numbands < 0) {
-        numbands = pyramid._2.getTilesize
+        numbands = pyramid._2.getBands
       }
       else if (numbands != pyramid._2.getBands) {
         throw new IllegalArgumentException("All images must have the same number of bands. " +
@@ -144,6 +143,16 @@ class MosaicDriver extends MrGeoJob {
     val groups = new CoGroupedRDD(pyramids, sparkPartitioner)
 
     val mosaiced:PairRDDFunctions[TileIdWritable, RasterWritable] = groups.map(U => {
+
+      def isnodata(sample:Double, nodata:Double): Boolean = {
+        if (nodata.isNaN && sample.isNaN) {
+          true
+        }
+        else {
+          nodata == sample
+        }
+      }
+
       var dst: WritableRaster = null
       var dstnodata:Array[Double] = null
 
@@ -237,14 +246,6 @@ class MosaicDriver extends MrGeoJob {
     true
   }
 
-  private def isnodata(sample:Double, nodata:Double): Boolean = {
-    if (nodata.isNaN && sample.isNaN) {
-      true
-    }
-    else {
-      nodata == sample
-    }
-  }
 
   override def teardown(job: JobArguments): Boolean = {
     true

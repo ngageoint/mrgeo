@@ -267,6 +267,19 @@ public class DependencyLoader
     // add the system classpath, including the cwd
     String classpath = System.getProperty("java.class.path", "");
 
+    String depclasspath = MrGeoProperties.getInstance().getProperty("dependency.classpath", null);
+    if (depclasspath != null)
+    {
+      if (classpath == null || classpath.isEmpty())
+      {
+        classpath = depclasspath;
+      }
+      else
+      {
+        classpath = depclasspath + System.getProperty("path.separator") + classpath;
+      }
+    }
+
     // prepend MRGEO_HOME
     String mrgeo = System.getenv("MRGEO_HOME");
     if (mrgeo == null)
@@ -332,17 +345,20 @@ public class DependencyLoader
         {
           for (File f : files)
           {
-            if (filesLeft.contains(f.getName()))
+            if (!f.isDirectory())
             {
-              log.debug("Adding " + file.getName() + " to paths from " + file.getPath());
-              paths.add(file);
-              filesLeft.remove(file.getName());
-              if (filesLeft.isEmpty())
+              if (filesLeft.contains(f.getName()))
               {
-                return;
+                log.debug("Adding " + f.getName() + " to paths from " + f.getPath());
+                paths.add(f);
+                filesLeft.remove(f.getName());
+                if (filesLeft.isEmpty())
+                {
+                  return;
+                }
               }
             }
-            if (recurseDirectories)
+            else if (recurseDirectories)
             {
               log.debug("In findJars recursing on dir: " + f.getPath() + " with paths: " + paths.size() + " and filesLeft: " + filesLeft.size());
               findJars(f, paths, filesLeft, recurseDirectories);
