@@ -692,6 +692,27 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
   public void setImageMetadata(final ImageMetadata[] metadata)
   {
     imageData = metadata;
+
+    // this will make sure the size of the image metadata matched the zoom, with empty levels as needed
+    if (imageData == null)
+    {
+      for (int i = 0; i <= maxZoomLevel; i++)
+      {
+        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
+      }
+    }
+    else if (maxZoomLevel < imageData.length)
+    {
+      imageData = (ImageMetadata[]) ArrayUtils.subarray(imageData, 0, maxZoomLevel + 1);
+    }
+    else if (maxZoomLevel > imageData.length)
+    {
+      for (int i = imageData.length; i <= maxZoomLevel; i++)
+      {
+        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
+      }
+    }
+
   }
 
   
