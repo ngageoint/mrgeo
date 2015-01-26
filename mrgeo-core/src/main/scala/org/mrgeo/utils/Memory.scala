@@ -1,4 +1,4 @@
-package org.mrgeo.util
+package org.mrgeo.utils
 
 object Memory {
 

@@ -566,6 +566,23 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 
   @Test
   @Category(IntegrationTest.class)
+  public void mosaic() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("mosaic([%s], [%s])", allonesPath, smallElevationPath), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
+          String.format("mosaic([%s], [%s])", allonesPath, smallElevationPath));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
   public void mult() throws Exception
   {
     if (GEN_BASELINE_DATA_ONLY)

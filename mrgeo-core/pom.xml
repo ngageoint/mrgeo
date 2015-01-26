@@ -228,6 +228,7 @@
   </build>
   <profiles>
     <!-- for using Spark -->
+    <!--
     <profile>
       <id>CDH530-yarn</id>
       <dependencies>
@@ -249,10 +250,11 @@
         </dependency>
         <dependency>
           <groupId>org.apache.spark</groupId>
-          <artifactId>spark-network-yarn_2.10</artifactId>
+          <artifactId>spark-yarn_2.10</artifactId>
         </dependency>
       </dependencies>
     </profile>
+    -->
     <profile>
       <id>run-shading</id>
       <build>
@@ -381,31 +383,30 @@
       <artifactId>jboss-vfs</artifactId>
     </dependency>
     <!-- end annoyance -->
-    
     <!-- Scala/spark dependencies -->
-          <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-streaming_2.10</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-graphx_2.10</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>org.scala-lang</groupId>
-        <artifactId>scala-library</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>org.scalatest</groupId>
-        <artifactId>scalatest_2.10</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-streaming_2.10</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>com.esotericsoftware.kryo</groupId>
-        <artifactId>kryo</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming_2.10</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-graphx_2.10</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.10</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming_2.10</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.esotericsoftware.kryo</groupId>
+      <artifactId>kryo</artifactId>
+    </dependency>
   </dependencies>
 </project>
