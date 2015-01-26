@@ -701,7 +701,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
         imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
       }
     }
-    else if (maxZoomLevel < imageData.length)
+    else if ((maxZoomLevel + 1) < imageData.length)
     {
       imageData = (ImageMetadata[]) ArrayUtils.subarray(imageData, 0, maxZoomLevel + 1);
     }
