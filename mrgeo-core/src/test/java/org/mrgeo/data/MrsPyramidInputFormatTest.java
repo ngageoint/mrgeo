@@ -24,17 +24,19 @@ import java.util.Properties;
 
 import junit.framework.Assert;
 
+import org.apache.hadoop.mapreduce.InputSplit;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.data.image.MrsImagePyramidInputFormat;
 import org.mrgeo.data.tile.TiledInputFormatContext;
+import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 
 import com.google.common.collect.Sets;
@@ -43,6 +45,9 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
 {
   private static String allones = Defs.INPUT + "all-ones";
   private static Bounds bounds;
+  private static int zoomLevel = 10;
+  private static int tileSize = 512;
+  private static LongRectangle imageTileBounds;
 
   @BeforeClass
   public static void setup() throws IOException
@@ -52,1132 +57,785 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
 
     MrsImagePyramid p = MrsImagePyramid.open(allones, (Properties)null);
     bounds = p.getBounds();
+    imageTileBounds = p.getTileBounds(zoomLevel); // (915, 203) (917, 206)
   }
 //  @Before
 //  public void setUp() throws Exception
 //  {
 //    Bounds bounds = Bounds.world;
 //
-//    fill = new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0);
-//    nofill = new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds);
+//    fill = new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones), bounds, 0);
+//    nofill = new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones), bounds);
 //  }
 
 
-  // Bounds equal to the bounds of the image
+  // Split is a single row of tiles that is completely to the left of the crop region
   @Test
   @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill1() throws Exception
+  public void testSingleRowSplitDoesNotOverlapCropLeft() throws Exception
   {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        50,
+        20,
+        50);
+    TiledInputFormatContext fill =
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
 
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    long startId = TMSUtils.tileid(tb.w, tb.s, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.n, nofill.getZoomLevel());
+    long startId = TMSUtils.tileid(1, 50, fill.getZoomLevel());
+    long endId = TMSUtils.tileid(9, 50,  fill.getZoomLevel());
 
     List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
+    TiledInputSplit fake = new TiledInputSplit();
+    splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
 
     // need to use the derived class, since MrsPyramidInputFormat is abstract.
     MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
 
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
+    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
 
     Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0));
-
+    compareSplit(null, filtered.get(0), crop.w, crop.s, crop.e, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
   }
 
-  // Bounds totally within the bounds of the image
+  // Split is a single row of tiles that is completely to the right of the crop region
   @Test
   @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill2() throws Exception
+  public void testSingleRowSplitDoesNotOverlapCropRight() throws Exception
   {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        50,
+        20,
+        50);
+    TiledInputFormatContext fill =
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
 
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    long startId = TMSUtils.tileid(tb.w + 1, tb.s + 1, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e - 1, tb.n - 1,  nofill.getZoomLevel());
+    long startId = TMSUtils.tileid(21, 50, fill.getZoomLevel());
+    long endId = TMSUtils.tileid(29, 50,  fill.getZoomLevel());
 
     List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
+    TiledInputSplit fake = new TiledInputSplit();
+    splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
 
     // need to use the derived class, since MrsPyramidInputFormat is abstract.
     MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
 
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
+    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
 
     Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-      compareSplit(splits.get(0), filtered.get(0));
-
+    compareSplit(null, filtered.get(0), crop.w, crop.s, crop.e, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
   }
 
-  // Bounds totally encompass the bounds of the image
+  // Split is a single row of tiles that is completely above the crop region
   @Test
   @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill3() throws Exception
+  public void testSingleRowSplitDoesNotOverlapCropTop() throws Exception
   {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        50,
+        20,
+        50);
+    TiledInputFormatContext fill =
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
 
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    long startId = TMSUtils.tileid(tb.w - 1, tb.s - 1, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 1, tb.n + 1,  nofill.getZoomLevel());
+    long startId = TMSUtils.tileid(1, 51, fill.getZoomLevel());
+    long endId = TMSUtils.tileid(29, 51,  fill.getZoomLevel());
 
     List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
+    TiledInputSplit fake = new TiledInputSplit();
+    splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
 
     // need to use the derived class, since MrsPyramidInputFormat is abstract.
     MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
 
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
+    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
 
     Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
+    compareSplit(null, filtered.get(0), crop.w, crop.s, crop.e, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
   }
 
-  // Bounds overlap left  bounds of the image
+  // Split is a single row of tiles that is completely below the crop region
   @Test
   @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill4() throws Exception
+  public void testSingleRowSplitDoesNotOverlapCropBottom() throws Exception
   {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        50,
+        20,
+        50);
+    TiledInputFormatContext fill =
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
 
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're only using 1 row!
-    long startId = TMSUtils.tileid(tb.w - 1, tb.s, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e - 1, tb.s,  nofill.getZoomLevel());
+    long startId = TMSUtils.tileid(1, 49, fill.getZoomLevel());
+    long endId = TMSUtils.tileid(29, 49,  fill.getZoomLevel());
 
     List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
+    TiledInputSplit fake = new TiledInputSplit();
+    splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
 
     // need to use the derived class, since MrsPyramidInputFormat is abstract.
     MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
 
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
+    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
 
     Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 916, 203);
+    compareSplit(null, filtered.get(0), crop.w, crop.s, crop.e, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
   }
 
-  // Bounds overlap right bounds of the image
+  // Split is a single row of tiles that overlaps left bounds of the crop region
   @Test
   @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill5() throws Exception
+  public void testSingleRowSplitOverlapsCropLeftEdge() throws Exception
   {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
+    int ty = 50;
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        ty,
+        20,
+        ty);
+    TiledInputFormatContext fill =
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
 
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're only using 1 row!
-    long startId = TMSUtils.tileid(tb.e - 1, tb.s, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 1, tb.s,  nofill.getZoomLevel());
+    long startId = TMSUtils.tileid(5, ty, fill.getZoomLevel());
+    long endId = TMSUtils.tileid(15, ty,  fill.getZoomLevel());
 
     List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
+    TiledInputSplit fake = new TiledInputSplit();
+    splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
 
     // need to use the derived class, since MrsPyramidInputFormat is abstract.
     MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
 
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
+    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
+
+    Assert.assertEquals("Wrong number of splits", 2, filtered.size());
+    compareSplit(fake, filtered.get(0), 5, ty, 15, ty,
+        fill.getZoomLevel(), fill.getTileSize());
+    compareSplit(null, filtered.get(1), 16, crop.s, crop.e, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
+  }
+
+  // Split is a single row of tiles that overlap the right bounds of the crop
+  @Test
+  @Category(UnitTest.class)
+  public void testSingleRowSplitOverlapsCropRightEdge() throws Exception
+  {
+    int ty = 50;
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        ty,
+        20,
+        ty);
+    TiledInputFormatContext fill =
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+
+    long startId = TMSUtils.tileid(15, ty, fill.getZoomLevel());
+    long endId = TMSUtils.tileid(25, ty,  fill.getZoomLevel());
+
+    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
+    TiledInputSplit fake = new TiledInputSplit();
+    splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
+
+    // need to use the derived class, since MrsPyramidInputFormat is abstract.
+    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
+
+    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
+
+    Assert.assertEquals("Wrong number of splits", 2, filtered.size());
+    compareSplit(null, filtered.get(0), crop.w, crop.s, 14, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
+    compareSplit(fake, filtered.get(1), 15, ty, 25, ty,
+        fill.getZoomLevel(), fill.getTileSize());
+  }
+
+  // Split is a single row of tiles that overlap the middle of the crop region
+  @Test
+  @Category(UnitTest.class)
+  public void testSingleRowSplitOverlapsCropMiddle() throws Exception
+  {
+    int ty = 50;
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        ty,
+        20,
+        ty);
+    TiledInputFormatContext fill =
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+
+    long startId = TMSUtils.tileid(11, ty, fill.getZoomLevel());
+    long endId = TMSUtils.tileid(19, ty,  fill.getZoomLevel());
+
+    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
+    TiledInputSplit fake = new TiledInputSplit();
+    splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
+
+    // need to use the derived class, since MrsPyramidInputFormat is abstract.
+    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
+
+    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
+
+    Assert.assertEquals("Wrong number of splits", 3, filtered.size());
+    compareSplit(null, filtered.get(0), crop.w, crop.s, 10, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
+    compareSplit(fake, filtered.get(1), 11, ty, 19, ty,
+        fill.getZoomLevel(), fill.getTileSize());
+    compareSplit(null, filtered.get(2), 20, crop.s, crop.e, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
+  }
+
+  // Crop bounds are a single row of tiles that overlap the entire crop region
+  @Test
+  @Category(UnitTest.class)
+  public void testSingleRowSplitOverlapsCropEntire() throws Exception
+  {
+    int ty = 50;
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        ty,
+        20,
+        ty);
+    TiledInputFormatContext fill =
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+
+    long startId = TMSUtils.tileid(8, ty, fill.getZoomLevel());
+    long endId = TMSUtils.tileid(22, ty,  fill.getZoomLevel());
+
+    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
+    TiledInputSplit fake = new TiledInputSplit();
+    splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
+
+    // need to use the derived class, since MrsPyramidInputFormat is abstract.
+    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
+
+    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
 
     Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 916, 203, 917, 203);
+    // The resulting split is the same as the input split. Note that the MrsPyramidRecordReader is responsible for
+    // skipping records within the split that do not overlap the crop region.
+    compareSplit(fake, filtered.get(0), 8, crop.s, 22, crop.s,
+        fill.getZoomLevel(), fill.getTileSize());
   }
 
-  // Bounds overlap bottom bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill6() throws Exception
+  private class TestResult
   {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w, tb.s - 1, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.s,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 203);
-  }
-
-  // Bounds overlap top bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill7() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're only using 1 row!
-    long startId = TMSUtils.tileid(tb.w, tb.n, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.n + 1,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 206, 917, 206);
-  }
-
-  // Bounds overlap top-left bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill8() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w - 1, tb.n - 1, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.w + 1, tb.n + 1,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 205, 916, 206);
-  }
-
-  // Bounds overlap top-right bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill9() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.e - 1, tb.n - 1, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 1, tb.n + 1,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 916, 205, 917, 206);
-  }
-
-  // Bounds overlap bottom-right bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill10() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.e - 1, tb.s - 1, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 1, tb.s + 1,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 916, 203, 917, 204);
-  }
-
-  // Bounds overlap bottom-left bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill11() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w - 1, tb.s - 1, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.w + 1, tb.s + 1,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 916, 204);
-  }
-
-  // Bounds totally to left of bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill12() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w - 10, tb.s, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.w - 5, tb.s,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 0, filtered.size());
-  }
-
-  // Bounds totally to right of bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill13() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.e + 5, tb.s, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 10, tb.s,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 0, filtered.size());
-  }
-
-  // Bounds totally above bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill14() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.e, tb.n + 5, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.w, tb.n + 10,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 0, filtered.size());
-  }
-
-  // Bounds totally below bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill15() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w, tb.s - 10, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.s = 5,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 0, filtered.size());
-  }
-
-  // multiple splits
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill16() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-
-    for (long y = tb.s; y <= tb.n; y++)
+    public long txStart;
+    public long tyStart;
+    public long txEnd;
+    public long tyEnd;
+    public TiledInputSplit wrapped;
+
+    public TestResult(long txStart, long tyStart, long txEnd, long tyEnd, TiledInputSplit wrapped)
     {
-      long startId = TMSUtils.tileid(tb.w, y, nofill.getZoomLevel());
-      long endId = TMSUtils.tileid(tb.e, y, nofill.getZoomLevel());
-
-      splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-    }
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", splits.size(), filtered.size());
-    for (int i = 0; i < splits.size(); i++)
-    {
-      compareSplit(splits.get(i), filtered.get(i));
+      this.txStart = txStart;
+      this.tyStart = tyStart;
+      this.txEnd = txEnd;
+      this.tyEnd = tyEnd;
+      this.wrapped = wrapped;
     }
   }
 
-  // reverse splits (tests sorting)
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoFill17() throws Exception
+  private class TestSplit
   {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
+    public long txStart;
+    public long tyStart;
+    public long txEnd;
+    public long tyEnd;
 
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-
-    for (long y = tb.n; y > tb.n; y--)
+    public TestSplit(long txStart, long tyStart, long txEnd, long tyEnd)
     {
-      long startId = TMSUtils.tileid(tb.w, y, nofill.getZoomLevel());
-      long endId = TMSUtils.tileid(tb.e, y, nofill.getZoomLevel());
-
-      splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-    }
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nofill, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", splits.size(), filtered.size());
-    for (int i = 0; i < splits.size(); i++)
-    {
-      compareSplit(splits.get(splits.size() - (i + 1)), filtered.get(i));
+      this.txStart = txStart;
+      this.tyStart = tyStart;
+      this.txEnd = txEnd;
+      this.tyEnd = tyEnd;
     }
   }
 
-  // Bounds equal to the bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill1() throws Exception
+  private class TestSpec
   {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    long startId = TMSUtils.tileid(tb.w, tb.s, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.n, fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0));
-
-  }
-
-  // Bounds totally within the bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill2() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    long startId = TMSUtils.tileid(tb.w + 1, tb.s + 1, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e - 1, tb.n - 1,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-
-  }
-
-  // Bounds totally encompass the bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill3() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    long startId = TMSUtils.tileid(tb.w - 1, tb.s - 1, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 1, tb.n + 1,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds overlap left  bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill4() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're only using 1 row!
-    long startId = TMSUtils.tileid(tb.w - 1, tb.s, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e - 1, tb.s,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds overlap right bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill5() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're only using 1 row!
-    long startId = TMSUtils.tileid(tb.e - 1, tb.s, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 1, tb.s,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds overlap bottom bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill6() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w, tb.s - 1, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.s,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds overlap top bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill7() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're only using 1 row!
-    long startId = TMSUtils.tileid(tb.w, tb.n, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.n + 1,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds overlap top-left bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill8() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w - 1, tb.n - 1, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.w + 1, tb.n + 1,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds overlap top-right bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill9() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.e - 1, tb.n - 1, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 1, tb.n + 1,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds overlap bottom-right bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill10() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.e - 1, tb.s - 1, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 1, tb.s + 1,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds overlap bottom-left bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill11() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w - 1, tb.s - 1, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.w + 1, tb.s + 1,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds totally to left of bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill12() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w - 10, tb.s, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.w - 5, tb.s,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds totally to right of bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill13() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.e + 5, tb.s, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e + 10, tb.s,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds totally above bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill14() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.e, tb.n + 5, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.w, tb.n + 10,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster>input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // Bounds totally below bounds of the image
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill15() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w, tb.s - 10, fill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.s = 5,  fill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 206);
-  }
-
-  // multiple splits
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill16() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-
-    for (long y = tb.s; y <= tb.n; y++)
+    public TestSplit[] splits;
+    public TestResult[] result;
+    
+    public TestSpec(TestSplit[] splits, TestResult[] result)
     {
-      long startId = TMSUtils.tileid(tb.w, y, fill.getZoomLevel());
-      long endId = TMSUtils.tileid(tb.e, y, fill.getZoomLevel());
-
-      splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-    }
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", splits.size(), filtered.size());
-    for (int i = 0; i < splits.size(); i++)
-    {
-      compareSplit(splits.get(i), filtered.get(i));
+      this.splits = splits;
+      this.result = result;
     }
   }
 
-  // crazy gaps in the splits
+  // Run multiple tests with a single split that spans more than one row
+  // within the crop region with various combinations of starting and ending
+  // to the left of the crop region, to the right, above, below, at the start,
+  // at the end, and in the middle.
+  // Note that the actual split start/end tile id's are not cropped even when
+  // they are outside the crop region. The record reader will ignore those
+  // records at runtime (not in this unit test).
   @Test
   @Category(UnitTest.class)
-  public void testFilterInputSplitsFill17() throws Exception
+  public void testFilterSingleInputSplitMultiRowCrop() throws Exception
+  {
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        50,
+        20,
+        55);
+    TiledInputSplit fake = new TiledInputSplit();
+    TestSpec[] testSpecs = {
+        new TestSpec(new TestSplit[] {
+            new TestSplit(22, 49, 9, 50)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+                new TestSplit(22, 49, 10, 50)
+            },
+            new TestResult[] {
+            new TestResult(22, 49, 10, 50, fake),
+            new TestResult(11, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(9, 49, 10, 50)
+        },
+        new TestResult[] {
+            new TestResult(9, 49, 10, 50, fake),
+            new TestResult(11, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(9, 49, 15, 50)
+        },
+        new TestResult[] {
+            new TestResult(9, 49, 15, 50, fake),
+            new TestResult(16, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 50, 20, 50)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, fake),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 50, 9, 51)
+        },
+        new TestResult[] {
+            new TestResult(10, 50,  9, 51, fake),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 50, 10, 51)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 10, 51, fake),
+            new TestResult(11, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 50, 15, 51)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 15, 51, fake),
+            new TestResult(16, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 50, 20, 51)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 51, fake),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(15, 50, 15, 51)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 14, 50, null),
+            new TestResult(15, 50, 15, 51, fake),
+            new TestResult(16, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 51, 10, 52)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 10, 52, fake),
+            new TestResult(11, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 51, 15, 52)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 15, 52, fake),
+            new TestResult(16, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 51, 20, 52)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 52, fake),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(15, 51, 15, 52)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 14, 51, null),
+            new TestResult(15, 51, 15, 52, fake),
+            new TestResult(16, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(15, 51, 25, 52)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 14, 51, null),
+            new TestResult(15, 51, 25, 52, fake),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(15, 54, 9, 55)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 14, 54, null),
+            new TestResult(15, 54,  9, 55, fake),
+            new TestResult(10, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(15, 54, 10, 55)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 14, 54, null),
+            new TestResult(15, 54, 10, 55, fake),
+            new TestResult(11, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(25, 54, 10, 55)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult(25, 54, 10, 55, fake),
+            new TestResult(11, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(15, 54, 15, 55)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 14, 54, null),
+            new TestResult(15, 54, 15, 55, fake),
+            new TestResult(16, 55, 20, 55, null)
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(15, 54, 20, 55)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 14, 54, null),
+            new TestResult(15, 54, 20, 55, fake),
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(9, 55, 10, 55)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult( 9, 55, 10, 55, fake),
+            new TestResult(11, 55, 20, 55, null),
+            }
+        ),
+        new TestSpec(new TestSplit[] {
+            new TestSplit(9, 55, 10, 56)
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            new TestResult(10, 54, 20, 54, null),
+            new TestResult( 9, 55, 10, 56, fake),
+            }
+        ),
+    };
+    for (TestSpec spec : testSpecs)
+    {
+      runTestSpec(spec, crop, fake);
+    }
+  }
+
+  // Run multiple tests including two splits where sometimes the splits are adjacent,
+  // and sometimes they have a gap between them. Include various cases where the
+  // splits start/end inside the crop region and outside.
+  @Test
+  @Category(UnitTest.class)
+  public void testFilterTwoInputSplits() throws Exception
+  {
+    TMSUtils.TileBounds crop = new TMSUtils.TileBounds(10,
+        50,
+        20,
+        53);
+    TiledInputSplit fake = new TiledInputSplit();
+    TestSpec[] testSpecs = {
+        // Both splits before the crop start, all results are blank rows
+        new TestSpec(new TestSplit[] {
+            new TestSplit(1, 49, 1, 50),
+            new TestSplit(5, 50, 9, 50),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // Both splits to the left of the crop, all results are blank rows
+        new TestSpec(new TestSplit[] {
+            new TestSplit(1, 51, 9, 51),
+            new TestSplit(2, 52, 9, 52),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // Both splits to the right of the crop, all results are blank rows
+        new TestSpec(new TestSplit[] {
+            new TestSplit(21, 51, 29, 51),
+            new TestSplit(23, 52, 23, 52),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // Both splits beyond the crop, all results are blank rows
+        new TestSpec(new TestSplit[] {
+            new TestSplit(21, 53, 29, 53),
+            new TestSplit(30, 53, 33, 53),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // First split before crop, second spans left edge
+        new TestSpec(new TestSplit[] {
+            new TestSplit(1, 49, 1, 50),
+            new TestSplit(8, 50, 12, 50),
+        },
+        new TestResult[] {
+            new TestResult( 8, 50, 12, 50, fake),
+            new TestResult(13, 50, 20, 50, null),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // First split before crop, second spans entire crop row
+        new TestSpec(new TestSplit[] {
+            new TestSplit(1, 49, 9, 50),
+            new TestSplit(10, 50, 23, 50),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 23, 50, fake),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // Both splits inside crop and adjacent
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 50, 13, 50),
+            new TestSplit(14, 50, 20, 50),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 13, 50, fake),
+            new TestResult(14, 50, 20, 50, fake),
+            new TestResult(10, 51, 20, 51, null),
+            new TestResult(10, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // Both splits inside crop and adjacent. Second one spans rows
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 50, 13, 50),
+            new TestSplit(14, 50, 15, 52),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 13, 50, fake),
+            new TestResult(14, 50, 15, 52, fake),
+            new TestResult(16, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // Both splits inside crop and non-adjacent. Second one spans rows
+        new TestSpec(new TestSplit[] {
+            new TestSplit(10, 50, 13, 50),
+            new TestSplit(17, 50, 15, 52),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 13, 50, fake),
+            new TestResult(14, 50, 16, 50, null),
+            new TestResult(17, 50, 15, 52, fake),
+            new TestResult(16, 52, 20, 52, null),
+            new TestResult(10, 53, 20, 53, null),
+            }
+        ),
+        // Both splits inside crop and non-adjacent. Second one spans beyond crop region
+        new TestSpec(new TestSplit[] {
+            new TestSplit(12, 51, 10, 52),
+            new TestSplit(17, 52, 25, 54),
+        },
+        new TestResult[] {
+            new TestResult(10, 50, 20, 50, null),
+            new TestResult(10, 51, 11, 51, null),
+            new TestResult(12, 51, 10, 52, fake),
+            new TestResult(11, 52, 16, 52, null),
+            new TestResult(17, 52, 25, 54, fake),
+            }
+        ),
+    };
+    for (TestSpec spec : testSpecs)
+    {
+      runTestSpec(spec, crop, fake);
+    }
+  }
+
+  private void runTestSpec(TestSpec spec, TMSUtils.TileBounds crop, TiledInputSplit fake)
   {
     TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
+        new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
 
     List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    long startId;
-    long endId;
+    for (TestSplit split: spec.splits)
+    {
+      long startId = TMSUtils.tileid(split.txStart, split.tyStart, fill.getZoomLevel());
+      long endId = TMSUtils.tileid(split.txEnd, split.tyEnd,  fill.getZoomLevel());
 
-    // start after the 1st tile
-    startId = TMSUtils.tileid(tb.w + 1, tb.s, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.e, tb.s,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // row starts/ends outside the row
-    startId = TMSUtils.tileid(tb.w - 1, tb.s + 1, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.e + 1, tb.s + 1,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // gap between rows
-    startId = TMSUtils.tileid(tb.w, tb.s + 2, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.w + 1, tb.s + 2,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    startId = TMSUtils.tileid(tb.e - 1, tb.s + 2, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.e, tb.s + 2,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // ends before the last tile
-    startId = TMSUtils.tileid(tb.w, tb.n, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.e - 1, tb.n,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
+      splits.add(new TiledInputSplit(fake, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
+    }
     // need to use the derived class, since MrsPyramidInputFormat is abstract.
     MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
 
     List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
 
-    Assert.assertEquals("Wrong number of splits", splits.size(), filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 203);
-    compareSplit(splits.get(1), filtered.get(1), 915, 204, 917, 204);
-    compareSplit(splits.get(2), filtered.get(2), 915, 205, 916, 205);
-    compareSplit(splits.get(3), filtered.get(3), 916, 205, 917, 205);
-    compareSplit(splits.get(4), filtered.get(4), 915, 206, 917, 206);
-
-  }
-
-  // crazy gaps in the splits, random order (test sort)
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsFill18() throws Exception
-  {
-    TiledInputFormatContext fill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, 0, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(fill.getBounds()), fill.getZoomLevel(), fill.getTileSize());;
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    long startId;
-    long endId;
-
-    // gap between rows
-    startId = TMSUtils.tileid(tb.w, tb.s + 2, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.w + 1, tb.s + 2,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // row starts/ends outside the row
-    startId = TMSUtils.tileid(tb.w - 1, tb.s + 1, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.e + 1, tb.s + 1,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // gap between rows
-    startId = TMSUtils.tileid(tb.e - 1, tb.s + 2, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.e, tb.s + 2,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // ends before the last tile
-    startId = TMSUtils.tileid(tb.w, tb.n, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.e - 1, tb.n,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // start after the 1st tile
-    startId = TMSUtils.tileid(tb.w + 1, tb.s, fill.getZoomLevel());
-    endId = TMSUtils.tileid(tb.e, tb.s,  fill.getZoomLevel());
-    splits.add(new TiledInputSplit(null, startId, endId, fill.getZoomLevel(), fill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(fill, splits, fill.getZoomLevel(), fill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", splits.size(), filtered.size());
-    compareSplit(splits.get(0), filtered.get(0), 915, 203, 917, 203);
-    compareSplit(splits.get(1), filtered.get(1), 915, 204, 917, 204);
-    compareSplit(splits.get(2), filtered.get(2), 915, 205, 916, 205);
-    compareSplit(splits.get(3), filtered.get(3), 916, 205, 917, 205);
-    compareSplit(splits.get(4), filtered.get(4), 915, 206, 917, 206);
-
-  }
-
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNullContext() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(nofill.getBounds()), nofill.getZoomLevel(), nofill.getTileSize());;
-
-    // note, we're using 2 rows
-    long startId = TMSUtils.tileid(tb.w, tb.s - 1, nofill.getZoomLevel());
-    long endId = TMSUtils.tileid(tb.e, tb.s,  nofill.getZoomLevel());
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-    splits.add(new TiledInputSplit(null, startId, endId, nofill.getZoomLevel(), nofill.getTileSize()));
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    input.filterInputSplits(null, splits, nofill.getZoomLevel(), nofill.getTileSize());
-
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoBounds() throws Exception
-  {
-    TiledInputFormatContext nobounds =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), nobounds.getZoomLevel(), nobounds.getTileSize());;
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-
-    for (long y = tb.s; y <= tb.n; y++)
+    Assert.assertEquals("Wrong number of splits", spec.result.length, filtered.size());
+    for (int i=0; i < spec.result.length; i++)
     {
-      long startId = TMSUtils.tileid(tb.w, y, nobounds.getZoomLevel());
-      long endId = TMSUtils.tileid(tb.e, y, nobounds.getZoomLevel());
-
-      splits.add(new TiledInputSplit(null, startId, endId, nobounds.getZoomLevel(), nobounds.getTileSize()));
-    }
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nobounds, splits, nobounds.getZoomLevel(), nobounds.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", splits.size(), filtered.size());
-    for (int i = 0; i < splits.size(); i++)
-    {
-      compareSplit(splits.get(i), filtered.get(i));
+      TestResult result = spec.result[i];
+      compareSplit(result.wrapped, filtered.get(i), result.txStart, result.tyStart, result.txEnd, result.tyEnd,
+          fill.getZoomLevel(), fill.getTileSize());
     }
   }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNoBoundsOutsideImage() throws Exception
-  {
-    TiledInputFormatContext nobounds =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), null);
-
-    TMSUtils.TileBounds tb = TMSUtils
-        .boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), nobounds.getZoomLevel(), nobounds.getTileSize());;
-
-    List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
-
-    for (long y = tb.s - 1; y <= tb.n + 1; y++)
-    {
-      long startId = TMSUtils.tileid(tb.w - 1, y, nobounds.getZoomLevel());
-      long endId = TMSUtils.tileid(tb.e + 1, y, nobounds.getZoomLevel());
-
-      splits.add(new TiledInputSplit(null, startId, endId, nobounds.getZoomLevel(), nobounds.getTileSize()));
-    }
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(nobounds, splits, nobounds.getZoomLevel(), nobounds.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", splits.size(), filtered.size());
-    for (int i = 0; i < splits.size(); i++)
-    {
-      compareSplit(splits.get(i), filtered.get(i));
-    }
-  }
-
-
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
-  public void testFilterInputSplitsNullSplits() throws Exception
-  {
-    TiledInputFormatContext nofill =
-        new TiledInputFormatContext(10, 512, Sets.newHashSet(allones), bounds, (Properties)null);
-
-    // need to use the derived class, since MrsPyramidInputFormat is abstract.
-    MrsPyramidInputFormat<Raster> input = new MrsImagePyramidInputFormat();
-
-    List<TiledInputSplit> filtered = input.filterInputSplits(null, null, nofill.getZoomLevel(), nofill.getTileSize());
-
-    Assert.assertEquals("Wrong number of splits", 1, filtered.size());
-  }
-
-
 
   private void compareSplit(TiledInputSplit expected, TiledInputSplit actual)
   {
@@ -1188,12 +846,27 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
     Assert.assertEquals("Tile size not equal!", expected.getTileSize(), actual.getTileSize());
   }
 
-  private void compareSplit(TiledInputSplit expected, TiledInputSplit actual, long expStTx, long expStTy, long expEnTx,long expEnTy)
+  private void compareSplit(String message,
+      int txExpectedStart, int tyExpectedStart,
+      int txExpectedEnd, int tyExpectedEnd,
+      int expectedZoom, int expectedTileSize, TiledInputSplit actual)
   {
-    Assert.assertEquals("Wrapped split not equal!", expected.getWrappedSplit(), actual.getWrappedSplit());
-    Assert.assertEquals("Start tileid not equal!", TMSUtils.tileid(expStTx, expStTy, expected.getZoomLevel()), actual.getStartTileId());
-    Assert.assertEquals("End tileid not equal!", TMSUtils.tileid(expEnTx, expEnTy, expected.getZoomLevel()), actual.getEndTileId());
-    Assert.assertEquals("Zoom level not equal!", expected.getZoomLevel(), actual.getZoomLevel());
-    Assert.assertEquals("Tile size not equal!", expected.getTileSize(), actual.getTileSize());
+    long expectedStart = TMSUtils.tileid(txExpectedStart, tyExpectedStart, expectedZoom);
+    long expectedEnd = TMSUtils.tileid(txExpectedEnd, tyExpectedEnd, expectedZoom);
+    Assert.assertEquals(message + ": start tileid not equal!", expectedStart, actual.getStartTileId());
+    Assert.assertEquals(message + " end tileid not equal!", expectedEnd, actual.getEndTileId());
+    Assert.assertEquals(message + " zoom level not equal!", expectedZoom, actual.getZoomLevel());
+    Assert.assertEquals(message + " tile size not equal!", expectedTileSize, actual.getTileSize());
+  }
+
+  private void compareSplit(InputSplit expectedWrappedSplit, TiledInputSplit actual,
+      long expStTx, long expStTy, long expEnTx, long expEnTy, int expectedZoom, int expectedTileSize)
+  {
+    Assert.assertEquals("Zoom level not equal!", expectedZoom, actual.getZoomLevel());
+    Assert.assertEquals("Tile size not equal!", expectedTileSize, actual.getTileSize());
+    Assert.assertEquals("Wrapped split not equal!", expectedWrappedSplit, actual.getWrappedSplit());
+    Assert.assertEquals("Start tileid not equal, expected " + expStTx + ", " + expStTy + " got " + TMSUtils.tileid(actual.getStartTileId(), expectedZoom).toString(),
+        TMSUtils.tileid(expStTx, expStTy, expectedZoom), actual.getStartTileId());
+    Assert.assertEquals("End tileid not equal, expected "  + expEnTx + ", " + expEnTy + " got " + TMSUtils.tileid(actual.getEndTileId(), expectedZoom).toString(), TMSUtils.tileid(expEnTx, expEnTy, expectedZoom), actual.getEndTileId());
   }
 }
