@@ -15,8 +15,6 @@
 
 package org.mrgeo.data.accumulo.ingest;
 
-import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
-import com.sun.org.apache.xml.internal.security.utils.Base64;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -34,6 +32,7 @@ import org.mrgeo.data.ingest.ImageIngestRawInputFormatProvider;
 import org.mrgeo.data.ingest.ImageIngestTiledInputFormatProvider;
 import org.mrgeo.data.ingest.ImageIngestWriterContext;
 import org.mrgeo.data.tile.MrsTileWriter;
+import org.mrgeo.utils.Base64Utils;
 
 import java.awt.image.Raster;
 import java.io.IOException;
@@ -183,22 +182,29 @@ public class AccumuloImageIngestDataProvider extends ImageIngestDataProvider
       auths = new Authorizations(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
     }
     
-    byte[] pw;
+    String pw;
     String enc = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
-    try{
-      if(Boolean.parseBoolean(enc)){
-        pw = Base64.decode(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
-      } else {
-        pw = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes();
+    try
+    {
+      if (Boolean.parseBoolean(enc))
+      {
+        pw = Base64Utils.decodeToObject(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD)).toString();
+        //pw = Base64.decode();
       }
-    } catch(Base64DecodingException b64){
-      throw new IOException(b64.getMessage());
+      else
+      {
+        pw = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
+      }
     }
-    
+    catch (ClassNotFoundException e)
+    {
+      throw new IOException(e);
+    }
+
     TCredentials tcr = new TCredentials();
     tcr.setInstanceId(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
     tcr.setPrincipal(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
-    tcr.setToken(pw);
+    tcr.setToken(pw.getBytes());
     
     Connector conn = AccumuloConnector.getConnector(props);
     // get the list of tables
