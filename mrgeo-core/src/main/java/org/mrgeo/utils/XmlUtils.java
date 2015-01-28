@@ -15,13 +15,13 @@
 
 package org.mrgeo.utils;
 
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
-import com.sun.org.apache.xpath.internal.XPathAPI;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.bootstrap.DOMImplementationRegistry;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -30,6 +30,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
 
@@ -181,7 +182,7 @@ public class XmlUtils
   }
 
   /**
-   * @param fdis
+   * @param is
    * @return
    * @throws ParserConfigurationException
    * @throws IOException
@@ -233,11 +234,26 @@ public class XmlUtils
   {
     // happy to replace this code w/ the non-deprecated code, but I couldn't get the transformer 
     // approach to work. 
-    OutputFormat format = new OutputFormat(doc);
-    format.setIndenting(true);
-    format.setIndent(2);
-    XMLSerializer serializer = new XMLSerializer(out, format);
-    serializer.serialize(doc);
+//    OutputFormat format = new OutputFormat(doc);
+//    format.setIndenting(true);
+//    format.setIndent(2);
+//    XMLSerializer serializer = new XMLSerializer(out, format);
+//    serializer.serialize(doc);
+
+    DOMImplementationRegistry registry = null;
+    try
+    {
+      registry = DOMImplementationRegistry.newInstance();
+      DOMImplementationLS impl =
+          (DOMImplementationLS)registry.getDOMImplementation("LS");
+
+      LSSerializer writer = impl.createLSSerializer();
+      out.write(writer.writeToString(doc));
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+    }
   }
   
   /**
@@ -252,6 +268,20 @@ public class XmlUtils
   public static boolean nodeExists(Node topLevelDomNode, String xpathQuery) 
     throws TransformerException
   {
-    return XPathAPI.selectNodeList(topLevelDomNode, xpathQuery).getLength() > 0;
+    //return XPathAPI.selectNodeList(topLevelDomNode, xpathQuery).getLength() > 0;
+
+    XPathFactory factory = XPathFactory.newInstance();
+    XPath xpath = factory.newXPath();
+    try
+    {
+      String str = xpath.evaluate(xpathQuery, topLevelDomNode);
+
+      return str != null && str.length() > 0;
+    }
+    catch (XPathExpressionException e)
+    {
+    }
+
+    return false;
   }
 }
