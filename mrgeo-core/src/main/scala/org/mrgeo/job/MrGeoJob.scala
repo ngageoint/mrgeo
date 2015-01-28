@@ -1,14 +1,19 @@
 package org.mrgeo.job
 
-import java.io.File
+import java.io.{OutputStream, InputStream, File}
 import java.net.URL
+import java.nio.ByteBuffer
 
 import org.apache.hadoop.util.ClassUtil
-import org.apache.spark.deploy.yarn.ApplicationMaster
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.hadoop.yarn.api.records.LocalResourceVisibility
+import org.apache.hadoop.yarn.conf.YarnConfiguration
+import org.apache.hadoop.yarn.util.ApplicationClassLoader
+import org.apache.spark.deploy.yarn.Client
+import org.apache.spark.serializer.{SerializationStream, DeserializationStream, SerializerInstance}
+import org.apache.spark.{Logging, SparkConf, SparkContext}
 import org.mrgeo.utils.DependencyLoader
 import scala.collection.JavaConversions._
-import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
 import scala.util.control.Breaks
 
@@ -30,13 +35,43 @@ abstract class MrGeoDriver {
     setupDependencies(job)
 
 
-    val urls = job.jars.map(jar => new File(jar).toURI.toURL)
-    val cl = new URLClassLoader(urls.toSeq, Thread.currentThread().getContextClassLoader)
+    var parentLoader:ClassLoader = Thread.currentThread().getContextClassLoader
+    if (parentLoader == null) {
+      parentLoader = getClass.getClassLoader
+    }
 
+    val urls = job.jars.map(jar => new File(jar).toURI.toURL)
+    val cl = new URLClassLoader(urls.toSeq, parentLoader)
+
+    if (job.isYarn) {
+      addYarnClasses(cl)
+    }
     val jobclass = cl.loadClass(job.driverClass)
 
     val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoJob]
     jobinstance.run(job.toArgArray)
+  }
+
+  private def addYarnClasses(cl: URLClassLoader) = {
+    val conf:YarnConfiguration = new YarnConfiguration
+
+    // get the yarn classpath from the configuration...
+    var cp = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")
+
+    // replace any variables $<xxx> with their environmental value
+    val envMap = System.getenv()
+    for ( entry <- envMap.entrySet()) {
+      val key = entry.getKey
+      val value = entry.getValue
+
+      cp = cp.replaceAll("\\$" + key, value)
+    }
+
+    // add the urls to the classloader
+    for (str <- cp.split(",")) {
+      val url = new File(str.trim).toURI.toURL
+      cl.addURL(url)
+    }
   }
 
   protected def setupDependencies(job:JobArguments): Unit = {
@@ -47,10 +82,10 @@ abstract class MrGeoDriver {
     for (jar <- dependencies) {
       // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...
       //if (!jar.contains("spark-yarn")) {
-        if (jars.length > 0) {
-          jars ++= ","
-        }
-        jars ++= jar
+      if (jars.length > 0) {
+        jars ++= ","
+      }
+      jars ++= jar
       //}
     }
     job.setJars(jars.toString())
@@ -100,6 +135,56 @@ abstract class MrGeoDriver {
 
 }
 
+class MySerializer(conf: SparkConf)
+    extends org.apache.spark.serializer.Serializer
+            with Logging
+            with Serializable {
+
+  println("***** Serializer *****")
+
+  val cl = this.getClass.getClassLoader
+  val rs = cl.loadClass("org.mrgeo.data.tile.TileIdWritable")
+
+  println("--- this.getClass.getClassLoader")
+  println(if (rs == null)  "null" else rs.getCanonicalName)
+
+  val tl = Thread.currentThread().getContextClassLoader
+  //    for (r <- sl.asInstanceOf[URLClassLoader].getURLs) {
+  //      println(r)
+  //    }
+  val ts = tl.loadClass("org.mrgeo.data.tile.TileIdWritable")
+
+  println("---Thread.currentThread().getContextClassLoader")
+  println(if (ts == null)  "null" else ts.getCanonicalName)
+
+  val sl = ClassLoader.getSystemClassLoader
+  //    for (r <- sl.asInstanceOf[URLClassLoader].getURLs) {
+  //      println(r)
+  //    }
+  println("---ClassLoader.getSystemClassLoader")
+  val ss = sl.loadClass("org.mrgeo.data.tile.TileIdWritable")
+
+  println(if (ss == null)  "null" else ss.getCanonicalName)
+  println("---")
+
+  override def newInstance(): SerializerInstance = {
+    new MySerializerInstance(this)
+  }
+}
+
+private[job] class MySerializerInstance(ks: MySerializer) extends SerializerInstance {
+  override def serialize[T](t: T)(implicit evidence$1: ClassTag[T]): ByteBuffer = { null }
+
+  override def serializeStream(s: OutputStream): SerializationStream = { null }
+
+  override def deserializeStream(s: InputStream): DeserializationStream = { null }
+
+  override def deserialize[T](bytes: ByteBuffer)(implicit evidence$2: ClassTag[T]): T = { null.asInstanceOf[T] }
+
+  override def deserialize[T](bytes: ByteBuffer, loader: ClassLoader)(implicit evidence$3: ClassTag[T]): T = { null.asInstanceOf[T]  }
+}
+
+
 abstract class MrGeoJob  {
   def registerClasses(): Array[Class[_]]
   def setup(job:JobArguments): Boolean
@@ -108,6 +193,7 @@ abstract class MrGeoJob  {
 
   private[job] def run(args:Array[String] = new Array[String](0)) = {
     val job = new JobArguments(args)
+
 
     println("Configuring application")
     setup(job)
@@ -136,12 +222,15 @@ abstract class MrGeoJob  {
         //    .set("spark.driver.extraJavaOptions", "")
         //    .set("spark.driver.extraLibraryPath", "")
 
+        .set("spark.yarn.preserve.staging.files", "true")
         .set("spark.storage.memoryFraction","0.25")
 
         // setup the kryo serializer
-        .set("spark.serializer","org.apache.spark.serializer.KryoSerializer")
-        //.set("spark.kryo.registrator","org.mrgeo.job.KryoRegistrar"
-        .set("spark.kryoserializer.buffer.mb","128")
+        //.set("spark.serializer","org.mrgeo.job.MySerializer")
+        //.set("spark.serializer","org.apache.spark.serializer.KryoSerializer")
+        //.set("spark.kryo.registrator","org.mrgeo.job.KryoRegistrar")
+        //.set("spark.kryoserializer.buffer.mb","128")
+
 
         // driver memory and cores
         .set("spark.driver.memory", if (job.driverMem != null) job.driverMem else "128m")
@@ -151,29 +240,45 @@ abstract class MrGeoJob  {
       //conf.set("spark.yarn.jar","")
       conf.set("spark.executor.memory", if (job.executorMem != null) job.executorMem else "128m")
           .set("spark.cores.max", if (job.executors > 0) job.executors.toString else "1")
-      .setMaster(job.YARN + "-client")
+          // running in "client" mode, the driver runs outside of YARN, but submits tasks
+          .setMaster(job.YARN + "-client")
 
       System.setProperty("SPARK_YARN_MODE", "true")
+
+      val sb = new StringBuilder
+
+      job.jars.foreach(jar => {
+        sb ++= jar
+        sb += ','
+      })
+
+      //conf.set("spark.yarn.dist.files", sb.substring(0, sb.length - 1))
+
       // need to initialize the ApplicationMaster
-//      val appargs = new ArrayBuffer[String]()
-//
-//      appargs += "--jar"
-//      appargs += job.driverJar
-//
-//      appargs += "--class"
-//      appargs += job.driverClass
-//
-//      appargs +=
+      //      val appargs = new ArrayBuffer[String]()
+      //
+      //      appargs += "--jar"
+      //      appargs += job.driverJar
+      //
+      //      appargs += "--class"
+      //      appargs += job.driverClass
+      //
+      //      appargs +=
       //ApplicationMaster.main(appargs.toArray)
-//      ApplicationMaster.main(job.toArgArray)
+      //      ApplicationMaster.main(job.toArgArray)
     }
     else if (job.isSpark) {
       conf.set("spark.driver.memory", if (job.driverMem != null) job.driverMem else "128m")
           .set("spark.driver.cores", if (job.cores > 0) job.cores.toString else "1")
     }
 
-    for (j <- job.jars) { println(j)}
-    new SparkContext(conf)
+    val context = new SparkContext(conf)
+
+    //    job.jars.foreach(jar => {
+    //      println(jar)
+    //      context.addJar(jar)})
+
+    context
   }
 
   //  final def main(args:Array[String]): Unit = {

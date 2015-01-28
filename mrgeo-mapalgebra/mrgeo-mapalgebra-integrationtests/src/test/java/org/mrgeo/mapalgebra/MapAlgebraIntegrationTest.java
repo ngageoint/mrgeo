@@ -74,14 +74,16 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   private static final String allones = "all-ones";
   private static Path allonesPath;
   private static final String alltwos = "all-twos";
+  private static Path alltwosPath;
   private static final String allhundreds = "all-hundreds";
+  private static Path allhundredsPath;
 
   private static MapOpTestUtils testUtils;
   // Vector private static MapOpTestVectorUtils vectorTestUtils;
 
   private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationTest.class);
 
-//  private static String factor1 = "fs_Bazaars_v2";
+  //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
   private Properties props = null;
@@ -133,10 +135,10 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     allonesPath = new Path(testUtils.getInputHdfs(), allones);
 
     HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), alltwos);
-    //alltwosPath = new Path(testUtils.getInputHdfs(), allones);
+    alltwosPath = new Path(testUtils.getInputHdfs(), alltwos);
 
     HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundreds);
-    // allhundredsPath = new Path(testUtils.getInputHdfs(), allones);
+    allhundredsPath = new Path(testUtils.getInputHdfs(), allhundreds);
 
     HadoopFileUtils
         .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
@@ -530,8 +532,8 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     // hillshading algorithm taken from:
     // http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm
     String exp = String.format("sl = slope([%s], \"rad\"); " +
-        "as = aspect([%s], \"rad\"); " +
-        "hill = 255.0 * ((%f * cos(sl)) + (%f * sin(sl) * cos(%f - as)))", smallElevation, smallElevation,
+            "as = aspect([%s], \"rad\"); " +
+            "hill = 255.0 * ((%f * cos(sl)) + (%f * sin(sl) * cos(%f - as)))", smallElevation, smallElevation,
         coszen, sinzen, sunaz);
 
     if (GEN_BASELINE_DATA_ONLY)
@@ -561,22 +563,20 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
   }
 
-  @Ignore
   @Test
-
   @Category(IntegrationTest.class)
   public void mosaic() throws Exception
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-          String.format("mosaic([%s], [%s])", allonesPath, smallElevationPath), -9999);
-    }
-    else
+//    if (GEN_BASELINE_DATA_ONLY)
+//    {
+//      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+//          String.format("mosaic([%s], [%s])", allhundredsPath, alltwosPath), -9999);
+//    }
+//    else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
           opImageTestUtils.nanTranslatorToMinus9999,
-          String.format("mosaic([%s], [%s])", allonesPath, smallElevationPath));
+          String.format("mosaic([%s], [%s])", allhundredsPath, alltwosPath));
     }
   }
 
@@ -797,7 +797,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     parser.parse(ex);
   }
 
-   @Test(expected = ParserException.class)
+  @Test(expected = ParserException.class)
   @Category(UnitTest.class)
   public void parseInvalidOperation() throws Exception
   {

@@ -95,56 +95,64 @@ public class HdfsMrsImagePyramidSimpleInputFormat extends SequenceFileInputForma
         }
 
         FileSplit fileSplit = (FileSplit) actualSplit;
-        if (lastFile != fileSplit.getPath())
+
+        String name = fileSplit.getPath().getName();
+
+        // ignore splits file
+        if (!fileSplit.getPath().getName().equals("splits"))
         {
-          String partFile = fileSplit.getPath().getParent().getName();
-          if (!partFile.startsWith("part-"))
+          if (lastFile != fileSplit.getPath())
           {
-            throw new IOException("Invalid FileSplit, expected path to start with 'part-': " + partFile);
+            String partFile = fileSplit.getPath().getParent().getName();
+            if (!partFile.startsWith("part-"))
+            {
+              throw new IOException("Invalid FileSplit, expected path to start with 'part-': " + partFile);
+            }
+
+            if (reader != null)
+            {
+              reader.close();
+            }
+            lastFile = fileSplit.getPath();
+
+            //reader = new SequenceFile.Reader(fs, fileSplit.getPath(), conf);
+            reader = new SequenceFile.Reader(conf,
+                SequenceFile.Reader.file(fileSplit.getPath()));
           }
 
-          if (reader != null)
+          if (reader == null)
           {
-            reader.close();
+            throw new IOException("Everything is messed up!");
           }
-          lastFile = fileSplit.getPath();
 
-          //reader = new SequenceFile.Reader(fs, fileSplit.getPath(), conf);
-          reader = new SequenceFile.Reader(conf,
-              SequenceFile.Reader.file(fileSplit.getPath()));
+          TileIdWritable startTileId = new TileIdWritable();
+
+          reader.sync(fileSplit.getStart());
+          RasterWritable value = new RasterWritable();
+          if (reader.next(startTileId, value))
+          {
+            //System.out.println("start: " + startTileId);
+          }
+
+          // seek to just before the last record...
+          long seeker = fileSplit.getStart() + (fileSplit.getLength() - (long) (value.getLength() * 1.05));
+          if (seeker < 0)
+          {
+            seeker = 0;
+          }
+          reader.sync(seeker);
+
+          TileIdWritable endTileId = new TileIdWritable();
+          while (reader.next(endTileId) &&
+              reader.getPosition() <= (fileSplit.getStart() + fileSplit.getLength()))
+          {
+            //System.out.println("skipping: " + endTileId);
+          }
+          //System.out.println("end: " + endTileId);
+
+          result
+              .add(new SimplePyramidInputSplit(pyramid.getName(), startTileId.get(), endTileId.get(), zoom, tilesize));
         }
-
-        if (reader == null)
-        {
-          throw new IOException("Everything is messed up!");
-        }
-
-        TileIdWritable startTileId = new TileIdWritable();
-
-        reader.sync(fileSplit.getStart());
-        RasterWritable value = new RasterWritable();
-        if (reader.next(startTileId, value))
-        {
-          //System.out.println("start: " + startTileId);
-        }
-
-        // seek to just before the last record...
-        long seeker = fileSplit.getStart() + (fileSplit.getLength() - (long) (value.getLength() * 1.05));
-        if (seeker < 0)
-        {
-          seeker = 0;
-        }
-        reader.sync(seeker);
-
-        TileIdWritable endTileId = new TileIdWritable();
-        while (reader.next(endTileId) &&
-            reader.getPosition() <= (fileSplit.getStart() + fileSplit.getLength()))
-        {
-          //System.out.println("skipping: " + endTileId);
-        }
-        //System.out.println("end: " + endTileId);
-
-        result.add(new SimplePyramidInputSplit(pyramid.getName(), startTileId.get(), endTileId.get(), zoom, tilesize));
       }
 
       if (reader != null)

@@ -1,6 +1,7 @@
 package org.mrgeo.job
 
 import java.awt.image.WritableRaster
+import java.net.URLClassLoader
 
 import com.esotericsoftware.kryo.io.{Output, Input}
 import com.esotericsoftware.kryo.{Serializer, KryoSerializable, Kryo}
@@ -21,6 +22,32 @@ class KryoRegistrar extends KryoRegistrator
   override def registerClasses(kryo: Kryo) {
 
 //    kryo.setReferences(false)
+
+    val cl = this.getClass.getClassLoader
+    val rs = cl.loadClass("org.mrgeo.data.tile.TileIdWritable")
+
+    println("---")
+    println(if (rs == null)  "null" else rs.getCanonicalName)
+    println("---")
+
+    val tl = Thread.currentThread().getContextClassLoader
+    //    for (r <- sl.asInstanceOf[URLClassLoader].getURLs) {
+    //      println(r)
+    //    }
+    val ts = tl.loadClass("org.mrgeo.data.tile.TileIdWritable")
+
+    println(if (ts == null)  "null" else ts.getCanonicalName)
+    println("---")
+
+    val sl = ClassLoader.getSystemClassLoader
+    //    for (r <- sl.asInstanceOf[URLClassLoader].getURLs) {
+    //      println(r)
+    //    }
+    val ss = sl.loadClass("org.mrgeo.data.tile.TileIdWritable")
+
+    println(if (ss == null)  "null" else ss.getCanonicalName)
+    println("---")
+
 
     kryo.register(classOf[RasterWritable], new RasterWritableSerializer)
 
