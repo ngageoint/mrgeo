@@ -27,7 +27,6 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.TMSUtils.TileBounds;
 
 import java.io.IOException;
 import java.util.*;
@@ -47,6 +46,117 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
   {
   }
 
+  private interface SplitVisitor
+  {
+    public boolean accept(TiledInputSplit split);
+  }
+  
+  private class RegionSplitVisitor implements SplitVisitor
+  {
+    private TMSUtils.TileBounds region;
+
+    public RegionSplitVisitor(TMSUtils.TileBounds region)
+    {
+      this.region = region;
+    }
+
+    @Override
+    public boolean accept(TiledInputSplit split)
+    {
+      int zoom = split.getZoomLevel();
+      return splitOverlapsTileBounds(
+          TMSUtils.tileid(split.getStartTileId(), zoom),
+          TMSUtils.tileid(split.getEndTileId(), zoom),
+          region);
+    }
+
+    boolean splitOverlapsTileBounds(final TMSUtils.Tile splitStartTile,
+        final TMSUtils.Tile splitEndTile, final TMSUtils.TileBounds cropBounds)
+    {
+      // If the split is either before or beyond the crop, then skip this split
+      if (splitEndTile.ty < cropBounds.s || (splitEndTile.ty == cropBounds.s && splitEndTile.tx < cropBounds.w))
+      {
+        return false;
+      }
+      else if (splitStartTile.ty > cropBounds.n || (splitStartTile.ty == cropBounds.n && splitStartTile.tx > cropBounds.e))
+      {
+        return false;
+      }
+
+      // Check the more complicated overlap cases now. If the vertical difference
+      // between the start tile and end tile is more than one row, then than
+      // split physically has to overlap the crop area because there is at
+      // least one full row of tiles included in the split.
+      long yDelta = splitEndTile.ty - splitStartTile.ty;
+      boolean intersect = false;
+      if (yDelta > 1)
+      {
+        intersect = true;
+      }
+      else if (yDelta == 0)
+      {
+        if (splitEndTile.tx < cropBounds.w || splitStartTile.tx > cropBounds.e)
+        {
+          intersect = false;
+        }
+        else
+        {
+          intersect = true;
+        }
+      }
+      else
+      {
+        // In this case, the split starts in one row, and ends in the row
+        // immediately above it. Now we need to check on where the start tile
+        // x position and end tile x position are relative to the crop area
+        // to determine if there is an intersection
+        if (splitStartTile.tx <= cropBounds.e || splitEndTile.tx >= cropBounds.w)
+        {
+          intersect = true;
+        }
+      }
+      return intersect;
+    }
+  }
+
+  private class SplitIterator
+  {
+    private int splitIndex;
+    private List<TiledInputSplit> splits;
+    private SplitVisitor visitor;
+    
+    public SplitIterator(List<TiledInputSplit> splits, SplitVisitor visitor)
+    {
+      this.splits = splits;
+      this.splitIndex = 0;
+      this.visitor = visitor;
+    }
+
+    public TiledInputSplit next()
+    {
+      if (splitIndex > splits.size())
+      {
+        return null;
+      }
+      while (splitIndex < splits.size())
+      {
+        TiledInputSplit split = splits.get(splitIndex);
+        splitIndex++;
+        if (visitor != null)
+        {
+          if (visitor.accept(split))
+          {
+            return split;
+          }
+        }
+        else
+        {
+          return split;
+        }
+      }
+      return null;
+    }
+  }
   /**
    * Sub-classes must override this method so that the data access layer being used can
    * return the native splits for that specific data format.
@@ -143,8 +253,9 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
     {
       String pyramid = pyramids[i].getName();
       zooms[i] = ifContext.getZoomLevel();
+      List<TiledInputSplit> splits = getNativeSplits(context, ifContext, pyramid);
       nativeSplitsPerInput.add(filterInputSplits(ifContext,
-          getNativeSplits(context, ifContext, pyramid), zooms[i],
+          splits, zooms[i],
           pyramids[i].getTileSize()));
       post.put(pyramid, pyramids[i].getBounds());
     }
@@ -182,6 +293,59 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
   }
 
   /**
+   * Add one new split to result for each row of tiles between fromTileId
+   * and toTileId. The from and to tiles can be in the same row or different
+   * rows.
+   * 
+   * @param result
+   * @param fromTileId
+   * @param toTileId
+   * @param zoom
+   * @param tileSize
+   */
+  private void fillHoles(List<TiledInputSplit> result, long fromTileId,
+   long toTileId, int zoom, int tileSize, TMSUtils.TileBounds cropBounds)
+  {
+    TMSUtils.Tile fromTile = TMSUtils.tileid(fromTileId, zoom);
+    TMSUtils.Tile toTile = TMSUtils.tileid(toTileId, zoom);
+    long txStart = fromTile.tx;
+    long tyStart = fromTile.ty;
+    // If the end of the "from" tile is to the right of the crop bounds, then
+    // move it up one row and start at the left side of the crop bounds.
+    if (txStart > cropBounds.e)
+    {
+      txStart = cropBounds.w;
+      tyStart = fromTile.ty + 1;
+    }
+    for (long ty = tyStart; ty <= toTile.ty; ty++)
+    {
+      long txEnd = -1;
+      if (ty < toTile.ty)
+      {
+        txEnd = cropBounds.e;
+      }
+      else
+      {
+        // It's in the same row as the ending tile. If the ending tile is left of
+        // the crop region, then we do not need to add a split for this row because
+        // it does not overlap the crop region in this row.
+        if (toTile.tx >= cropBounds.w)
+        {
+          txEnd = Math.min(toTile.tx, cropBounds.e);
+        }
+      }
+      // Add the new split if one is needed (e.g. txEnd >= 0)
+      if (txEnd >= 0 && txStart <= txEnd)
+      {
+        long startTileId = TMSUtils.tileid(txStart, ty, zoom);
+        long endTileId = TMSUtils.tileid(txEnd, ty, zoom);
+        result.add(new TiledInputSplit(null, startTileId, endTileId, zoom, tileSize));
+      }
+      txStart = cropBounds.w;
+    }
+  }
+
+  /**
    * Performs cropping of input splits to the bounds specified in the ifContext. This
    * logic is common to all pyramid input formats, regardless of the data provider,
    * so there should be no need to override it in sub-classes.
@@ -195,8 +359,14 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
   List<TiledInputSplit> filterInputSplits(final TiledInputFormatContext ifContext,
       final List<TiledInputSplit> splits, final int zoomLevel, final int tileSize)
   {
+    // If there are no splits or no crop region, just return the splits
+    if (splits.size() == 0 || ifContext.getBounds() == null)
+    {
+      return splits;
+    }
     List<TiledInputSplit> result = new ArrayList<TiledInputSplit>();
-    TMSUtils.TileBounds cropBounds = null;
+    TMSUtils.TileBounds cropBounds = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(ifContext.getBounds()),
+        ifContext.getZoomLevel(), tileSize);
 
     // sort the splits by tileid, so we can handle missing tiles in the case of a fill...S
     Collections.sort(splits, new Comparator<TiledInputSplit>()
@@ -210,160 +380,29 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
       }
     });
 
-
-    TMSUtils.Tile lastTile = null;
-
-    if (ifContext.getBounds() != null)
+    SplitIterator splitIter = new SplitIterator(splits, new RegionSplitVisitor(cropBounds));
+    TiledInputSplit firstSplit = null;
+    TiledInputSplit secondSplit = splitIter.next();
+    long fromTileId = TMSUtils.tileid(cropBounds.w, cropBounds.s, ifContext.getZoomLevel());
+    while (secondSplit != null)
     {
-      cropBounds = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(ifContext.getBounds()), ifContext.getZoomLevel(), tileSize);;
-      lastTile = new TMSUtils.Tile(cropBounds.w, cropBounds.s);
-      System.out.println("Last tile: " + lastTile.toString());
+      long toTileId = secondSplit.getStartTileId() - 1;
+      fillHoles(result, fromTileId, toTileId, ifContext.getZoomLevel(),
+          ifContext.getTileSize(), cropBounds);
+      result.add(secondSplit);
+      firstSplit = secondSplit;
+      secondSplit = splitIter.next();
+      fromTileId = firstSplit.getEndTileId() + 1;
     }
 
-    int cnt = 0;
-    for (TiledInputSplit tiledSplit : splits)
+    // Post-processing to fill in holes beyond the last split but remaining
+    // within the crop bounds
+    if (ifContext.getIncludeEmptyTiles())
     {
-      // If the caller requested bounds cropping, then check the tile bounds for intersection
-      if (cropBounds != null)
-      {
-        // See if the split bounds intersects the crop
-        TMSUtils.Tile splitStartTile = TMSUtils.tileid(tiledSplit.getStartTileId(), ifContext.getZoomLevel());
-        TMSUtils.Tile splitEndTile = TMSUtils.tileid(tiledSplit.getEndTileId(), ifContext.getZoomLevel());
-
-        if(splitEndTile.ty < cropBounds.s){
-    		continue;
-    	} else if(splitStartTile.ty > cropBounds.n){
-    		continue;
-    	}
-        
-        // we know we are in the y range!
-        
-
-        boolean intersect = false;
-        long yDelta = splitEndTile.ty - splitStartTile.ty;
-        long minX, maxX, minY, maxY;
-
-        if(yDelta > 1){
-        	intersect = true;
-        	minX = cropBounds.w;
-    		maxX = cropBounds.e;
-    		minY = Math.max(splitStartTile.ty, cropBounds.s);
-    		maxY = Math.min(splitEndTile.ty, cropBounds.n);
-        	
-        } else if(yDelta == 0){
-        	// am out outside
-        	if(splitEndTile.tx < cropBounds.w || splitStartTile.tx > cropBounds.e){
-        		continue;
-        	} else {
-        		intersect = true;
-        		minX = Math.max(splitStartTile.tx, cropBounds.w);
-        		maxX = Math.min(splitEndTile.tx, cropBounds.e);
-        		minY = splitStartTile.ty;
-        		maxY = splitStartTile.ty;
-        	}
-        	
-        	
-        } else {
-        	// yDelta == 1 now
-        	// need image bounds
-        	if(splitStartTile.tx > cropBounds.e && splitEndTile.tx < cropBounds.w){
-        		continue;
-        	} else {
-        		intersect = true;
-
-        		// this is a lie
-        		minX = cropBounds.w;
-        		maxX = cropBounds.e;
-
-        		// this is right
-        		minY = Math.max(splitStartTile.ty, cropBounds.s);
-        		maxY = Math.min(splitEndTile.ty, cropBounds.n);
-        	}
-        	
-        }
-        
-        
-        
-//        TMSUtils.TileBounds splitTileBounds = new TMSUtils.TileBounds(
-//            splitStartTile.tx, splitStartTile.ty, splitEndTile.tx, splitEndTile.ty);
-        TMSUtils.TileBounds splitTileBounds = new TMSUtils.TileBounds(
-                minX, minY, maxX, maxY);
-            
-
-        TMSUtils.Bounds splitBounds = TMSUtils.tileToBounds(splitTileBounds,
-            zoomLevel, tileSize);
-
-        System.out.println("Cropped bounds:    " + cropBounds.toString());
-        System.out.println("Split Tile bounds: " + splitTileBounds.toString());
-        
-        TMSUtils.TileBounds intersection = cropBounds.intersection(splitTileBounds);
-        //if (intersection != null)
-        if(intersect)
-        {
-          long startId = TMSUtils.tileid(intersection.w, intersection.s, ifContext.getZoomLevel());
-          long endId = TMSUtils.tileid(intersection.e, intersection.n, ifContext.getZoomLevel());
-
-          long lastTileId = TMSUtils.tileid(lastTile.tx, lastTile.ty, ifContext.getZoomLevel());
-
-          if (ifContext.getIncludeEmptyTiles() && lastTileId < startId)
-          {
-            startId = lastTileId;
-          }
-
-          // if we intersect at the right bounds, we need to move the last tile to the next row
-          // in the cropped bounds, otherwise, it's just the next tile
-          if (intersection.e >= cropBounds.e)
-          {
-            lastTile = new TMSUtils.Tile(cropBounds.w, intersection.n + 1);
-          }
-          else
-          {
-            lastTile = new TMSUtils.Tile(intersection.e, intersection.n);
-          }
-
-          result.add(new  TiledInputSplit(tiledSplit.getWrappedSplit(), startId,
-              endId, tiledSplit.getZoomLevel(), tiledSplit.getTileSize()));
-        } else {
-        	//System.out.println("Filtered out split ("+cnt+") " + tiledSplit.getStartTileId() + " => " + tiledSplit.getEndTileId());
-        	System.out.println("Filtered out split ("+cnt+") " +
-        			splitStartTile.tx + ", " + 
-        			splitStartTile.ty + " => " +
-        			splitEndTile.tx + ", " +
-        			splitEndTile.ty);
-        }
-      }
-      else
-      {
-        result.add(tiledSplit);
-      }
-      cnt++;
+      fillHoles(result, fromTileId,
+          TMSUtils.tileid(cropBounds.e, cropBounds.n, zoomLevel),
+          zoomLevel, tileSize, cropBounds);
     }
-
-    // check if we need to add additional tiles to the last split...
-    if (ifContext.getIncludeEmptyTiles() && cropBounds != null)
-    {
-      long finalId = TMSUtils.tileid(cropBounds.e, cropBounds.n, ifContext.getZoomLevel());
-
-      long lastTileId = TMSUtils.tileid(lastTile.tx, lastTile.ty, ifContext.getZoomLevel());
-      if (finalId > lastTileId)
-      {
-        if (result.size() > 0)
-        {
-          TiledInputSplit last = result.get(result.size() - 1);
-
-          result.set(result.size() - 1, new TiledInputSplit(last.getWrappedSplit(), last.getStartTileId(),
-              finalId, last.getZoomLevel(), last.getTileSize()));
-        }
-        else
-        {
-          // nothing put in the result, this means we'll have all blank tiles returned
-          result.add(new TiledInputSplit(null, lastTileId,
-              finalId, ifContext.getZoomLevel(), ifContext.getTileSize()));
-        }
-      }
-    }
-    
-    System.out.println("Number of result splits from format = " + result.size());
     return result;
   }
 }
