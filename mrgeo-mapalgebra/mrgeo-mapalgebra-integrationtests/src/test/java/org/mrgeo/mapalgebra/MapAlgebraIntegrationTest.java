@@ -500,6 +500,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
               + "[" + allonesPath.toString() + "];");
     }
   }
+
   @Test
   @Category(IntegrationTest.class)
   public void fill() throws Exception
@@ -517,8 +518,25 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
   }
 
-
-
+  // Run a fill for the upper right corner of the image. This tests
+  // that the fill code properly handles splits that begin with tiles
+  // outside of the crop bounds.
+  @Test
+  @Category(IntegrationTest.class)
+  public void fill1() throws Exception
+  {
+    // paths with file extensions
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          "fill([" + greece + "], 1, 24.9, 41.3, 26, 43, \"EXACT\")");
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          "fill([" + greece + "], 1, 24.9, 41.3, 26, 43, \"EXACT\")");
+    }
+  }
 
   @Test
   @Category(IntegrationTest.class)

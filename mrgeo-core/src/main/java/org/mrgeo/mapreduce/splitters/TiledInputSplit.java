@@ -96,13 +96,13 @@ public class TiledInputSplit extends InputSplit implements Writable
   @Override
   public long getLength() throws IOException, InterruptedException
   {
-    return wrappedInputSplit.getLength();
+    return (wrappedInputSplit != null) ? wrappedInputSplit.getLength() : 0;
   }
 
   @Override
   public String[] getLocations() throws IOException, InterruptedException
   {
-    return wrappedInputSplit.getLocations();
+    return (wrappedInputSplit != null) ? wrappedInputSplit.getLocations() : new String[0];
   }
 
   public InputSplit getWrappedSplit()
