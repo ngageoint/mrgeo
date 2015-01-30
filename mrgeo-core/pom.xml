@@ -19,6 +19,7 @@
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo</artifactId>
     <version>0.5.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>mrgeo-core</artifactId>
   <packaging>jar</packaging>
@@ -227,34 +228,6 @@
     </plugins>
   </build>
   <profiles>
-    <!-- for using Spark -->
-    <!--
-    <profile>
-      <id>CDH530-yarn</id>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-yarn-api</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-yarn-common</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-yarn-server-web-proxy</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-yarn-client</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-yarn_2.10</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    -->
     <profile>
       <id>run-shading</id>
       <build>
@@ -262,7 +235,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
-            <version>2.3</version>
             <executions>
               <execution>
                 <phase>package</phase>
@@ -271,6 +243,37 @@
                 </goals>
                 <configuration>
                   <finalName>${project.artifactId}-${project.parent.version}-jar-with-dependencies</finalName>
+                  <shadedArtifactAttached>true</shadedArtifactAttached>
+                  <generateUniqueDependencyReducedPom>true</generateUniqueDependencyReducedPom>
+                  <artifactSet>
+				  <includes>
+					<include>*</include>
+				  </includes>
+				  <excludes>
+					  <exclude>org.spark-project:unused</exclude>
+				  </excludes>
+				</artifactSet>
+                  <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                      <manifestEntries>
+                        <Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
+                        <Specification-Version>1.1</Specification-Version>
+                        <Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
+                        <Implementation-Title>com.sun.media.imageio</Implementation-Title>
+                        <Implementation-Version>1.1</Implementation-Version>
+                        <Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
+                        <Extension-Name>com.sun.media.imageio</Extension-Name>
+                        <Sealed>true</Sealed>
+                      </manifestEntries>
+                    </transformer>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                      <resource>META-INF/spring.handlers</resource>
+                    </transformer>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                      <resource>META-INF/spring.schemas</resource>
+                    </transformer>
+                  </transformers>
                 </configuration>
               </execution>
             </executions>
@@ -407,6 +410,10 @@
     <dependency>
       <groupId>com.esotericsoftware.kryo</groupId>
       <artifactId>kryo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
     </dependency>
   </dependencies>
 </project>
