@@ -18,9 +18,11 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo-mapalgebra</artifactId>
-    <version>0.5.0-SNAPSHOT</version>
+    <version>${mrgeo.version}</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>mrgeo-mapalgebra-image</artifactId>
+  <version>${mrgeo.version}</version>
   <packaging>jar</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -66,23 +68,6 @@
         <configuration>
           <skipTests>${skip.mrgeo.mapalgebra.integration.tests}</skipTests>
         </configuration>
-      </plugin>
-      <!-- generate dependency versions -->
-      <plugin>
-        <groupId>org.apache.servicemix.tooling</groupId>
-        <artifactId>depends-maven-plugin</artifactId>
-        <version>1.2</version>
-        <executions>
-          <execution>
-            <id>generate-depends-file</id>
-            <goals>
-              <goal>generate-depends-file</goal>
-            </goals>
-            <configuration>
-              <outputFile>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</outputFile>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -131,39 +116,27 @@
       <plugin>
         <groupId>com.pyx4j</groupId>
         <artifactId>maven-junction-plugin</artifactId>
-        <version>1.0.3</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <configuration>
+          <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
+          <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.mrgeo.plugins</groupId>
+        <artifactId>pomtools-maven-plugin</artifactId>
         <executions>
+          <!-- turn on generate dependencies -->
           <execution>
-            <id>link-core</id>
-            <phase>package</phase>
-            <goals>
-              <goal>link</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>unlink</id>
-            <phase>clean</phase>
-            <goals>
-              <goal>unlink</goal>
-            </goals>
+            <id>generate-dependencies</id>
+            <phase>generate-sources</phase>
           </execution>
         </executions>
-        <configuration>
-          <links>
-            <link>
-              <src>${project.build.directory}/${project.build.finalName}.${project.packaging}</src>
-              <dst>${project.build.directory}/${project.artifactId}.${project.packaging}</dst>
-            </link>
-            <link>
-              <src>${project.build.directory}/${project.build.finalName}-tests.${project.packaging}</src>
-              <dst>${project.build.directory}/${project.artifactId}-tests.${project.packaging}</dst>
-            </link>
-          </links>
-        </configuration>
       </plugin>
     </plugins>
   </build>
-  <dependencies>
-	  <!-- no dependencies? -->
-  </dependencies>
+  <dependencies><!-- no dependencies? --></dependencies>
 </project>

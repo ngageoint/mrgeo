@@ -108,6 +108,7 @@ MODULE="all"
 BUILD="CDH450"
 CONF="/etc/hadoop/conf"
 LICENSE="-DskipLicenses"
+RELEASEPHASE=prepare
 
 # add any predefined options (for developer convencience)
 if [ -n "$MRGEO_BUILD_OPTIONS" ]; then

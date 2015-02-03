@@ -18,9 +18,13 @@
   <groupId>org.mrgeo</groupId>
   <artifactId>mrgeo</artifactId>
   <name>MrGeo</name>
-  <version>0.5.0-SNAPSHOT</version>
+  <version>${mrgeo.version}</version>
   <packaging>pom</packaging>
   <properties>
+    <!-- version -->
+    <mrgeo.version>0.5.0-${final.classifier}-SNAPSHOT</mrgeo.version>
+    <!-- classifier to tag onto the end of the jars -->
+    <final.classifier>unknown</final.classifier>
     <!-- default location for the hadoop config files, used for testing -->
     <hadoop.config>/etc/hadoop/conf</hadoop.config>
     <!-- classifier put on the distribution -->
@@ -143,6 +147,54 @@
             <doUpdate>false</doUpdate>
             <revisionOnScmFailure>unknown</revisionOnScmFailure>
             <timestampFormat>{0,date,yyyy-MM-dd HH:mm:ss}</timestampFormat>
+          </configuration>
+        </plugin>
+        <!--
+             <plugin>
+             <groupId>org.apache.servicemix.tooling</groupId>
+             <artifactId>depends-maven-plugin</artifactId>
+             <version>1.2</version>
+             <executions>
+             <execution>
+             <id>generate-depends-file</id>
+             <goals>
+             <goal>generate-depends-file</goal>
+             </goals>
+             <configuration>
+             <outputFile>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</outputFile>
+             </configuration>
+             </execution>
+             </executions>
+             </plugin>
+        -->
+        <!-- Make some soft links for the generated products, for convenience -->
+        <plugin>
+          <groupId>com.pyx4j</groupId>
+          <artifactId>maven-junction-plugin</artifactId>
+          <version>1.0.3</version>
+          <executions>
+            <execution>
+              <id>link-core</id>
+              <phase>package</phase>
+              <goals>
+                <goal>link</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>unlink</id>
+              <phase>clean</phase>
+              <goals>
+                <goal>unlink</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <links>
+              <link>
+                <src>${project.build.directory}/${project.build.finalName}.${project.packaging}</src>
+                <dst>${project.build.directory}/${project.artifactId}.${project.packaging}</dst>
+              </link>
+            </links>
           </configuration>
         </plugin>
         <plugin>
@@ -347,6 +399,7 @@
           <version>${maven-shade.version}</version>
           <configuration>
             <shadedArtifactAttached>false</shadedArtifactAttached>
+            <createDependencyReducedPom>true</createDependencyReducedPom>
             <artifactSet>
               <includes>
                 <include>org.spark-project:unused</include>
@@ -359,6 +412,53 @@
               <goals>
                 <goal>shade</goal>
               </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- build the effective pom -->
+        <plugin>
+          <groupId>org.mrgeo.plugins</groupId>
+          <artifactId>pomtools-maven-plugin</artifactId>
+          <version>0.1</version>
+          <executions>
+            <execution>
+              <id>generate-pom</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>generate-pom</goal>
+              </goals>
+              <configuration>
+                <output>${project.build.directory}/generated-sources/effective-pom.xml</output>
+              </configuration>
+            </execution>
+            <execution>
+              <id>generate-dependencies</id>
+              <phase/>
+              <goals>
+                <goal>list-dependencies</goal>
+              </goals>
+              <configuration>
+                <output>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</output>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- install the effective pom -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.5.1</version>
+          <configuration>
+            <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
+            <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
+          </configuration>
+          <executions>
+            <execution>
+              <id>install-effective-pom</id>
+              <goals>
+                <goal>install-file</goal>
+              </goals>
+              <phase>install</phase>
             </execution>
           </executions>
         </plugin>
@@ -386,7 +486,15 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
+        <artifactId>maven-install-plugin</artifactId>
+        <configuration>
+          <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
+          <file>${project.build.directory}/generated-sources/effective-pom.xml</file>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.mrgeo.plugins</groupId>
+        <artifactId>pomtools-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -405,7 +513,6 @@
          | <profile>
          |   <id>CDH520-yarn</id>
          |   <properties>
-         |     <hadoop-provider></hadoop-provider>
          |     <hadoop.version></hadoop.version>
          |     <mahout.version></mahout.version>
          |     <pig.version></pig.version>
@@ -416,16 +523,6 @@
          |  </properties>
          |</profile>
          |
-         | java.version - java version to compile against (1.7, 1.8, etc.)  usually 1.7
-         |
-         | hadoop-provider - the "type" of hadoop build
-         |                     apache2          - Apache Hadoop, version 2.0+
-         |                     apache2-yarn     - Apache Hadoop, version 2.0+, using YARN
-         |                     cloudera4        - Cloudera Hadoop, 4 series
-         |                     cloudera4-yarn   - Cloudera Hadoop, 4 series, using YARN
-         |                     cloudera5        - Cloudera Hadoop, 5 series
-         |                     cloudera5-yarn   - Cloudera Hadoop, 5 series, using YARN
-         | hadoop-provider-groupid - the dependency groupid for the hadoop version, usually org.apache.hadoop
          | hadoop-version - the dependency version number
          | mahout.version - the apache mahout version corresponding to the hadoop version
          | pig.version - the apache pig version corresponding to the hadoop version
@@ -442,8 +539,9 @@
         <mahout.version>0.9-cdh5.3.0</mahout.version>
         <pig.version>0.12.0-cdh5.3.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.2.0-cdh5.3.0</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <final.classifier>CDH530</final.classifier>
+        <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -457,44 +555,22 @@
         <dependency>
           <groupId>org.apache.spark</groupId>
           <artifactId>spark-yarn_2.10</artifactId>
-          <version>1.2.0-cdh5.3.0</version>
+          <version>${spark.version}</version>
         </dependency>
       </dependencies>
     </profile>
     <profile>
       <id>CDH530</id>
       <properties>
-        <java.version>1.7</java.version>
         <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
         <pig.version>0.12.0-cdh5.3.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <hadoop.config>/etc/hadoop/conf</hadoop.config>
-        <final.classifier>CDH530</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
-        <include.costdistance>false</include.costdistance>
+        <spark.version>1.2.0-cdh5.3.0</spark.version>
+        <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
       </properties>
-      <!-- dependencies here can not have properties in them (no ${}!) -->
-      <dependencyManagement>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-network-common_2.10</artifactId>
-            <version>1.2.0-cdh5.3.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.10</artifactId>
-            <version>1.2.0-cdh5.3.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-graphx_2.10</artifactId>
-            <version>1.2.0-cdh5.3.0</version>
-          </dependency>
-        </dependencies>
-      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -514,58 +590,15 @@
     <profile>
       <id>CDH520-yarn</id>
       <properties>
-        <java.version>1.7</java.version>
         <hadoop.version>2.5.0-cdh5.2.0</hadoop.version>
         <mahout.version>0.9-cdh5.2.0</mahout.version>
         <pig.version>0.12.0-cdh5.2.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <hadoop.config>/etc/hadoop/conf</hadoop.config>
         <slf4j.version>1.6.1</slf4j.version>
-        <final.classifier>CDH520</final.classifier>
-        <slf4j.version>1.6.1</slf4j.version>
-        <include.costdistance>false</include.costdistance>
+        <spark.version>1.1.0-cdh5.2.0</spark.version>
+        <final.classifier>cdh5.2.0</final.classifier>
         <release.arguments />
       </properties>
-      <!-- dependencies here can not have properties in them (no ${}!) -->
-      <dependencyManagement>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-api</artifactId>
-            <version>2.5.0-cdh5.2.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-common</artifactId>
-            <version>2.5.0-cdh5.2.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-server-web-proxy</artifactId>
-            <version>2.5.0-cdh5.2.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-client</artifactId>
-            <version>2.5.0-cdh5.2.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-yarn_2.10</artifactId>
-            <version>1.1.0-cdh5.2.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.10</artifactId>
-            <version>1.1.0-cdh5.2.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-graphx_2.10</artifactId>
-            <version>1.1.0-cdh5.2.0</version>
-          </dependency>
-        </dependencies>
-      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -578,32 +611,15 @@
     <profile>
       <id>CDH520</id>
       <properties>
-        <java.version>1.7</java.version>
         <hadoop.version>2.5.0-mr1-cdh5.2.0</hadoop.version>
         <mahout.version>0.9-cdh5.2.0</mahout.version>
         <pig.version>0.12.0-cdh5.2.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <hadoop.config>/etc/hadoop/conf</hadoop.config>
-        <final.classifier>CDH520</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
-        <include.costdistance>false</include.costdistance>
+        <spark.version>1.1.0-cdh5.2.0</spark.version>
+        <final.classifier>cdh5.2.0</final.classifier>
         <release.arguments />
       </properties>
-      <!-- dependencies here can not have properties in them (no ${}!) -->
-      <dependencyManagement>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.10</artifactId>
-            <version>1.1.0-cdh5.2.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-graphx_2.10</artifactId>
-            <version>1.1.0-cdh5.2.0</version>
-          </dependency>
-        </dependencies>
-      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -623,58 +639,15 @@
     <profile>
       <id>CDH510-yarn</id>
       <properties>
-        <java.version>1.7</java.version>
         <hadoop.version>2.3.0-cdh5.1.0</hadoop.version>
         <mahout.version>0.9-cdh5.1.0</mahout.version>
         <pig.version>0.12.0-cdh5.1.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <hadoop.config>/etc/hadoop/conf</hadoop.config>
         <slf4j.version>1.6.1</slf4j.version>
-        <final.classifier>CDH510</final.classifier>
-        <reuseTestVMs>true</reuseTestVMs>
-        <include.costdistance>false</include.costdistance>
+        <spark.version>1.0.0-cdh5.1.0</spark.version>
+        <final.classifier>cdh5.1.0</final.classifier>
         <release.arguments />
       </properties>
-      <!-- dependencies here can not have properties in them (no ${}!) -->
-      <dependencyManagement>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-api</artifactId>
-            <version>2.3.0-cdh5.1.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-common</artifactId>
-            <version>2.3.0-cdh5.1.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-server-web-proxy</artifactId>
-            <version>2.3.0-cdh5.1.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-client</artifactId>
-            <version>2.3.0-cdh5.1.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-yarn_2.10</artifactId>
-            <version>1.0.0-cdh5.1.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.10</artifactId>
-            <version>1.0.0-cdh5.1.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-graphx_2.10</artifactId>
-            <version>1.0.0-cdh5.1.0</version>
-          </dependency>
-        </dependencies>
-      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -687,33 +660,15 @@
     <profile>
       <id>CDH510</id>
       <properties>
-        <java.version>1.7</java.version>
         <hadoop.version>2.3.0-mr1-cdh5.1.0</hadoop.version>
         <mahout.version>0.9-cdh5.1.0</mahout.version>
         <pig.version>0.12.0-cdh5.1.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <hadoop.config>/etc/hadoop/conf</hadoop.config>
-        <final.classifier>CDH510</final.classifier>
-        <release.arguments />
         <slf4j.version>1.6.1</slf4j.version>
-        <include.costdistance>false</include.costdistance>
+        <spark.version>1.0.0-cdh5.1.0</spark.version>
+        <final.classifier>cdh5.1.0</final.classifier>
         <release.arguments />
       </properties>
-      <!-- dependencies here can not have properties in them (no ${}!) -->
-      <dependencyManagement>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.10</artifactId>
-            <version>1.0.0-cdh5.1.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-graphx_2.10</artifactId>
-            <version>1.0.0-cdh5.1.0</version>
-          </dependency>
-        </dependencies>
-      </dependencyManagement>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
         <dependency>
@@ -726,15 +681,12 @@
     <profile>
       <id>CDH470</id>
       <properties>
-        <java.version>1.7</java.version>
         <hadoop.version>2.0.0-mr1-cdh4.7.0</hadoop.version>
         <mahout.version>0.7-cdh4.7.0</mahout.version>
         <pig.version>0.11.0-cdh4.7.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
-        <hadoop.config>/etc/hadoop/conf</hadoop.config>
-        <final.classifier>CDH470</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
-        <reuseTestVMs>true</reuseTestVMs>
+        <final.classifier>cdh4.7.0</final.classifier>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
@@ -755,15 +707,12 @@
     <profile>
       <id>CDH470-yarn</id>
       <properties>
-        <java.version>1.7</java.version>
         <hadoop.version>2.0.0-cdh4.7.0</hadoop.version>
         <mahout.version>0.7-cdh4.7.0</mahout.version>
         <pig.version>0.11.0-cdh4.7.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
-        <hadoop.config>/etc/hadoop/conf</hadoop.config>
-        <final.classifier>CDH470</final.classifier>
+        <final.classifier>cdh4.7.0</final.classifier>
         <slf4j.version>1.6.1</slf4j.version>
-        <include.costdistance>false</include.costdistance>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
@@ -908,6 +857,7 @@
         </property>
       </activation>
       <modules>
+        <module>mrgeo-core</module>
         <module>mrgeo-vector</module>
       </modules>
     </profile>
@@ -986,7 +936,7 @@
     </profile>
     <!-- profiles that may be included in child POMs -->
     <profile>
-		<id>run-shading</id>
+      <id>run-shading</id>
     </profile>
   </profiles>
   <!-- DependencyManagement is intended to maintain consistant dependency versioning across all the projects.
@@ -1010,6 +960,168 @@
   -->
   <dependencyManagement>
     <dependencies>
+      <!-- mrgeo dependencies.  Here for consistancy between projects! -->
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-buildpyramid</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-core</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-developers</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-distribution</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-export</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-ingest</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-ingestvector</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-mapalgebra</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-core</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-core</artifactId>
+        <version>${mrgeo.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-dataprovider</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-dataprovider-accumulo</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-dataprovider-distribution</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra-image</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra-integrationtests</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra-integrationtests-costdistance</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra-rasterizevector</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra-terrain</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-mapalgebra-vector</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-pig</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-services</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-services-core</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-services-core</artifactId>
+        <version>${mrgeo.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-services-tms</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-services-wms</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-vector</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-vector</artifactId>
+        <version>${mrgeo.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>

@@ -18,9 +18,11 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo-mapalgebra</artifactId>
-    <version>0.5.0-SNAPSHOT</version>
+    <version>${mrgeo.version}</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>mrgeo-mapalgebra-integrationtests</artifactId>
+  <version>${mrgeo.version}</version>
   <packaging>jar</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -62,56 +64,29 @@
           <skipTests>${skip.mrgeo.mapalgebra.integration.tests}</skipTests>
         </configuration>
       </plugin>
-      <!-- generate dependency versions -->
-      <plugin>
-        <groupId>org.apache.servicemix.tooling</groupId>
-        <artifactId>depends-maven-plugin</artifactId>
-        <version>1.2</version>
-        <executions>
-          <execution>
-            <id>generate-depends-file</id>
-            <goals>
-              <goal>generate-depends-file</goal>
-            </goals>
-            <configuration>
-              <outputFile>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</outputFile>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <!-- Make some soft links for the generated products, for convenience -->
       <plugin>
         <groupId>com.pyx4j</groupId>
         <artifactId>maven-junction-plugin</artifactId>
-        <version>1.0.3</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <configuration>
+          <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
+          <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.mrgeo.plugins</groupId>
+        <artifactId>pomtools-maven-plugin</artifactId>
         <executions>
+          <!-- turn on generate dependencies -->
           <execution>
-            <id>link-core</id>
-            <phase>package</phase>
-            <goals>
-              <goal>link</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>unlink</id>
-            <phase>clean</phase>
-            <goals>
-              <goal>unlink</goal>
-            </goals>
+            <id>generate-dependencies</id>
+            <phase>generate-sources</phase>
           </execution>
         </executions>
-        <configuration>
-          <links>
-            <link>
-              <src>${project.build.directory}/${project.build.finalName}.${project.packaging}</src>
-              <dst>${project.build.directory}/${project.artifactId}.${project.packaging}</dst>
-            </link>
-            <link>
-              <src>${project.build.directory}/${project.build.finalName}-tests.${project.packaging}</src>
-              <dst>${project.build.directory}/${project.artifactId}-tests.${project.packaging}</dst>
-            </link>
-          </links>
-        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -149,39 +124,32 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-vector</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-vector</artifactId>
-      <version>${project.parent.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-image</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-rasterizevector</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-terrain</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-vector</artifactId>
-      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.mahout</groupId>
