@@ -90,6 +90,7 @@
     <!-- Maven plugin versions -->
     <buildnumber-maven.version>1.3</buildnumber-maven.version>
     <cobertura-maven.version>2.6</cobertura-maven.version>
+    <pomtools-maven.version>0.1</pomtools-maven.version>
     <maven-compiler.version>3.2</maven-compiler.version>
     <maven-eclipse.version>2.9</maven-eclipse.version>
     <maven-failsafe.version>2.18.1</maven-failsafe.version>
@@ -149,24 +150,6 @@
             <timestampFormat>{0,date,yyyy-MM-dd HH:mm:ss}</timestampFormat>
           </configuration>
         </plugin>
-        <!--
-             <plugin>
-             <groupId>org.apache.servicemix.tooling</groupId>
-             <artifactId>depends-maven-plugin</artifactId>
-             <version>1.2</version>
-             <executions>
-             <execution>
-             <id>generate-depends-file</id>
-             <goals>
-             <goal>generate-depends-file</goal>
-             </goals>
-             <configuration>
-             <outputFile>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</outputFile>
-             </configuration>
-             </execution>
-             </executions>
-             </plugin>
-        -->
         <!-- Make some soft links for the generated products, for convenience -->
         <plugin>
           <groupId>com.pyx4j</groupId>
@@ -419,7 +402,7 @@
         <plugin>
           <groupId>org.mrgeo.plugins</groupId>
           <artifactId>pomtools-maven-plugin</artifactId>
-          <version>0.1</version>
+          <version>${pomtools-maven.version}</version>
           <executions>
             <execution>
               <id>generate-pom</id>
