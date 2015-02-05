@@ -134,13 +134,7 @@
   </dependencies>
   <profiles>
     <profile>
-      <id>costdistance</id>
-      <activation>
-        <property>
-          <name>include.costdistance</name>
-          <value>!false</value>
-        </property>
-      </activation>
+      <id>include-costdistance</id>
       <dependencies>
         <dependency>
           <groupId>org.mrgeo</groupId>
