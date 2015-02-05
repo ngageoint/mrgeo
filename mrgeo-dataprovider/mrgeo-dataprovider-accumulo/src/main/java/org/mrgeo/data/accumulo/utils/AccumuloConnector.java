@@ -274,6 +274,34 @@ public class AccumuloConnector {
 	  return conn;
 	} // end getMockConnector
 	
+	
+	public static String getReadAuthorizations(String curAuths){
+
+		// if the incoming string is valid - use that
+		if(curAuths != null){
+			return curAuths;
+		}
+
+		String retStr = MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS;
+		// get the properties of the system
+		Properties props = AccumuloConnector.getAccumuloProperties();
+
+		// look for items in the properties
+		if(props != null && props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_DEFAULT_READ_AUTHS)){
+			String a = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_DEFAULT_READ_AUTHS);
+
+			// check if the default read is "null"
+			if(! a.equals("null")){
+				// ah - valid defaults
+				retStr = a;
+			}
+		}
+
+		return retStr;
+		
+	} // end getReadAuthorizations
+	
+	
 	public static void main(String args[]) throws Exception{
 //	  String myEnc = AccumuloConnector.encodeAccumuloProperties("rrr");
 //	  System.out.println("Encoded: " + myEnc);

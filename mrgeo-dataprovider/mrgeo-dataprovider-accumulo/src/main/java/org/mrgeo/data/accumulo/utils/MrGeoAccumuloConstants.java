@@ -47,6 +47,10 @@ public class MrGeoAccumuloConstants
   public static final String MRGEO_ACC_NOAUTHS = "";
   public static final String MRGEO_ACC_AUTHS_U = "U";
   
+  public static final String MRGEO_ACC_KEY_DEFAULT_WRITE_VIZ = "accumulo.default.write.viz";
+  public static final String MRGEO_ACC_KEY_DEFAULT_READ_AUTHS = "accumulo.default.read.auths";
+  
+  
   
   public static final String MRGEO_ACC_KEY_INPUT_TABLE = "accumulo.inputtable"; // is the password encoded
   public static final String MRGEO_ACC_KEY_OUTPUT_TABLE = "accumulo.outputtable"; // is the password encoded

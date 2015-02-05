@@ -104,7 +104,7 @@
 <!--  Uncomment this section to turn on Spring security. Note also that
       you will have to properly configure the applicationContext-security.xml
       file for your security environment. -->
-<!--
+<!-- -->
     <context-param>
         <param-name>contextConfigLocation</param-name>
         <param-value>
@@ -148,5 +148,5 @@
     <listener>
         <listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
     </listener>
--->
+<!-- -->
 </web-app>
