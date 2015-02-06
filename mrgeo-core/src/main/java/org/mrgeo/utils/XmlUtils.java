@@ -15,13 +15,10 @@
 
 package org.mrgeo.utils;
 
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
-import com.sun.org.apache.xpath.internal.XPathAPI;
-import org.w3c.dom.Comment;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import org.w3c.dom.*;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSOutput;
+import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -30,13 +27,14 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
 
 
 /**
  * @author jason.surratt
- * 
+ *
  */
 public class XmlUtils
 {
@@ -75,17 +73,17 @@ public class XmlUtils
   {
     return createTextElement(parent, tagName, Double.valueOf(v).toString());
   }
-  
+
   public static Element createTextElement(Element parent, String tagName, long v)
   {
     return createTextElement(parent, tagName, Long.valueOf(v).toString());
   }
-  
+
   public static Element createTextElement(Element parent, String tagName, int v)
   {
     return createTextElement(parent, tagName, Integer.valueOf(v).toString());
   }
-  
+
   public static Element createTextElement(Element parent, String tagName, String text)
   {
     Document doc = parent.getOwnerDocument();
@@ -97,7 +95,7 @@ public class XmlUtils
     e.appendChild(doc.createTextNode(text));
     return e;
   }
-  
+
   /**
    * Creates a DOM comment
    * @param parent parent DOM element
@@ -181,7 +179,7 @@ public class XmlUtils
   }
 
   /**
-   * @param fdis
+   * @param is
    * @return
    * @throws ParserConfigurationException
    * @throws IOException
@@ -207,21 +205,21 @@ public class XmlUtils
   {
     return parseString(xml, true);
   }
-  
-  public static Document parseString(String xml, boolean namespaceAware) throws SAXException, 
-    IOException, ParserConfigurationException
+
+  public static Document parseString(String xml, boolean namespaceAware) throws SAXException,
+      IOException, ParserConfigurationException
   {
     DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
     domFactory.setNamespaceAware(namespaceAware); // never forget this!
     DocumentBuilder builder;
     builder = domFactory.newDocumentBuilder();
-    
+
     InputSource is = new InputSource();
     is.setCharacterStream(new StringReader(xml));
-    
+
     return builder.parse(is);
   }
-  
+
   public static String documentToString(Document doc) throws IOException
   {
     StringWriter writer = new StringWriter();
@@ -233,25 +231,60 @@ public class XmlUtils
   {
     // happy to replace this code w/ the non-deprecated code, but I couldn't get the transformer 
     // approach to work. 
-    OutputFormat format = new OutputFormat(doc);
-    format.setIndenting(true);
-    format.setIndent(2);
-    XMLSerializer serializer = new XMLSerializer(out, format);
-    serializer.serialize(doc);
+//    OutputFormat format = new OutputFormat(doc);
+//    format.setIndenting(true);
+//    format.setIndent(2);
+//    XMLSerializer serializer = new XMLSerializer(out, format);
+//    serializer.serialize(doc);
+
+    DOMImplementationLS impl = (DOMImplementationLS) doc.getImplementation();
+    LSSerializer writer = impl.createLSSerializer();
+    DOMConfiguration config = writer.getDomConfig();
+
+    if (config.canSetParameter("format-pretty-print",Boolean.TRUE))
+    {
+      config.setParameter("format-pretty-print", Boolean.TRUE);
+    }
+
+
+    // what a crappy way to force the stream to be UTF-8.  yuck!
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    LSOutput output = impl.createLSOutput();
+    output.setEncoding("UTF-8");
+    output.setByteStream(baos);
+
+    writer.write(doc, output);
+
+    out.write(baos.toString());
+    out.flush();
   }
-  
+
   /**
    * Determines whether the DOM node satisifying the specified query exists
-   * 
+   *
    * @param topLevelDomNode Root of the XML DOM to search
    * @param xpathQuery XPATH query defining the search to execute
    * @return true if the DOM node satisfying the XPATH query was found; false otherwise
-   * @throws TransformerException 
+   * @throws TransformerException
    * @throws Exception
    */
-  public static boolean nodeExists(Node topLevelDomNode, String xpathQuery) 
-    throws TransformerException
+  public static boolean nodeExists(Node topLevelDomNode, String xpathQuery)
+      throws TransformerException
   {
-    return XPathAPI.selectNodeList(topLevelDomNode, xpathQuery).getLength() > 0;
+    //return XPathAPI.selectNodeList(topLevelDomNode, xpathQuery).getLength() > 0;
+
+    XPathFactory factory = XPathFactory.newInstance();
+    XPath xpath = factory.newXPath();
+    try
+    {
+      String str = xpath.evaluate(xpathQuery, topLevelDomNode);
+
+      return str != null && str.length() > 0;
+    }
+    catch (XPathExpressionException e)
+    {
+    }
+
+    return false;
   }
 }

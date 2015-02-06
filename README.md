@@ -24,7 +24,7 @@ Unique features/solutions of MrGeo:
 
 * Scalable storage and processing of raster data
 * Application ready data: data is stored in MrGeo in a format that is ready for computation, eliminating several data pre-processing steps from production workflows.
-* A suite of robust suite of MapReduce analytics that that include algebraic math operations, focal operations(i.e. slope), and graph operations (cost distance)
+* A suite of robust MapReduce analytics that that include algebraic math operations, focal operations(i.e. slope), and graph operations (cost distance)
 * A third generation data storage model that 
   * Maintains data locality via  spatial indexing. 
   * An abstraction layer between the MapReduce analytics and storage methods to enable a diverse set of cloud storage options such as HDFS, Accumulo, HBASE etc.

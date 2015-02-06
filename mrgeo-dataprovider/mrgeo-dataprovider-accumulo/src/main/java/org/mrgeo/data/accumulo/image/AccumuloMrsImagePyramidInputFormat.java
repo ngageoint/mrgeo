@@ -28,6 +28,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
+import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.raster.RasterWritable;
@@ -40,6 +41,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+
+import javax.management.RuntimeErrorException;
 
 
 /**
@@ -97,7 +100,7 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
 
       // get the range
       Range r = ris.getRange();
-
+      
       log.info("Range: " + r.toString());
       
       // get the start
@@ -138,7 +141,10 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
           );
       retList.add(tis);
       
-      log.info("\tSplit starting at " + sl + " and ending at " + el);
+      TMSUtils.Tile tile1 = TMSUtils.tileid(sl, tifc.getZoomLevel());
+      TMSUtils.Tile tile2 = TMSUtils.tileid(el, tifc.getZoomLevel());
+      
+      log.info("\tSplit starting at " + sl + " ("+tile1.tx+","+tile1.ty+")" + " and ending at " + el + " ("+tile2.tx+","+tile2.ty+")");
       
     }
     
@@ -146,42 +152,6 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
     
   } // end getSplits
 
-//  private ArrayList<RangeInputSplit> smoothSplits(List<InputSplit> inputSplits){
-//    ArrayList<RangeInputSplit> retList = new ArrayList<RangeInputSplit>();
-//
-//    for(InputSplit is : inputSplits){
-//      RangeInputSplit ris = (RangeInputSplit)is;
-//      Range r = ris.getRange();
-//      Range r2;
-//      Key sk = r.getStartKey();
-//      Key ek = r.getEndKey();
-//      Key sk2 = null;
-//      Key ek2 = null;
-//
-//      long sl = 0;
-//      long el = Long.MAX_VALUE >> 8;
-//      if(sk != null){
-//        Text sr = sk.getRow();
-//        //sl = AccumuloUtils.toLong(sr);        
-//        sl = AccumuloUtils.toLong(sr.getBytes());
-//        sk2 = new Key(AccumuloUtils.toText(sl), sk.getColumnFamily(), sk.getColumnQualifier());
-//      }
-//      if(ek != null){
-//        Text er = ek.getRow();
-//        
-//        //el = AccumuloUtils.toLong(er);
-//        el = AccumuloUtils.toLong(er.getBytes());
-//        ek2 = new Key(AccumuloUtils.toText(el), ek.getColumnFamily(), ek.getColumnQualifier());
-//        
-//        
-//      }
-//      r2 = new Range(sk2, ek2);
-//      ris.setRange(r2);
-//      
-//    }
-//    
-//    return retList;
-//  } // end smoothSplits
   
   
   /**
@@ -202,32 +172,47 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
 //    if(authStr != null){
 //      auths = new Authorizations(authStr.split(","));
 //    }
-    
+	  return makeRecordReader();
     /**
      * This RecordReaderBase takes apart the key and produces the TileIDWritable.
      * It also prepares the RasterWritable for the value.
      */
-    return new RecordReaderBase<TileIdWritable, RasterWritable>() {
-      @Override
-
-      public boolean nextKeyValue() throws IOException, InterruptedException {
-        if (scannerIterator.hasNext()) {
-          ++numKeysRead;
-          Entry<Key,Value> entry = scannerIterator.next();
-          // transform key and value
-          long id = AccumuloUtils.toLong(entry.getKey().getRow());
-          currentKey = entry.getKey();
-          currentValue = entry.getValue();
-
-          currentK = new TileIdWritable(id);
-          currentV = new RasterWritable(entry.getValue().get());
-          if (log.isTraceEnabled())
-            log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));
-          return true;
-        }
-        return false;
-      }
-    }; //end RecordReaderBase
+//    return new RecordReaderBase<TileIdWritable, RasterWritable>() {
+//
+//    	@Override
+//    	public void initialize(InputSplit split, TaskAttemptContext context) throws IOException
+//    	  {
+//    	    if (split instanceof TiledInputSplit)
+//    	    {
+//    	      super.initialize(((TiledInputSplit)split).getWrappedSplit(), context);
+//    	    }
+//    	    else
+//    	    {
+//    	      // Should never happen
+//    	      super.initialize(split, context);
+//    	    }
+//    	  } 
+//    	
+//    	
+//    	@Override
+//      public boolean nextKeyValue() throws IOException, InterruptedException {
+//        if (scannerIterator.hasNext()) {
+//          ++numKeysRead;
+//          Entry<Key,Value> entry = scannerIterator.next();
+//          // transform key and value
+//          long id = AccumuloUtils.toLong(entry.getKey().getRow());
+//          currentKey = entry.getKey();
+//          currentValue = entry.getValue();
+//
+//          currentK = new TileIdWritable(id);
+//          currentV = new RasterWritable(entry.getValue().get());
+//          if (log.isTraceEnabled())
+//            log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));
+//          return true;
+//        }
+//        return false;
+//      }
+//    }; //end RecordReaderBase
     
   } // end RecordReader
   
@@ -239,12 +224,64 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
       @Override
       public void initialize(InputSplit inSplit, TaskAttemptContext attempt) throws IOException {
         
-        RangeInputSplit ris = (RangeInputSplit) ((TiledInputSplit)inSplit).getWrappedSplit();
+//        RangeInputSplit ris = (RangeInputSplit) ((TiledInputSplit)inSplit).getWrappedSplit();
+//
+//        log.info("initializing with instance of " + ris.getInstanceName());
+//        log.info("initializing with auths of " + ris.getAuths().toString());
+//        
+//        super.initialize(((TiledInputSplit)inSplit).getWrappedSplit(), attempt);
 
-        log.info("initializing with instance of " + ris.getInstanceName());
-        log.info("initializing with auths of " + ris.getAuths().toString());
+    	  log.info("initializing input splits of type " + inSplit.getClass().getCanonicalName());
+    	  String[] locs;
+    	  try{
+    		  locs = inSplit.getLocations();
+    		  for(int x = 0; x < locs.length; x++){
+    			  log.info("location " + x + " -> " + locs[x]);
+    		  }
+    	  } catch(InterruptedException ie){
+    		  ie.printStackTrace();
+    		  return;
+    	  }
+        if(inSplit instanceof TiledInputSplit){
+        	
+        	// deal with this
+        	RangeInputSplit ris = new RangeInputSplit();
+        	InputSplit inS = ((TiledInputSplit)inSplit).getWrappedSplit();
+        	long startId = ((TiledInputSplit) inSplit).getStartTileId();
+        	long endId = ((TiledInputSplit) inSplit).getEndTileId();
+        	Key startKey = AccumuloUtils.toKey(startId);
+        	Key endKey = AccumuloUtils.toKey(endId);
+        	int zoomL = ((TiledInputSplit)inSplit).getZoomLevel();
+        	Range r = new Range(startKey, endKey);
+
+        	
+        	log.info("Zoom Level = " + zoomL);
+        	log.info("Range " + startId + " to " + endId);
+        	
+        	try{
+        		locs = inS.getLocations();
+//        		for(int x = 0; x < locs.length; x++){
+//        			log.info("split " + x + " -> " + locs[x]);
+//        		}
+        		ris.setRange(r);
+        		ris.setLocations(locs);
+        		// there can be more added here
+        		
+        	} catch(InterruptedException ie){
+        		throw new RuntimeErrorException(new Error(ie.getMessage()));
+        	}
+
+        	super.initialize(ris, attempt);
+
+        	//super.initialize(((TiledInputSplit) inSplit).getWrappedSplit(), attempt);
+        	
+        } else {
+        	super.initialize(inSplit, attempt);
+        }
         
-        super.initialize(((TiledInputSplit)inSplit).getWrappedSplit(), attempt);
+        
+        
+        
         
       } // end initialize
       
@@ -262,13 +299,15 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
           long id = AccumuloUtils.toLong(entry.getKey().getRow());
           currentKey = entry.getKey();
           currentValue = entry.getValue();
+          
+          log.info("Processing " + id + " -> " + currentValue.getSize());
 
           currentK = new TileIdWritable(id);
           currentV = new RasterWritable(entry.getValue().get());
           
           //log.info("current key = " + id);
-          if (log.isTraceEnabled())
-            log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));
+//          if (log.isTraceEnabled())
+//            log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));
           return true;
         }
         return false;

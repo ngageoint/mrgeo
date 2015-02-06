@@ -149,6 +149,8 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
     } else {
     	cv = new ColumnVisibility(pl);
     }
+
+    log.info("Writing metadata for table " + metadata.getPyramid() + " with ColumnVisibility = " + cv.toString());
     
     // this is the name of the image
     String pyramid = metadata.getPyramid();

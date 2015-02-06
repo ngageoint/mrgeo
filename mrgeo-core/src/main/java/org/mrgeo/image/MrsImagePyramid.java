@@ -108,6 +108,9 @@ public class MrsImagePyramid extends MrsPyramid
     metadata.setBounds(bounds);
     metadata.setName(zoom);
     metadata.setDefaultValues(defaultValues);
+    if(protectionLevel != null){
+    	metadata.setProtectionLevel(protectionLevel);
+    }
 
     // HACK!!! (kinda...) Need to make metadata is there so the provider can get the
     //          MrsTileReader (it does a canOpen(), which makes sure metadata is present)

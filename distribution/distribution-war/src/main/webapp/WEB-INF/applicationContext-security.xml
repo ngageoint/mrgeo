@@ -48,7 +48,7 @@
         <user name="rod" password="rod" authorities="ROLE_SUPERVISOR,ROLE_USER" />
         <user name="dianne" password="dianne" authorities="ROLE_USER" />
         <user name="scott" password="scott" authorities="ROLE_USER" />
-       <user name="andrew" password="andrew" authorities="ROLE_SUPERVISOR,ROLE_USER,U,A,B,C" />
+       <user name="andrew" password="andrew" authorities="ROLE_USER,U,A,B,C,D" />
        <user name="tim" password="tim" authorities="ROLE_USER,U,A" />
        <user name="dave" password="dave" authorities="ROLE_USER,U,C" />
     </user-service>

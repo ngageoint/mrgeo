@@ -15,14 +15,17 @@
 
 package org.mrgeo.data.accumulo.input.image;
 
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.accumulo.core.util.Pair;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImagePyramidInputFormat;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
@@ -34,8 +37,12 @@ import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Properties;
+import java.util.Set;
 
 public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFormatProvider
 {
@@ -101,14 +108,38 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
 
     //zoomLevelsInPyramid = new ArrayList<Integer>();
 
+    log.info("Setting up job " + job.getJobName());
+    
+    // lets look into the properties coming in
+    if(providerProperties != null){
+    	Set<Object> k1 = providerProperties.keySet();
+    	ArrayList<String> k2 = new ArrayList<String>();
+    	for(Object o : k1){
+    		k2.add(o.toString());
+    	}
+    	Collections.sort(k2);
+    	for(int x = 0; x < k2.size(); x++){
+    		log.info("provider property " + x + ": k='" + k2.get(x) + "' v='" + providerProperties.getProperty(k2.get(x)) + "'");
+    	}
+    }
+    
     // set the needed information
     if(props == null){
       props = new Properties();
       props.putAll(AccumuloConnector.getAccumuloProperties());
     }
+    
+    String connUser = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
+    log.info("connecting to accumulo as user " + connUser);
+    
+    if(providerProperties != null){
+    	props.putAll(providerProperties);
+    }
     if(props.size() == 0){
       throw new RuntimeException("No configuration for Accumulo!");
     }
+
+    // just in case this gets overwritten
     
     for(String k : MrGeoAccumuloConstants.MRGEO_ACC_KEYS_CONNECTION){
       job.getConfiguration().set(k, props.getProperty(k));
@@ -117,12 +148,6 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
       job.getConfiguration().set(k, props.getProperty(k));
     }
     
-//    // set the important configuration items
-//    job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
-//        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
-//    job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
-//        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
-
     if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE) == null){
       job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE, this.table);
     } else {
@@ -130,10 +155,6 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
           props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE));
     }
     
-    // username and password
-//    job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
-//        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
-
     // make sure the password is set with Base64Encoding
     String pw = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
     String isEnc = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
@@ -157,6 +178,7 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
           new String("true"));
     }
 
+    // get the visualizations
     if(job.getConfiguration().get("protectionLevel") != null){
     	job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ,
     			job.getConfiguration().get("protectionLevel"));
@@ -175,55 +197,70 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
 
     String enc = AccumuloConnector.encodeAccumuloProperties(context.getFirstInput());
     job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ENCODED, enc);
-    // get the input table
-    for(final String input : context.getInputs()){
-      // put encoded string for Accumulo connections 
-      
-      
-      
-      
-      
-      MrsImagePyramid pyramid;
-      try{
-        pyramid = MrsImagePyramid.open(input, job.getConfiguration());
-        final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-        log.debug("In setupJob(), loading pyramid for " + input +
-            " pyramid instance is " + pyramid + " metadata instance is " + metadata);
 
-//      ImageMetadata[] im = metadata.getImageMetadata();
-        // im[0] - should be null
-        //im[0].name; // string that is the zoom level
-
-        //int z = context.getZoomLevel();
-        // check to see if the zoom level is in the list of zoom levels
-//        if(! zoomLevelsInPyramid.contains(z)){
-//          z = metadata.getMaxZoomLevel();
-//        }
-      } catch(IOException ioe){
-        throw new DataProviderException("Failure opening input image pyramid: " + input, ioe);
-      }
-
-      
-      
-    } // end for loop
 
     //job.setInputFormatClass(AccumuloMrsImagePyramidInputFormat.class);
-    
+
     // check for base64 encoded password
-    AccumuloMrsImagePyramidInputFormat.setInputInfo(job.getConfiguration(),
-        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
-        pwDec.getBytes(),
-        table,
-        auths);
+//    AccumuloMrsImagePyramidInputFormat.setInputInfo(job.getConfiguration(),
+//        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
+//        pwDec.getBytes(),
+//        table,
+//        auths);
     
     AccumuloMrsImagePyramidInputFormat.setZooKeeperInstance(job,
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+
+    PasswordToken pt = new PasswordToken(
+    		//job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD)
+    		pwDec
+    		);
+    log.info("connecting to accumulo with user " + connUser);
+    //log.info("password used to connect is " + job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
+    log.info("password (decoded) used to connect is " + pwDec);
+    log.info("scan authorizations are " + auths);
+	log.info("authorizations from config = " + job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS));
+
+    try{
+    	AccumuloMrsImagePyramidInputFormat.setConnectorInfo(
+    			job,
+    			connUser,
+    			//props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
+    			//job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
+    			pt);
+    } catch(AccumuloSecurityException ase){
+    	log.info("problem with authentication elements.");
+    	return;
+    }
+    AccumuloInputFormat.setScanAuthorizations(job, auths);
     
+    // get the input table
+    for(final String input : context.getInputs()){
+      // put encoded string for Accumulo connections 
+      
+    	
+    	//TODO what needs to be done here?
+    	log.info("working with source " + input + " with auths = " + auths);
+      
+    	AccumuloMrsImagePyramidInputFormat.setInputTableName(job, input);
+      
+      
+    } // end for loop
+    
+
+    log.info("setting column family to regex " + Integer.toString(context.getZoomLevel()));
     // think about scanners - set the zoom level of the job
     IteratorSetting regex = new IteratorSetting(51, "regex", RegExFilter.class);
     RegExFilter.setRegexs(regex, null, Integer.toString(context.getZoomLevel()), null, null, false);
+    Collection<Pair<Text, Text>> colFamColQual = new ArrayList<Pair<Text,Text>>();
+    Pair<Text, Text> p1 = new Pair<Text, Text>(new Text(Integer.toString(context.getZoomLevel())), null);
+    colFamColQual.add(p1);
+    AccumuloMrsImagePyramidInputFormat.fetchColumns(job, colFamColQual);
     AccumuloMrsImagePyramidInputFormat.addIterator(job, regex);
+    //job.setJarByClass(this.getClass());
+    String cp = job.getConfiguration().get("mapred.job.classpath.files");
+    log.info("mapred.job.classpath.files = " + cp);
     
   } // end setupJob
 

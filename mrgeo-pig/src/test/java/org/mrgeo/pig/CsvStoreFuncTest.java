@@ -61,11 +61,14 @@ public class CsvStoreFuncTest extends LocalRunnerTest
       pq.query("result = load '" + _outputHdfs + "/test1-in.tsv' using PigStorage() AS (a:double, b:double, c:double, class:chararray);", new Path(
           _outputHdfs, "test1.tsv"), this.conf);
 
-      Assert.assertEquals(TestUtils.readPath(new Path(_outputHdfs + "/test1.tsv/part-m-00000.tsv")),
-          TestUtils.readFile(new File(_input + "/test1.tsv")));
+      TestUtils.compareTextFiles(_outputHdfs + "/test1.tsv/part-m-00000.tsv", _input + "/test1.tsv");
+      TestUtils.compareTextFiles(_outputHdfs + "/test1.tsv.columns", _input + "/test1.tsv.columns");
 
-      Assert.assertEquals(TestUtils.readPath(new Path(_outputHdfs + "/test1.tsv.columns")),
-          TestUtils.readFile(new File(_input + "/test1.tsv.columns")));
+//    Assert.assertEquals(TestUtils.readPath(new Path(_outputHdfs + "/test1.tsv/part-m-00000.tsv")),
+//         TestUtils.readFile(new File(_input + "/test1.tsv")));
+
+//      Assert.assertEquals(TestUtils.readPath(new Path(_outputHdfs + "/test1.tsv.columns")),
+//          TestUtils.readFile(new File(_input + "/test1.tsv.columns")));
 
     }
     catch (Exception e)

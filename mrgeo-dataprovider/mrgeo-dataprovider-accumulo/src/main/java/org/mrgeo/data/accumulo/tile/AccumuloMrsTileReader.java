@@ -15,6 +15,7 @@
 
 package org.mrgeo.data.accumulo.tile;
 
+import java.awt.image.Raster;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -283,8 +285,8 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
       }
     }
 
-    if(MrGeoProperties.getInstance().containsKey("accumulo.auths")){
-      authStr = MrGeoProperties.getInstance().getProperty("accumulo.auths");
+    if(MrGeoProperties.getInstance().containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS)){
+      authStr = MrGeoProperties.getInstance().getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
       auths = new Authorizations(authStr.split(","));
     } else {
       auths = new Authorizations();
@@ -497,7 +499,7 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
    * I don't know what this is for
    */
   protected abstract T toNonWritable(final byte[] val, final CompressionCodec codec,
-      Decompressor decompressor) throws IOException;
+		  Decompressor decompressor) throws IOException;
 
   
   /**
@@ -610,10 +612,17 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
      * it appears there is a one to one mapping in the tiles and list
      */
 
+    
+    
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null){
       auths = new Authorizations(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
     } else {
-      auths = new Authorizations();
+      auths = new Authorizations(MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS);
+    }
+    String authsStr = "";
+    for(byte[] b : auths.getAuthorizations()){
+    	authsStr += new String(b) + " ";
     }
     
     if(connector == null){
@@ -627,7 +636,7 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
     //log.info("startkey = " + startKey.get() + " endkey = " + endKey.get());
     log.info("accStartkey = " + AccumuloUtils.toLong(sKey.getRow()) +
         " accEndKey = " + AccumuloUtils.toLong(eKey.getRow()) +
-        " zoomLevel = " + zoomLevel + "\tonetile = " + oneTile);
+        " zoomLevel = " + zoomLevel + "\tonetile = " + oneTile + "\tauths = " + authsStr);
     
     Range r;
     if(oneTile){
@@ -710,7 +719,15 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
       {
         try
         {
-          return toNonWritable(current.getValue().get(), null, null);
+        	if(current == null && it.hasNext()){
+        		current = it.next();
+        	}
+
+        	log.info("Current key = " + Hex.encodeHexString(current.getKey().getRow().getBytes()));
+        	log.info("Size of value = " + current.getValue().get().length);
+
+        	
+        	return toNonWritable(current.getValue().get(), null, null);
         }
         catch (final IOException e)
         {

@@ -267,6 +267,19 @@ public class DependencyLoader
     // add the system classpath, including the cwd
     String classpath = System.getProperty("java.class.path", "");
 
+    String depclasspath = MrGeoProperties.getInstance().getProperty("dependency.classpath", null);
+    if (depclasspath != null)
+    {
+      if (classpath == null || classpath.isEmpty())
+      {
+        classpath = depclasspath;
+      }
+      else
+      {
+        classpath = depclasspath + System.getProperty("path.separator") + classpath;
+      }
+    }
+
     // prepend MRGEO_HOME
     String mrgeo = System.getenv("MRGEO_HOME");
     if (mrgeo == null)
@@ -332,21 +345,24 @@ public class DependencyLoader
         {
           for (File f : files)
           {
-            if (filesLeft.contains(f.getName()))
+            if (!f.isDirectory())
             {
-              log.debug("Adding " + file.getName() + " to paths from " + file.getPath());
-              paths.add(file);
-              filesLeft.remove(file.getName());
-              if (filesLeft.isEmpty())
+              if (filesLeft.contains(f.getName()))
               {
-                return;
+                log.debug("Adding " + f.getName() + " to paths from " + f.getPath());
+                paths.add(f);
+                filesLeft.remove(f.getName());
+                if (filesLeft.isEmpty())
+                {
+                  return;
+                }
               }
             }
-            if (recurseDirectories)
+            else if (recurseDirectories)
             {
               log.debug("In findJars recursing on dir: " + f.getPath() + " with paths: " + paths.size() + " and filesLeft: " + filesLeft.size());
               findJars(f, paths, filesLeft, recurseDirectories);
-  
+
               if (filesLeft.isEmpty())
               {
                 return;
@@ -548,7 +564,7 @@ public class DependencyLoader
 
     BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
-    boolean start = false;
+    boolean first = true;
     Dependency master = new Dependency();
     master.type = "jar";
     master.scope = "compile";
@@ -559,62 +575,40 @@ public class DependencyLoader
     String line;
     while ((line = reader.readLine()) != null)
     {
-      if (start)
+      line = line.trim();
+      if (!line.startsWith("#") && line.length() > 0)
       {
-        // blank line
-        if (line.trim().length() == 0)
+        String[] vals = line.split("|");
+
+        if (first)
         {
-          if (dep != null)
+          if (vals.length == 4)
           {
-            deps.add(dep);
-            dep = null;
+            master.artifact = vals[1];
+            master.version = vals[2];
+
+            deps.add(master);
+
           }
+
+          first = false;
         }
-        else
+        else if (vals.length == 6)
         {
-          String[] kv = line.split("=");
-          if (kv.length != 2)
-          {
-            throw new IOException("Error reading property: " + line);
-          }
+          dep = new Dependency();
 
-          String[] key = kv[0].split("/");
+          dep.artifact = vals[1];
+          dep.version = vals[2];
+          dep.classifier = (vals[3].length() > 0) ? vals[3] : null;
+          dep.type = vals[4];
+          dep.scope = vals[5];
 
-          if (key.length != 3)
-          {
-            throw new IOException("Error reading property: " + line);
-          }
-
-          if (dep == null)
-          {
-            dep = new Dependency();
-
-            addToDependency(dep, "groupId", key[0].trim());
-            addToDependency(dep, "artifactId", key[1].trim());
-          }
-
-          addToDependency(dep, key[2].trim(), kv[1].trim());
-        }
-      }
-      else
-      {
-        if (line.trim().equals("# dependencies"))
-        {
-          start = true;
-        }
-        else
-        {
-          String[] kv = line.split("=");
-          if (kv.length == 2)
-          {
-            addToDependency(master, kv[0].trim(), kv[1].trim());
-          }
+          deps.add(dep);
         }
       }
     }
 
 
-    deps.add(master);
     if (log.isDebugEnabled())
     {
       log.debug("Dependencies: ");
@@ -667,7 +661,7 @@ public class DependencyLoader
         String name = je.getName();
         if (name.endsWith("dependencies.properties"))
         {
-        	log.debug("Found dependency for " + jar + " -> " + name);
+          log.debug("Found dependency for " + jar + " -> " + name);
           URL resource = new URL(jar + name);
           InputStream is = resource.openStream();
 
