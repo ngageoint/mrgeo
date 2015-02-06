@@ -7,13 +7,19 @@ import org.apache.commons.codec.binary.Base64
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FSDataOutputStream, FileSystem}
 import org.apache.spark.{SparkContext, Partitioner}
-import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.DataProviderFactory.AccessMode
+import org.mrgeo.data.tile.{TiledInputFormatContext, TileIdWritable}
+import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
+import org.mrgeo.hdfs.tile.SplitFile
+import org.mrgeo.image.MrsImagePyramid
 import scala.collection.JavaConverters._
 import org.mrgeo.tile.SplitGenerator
 
-
+@SerialVersionUID(-1)
 class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
 {
+
   private val splits = splitGenerator.getSplits.asScala.toArray
 
 
@@ -46,8 +52,20 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
         key.getClass + ". Expected org.mrgeo.data.tile.TileIdWritable or a subclass.")
   }
 
-  def writeSplits(path:String, conf:Configuration): Unit = {
+  def writeSplits(pyramid:String, zoom:Int, conf:Configuration): Unit = {
+    val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
 
+    val inputWithZoom: Path = new Path(dp.getResourcePath(true), "" + zoom)
+    var splitPath: Path = new Path(inputWithZoom, SplitFile.SPLIT_FILE)
+    val fs: FileSystem = splitPath.getFileSystem(conf)
+    if (!fs.exists(splitPath)) {
+      splitPath = new Path(inputWithZoom, SplitFile.OLD_SPLIT_FILE)
+    }
+
+    writeSplits(splitPath.toString, conf)
+  }
+
+  def writeSplits(path:String, conf:Configuration): Unit = {
     val HasPartitionNames: Long = -12345L
     val SplitFile: String = "splits"
 

@@ -20,14 +20,14 @@ import java.awt.image.WritableRaster
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
-import org.apache.spark.rdd.{PairRDDFunctions, RDD, CoGroupedRDD}
+import org.apache.spark.rdd.{RDD, CoGroupedRDD}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
 import org.mrgeo.job.{MrGeoDriver, JobArguments, MrGeoJob}
 import org.mrgeo.utils.TMSUtils.TileBounds
-import org.mrgeo.utils.{TMSUtils, Bounds, SparkUtils}
+import org.mrgeo.utils.{LoggingUtils, TMSUtils, Bounds, SparkUtils}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control._
@@ -35,6 +35,8 @@ import scala.util.control._
 object MosaicDriver extends MrGeoDriver {
 
   def mosaic(inputs: Array[String], output:String): Unit = {
+
+    LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG)
 
     val args:ArrayBuffer[String] = new ArrayBuffer[String]
 
@@ -45,8 +47,8 @@ object MosaicDriver extends MrGeoDriver {
     args += output
 
     // not sure how to get these into the args
-//    args += "--cluster"
-//    args += "yarn"
+    args += "--cluster"
+    args += "yarn"
 //    args += "--executors"
 //    args += "2"
 //    args += "--executorMemory"
@@ -75,6 +77,10 @@ class MosaicDriver extends MrGeoJob {
 
 
   override def execute(context: SparkContext): Boolean = {
+
+    implicit val tileIdOrdering = new Ordering[TileIdWritable] {
+      override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
+    }
 
     val pyramids = Array.ofDim[RDD[(TileIdWritable, RasterWritable)]](inputs.length)
     val nodata = Array.ofDim[Array[Double]](inputs.length)
@@ -142,7 +148,7 @@ class MosaicDriver extends MrGeoJob {
 
     val groups = new CoGroupedRDD(pyramids, sparkPartitioner)
 
-    val mosaiced:PairRDDFunctions[TileIdWritable, RasterWritable] = groups.map(U => {
+    val mosaiced:RDD[(TileIdWritable, RasterWritable)] = groups.map(U => {
 
       def isnodata(sample:Double, nodata:Double): Boolean = {
         if (nodata.isNaN && sample.isNaN) {
@@ -156,12 +162,14 @@ class MosaicDriver extends MrGeoJob {
       var dst: WritableRaster = null
       var dstnodata:Array[Double] = null
 
-      val i = 0
       val done = new Breaks
+      var i:Int = 0
       done.breakable {
-        for (wr <- U._2) {
+        for (wr<- U._2) {
           if (wr != null) {
-            val writable = wr.asInstanceOf[RasterWritable]
+            println(i)
+            val writable = wr.asInstanceOf[Seq[RasterWritable]](0)
+
             if (dst == null) {
               // the tile conversion is a WritableRaster, we can just typecast here
               dst = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
@@ -171,9 +179,9 @@ class MosaicDriver extends MrGeoJob {
 
               // check if there are any nodatas in the 1st tile
               looper.breakable {
-                for (y <- 0 to dst.getHeight) {
-                  for (x <- 0 to dst.getWidth) {
-                    for (b <- 0 to dst.getNumBands) {
+                for (y <- 0 until dst.getHeight) {
+                  for (x <- 0 until dst.getWidth) {
+                    for (b <- 0 until dst.getNumBands) {
                       if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
                         looper.break()
                       }
@@ -192,9 +200,9 @@ class MosaicDriver extends MrGeoJob {
               val src = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
               val srcnodata = nodata(i)
 
-              for (y <- 0 to dst.getHeight) {
-                for (x <- 0 to dst.getWidth) {
-                  for (b <- 0 to dst.getNumBands) {
+              for (y <- 0 until dst.getHeight) {
+                for (x <- 0 until dst.getWidth) {
+                  for (b <- 0 until dst.getNumBands) {
                     if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
                       val sample = src.getSampleDouble(x, y, b)
                       // if the src is also nodata, remember this, we still have to look in other tiles
@@ -214,6 +222,7 @@ class MosaicDriver extends MrGeoJob {
               }
             }
           }
+          i += 1
         }
       }
 
@@ -221,14 +230,21 @@ class MosaicDriver extends MrGeoJob {
       (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
     })
 
+
+
     val job:Job = new Job()
 
     // save the new pyramid
     //TODO:  protection level & properties
-    MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
+    val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
       tilesize, tiletype, numbands, "", null)
 
-    mosaiced.saveAsNewAPIHadoopDataset(job.getConfiguration)
+    // sort and save the image
+    mosaiced.sortByKey().saveAsNewAPIHadoopDataset(job.getConfiguration)
+
+    dp.teardown(job)
+
+    sparkPartitioner.writeSplits(output, zoom, job.getConfiguration)
 
     true
   }
