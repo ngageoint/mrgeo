@@ -22,10 +22,7 @@ import java.util.Properties;
 import junit.framework.Assert;
 
 import org.apache.hadoop.fs.Path;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
@@ -564,6 +561,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
   }
 
+  @Ignore
   @Test
   @Category(IntegrationTest.class)
   public void mosaic() throws Exception
