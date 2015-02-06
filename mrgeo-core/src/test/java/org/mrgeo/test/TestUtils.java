@@ -42,10 +42,7 @@ import org.mrgeo.utils.TMSUtils;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -836,5 +833,143 @@ public class TestUtils
 
     GeoTiffExporter.export(image, tb.asBounds(), baselineTif, false, nodata);
   }
+
+
+  public static void compareTextFiles(File f1, File f2) throws IOException
+  {
+    compareTextFiles(f1.getCanonicalPath(), f2.getCanonicalPath(), true);
+  }
+  public static void compareTextFiles(File f1, File f2, boolean ignorewhitespace) throws IOException
+  {
+    compareTextFiles(f1.getCanonicalPath(), f2.getCanonicalPath(), ignorewhitespace);
+  }
+
+  public static void compareTextFiles(String f1, String f2) throws IOException
+  {
+    compareTextFiles(f1, f2, true);
+  }
+
+  public static void compareTextFiles(String f1, String f2, boolean ignorewhitespace) throws IOException
+  {
+    Assert.assertNotNull("File cannot be null!", f1);
+    Assert.assertNotNull("File cannot be null!", f2);
+
+    File ff1 = new File(f1);
+    File ff2 = new File(f2);
+
+    FileReader fr1 = null;
+    FileReader fr2 = null;
+
+    InputStream is1 = null;
+    InputStream is2 = null;
+
+    BufferedReader br1 = null;
+    BufferedReader br2 = null;
+
+    try
+    {
+      if (ff1.exists())
+      {
+        fr1 = new FileReader(ff1);
+
+        br1 = new BufferedReader(fr1);
+      }
+      else if (HadoopFileUtils.exists(f1))
+      {
+        is1 = HadoopFileUtils.open(new Path(f1));
+        InputStreamReader isr = new InputStreamReader(is1);
+
+        br1 = new BufferedReader(isr);
+      }
+      else
+      {
+        Assert.fail("File not found: " + f1);
+      }
+
+      if (ff2.exists())
+      {
+        fr2 = new FileReader(ff2);
+
+        br2 = new BufferedReader(fr2);
+      }
+      else if (HadoopFileUtils.exists(f2))
+      {
+        is2 = HadoopFileUtils.open(new Path(f2));
+        InputStreamReader isr = new InputStreamReader(is2);
+
+        br2 = new BufferedReader(isr);
+      }
+      else
+      {
+        Assert.fail("File not found: " + f2);
+      }
+
+
+      String line1;
+      String line2;
+      while ((line1 = br1.readLine()) != null)
+      {
+        line2 = br2.readLine();
+        if (line2 == null)
+        {
+          Assert.fail("File has extra lines (" + f1 + ")");
+        }
+
+        if (ignorewhitespace)
+        {
+          line1 = line1.trim().replaceAll(" +", " ");
+          line2 = line2.trim().replaceAll(" +", " ");
+        }
+
+        Assert.assertEquals("Lines are not equal", line1, line2);
+      }
+
+      line2 = br2.readLine();
+      while (line2 != null)
+      {
+        if (ignorewhitespace)
+        {
+          line2 = line2.trim();
+        }
+
+
+        if (line2.length() != 0)
+        {
+          Assert.fail("File has extra lines (" + f2 + ")");
+        }
+      }
+    }
+    finally
+    {
+      if (br1 != null)
+      {
+        br1.close();
+      }
+      if (br2 != null)
+      {
+        br2.close();
+      }
+
+      if (fr1 != null)
+      {
+        fr1.close();
+      }
+      if (fr2 != null)
+      {
+        fr2.close();
+      }
+      if (is1 != null)
+      {
+        is1.close();
+      }
+      if (is2 != null)
+      {
+        is2.close();
+      }
+    }
+
+  }
+
+
 
 }
