@@ -5,10 +5,6 @@ import java.net.URL
 import java.nio.ByteBuffer
 
 import org.apache.hadoop.util.ClassUtil
-import org.apache.hadoop.yarn.api.records.LocalResourceVisibility
-import org.apache.hadoop.yarn.conf.YarnConfiguration
-import org.apache.hadoop.yarn.util.ApplicationClassLoader
-import org.apache.spark.deploy.yarn.Client
 import org.apache.spark.serializer.{SerializationStream, DeserializationStream, SerializerInstance}
 import org.apache.spark.{Logging, SparkConf, SparkContext}
 import org.mrgeo.utils.DependencyLoader
@@ -53,25 +49,29 @@ abstract class MrGeoDriver {
   }
 
   private def addYarnClasses(cl: URLClassLoader) = {
-    val conf:YarnConfiguration = new YarnConfiguration
+    // need to do this by reflection, since we may support non YARN setups
 
-    // get the yarn classpath from the configuration...
-    var cp = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")
+    throw new NotImplementedError("This method needs to be implemented as reflection!")
 
-    // replace any variables $<xxx> with their environmental value
-    val envMap = System.getenv()
-    for ( entry <- envMap.entrySet()) {
-      val key = entry.getKey
-      val value = entry.getValue
-
-      cp = cp.replaceAll("\\$" + key, value)
-    }
-
-    // add the urls to the classloader
-    for (str <- cp.split(",")) {
-      val url = new File(str.trim).toURI.toURL
-      cl.addURL(url)
-    }
+//    val conf:YarnConfiguration = new YarnConfiguration
+//
+//    // get the yarn classpath from the configuration...
+//    var cp = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")
+//
+//    // replace any variables $<xxx> with their environmental value
+//    val envMap = System.getenv()
+//    for ( entry <- envMap.entrySet()) {
+//      val key = entry.getKey
+//      val value = entry.getValue
+//
+//      cp = cp.replaceAll("\\$" + key, value)
+//    }
+//
+//    // add the urls to the classloader
+//    for (str <- cp.split(",")) {
+//      val url = new File(str.trim).toURI.toURL
+//      cl.addURL(url)
+//    }
   }
 
   protected def setupDependencies(job:JobArguments): Unit = {
@@ -213,11 +213,14 @@ abstract class MrGeoJob  {
 
 
   final private def prepareJob(job:JobArguments): SparkContext = {
+
+    throw new NotImplementedError("Need to fix registerKryoClasses, which isn't in pre spark 1.2.0")
+
     val conf:SparkConf = new SparkConf()
         .setAppName(job.name)
         .setMaster(job.cluster)
         .setJars(job.jars)
-        .registerKryoClasses(registerClasses())
+        //.registerKryoClasses(registerClasses())
         //    .set("spark.driver.extraClassPath", "")
         //    .set("spark.driver.extraJavaOptions", "")
         //    .set("spark.driver.extraLibraryPath", "")
