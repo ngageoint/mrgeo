@@ -27,6 +27,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <generatedResources>${project.build.directory}/generated-resources</generatedResources>
   </properties>
   <name>mrgeo-cmd-developers</name>
   <url>http://mrgeo.org</url>
@@ -56,23 +57,6 @@
           <skipTests>${skip.mrgeo.cmd.integration.tests}</skipTests>
         </configuration>
       </plugin>
-      <!-- generate dependency versions -->
-      <plugin>
-        <groupId>org.apache.servicemix.tooling</groupId>
-        <artifactId>depends-maven-plugin</artifactId>
-        <version>1.2</version>
-        <executions>
-          <execution>
-            <id>generate-depends-file</id>
-            <goals>
-              <goal>generate-depends-file</goal>
-            </goals>
-            <configuration>
-              <outputFile>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</outputFile>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <!-- Make some soft links for the generated products, for convenience -->
       <plugin>
         <groupId>com.pyx4j</groupId>
@@ -85,6 +69,17 @@
           <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
           <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.mrgeo.plugins</groupId>
+        <artifactId>pomtools-maven-plugin</artifactId>
+        <executions>
+          <!-- turn on generate dependencies -->
+          <execution>
+            <id>generate-dependencies</id>
+            <phase>generate-sources</phase>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
