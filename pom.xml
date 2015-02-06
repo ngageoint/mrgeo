@@ -529,6 +529,60 @@
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
+      <id>CDH521-yarn</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.5.0-cdh5.2.1</hadoop-version>
+        <mahout.version>0.9-cdh5.2.1</mahout.version>
+        <pig.version>0.12.0-cdh5.2.1</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <slf4j.version>1.6.1</slf4j.version>
+        <final.classifier>CDH521</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+        <include.costdistance>false</include.costdistance>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH521</id>
+      <properties>
+        <java-version>1.7</java-version>
+        <hadoop-version>2.5.0-mr1-cdh5.2.1</hadoop-version>
+        <mahout.version>0.9-cdh5.2.1</mahout.version>
+        <pig.version>0.12.0-cdh5.2.1</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <hadoop-config>/etc/hadoop/conf</hadoop-config>
+        <final.classifier>CDH521</final.classifier>
+        <slf4j.version>1.6.1</slf4j.version>
+        <include.costdistance>false</include.costdistance>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>CDH520-yarn</id>
       <properties>
         <java-version>1.7</java-version>
@@ -1095,7 +1149,7 @@
       <dependency>
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-core</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.0</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -1115,7 +1169,7 @@
       <dependency>
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-fate</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.0</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -1135,7 +1189,7 @@
       <dependency>
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-start</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.0</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -1155,7 +1209,7 @@
       <dependency>
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-trace</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.0</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -1589,6 +1643,16 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-jexl</artifactId>
         <version>2.1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>mil.nga.giat</groupId>
+        <artifactId>geowave-accumulo</artifactId>
+        <version>0.8.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>mil.nga.giat</groupId>
+        <artifactId>geowave-vector</artifactId>
+        <version>0.8.2-SNAPSHOT</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

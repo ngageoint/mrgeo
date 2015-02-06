@@ -561,6 +561,7 @@ public class DataProviderFactory
   private static class VectorLoader implements Callable<VectorDataProvider>
   {
     private String name;
+    private String prefix;
     private AccessMode accessMode;
     private Configuration conf;
     private Properties props;
@@ -571,8 +572,23 @@ public class DataProviderFactory
         final Properties props)
     {
       this.conf = conf;
-      this.props = props;
-      this.name = name;
+      if (conf == null && props == null)
+      {
+        this.props = new Properties();
+      }
+      else
+      {
+        this.props = props;
+      }
+      this.prefix = getPrefix(name);
+      if (prefix != null)
+      {
+        this.name = name.substring(this.prefix.length() + PREFIX_CHAR.length());
+      }
+      else
+      {
+        this.name = name;
+      }
       this.accessMode = accessMode;
     }
 
@@ -585,36 +601,82 @@ public class DataProviderFactory
       {
         if (factory != null)
         {
-          if (factory.canOpen(name))
+          if (props != null)
           {
-            return factory.createVectorDataProvider(name);
+            if (factory.canOpen(name, props))
+            {
+              return factory.createVectorDataProvider(name, props);
+            }
+          }
+          else
+          {
+            if (factory.canOpen(name, conf))
+            {
+              return factory.createVectorDataProvider(name, conf);
+            }
           }
         }
-        throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
+        throw new DataProviderNotFound("Unable to find a vector data provider for " + name);
       }
       else if (accessMode == AccessMode.OVERWRITE)
       {
         if (factory != null)
         {
-          if (factory.exists(name))
+          if (props != null)
           {
-            factory.delete(name);
+            if (factory.exists(name, props))
+            {
+              factory.delete(name, props);
+            }
+            return factory.createVectorDataProvider(name, props);
           }
-          return factory.createVectorDataProvider(name);
+          else
+          {
+            if (factory.exists(name, conf))
+            {
+              factory.delete(name, conf);
+            }
+            return factory.createVectorDataProvider(name, conf);
+          }
         }
-        return getPreferredProvider().createVectorDataProvider(name);
+        if (props != null)
+        {
+          return getPreferredProvider().createVectorDataProvider(name, props);
+        }
+        else
+        {
+          return getPreferredProvider().createVectorDataProvider(name, conf);
+        }
       }
       else
       {
         if (factory != null)
         {
-          if (factory.canWrite(name))
+          if (props != null)
           {
-            return factory.createVectorDataProvider(name);
+            if (factory.canWrite(name, props))
+            {
+              return factory.createVectorDataProvider(name, props);
+            }
+            throw new DataProviderNotFound("Unable to find a vector data provider for " + name);
           }
-          throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
+          else
+          {
+            if (factory.canWrite(name, conf))
+            {
+              return factory.createVectorDataProvider(name, conf);
+            }
+            throw new DataProviderNotFound("Unable to find a vector data provider for " + name);
+          }
         }
-        return getPreferredProvider().createVectorDataProvider(name);
+        if (props != null)
+        {
+          return getPreferredProvider().createVectorDataProvider(name, props);
+        }
+        else
+        {
+          return getPreferredProvider().createVectorDataProvider(name, conf);
+        }
       }
     }
 
@@ -630,8 +692,6 @@ public class DataProviderFactory
 
     private VectorDataProviderFactory findFactory() throws IOException
     {
-      String prefix = getPrefix(name);
-
       if (prefix != null)
       {
         if (vectorProviderFactories.containsKey(prefix))
@@ -641,11 +701,22 @@ public class DataProviderFactory
       }
       for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
       {
-        if (factory.exists(name))
+        if (props != null)
         {
-          return factory;
+          if (factory.exists(name, props))
+          {
+            return factory;
+          }
+          log.debug("resource cache load: " + name);
         }
-        log.debug("resource cache load: " + name);
+        else
+        {
+          if (factory.exists(name, conf))
+          {
+            return factory;
+          }
+          log.debug("resource cache load: " + name);
+        }
       }
 
       return null;
@@ -927,7 +998,7 @@ public class DataProviderFactory
     List<String> results = new ArrayList<String>();
     for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
     {
-      String[] vectors = factory.listVectors();
+      String[] vectors = factory.listVectors(providerProperties);
       if (vectors != null && vectors.length > 0)
       {
         results.addAll(Arrays.asList(vectors));
@@ -1242,14 +1313,6 @@ public class DataProviderFactory
         {
           if (dp.isValid())
           {
-            if (conf != null)
-            {
-              dp.configure(conf);
-            }
-            else
-            {
-              dp.configure(p);
-            }
             vectorProviderFactories.put(dp.getPrefix(), dp);
           }
         }

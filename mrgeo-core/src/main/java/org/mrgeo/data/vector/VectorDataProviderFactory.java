@@ -35,14 +35,30 @@ public interface VectorDataProviderFactory
 
   public String getPrefix();
 
-  public VectorDataProvider createVectorDataProvider(final String input);
+  public VectorDataProvider createVectorDataProvider(final String input,
+      final Configuration conf);
+  public VectorDataProvider createVectorDataProvider(final String input,
+      final Properties providerProperties);
 
-  public String[] listVectors() throws IOException;
+  public String[] listVectors(final Properties providerProperties) throws IOException;
   
-  public boolean canOpen(final String input) throws IOException;
-  public boolean canWrite(final String input) throws IOException;
-  public boolean exists(final String name) throws IOException;
-  public void delete(final String name) throws IOException;
-  public void configure(final Configuration conf);
-  public void configure(final Properties p);
+  public boolean canOpen(final String input,
+      final Configuration conf) throws IOException;
+  public boolean canOpen(final String input,
+      final Properties providerProperties) throws IOException;
+
+  public boolean canWrite(final String input,
+      final Configuration conf) throws IOException;
+  public boolean canWrite(final String input,
+      final Properties providerProperties) throws IOException;
+
+  public boolean exists(final String name,
+      final Configuration conf) throws IOException;
+  public boolean exists(final String name,
+      final Properties providerProperties) throws IOException;
+
+  public void delete(final String name,
+      final Configuration conf) throws IOException;
+  public void delete(final String name,
+      final Properties providerProperties) throws IOException;
 }
