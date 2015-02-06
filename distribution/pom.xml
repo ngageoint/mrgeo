@@ -125,13 +125,13 @@
       <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
-    <!--
+    <!-- -->
          <dependency>
          <groupId>org.mrgeo</groupId>
          <artifactId>mrgeo-dataprovider-accumulo</artifactId>
          <version>${project.parent.version}</version>
          </dependency>
-    -->
+    <!-- -->
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-pig</artifactId>

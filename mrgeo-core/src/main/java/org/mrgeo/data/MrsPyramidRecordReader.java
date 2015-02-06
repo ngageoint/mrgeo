@@ -71,6 +71,105 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
   }
 
   /**
+   * A record reader that always returns a blank tile of imagery for every tile within
+   * the split it is initialized with. When an image is used as input with a crop bounds
+   * and in fill mode, the MrsPyramidInputFormat manufactures splits to includes the tiles
+   * that the input image itself does not have tile data for. This record reader is used
+   * for those manufactured splits to return blank tiles for them.
+   */
+  private class AllBlankTilesRecordReader extends RecordReader<TileIdWritable, TWritable>
+  {
+    private long nextTileId;
+    private long endTileId;
+    private long tileCount;
+    private long totalTiles;
+    private TileIdWritable currentKey;
+    private TWritable currentValue;
+    private T blankValue;
+    private TiledInputFormatContext ifContext;
+    private TMSUtils.TileBounds cropBounds;
+
+    @Override
+    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
+        InterruptedException
+    {
+      if (split instanceof MrsPyramidInputSplit)
+      {
+        MrsPyramidInputSplit mrsPyramidInputSplit = (MrsPyramidInputSplit)split;
+        nextTileId = mrsPyramidInputSplit.getWrappedSplit().getStartTileId();
+        endTileId = mrsPyramidInputSplit.getWrappedSplit().getEndTileId();
+        totalTiles = endTileId - nextTileId + 1;
+        ifContext = TiledInputFormatContext.load(context.getConfiguration());
+        Bounds requestedBounds = ifContext.getBounds();
+        if (requestedBounds == null)
+        {
+          requestedBounds = new Bounds();
+        }
+        cropBounds = TMSUtils.boundsToTile(requestedBounds.getTMSBounds(),
+            ifContext.getZoomLevel(), ifContext.getTileSize());
+      }
+      else
+      {
+        throw new IOException("Invalid InputSplit passed to AllBlankTilesRecordReader.initialize: " + split.getClass().getName());
+      }
+    }
+
+    @Override
+    public boolean nextKeyValue() throws IOException, InterruptedException
+    {
+      TMSUtils.Tile t = TMSUtils.tileid(nextTileId, zoomLevel);
+      while (!cropBounds.contains(t) && nextTileId < endTileId)
+      {
+        nextTileId++;
+        tileCount++;
+        t = TMSUtils.tileid(nextTileId, zoomLevel);
+      }
+      if (nextTileId > endTileId)
+      {
+        return false;
+      }
+      currentKey = new TileIdWritable(nextTileId);
+      currentValue = toWritable(getBlankTile());
+      nextTileId++;
+      tileCount++;
+      return true;
+    }
+
+    @Override
+    public TileIdWritable getCurrentKey() throws IOException, InterruptedException
+    {
+      return currentKey;
+    }
+
+    @Override
+    public TWritable getCurrentValue() throws IOException, InterruptedException
+    {
+      return currentValue;
+    }
+
+    @Override
+    public float getProgress() throws IOException, InterruptedException
+    {
+      return ((float)tileCount / (float)totalTiles);
+    }
+
+    @Override
+    public void close() throws IOException
+    {
+      // Nothing to close
+    }
+
+    private T getBlankTile()
+    {
+      if (blankValue == null)
+      {
+        blankValue = createBlankTile(ifContext.getFillValue());
+      }
+      return blankValue;
+    }
+  }
+
+  /**
    * A wrapper record reader used within the MrsPyramidRecordReader to handle the case
    * where the caller specified a bounds as well as wanting to return empty tiles
    * in cases where the input image does not have imagery.
@@ -90,12 +189,11 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
   {
     private RecordReader<TileIdWritable, TWritable> delegate;
     private TiledInputFormatContext ifContext;
-    private long currentTx;
-    private long currentTy;
-    private long minTx;
-    private long maxTx;
-    private long minTy;
-    private long maxTy;
+    private long nextTileId;
+    private long endTileId;
+    private long totalTiles;
+    private long tileCount;
+    private TMSUtils.TileBounds cropBounds;
     private TileIdWritable currentKey;
     private TWritable currentValue;
     private T blankValue;
@@ -122,11 +220,7 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     @Override
     public float getProgress() throws IOException, InterruptedException
     {
-      long tilesWide = maxTx - minTx;
-      long tilesHigh = maxTy - minTy;
-      long totalTiles = tilesHigh * tilesWide;
-      long tilesProcessed = (tilesWide * (currentTy - minTy)) + (currentTx - minTx);
-      return ((float)tilesProcessed / (float)totalTiles);
+      return ((float)tileCount / (float)totalTiles);
     }
 
     @Override
@@ -144,14 +238,11 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
         {
           requestedBounds = new Bounds();
         }
-        TMSUtils.TileBounds requestedTileBounds = TMSUtils.boundsToTile(requestedBounds.getTMSBounds(),
+        cropBounds = TMSUtils.boundsToTile(requestedBounds.getTMSBounds(),
             ifContext.getZoomLevel(), ifContext.getTileSize());
-        minTy = requestedTileBounds.s;
-        minTx = requestedTileBounds.w;
-        maxTy = requestedTileBounds.n;
-        maxTx = requestedTileBounds.e;
-        currentTx = -1;
-        currentTy = minTy;
+        endTileId = ((MrsPyramidInputSplit)split).getWrappedSplit().getEndTileId();
+        nextTileId = ((MrsPyramidInputSplit)split).getWrappedSplit().getStartTileId();
+        totalTiles = endTileId - nextTileId + 1;
         blankValue = null;
       }
       else
@@ -164,33 +255,35 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException
     {
-      // Figure out the next tile to grab.
-      if (currentTx < 0)
+      TMSUtils.Tile t = TMSUtils.tileid(nextTileId, zoomLevel);
+      while (!cropBounds.contains(t) && nextTileId < endTileId)
       {
-        // First tile
-        currentTx = minTx;
+        nextTileId++;
+        tileCount++;
+        t = TMSUtils.tileid(nextTileId, zoomLevel);
       }
-      else
+      if (nextTileId > endTileId)
       {
-        currentTx++;
+        return false;
       }
-      // See if we need to go to a new row
-      if (currentTx > maxTx)
-      {
-        currentTx = minTx;
-        currentTy++;
-        if (currentTy > maxTy)
-        {
-          return false;
-        }
-      }
-      currentKey = new TileIdWritable(TMSUtils.tileid(currentTx, currentTy, ifContext.getZoomLevel()));
+      currentKey = new TileIdWritable(nextTileId);
       // See if the key from the delegate matches the current tile.
       if (delegateKey == null)
       {
-        if (delegate.nextKeyValue())
+        // Since native splits can begin with tiles that precede the nextTileId
+        // that is required, we need to skip over tiles returned from the
+        // delegate if they are less than the nextTileId. This can happen when
+        // the crop bounds are near the right and/or top sides of a source image.
+        boolean delegateResult = delegate.nextKeyValue();
+        while (delegateResult)
         {
-          delegateKey = delegate.getCurrentKey();
+          TileIdWritable tempKey = delegate.getCurrentKey();
+          if (tempKey != null && tempKey.get() >= nextTileId)
+          {
+            delegateKey = delegate.getCurrentKey();
+            break;
+          }
+          delegateResult = delegate.nextKeyValue();
         }
       }
       // If the current tile does not exist in the delegate, then return
@@ -207,6 +300,8 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
       {
         currentValue = toWritable(getBlankTile());
       }
+      nextTileId++;
+      tileCount++;
       return true;
     }
 
@@ -271,9 +366,16 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     RecordReader<TileIdWritable,TWritable> recordReader = null;
     if (ifContext.getIncludeEmptyTiles())
     {
-      // The all tiles record reader needs the MrsPyramidInputSplit which
+      if (split.getWrappedSplit().getWrappedSplit() == null)
+      {
+        recordReader = new AllBlankTilesRecordReader();
+      }
+      else
+      {
+        recordReader = new AllTilesRecordReader();
+      }
+      // The all tiles record readers need the MrsPyramidInputSplit which
       // wraps the native split returned from the data plugin.
-      recordReader = new AllTilesRecordReader();
       initializeWithSplit = split;
     }
     else
@@ -345,9 +447,6 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
       if (ifContext.getBounds() != null)
       {
         inputBounds = ifContext.getBounds();
-        if (ifContext.getIncludeEmptyTiles())
-        {
-        }
       }
       scannedInputReader = createRecordReader(fsplit, context);
       final String pyramidName = fsplit.getName();
