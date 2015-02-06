@@ -15,12 +15,9 @@
 
 package org.mrgeo.utils;
 
-import org.w3c.dom.Comment;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.bootstrap.DOMImplementationRegistry;
+import org.w3c.dom.*;
 import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -37,7 +34,7 @@ import java.io.*;
 
 /**
  * @author jason.surratt
- * 
+ *
  */
 public class XmlUtils
 {
@@ -76,17 +73,17 @@ public class XmlUtils
   {
     return createTextElement(parent, tagName, Double.valueOf(v).toString());
   }
-  
+
   public static Element createTextElement(Element parent, String tagName, long v)
   {
     return createTextElement(parent, tagName, Long.valueOf(v).toString());
   }
-  
+
   public static Element createTextElement(Element parent, String tagName, int v)
   {
     return createTextElement(parent, tagName, Integer.valueOf(v).toString());
   }
-  
+
   public static Element createTextElement(Element parent, String tagName, String text)
   {
     Document doc = parent.getOwnerDocument();
@@ -98,7 +95,7 @@ public class XmlUtils
     e.appendChild(doc.createTextNode(text));
     return e;
   }
-  
+
   /**
    * Creates a DOM comment
    * @param parent parent DOM element
@@ -208,21 +205,21 @@ public class XmlUtils
   {
     return parseString(xml, true);
   }
-  
-  public static Document parseString(String xml, boolean namespaceAware) throws SAXException, 
-    IOException, ParserConfigurationException
+
+  public static Document parseString(String xml, boolean namespaceAware) throws SAXException,
+      IOException, ParserConfigurationException
   {
     DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
     domFactory.setNamespaceAware(namespaceAware); // never forget this!
     DocumentBuilder builder;
     builder = domFactory.newDocumentBuilder();
-    
+
     InputSource is = new InputSource();
     is.setCharacterStream(new StringReader(xml));
-    
+
     return builder.parse(is);
   }
-  
+
   public static String documentToString(Document doc) throws IOException
   {
     StringWriter writer = new StringWriter();
@@ -240,33 +237,39 @@ public class XmlUtils
 //    XMLSerializer serializer = new XMLSerializer(out, format);
 //    serializer.serialize(doc);
 
-    DOMImplementationRegistry registry = null;
-    try
-    {
-      registry = DOMImplementationRegistry.newInstance();
-      DOMImplementationLS impl =
-          (DOMImplementationLS)registry.getDOMImplementation("LS");
+    DOMImplementationLS impl = (DOMImplementationLS) doc.getImplementation();
+    LSSerializer writer = impl.createLSSerializer();
+    DOMConfiguration config = writer.getDomConfig();
 
-      LSSerializer writer = impl.createLSSerializer();
-      out.write(writer.writeToString(doc));
-    }
-    catch (Exception e)
+    if (config.canSetParameter("format-pretty-print",Boolean.TRUE))
     {
-      e.printStackTrace();
+      config.setParameter("format-pretty-print", Boolean.TRUE);
     }
+
+
+    // what a crappy way to force the stream to be UTF-8.  yuck!
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    LSOutput output = impl.createLSOutput();
+    output.setEncoding("UTF-8");
+    output.setByteStream(baos);
+
+    writer.write(doc, output);
+
+    out.write(baos.toString());
+    out.flush();
   }
-  
+
   /**
    * Determines whether the DOM node satisifying the specified query exists
-   * 
+   *
    * @param topLevelDomNode Root of the XML DOM to search
    * @param xpathQuery XPATH query defining the search to execute
    * @return true if the DOM node satisfying the XPATH query was found; false otherwise
-   * @throws TransformerException 
+   * @throws TransformerException
    * @throws Exception
    */
-  public static boolean nodeExists(Node topLevelDomNode, String xpathQuery) 
-    throws TransformerException
+  public static boolean nodeExists(Node topLevelDomNode, String xpathQuery)
+      throws TransformerException
   {
     //return XPathAPI.selectNodeList(topLevelDomNode, xpathQuery).getLength() > 0;
 
