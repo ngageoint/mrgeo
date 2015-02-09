@@ -578,7 +578,7 @@ public class DependencyLoader
       line = line.trim();
       if (!line.startsWith("#") && line.length() > 0)
       {
-        String[] vals = line.split("|");
+        String[] vals = line.split("\\|");
 
         if (first)
         {
@@ -593,7 +593,7 @@ public class DependencyLoader
 
           first = false;
         }
-        else if (vals.length == 6)
+        else if (vals.length == 7)
         {
           dep = new Dependency();
 
