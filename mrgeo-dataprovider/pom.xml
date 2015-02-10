@@ -29,6 +29,14 @@
     <module>mrgeo-dataprovider-accumulo</module>
     <module>mrgeo-dataprovider-distribution</module>
   </modules>
+  <profiles>
+    <profile>
+      <id>include-geowave</id>
+      <modules>
+        <module>mrgeo-dataprovider-geowave</module>
+      </modules>
+    </profile>
+  </profiles>
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>

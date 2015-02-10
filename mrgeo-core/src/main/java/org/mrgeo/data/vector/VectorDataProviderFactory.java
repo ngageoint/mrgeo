@@ -23,26 +23,62 @@ import org.apache.hadoop.conf.Configuration;
 public interface VectorDataProviderFactory
 {
   /**
-   * Provider implementations should perform any needed checks within this method
-   * to determine if the other functions defined in this interface can be called
-   * reliably. For example, if the implementation requires some configuration
-   * settings in order to work properly, it can use this method to determine if
-   * those settings have been defined. Returning false from this method will prevent
-   * the provider from being called thereafter.
-   * @return
+   * This function is called by MrGeo so that providers can make sure they have
+   * the necessary information to be used within MrGeo. For example, if login
+   * or connection data must be configured properly in order for this provider
+   * to work properly, that should be verified within this function. If this
+   * function returns false, the provider will not be used within MrGeo.
+   * 
+   * This particular signature is invoked by MrGeo when providers are needed
+   * within a map/reduce task, so it should verify that any settings it needs
+   * can be obtained from the job configuration. Note that it is the provider's
+   * responsibility to encode the settings it requires into the job configuration
+   * during the setup of the job. This is typically done inside a "setupJob" method
+   * within a VectorInputFormatProvider or VectorOutputFormatProvider implementation
+   * in the data provider.
    */
-  public boolean isValid();
+  public boolean isValid(final Configuration conf);
+
+  /**
+   * This function is called by MrGeo so that providers can make sure they have
+   * the necessary information to be used within MrGeo. For example, if login
+   * or connection data must be configured properly in order for this provider
+   * to work properly, that should be verified within this function. If this
+   * function returns false, the provider will not be used within MrGeo.
+   * 
+   * This particular signature is invoked by MrGeo when providers are needed
+   * outside the context of a map/reduce task, for example while setting up
+   * a map/reduce job before running it, or any time a provider is used outside
+   * of map.reduce altogether.
+   */
+  public boolean isValid(final Properties providerProperties);
 
   public String getPrefix();
 
-  public VectorDataProvider createVectorDataProvider(final String input);
+  public VectorDataProvider createVectorDataProvider(final String input,
+      final Configuration conf);
+  public VectorDataProvider createVectorDataProvider(final String input,
+      final Properties providerProperties);
 
-  public String[] listVectors() throws IOException;
+  public String[] listVectors(final Properties providerProperties) throws IOException;
   
-  public boolean canOpen(final String input) throws IOException;
-  public boolean canWrite(final String input) throws IOException;
-  public boolean exists(final String name) throws IOException;
-  public void delete(final String name) throws IOException;
-  public void configure(final Configuration conf);
-  public void configure(final Properties p);
+  public boolean canOpen(final String input,
+      final Configuration conf) throws IOException;
+  public boolean canOpen(final String input,
+      final Properties providerProperties) throws IOException;
+
+  public boolean canWrite(final String input,
+      final Configuration conf) throws IOException;
+  public boolean canWrite(final String input,
+      final Properties providerProperties) throws IOException;
+
+  public boolean exists(final String name,
+      final Configuration conf) throws IOException;
+  public boolean exists(final String name,
+      final Properties providerProperties) throws IOException;
+
+  public void delete(final String name,
+      final Configuration conf) throws IOException;
+  public void delete(final String name,
+      final Properties providerProperties) throws IOException;
 }

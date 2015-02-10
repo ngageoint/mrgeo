@@ -15,8 +15,10 @@
 
 package org.mrgeo.data.vector;
 
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.mrgeo.geometry.Geometry;
 
 import java.io.IOException;
 
@@ -36,6 +38,9 @@ public abstract class VectorDataProvider
 
   /**
    * Return an instance of a class that can read metadata for this resource.
+   * If this type of vector data does not support an overall schema of metadata
+   * then return null. That would be the case when each feature could potentially
+   * have a different set of attributes.
    * 
    * @return
    */
@@ -43,6 +48,9 @@ public abstract class VectorDataProvider
 
   /**
    * Return an instance of a class that can write metadata for this resource.
+   * If this type of vector data does not support an overall schema of metadata
+   * then return null. That would be the case when each feature could potentially
+   * have a different set of attributes.
    * 
    * @return
    */
@@ -70,7 +78,7 @@ public abstract class VectorDataProvider
    * 
    * @return
    */
-  public abstract RecordReader<VectorKey, VectorValue> getRecordReader();
+  public abstract RecordReader<LongWritable, Geometry> getRecordReader();
 
   /**
    * Return an instance of a RecordWriter class to be used in map/reduce jobs for writing
@@ -78,7 +86,7 @@ public abstract class VectorDataProvider
    * 
    * @return
    */
-  public abstract RecordWriter<VectorKey, VectorValue> getRecordWriter();
+  public abstract RecordWriter<LongWritable, Geometry> getRecordWriter();
 
   /**
    * Return an instance of an InputFormat class to be used in map/reduce jobs for processing

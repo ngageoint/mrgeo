@@ -19,12 +19,16 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 public class VectorInputFormatContext
 {
   private static final String className = VectorInputFormatContext.class.getSimpleName();
   private static final String INPUTS = className + ".inputs";
+  private static final String PROVIDER_PROPERTY_COUNT = className + ".provPropCount";
+  private static final String PROVIDER_PROPERTY_KEY = className + ".provPropKey.";
+  private static final String PROVIDER_PROPERTY_VALUE = className + ".provPropValue.";
 
   // TODO: Might need to include properties for spatial filtering
   // here - like a geometry collection. We could also add a flag for
@@ -36,10 +40,13 @@ public class VectorInputFormatContext
   // TODO: Also should consider properties for attribute filtering.
 
   private Set<String> inputs;
+  private Properties inputProviderProperties = new Properties();
 
-  public VectorInputFormatContext(final Set<String> inputs)
+  public VectorInputFormatContext(final Set<String> inputs,
+      final Properties inputProviderProperties)
   {
     this.inputs = inputs;
+    this.inputProviderProperties.putAll(inputProviderProperties);
   }
 
   protected VectorInputFormatContext()
@@ -51,9 +58,31 @@ public class VectorInputFormatContext
     return inputs;
   }
 
+  public Properties getProviderProperties()
+  {
+    return inputProviderProperties;
+  }
+
   public void save(final Configuration conf)
   {
     conf.set(INPUTS, StringUtils.join(inputs, ","));
+    conf.setInt(PROVIDER_PROPERTY_COUNT,
+        ((inputProviderProperties == null) ? 0 : inputProviderProperties.size()));
+    if (inputProviderProperties != null)
+    {
+      Set<String> keySet = inputProviderProperties.stringPropertyNames();
+      String[] keys = new String[keySet.size()];
+      keySet.toArray(keys);
+      for (int i=0; i < keys.length; i++)
+      {
+        conf.set(PROVIDER_PROPERTY_KEY + i, keys[i]);
+        String v = inputProviderProperties.getProperty(keys[i]);
+        if (v != null)
+        {
+          conf.set(PROVIDER_PROPERTY_VALUE + i, v);
+        }
+      }
+    }
   }
 
   public static VectorInputFormatContext load(final Configuration conf)
@@ -67,6 +96,17 @@ public class VectorInputFormatContext
       for (String confInput : confInputs)
       {
         context.inputs.add(confInput);
+      }
+    }
+    int providerPropertyCount = conf.getInt(PROVIDER_PROPERTY_COUNT, 0);
+    if (providerPropertyCount > 0)
+    {
+      context.inputProviderProperties = new Properties();
+      for (int i=0; i < providerPropertyCount; i++)
+      {
+        String key = conf.get(PROVIDER_PROPERTY_KEY + i);
+        String value = conf.get(PROVIDER_PROPERTY_VALUE + i);
+        context.inputProviderProperties.setProperty(key, value);
       }
     }
     return context;

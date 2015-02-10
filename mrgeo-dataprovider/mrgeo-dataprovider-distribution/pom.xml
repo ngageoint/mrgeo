@@ -120,6 +120,15 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>include-geowave</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-dataprovider-geowave</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
   </profiles>
   <dependencies>
     <dependency>

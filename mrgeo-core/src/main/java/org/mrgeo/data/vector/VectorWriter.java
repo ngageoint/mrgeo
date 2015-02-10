@@ -17,10 +17,13 @@ package org.mrgeo.data.vector;
 
 import java.io.IOException;
 
+import org.apache.hadoop.io.LongWritable;
+import org.mrgeo.geometry.Geometry;
+
 
 public interface VectorWriter
 {
-  public abstract void append(final VectorKey key, final VectorValue value)
+  public abstract void append(final LongWritable key, final Geometry value)
       throws IOException;
   public abstract void close() throws IOException;
 }
