@@ -63,20 +63,15 @@ public class CsvOutputFormatTest
       writer.close(null);
 
       String input = TestUtils.composeInputDir(CsvOutputFormatTest.class);
-      {
+
         File csvBaselineFile = new File(input, "testBasics.csv");
         File csvOutputFile = new File(output, "testBasics.csv");
-        Assert.assertTrue(String.format("The content in %s does not match %s",
-              csvOutputFile.getAbsoluteFile(), csvBaselineFile.getAbsoluteFile()),
-            FileUtils.contentEquals(csvBaselineFile, csvOutputFile));
-      }
-      {
+        TestUtils.compareTextFiles(csvBaselineFile.getAbsoluteFile(), csvOutputFile.getAbsoluteFile());
+
         File columnsBaselineFile = new File(input, "testBasics.csv.columns");
         File columnsOutputFile = new File(output, "testBasics.csv.columns");
-        Assert.assertTrue(String.format("The content in %s does not match %s",
-              columnsOutputFile.getAbsoluteFile(), columnsBaselineFile.getAbsoluteFile()),
-            FileUtils.contentEquals(columnsBaselineFile, columnsOutputFile));
-      }
+
+        TestUtils.compareTextFiles(columnsBaselineFile.getAbsoluteFile(), columnsOutputFile.getAbsoluteFile());
     }
     catch (Exception e)
     {

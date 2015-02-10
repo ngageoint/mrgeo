@@ -93,7 +93,22 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
     
     this.provider = provider;
     this.cv = cv; //provider.getColumnVisibility();
-    log.info("Have column visibility of: " + cv.toString());
+//    if(this.cv == null){
+//    	String str = this.provider.getProviderProperties().getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+//    	if(str == null){
+//    		this.cv = new ColumnVisibility();
+//    	} else {
+//    		this.cv = new ColumnVisibility(str);
+//    	}
+//    }
+    
+    //TODO - program things to get rid of this
+    if(this.cv == null){
+    	log.info("setting blank column visibility");
+    	//this.cv = new ColumnVisibility("C&D");
+    	this.cv = new ColumnVisibility();
+    }
+    log.info("Have column visibility of: " + this.cv.toString());
     
     this.zoomLevel = context.getZoomlevel();
     this.tileSize = context.getTilesize();
