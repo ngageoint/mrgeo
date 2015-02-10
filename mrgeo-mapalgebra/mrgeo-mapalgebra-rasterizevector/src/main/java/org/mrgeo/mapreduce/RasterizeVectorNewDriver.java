@@ -147,7 +147,7 @@ public class RasterizeVectorNewDriver
     VectorInputFormatContext ifContext = new VectorInputFormatContext(
         inputs, providerProperties);
     VectorInputFormatProvider ifp = vdp.getVectorInputFormatProvider(ifContext);
-    ifp.setupJob(job);
+    ifp.setupJob(job, providerProperties);
     run(job, output, aggregationType, zoom, bounds, progress, jobListener, protectionLevel,
         providerProperties);
   }

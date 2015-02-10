@@ -13,16 +13,29 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.geometry.Geometry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
 {
+  static final Logger log = LoggerFactory.getLogger(VectorInputFormat.class);
+
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
   {
+    boolean debugEnabled = log.isDebugEnabled();
     VectorInputFormatContext ifContext = VectorInputFormatContext.load(context.getConfiguration());
     List<InputSplit> results = new ArrayList<InputSplit>();
+    if (debugEnabled)
+    {
+      log.debug("Number of inputs to get splits for: " + ifContext.getInputs().size());
+    }
     for (String input: ifContext.getInputs())
     {
+      if (debugEnabled)
+      {
+        log.debug("Getting splits for input: " + input);
+      }
       List<InputSplit> nativeSplits = getNativeSplits(context, ifContext, input);
       if (nativeSplits != null && !nativeSplits.isEmpty())
       {
@@ -33,6 +46,10 @@ public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
         }
       }
     }
+    if (debugEnabled)
+    {
+      log.debug("VectorInputFormat.getSplits returns: " + results.size());
+    }
     return results;
   }
 
@@ -40,7 +57,8 @@ public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
   public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
-    if (split instanceof VectorInputSplit)
+//    return new VectorRecordReader();
+    if (!(split instanceof VectorInputSplit))
     {
       throw new IOException("Expected a VectorInputSplit but got " + split.getClass().getName());
     }
@@ -48,7 +66,7 @@ public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
     VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(context.getConfiguration(),
         inputSplit.getVectorName(), AccessMode.READ);
     RecordReader<LongWritable, Geometry> recordReader = dp.getRecordReader();
-    recordReader.initialize(inputSplit.getWrappedInputSplit(), context);
+    recordReader.initialize(inputSplit, context);
     return recordReader;
   }
   
@@ -59,6 +77,12 @@ public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
     VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(context.getConfiguration(),
         input, AccessMode.READ);
     VectorInputFormatProvider ifProvider = dp.getVectorInputFormatProvider(ifContext);
-    return ifProvider.getInputFormat(input).getSplits(context);
+    List<InputSplit> results = ifProvider.getInputFormat(input).getSplits(context);
+    if (log.isDebugEnabled())
+    {
+      log.debug("vector input format provider class is " + ifProvider.getClass().getName());
+      log.debug("VectorInputFormat.getNativeSplits returns: " + results.size());
+    }
+    return results;
   }
 }

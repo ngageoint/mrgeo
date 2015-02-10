@@ -616,7 +616,20 @@ public class DataProviderFactory
             }
           }
         }
-        throw new DataProviderNotFound("Unable to find a vector data provider for " + name);
+        // Log some useful debug information
+        String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
+        if (log.isDebugEnabled())
+        {
+          log.debug(msg);
+          log.debug("Available vector provider factories: " + vectorProviderFactories.size());
+          for (VectorDataProviderFactory f: vectorProviderFactories.values())
+          {
+            log.debug(f.getPrefix() + " using " + f.getClass().getName());
+          }
+          String cp = System.getProperty("java.class.path");
+          log.debug("java.class.path=" + cp);
+        }
+        throw new DataProviderNotFound(msg);
       }
       else if (accessMode == AccessMode.OVERWRITE)
       {
@@ -658,7 +671,19 @@ public class DataProviderFactory
             {
               return factory.createVectorDataProvider(name, props);
             }
-            throw new DataProviderNotFound("Unable to find a vector data provider for " + name);
+            String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
+            if (log.isDebugEnabled())
+            {
+              log.debug(msg);
+              log.debug("Available vector provider factories: " + vectorProviderFactories.size());
+              for (VectorDataProviderFactory f: vectorProviderFactories.values())
+              {
+                log.debug(f.getPrefix() + " using " + f.getClass().getName());
+              }
+              String cp = System.getProperty("java.class.path");
+              log.debug("java.class.path=" + cp);
+            }
+            throw new DataProviderNotFound(msg);
           }
           else
           {
@@ -666,7 +691,19 @@ public class DataProviderFactory
             {
               return factory.createVectorDataProvider(name, conf);
             }
-            throw new DataProviderNotFound("Unable to find a vector data provider for " + name);
+            String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
+            if (log.isDebugEnabled())
+            {
+              log.debug(msg);
+              log.debug("Available vector provider factories: " + vectorProviderFactories.size());
+              for (VectorDataProviderFactory f: vectorProviderFactories.values())
+              {
+                log.debug(f.getPrefix() + " using " + f.getClass().getName());
+              }
+              String cp = System.getProperty("java.class.path");
+              log.debug("java.class.path=" + cp);
+            }
+            throw new DataProviderNotFound(msg);
           }
         }
         if (props != null)
@@ -692,36 +729,66 @@ public class DataProviderFactory
 
     private VectorDataProviderFactory findFactory() throws IOException
     {
+      boolean debugEnabled = log.isDebugEnabled();
+      if (debugEnabled)
+      {
+        log.debug("Looking for factory for prefix: " + ((prefix != null) ? prefix : "null") + " and name " + name);
+        log.debug("Vector factory count = " + vectorProviderFactories.size());
+      }
       if (prefix != null)
       {
         if (vectorProviderFactories.containsKey(prefix))
         {
+          if (debugEnabled)
+          {
+            log.debug("Returning factory from prefix cache: " + vectorProviderFactories.get(prefix).getClass().getName());
+          }
           return vectorProviderFactories.get(prefix);
         }
       }
       for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
       {
+        if (debugEnabled)
+        {
+          log.debug("Checking factory: " + factory.getClass().getName());
+        }
         if (props != null)
         {
           if (factory.exists(name, props))
           {
+            if (debugEnabled)
+            {
+              log.debug("Returning factory from provider properties: " + vectorProviderFactories.get(prefix).getClass().getName());
+            }
             return factory;
           }
-          log.debug("resource cache load: " + name);
+          if (debugEnabled)
+          {
+            log.debug("resource cache load: " + name);
+          }
         }
         else
         {
           if (factory.exists(name, conf))
           {
+            if (debugEnabled)
+            {
+              log.debug("Returning factory from configuration: " + vectorProviderFactories.get(prefix).getClass().getName());
+            }
             return factory;
           }
-          log.debug("resource cache load: " + name);
+          if (debugEnabled)
+          {
+            log.debug("resource cache load: " + name);
+          }
         }
       }
-
+      if (debugEnabled)
+      {
+        log.debug("Returning null factory");
+      }
       return null;
     }
-
   }
 
   private static Cache<String, AdHocDataProvider> adHocProviderCache = CacheBuilder
@@ -1302,24 +1369,76 @@ public class DataProviderFactory
     }
     if (vectorProviderFactories == null)
     {
+      boolean debugEnabled = log.isDebugEnabled();
       vectorProviderFactories = new HashMap<String, VectorDataProviderFactory>();
 
+      if (debugEnabled)
+      {
+        log.debug("Finding vector provider factories");
+      }
       // Find the vectorProviders
       final ServiceLoader<VectorDataProviderFactory> dataProviderLoader = ServiceLoader
           .load(VectorDataProviderFactory.class);
+      int count = 0;
       for (final VectorDataProviderFactory dp : dataProviderLoader)
       {
         try
         {
-          if (dp.isValid())
+          if (conf != null)
           {
-            vectorProviderFactories.put(dp.getPrefix(), dp);
+            if (debugEnabled)
+            {
+              log.debug("Checking if vector factory is valid using configuration: " + dp.getClass().getName());
+            }
+            if (dp.isValid(conf))
+            {
+              if (debugEnabled)
+              {
+                log.debug("Factory " + dp.getClass().getName() + " is valid, uses prefix: " + dp.getPrefix());
+              }
+              vectorProviderFactories.put(dp.getPrefix(), dp);
+              count++;
+            }
+            else
+            {
+              if (debugEnabled)
+              {
+                log.debug("Factory " + dp.getClass().getName() + " is NOT valid, uses prefix: " + dp.getPrefix());
+              }
+            }
+          }
+          else
+          {
+            if (debugEnabled)
+            {
+              log.debug("Checking if vector factory is valid using provider properties: " + dp.getClass().getName());
+            }
+            if (dp.isValid(p))
+            {
+              if (debugEnabled)
+              {
+                log.debug("Factory " + dp.getClass().getName() + " is valid, uses prefix: " + dp.getPrefix());
+              }
+              vectorProviderFactories.put(dp.getPrefix(), dp);
+              count++;
+            }
+            else
+            {
+              if (debugEnabled)
+              {
+                log.debug("Factory " + dp.getClass().getName() + " is NOT valid, uses prefix: " + dp.getPrefix());
+              }
+            }
           }
         }
         catch (Exception e)
         {
-          // no op, just won't put the provider in the list
+          log.warn("Skipping vector factory provider " + dp.getClass().getName() + " due to exception", e);
         }
+      }
+      if (count == 0)
+      {
+        log.warn("No vector factory providers were found");
       }
     }
 

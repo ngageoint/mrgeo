@@ -1,5 +1,6 @@
 package org.mrgeo.data.geowave.vector;
 
+import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -56,29 +57,29 @@ public class GeoWaveConnectionInfo
     String zookeeperServers = conf.get(GEOWAVE_ZOOKEEPER_SERVERS_KEY);
     if (zookeeperServers == null || zookeeperServers.isEmpty())
     {
-      return null;
+      throw new IllegalArgumentException("Missing zookeeper setting for GeoWave");
     }
     String instance = conf.get(GEOWAVE_INSTANCE_KEY);
     if (instance == null || instance.isEmpty())
     {
-      return null;
+      throw new IllegalArgumentException("Missing instance setting for GeoWave");
     }
     String userName = conf.get(GEOWAVE_USERNAME_KEY);
     if (userName == null || userName.isEmpty())
     {
-      return null;
+      throw new IllegalArgumentException("Missing user name setting for GeoWave");
     }
     // TODO: Encrypt the password. Maybe initially we can just Base64 it? See
     // what the Accumulo plugin does.
     String password = conf.get(GEOWAVE_PASSWORD_KEY);
     if (password == null || password.isEmpty())
     {
-      return null;
+      throw new IllegalArgumentException("Missing password setting for GeoWave");
     }
     String namespace = conf.get(GEOWAVE_NAMESPACE_KEY);
     if (namespace == null || namespace.isEmpty())
     {
-      return null;
+      throw new IllegalArgumentException("Missing namespace setting for GeoWave");
     }
     return new GeoWaveConnectionInfo(zookeeperServers, instance, userName,
         password, namespace);
@@ -92,7 +93,7 @@ public class GeoWaveConnectionInfo
     // TODO: Encrypt the password. Maybe initially we can just Base64 it? See
     // what the Accumulo plugin does.
     conf.set(GEOWAVE_PASSWORD_KEY, password);
-    conf.get(GEOWAVE_NAMESPACE_KEY, namespace);
+    conf.set(GEOWAVE_NAMESPACE_KEY, namespace);
   }
 
   public GeoWaveConnectionInfo(String zookeeperServers, String instanceName,

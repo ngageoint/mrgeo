@@ -7,13 +7,16 @@ import java.io.IOException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.HadoopUtils;
 
 public class VectorInputSplit extends InputSplit implements Writable
 {
   private String vectorName;
   private InputSplit wrappedInputSplit;
+
+  public VectorInputSplit()
+  {
+  }
 
   public VectorInputSplit(String vectorName, InputSplit wrappedInputSplit)
   {
@@ -58,7 +61,7 @@ public class VectorInputSplit extends InputSplit implements Writable
       try
       {
         Class<?> splitClass = Class.forName(wrappedSplitClassName);
-        wrappedInputSplit = (TiledInputSplit)ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
+        wrappedInputSplit = (InputSplit)ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
         ((Writable)wrappedInputSplit).readFields(in);
       }
       catch (ClassNotFoundException e)

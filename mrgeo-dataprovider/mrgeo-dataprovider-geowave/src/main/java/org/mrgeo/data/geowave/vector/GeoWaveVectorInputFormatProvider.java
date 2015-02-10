@@ -1,5 +1,7 @@
 package org.mrgeo.data.geowave.vector;
 
+import java.util.Properties;
+
 import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveInputFormat;
 
 import org.apache.hadoop.io.LongWritable;
@@ -10,9 +12,8 @@ import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.geometry.Geometry;
 
-public class GeoWaveVectorInputFormatProvider implements VectorInputFormatProvider
+public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
 {
-  private VectorInputFormatContext context;
   private GeoWaveConnectionInfo connectionInfo;
 //  private Integer minInputSplits; // ?
 //  private Integer maxInputSplits; // ?
@@ -20,7 +21,7 @@ public class GeoWaveVectorInputFormatProvider implements VectorInputFormatProvid
   public GeoWaveVectorInputFormatProvider(VectorInputFormatContext context,
       GeoWaveConnectionInfo connectionInfo)
   {
-    this.context = context;
+    super(context);
     this.connectionInfo = connectionInfo;
   }
 
@@ -31,8 +32,9 @@ public class GeoWaveVectorInputFormatProvider implements VectorInputFormatProvid
   }
 
   @Override
-  public void setupJob(Job job) throws DataProviderException
+  public void setupJob(Job job, Properties providerProperties) throws DataProviderException
   {
+    super.setupJob(job, providerProperties);
     GeoWaveInputFormat.setAccumuloOperationsInfo(
         job,
         connectionInfo.getZookeeperServers(),
@@ -40,7 +42,7 @@ public class GeoWaveVectorInputFormatProvider implements VectorInputFormatProvid
         connectionInfo.getUserName(),
         connectionInfo.getPassword(),
         connectionInfo.getNamespace());
-
+    this.connectionInfo.writeToConfig(job.getConfiguration());
 //    if ((adapters != null) && (adapters.size() > 0)) {
 //      for (final DataAdapter<?> adapter : adapters) {
 //        GeoWaveInputFormat.addDataAdapter(

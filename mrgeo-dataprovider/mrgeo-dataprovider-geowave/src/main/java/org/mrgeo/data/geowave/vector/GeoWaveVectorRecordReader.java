@@ -8,6 +8,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.mrgeo.data.vector.VectorInputSplit;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -21,8 +22,13 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
+    if (!(split instanceof VectorInputSplit))
+    {
+      throw new IOException("Expected split to be of type VectorInputSplit, but got: " + split.getClass().getName());
+    }
     delegateReader = new GeoWaveRecordReader<Object>();
-    delegateReader.initialize(split, context);
+    // Pass the native split wrapped by VectorInputSplit back into the native reader.
+    delegateReader.initialize(((VectorInputSplit)split).getWrappedInputSplit(), context);
   }
 
   @Override

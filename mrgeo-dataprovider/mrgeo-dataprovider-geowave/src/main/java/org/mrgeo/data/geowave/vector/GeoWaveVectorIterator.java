@@ -105,8 +105,13 @@ public class GeoWaveVectorIterator implements KVIterator<LongWritable, Geometry>
     List<AttributeDescriptor> descriptors = feature.getFeatureType().getAttributeDescriptors();
     for (AttributeDescriptor desc : descriptors)
     {
-      geom.setAttribute(desc.getLocalName(),
-          feature.getAttribute(desc.getLocalName()).toString());
+      String localName = desc.getLocalName();
+      Object attrValue = feature.getAttribute(localName);
+      if (attrValue != null)
+      {
+        String strValue = attrValue.toString();
+        geom.setAttribute(localName, strValue);
+      }
     }
     return geom;
   }
