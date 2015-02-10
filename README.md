@@ -20,6 +20,8 @@ See [YouTube explainer](http://youtu.be/Z3fPTTtZ60I?list=FLBRaZ-IsIB44ikg-9n1RKt
 
 MrGeo (MapReduce Geo) is a geospatial toolkit designed to provide raster-based geospatial capabilities that can be performed at scale. MrGeo is built upon the Hadoop ecosystem to leverage the storage and processing of hundreds of commodity computers.  Functionally,  MrGeo stores large raster datasets as a collection of individual tiles stored in Hadoop to enable large-scale data and analytic services.  The co-location of data and analytics offers the advantage of minimizing the movement of data  in favor of bringing the computation to the data; a more favorable compute method for Geospatial Big Data. This framework has enabled the servicing of terabyte scale raster databases and  performed terrain analytics on databases exceeding hundreds of gigabytes in size.
 
+See [Wiki](https://github.com/ngageoint/mrgeo/wiki) for detailed documentation
+
 Unique features/solutions of MrGeo:
 
 * Scalable storage and processing of raster data
