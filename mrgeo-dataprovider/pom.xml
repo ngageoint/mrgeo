@@ -26,7 +26,7 @@
   <name>mrgeo-dataprovider</name>
   <packaging>pom</packaging>
   <modules>
-<!--    <module>mrgeo-dataprovider-accumulo</module> -->
+    <module>mrgeo-dataprovider-accumulo</module>
     <module>mrgeo-dataprovider-distribution</module>
   </modules>
   <profiles>

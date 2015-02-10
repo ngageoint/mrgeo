@@ -45,8 +45,8 @@ public class GeoWaveTester
     protected void map(LongWritable key, Geometry value, Context context) throws IOException,
         InterruptedException
     {
-      System.out.println("Key: " + key.get());
-      System.out.println("Value: " + value);
+//      System.out.println("Key: " + key.get());
+//      System.out.println("Value: " + value);
       context.write(new Text("" + key.get()), new Text(value.toString()));
     }
   }
