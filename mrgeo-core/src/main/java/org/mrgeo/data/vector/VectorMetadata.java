@@ -15,14 +15,14 @@
 
 package org.mrgeo.data.vector;
 
-import org.mrgeo.utils.Bounds;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.mrgeo.utils.Bounds;
 
 public class VectorMetadata
 {
-  private Map<String, Object> metadata = new HashMap<String, Object>();
+  private List<String> attributes = new ArrayList<String>();
   private Bounds bounds;
 
   public VectorMetadata()
@@ -39,108 +39,27 @@ public class VectorMetadata
     this.bounds = bounds;
   }
 
-  public void set(final String key, final String value)
+  /**
+   * Attributes should not include the attribute that stores geometry.
+   * 
+   * @param attribute
+   */
+  public void addAttribute(String attribute)
   {
-    metadata.put(key, value);
-  }
-
-  public void set(final String key, final int value)
-  {
-    metadata.put(key, value);
-  }
-
-  public void set(final String key, final long value)
-  {
-    metadata.put(key, value);
-  }
-
-  public void set(final String key, final float value)
-  {
-    metadata.put(key, value);
-  }
-
-  public void set(final String key, final double value)
-  {
-    metadata.put(key, value);
-  }
-
-  public void set(final String key, final Object value)
-  {
-    metadata.put(key, value);
-  }
-
-  public String getString(final String key)
-  {
-    Object value = metadata.get(key);
-    if (value == null)
+    if (!hasAttribute(attribute))
     {
-      return null;
+      attributes.add(attribute);
     }
-    if (value instanceof String)
-    {
-      return (String)value;
-    }
-    return null;
   }
 
-  public int getInt(final String key, final int defaultValue)
+  public boolean hasAttribute(final String fieldName)
   {
-    Object value = metadata.get(key);
-    if (value == null)
-    {
-      return defaultValue;
-    }
-    if (value instanceof Integer)
-    {
-      return ((Integer)value).intValue();
-    }
-    return defaultValue;
+    return attributes.contains(fieldName);
   }
 
-  public long getLong(final String key, final long defaultValue)
+  public String[] getAttributes()
   {
-    Object value = metadata.get(key);
-    if (value == null)
-    {
-      return defaultValue;
-    }
-    if (value instanceof Long)
-    {
-      return ((Long)value).longValue();
-    }
-    return defaultValue;
-  }
-
-  public float getFloat(final String key, final float defaultValue)
-  {
-    Object value = metadata.get(key);
-    if (value == null)
-    {
-      return defaultValue;
-    }
-    if (value instanceof Float)
-    {
-      return ((Float)value).floatValue();
-    }
-    return defaultValue;
-  }
-
-  public double getDouble(final String key, final double defaultValue)
-  {
-    Object value = metadata.get(key);
-    if (value == null)
-    {
-      return defaultValue;
-    }
-    if (value instanceof Double)
-    {
-      return ((Double)value).doubleValue();
-    }
-    return defaultValue;
-  }
-
-  public Object getObject(final String key)
-  {
-    return metadata.get(key);
+    String[] result = new String[attributes.size()];
+    return attributes.toArray(result);
   }
 }

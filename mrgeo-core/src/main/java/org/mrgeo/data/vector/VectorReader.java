@@ -15,20 +15,22 @@
 
 package org.mrgeo.data.vector;
 
+import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.KVIterator;
+import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
 
 public interface VectorReader
 {
   public abstract void close();
-  public abstract KVIterator<VectorKey, VectorValue> get();
+  public abstract KVIterator<LongWritable, Geometry> get();
   // TODO: How do we handle the following for vector sources that aren't
   // indexed at all (like maybe tsv/csv)? Should these methods be included
   // in a separate interface which callers must use "instanceof" followed
   // by a typecast in order to call these methods?
-  public abstract boolean exists(final VectorKey key);
-  public abstract VectorValue get(final VectorKey key);
-  public abstract KVIterator<VectorKey, VectorValue> get(final Bounds bounds);
+  public abstract boolean exists(LongWritable featureId);
+  public abstract Geometry get(LongWritable featureId);
+  public abstract KVIterator<LongWritable, Geometry> get(final Bounds bounds);
   // TODO: Do we want to include some more advanced spatial query capability here?
   // We could handle that via a different interface that callers could use
   // "instanceof" to see of the reader supports that capability...

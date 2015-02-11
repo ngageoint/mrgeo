@@ -15,34 +15,32 @@
 
 package org.mrgeo.data.accumulo.image;
 
-import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
-import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.util.format.DefaultFormatter;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.mrgeo.mapreduce.splitters.TiledInputSplit;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.data.accumulo.utils.AccumuloUtils;
-import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
-import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
 import javax.management.RuntimeErrorException;
+
+import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.mrgeo.data.accumulo.utils.AccumuloUtils;
+import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
+import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.data.tile.TiledInputFormatContext;
+import org.mrgeo.mapreduce.splitters.TiledInputSplit;
+import org.mrgeo.utils.TMSUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -298,9 +296,9 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
           // transform key and value
           long id = AccumuloUtils.toLong(entry.getKey().getRow());
           currentKey = entry.getKey();
-          currentValue = entry.getValue();
+//          currentValue = entry.getValue();
           
-          log.info("Processing " + id + " -> " + currentValue.getSize());
+//          log.info("Processing " + id + " -> " + currentValue.getSize());
 
           currentK = new TileIdWritable(id);
           currentV = new RasterWritable(entry.getValue().get());

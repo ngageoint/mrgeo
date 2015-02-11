@@ -140,8 +140,8 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
       _innerFormat = AccumuloOutputFormat.class.newInstance();
       if(! ConfiguratorBase.isConnectorInfoSet(AccumuloOutputFormat.class, conf)){
       //if(! outputInfoSet){
-        _innerFormat.setOutputInfo(conf, username, password.getBytes(), false, table);
-        _innerFormat.setZooKeeperInstance(conf, instanceName, zooKeepers);
+//        _innerFormat.setOutputInfo(conf, username, password.getBytes(), false, table);
+//        _innerFormat.setZooKeeperInstance(conf, instanceName, zooKeepers);
         outputInfoSet = true;
       }
     }

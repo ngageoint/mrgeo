@@ -29,6 +29,7 @@ usage() {
     echo "  cdh470    - Cloudera hadoop 4.7.0"
     echo "  cdh510    - Cloudera hadoop 5.1.0"
     echo "  cdh520    - Cloudera hadoop 5.2.0"
+    echo "  cdh521    - Cloudera hadoop 5.2.1"
     echo "  cdh530    - Cloudera hadoop 5.3.0"
     echo "  cdh531    - Cloudera hadoop 5.3.1"
     echo "  mapr      - mapr hadoop"
@@ -50,6 +51,7 @@ usage() {
     echo "  -v  --version <version>   - hadoop version to use (0.20.2)"
     echo "  -y  --yarn                - use hadoop YARN (for hadoop 2+, instead of mr1)"
     echo "  -sh --shade               - generate the shaded (jar with dependencies) jars"
+    echo "  -g  --geowave             - build the GeoWave data provider"
     echo " "
     echo "  all other args will be passed to maven directly"
     echo " "
@@ -285,6 +287,9 @@ while [ $# -gt 0 ] ; do
     "cdh520")
         BUILD="CDH520"
         ;;
+    "cdh521")
+        BUILD="CDH521"
+        ;;
     "cdh530")
         BUILD="CDH530"
         ;;
@@ -356,6 +361,9 @@ while [ $# -gt 0 ] ; do
         ;;
     "-y" | "--yarn")
         USEYARN=true
+        ;;
+    "-g" | "--geowave")
+        ARGS=$ARGS" -Pinclude-geowave"
         ;;
     "-l" | "--license")
         LICENSE=

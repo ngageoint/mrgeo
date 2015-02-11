@@ -15,11 +15,32 @@
 
 package org.mrgeo.data.vector;
 
+import java.util.Properties;
+
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.geometry.Geometry;
 
-public interface VectorInputFormatProvider
+public abstract class VectorInputFormatProvider
 {
+  private VectorInputFormatContext context;
+
+  public VectorInputFormatProvider(VectorInputFormatContext context)
+  {
+    this.context = context;
+  }
+  /**
+   * Returns an instance of an InputFormat for the data provider that
+   * is responsible for translating the keys and values from the native
+   * InputFormat to LongWritable keys and Geometry values.
+   * 
+   * @return
+   */
+  public abstract InputFormat<LongWritable, Geometry> getInputFormat(String input);
+
   /**
    * For performing all Hadoop job setup required to use this data source
    * as an InputFormat for a Hadoop map/reduce job, including the input
@@ -27,12 +48,20 @@ public interface VectorInputFormatProvider
    * 
    * @param job
    */
-  public void setupJob(final Job job) throws DataProviderException;
+  public void setupJob(final Job job,
+      final Properties providerProperties) throws DataProviderException
+  {
+    DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
+        job.getConfiguration());
+    context.save(job.getConfiguration());
+  }
 
   /**
    * Perform any processing required after the map/reduce has completed.
    * 
    * @param job
    */
-  public void teardown(final Job job) throws DataProviderException;
+  public void teardown(final Job job) throws DataProviderException
+  {
+  }
 }
