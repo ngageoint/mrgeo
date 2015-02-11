@@ -49,29 +49,36 @@ abstract class MrGeoDriver {
   }
 
   private def addYarnClasses(cl: URLClassLoader) = {
-    // need to do this by reflection, since we may support non YARN setups
+    // need to get the Yarn config by reflection, since we may support non YARN setups
 
-    throw new NotImplementedError("This method needs to be implemented as reflection!")
+    val clazz = getClass.getClassLoader.loadClass("org.apache.hadoop.yarn.conf.YarnConfiguration")
 
-//    val conf:YarnConfiguration = new YarnConfiguration
-//
-//    // get the yarn classpath from the configuration...
-//    var cp = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")
-//
-//    // replace any variables $<xxx> with their environmental value
-//    val envMap = System.getenv()
-//    for ( entry <- envMap.entrySet()) {
-//      val key = entry.getKey
-//      val value = entry.getValue
-//
-//      cp = cp.replaceAll("\\$" + key, value)
-//    }
-//
-//    // add the urls to the classloader
-//    for (str <- cp.split(",")) {
-//      val url = new File(str.trim).toURI.toURL
-//      cl.addURL(url)
-//    }
+    if (clazz != null) {
+      val conf = clazz.newInstance()
+      val get = clazz.getMethod("get", classOf[String], classOf[String])
+
+      var cp = get.invoke(conf, "yarn.application.classpath", "").asInstanceOf[String]
+
+      //    val conf:YarnConfiguration = new YarnConfiguration
+      //
+      //    // get the yarn classpath from the configuration...
+      //    var cp = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")
+      //
+      // replace any variables $<xxx> with their environmental value
+      val envMap = System.getenv()
+      for (entry <- envMap.entrySet()) {
+        val key = entry.getKey
+        val value = entry.getValue
+
+        cp = cp.replaceAll("\\$" + key, value)
+      }
+
+      // add the urls to the classloader
+      for (str <- cp.split(",")) {
+        val url = new File(str.trim).toURI.toURL
+        cl.addURL(url)
+      }
+    }
   }
 
   protected def setupDependencies(job:JobArguments): Unit = {
@@ -214,7 +221,6 @@ abstract class MrGeoJob  {
 
   final private def prepareJob(job:JobArguments): SparkContext = {
 
-    throw new NotImplementedError("Need to fix registerKryoClasses, which isn't in pre spark 1.2.0")
 
     val conf:SparkConf = new SparkConf()
         .setAppName(job.name)
@@ -225,7 +231,6 @@ abstract class MrGeoJob  {
         //    .set("spark.driver.extraJavaOptions", "")
         //    .set("spark.driver.extraLibraryPath", "")
 
-        .set("spark.yarn.preserve.staging.files", "true")
         .set("spark.storage.memoryFraction","0.25")
 
         // setup the kryo serializer
@@ -239,10 +244,22 @@ abstract class MrGeoJob  {
         .set("spark.driver.memory", if (job.driverMem != null) job.driverMem else "128m")
         .set("spark.driver.cores", if (job.cores > 0) job.cores.toString else "1")
 
+    // Check and invoke for registerKryoClasses() with reflection, because isn't in pre Spark 1.2.0
+    try {
+      val method = conf.getClass.getMethod("registerKryoClasses", classOf[Array[Class[_]]])
+      method.invoke(conf, registerClasses())
+    } catch {
+      case nsme:NoSuchMethodException => {
+        conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
+      }
+      case e:Exception => e.printStackTrace()
+    }
+
     if (job.isYarn) {
       //conf.set("spark.yarn.jar","")
       conf.set("spark.executor.memory", if (job.executorMem != null) job.executorMem else "128m")
           .set("spark.cores.max", if (job.executors > 0) job.executors.toString else "1")
+          .set("spark.yarn.preserve.staging.files", "true")
           // running in "client" mode, the driver runs outside of YARN, but submits tasks
           .setMaster(job.YARN + "-client")
 

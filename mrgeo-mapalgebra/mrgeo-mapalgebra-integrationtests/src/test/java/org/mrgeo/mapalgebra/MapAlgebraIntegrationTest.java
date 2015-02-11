@@ -581,7 +581,6 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
   }
 
-  @Ignore
   @Test
   @Category(IntegrationTest.class)
   public void mosaic() throws Exception

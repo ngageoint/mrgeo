@@ -58,7 +58,6 @@ object MosaicDriver extends MrGeoDriver {
 
     run(args.toArray)
   }
-
 }
 
 class MosaicDriver extends MrGeoJob {
@@ -81,6 +80,8 @@ class MosaicDriver extends MrGeoJob {
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
+
+    println("MosaicDriver.execute")
 
     val pyramids = Array.ofDim[RDD[(TileIdWritable, RasterWritable)]](inputs.length)
     val nodata = Array.ofDim[Array[Double]](inputs.length)
@@ -158,6 +159,8 @@ class MosaicDriver extends MrGeoJob {
           nodata == sample
         }
       }
+
+      println("MosaicDriver.mosaic")
 
       var dst: WritableRaster = null
       var dstnodata:Array[Double] = null
