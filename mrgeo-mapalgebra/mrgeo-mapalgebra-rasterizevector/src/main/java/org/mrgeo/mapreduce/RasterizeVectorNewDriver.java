@@ -141,7 +141,8 @@ public class RasterizeVectorNewDriver
   {
     final Job job = new Job(conf);
 
-    VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ);
+    VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ,
+        providerProperties);
     Set<String> inputs = new HashSet<String>();
     inputs.add(input);
     VectorInputFormatContext ifContext = new VectorInputFormatContext(

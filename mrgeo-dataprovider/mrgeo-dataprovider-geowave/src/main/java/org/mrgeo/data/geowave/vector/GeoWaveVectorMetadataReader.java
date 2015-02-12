@@ -69,7 +69,7 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
     return null;
   }
 
-  private VectorMetadata loadMetadata() throws AccumuloSecurityException, AccumuloException
+  private VectorMetadata loadMetadata() throws AccumuloSecurityException, AccumuloException, IOException
   {
     VectorMetadata metadata = new VectorMetadata();
     if (adapter == null)
