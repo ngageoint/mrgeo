@@ -1179,9 +1179,10 @@ public class DataProviderFactory
    * @throws DataProviderNotFound
    */
   public static VectorDataProvider getVectorDataProvider(final String name,
-      AccessMode accessMode) throws DataProviderNotFound
+      AccessMode accessMode,
+      Properties providerProperties) throws DataProviderNotFound
   {
-    return getVectorDataProvider(name, accessMode, null, null);
+    return getVectorDataProvider(name, accessMode, null, providerProperties);
   }
 
   public static VectorDataProvider getVectorDataProvider(final Configuration conf,
@@ -1194,12 +1195,12 @@ public class DataProviderFactory
   private static VectorDataProvider getVectorDataProvider(final String name,
       AccessMode accessMode,
       final Configuration conf,
-      final Properties props) throws DataProviderNotFound
+      final Properties providerProperties) throws DataProviderNotFound
   {
     try
     {
       // Make sure that vector resources are cached uniquely by user
-      String cacheKey = getResourceCacheKey(name, conf, props);
+      String cacheKey = getResourceCacheKey(name, conf, providerProperties);
       // If a resource was already accessed in read mode, and then again in
       // OVERWRITE or WRITE mode, then force the cache to re-load the resource
       // to execute validation beforehand
@@ -1208,7 +1209,7 @@ public class DataProviderFactory
         vectorProviderCache.invalidate(cacheKey);
       }
       return vectorProviderCache.get(cacheKey,
-          new VectorLoader(name, accessMode, conf, props));
+          new VectorLoader(name, accessMode, conf, providerProperties));
     }
     catch (ExecutionException e)
     {
@@ -1288,7 +1289,8 @@ public class DataProviderFactory
       return;
     }
 
-    VectorDataProvider vectorProvider = getVectorDataProvider(resource, AccessMode.OVERWRITE);
+    VectorDataProvider vectorProvider = getVectorDataProvider(resource, AccessMode.OVERWRITE,
+        providerProperties);
     if (vectorProvider != null)
     {
       vectorProvider.delete();
