@@ -8,7 +8,6 @@ import java.util.Set;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -27,10 +26,22 @@ public class GeoWaveTester
 {
   public static void main(String[] args)
   {
+    if (args.length != 2 && args.length != 3)
+    {
+      System.err.println("GeoWaveTester <input> <output>");
+      return;
+    }
     GeoWaveTester tester = new GeoWaveTester();
     try
     {
-      tester.runTest();
+      String input = args[0];
+      String output = args[1];
+      String userRoles = null;
+      if (args.length == 3)
+      {
+        userRoles = args[2];
+      }
+      tester.runTest(input, output, userRoles);
     }
     catch (IOException e)
     {
@@ -57,7 +68,7 @@ public class GeoWaveTester
     {
     }
 
-    public void run(String input, String output)
+    public void run(String input, String output, String userRoles)
     {
       try
       {
@@ -68,10 +79,14 @@ public class GeoWaveTester
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(VectorInputFormat.class);
-        VectorDataProvider vpd = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ);
+        Properties providerProperties = new Properties();
+        if (userRoles != null)
+        {
+          providerProperties.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES, userRoles);
+        }
+        VectorDataProvider vpd = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ, providerProperties);
         Set<String> inputs = new HashSet<String>();
         inputs.add(input);
-        Properties providerProperties = new Properties();
         VectorInputFormatContext ifc = new VectorInputFormatContext(inputs,
             providerProperties);
         VectorInputFormatProvider ifp = vpd.getVectorInputFormatProvider(ifc);
@@ -106,7 +121,7 @@ public class GeoWaveTester
     }
   }
 
-  public void runTest() throws IOException
+  public void runTest(String input, String output, String userRoles) throws IOException
   {
 //    VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider("geowave:Af_Clip", AccessMode.READ);
 //    VectorMetadataReader reader = vdp.getMetadataReader();
@@ -154,6 +169,7 @@ public class GeoWaveTester
 //    }
     
     TestDriver driver = new TestDriver();
-    driver.run("geowave:Af_Clip", "/user/dave.johnson/out");
+//    driver.run("geowave:Af_Clip", "/user/dave.johnson/out");
+    driver.run(input, output, userRoles);
   }
 }

@@ -232,6 +232,8 @@
             <scalaVersion>${scala.version}</scalaVersion>
             <args>
               <arg>-target:jvm-${java.version}</arg>
+	      <arg>-Xmax-classfile-name</arg>
+	      <arg>143</arg>
             </args>
             <sourceDir>${project.basedir}/src/main/scala</sourceDir>
             <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>

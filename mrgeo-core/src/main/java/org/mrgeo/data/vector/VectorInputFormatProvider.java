@@ -64,4 +64,9 @@ public abstract class VectorInputFormatProvider
   public void teardown(final Job job) throws DataProviderException
   {
   }
+
+  protected VectorInputFormatContext getContext()
+  {
+    return context;
+  }
 }

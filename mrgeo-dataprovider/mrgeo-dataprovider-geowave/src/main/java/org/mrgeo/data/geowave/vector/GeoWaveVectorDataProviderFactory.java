@@ -3,6 +3,8 @@ package org.mrgeo.data.geowave.vector;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorDataProviderFactory;
@@ -12,15 +14,13 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   @Override
   public boolean isValid(Configuration conf)
   {
-    GeoWaveConnectionInfo connectionInfo = GeoWaveConnectionInfo.load(conf);
-    return (connectionInfo != null);
+    return GeoWaveVectorDataProvider.isValid(conf);
   }
 
   @Override
   public boolean isValid(Properties providerProperties)
   {
-    GeoWaveConnectionInfo connectionInfo = GeoWaveConnectionInfo.load();
-    return (connectionInfo != null);
+    return GeoWaveVectorDataProvider.isValid(providerProperties);
   }
 
   @Override
@@ -53,58 +53,70 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   @Override
   public boolean canOpen(String input, Configuration conf) throws IOException
   {
-    // TODO Auto-generated method stub
-    // TODO Need to implement
-    return true;
+    try
+    {
+      return GeoWaveVectorDataProvider.canOpen(input, conf);
+    }
+    catch (AccumuloException e)
+    {
+      throw new IOException(e);
+    }
+    catch (AccumuloSecurityException e)
+    {
+      throw new IOException(e);
+    }
   }
 
   @Override
   public boolean canOpen(String input, Properties providerProperties) throws IOException
   {
-    // TODO Auto-generated method stub
-    // TODO Need to implement
-    return true;
+    try
+    {
+      return GeoWaveVectorDataProvider.canOpen(input, providerProperties);
+    }
+    catch (AccumuloException e)
+    {
+      throw new IOException(e);
+    }
+    catch (AccumuloSecurityException e)
+    {
+      throw new IOException(e);
+    }
   }
 
   @Override
   public boolean canWrite(String input, Configuration conf) throws IOException
   {
-    // TODO Auto-generated method stub
-    return false;
+    throw new IOException("GeoWave provider does not support writing vectors");
   }
 
   @Override
   public boolean canWrite(String input, Properties providerProperties) throws IOException
   {
-    // TODO Auto-generated method stub
-    return false;
+    throw new IOException("GeoWave provider does not support writing vectors");
   }
 
   @Override
   public boolean exists(String name, Configuration conf) throws IOException
   {
-    // TODO Auto-generated method stub
-    return false;
+    return canOpen(name, conf);
   }
 
   @Override
   public boolean exists(String name, Properties providerProperties) throws IOException
   {
-    // TODO Auto-generated method stub
-    return false;
+    return canOpen(name, providerProperties);
   }
 
   @Override
   public void delete(String name, Configuration conf) throws IOException
   {
-    // TODO Auto-generated method stub
-    
+    throw new IOException("GeoWave provider does not support deleting vectors");
   }
 
   @Override
   public void delete(String name, Properties providerProperties) throws IOException
   {
-    // TODO Auto-generated method stub
-    
+    throw new IOException("GeoWave provider does not support deleting vectors");
   }
 }
