@@ -36,7 +36,9 @@ abstract class MrGeoDriver {
       parentLoader = getClass.getClassLoader
     }
 
-    val urls = job.jars.map(jar => new File(jar).toURI.toURL)
+    val urls = job.jars.map(jar => new URL(jar))
+    urls.foreach(jar => println(jar.toString))
+
     val cl = new URLClassLoader(urls.toSeq, parentLoader)
 
     if (job.isYarn) {
@@ -142,54 +144,6 @@ abstract class MrGeoDriver {
 
 }
 
-class MySerializer(conf: SparkConf)
-    extends org.apache.spark.serializer.Serializer
-            with Logging
-            with Serializable {
-
-  println("***** Serializer *****")
-
-  val cl = this.getClass.getClassLoader
-  val rs = cl.loadClass("org.mrgeo.data.tile.TileIdWritable")
-
-  println("--- this.getClass.getClassLoader")
-  println(if (rs == null)  "null" else rs.getCanonicalName)
-
-  val tl = Thread.currentThread().getContextClassLoader
-  //    for (r <- sl.asInstanceOf[URLClassLoader].getURLs) {
-  //      println(r)
-  //    }
-  val ts = tl.loadClass("org.mrgeo.data.tile.TileIdWritable")
-
-  println("---Thread.currentThread().getContextClassLoader")
-  println(if (ts == null)  "null" else ts.getCanonicalName)
-
-  val sl = ClassLoader.getSystemClassLoader
-  //    for (r <- sl.asInstanceOf[URLClassLoader].getURLs) {
-  //      println(r)
-  //    }
-  println("---ClassLoader.getSystemClassLoader")
-  val ss = sl.loadClass("org.mrgeo.data.tile.TileIdWritable")
-
-  println(if (ss == null)  "null" else ss.getCanonicalName)
-  println("---")
-
-  override def newInstance(): SerializerInstance = {
-    new MySerializerInstance(this)
-  }
-}
-
-private[job] class MySerializerInstance(ks: MySerializer) extends SerializerInstance {
-  override def serialize[T](t: T)(implicit evidence$1: ClassTag[T]): ByteBuffer = { null }
-
-  override def serializeStream(s: OutputStream): SerializationStream = { null }
-
-  override def deserializeStream(s: InputStream): DeserializationStream = { null }
-
-  override def deserialize[T](bytes: ByteBuffer)(implicit evidence$2: ClassTag[T]): T = { null.asInstanceOf[T] }
-
-  override def deserialize[T](bytes: ByteBuffer, loader: ClassLoader)(implicit evidence$3: ClassTag[T]): T = { null.asInstanceOf[T]  }
-}
 
 
 abstract class MrGeoJob  {
@@ -249,9 +203,8 @@ abstract class MrGeoJob  {
       val method = conf.getClass.getMethod("registerKryoClasses", classOf[Array[Class[_]]])
       method.invoke(conf, registerClasses())
     } catch {
-      case nsme:NoSuchMethodException => {
+      case nsme:NoSuchMethodException =>
         conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
-      }
       case e:Exception => e.printStackTrace()
     }
 
