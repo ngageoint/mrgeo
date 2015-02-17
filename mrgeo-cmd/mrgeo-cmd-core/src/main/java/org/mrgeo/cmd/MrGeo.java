@@ -192,7 +192,8 @@ public class MrGeo extends Configured implements Tool
       Command cmd = spi.getCommandClass().newInstance();
 
       // strip the 1st argument (the command name) and pass the rest to the command
-      return cmd.run(Arrays.copyOfRange(args, 1, args.length), getConf(), (Properties)null);
+      Properties providerProperties = new Properties();
+      return cmd.run(Arrays.copyOfRange(args, 1, args.length), getConf(), providerProperties);
     }
     catch (Exception e)
     {

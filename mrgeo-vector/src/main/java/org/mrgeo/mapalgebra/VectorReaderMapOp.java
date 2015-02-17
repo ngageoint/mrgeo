@@ -15,23 +15,34 @@
 
 package org.mrgeo.mapalgebra;
 
+import java.io.IOException;
+import java.util.Properties;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.mrgeo.data.vector.VectorDataProvider;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.HadoopUtils;
-
-import java.io.IOException;
 
 public class VectorReaderMapOp extends VectorMapOp
 {
+  private VectorDataProvider dp;
+  private Properties providerProperties;
+
   public VectorReaderMapOp(String vectorName)
   {
     _outputName = vectorName;
+  }
+
+  public VectorReaderMapOp(VectorDataProvider dp, Properties providerProperties)
+  {
+    this.dp = dp;
+    _outputName = dp.getResourceName();
+    this.providerProperties = providerProperties;
   }
 
   // Declare the default constructor private so no one can use it
@@ -53,7 +64,14 @@ public class VectorReaderMapOp extends VectorMapOp
     {
       p.complete();
     }
-    _output = new BasicInputFormatDescriptor(_outputName);
+    if (dp != null)
+    {
+      _output = new BasicInputFormatDescriptor(dp, providerProperties);
+    }
+    else
+    {
+      _output = new BasicInputFormatDescriptor(_outputName);
+    }
   }
 
   // TODO: This method should use DataProviderFactory to perform the move like the
@@ -62,25 +80,35 @@ public class VectorReaderMapOp extends VectorMapOp
   @Override
   public void moveOutput(String toName) throws IOException
   {
-    Path toPath = new Path(toName);
-    Path sourcePath = new Path(_outputName);
-    Configuration conf = createConfiguration();
-    FileSystem sourceFs = HadoopFileUtils.getFileSystem(conf, sourcePath);
-    FileSystem destFs = HadoopFileUtils.getFileSystem(conf, toPath);
-    if (!FileUtil.copy(sourceFs, sourcePath, destFs, toPath, false, false, conf))
+    if (dp != null)
     {
-      throw new IOException("Error copying '" + _outputName +
-          "' to '" + toName.toString() + "'");
+      // Do the move through the data provider
+      dp.move(toName);
     }
-    // Now copy the 
-    Path sourceColumns = new Path(_outputName + ".columns");
-    if (sourceFs.exists(sourceColumns))
+    else
     {
-      Path toColumns = new Path(toName.toString() + ".columns");
-      if (FileUtil.copy(sourceFs, sourceColumns, destFs, toColumns, false, false, conf) == false)
+      // If there is no vector data provider, fall-back to the existing HDFS
+      // code.
+      Path toPath = new Path(toName);
+      Path sourcePath = new Path(_outputName);
+      Configuration conf = createConfiguration();
+      FileSystem sourceFs = HadoopFileUtils.getFileSystem(conf, sourcePath);
+      FileSystem destFs = HadoopFileUtils.getFileSystem(conf, toPath);
+      if (!FileUtil.copy(sourceFs, sourcePath, destFs, toPath, false, false, conf))
       {
-        throw new IOException("Error copying columns file '" + sourceColumns.toString() +
-            "' to '" + toColumns.toString());
+        throw new IOException("Error copying '" + _outputName +
+            "' to '" + toName.toString() + "'");
+      }
+      // Now copy the 
+      Path sourceColumns = new Path(_outputName + ".columns");
+      if (sourceFs.exists(sourceColumns))
+      {
+        Path toColumns = new Path(toName.toString() + ".columns");
+        if (FileUtil.copy(sourceFs, sourceColumns, destFs, toColumns, false, false, conf) == false)
+        {
+          throw new IOException("Error copying columns file '" + sourceColumns.toString() +
+              "' to '" + toColumns.toString());
+        }
       }
     }
     _outputName = toName;
