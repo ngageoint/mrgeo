@@ -232,6 +232,8 @@
             <scalaVersion>${scala.version}</scalaVersion>
             <args>
               <arg>-target:jvm-${java.version}</arg>
+	      <arg>-Xmax-classfile-name</arg>
+	      <arg>143</arg>
             </args>
             <sourceDir>${project.basedir}/src/main/scala</sourceDir>
             <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
@@ -860,6 +862,34 @@
         <slf4j.version>1.6.1</slf4j.version>
         <spark.version>1.1.0</spark.version>
         <final.classifier>cdh4.5.0</final.classifier>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache220</id>
+      <properties>
+        <hadoop.version>2.2.0</hadoop.version>
+        <mahout.version>0.7</mahout.version>
+        <pig.version>0.11.0</pig.version>
+        <protobuf.version>2.4.1</protobuf.version>
+        <slf4j.version>1.6.1</slf4j.version>
+        <spark.version>1.2.0</spark.version>
+        <final.classifier>2.2.0</final.classifier>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from pig -->

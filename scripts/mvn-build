@@ -58,10 +58,10 @@ usage() {
 }
 
 run-eclipse() {
-    
+
     mvn -Denv=eclipse eclipse:clean $ARGS
     mvn -Denv=eclipse eclipse:eclipse  $ARGS
-    
+
     # don't need monocle anymore
     # pushd monocle
     # mvn -Denv=eclipse gwt:eclipse $ARGS
@@ -83,21 +83,21 @@ run-eclipse() {
           </filter>\
         </filteredResources>\
         </projectDescription>|' {} \;
-    
+
     # This adds an "exported="true" to the jar libraries, so we can run from eclipse
     find . -name .classpath -exec sed -i 's|kind="var" path="M2_REPO|kind="var" exported="true" path="M2_REPO|' {} \;
-    
+
     CONF_LINK=`readlink -f $CONF`
     echo $CONF_LINK
     find . -name .classpath -exec sed -i 's|^.*path="'$CONF_LINK'".*|<classpathentry kind="lib" path="'$CONF_LINK'"/>|' {} \;
 
-    # This removes the warning: "Classpath entry M2_REPO/<xxx>.jar will not be exported or published. Runtime ClassNotFoundExceptions may result." 
+    # This removes the warning: "Classpath entry M2_REPO/<xxx>.jar will not be exported or published. Runtime ClassNotFoundExceptions may result."
     pushd mrgeo-services/mrgeo-services-distribution
-    sed -i '/<classpathentry kind="var"/{s|/>$|><attributes><attribute name="org.eclipse.jst.component.nondependency" value=""\/\></attributes></classpathentry>|}' .classpath 
-    
+    sed -i '/<classpathentry kind="var"/{s|/>$|><attributes><attribute name="org.eclipse.jst.component.nondependency" value=""\/\></attributes></classpathentry>|}' .classpath
+
     # This removes the same warning for the CONF param (usually /usr/local/hadoop/conf)
-    REPLACED=${CONF//\//\\\/}    
-    sed  -i "/$REPLACED/{s|/>$|><attributes><attribute name=\"org.eclipse.jst.component.nondependency\" value=\"\"\/\></attributes></classpathentry>|}" .classpath 
+    REPLACED=${CONF//\//\\\/}
+    sed  -i "/$REPLACED/{s|/>$|><attributes><attribute name=\"org.eclipse.jst.component.nondependency\" value=\"\"\/\></attributes></classpathentry>|}" .classpath
     popd
 
 }
@@ -170,52 +170,52 @@ while [ $# -gt 0 ] ; do
         usage
         exit 0
         ;;
-    "all") 
+    "all")
         MODULE="all"
         ;;
     "core" | "core-only")
         MODULE="core"
         ARGS="$SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
-    "mapalgebra") 
+    "mapalgebra")
         MODULE="mapalgebra"
         ;;
-    "mapalgebra-only") 
+    "mapalgebra-only")
         MODULE="mapalgebra"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
-    "vector") 
+    "vector")
         MODULE="vector"
         ;;
-    "vector-only") 
+    "vector-only")
         MODULE="vector"
         ARGS="$SKIPCORE $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
-    "dataprovider") 
+    "dataprovider")
         MODULE="dataprovider"
         ;;
-    "dataprovider-only") 
+    "dataprovider-only")
         MODULE="dataprovider"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
-    "cmd") 
+    "cmd")
         MODULE="cmd"
         ;;
-    "cmd-only") 
+    "cmd-only")
         MODULE="cmd"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
-    "pig") 
+    "pig")
         MODULE="pig"
         ;;
-    "pig-only") 
+    "pig-only")
         MODULE="pig"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
-    "legion") 
+    "legion")
         MODULE="legion"
         ;;
-    "legion-only") 
+    "legion-only")
         MODULE="legion"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPNET $SKIPSERVICES $ARGS"
         ;;
@@ -226,19 +226,19 @@ while [ $# -gt 0 ] ; do
         MODULE="services"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $ARGS"
         ;;
-    "apache204") 
+    "apache204")
         echo "*** Apache Hadoop 0.20.304 is no longer supported"
         exit
         ;;
-    "apache103") 
+    "apache103")
         echo "*** Apache Hadoop 1.0.3 is no longer supported"
         exit
         ;;
-    "apache104") 
+    "apache104")
         echo "*** Apache Hadoop 1.0.4 is no longer supported"
         exit
         ;;
-    "apache112") 
+    "apache112")
         echo "*** Apache Hadoop 1.1,2 is no longer supported"
         exit
         ;;
@@ -247,13 +247,13 @@ while [ $# -gt 0 ] ; do
         exit
         ;;
     "apache220")
-        BUILD="apache2"
+        BUILD="apache220"
         ;;
-    "mapr") 
+    "mapr")
         echo "*** MapR Hadoop is no longer supported"
         exit
         ;;
-    "cdh3u1") 
+    "cdh3u1")
         echo "*** Cloudera Hadoop CDH3u1 is no longer supported"
         exit
         ;;
@@ -303,35 +303,35 @@ while [ $# -gt 0 ] ; do
         PHASE="deploy"
         SKIPLICENSE=
         ;;
-    "test") 
+    "test")
         PHASE="test"
         ;;
-    "integration") 
+    "integration")
         PHASE="integration"
-        ;;        
-    "release") 
+        ;;
+    "release")
         PHASE="release"
         if [ $2 == "rollback" ]
         then
           RELEASEPHASE="rollback"
           shift 1
         fi
-        ;;        
-    "verify") 
+        ;;
+    "verify")
         PHASE="verify"
-        ;;        
-    "version") 
+        ;;
+    "version")
         PHASE="version"
         POMVERSION=$2
         shift 1
-        ;;        
+        ;;
     "cobertura:cobertura")
         PHASE="cobertura:cobertura"
         ;;
     "clean")
         PHASE="clean"
         ;;
-    "eclipse") 
+    "eclipse")
         PHASE="eclipse"
         ;;
     "-c" | "--conf")
@@ -371,7 +371,7 @@ while [ $# -gt 0 ] ; do
     "-sh" | "--shade")
         ARGS=$ARGS" -Prun-shading"
         ;;
-     *) 
+     *)
      ARGS=$ARGS" "$1
       ;;
     esac
@@ -424,10 +424,10 @@ case $PHASE in
    ;;
    "verify")
        ARGS="$ARGS verify"
-   ;;   
+   ;;
    "version")
        ARGS="$ARGS versions:set -DnewVersion=$POMVERSION"
-   ;;   
+   ;;
    "release")
        ARGS="$SKIPALL $ARGS"
        ARGS="$ARGS \"-Drelease.arguments=$ARGS\" --batch-mode release:$RELEASEPHASE -DautoVersionSubmodules=true"
