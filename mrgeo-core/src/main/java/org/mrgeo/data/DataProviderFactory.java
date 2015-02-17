@@ -1313,6 +1313,11 @@ public class DataProviderFactory
         {
           adHocProviderFactories.put(dp.getPrefix(), dp);
         }
+        else
+        {
+          log.info("Skipping ad hoc data provider " + dp.getClass().getName() +
+              " because isValid returned false");
+        }
       }
     }
 
@@ -1339,6 +1344,11 @@ public class DataProviderFactory
             }
             imageIngestProviderFactories.put(dp.getPrefix(), dp);
           }
+          else
+          {
+            log.info("Skipping image ingest data provider " + dp.getClass().getName() +
+                " because isValid returned false");
+          }
         }
         catch (Exception e)
         {
@@ -1361,6 +1371,11 @@ public class DataProviderFactory
           if (dp.isValid())
           {
             mrsImageProviderFactories.put(dp.getPrefix(), dp);
+          }
+          else
+          {
+            log.info("Skipping mrs image data provider " + dp.getClass().getName() +
+                " because isValid returned false");
           }
         }
         catch (Exception e)
@@ -1386,30 +1401,7 @@ public class DataProviderFactory
       {
         try
         {
-          if (conf != null)
-          {
-            if (debugEnabled)
-            {
-              log.debug("Checking if vector factory is valid using configuration: " + dp.getClass().getName());
-            }
-            if (dp.isValid(conf))
-            {
-              if (debugEnabled)
-              {
-                log.debug("Factory " + dp.getClass().getName() + " is valid, uses prefix: " + dp.getPrefix());
-              }
-              vectorProviderFactories.put(dp.getPrefix(), dp);
-              count++;
-            }
-            else
-            {
-              if (debugEnabled)
-              {
-                log.debug("Factory " + dp.getClass().getName() + " is NOT valid, uses prefix: " + dp.getPrefix());
-              }
-            }
-          }
-          else
+          if (p != null)
           {
             if (debugEnabled)
             {
@@ -1430,6 +1422,33 @@ public class DataProviderFactory
               {
                 log.debug("Factory " + dp.getClass().getName() + " is NOT valid, uses prefix: " + dp.getPrefix());
               }
+              log.info("Skipping vector data provider " + dp.getClass().getName() +
+                  " because isValid returned false");
+            }
+          }
+          else
+          {
+            if (debugEnabled)
+            {
+              log.debug("Checking if vector factory is valid using configuration: " + dp.getClass().getName());
+            }
+            if (dp.isValid(conf))
+            {
+              if (debugEnabled)
+              {
+                log.debug("Factory " + dp.getClass().getName() + " is valid, uses prefix: " + dp.getPrefix());
+              }
+              vectorProviderFactories.put(dp.getPrefix(), dp);
+              count++;
+            }
+            else
+            {
+              if (debugEnabled)
+              {
+                log.debug("Factory " + dp.getClass().getName() + " is NOT valid, uses prefix: " + dp.getPrefix());
+              }
+              log.info("Skipping vector data provider " + dp.getClass().getName() +
+                  " because isValid returned false");
             }
           }
         }

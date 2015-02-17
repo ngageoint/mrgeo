@@ -180,7 +180,7 @@ public class MapAlgebra extends Command
         Job job = new Job();
         job.setJobName("MapAlgebra");
 
-        MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf);
+        MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties);
         String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
         MapAlgebraParser parser = new MapAlgebraParser(conf, useProtectionLevel, providerProperties);
         MapOp root = parser.parse(expression);

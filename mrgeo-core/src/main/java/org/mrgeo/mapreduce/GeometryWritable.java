@@ -31,6 +31,8 @@ import java.util.Map;
  */
 public class GeometryWritable implements Writable
 {
+  private static final String CHAR_ENCODING = "UTF8";
+
   // This is exposed for performance reasons. Be sure you understand all the
   // implications before you change the value.
   public Geometry geometry = null;
@@ -51,7 +53,12 @@ public class GeometryWritable implements Writable
     final int size = in.readInt();
     for (int i = 0; i < size; i++)
     {
-      g.setAttribute(in.readUTF(), in.readUTF());
+      String key = in.readUTF();
+      int attrByteLen = in.readInt();
+      byte[] attrBytes = new byte[attrByteLen];
+      in.readFully(attrBytes);
+      String value = new String(attrBytes, CHAR_ENCODING);
+      g.setAttribute(key, value);
     }
   }
 
@@ -94,7 +101,13 @@ public class GeometryWritable implements Writable
     for (Map.Entry attr : g.getAllAttributesSorted().entrySet())
     {
       out.writeUTF(attr.getKey().toString());
-      out.writeUTF(attr.getValue().toString());
+      // Cannot use writeUTF for the value because there is a limit of 65K
+      // characters that it will write to the stream, and geometry values can
+      // get longer than that.
+      byte[] attrBytes = attr.getValue().toString().getBytes(CHAR_ENCODING);
+      out.writeInt(attrBytes.length);
+      out.write(attrBytes);
+//      out.writeUTF(attr.getValue().toString());
     }
   }
 

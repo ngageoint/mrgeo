@@ -29,16 +29,22 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.GeometryInputStream;
+import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.csv.CsvGeometryInputStreamOld;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.shp.ShapefileReader;
 import org.mrgeo.data.tsv.TsvGeometryInputStreamOld;
+import org.mrgeo.data.vector.VectorDataProvider;
+import org.mrgeo.data.vector.VectorMetadata;
+import org.mrgeo.data.vector.VectorMetadataReader;
+import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.format.CsvInputFormat;
 import org.mrgeo.format.FeatureInputFormatFactory;
 import org.mrgeo.format.InlineCsvInputFormat;
 import org.mrgeo.format.PgQueryInputFormat;
 import org.mrgeo.format.ShpInputFormat;
 import org.mrgeo.format.TsvInputFormat;
+import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramid;
@@ -123,56 +129,95 @@ public class RasterizeVectorMapOp extends RasterMapOp
       {
         final BasicInputFormatDescriptor bfd = (BasicInputFormatDescriptor) ifd;
 
-        String input = bfd.getPath();
-
-        InputFormat<LongWritable, org.mrgeo.geometry.Geometry> format =
-            FeatureInputFormatFactory.getInstance().createInputFormat(input);
-
-        GeometryInputStream stream = null;
-        Path inputPath = new Path(input);
-        // make sure to test for TSV first (it is derived from CSV)
-        if (format instanceof TsvInputFormat)
+        VectorDataProvider dp = bfd.getVectorDataProvider();
+        if (dp != null)
         {
-          //        FileSystem fs = HadoopFileUtils.getFileSystem(inputPath);
-          //        FSDataInputStream fdis = fs.open(inputPath);
-
-          InputStream is = HadoopFileUtils.open(inputPath);
-          stream = new TsvGeometryInputStreamOld(is);
-        }
-        else if (format instanceof CsvInputFormat)
-        {
-          InputStream is = HadoopFileUtils.open(inputPath);
-          stream = new CsvGeometryInputStreamOld(is);
-
-          //        FileSystem fs = HadoopFileUtils.getFileSystem(inputPath);
-          //        FSDataInputStream fdis = fs.open(inputPath);
-
-          stream = new CsvGeometryInputStreamOld(is);
-        }
-        else if (format instanceof ShpInputFormat)
-        {
-          stream = new ShapefileReader(inputPath);
-        }
-        else if (format instanceof PgQueryInputFormat)
-        {
-          throw new IOException("PostGIS query not supported yet.");
-        }
-
-        if (stream != null)
-        {
-          bounds = new Bounds();
-          while (stream.hasNext())
+          VectorMetadataReader metadataReader = dp.getMetadataReader();
+          if (metadataReader != null)
           {
-            WritableGeometry geom = stream.next();
-            if (geom != null)
+            VectorMetadata metadata = metadataReader.read();
+            if (metadata != null)
             {
-              bounds.expand(geom.getBounds());
+              Bounds b = metadata.getBounds();
+              if (b != null)
+              {
+                bounds = b;
+                return bounds;
+              }
             }
           }
-
-          stream.close();
-
-          return bounds;
+          // The provider does not give back bounds, so we have to run through
+          // the features ourselves computing the bounds.
+          VectorReader reader = dp.getVectorReader();
+          if (reader != null)
+          {
+            KVIterator<LongWritable, Geometry> iter = reader.get();
+            if (iter != null)
+            {
+              bounds = new Bounds();
+              while (iter.hasNext())
+              {
+                Geometry geom = iter.next();
+                bounds.expand(geom.getBounds());
+              }
+              return bounds;
+            }
+          }
+        }
+        else
+        {
+          // Run the old HDFS-specific code
+          String input = bfd.getPath();
+  
+          InputFormat<LongWritable, org.mrgeo.geometry.Geometry> format =
+              FeatureInputFormatFactory.getInstance().createInputFormat(input);
+  
+          GeometryInputStream stream = null;
+          Path inputPath = new Path(input);
+          // make sure to test for TSV first (it is derived from CSV)
+          if (format instanceof TsvInputFormat)
+          {
+            //        FileSystem fs = HadoopFileUtils.getFileSystem(inputPath);
+            //        FSDataInputStream fdis = fs.open(inputPath);
+  
+            InputStream is = HadoopFileUtils.open(inputPath);
+            stream = new TsvGeometryInputStreamOld(is);
+          }
+          else if (format instanceof CsvInputFormat)
+          {
+            InputStream is = HadoopFileUtils.open(inputPath);
+            stream = new CsvGeometryInputStreamOld(is);
+  
+            //        FileSystem fs = HadoopFileUtils.getFileSystem(inputPath);
+            //        FSDataInputStream fdis = fs.open(inputPath);
+  
+            stream = new CsvGeometryInputStreamOld(is);
+          }
+          else if (format instanceof ShpInputFormat)
+          {
+            stream = new ShapefileReader(inputPath);
+          }
+          else if (format instanceof PgQueryInputFormat)
+          {
+            throw new IOException("PostGIS query not supported yet.");
+          }
+  
+          if (stream != null)
+          {
+            bounds = new Bounds();
+            while (stream.hasNext())
+            {
+              WritableGeometry geom = stream.next();
+              if (geom != null)
+              {
+                bounds.expand(geom.getBounds());
+              }
+            }
+  
+            stream.close();
+  
+            return bounds;
+          }
         }
       }
       else if (ifd instanceof InlineCsvInputFormatDescriptor)
