@@ -1,6 +1,8 @@
 package org.mrgeo.data.geowave.vector;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import mil.nga.giat.geowave.accumulo.AccumuloOperations;
@@ -226,6 +228,38 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   {
     initConnectionInfo();
     return (connectionInfo != null);
+  }
+
+  public static String[] listVectors(final Properties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
+  {
+    initConnectionInfo();
+    initDataSource();
+    List<String> results = new ArrayList<String>();
+    CloseableIterator<DataAdapter<?>> iter = adapterStore.getAdapters();
+    try
+    {
+      while (iter.hasNext())
+      {
+        DataAdapter<?> adapter = iter.next();
+        if (adapter != null)
+        {
+          ByteArrayId adapterId = adapter.getAdapterId();
+          if (checkAuthorizations(adapterId, providerProperties))
+          {
+            results.add(adapterId.getString());
+          }
+        }
+      }
+    }
+    finally
+    {
+      if (iter != null)
+      {
+        iter.close();
+      }
+    }
+    String[] resultArray = new String[results.size()];
+    return results.toArray(resultArray);
   }
 
   public static boolean canOpen(String input, Configuration conf) throws AccumuloException, AccumuloSecurityException, IOException
