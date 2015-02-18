@@ -8,6 +8,7 @@ import org.mrgeo.core.MrGeoProperties;
 
 public class GeoWaveConnectionInfo
 {
+  public static final String GEOWAVE_HAS_CONNECTION_INFO_KEY = "geowave.has.connection.info";
   public static final String GEOWAVE_ZOOKEEPER_SERVERS_KEY = "geowave.zookeeper.servers";
   public static final String GEOWAVE_INSTANCE_KEY = "geowave.instance";
   public static final String GEOWAVE_USERNAME_KEY = "geowave.username";
@@ -54,6 +55,16 @@ public class GeoWaveConnectionInfo
 
   public static GeoWaveConnectionInfo load(final Configuration conf)
   {
+    // Check to see if connection info exists in this configuration before attempting
+    // to load it. Otherwise, we attempt to load it from its default location.
+    boolean hasConnectionInfo = conf.getBoolean(GEOWAVE_HAS_CONNECTION_INFO_KEY, false);
+    if (!hasConnectionInfo)
+    {
+      // The config does not contain GeoWave connection info, so we try to load
+      // it from the default location.
+      return load();
+    }
+    // The configuration does contain GeoWave connection info, so load it.
     String zookeeperServers = conf.get(GEOWAVE_ZOOKEEPER_SERVERS_KEY);
     if (zookeeperServers == null || zookeeperServers.isEmpty())
     {
@@ -87,6 +98,7 @@ public class GeoWaveConnectionInfo
 
   public void writeToConfig(final Configuration conf)
   {
+    conf.setBoolean(GEOWAVE_HAS_CONNECTION_INFO_KEY, true);
     conf.set(GEOWAVE_ZOOKEEPER_SERVERS_KEY, zookeeperServers);
     conf.set(GEOWAVE_INSTANCE_KEY, instanceName);
     conf.set(GEOWAVE_USERNAME_KEY, userName);
