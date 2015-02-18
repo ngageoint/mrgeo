@@ -222,7 +222,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return (connectionInfo != null);
   }
 
-  public static boolean isValid(Properties providerProperties)
+  public static boolean isValid()
   {
     initConnectionInfo();
     return (connectionInfo != null);

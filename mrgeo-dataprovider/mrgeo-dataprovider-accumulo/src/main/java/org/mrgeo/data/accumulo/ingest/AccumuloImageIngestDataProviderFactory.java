@@ -78,18 +78,4 @@ public class AccumuloImageIngestDataProviderFactory implements ImageIngestDataPr
   {
     AccumuloImageIngestDataProvider.delete(name);
   }
-
-  @Override
-  public void configure(Configuration conf)
-  {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void configure(Properties p)
-  {
-    // TODO Auto-generated method stub
-    
-  }
 } // end AccumuloImageIngestDataProviderFactory

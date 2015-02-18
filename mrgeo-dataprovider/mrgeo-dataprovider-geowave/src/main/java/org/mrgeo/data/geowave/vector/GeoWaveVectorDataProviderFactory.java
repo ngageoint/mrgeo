@@ -18,9 +18,9 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   }
 
   @Override
-  public boolean isValid(Properties providerProperties)
+  public boolean isValid()
   {
-    return GeoWaveVectorDataProvider.isValid(providerProperties);
+    return GeoWaveVectorDataProvider.isValid();
   }
 
   @Override

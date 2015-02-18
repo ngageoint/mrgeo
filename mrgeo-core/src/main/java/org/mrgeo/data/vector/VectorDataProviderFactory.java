@@ -29,13 +29,11 @@ public interface VectorDataProviderFactory
    * to work properly, that should be verified within this function. If this
    * function returns false, the provider will not be used within MrGeo.
    * 
-   * This particular signature is invoked by MrGeo when providers are needed
-   * within a map/reduce task, so it should verify that any settings it needs
-   * can be obtained from the job configuration. Note that it is the provider's
-   * responsibility to encode the settings it requires into the job configuration
-   * during the setup of the job. This is typically done inside a "setupJob" method
-   * within a VectorInputFormatProvider or VectorOutputFormatProvider implementation
-   * in the data provider.
+   * If this method is called from within map/reduce task execution, the
+   * Configuration passed in will be that from the mapper or reducer
+   * job context. A typical scenario for a data provider is to include settings
+   * required for validating the data provider in the Configuration during
+   * job setup so that it will be available in the mapper and reducer.
    */
   public boolean isValid(final Configuration conf);
 
@@ -49,9 +47,11 @@ public interface VectorDataProviderFactory
    * This particular signature is invoked by MrGeo when providers are needed
    * outside the context of a map/reduce task, for example while setting up
    * a map/reduce job before running it, or any time a provider is used outside
-   * of map.reduce altogether.
+   * of map.reduce altogether. In this case, the provider should look for its
+   * configuration on the server side (e.g. in MrGeoProperties if those settings
+   * are configured in mrgeo.conf).
    */
-  public boolean isValid(final Properties providerProperties);
+  public boolean isValid();
 
   public String getPrefix();
 
