@@ -1,4 +1,4 @@
-package org.mrgeo.data.geowave.vector;
+package org.mrgeo.data.vector.geowave;
 
 import java.io.IOException;
 
