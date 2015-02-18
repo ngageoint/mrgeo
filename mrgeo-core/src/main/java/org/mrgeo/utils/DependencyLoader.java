@@ -303,7 +303,17 @@ public class DependencyLoader
       log.error("MRGEO_HOME is not defined, and may result in inability to find dependent JAR files");
     }
 
-    log.debug("Loading dependent JAR files from claspath: " + classpath);
+    // now perform any variable replacement in the classpath
+    Map<String, String> envMap = System.getenv();
+
+    for (Map.Entry<String, String>entry : envMap.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      classpath = classpath.replaceAll("\\$" + key, value);
+    }
+
+    log.debug("Loading dependent JAR files from classpath: " + classpath);
     String[] classpaths = classpath.split(":");
 
     for (String cp : classpaths)
