@@ -41,7 +41,20 @@ public class GeoWaveTester
       {
         userRoles = args[2];
       }
-      tester.runTest(input, output, userRoles);
+      Properties providerProperties = new Properties();
+      if (userRoles != null)
+      {
+        providerProperties.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES, userRoles);
+      }
+
+      System.out.println("Available vector sources:");
+      String[] sources = DataProviderFactory.listVectors(providerProperties);
+      for (String source: sources)
+      {
+        System.out.println("  " + source);
+      }
+
+      tester.runTest(input, output, providerProperties);
     }
     catch (IOException e)
     {
@@ -68,7 +81,7 @@ public class GeoWaveTester
     {
     }
 
-    public void run(String input, String output, String userRoles)
+    public void run(String input, String output, Properties providerProperties)
     {
       try
       {
@@ -79,11 +92,6 @@ public class GeoWaveTester
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setInputFormatClass(VectorInputFormat.class);
-        Properties providerProperties = new Properties();
-        if (userRoles != null)
-        {
-          providerProperties.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES, userRoles);
-        }
         VectorDataProvider vpd = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ, providerProperties);
         Set<String> inputs = new HashSet<String>();
         inputs.add(input);
@@ -121,7 +129,7 @@ public class GeoWaveTester
     }
   }
 
-  public void runTest(String input, String output, String userRoles) throws IOException
+  public void runTest(String input, String output, Properties providerProperties) throws IOException
   {
 //    VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider("geowave:Af_Clip", AccessMode.READ);
 //    VectorMetadataReader reader = vdp.getMetadataReader();
@@ -170,6 +178,6 @@ public class GeoWaveTester
     
     TestDriver driver = new TestDriver();
 //    driver.run("geowave:Af_Clip", "/user/dave.johnson/out");
-    driver.run(input, output, userRoles);
+    driver.run(input, output, providerProperties);
   }
 }

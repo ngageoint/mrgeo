@@ -46,8 +46,18 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   @Override
   public String[] listVectors(final Properties providerProperties) throws IOException
   {
-    // TODO Auto-generated method stub
-    return null;
+    try
+    {
+      return GeoWaveVectorDataProvider.listVectors(providerProperties);
+    }
+    catch (AccumuloException e)
+    {
+      throw new IOException(e);
+    }
+    catch (AccumuloSecurityException e)
+    {
+      throw new IOException(e);
+    }
   }
 
   @Override
