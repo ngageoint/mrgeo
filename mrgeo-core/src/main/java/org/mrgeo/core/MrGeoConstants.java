@@ -61,6 +61,10 @@ public class MrGeoConstants
 
   public static final String MRGEO_HDFS_DISTRIBUTED_CACHE = "distributed.base";
 
+  /* Spark configuration keys
+   *
+   */
+  public static final String MRGEO_USE_KRYO="use.kryo.serialization";
   /*
    * Runtime configuration keys
    */

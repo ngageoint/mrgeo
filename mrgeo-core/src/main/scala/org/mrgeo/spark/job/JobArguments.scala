@@ -1,10 +1,11 @@
-package org.mrgeo.job
+package org.mrgeo.spark.job
 
 import java.io.File
-import java.net.{URL, URI}
+import java.net.URI
 
 import org.apache.commons.lang3.SystemUtils
 import org.mrgeo.utils.Memory
+
 import scala.collection.mutable.ArrayBuffer
 
 class JobArguments(args: Seq[String]) {
@@ -25,9 +26,9 @@ class JobArguments(args: Seq[String]) {
   var driverClass: String = null
   var driverJar: String = null
 
-  var executorMem:String = null
-  var driverMem:String = null
-  var executors:Int = -1
+  var memory:String = null
+  //var driverMem:String = null
+  //var executors:Int = -1
   var cores:Int = -1
   val params = collection.mutable.Map[String, String]()
 
@@ -124,20 +125,20 @@ class JobArguments(args: Seq[String]) {
       args += cores.toString
     }
 
-    if (executors > 0) {
-      args += "executors"
-      args += executors.toString
+//    if (executors > 0) {
+//      args += "executors"
+//      args += executors.toString
+//    }
+
+    if (memory != null) {
+      args += "memory"
+      args += memory
     }
 
-    if (executorMem != null) {
-      args += "executorMemory"
-      args += executorMem
-    }
-
-    if (driverMem != null) {
-      args += "driverMemory"
-      args += driverMem
-    }
+//    if (driverMem != null) {
+//      args += "driverMemory"
+//      args += driverMem
+//    }
 
     for (param <- params) {
       args += param._1
@@ -184,17 +185,17 @@ class JobArguments(args: Seq[String]) {
     cores = value.toInt
     parse(tail)
 
-  case ("--executors") :: value :: tail =>
-    executors = value.toInt
+//  case ("--executors") :: value :: tail =>
+//    executors = value.toInt
+//    parse(tail)
+
+  case ("--memory") :: value :: tail =>
+    memory = value
     parse(tail)
 
-  case ("--executorMemory") :: value :: tail =>
-    executorMem = value
-    parse(tail)
-
-  case ("--driverMemory") :: value :: tail =>
-    driverMem = value
-    parse(tail)
+//  case ("--driverMemory") :: value :: tail =>
+//    driverMem = value
+//    parse(tail)
 
   case key :: value :: tail =>
     if (key.startsWith("--")) {
@@ -306,7 +307,7 @@ class JobArguments(args: Seq[String]) {
     val maxMem = Runtime.getRuntime.maxMemory()
     if (maxMem != Long.MaxValue) {
       val mem = (maxMem * 0.95).round
-      executorMem = mem.toString
+      memory = mem.toString
       println("Setting max memory to: " + Memory.format(mem))
     }
   }

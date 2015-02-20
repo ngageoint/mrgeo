@@ -25,7 +25,7 @@ import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
-import org.mrgeo.job.{MrGeoDriver, JobArguments, MrGeoJob}
+import org.mrgeo.spark.job.{MrGeoJob, MrGeoDriver, JobArguments}
 import org.mrgeo.utils.TMSUtils.TileBounds
 import org.mrgeo.utils.{LoggingUtils, TMSUtils, Bounds, SparkUtils}
 
@@ -49,14 +49,105 @@ object MosaicDriver extends MrGeoDriver {
     // not sure how to get these into the args
     args += "--cluster"
     args += "yarn"
-//    args += "--executors"
-//    args += "2"
-//    args += "--executorMemory"
-//    args += "19G"
-//    args += "--cores"
-//    args += "10"
+    //    args += "--executors"
+    //    args += "2"
+    //    args += "--executorMemory"
+    //    args += "19G"
+    //    args += "--cores"
+    //    args += "10"
 
     run(args.toArray)
+  }
+}
+
+object Mosaic {
+  def mosaic(input: CoGroupedRDD[TileIdWritable], nodata:Array[Array[Double]]): RDD[(TileIdWritable, RasterWritable)] = {
+
+    val mosaiced:RDD[(TileIdWritable, RasterWritable)] = input.map(U => {
+
+      def isnodata(sample:Double, nodata:Double): Boolean = {
+        if (nodata.isNaN && sample.isNaN) {
+          true
+        }
+        else {
+          nodata == sample
+        }
+      }
+
+      println("MosaicDriver.mosaic")
+
+      var dst: WritableRaster = null
+      var dstnodata:Array[Double] = null
+
+      val done = new Breaks
+      var i:Int = 0
+      done.breakable {
+        for (wr<- U._2) {
+          if (wr != null) {
+            println(i)
+            val writable = wr.asInstanceOf[Seq[RasterWritable]](0)
+
+            if (dst == null) {
+              // the tile conversion is a WritableRaster, we can just typecast here
+              dst = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
+              dstnodata = nodata(i)
+
+              val looper = new Breaks
+
+              // check if there are any nodatas in the 1st tile
+              looper.breakable {
+                for (y <- 0 until dst.getHeight) {
+                  for (x <- 0 until dst.getWidth) {
+                    for (b <- 0 until dst.getNumBands) {
+                      if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
+                        looper.break()
+                      }
+                    }
+                  }
+                }
+                // we only get here if there aren't any nondatas, so we can just take the 1st tile verbatim
+                done.break()
+              }
+            }
+            else {
+              // do the mosaic
+              var hasnodata = false
+
+              // the tile conversion is a WritableRaster, we can just typecast here
+              val src = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
+              val srcnodata = nodata(i)
+
+              for (y <- 0 until dst.getHeight) {
+                for (x <- 0 until dst.getWidth) {
+                  for (b <- 0 until dst.getNumBands) {
+                    if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
+                      val sample = src.getSampleDouble(x, y, b)
+                      // if the src is also nodata, remember this, we still have to look in other tiles
+                      if (isnodata(sample, srcnodata(b))) {
+                        hasnodata = true
+                      }
+                      else {
+                        dst.setSample(x, y, b, sample)
+                      }
+                    }
+                  }
+                }
+              }
+              // we've filled up the tile, nothing left to do...
+              if (!hasnodata) {
+                done.break()
+              }
+            }
+          }
+          i += 1
+        }
+      }
+
+      // write the tile...
+      (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
+    })
+
+    mosaiced
   }
 }
 
@@ -233,6 +324,7 @@ class MosaicDriver extends MrGeoJob {
       (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
     })
 
+    //val mosaiced = Mosaic.mosaic(groups, nodata)
 
 
     val job:Job = new Job()
