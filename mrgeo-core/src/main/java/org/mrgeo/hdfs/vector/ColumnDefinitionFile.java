@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.column;
+package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.mrgeo.column.Column.FactorType;
+import org.mrgeo.hdfs.vector.Column.FactorType;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.w3c.dom.Comment;
@@ -29,6 +29,7 @@ import org.w3c.dom.NodeList;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

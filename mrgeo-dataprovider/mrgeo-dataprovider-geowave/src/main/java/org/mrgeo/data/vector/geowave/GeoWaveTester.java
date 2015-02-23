@@ -13,12 +13,15 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.vector.VectorDataProvider;
+import org.mrgeo.data.vector.VectorDataProviderFactory;
 import org.mrgeo.data.vector.VectorInputFormat;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
+import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.HadoopUtils;
 
@@ -47,14 +50,38 @@ public class GeoWaveTester
         providerProperties.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES, userRoles);
       }
 
-      System.out.println("Available vector sources:");
-      String[] sources = DataProviderFactory.listVectors(providerProperties);
-      for (String source: sources)
+      String[] vectors = DataProviderFactory.listVectors(providerProperties);
+      System.out.println("Vectors available: ");
+      for (String v: vectors)
       {
-        System.out.println("  " + source);
+        System.out.println("  " + v);
       }
-
-      tester.runTest(input, output, providerProperties);
+//      VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ, providerProperties);
+//      VectorReader vr = vdp.getVectorReader();
+//      System.out.println("Vector Data:");
+//      CloseableKVIterator<LongWritable, Geometry> iter = vr.get();
+//      try
+//      {
+//        while (iter.hasNext())
+//        {
+//          Geometry geom = iter.next();
+//          if (geom != null)
+//          {
+//            System.out.println("Key: " + iter.currentKey().get());
+//          }
+//        }
+//      }
+//      finally {
+//        iter.close();
+//      }
+//      System.out.println("Available vector sources:");
+//      String[] sources = DataProviderFactory.listVectors(providerProperties);
+//      for (String source: sources)
+//      {
+//        System.out.println("  " + source);
+//      }
+//
+//      tester.runTest(input, output, providerProperties);
     }
     catch (IOException e)
     {

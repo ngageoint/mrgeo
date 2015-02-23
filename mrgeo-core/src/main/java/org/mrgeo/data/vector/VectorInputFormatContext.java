@@ -46,7 +46,10 @@ public class VectorInputFormatContext
       final Properties inputProviderProperties)
   {
     this.inputs = inputs;
-    this.inputProviderProperties.putAll(inputProviderProperties);
+    if (inputProviderProperties != null)
+    {
+      this.inputProviderProperties.putAll(inputProviderProperties);
+    }
   }
 
   protected VectorInputFormatContext()

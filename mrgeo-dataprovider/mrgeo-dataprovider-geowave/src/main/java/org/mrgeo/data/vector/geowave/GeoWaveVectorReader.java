@@ -15,7 +15,7 @@ import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
 
 import org.apache.hadoop.io.LongWritable;
 import org.geotools.factory.CommonFactoryFinder;
-import org.mrgeo.data.KVIterator;
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
@@ -47,7 +47,7 @@ public class GeoWaveVectorReader implements VectorReader
   }
 
   @Override
-  public KVIterator<LongWritable, Geometry> get()
+  public CloseableKVIterator<LongWritable, Geometry> get()
   {
     CloseableIterator<?> iter = dataStore.query(adapter, null);
     return new GeoWaveVectorIterator(iter);
@@ -84,7 +84,7 @@ public class GeoWaveVectorReader implements VectorReader
   }
 
   @Override
-  public KVIterator<LongWritable, Geometry> get(Bounds bounds)
+  public CloseableKVIterator<LongWritable, Geometry> get(Bounds bounds)
   {
     com.vividsolutions.jts.geom.GeometryFactory gf = new com.vividsolutions.jts.geom.GeometryFactory();
     com.vividsolutions.jts.geom.Geometry queryGeometry = gf.toGeometry(bounds.toEnvelope());
