@@ -375,8 +375,11 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
         
       } else {
         
-        job.setNumReduceTasks(4);
+        //job.setNumReduceTasks(4);
+    	  log.info("Setting the output format of: " +
+    			  	AccumuloMrsImagePyramidOutputFormat.class.getCanonicalName());
         job.setOutputFormatClass(AccumuloMrsImagePyramidOutputFormat.class);
+        AccumuloMrsImagePyramidOutputFormat.setJob(job);
         log.info("Setting zoom level to " + zoomLevel);
         log.info("Visibility is " + cv.toString());
         //AccumuloMrsImagePyramidOutputFormat.setZoomLevel(zoomLevel);
