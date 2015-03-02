@@ -156,7 +156,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     }
     GeoWaveVectorReader reader = new GeoWaveVectorReader(dataStore,
         adapterStore.getAdapter(new ByteArrayId(this.getResourceName())),
-        index);
+        index, providerProperties);
     return reader;
   }
 
@@ -290,21 +290,37 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return checkAuthorizations(adapterId, providerProperties);
   }
 
-  private static boolean checkAuthorizations(ByteArrayId adapterId, Properties providerProperties)
+  private static boolean checkAuthorizations(ByteArrayId adapterId,
+      Properties providerProperties) throws IOException, AccumuloException, AccumuloSecurityException
   {
     // Check to see if the requester is authorized to see any of the data in
     // the adapter.
+    return (getAdapterCount(adapterId, providerProperties) > 0L);
+  }
+
+  public static long getAdapterCount(ByteArrayId adapterId,
+      Properties providerProperties) throws IOException, AccumuloException, AccumuloSecurityException
+  {
+    initConnectionInfo();
+    initDataSource();
     String auths = providerProperties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
     if (auths != null)
     {
       CountDataStatistics<?> count = (CountDataStatistics<?>)statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID, auths);
-      return (count != null && count.isSet() && count.getCount() > 0);
+      if (count != null && count.isSet())
+      {
+        return count.getCount();
+      }
     }
     else
     {
       CountDataStatistics<?> count = (CountDataStatistics<?>)statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID);
-      return (count != null && count.isSet() && count.getCount() > 0);
+      if (count != null && count.isSet())
+      {
+        return count.getCount();
+      }
     }
+    return 0L;
   }
 
   public static void storeProviderProperties(Properties providerProperties, Configuration conf)

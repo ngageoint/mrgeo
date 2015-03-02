@@ -185,17 +185,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
           GeometryInputStream stream = null;
           Path inputPath = new Path(input);
           // make sure to test for TSV first (it is derived from CSV)
-          if (format instanceof TsvInputFormat)
-          {
-            InputStream is = HadoopFileUtils.open(inputPath);
-            stream = new TsvGeometryInputStreamOld(is);
-          }
-          else if (format instanceof CsvInputFormat)
-          {
-            InputStream is = HadoopFileUtils.open(inputPath);
-            stream = new CsvGeometryInputStreamOld(is);
-          }
-          else if (format instanceof ShpInputFormat)
+          if (format instanceof ShpInputFormat)
           {
             stream = new ShapefileReader(inputPath);
           }

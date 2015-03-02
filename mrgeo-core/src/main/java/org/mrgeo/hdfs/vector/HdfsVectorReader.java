@@ -259,4 +259,26 @@ public class HdfsVectorReader implements VectorReader
     DelimitedReader reader = new DelimitedReader(fileReader, delimitedParser, visitor);
     return reader;
   }
+
+  @Override
+  public long count() throws IOException
+  {
+    long featureCount = 0L;
+    CloseableKVIterator<LongWritable, Geometry> iter = get();
+    try
+    {
+      while (iter.hasNext())
+      {
+        if (iter.next() != null)
+        {
+          featureCount++;
+        }
+      }
+    }
+    finally
+    {
+      iter.close();
+    }
+    return featureCount;
+  }
 }

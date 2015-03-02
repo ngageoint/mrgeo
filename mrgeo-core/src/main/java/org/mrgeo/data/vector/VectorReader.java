@@ -27,7 +27,7 @@ public interface VectorReader
   public abstract void close();
 
   /**
-   * Return an iterator that allows the caller to visit all geometries
+   * Return an iterator that allows the caller to visit all features
    * within this reader. The caller is responsible for calling the close()
    * method on the returned iterator when they are done with it.
    * 
@@ -73,6 +73,15 @@ public interface VectorReader
    * @return
    */
   public abstract CloseableKVIterator<LongWritable, Geometry> get(final Bounds bounds) throws IOException;
+
+  /**
+   * Returns the number of features.
+   * 
+   * @return
+   * @throws IOException
+   */
+  public long count() throws IOException;
+
   // TODO: Do we want to include some more advanced spatial query capability here?
   // We could handle that via a different interface that callers could use
   // "instanceof" to see of the reader supports that capability...
