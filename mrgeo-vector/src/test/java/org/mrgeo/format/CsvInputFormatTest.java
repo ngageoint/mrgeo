@@ -5,6 +5,7 @@
 package org.mrgeo.format;
 
 import com.vividsolutions.jts.io.WKTReader;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -23,7 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.geometry.Geometry;
-import org.mrgeo.utils.WktGeometryUtils;
+import org.mrgeo.hdfs.vector.WktGeometryUtils;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;

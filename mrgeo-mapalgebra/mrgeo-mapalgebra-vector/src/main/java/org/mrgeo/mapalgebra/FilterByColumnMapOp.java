@@ -20,12 +20,12 @@ import java.util.Vector;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.Path;
-import org.mrgeo.column.ColumnDefinitionFile;
 import org.mrgeo.featurefilter.ColumnFeatureFilter;
 import org.mrgeo.featurefilter.DateColumnFeatureFilter;
 import org.mrgeo.featurefilter.FeatureFilter;
 import org.mrgeo.featurefilter.NumericColumnFeatureFilter;
 import org.mrgeo.featurefilter.TextColumnFeatureFilter;
+import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.slf4j.Logger;

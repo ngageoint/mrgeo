@@ -17,9 +17,10 @@ package org.mrgeo.data.csv;
 
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.mrgeo.column.Column;
-import org.mrgeo.column.ColumnDefinitionFile;
-import org.mrgeo.utils.WktGeometryUtils;
+
+import org.mrgeo.hdfs.vector.Column;
+import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
+import org.mrgeo.hdfs.vector.WktGeometryUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

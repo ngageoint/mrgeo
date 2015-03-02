@@ -1,55 +1,48 @@
 package org.mrgeo.featurefilter;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RawLocalFileSystem;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.mrgeo.format.CsvInputFormat;
-import org.mrgeo.format.TsvInputFormat;
-import org.mrgeo.geometry.Geometry;
-import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.HadoopUtils;
-
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
+import org.apache.hadoop.io.LongWritable;
+import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.vector.VectorDataProvider;
+import org.mrgeo.data.vector.VectorReader;
+import org.mrgeo.geometry.Geometry;
+import org.mrgeo.test.TestUtils;
 
 public abstract class ColumnFeatureFilterTest
 {
-  protected static CsvInputFormat.CsvRecordReader getRecordReader(String filename) throws IOException
-  {
-    String inputDir = TestUtils.composeInputDir(ColumnFeatureFilterTest.class);
-    Job j = new Job(new Configuration());
-    Configuration c = j.getConfiguration();
-    FileSystem fs = new RawLocalFileSystem();
-    fs.setConf(c);
-    Path testFile = new Path(inputDir, filename);
-    testFile = fs.makeQualified(testFile);
-    FileInputFormat.addInputPath(j, testFile);
-    FileSplit split = new FileSplit(testFile, 0, 1000000000, null);
-    
-    TsvInputFormat.TsvRecordReader reader = new TsvInputFormat.TsvRecordReader();
-    reader.initialize(split, HadoopUtils.createTaskAttemptContext(c, new TaskAttemptID()));
-    
-    fs.close();
-    
-    return reader;
-  }
-  
   protected static List<Geometry> readFeatures(String fileName) throws IOException,
     InterruptedException
   {
-    CsvInputFormat.CsvRecordReader reader = getRecordReader(fileName);
-    List<Geometry> features = new ArrayList<>();
-    while (reader.nextKeyValue())
+    String testDir = TestUtils.composeInputDir(ColumnFeatureFilterTest.class);
+    File testFile = new File(testDir, fileName);
+    String resolvedFileName = testFile.toURI().toString();
+    VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider(resolvedFileName,
+        AccessMode.READ, new Properties());
+    VectorReader reader = vdp.getVectorReader();
+    CloseableKVIterator<LongWritable, Geometry> iter = reader.get();
+    try
     {
-      features.add(reader.getCurrentValue().createWritableClone());
+      List<Geometry> features = new ArrayList<>();
+      while (iter.hasNext())
+      {
+        Geometry geom = iter.next();
+        if (geom != null)
+        {
+          features.add(geom.createWritableClone());
+        }
+      }
+      return features;
     }
-    reader.close();
-    return features;
+    finally
+    {
+      iter.close();
+    }
   } 
 }

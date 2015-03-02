@@ -94,20 +94,27 @@ public class VectorFileMapOpLoader implements ResourceMapOpLoader
         // The URI is invalid, so let's continue to try to open it in HDFS
       }
     }
-    Path p = new Path(input);
-
-    FileSystem fs = HadoopFileUtils.getFileSystem(p);
-    if (fs.exists(p))
+    try
     {
-      return p;
+      Path p = new Path(input);
+  
+      FileSystem fs = HadoopFileUtils.getFileSystem(p);
+      if (fs.exists(p))
+      {
+        return p;
+      }
+  
+      Path basePath = new Path(getVectorBasePath());
+      p = new Path(basePath, input);
+      fs = HadoopFileUtils.getFileSystem(p);
+      if (fs.exists(p))
+      {
+        return p;
+      }
     }
-
-    Path basePath = new Path(getVectorBasePath());
-    p = new Path(basePath, input);
-    fs = HadoopFileUtils.getFileSystem(p);
-    if (fs.exists(p))
+    catch(IllegalArgumentException e)
     {
-      return p;
+      // The URI is invalid
     }
 
     return null;

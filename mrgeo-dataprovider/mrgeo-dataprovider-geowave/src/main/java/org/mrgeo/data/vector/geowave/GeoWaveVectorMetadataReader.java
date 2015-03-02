@@ -2,6 +2,7 @@ package org.mrgeo.data.vector.geowave;
 
 import java.io.IOException;
 
+import mil.nga.giat.geowave.index.ByteArrayId;
 import mil.nga.giat.geowave.store.adapter.DataAdapter;
 import mil.nga.giat.geowave.store.adapter.statistics.BoundingBoxDataStatistics;
 import mil.nga.giat.geowave.store.adapter.statistics.DataStatistics;
@@ -13,7 +14,6 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.mrgeo.data.vector.VectorMetadata;
 import org.mrgeo.data.vector.VectorMetadataReader;
 import org.mrgeo.utils.Bounds;
-import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 
@@ -88,15 +88,13 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
       AttributeDescriptor desc = sft.getDescriptor(index);
       metadata.addAttribute(desc.getName().getLocalPart());
     }
-    // TODO: The following gives back bad bounds for the adapter. I have a question
-    // in to Rich to determine what I'm doing wrong. In the meantime, do not set
-    // the bounds in the metadata. This will force a re-computation of the bounds
-    // the hard way (in the caller).
-    DataStatistics<SimpleFeature> stats = adapter.createDataStatistics(BoundingBoxDataStatistics.STATS_ID);
+    DataStatistics<?> stats = GeoWaveVectorDataProvider.getStatisticsStore().getDataStatistics(
+        new ByteArrayId(dataProvider.getResourceName()),
+        BoundingBoxDataStatistics.STATS_ID);
     FeatureBoundingBoxStatistics boundsStats = (FeatureBoundingBoxStatistics)stats;
     Bounds bounds = new Bounds(boundsStats.getMinX(), boundsStats.getMinY(),
         boundsStats.getMaxX(), boundsStats.getMaxY());
-//    metadata.setBounds(bounds);
+    metadata.setBounds(bounds);
     return metadata;
   }
 }

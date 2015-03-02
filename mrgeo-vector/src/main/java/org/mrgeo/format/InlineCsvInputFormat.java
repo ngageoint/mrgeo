@@ -17,18 +17,19 @@ package org.mrgeo.format;
 
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
-import org.mrgeo.column.Column;
-import org.mrgeo.column.Column.FactorType;
-import org.mrgeo.column.ColumnDefinitionFile;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
+import org.mrgeo.hdfs.vector.Column;
+import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
+import org.mrgeo.hdfs.vector.Column.FactorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
