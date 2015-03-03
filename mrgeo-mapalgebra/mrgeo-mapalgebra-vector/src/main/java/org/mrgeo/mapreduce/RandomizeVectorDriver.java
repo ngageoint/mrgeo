@@ -15,6 +15,14 @@
 
 package org.mrgeo.mapreduce;
 
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -22,6 +30,12 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.vector.VectorDataProvider;
+import org.mrgeo.data.vector.VectorInputFormat;
+import org.mrgeo.data.vector.VectorInputFormatContext;
+import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.format.AutoFeatureInputFormat;
 import org.mrgeo.format.CsvOutputFormat;
 import org.mrgeo.geometry.Geometry;
@@ -30,11 +44,6 @@ import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.utils.HadoopUtils;
-
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.UUID;
 
 public class RandomizeVectorDriver
 {
@@ -66,18 +75,37 @@ public class RandomizeVectorDriver
     MapReduceUtils.runJob(job, progress, jobListener);
   }
 
-  public void run(final Configuration conf, final Path input, final Path output,
-      final Progress progress, final JobListener jobListener)
+  public void run(final Configuration conf, final String input, final Path output,
+      final Progress progress, final JobListener jobListener,
+      Properties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     final Job job = new Job(conf);
 
-    if (inputFormat == null)
+    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(input,
+        AccessMode.READ, providerProperties);
+    if (dp != null)
     {
-      inputFormat = AutoFeatureInputFormat.class;
+      Set<String> inputs = new HashSet<String>(1);
+      inputs.add(input);
+      VectorInputFormatContext context = new VectorInputFormatContext(inputs,
+          providerProperties);
+      VectorInputFormatProvider ifp = dp.getVectorInputFormatProvider(context);
+      ifp.setupJob(job, providerProperties);
+      job.setInputFormatClass(VectorInputFormat.class);
+      run(job, output, progress, jobListener);
     }
-    job.setInputFormatClass(inputFormat);
-    FileInputFormat.addInputPath(job, input);
-    run(job, output, progress, jobListener);
+    else
+    {
+      // If we couldn't get a vector data provider for the input, then run the
+      // old code for setting up the input format.
+      if (inputFormat == null)
+      {
+        inputFormat = AutoFeatureInputFormat.class;
+      }
+      job.setInputFormatClass(inputFormat);
+      FileInputFormat.addInputPath(job, new Path(input));
+      run(job, output, progress, jobListener);
+    }
   }
 }

@@ -62,17 +62,18 @@ public class RandomizeVectorMapOp extends VectorMapOp
 
     RandomizeVectorDriver rvd = new RandomizeVectorDriver();
     MapOp inputMapOp = _inputs.get(0);
-    String inputPath = null;
+    String input = null;
     if (inputMapOp instanceof VectorMapOp)
     {
-      inputPath = ((VectorMapOp)inputMapOp).getOutputName();
+      input = ((VectorMapOp)inputMapOp).getOutputName();
     }
     else
     {
       // defensive code since all inputs should be VectorMapOp's - see addInput()
       throw new IllegalArgumentException("Invalid value for vector argument to RandomizeVector");
     }
-    rvd.run(createConfiguration(), new Path(inputPath), new Path(_outputName), p, jobListener);
+    rvd.run(createConfiguration(), input, new Path(_outputName), p, jobListener,
+        getProviderProperties());
     _output = new BasicInputFormatDescriptor(_outputName);
   }
 

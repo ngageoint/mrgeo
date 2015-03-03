@@ -1,5 +1,8 @@
 package org.mrgeo.mapalgebra;
 
+import java.io.IOException;
+import java.util.List;
+
 import org.apache.hadoop.fs.Path;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -10,10 +13,6 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestVectorUtils;
 import org.mrgeo.test.TestUtils;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 public class RandomizeVectorMapOpIntegrationTest extends LocalRunnerTest
 {

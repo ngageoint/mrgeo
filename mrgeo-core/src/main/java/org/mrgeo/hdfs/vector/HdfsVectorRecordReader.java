@@ -89,6 +89,14 @@ public class HdfsVectorRecordReader extends RecordReader<LongWritable, Geometry>
     int geometryCol = -1;
     boolean skipFirstLine = false;
     FileSystem fs = HadoopFileUtils.getFileSystem(conf, columnsPath);
+    if (!fs.exists(columnsPath))
+    {
+      // This is to cover the case where delimited text was the output of
+      // a map/reduce operation. In that case "output.csv" is a directory
+      // containing multiple part*.csv files. And the .columns file is
+      // stored as output.tsv.columns at the parent level.
+      columnsPath = new Path(columnsPath.getParent().toString() + ".columns");
+    }
     if (fs.exists(columnsPath))
     {
       InputStream in = null;
@@ -136,7 +144,7 @@ public class HdfsVectorRecordReader extends RecordReader<LongWritable, Geometry>
     }
     else
     {
-      throw new IOException("Column file was not found.");
+      throw new IOException("Column file was not found: " + columnsPath.toString());
     }
     DelimitedParser delimitedParser = new DelimitedParser(attributeNames,
         xCol, yCol, geometryCol, delimiter, '\"', skipFirstLine);
