@@ -1,52 +1,104 @@
 package org.mrgeo.spark.job
 
 import java.io.File
-import java.net.URL
+import java.net.{URI, URL}
+import java.util
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.util.ClassUtil
-import org.apache.spark.SparkConf
-import org.mrgeo.utils.DependencyLoader
+import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
+import org.apache.spark.{Logging, SparkConf}
+import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.mrgeo.spark.job.yarn.MrGeoYarnDriver
+import org.mrgeo.utils.{FileUtils, HadoopUtils, SparkUtils, DependencyLoader}
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
-import scala.util.control.Breaks
 
-abstract class MrGeoDriver {
+abstract class MrGeoDriver extends Logging {
 
-  def run(args:Array[String] = new Array[String](0)) = {
-    val job = new JobArguments(args)
+  def run(name:String, driver:String = this.getClass.getName, args:Map[String, String] = Map[String, String](), hadoopConf:Configuration) = {
+    val job = new JobArguments()
 
-    val classname = getClass.getName
-    if (classname.endsWith("$")) {
-      job.driverClass = classname.substring(0, classname.lastIndexOf("$"))
-    }
-    else {
-      job.driverClass = classname
-    }
+    job.driverClass = driver
 
-    println("Configuring application")
+    job.name = name
+    job.setAllSettings(args)
 
-    setupDependencies(job)
 
+    logInfo("Configuring application")
+
+    // setup dependencies, but save the local deps to use in the classloader
+    val local = setupDependencies(job)
 
     var parentLoader:ClassLoader = Thread.currentThread().getContextClassLoader
     if (parentLoader == null) {
       parentLoader = getClass.getClassLoader
     }
 
-    val urls = job.jars.map(jar => new URL(jar))
-    //urls.foreach(jar => println(jar.toString))
+    val urls = local.map(jar => {
+      new URL(FileUtils.resolveURL(jar))
+    })
 
+    val conf = PrepareJob.prepareJob(job)
     val cl = new URLClassLoader(urls.toSeq, parentLoader)
 
-    if (job.isYarn) {
-      getYarnSettings(job, cl)
-      addYarnClasses(cl)
-    }
-    val jobclass = cl.loadClass(job.driverClass)
+    setupDriver(job, cl)
 
-    val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoJob]
-    jobinstance.run(job.toArgArray)
+
+//    if (HadoopUtils.isLocal(hadoopConf))
+//    {
+//      job.useLocal()
+//    }
+//    else {
+      val cluster = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_CLUSTER, "local")
+
+      cluster.toLowerCase match {
+      case "yarn" => job.useYarn()
+      case "spark" => {
+        val master = conf.get("spark.master", "spark://localhost:7077")
+        job.useSpark(master)
+      }
+      case _ => job.useLocal()
+      }
+
+//    }
+
+    // yarn needs to be run in its own client code, so we'll set up it up separately
+    if (job.isYarn) {
+      loadYarnSettings(job, cl)
+      addYarnClasses(cl)
+
+      val jobclass = cl.loadClass(classOf[MrGeoYarnDriver].getCanonicalName)
+      val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoYarnDriver]
+
+      jobinstance.run(job, cl, conf)
+    }
+    else {
+      val jobclass = cl.loadClass(job.driverClass)
+      val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoJob]
+      jobinstance.run(job, conf)
+    }
+  }
+
+  private def setupDriver(job:JobArguments, cl: URLClassLoader) = {
+    if (job.driverClass == null)
+    {
+      job.driverClass = getClass.getName.replaceAll("\\$","") .replaceAll("\\$","")
+    }
+
+    if (job.driverJar == null || !job.driverJar.endsWith(".jar")) {
+      val clazz = Class.forName(job.driverClass)
+      val jar: String = ClassUtil.findContainingJar(clazz)
+
+      if (jar != null) {
+        job.driverJar = jar
+      }
+      else {
+        job.driverJar = SparkUtils.jarForClass(job.driverClass, cl)
+      }
+    }
   }
 
   private def addYarnClasses(cl: URLClassLoader) = {
@@ -81,38 +133,9 @@ abstract class MrGeoDriver {
     }
   }
 
-  private def humantokb(human:String):Int = {
-    //val pre: Char = new String ("KMGTPE").charAt (exp - 1)
 
-    val trimmed = human.trim.toLowerCase
-    val units = trimmed.charAt(human.length - 1)
-    val exp = units match {
-    case 'k' => 0
-    case 'm' => 1
-    case 'g' => 2
-    case 'p' => 3
-    case 'e' => 4
-    case _ => return trimmed.substring(0, trimmed.length - 2).toInt
-    }
-
-    val mult = Math.pow(1024, exp).toInt
-
-    trimmed.substring(0, trimmed.length - 2).toInt * mult
-  }
-
-  private def kbtohuman(kb:Int):String = {
-
-    val unit = 1024
-    val kbunit = unit * unit
-    val exp: Int = (Math.log(kb) / Math.log(kbunit)).toInt
-    val pre: Char = new String("MGTPE").charAt(exp)
-
-    "%d%s".format((kb / Math.pow(unit, exp + 1)).toInt, pre)
-  }
-
-  private def getYarnSettings(job:JobArguments, cl: URLClassLoader) = {
-    // need to get the Yarn config by reflection, since we support non YARN setups
-
+  private def loadYarnSettings(job:JobArguments, cl: URLClassLoader) = {
+    // need to get the YARN classes by reflection, since we support non YARN setups
     val clazz = getClass.getClassLoader.loadClass("org.apache.hadoop.yarn.conf.YarnConfiguration")
 
     if (clazz != null) {
@@ -125,6 +148,14 @@ abstract class MrGeoDriver {
         job.cores = cores
       }
 
+      val res = calculateYarnResources()
+
+      job.executors = res._2 + 1 // total CPUs + 1 (for the driver)
+      job.cores = res._1 / job.executors
+
+      job.executors = 8
+      job.cores = 1
+
       val sparkConf:SparkConf = new SparkConf()
 
       // Additional memory to allocate to containers
@@ -132,30 +163,117 @@ abstract class MrGeoDriver {
       val amMemoryOverhead = sparkConf.getInt("spark.yarn.driver.memoryOverhead", 384)
       val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 364)
 
-      val defmem:Integer = 2048
-      val mem = (((getInt.invoke(conf, "yarn.nodemanager.resource.memory-mb", defmem).asInstanceOf[Int] * 1024)
-      - executorMemoryOverhead - amMemoryOverhead) * 0.95).toInt
+      //      val defmem:Integer = 2048
+      //      val mem = (((getInt.invoke(conf, "yarn.nodemanager.resource.memory-mb", defmem).asInstanceOf[Int] * 1024)
+      //          - executorMemoryOverhead - amMemoryOverhead) * 0.95).toInt
 
-      if (job.memory != null) {
-        val exmem = humantokb(job.memory)
+      val mem = ((res._3 - executorMemoryOverhead - amMemoryOverhead) * 0.98).toInt
+      job.memory = SparkUtils.kbtohuman(mem)
 
-        if (mem < exmem) {
-          job.memory = kbtohuman(mem)
-        }
-
-      }
-      else {
-        job.memory = kbtohuman(mem)
-      }
+      //      if (job.memory != null) {
+      //        val exmem = SparkUtils.humantokb(job.memory)
+      //
+      //        if (mem < exmem) {
+      //          job.memory = SparkUtils.kbtohuman(mem)
+      //        }
+      //      }
+      //      else {
+      //        job.memory = SparkUtils.kbtohuman(mem)
+      //      }
     }
   }
 
-  protected def setupDependencies(job:JobArguments): Unit = {
+  private def calculateYarnResources():(Int, Int, Int) = {
+
+    val cl = getClass.getClassLoader
+
+    var client:Class[_] = null
+    try {
+      client = cl.loadClass("org.apache.hadoop.yarn.client.api.YarnClient")
+    }
+    catch {
+      // YarnClient was here in older versions of YARN
+      case cnfe: ClassNotFoundException => {
+        client = cl.loadClass("org.apache.hadoop.yarn.client.YarnClient")
+      }
+    }
+
+    val create = client.getMethod("createYarnClient")
+    val init = client.getMethod("init", classOf[Configuration])
+    val start = client.getMethod("start")
+
+
+    val getNodeReports = client.getMethod("getNodeReports", classOf[Array[NodeState]])
+    val stop = client.getMethod("stop")
+
+
+    val yc = create.invoke(null)
+    init.invoke(yc, HadoopUtils.createConfiguration())
+    start.invoke(yc)
+
+    val na = new Array[NodeState](1)
+    na(0) = NodeState.RUNNING
+
+    val nr = getNodeReports.invoke(yc, na).asInstanceOf[util.ArrayList[NodeReport]]
+
+    var totalcores:Int = 0
+    var totalmem:Long = 0
+
+    nr.foreach(rep => {
+      val res = rep.getCapability
+
+      totalmem = totalmem + res.getMemory
+      totalcores = totalcores + res.getVirtualCores
+    })
+
+    val executors:Int = nr.length
+
+    stop.invoke(yc)
+
+    (totalcores, executors, totalmem.toInt)
+
+    //
+    //      val yc = YarnClient.createYarnClient()
+    //      yc.init(HadoopUtils.createConfiguration())
+    //      yc.start()
+    //      val nr = yc.getNodeReports(NodeState.RUNNING)
+    //
+    //      var totalcores:Int = 0
+    //      var totalmem:Long = 0
+    //
+    //      nr.foreach(rep => {
+    //        val res = rep.getCapability
+    //
+    //        totalmem = totalmem + res.getMemory
+    //
+    //        totalcores = totalcores + res.getVirtualCores
+    //
+    //      })
+    //      val executors:Int = nr.length
+    //
+    //      yc.stop()
+    //
+    //    }
+    //    catch {
+    //      case nsme:NoSuchMethodException => {
+    //        val clazz = getClass.getClassLoader.loadClass("org.apache.hadoop.yarn.client.YarnClient")
+    //        create = clazz.getMethod("createYarnConfig")
+    //
+    //      }
+    //    }
+    //
+    //
+    //
+    //
+    //   (totalcores, executors, (totalmem / 1024).toInt)
+  }
+  protected def setupDependencies(job:JobArguments): mutable.Set[String] = {
 
     val dependencies = DependencyLoader.getDependencies(getClass)
+    val qualified = DependencyLoader.copyDependencies(dependencies)
     val jars:StringBuilder = new StringBuilder
 
-    for (jar <- dependencies) {
+    for (jar <- qualified) {
       // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...
       //if (!jar.contains("spark-yarn")) {
       if (jars.length > 0) {
@@ -166,47 +284,7 @@ abstract class MrGeoDriver {
     }
     job.setJars(jars.toString())
 
-    job.driverJar = getClass.getProtectionDomain.getCodeSource.getLocation.getPath
-
-    if (!job.driverJar.endsWith(".jar")) {
-
-      val jar: String = ClassUtil.findContainingJar(getClass)
-
-      if (jar != null) {
-        job.driverJar = jar
-      }
-      else {
-        // now the hard part, need to look in the dependencies...
-
-        //val urls:Array[URL] = Array.ofDim(dependencies.size())
-        val urls = dependencies.map(jar => new File(jar).toURI.toURL)
-
-        val cl = new URLClassLoader(urls.toSeq, Thread.currentThread().getContextClassLoader)
-
-        val classFile: String = getClass.getName.replaceAll("\\.", "/") + ".class"
-        val iter =  cl.getResources(classFile)
-
-        val break = new Breaks
-
-        break.breakable(
-          while (iter.hasMoreElements) {
-            val url: URL = iter.nextElement
-            if (url.getProtocol == "jar") {
-              val path: String = url.getPath
-              if (path.startsWith("file:")) {
-                // strip off the "file:" and "!<classname>"
-                job.driverJar = path.substring("file:".length).replaceAll("!.*$", "")
-
-                break.break()
-              }
-            }
-          })
-      }
-
-    }
-
-
-
+    dependencies
   }
 
 }

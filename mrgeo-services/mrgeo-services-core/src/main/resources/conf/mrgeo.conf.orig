@@ -11,6 +11,10 @@ distributed.base = /mrgeo/jars
 # This needs to be a location that MrGeo can write to.
 db.path = /tmp/mrgeo-services-db
 
+# Denote which cluster type you have.  Mainly used for Spark processing.  Valid values
+# are: yarn, spark, and local
+cluster=yarn
+
 # Use Kryo serialization for Spark jobs, if using Spark < 1.3.0, this _MUST_ be false!
 use.kryo.serialization=false
 

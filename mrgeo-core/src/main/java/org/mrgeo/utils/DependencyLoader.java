@@ -60,6 +60,44 @@ public class DependencyLoader
     return deps;
   }
 
+  public static Set<String> copyDependencies(final Set<String> localDependencies) throws IOException
+  {
+    Configuration conf = HadoopUtils.createConfiguration();
+    FileSystem fs = HadoopFileUtils.getFileSystem(conf);
+    Path hdfsBase =
+        new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
+
+
+    Set<String> deps = new HashSet<>();
+
+    // copy the dependencies to hdfs, if needed
+    for (String local: localDependencies)
+    {
+      File file = new File(local);
+
+      addFileToClasspath(conf, deps, fs, hdfsBase, file);
+    }
+
+    Set<String> qualified = new HashSet<>();
+
+    // fully qualify the dependency
+    for(String dep: deps)
+    {
+      qualified.add(fs.makeQualified(new Path(dep)).toString());
+    }
+
+    return qualified;
+
+  }
+
+  public static Set<String> getAndCopyDependencies(final Class<?> clazz) throws IOException
+  {
+    // get the list of dependencies
+    Set<String> rawDeps = getDependencies(clazz);
+
+    return copyDependencies(rawDeps);
+  }
+
   public static String getMasterJar(final Class<?> clazz) throws IOException
   {
     Set<Dependency> properties = loadDependenciesByReflection(clazz);
@@ -151,7 +189,7 @@ public class DependencyLoader
 
   public static void addDependencies(final Job job, final Class<?> clazz) throws IOException
   {
-    if (job.getConfiguration().get("mapred.job.tracker", "local") == "local")
+    if (HadoopUtils.isLocal(job.getConfiguration()))
     {
       return;
     }
@@ -189,7 +227,7 @@ public class DependencyLoader
 
   public static void addDependencies(final Configuration conf, final Class<?> clazz) throws IOException
   {
-    if (conf.get("mapred.job.tracker", "local") == "local")
+    if (HadoopUtils.isLocal(conf))
     {
       return;
     }
@@ -468,6 +506,59 @@ public class DependencyLoader
     for (String env : cpstr.split(":"))
     {
       addFilesToClassPath(conf, existing, fs, hdfsBase, env);
+    }
+  }
+
+  private static void moveFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
+  {
+    File f = new File(base);
+    if (f.exists())
+    {
+      if (f.isDirectory())
+      {
+        File[] files = f.listFiles();
+        if (files != null)
+        {
+          for (File file : files)
+          {
+            moveFilesToClassPath(conf, existing, fs, hdfsBase, file.getCanonicalPath());
+          }
+        }
+      }
+      else
+      {
+        if (f.getName().endsWith(".jar"))
+        {
+          moveFileToClasspath(conf, existing, fs, hdfsBase, f);
+        }
+      }
+    }
+  }
+
+  private static void moveFileToClasspath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, File file) throws IOException
+  {
+    Path hdfsPath = new Path(hdfsBase, file.getName());
+    if (!existing.contains(hdfsPath.toString()))
+    {
+      if (fs.exists(hdfsPath))
+      {
+        // check the timestamp and exit if the one in hdfs is "newer"
+        FileStatus status = fs.getFileStatus(hdfsPath);
+
+        if (file.lastModified() <= status.getModificationTime())
+        {
+          log.debug(file.getPath() + " up to date");
+
+          existing.add(hdfsPath.toString());
+          return;
+        }
+      }
+
+      // copy the file...
+      log.debug("Copying " + file.getPath() + " to HDFS for distribution");
+
+      fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
+      existing.add(hdfsPath.toString());
     }
   }
 

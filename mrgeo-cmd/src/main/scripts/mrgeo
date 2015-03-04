@@ -1,20 +1,35 @@
-#!/bin/sh
+#!/bin/bash
 
-CMD_JAR=$MRGEO_HOME/mrgeo-cmd-core.jar
-if [ -e $CMD_JAR ]
+CMD_JAR=$MRGEO_HOME/mrgeo-cmd-core*.jar
+if [ ! -e $CMD_JAR ]
 then
-    LIBS=$MRGEO_HOME/*:$MRGEO_HOME/lib/*
-else
   # could this be a dev environment?
-  CMD_JAR=$MRGEO_HOME/mrgeo-cmd/mrgeo-cmd-distribution/target/mrgeo-cmd-distribution.jar
+
+  FILES=`find $MRGEO_HOME -name "mrgeo-cmd-distribution*.jar"`
+  for file in $FILES;
+  do
+    CMD_JAR=$file
+    break
+  done
+
   if [ -e $CMD_JAR ]
   then
-    LIBS=$MRGEO_HOME/mrgeo-cmd/mrgeo-cmd-distribution/target/lib/*
+    # This script is specific to running mrgeo-proprietary code, so we
+    # need to include the proprietary libs too. Put the open source
+    # libraries first in the classpath so that developers can just
+    # rebuild open source without having to also rebuild proprietary in
+    # order to run with their mods.
+    LIBS=`dirname $CMD_JAR`:`dirname $CMD_JAR`/lib/*
   else
     echo "Can't find mrgeo-cmd-core jar file.  Make sure MRGEO_HOME is set properly"
     exit -1
   fi
+else
+  LIBS=$MRGEO_HOME/*:$MRGEO_HOME/lib/*
 fi
+
+#echo $CMD_JAR
+echo $LIBS
 
 # set the hadoop user classpath and force it to be prefixed in the classpath
 export HADOOP_USER_CLASSPATH_FIRST=true

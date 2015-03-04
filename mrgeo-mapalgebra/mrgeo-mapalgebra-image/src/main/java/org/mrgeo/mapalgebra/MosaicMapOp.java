@@ -54,7 +54,7 @@ public class MosaicMapOp extends RasterMapOp
     {
       names[i++] = ((RasterMapOp)(input)).getOutputName();
     }
-    MosaicDriver.mosaic(names, getOutputName());
+    MosaicDriver.mosaic(names, getOutputName(), createConfiguration());
 
     p.complete();
   }

@@ -232,7 +232,7 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
     final int zoom) throws IOException
     {
     // don't set up a partitioner in local mode
-    if (job.getConfiguration().get("mapred.job.tracker", "").equals("local"))
+      if (HadoopUtils.isLocal(job.getConfiguration()))
     {
       // make sure we have at least 1 reducer...
       if (job.getNumReduceTasks() < 1)
