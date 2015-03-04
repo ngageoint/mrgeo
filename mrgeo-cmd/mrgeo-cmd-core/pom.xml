@@ -71,7 +71,19 @@
           <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
         </configuration>
       </plugin>
-    </plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.mrgeo.cmd.MrGeo</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+   </plugins>
   </build>
   <dependencies>
     <dependency>
