@@ -93,22 +93,12 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
     
     this.provider = provider;
     this.cv = cv; //provider.getColumnVisibility();
-//    if(this.cv == null){
-//    	String str = this.provider.getProviderProperties().getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
-//    	if(str == null){
-//    		this.cv = new ColumnVisibility();
-//    	} else {
-//    		this.cv = new ColumnVisibility(str);
-//    	}
-//    }
     
     //TODO - program things to get rid of this
     if(this.cv == null){
-    	log.info("setting blank column visibility");
-    	//this.cv = new ColumnVisibility("C&D");
     	this.cv = new ColumnVisibility();
     }
-    log.info("Have column visibility of: " + this.cv.toString());
+    log.info("column visibility of: " + this.cv.toString());
     
     this.zoomLevel = context.getZoomlevel();
     this.tileSize = context.getTilesize();
@@ -375,22 +365,20 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
         
       } else {
         
-        //job.setNumReduceTasks(4);
     	  log.info("Setting the output format of: " +
     			  	AccumuloMrsImagePyramidOutputFormat.class.getCanonicalName());
-        job.setOutputFormatClass(AccumuloMrsImagePyramidOutputFormat.class);
-        AccumuloMrsImagePyramidOutputFormat.setJob(job);
-        log.info("Setting zoom level to " + zoomLevel);
-        log.info("Visibility is " + cv.toString());
-        //AccumuloMrsImagePyramidOutputFormat.setZoomLevel(zoomLevel);
+    	
+    	  job.setOutputFormatClass(AccumuloMrsImagePyramidOutputFormat.class);
+    	  AccumuloMrsImagePyramidOutputFormat.setJob(job);
+
+    	  log.info("Setting zoom level to " + zoomLevel);
+    	  log.info("Visibility is " + cv.toString());
+    	  log.info("Setting the number of reducers to " + MrGeoAccumuloConstants.MRGEO_DEFAULT_NUM_REDUCERS);
+    	  job.setNumReduceTasks(MrGeoAccumuloConstants.MRGEO_DEFAULT_NUM_REDUCERS);
       }
       
       job.setOutputKeyClass(TileIdWritable.class);
       job.setOutputValueClass(RasterWritable.class);
-      //job.setOutputFormatClass(AccumuloMrsImagePyramidOutputFormat.class);
-      //job.setPartitionerClass(AccumuloMrGeoRangePartitioner.class);
-      //AccumuloMrGeoRangePartitioner.setSplitFile(job, file);
-      
       
     } catch(IOException ioe){
       throw new DataProviderException("Error running job setup", ioe);

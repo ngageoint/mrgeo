@@ -144,12 +144,11 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
     // get the properties for connecting out to Accumulo
     Properties props;
     if(AccumuloConnector.isEncoded(enc)){
-      props = AccumuloConnector.decodeAccumuloProperties(enc);
-      table = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
-    
+    	props = AccumuloConnector.decodeAccumuloProperties(enc);
+    	table = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
     } else {
-      table = enc;
-      props = AccumuloConnector.getAccumuloProperties();
+    	table = enc;
+    	props = AccumuloConnector.getAccumuloProperties();
     }
     
     // set up all needed information
@@ -196,40 +195,44 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
    * @param props - the object that has the information for connecting out to Accumulo.
    */
   private void initialize(Properties props){
-
+	  Properties tmpProps = AccumuloConnector.getAccumuloProperties();
     // initialize properties
     if(AMTR_props == null){
       AMTR_props = new Properties();
     }
+    AMTR_props.putAll(tmpProps);
+    
+    String authsString = AMTR_props.getProperty(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS));
     
     // pull in all properties for input
     if(props != null){
-      AMTR_props.putAll(props);
-    } else {
-      // read in properties from file?
+    	if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null){
+    		authsString = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    	}  	
+    	AMTR_props.putAll(props);
       
-    }
+    } //else {
+      // read in properties from file?
+    //}
 
     // get all needed properties for connecting to Accumulo
     
     //table = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
-
     instance = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
     zooServers = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS);
     user = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
     pass = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
     
+    //log.info("auth string = " + AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS));
+    //log.info("provider rolses = " + AMTR_props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
+    
     // authorizations - this will need to be set on a per query basis
-    String authsStr = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
-    if(authStr == null){
-    	authStr = AMTR_props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
-    }
-    if(authsStr != null && authsStr.length() > 0){
-      auths = new Authorizations(authsStr.split(","));
-    } else {
-      auths = new Authorizations();
-    }
-  }
+	  if(authsString != null && authsString.length() > 0){
+		  auths = new Authorizations(authsString.split(","));
+	  } else {
+		  auths = new Authorizations();
+	  }
+  } // end initialize
 
   
   /**
@@ -450,7 +453,6 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
   @Override
   public KVIterator<TileIdWritable, T> get()
   {
-    //throw new NotImplementedException(this.getClass().getName() + ".get() is not implemented for empty ranges.");
     return get(null, null);
   } // end get()
 
@@ -512,7 +514,7 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
   @Override
   public T get(final TileIdWritable key)
   {
-    log.info("getting single tile of id = " + key.get());
+    log.debug("getting single tile of id = " + key.get());
 
     // set the scanner for the tile id
     scanner.setRange(new Range(AccumuloUtils.toRowId(key.get())));
@@ -527,7 +529,7 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
          */
 
         final Entry<Key, Value> ent = it.next();
-        log.info("tid = " + ent.getKey().getColumnQualifier().toString() + " image byte size = " + ent.getValue().getSize());
+        log.debug("tid = " + ent.getKey().getColumnQualifier().toString() + " image byte size = " + ent.getValue().getSize());
 
         // done with the scanner
         scanner.close();
@@ -562,10 +564,6 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
                                            final TileIdWritable endKey)
   {
 
-//    if(startKey == null || endKey == null){
-//      throw new NotImplementedException(this.getClass().getName() + ".get for wide open ranges is not implemented.");
-//    }
-    
     // start
     long startLong;
     if(startKey != null){
@@ -611,8 +609,6 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
      * TODO: how do you know if you are missing items in the tile list - it is possible right now
      * it appears there is a one to one mapping in the tiles and list
      */
-
-    
     
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null){
@@ -634,17 +630,15 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
     }
     
     //log.info("startkey = " + startKey.get() + " endkey = " + endKey.get());
-    log.info("accStartkey = " + AccumuloUtils.toLong(sKey.getRow()) +
+    log.debug("accStartkey = " + AccumuloUtils.toLong(sKey.getRow()) +
         " accEndKey = " + AccumuloUtils.toLong(eKey.getRow()) +
         " zoomLevel = " + zoomLevel + "\tonetile = " + oneTile + "\tauths = " + authsStr);
     
     Range r;
     if(oneTile){
       r = new Range(AccumuloUtils.toRowId(startLong));
-      //scanner.setRange(r);
     } else {
       r = new Range(sKey, true, eKey, true);
-      //batchScanner.setRanges(Collections.singleton(r));
     }
 
     // set the scanner
@@ -723,8 +717,8 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
         		current = it.next();
         	}
 
-        	log.info("Current key = " + Hex.encodeHexString(current.getKey().getRow().getBytes()));
-        	log.info("Size of value = " + current.getValue().get().length);
+        	log.debug("Current key = " + Hex.encodeHexString(current.getKey().getRow().getBytes()));
+        	log.debug("Size of value = " + current.getValue().get().length);
 
         	
         	return toNonWritable(current.getValue().get(), null, null);
@@ -761,9 +755,7 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
       
     }
     return zoomLevel;
-    //throw new NotImplementedException();
   } // end getZoomlevel
   
-  //protected abstract MrsPyramidMetadata loadGenericMetadata();
 
-}
+} // end AccumuloMrsTileReader

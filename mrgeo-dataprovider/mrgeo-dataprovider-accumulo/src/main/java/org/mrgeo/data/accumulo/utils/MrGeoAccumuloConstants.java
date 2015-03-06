@@ -85,6 +85,8 @@ public class MrGeoAccumuloConstants
                                                       };
   
   public static final String MRGEO_KEY_PROTECTIONLEVEL = "protectionLevel";
+
+  public static final int MRGEO_DEFAULT_NUM_REDUCERS = 4;
   
   private MrGeoAccumuloConstants(){
     throw new AssertionError();
