@@ -55,7 +55,7 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
   def writeSplits(pyramid:String, zoom:Int, conf:Configuration): Unit = {
     val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
 
-    val inputWithZoom: Path = new Path(dp.getResourcePath(true), "" + zoom)
+    val inputWithZoom: Path = new Path(dp.getResourcePath(false), "" + zoom)
     var splitPath: Path = new Path(inputWithZoom, SplitFile.SPLIT_FILE)
     val fs: FileSystem = splitPath.getFileSystem(conf)
     if (!fs.exists(splitPath)) {

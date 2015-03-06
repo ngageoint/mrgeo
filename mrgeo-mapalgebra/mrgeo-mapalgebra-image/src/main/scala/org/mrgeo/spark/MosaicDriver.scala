@@ -28,9 +28,10 @@ import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
+import org.mrgeo.image.MrsImagePyramid
 import org.mrgeo.spark.job.{MrGeoJob, MrGeoDriver, JobArguments}
 import org.mrgeo.utils.TMSUtils.TileBounds
-import org.mrgeo.utils.{LoggingUtils, TMSUtils, Bounds, SparkUtils}
+import org.mrgeo.utils._
 
 import scala.collection.mutable
 import scala.util.control._
@@ -39,7 +40,7 @@ object MosaicDriver extends MrGeoDriver with Externalizable {
 
   def mosaic(inputs: Array[String], output:String, conf:Configuration): Unit = {
 
-    LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO)
+    LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG)
     LoggingUtils.setLogLevel("org.apache.hadoop", LoggingUtils.WARN)
 
     val args =  mutable.Map[String, String]()
@@ -178,17 +179,17 @@ class MosaicDriver extends MrGeoJob with Externalizable {
       var dstnodata:Array[Double] = null
 
       val done = new Breaks
-      var i:Int = 0
+      var img:Int = 0
       done.breakable {
         for (wr<- U._2) {
           if (wr != null) {
-            println(i)
+            println(img)
             val writable = wr.asInstanceOf[Seq[RasterWritable]](0)
 
             if (dst == null) {
               // the tile conversion is a WritableRaster, we can just typecast here
               dst = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
-              dstnodata = nodata(i)
+              dstnodata = nodata(img)
 
               val looper = new Breaks
 
@@ -213,7 +214,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
               // the tile conversion is a WritableRaster, we can just typecast here
               val src = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
-              val srcnodata = nodata(i)
+              val srcnodata = nodata(img)
 
               for (y <- 0 until dst.getHeight) {
                 for (x <- 0 until dst.getWidth) {
@@ -237,7 +238,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
               }
             }
           }
-          i += 1
+          img += 1
         }
       }
 
@@ -246,7 +247,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     }).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
 
-    val job:Job = new Job()
+    val job:Job = new Job(HadoopUtils.createConfiguration())
 
     // save the new pyramid
     //TODO:  protection level & properties
@@ -258,6 +259,11 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
     dp.teardown(job)
 
+    // calculate and save metadata
+    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, null,
+      nodata(0), bounds, job.getConfiguration, null, null)
+
+    // write splits
     sparkPartitioner.writeSplits(output, zoom, job.getConfiguration)
 
     true

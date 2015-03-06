@@ -76,41 +76,25 @@ class MrGeoYarnDriver {
     args += "--jar"
     args += driverJar
 
-    //args += job.driverJar
-
-    //    if (conf.contains("")) {
-    //
-    //    }
     args += "--num-executors"
-    args += job.executors.toString
-
-//    var cores:Int = job.cores
-//    if (conf.contains("spark.executor.cores")) {
-//      val scores:Int = conf.get("spark.executor.cores").toInt
-//      if (scores > cores)
-//      {
-//        cores = scores
-//      }
-//    }
+    args += "4" // job.executors.toString
+    conf.set("spark.executor.instances", "4")// job.executors.toString)
 
     args += "--executor-cores"
-    args += job.cores.toString
+    args += "2" //  job.cores.toString
+    conf.set("spark.executor.cores", "2") // job.cores.toString)
 
-    args += "--driver-memory"
-    //args += SparkUtils.kbtohuman((Runtime.getRuntime.maxMemory() / 1024).toInt)
-    args += "2G"
+    val exmemory:Int = SparkUtils.humantokb(job.memory)
+    val dvmem = SparkUtils.kbtohuman(exmemory / (job.cores * job.executors))
+    //val dvmem = SparkUtils.kbtohuman((Runtime.getRuntime.maxMemory() / 1024).toInt)
 
-//    var memory:Int = SparkUtils.humantokb(job.memory)
-//    if (conf.contains("spark.executor.memory")) {
-//      val smem:Int = SparkUtils.humantokb(conf.get("spark.executor.memory"))
-//      if (smem > memory)
-//      {
-//        memory = smem
-//      }
-//    }
+    //args += "--driver-memory"
+    //args += dvmem
+    conf.set("spark.driver.memory", dvmem)
 
-    args += "--executor-memory"
-    args += job.memory
+    //args += "--executor-memory"
+    //args += job.memory
+    conf.set("spark.executor.memory", job.memory)
 
 
     args += "--name"

@@ -15,7 +15,7 @@ object MrGeoYarnJob extends Logging {
     if (job.params.contains(MrGeoYarnDriver.DRIVER)) {
       val driver: String = job.params.getOrElseUpdate(MrGeoYarnDriver.DRIVER, "")
 
-      // need to get the Yarn config by reflection, since we support non YARN setups
+      logInfo("driver: " + driver)
       val clazz = getClass.getClassLoader.loadClass(driver)
       if (clazz != null) {
         val mrgeo: MrGeoJob = clazz.newInstance().asInstanceOf[MrGeoJob]
@@ -26,7 +26,8 @@ object MrGeoYarnJob extends Logging {
         // set all the spark settings back...
         val conf = new SparkConf()
 
-        conf.set("spark.files.overwrite", "true")
+        logInfo("SparkConf parameters")
+        conf.getAll.foreach(kv => {logInfo("  " + kv._1 + ": " + kv._2)})
 
         val context = new SparkContext(conf)
 

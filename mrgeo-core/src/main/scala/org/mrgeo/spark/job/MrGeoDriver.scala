@@ -1,7 +1,7 @@
 package org.mrgeo.spark.job
 
 import java.io.File
-import java.net.{URI, URL}
+import java.net.URL
 import java.util
 
 import org.apache.hadoop.conf.Configuration
@@ -150,11 +150,14 @@ abstract class MrGeoDriver extends Logging {
 
       val res = calculateYarnResources()
 
-      job.executors = res._2 + 1 // total CPUs + 1 (for the driver)
-      job.cores = res._1 / job.executors
+      // TODO:  This calculation is just voodoo.  We need to figure out a better one
+      job.cores = 2
+      job.executors = res._1 / job.cores
 
-      job.executors = 8
-      job.cores = 1
+      // This is what I _think_ these values should be, but job regularly fail with "out of memory"
+      // errors when I set them this way...
+      //job.executors = res._2 + 1 // total CPUs + 1 (for the driver)
+      //job.cores = res._1 / job.executors
 
       val sparkConf:SparkConf = new SparkConf()
 
@@ -168,7 +171,7 @@ abstract class MrGeoDriver extends Logging {
       //          - executorMemoryOverhead - amMemoryOverhead) * 0.95).toInt
 
       val mem = ((res._3 - executorMemoryOverhead - amMemoryOverhead) * 0.98).toInt
-      job.memory = SparkUtils.kbtohuman(mem)
+      job.memory = SparkUtils.kbtohuman(mem * 1024) // mem is in mb, convert to kb
 
       //      if (job.memory != null) {
       //        val exmem = SparkUtils.humantokb(job.memory)
