@@ -19,10 +19,10 @@ import org.geotools.data.AbstractDataStoreFactory;
 import org.geotools.data.DataStore;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFactorySpi;
-import org.mrgeo.column.Column;
-import org.mrgeo.column.ColumnDefinitionFile;
 import org.mrgeo.data.csv.CsvGeometryInputStream;
 import org.mrgeo.data.tsv.TsvGeometryInputStream;
+import org.mrgeo.hdfs.vector.Column;
+import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
 import org.mrgeo.utils.HadoopURLStreamHandlerFactory;
 
 import java.io.FileNotFoundException;

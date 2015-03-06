@@ -22,7 +22,6 @@ import java.util.Map.Entry;
 
 import javax.management.RuntimeErrorException;
 
-import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -32,6 +31,8 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
+//import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.raster.RasterWritable;
@@ -94,7 +95,8 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
     for(InputSplit is : splits){
 
       // an Accumulo split is a RangeInputSplit
-      RangeInputSplit ris = (RangeInputSplit)is;
+   	  org.apache.accumulo.core.client.mapreduce.RangeInputSplit ris =
+   			  (org.apache.accumulo.core.client.mapreduce.RangeInputSplit)is;
 
       // get the range
       Range r = ris.getRange();
@@ -243,8 +245,10 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
         if(inSplit instanceof TiledInputSplit){
         	
         	// deal with this
-        	RangeInputSplit ris = new RangeInputSplit();
+        	org.apache.accumulo.core.client.mapreduce.RangeInputSplit ris =
+        			new org.apache.accumulo.core.client.mapreduce.RangeInputSplit();
         	InputSplit inS = ((TiledInputSplit)inSplit).getWrappedSplit();
+        	log.info("input split class: " + inS.getClass().getCanonicalName());
         	long startId = ((TiledInputSplit) inSplit).getStartTileId();
         	long endId = ((TiledInputSplit) inSplit).getEndTileId();
         	Key startKey = AccumuloUtils.toKey(startId);
@@ -258,17 +262,24 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
         	
         	try{
         		locs = inS.getLocations();
-//        		for(int x = 0; x < locs.length; x++){
-//        			log.info("split " + x + " -> " + locs[x]);
-//        		}
+        		for(int x = 0; x < locs.length; x++){
+        			log.info("split " + x + " -> " + locs[x]);
+        		}
         		ris.setRange(r);
         		ris.setLocations(locs);
+        		ris.setTableName(((org.apache.accumulo.core.client.mapreduce.RangeInputSplit)inS).getTableName());
+        		ris.setTableId(((org.apache.accumulo.core.client.mapreduce.RangeInputSplit)inS).getTableId());
+        		
         		// there can be more added here
         		
         	} catch(InterruptedException ie){
         		throw new RuntimeErrorException(new Error(ie.getMessage()));
         	}
-
+        	if(ris == null){
+        		log.info("range input split is null");
+        	} else {
+        		log.info("table " + ris.getTableName() + " is offline: " + ris.isOffline());
+        	}
         	super.initialize(ris, attempt);
 
         	//super.initialize(((TiledInputSplit) inSplit).getWrappedSplit(), attempt);
@@ -296,9 +307,9 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
           // transform key and value
           long id = AccumuloUtils.toLong(entry.getKey().getRow());
           currentKey = entry.getKey();
-//          currentValue = entry.getValue();
+          //currentValue = entry.getValue();
           
-//          log.info("Processing " + id + " -> " + currentValue.getSize());
+          log.info("Processing " + id + " -> " + entry.getValue().getSize());
 
           currentK = new TileIdWritable(id);
           currentV = new RasterWritable(entry.getValue().get());

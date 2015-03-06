@@ -15,26 +15,31 @@
 
 package org.mrgeo.format;
 
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
-import org.mrgeo.column.Column;
-import org.mrgeo.column.Column.FactorType;
-import org.mrgeo.column.ColumnDefinitionFile;
 import org.mrgeo.geometry.Geometry;
-import org.mrgeo.geometry.GeometryFactory;
-import org.mrgeo.geometry.WritableGeometry;
+import org.mrgeo.hdfs.vector.Column;
+import org.mrgeo.hdfs.vector.Column.FactorType;
+import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
+import org.mrgeo.hdfs.vector.DelimitedParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
+import com.vividsolutions.jts.io.WKTReader;
 
 /**
  * This class is designed for handling small inputs of tabular data that don't
@@ -153,17 +158,16 @@ public class InlineCsvInputFormat extends InputFormat<LongWritable, Geometry> im
   // provides the methods nextFeature and getCurrentFeature.
   static public class InlineCsvReader
   {
-    private WritableGeometry feature;
+    private Geometry feature;
     private ColumnDefinitionFile cdf;
     //private FeatureSchemaStats schema;
     private String _line;
     private char encapsulator = '\'';
     private char _delimiter = ',';
     private char _lineSeparator = ';';
-    private int _xCol = -1, _yCol = -1, _geometryCol = -1;
     private String[] _lines;
     private int _lineIndex = 0;
-    private WKTReader _wktReader = null;
+    private DelimitedParser delimitedParser;
 
     // we initialize to avoid a bunch of if (reader != null) code. It will be recreated in the 
     // initialize function.
@@ -201,6 +205,7 @@ public class InlineCsvInputFormat extends InputFormat<LongWritable, Geometry> im
 
     public void initialize(String columns, String values)
     {
+      List<String> attributes = new ArrayList<String>();
       //schema = new FeatureSchemaStats();
       _lines = values.split(Character.toString(_lineSeparator));
 
@@ -210,6 +215,9 @@ public class InlineCsvInputFormat extends InputFormat<LongWritable, Geometry> im
 //      boolean hasY = false;
 
       int i = 0;
+      int xCol = -1;
+      int yCol = -1;
+      int geometryCol = -1;
       for (Column col : cdf.getColumns())
       {
         String c = col.getName();
@@ -219,12 +227,12 @@ public class InlineCsvInputFormat extends InputFormat<LongWritable, Geometry> im
           if (c.equals("x"))
           {
 //            hasX = true;
-            _xCol = i;
+            xCol = i;
           }
           else if (c.equals("y"))
           {
 //            hasY = true;
-            _yCol = i;
+            yCol = i;
           }
 //          schema.addAttribute(c, AttributeType.DOUBLE);
 //          schema.setAttributeMin(i, col.getMin());
@@ -234,7 +242,7 @@ public class InlineCsvInputFormat extends InputFormat<LongWritable, Geometry> im
         {
           if (c.toLowerCase().equals("geometry"))
           {
-            _geometryCol = i;
+            geometryCol = i;
 //            schema.addAttribute(c, AttributeType.GEOMETRY);
           }
 //          else
@@ -242,6 +250,7 @@ public class InlineCsvInputFormat extends InputFormat<LongWritable, Geometry> im
 //            schema.addAttribute(c, AttributeType.STRING);
 //          }
         }
+        attributes.add(c);
 //        schema.setAttributeCount(i, col.getCount());
         i++;
       }
@@ -252,88 +261,21 @@ public class InlineCsvInputFormat extends InputFormat<LongWritable, Geometry> im
 //      }
 
       //feature = new BasicFeature(schema);
+      delimitedParser = new DelimitedParser(attributes, xCol, yCol, geometryCol,
+          _delimiter, encapsulator, cdf.isFirstLineHeader());
     }
 
     public boolean nextFeature() throws IOException
     {
-      if (_wktReader == null)
-      {
-        _wktReader = new WKTReader();
-      }
-
       feature = null;
 
       boolean result = false;
       if (_lineIndex < _lines.length)
       {
-        double x = -1, y = -1;
-        String wktGeometry = null;
-        HashMap<String, String> attributes = new HashMap<>();
-        Vector<Column> columns = cdf.getColumns();
-
+        _line = _lines[_lineIndex++];
+        feature = delimitedParser.parse(_line);
         result = true;
-        _line = _lines[_lineIndex];
-
-        if (!_line.isEmpty())
-        {
-          String[] values = CsvInputFormat.CsvRecordReader.split(_line, _delimiter, encapsulator);
-          if (values.length == 0)
-          {
-            log.info("Values empty. Weird.");
-          }
-
-          for (int i = 0; i < values.length; i++)
-          {
-            if (i == _geometryCol)
-            {
-              wktGeometry = values[i];
-            }
-            else if (i == _xCol)
-            {
-              x = Double.parseDouble(values[i]);
-            }
-            else if (i == _yCol)
-            {
-              y = Double.parseDouble(values[i]);
-            }
-
-            if (i < columns.size())
-            {
-              attributes.put(columns.get(i).getName(), values[i]);
-            }
-          }
-
-          if (wktGeometry != null)
-          {
-            try
-            {
-              feature = org.mrgeo.geometry.GeometryFactory.fromJTS(_wktReader.read(wktGeometry));
-              //feature.setGeometry(_wktReader.read(wktGeometry));
-            }
-            catch (ParseException e)
-            {
-              throw new IOException(e);
-            }
-          }
-          else if (_geometryCol == -1 && _xCol >= 0 && _yCol >= 0)
-          {
-            feature = org.mrgeo.geometry.GeometryFactory.createPoint(x, y);
-            //feature.setGeometry(new GeometryFactory().createPoint(new Coordinate(x, y)));
-          }
-
-          if (feature == null)
-          {
-            feature = GeometryFactory.createEmptyGeometry();
-          }
-          feature.setAttributes(attributes);
-
-          result = true;
-        }
-
       }
-
-      _lineIndex++;
-
       return result;
     }
 

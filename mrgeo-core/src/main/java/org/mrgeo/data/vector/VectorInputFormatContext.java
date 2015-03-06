@@ -26,6 +26,8 @@ public class VectorInputFormatContext
 {
   private static final String className = VectorInputFormatContext.class.getSimpleName();
   private static final String INPUTS = className + ".inputs";
+  private static final String FEATURE_COUNT_KEY = className + ".featureCount";
+  private static final String MIN_FEATURES_PER_SPLIT_KEY = className + ".minFeaturesPerSplit";
   private static final String PROVIDER_PROPERTY_COUNT = className + ".provPropCount";
   private static final String PROVIDER_PROPERTY_KEY = className + ".provPropKey.";
   private static final String PROVIDER_PROPERTY_VALUE = className + ".provPropValue.";
@@ -41,14 +43,27 @@ public class VectorInputFormatContext
 
   private Set<String> inputs;
   private Properties inputProviderProperties = new Properties();
+  private long featureCount = -1L;
+  private int minFeaturesPerSplit = -1;
 
   public VectorInputFormatContext(final Set<String> inputs,
       final Properties inputProviderProperties)
   {
     this.inputs = inputs;
-    this.inputProviderProperties.putAll(inputProviderProperties);
+    if (inputProviderProperties != null)
+    {
+      this.inputProviderProperties.putAll(inputProviderProperties);
+    }
   }
 
+  public VectorInputFormatContext(final Set<String> inputs,
+      final Properties inputProviderProperties, long featureCount,
+      int minFeaturesPerSplit)
+  {
+    this(inputs, inputProviderProperties);
+    this.featureCount = featureCount;
+    this.minFeaturesPerSplit = minFeaturesPerSplit;
+  }
   protected VectorInputFormatContext()
   {
   }
@@ -63,9 +78,21 @@ public class VectorInputFormatContext
     return inputProviderProperties;
   }
 
+  public long getFeatureCount()
+  {
+    return featureCount;
+  }
+
+  public int getMinFeaturesPerSplit()
+  {
+    return minFeaturesPerSplit;
+  }
+
   public void save(final Configuration conf)
   {
     conf.set(INPUTS, StringUtils.join(inputs, ","));
+    conf.setLong(FEATURE_COUNT_KEY, featureCount);
+    conf.setInt(MIN_FEATURES_PER_SPLIT_KEY, minFeaturesPerSplit);
     conf.setInt(PROVIDER_PROPERTY_COUNT,
         ((inputProviderProperties == null) ? 0 : inputProviderProperties.size()));
     if (inputProviderProperties != null)
@@ -89,6 +116,8 @@ public class VectorInputFormatContext
   {
     VectorInputFormatContext context = new VectorInputFormatContext();
     context.inputs = new HashSet<String>();
+    context.featureCount = conf.getLong(FEATURE_COUNT_KEY, -1L);
+    context.minFeaturesPerSplit = conf.getInt(MIN_FEATURES_PER_SPLIT_KEY, -1);
     String strInputs = conf.get(INPUTS);
     if (strInputs != null)
     {
