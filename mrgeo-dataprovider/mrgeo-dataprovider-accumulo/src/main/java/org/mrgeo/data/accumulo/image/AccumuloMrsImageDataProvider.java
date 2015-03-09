@@ -113,10 +113,9 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
       queryProps = new Properties();
     }
 
-    // TODO: get this resolved to get the right authorizations put into a query
-    if(queryProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) == null){
-    	queryProps.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS);
-    }
+//    if(queryProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) == null){
+//    	queryProps.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS);
+//    }
     	
   } // end constructor
 
@@ -151,7 +150,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 	   * get the authorizations for reading from Accumulo
 	   */
 	  // set the default of no authorizations
-	  String auths = MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS;
+	  String auths = null;// = MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS;
 
 	  // check for auths in the query
 	  if(props != null && props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES) != null){
@@ -159,8 +158,10 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 	  }
 
 	  // set the authorizations in the query properties
-	  queryProps.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, auths);
-
+	  if(auths != null){
+		  queryProps.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, auths);
+	  }
+	  
 	  // get the connection information
 	  if(props != null) {
 		  queryProps.putAll(props);

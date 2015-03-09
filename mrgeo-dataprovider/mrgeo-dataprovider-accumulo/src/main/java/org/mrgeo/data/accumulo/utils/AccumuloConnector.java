@@ -132,7 +132,7 @@ public class AccumuloConnector {
       if(! f.exists()){
         return null;
       }
-      log.info("using " + f.getAbsolutePath());
+      log.debug("using " + f.getAbsolutePath());
   	  
   	  Properties p = new Properties();
       try{
