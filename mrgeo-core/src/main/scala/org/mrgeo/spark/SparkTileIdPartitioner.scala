@@ -56,13 +56,8 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
     val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
 
     val inputWithZoom: Path = new Path(dp.getResourcePath(false), "" + zoom)
-    var splitPath: Path = new Path(inputWithZoom, SplitFile.SPLIT_FILE)
-    val fs: FileSystem = splitPath.getFileSystem(conf)
-    if (!fs.exists(splitPath)) {
-      splitPath = new Path(inputWithZoom, SplitFile.OLD_SPLIT_FILE)
-    }
 
-    writeSplits(splitPath.toString, conf)
+    writeSplits(inputWithZoom.toString, conf)
   }
 
   def writeSplits(path:String, conf:Configuration): Unit = {
@@ -80,21 +75,24 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
 
       out.println(new String(magic))
 
-      println(splits.length)
-      for (ndx <- splits.indices) {
+      println("\nsplits:")
+      splits.indices.foreach(ndx => {
         val id: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(splits(ndx)).array)
         out.println(new String(id))
         val part: Array[Byte] = Base64.encodeBase64("part-r-%05d".format(ndx).getBytes)
         out.println(new String(part))
-      }
 
-      // need to write the name of the last partition, we can use magic number
+        //println("  " + splits(ndx) + " " + "part-r-%05d".format(ndx))
+      })
+
+      // just need to write the name of the last partition, we can use magic number
       // for the tileid...
       out.println(new String(magic))
 
-      val part: Array[Byte] = Base64.encodeBase64("part-r-%05d".format(numPartitions).getBytes)
-
+      val part: Array[Byte] = Base64.encodeBase64("part-r-%05d".format(numPartitions - 1).getBytes)
       out.println(new String(part))
+
+      //println("  " + HasPartitionNames + " " + "part-r-%05d".format(numPartitions - 1))
     }
     finally
     {

@@ -21,7 +21,7 @@ import java.io.{ObjectOutput, ObjectInput, Externalizable}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{Logging, SparkContext}
+import org.apache.spark.{Partition, Logging, SparkContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.{RDD, CoGroupedRDD}
 import org.mrgeo.data.image.MrsImageDataProvider
@@ -29,6 +29,7 @@ import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
 import org.mrgeo.image.MrsImagePyramid
+import org.mrgeo.image.geotools.GeotoolsRasterUtils
 import org.mrgeo.spark.job.{MrGeoJob, MrGeoDriver, JobArguments}
 import org.mrgeo.utils.TMSUtils.TileBounds
 import org.mrgeo.utils._
@@ -39,9 +40,6 @@ import scala.util.control._
 object MosaicDriver extends MrGeoDriver with Externalizable {
 
   def mosaic(inputs: Array[String], output:String, conf:Configuration): Unit = {
-
-    LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG)
-    LoggingUtils.setLogLevel("org.apache.hadoop", LoggingUtils.WARN)
 
     val args =  mutable.Map[String, String]()
 
@@ -182,8 +180,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
       var img:Int = 0
       done.breakable {
         for (wr<- U._2) {
-          if (wr != null) {
-            println(img)
+          if (wr != null && wr.size > 0) {
             val writable = wr.asInstanceOf[Seq[RasterWritable]](0)
 
             if (dst == null) {
@@ -204,7 +201,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
                     }
                   }
                 }
-                // we only get here if there aren't any nondatas, so we can just take the 1st tile verbatim
+                // we only get here if there aren't any nodatas, so we can just take the 1st tile verbatim
                 done.break()
               }
             }
@@ -242,6 +239,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
         }
       }
 
+
       // write the tile...
       (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
     }).persist(StorageLevel.MEMORY_AND_DISK_SER)
@@ -254,8 +252,22 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
       tilesize, tiletype, numbands, "", null)
 
-    // sort and save the image
-    mosaiced.sortByKey().saveAsNewAPIHadoopDataset(job.getConfiguration)
+    // sort by key
+    //val sorted = mosaiced..partitionBy(sparkPartitioner).sortByKey().persist(StorageLevel.MEMORY_AND_DISK_SER)
+
+    //    sorted.foreach(U => {
+    //      val t = TMSUtils.tileid(U._1.get(), zoom)
+    //      println(U._1.get() + " " + t.tx + " " + t.ty)
+    ////      val imageOutput: String = "/data/export/mosaic-raw/" + t.ty + "-" + t.tx + "-" + U._1.get()
+    ////
+    ////      GeotoolsRasterUtils.saveLocalGeotiff(imageOutput, RasterWritable.toRaster(U._2), t.tx, t.ty, zoom, 512, -9999.0)
+    //    })
+
+    val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
+
+    // save the image
+    sorted.saveAsNewAPIHadoopDataset(job.getConfiguration)
+
 
     dp.teardown(job)
 

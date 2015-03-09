@@ -47,11 +47,11 @@ abstract class MrGeoDriver extends Logging {
     setupDriver(job, cl)
 
 
-//    if (HadoopUtils.isLocal(hadoopConf))
-//    {
-//      job.useLocal()
-//    }
-//    else {
+    if (HadoopUtils.isLocal(hadoopConf))
+    {
+      job.useLocal()
+    }
+    else {
       val cluster = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_CLUSTER, "local")
 
       cluster.toLowerCase match {
@@ -62,8 +62,7 @@ abstract class MrGeoDriver extends Logging {
       }
       case _ => job.useLocal()
       }
-
-//    }
+    }
 
     // yarn needs to be run in its own client code, so we'll set up it up separately
     if (job.isYarn) {
