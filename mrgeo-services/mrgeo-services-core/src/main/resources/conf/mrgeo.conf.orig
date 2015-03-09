@@ -11,21 +11,27 @@ distributed.base = /mrgeo/jars
 # This needs to be a location that MrGeo can write to.
 db.path = /tmp/mrgeo-services-db
 
+# Denote which cluster type you have.  Mainly used for Spark processing.  Valid values
+# are: yarn, spark, and local
+cluster=yarn
+
+# Use Kryo serialization for Spark jobs, if using Spark < 1.3.0, this _MUST_ be false!
+use.kryo.serialization=false
 
 
-# Additional classpath elements used for finding dependencies used in distributed 
+# Additional classpath elements used for finding dependencies used in distributed
 # processing.  These are added AFTER MRGEO_HOME dependencies, but before
 # any others on the classpath
 #dependency.classpath=
 
 # Additional hadoop parameters as well as parameters needed for Giraph.
-# Either hadoop.params with -libjars and the path to <giraph-with-dependencies>, 
+# Either hadoop.params with -libjars and the path to <giraph-with-dependencies>,
 # or zooservers pointing to existing zookeeper host/port(s) need to be set
 #zooservers=host1:port1,host2:port2,host3:port3
 #hadoop.params=-libjars /usr/local/mrgeo/giraph/giraph-core/1.0.0/giraph-core-1.0.0.jar
 
-# Modify this to match your server config. You may need to change the port, etc.  Do not remove 
-# the trailing forward slash. 
+# Modify this to match your server config. You may need to change the port, etc.  Do not remove
+# the trailing forward slash.
 base.url = http://localhost:8080/mrgeo/
 
 # The number of simultaneous WMS requests to process

@@ -1,13 +1,14 @@
-package org.mrgeo.job
+package org.mrgeo.spark.job
 
 import java.io.File
-import java.net.{URL, URI}
+import java.net.URI
 
 import org.apache.commons.lang3.SystemUtils
-import org.mrgeo.utils.Memory
+import org.mrgeo.utils.{FileUtils, Memory}
+
 import scala.collection.mutable.ArrayBuffer
 
-class JobArguments(args: Seq[String]) {
+class JobArguments() {
   /**
    * Pattern for matching a Windows drive, which contains only a single alphabet character.
    */
@@ -20,13 +21,13 @@ class JobArguments(args: Seq[String]) {
    * Whether the underlying operating system is Windows.
    */
   val isWindows = SystemUtils.IS_OS_WINDOWS
-  var name: String = "Unnamed MrGeo Job"
+  var name: String = null
   var cluster: String = "local[1]"
   var driverClass: String = null
   var driverJar: String = null
 
-  var executorMem:String = null
-  var driverMem:String = null
+  var memory:String = null
+  //var driverMem:String = null
   var executors:Int = -1
   var cores:Int = -1
   val params = collection.mutable.Map[String, String]()
@@ -34,22 +35,30 @@ class JobArguments(args: Seq[String]) {
   var jars: Array[String] = null
   var verbose: Boolean = false
 
-  parse(args.toList)
-
-  def this() {
-    this(List[String]())
+  def this(args: Seq[String]) {
+    this()
+    parse(args.toList)
   }
 
+
   def hasSetting(name: String): Boolean = {
-    return params.contains(name)
+    params.contains(name)
   }
 
   def getSetting(name: String): String = {
-    return params(name)
+    params(name)
+  }
+
+  def setSetting(key:String, value:String) = {
+    params += key -> value
+  }
+
+  def setAllSettings(values: Map[String, String]) = {
+    params ++= values
   }
 
   def setJars(paths:String) = {
-    jars = resolveURLs(paths)
+    jars = resolveURIs(paths)
   }
 
   def toArgs: String = {
@@ -129,15 +138,15 @@ class JobArguments(args: Seq[String]) {
       args += executors.toString
     }
 
-    if (executorMem != null) {
-      args += "executorMemory"
-      args += executorMem
+    if (memory != null) {
+      args += "memory"
+      args += memory
     }
 
-    if (driverMem != null) {
-      args += "driverMemory"
-      args += driverMem
-    }
+//    if (driverMem != null) {
+//      args += "driverMemory"
+//      args += driverMem
+//    }
 
     for (param <- params) {
       args += param._1
@@ -166,15 +175,12 @@ class JobArguments(args: Seq[String]) {
     parse(tail)
 
   case ("--jars") :: value :: tail =>
-    jars = resolveURLs(value)
+    jars = resolveURIs(value)
     parse(tail)
 
   case ("--driverjar") :: value :: tail =>
-    driverJar = resolveURL(value)
+    driverJar = FileUtils.resolveURI(value)
     parse(tail)
-
-  case ("--help" | "-h") :: tail =>
-    printUsageAndExit(0)
 
   case ("--verbose" | "-v") :: tail =>
     verbose = true
@@ -188,13 +194,13 @@ class JobArguments(args: Seq[String]) {
     executors = value.toInt
     parse(tail)
 
-  case ("--executorMemory") :: value :: tail =>
-    executorMem = value
+  case ("--memory") :: value :: tail =>
+    memory = value
     parse(tail)
 
-  case ("--driverMemory") :: value :: tail =>
-    driverMem = value
-    parse(tail)
+//  case ("--driverMemory") :: value :: tail =>
+//    driverMem = value
+//    parse(tail)
 
   case key :: value :: tail =>
     if (key.startsWith("--")) {
@@ -306,65 +312,18 @@ class JobArguments(args: Seq[String]) {
     val maxMem = Runtime.getRuntime.maxMemory()
     if (maxMem != Long.MaxValue) {
       val mem = (maxMem * 0.95).round
-      executorMem = mem.toString
+      memory = mem.toString
       println("Setting max memory to: " + Memory.format(mem))
     }
   }
 
-  /**
-   * Format a Windows path such that it can be safely passed to a URI.
-   */
-  def formatWindowsPath(path: String): String = path.replace("\\", "/")
-
-  private def printUsageAndExit(exitCode: Int, unknownParam: Any = null) {
-    //    val outStream = SparkSubmit.printStream
-    //    if (unknownParam != null) {
-    //      outStream.println("Unknown/unsupported param " + unknownParam)
-    //    }
-    //    outStream.println(
-    //      """Usage: spark-submit [options] <app jar | python file> [app options]
-    //        |Options:
-    //      """
-    //    )
-  }
-
-  /**
-   * Return a well-formed URI for the file described by a user input string.
-   *
-   * If the supplied path does not contain a scheme, or is a relative path, it will be
-   * converted into an absolute path with a file:// scheme.
-   */
-  private def resolveURL(path: String, testWindows: Boolean = false): String = {
-
-    // In Windows, the file separator is a backslash, but this is inconsistent with the URI format
-    val windows = isWindows || testWindows
-    val formattedPath = if (windows) formatWindowsPath(path) else path
-
-    val uri = new URI(formattedPath)
-    if (uri.getPath == null) {
-      throw new IllegalArgumentException(s"Given path is malformed: $uri")
-    }
-    uri.getScheme match {
-    case windowsDrive(d) if windows =>
-      new URI("file:/" + uri.toString.stripPrefix("/")).toURL.toString
-    case null =>
-      // Preserve fragments for HDFS file name substitution (denoted by "#")
-      // For instance, in "abc.py#xyz.py", "xyz.py" is the name observed by the application
-      val fragment = uri.getFragment
-      val part = new File(uri.getPath).toURI
-      new URI(part.getScheme, part.getPath, fragment).toURL.toString
-    case _ =>
-      uri.toURL.toString
-    }
-  }
-
   /** Resolve a comma-separated list of paths. */
-  private def resolveURLs(paths: String, testWindows: Boolean = false): Array[String] = {
+  private def resolveURIs(paths: String, testWindows: Boolean = false): Array[String] = {
     if (paths == null || paths.trim.isEmpty) {
       null
     }
     else {
-      paths.split(",").map { p => resolveURL(p, testWindows)}
+      paths.split(",").map { p => FileUtils.resolveURI(p)}
     }
   }
 

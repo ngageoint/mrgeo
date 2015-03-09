@@ -23,32 +23,7 @@ class KryoRegistrar extends KryoRegistrator
 
 //    kryo.setReferences(false)
 
-    val cl = this.getClass.getClassLoader
-    val rs = cl.loadClass("org.mrgeo.data.tile.TileIdWritable")
-
-    println("---")
-    println(if (rs == null)  "null" else rs.getCanonicalName)
-    println("---")
-
-    val tl = Thread.currentThread().getContextClassLoader
-    //    for (r <- sl.asInstanceOf[URLClassLoader].getURLs) {
-    //      println(r)
-    //    }
-    val ts = tl.loadClass("org.mrgeo.data.tile.TileIdWritable")
-
-    println(if (ts == null)  "null" else ts.getCanonicalName)
-    println("---")
-
-    val sl = ClassLoader.getSystemClassLoader
-    //    for (r <- sl.asInstanceOf[URLClassLoader].getURLs) {
-    //      println(r)
-    //    }
-    val ss = sl.loadClass("org.mrgeo.data.tile.TileIdWritable")
-
-    println(if (ss == null)  "null" else ss.getCanonicalName)
-    println("---")
-
-
+    kryo.register(classOf[TileIdWritable])
     kryo.register(classOf[RasterWritable], new RasterWritableSerializer)
 
     kryo.register(classOf[Bounds], new BoundsSerializer)

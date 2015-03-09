@@ -558,7 +558,7 @@ public class HadoopUtils
   public static String getJar(final Configuration conf, Class clazz) throws IOException
   {
 
-    if (conf.get("mapred.job.tracker", "local") == "local")
+    if (isLocal(conf))
     {
       String jar = ClassUtil.findContainingJar(clazz);
 
@@ -572,6 +572,9 @@ public class HadoopUtils
     //setJar(job.getConfiguration());
   }
 
+  public static boolean isLocal(final Configuration conf) {
+    return conf.get("mapred.job.tracker", "local").equals("local");
+  }
 
   public static void setMetadata(final Configuration conf, final MrsImagePyramidMetadata metadata)
       throws IOException

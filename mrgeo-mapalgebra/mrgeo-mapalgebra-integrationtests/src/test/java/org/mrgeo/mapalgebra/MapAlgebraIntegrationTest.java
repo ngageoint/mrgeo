@@ -77,6 +77,12 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   private static Path alltwosPath;
   private static final String allhundreds = "all-hundreds";
   private static Path allhundredsPath;
+  private static final String allhundredsleft = "all-hundreds-shifted-left";
+  private static Path allhundredsleftPath;
+  private static final String allhundredshalf = "all-hundreds-shifted-half";
+  private static Path allhundredshalfPath;
+  private static final String allhundredsup = "all-hundreds-shifted-up";
+  private static Path allhundredsupPath;
 
   private static MapOpTestUtils testUtils;
   // Vector private static MapOpTestVectorUtils vectorTestUtils;
@@ -139,6 +145,12 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 
     HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundreds);
     allhundredsPath = new Path(testUtils.getInputHdfs(), allhundreds);
+    HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsleft);
+    allhundredsleftPath = new Path(testUtils.getInputHdfs(), allhundredsleft);
+    HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredshalf);
+    allhundredshalfPath = new Path(testUtils.getInputHdfs(), allhundredshalf);
+    HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
+    allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
 
     HadoopFileUtils
         .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
@@ -581,21 +593,101 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
   }
 
-  @Ignore
   @Test
   @Category(IntegrationTest.class)
-  public void mosaic() throws Exception
+  public void mosaicOverlapHundredsTop() throws Exception
   {
-//    if (GEN_BASELINE_DATA_ONLY)
-//    {
-//      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-//          String.format("mosaic([%s], [%s])", allhundredsPath, alltwosPath), -9999);
-//    }
-//    else
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("mosaic([%s], [%s])", allhundredsPath, alltwosPath), -9999);
+    }
+    else
     {
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
           opImageTestUtils.nanTranslatorToMinus9999,
           String.format("mosaic([%s], [%s])", allhundredsPath, alltwosPath));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void mosaicOverlapTwosTop() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("mosaic([%s], [%s])", alltwosPath, allhundredsPath), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
+          String.format("mosaic([%s], [%s])", alltwosPath, allhundredsPath));
+    }
+  }
+  @Test
+  @Category(IntegrationTest.class)
+  public void mosaicButtedLeft() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("mosaic([%s], [%s])", alltwosPath, allhundredsleftPath), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
+          String.format("mosaic([%s], [%s])", alltwosPath, allhundredsleftPath));
+    }
+  }
+  @Test
+  @Category(IntegrationTest.class)
+  public void mosaicButtedTop() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("mosaic([%s], [%s])", alltwosPath, allhundredsupPath), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
+          String.format("mosaic([%s], [%s])", alltwosPath, allhundredsupPath));
+    }
+  }
+  @Test
+  @Category(IntegrationTest.class)
+  public void mosaicPartialOverlapTwosTop() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("mosaic([%s], [%s])", alltwosPath, allhundredshalfPath), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
+          String.format("mosaic([%s], [%s])", alltwosPath, allhundredshalfPath));
+    }
+  }
+  @Test
+  @Category(IntegrationTest.class)
+  public void mosaicPartialOverlapHundredsTop() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+          String.format("mosaic([%s], [%s])", allhundredshalfPath, alltwosPath), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+          opImageTestUtils.nanTranslatorToMinus9999,
+          String.format("mosaic([%s], [%s])", allhundredshalfPath, alltwosPath));
     }
   }
 
