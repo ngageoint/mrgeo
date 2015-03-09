@@ -263,7 +263,9 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     ////      GeotoolsRasterUtils.saveLocalGeotiff(imageOutput, RasterWritable.toRaster(U._2), t.tx, t.ty, zoom, 512, -9999.0)
     //    })
 
-    val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
+    val sorted = mosaiced.sortByKey().partitionBy(sparkPartitioner)
+    // this is missing in early spark APIs
+    //val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
 
     // save the image
     sorted.saveAsNewAPIHadoopDataset(job.getConfiguration)
