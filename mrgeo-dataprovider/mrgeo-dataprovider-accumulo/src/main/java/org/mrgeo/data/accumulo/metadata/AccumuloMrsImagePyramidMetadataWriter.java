@@ -25,7 +25,6 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
-import org.mrgeo.data.accumulo.utils.AccumuloMetadataReader;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
