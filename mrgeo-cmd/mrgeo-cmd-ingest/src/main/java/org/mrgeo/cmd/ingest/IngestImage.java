@@ -34,6 +34,8 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.aggregators.*;
 import org.mrgeo.buildpyramid.BuildPyramidDriver;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.ingest.IngestImageDriver;
 import org.mrgeo.ingest.IngestImageDriver.IngestImageException;
@@ -48,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -71,6 +74,9 @@ public class IngestImage extends Command
   private boolean ignoretags = false;
   private Map<String, String> tags = new HashMap<String, String>();
   private Bounds bounds = null;
+
+  private AdHocDataProvider adhoc = null;
+  private PrintStream adhocStream = null;
 
   public IngestImage()
   {
@@ -178,7 +184,7 @@ public class IngestImage extends Command
     return result;
   }
 
-  private void calculateParams(AbstractGridCoverage2DReader reader)
+  private void calculateParams(AbstractGridCoverage2DReader reader, final Configuration conf)
   {
     try
     {
@@ -214,6 +220,7 @@ public class IngestImage extends Command
           envelope.getMaximum(GeotoolsRasterUtils.LON_DIMENSION) + ", " +
           envelope.getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
 
+
       if (bounds == null)
       {
         bounds = new Bounds(envelope
@@ -231,6 +238,11 @@ public class IngestImage extends Command
             .getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
       }
 
+      if (adhoc == null)
+      {
+        adhoc = DataProviderFactory.createAdHocDataProvider(conf);
+        adhocStream = new PrintStream(adhoc.add(IngestImageDriver.INGEST_BOUNDS_FILE));
+      }
 
       try
       {
@@ -350,7 +362,7 @@ public class IngestImage extends Command
           if (reader != null)
           {
             System.out.println(" accepted ***");
-            calculateParams(reader);
+            calculateParams(reader, conf);
             inputs.add(f.getCanonicalFile().toURI().toString());
           }
           else
@@ -360,7 +372,7 @@ public class IngestImage extends Command
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader);
+              calculateParams(reader, conf);
               inputs.add(f.getCanonicalFile().toURI().toString());
 
               // force local mode
@@ -381,7 +393,7 @@ public class IngestImage extends Command
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader);
+              calculateParams(reader, conf);
               inputs.add(f.getCanonicalFile().toURI().toString());
 
               // force local mode
@@ -468,7 +480,7 @@ public class IngestImage extends Command
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader);
+              calculateParams(reader, conf);
               inputs.add(p.toUri().toString());
             }
             else

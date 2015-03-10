@@ -61,6 +61,8 @@ public class IngestImageDriver
   public static class IngestImageException extends RuntimeException
   {
     private static final long serialVersionUID = 1L;
+
+
     private final Exception origException;
 
     public IngestImageException(final Exception e)
@@ -84,6 +86,8 @@ public class IngestImageDriver
   private static Logger log = LoggerFactory.getLogger(IngestImageDriver.class);
 
   //private final static GeoTiffWriteParams DEFAULT_WRITE_PARAMS;
+
+  public static final String INGEST_BOUNDS_FILE = "bounds-lookup.txt";
 
   static
   {
