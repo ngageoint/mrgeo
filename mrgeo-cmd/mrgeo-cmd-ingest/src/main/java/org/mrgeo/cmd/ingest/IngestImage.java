@@ -184,7 +184,7 @@ public class IngestImage extends Command
     return result;
   }
 
-  private void calculateParams(AbstractGridCoverage2DReader reader, final Configuration conf)
+  private void calculateParams(AbstractGridCoverage2DReader reader, final String imageName, final Configuration conf)
   {
     try
     {
@@ -214,6 +214,12 @@ public class IngestImage extends Command
 
       final GeneralEnvelope envelope = (GeneralEnvelope) image.getEnvelope();
 
+      Bounds b = new Bounds(envelope
+          .getMinimum(GeotoolsRasterUtils.LON_DIMENSION), envelope
+          .getMinimum(GeotoolsRasterUtils.LAT_DIMENSION), envelope
+          .getMaximum(GeotoolsRasterUtils.LON_DIMENSION), envelope
+          .getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
+
       log.debug("    image bounds: (lon/lat) " +
           envelope.getMinimum(GeotoolsRasterUtils.LON_DIMENSION) + ", " +
           envelope.getMinimum(GeotoolsRasterUtils.LAT_DIMENSION) + " to " +
@@ -223,25 +229,25 @@ public class IngestImage extends Command
 
       if (bounds == null)
       {
-        bounds = new Bounds(envelope
-            .getMinimum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-            .getMinimum(GeotoolsRasterUtils.LAT_DIMENSION), envelope
-            .getMaximum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-            .getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
+        bounds = b;
       }
       else
       {
-        bounds.expand(envelope
-            .getMinimum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-            .getMinimum(GeotoolsRasterUtils.LAT_DIMENSION), envelope
-            .getMaximum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-            .getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
+        bounds.expand(b);
       }
 
       if (adhoc == null)
       {
         adhoc = DataProviderFactory.createAdHocDataProvider(conf);
+
+        conf.set(IngestImageDriver.INGEST_BOUNDS_LOCATION, adhoc.getResourceName());
+
         adhocStream = new PrintStream(adhoc.add(IngestImageDriver.INGEST_BOUNDS_FILE));
+      }
+
+      if (adhocStream != null)
+      {
+        adhocStream.println(imageName + "|" + bounds.toDelimitedString());
       }
 
       try
@@ -354,6 +360,7 @@ public class IngestImage extends Command
       {
         // is this an geospatial image file?
         System.out.print("*** checking (local file) " + f.getCanonicalPath());
+        String name = f.getCanonicalFile().toURI().toString();
         try
         {
           //reader = GeotoolsRasterUtils.openImage("file://" + f.getCanonicalPath());
@@ -362,8 +369,8 @@ public class IngestImage extends Command
           if (reader != null)
           {
             System.out.println(" accepted ***");
-            calculateParams(reader, conf);
-            inputs.add(f.getCanonicalFile().toURI().toString());
+            calculateParams(reader, name, conf);
+            inputs.add(name);
           }
           else
           {
@@ -372,8 +379,8 @@ public class IngestImage extends Command
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader, conf);
-              inputs.add(f.getCanonicalFile().toURI().toString());
+              calculateParams(reader, name, conf);
+              inputs.add(name);
 
               // force local mode
               local = true;
@@ -393,8 +400,8 @@ public class IngestImage extends Command
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader, conf);
-              inputs.add(f.getCanonicalFile().toURI().toString());
+              calculateParams(reader, name, conf);
+              inputs.add(name);
 
               // force local mode
               local = true;
@@ -449,7 +456,7 @@ public class IngestImage extends Command
     catch (URISyntaxException e)
     {
     } catch(IllegalArgumentException e){
-      
+
     }
 
 
@@ -474,14 +481,15 @@ public class IngestImage extends Command
         {
           // is this an geospatial image file?
           System.out.print("*** checking " + p.toString());
+          String name = p.toUri().toString();
           try
           {
-            reader = GeotoolsRasterUtils.openImage(p.toUri().toString());
+            reader = GeotoolsRasterUtils.openImage(name);
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader, conf);
-              inputs.add(p.toUri().toString());
+              calculateParams(reader, name, conf);
+              inputs.add(name);
             }
             else
             {
@@ -614,6 +622,12 @@ public class IngestImage extends Command
         String protectionLevel = line.getOptionValue("pl");
         if (inputs.size() > 0)
         {
+
+          if (adhocStream != null)
+          {
+            adhocStream.close();
+          }
+
           try
           {
             final boolean success;
@@ -676,6 +690,13 @@ public class IngestImage extends Command
             e.printStackTrace();
             log.error("IngestImage exited with error", e);
             return 1;
+          }
+          finally
+          {
+            if (adhoc != null)
+            {
+              adhoc.delete();
+            }
           }
         }
       }

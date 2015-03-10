@@ -87,6 +87,7 @@ public class IngestImageDriver
 
   //private final static GeoTiffWriteParams DEFAULT_WRITE_PARAMS;
 
+  public static final String INGEST_BOUNDS_LOCATION = "IngestImage.bounds.location";
   public static final String INGEST_BOUNDS_FILE = "bounds-lookup.txt";
 
   static
