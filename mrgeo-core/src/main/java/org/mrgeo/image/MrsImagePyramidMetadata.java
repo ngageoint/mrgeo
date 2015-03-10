@@ -40,7 +40,7 @@ import java.io.OutputStream;
  * The contents of the pyramid are generally rasters.  The
  * metadata object describes geospatial bounds, geospatial
  * tiled bounds, and pixel bounds of images.
- * 
+ *
  * A pyramid of imagery is a set of images produced from a
  * base zoom level and then all derived image levels from
  * the base.  For example, a set of images are used to produce
@@ -48,18 +48,18 @@ import java.io.OutputStream;
  * The images of 12 are used to create image for zoom level 11
  * and then zoom level 11 is used for 10 and so on until zoom level
  * 1 is created.  So, the pyramid exists from 12 to 1.  
- * 
+ *
  */
 public class MrsImagePyramidMetadata extends MrsPyramidMetadata
 {
-  
+
   // logger for the class
   private static final Logger log = LoggerFactory.getLogger(MrsImagePyramidMetadata.class);
 
   // version
   private static final long serialVersionUID = 1L;
 
-  
+
   /**
    * ImageMetadata is a container of the multiple types of
    * bounds for images. 
@@ -70,7 +70,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
 
     // pixel bounds of the image (0, 0, width, height)
     public LongRectangle pixelBounds = null;
-    
+
     // statistics of the image
     public ImageStats[] stats = null;
 
@@ -78,7 +78,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     public ImageMetadata()
     {
     }
-    
+
     // For backward compatibility with older image pyramids that
     // still have a reference to the "image" property. It was renamed
     // to "name".
@@ -92,7 +92,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
   /*
    * start globals section
    */
-  
+
   private ImageMetadata[] imageData = null; // data specific to a single
   // pyramid-level image
 
@@ -128,7 +128,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
    * Loading a metadata file from the local file system.  The objects of
    * the file are stored in a json format.  This enables the ObjectMapper
    * to parse out the values correctly.
-   * 
+   *
    * @param file metadata file on the local file system to load
    * @return a valid MrsImagePyramidMetadata object
    * @throws JsonGenerationException
@@ -137,7 +137,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
    */
   @Deprecated
   public static MrsImagePyramidMetadata load(final File file) throws JsonGenerationException,
-  JsonMappingException, IOException
+      JsonMappingException, IOException
   {
     final ObjectMapper mapper = new ObjectMapper();
     final MrsImagePyramidMetadata metadata = mapper.readValue(file, MrsImagePyramidMetadata.class);
@@ -154,7 +154,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
    * Loading metadata from an InputStream.  The objects of
    * the file are stored in a json format.  This enables the ObjectMapper
    * to parse out the values correctly.
-   * 
+   *
    * @param stream - the stream attached to the metadata input
    * @return a valid MrsImagePyramidMetadata object
    * @throws JsonGenerationException
@@ -162,7 +162,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
    * @throws IOException
    */
   public static MrsImagePyramidMetadata load(final InputStream stream) throws JsonGenerationException,
-  JsonMappingException, IOException
+      JsonMappingException, IOException
   {
     final ObjectMapper mapper = new ObjectMapper();
     final MrsImagePyramidMetadata metadata = mapper.readValue(stream, MrsImagePyramidMetadata.class);
@@ -173,7 +173,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
   /*
    * Helper functions for types used in rasters and databuffers 
    */
-  
+
   public static int toBytes(final int tiletype)
   {
     switch (tiletype)
@@ -207,7 +207,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return 0;
   } // end toBytes
 
-  
+
   public static int toTileType(final String tiletype)
   {
     if (tiletype == "Byte")
@@ -237,7 +237,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
 
     return DataBuffer.TYPE_UNDEFINED;
   } // end toTileType
-  
+
 
   public static String toTileTypeText(final int tiletype)
   {
@@ -282,25 +282,25 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
    * start get section
    */
 
-  
+
   public int getBands()
   {
     return bands;
   }
-  
+
 
   @JsonIgnore
   public double getPixelHeight(int zoom) {
     return TMSUtils.resolution(zoom, tilesize);
   }
 
-  
+
   @JsonIgnore
   public double getPixelWidth(int zoom) {
     return TMSUtils.resolution(zoom, tilesize);
   }
 
-  
+
   @JsonIgnore
   public double getDefaultValue(final int band)
   {
@@ -312,7 +312,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return Double.NaN;
   }
 
-  
+
   @JsonIgnore
   public byte getDefaultValueByte(final int band)
   {
@@ -323,15 +323,15 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
 
     return 0;
   }
-  
-  
+
+
   @JsonIgnore
   public double getDefaultValueDouble(final int band)
   {
     return getDefaultValue(band);
   }
 
-  
+
   @JsonIgnore
   public float getDefaultValueFloat(final int band)
   {
@@ -343,7 +343,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return Float.NaN;
   }
 
-  
+
   @JsonIgnore
   public int getDefaultValueInt(final int band)
   {
@@ -355,7 +355,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return 0;
   }
 
-  
+
   @JsonIgnore
   public long getDefaultValueLong(final int band)
   {
@@ -367,13 +367,13 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return 0;
   }
 
-  
+
   public double[] getDefaultValues()
   {
     return defaultValues;
   }
 
-  
+
   @JsonIgnore
   public byte[] getDefaultValuesByte()
   {
@@ -386,14 +386,14 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return defaults;
   }
 
-  
+
   @JsonIgnore
   public double[] getDefaultValuesDouble()
   {
     return getDefaultValues();
   }
 
-  
+
   @JsonIgnore
   public float[] getDefaultValuesFloat()
   {
@@ -406,7 +406,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return defaults;
   }
 
-  
+
   @JsonIgnore
   public short getDefaultValueShort(final int band)
   {
@@ -418,7 +418,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return 0;
   }
 
-  
+
   @JsonIgnore
   public int[] getDefaultValuesInt()
   {
@@ -431,7 +431,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return defaults;
   }
 
-  
+
   @JsonIgnore
   public long[] getDefaultValuesLong()
   {
@@ -444,7 +444,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return defaults;
   }
 
-  
+
   @JsonIgnore
   public short[] getDefaultValuesShort()
   {
@@ -472,7 +472,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return imageData;
   }
 
-  
+
   public LongRectangle getPixelBounds(final int zoomlevel)
   {
     if (imageData != null)
@@ -486,7 +486,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return null;
   }
 
-  
+
   @Override
   public LongRectangle getTileBounds(final int zoomlevel)
   {
@@ -503,7 +503,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return null;
   }
 
-  
+
   public ImageStats[] getImageStats(final int zoomlevel)
   {
     if (imageData != null)
@@ -519,7 +519,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return null;
   }
 
-  
+
   public ImageStats getImageStats(final int zoomlevel, int band)
   {
 
@@ -527,7 +527,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     {
       if (zoomlevel < imageData.length)
       {
-        if (imageData[zoomlevel].stats != null && band < imageData[zoomlevel].stats.length) 
+        if (imageData[zoomlevel].stats != null && band < imageData[zoomlevel].stats.length)
         {
           return imageData[zoomlevel].stats[band];
         }
@@ -540,19 +540,19 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return null;
   }
 
-  
+
   public ImageStats getStats(int band)
   {
     return (stats == null) ? null : stats[band];
   }
 
-  
+
   public ImageStats[] getStats()
   {
     return stats;
   }
 
-  
+
   @Override
   public LongRectangle getOrCreateTileBounds(final int zoomlevel)
   {
@@ -573,9 +573,9 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return tilebounds;
   }
 
-  
+
   public LongRectangle getOrCreatePixelBounds(final int zoomlevel)
-  {  
+  {
     if (imageData != null && zoomlevel < imageData.length)
     {
       return imageData[zoomlevel].pixelBounds;
@@ -590,19 +590,19 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
   }
 
-  
+
   public int getTileType()
   {
     return tileType;
   }
 
-  
+
   public Classification getClassification()
   {
     return classification;
   }
 
-  
+
   /**
    * Return the minimum and maximum values from the statistics for the image at the requested zoom 
    * level
@@ -621,7 +621,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     }
     else
     {
-      log.warn("No statistics have been calculated on the requested image " + 
+      log.warn("No statistics have been calculated on the requested image " +
           pyramid + "/" + imageData[zoomLevel].name + ".  Using default range of 0.0 to 1.0...");
       extrema[0] = 0.0;
       extrema[1] = 1.0;
@@ -629,22 +629,22 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     return extrema;
   }
 
-  
+
   public String getResamplingMethod()
   {
     return resamplingMethod;
   }
 
-  
+
   public void setResamplingMethod(String resamplingMethod)
   {
     this.resamplingMethod = resamplingMethod;
   }
 
-  
+
 
   public void save(final OutputStream stream) throws JsonGenerationException, JsonMappingException,
-  IOException
+      IOException
   {
     final ObjectMapper mapper = new ObjectMapper();
     try
@@ -671,13 +671,13 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     this.bands = bands;
   }
 
-  
+
   public void setDefaultValues(final double[] defaultValues)
   {
     this.defaultValues = defaultValues;
   }
 
-  
+
   @Override
   public void setName(final int zoomlevel, final String name)
   {
@@ -688,22 +688,33 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     imageData[zoomlevel].name = name;
   }
 
-  
+
   public void setImageMetadata(final ImageMetadata[] metadata)
   {
-    imageData = metadata;
 
     // this will make sure the size of the image metadata matched the zoom, with empty levels as needed
-    if (imageData == null)
+    if (metadata == null)
     {
+      imageData = metadata;
       for (int i = 0; i <= maxZoomLevel; i++)
       {
         imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
       }
+
+      return;
     }
-    else if ((maxZoomLevel + 1) < imageData.length)
+
+    // this could be the case when reading the data in, but the maxzoom comes after the imagedata
+    // in the JSON
+    if (maxZoomLevel <= 0)
     {
-      imageData = (ImageMetadata[]) ArrayUtils.subarray(imageData, 0, maxZoomLevel + 1);
+      setMaxZoomLevel(metadata.length - 1);
+    }
+
+    imageData = metadata;
+    if ((maxZoomLevel + 1) < imageData.length)
+    {
+      imageData = (ImageMetadata[]) ArrayUtils.subarray(metadata, 0, maxZoomLevel + 1);
     }
     else if (maxZoomLevel > imageData.length)
     {
@@ -715,7 +726,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
 
   }
 
-  
+
   @Override
   public void setMaxZoomLevel(final int zoomlevel)
   {
@@ -740,7 +751,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     this.maxZoomLevel = zoomlevel;
   }
 
-  
+
   public void setPixelBounds(final int zoomlevel, final LongRectangle pixelBounds)
   {
     if (imageData == null || zoomlevel > maxZoomLevel)
@@ -750,7 +761,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     imageData[zoomlevel].pixelBounds = pixelBounds;
   }
 
-  
+
   @Override
   public void setTileBounds(final int zoomlevel, final LongRectangle tileBounds)
   {
@@ -761,7 +772,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     imageData[zoomlevel].tileBounds = tileBounds;
   }
 
-  
+
   public void setImageStats(final int zoomlevel, final ImageStats[] stats)
   {
     if (imageData == null || zoomlevel > maxZoomLevel)
@@ -771,13 +782,13 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     imageData[zoomlevel].stats = stats;
   }
 
-  
+
   public void setStats(final ImageStats[] stats)
   {
     this.stats = stats;
   }
 
-  
+
   public void setTileType(final int tileType)
   {
     this.tileType = tileType;
@@ -800,7 +811,7 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
     this.classification = classification;
   }
 
-  
-    
+
+
 } // end MrsImagePyramidMetadata
 

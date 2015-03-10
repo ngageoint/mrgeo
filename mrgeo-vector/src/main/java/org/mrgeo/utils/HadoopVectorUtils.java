@@ -517,7 +517,7 @@ public class HadoopVectorUtils
   {
     Configuration conf = job.getConfiguration();
 
-    if (conf.get("mapred.job.tracker", "local") == "local")
+    if (HadoopUtils.isLocal(conf))
     {
       String jar = ClassUtil.findContainingJar(clazz);
 

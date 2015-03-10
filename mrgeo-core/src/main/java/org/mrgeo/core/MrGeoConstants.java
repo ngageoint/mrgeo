@@ -37,7 +37,8 @@ public class MrGeoConstants
   public static final String MRGEO_SETTINGS = "settings.properties";
   public static final String MRGEO_CONF = "conf/mrgeo.conf";
   public static final String MRGEO_DEVELOPMENT_MODE = "development.mode";
-  
+
+  public static final String MRGEO_CLUSTER = "cluster";
   /*
    * Accumulo configuration keys
    */  
@@ -61,6 +62,10 @@ public class MrGeoConstants
 
   public static final String MRGEO_HDFS_DISTRIBUTED_CACHE = "distributed.base";
 
+  /* Spark configuration keys
+   *
+   */
+  public static final String MRGEO_USE_KRYO="use.kryo.serialization";
   /*
    * Runtime configuration keys
    */

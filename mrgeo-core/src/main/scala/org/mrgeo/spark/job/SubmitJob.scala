@@ -1,11 +1,9 @@
-package org.mrgeo.job
+package org.mrgeo.spark.job
 
 import java.io.PrintStream
 
 import org.apache.spark.SparkContext
-import org.apache.spark.deploy.SparkSubmit
 
-import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ArrayBuffer
 
 object SubmitJob {

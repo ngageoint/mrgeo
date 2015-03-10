@@ -17,6 +17,9 @@ package org.mrgeo.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class FileUtils
 {
@@ -56,6 +59,53 @@ public class FileUtils
   public static void deleteDir(final File dir) throws IOException
   {
     org.apache.commons.io.FileUtils.deleteDirectory(dir);
+  }
+
+
+  public static String resolveURI(final String path)
+  {
+    try
+    {
+      URI uri = new URI(path);
+      if (uri.getScheme() == null)
+      {
+        String fragment = uri.getFragment();
+        URI part = new File(uri.getPath()).toURI();
+
+        uri = new URI(part.getScheme(), part.getPath(), fragment);
+      }
+      return uri.toString();
+    }
+    catch (URISyntaxException e)
+    {
+      e.printStackTrace();
+    }
+
+    return path;
+  }
+
+  public static String resolveURL(final String path)
+  {
+    try
+    {
+      URI uri = new URI(path);
+      if (uri.getScheme() == null)
+      {
+        String fragment = uri.getFragment();
+        URI part = new File(uri.getPath()).toURI();
+
+        uri = new URI(part.getScheme(), part.getPath(), fragment);
+      }
+      return uri.toURL().toString();
+    }
+    catch (URISyntaxException e)
+    {
+    }
+    catch (MalformedURLException e)
+    {
+    }
+
+    return path;
   }
 
 }
