@@ -34,10 +34,10 @@ import java.util.Set;
 
 public class BasicInputFormatDescriptor implements InputFormatDescriptor
 {
-  FeatureFilterChain _chain = new FeatureFilterChain();
-  String _path = null;
-  VectorDataProvider dp;
-  Properties providerProperties;
+  private FeatureFilterChain _chain = new FeatureFilterChain();
+  private String _path = null;
+  private VectorDataProvider dp;
+  private Properties providerProperties;
   
   public BasicInputFormatDescriptor(String path)
   {

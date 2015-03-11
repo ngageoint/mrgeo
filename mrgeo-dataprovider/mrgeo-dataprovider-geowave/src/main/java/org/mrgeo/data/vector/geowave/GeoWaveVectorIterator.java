@@ -1,18 +1,19 @@
 package org.mrgeo.data.vector.geowave;
 
+import java.io.IOException;
 import java.util.List;
 
 import mil.nga.giat.geowave.store.CloseableIterator;
 
 import org.apache.hadoop.io.LongWritable;
-import org.mrgeo.data.KVIterator;
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.type.AttributeDescriptor;
 
-public class GeoWaveVectorIterator implements KVIterator<LongWritable, Geometry>
+public class GeoWaveVectorIterator implements CloseableKVIterator<LongWritable, Geometry>
 {
   private CloseableIterator<?> geoWaveIter;
   private Geometry currValue;
@@ -21,6 +22,12 @@ public class GeoWaveVectorIterator implements KVIterator<LongWritable, Geometry>
   public GeoWaveVectorIterator(CloseableIterator<?> iter)
   {
     this.geoWaveIter = iter;
+  }
+
+  @Override
+  public void close() throws IOException
+  {
+    geoWaveIter.close();
   }
 
   @Override

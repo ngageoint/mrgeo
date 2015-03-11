@@ -81,6 +81,10 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     this.cv = new ColumnVisibility();
   }
   
+  public void reset(MrsImagePyramidMetadata m){
+	  metadata = m;
+  }
+  
   @Override
   public MrsImagePyramidMetadata read() throws IOException
   {
@@ -200,39 +204,46 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
 
   private MrsImagePyramidMetadata loadMetadata() throws IOException{
 
-    Properties mrgeoAccProps;
-
+    Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
+    String authsString = mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    Properties p1 = null;
+    Properties p2 = null;
+    
     if(dataProvider == null){
-    	log.info("no data provider used");
+    	//log.info("no data provider used");
       mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
     } else {
-      String enc = dataProvider.getResolvedName();
-      mrgeoAccProps = AccumuloConnector.decodeAccumuloProperties(enc);
-    
-      // get authorizations from dataProvider
-      Properties p1 = dataProvider.getProviderProperties();
-      Properties p2 = dataProvider.getQueryProperties();
+
+    	// get authorizations from dataProvider
+    	p1 = dataProvider.getProviderProperties();
+    	p2 = dataProvider.getQueryProperties();
       if(p1 != null){
     	  mrgeoAccProps.putAll(p1);
       }
-//      log.info("loading with data provider auths = " + mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
       if(p2 != null){
     	  mrgeoAccProps.putAll(p2);
       }
 
     }
     
-    if(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) == null){
-      auths = new Authorizations();
+    if(p1 != null){
+    	if(p1.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null && 
+    			p1.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).length() > 0){
+    		authsString = p1.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    	}    	
+    }
+    if(mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES) != null &&
+    		mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES).length() > 0){
+    	authsString = mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
+    }
+
+    if(authsString.length() > 0){
+    	auths = new Authorizations(authsString.split(","));
     } else {
-    	String authStr = mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
-    	if(authStr == null){
-    		authStr = mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
-    	}
-      auths = new Authorizations(authStr.split(","));
+    	auths = new Authorizations();
     }
     
-    log.info("authorizations = " + auths);
+    log.debug("authorizations = " + auths);
     
     if(conn == null){
       try{
@@ -243,8 +254,6 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
       }
     }
     
-//    String table = dataProvider.getResourceName();
-    //String auths = dataProvider.
     if(name == null || name.length() == 0){
       throw new IOException("Can not load metadata, resource name is empty!");
     }
@@ -261,8 +270,6 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     scan.setRange(range);
     scan.fetchColumn(new Text(MrGeoAccumuloConstants.MRGEO_ACC_METADATA), new Text(MrGeoAccumuloConstants.MRGEO_ACC_CQALL));
     for(Entry<Key, Value> entry : scan){
-      //System.out.println("key: " + entry.getKey().toString());
-      //System.out.println("value: " + entry.getValue().toString());
 
       ByteArrayInputStream bis = new ByteArrayInputStream(entry.getValue().get());
       retMeta = MrsImagePyramidMetadata.load(bis);

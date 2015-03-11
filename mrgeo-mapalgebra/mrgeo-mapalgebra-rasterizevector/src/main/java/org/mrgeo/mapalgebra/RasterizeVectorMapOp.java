@@ -28,8 +28,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.GeometryInputStream;
-import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.csv.CsvGeometryInputStreamOld;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.shp.ShapefileReader;
@@ -151,16 +151,26 @@ public class RasterizeVectorMapOp extends RasterMapOp
           VectorReader reader = dp.getVectorReader();
           if (reader != null)
           {
-            KVIterator<LongWritable, Geometry> iter = reader.get();
+            CloseableKVIterator<LongWritable, Geometry> iter = reader.get();
             if (iter != null)
             {
-              bounds = new Bounds();
-              while (iter.hasNext())
+              try
               {
-                Geometry geom = iter.next();
-                bounds.expand(geom.getBounds());
+                bounds = new Bounds();
+                while (iter.hasNext())
+                {
+                  Geometry geom = iter.next();
+                  if (geom != null)
+                  {
+                    bounds.expand(geom.getBounds());
+                  }
+                }
+                return bounds;
               }
-              return bounds;
+              finally
+              {
+                iter.close();
+              }
             }
           }
         }
@@ -175,25 +185,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
           GeometryInputStream stream = null;
           Path inputPath = new Path(input);
           // make sure to test for TSV first (it is derived from CSV)
-          if (format instanceof TsvInputFormat)
-          {
-            //        FileSystem fs = HadoopFileUtils.getFileSystem(inputPath);
-            //        FSDataInputStream fdis = fs.open(inputPath);
-  
-            InputStream is = HadoopFileUtils.open(inputPath);
-            stream = new TsvGeometryInputStreamOld(is);
-          }
-          else if (format instanceof CsvInputFormat)
-          {
-            InputStream is = HadoopFileUtils.open(inputPath);
-            stream = new CsvGeometryInputStreamOld(is);
-  
-            //        FileSystem fs = HadoopFileUtils.getFileSystem(inputPath);
-            //        FSDataInputStream fdis = fs.open(inputPath);
-  
-            stream = new CsvGeometryInputStreamOld(is);
-          }
-          else if (format instanceof ShpInputFormat)
+          if (format instanceof ShpInputFormat)
           {
             stream = new ShapefileReader(inputPath);
           }

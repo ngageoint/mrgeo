@@ -601,12 +601,14 @@ public class DataProviderFactory
       {
         if (factory != null)
         {
+          log.debug("For " + name + ", found factory: " + factory.getClass().getName());
           if (props != null)
           {
             if (factory.canOpen(name, props))
             {
               return factory.createVectorDataProvider(name, props);
             }
+            log.debug("Unable to open " + name + " using provider properties");
           }
           else
           {
@@ -614,6 +616,7 @@ public class DataProviderFactory
             {
               return factory.createVectorDataProvider(name, conf);
             }
+            log.debug("Unable to open " + name + " using configuration");
           }
         }
         // Log some useful debug information
@@ -758,7 +761,7 @@ public class DataProviderFactory
           {
             if (debugEnabled)
             {
-              log.debug("Returning factory from provider properties: " + vectorProviderFactories.get(prefix).getClass().getName());
+              log.debug("Returning factory from provider properties: " + factory.getClass().getName());
             }
             return factory;
           }
@@ -773,7 +776,7 @@ public class DataProviderFactory
           {
             if (debugEnabled)
             {
-              log.debug("Returning factory from configuration: " + vectorProviderFactories.get(prefix).getClass().getName());
+              log.debug("Returning factory from configuration: " + factory.getClass().getName());
             }
             return factory;
           }

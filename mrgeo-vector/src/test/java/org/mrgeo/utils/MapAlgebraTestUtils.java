@@ -1,14 +1,15 @@
 package org.mrgeo.utils;
 
 import com.vividsolutions.jts.io.WKTReader;
+
 import org.apache.hadoop.fs.Path;
 import org.junit.Assert;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryCollection;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.LineString;
+import org.mrgeo.hdfs.vector.WktGeometryUtils;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.WktGeometryUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;

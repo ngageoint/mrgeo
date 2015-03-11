@@ -19,6 +19,7 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.commons.codec.binary.Base64;
 import org.mrgeo.data.DataProviderException;
 import org.slf4j.Logger;
@@ -131,7 +132,7 @@ public class AccumuloConnector {
       if(! f.exists()){
         return null;
       }
-      log.info("using " + f.getAbsolutePath());
+      log.debug("using " + f.getAbsolutePath());
   	  
   	  Properties p = new Properties();
       try{
@@ -229,7 +230,7 @@ public class AccumuloConnector {
 		
 		Instance inst = new ZooKeeperInstance(instance, zookeepers);
 		try {
-		  conn = inst.getConnector(user, pass);
+		  conn = inst.getConnector(user, new PasswordToken(pass.getBytes()));
 		  return conn;
 		} catch (Exception e) {
 		  e.printStackTrace();

@@ -42,10 +42,8 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
   private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidMetadataWriter.class);
   
   private final MrsImageDataProvider provider;
-  //private final AccumuloMrsImageDataProvider provider;
   
   private Connector conn = null;
-  //private MrsImagePyramidMetadataWriterContext context = null;
   
   /**
    * Constructor for HdfsMrsImagePyramidMetadataWriter.
@@ -55,11 +53,7 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
   public AccumuloMrsImagePyramidMetadataWriter(MrsImageDataProvider provider,
       MrsImagePyramidMetadataWriterContext context)
   {
-    //this.provider = (AccumuloMrsImageDataProvider)provider;
     this.provider = provider;
-    //this.context = context;
-    
-    //TODO: get the Visualization/Authorization values here - perhaps from the context object
     
   } // end constructor
   
@@ -74,8 +68,6 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
   {
     MrsImagePyramidMetadata metadata = provider.getMetadataReader(null).read();
 
-    // need to determine if the write is to a bulk dir
-    
     write(metadata);
   } // end write
   
@@ -137,7 +129,6 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
      * class then pull them out and put them in the visualization
      * fields.
      */
-    //String vis = metadata.getProtection();
     ColumnVisibility cv;
     if(pl == null){
     
@@ -150,7 +141,7 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
     	cv = new ColumnVisibility(pl);
     }
 
-    log.info("Writing metadata for table " + metadata.getPyramid() + " with ColumnVisibility = " + cv.toString());
+    log.debug("Writing metadata for table " + metadata.getPyramid() + " with ColumnVisibility = " + cv.toString());
     
     // this is the name of the image
     String pyramid = metadata.getPyramid();
@@ -167,16 +158,15 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
     } catch(MutationsRejectedException mre){
       
     }
-
-
+    
     provider.getMetadataReader(null).reload();
     
   } // end write
   
+  
   public void setConnector(Connector conn){
-    this.conn = conn;
+	  this.conn = conn;
   } // end setConnector
-  
-  
+
   
 } // end AccumuloMrsImagePyramidMetadataWriter

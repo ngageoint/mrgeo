@@ -23,6 +23,7 @@ import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.progress.ProgressHierarchy;
 import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -373,7 +374,7 @@ public class MapAlgebraExecutioner
       // many versions of the
       // localJobTracker class are NOT threadsafe.
 
-      if (conf.get("mapred.job.tracker", "").equals("local"))
+      if (HadoopUtils.isLocal(conf))
       {
         executorSvc = Executors.newFixedThreadPool(1);
       }

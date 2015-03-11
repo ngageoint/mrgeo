@@ -40,7 +40,7 @@ public class PigQuerier
     log.info("query: " + str);
     log.info("output: " + output.toString());
     ExecType et = ExecType.MAPREDUCE;
-    if (conf.get("mapred.job.tracker").equals("local"))
+    if (HadoopUtils.isLocal(conf))
     {
       et = ExecType.LOCAL;
     }

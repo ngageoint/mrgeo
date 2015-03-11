@@ -15,8 +15,15 @@
 
 package org.mrgeo.data.accumulo.output.image;
 
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.ClientConfiguration;
+import org.apache.accumulo.core.client.ClientConfiguration.ClientProperty;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
-import org.apache.accumulo.core.client.mapreduce.lib.util.ConfiguratorBase;
+import org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase;
+import org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.ConnectorInfo;
+import org.apache.accumulo.core.client.mapreduce.lib.impl.OutputConfigurator;
+import org.apache.accumulo.core.client.security.tokens.AuthenticationToken;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
@@ -52,7 +59,7 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
   
   private static ColumnVisibility colViz = null;
   
-  private AccumuloOutputFormat _innerFormat;
+  private AccumuloOutputFormat _innerFormat = null;
   private RecordWriter _innerRecordWriter;
   
   // do compression!!!
@@ -60,6 +67,8 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
   private CompressionCodec codec;
   private Compressor decompressor;
 
+  private static Job job;
+  
   public AccumuloMrsImagePyramidOutputFormat(){}
   public AccumuloMrsImagePyramidOutputFormat(int z, ColumnVisibility cv){
     zoomLevel = z;
@@ -73,13 +82,17 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
   
   private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidOutputFormat.class);
   
+  public static void setJob(Job j){
+	  job = j;
+  }
+  
   @Override
   public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException
   {
 
     // make sure the inner format is created
     if(_innerFormat == null){
-      initialize(context.getConfiguration());
+      initialize(context);
     }
 
     // make sure output specs are dealt with
@@ -103,8 +116,10 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
    * 
    * @param conf
    */
-  private void initialize(Configuration conf){
-    try
+  private void initialize(JobContext context){//Configuration conf){
+
+	  Configuration conf = context.getConfiguration();
+	  try
     {
       // output zoom level
       log.info("Working from zoom level = " + zoomLevel);
@@ -136,13 +151,33 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
       if(isEnc.equalsIgnoreCase("true")){
         password = new String(Base64.decodeBase64(password.getBytes()));
       }
+
+      if(_innerFormat != null){
+    	  return;
+      }
       
       _innerFormat = AccumuloOutputFormat.class.newInstance();
-      if(! ConfiguratorBase.isConnectorInfoSet(AccumuloOutputFormat.class, conf)){
-      //if(! outputInfoSet){
-//        _innerFormat.setOutputInfo(conf, username, password.getBytes(), false, table);
-//        _innerFormat.setZooKeeperInstance(conf, instanceName, zooKeepers);
-        outputInfoSet = true;
+      AuthenticationToken token = new PasswordToken(password.getBytes());
+//      log.info("Setting output with: u = " + username);
+//      log.info("Setting output with: p = " + password);
+//      log.info("Setting output with: i = " + instanceName);
+//      log.info("Setting output with: z = " + zooKeepers);
+      
+      boolean connSet = ConfiguratorBase.isConnectorInfoSet(AccumuloOutputFormat.class, conf);
+      if(!connSet){
+    	  // job not always available - do it how Accumulo does it
+	      OutputConfigurator.setConnectorInfo(AccumuloOutputFormat.class,
+	    		  conf,
+	    		  username,
+	    		  token);
+	      ClientConfiguration cc = ClientConfiguration.loadDefault().withInstance(instanceName);
+	      cc.setProperty(ClientProperty.INSTANCE_ZK_HOST, zooKeepers);
+
+	      OutputConfigurator.setZooKeeperInstance(AccumuloOutputFormat.class, conf, cc);
+	      OutputConfigurator.setDefaultTableName(AccumuloOutputFormat.class, conf, table);
+	      OutputConfigurator.setCreateTables(AccumuloOutputFormat.class, conf, true);
+	      
+	      outputInfoSet = true;
       }
     }
     catch (InstantiationException e)
@@ -154,6 +189,10 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
     {
       // TODO Auto-generated catch block
       e.printStackTrace();
+    }
+    catch(AccumuloSecurityException ase)
+    {
+    	ase.printStackTrace();
     }
 
   } // end initialize
@@ -173,7 +212,7 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
     }
     
     if(_innerFormat == null){
-      initialize(context.getConfiguration());
+      initialize(context);
     }
     
     if(_innerRecordWriter == null){

@@ -29,16 +29,21 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.admin.TableOperationsImpl;
+import org.apache.accumulo.core.client.security.tokens.AuthenticationToken;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.accumulo.core.security.Credentials;
 import org.apache.accumulo.core.security.thrift.TCredentials;
 import org.apache.accumulo.core.util.BadArgumentException;
 import org.apache.hadoop.conf.Configuration;
@@ -597,22 +602,39 @@ public class AccumuloUtils {
 				MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
 		Connector conn;
 		try {
-			conn = AccumuloConnector.getConnector();
-		} catch (DataProviderException dpe) {
-			dpe.printStackTrace();
+			//conn = AccumuloConnector.getConnector();
+			Instance inst = new ZooKeeperInstance(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+			AuthenticationToken token = new PasswordToken(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+			conn = inst.getConnector(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
+					token);
+			
+		} catch(AccumuloSecurityException ase){
+			ase.printStackTrace();
 			return null;
-		}
-		TCredentials tcr = new TCredentials();
-		tcr.setInstanceId(props
-				.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
-		tcr.setPrincipal(props
-				.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
-		tcr.setToken(props.getProperty(
-				MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
-
-		TableOperationsImpl toi = new TableOperationsImpl(conn.getInstance(),
-				tcr);
-		Set<String> list = toi.list();
+		} catch(AccumuloException ae){
+			ae.printStackTrace();
+			return null;
+		} //catch (DataProviderException dpe) {
+			//dpe.printStackTrace();
+			//return null;
+		//}
+//		TCredentials tcr = new TCredentials();
+//		tcr.setInstanceId(props
+//				.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
+//		tcr.setPrincipal(props
+//				.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
+//		tcr.setToken(props.getProperty(
+//				MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+//
+//		TableOperationsImpl toi = new TableOperationsImpl(conn.getInstance(), tcr);
+		Set<String> list = conn.tableOperations().list();
+		
+		
+		//Set<String> list = toi.list();
 
 		Set<String> retList = new HashSet<String>();
 		for (String l : list) {
@@ -643,46 +665,70 @@ public class AccumuloUtils {
 			Authorizations auths = new Authorizations(strAuths.split(","));
 			Connector conn;
 			try {
-				conn = AccumuloConnector.getConnector();
-			} catch (DataProviderException dpe) {
-				dpe.printStackTrace();
+				//conn = AccumuloConnector.getConnector();
+				Instance inst = new ZooKeeperInstance(
+						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
+						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+				AuthenticationToken token = new PasswordToken(
+						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+				conn = inst.getConnector(
+						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
+						token);
+			} catch(AccumuloSecurityException ase){
+				ase.printStackTrace();
 				return null;
-			}
+			} catch(AccumuloException ae){
+				ae.printStackTrace();
+				return null;
+			} //catch (DataProviderException dpe) {
+				//dpe.printStackTrace();
+				//return null;
+			//}
 			
-			TCredentials tcr = new TCredentials();
-			tcr.setInstanceId(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
-			tcr.setPrincipal(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
-			tcr.setToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+//			TCredentials tcr = new TCredentials();
+//			tcr.setInstanceId(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
+//			tcr.setPrincipal(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
+//			tcr.setToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
 
-			return getGeoTables(tcr, auths, conn);
+			AuthenticationToken at = new PasswordToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+			
+			return getGeoTables(at, auths, conn);
 		}
 
 		return new Hashtable<String, String>();
 
 	} // end getGeoTables
 	
-	public static Hashtable<String, String> getGeoTables(TCredentials tcr,
-			Authorizations auths, Connector conn) {
+	
+	public static Hashtable<String, String> getGeoTables(AuthenticationToken token,
+			Authorizations auths, Connector conn){
+//	public static Hashtable<String, String> getGeoTables(TCredentials tcr,
+//			Authorizations auths, Connector conn) {
 		if (auths == null || conn == null) {
 			return null;
 		}
 		Hashtable<String, String> retTable = new Hashtable<String, String>();
 
-		TableOperationsImpl toi = new TableOperationsImpl(conn.getInstance(),
-				tcr);
-		Set<String> list = toi.list();
+		//TableOperationsImpl toi = new TableOperationsImpl(conn.getInstance(), tcr);
 
+//		Credentials cred = new Credentials("root", token);
+//		org.apache.accumulo.core.client.impl.TableOperationsImpl toi = 
+//				new org.apache.accumulo.core.client.impl.TableOperationsImpl(conn.getInstance(), cred);
+//		Set<String> list = toi.list();
+
+		Set<String> list = conn.tableOperations().list();
 		for (String l : list) {
 			if (l.equals("!METADATA") || l.equals("trace")) {
 				continue;
 			}
+			//System.out.println("Looking at table: " + l);
 			// log.info("Looking at table: " + l);
 			Scanner scann = null;
 			try {
 				scann = conn.createScanner(l, auths);
 				String m1 = "METADATA";
-				String m2 = m1 + 1;
-				Range r = new Range("METADATA", m2);
+				String m2 = "METADATB";
+				Range r = new Range(m1 , m2);
 
 				scann.setRange(r);
 

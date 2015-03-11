@@ -30,13 +30,13 @@ import org.apache.pig.StoreFunc;
 import org.apache.pig.StoreMetadata;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
-import org.mrgeo.column.ColumnDefinitionFile;
 import org.mrgeo.format.CsvOutputFormat;
 import org.mrgeo.format.CsvOutputFormat.CsvRecordWriter;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
