@@ -121,7 +121,7 @@ public class IngestImageSplittingInputFormat extends
     long spillsize = (long) (conf.getFloat("io.sort.mb", 200) * spillpct) * 1024 * 1024;
     log.info("Spill size for splitting is: " + spillsize + "b");
 
-    Map<String, TMSUtils.Bounds> lookup = new HashMap<>();
+    Map<String, Bounds> lookup = new HashMap<>();
 
     final String adhocname = conf.get(IngestImageDriver.INGEST_BOUNDS_LOCATION, null);
     if (adhocname != null)
@@ -133,15 +133,13 @@ public class IngestImageSplittingInputFormat extends
       String line;
       while ((line = reader.readLine()) != null)
       {
-        String[] data = line.split("|");
+        String[] data = line.split("\\|");
         if (data.length == 2)
         {
-          String filename = data[0];
-          TMSUtils.Bounds bounds = TMSUtils.Bounds.asTMSBounds(Bounds.fromDelimitedString(data[1]));
-
-          lookup.put(filename, bounds);
+          lookup.put(data[0], Bounds.fromDelimitedString(data[1]));
         }
       }
+      is.close();
     }
     //log.info("Creating splits for: " + output.toString());
     for (final Path input : inputs)
@@ -151,7 +149,8 @@ public class IngestImageSplittingInputFormat extends
 
       if (lookup.containsKey(input.toString()))
       {
-        TMSUtils.boundsToTile(lookup.get(input.toString()), zoomlevel, tilesize);
+        Bounds b = lookup.get(input.toString());
+        bounds = TMSUtils.boundsToTile(b.getTMSBounds(), zoomlevel, tilesize).toLongRectangle();
       }
       else
       {

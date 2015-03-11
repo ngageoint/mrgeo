@@ -40,10 +40,7 @@ import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.ingest.IngestImageDriver;
 import org.mrgeo.ingest.IngestImageDriver.IngestImageException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.*;
 import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -213,7 +210,7 @@ public class IngestImage extends Command
       bands = image.getNumSampleDimensions();
 
       final GeneralEnvelope envelope = (GeneralEnvelope) image.getEnvelope();
-
+//
       Bounds b = new Bounds(envelope
           .getMinimum(GeotoolsRasterUtils.LON_DIMENSION), envelope
           .getMinimum(GeotoolsRasterUtils.LAT_DIMENSION), envelope
@@ -247,7 +244,7 @@ public class IngestImage extends Command
 
       if (adhocStream != null)
       {
-        adhocStream.println(imageName + "|" + bounds.toDelimitedString());
+        adhocStream.println(imageName + "|" + b.toDelimitedString());
       }
 
       try
