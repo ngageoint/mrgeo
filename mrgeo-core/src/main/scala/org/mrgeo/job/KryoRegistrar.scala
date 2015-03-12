@@ -10,7 +10,6 @@ import org.apache.spark.graphx.{GraphKryoRegistrator, Edge}
 import org.apache.spark.serializer.{KryoSerializer, KryoRegistrator}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.hdfs.input.image.SimplePyramidInputSplit
 import org.mrgeo.spark.{BoundsSerializer, RasterWritableSerializer}
 import org.mrgeo.utils.Bounds
 import org.reflections.Reflections
