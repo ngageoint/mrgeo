@@ -34,20 +34,20 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.aggregators.*;
 import org.mrgeo.buildpyramid.BuildPyramidDriver;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.ingest.IngestImageDriver;
 import org.mrgeo.ingest.IngestImageDriver.IngestImageException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.*;
 import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -71,6 +71,9 @@ public class IngestImage extends Command
   private boolean ignoretags = false;
   private Map<String, String> tags = new HashMap<String, String>();
   private Bounds bounds = null;
+
+  private AdHocDataProvider adhoc = null;
+  private PrintStream adhocStream = null;
 
   public IngestImage()
   {
@@ -178,7 +181,7 @@ public class IngestImage extends Command
     return result;
   }
 
-  private void calculateParams(AbstractGridCoverage2DReader reader)
+  private void calculateParams(AbstractGridCoverage2DReader reader, final String imageName, final Configuration conf)
   {
     try
     {
@@ -207,6 +210,12 @@ public class IngestImage extends Command
       bands = image.getNumSampleDimensions();
 
       final GeneralEnvelope envelope = (GeneralEnvelope) image.getEnvelope();
+//
+      Bounds b = new Bounds(envelope
+          .getMinimum(GeotoolsRasterUtils.LON_DIMENSION), envelope
+          .getMinimum(GeotoolsRasterUtils.LAT_DIMENSION), envelope
+          .getMaximum(GeotoolsRasterUtils.LON_DIMENSION), envelope
+          .getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
 
       log.debug("    image bounds: (lon/lat) " +
           envelope.getMinimum(GeotoolsRasterUtils.LON_DIMENSION) + ", " +
@@ -214,23 +223,29 @@ public class IngestImage extends Command
           envelope.getMaximum(GeotoolsRasterUtils.LON_DIMENSION) + ", " +
           envelope.getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
 
+
       if (bounds == null)
       {
-        bounds = new Bounds(envelope
-            .getMinimum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-            .getMinimum(GeotoolsRasterUtils.LAT_DIMENSION), envelope
-            .getMaximum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-            .getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
+        bounds = b;
       }
       else
       {
-        bounds.expand(envelope
-            .getMinimum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-            .getMinimum(GeotoolsRasterUtils.LAT_DIMENSION), envelope
-            .getMaximum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-            .getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
+        bounds.expand(b);
       }
 
+      if (adhoc == null)
+      {
+        adhoc = DataProviderFactory.createAdHocDataProvider(conf);
+
+        conf.set(IngestImageDriver.INGEST_BOUNDS_LOCATION, adhoc.getResourceName());
+
+        adhocStream = new PrintStream(adhoc.add(IngestImageDriver.INGEST_BOUNDS_FILE));
+      }
+
+      if (adhocStream != null)
+      {
+        adhocStream.println(imageName + "|" + b.toDelimitedString());
+      }
 
       try
       {
@@ -342,6 +357,7 @@ public class IngestImage extends Command
       {
         // is this an geospatial image file?
         System.out.print("*** checking (local file) " + f.getCanonicalPath());
+        String name = f.getCanonicalFile().toURI().toString();
         try
         {
           //reader = GeotoolsRasterUtils.openImage("file://" + f.getCanonicalPath());
@@ -350,8 +366,8 @@ public class IngestImage extends Command
           if (reader != null)
           {
             System.out.println(" accepted ***");
-            calculateParams(reader);
-            inputs.add(f.getCanonicalFile().toURI().toString());
+            calculateParams(reader, name, conf);
+            inputs.add(name);
           }
           else
           {
@@ -360,8 +376,8 @@ public class IngestImage extends Command
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader);
-              inputs.add(f.getCanonicalFile().toURI().toString());
+              calculateParams(reader, name, conf);
+              inputs.add(name);
 
               // force local mode
               local = true;
@@ -381,8 +397,8 @@ public class IngestImage extends Command
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader);
-              inputs.add(f.getCanonicalFile().toURI().toString());
+              calculateParams(reader, name, conf);
+              inputs.add(name);
 
               // force local mode
               local = true;
@@ -437,7 +453,7 @@ public class IngestImage extends Command
     catch (URISyntaxException e)
     {
     } catch(IllegalArgumentException e){
-      
+
     }
 
 
@@ -462,14 +478,15 @@ public class IngestImage extends Command
         {
           // is this an geospatial image file?
           System.out.print("*** checking " + p.toString());
+          String name = p.toUri().toString();
           try
           {
-            reader = GeotoolsRasterUtils.openImage(p.toUri().toString());
+            reader = GeotoolsRasterUtils.openImage(name);
             if (reader != null)
             {
               System.out.println(" accepted ***");
-              calculateParams(reader);
-              inputs.add(p.toUri().toString());
+              calculateParams(reader, name, conf);
+              inputs.add(name);
             }
             else
             {
@@ -602,6 +619,12 @@ public class IngestImage extends Command
         String protectionLevel = line.getOptionValue("pl");
         if (inputs.size() > 0)
         {
+
+          if (adhocStream != null)
+          {
+            adhocStream.close();
+          }
+
           try
           {
             final boolean success;
@@ -664,6 +687,13 @@ public class IngestImage extends Command
             e.printStackTrace();
             log.error("IngestImage exited with error", e);
             return 1;
+          }
+          finally
+          {
+            if (adhoc != null)
+            {
+              adhoc.delete();
+            }
           }
         }
       }
