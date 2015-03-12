@@ -15,12 +15,13 @@
 
 package org.mrgeo.utils
 
+import collection.JavaConversions._
+
 import java.net.URL
-import java.util
+import java.util.Enumeration
 import java.util.Properties
 
-import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
+import org.apache.hadoop.mapreduce.{InputFormat, Job}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -28,10 +29,8 @@ import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.hdfs.input.image.HdfsMrsImagePyramidSimpleInputFormat
+import org.mrgeo.hdfs.input.image.HdfsMrsImagePyramidInputFormat
 import org.mrgeo.image.MrsImagePyramidMetadata
-
-import scala.util.control.Breaks
 
 object SparkUtils {
 
@@ -41,26 +40,20 @@ object SparkUtils {
     val keyclass = classOf[TileIdWritable]
     val valueclass = classOf[RasterWritable]
     
-    //TODO:   Get this from the DataProvider
-    val inputformatclass = classOf[HdfsMrsImagePyramidSimpleInputFormat] // MrsImagePyramidInputFormat]
-
     // build a phony job...
     val job = new Job()
 
     val providerProps: Properties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
-
     val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
 
-    FileInputFormat.addInputPaths(job, imageName + "/" + metadata.getMaxZoomLevel)
-
-    //    MrsImageDataProvider.setupMrsPyramidInputFormat(job, imageName, metadata.getMaxZoomLevel,
-    //      metadata.getTilesize, providerProps)
+    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, imageName, providerProps)
 
     // calculate the friction surface
+    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass.asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
     val image = context.newAPIHadoopRDD(job.getConfiguration,
-      inputformatclass,
+      inputFormatClass,
       keyclass,
       valueclass).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
@@ -99,7 +92,7 @@ object SparkUtils {
     // now the hard part, need to look in the dependencies...
     val classFile: String = clazz.replaceAll("\\.", "/") + ".class"
 
-    var iter: util.Enumeration[URL] = null
+    var iter: Enumeration[URL] = null
 
     if (cl != null) {
       iter = cl.getResources(classFile)

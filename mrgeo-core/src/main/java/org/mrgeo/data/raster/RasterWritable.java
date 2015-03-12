@@ -66,6 +66,11 @@ public class RasterWritable extends BytesWritable implements Serializable
     super(bytes);
   }
 
+  public RasterWritable(RasterWritable copy)
+  {
+    super(copy.copyBytes());
+  }
+
   // we could use the default serializations here, but instead we'll just do it manually
   private synchronized void writeObject(ObjectOutputStream stream) throws IOException
   {
