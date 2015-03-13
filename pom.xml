@@ -963,9 +963,219 @@
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.6.5</slf4j.version>
-        <spark.version>1.2.0</spark.version>
+        <spark.version>1.2.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.2.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache230</id>
+      <properties>
+        <hadoop.version>2.3.0</hadoop.version>
+        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
+        <mahout.version>0.7</mahout.version>
+        <pig.version>0.11.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <spark.version>1.2.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.3.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache240</id>
+      <properties>
+        <hadoop.version>2.4.0</hadoop.version>
+        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
+        <mahout.version>0.7</mahout.version>
+        <pig.version>0.11.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <spark.version>1.2.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.4.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache241</id>
+      <properties>
+        <hadoop.version>2.4.1</hadoop.version>
+        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
+        <mahout.version>0.7</mahout.version>
+        <pig.version>0.11.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <spark.version>1.2.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.4.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache250</id>
+      <properties>
+        <hadoop.version>2.5.0</hadoop.version>
+        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
+        <mahout.version>0.7</mahout.version>
+        <pig.version>0.11.0</pig.version>
+        <protobuf.version>2.4.1</protobuf.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <spark.version>1.2.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.5.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache251</id>
+      <properties>
+        <hadoop.version>2.5.1</hadoop.version>
+        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
+        <mahout.version>0.7</mahout.version>
+        <pig.version>0.11.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <spark.version>1.2.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.5.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache252</id>
+      <properties>
+        <hadoop.version>2.5.2</hadoop.version>
+        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
+        <mahout.version>0.7</mahout.version>
+        <pig.version>0.11.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <spark.version>1.2.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.5.2</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache260</id>
+      <properties>
+        <hadoop.version>2.6.0</hadoop.version>
+        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
+        <mahout.version>0.7</mahout.version>
+        <pig.version>0.11.0</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <spark.version>1.2.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.6.0</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>

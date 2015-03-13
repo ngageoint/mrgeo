@@ -20,6 +20,13 @@ usage() {
     echo "  apache104 - Apache hadoop, version 1.0.4"
     echo "  apache112 - Apache hadoop, version 1.1.2"
     echo "  apache220 - Apache hadoop, version 2.2.0"
+    echo "  apache230 - Apache hadoop, version 2.3.0"
+    echo "  apache240 - Apache hadoop, version 2.4.0"
+    echo "  apache241 - Apache hadoop, version 2.4.1"
+    echo "  apache250 - Apache hadoop, version 2.5.0"
+    echo "  apache251 - Apache hadoop, version 2.5.1"
+    echo "  apache252 - Apache hadoop, version 2.5.2"
+    echo "  apache260 - Apache hadoop, version 2.6.0"
     echo "  cdh3u1    - Cloudera hadoop 3 update 1"
     echo "  cdh3u4    - Cloudera hadoop 3 update 4"
     echo "  cdh3u5    - Cloudera hadoop 3 update 5"
@@ -249,6 +256,27 @@ while [ $# -gt 0 ] ; do
         ;;
     "apache220")
         BUILD="apache220"
+        ;;
+    "apache230")
+        BUILD="apache230"
+        ;;
+    "apache240")
+        BUILD="apache240"
+        ;;
+    "apache241")
+        BUILD="apache241"
+        ;;
+    "apache250")
+        BUILD="apache250"
+        ;;
+    "apache251")
+        BUILD="apache251"
+        ;;
+    "apache252")
+        BUILD="apache252"
+        ;;
+    "apache260")
+        BUILD="apache260"
         ;;
     "mapr")
         echo "*** MapR Hadoop is no longer supported"
