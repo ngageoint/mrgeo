@@ -43,10 +43,6 @@ object MosaicDriver extends MrGeoDriver with Externalizable {
 
     val args =  mutable.Map[String, String]()
 
-    //val args:ArrayBuffer[String] = new ArrayBuffer[String]
-    System.setProperty("SPARK_JAR", "/home/tim.tisler/tools/src/spark-1.2.0-cdh5.3.2/assembly/target/scala-2.10/spark-assembly-1.2.0-cdh5.3.2-hadoop2.5.0-cdh5.3.2.jar")
-
-
     val in = inputs.mkString(",")
     val name = "Mosaic (" + in + ")"
 
@@ -252,24 +248,12 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
       tilesize, tiletype, numbands, "", null)
 
-    // sort by key
-    //val sorted = mosaiced..partitionBy(sparkPartitioner).sortByKey().persist(StorageLevel.MEMORY_AND_DISK_SER)
-
-    //    sorted.foreach(U => {
-    //      val t = TMSUtils.tileid(U._1.get(), zoom)
-    //      println(U._1.get() + " " + t.tx + " " + t.ty)
-    ////      val imageOutput: String = "/data/export/mosaic-raw/" + t.ty + "-" + t.tx + "-" + U._1.get()
-    ////
-    ////      GeotoolsRasterUtils.saveLocalGeotiff(imageOutput, RasterWritable.toRaster(U._2), t.tx, t.ty, zoom, 512, -9999.0)
-    //    })
-
     val sorted = mosaiced.sortByKey().partitionBy(sparkPartitioner)
     // this is missing in early spark APIs
     //val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
 
     // save the image
     sorted.saveAsNewAPIHadoopDataset(job.getConfiguration)
-
 
     dp.teardown(job)
 

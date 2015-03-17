@@ -75,31 +75,7 @@ object PrepareJob extends Logging {
 
         .set("spark.storage.memoryFraction", "0.25")
 
-    // setup the kryo serializer
-    //.set("spark.serializer","org.mrgeo.job.MySerializer")
-    //.set("spark.serializer","org.apache.spark.serializer.KryoSerializer")
-    //.set("spark.kryo.registrator","org.mrgeo.job.KryoRegistrar")
-    //.set("spark.kryoserializer.buffer.mb","128")
-
-
-    // driver memory and cores
-    //.set("spark.driver.memory", if (job.driverMem != null) job.driverMem else "128m")
-    //.set("spark.driver.cores", if (job.cores > 0) job.cores.toString else "1")
-
-
-    if (conf.contains("spark.executor.extraClassPath")) {
-      conf.set("spark.executor.extraClassPath",
-        conf.get("spark.executor.extraClassPath") +
-            ":/home/tim.tisler/projects/mrgeo/mrgeo-opensource/mrgeo-core/target/mrgeo-core.jar")
-    }
-    else {
-      conf.set("spark.executor.extraClassPath",
-        "/home/tim.tisler/projects/mrgeo/mrgeo-opensource/mrgeo-core/target/mrgeo-core.jar")
-    }
-
-
     if (job.isYarn) {
-      //conf.set("spark.yarn.jar","")
       conf.set("spark.yarn.am.cores", if (job.cores > 0) { job.cores.toString } else { "1" })
           .set("spark.executor.memory", if (job.memory != null) { job.memory } else { "128m" })
           .set("spark.executor.cores", if (job.cores > 0) { job.cores.toString } else { "1" })
@@ -107,29 +83,6 @@ object PrepareJob extends Logging {
           .set("spark.yarn.preserve.staging.files", "true")
           // running in "cluster" mode, the driver runs within a YARN process
           .setMaster(job.YARN + "-cluster")
-
-
-      //      val sb = new StringBuilder
-      //
-      //      job.jars.foreach(jar => {
-      //        sb ++= jar
-      //        sb += ','
-      //      })
-
-
-      //conf.set("spark.yarn.dist.files", sb.substring(0, sb.length - 1))
-
-      // need to initialize the ApplicationMaster
-      //      val appargs = new ArrayBuffer[String]()
-      //
-      //      appargs += "--jar"
-      //      appargs += job.driverJar
-      //
-      //      appargs += "--class"
-      //      appargs += job.driverClass
-      //
-      //      appargs +=
-      //      ApplicationMaster.main(job.toArgArray)
     }
     else if (job.isSpark) {
       conf.set("spark.driver.memory", if (job.memory != null) {
@@ -150,7 +103,6 @@ object PrepareJob extends Logging {
   }
 
   def setupSerializer(mrgeoJob: MrGeoJob, job:JobArguments, conf:SparkConf) = {
-
     // we need to check the serializer property, there is a bug in the registerKryoClasses in Spark < 1.3.0 that
     // causes a ClassNotFoundException.  So we need to add a config property to use/ignore kryo
     if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_USE_KRYO, "false").equals("true")) {
@@ -160,12 +112,13 @@ object PrepareJob extends Logging {
         method.invoke(conf, mrgeoJob.registerClasses())
       }
       catch {
-        case nsme: NoSuchMethodException => conf.set("spark.serializer", "org.mrgeo.spark.JavaSerializer")
+        case nsme: NoSuchMethodException => conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
         case e: Exception => e.printStackTrace()
       }
+
     }
     else {
-      conf.set("spark.serializer", "org.mrgeo.spark.JavaSerializer")
+      conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
     }
 
   }
