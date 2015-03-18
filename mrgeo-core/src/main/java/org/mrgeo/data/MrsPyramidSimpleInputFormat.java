@@ -275,8 +275,10 @@ public abstract class MrsPyramidSimpleInputFormat<V> extends InputFormat<TileIdW
     while (secondSplit != null)
     {
       long toTileId = secondSplit.getStartTileId() - 1;
-      fillHoles(result, fromTileId, toTileId, ifContext.getZoomLevel(),
-              ifContext.getTileSize(), cropBounds);
+      if (ifContext.getIncludeEmptyTiles()) {
+        fillHoles(result, fromTileId, toTileId, ifContext.getZoomLevel(),
+                ifContext.getTileSize(), cropBounds);
+      }
       result.add(secondSplit);
       firstSplit = secondSplit;
       secondSplit = splitIter.next();

@@ -2,24 +2,35 @@ package org.mrgeo.data;
 
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.TMSUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RegionSplitVisitor implements SplitVisitor
 {
+  static Logger log = LoggerFactory.getLogger(SplitVisitor.class);
   private TMSUtils.TileBounds region;
 
   public RegionSplitVisitor(TMSUtils.TileBounds region)
   {
     this.region = region;
+    log.debug("Created RegionSplitVisitor with region: " + region.toString());
   }
 
   @Override
   public boolean accept(TiledInputSplit split)
   {
     int zoom = split.getZoomLevel();
-    return splitOverlapsTileBounds(
+    TMSUtils.Tile startTile = TMSUtils.tileid(split.getStartTileId(), zoom);
+    TMSUtils.Tile endTile = TMSUtils.tileid(split.getEndTileId(), zoom);
+    boolean result = splitOverlapsTileBounds(
             TMSUtils.tileid(split.getStartTileId(), zoom),
             TMSUtils.tileid(split.getEndTileId(), zoom),
             region);
+    if (!result)
+    {
+      log.info("Skipping split starting at tile " + split.getStartTileId());
+    }
+    return result;
   }
 
   boolean splitOverlapsTileBounds(final TMSUtils.Tile splitStartTile,

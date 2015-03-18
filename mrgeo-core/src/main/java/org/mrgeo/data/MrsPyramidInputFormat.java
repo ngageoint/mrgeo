@@ -27,6 +27,8 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -42,6 +44,8 @@ import java.util.*;
  */
 public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritable, TileCollection<V>>
 {
+  static Logger log = LoggerFactory.getLogger(MrsPyramidInputFormat.class);
+
   public MrsPyramidInputFormat()
   {
   }
@@ -143,9 +147,12 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
       String pyramid = pyramids[i].getName();
       zooms[i] = ifContext.getZoomLevel();
       List<TiledInputSplit> splits = getNativeSplits(context, ifContext, pyramid);
-      nativeSplitsPerInput.add(filterInputSplits(ifContext,
-          splits, zooms[i],
-          pyramids[i].getTileSize()));
+      log.info("Native split count: " + splits.size());
+      List<TiledInputSplit> filteredSplits = filterInputSplits(ifContext,
+              splits, zooms[i],
+              pyramids[i].getTileSize());
+      log.info("Filtered split count = " + filteredSplits.size());
+      nativeSplitsPerInput.add(filteredSplits);
       post.put(pyramid, pyramids[i].getBounds());
     }
 
@@ -276,8 +283,10 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
     while (secondSplit != null)
     {
       long toTileId = secondSplit.getStartTileId() - 1;
-      fillHoles(result, fromTileId, toTileId, ifContext.getZoomLevel(),
-          ifContext.getTileSize(), cropBounds);
+      if (ifContext.getIncludeEmptyTiles()) {
+        fillHoles(result, fromTileId, toTileId, ifContext.getZoomLevel(),
+                ifContext.getTileSize(), cropBounds);
+      }
       result.add(secondSplit);
       firstSplit = secondSplit;
       secondSplit = splitIter.next();

@@ -1398,7 +1398,7 @@ public class DataProviderFactory
         {
           if (debugEnabled)
           {
-            log.debug("Checking if vector factory is valid: " + dp.getClass().getName());
+            log.debug("Checking if vector factory is valid: " + dp.getClass().getName() + " with config " + ((conf == null) ? "null" : "not null"));
           }
           boolean valid = false;
           if (conf != null)
