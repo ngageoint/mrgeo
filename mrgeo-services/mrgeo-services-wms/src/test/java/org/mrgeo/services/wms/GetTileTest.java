@@ -168,7 +168,7 @@ public class GetTileTest extends WmsGeneratorTestAbstract
       WebResponse response = webClient.getResponse(request);
       Assert.assertEquals(response.getResponseCode(), 200);
       assertTrue(
-          response.getText().contains("Tile x/y out of range. (1, 1) range: (243, 56) to (243, 56) (inclusive)"));
+          response.getText().contains("Tile x/y out of range. (1, 1) range: (242, 56) to (243, 56) (inclusive)"));
         response.close();
     }
     catch (Exception e)
@@ -265,7 +265,7 @@ public class GetTileTest extends WmsGeneratorTestAbstract
       WebResponse response = webClient.getResponse(request);
       Assert.assertEquals(response.getResponseCode(), 200);
       assertTrue(
-          response.getText().contains("Tile x/y out of range. (1, 1) range: (243, 56) to (243, 56) (inclusive)"));
+          response.getText().contains("Tile x/y out of range. (1, 1) range: (242, 56) to (243, 56) (inclusive)"));
         response.close();
     }
     catch (Exception e)
@@ -315,7 +315,7 @@ public class GetTileTest extends WmsGeneratorTestAbstract
       WebResponse response = webClient.getResponse(request);
       Assert.assertEquals(response.getResponseCode(), 200);
       assertTrue(
-          response.getText().contains("Tile x/y out of range. (1, 1) range: (243, 56) to (243, 56) (inclusive)"));
+          response.getText().contains("Tile x/y out of range. (1, 1) range: (242, 56) to (243, 56) (inclusive)"));
         response.close();
     }
     catch (Exception e)
