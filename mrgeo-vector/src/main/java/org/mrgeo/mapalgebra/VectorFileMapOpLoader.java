@@ -17,6 +17,10 @@ package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.format.FeatureInputFormatFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.HadoopUtils;
@@ -40,6 +44,20 @@ public class VectorFileMapOpLoader implements ResourceMapOpLoader
   public MapOp loadMapOpFromResource(String resourceName,
       final Properties providerProperties) throws IOException
   {
+    try
+    {
+      VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(resourceName, AccessMode.READ, providerProperties);
+      if (dp != null)
+      {
+        VectorReaderMapOp vrn = new VectorReaderMapOp(dp, providerProperties);
+        return vrn;
+      }
+    }
+    catch(DataProviderNotFound e)
+    {
+      // Fall-back to old code for reading from HDFS until we have an HDFS
+      // implementation for the vector data provider API.
+    }
     // This code is HDFS-specific for now because we do not have a vector
     // data provider implemented for file-based vector data yet. Once that
     // is done, this code can be re-factored to use it.
@@ -76,20 +94,27 @@ public class VectorFileMapOpLoader implements ResourceMapOpLoader
         // The URI is invalid, so let's continue to try to open it in HDFS
       }
     }
-    Path p = new Path(input);
-
-    FileSystem fs = HadoopFileUtils.getFileSystem(p);
-    if (fs.exists(p))
+    try
     {
-      return p;
+      Path p = new Path(input);
+  
+      FileSystem fs = HadoopFileUtils.getFileSystem(p);
+      if (fs.exists(p))
+      {
+        return p;
+      }
+  
+      Path basePath = new Path(getVectorBasePath());
+      p = new Path(basePath, input);
+      fs = HadoopFileUtils.getFileSystem(p);
+      if (fs.exists(p))
+      {
+        return p;
+      }
     }
-
-    Path basePath = new Path(getVectorBasePath());
-    p = new Path(basePath, input);
-    fs = HadoopFileUtils.getFileSystem(p);
-    if (fs.exists(p))
+    catch(IllegalArgumentException e)
     {
-      return p;
+      // The URI is invalid
     }
 
     return null;

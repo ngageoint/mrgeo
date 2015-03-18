@@ -15,22 +15,73 @@
 
 package org.mrgeo.data.vector;
 
+import java.io.IOException;
+
 import org.apache.hadoop.io.LongWritable;
-import org.mrgeo.data.KVIterator;
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
 
 public interface VectorReader
 {
   public abstract void close();
-  public abstract KVIterator<LongWritable, Geometry> get();
-  // TODO: How do we handle the following for vector sources that aren't
-  // indexed at all (like maybe tsv/csv)? Should these methods be included
-  // in a separate interface which callers must use "instanceof" followed
-  // by a typecast in order to call these methods?
-  public abstract boolean exists(LongWritable featureId);
-  public abstract Geometry get(LongWritable featureId);
-  public abstract KVIterator<LongWritable, Geometry> get(final Bounds bounds);
+
+  /**
+   * Return an iterator that allows the caller to visit all features
+   * within this reader. The caller is responsible for calling the close()
+   * method on the returned iterator when they are done with it.
+   * 
+   * @return
+   * @throws IOException 
+   */
+  public abstract CloseableKVIterator<LongWritable, Geometry> get() throws IOException;
+  
+  /**
+   * Returns true if there is a feature with the specified featureId.
+   * For non-indexed data sources (like delimited text), this method will
+   * iterate through all of the features until it finds the one that matches
+   * the specified featureId.
+   * 
+   * @param featureId
+   * @return
+   * @throws IOException
+   */
+  public abstract boolean exists(LongWritable featureId) throws IOException;
+  
+  /**
+   * Returns the Geometry object corresponding to the featureId passed in.
+   * For non-indexed data sources (like delimited text), this method will
+   * iterate through all of the features until it finds the one that matches
+   * the specified featureId. If no matching feature is found, a null is
+   * returned.
+   * 
+   * @param featureId
+   * @return
+   * @throws IOException
+   */
+  public abstract Geometry get(LongWritable featureId) throws IOException;
+
+  /**
+   * Return an iterator that allows the caller to visit all geometries
+   * within this reader that fall within the specified bounds. The
+   * caller is responsible for calling the close()
+   * method on the returned iterator when they are done with it.
+   * 
+   * It is possible that the last call to the next() method of the returned
+   * iterator could give back a null value, so the caller should test for that.
+   * 
+   * @return
+   */
+  public abstract CloseableKVIterator<LongWritable, Geometry> get(final Bounds bounds) throws IOException;
+
+  /**
+   * Returns the number of features.
+   * 
+   * @return
+   * @throws IOException
+   */
+  public long count() throws IOException;
+
   // TODO: Do we want to include some more advanced spatial query capability here?
   // We could handle that via a different interface that callers could use
   // "instanceof" to see of the reader supports that capability...

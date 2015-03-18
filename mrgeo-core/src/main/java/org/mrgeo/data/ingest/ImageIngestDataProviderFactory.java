@@ -61,6 +61,4 @@ public interface ImageIngestDataProviderFactory
   public boolean canWrite(final String name) throws IOException;
   public boolean exists(final String name) throws IOException;
   public void delete(final String name) throws IOException;
-  public void configure(final Configuration conf);
-  public void configure(final Properties p);
 }

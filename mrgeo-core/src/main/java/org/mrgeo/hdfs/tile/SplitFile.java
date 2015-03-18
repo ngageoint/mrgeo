@@ -25,6 +25,7 @@ import org.mrgeo.tile.SplitGenerator;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,7 +212,7 @@ public class SplitFile
       throws IOException
   {
     // move split file into the output directory
-    if (!conf.get("mapred.job.tracker", "").equals("local"))
+    if (!HadoopUtils.isLocal(conf))
     {
       final Path splitFileTo = new Path(splitFileToDir, SPLIT_FILE);
       final FileSystem fsTo = splitFileTo.getFileSystem(conf);

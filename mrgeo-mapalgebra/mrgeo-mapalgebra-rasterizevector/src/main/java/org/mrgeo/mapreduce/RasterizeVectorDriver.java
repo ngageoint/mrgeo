@@ -19,18 +19,16 @@ import java.awt.image.DataBuffer;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -39,8 +37,11 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.data.vector.VectorDataProvider;
+import org.mrgeo.data.vector.VectorInputFormat;
+import org.mrgeo.data.vector.VectorInputFormatContext;
+import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.featurefilter.FeatureFilter;
-import org.mrgeo.format.AutoFeatureInputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsImagePyramid;
@@ -153,10 +154,10 @@ public class RasterizeVectorDriver
   public static String GEOMETRY_FILTER = "geometryFilter";
   public static String TEST_REDUCER = "testReducer"; // will be used for testing only
   private FeatureFilter filter = null;
-  private Class<? extends InputFormat<LongWritable, Geometry>> inputFormat = null;
   String valueColumn = null;
 
-  public void run(final Job job, final String output, final RasterizeVectorPainter.AggregationType aggregationType,
+  public void run(final Job job, final String output,
+      final RasterizeVectorPainter.AggregationType aggregationType,
       final int zoom, final Bounds bounds, final Progress progress,
       final JobListener jobListener, final String protectionLevel,
       final Properties providerProperties)
@@ -214,8 +215,8 @@ public class RasterizeVectorDriver
     // get the ad hoc provider set up for map/reduce
     statsProvider.setupJob(job);
     boundsProvider.setupJob(job);
-    conf.set(STATS_PROVIDER, statsProvider.getResourceName());
-    conf.set(BOUNDS_PROVIDER, boundsProvider.getResourceName());
+    conf.set(RasterizeVectorDriver.STATS_PROVIDER, statsProvider.getResourceName());
+    conf.set(RasterizeVectorDriver.BOUNDS_PROVIDER, boundsProvider.getResourceName());
 
     MrsImageOutputFormatProvider provider = MrsImageDataProvider.setupMrsPyramidOutputFormat(job,
         output, bounds, zoom, tilesize, protectionLevel, providerProperties);
@@ -245,7 +246,7 @@ public class RasterizeVectorDriver
   }
 
   public void run(final Configuration conf,
-      final Path input, final String output, final RasterizeVectorPainter.AggregationType aggregationType,
+      final String input, final String output, final RasterizeVectorPainter.AggregationType aggregationType,
       final int zoom, final Bounds bounds, final Progress progress,
       final JobListener jobListener, final String protectionLevel,
       final Properties providerProperties)
@@ -253,12 +254,16 @@ public class RasterizeVectorDriver
   {
     final Job job = new Job(conf);
 
-    if (inputFormat == null)
-    {
-      inputFormat = AutoFeatureInputFormat.class;
-    }
-    job.setInputFormatClass(inputFormat);
-    FileInputFormat.addInputPath(job, input);
+    VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ,
+        providerProperties);
+    Set<String> inputs = new HashSet<String>();
+    inputs.add(input);
+    VectorInputFormatContext ifContext = new VectorInputFormatContext(
+        inputs, providerProperties);
+    VectorInputFormatProvider ifp = vdp.getVectorInputFormatProvider(ifContext);
+    ifp.setupJob(job, providerProperties);
+//    HadoopUtils.setupLocalRunner(job.getConfiguration());
+    job.setInputFormatClass(VectorInputFormat.class);
     run(job, output, aggregationType, zoom, bounds, progress, jobListener, protectionLevel,
         providerProperties);
   }
@@ -266,11 +271,6 @@ public class RasterizeVectorDriver
   public void setFeatureFilter(final FeatureFilter filter)
   {
     this.filter = filter;
-  }
-
-  public void setInputFormat(final Class<? extends InputFormat<LongWritable, Geometry>> format)
-  {
-    inputFormat = format;
   }
 
   public void setValueColumn(final String weightColumn)

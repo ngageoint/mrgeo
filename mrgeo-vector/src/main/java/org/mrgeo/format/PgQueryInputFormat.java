@@ -16,6 +16,7 @@
 package org.mrgeo.format;
 
 import com.vividsolutions.jts.io.WKTReader;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -25,8 +26,8 @@ import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
-import org.mrgeo.utils.WktGeometryUtils;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.vector.WktGeometryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,55 +16,50 @@
 package org.mrgeo.spark
 
 import java.awt.image.WritableRaster
+import java.io.{ObjectOutput, ObjectInput, Externalizable}
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
-import org.apache.spark.SparkContext
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{Partition, Logging, SparkContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.{RDD, CoGroupedRDD}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
-import org.mrgeo.job.{MrGeoDriver, JobArguments, MrGeoJob}
+import org.mrgeo.image.MrsImagePyramid
+import org.mrgeo.image.geotools.GeotoolsRasterUtils
+import org.mrgeo.spark.job.{MrGeoJob, MrGeoDriver, JobArguments}
 import org.mrgeo.utils.TMSUtils.TileBounds
-import org.mrgeo.utils.{LoggingUtils, TMSUtils, Bounds, SparkUtils}
+import org.mrgeo.utils._
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 import scala.util.control._
 
-object MosaicDriver extends MrGeoDriver {
+object MosaicDriver extends MrGeoDriver with Externalizable {
 
-  def mosaic(inputs: Array[String], output:String): Unit = {
+  def mosaic(inputs: Array[String], output:String, conf:Configuration): Unit = {
 
-    LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG)
+    val args =  mutable.Map[String, String]()
 
-    val args:ArrayBuffer[String] = new ArrayBuffer[String]
+    val in = inputs.mkString(",")
+    val name = "Mosaic (" + in + ")"
 
-    args += "--inputs"
-    args += inputs.mkString(",")
+    args += "inputs" -> in
+    args += "output" -> output
 
-    args += "--output"
-    args += output
 
-    // not sure how to get these into the args
-    args += "--cluster"
-    args += "yarn"
-//    args += "--executors"
-//    args += "2"
-//    args += "--executorMemory"
-//    args += "19G"
-//    args += "--cores"
-//    args += "10"
-
-    run(args.toArray)
+    run(name, classOf[MosaicDriver].getName, args.toMap, conf)
   }
 
+  override def writeExternal(out: ObjectOutput): Unit = {}
+  override def readExternal(in: ObjectInput): Unit = {}
 }
 
-class MosaicDriver extends MrGeoJob {
+class MosaicDriver extends MrGeoJob with Externalizable {
   var inputs: Array[String] = null
   var output:String = null
-
 
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
@@ -75,12 +70,13 @@ class MosaicDriver extends MrGeoJob {
     classes.result()
   }
 
-
   override def execute(context: SparkContext): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
+
+    logInfo("MosaicDriver.execute")
 
     val pyramids = Array.ofDim[RDD[(TileIdWritable, RasterWritable)]](inputs.length)
     val nodata = Array.ofDim[Array[Double]](inputs.length)
@@ -94,51 +90,63 @@ class MosaicDriver extends MrGeoJob {
 
     // loop through the inputs and load the pyramid RDDs and metadata
     for (input <- inputs) {
-      val pyramid = SparkUtils.loadMrsPyramid(input, context)
-      pyramids(i) = pyramid._1
 
-      nodata(i) = pyramid._2.getDefaultValues
+      logInfo("Loading pyramid: " + input)
+      try {
+        val pyramid = SparkUtils.loadMrsPyramid(input, context)
+        pyramids(i) = pyramid._1
 
-      // check for the same max zooms
-      if (zoom < 0) {
-        zoom = pyramid._2.getMaxZoomLevel
-      }
-      else if (zoom != pyramid._2.getMaxZoomLevel) {
-        throw new IllegalArgumentException("All images must have the same max zoom level. " +
-            pyramid._2.getPyramid + " is " + pyramid._2.getMaxZoomLevel + ", others are " + zoom)
-      }
 
-      if (tilesize < 0) {
-        tilesize = pyramid._2.getTilesize
-      }
-      else if (tilesize != pyramid._2.getTilesize) {
-        throw new IllegalArgumentException("All images must have the same tilesize. " +
-            pyramid._2.getPyramid + " is " + pyramid._2.getTilesize + ", others are " + tilesize)
-      }
+        nodata(i) = pyramid._2.getDefaultValues
 
-      if (tiletype < 0) {
-        tiletype = pyramid._2.getTileType
-      }
-      else if (tiletype != pyramid._2.getTileType) {
-        throw new IllegalArgumentException("All images must have the same tile type. " +
-            pyramid._2.getPyramid + " is " + pyramid._2.getTileType + ", others are " + tiletype)
-      }
+        // check for the same max zooms
+        if (zoom < 0) {
+          zoom = pyramid._2.getMaxZoomLevel
+        }
+        else if (zoom != pyramid._2.getMaxZoomLevel) {
+          throw new IllegalArgumentException("All images must have the same max zoom level. " +
+              pyramid._2.getPyramid + " is " + pyramid._2.getMaxZoomLevel + ", others are " + zoom)
+        }
 
-      if (numbands < 0) {
-        numbands = pyramid._2.getBands
-      }
-      else if (numbands != pyramid._2.getBands) {
-        throw new IllegalArgumentException("All images must have the same number of bands. " +
-            pyramid._2.getPyramid + " is " + pyramid._2.getBands + ", others are " + numbands)
-      }
+        if (tilesize < 0) {
+          tilesize = pyramid._2.getTilesize
+        }
+        else if (tilesize != pyramid._2.getTilesize) {
+          throw new IllegalArgumentException("All images must have the same tilesize. " +
+              pyramid._2.getPyramid + " is " + pyramid._2.getTilesize + ", others are " + tilesize)
+        }
 
-      // expand the total bounds
-      bounds.expand(pyramid._2.getBounds)
+        if (tiletype < 0) {
+          tiletype = pyramid._2.getTileType
+        }
+        else if (tiletype != pyramid._2.getTileType) {
+          throw new IllegalArgumentException("All images must have the same tile type. " +
+              pyramid._2.getPyramid + " is " + pyramid._2.getTileType + ", others are " + tiletype)
+        }
+
+        if (numbands < 0) {
+          numbands = pyramid._2.getBands
+        }
+        else if (numbands != pyramid._2.getBands) {
+          throw new IllegalArgumentException("All images must have the same number of bands. " +
+              pyramid._2.getPyramid + " is " + pyramid._2.getBands + ", others are " + numbands)
+        }
+
+        // expand the total bounds
+        bounds.expand(pyramid._2.getBounds)
+      }
+      catch {
+        case e:Exception =>   logError("ERROR Loading pyramid: " + input, e)
+
+      }
 
       i += 1
     }
 
     val tileBounds:TileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+
+    logDebug("Bounds: " + bounds.toString)
+    logDebug("TileBounds: " + tileBounds.toString)
 
     // cogroup needs a partitioner, so we'll give one here...
     val splitGenerator =  new ImageSplitGenerator(tileBounds.w, tileBounds.s,
@@ -146,7 +154,7 @@ class MosaicDriver extends MrGeoJob {
 
     val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
 
-    val groups = new CoGroupedRDD(pyramids, sparkPartitioner)
+    val groups = new CoGroupedRDD(pyramids, sparkPartitioner).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     val mosaiced:RDD[(TileIdWritable, RasterWritable)] = groups.map(U => {
 
@@ -159,21 +167,22 @@ class MosaicDriver extends MrGeoJob {
         }
       }
 
+      logInfo("MosaicDriver.mosaic")
+
       var dst: WritableRaster = null
       var dstnodata:Array[Double] = null
 
       val done = new Breaks
-      var i:Int = 0
+      var img:Int = 0
       done.breakable {
         for (wr<- U._2) {
-          if (wr != null) {
-            println(i)
+          if (wr != null && wr.size > 0) {
             val writable = wr.asInstanceOf[Seq[RasterWritable]](0)
 
             if (dst == null) {
               // the tile conversion is a WritableRaster, we can just typecast here
               dst = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
-              dstnodata = nodata(i)
+              dstnodata = nodata(img)
 
               val looper = new Breaks
 
@@ -188,7 +197,7 @@ class MosaicDriver extends MrGeoJob {
                     }
                   }
                 }
-                // we only get here if there aren't any nondatas, so we can just take the 1st tile verbatim
+                // we only get here if there aren't any nodatas, so we can just take the 1st tile verbatim
                 done.break()
               }
             }
@@ -198,7 +207,7 @@ class MosaicDriver extends MrGeoJob {
 
               // the tile conversion is a WritableRaster, we can just typecast here
               val src = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
-              val srcnodata = nodata(i)
+              val srcnodata = nodata(img)
 
               for (y <- 0 until dst.getHeight) {
                 for (x <- 0 until dst.getWidth) {
@@ -222,28 +231,37 @@ class MosaicDriver extends MrGeoJob {
               }
             }
           }
-          i += 1
+          img += 1
         }
       }
 
+
       // write the tile...
       (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
-    })
+    }).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
 
-
-    val job:Job = new Job()
+    val job:Job = new Job(HadoopUtils.createConfiguration())
 
     // save the new pyramid
     //TODO:  protection level & properties
     val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
       tilesize, tiletype, numbands, "", null)
 
-    // sort and save the image
-    mosaiced.sortByKey().saveAsNewAPIHadoopDataset(job.getConfiguration)
+    val sorted = mosaiced.sortByKey().partitionBy(sparkPartitioner)
+    // this is missing in early spark APIs
+    //val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
+
+    // save the image
+    sorted.saveAsNewAPIHadoopDataset(job.getConfiguration)
 
     dp.teardown(job)
 
+    // calculate and save metadata
+    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, null,
+      nodata(0), bounds, job.getConfiguration, null, null)
+
+    // write splits
     sparkPartitioner.writeSplits(output, zoom, job.getConfiguration)
 
     true
@@ -254,10 +272,7 @@ class MosaicDriver extends MrGeoJob {
     val in:String = job.getSetting("inputs")
 
     inputs = in.split(",")
-
     output = job.getSetting("output")
-
-    job.name = "Mosaic (" + in + ")"
 
     true
   }
@@ -267,4 +282,7 @@ class MosaicDriver extends MrGeoJob {
     true
   }
 
+  override def writeExternal(out: ObjectOutput): Unit = {}
+
+  override def readExternal(in: ObjectInput): Unit = {}
 }
