@@ -394,26 +394,84 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
  * @param providerProperties
  * @throws IOException
  */
-public static void setupMrsPyramidSingleInputFormat(final Job job, final String input,
-  final int zoomlevel, final int tileSize, final Bounds bounds,
-  final Properties providerProperties) throws IOException
-{
+  public static void setupMrsPyramidSingleInputFormat(final Job job, final String input,
+    final int zoomlevel, final int tileSize, final Bounds bounds,
+    final Properties providerProperties) throws IOException
+  {
+    setupCommonMrsPyramidSingleInputFormat(job, input, zoomlevel, tileSize, bounds, providerProperties);
+    job.setInputFormatClass(MrsImagePyramidInputFormat.class);
+  }
+
+  /**
+   * Convenience function for setting up a single image pyramid as the input for a
+   * map/reduce job. Only the tiles containing actual image data will be input
+   * to the mappers.
+   *
+   * @param job
+   * @param input
+   * @param providerProperties
+   * @throws IOException
+   */
+  public static void setupMrsPyramidSingleSimpleInputFormat(final Job job, final String input,
+                                                            final Properties providerProperties)
+          throws IOException
+  {
+
+    int zoom = Integer.MAX_VALUE;
+    final MrsImagePyramid pyramid = MrsImagePyramid.open(input, providerProperties);
+    final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+
+    if (metadata.getMaxZoomLevel() < zoom)
+    {
+      zoom = metadata.getMaxZoomLevel();
+    }
+    setupMrsPyramidSingleSimpleInputFormat(job, input, zoom, metadata.getTilesize(), null,
+            providerProperties);
+  }
+
+  /**
+   * Convenience function for setting up a single image pyramid as the input for a
+   * map/reduce job. Only the tiles containing actual image data will be input
+   * to the mappers.
+   *
+   * @param job
+   * @param input
+   * @param zoomlevel
+   * @param tileSize
+   * @param bounds
+   * @param providerProperties
+   * @throws IOException
+   */
+  public static void setupMrsPyramidSingleSimpleInputFormat(final Job job, final String input,
+                                                            final int zoomlevel, final int tileSize,
+                                                            final Bounds bounds,
+                                                            final Properties providerProperties) throws IOException
+  {
+    setupCommonMrsPyramidSingleInputFormat(job, input, zoomlevel, tileSize, bounds, providerProperties);
+    job.setInputFormatClass(MrsImagePyramidSimpleInputFormat.class);
+  }
+
+  private static void setupCommonMrsPyramidSingleInputFormat(final Job job, final String input,
+                                                             final int zoomlevel, final int tileSize,
+                                                             final Bounds bounds,
+                                                             final Properties providerProperties) throws IOException
+  {
     final MrsImagePyramid pyramid = MrsImagePyramid.open(input, providerProperties);
     MrsImagePyramidMetadata croppedMetadata = pyramid.getMetadata();
     if (bounds != null)
     {
       // serialize cropped metadata inside the job
       croppedMetadata = BoundsCropper.getCroppedMetadata(pyramid.getMetadata(),
-          Collections.singletonList(TMSUtils.Bounds.convertOldToNewBounds(bounds)),
-        zoomlevel);
+              Collections.singletonList(TMSUtils.Bounds.convertOldToNewBounds(bounds)),
+              zoomlevel);
     }
     Set<String> inputs = new HashSet<String>(1);
     inputs.add(input);
     TiledInputFormatContext context = new TiledInputFormatContext(zoomlevel,
-        tileSize, inputs, croppedMetadata.getBounds(),
-        providerProperties);
+            tileSize, inputs, croppedMetadata.getBounds(),
+            providerProperties);
     MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(input,
-        AccessMode.READ, providerProperties);
+            AccessMode.READ, providerProperties);
     if (provider == null)
     {
       throw new IOException("No data provider available for input " + input);
@@ -424,25 +482,24 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
       throw new IOException("No input format provider available for " + input);
     }
     ifProvider.setupJob(job, providerProperties);
-    job.setInputFormatClass(MrsImagePyramidInputFormat.class);
     // The following must be after the setupJob() call so that we overwrite the metadata
     // stored into the config during setupJob() with the cropped metadata.
     HadoopUtils.setMetadata(job, croppedMetadata);
   }
 
-/**
- * Convenience function for setting up an image pyramid as the output for
- * a map/reduce job.
- * 
- * @param job
- * @param output
- * @param bounds
- * @param zoomlevel
- * @param tilesize
- * @param providerProperties
- * @return
- * @throws IOException
- */
+  /**
+   * Convenience function for setting up an image pyramid as the output for
+   * a map/reduce job.
+   *
+   * @param job
+   * @param output
+   * @param bounds
+   * @param zoomlevel
+   * @param tilesize
+   * @param providerProperties
+   * @return
+   * @throws IOException
+   */
   public static MrsImageOutputFormatProvider setupMrsPyramidOutputFormat(final Job job, final String output,
     final Bounds bounds, final int zoomlevel, final int tilesize,
     final String protectionLevel,

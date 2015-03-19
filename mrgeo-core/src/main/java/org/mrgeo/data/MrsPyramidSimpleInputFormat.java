@@ -19,7 +19,6 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapreduce.formats.TileCollection;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.pyramid.MrsPyramid;
@@ -27,8 +26,6 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -42,18 +39,16 @@ import java.util.*;
  * classes for pyramid data can use that information to ensure that tiles are only
  * ever read once, regardless of which input pyramids contain data in that tile.
  */
-public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritable, TileCollection<V>>
+public abstract class MrsPyramidSimpleInputFormat<V> extends InputFormat<TileIdWritable, V>
 {
-  static Logger log = LoggerFactory.getLogger(MrsPyramidInputFormat.class);
-
-  public MrsPyramidInputFormat()
+  public MrsPyramidSimpleInputFormat()
   {
   }
 
   /**
    * Sub-classes must override this method so that the data access layer being used can
    * return the native splits for that specific data format.
-   * 
+   *
    * @param context
    * @param ifContext
    * @param input
@@ -62,7 +57,7 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
    * @throws InterruptedException
    */
   protected abstract List<TiledInputSplit> getNativeSplits(final JobContext context,
-      final TiledInputFormatContext ifContext, final String input) throws IOException, InterruptedException;
+                                                           final TiledInputFormatContext ifContext, final String input) throws IOException, InterruptedException;
 
   /**
    * Returns the list of MrsPyramidInputSplit objects required across all of the
@@ -147,12 +142,9 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
       String pyramid = pyramids[i].getName();
       zooms[i] = ifContext.getZoomLevel();
       List<TiledInputSplit> splits = getNativeSplits(context, ifContext, pyramid);
-      log.info("Native split count: " + splits.size());
-      List<TiledInputSplit> filteredSplits = filterInputSplits(ifContext,
+      nativeSplitsPerInput.add(filterInputSplits(ifContext,
               splits, zooms[i],
-              pyramids[i].getTileSize());
-      log.info("Filtered split count = " + filteredSplits.size());
-      nativeSplitsPerInput.add(filteredSplits);
+              pyramids[i].getTileSize()));
       post.put(pyramid, pyramids[i].getBounds());
     }
 
@@ -174,9 +166,9 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
         {
           TiledInputSplit tiledSplit = iter.next();
           MrsPyramidInputSplit mpsplit =
-              new MrsPyramidInputSplit(tiledSplit, pyramid.getName(), zooms[i],
-                  pre.values().toArray(new Bounds[0]),
-                  post.values().toArray(new Bounds[0]));
+                  new MrsPyramidInputSplit(tiledSplit, pyramid.getName(), zooms[i],
+                          pre.values().toArray(new Bounds[0]),
+                          post.values().toArray(new Bounds[0]));
           splits.add(mpsplit);
         }
       }
@@ -192,7 +184,7 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
    * Add one new split to result for each row of tiles between fromTileId
    * and toTileId. The from and to tiles can be in the same row or different
    * rows.
-   * 
+   *
    * @param result
    * @param fromTileId
    * @param toTileId
@@ -200,7 +192,7 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
    * @param tileSize
    */
   private void fillHoles(List<TiledInputSplit> result, long fromTileId,
-   long toTileId, int zoom, int tileSize, TMSUtils.TileBounds cropBounds)
+                         long toTileId, int zoom, int tileSize, TMSUtils.TileBounds cropBounds)
   {
     TMSUtils.Tile fromTile = TMSUtils.tileid(fromTileId, zoom);
     TMSUtils.Tile toTile = TMSUtils.tileid(toTileId, zoom);
@@ -245,7 +237,7 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
    * Performs cropping of input splits to the bounds specified in the ifContext. This
    * logic is common to all pyramid input formats, regardless of the data provider,
    * so there should be no need to override it in sub-classes.
-   * 
+   *
    * @param ifContext
    * @param splits
    * @param zoomLevel
@@ -253,7 +245,7 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
    * @return
    */
   List<TiledInputSplit> filterInputSplits(final TiledInputFormatContext ifContext,
-      final List<TiledInputSplit> splits, final int zoomLevel, final int tileSize)
+                                          final List<TiledInputSplit> splits, final int zoomLevel, final int tileSize)
   {
     // If there are no splits or no crop region, just return the splits
     if (splits.size() == 0 || ifContext.getBounds() == null)
@@ -262,7 +254,7 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
     }
     List<TiledInputSplit> result = new ArrayList<TiledInputSplit>();
     TMSUtils.TileBounds cropBounds = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(ifContext.getBounds()),
-        ifContext.getZoomLevel(), tileSize);
+            ifContext.getZoomLevel(), tileSize);
 
     // sort the splits by tileid, so we can handle missing tiles in the case of a fill...S
     Collections.sort(splits, new Comparator<TiledInputSplit>()
@@ -298,8 +290,8 @@ public abstract class MrsPyramidInputFormat<V> extends InputFormat<TileIdWritabl
     if (ifContext.getIncludeEmptyTiles())
     {
       fillHoles(result, fromTileId,
-          TMSUtils.tileid(cropBounds.e, cropBounds.n, zoomLevel),
-          zoomLevel, tileSize, cropBounds);
+              TMSUtils.tileid(cropBounds.e, cropBounds.n, zoomLevel),
+              zoomLevel, tileSize, cropBounds);
     }
     return result;
   }

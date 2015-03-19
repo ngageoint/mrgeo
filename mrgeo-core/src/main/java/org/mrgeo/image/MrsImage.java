@@ -356,7 +356,7 @@ public class MrsImage
 
       final String msg = String.format(
         "Tile x/y out of range. (%d, %d) range: (%d, %d) to (%d, %d) (inclusive)", tx, ty,
-        getMaxTileX(), getMinTileY(), getMaxTileX(), getMaxTileY());
+        getMinTileX(), getMinTileY(), getMaxTileX(), getMaxTileY());
       throw new TileNotFoundException(msg);
     }
     if (reader == null)

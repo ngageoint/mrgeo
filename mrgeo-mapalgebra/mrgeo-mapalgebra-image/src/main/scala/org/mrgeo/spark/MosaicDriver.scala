@@ -167,8 +167,6 @@ class MosaicDriver extends MrGeoJob with Externalizable {
         }
       }
 
-      logInfo("MosaicDriver.mosaic")
-
       var dst: WritableRaster = null
       var dstnodata:Array[Double] = null
 
