@@ -582,6 +582,10 @@
         <groupId>org.mrgeo.plugins</groupId>
         <artifactId>pomtools-maven-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
   <reporting>
