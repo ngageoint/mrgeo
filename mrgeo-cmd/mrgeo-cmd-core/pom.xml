@@ -65,14 +65,6 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <configuration>
-          <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
-          <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.5</version>
         <configuration>

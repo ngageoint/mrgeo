@@ -119,6 +119,47 @@
               <generatePom>false</generatePom>
             </configuration>
           </execution>
+          <!-- effectivly turn off the install, just install the pom... -->
+          <execution>
+            <id>install-effective-pom</id>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <phase>install</phase>
+            <configuration>
+              <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
+              <file>${project.build.directory}/${project.build.finalName}.pom</file>
+              <packaging>pom</packaging>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-install</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- effectivly turn off the deploy, just deploy the pom... -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.2</version>
+        <executions>
+          <execution>
+            <id>deploy-effective-pom</id>
+            <goals>
+              <goal>deploy-file</goal>
+            </goals>
+            <phase>deploy</phase>
+            <configuration>
+              <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
+              <file>${project.build.directory}/${project.build.finalName}.pom</file>
+              <packaging>pom</packaging>
+              <repositoryId>repository</repositoryId>
+              <url>${deploy.repository}</url>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <!-- Make some soft links for the generated products, for convenience -->
@@ -136,14 +177,6 @@
               <dst>${project.parent.build.directory}/${project.parent.artifactId}.${project.packaging}</dst>
             </link>
           </links>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <configuration>
-          <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
-          <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
         </configuration>
       </plugin>
     </plugins>

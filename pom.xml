@@ -109,6 +109,18 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
+  <distributionManagement>
+    <repository>
+      <id>repository</id>
+      <url>${repository.url}</url>
+      <layout>default</layout>
+    </repository>
+    <snapshotRepository>
+      <id>repository</id>
+      <url>${snapshot.repository.url}</url>
+      <layout>default</layout>
+    </snapshotRepository>
+  </distributionManagement>
   <build>
     <defaultGoal>install</defaultGoal>
     <testResources>
@@ -424,7 +436,7 @@
                 <goal>generate-pom</goal>
               </goals>
               <configuration>
-                <output>${project.build.directory}/generated-sources/effective-pom.xml</output>
+                <output>${project.build.directory}/${project.build.finalName}.pom</output>
               </configuration>
             </execution>
             <execution>
@@ -439,15 +451,90 @@
             </execution>
           </executions>
         </plugin>
-        <!-- install the effective pom -->
+        <!-- add the effective pom as an artifact -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>1.9.1</version>
+          <executions>
+            <execution>
+              <id>attach-effective-pom</id>
+              <phase>package</phase>
+              <goals>
+                <goal>attach-artifact</goal>
+              </goals>
+              <configuration>
+                <skipAttach>${alternate.deploy}</skipAttach>
+                <artifacts>
+                  <artifact>
+                    <file>${project.build.directory}/${project.build.finalName}.pom</file>
+                    <type>pom</type>
+                  </artifact>
+                </artifacts>
+              </configuration>
+            </execution>
+            <!-- skip the attach for pom-only modules, set the repo url as well -->
+            <execution>
+              <id>check-packaging-for-skip</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>bsh-property</goal>
+              </goals>
+              <configuration>
+                <source>
+                  if (project.packaging.equals("pom")) {
+                  project.properties.setProperty("alternate.deploy",  "true");
+                  }
+                  else {
+                  project.properties.setProperty("alternate.deploy",  "false");
+                  }
+
+                  if (project.version.endsWith("-SNAPSHOT")) {
+                  project.properties.setProperty("deploy.repository", project.properties.getProperty("snapshot.repository.url", ""));
+                  }
+                  else {
+                  project.properties.setProperty("deploy.repository", project.properties.getProperty("repository.url", ""));
+                  }
+                </source>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.8.2</version>
+          <executions>
+            <execution>
+              <id>default-deploy</id>
+              <configuration>
+                <skip>${alternate.deploy}</skip>
+                <deployAtEnd>true</deployAtEnd>
+              </configuration>
+            </execution>
+            <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
+            <execution>
+              <id>deploy-pom-only</id>
+              <goals>
+                <goal>deploy-file</goal>
+              </goals>
+              <phase>deploy</phase>
+              <inherited>false</inherited>
+              <configuration>
+                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
+                <file>${project.build.directory}/${project.build.finalName}.pom</file>
+                <packaging>pom</packaging>
+                <repositoryId>repository</repositoryId>
+                <url>${deploy.repository}</url>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- Force maven to only install the effective pom.  Just for this pom, not children -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-install-plugin</artifactId>
           <version>2.5.1</version>
-          <configuration>
-            <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
-            <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
-          </configuration>
           <executions>
             <execution>
               <id>install-effective-pom</id>
@@ -455,6 +542,17 @@
                 <goal>install-file</goal>
               </goals>
               <phase>install</phase>
+              <configuration>
+                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
+                <file>${project.build.directory}/${project.build.finalName}.pom</file>
+                <packaging>pom</packaging>
+              </configuration>
+            </execution>
+            <execution>
+              <id>default-install</id>
+              <configuration>
+                <skip>${alternate.deploy}</skip>
+              </configuration>
             </execution>
           </executions>
         </plugin>
@@ -465,12 +563,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
       </plugin>
-      <!--
-           <plugin>
-           <groupId>org.codehaus.mojo</groupId>
-           <artifactId>buildnumber-maven-plugin</artifactId>
-           </plugin>
-      -->
       <plugin>
         <artifactId>maven-eclipse-plugin</artifactId>
       </plugin>
@@ -483,12 +575,8 @@
         <artifactId>cobertura-maven-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <configuration>
-          <pomFile>${project.build.directory}/generated-sources/effective-pom.xml</pomFile>
-          <file>${project.build.directory}/generated-sources/effective-pom.xml</file>
-        </configuration>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.mrgeo.plugins</groupId>
@@ -1287,8 +1375,8 @@
       <modules>
         <module>mrgeo-core</module>
         <module>mrgeo-vector</module>
-        <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
+        <module>mrgeo-mapalgebra</module>
       </modules>
     </profile>
     <profile>
