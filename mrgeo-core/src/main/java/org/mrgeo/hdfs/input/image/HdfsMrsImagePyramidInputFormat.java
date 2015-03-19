@@ -221,26 +221,16 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
           // Now that we know the split intersects the user bounds, get the start and
           // end tile id's of the actual tile
           LongRange splitTileIdRange = getSplitBounds(fileSplit, partFileTileBounds, ifContext.getZoomLevel(), fs, conf);
-          TileBounds userTileBounds = TMSUtils.boundsToTile(userBounds, ifContext.getZoomLevel(),
-              metadata.getTilesize());
-          TMSUtils.Tile partStartTile = TMSUtils.tileid(splitTileIdRange.getMinimumLong(),
-              ifContext.getZoomLevel()); 
-          TMSUtils.Tile partEndTile = TMSUtils.tileid(splitTileIdRange.getMaximumLong(),
-              ifContext.getZoomLevel());
-          TileBounds splitTileBounds = new TileBounds(partStartTile.tx,
-              partStartTile.ty, partEndTile.tx, partEndTile.ty);
-          Bounds splitBounds = TMSUtils.tileToBounds(splitTileBounds,
-              ifContext.getZoomLevel(), metadata.getTilesize());
-
-          if (userBounds.intersect(splitBounds, false /* include adjacent splits */))
+          if (tileRangeIntersects(splitTileIdRange, ifContext.getZoomLevel(), ifContext.getTileSize(),
+                  tileBounds.getMinX(), tileBounds.getMaxX(), userBounds))
           {
-            // If the tile bounds of the actual tile intersects the user bounds,
-            // then return the actual tile bounds (instead of the full theoretical
-            // range allowed 
-            LOG.info(String
-                .format(
-                    "Split check passed split %s with splitBounds=%s, splitTileIdRange=%s, userBounds=%s, userTileBounds=%s",
-                    fileSplit, splitBounds, splitTileIdRange, userBounds, userTileBounds));
+            // If the tile bounds of the actual split intersects the user bounds,
+            // then return the actual split bounds (instead of the full theoretical
+            // range allowed).
+//            LOG.info(String
+//                .format(
+//                    "Split check passed split %s with splitBounds=%s, splitTileIdRange=%s, userBounds=%s, userTileBounds=%s",
+//                    fileSplit, splitBounds, splitTileIdRange, userBounds, userTileBounds));
             result.add(new TiledInputSplit(actualSplit, splitTileIdRange.getMinimumLong(),
                 splitTileIdRange.getMaximumLong(), ifContext.getZoomLevel(),
                 metadata.getTilesize()));
@@ -267,7 +257,62 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
             ifContext.getZoomLevel(), metadata.getTilesize()));
       }
     }
+    // The following code is useful for debugging. The gaps can be compared against the
+    // contents of the actual index file for the partition to see if there are any gaps
+    // in areas where there actually is tile information.
+//    long lastEndTile = -1;
+//    for (InputSplit split: result)
+//    {
+//      if (lastEndTile >= 0)
+//      {
+//        long startTileId = ((TiledInputSplit)split).getStartTileId();
+//        if (startTileId > lastEndTile + 1)
+//        {
+//          LOG.error("Gap in splits: " + lastEndTile + " - " + startTileId);
+//        }
+//        lastEndTile = ((TiledInputSplit)split).getEndTileId();
+//      }
+//    }
     return result;
+  }
+
+  private boolean tileRangeIntersects(LongRange tileIdRange, int zoom, int tileSize,
+                                      long txImageLeft, long txImageRight, Bounds bounds)
+  {
+    TMSUtils.Tile startTile = TMSUtils.tileid(tileIdRange.getMinimumLong(), zoom);
+    TMSUtils.Tile endTile = TMSUtils.tileid(tileIdRange.getMaximumLong(), zoom);
+    // Check each tile row within the range, build a bounds for that tiles in
+    // the tile range within that row and check for an intersection with the
+    // bounds passed in. As soon as we find any intersection, we return true.
+    long tx = startTile.tx;
+    long txLeft;
+    long txRight;
+    for (long ty = startTile.ty; ty <= endTile.ty; ty++)
+    {
+      if (ty == startTile.ty)
+      {
+        txLeft = startTile.tx;
+      }
+      else
+      {
+        txLeft = txImageLeft;
+      }
+      if (ty == endTile.ty)
+      {
+        txRight = endTile.tx;
+      }
+      else
+      {
+        txRight = txImageRight;
+      }
+      TMSUtils.TileBounds tileBounds = new TMSUtils.TileBounds(txLeft, ty, txRight, ty);
+      TMSUtils.Bounds b = TMSUtils.tileToBounds(tileBounds, zoom, tileSize);
+      if (bounds.intersect(b, false /* include adjacent splits */))
+      {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static LongRange getSplitBounds(FileSplit split, TileBounds partFileTileBounds, int zoomLevel, FileSystem fs,
@@ -295,7 +340,7 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
       }
       LongWritable tileOffset = new LongWritable();
   
-      long startTileId = -1, endTileId = -1;
+      long startTileId = -1;
 
       // find startTileId
       while (reader.next(tileId, tileOffset))
@@ -306,9 +351,10 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
           break;
         }
       }
-  
+
       assert (startTileId != -1);
-  
+
+      long endTileId = startTileId;
       // find endTileId
       while (reader.next(tileId, tileOffset) && tileOffset.get() < endOffset)
       {
