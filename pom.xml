@@ -661,7 +661,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
-        <final.classifier>cdh5.3.2</final.classifier>
+        <final.classifier>cdh5.3.2-mr1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -719,7 +719,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
-        <final.classifier>cdh5.3.1</final.classifier>
+        <final.classifier>cdh5.3.1-mr1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -771,7 +771,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
-        <final.classifier>cdh5.3.0</final.classifier>
+        <final.classifier>cdh5.3.0-mr1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -823,7 +823,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.1.0-cdh5.2.1</spark.version>
-        <final.classifier>cdh5.2.1</final.classifier>
+        <final.classifier>cdh5.2.1-mr1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -875,7 +875,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.1.0-cdh5.2.0</spark.version>
-        <final.classifier>cdh5.2.0</final.classifier>
+        <final.classifier>cdh5.2.0-mr1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -927,7 +927,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.6.5</slf4j.version>
         <spark.version>1.0.0-cdh5.1.0</spark.version>
-        <final.classifier>cdh5.1.0</final.classifier>
+        <final.classifier>cdh5.1.0-mr1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -949,7 +949,7 @@
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.6.5</slf4j.version>
         <spark.version>1.1.0</spark.version>
-        <final.classifier>cdh4.7.0</final.classifier>
+        <final.classifier>cdh4.7.0-mr1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -1000,7 +1000,7 @@
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.6.5</slf4j.version>
         <spark.version>1.1.0</spark.version>
-        <final.classifier>cdh4.6.0</final.classifier>
+        <final.classifier>cdh4.6.0-mr1</final.classifier>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
@@ -1028,7 +1028,7 @@
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.6.5</slf4j.version>
         <spark.version>1.1.0</spark.version>
-        <final.classifier>cdh4.5.0</final.classifier>
+        <final.classifier>cdh4.5.0-mr1</final.classifier>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from pig -->
