@@ -1849,6 +1849,10 @@
                workaround -->
           <exclusion>
             <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hbase</groupId>
             <artifactId>hbase</artifactId>
           </exclusion>
           <!-- pig includes an old version of hsqldb that is not compatible
