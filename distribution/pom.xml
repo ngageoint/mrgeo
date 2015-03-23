@@ -93,6 +93,49 @@
           </licenseMerges>
         </configuration>
       </plugin>
+      <!-- effectivly turn off the install, just install the pom... -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>install-effective-pom</id>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <phase>install</phase>
+            <inherited>true</inherited>
+            <configuration>
+              <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
+              <file>${project.build.directory}/${project.build.finalName}.pom</file>
+              <packaging>pom</packaging>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-install</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- effectivly turn off the deploy, just deploy the pom... -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-deploy</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <execution>
+            <id>deploy-pom-only</id>
+            <inherited>true</inherited>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <dependencies>

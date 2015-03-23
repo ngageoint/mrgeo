@@ -29,9 +29,11 @@
       <includes>
         <include>org.mrgeo:*:jar:*</include>
       </includes>
+      <!-- No services are currently included, uncomment if we add some in the future
       <excludes>
         <exclude>org.mrgeo:mrgeo-services*:jar:*</exclude>
       </excludes>
+      -->
     </dependencySet>
     <!-- 3rd party jars -->
     <dependencySet>
