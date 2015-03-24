@@ -83,7 +83,7 @@
     <spring-ldap.version>1.3.1.RELEASE</spring-ldap.version>
     <spring.version>3.2.1.RELEASE</spring.version>
     <!-- testing frameworks -->
-    <cpsuite.version>1.2.6</cpsuite.version>
+    <cpsuite.version>1.2.7</cpsuite.version>
     <httpunit.version>1.7</httpunit.version>
     <junit.version>4.8.2</junit.version>
     <mockito.version>1.9.5</mockito.version>
@@ -1652,8 +1652,8 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>cpsuite</groupId>
-        <artifactId>cpsuite</artifactId>
+        <groupId>io.takari.junit</groupId>
+        <artifactId>takari-cpsuite</artifactId>
         <version>${cpsuite.version}</version>
         <scope>test</scope>
       </dependency>
@@ -2439,8 +2439,8 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>cpsuite</groupId>
-      <artifactId>cpsuite</artifactId>
+      <groupId>io.takari.junit</groupId>
+      <artifactId>takari-cpsuite</artifactId>
     </dependency>
     <!-- NOTE!!!  Very important!
          ========================
