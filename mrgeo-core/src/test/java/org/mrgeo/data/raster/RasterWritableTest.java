@@ -71,7 +71,7 @@ public class RasterWritableTest {
 	@Before 
 	public void setUp() throws IOException {
 		conf = HadoopUtils.createConfiguration();
-	    conf.set("mapred.job.tracker", "local");
+    HadoopUtils.setupLocalRunner(conf);
 		srcRaster = ConstantDescriptor.create(RASTER_SIZE, RASTER_SIZE, new Double[]{PIXEL_VALUE}, null).getData();
 
 //		codec = AccumuloUtils.getCodec(conf);		  
