@@ -172,8 +172,8 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>cpsuite</groupId>
-      <artifactId>cpsuite</artifactId>
+      <groupId>io.takari.junit</groupId>
+      <artifactId>takari-cpsuite</artifactId>
     </dependency>
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
