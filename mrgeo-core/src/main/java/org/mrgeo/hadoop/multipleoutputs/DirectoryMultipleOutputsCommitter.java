@@ -104,12 +104,20 @@ public class DirectoryMultipleOutputsCommitter extends OutputCommitter
   @Override
   public void commitJob(JobContext jobContext) throws IOException
   {
+    for (final OutputCommitter that : committers)
+    {
+      that.commitJob(jobContext);
+    }
     super.commitJob(jobContext);
   }
 
   @Override
   public void abortJob(JobContext jobContext, State state) throws IOException
   {
+    for (final OutputCommitter that : committers)
+    {
+      that.abortJob(jobContext, state);
+    }
     super.abortJob(jobContext, state);
   }
 
