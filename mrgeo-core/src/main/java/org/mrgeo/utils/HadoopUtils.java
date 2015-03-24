@@ -538,7 +538,7 @@ public class HadoopUtils
   {
     Configuration conf = job.getConfiguration();
 
-    if (conf.get("mapred.job.tracker", "local") == "local")
+    if (isLocal(conf))
     {
       String jar = ClassUtil.findContainingJar(clazz);
 
@@ -572,8 +572,17 @@ public class HadoopUtils
     //setJar(job.getConfiguration());
   }
 
-  public static boolean isLocal(final Configuration conf) {
-    return conf.get("mapred.job.tracker", "local").equals("local");
+  public static boolean isLocal(final Configuration conf)
+  {
+    // If we're running under YARN, then only check the YARN setting
+    String yarnLocal = conf.get("mapreduce.framework.name", null);
+    if (yarnLocal != null)
+    {
+      return yarnLocal.equals("local");
+    }
+    // Otherwise, check the MR1 setting
+    String mr1Local = conf.get("mapred.job.tracker", "local");
+    return mr1Local.equals("local");
   }
 
   public static void setMetadata(final Configuration conf, final MrsImagePyramidMetadata metadata)
