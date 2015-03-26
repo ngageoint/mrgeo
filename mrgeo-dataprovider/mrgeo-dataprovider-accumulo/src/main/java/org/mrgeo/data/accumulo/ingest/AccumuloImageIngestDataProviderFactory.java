@@ -20,12 +20,16 @@ import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.ingest.ImageIngestDataProvider;
 import org.mrgeo.data.ingest.ImageIngestDataProviderFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
 
 public class AccumuloImageIngestDataProviderFactory implements ImageIngestDataProviderFactory
 {
+	private static Logger log = LoggerFactory.getLogger(AccumuloImageIngestDataProviderFactory.class);
+	
   @Override
   public boolean isValid()
   {
@@ -34,6 +38,7 @@ public class AccumuloImageIngestDataProviderFactory implements ImageIngestDataPr
     Properties props = AccumuloConnector.getAccumuloProperties();
     if (props == null)
     {
+    	log.info("No Accumulo properties pulled from file system.");
       return false;
     }
     return true;

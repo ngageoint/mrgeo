@@ -74,7 +74,7 @@ public class GeoWaveVectorReader implements VectorReader
     Filter filter = ff.id(ids);
     Query query = new TemporalQuery(new TemporalConstraints());
     Integer limit = null; // no limit
-    CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter,
+    CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
         query, filter, limit);
     if (iter.hasNext())
     {
