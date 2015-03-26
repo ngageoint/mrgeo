@@ -287,14 +287,17 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
       }
   } // end constructor
 
-  public static SequenceFile.Reader[] getIndexReaders(final Path path, final Configuration conf)
+  @Override
+  public long calculateTileCount()
   {
+    int count = 0;
     try
     {
-      final FileSystem fs = path.getFileSystem(conf);
-      final Path[] names = FileUtil.stat2Paths(fs.listStatus(path));
+      final FileSystem fs = imagePath.getFileSystem(conf);
+      final Path[] names = FileUtil.stat2Paths(fs.listStatus(imagePath));
       Arrays.sort(names);
-      final List<SequenceFile.Reader> readers = new ArrayList<SequenceFile.Reader>();
+      final DataOutputBuffer key = new DataOutputBuffer();
+
       for (final Path name : names)
       {
         final FileStatus[] dirFiles = fs.listStatus(name);
@@ -302,48 +305,27 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
         {
           if (dirFile.getPath().getName().equals("index"))
           {
-            readers.add(new SequenceFile.Reader(fs, dirFile.getPath(), conf));
+            SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf);
+            try
+            {
+              while (index.nextRawKey(key) >= 0)
+              {
+                count++;
+              }
+            }
+            finally
+            {
+              index.close();
+            }
           }
         }
       }
-      return readers.toArray(new SequenceFile.Reader[0]);
-
+      return count;
     }
     catch (final IOException e)
     {
       throw new MrsTileException(e);
     }
-  }
-
-  @Override
-  public int calculateTileCount()
-  {
-    int count = 0;
-    try
-    {
-      final DataOutputBuffer key = new DataOutputBuffer();
-
-      final SequenceFile.Reader[] indexes = getIndexReaders(imagePath, conf);
-
-      for (final SequenceFile.Reader index : indexes)
-      {
-        while (index.nextRawKey(key) >= 0)
-        {
-          count++;
-        }
-      }
-
-      for (final SequenceFile.Reader reader : indexes)
-      {
-        reader.close();
-      }
-    }
-    catch (final IOException e)
-    {
-      throw new MrsTileException(e);
-    }
-
-    return count;
   }
 
   /**

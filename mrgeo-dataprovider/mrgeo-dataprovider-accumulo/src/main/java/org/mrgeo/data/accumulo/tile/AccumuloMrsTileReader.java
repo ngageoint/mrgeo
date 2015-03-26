@@ -403,7 +403,7 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
    * get the number of tiles in the table - not implemented
    */
   @Override
-  public int calculateTileCount()
+  public long calculateTileCount()
   {    
     throw new NotImplementedException("AccumuloReader.calculateTileCount not implemented");
   } // end calculateTileCount

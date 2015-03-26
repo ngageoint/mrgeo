@@ -129,7 +129,7 @@ public abstract class MrsTileReader<T>
    */
   public abstract void close();
 
-  public abstract int calculateTileCount();
+  public abstract long calculateTileCount();
 
   /**
    * Varify if an item exists in the data.
