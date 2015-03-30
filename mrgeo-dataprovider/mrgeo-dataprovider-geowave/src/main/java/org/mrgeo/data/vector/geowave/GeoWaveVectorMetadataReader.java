@@ -3,9 +3,12 @@ package org.mrgeo.data.vector.geowave;
 import java.io.IOException;
 
 import mil.nga.giat.geowave.index.ByteArrayId;
+import mil.nga.giat.geowave.store.CloseableIterator;
 import mil.nga.giat.geowave.store.adapter.DataAdapter;
 import mil.nga.giat.geowave.store.adapter.statistics.BoundingBoxDataStatistics;
 import mil.nga.giat.geowave.store.adapter.statistics.DataStatistics;
+import mil.nga.giat.geowave.store.query.BasicQuery;
+import mil.nga.giat.geowave.store.query.Query;
 import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
 import mil.nga.giat.geowave.vector.stats.FeatureBoundingBoxStatistics;
 
@@ -14,8 +17,10 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.mrgeo.data.vector.VectorMetadata;
 import org.mrgeo.data.vector.VectorMetadataReader;
 import org.mrgeo.utils.Bounds;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.geometry.BoundingBox;
 
 public class GeoWaveVectorMetadataReader implements VectorMetadataReader
 {
@@ -92,9 +97,36 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
         new ByteArrayId(dataProvider.getResourceName()),
         BoundingBoxDataStatistics.STATS_ID);
     FeatureBoundingBoxStatistics boundsStats = (FeatureBoundingBoxStatistics)stats;
-    Bounds bounds = new Bounds(boundsStats.getMinX(), boundsStats.getMinY(),
-        boundsStats.getMaxX(), boundsStats.getMaxY());
-    metadata.setBounds(bounds);
-    return metadata;
+    Bounds bounds = null;
+    if(boundsStats != null){
+    
+    	bounds = new Bounds(boundsStats.getMinX(), boundsStats.getMinY(),
+    			boundsStats.getMaxX(), boundsStats.getMaxY());
+    } else {
+    	Query query = new BasicQuery(new BasicQuery.Constraints());
+		CloseableIterator<SimpleFeature> iter = GeoWaveVectorDataProvider
+				.getDataStore().query(adapter,
+						GeoWaveVectorDataProvider.getIndex(), query);
+
+		double minX = Double.MAX_VALUE;
+		double minY = Double.MAX_VALUE;
+		double maxX = Double.MIN_VALUE;
+		double maxY = Double.MIN_VALUE;
+		while (iter.hasNext()) {
+			SimpleFeature sf = iter.next();
+			BoundingBox bb = sf.getBounds();
+			minX = Math.min(minX, bb.getMinX());
+			minY = Math.min(minY, bb.getMinY());
+			maxX = Math.max(maxX, bb.getMaxX());
+			maxY = Math.max(maxY, bb.getMaxY());
+		}
+		bounds = new Bounds(minX, minY, maxX, maxY);
+
+    }    
+	metadata.setBounds(bounds);
+	return metadata;
+    
+    
+    
   }
 }
