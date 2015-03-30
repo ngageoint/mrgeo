@@ -2026,6 +2026,12 @@
         <artifactId>hadoop-yarn-api</artifactId>
         <version>${hadoop.yarn.version}</version>
         <scope>${hadoop.yarn.scope}</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -2104,7 +2110,11 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
           </exclusion>
-        </exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.accumulo</groupId>
@@ -2637,11 +2647,23 @@
         <groupId>mil.nga.giat</groupId>
         <artifactId>geowave-accumulo</artifactId>
         <version>0.8.4-SNAPSHOT</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>mil.nga.giat</groupId>
         <artifactId>geowave-vector</artifactId>
         <version>0.8.4-SNAPSHOT</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
   </dependencyManagement>

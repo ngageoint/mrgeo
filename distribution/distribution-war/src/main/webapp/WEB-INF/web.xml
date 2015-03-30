@@ -97,6 +97,12 @@
     <param-name>webAppRootKey</param-name>
     <param-value>mrgeoServicesDistributionRootKey</param-value>
 </context-param>
+
+    <context-param>
+        <param-name>log4jConfigLocation</param-name>
+        <param-value>/WEB-INF/classes/log4j.properties</param-value>
+    </context-param>
+
     <!--
       - Location of the XML file that defines the root application context
       - Applied by ContextLoaderListener.
@@ -105,16 +111,12 @@
       you will have to properly configure the applicationContext-security.xml
       file for your security environment. -->
 <!-- -->
+<!--
     <context-param>
         <param-name>contextConfigLocation</param-name>
         <param-value>
             /WEB-INF/applicationContext-security.xml
         </param-value>
-    </context-param>
- 
-    <context-param>
-        <param-name>log4jConfigLocation</param-name>
-        <param-value>/WEB-INF/classes/log4j.properties</param-value>
     </context-param>
  
     <filter>
@@ -148,5 +150,6 @@
     <listener>
         <listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
     </listener>
+-->
 <!-- -->
 </web-app>
