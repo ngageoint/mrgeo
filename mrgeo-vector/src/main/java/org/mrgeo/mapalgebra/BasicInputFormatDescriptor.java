@@ -62,7 +62,7 @@ public class BasicInputFormatDescriptor implements InputFormatDescriptor
     if (dp != null)
     {
       Set<String> inputs = new HashSet<String>();
-      inputs.add(dp.getResourceName());
+      inputs.add(dp.getPrefixedResourceName());
       VectorInputFormatContext context = new VectorInputFormatContext(inputs, providerProperties);
       VectorInputFormatProvider ifp = dp.getVectorInputFormatProvider(context);
       ifp.setupJob(job, providerProperties);

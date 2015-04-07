@@ -310,11 +310,12 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
     Assert.assertFalse("Can not open file!", HdfsMrsImageDataProvider.canOpen(conf, "missing", null));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testCanOpenBadUri() throws Exception
   {
-    HdfsMrsImageDataProvider.canOpen(conf, "abcd:bad-name", null);
+    boolean result = HdfsMrsImageDataProvider.canOpen(conf, "abcd:bad-name", null);
+    Assert.assertFalse(result);
   }
 
   @Test(expected = NullPointerException.class)

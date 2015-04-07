@@ -2264,6 +2264,11 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
+        <artifactId>gt-cql</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
         <artifactId>gt-main</artifactId>
         <version>${geotools.version}</version>
         <scope>runtime</scope>
@@ -2281,8 +2286,26 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
+        <artifactId>gt-imagemosaic</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-jdbc</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
         <artifactId>gt-opengis</artifactId>
         <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-property</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
@@ -2347,6 +2370,12 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
+        <artifactId>gt-transform</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
         <artifactId>gt-xml</artifactId>
         <version>${geotools.version}</version>
         <scope>runtime</scope>
@@ -2359,6 +2388,42 @@
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-process-feature</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-svg</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-wfs-ng</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-wms</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-wms</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools.xsd</groupId>
+        <artifactId>gt-xsd-sld</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools.ogc</groupId>
+        <artifactId>net.opengis.wfs</artifactId>
         <version>${geotools.version}</version>
         <scope>runtime</scope>
       </dependency>

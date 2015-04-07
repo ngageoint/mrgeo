@@ -25,7 +25,8 @@ import java.util.Set;
 public class VectorInputFormatContext
 {
   private static final String className = VectorInputFormatContext.class.getSimpleName();
-  private static final String INPUTS = className + ".inputs";
+  private static final String INPUTS_COUNT = className + ".inputsCount";
+  private static final String INPUTS_PREFIX = className + ".inputs.";
   private static final String FEATURE_COUNT_KEY = className + ".featureCount";
   private static final String MIN_FEATURES_PER_SPLIT_KEY = className + ".minFeaturesPerSplit";
   private static final String PROVIDER_PROPERTY_COUNT = className + ".provPropCount";
@@ -90,7 +91,13 @@ public class VectorInputFormatContext
 
   public void save(final Configuration conf)
   {
-    conf.set(INPUTS, StringUtils.join(inputs, ","));
+    conf.setInt(INPUTS_COUNT, inputs.size());
+    int inputIndex = 0;
+    for (String input: inputs)
+    {
+      conf.set(INPUTS_PREFIX + inputIndex, input);
+      inputIndex++;
+    }
     conf.setLong(FEATURE_COUNT_KEY, featureCount);
     conf.setInt(MIN_FEATURES_PER_SPLIT_KEY, minFeaturesPerSplit);
     conf.setInt(PROVIDER_PROPERTY_COUNT,
@@ -118,14 +125,11 @@ public class VectorInputFormatContext
     context.inputs = new HashSet<String>();
     context.featureCount = conf.getLong(FEATURE_COUNT_KEY, -1L);
     context.minFeaturesPerSplit = conf.getInt(MIN_FEATURES_PER_SPLIT_KEY, -1);
-    String strInputs = conf.get(INPUTS);
-    if (strInputs != null)
+    int inputsCount = conf.getInt(INPUTS_COUNT, 0);
+    for (int inputIndex=0; inputIndex < inputsCount; inputIndex++)
     {
-      String[] confInputs = strInputs.split(",");
-      for (String confInput : confInputs)
-      {
-        context.inputs.add(confInput);
-      }
+      String input = conf.get(INPUTS_PREFIX + inputIndex);
+      context.inputs.add(input);
     }
     int providerPropertyCount = conf.getInt(PROVIDER_PROPERTY_COUNT, 0);
     if (providerPropertyCount > 0)

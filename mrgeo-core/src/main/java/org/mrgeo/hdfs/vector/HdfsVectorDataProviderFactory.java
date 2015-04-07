@@ -37,15 +37,15 @@ public class HdfsVectorDataProviderFactory implements VectorDataProviderFactory
   }
 
   @Override
-  public VectorDataProvider createVectorDataProvider(String input, Configuration conf)
+  public VectorDataProvider createVectorDataProvider(String prefix, String input, Configuration conf)
   {
-    return new HdfsVectorDataProvider(conf, input, null);
+    return new HdfsVectorDataProvider(conf, prefix, input, null);
   }
 
   @Override
-  public VectorDataProvider createVectorDataProvider(String input, Properties providerProperties)
+  public VectorDataProvider createVectorDataProvider(String prefix, String input, Properties providerProperties)
   {
-    return new HdfsVectorDataProvider(getBasicConf(), input, providerProperties);
+    return new HdfsVectorDataProvider(getBasicConf(), prefix, input, providerProperties);
   }
 
   @Override
