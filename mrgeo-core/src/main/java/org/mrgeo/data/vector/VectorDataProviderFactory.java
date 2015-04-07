@@ -55,10 +55,12 @@ public interface VectorDataProviderFactory
 
   public String getPrefix();
 
-  public VectorDataProvider createVectorDataProvider(final String input,
-      final Configuration conf);
-  public VectorDataProvider createVectorDataProvider(final String input,
-      final Properties providerProperties);
+  public VectorDataProvider createVectorDataProvider(final String prefix,
+                                                     final String input,
+                                                     final Configuration conf);
+  public VectorDataProvider createVectorDataProvider(final String prefix,
+                                                     final String input,
+                                                     final Properties providerProperties);
 
   public String[] listVectors(final Properties providerProperties) throws IOException;
   

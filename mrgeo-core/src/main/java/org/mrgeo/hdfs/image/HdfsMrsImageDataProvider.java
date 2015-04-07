@@ -60,7 +60,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
 
   public String getResolvedResourceName(final boolean mustExist) throws IOException
   {
-    return resolveNameToPath(conf, getResourceName(), providerProperties, mustExist).toUri().toString();
+    return resolveNameToPath(conf, getResourceName(), providerProperties, mustExist, true).toUri().toString();
     //return new Path(getImageBasePath(), getResourceName()).toUri().toString();
   }
 
@@ -148,7 +148,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   public void move(final String toResource) throws IOException
   {
     HadoopFileUtils.move(getConfiguration(),
-        resolveNameToPath(getConfiguration(), getResourceName(), providerProperties, true),
+        resolveNameToPath(getConfiguration(), getResourceName(), providerProperties, true, true),
         new Path(toResource));
   }
 
@@ -161,8 +161,24 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     return true;
   }
 
+  /**
+   * When this code attempts to construct a Path object from the input parameter,
+   * if the the throwExceptionIfInvalid flag is true, this function will not
+   * intercept the IllegalArgumentException when it is thrown. If that flag is
+   * false, then the IllegalArgumentException is caught, and this function will
+   * return a null value.
+   *
+   * @param conf
+   * @param input
+   * @param providerProperties
+   * @param mustExist
+   * @param throwExceptionIfInvalid
+   * @return
+   * @throws IOException
+   */
   private static Path resolveNameToPath(final Configuration conf, final String input,
-      final Properties providerProperties, final boolean mustExist) throws IOException
+      final Properties providerProperties, final boolean mustExist,
+      final boolean throwExceptionIfInvalid) throws IOException
   {
     if (input.indexOf('/') >= 0)
     {
@@ -183,7 +199,24 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
           // The URI is invalid, so let's continue to try to open it in HDFS
         }
       }
-      Path p = new Path(input);
+      Path p = null;
+      if (throwExceptionIfInvalid)
+      {
+        p = new Path(input);
+      }
+      else
+      {
+        try
+        {
+          p = new Path(input);
+        }
+        catch (IllegalArgumentException e)
+        {
+          // If the resource is not a legitimate HDFS path, then this is the wrong
+          // provider, so return null;
+          return null;
+        }
+      }
       if (mustExist)
       {
         FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
@@ -201,7 +234,24 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     else
     {
       // The input is relative, check it using the image base path.
-      Path p = new Path(getBasePath(conf), input);
+      Path p = null;
+      if (throwExceptionIfInvalid)
+      {
+        p = new Path(getBasePath(conf), input);
+      }
+      else
+      {
+        try
+        {
+          p = new Path(getBasePath(conf), input);
+        }
+        catch (IllegalArgumentException e)
+        {
+          // If the resource is not a legitimate HDFS path, then this is the wrong
+          // provider, so return null;
+          return null;
+        }
+      }
       if (mustExist)
       {
         FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
@@ -258,7 +308,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   private static Path resolveName(final Configuration conf, final String input,
       final Properties providerProperties, final boolean mustExist) throws IOException
   {
-    Path result = resolveNameToPath(conf, input, providerProperties, mustExist);
+    Path result = resolveNameToPath(conf, input, providerProperties, mustExist, false);
     if (result != null && hasMetadata(conf, result))
     {
       return result;
@@ -305,13 +355,13 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   public static boolean exists(final Configuration conf, String input,
       final Properties providerProperties) throws IOException
   {
-    return resolveNameToPath(conf, input, providerProperties, true) != null;
+    return resolveNameToPath(conf, input, providerProperties, true, true) != null;
   }
   
   public static void delete(final Configuration conf, String input,
       final Properties providerProperties) throws IOException
   {
-    Path p = resolveNameToPath(conf, input, providerProperties, false);
+    Path p = resolveNameToPath(conf, input, providerProperties, false, true);
     // In case the resource was moved since it was created
     if (p != null)
     {
@@ -325,7 +375,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     // The return value of resolveNameToPath will be null if the input
     // path does not exist. It wil throw an exception if there is a problem
     // with building the path.
-    Path p = resolveNameToPath(conf, input, providerProperties, true);
+    Path p = resolveNameToPath(conf, input, providerProperties, true, true);
     return (p == null);
   }
 

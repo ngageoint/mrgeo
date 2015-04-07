@@ -41,7 +41,7 @@ public class VectorReaderMapOp extends VectorMapOp
   public VectorReaderMapOp(VectorDataProvider dp, Properties providerProperties)
   {
     this.dp = dp;
-    _outputName = dp.getResourceName();
+    _outputName = dp.getPrefixedResourceName();
     this.providerProperties = providerProperties;
   }
 

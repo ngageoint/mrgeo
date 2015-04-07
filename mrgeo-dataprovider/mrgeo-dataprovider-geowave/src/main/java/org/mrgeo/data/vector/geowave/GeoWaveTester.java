@@ -13,6 +13,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.geotools.filter.text.cql2.CQL;
+import org.geotools.filter.text.cql2.CQLException;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -24,14 +26,28 @@ import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.HadoopUtils;
+import org.opengis.filter.Filter;
 
 public class GeoWaveTester
 {
   public static void main(String[] args)
   {
+    try
+    {
+      Filter filter = CQL.toFilter(args[0]);
+    }
+    catch (CQLException e)
+    {
+      e.printStackTrace();
+    }
     if (args.length != 2 && args.length != 3)
     {
-      System.err.println("GeoWaveTester <input> <output>");
+      System.err.println("Did not expect " + args.length + " arguments");
+      for (String a : args)
+      {
+        System.err.println("  " + a);
+      }
+      System.err.println("GeoWaveTester <input> <output> [user roles]");
       return;
     }
     GeoWaveTester tester = new GeoWaveTester();
@@ -50,12 +66,12 @@ public class GeoWaveTester
         providerProperties.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES, userRoles);
       }
 
-      String[] vectors = DataProviderFactory.listVectors(providerProperties);
-      System.out.println("Vectors available: ");
-      for (String v: vectors)
-      {
-        System.out.println("  " + v);
-      }
+//      String[] vectors = DataProviderFactory.listVectors(providerProperties);
+//      System.out.println("Vectors available: ");
+//      for (String v: vectors)
+//      {
+//        System.out.println("  " + v);
+//      }
 //      VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ, providerProperties);
 //      VectorReader vr = vdp.getVectorReader();
 //      System.out.println("Vector Data:");
@@ -81,7 +97,7 @@ public class GeoWaveTester
 //        System.out.println("  " + source);
 //      }
 //
-//      tester.runTest(input, output, providerProperties);
+      tester.runTest(input, output, providerProperties);
     }
     catch (IOException e)
     {

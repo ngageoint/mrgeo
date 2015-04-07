@@ -38,9 +38,9 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   private Properties providerProperties;
 
   public HdfsVectorDataProvider(final Configuration conf,
-      final String resourceName, final Properties providerProperties)
+      final String prefix, final String resourceName, final Properties providerProperties)
   {
-    super(resourceName);
+    super(prefix, resourceName);
     this.conf = conf;
     this.providerProperties = providerProperties;
   }
@@ -225,7 +225,17 @@ public class HdfsVectorDataProvider extends VectorDataProvider
           // The URI is invalid, so let's continue to try to open it in HDFS
         }
       }
-      Path p = new Path(input);
+      Path p = null;
+      try
+      {
+        p = new Path(input);
+      }
+      catch(IllegalArgumentException e)
+      {
+        // If the path is a bad URI (which can happen if this is not an HDFS resource),
+        // then an IllegalArgumentException is thrown.
+        return null;
+      }
       if (mustExist)
       {
         FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
@@ -243,7 +253,17 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     else
     {
       // The input is relative, check it using the image base path.
-      Path p = new Path(getBasePath(conf), input);
+      Path p = null;
+      try
+      {
+        p = new Path(getBasePath(conf), input);
+      }
+      catch(IllegalArgumentException e)
+      {
+        // If the path is a bad URI (which can happen if this is not an HDFS resource),
+        // then an IllegalArgumentException is thrown.
+        return null;
+      }
       if (mustExist)
       {
         FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);

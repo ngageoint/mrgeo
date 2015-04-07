@@ -10,8 +10,6 @@ import mil.nga.giat.geowave.store.adapter.DataAdapter;
 import mil.nga.giat.geowave.store.index.Index;
 import mil.nga.giat.geowave.store.query.Query;
 import mil.nga.giat.geowave.store.query.SpatialQuery;
-import mil.nga.giat.geowave.store.query.TemporalConstraints;
-import mil.nga.giat.geowave.store.query.TemporalQuery;
 import mil.nga.giat.geowave.vector.VectorDataStore;
 import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
 
@@ -27,23 +25,28 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;
 import org.opengis.filter.identity.FeatureId;
-
-//import com.vividsolutions.jts.geom.Geometry;
-//import com.vividsolutions.jts.geom.GeometryFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeoWaveVectorReader implements VectorReader
 {
+  static final Logger log = LoggerFactory.getLogger(GeoWaveVectorReader.class);
+
   private VectorDataStore dataStore;
   private DataAdapter<?> adapter;
+  private Query query;
   private Index index;
+  private Filter filter;
   private Properties providerProperties;
 
   public GeoWaveVectorReader(VectorDataStore dataStore, DataAdapter<?> adapter,
-      Index index, Properties providerProperties)
+      Query query, Index index, Filter filter, Properties providerProperties)
   {
     this.dataStore = dataStore;
     this.adapter = adapter;
+    this.query = query;
     this.index = index;
+    this.filter = filter;
     this.providerProperties = providerProperties;
   }
 
@@ -55,7 +58,9 @@ public class GeoWaveVectorReader implements VectorReader
   @Override
   public CloseableKVIterator<LongWritable, Geometry> get()
   {
-    CloseableIterator<?> iter = dataStore.query(adapter, null);
+    Integer limit = null; // no limit
+    CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
+                                                query, filter, limit);
     return new GeoWaveVectorIterator(iter);
   }
 
@@ -71,11 +76,11 @@ public class GeoWaveVectorReader implements VectorReader
     FilterFactory ff = CommonFactoryFinder.getFilterFactory();
     Set<FeatureId> ids = new HashSet<FeatureId>();
     ids.add(ff.featureId(adapter.getAdapterId().getString() + "." + featureId));
-    Filter filter = ff.id(ids);
-    Query query = new TemporalQuery(new TemporalConstraints());
+    Filter idFilter = ff.id(ids);
+    Filter queryFilter = ff.and(idFilter, this.filter);
     Integer limit = null; // no limit
     CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
-        query, filter, limit);
+                                                query, queryFilter, limit);
     if (iter.hasNext())
     {
       Object value = iter.next();
@@ -95,7 +100,9 @@ public class GeoWaveVectorReader implements VectorReader
     com.vividsolutions.jts.geom.GeometryFactory gf = new com.vividsolutions.jts.geom.GeometryFactory();
     com.vividsolutions.jts.geom.Geometry queryGeometry = gf.toGeometry(bounds.toEnvelope());
     Query query = new SpatialQuery(queryGeometry);
-    CloseableIterator<?> iter = dataStore.query(adapter, index, query);
+    Integer limit = null; // no limit
+    CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
+                                                query, filter, limit);
     return new GeoWaveVectorIterator(iter);
   }
 
@@ -104,8 +111,25 @@ public class GeoWaveVectorReader implements VectorReader
   {
     try
     {
-      return GeoWaveVectorDataProvider.getAdapterCount(adapter.getAdapterId(),
-          providerProperties);
+      if (filter == null)
+      {
+        return GeoWaveVectorDataProvider.getAdapterCount(adapter.getAdapterId(),
+                                                         providerProperties);
+      }
+      else
+      {
+        // We must iterate through the returned features to get the count
+        long count = 0L;
+        Integer limit = null; // no limit
+        CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
+                                                    query, filter, limit);
+        while (iter.hasNext())
+        {
+          count++;
+          iter.next();
+        }
+        return count;
+      }
     }
     catch(AccumuloSecurityException e)
     {

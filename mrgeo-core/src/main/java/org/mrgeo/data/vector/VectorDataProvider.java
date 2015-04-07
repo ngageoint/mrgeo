@@ -24,10 +24,12 @@ import java.io.IOException;
 
 public abstract class VectorDataProvider
 {
+  private String resourcePrefix;
   private String resourceName;
 
-  public VectorDataProvider(final String input)
+  public VectorDataProvider(final String inputPrefix, final String input)
   {
+    resourcePrefix = inputPrefix;
     resourceName = input;
   }
 
@@ -36,6 +38,19 @@ public abstract class VectorDataProvider
     return resourceName;
   }
 
+  public String getResourcePrefix()
+  {
+    return resourcePrefix;
+  }
+
+  public String getPrefixedResourceName()
+  {
+    if (resourcePrefix != null && !resourcePrefix.isEmpty())
+    {
+      return resourcePrefix + ":" + resourceName;
+    }
+    return resourceName;
+  }
   /**
    * Return an instance of a class that can read metadata for this resource.
    * If this type of vector data does not support an overall schema of metadata

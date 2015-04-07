@@ -30,17 +30,17 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   }
 
   @Override
-  public VectorDataProvider createVectorDataProvider(String input,
+  public VectorDataProvider createVectorDataProvider(String prefix, String input,
       Configuration conf)
   {
-    return new GeoWaveVectorDataProvider(input, conf);
+    return new GeoWaveVectorDataProvider(prefix, input, conf);
   }
 
   @Override
-  public VectorDataProvider createVectorDataProvider(String input,
+  public VectorDataProvider createVectorDataProvider(String prefix, String input,
       Properties providerProperties)
   {
-    return new GeoWaveVectorDataProvider(input, providerProperties);
+    return new GeoWaveVectorDataProvider(prefix, input, providerProperties);
   }
 
   @Override
