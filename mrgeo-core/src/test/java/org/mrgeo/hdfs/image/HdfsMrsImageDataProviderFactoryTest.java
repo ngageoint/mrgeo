@@ -136,18 +136,20 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
     Assert.assertFalse("Can not open image!", factory.canOpen( "missing", providerProperties));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testCanOpenBadUri1() throws Exception
   {
-    factory.canOpen( "abcd:bad-name", conf);
+    boolean result = factory.canOpen( "abcd:bad-name", conf);
+    Assert.assertFalse(result);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testCanOpenBadUri2() throws Exception
   {
-    factory.canOpen( "abcd:bad-name", providerProperties);
+    boolean result = factory.canOpen( "abcd:bad-name", providerProperties);
+    Assert.assertFalse(result);
   }
 
   @Test(expected = NullPointerException.class)

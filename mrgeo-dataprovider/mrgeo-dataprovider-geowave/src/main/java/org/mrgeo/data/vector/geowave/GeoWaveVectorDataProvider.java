@@ -16,9 +16,10 @@ import mil.nga.giat.geowave.store.adapter.DataAdapter;
 import mil.nga.giat.geowave.store.adapter.statistics.CountDataStatistics;
 import mil.nga.giat.geowave.store.adapter.statistics.DataStatisticsStore;
 import mil.nga.giat.geowave.store.index.Index;
+import mil.nga.giat.geowave.store.query.BasicQuery;
+import mil.nga.giat.geowave.store.query.Query;
 import mil.nga.giat.geowave.vector.AccumuloDataStatisticsStoreExt;
 import mil.nga.giat.geowave.vector.VectorDataStore;
-//import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -26,6 +27,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.geotools.filter.text.cql2.CQLException;
+import org.geotools.filter.text.ecql.ECQL;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorInputFormatContext;
@@ -39,7 +42,7 @@ import org.mrgeo.data.vector.VectorReaderContext;
 import org.mrgeo.data.vector.VectorWriter;
 import org.mrgeo.data.vector.VectorWriterContext;
 import org.mrgeo.geometry.Geometry;
-//import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.filter.Filter;
 
 public class GeoWaveVectorDataProvider extends VectorDataProvider
 {
@@ -55,12 +58,14 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   private static Index index;
 
   private DataAdapter<?> dataAdapter;
+  private Filter filter;
+  private String cqlFilter;
   private GeoWaveVectorMetadataReader metaReader;
   private Properties providerProperties;
 
-  public GeoWaveVectorDataProvider(String input, Configuration conf)
+  public GeoWaveVectorDataProvider(String inputPrefix, String input, Configuration conf)
   {
-    super(input);
+    super(inputPrefix, input);
     initConnectionInfo(conf);
     // We are on the task execution side of map/reduce, and the provider
     // properties are stored in the job configuration. Get them from there.
@@ -68,9 +73,9 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     loadProviderProperties(providerProperties, conf);
   }
 
-  public GeoWaveVectorDataProvider(String input, Properties providerProperties)
+  public GeoWaveVectorDataProvider(String inputPrefix, String input, Properties providerProperties)
   {
-    super(input);
+    super(inputPrefix, input);
     // This constructor is only called from driver-side (i.e. not in
     // map/reduce tasks), so the connection settings are obtained from
     // the mrgeo.conf file.
@@ -86,28 +91,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return connectionInfo;
   }
 
-  public static AccumuloOperations getStoreOperations() throws AccumuloSecurityException, AccumuloException, IOException
-  {
-    initDataSource();
-    return storeOperations;
-  }
-
-  public static AdapterStore getAdapterStore() throws AccumuloSecurityException, AccumuloException, IOException
-  {
-    initDataSource();
-    return adapterStore;
-  }
-
   public static DataStatisticsStore getStatisticsStore() throws AccumuloSecurityException, AccumuloException, IOException
   {
     initDataSource();
     return statisticsStore;
-  }
-
-  public static VectorDataStore getDataStore() throws AccumuloSecurityException, AccumuloException, IOException
-  {
-    initDataSource();
-    return dataStore;
   }
 
   public static Index getIndex() throws AccumuloSecurityException, AccumuloException, IOException
@@ -116,10 +103,76 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return index;
   }
 
+  public String getGeoWaveResourceName() throws IOException
+  {
+    String[] specs = parseResourceName(getResourceName());
+    return specs[0];
+  }
+
   public DataAdapter<?> getDataAdapter() throws AccumuloSecurityException, AccumuloException, IOException
   {
     init();
     return dataAdapter;
+  }
+
+  /**
+   * Returns the CQL filter for this data provider. If no filtering is required, then this will
+   * return a null value.
+   *
+   * @return
+   * @throws AccumuloSecurityException
+   * @throws AccumuloException
+   * @throws IOException
+   */
+  public String getCqlFilter() throws AccumuloSecurityException, AccumuloException, IOException
+  {
+    init();
+    return cqlFilter;
+  }
+
+  /**
+   * Parses the input string into the name of the input and the optional query string
+   * that accompanies it. The two strings are separated by a semi-colon, and the query
+   * should be included in double quotes if it contains any semi-colons or square brackets.
+   * But the double quotes are not required otherwise.
+   *
+   * @param input
+   * @return
+   */
+  private static String[] parseResourceName(String input) throws IOException
+  {
+    int semiColonIndex = input.indexOf(';');
+    if (semiColonIndex == 0)
+    {
+      throw new IOException("Missing name from GeoWave data source: " + input);
+    }
+    String[] result = new String[2];
+    if (semiColonIndex > 0)
+    {
+      result[0] = input.substring(0, semiColonIndex);
+      String query = input.substring(semiColonIndex + 1).trim();
+      if (query.startsWith("\""))
+      {
+        if (query.endsWith("\""))
+        {
+          result[1] = query.substring(1, query.length() - 1);
+        }
+        else
+        {
+          throw new IOException("Invalid query string, expected ending double quote: " + input);
+        }
+      }
+      else
+      {
+        result[1] = query;
+      }
+    }
+    else
+    {
+      result[0] = input;
+      result[1] = null;
+    }
+    return result;
   }
 
   @Override
@@ -154,9 +207,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     {
       throw new IOException("AccumuloException in GeoWave data provider getVectorReader", e);
     }
+    Query query = new BasicQuery(new BasicQuery.Constraints());
     GeoWaveVectorReader reader = new GeoWaveVectorReader(dataStore,
-        adapterStore.getAdapter(new ByteArrayId(this.getResourceName())),
-        index, providerProperties);
+        adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
+        query, index, filter, providerProperties);
     return reader;
   }
 
@@ -268,7 +322,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     initDataSource();
     Properties providerProperties = new Properties();
     loadProviderProperties(providerProperties, conf);
-    ByteArrayId adapterId = new ByteArrayId(input);
+    String[] specs = parseResourceName(input);
+    ByteArrayId adapterId = new ByteArrayId(specs[0]);
     DataAdapter<?> adapter = adapterStore.getAdapter(adapterId);
     if (adapter == null)
     {
@@ -281,7 +336,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   {
     initConnectionInfo();
     initDataSource();
-    ByteArrayId adapterId = new ByteArrayId(input);
+    String[] specs = parseResourceName(input);
+    ByteArrayId adapterId = new ByteArrayId(specs[0]);
     DataAdapter<?> adapter = adapterStore.getAdapter(adapterId);
     if (adapter == null)
     {
@@ -357,9 +413,27 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   private void init() throws AccumuloSecurityException, AccumuloException, IOException
   {
+    // Extract the GeoWave adapter name and optional CQL string
+    String[] specs = parseResourceName(getResourceName());
     // Now perform initialization for this specific data provider (i.e. for
     // this resource).
-    dataAdapter = adapterStore.getAdapter(new ByteArrayId(getResourceName()));
+    dataAdapter = adapterStore.getAdapter(new ByteArrayId(specs[0]));
+    if (specs.length > 1 && specs[1] != null && !specs[1].isEmpty())
+    {
+      cqlFilter = specs[1];
+      try
+      {
+        filter = ECQL.toFilter(specs[1]);
+      }
+      catch (CQLException e)
+      {
+        throw new IOException("Bad CQL filter: " + specs[1], e);
+      }
+    }
+    else
+    {
+      filter = null;
+    }
 // Testing code
 //    SimpleFeatureType sft = ((FeatureDataAdapter)dataAdapter).getType();
 //    int attributeCount = sft.getAttributeCount();

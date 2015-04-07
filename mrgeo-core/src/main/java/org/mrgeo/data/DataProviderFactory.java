@@ -606,7 +606,7 @@ public class DataProviderFactory
           {
             if (factory.canOpen(name, props))
             {
-              return factory.createVectorDataProvider(name, props);
+              return factory.createVectorDataProvider(prefix, name, props);
             }
             log.debug("Unable to open " + name + " using provider properties");
           }
@@ -614,7 +614,7 @@ public class DataProviderFactory
           {
             if (factory.canOpen(name, conf))
             {
-              return factory.createVectorDataProvider(name, conf);
+              return factory.createVectorDataProvider(prefix, name, conf);
             }
             log.debug("Unable to open " + name + " using configuration");
           }
@@ -644,7 +644,7 @@ public class DataProviderFactory
             {
               factory.delete(name, props);
             }
-            return factory.createVectorDataProvider(name, props);
+            return factory.createVectorDataProvider(prefix, name, props);
           }
           else
           {
@@ -652,16 +652,16 @@ public class DataProviderFactory
             {
               factory.delete(name, conf);
             }
-            return factory.createVectorDataProvider(name, conf);
+            return factory.createVectorDataProvider(prefix, name, conf);
           }
         }
         if (props != null)
         {
-          return getPreferredProvider().createVectorDataProvider(name, props);
+          return getPreferredProvider().createVectorDataProvider(prefix, name, props);
         }
         else
         {
-          return getPreferredProvider().createVectorDataProvider(name, conf);
+          return getPreferredProvider().createVectorDataProvider(prefix, name, conf);
         }
       }
       else
@@ -672,7 +672,7 @@ public class DataProviderFactory
           {
             if (factory.canWrite(name, props))
             {
-              return factory.createVectorDataProvider(name, props);
+              return factory.createVectorDataProvider(prefix, name, props);
             }
             String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
             if (log.isDebugEnabled())
@@ -692,7 +692,7 @@ public class DataProviderFactory
           {
             if (factory.canWrite(name, conf))
             {
-              return factory.createVectorDataProvider(name, conf);
+              return factory.createVectorDataProvider(prefix, name, conf);
             }
             String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
             if (log.isDebugEnabled())
@@ -711,11 +711,11 @@ public class DataProviderFactory
         }
         if (props != null)
         {
-          return getPreferredProvider().createVectorDataProvider(name, props);
+          return getPreferredProvider().createVectorDataProvider(prefix, name, props);
         }
         else
         {
-          return getPreferredProvider().createVectorDataProvider(name, conf);
+          return getPreferredProvider().createVectorDataProvider(prefix, name, conf);
         }
       }
     }

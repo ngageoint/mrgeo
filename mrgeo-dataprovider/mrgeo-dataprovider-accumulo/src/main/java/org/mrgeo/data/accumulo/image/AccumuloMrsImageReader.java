@@ -75,7 +75,7 @@ public class AccumuloMrsImageReader extends AccumuloMrsTileReader<Raster, Raster
 //  }
 
   @Override
-  public int calculateTileCount(){
+  public long calculateTileCount(){
     int zl = context.getZoomlevel();
     try{
       MrsImagePyramidMetadata meta = provider.getMetadataReader().read();
@@ -83,7 +83,7 @@ public class AccumuloMrsImageReader extends AccumuloMrsTileReader<Raster, Raster
       long count = (lr.getMaxX() - lr.getMinX() + 1) *
           (lr.getMaxY() - lr.getMinY() + 1);
       
-      return (int) count;
+      return count;
     } catch(IOException ioe){
       return -1;
     }

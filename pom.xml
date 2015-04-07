@@ -2026,6 +2026,12 @@
         <artifactId>hadoop-yarn-api</artifactId>
         <version>${hadoop.yarn.version}</version>
         <scope>${hadoop.yarn.scope}</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -2104,7 +2110,11 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
           </exclusion>
-        </exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.accumulo</groupId>
@@ -2254,6 +2264,11 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
+        <artifactId>gt-cql</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
         <artifactId>gt-main</artifactId>
         <version>${geotools.version}</version>
         <scope>runtime</scope>
@@ -2271,8 +2286,26 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
+        <artifactId>gt-imagemosaic</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-jdbc</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
         <artifactId>gt-opengis</artifactId>
         <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-property</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
@@ -2337,6 +2370,12 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
+        <artifactId>gt-transform</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
         <artifactId>gt-xml</artifactId>
         <version>${geotools.version}</version>
         <scope>runtime</scope>
@@ -2349,6 +2388,42 @@
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-process-feature</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-svg</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-wfs-ng</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-wms</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-wms</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools.xsd</groupId>
+        <artifactId>gt-xsd-sld</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools.ogc</groupId>
+        <artifactId>net.opengis.wfs</artifactId>
         <version>${geotools.version}</version>
         <scope>runtime</scope>
       </dependency>
@@ -2636,12 +2711,24 @@
       <dependency>
         <groupId>mil.nga.giat</groupId>
         <artifactId>geowave-accumulo</artifactId>
-        <version>0.8.2-SNAPSHOT</version>
+        <version>0.8.4-SNAPSHOT</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>mil.nga.giat</groupId>
         <artifactId>geowave-vector</artifactId>
-        <version>0.8.2-SNAPSHOT</version>
+        <version>0.8.4-SNAPSHOT</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
   </dependencyManagement>

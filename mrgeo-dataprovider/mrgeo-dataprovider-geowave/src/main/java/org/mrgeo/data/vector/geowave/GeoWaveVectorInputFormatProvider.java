@@ -60,15 +60,20 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
       adapter = dataProvider.getDataAdapter();
       if (adapter == null)
       {
-        throw new DataProviderException("Missing data adapter in data provider for " + dataProvider.getResourceName());
+        throw new DataProviderException("Missing data adapter in data provider for " + dataProvider.getPrefixedResourceName());
       }
-      GeoWaveInputFormat.addDataAdapter(job, adapter);
+      GeoWaveInputFormat.addDataAdapter(conf, adapter);
       Index index = GeoWaveVectorDataProvider.getIndex();
       if (index == null)
       {
-        throw new DataProviderException("Missing index in data provider for " + dataProvider.getResourceName());
+        throw new DataProviderException("Missing index in data provider for " + dataProvider.getPrefixedResourceName());
       }
-      GeoWaveInputFormat.addIndex(job, index);
+      GeoWaveInputFormat.addIndex(conf, index);
+      String cql = dataProvider.getCqlFilter();
+      if (cql != null && !cql.isEmpty())
+      {
+        conf.set(GeoWaveVectorRecordReader.CQL_FILTER, cql);
+      }
     }
     catch (AccumuloSecurityException e)
     {
@@ -92,7 +97,7 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
     {
       for (String role: userRoles)
       {
-        GeoWaveInputConfigurator.addAuthorization(GeoWaveInputFormat.class, job, role.trim());
+        GeoWaveInputConfigurator.addAuthorization(GeoWaveInputFormat.class, conf, role.trim());
       }
     }
     

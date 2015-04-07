@@ -126,5 +126,9 @@
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-cql</artifactId>
+    </dependency>
   </dependencies>
 </project>

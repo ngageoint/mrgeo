@@ -79,27 +79,40 @@ public class GeoWaveVectorIterator implements CloseableKVIterator<LongWritable, 
 
   public static void setKeyFromFeature(LongWritable key, SimpleFeature feature)
   {
-    String id = feature.getID();
-    if (id != null && !id.isEmpty())
-    {
-      // Id values returned from GeoWave are in the form "Name.Number"
-      // where "Name" is the name of the adapter, and "Number" is the
-      // id assignged to the feature when it was ingested. We want just
-      // the number.
-      String[] idPieces = id.split("\\.");
-      if (idPieces.length == 2)
-      {
-        key.set(Long.parseLong(idPieces[1]));
-      }
-      else
-      {
-        throw new IllegalArgumentException("Skipping record due to unexpected id value: " + id);
-      }
-    }
-    else
-    {
-      throw new IllegalArgumentException("Skipping record due to missing id");
-    }
+    // NOTE: The feature id key is not used for processing anywhere in MrGeo.
+    // In fact, some of the input formats for vector data hard-code the key
+    // to different values. For example CsvInputFormat hard-codes the key for
+    // every record to -1. Since the key is never used, I Just hard-code it
+    // here to keep things simple.
+    // In the future, if needed, we should switch the LongWritable key to a
+    // Text key and use the actual feature ID returned from SimpleFeature as
+    // the key value. This will have a large ripple effect because input formats,
+    // record readers, mappers, and reducers that used to rely on LongWritable
+    // key values will have to be changed to Text, and the compiler will not be
+    // able to automatically find the code that needs to change.
+    key.set(-1L);
+//    String id = feature.getID();
+//    feature.getIdentifier();
+//    if (id != null && !id.isEmpty())
+//    {
+//      // Id values returned from GeoWave are in the form "Name.Number"
+//      // where "Name" is the name of the adapter, and "Number" is the
+//      // id assignged to the feature when it was ingested. We want just
+//      // the number.
+//      String[] idPieces = id.split("\\.");
+//      if (idPieces.length == 2)
+//      {
+//        key.set(Long.parseLong(idPieces[1]));
+//      }
+//      else
+//      {
+//        throw new IllegalArgumentException("Skipping record due to unexpected id value: " + id);
+//      }
+//    }
+//    else
+//    {
+//      throw new IllegalArgumentException("Skipping record due to missing id");
+//    }
   }
 
   public static WritableGeometry convertToGeometry(SimpleFeature feature)

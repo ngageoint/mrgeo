@@ -11,8 +11,12 @@ import mil.nga.giat.geowave.vector.stats.FeatureBoundingBoxStatistics;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.hadoop.io.LongWritable;
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.vector.VectorMetadata;
 import org.mrgeo.data.vector.VectorMetadataReader;
+import org.mrgeo.data.vector.VectorReader;
+import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
@@ -88,12 +92,43 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
       AttributeDescriptor desc = sft.getDescriptor(index);
       metadata.addAttribute(desc.getName().getLocalPart());
     }
-    DataStatistics<?> stats = GeoWaveVectorDataProvider.getStatisticsStore().getDataStatistics(
-        new ByteArrayId(dataProvider.getResourceName()),
-        BoundingBoxDataStatistics.STATS_ID);
-    FeatureBoundingBoxStatistics boundsStats = (FeatureBoundingBoxStatistics)stats;
-    Bounds bounds = new Bounds(boundsStats.getMinX(), boundsStats.getMinY(),
-        boundsStats.getMaxX(), boundsStats.getMaxY());
+    FeatureBoundingBoxStatistics boundsStats = null;
+    String cqlFilter = dataProvider.getCqlFilter();
+    // We only want to try to read the bounds stats if there is no CQL filter because
+    // if there is a filter, the overall bounds for the data source will not be correct.
+    if (cqlFilter == null || cqlFilter.isEmpty())
+    {
+      DataStatistics<?> stats = GeoWaveVectorDataProvider.getStatisticsStore().getDataStatistics(
+              new ByteArrayId(dataProvider.getGeoWaveResourceName()),
+              BoundingBoxDataStatistics.STATS_ID);
+      boundsStats = (FeatureBoundingBoxStatistics) stats;
+    }
+    Bounds bounds = null;
+    if(boundsStats != null)
+    {
+    
+    	bounds = new Bounds(boundsStats.getMinX(), boundsStats.getMinY(),
+    			boundsStats.getMaxX(), boundsStats.getMaxY());
+    }
+    else
+    {
+      VectorReader reader = dataProvider.getVectorReader();
+      CloseableKVIterator<LongWritable, Geometry> iter = reader.get();
+      double minX = Double.MAX_VALUE;
+      double minY = Double.MAX_VALUE;
+      double maxX = Double.MIN_VALUE;
+      double maxY = Double.MIN_VALUE;
+      while (iter.hasNext())
+      {
+        Geometry geom = iter.next();
+        Bounds b = geom.getBounds();
+        minX = Math.min(minX, b.getMinX());
+        minY = Math.min(minY, b.getMinY());
+        maxX = Math.max(maxX, b.getMaxX());
+        maxY = Math.max(maxY, b.getMaxY());
+      }
+		  bounds = new Bounds(minX, minY, maxX, maxY);
+    }
     metadata.setBounds(bounds);
     return metadata;
   }
