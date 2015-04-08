@@ -46,6 +46,7 @@
     <commons-lang.version>2.5</commons-lang.version>
     <geotiff-jai.version>0.0</geotiff-jai.version>
     <geotools.version>12.1</geotools.version>
+    <geowave.version>0.8.5-SNAPSHOT</geowave.version>
     <gson.version>2.2.2</gson.version>
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
@@ -2711,7 +2712,7 @@
       <dependency>
         <groupId>mil.nga.giat</groupId>
         <artifactId>geowave-accumulo</artifactId>
-        <version>0.8.4-SNAPSHOT</version>
+        <version>${geowave.version}</version>
         <exclusions>
           <exclusion>
             <groupId>javax.servlet</groupId>
@@ -2722,7 +2723,7 @@
       <dependency>
         <groupId>mil.nga.giat</groupId>
         <artifactId>geowave-vector</artifactId>
-        <version>0.8.4-SNAPSHOT</version>
+        <version>${geowave.version}</version>
         <exclusions>
           <exclusion>
             <groupId>javax.servlet</groupId>
