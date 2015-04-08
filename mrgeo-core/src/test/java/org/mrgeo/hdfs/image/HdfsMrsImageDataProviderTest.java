@@ -90,7 +90,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
     Assert.assertNotNull(provider.getResolvedResourceName(true));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IOException.class)
   @Category(UnitTest.class)
   public void testGetResolvedResourceNameInvalidUri() throws Exception
   {
@@ -257,7 +257,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
     HdfsMrsImageDataProvider.delete(conf, "bad-name", null);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IOException.class)
   @Category(UnitTest.class)
   public void testDeleteBadUri() throws Exception
   {
@@ -339,11 +339,11 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
     Assert.assertFalse("Can not open file!", HdfsMrsImageDataProvider.exists(conf, "missing", null));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testExistsBadUri() throws Exception
   {
-    HdfsMrsImageDataProvider.exists(conf, "abcd:bad-name", null);
+    Assert.assertFalse(HdfsMrsImageDataProvider.exists(conf, "abcd:bad-name", null));
   }
 
   @Test(expected = NullPointerException.class)
@@ -367,11 +367,11 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
     Assert.assertTrue("Can not write!", HdfsMrsImageDataProvider.canWrite(conf, "missing", null));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testCanWriteBadUri() throws Exception
   {
-    HdfsMrsImageDataProvider.canWrite(conf, "abcd:bad-name", null);
+    Assert.assertFalse(HdfsMrsImageDataProvider.canWrite(conf, "abcd:bad-name", null));
   }
 
   @Test(expected = NullPointerException.class)

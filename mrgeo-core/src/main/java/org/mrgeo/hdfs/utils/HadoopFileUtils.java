@@ -558,7 +558,7 @@ public class HadoopFileUtils
    * sub-directory already exists under the targetParent, delete it and then perform the move. This
    * function does not moves files below the parent, just directories.
    *
-   * @param fs
+   * @param conf
    * @param targetParent
    * @throws IOException
    */
@@ -659,18 +659,18 @@ public class HadoopFileUtils
     }
   }
 
-  public static Path resolveName(final String input) throws IOException
+  public static Path resolveName(final String input) throws IOException, URISyntaxException
   {
     return resolveName(input, true);
   }
   
-  public static Path resolveName(final String input, boolean checkForExistance) throws IOException
+  public static Path resolveName(final String input, boolean checkForExistance) throws IOException, URISyntaxException
   {
     return resolveName(HadoopUtils.createConfiguration(), input, checkForExistance);
   }
 
   public static Path resolveName(final Configuration conf, final String input,
-      boolean checkForExistance) throws IOException
+      boolean checkForExistance) throws IOException, URISyntaxException
   {
     // It could be either HDFS or local file system
     File f = new File(input);
@@ -685,17 +685,10 @@ public class HadoopFileUtils
         // The URI is invalid, so let's continue to try to open it in HDFS
       }
     }
-    try
+    Path p = new Path(new URI(input));
+    if (!checkForExistance || exists(conf, p))
     {
-      Path p = new Path(new URI(input));
-      if (!checkForExistance || exists(conf, p))
-      {
-        return p;
-      }
-    }
-    catch (URISyntaxException e)
-    {
-      throw new IOException(e);
+      return p;
     }
     throw new IOException("Cannot find: " + input);
   }

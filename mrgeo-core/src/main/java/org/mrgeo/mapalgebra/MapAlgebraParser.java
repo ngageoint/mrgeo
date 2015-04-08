@@ -214,7 +214,7 @@ public class MapAlgebraParser implements MapOpFactory
       catch (Exception e)
       {
         log.error("Exception in map algebra parser while opening resource " + file, e);
-        throw new ParserException(e.getMessage());
+        throw new ParserException(e);
       }
     }
 //    MapOp result =  _loadVectorFile(file);
@@ -243,7 +243,8 @@ public class MapAlgebraParser implements MapOpFactory
     }
     catch (IOException e)
     {
-      throw new ParserException(String.format("Error opening %s. (%s)", file, e.toString()));
+      log.error("Exception in map algebra parser while opening resource " + file, e);
+      throw new ParserException(String.format("Error opening %s.", file), e);
     }
 
     throw new ParserException(String.format(
@@ -367,7 +368,7 @@ public class MapAlgebraParser implements MapOpFactory
     catch (Exception e)
     {
       e.printStackTrace();
-      throw new ParserException(String.format("Unable to instantiate %s", c.getName()));
+      throw new ParserException(String.format("Unable to instantiate %s", c.getName()), e);
     }
 
     Vector<ParserNode> children = new Vector<ParserNode>();

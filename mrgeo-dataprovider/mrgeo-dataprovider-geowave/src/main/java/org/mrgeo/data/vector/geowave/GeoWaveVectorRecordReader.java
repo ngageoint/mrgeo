@@ -65,10 +65,6 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
       {
         if (value instanceof SimpleFeature)
         {
-          if (cqlFilter != null)
-          {
-            cqlFilter.evaluate(value);
-          }
           SimpleFeature feature = (SimpleFeature) value;
           GeoWaveVectorIterator.setKeyFromFeature(currKey, feature);
           currValue = GeoWaveVectorIterator.convertToGeometry(feature);
