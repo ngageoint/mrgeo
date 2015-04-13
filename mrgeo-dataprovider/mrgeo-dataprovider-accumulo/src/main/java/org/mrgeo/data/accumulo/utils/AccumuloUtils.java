@@ -638,7 +638,7 @@ public class AccumuloUtils {
 
 		Set<String> retList = new HashSet<String>();
 		for (String l : list) {
-			if (l.equals("!METADATA") || l.equals("trace")) {
+			if (l.equals("!METADATA") || l.equals("trace") || l.equals("accumulo.root") || l.equals("accumulo.metadata")) {
 				continue;
 			}
 
@@ -718,7 +718,7 @@ public class AccumuloUtils {
 
 		Set<String> list = conn.tableOperations().list();
 		for (String l : list) {
-			if (l.equals("!METADATA") || l.equals("trace")) {
+			if (l.equals("!METADATA") || l.equals("trace") || l.equals("accumulo.root") || l.equals("accumulo.metadata")) {
 				continue;
 			}
 			//System.out.println("Looking at table: " + l);
