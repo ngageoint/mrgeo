@@ -60,8 +60,14 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
 
   public String getResolvedResourceName(final boolean mustExist) throws IOException
   {
-    return resolveNameToPath(conf, getResourceName(), providerProperties, mustExist, true).toUri().toString();
-    //return new Path(getImageBasePath(), getResourceName()).toUri().toString();
+    try
+    {
+      return resolveNameToPath(conf, getResourceName(), providerProperties, mustExist, true).toUri().toString();
+    }
+    catch (IllegalArgumentException e)
+    {
+      throw new IOException(e);
+    }
   }
 
   public Path getResourcePath(boolean mustExist) throws IOException
@@ -147,9 +153,16 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   @Override
   public void move(final String toResource) throws IOException
   {
-    HadoopFileUtils.move(getConfiguration(),
-        resolveNameToPath(getConfiguration(), getResourceName(), providerProperties, true, true),
-        new Path(toResource));
+    try
+    {
+      HadoopFileUtils.move(getConfiguration(),
+                           resolveNameToPath(getConfiguration(), getResourceName(), providerProperties, true, true),
+                           new Path(toResource));
+    }
+    catch (IllegalArgumentException e)
+    {
+      throw new IOException(e);
+    }
   }
 
   @Override
@@ -355,17 +368,24 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   public static boolean exists(final Configuration conf, String input,
       final Properties providerProperties) throws IOException
   {
-    return resolveNameToPath(conf, input, providerProperties, true, true) != null;
+    return resolveNameToPath(conf, input, providerProperties, true, false) != null;
   }
   
   public static void delete(final Configuration conf, String input,
       final Properties providerProperties) throws IOException
   {
-    Path p = resolveNameToPath(conf, input, providerProperties, false, true);
-    // In case the resource was moved since it was created
-    if (p != null)
+    try
     {
-      HadoopFileUtils.delete(conf, p);
+      Path p = resolveNameToPath(conf, input, providerProperties, false, true);
+      // In case the resource was moved since it was created
+      if (p != null)
+      {
+        HadoopFileUtils.delete(conf, p);
+      }
+    }
+    catch (IllegalArgumentException e)
+    {
+      throw new IOException(e);
     }
   }
 
@@ -373,10 +393,16 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
       final Properties providerProperties) throws IOException
   {
     // The return value of resolveNameToPath will be null if the input
-    // path does not exist. It wil throw an exception if there is a problem
-    // with building the path.
-    Path p = resolveNameToPath(conf, input, providerProperties, true, true);
-    return (p == null);
+    // path does not exist.
+    try
+    {
+      Path p = resolveNameToPath(conf, input, providerProperties, true, true);
+      return (p == null);
+    }
+    catch (IllegalArgumentException e)
+    {
+    }
+    return false;
   }
 
 //  public static MrsImagePyramidMetadata load(final Path path) throws JsonGenerationException,

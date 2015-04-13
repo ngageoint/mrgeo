@@ -29,6 +29,7 @@ import org.mrgeo.utils.HadoopUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -117,9 +118,15 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   @Override
   public void move(final String toResource) throws IOException
   {
-    HadoopFileUtils.move(getConfiguration(),
-        getResourcePath(), determineResourcePath(getConfiguration(), toResource));
-
+    try
+    {
+      HadoopFileUtils.move(getConfiguration(),
+                           getResourcePath(), determineResourcePath(getConfiguration(), toResource));
+    }
+    catch (URISyntaxException e)
+    {
+      throw new IOException(e);
+    }
   }
 
   @Override
@@ -167,13 +174,20 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   {
     if (resourcePath == null)
     {
-      resourcePath = determineResourcePath(getConfiguration(), getResourceName());
+      try
+      {
+        resourcePath = determineResourcePath(getConfiguration(), getResourceName());
+      }
+      catch (URISyntaxException e)
+      {
+        throw new IOException(e);
+      }
     }
     return resourcePath;
   }
 
   private static Path determineResourcePath(final Configuration conf,
-      final String resourceName) throws IOException
+      final String resourceName) throws IOException, URISyntaxException
   {
     return HadoopFileUtils.resolveName(conf, resourceName, false);
   }
@@ -188,9 +202,17 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   public static boolean canOpen(final Configuration conf,
       final String name, final Properties providerProperties) throws IOException
   {
-    Path p = determineResourcePath(conf, name);
-    FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
-    return fs.exists(p);
+    try
+    {
+      Path p = determineResourcePath(conf, name);
+      FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
+      return fs.exists(p);
+    }
+    catch(URISyntaxException e)
+    {
+      // The requested resource is not a legitimate HDFS source
+    }
+    return false;
   }
 
   public static boolean canWrite(final String name, final Configuration conf,
@@ -231,13 +253,28 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   public static boolean exists(final Configuration conf, String name,
       final Properties providerProperties) throws IOException
   {
-    return HadoopFileUtils.exists(determineResourcePath(conf, name));
+    try
+    {
+      return HadoopFileUtils.exists(determineResourcePath(conf, name));
+    }
+    catch (URISyntaxException e)
+    {
+      // The name may not be an HDFS source, so in that case we return false
+    }
+    return false;
   }
 
   public static void delete(final Configuration conf, String name,
       final Properties providerProperties) throws IOException
   {
-    HadoopFileUtils.delete(determineResourcePath(conf, name));
+    try
+    {
+      HadoopFileUtils.delete(determineResourcePath(conf, name));
+    }
+    catch (URISyntaxException e)
+    {
+      throw new IOException(e);
+    }
   }
 
   private Configuration getConfiguration()

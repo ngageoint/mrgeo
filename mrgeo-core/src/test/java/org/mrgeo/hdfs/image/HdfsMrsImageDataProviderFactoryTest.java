@@ -194,18 +194,18 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
     Assert.assertFalse("Can not open file!", factory.exists( "missing", providerProperties));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testExistsBadUri1() throws Exception
   {
-    factory.exists( "abcd:bad-name", conf);
+    Assert.assertFalse(factory.exists( "abcd:bad-name", conf));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testExistsBadUri2() throws Exception
   {
-    factory.exists( "abcd:bad-name", providerProperties);
+    Assert.assertFalse(factory.exists( "abcd:bad-name", providerProperties));
   }
 
   @Test(expected = NullPointerException.class)
@@ -250,18 +250,18 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
     Assert.assertTrue("Can not write!", factory.canWrite( "missing", providerProperties));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testCanWriteBadUri1() throws Exception
   {
-    factory.canWrite( "abcd:bad-name", conf);
+    Assert.assertFalse(factory.canWrite( "abcd:bad-name", conf));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   @Category(UnitTest.class)
   public void testCanWriteBadUri2() throws Exception
   {
-    factory.canWrite( "abcd:bad-name", providerProperties);
+    Assert.assertFalse(factory.canWrite( "abcd:bad-name", providerProperties));
   }
 
   @Test(expected = NullPointerException.class)
