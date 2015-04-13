@@ -312,7 +312,7 @@ public abstract class MapOp implements Cloneable
    * will call the cleanup() method on each of the map ops to remove these
    * temporary resources.
    * 
-   * @param p The name of the temporary resource
+   * @param resource The name of the temporary resource
    */
   public void addTempResource(final String resource)
   {
@@ -618,6 +618,28 @@ public abstract class MapOp implements Cloneable
     return null;
   }
 
+  public String printTree()
+  {
+    StringBuilder builder = new StringBuilder();
+    walkAndPrintTree(this, 0, builder);
+
+    return builder.toString();
+  }
+
+  private void walkAndPrintTree(MapOp op, int level, StringBuilder builder)
+  {
+    for (int i = 0; i < level; i++)
+    {
+      builder.append("  ");
+    }
+    builder.append(op.toString());
+    builder.append('\n');
+
+    for (MapOp input : op._inputs)
+    {
+      walkAndPrintTree(input, level + 1, builder);
+    }
+  }
   /**
    * Adds an execute listener to this MapOp. The MapAlgebraExecutioner will take care of
    * calling each of the executeListeners after this MapOp executes. The map algebra

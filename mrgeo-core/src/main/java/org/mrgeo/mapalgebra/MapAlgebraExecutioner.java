@@ -87,15 +87,14 @@ public class MapAlgebraExecutioner
         // Build execute listeners if there are any
         if (executeListeners != null)
         {
-          for (int i=0; i < executeListeners.size(); i++)
+          for (MapOp listener : executeListeners)
           {
-            MapOp listener = executeListeners.get(i);
             if (listener != null)
             {
               ProgressHierarchy listenerProgress = new ProgressHierarchy();
               if (listener instanceof OutputProducer)
               {
-                ((OutputProducer)listener).resolveOutputName();
+                ((OutputProducer) listener).resolveOutputName();
               }
               listener.build(listenerProgress);
             }
@@ -136,10 +135,8 @@ public class MapAlgebraExecutioner
   {
     synchronized (futures)
     {
-      Iterator<Future<RunnableMapOp>> iter = futures.iterator();
-      while (iter.hasNext())
+      for (Future<RunnableMapOp> future : futures)
       {
-        Future<RunnableMapOp> future = iter.next();
         // cancel (true - may interrupt the job if running)
         future.cancel(true);
       }
@@ -265,13 +262,19 @@ public class MapAlgebraExecutioner
       {
         v.add(new RunnableMapOp(conf, child, pc1));
       }
-      else if ((child instanceof DeferredExecutor) && (mapOp instanceof DeferredExecutor))
+      // see if the child has any execute listeners (like a save(...)), if so, make sure we run
+      // it here, otherwise the listeners are quietly ignored
+      else if (child.getExecuteListeners() != null && child.getExecuteListeners().size() > 0)
+      {
+        v.add(new RunnableMapOp(conf, child, pc1));
+      }
+      else
       {
         // If both the child and the parent are deferred executors, but the child
         // is a different type of deferred executor, then we need to build the
         // child since they can't built together.
-        DeferredExecutor deferredChild = (DeferredExecutor)child;
-        DeferredExecutor deferredMapOp = (DeferredExecutor)mapOp;
+        DeferredExecutor deferredChild = (DeferredExecutor) child;
+        DeferredExecutor deferredMapOp = (DeferredExecutor) mapOp;
         if (!deferredChild.getOperationId().equals(deferredMapOp.getOperationId()))
         {
           v.add(new RunnableMapOp(conf, child, pc1));
@@ -284,6 +287,8 @@ public class MapAlgebraExecutioner
     {
       runThreads(conf, v);
     }
+
+
     // The prepare() is called at the level being recursed because there is
     // nothing more to know than whether or not it is a deferred map op.
     if (mapOp instanceof DeferredExecutor)
@@ -392,8 +397,8 @@ public class MapAlgebraExecutioner
    * Calculate the input pyramid paths from the entire tree this image. This should _not_ call
    * getOutput() on its input MapOps.
    * 
-   * @param inputIndex
-   * @param outputBounds
+   * @param mapOp
+   * @param inputPyramids
    * @return
    * @throws IOException
    */
@@ -416,8 +421,7 @@ public class MapAlgebraExecutioner
    * Calculate the combined bounds of all the inputs, which gives us the total bounds of this image.
    * This should _not_ call getOutput() on its input MapOps.
    * 
-   * @param inputIndex
-   * @param outputBounds
+   * @param mapOp
    * @return
    * @throws IOException
    */
@@ -445,8 +449,7 @@ public class MapAlgebraExecutioner
    * Calculate the maximum (most detailed) zoom level of all the inputs below the
    * mapOp passed in. This should _not_ call getOutput() on its input MapOps.
    * 
-   * @param inputIndex
-   * @param outputBounds
+   * @param mapOp
    * @return
    * @throws IOException
    */
@@ -502,8 +505,7 @@ public class MapAlgebraExecutioner
    * Calculate the tile size of all the inputs. The tile size is expected to be the same for all
    * inputs. This should _not_ call getOutput() on its input MapOps.
    * 
-   * @param inputIndex
-   * @param outputBounds
+   * @param mapOp
    * @return
    * @throws IOException
    */

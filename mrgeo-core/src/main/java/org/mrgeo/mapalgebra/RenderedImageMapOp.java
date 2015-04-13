@@ -57,7 +57,7 @@ public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor,
   {
     if (!(n instanceof RasterMapOp))
     {
-      throw new IllegalArgumentException("Only raster inputs are supported.");
+      throw new IllegalArgumentException("Only raster inputs are supported, got a " + n.getClass().getName());
     }
     _inputs.add(n);
   }
