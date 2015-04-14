@@ -99,13 +99,6 @@ public class PixelSizeMultiplier {
         if(!Float.isNaN(nodata) && s == nodata) {
         	v[0] = v[1] = Float.NaN;
         }
-        if ((px == 510 || px == 511) && (py == 510 || py == 511))
-        {
-          System.out.println("friction surface at (" + px + ", " + py + ") is " + s);
-          System.out.println("pixelWidthM = " + pixelWidthM);
-          System.out.println("pixelHeightM = " + pixelHeightM);
-          System.out.println("Set cost surface (" + px + ", " + py + ") to width " + v[0] + ", height " + v[1]);
-        }
         out.setPixel(px, py, v);
       }
     }

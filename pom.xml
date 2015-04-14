@@ -1807,6 +1807,11 @@
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-webserver</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-core</artifactId>
         <version>${mrgeo.version}</version>
       </dependency>
@@ -2172,6 +2177,12 @@
           <exclusion>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <!-- Exclude servlet-api because it conflicts with the servlet
+               classes provided at runtime by the web server -->
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>servlet-api-2.5</artifactId>
           </exclusion>
          </exclusions>
       </dependency>
