@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.SortedSet;
@@ -314,6 +315,21 @@ public class AccumuloConnector {
 		return retStr;
 
 	} // end getReadAuthorizations
+	
+	
+	public static boolean deleteTable(String table){
+		ArrayList<String> ignore = AccumuloUtils.getIgnoreTables();
+		try{
+			Connector conn = AccumuloConnector.getConnector();
+			conn.tableOperations().delete(table);
+			return true;
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		return false;
+	} // end deleteTable
+	
+	
 
 	public static void main(String args[]) throws Exception {
 		// String myEnc = AccumuloConnector.encodeAccumuloProperties("rrr");

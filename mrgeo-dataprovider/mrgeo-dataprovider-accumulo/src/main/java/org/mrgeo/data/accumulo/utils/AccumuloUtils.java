@@ -18,6 +18,8 @@ package org.mrgeo.data.accumulo.utils;
 import java.awt.image.Raster;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -32,6 +34,7 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.admin.TableOperationsImpl;
@@ -238,6 +241,13 @@ public class AccumuloUtils {
 				,MrGeoProperties.getInstance().getProperty("zooservers")
 				,MrGeoProperties.getInstance().getProperty("accumulo.user")
 				,MrGeoProperties.getInstance().getProperty("accumulo.password"));
+		if(! connector.tableOperations().exists(tableName)){
+			try{
+				connector.tableOperations().create(tableName, true);
+			} catch(TableExistsException tee){
+				tee.printStackTrace();
+			}
+		}
 		connector.tableOperations().importDirectory(tableName, workDir + "/files", workDir + "/failures", false);
 
 	} // end importDirectory
@@ -635,10 +645,18 @@ public class AccumuloUtils {
 		
 		
 		//Set<String> list = toi.list();
-
+		ArrayList<String> ignoreTables = new ArrayList<String>();
+		if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES) != null){
+			ignoreTables.addAll(Arrays.asList(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES).split(",")));
+		}
+		
 		Set<String> retList = new HashSet<String>();
 		for (String l : list) {
-			if (l.equals("!METADATA") || l.equals("trace") || l.equals("accumulo.root") || l.equals("accumulo.metadata")) {
+			if (l.equals("!METADATA") ||
+					l.equals("trace") ||
+					l.equals("accumulo.root") ||
+					l.equals("accumulo.metadata") ||
+					ignoreTables.contains(l)) {
 				continue;
 			}
 
@@ -648,6 +666,20 @@ public class AccumuloUtils {
 		return retList;
 
 	} // end getListOfTables
+	
+	public static ArrayList<String> getIgnoreTables(){
+		Properties props = AccumuloConnector.getAccumuloProperties();
+		ArrayList<String> ignoreTables = new ArrayList<String>();
+		ignoreTables.add("!METADATA");
+		ignoreTables.add("trace");
+		ignoreTables.add("accumulo.root");
+		ignoreTables.add("accumulo.metadata");
+		if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES) != null){
+			ignoreTables.addAll(Arrays.asList(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES).split(",")));
+		}
+		return ignoreTables;
+	} // end 
+	
 	
 	public static Hashtable<String, String> getGeoTables(Properties providerProperties) {
 
@@ -692,7 +724,7 @@ public class AccumuloUtils {
 
 			AuthenticationToken at = new PasswordToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
 			
-			return getGeoTables(at, auths, conn);
+			return getGeoTables(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES), at, auths, conn);
 		}
 
 		return new Hashtable<String, String>();
@@ -700,7 +732,7 @@ public class AccumuloUtils {
 	} // end getGeoTables
 	
 	
-	public static Hashtable<String, String> getGeoTables(AuthenticationToken token,
+	public static Hashtable<String, String> getGeoTables(String ignore, AuthenticationToken token,
 			Authorizations auths, Connector conn){
 //	public static Hashtable<String, String> getGeoTables(TCredentials tcr,
 //			Authorizations auths, Connector conn) {
@@ -708,6 +740,10 @@ public class AccumuloUtils {
 			return null;
 		}
 		Hashtable<String, String> retTable = new Hashtable<String, String>();
+		ArrayList<String> ignoreTables = new ArrayList<String>();
+		if(ignore != null){
+			ignoreTables.addAll(Arrays.asList(ignore.split(",")));
+		}
 
 		//TableOperationsImpl toi = new TableOperationsImpl(conn.getInstance(), tcr);
 
@@ -718,7 +754,11 @@ public class AccumuloUtils {
 
 		Set<String> list = conn.tableOperations().list();
 		for (String l : list) {
-			if (l.equals("!METADATA") || l.equals("trace") || l.equals("accumulo.root") || l.equals("accumulo.metadata")) {
+			if (l.equals("!METADATA") ||
+					l.equals("trace") ||
+					l.equals("accumulo.root") ||
+					l.equals("accumulo.metadata") ||
+					ignoreTables.contains(l)) {
 				continue;
 			}
 			//System.out.println("Looking at table: " + l);
@@ -775,7 +815,7 @@ public class AccumuloUtils {
 				e.printStackTrace();
 			}
 
-		}
+		} // end for loop
 
 		return retTable;
 	} // end getGeoTables
