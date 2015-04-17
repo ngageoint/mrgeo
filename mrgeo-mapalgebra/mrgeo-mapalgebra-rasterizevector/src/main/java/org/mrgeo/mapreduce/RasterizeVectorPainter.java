@@ -60,7 +60,7 @@ public class RasterizeVectorPainter
 
   private GeometryPainter rasterPainter;
   private GeometryPainter totalPainter;
-  private WeightedComposite composite;
+  private Composite composite;
   private WritableRaster totalRaster;
   private WritableRaster raster;
 
@@ -99,11 +99,23 @@ public class RasterizeVectorPainter
     {
       composite = new MaxCompositeDouble();
     }
+    else if (aggregationType == AggregationType.MASK)
+    {
+      // When a feature is painted in MASK mode, the src raster will contain
+      // 1.0 in each pixel that overlaps the feature. The MaskComposite will
+      // write a 0.0 to each pixel that was originally painted, and if any
+      // polygon holes are painted after that, those are written as NaN.
+      composite = new MaskComposite(1.0, 0.0, Double.NaN);
+    }
     else
     {
       composite = new AdditiveCompositeDouble();
     }
 
+    // Because of how MASK works, and having to properly handle inner rings of
+    // polygons, the raster is initialized to all 0's for the MASK aggregation.
+    // There is no way to paint NaN values onto the raster using the GeometryPainter
+    // so the non-masked pixels will be set to a value of 0 (which can be painted).
     raster = RasterUtils.createEmptyRaster(tileSize, tileSize, 1,
         DataBuffer.TYPE_DOUBLE, Double.NaN);
 
@@ -125,12 +137,6 @@ public class RasterizeVectorPainter
 
     final BufferedImage bi = RasterUtils.makeBufferedImage(raster);
     final Graphics2D gr = bi.createGraphics();
-
-    // masks have 0.0 in areas with data, and NaN in areas with no data
-    if (aggregationType == AggregationType.MASK)
-    {
-      composite.setWeight(0.0);
-    }
 
     gr.setComposite(composite);
     gr.setStroke(new BasicStroke(0));
@@ -166,7 +172,7 @@ public class RasterizeVectorPainter
       if (sv != null)
       {
         final double v = Double.parseDouble(sv);
-        composite.setWeight(v);
+        ((WeightedComposite)composite).setWeight(v);
 
         rasterPainter.paint(g);
 
@@ -189,7 +195,7 @@ public class RasterizeVectorPainter
 
     if (aggregationType == AggregationType.AVERAGE && totalPainter != null)
     {
-      composite.setWeight(1.0);
+      ((WeightedComposite)composite).setWeight(1.0);
       totalPainter.setBounds(b);
       totalPainter.paint(g);
     }
