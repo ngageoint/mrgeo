@@ -26,6 +26,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.thrift.TCredentials;
 import org.apache.commons.lang.NotImplementedException;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
+import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.ingest.ImageIngestDataProvider;
 import org.mrgeo.data.ingest.ImageIngestRawInputFormatProvider;
@@ -144,21 +145,29 @@ public class AccumuloImageIngestDataProvider extends ImageIngestDataProvider
    * @throws IOException
    */
   public static boolean canOpen(final String name) throws IOException {
-
-    if(name.equals("!METADATA") || name.equals("trace")){
+	  // get list of ignored tables
+	  ArrayList<String> ignoreTables = AccumuloUtils.getIgnoreTables();
+    if(name.equals("!METADATA") ||
+    		name.equals("trace") ||
+    		name.equals("accumulo.root") ||
+    		name.equals("accumulo.metadata") ||
+    		ignoreTables.contains(name)){
       return false;
     }
-    
 
     ArrayList<String> tables = listGeoTables();
     return tables.contains(name);
-    
     
   } // end canOpen
   
   
   public static boolean canWrite(final String name){
-    try{
+	  ArrayList<String> ignoreTables = AccumuloUtils.getIgnoreTables();
+	  if(ignoreTables.contains(name)){
+		  return false;
+	  }
+	  try{
+    	// this may need to be changed
       return canOpen(name);
     } catch(IOException ioe){
       
@@ -272,7 +281,10 @@ public class AccumuloImageIngestDataProvider extends ImageIngestDataProvider
 
 
   public static void delete(String name) throws IOException{
-    // do nothing
+	  // think about this one
+	  AccumuloConnector.deleteTable(name);
+	  
+	  
   }
 
   @Override
