@@ -1214,7 +1214,7 @@
       <id>apache240</id>
       <properties>
         <hadoop.version>2.4.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
+        <hadoop.yarn.scope>provided</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -2041,6 +2041,7 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
         <version>${hadoop.version}</version>
+        <scope>provided</scope>
         <exclusions>
           <exclusion>
             <groupId>asm</groupId>
@@ -2202,6 +2203,14 @@
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
           </exclusion>
         </exclusions>
         <!-- scope>provided</scope -->
