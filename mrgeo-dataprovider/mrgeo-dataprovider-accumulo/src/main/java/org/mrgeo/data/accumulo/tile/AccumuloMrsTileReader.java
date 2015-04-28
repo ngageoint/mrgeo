@@ -514,10 +514,13 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
   @Override
   public T get(final TileIdWritable key)
   {
-    log.debug("getting single tile of id = " + key.get());
+    log.debug("getting single (no zoom level) tile of id = " + key.get());
 
     // set the scanner for the tile id
     scanner.setRange(new Range(AccumuloUtils.toRowId(key.get())));
+    if(zoomLevel != -1){
+    	scanner.fetchColumnFamily(new Text(Integer.toString(zoomLevel)));
+    }
     
     final Iterator<Entry<Key, Value>> it = scanner.iterator();
     try
