@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.services.wms;
+package org.mrgeo.resources.wms;
 
-import com.meterware.httpunit.WebRequest;
+import com.sun.jersey.api.client.ClientResponse;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
@@ -37,12 +37,12 @@ public class CustomColorScaleTest extends WmsGeneratorTestAbstract
     LoggerFactory.getLogger(CustomColorScaleTest.class);
   
   @BeforeClass 
-  public static void setUp()
+  public static void setUpForJUnit()
   {    
     try 
     {
       baselineInput = TestUtils.composeInputDir(CustomColorScaleTest.class);
-      WmsGeneratorTestAbstract.setUp();
+      WmsGeneratorTestAbstract.setUpForJUnit();
       
       FileSystem fileSystem = HadoopFileUtils.getFileSystem(inputHdfs);
       
@@ -63,25 +63,20 @@ public class CustomColorScaleTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)  
   public void testMissingSystemColorScale() throws Exception
   {
-    try
-    {
-      MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, "foo/bar");
+    MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, "foo/bar");
 
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getmap");
-      request.setParameter("LAYERS", "IslandsElevation-v2");
-      request.setParameter("FORMAT", "image/png");
-      request.setParameter("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE);
-      request.setParameter("WIDTH", "512");
-      request.setParameter("HEIGHT", "512");
-        
-      processImageResponse(webClient.getResponse(request), "png");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    String contentType = "image/png";
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getmap")
+            .queryParam("LAYERS", "IslandsElevation-v2")
+            .queryParam("FORMAT", contentType)
+            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+            .queryParam("WIDTH", "512")
+            .queryParam("HEIGHT", "512")
+            .get(ClientResponse.class);
+
+    processImageResponse(response, contentType, "png");
   }
   
   // TODO: Commented out all of the following WMS tests since we no longer support a

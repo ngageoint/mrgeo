@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.services.wms;
+package org.mrgeo.resources.wms;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
+import com.sun.jersey.api.client.ClientResponse;
 import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,6 +27,7 @@ import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.Response;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -40,12 +40,12 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
   private static final Logger log = LoggerFactory.getLogger(DescribeTilesTest.class);
 
   @BeforeClass
-  public static void setUp()
+  public static void setUpForJUnit()
   {
     try
     {
       baselineInput = TestUtils.composeInputDir(DescribeTilesTest.class);
-      WmsGeneratorTestAbstract.setUp();
+      WmsGeneratorTestAbstract.setUpForJUnit();
 
       Properties mrgeoProperties = MrGeoProperties.getInstance();
 
@@ -72,61 +72,43 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)
   public void testDescribeTilesEmptyVersion() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "describetiles");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "describetiles")
+            .get(ClientResponse.class);
 
-      processTextResponse(webClient.getResponse(request), "DescribeTiles.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    processTextResponse(response, "DescribeTiles.xml");
   }
 
   @Test
   @Category(IntegrationTest.class)
   public void testDescribeTilesLessThan140() throws Exception
   {
-    WebResponse response = null;
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "describetiles");
-      request.setParameter("VERSION", "1.3.0");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "describetiles")
+            .queryParam("VERSION", "1.3.0")
+            .get(ClientResponse.class);
 
-      response = webClient.getResponse(request);
-    }
-    finally
-    {
-      Assert.assertNotNull(response);
-      assertEquals(response.getResponseCode(), 200);
-      assertTrue(
-          response.getText().contains(
-              "<ServiceException code=\"Describe tiles is only supported with version &gt;= 1.4.0\"")
-      );
-      response.close();
-    }
+    Assert.assertNotNull(response);
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    String content = response.getEntity(String.class);
+    assertTrue("Unexpected response: " + content,
+               content.contains(
+                       "<ServiceException><![CDATA[Describe tiles is only supported with version >= 1.4.0]]></ServiceException>")
+    );
+    response.close();
   }
 
   @Test
   @Category(IntegrationTest.class)
   public void testDescribeTiles140() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "describetiles");
-      request.setParameter("VERSION", "1.4.0");
-
-      processTextResponse(webClient.getResponse(request), "DescribeTiles.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "describetiles")
+            .queryParam("VERSION", "1.4.0")
+            .get(ClientResponse.class);
+    processTextResponse(response, "DescribeTiles.xml");
   }
 }

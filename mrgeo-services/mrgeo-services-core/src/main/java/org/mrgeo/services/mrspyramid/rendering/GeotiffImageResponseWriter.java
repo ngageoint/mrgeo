@@ -58,7 +58,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
   }
 
   @Override
-  public Response write(final Raster raster)
+  public Response.ResponseBuilder write(final Raster raster)
   {
     try
     {
@@ -67,16 +67,15 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
       writeStream(raster, Bounds.world, Double.NaN, byteStream);
 
       return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
-        getResponseMimeType()).header("Content-Disposition", "attachment; filename=image.tif")
-        .build();
+        getResponseMimeType()).header("Content-Disposition", "attachment; filename=image.tif");
     }
     catch (final Exception e)
     {
       if (e.getMessage() != null)
       {
-        return Response.serverError().entity(e.getMessage()).build();
+        return Response.serverError().entity(e.getMessage());
       }
-      return Response.serverError().entity("Internal Error").build();
+      return Response.serverError().entity("Internal Error");
 
     }
 
@@ -100,7 +99,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
   }
 
   @Override
-  public Response write(final Raster raster, final int tileColumn, final int tileRow,
+  public Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow,
     final double scale, final MrsImagePyramid pyramid)
   {
     try
@@ -115,15 +114,15 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
       return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
         getResponseMimeType()).header("Content-Disposition",
-        "attachment; filename=" + pyramid.getName() + ".tif").build();
+                                      "attachment; filename=" + pyramid.getName() + ".tif");
     }
     catch (final Exception e)
     {
       if (e.getMessage() != null)
       {
-        return Response.serverError().entity(e.getMessage()).build();
+        return Response.serverError().entity(e.getMessage());
       }
-      return Response.serverError().entity("Internal Error").build();
+      return Response.serverError().entity("Internal Error");
 
     }
 
@@ -155,13 +154,13 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
   /**
    * 
-   * @param image
    * @param imageName
+   * @param bounds
    * @return
    * @throws IOException
    */
   @Override
-  public Response write(final Raster raster, final String imageName, final Bounds bounds)
+  public Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds)
   {
     try
     {
@@ -171,15 +170,15 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
       return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
         getResponseMimeType()).header("Content-Disposition",
-        "attachment; filename=" + imageName + ".tif").build();
+                                      "attachment; filename=" + imageName + ".tif");
     }
     catch (final Exception e)
     {
       if (e.getMessage() != null)
       {
-        return Response.serverError().entity(e.getMessage()).build();
+        return Response.serverError().entity(e.getMessage());
       }
-      return Response.serverError().entity("Internal Error").build();
+      return Response.serverError().entity("Internal Error");
 
     }
 

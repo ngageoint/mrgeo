@@ -146,7 +146,7 @@ public class TileMapServiceResource
     g.fillRect(0, 0, width, height);
     g.dispose();
 
-    return writer.write(bufImg.getData());
+    return writer.write(bufImg.getData()).build();
   }
 
   protected static Document mrsPyramidMetadataToTileMapXml(final String raster, final String url,
@@ -901,7 +901,7 @@ public class TileMapServiceResource
 //      }
 
       return ((ImageResponseWriter) ImageHandlerFactory.getHandler(format,
-        ImageResponseWriter.class)).write(raster, renderer.getDefaultValues());
+        ImageResponseWriter.class)).write(raster, renderer.getDefaultValues()).build();
 
     }
     catch (final IllegalArgumentException e)

@@ -331,7 +331,7 @@ public class RasterResourceTest extends JerseyTest
 
       ImageResponseWriter writer = mock(ImageResponseWriter.class);
       //Mockito.when(writer.getMimeType()).thenReturn( typ );
-      when(writer.write((Raster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ).build());
+      when(writer.write((Raster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
 
       when(service.getImageResponseWriter(anyString())).thenReturn(writer);
     final WebResource webResource = resource();
@@ -375,7 +375,7 @@ public class RasterResourceTest extends JerseyTest
 
       ImageResponseWriter writer = mock(ImageResponseWriter.class);
       //Mockito.when(writer.getMimeType()).thenReturn( typ );
-      when(writer.write((Raster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ).build());
+      when(writer.write((Raster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
 
       when(service.getImageResponseWriter(anyString())).thenReturn(writer);
     final WebResource webResource = resource();

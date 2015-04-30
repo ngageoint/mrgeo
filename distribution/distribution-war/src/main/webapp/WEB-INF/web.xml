@@ -83,16 +83,6 @@
     <servlet-name>KmlGenerator</servlet-name>
     <url-pattern>/KmlGenerator</url-pattern>
   </servlet-mapping>
-  <servlet>
-    <description></description>
-    <display-name>WmsGenerator</display-name>
-    <servlet-name>WmsGenerator</servlet-name>
-    <servlet-class>org.mrgeo.services.wms.WmsGenerator</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>WmsGenerator</servlet-name>
-    <url-pattern>/WmsGenerator</url-pattern>
-  </servlet-mapping>
 <context-param>
     <param-name>webAppRootKey</param-name>
     <param-value>mrgeoServicesDistributionRootKey</param-value>

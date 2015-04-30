@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.services.wms;
+package org.mrgeo.resources.wms;
 
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;

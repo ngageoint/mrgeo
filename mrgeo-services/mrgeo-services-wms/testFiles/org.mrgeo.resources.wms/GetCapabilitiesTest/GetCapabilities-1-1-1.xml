@@ -5,7 +5,7 @@
 <Name>OGC:WMS</Name>
 <Title>MrGeo Web Map Service</Title>
 <Abstract>MrGeo Web Map Service</Abstract>
-<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/mrgeo-services/WmsGenerator" xlink:type="simple"/>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;version=1.1.1" xlink:type="simple"/>
 <Fees>none</Fees>
 <AccessConstraints>none</AccessConstraints>
 </Service>
@@ -16,10 +16,10 @@
 <DCPType>
 <HTTP>
 <Get>
-<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/mrgeo-services/WmsGenerator" xlink:type="simple"/>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;version=1.1.1" xlink:type="simple"/>
 </Get>
 <Post>
-<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/mrgeo-services/WmsGenerator" xlink:type="simple"/>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;version=1.1.1" xlink:type="simple"/>
 </Post>
 </HTTP>
 </DCPType>
@@ -35,10 +35,10 @@
 <DCPType>
 <HTTP>
 <Get>
-<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/mrgeo-services/WmsGenerator" xlink:type="simple"/>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;version=1.1.1" xlink:type="simple"/>
 </Get>
 <Post>
-<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/mrgeo-services/WmsGenerator" xlink:type="simple"/>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;version=1.1.1" xlink:type="simple"/>
 </Post>
 </HTTP>
 </DCPType>
@@ -54,10 +54,10 @@
 <DCPType>
 <HTTP>
 <Get>
-<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/mrgeo-services/WmsGenerator" xlink:type="simple"/>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;version=1.1.1" xlink:type="simple"/>
 </Get>
 <Post>
-<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/mrgeo-services/WmsGenerator" xlink:type="simple"/>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;version=1.1.1" xlink:type="simple"/>
 </Post>
 </HTTP>
 </DCPType>

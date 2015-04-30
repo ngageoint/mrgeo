@@ -5,7 +5,7 @@
 <Name>OGC:WMS</Name>
 <Title>MrGeo Web Map Service</Title>
 <Abstract>MrGeo Web Map Service</Abstract>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 <Fees>none</Fees>
 <AccessConstraints>none</AccessConstraints>
 </Service>
@@ -16,10 +16,10 @@
 <DCPType>
 <HTTP>
 <Get>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Get>
 <Post>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Post>
 </HTTP>
 </DCPType>
@@ -35,10 +35,10 @@
 <DCPType>
 <HTTP>
 <Get>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Get>
 <Post>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Post>
 </HTTP>
 </DCPType>
@@ -54,10 +54,10 @@
 <DCPType>
 <HTTP>
 <Get>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Get>
 <Post>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Post>
 </HTTP>
 </DCPType>
@@ -66,10 +66,10 @@
 <DCPType>
 <HTTP>
 <Get>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Get>
 <Post>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Post>
 </HTTP>
 </DCPType>
@@ -85,10 +85,10 @@
 <DCPType>
 <HTTP>
 <Get>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Get>
 <Post>
-<OnlineResource>http://localhost/mrgeo-services/WmsGenerator</OnlineResource>
+<OnlineResource>http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS&amp;VERSION=1.4.0</OnlineResource>
 </Post>
 </HTTP>
 </DCPType>

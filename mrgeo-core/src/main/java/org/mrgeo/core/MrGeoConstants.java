@@ -86,7 +86,7 @@ public class MrGeoConstants
   /*
    * WMS configuration keys
    */
-  public static final String MRGEO_WMS_PERMITS = "org.mrgeo.services.WmsGenerator.permits";
+  public static final String MRGEO_WMS_PERMITS = "org.mrgeo.resources.WmsGenerator.permits";
 
   /*
    * Security classification keys

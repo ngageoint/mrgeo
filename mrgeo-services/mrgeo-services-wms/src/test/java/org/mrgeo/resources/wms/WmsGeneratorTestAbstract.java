@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.services.wms;
+package org.mrgeo.resources.wms;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
-import com.meterware.servletunit.ServletRunner;
 import com.meterware.servletunit.ServletUnitClient;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.core.DefaultResourceConfig;
+import com.sun.jersey.test.framework.AppDescriptor;
+import com.sun.jersey.test.framework.JerseyTest;
+import com.sun.jersey.test.framework.LowLevelAppDescriptor;
+import com.sun.jersey.test.framework.spi.container.TestContainerException;
+import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
+import com.sun.jersey.test.framework.spi.container.grizzly2.GrizzlyTestContainerFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.mrgeo.core.Defs;
@@ -32,12 +38,12 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.services.mrspyramid.ColorScaleManager;
 import org.mrgeo.services.utils.ImageTestUtils;
-import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.Response;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,7 +53,7 @@ import static org.junit.Assert.assertEquals;
 
 //import org.mrgeo.utils.LoggingUtils;
 
-public class WmsGeneratorTestAbstract extends LocalRunnerTest
+public class WmsGeneratorTestAbstract extends JerseyTest
 {
   private static final Logger log = LoggerFactory.getLogger(WmsGeneratorTestAbstract.class);
 
@@ -55,7 +61,7 @@ public class WmsGeneratorTestAbstract extends LocalRunnerTest
   protected static String baselineInput;
   protected static Path inputHdfs;
 
-  protected static ServletRunner servletRunner;
+//  protected static ServletRunner servletRunner;
   protected static ServletUnitClient webClient;
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
@@ -85,19 +91,37 @@ public class WmsGeneratorTestAbstract extends LocalRunnerTest
   protected static String small3band = "small-3band";
   protected static String small3bandUnqualified;
 
+  @Override
+  protected AppDescriptor configure()
+  {
+    DefaultResourceConfig resourceConfig = new DefaultResourceConfig();
+    resourceConfig.getClasses().add(WmsGenerator.class);
+    return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
+  }
+
+  @Override
+  protected TestContainerFactory getTestContainerFactory() throws TestContainerException
+  {
+//    return new FilteringInMemoryTestContainerFactory();
+    return new GrizzlyTestContainerFactory();
+//    return new InMemoryTestContainerFactory();
+  }
+
   @BeforeClass
-  public static void setUp()
+  public static void setUpForJUnit()
   {
     try
     {
       DataProviderFactory.invalidateCache();
       ColorScaleManager.invalidateCache();
-      
+
       // use the top level dir for input data
       input = TestUtils.composeInputDir(WmsGeneratorTestAbstract.class);
       inputHdfs = TestUtils.composeInputHdfs(WmsGeneratorTestAbstract.class, true);
       copyInputData();
-      launchServlet();
+//      launchServlet();
+      MrGeoProperties.getInstance().setProperty(HadoopUtils.IMAGE_BASE, inputHdfs.toString());
+      MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, inputHdfs.toString());
 
       if (GEN_BASELINE_DATA_ONLY)
       {
@@ -117,14 +141,23 @@ public class WmsGeneratorTestAbstract extends LocalRunnerTest
     ColorScaleManager.invalidateCache();
   }
   
-  @AfterClass
-  public static void tearDown()
-  {
-    if (servletRunner != null)
-    {
-      servletRunner.shutDown();
-    }
-  }
+//  @AfterClass
+//  public static void tearDownForJUnit()
+//  {
+//    if (servletRunner != null)
+//    {
+//      servletRunner.shutDown();
+//    }
+//  }
+
+//  @Override
+//  protected AppDescriptor configure()
+//  {
+//    return new WebAppDescriptor.Builder("org.mrgeo.resources")
+//            .contextPath("/")
+//            .initParam("javax.ws.rs.Application", "org.mrgeo.application.Application")
+//            .build();
+//  }
 
   // TODO: all test classes are using the same set of input data for now to make things simpler...
   // kind of inefficient
@@ -191,21 +224,21 @@ public class WmsGeneratorTestAbstract extends LocalRunnerTest
         new URL(
             MrGeoProperties.getInstance().getProperty("base.url", "http://localhost:8080")
                 .replaceAll("/mrgeo-services/", "")),
-        "/mrgeo-services/WmsGenerator");
+        "/mrgeo-services/wms");
   }
 
-  protected static void launchServlet()
-  {
-    servletRunner = new ServletRunner();
-    servletRunner.registerServlet(
-        "/mrgeo-services/WmsGenerator", WmsGenerator.class.getName());
-    webClient = servletRunner.newClient();
-//    WmsGenerator.setBasePath(inputHdfs);
-//    WmsGenerator.setColorScaleBasePath(inputHdfs);
-    
-    MrGeoProperties.getInstance().setProperty(HadoopUtils.IMAGE_BASE, inputHdfs.toString());
-    MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, inputHdfs.toString());
-  }
+//  protected static void launchServlet()
+//  {
+//    servletRunner = new ServletRunner();
+//    servletRunner.registerServlet(
+//        "/mrgeo-services/WmsGenerator", WmsGenerator.class.getName());
+//    webClient = servletRunner.newClient();
+////    WmsGenerator.setBasePath(inputHdfs);
+////    WmsGenerator.setColorScaleBasePath(inputHdfs);
+//
+//    MrGeoProperties.getInstance().setProperty(HadoopUtils.IMAGE_BASE, inputHdfs.toString());
+//    MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, inputHdfs.toString());
+//  }
 
   protected static void processImageResponse(final WebResponse response, final String extension)
       throws IOException
@@ -226,6 +259,49 @@ public class WmsGeneratorTestAbstract extends LocalRunnerTest
         final String baselineImageFile =
             baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
                 extension;
+        log.info("Comparing result to baseline image " + baselineImageFile + " ...");
+        ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
+      }
+    }
+    finally
+    {
+      if (response != null)
+      {
+        response.close();
+      }
+    }
+  }
+
+  protected static void processImageResponse(final ClientResponse response,
+                                             final String contentType, final String extension)
+          throws IOException
+  {
+    try
+    {
+      if (response.getStatus() != Response.Status.OK.getStatusCode())
+      {
+        // Because of how junit works, we check for the failure case before calling
+        // assertEquals because it will trigger the code that computes the message (the
+        // first argument), which reads the content, and then the content would not be
+        // readable for the success case (to get the image bytes).
+        String content = response.getEntity(String.class);
+        assertEquals("Unexpected response status " + response.getStatus() + " with content " + content,
+                     Response.Status.OK.getStatusCode(), response.getStatus());
+      }
+      assertEquals(contentType, response.getHeaders().getFirst("Content-Type"));
+      if (GEN_BASELINE_DATA_ONLY)
+      {
+        final String outputPath =
+                baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+                        extension;
+        log.info("Generating baseline image: " + outputPath);
+        ImageTestUtils.writeBaselineImage(response, outputPath);
+      }
+      else
+      {
+        final String baselineImageFile =
+                baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+                        extension;
         log.info("Comparing result to baseline image " + baselineImageFile + " ...");
         ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
       }
@@ -270,6 +346,58 @@ public class WmsGeneratorTestAbstract extends LocalRunnerTest
           // log.debug(response.getText());
           log.info("Comparing result to baseline text in " + baselineFile + " ...");
           assertEquals(IOUtils.toString(inputStream), response.getText());
+        }
+        finally
+        {
+          IOUtils.closeQuietly(inputStream);
+        }
+      }
+    }
+    finally
+    {
+      if (response != null)
+      {
+        response.close();
+      }
+    }
+  }
+
+  protected static void processTextResponse(final ClientResponse response,
+                                            final String baselineFileName)
+          throws IOException
+  {
+    try
+    {
+      String content = response.getEntity(String.class);
+      if (response.getStatus() != Response.Status.OK.getStatusCode())
+      {
+        assertEquals("Unexpected response status " + response.getStatus() + " with content " + content,
+                     Response.Status.OK.getStatusCode(), response.getStatus());
+      }
+      if (GEN_BASELINE_DATA_ONLY)
+      {
+        final String outputPath = baselineInput + baselineFileName;
+        log.info("Generating baseline text: " + outputPath);
+        final OutputStream outputStream = new FileOutputStream(new File(outputPath));
+        try
+        {
+          // log.debug(response.getText());
+          IOUtils.write(content, outputStream);
+        }
+        finally
+        {
+          IOUtils.closeQuietly(outputStream);
+        }
+      }
+      else
+      {
+        final String baselineFile = baselineInput + baselineFileName;
+        final InputStream inputStream = new FileInputStream(new File(baselineFile));
+        try
+        {
+          // log.debug(response.getText());
+          log.info("Comparing result to baseline text in " + baselineFile + " ...");
+          assertEquals(IOUtils.toString(inputStream), content);
         }
         finally
         {

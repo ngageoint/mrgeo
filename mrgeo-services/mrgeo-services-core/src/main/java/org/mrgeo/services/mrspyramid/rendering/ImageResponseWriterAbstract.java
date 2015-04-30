@@ -37,13 +37,13 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
   private static final Logger log = LoggerFactory.getLogger(ImageResponseWriterAbstract.class);
 
   @Override
-  public Response write(final Raster raster)
+  public Response.ResponseBuilder write(final Raster raster)
   {
     return write(raster, (double[])(null));
   }
 
   @Override
-  public Response write(final Raster raster, double[] defaults)
+  public Response.ResponseBuilder write(final Raster raster, double[] defaults)
   {
     try
     {
@@ -52,16 +52,15 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
       writeToStream(raster, defaults, byteStream);
 
       // TODO: the type passed to Response.ok may not be correct here
-      return Response.ok(byteStream.toByteArray()).header("Content-type", getResponseMimeType())
-          .build();
+      return Response.ok(byteStream.toByteArray()).header("Content-type", getResponseMimeType());
     }
     catch (final Exception e)
     {
       if (e.getMessage() != null)
       {
-        return Response.serverError().entity(e.getMessage()).build();
+        return Response.serverError().entity(e.getMessage());
       }
-      return Response.serverError().entity("Internal Error").build();
+      return Response.serverError().entity("Internal Error");
     }
   }
 
@@ -88,7 +87,7 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
   }
 
   @Override
-  public Response write(final Raster raster, final int tileColumn, final int tileRow,
+  public Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow,
     final double scale, final MrsImagePyramid pyramid) throws IOException
   {
     return write(raster, pyramid.getMetadata().getDefaultValues());
@@ -103,7 +102,7 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
     }
 
   @Override
-  public Response write(final Raster raster, final String imageName, final Bounds bounds)
+  public Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds)
   {
     return write(raster);
   }

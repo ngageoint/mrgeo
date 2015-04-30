@@ -12,9 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
-package org.mrgeo.services.wms;
+package org.mrgeo.resources.wms;
 
-import com.meterware.httpunit.WebRequest;
+import com.sun.jersey.api.client.ClientResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -34,12 +34,12 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
   private static final Logger log = LoggerFactory.getLogger(GetCapabilitiesTest.class);
   
   @BeforeClass 
-  public static void setUp()
+  public static void setUpForJUnit()
   {    
     try 
     {
       baselineInput = TestUtils.composeInputDir(GetCapabilitiesTest.class);
-      WmsGeneratorTestAbstract.setUp();
+      WmsGeneratorTestAbstract.setUpForJUnit();
     }
     catch (Exception e)
     {
@@ -54,15 +54,10 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)  
   public void testEmptyRequestType() throws Exception
   {
-    try
-    {
-      processTextResponse(webClient.getResponse(createRequest()), "GetCapabilities-1-1-1.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .get(ClientResponse.class);
+    processTextResponse(response, "GetCapabilities-1-1-1-EmptyRequest.xml");
   }
   
   /*
@@ -76,150 +71,102 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)  
   public void testGetCapabilitiesEmptyVersion() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getcapabilities");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getcapabilities")
+            .get(ClientResponse.class);
       
-      processTextResponse(webClient.getResponse(request), "GetCapabilities-1-1-1.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    processTextResponse(response, "GetCapabilities-1-1-1-EmptyVersion.xml");
   }
   
   @Test 
   @Category(IntegrationTest.class)  
   public void testGetCapabilities111() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getcapabilities");
-      request.setParameter("version", "1.1.1");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getcapabilities")
+            .queryParam("version", "1.1.1")
+            .get(ClientResponse.class);
       
-      processTextResponse(webClient.getResponse(request), "GetCapabilities-1-1-1.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    processTextResponse(response, "GetCapabilities-1-1-1.xml");
   }
   
   @Test 
   @Category(IntegrationTest.class)  
   public void testGetCapabilities130() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getcapabilities");
-      request.setParameter("VERSION", "1.3.0");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getcapabilities")
+            .queryParam("VERSION", "1.3.0")
+            .get(ClientResponse.class);
       
-      processTextResponse(webClient.getResponse(request), "GetCapabilities-1-3-0.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    processTextResponse(response, "GetCapabilities-1-3-0.xml");
   }
   
   @Test 
   @Category(IntegrationTest.class)  
   public void testGetCapabilities140() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getcapabilities");
-      request.setParameter("VERSION", "1.4.0");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getcapabilities")
+            .queryParam("VERSION", "1.4.0")
+            .get(ClientResponse.class);
       
-      processTextResponse(webClient.getResponse(request), "GetCapabilities-1-4-0.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    processTextResponse(response, "GetCapabilities-1-4-0.xml");
   }
   
   @Test 
   @Category(IntegrationTest.class)  
   public void testGetCapabilitiesLessThan111() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getcapabilities");
-      request.setParameter("VERSION", "0.9.9");
-      
-      processTextResponse(webClient.getResponse(request), "GetCapabilities-1-1-1.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getcapabilities")
+            .queryParam("version", "0.9.9")
+            .get(ClientResponse.class);
+
+    processTextResponse(response, "GetCapabilities-1-1-1.xml");
   }
   
   @Test 
   @Category(IntegrationTest.class)  
   public void testGetCapabilitiesLessThan130() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getcapabilities");
-      request.setParameter("VERSION", "1.2.9");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getcapabilities")
+            .queryParam("version", "1.2.9")
+            .get(ClientResponse.class);
        
-      processTextResponse(webClient.getResponse(request), "GetCapabilities-1-1-1.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    processTextResponse(response, "GetCapabilities-1-1-1.xml");
   }
   
   @Test 
   @Category(IntegrationTest.class)  
   public void testGetCapabilitiesLessThan140() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getcapabilities");
-      request.setParameter("VERSION", "1.3.9");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getcapabilities")
+            .queryParam("VERSION", "1.3.9")
+            .get(ClientResponse.class);
       
-      processTextResponse(webClient.getResponse(request), "GetCapabilities-1-3-0.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    processTextResponse(response, "GetCapabilities-1-3-0.xml");
   }
   
   @Test 
   @Category(IntegrationTest.class)  
   public void testGetCapabilitiesGreaterThan140() throws Exception
   {
-    try
-    {
-      WebRequest request = createRequest();
-      request.setParameter("REQUEST", "getcapabilities");
-      request.setParameter("VERSION", "1.4.1");
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getcapabilities")
+            .queryParam("VERSION", "1.4.1")
+            .get(ClientResponse.class);
       
-      processTextResponse(webClient.getResponse(request), "GetCapabilities-1-4-0.xml");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    processTextResponse(response, "GetCapabilities-1-4-0.xml");
   }
 }

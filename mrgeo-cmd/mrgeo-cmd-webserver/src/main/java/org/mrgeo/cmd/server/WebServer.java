@@ -150,7 +150,7 @@ public class WebServer extends Command
     servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
     servletHolder.setInitOrder(1);
     context.addServlet(servletHolder, "/mrgeo/*");
-    context.addServlet("org.mrgeo.services.wms.WmsGenerator", "/WmsGenerator/*");
+//    context.addServlet("org.mrgeo.services.wms.WmsGenerator", "/WmsGenerator/*");
     server.start();
     System.out.println(String.format("Web Server started at %s", uri));
     return server;

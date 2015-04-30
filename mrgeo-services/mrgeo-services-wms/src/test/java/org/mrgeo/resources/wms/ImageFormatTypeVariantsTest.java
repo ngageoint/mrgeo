@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.services.wms;
+package org.mrgeo.resources.wms;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
+import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
@@ -38,12 +38,12 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
   private static final Logger log = LoggerFactory.getLogger(ImageFormatTypeVariantsTest.class);
   
   @BeforeClass 
-  public static void setUp()
+  public static void setUpForJUnit()
   {    
     try 
     {
       baselineInput = TestUtils.composeInputDir(ImageFormatTypeVariantsTest.class);
-      WmsGeneratorTestAbstract.setUp();
+      WmsGeneratorTestAbstract.setUpForJUnit();
     }
     catch (Exception e)
     {
@@ -51,16 +51,18 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
     }
   }
   
-  private static WebResponse testGetMapWithVariant(String format) throws IOException, SAXException
+  private ClientResponse testGetMapWithVariant(String format) throws IOException, SAXException
   {
-    WebRequest request = createRequest();
-    request.setParameter("REQUEST", "getmap");
-    request.setParameter("LAYERS", "IslandsElevation-v2");
-    request.setParameter("FORMAT", format);
-    request.setParameter("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE);
-    request.setParameter("WIDTH", "512");
-    request.setParameter("HEIGHT", "512");
-    return webClient.getResponse(request); 
+    ClientResponse response = resource().path("/wms")
+            .queryParam("SERVICE", "WMS")
+            .queryParam("REQUEST", "getmap")
+            .queryParam("LAYERS", "IslandsElevation-v2")
+            .queryParam("FORMAT", format)
+            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+            .queryParam("WIDTH", "512")
+            .queryParam("HEIGHT", "512")
+            .get(ClientResponse.class);
+    return response;
   }
   
   /*
@@ -75,7 +77,7 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)  
   public void testVariants() throws Exception
   {
-    WebResponse response  = null;
+    ClientResponse response  = null;
     try
     {
       //correct format is "image/png"
@@ -90,8 +92,8 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
         finally
         {
           Assert.assertNotNull(response);
-          assertEquals(response.getResponseCode(), 200);
-          assertFalse(response.getText().contains("Invalid format"));
+          assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+          assertFalse(response.getEntity(String.class).contains("Invalid format"));
           response.close();
         }
       }
@@ -108,8 +110,8 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
         finally
         {
           Assert.assertNotNull(response);
-          assertEquals(response.getResponseCode(), 200);
-          assertFalse(response.getText().contains("Invalid format"));
+          assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+          assertFalse(response.getEntity(String.class).contains("Invalid format"));
           response.close();
         }
       }
@@ -127,8 +129,8 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
         finally
         {
           Assert.assertNotNull(response);
-          assertEquals(response.getResponseCode(), 200);
-          assertFalse(response.getText().contains("Invalid format"));
+          assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+          assertFalse(response.getEntity(String.class).contains("Invalid format"));
           response.close();
         }
       }

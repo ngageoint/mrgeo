@@ -285,7 +285,7 @@ public class RasterResource
           result = service.applyColorScaleToImage(format, result, cs, renderer, overrideExtrema);
           log.debug("Color scale applied to image " + imgName);
         }
-        return service.getImageResponseWriter(format).write(result, imgName, bounds);
+        return service.getImageResponseWriter(format).write(result, imgName, bounds).build();
       }
       else
       {
