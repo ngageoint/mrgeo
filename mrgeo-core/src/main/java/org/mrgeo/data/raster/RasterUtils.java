@@ -251,8 +251,8 @@ public class RasterUtils
   
   public static WritableRaster createRGBRaster(final int width, final int height)
 {
-    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 
-      width * 3, 3, new int[]{0, 1, 2}, null);
+    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
+        width * 3, 3, new int[]{0, 1, 2}, null);
     return raster;
 }
   
@@ -673,9 +673,11 @@ public class RasterUtils
     int r1, r2;
 
     int x, y;
-    final float x_ratio = ((float) (srcW - 1)) / dstWidth;
-    final float y_ratio = ((float) (srcH - 1)) / dstHeight;
-    float x_diff, y_diff;
+
+    final double x_ratio = (double)srcW / dstWidth;
+    final double y_ratio = (double)srcH / dstHeight;
+
+    double x_diff, y_diff;
 
     int ul, ur, ll, lr;
 
@@ -698,32 +700,33 @@ public class RasterUtils
 
           ul = y * srcW + x;
 
-          // keep the indexes from going out of bounds. This happens ONLY when the srcW
-          // srcH is 1;
-          if (srcH == 1)
-          {
-            ll = ul;
-          }
-          else
+          // keep the indexes from going out of bounds.
+          if (y < srcH - 1)
           {
             ll = ul + srcW;
           }
-
-          if (srcW == 1)
-          {
-            ur = ul;
-            lr = ll;
-          }
           else
+          {
+            ll = ul;
+          }
+
+          if (x < srcW - 1)
           {
             ur = ul + 1;
             lr = ll + 1;
+          }
+          else
+          {
+            ur = ul;
+            lr = ll;
           }
 
           A = rawInput[ul];
           B = rawInput[ur];
           C = rawInput[ll];
           D = rawInput[lr];
+
+          // Y = A(1-w)(1-h) + B(w)(1-h) + C(h)(1-w) + Dwh
 
           if (A == nodata)
           {
@@ -763,9 +766,9 @@ public class RasterUtils
           {
             rawOutput[offset] = (int) (r1 * (1 - y_diff) + r2 * y_diff);
           }
+
           offset++;
 
-          // Y = A(1-w)(1-h) + B(w)(1-h) + C(h)(1-w) + Dwh
         }
       }
       dst.setSamples(0, 0, dstWidth, dstHeight, band, rawOutput);
