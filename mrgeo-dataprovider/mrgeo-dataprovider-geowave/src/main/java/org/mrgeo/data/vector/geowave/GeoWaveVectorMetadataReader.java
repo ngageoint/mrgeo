@@ -1,14 +1,10 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-
 import mil.nga.giat.geowave.index.ByteArrayId;
 import mil.nga.giat.geowave.store.adapter.DataAdapter;
-import mil.nga.giat.geowave.store.adapter.statistics.BoundingBoxDataStatistics;
 import mil.nga.giat.geowave.store.adapter.statistics.DataStatistics;
 import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
 import mil.nga.giat.geowave.vector.stats.FeatureBoundingBoxStatistics;
-
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.hadoop.io.LongWritable;
@@ -20,9 +16,14 @@ import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class GeoWaveVectorMetadataReader implements VectorMetadataReader
 {
+  private static Logger log = LoggerFactory.getLogger(VectorMetadataReader.class);
   private VectorMetadata metadata;
   private GeoWaveVectorDataProvider dataProvider;
   private FeatureDataAdapter adapter;
@@ -100,15 +101,15 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
     {
       DataStatistics<?> stats = GeoWaveVectorDataProvider.getStatisticsStore().getDataStatistics(
               new ByteArrayId(dataProvider.getGeoWaveResourceName()),
-              BoundingBoxDataStatistics.STATS_ID);
+              FeatureBoundingBoxStatistics.composeId("the_geom"));
       boundsStats = (FeatureBoundingBoxStatistics) stats;
     }
     Bounds bounds = null;
     if(boundsStats != null)
     {
-    
     	bounds = new Bounds(boundsStats.getMinX(), boundsStats.getMinY(),
     			boundsStats.getMaxX(), boundsStats.getMaxY());
+      log.info("Bounds for " + dataProvider.getGeoWaveResourceName() + " from GeoWave: " + bounds.toString());
     }
     else
     {
@@ -128,6 +129,7 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
         maxY = Math.max(maxY, b.getMaxY());
       }
 		  bounds = new Bounds(minX, minY, maxX, maxY);
+      log.info("Bounds for " + dataProvider.getGeoWaveResourceName() + " were computed as: " + bounds.toString());
     }
     metadata.setBounds(bounds);
     return metadata;
