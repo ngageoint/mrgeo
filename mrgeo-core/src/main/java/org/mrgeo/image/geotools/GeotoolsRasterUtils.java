@@ -32,24 +32,13 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.LogManager;
 
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageInputStreamSpi;
-import javax.media.jai.BorderExtender;
-import javax.media.jai.FloatDoubleColorModel;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.TileCache;
+import javax.media.jai.*;
+import javax.media.jai.operator.ScaleDescriptor;
 
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -455,6 +444,68 @@ public class GeotoolsRasterUtils
     return cropped.getRenderedImage();
   }
 
+  public static PlanarImage prepareForCutting(GridCoverage2D geotoolsImage, int zoomlevel, int tilesize, Classification classification)
+  {
+
+    int ih = (int) geotoolsImage.getGridGeometry().getGridRange2D().getHeight();
+    int iw = (int) geotoolsImage.getGridGeometry().getGridRange2D().getWidth();
+
+//      WritableRaster wr = RasterUtils.makeRasterWritable(geotoolsImage.getRenderedImage().getData());
+//
+//      int cnt = 1;
+//      for (int y = 0; y < iih; y++)
+//      {
+//        for (int x = 0; x < iiw; x++)
+//        {
+//          wr.setSample(x, y, 0, cnt++);
+//        }
+//      }
+//
+//      GridCoverageFactory f = new GridCoverageFactory();
+//      geotoolsImage = f.create("foo", wr, envelope);
+
+    GeneralEnvelope envelope = (GeneralEnvelope) geotoolsImage.getEnvelope();
+    TMSUtils.Bounds imageBounds = new TMSUtils.Bounds(
+        envelope.getMinimum(GeotoolsRasterUtils.LON_DIMENSION),
+        envelope.getMinimum(GeotoolsRasterUtils.LAT_DIMENSION),
+        envelope.getMaximum(GeotoolsRasterUtils.LON_DIMENSION),
+        envelope.getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
+
+    TMSUtils.TileBounds tiles = TMSUtils.boundsToTile(imageBounds, zoomlevel, tilesize);
+    TMSUtils.Bounds tileBounds = TMSUtils.tileBounds(tiles.w, tiles.n, zoomlevel, tilesize);
+
+    tileBounds = TMSUtils.tileBounds(imageBounds, zoomlevel, tilesize);
+
+    DPx tp = DPx.latLonToPixels(tileBounds.n, tileBounds.w, zoomlevel, tilesize);
+    DPx ip = DPx.latLonToPixels(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
+    DPx ep = DPx.latLonToPixels(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
+
+    float xlatex = (float) (ip.px - tp.px);
+    float xlatey = (float) (tp.py - ip.py);
+
+    float scalex = (float)(ep.px - ip.px) / (iw);
+    float scaley = (float)(ip.py - ep.py) / (ih);
+
+
+    // take care of categorical data
+    Interpolation interp;
+    if (classification != null && classification == Classification.Categorical)
+    {
+      interp = Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+    }
+    else
+    {
+      interp = Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
+    }
+
+    RenderingHints qualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,
+        RenderingHints.VALUE_RENDER_QUALITY);
+    qualityHints.put(JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+
+
+    return ScaleDescriptor.create(geotoolsImage.getRenderedImage(), scalex, scaley, xlatex, xlatey, interp, qualityHints);
+  }
+
   public static Raster
   cutTile(final GridCoverage2D image, final long tx, final long ty, final int zoomlevel,
       final int tilesize, final double[] defaultValues, final boolean categorical)
@@ -760,7 +811,7 @@ public class GeotoolsRasterUtils
       throws SecurityException, NoSuchMethodException, IllegalArgumentException,
       IllegalAccessException, InvocationTargetException
   {
-    Method m = reader.getClass().getMethod("getMetadata", new Class[] {});
+    Method m = reader.getClass().getMethod("getMetadata", new Class[]{});
     final Object meta = m.invoke(reader, new Object[] {});
 
     m = meta.getClass().getMethod("getNoData", new Class[] {});
@@ -1291,6 +1342,24 @@ public class GeotoolsRasterUtils
     {
       e.printStackTrace();
     }
+  }
+
+  private static class DPx {
+    public double px;
+    public double py;
+
+    public DPx(double x, double y)
+    {
+      this.px = x;
+      this.py = y;
+    }
+
+    static DPx latLonToPixels(double lat, double lon, int zoom, int tilesize)
+    {
+      double res = TMSUtils.resolution(zoom, tilesize);
+      return new DPx(((180.0 + lon) / res), ((90.0 + lat) / res));
+    }
+
   }
 
   private static void loadFormats()

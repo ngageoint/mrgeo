@@ -15,7 +15,10 @@
 
 package org.mrgeo.ingest;
 
+import java.awt.*;
 import java.awt.image.Raster;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,12 +52,13 @@ import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.image.geotools.GeotoolsRasterUtils;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.media.jai.BorderExtender;
+import javax.media.jai.BorderExtenderConstant;
+import javax.media.jai.PlanarImage;
 
 public class IngestImageDriver
 {
@@ -158,7 +162,7 @@ public class IngestImageDriver
 
         if (reader != null)
         {
-          final GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
+          final GridCoverage2D geotoolsImage = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
           final LongRectangle tilebounds = GeotoolsRasterUtils.calculateTiles(reader, tilesize,
               zoomlevel);
 
@@ -170,12 +174,16 @@ public class IngestImageDriver
 
           log.info("    zoomlevel: " + zoomlevel);
 
+          BorderExtender extender = new BorderExtenderConstant(defaults);
+          PlanarImage image = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
+              categorical ? Classification.Categorical : Classification.Continuous);
+
           for (long ty = tilebounds.getMinY(); ty <= tilebounds.getMaxY(); ty++)
           {
             for (long tx = tilebounds.getMinX(); tx <= tilebounds.getMaxX(); tx++)
             {
-              final Raster raster = GeotoolsRasterUtils.cutTile(image, tx, ty, zoomlevel, tilesize,
-                  defaults, categorical);
+
+              Raster raster = ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX(), tilebounds.getMaxY(), tilesize, extender);
 
               // final long len = raster.getDataBuffer().getSize();
               //
@@ -197,6 +205,8 @@ public class IngestImageDriver
           }
 
         }
+
+        GeotoolsRasterUtils.closeStreamFromReader(reader);
       }
       writer.close();
 
@@ -208,6 +218,7 @@ public class IngestImageDriver
       provider.delete();
     }
   }
+
 
   public static boolean quickIngest(final InputStream input, final String output,
       final boolean categorical, final Configuration config, final boolean overridenodata,
@@ -248,9 +259,9 @@ public class IngestImageDriver
 
     if (reader != null)
     {
-      final GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
+      final GridCoverage2D geotoolsImage = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
 
-      final LongRectangle bounds = GeotoolsRasterUtils.calculateTiles(reader,
+      final LongRectangle tilebounds = GeotoolsRasterUtils.calculateTiles(reader,
           metadata.getTilesize(),
           metadata.getMaxZoomLevel());
 
@@ -260,12 +271,16 @@ public class IngestImageDriver
 
       log.info("    zoomlevel: " + zoomlevel);
 
-      for (long ty = bounds.getMinY(); ty <= bounds.getMaxY(); ty++)
+      BorderExtender extender = new BorderExtenderConstant(defaults);
+      PlanarImage image = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
+          categorical ? Classification.Categorical : Classification.Continuous);
+
+      for (long ty = tilebounds.getMinY(); ty <= tilebounds.getMaxY(); ty++)
       {
-        for (long tx = bounds.getMinX(); tx <= bounds.getMaxX(); tx++)
+        for (long tx = tilebounds.getMinX(); tx <= tilebounds.getMaxX(); tx++)
         {
-          final Raster raster = GeotoolsRasterUtils.cutTile(image, tx, ty, zoomlevel,
-              tilesize, defaults, categorical);
+
+          Raster raster = ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX(), tilebounds.getMaxY(), tilesize, extender);
 
           writer.append(new TileIdWritable(TMSUtils.tileid(tx, ty, zoomlevel)), raster);
         }
@@ -316,13 +331,13 @@ public class IngestImageDriver
     final MrsTileWriter<Raster> writer = provider.getMrsTileWriter(metadata.getMaxZoomLevel());
     final AbstractGridCoverage2DReader reader = GeotoolsRasterUtils.openImage(input);
 
-    log.info("  reading: " + input.toString());
+    log.info("  reading: " + input);
 
     if (reader != null)
     {
-      final GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
+      final GridCoverage2D geotoolsImage = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
 
-      final LongRectangle bounds = GeotoolsRasterUtils.calculateTiles(reader, metadata
+      final LongRectangle tilebounds = GeotoolsRasterUtils.calculateTiles(reader, metadata
           .getTilesize(), metadata.getMaxZoomLevel());
 
       final int zoomlevel = metadata.getMaxZoomLevel();
@@ -331,12 +346,16 @@ public class IngestImageDriver
 
       log.info("    zoomlevel: " + zoomlevel);
 
-      for (long ty = bounds.getMinY(); ty <= bounds.getMaxY(); ty++)
+      BorderExtender extender = new BorderExtenderConstant(defaults);
+      PlanarImage image = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
+          categorical ? Classification.Categorical : Classification.Continuous);
+
+      for (long ty = tilebounds.getMinY(); ty <= tilebounds.getMaxY(); ty++)
       {
-        for (long tx = bounds.getMinX(); tx <= bounds.getMaxX(); tx++)
+        for (long tx = tilebounds.getMinX(); tx <= tilebounds.getMaxX(); tx++)
         {
-          final Raster raster = GeotoolsRasterUtils.cutTile(image, tx, ty, zoomlevel, tilesize,
-              defaults, categorical);
+
+          Raster raster = ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX(), tilebounds.getMaxY(), tilesize, extender);
 
           writer.append(new TileIdWritable(TMSUtils.tileid(tx, ty, zoomlevel)), raster);
         }
@@ -519,7 +538,7 @@ public class IngestImageDriver
     conf.setInt("tilesize", tilesize);
     conf.setFloat("nodata", nodata.floatValue());
     conf.setInt("bands", bands);
-    
+
     if (categorical)
     {
       conf.set("classification", Classification.Categorical.name());

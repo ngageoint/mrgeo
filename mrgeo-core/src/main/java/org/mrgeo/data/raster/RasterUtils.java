@@ -92,8 +92,6 @@ public class RasterUtils
    * Scan the list of sources for the one that uses the
    * largest data type and return it.
    * 
-   * @param sources
-   * @return
    */
   public static RenderedImage getMostSpecificSource(RenderedImage[] sources)
   {
@@ -190,10 +188,6 @@ public class RasterUtils
    * Return a new ImageLayout based on the specified source, but overriding the dataType and number of bands
    * in that source with the values passed in.
    * 
-   * @param basedOnSource
-   * @param dataType
-   * @param numBands
-   * @return
    */
   public static ImageLayout createImageLayout(RenderedImage basedOnSource, int dataType, int numBands)
   {
@@ -225,35 +219,30 @@ public class RasterUtils
 {
   // we'll force the empty raster to be a banded model, for simplicity of the code.
   final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
-  final WritableRaster raster = Raster.createWritableRaster(model, null);
-  return raster;
+  return Raster.createWritableRaster(model, null);
 }
   
   public static WritableRaster createGBRRaster(final int width, final int height)
 {
-  WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 
+  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
     width * 3, 3, new int[]{2, 1, 0}, null);
-  return raster;
 }
   public static WritableRaster createAGBRRaster(final int width, final int height)
 {
-  WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 
+  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
     width * 4, 4, new int[]{3, 2, 1, 0}, null);
-  return raster;
 }
   
   public static WritableRaster createRGBARaster(final int width, final int height)
 {
-    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 
-      width * 4, 4, new int[]{0, 1, 2, 3}, null);
-    return raster;
+  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
+    width * 4, 4, new int[]{0, 1, 2, 3}, null);
 }
   
   public static WritableRaster createRGBRaster(final int width, final int height)
 {
-    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-        width * 3, 3, new int[]{0, 1, 2}, null);
-    return raster;
+  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
+      width * 3, 3, new int[]{0, 1, 2}, null);
 }
   
  
@@ -314,14 +303,13 @@ public class RasterUtils
   public static WritableRaster makeRasterWritable(final Raster raster)
   {
     // create a writable raster using the sample model and actual data buffer from the source raster
-    final WritableRaster writable = Raster.createWritableRaster(raster.getSampleModel(),
-        raster.getDataBuffer(), null);
 
     // create a child raster
     // writable = writable.createWritableChild(raster.getMinX() - raster.getSampleModelTranslateX(),
     // raster.getMinY() - raster.getSampleModelTranslateY(), raster.getWidth(),
     // raster.getHeight(), raster.getMinX(), raster.getMinY(), null);
-    return writable;
+    return Raster.createWritableRaster(raster.getSampleModel(),
+        raster.getDataBuffer(), null);
   }
 
   // Scaling algorithm taken from: http://willperone.net/Code/codescaling.php and modified to use
@@ -444,8 +432,8 @@ public class RasterUtils
     double r1, r2;
 
     int x, y;
-    final float x_ratio = ((float) (srcW - 1)) / dstWidth;
-    final float y_ratio = ((float) (srcH - 1)) / dstHeight;
+    final float x_ratio = (float)srcW / dstWidth;
+    final float y_ratio = (float)srcH / dstHeight;
     float x_diff, y_diff;
 
     int ul, ur, ll, lr;
@@ -469,26 +457,25 @@ public class RasterUtils
 
           ul = y * srcW + x;
 
-          // keep the indexes from going out of bounds. This happens ONLY when the srcW
-          // srcH is 1;
-          if (srcH == 1)
-          {
-            ll = ul;
-          }
-          else
+          // keep the indexes from going out of bounds.
+          if (y < srcH - 1)
           {
             ll = ul + srcW;
           }
-
-          if (srcW == 1)
-          {
-            ur = ul;
-            lr = ll;
-          }
           else
+          {
+            ll = ul;
+          }
+
+          if (x < srcW - 1)
           {
             ur = ul + 1;
             lr = ll + 1;
+          }
+          else
+          {
+            ur = ul;
+            lr = ll;
           }
 
           A = rawInput[ul];
@@ -557,8 +544,8 @@ public class RasterUtils
     float r1, r2;
 
     int x, y;
-    final float x_ratio = ((float) (srcW - 1)) / dstWidth;
-    final float y_ratio = ((float) (srcH - 1)) / dstHeight;
+    final float x_ratio = (float)srcW / dstWidth;
+    final float y_ratio = (float)srcH / dstHeight;
     float x_diff, y_diff;
 
     int ul, ur, ll, lr;
@@ -582,26 +569,25 @@ public class RasterUtils
 
           ul = y * srcW + x;
 
-          // keep the indexes from going out of bounds. This happens ONLY when the srcW
-          // srcH is 1;
-          if (srcH == 1)
-          {
-            ll = ul;
-          }
-          else
+          // keep the indexes from going out of bounds.
+          if (y < srcH - 1)
           {
             ll = ul + srcW;
           }
-
-          if (srcW == 1)
-          {
-            ur = ul;
-            lr = ll;
-          }
           else
+          {
+            ll = ul;
+          }
+
+          if (x < srcW - 1)
           {
             ur = ul + 1;
             lr = ll + 1;
+          }
+          else
+          {
+            ur = ul;
+            lr = ll;
           }
 
           A = rawInput[ul];

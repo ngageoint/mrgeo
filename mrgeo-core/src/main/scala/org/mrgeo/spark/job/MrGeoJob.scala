@@ -18,16 +18,16 @@ abstract class MrGeoJob extends Logging {
     // need to do this here, so we can call registerClasses() on the job.
     PrepareJob.setupSerializer(this, job, conf)
 
-    println("Setting up job")
+    logInfo("Setting up job")
     setup(job)
 
     val context = new SparkContext(conf)
     try {
-      println("Running job")
+      logInfo("Running job")
       execute(context)
     }
     finally {
-      println("Stopping spark context")
+      logInfo("Stopping spark context")
       context.stop()
     }
 
