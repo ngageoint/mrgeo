@@ -62,7 +62,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
   //private long minTy;
 
   private long maxTx;
-  private long maxTy;
+  //private long maxTy;
 
   private int zoomlevel;
 
@@ -212,7 +212,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
         minTx = b.getMinX();
         //minTy = b.getMinY();
         maxTx = b.getMaxX();
-        maxTy = b.getMaxY();
+        //maxTy = b.getMaxY();
 
         currentTile = 0;
         totalTiles = isplit.getTotalTiles();
@@ -372,7 +372,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
     }
   }
 
- // static int cnt = 1;
+  static int cnt = 1;
 
   private static class DPx {
     public double px;
@@ -397,7 +397,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException
   {
-    // long startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
     if (currentTx > maxTx)
     {
@@ -416,35 +416,36 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
       return false;
     }
 
-    final Raster raster = RasterUtils.crop(this.raster, currentTx, currentTy, minTx, endTy, tilesize);
+    final Raster cropped = RasterUtils.crop(raster, currentTx, currentTy, minTx, endTy, tilesize);
 
     // save the tile...
 //    try
 //    {
-//      GeotoolsRasterUtils.saveLocalGeotiff("/data/export/tile-" + cnt, raster, currentTx, currentTy, zoomlevel, tilesize, nodata);
+//      GeotoolsRasterUtils.saveLocalGeotiff("/data/export/tile-" + cnt, cropped,
+//          currentTx, currentTy, zoomlevel, tilesize, nodata);
 //    }
 //    catch (IOException | FactoryException e)
 //    {
 //      e.printStackTrace();
 //    }
 
-    if (raster.getMinX() != 0 || raster.getMinY() != 0 ||
-        raster.getWidth() != tilesize || raster.getHeight() != tilesize)
+    if (cropped.getMinX() != 0 || cropped.getMinY() != 0 ||
+        cropped.getWidth() != tilesize || cropped.getHeight() != tilesize)
     {
-      throw new IOException("Tile not the right position/size: x"  + raster.getMinX() + " y: " + raster.getMinY() +
-      " w: " + raster.getWidth() + " h: " + raster.getHeight());
+      throw new IOException("Tile not the right position/size: x"  + cropped.getMinX() + " y: " + cropped.getMinY() +
+          " w: " + cropped.getWidth() + " h: " + cropped.getHeight());
     }
 
     key = new TileIdWritable(TMSUtils.tileid(currentTx, currentTy, zoomlevel));
-    value = RasterWritable.toWritable(raster);
+    value = RasterWritable.toWritable(cropped);
 
     currentTx++;
     currentTile++;
 
-    //cnt++;
+    cnt++;
 
-    // long endTime = System.currentTimeMillis();
-    // System.out.println("Tile read time: " + (endTime - startTime));
+    long endTime = System.currentTimeMillis();
+    System.out.println("Tile read time: " + (endTime - startTime));
     return true;
   }
 

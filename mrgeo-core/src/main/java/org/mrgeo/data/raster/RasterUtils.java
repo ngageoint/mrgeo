@@ -254,7 +254,11 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
   int x = dtx * tilesize;
   int y = dty * tilesize;
 
-  return src.createChild(x, y, tilesize, tilesize, 0, 0, null);
+  WritableRaster cropped = src.createCompatibleWritableRaster(tilesize, tilesize);
+  Object data = src.getDataElements(x, y, tilesize, tilesize, null);
+  cropped.setDataElements(0, 0, data);
+
+  return cropped;
 }
 
   public static void fillWithNodata(final WritableRaster raster, final double nodata)
