@@ -15,42 +15,12 @@
 
 package org.mrgeo.image.geotools;
 
-import java.awt.RenderingHints;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
-import java.awt.image.RenderedImage;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.*;
-import java.util.logging.LogManager;
-
-import javax.imageio.spi.IIORegistry;
-import javax.imageio.spi.ImageInputStreamSpi;
-import javax.media.jai.*;
-import javax.media.jai.operator.ScaleDescriptor;
-
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
-import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.coverage.grid.io.GridFormatFactorySpi;
-import org.geotools.coverage.grid.io.GridFormatFinder;
-import org.geotools.coverage.grid.io.OverviewPolicy;
-import org.geotools.coverage.grid.io.UnknownFormat;
+import org.geotools.coverage.grid.io.*;
 import org.geotools.coverage.processing.CoverageProcessingException;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.coverage.processing.Operations;
@@ -97,6 +67,23 @@ import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageInputStreamSpi;
+import javax.media.jai.*;
+import javax.media.jai.operator.ScaleDescriptor;
+import java.awt.*;
+import java.awt.color.ColorSpace;
+import java.awt.image.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.util.*;
+import java.util.List;
+import java.util.logging.LogManager;
 
 public class GeotoolsRasterUtils
 {
@@ -411,9 +398,8 @@ public class GeotoolsRasterUtils
     }
   }
 
-  public static RenderedImage crop(final GridCoverage2D image, final double left,
-      final double bottom, final double right, final double top, final double[] defaultValues,
-      final boolean categorical)
+  public static GridCoverage2D crop(final GridCoverage2D image, final double left,
+      final double bottom, final double right, final double top)
   {
     final CoordinateReferenceSystem crs = image.getCoordinateReferenceSystem2D();
 
@@ -421,12 +407,10 @@ public class GeotoolsRasterUtils
         new double[] { right, top });
     croppedEnvelope.setCoordinateReferenceSystem(crs);
 
-    final GridCoverage2D cropped = (GridCoverage2D) Operations.DEFAULT.crop(image, croppedEnvelope);
-
-    return cropped.getRenderedImage();
+    return (GridCoverage2D) Operations.DEFAULT.crop(image, croppedEnvelope);
   }
 
-  public static RenderedImage crop(final GridCoverage2D image, final long txLeft,
+  public static GridCoverage2D crop(final GridCoverage2D image, final long txLeft,
       final long tyBottom, final long txRight, final long tyTop, final int zoomlevel,
       final int tilesize, final double[] defaultValues, final boolean categorical)
   {
@@ -439,9 +423,7 @@ public class GeotoolsRasterUtils
         blBounds.s }, new double[] { trBounds.e, trBounds.n });
     croppedEnvelope.setCoordinateReferenceSystem(crs);
 
-    final GridCoverage2D cropped = (GridCoverage2D) Operations.DEFAULT.crop(image, croppedEnvelope);
-
-    return cropped.getRenderedImage();
+    return (GridCoverage2D) Operations.DEFAULT.crop(image, croppedEnvelope);
   }
 
   public static PlanarImage prepareForCutting(GridCoverage2D geotoolsImage, int zoomlevel, int tilesize, Classification classification)
@@ -927,8 +909,8 @@ public class GeotoolsRasterUtils
     saveLocalGeotiff(path  + ".tif", coverage, nodata);
   }
 
-  public static void saveLocalGeotiff(final WritableRaster raster, final GeneralEnvelope envelope,
-      final String output) throws IOException
+  public static void saveLocalGeotiff(final String path, final WritableRaster raster,
+      final GeneralEnvelope envelope, final double nodata) throws IOException
   {
     // now build a PlanarImage from the raster
     final int type = raster.getTransferType();
@@ -954,9 +936,9 @@ public class GeotoolsRasterUtils
     final BufferedImage img = new BufferedImage(cm, raster, false, null);
 
     final GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(null);
-    final GridCoverage2D coverage = factory.create(output, img, envelope);
+    final GridCoverage2D coverage = factory.create(path, img, envelope);
 
-    saveLocalGeotiff(output, coverage, -9999.0);
+    saveLocalGeotiff(path, coverage, nodata);
   }
 
   private static synchronized void addMissingEPSGCodesInternal()

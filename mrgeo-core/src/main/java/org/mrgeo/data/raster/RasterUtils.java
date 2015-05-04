@@ -225,7 +225,7 @@ public class RasterUtils
   public static WritableRaster createGBRRaster(final int width, final int height)
 {
   return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-    width * 3, 3, new int[]{2, 1, 0}, null);
+      width * 3, 3, new int[]{2, 1, 0}, null);
 }
   public static WritableRaster createAGBRRaster(final int width, final int height)
 {
@@ -246,6 +246,22 @@ public class RasterUtils
 }
   
  
+public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, int tilesize)
+{
+  int dtx = (int) (tx - minTx);
+  int dty = (int) (maxTy - ty);
+
+  int x = dtx * tilesize;
+  int y = dty * tilesize;
+
+
+  Rectangle cropRect = new Rectangle(x, y, tilesize, tilesize);
+
+  // crop, and fill the extra data with nodatas
+  Raster cropped;
+
+  return src.createChild(x, y, tilesize, tilesize, 0, 0, null);
+}
 
   public static void fillWithNodata(final WritableRaster raster, final double nodata)
   {
