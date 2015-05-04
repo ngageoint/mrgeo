@@ -254,12 +254,6 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
   int x = dtx * tilesize;
   int y = dty * tilesize;
 
-
-  Rectangle cropRect = new Rectangle(x, y, tilesize, tilesize);
-
-  // crop, and fill the extra data with nodatas
-  Raster cropped;
-
   return src.createChild(x, y, tilesize, tilesize, 0, 0, null);
 }
 

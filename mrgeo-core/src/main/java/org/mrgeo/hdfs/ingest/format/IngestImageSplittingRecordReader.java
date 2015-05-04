@@ -35,14 +35,12 @@ import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
-import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.media.jai.BorderExtenderConstant;
-import javax.media.jai.PlanarImage;
+import javax.media.jai.*;
 import javax.media.jai.operator.ScaleDescriptor;
 import java.awt.*;
 import java.awt.image.Raster;
@@ -71,7 +69,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
   private float currentTile; // used for progress ONLY
   private float totalTiles; // used for progress ONLY
 
-  private Raster image = null;
+  private Raster raster = null;
 
   private int tilesize = -1;
   private Classification classification = null;
@@ -219,19 +217,19 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
         currentTile = 0;
         totalTiles = isplit.getTotalTiles();
 
+        // open the geotools raster
         GridCoverage2D geotoolsImage = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
 
+        // get nodata's
         defaults = new double[geotoolsImage.getNumSampleDimensions()];
         Arrays.fill(defaults, nodata);
 
-        BorderExtenderConstant extender = new BorderExtenderConstant(defaults);
+        // calculate the raster width and height
+        final int ih = (int) geotoolsImage.getGridGeometry().getGridRange2D().getHeight();
+        final int iw = (int) geotoolsImage.getGridGeometry().getGridRange2D().getWidth();
 
-        //image = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize, classification);
-
-
-        int ih = (int) geotoolsImage.getGridGeometry().getGridRange2D().getHeight();
-        int iw = (int) geotoolsImage.getGridGeometry().getGridRange2D().getWidth();
-
+        // this code will fill in the src raster with the corresponding cell id.  It's useful for testing
+        // to make sure the scaling/cropping are getting all the data correctly
 //      WritableRaster wr = RasterUtils.makeRasterWritable(geotoolsImage.getRenderedImage().getData());
 //
 //      int cnt = 1;
@@ -247,6 +245,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
 //      geotoolsImage = f.create("foo", wr, envelope);
 
 
+        // get the input envelope
         GeneralEnvelope envelope = (GeneralEnvelope) geotoolsImage.getEnvelope();
         CoordinateReferenceSystem crs = geotoolsImage.getCoordinateReferenceSystem2D();
 
@@ -256,116 +255,108 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
             envelope.getMaximum(GeotoolsRasterUtils.LON_DIMENSION),
             envelope.getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
 
-
-        //TMSUtils.TileBounds tiles = TMSUtils.boundsToTile(imageBounds, zoomlevel, tilesize);
-
-        TMSUtils.Bounds tiletl = TMSUtils.tileBounds(b.getMinX(), endTy, zoomlevel, tilesize);
-        TMSUtils.Bounds tilelr = TMSUtils.tileBounds(b.getMaxX(), currentTy, zoomlevel, tilesize);
-
-//      DPx tp = DPx.latLonToPixels(tileBounds.n, tileBounds.w, zoomlevel, tilesize);
-//      DPx ep = DPx.latLonToPixels(tileBounds.s, tileBounds.e, zoomlevel, tilesize);
-
-        DPx tp = DPx.latLonToPixels(tiletl.n, tiletl.w, zoomlevel, tilesize);
-        //DPx ep = DPx.latLonToPixels(tilelr.s, tilelr.e, zoomlevel, tilesize);
-
-        int w = (int)(b.getMaxX() - b.getMinX() + 1) * tilesize;
-        int h = (int)(endTy - currentTy + 1) * tilesize;
-
+        // calculate pixel h/w
         double pw = envelope.getSpan(GeotoolsRasterUtils.LON_DIMENSION) / iw;
         double ph = envelope.getSpan(GeotoolsRasterUtils.LON_DIMENSION) / ih;
 
+
+        // calculate the lat/lon bounds of the input split ( tiles)
+        TMSUtils.Bounds tiletl = TMSUtils.tileBounds(b.getMinX(), endTy, zoomlevel, tilesize);
+        TMSUtils.Bounds tilelr = TMSUtils.tileBounds(b.getMaxX(), currentTy, zoomlevel, tilesize);
+
         TMSUtils.Bounds tileBounds = new TMSUtils.Bounds(tiletl.w, tilelr.s, tilelr.e, tiletl.n);
+
+        // calculate the mrgeo pixel space for the input tile bounds
+        DPx tilePxTl = DPx.latLonToPixels(tileBounds.n, tileBounds.w, zoomlevel, tilesize);
+        //DPx tilePxLr = DPx.latLonToPixels(tileBounds.s, tileBounds.e, zoomlevel, tilesize);
+
+        // final raster h/w
+        int rasterw = (int)(b.getMaxX() - b.getMinX() + 1) * tilesize;
+        int rasterh = (int)(endTy - currentTy + 1) * tilesize;
+
 
         try
         {
           GridGeometry2D grid = geotoolsImage.getGridGeometry();
 
-//          MathTransform2D xform = grid.getCRSToGrid2D();
-//
-//          Point2D.Double tl =
-//              (Point2D.Double) xform.transform(new Point2D.Double(tileBounds.w - pw / 2, tileBounds.n - ph / 2), null);
-//          Point2D.Double lr =
-//              (Point2D.Double) xform.transform(new Point2D.Double(tileBounds.e - pw / 2, tileBounds.s - ph / 2), null);
+          // calculate the source image (pixel) values for the tiles to read
+          GridCoordinates2D tl = grid.worldToGrid(
+              new DirectPosition2D(crs, tileBounds.w + pw / 2, tileBounds.n - ph / 2));
+          GridCoordinates2D lr = grid.worldToGrid(
+              new DirectPosition2D(crs, tileBounds.e + pw / 2, tileBounds.s - ph / 2));
 
 
-//          GridCoordinates2D tl = grid.worldToGrid(new DirectPosition2D(crs, tileBounds.w, tileBounds.n));
-//          GridCoordinates2D lr = grid.worldToGrid(new DirectPosition2D(crs, tileBounds.e, tileBounds.s));
+          // image in mrgeo pixel space
+          DPx imagePxTl = DPx.latLonToPixels(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
+          //DPx imagePxLr = DPx.latLonToPixels(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
 
-          GridCoordinates2D tl = grid.worldToGrid(new DirectPosition2D(crs, tileBounds.w + pw / 2, tileBounds.n - ph / 2));
-          GridCoordinates2D lr = grid.worldToGrid(new DirectPosition2D(crs, tileBounds.e + pw / 2, tileBounds.s - ph / 2));
+          float xlatex = (float)(imagePxTl.px - tilePxTl.px);
+          float xlatey = (float)(tilePxTl.py - imagePxTl.py);
 
-      DPx ip = DPx.latLonToPixels(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
-      DPx ep = DPx.latLonToPixels(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
+          float scalex = (float)(rasterw) / (lr.x - tl.x);
+          float scaley = (float)(rasterh) / (lr.y - tl.y);
 
-      float xlatex = (float) (ip.px - tp.px);
-      float xlatey = (float) (tp.py - ip.py);
+          Interpolation interp;
+          if (classification != null && classification == Classification.Categorical)
+          {
+            interp = Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+          }
+          else
+          {
+            interp = Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
+          }
 
-      float scalex = (float)(ep.px - ip.px) / (iw);
-      float scaley = (float)(ip.py - ep.py) / (ih);
-
-//      System.out.println(
-//          "image: x: " + image.getMinX() + " y: " + image.getMinY() + " w: " + image.getWidth() + " h: " +
-//              image.getHeight());
-
+          // crop the image to the input area
           GridCoverage2D geotoolsCropped = GeotoolsRasterUtils.crop(geotoolsImage, tileBounds.w, tileBounds.s,
               tileBounds.e, tileBounds.n);
-
           PlanarImage geotoolsPlanar = (PlanarImage) geotoolsCropped.getRenderedImage();
 
-          Rectangle cropRect = new Rectangle((int)(tl.x), (int)(tl.y), (int)(lr.x - tl.x), (int)(lr.y - tl.y));
+          // scale the image to mrgeo pixels, filling with nodata if needed
+          RenderingHints qualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,
+              RenderingHints.VALUE_RENDER_QUALITY);
+          qualityHints.put(JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
-          Raster cropped = geotoolsPlanar.getExtendedData(cropRect, extender).createTranslatedChild(0, 0);
+          BorderExtenderConstant extender = new BorderExtenderConstant(defaults);
 
-          PlanarImage scaled = ScaleDescriptor
-//
-//          image = RasterUtils.scaleRaster(cropped, w, h, classification != Classification.Categorical, nodata);
-//
-//          BufferedImage bi = geotoolsPlanar.getAsBufferedImage();
-////
-////          WritableRaster wr = RasterUtils.createEmptyRaster(w, h, cropped.getNumBands(), cropped.getTransferType(),
-////              nodata);
-////          BufferedImage dimg = new BufferedImage(RasterUtils.createColorModel(wr), wr, false, null);
-////
-////
-//          BufferedImage dimg = new BufferedImage(w, h,bi.getType());
-//          Graphics2D g = dimg.createGraphics();
-//          g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-//          g.drawImage(bi, 0, 0, w, h, 0, 0, geotoolsPlanar.getWidth(), geotoolsPlanar.getHeight(), null);
-//          g.dispose();
-//
-//          image = dimg.getData();
+          PlanarImage scaled =  ScaleDescriptor.create(geotoolsPlanar, scalex, scaley, xlatex, xlatey,
+              interp, qualityHints);
 
+          // make the final raster
+          Rectangle imageRect = new Rectangle(0, 0, rasterw, rasterh);
+          raster = scaled.getExtendedData(imageRect, extender).createTranslatedChild(0, 0);
 
-          try
-          {
+          // this will save the pieces
+//          try
+//          {
 //            File file = new File("/data/export/scaled-raw-" + cnt + ".tiff");
-//            ImageUtils.writeImageToFile(file, ImageUtils.createImageWriter("image/tiff"),
-//                RasterUtils.makeBufferedImage(image));
+//            ImageUtils.writeImageToFile(file, ImageUtils.createImageWriter("raster/tiff"),
+//                RasterUtils.makeBufferedImage(raster));
+//
+//            final GeneralEnvelope env = new GeneralEnvelope(new double[]{tileBounds.w, tileBounds.s},
+//                new double[]{tileBounds.e, tileBounds.n});
+//            env.setCoordinateReferenceSystem(geotoolsImage.getCoordinateReferenceSystem());
+//            GeotoolsRasterUtils.saveLocalGeotiff("/data/export/src-" + cnt + ".tiff", geotoolsImage, nodata);
+//            GeotoolsRasterUtils.saveLocalGeotiff("/data/export/scaled-" + cnt + ".tiff",
+//                RasterUtils.makeRasterWritable(scaled.getData()), (GeneralEnvelope) geotoolsImage.getEnvelope(), nodata);
+//            GeotoolsRasterUtils.saveLocalGeotiff("/data/export/final-" + cnt + ".tiff",
+//                RasterUtils.makeRasterWritable(raster), env, nodata);
+//
+//            System.out.println("cropped: x: " + scaled.getMinX() + " y: " + scaled.getMinY() + " rasterw: " +
+//                scaled.getWidth() + " rasterh: " + scaled.getHeight());
+//            System.out.println("raster: x: " + raster.getMinX() + " y: " + raster.getMinY() + " rasterw: " +
+//                raster.getWidth() + " rasterh: " + raster.getHeight());
+//
+//          }
+//          catch (IOException e)
+//          {
+//            e.printStackTrace();
+//          }
 
-            final GeneralEnvelope env = new GeneralEnvelope(new double[]{tileBounds.w, tileBounds.s},
-                new double[]{tileBounds.e, tileBounds.n});
-            env.setCoordinateReferenceSystem(geotoolsImage.getCoordinateReferenceSystem());
-            GeotoolsRasterUtils.saveLocalGeotiff("/data/export/src-" + cnt + ".tiff", geotoolsImage, nodata);
-            GeotoolsRasterUtils.saveLocalGeotiff("/data/export/cropped-" + cnt + ".tiff",
-                RasterUtils.makeRasterWritable(cropped), env, nodata);
-            GeotoolsRasterUtils.saveLocalGeotiff("/data/export/scaled-" + cnt + ".tiff",
-                RasterUtils.makeRasterWritable(image), env, nodata);
-          }
-          catch (IOException e)
-          {
-            e.printStackTrace();
-          }
-
-          System.out.println("cropped: x: " + cropped.getMinX() + " y: " + cropped.getMinY() + " w: " +
-              cropped.getWidth() + " h: " + cropped.getHeight());
-          System.out.println("image: x: " + image.getMinX() + " y: " + image.getMinY() + " w: " +
-              image.getWidth() + " h: " + image.getHeight());
         }
         catch (TransformException e)
         {
           throw new IOException(e);
         }
-
       }
     }
     finally
@@ -381,7 +372,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
     }
   }
 
-  static int cnt = 1;
+ // static int cnt = 1;
 
   private static class DPx {
     public double px;
@@ -425,18 +416,23 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
       return false;
     }
 
-    final Raster raster = RasterUtils.crop(image, currentTx, currentTy, minTx, maxTy, tilesize);
+    final Raster raster = RasterUtils.crop(this.raster, currentTx, currentTy, minTx, endTy, tilesize);
 
-    //File file = new File("/data/export/scaled" + cnt + ".tiff");
-    try
+    // save the tile...
+//    try
+//    {
+//      GeotoolsRasterUtils.saveLocalGeotiff("/data/export/tile-" + cnt, raster, currentTx, currentTy, zoomlevel, tilesize, nodata);
+//    }
+//    catch (IOException | FactoryException e)
+//    {
+//      e.printStackTrace();
+//    }
+
+    if (raster.getMinX() != 0 || raster.getMinY() != 0 ||
+        raster.getWidth() != tilesize || raster.getHeight() != tilesize)
     {
-      //ImageUtils.writeImageToFile(file,ImageUtils.createImageWriter("image/tiff"), RasterUtils.makeBufferedImage(tile));
-      GeotoolsRasterUtils.saveLocalGeotiff("/data/export/tile-" + cnt, raster, currentTx, currentTy, zoomlevel, tilesize, nodata);
-      //GeotoolsRasterUtils.saveLocalGeotiff("/data/export/cropped-tile" + cnt, cropped, currentTx, currentTy, zoomlevel, tilesize, Double.NaN);
-    }
-    catch (IOException | FactoryException e)
-    {
-      e.printStackTrace();
+      throw new IOException("Tile not the right position/size: x"  + raster.getMinX() + " y: " + raster.getMinY() +
+      " w: " + raster.getWidth() + " h: " + raster.getHeight());
     }
 
     key = new TileIdWritable(TMSUtils.tileid(currentTx, currentTy, zoomlevel));
@@ -445,7 +441,8 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
     currentTx++;
     currentTile++;
 
-    cnt++;
+    //cnt++;
+
     // long endTime = System.currentTimeMillis();
     // System.out.println("Tile read time: " + (endTime - startTime));
     return true;
