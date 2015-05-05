@@ -401,7 +401,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException
   {
-    long startTime = System.currentTimeMillis();
+//    long startTime = System.currentTimeMillis();
 
     if (currentTx > maxTx)
     {
@@ -448,8 +448,8 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
 
     cnt++;
 
-    long endTime = System.currentTimeMillis();
-    System.out.println(currentTx + ", " + currentTy + ", " + (endTime - startTime));
+//    long endTime = System.currentTimeMillis();
+//    System.out.println(currentTx + ", " + currentTy + ", " + (endTime - startTime));
     return true;
   }
 
