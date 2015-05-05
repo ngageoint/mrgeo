@@ -93,7 +93,7 @@ public class ColorScaleResource
         String format = "png";
         Raster ri = service.createColorScaleSwatch(colorScalePath, format, width, height);
 
-        return service.getImageResponseWriter(format).write(ri);
+        return service.getImageResponseWriter(format).write(ri).build();
       } catch (Exception ex) {
         ex.printStackTrace();
         return Response.status(Status.BAD_REQUEST).entity("Color scale file not found: " + colorScalePath).build();

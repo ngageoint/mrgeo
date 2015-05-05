@@ -43,25 +43,25 @@ public interface ImageResponseWriter
 
   String[] getWmsFormats();
 
-  Response write(final Raster raster);
+  Response.ResponseBuilder write(final Raster raster);
   void write(final Raster raster, final HttpServletResponse response) throws ServletException;
   
-  Response write(final Raster raster, double[] defaults);
+  Response.ResponseBuilder write(final Raster raster, double[] defaults);
   void write(final Raster raster, double[] defaults, final HttpServletResponse response) throws ServletException;
 
-  Response write(final Raster raster, final int tileColumn, final int tileRow, final double scale,
+  Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow, final double scale,
     final MrsImagePyramid pyramid) throws IOException;
   void write(final Raster raster, final int tileColumn, final int tileRow, final double scale,
     final MrsImagePyramid pyramid, final HttpServletResponse response) throws ServletException, IOException;
 
   /**
    * 
-   * @param image
+   * @param imageName
    * @param imageName
    * @return
    * @throws IOException
    */
-  Response write(final Raster raster, final String imageName, final Bounds bounds);
+  Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds);
 
   void write(final Raster raster, final String imageName, final Bounds bounds,
     final HttpServletResponse response) throws ServletException;

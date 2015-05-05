@@ -218,14 +218,29 @@ public class ShapefileReader implements GeometryInputStream, GeometryCollection
 
   private static WritablePolygon convertToPolygon(JPolygonZ poly)
   {
-    WritablePolygon result = GeometryFactory.createPolygon();
-    WritableLinearRing exteriorRing = GeometryFactory.createLinearRing();
-    for (int i = 0; i < poly.getPointCount(); i++)
+    if (poly.getPartCount() == 0)
     {
-      Coord c = poly.getPoint(i);
-      exteriorRing.addPoint(GeometryFactory.createPoint(c.x, c.y, poly.getZ(i)));
+      return null;
     }
-    result.setExteriorRing(exteriorRing);
+    WritablePolygon result = GeometryFactory.createPolygon();
+    for (int part=0; part < poly.getPartCount(); part++)
+    {
+      WritableLinearRing ring = GeometryFactory.createLinearRing();
+      int maxPointIndex = (part == poly.getPartCount() - 1) ? poly.getPointCount() : poly.getPart(part + 1);
+      for (int i = poly.getPart(part); i < maxPointIndex; i++)
+      {
+        Coord c = poly.getPoint(i);
+        ring.addPoint(GeometryFactory.createPoint(c.x, c.y, poly.getZ(i)));
+      }
+      if (part == 0)
+      {
+        result.setExteriorRing(ring);
+      }
+      else
+      {
+        result.addInteriorRing(ring);
+      }
+    }
 
     return result;
   }

@@ -642,6 +642,100 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     Assert.assertEquals(POST_BUILD_ACTION, listener.getAction(index));
   }
 
+  // Construct a map op tree with a parent and child map op that are both
+  // DeferredExecution map ops. And assign an execute listener to the child.
+  // The child should be prepared and built, followed by the execute listener
+  // being built (but not prepared), and finally the root should be prepared,
+  // built and then post-built.
+  @Test
+  @Category(UnitTest.class)
+  public void testChainWithExecuteListener() throws JobFailedException, JobCancelledException
+  {
+    // Deferred1 -> Deferred1
+    int mapOpId = 1;
+    MapOpActionListener listener = new MapOpActionListener();
+    String rootId = "" + mapOpId++;
+    String childId = "" + mapOpId++;
+    String listenerId = "" + mapOpId++;
+    MapOp root = new DeferredMapOp1(rootId, listener);
+    MapOp child = new DeferredMapOp1(childId, listener);
+    MapOp executeListener = new NormalMapOp(listenerId, listener);
+    child.addExecuteListener(executeListener);
+    root.addInput(child);
+    executioner.setRoot(root);
+    executioner.execute(conf, new ProgressHierarchy());
+    Assert.assertEquals(6, listener.size());
+    int index = 0;
+    Assert.assertEquals(childId, listener.getActionId(index));
+    Assert.assertEquals(PREPARE_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(childId, listener.getActionId(index));
+    Assert.assertEquals(BUILD_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(listenerId, listener.getActionId(index));
+    Assert.assertEquals(BUILD_ACTION, listener.getAction(index));
+    index++;
+    // Root is last
+    Assert.assertEquals(rootId, listener.getActionId(index));
+    Assert.assertEquals(PREPARE_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(rootId, listener.getActionId(index));
+    Assert.assertEquals(BUILD_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(rootId, listener.getActionId(index));
+    Assert.assertEquals(POST_BUILD_ACTION, listener.getAction(index));
+  }
+
+  // Construct a map op tree with a parent and child map op that are both
+  // DeferredExecution map ops. And assign an execute listener to the child.
+  // The child should be prepared and built, followed by the execute listener
+  // being built (but not prepared), and finally the root should be prepared,
+  // built and then post-built.
+  @Test
+  @Category(UnitTest.class)
+  public void testMultiChainWithExecuteListener() throws JobFailedException, JobCancelledException
+  {
+    // Deferred1 -> Deferred1
+    int mapOpId = 1;
+    MapOpActionListener listener = new MapOpActionListener();
+    String rootId = "" + mapOpId++;
+    String childId = "" + mapOpId++;
+    String grandChildId = "" + mapOpId++;
+    String listenerId = "" + mapOpId++;
+    MapOp root = new DeferredMapOp1(rootId, listener);
+    MapOp child = new DeferredMapOp1(childId, listener);
+    MapOp grandChild = new DeferredMapOp1(grandChildId, listener);
+    MapOp executeListener = new NormalMapOp(listenerId, listener);
+    root.addInput(child);
+    child.addInput(grandChild);
+    child.addExecuteListener(executeListener);
+    executioner.setRoot(root);
+    executioner.execute(conf, new ProgressHierarchy());
+    Assert.assertEquals(7, listener.size());
+    int index = 0;
+    Assert.assertEquals(grandChildId, listener.getActionId(index));
+    Assert.assertEquals(PREPARE_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(childId, listener.getActionId(index));
+    Assert.assertEquals(PREPARE_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(childId, listener.getActionId(index));
+    Assert.assertEquals(BUILD_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(listenerId, listener.getActionId(index));
+    Assert.assertEquals(BUILD_ACTION, listener.getAction(index));
+    index++;
+    // Root is last
+    Assert.assertEquals(rootId, listener.getActionId(index));
+    Assert.assertEquals(PREPARE_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(rootId, listener.getActionId(index));
+    Assert.assertEquals(BUILD_ACTION, listener.getAction(index));
+    index++;
+    Assert.assertEquals(rootId, listener.getActionId(index));
+    Assert.assertEquals(POST_BUILD_ACTION, listener.getAction(index));
+  }
+
   @Test
   @Category(UnitTest.class)
   public void testMultiChildren() throws JobFailedException, JobCancelledException

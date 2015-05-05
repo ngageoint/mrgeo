@@ -299,9 +299,20 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
       t = input.replaceFirst(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX, "");
     }
     ADPF_AllTables = AccumuloUtils.getListOfTables(null);
+    ADPF_ImageToTable = AccumuloUtils.getGeoTables(null);
+    
+    ArrayList<String> ignoreTables = AccumuloUtils.getIgnoreTables();
+    if(ignoreTables.contains(t)){
+    	return false;
+    }
+
+    if(ADPF_AllTables.contains(t) && !ADPF_ImageToTable.contains(t)){
+    	return false;
+    }
     
     // make the assumption that if the table exists that it is available to be writen
-    return ADPF_AllTables.contains(t);
+    //return ADPF_AllTables.contains(t);
+    return true;
   } // canWrite
 
   
@@ -313,9 +324,21 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
       t = input.replaceFirst(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX, "");
     }
     ADPF_AllTables = AccumuloUtils.getListOfTables(providerProperties);
+    ADPF_ImageToTable = AccumuloUtils.getGeoTables(providerProperties);
+    
+    ArrayList<String> ignoreTables = AccumuloUtils.getIgnoreTables();
+    if(ignoreTables.contains(t)){
+    	return false;
+    }
+
+    if(ADPF_AllTables.contains(t) && !ADPF_ImageToTable.contains(t)){
+    	return false;
+    }
     
     // make the assumption that if the table exists that it is available to be writen
-    return ADPF_AllTables.contains(t);
+    //return ADPF_AllTables.contains(t);
+    return true;
+    
   } // canWrite
 
   
@@ -413,6 +436,7 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
   public void delete(String name, final Configuration conf) throws IOException
   {
 	  log.info("asked to delete " + name + " -- doing nothing.");
+	  AccumuloConnector.deleteTable(name);
     return;
   } // end delete
 
@@ -420,6 +444,7 @@ public class AccumuloMrsImageDataProviderFactory implements MrsImageDataProvider
   @Override
   public void delete(String name, final Properties providerProperties) throws IOException
   {
+	  AccumuloConnector.deleteTable(name);
     return;
   } // end delete
 

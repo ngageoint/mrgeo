@@ -21,7 +21,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.security.ColumnVisibility;
@@ -448,6 +451,18 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
         Path failures = new Path(workDir, "failures");  
         fs.delete(failures, true);
         fs.mkdirs(new Path(workDir, "failures"));
+        
+        if(! conn.tableOperations().exists(table)){
+        	conn.tableOperations().create(table, true);
+        	HashMap<String, Set<Text>> groups = new HashMap<String, Set<Text>>();
+        	for(int i = 1; i <= 18; i++){
+        		String k = Integer.toString(i);
+        		HashSet<Text> hs = new HashSet<Text>();
+        		
+        		hs.add(new Text(Integer.toString(i)));
+        	}
+        	conn.tableOperations().setLocalityGroups(table, groups);
+        }
         
         conn.tableOperations().importDirectory(table, workDir + "files", workDir + "failures", true);
         conn.tableOperations().compact(table, new Text("" + 0x00), new Text("" + 0xFF), true, false);

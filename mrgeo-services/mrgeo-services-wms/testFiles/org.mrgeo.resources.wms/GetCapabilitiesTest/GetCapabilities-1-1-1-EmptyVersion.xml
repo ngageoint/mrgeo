@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd">
+<WMT_MS_Capabilities updateSequence="0" version="1.1.1">
+<Service>
+<Name>OGC:WMS</Name>
+<Title>MrGeo Web Map Service</Title>
+<Abstract>MrGeo Web Map Service</Abstract>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS" xlink:type="simple"/>
+<Fees>none</Fees>
+<AccessConstraints>none</AccessConstraints>
+</Service>
+<Capability>
+<Request>
+<GetCapabilities>
+<Format>application/vnd.ogc.wms_xml</Format>
+<DCPType>
+<HTTP>
+<Get>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS" xlink:type="simple"/>
+</Get>
+<Post>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS" xlink:type="simple"/>
+</Post>
+</HTTP>
+</DCPType>
+</GetCapabilities>
+<GetMap>
+<Format>image/geotif</Format>
+<Format>image/geotiff</Format>
+<Format>image/jpeg</Format>
+<Format>image/jpg</Format>
+<Format>image/png</Format>
+<Format>image/tif</Format>
+<Format>image/tiff</Format>
+<DCPType>
+<HTTP>
+<Get>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS" xlink:type="simple"/>
+</Get>
+<Post>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS" xlink:type="simple"/>
+</Post>
+</HTTP>
+</DCPType>
+</GetMap>
+<GetMosaic>
+<Format>image/geotif</Format>
+<Format>image/geotiff</Format>
+<Format>image/jpeg</Format>
+<Format>image/jpg</Format>
+<Format>image/png</Format>
+<Format>image/tif</Format>
+<Format>image/tiff</Format>
+<DCPType>
+<HTTP>
+<Get>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS" xlink:type="simple"/>
+</Get>
+<Post>
+<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost:9998/wms?REQUEST=getcapabilities&amp;SERVICE=WMS" xlink:type="simple"/>
+</Post>
+</HTTP>
+</DCPType>
+</GetMosaic>
+</Request>
+<Exception>
+<Format>application/vnd.ogc.se_xml</Format>
+<Format>application/vnd.ogc.se_inimage</Format>
+<Format>application/vnd.ogc.se_blank</Format>
+</Exception>
+<Layer noSubsets="0" opaque="0" queryable="0">
+<Title>AllLayers</Title>
+<SRS>EPSG:4326</SRS>
+<Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
+<Title>IslandsElevation-v2</Title>
+<Name>IslandsElevation-v2</Name>
+<SRS>EPSG:4326</SRS>
+<LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
+<BoundingBox>
+<SRS>EPSG:4326</SRS>
+<minx>161.25</minx>
+<maxx>162.5</maxx>
+<miny>-11.0</miny>
+<maxy>-10.083333333333334</maxy>
+</BoundingBox>
+<Style>
+<Name>Default</Name>
+<Title>Default Grayscale</Title>
+<Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+</Style>
+<Style>
+<Name>Default</Name>
+<Title>Default</Title>
+</Style>
+</Layer>
+<Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
+<Title>IslandsElevation-v2-color-scale</Title>
+<Name>IslandsElevation-v2-color-scale</Name>
+<SRS>EPSG:4326</SRS>
+<LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
+<BoundingBox>
+<SRS>EPSG:4326</SRS>
+<minx>161.25</minx>
+<maxx>162.5</maxx>
+<miny>-11.0</miny>
+<maxy>-10.083333333333334</maxy>
+</BoundingBox>
+<Style>
+<Name>Default</Name>
+<Title>Default Grayscale</Title>
+<Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+</Style>
+<Style>
+<Name>Default</Name>
+<Title>Default</Title>
+</Style>
+</Layer>
+<Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
+<Title>IslandsElevation-v2-no-pyramid</Title>
+<Name>IslandsElevation-v2-no-pyramid</Name>
+<SRS>EPSG:4326</SRS>
+<LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
+<BoundingBox>
+<SRS>EPSG:4326</SRS>
+<minx>161.25</minx>
+<maxx>162.5</maxx>
+<miny>-11.0</miny>
+<maxy>-10.083333333333334</maxy>
+</BoundingBox>
+<Style>
+<Name>Default</Name>
+<Title>Default Grayscale</Title>
+<Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+</Style>
+<Style>
+<Name>Default</Name>
+<Title>Default</Title>
+</Style>
+</Layer>
+<Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
+<Title>IslandsElevation-v2-no-pyramid-extra-metadata</Title>
+<Name>IslandsElevation-v2-no-pyramid-extra-metadata</Name>
+<SRS>EPSG:4326</SRS>
+<LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
+<BoundingBox>
+<SRS>EPSG:4326</SRS>
+<minx>161.25</minx>
+<maxx>162.5</maxx>
+<miny>-11.0</miny>
+<maxy>-10.083333333333334</maxy>
+</BoundingBox>
+<Style>
+<Name>Default</Name>
+<Title>Default Grayscale</Title>
+<Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+</Style>
+<Style>
+<Name>Default</Name>
+<Title>Default</Title>
+</Style>
+</Layer>
+<Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
+<Title>IslandsElevation-v2-no-stats</Title>
+<Name>IslandsElevation-v2-no-stats</Name>
+<SRS>EPSG:4326</SRS>
+<LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
+<BoundingBox>
+<SRS>EPSG:4326</SRS>
+<minx>161.25</minx>
+<maxx>162.5</maxx>
+<miny>-11.0</miny>
+<maxy>-10.083333333333334</maxy>
+</BoundingBox>
+<Style>
+<Name>Default</Name>
+<Title>Default Grayscale</Title>
+<Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+</Style>
+<Style>
+<Name>Default</Name>
+<Title>Default</Title>
+</Style>
+</Layer>
+<Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
+<Title>cost-distance</Title>
+<Name>cost-distance</Name>
+<SRS>EPSG:4326</SRS>
+<LatLonBoundingBox maxx="69.43359375" maxy="35.068359375" minx="69.08203125" miny="34.8046875"/>
+<BoundingBox>
+<SRS>EPSG:4326</SRS>
+<minx>69.08203125</minx>
+<maxx>69.43359375</maxx>
+<miny>34.8046875</miny>
+<maxy>35.068359375</maxy>
+</BoundingBox>
+<Style>
+<Name>Default</Name>
+<Title>Default Grayscale</Title>
+<Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+</Style>
+<Style>
+<Name>Default</Name>
+<Title>Default</Title>
+</Style>
+</Layer>
+<Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
+<Title>cost-distance-shift-2</Title>
+<Name>cost-distance-shift-2</Name>
+<SRS>EPSG:4326</SRS>
+<LatLonBoundingBox maxx="-111.4453125" maxy="36.5625" minx="-112.5" miny="35.5078125"/>
+<BoundingBox>
+<SRS>EPSG:4326</SRS>
+<minx>-112.5</minx>
+<maxx>-111.4453125</maxx>
+<miny>35.5078125</miny>
+<maxy>36.5625</maxy>
+</BoundingBox>
+<Style>
+<Name>Default</Name>
+<Title>Default Grayscale</Title>
+<Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+</Style>
+<Style>
+<Name>Default</Name>
+<Title>Default</Title>
+</Style>
+</Layer>
+<Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
+<Title>small-3band</Title>
+<Name>small-3band</Name>
+<SRS>EPSG:4326</SRS>
+<LatLonBoundingBox maxx="8.525390625" maxy="55.107421875" minx="8.173999786376953" miny="54.84443664550781"/>
+<BoundingBox>
+<SRS>EPSG:4326</SRS>
+<minx>8.173999786376953</minx>
+<maxx>8.525390625</maxx>
+<miny>54.84443664550781</miny>
+<maxy>55.107421875</maxy>
+</BoundingBox>
+<Style>
+<Name>Default</Name>
+<Title>Default RGB</Title>
+<Abstract>3-band color image,  Colors are taken from bands 1, 2, &amp; 3 respectively</Abstract>
+</Style>
+<Style>
+<Name>BandR,G,B</Name>
+<Title>Band Selection</Title>
+</Style>
+</Layer>
+</Layer>
+</Capability>
+</WMT_MS_Capabilities>

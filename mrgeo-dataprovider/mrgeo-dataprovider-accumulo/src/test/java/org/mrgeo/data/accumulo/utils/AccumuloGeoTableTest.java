@@ -72,7 +72,7 @@ public class AccumuloGeoTableTest
 	    //Authorizations auths = new Authorizations(authsStr.split(","));
 	    Authorizations auths = new Authorizations("A,B,C,D,ROLE_USER,U".split(","));
 	    System.out.println(auths.toString());
-	    Hashtable<String, String> ht = AccumuloUtils.getGeoTables(token, auths, conn);
+	    Hashtable<String, String> ht = AccumuloUtils.getGeoTables(null, token, auths, conn);
 	    for(String k : ht.keySet()){
 	    	System.out.println(k + " => " + ht.get(k));
 	    }
