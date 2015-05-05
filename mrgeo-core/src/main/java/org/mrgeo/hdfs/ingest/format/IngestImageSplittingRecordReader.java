@@ -280,10 +280,14 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
           GridGeometry2D grid = geotoolsImage.getGridGeometry();
 
           // calculate the source image (pixel) values for the tiles to read
+//          GridCoordinates2D tl = grid.worldToGrid(
+//              new DirectPosition2D(crs, tileBounds.w + pw / 2, tileBounds.n - ph / 2));
+//          GridCoordinates2D lr = grid.worldToGrid(
+//              new DirectPosition2D(crs, tileBounds.e + pw / 2, tileBounds.s - ph / 2));
           GridCoordinates2D tl = grid.worldToGrid(
-              new DirectPosition2D(crs, tileBounds.w + pw / 2, tileBounds.n - ph / 2));
+              new DirectPosition2D(crs, tileBounds.w, tileBounds.n));
           GridCoordinates2D lr = grid.worldToGrid(
-              new DirectPosition2D(crs, tileBounds.e + pw / 2, tileBounds.s - ph / 2));
+              new DirectPosition2D(crs, tileBounds.e, tileBounds.s));
 
 
           // image in mrgeo pixel space
@@ -328,9 +332,9 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
           // this will save the pieces
 //          try
 //          {
-//            File file = new File("/data/export/scaled-raw-" + cnt + ".tiff");
-//            ImageUtils.writeImageToFile(file, ImageUtils.createImageWriter("raster/tiff"),
-//                RasterUtils.makeBufferedImage(raster));
+////            File file = new File("/data/export/scaled-raw-" + cnt + ".tiff");
+////            ImageUtils.writeImageToFile(file, ImageUtils.createImageWriter("raster/tiff"),
+////                RasterUtils.makeBufferedImage(raster));
 //
 //            final GeneralEnvelope env = new GeneralEnvelope(new double[]{tileBounds.w, tileBounds.s},
 //                new double[]{tileBounds.e, tileBounds.n});
@@ -341,10 +345,10 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
 //            GeotoolsRasterUtils.saveLocalGeotiff("/data/export/final-" + cnt + ".tiff",
 //                RasterUtils.makeRasterWritable(raster), env, nodata);
 //
-//            System.out.println("cropped: x: " + scaled.getMinX() + " y: " + scaled.getMinY() + " rasterw: " +
-//                scaled.getWidth() + " rasterh: " + scaled.getHeight());
-//            System.out.println("raster: x: " + raster.getMinX() + " y: " + raster.getMinY() + " rasterw: " +
-//                raster.getWidth() + " rasterh: " + raster.getHeight());
+//            System.out.println("cropped: x: " + scaled.getMinX() + " y: " + scaled.getMinY() + " w: " +
+//                scaled.getWidth() + " h: " + scaled.getHeight());
+//            System.out.println("raster: x: " + raster.getMinX() + " y: " + raster.getMinY() + " w: " +
+//                raster.getWidth() + " h: " + raster.getHeight());
 //
 //          }
 //          catch (IOException e)
@@ -445,7 +449,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
     cnt++;
 
     long endTime = System.currentTimeMillis();
-    System.out.println("Tile read time: " + (endTime - startTime));
+    System.out.println(currentTx + ", " + currentTy + ", " + (endTime - startTime));
     return true;
   }
 

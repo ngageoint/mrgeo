@@ -27,18 +27,24 @@ import java.awt.image.*;
 import java.util.Arrays;
 
 /**
- * 
+ *
  */
 public class RasterUtils
 {
 
+  public final static int BYTES_BYTES = 1;
+  public final static int FLOAT_BYTES = Float.SIZE / Byte.SIZE;
+  public final static int DOUBLE_BYTES = Double.SIZE / Byte.SIZE;
+  public final static int LONG_BYTES = Long.SIZE / Byte.SIZE;
+  public final static int INT_BYTES = Integer.SIZE / Byte.SIZE;
+  public final static int SHORT_BYTES = Short.SIZE / Byte.SIZE;
+  public final static int USHORT_BYTES = Character.SIZE / Byte.SIZE;
+
   /**
    * Return a color model for a particular raster type
-   * 
-   * @param dataType
-   *          data type
-   * @param numBands
-   *          number of image bands
+   *
+   * @param dataType data type
+   * @param numBands number of image bands
    * @return a color model
    */
   public static ColorModel colorModelForRaster(final int dataType, final int numBands)
@@ -91,13 +97,12 @@ public class RasterUtils
   /**
    * Scan the list of sources for the one that uses the
    * largest data type and return it.
-   * 
    */
   public static RenderedImage getMostSpecificSource(RenderedImage[] sources)
   {
     int useIndex = -1;
     int largestDataType = -1;
-    for (int ii=0; ii < sources.length; ii++)
+    for (int ii = 0; ii < sources.length; ii++)
     {
       RenderedImage ri = sources[ii];
       if (ri != null)
@@ -124,8 +129,8 @@ public class RasterUtils
               {
                 // When choosing the largest data type, unfortunately we can't just use a numeric
                 // comparison of the dataType values because the value of USHORT is less than SHORT.
-                // And it's probably better 
-                switch(largestDataType)
+                // And it's probably better
+                switch (largestDataType)
                 {
                 case DataBuffer.TYPE_BYTE:
                   replaceLargest = true;
@@ -187,7 +192,6 @@ public class RasterUtils
   /**
    * Return a new ImageLayout based on the specified source, but overriding the dataType and number of bands
    * in that source with the values passed in.
-   * 
    */
   public static ImageLayout createImageLayout(RenderedImage basedOnSource, int dataType, int numBands)
   {
@@ -205,61 +209,61 @@ public class RasterUtils
   }
 
   public static WritableRaster createEmptyRaster(final int width, final int height,
-    final int bands, final int datatype,
-    final double nodata)
-{
-  // we'll force the empty raster to be a banded model, for simplicity of the code.
-  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
-  final WritableRaster raster = Raster.createWritableRaster(model, null);
-  fillWithNodata(raster, nodata);
-  return raster;
-}
+      final int bands, final int datatype,
+      final double nodata)
+  {
+    // we'll force the empty raster to be a banded model, for simplicity of the code.
+    final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
+    final WritableRaster raster = Raster.createWritableRaster(model, null);
+    fillWithNodata(raster, nodata);
+    return raster;
+  }
+
   public static WritableRaster createEmptyRaster(final int width, final int height,
-    final int bands, final int datatype)
-{
-  // we'll force the empty raster to be a banded model, for simplicity of the code.
-  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
-  return Raster.createWritableRaster(model, null);
-}
-  
+      final int bands, final int datatype)
+  {
+    // we'll force the empty raster to be a banded model, for simplicity of the code.
+    final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
+    return Raster.createWritableRaster(model, null);
+  }
+
   public static WritableRaster createGBRRaster(final int width, final int height)
-{
-  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-      width * 3, 3, new int[]{2, 1, 0}, null);
-}
+  {
+    return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
+        width * 3, 3, new int[]{2, 1, 0}, null);
+  }
+
   public static WritableRaster createAGBRRaster(final int width, final int height)
-{
-  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-    width * 4, 4, new int[]{3, 2, 1, 0}, null);
-}
-  
+  {
+    return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
+        width * 4, 4, new int[]{3, 2, 1, 0}, null);
+  }
+
   public static WritableRaster createRGBARaster(final int width, final int height)
-{
-  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-    width * 4, 4, new int[]{0, 1, 2, 3}, null);
-}
-  
+  {
+    return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
+        width * 4, 4, new int[]{0, 1, 2, 3}, null);
+  }
+
   public static WritableRaster createRGBRaster(final int width, final int height)
-{
-  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-      width * 3, 3, new int[]{0, 1, 2}, null);
-}
-  
- 
-public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, int tilesize)
-{
-  int dtx = (int) (tx - minTx);
-  int dty = (int) (maxTy - ty);
+  {
+    return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
+        width * 3, 3, new int[]{0, 1, 2}, null);
+  }
 
-  int x = dtx * tilesize;
-  int y = dty * tilesize;
+  public static Raster crop(final Raster src, final long tx, final long ty, final long minTx, final long maxTy, final int tilesize)
+  {
+    final int dtx = (int) (tx - minTx);
+    final int dty = (int) (maxTy - ty);
 
-  WritableRaster cropped = src.createCompatibleWritableRaster(tilesize, tilesize);
-  Object data = src.getDataElements(x, y, tilesize, tilesize, null);
-  cropped.setDataElements(0, 0, data);
+    final int x = dtx * tilesize;
+    final int y = dty * tilesize;
 
-  return cropped;
-}
+    final WritableRaster cropped = src.createCompatibleWritableRaster(tilesize, tilesize);
+    cropped.setDataElements(0, 0, tilesize, tilesize, src.getDataElements(x, y, tilesize, tilesize, null));
+
+    return cropped;
+  }
 
   public static void fillWithNodata(final WritableRaster raster, final double nodata)
   {
@@ -303,17 +307,17 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
     WritableRaster wr;
     if (raster instanceof WritableRaster)
     {
-      wr = (WritableRaster)raster;
+      wr = (WritableRaster) raster;
     }
     else
     {
       wr = RasterUtils.makeRasterWritable(raster);
     }
-    
+
     ColorModel cm = RasterUtils.createColorModel(raster);
     return new BufferedImage(cm, wr, false, null);
   }
-  
+
   public static WritableRaster makeRasterWritable(final Raster raster)
   {
     // create a writable raster using the sample model and actual data buffer from the source raster
@@ -446,8 +450,8 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
     double r1, r2;
 
     int x, y;
-    final float x_ratio = (float)srcW / dstWidth;
-    final float y_ratio = (float)srcH / dstHeight;
+    final float x_ratio = (float) srcW / dstWidth;
+    final float y_ratio = (float) srcH / dstHeight;
     float x_diff, y_diff;
 
     int ul, ur, ll, lr;
@@ -558,8 +562,8 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
     float r1, r2;
 
     int x, y;
-    final float x_ratio = (float)srcW / dstWidth;
-    final float y_ratio = (float)srcH / dstHeight;
+    final float x_ratio = (float) srcW / dstWidth;
+    final float y_ratio = (float) srcH / dstHeight;
     float x_diff, y_diff;
 
     int ul, ur, ll, lr;
@@ -674,8 +678,8 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
 
     int x, y;
 
-    final double x_ratio = (double)srcW / dstWidth;
-    final double y_ratio = (double)srcH / dstHeight;
+    final double x_ratio = (double) srcW / dstWidth;
+    final double y_ratio = (double) srcH / dstHeight;
 
     double x_diff, y_diff;
 
@@ -931,10 +935,10 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
       dst.setSamples(0, 0, dstWidth, dstHeight, band, rawOutput);
     }
   }
-  
+
   public static void fillWithNodata(final WritableRaster raster, final MrsImagePyramidMetadata metadata)
   {
-    
+
     int elements = raster.getHeight() * raster.getWidth();
     for (int b = 0; b < raster.getNumBands(); b++)
     {
@@ -965,8 +969,8 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
     }
   }
 
-  
-  public static void decimate(final Raster parent, final WritableRaster child, final Aggregator aggregator, final MrsImagePyramidMetadata metadata)
+  public static void decimate(final Raster parent, final WritableRaster child, final Aggregator aggregator,
+      final MrsImagePyramidMetadata metadata)
   {
     final int w = parent.getWidth();
     final int h = parent.getHeight();
@@ -1013,7 +1017,6 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
     }
   }
 
-
   public static int getElementSize(final int rasterDataType)
   {
     int size = -1;
@@ -1051,7 +1054,7 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
   {
     addToRaster(r, mr, 1.0);
   }
-  
+
   /**
    * @param r
    * @param mr
@@ -1112,12 +1115,4 @@ public static Raster crop(Raster src, long tx, long ty, long minTx, long maxTy, 
       }
     }
   }
-
-  public final static int BYTES_BYTES = 1;
-  public final static int FLOAT_BYTES = Float.SIZE / Byte.SIZE;
-  public final static int DOUBLE_BYTES = Double.SIZE / Byte.SIZE;
-  public final static int LONG_BYTES = Long.SIZE / Byte.SIZE;
-  public final static int INT_BYTES = Integer.SIZE / Byte.SIZE;
-  public final static int SHORT_BYTES = Short.SIZE / Byte.SIZE;
-  public final static int USHORT_BYTES = Character.SIZE / Byte.SIZE;
 }
