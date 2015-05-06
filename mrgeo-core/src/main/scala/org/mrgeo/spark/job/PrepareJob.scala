@@ -5,6 +5,7 @@ import java.util.Properties
 
 import org.apache.spark.{Logging, SparkException, SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.mrgeo.hdfs.utils.HadoopFileUtils
 
 import scala.collection.Map
 import scala.collection.mutable.ArrayBuffer
@@ -63,6 +64,7 @@ object PrepareJob extends Logging {
     val conf: SparkConf = new SparkConf()
 
     loadDefaultSparkProperties(conf)
+
 
     logInfo("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
     conf.setAppName(job.name)

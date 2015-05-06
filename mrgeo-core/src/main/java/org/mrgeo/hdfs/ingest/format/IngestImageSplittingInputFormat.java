@@ -63,7 +63,7 @@ public class IngestImageSplittingInputFormat extends
   {
     final RecordReader<TileIdWritable, RasterWritable> reader = new IngestImageSplittingRecordReader();
     //FIXME: This seems to be called from AutoFeatureInputFormat.initialize()
-    reader.initialize(split, context);
+    //reader.initialize(split, context);
 
     return reader;
   }

@@ -288,7 +288,19 @@ public class TMSUtils
 
       return null;
     }
+
+    public double width()
+    {
+      return e - w;
+    }
+
+    public double height()
+    {
+      return n - s;
+    }
+
   }
+
 
   public static class LatLon implements Serializable
   {
