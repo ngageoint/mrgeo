@@ -20,6 +20,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.gdal.gdal.Driver;
+import org.gdal.gdal.gdal;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -533,6 +535,18 @@ public class IngestImage extends Command
     {
       long start = System.currentTimeMillis();
 
+      System.out.println(System.getProperty("java.library.path"));
+      System.load("/usr/lib/jni/libgdaljni.so");
+      System.load("/usr/lib/jni/libgdalconstjni.so");
+      System.load("/usr/lib/libgdal.so");
+
+      gdal.AllRegister();
+      int drivers = gdal.GetDriverCount();
+      for (int i = 0; i < drivers; i++)
+      {
+        Driver driver = gdal.GetDriver(i);
+        System.out.println(driver.getLongName());
+      }
       CommandLine line = null;
       try
       {
