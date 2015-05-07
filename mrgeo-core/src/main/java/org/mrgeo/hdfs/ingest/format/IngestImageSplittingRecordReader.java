@@ -326,6 +326,8 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
               interp, qualityHints);
 
           // make the final raster
+          long startTime = System.currentTimeMillis();
+
           Rectangle imageRect = new Rectangle(0, 0, rasterw, rasterh);
           raster = scaled.getExtendedData(imageRect, extender).createTranslatedChild(0, 0);
 
@@ -355,6 +357,8 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
 //          {
 //            e.printStackTrace();
 //          }
+          long endTime = System.currentTimeMillis();
+          log.warn("scale: " + currentTx + ", " + currentTy + ", " + (endTime - startTime));
 
         }
         catch (TransformException e)
@@ -401,7 +405,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException
   {
-//    long startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
     if (currentTx > maxTx)
     {
@@ -436,7 +440,7 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
     if (cropped.getMinX() != 0 || cropped.getMinY() != 0 ||
         cropped.getWidth() != tilesize || cropped.getHeight() != tilesize)
     {
-      throw new IOException("Tile not the right position/size: x"  + cropped.getMinX() + " y: " + cropped.getMinY() +
+      throw new IOException("Tile not the right position/size: x: "  + cropped.getMinX() + " y: " + cropped.getMinY() +
           " w: " + cropped.getWidth() + " h: " + cropped.getHeight());
     }
 
@@ -448,8 +452,8 @@ public class IngestImageSplittingRecordReader extends RecordReader<TileIdWritabl
 
     cnt++;
 
-//    long endTime = System.currentTimeMillis();
-//    System.out.println(currentTx + ", " + currentTy + ", " + (endTime - startTime));
+    long endTime = System.currentTimeMillis();
+    log.warn(currentTx + ", " + currentTy + ", " + (endTime - startTime));
     return true;
   }
 
