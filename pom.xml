@@ -656,6 +656,7 @@
       <id>CDH540</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.0</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.4.0</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
         <pig.version>0.12.0-cdh5.4.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
