@@ -50,8 +50,8 @@
     <gson.version>2.2.2</gson.version>
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
+    <hadoop.scope>provided</hadoop.scope>
     <hadoop.yarn.version>${hadoop.version}</hadoop.yarn.version>
-    <hadoop.yarn.scope>provided</hadoop.yarn.scope>
     <hppc.version>0.5.2</hppc.version>
     <imageio.version>1.1.7</imageio.version>
     <jackson.version>1.9.2</jackson.version>
@@ -628,7 +628,6 @@
       <id>CDH540-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
         <pig.version>0.12.0-cdh5.4.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -657,7 +656,6 @@
       <id>CDH540</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.0</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
         <pig.version>0.12.0-cdh5.4.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -686,7 +684,6 @@
       <id>CDH533-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.3</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.3.3</mahout.version>
         <pig.version>0.12.0-cdh5.3.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -744,7 +741,6 @@
       <id>CDH532-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.2</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.3.2</mahout.version>
         <pig.version>0.12.0-cdh5.3.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -802,7 +798,6 @@
       <id>CDH531-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.1</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.3.1</mahout.version>
         <pig.version>0.12.0-cdh5.3.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -860,7 +855,6 @@
       <id>CDH530-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
         <pig.version>0.12.0-cdh5.3.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -912,7 +906,6 @@
       <id>CDH521-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.2.1</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.2.1</mahout.version>
         <pig.version>0.12.0-cdh5.2.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -964,7 +957,6 @@
       <id>CDH520-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.2.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.2.0</mahout.version>
         <pig.version>0.12.0-cdh5.2.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1016,7 +1008,6 @@
       <id>CDH513-yarn</id>
       <properties>
         <hadoop.version>2.3.0-cdh5.1.3</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.1.3</mahout.version>
         <pig.version>0.12.0-cdh5.1.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1061,7 +1052,6 @@
       <id>CDH510-yarn</id>
       <properties>
         <hadoop.version>2.3.0-cdh5.1.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.9-cdh5.1.0</mahout.version>
         <pig.version>0.12.0-cdh5.1.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1135,7 +1125,6 @@
       <id>CDH470-yarn</id>
       <properties>
         <hadoop.version>2.0.0-cdh4.7.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.7-cdh4.7.0</mahout.version>
         <pig.version>0.11.0-cdh4.7.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
@@ -1213,7 +1202,6 @@
       <id>apache220</id>
       <properties>
         <hadoop.version>2.2.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
@@ -1243,7 +1231,6 @@
       <id>apache230</id>
       <properties>
         <hadoop.version>2.3.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1273,7 +1260,6 @@
       <id>apache240</id>
       <properties>
         <hadoop.version>2.4.0</hadoop.version>
-        <hadoop.yarn.scope>provided</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1303,7 +1289,6 @@
       <id>apache241</id>
       <properties>
         <hadoop.version>2.4.1</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1333,7 +1318,6 @@
       <id>apache250</id>
       <properties>
         <hadoop.version>2.5.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
@@ -1363,7 +1347,6 @@
       <id>apache251</id>
       <properties>
         <hadoop.version>2.5.1</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1393,7 +1376,6 @@
       <id>apache252</id>
       <properties>
         <hadoop.version>2.5.2</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1423,7 +1405,6 @@
       <id>apache260</id>
       <properties>
         <hadoop.version>2.6.0</hadoop.version>
-        <hadoop.yarn.scope>compile</hadoop.yarn.scope>
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -1484,6 +1465,12 @@
       </activation>
       <properties>
         <modules>all</modules>
+      </properties>
+    </profile>
+    <profile>
+      <id>intellij</id>
+      <properties>
+        <hadoop.scope>compile</hadoop.scope>
       </properties>
     </profile>
     <!--
@@ -2100,7 +2087,7 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
         <version>${hadoop.version}</version>
-        <scope>provided</scope>
+        <scope>${hadoop.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>asm</groupId>
@@ -2149,7 +2136,7 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-yarn-api</artifactId>
         <version>${hadoop.yarn.version}</version>
-        <scope>${hadoop.yarn.scope}</scope>
+        <scope>${hadoop.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>javax.servlet</groupId>
@@ -2161,19 +2148,19 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-yarn-common</artifactId>
         <version>${hadoop.yarn.version}</version>
-        <scope>${hadoop.yarn.scope}</scope>
+        <scope>${hadoop.scope}</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-yarn-server-web-proxy</artifactId>
         <version>${hadoop.yarn.version}</version>
-        <scope>${hadoop.yarn.scope}</scope>
+        <scope>${hadoop.scope}</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-yarn-client</artifactId>
         <version>${hadoop.yarn.version}</version>
-        <scope>${hadoop.yarn.scope}</scope>
+        <scope>${hadoop.scope}</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
