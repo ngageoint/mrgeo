@@ -45,6 +45,7 @@
     <commons-jexl.version>2.1.1</commons-jexl.version>
     <commons-lang.version>2.5</commons-lang.version>
     <geotiff-jai.version>0.0</geotiff-jai.version>
+    <gdal.version>1.10.1</gdal.version>
     <geotools.version>12.1</geotools.version>
     <geowave.version>0.8.5-SNAPSHOT</geowave.version>
     <gson.version>2.2.2</gson.version>
@@ -2387,6 +2388,11 @@
         <groupId>org.reflections</groupId>
         <artifactId>reflections</artifactId>
         <version>${reflections.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gdal</groupId>
+        <artifactId>gdal</artifactId>
+        <version>${gdal.version}</version>
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
