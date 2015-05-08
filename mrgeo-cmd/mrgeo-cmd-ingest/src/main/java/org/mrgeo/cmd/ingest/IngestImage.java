@@ -29,18 +29,22 @@ import org.geotools.geometry.GeneralEnvelope;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
+import org.mrgeo.aggregators.*;
+import org.mrgeo.buildpyramid.BuildPyramidDriver;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.aggregators.*;
-import org.mrgeo.buildpyramid.BuildPyramidDriver;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.ingest.IngestImageDriver;
 import org.mrgeo.ingest.IngestImageDriver.IngestImageException;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.*;
+import org.mrgeo.ingest.IngestImageSpark;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LoggingUtils;
+import org.mrgeo.utils.TMSUtils;
 import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,6 +128,7 @@ public class IngestImage extends Command
     sum.setRequired(false);
     aggregators.addOption(sum);
 
+
     Option nearest = new Option("n", "nearest", false, "Nearest Pyramid Pixel Resampling Method");
     nearest.setRequired(false);
     aggregators.addOption(nearest);
@@ -153,6 +158,11 @@ public class IngestImage extends Command
     Option quick = new Option("q", "quick", false, "Quick ingest (for small files only)");
     quick.setRequired(false);
     result.addOption(quick);
+
+
+    Option spark = new Option("k", "spark", false, "Use Spark");
+    spark.setRequired(false);
+    result.addOption(spark);
 
     Option protectionLevelOption = new Option("pl", "protectionLevel", true, "Protection level");
     // If mrgeo.conf security.classification.required is true and there is no
@@ -617,6 +627,8 @@ public class IngestImage extends Command
         quick = quick | line.hasOption("q");
         local = local | line.hasOption("lc");
         String protectionLevel = line.getOptionValue("pl");
+
+        Boolean spark = line.hasOption("k");
         if (inputs.size() > 0)
         {
 
@@ -636,6 +648,12 @@ public class IngestImage extends Command
             else if (local)
             {
               success = IngestImageDriver.localIngest(inputs.toArray(new String[inputs.size()]),
+                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
+                  tags, protectionLevel, providerProperties);
+            }
+            else if (spark)
+            {
+              success = IngestImageSpark.ingest(inputs.toArray(new String[inputs.size()]),
                   output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
                   tags, protectionLevel, providerProperties);
             }

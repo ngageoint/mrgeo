@@ -162,7 +162,11 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
+      <artifactId>mrgeo-mapalgebra-terrain</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-mapalgebra-vector</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
