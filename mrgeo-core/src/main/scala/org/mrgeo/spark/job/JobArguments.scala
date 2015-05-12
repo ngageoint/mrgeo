@@ -1,8 +1,5 @@
 package org.mrgeo.spark.job
 
-import java.io.File
-import java.net.URI
-
 import org.apache.commons.lang3.SystemUtils
 import org.mrgeo.utils.{FileUtils, Memory}
 
@@ -47,6 +44,15 @@ class JobArguments() {
 
   def getSetting(name: String): String = {
     params(name)
+  }
+  def getSetting(name: String, default:String): String = {
+    if (params.contains(name)) {
+      params(name)
+    }
+    else
+    {
+      default
+    }
   }
 
   def setSetting(key:String, value:String) = {
