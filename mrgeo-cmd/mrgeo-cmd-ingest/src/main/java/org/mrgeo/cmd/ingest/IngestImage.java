@@ -20,14 +20,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.gdal.gdal.Band;
+import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
-import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.grid.GridEnvelope2D;
-import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
-import org.geotools.geometry.Envelope2D;
-import org.geotools.geometry.GeneralEnvelope;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -39,23 +35,15 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.ingest.IngestImageDriver;
-import org.mrgeo.ingest.IngestImageDriver.IngestImageException;
 import org.mrgeo.ingest.IngestImageSpark;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
-import org.mrgeo.utils.TMSUtils;
-import org.opengis.referencing.operation.TransformException;
+import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -71,6 +59,7 @@ public class IngestImage extends Command
   private int tilesize;
   private Number nodata = null;
   private int bands;
+  private int tiletype;
   private boolean overrideNodata = false;
   private boolean local = false;
   private boolean quick = false;
@@ -193,19 +182,15 @@ public class IngestImage extends Command
     return result;
   }
 
-  private void calculateParams(AbstractGridCoverage2DReader reader, final String imageName, final Configuration conf)
+  private void calculateParams(final Dataset image, final String imageName, final Configuration conf)
   {
     try
     {
-      GridCoverage2D image = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326");
-
       // calculate zoom level for the image
-      final GridGeometry2D geometry = image.getGridGeometry();
-      Envelope2D pixelEnvelop;
-      pixelEnvelop = geometry.gridToWorld(new GridEnvelope2D(0, 0, 1, 1));
+      double[] xform = image.GetGeoTransform();
 
-      final double pixelsizeLon = Math.abs(pixelEnvelop.width);
-      final double pixelsizeLat = Math.abs(pixelEnvelop.height);
+      final double pixelsizeLon = xform[1];
+      final double pixelsizeLat = -xform[5];
 
       final int zx = TMSUtils.zoomForPixelSize(pixelsizeLon, tilesize);
       final int zy = TMSUtils.zoomForPixelSize(pixelsizeLat, tilesize);
@@ -219,30 +204,23 @@ public class IngestImage extends Command
         zoomlevel = zy;
       }
 
-      bands = image.getNumSampleDimensions();
+      bands = image.GetRasterCount();
+      tiletype = GDALUtils.toRasterDataBufferType(image.GetRasterBand(1).getDataType());
 
-      final GeneralEnvelope envelope = (GeneralEnvelope) image.getEnvelope();
-//
-      Bounds b = new Bounds(envelope
-          .getMinimum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-          .getMinimum(GeotoolsRasterUtils.LAT_DIMENSION), envelope
-          .getMaximum(GeotoolsRasterUtils.LON_DIMENSION), envelope
-          .getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
+      Bounds imageBounds = GDALUtils.getBounds(image);
 
       log.debug("    image bounds: (lon/lat) " +
-          envelope.getMinimum(GeotoolsRasterUtils.LON_DIMENSION) + ", " +
-          envelope.getMinimum(GeotoolsRasterUtils.LAT_DIMENSION) + " to " +
-          envelope.getMaximum(GeotoolsRasterUtils.LON_DIMENSION) + ", " +
-          envelope.getMaximum(GeotoolsRasterUtils.LAT_DIMENSION));
+          imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
+          imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
 
 
       if (bounds == null)
       {
-        bounds = b;
+        bounds = imageBounds;
       }
       else
       {
-        bounds.expand(b);
+        bounds.expand(imageBounds);
       }
 
       if (adhoc == null)
@@ -256,275 +234,159 @@ public class IngestImage extends Command
 
       if (adhocStream != null)
       {
-        adhocStream.println(imageName + "|" + b.toDelimitedString());
+        adhocStream.println(imageName + "|" + imageBounds.toDelimitedString());
       }
 
       try
       {
-        Method m = reader.getClass().getMethod("getMetadata", new Class[] {});
-        final Object meta = m.invoke(reader, new Object[] {});
-
-        m = meta.getClass().getMethod("getNoData", new Class[] {});
-
         if (nodata == null)
         {
-          nodata = 0; // default...
-          nodata = (Number) m.invoke(meta, new Object[] {});
-
-          log.debug("nodata: b: " + nodata.byteValue() + " d: " + nodata.doubleValue() +
-              " f: " + nodata.floatValue() + " i: " + nodata.intValue() +
-              " s: " + nodata.shortValue() + " l: " + nodata.longValue());
-        }
-        else if (!overrideNodata)
-        {
-          final double n = (Double) m.invoke(meta, new Object[] {});
-
-          if ((Double.isNaN(nodata.doubleValue()) != Double.isNaN(n)) ||
-              (!Double.isNaN(nodata.doubleValue()) && (nodata.doubleValue() != n)))
+          for (int b = 1; b <= bands; b++)
           {
-            throw new IngestImageException(
-                "All images within the set need to have the same nodata value: "
-                    + " one has " + m.invoke(meta, new Object[] {}) + ", others have "
-                    + nodata.toString());
+            Double[] val = new Double[1];
+            Band band = image.GetRasterBand(b);
+            band.GetNoDataValue(val);
+
+            nodata = val[0];
+
+            if (nodata != null)
+            {
+              log.debug("nodata: b: " + nodata.byteValue() + " d: " + nodata.doubleValue() +
+                  " f: " + nodata.floatValue() + " i: " + nodata.intValue() +
+                  " s: " + nodata.shortValue() + " l: " + nodata.longValue());
+              break;
+            }
           }
         }
       }
-      catch (final NoSuchMethodException e)
-      {
-
-      }
-      catch (IllegalArgumentException e)
-      {
-      }
-      catch (IllegalAccessException e)
-      {
-      }
-      catch (InvocationTargetException e)
+      catch (IllegalArgumentException ignored)
       {
       }
 
-    }
-    catch (TransformException e)
-    {
     }
     catch (IOException e)
     {
     }
 
 
-//    if (reader instanceof GeoTiffReader)
+//    String[] names = reader.getMetadataNames();
+//    if (names != null)
 //    {
-//      GeoTiffIIOMetadataDecoder metadata = ((GeoTiffReader)reader).getMetadata();
-//
-//
-//      for (GeoKeyEntry key: metadata.getGeoKeys())
+//      System.out.println("Metadata:");
+//      for (String name : names)
 //      {
-//        System.out.println("  " + key.getKeyID() + ":" + metadata.getGeoKey(key.getKeyID()) + ":");
+//        System.out.println("  " + name + ":" + reader.getMetadataValue(name));
+//        tags.put(name, reader.getMetadataValue(name));
 //      }
+//      System.out.println("***");
 //    }
-
-    String[] names = reader.getMetadataNames();
-    if (names != null)
-    {
-      System.out.println("Metadata:");
-      for (String name : names)
-      {
-        System.out.println("  " + name + ":" + reader.getMetadataValue(name));
-        tags.put(name, reader.getMetadataValue(name));
-      }
-      System.out.println("***");
-    }
   }
 
-  List<String> getInputs(String arg, boolean recurse, final Configuration conf) throws IOException
+  List<String> getInputs(String arg, boolean recurse, final Configuration conf)
   {
-    AbstractGridCoverage2DReader reader = null;
-
     List<String> inputs = new LinkedList<String>();
 
+    File f;
     try
     {
-      File f = new File(new URI(arg));
+      f = new File(new URI(arg));
+    }
+    catch (URISyntaxException | IllegalArgumentException ignored)
+    {
+      f = new File(arg);
+    }
 
-      // recurse through directories
-      if (f.isDirectory())
-      {
-        File[] dir = f.listFiles();
+    // recurse through directories
+    if (f.isDirectory())
+    {
+      File[] dir = f.listFiles();
 
-        for (File s : dir)
-        {
-          try
-          {
-            if (s.isFile() || (s.isDirectory() && recurse))
-            {
-              inputs.addAll(getInputs(s.getCanonicalFile().toURI().toString(), recurse, conf));
-            }
-          }
-          catch (IOException e)
-          {
-          }
-        }
-      }
-      else if (f.isFile())
+      for (File s : dir)
       {
-        // is this an geospatial image file?
-        System.out.print("*** checking (local file) " + f.getCanonicalPath());
-        String name = f.getCanonicalFile().toURI().toString();
         try
         {
-          //reader = GeotoolsRasterUtils.openImage("file://" + f.getCanonicalPath());
-          reader = GeotoolsRasterUtils.openImage(f.getCanonicalFile().toURI().toString());
-
-          if (reader != null)
+          if (s.isFile() || (s.isDirectory() && recurse))
           {
-            System.out.println(" accepted ***");
-            calculateParams(reader, name, conf);
-            inputs.add(name);
-          }
-          else
-          {
-            reader = GeotoolsRasterUtils.openImageFromFile(f);
-
-            if (reader != null)
-            {
-              System.out.println(" accepted ***");
-              calculateParams(reader, name, conf);
-              inputs.add(name);
-
-              // force local mode
-              local = true;
-            }
-            else
-            {
-              System.out.println(" can't load ***");
-            }
+            inputs.addAll(getInputs(s.getCanonicalFile().toURI().toString(), recurse, conf));
           }
         }
         catch (IOException e)
         {
-          try
-          {
-            reader = GeotoolsRasterUtils.openImageFromFile(f);
+        }
+      }
+    }
+    else if (f.isFile())
+    {
+      // is this a geospatial image file?
+      try
+      {
+        System.out.print("*** checking (local file) " + f.getCanonicalPath());
+        String name = f.getCanonicalFile().toURI().toString();
 
-            if (reader != null)
+        Dataset dataset = GDALUtils.open(name);
+
+        calculateParams(dataset, name, conf);
+
+        GDALUtils.close(name);
+        inputs.add(name);
+
+
+        System.out.println(" accepted ***");
+      }
+      catch (IOException ignored)
+      {
+        System.out.println(" can't load ***");
+      }
+    }
+    else
+    {
+      try
+      {
+
+        Path p = new Path(arg);
+        FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
+
+        if (fs.exists(p))
+        {
+          FileStatus status = fs.getFileStatus(p);
+
+          if (status.isDir() && recurse)
+          {
+            FileStatus[] files = fs.listStatus(p);
+            for (FileStatus file : files)
             {
-              System.out.println(" accepted ***");
-              calculateParams(reader, name, conf);
+              inputs.addAll(getInputs(file.getPath().toUri().toString(), recurse, conf));
+            }
+          }
+          else
+          {
+            // is this a geospatial image file?
+            try
+            {
+              System.out.print("*** checking  " + p.toString());
+              String name = p.toUri().toString();
+              Dataset dataset = GDALUtils.open(name);
+
+              calculateParams(dataset, name, conf);
+              GDALUtils.close(name);
               inputs.add(name);
 
-              // force local mode
-              local = true;
+              System.out.println(" accepted ***");
             }
-            else
+            catch (IOException ignored)
             {
               System.out.println(" can't load ***");
             }
           }
-          catch (IOException e2)
-          {
-            System.out.println(" can't load ***");
-          }
-          catch (UnsupportedOperationException e2)
-          {
-            System.out.println(" can't load ***");
-          }
         }
-        finally
-        {
-          try
-          {
-            GeotoolsRasterUtils.closeStreamFromReader(reader);
-          }
-          catch (Exception e)
-          {
-          }
-        }
-
-        //      // is this an geospatial image file?
-        //
-        //      System.out.print("*** checking " + f.getCanonicalPath());
-        //      if (GeotoolsRasterUtils.fastAccepts(f))
-        //      {
-        //        try
-        //        {
-        //          System.out.println(" accepted ***");
-        //          inputs.add(f.getCanonicalPath());
-        //        }
-        //        catch (IOException e)
-        //        {
-        //          e.printStackTrace();
-        //        }
-        //      }
-        //      else
-        //      {
-        //        System.out.println(" can't load ***");
-        //      }
       }
-      return inputs;
-    }
-    catch (URISyntaxException e)
-    {
-    } catch(IllegalArgumentException e){
-
-    }
-
-
-    Path p = new Path(arg);
-    FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
-
-    if (fs.exists(p))
-    {
-      FileStatus status = fs.getFileStatus(p);
-
-      if (status.isDir() && recurse)
+      catch (IOException ignored)
       {
-        FileStatus[] files = fs.listStatus(p);
-        for (FileStatus file: files)
-        {
-          inputs.addAll(getInputs(file.getPath().toUri().toString(), recurse, conf));
-        }
       }
-      else
-      {
-        try
-        {
-          // is this an geospatial image file?
-          System.out.print("*** checking " + p.toString());
-          String name = p.toUri().toString();
-          try
-          {
-            reader = GeotoolsRasterUtils.openImage(name);
-            if (reader != null)
-            {
-              System.out.println(" accepted ***");
-              calculateParams(reader, name, conf);
-              inputs.add(name);
-            }
-            else
-            {
-              System.out.println(" can't load ***");
-            }
-          }
-          catch (IOException e)
-          {
-            System.out.println(" can't load ***");
-          }
-        }
-        finally
-        {
-          try
-          {
-            GeotoolsRasterUtils.closeStreamFromReader(reader);
-          }
-          catch (Exception e)
-          {
-          }
-        }
-      }
+
     }
 
     return inputs;
-
   }
 
 
@@ -535,18 +397,25 @@ public class IngestImage extends Command
     {
       long start = System.currentTimeMillis();
 
-      System.out.println(System.getProperty("java.library.path"));
-      System.load("/usr/lib/jni/libgdaljni.so");
-      System.load("/usr/lib/jni/libgdalconstjni.so");
-      System.load("/usr/lib/libgdal.so");
+      System.out.println("Classpath: " + System.getProperty("java.class.path"));
+      System.out.println("Java Library Path: " + System.getProperty("java.library.path"));
 
-      gdal.AllRegister();
+      GDALUtils.register();
+//      System.load("/usr/lib/jni/libgdaljni.so");
+//      System.load("/usr/lib/jni/libgdalconstjni.so");
+//      System.load("/usr/lib/libgdal.so");
+//
+//      gdal.AllRegister();
       int drivers = gdal.GetDriverCount();
+      System.out.println("Found " + drivers + " gdal drivers");
       for (int i = 0; i < drivers; i++)
       {
         Driver driver = gdal.GetDriver(i);
-        System.out.println(driver.getLongName());
+        System.out.println("  " + driver.getShortName() + " (" + driver.getLongName() + ")");
       }
+
+//      GDALUtils.open("/user/tim.tisler/gis-data/small-elevation/small-elevation.tif");
+
       CommandLine line = null;
       try
       {
@@ -579,6 +448,19 @@ public class IngestImage extends Command
         }
 
         overrideNodata = line.hasOption("nd");
+        if (overrideNodata)
+        {
+          String str = line.getOptionValue("nd");
+          if (str.compareToIgnoreCase("nan") != 0)
+          {
+            nodata = Double.parseDouble(line.getOptionValue("nd"));
+            log.info("overriding nodata with: " + nodata);
+          }
+          else
+          {
+            nodata = Double.NaN;
+          }
+        }
 
 
         boolean categorical = line.hasOption("c");
@@ -624,16 +506,7 @@ public class IngestImage extends Command
           }
         }
 
-        if (overrideNodata)
-        {
-          String str = line.getOptionValue("nd");
-          if (str.compareToIgnoreCase("nan") != 0)
-          {
-            nodata = Double.parseDouble(line.getOptionValue("nd"));
-            log.info("overriding nodata with: " + nodata);
-          }
-        }
-        else if (nodata == null)
+        if (nodata == null)
         {
           nodata = Double.NaN;
         }
@@ -668,7 +541,7 @@ public class IngestImage extends Command
             else if (spark)
             {
               success = IngestImageSpark.ingest(inputs.toArray(new String[inputs.size()]),
-                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
+                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
                   tags, protectionLevel, providerProperties);
             }
             else
