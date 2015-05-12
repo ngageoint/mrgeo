@@ -45,6 +45,7 @@
     <commons-jexl.version>2.1.1</commons-jexl.version>
     <commons-lang.version>2.5</commons-lang.version>
     <geotiff-jai.version>0.0</geotiff-jai.version>
+    <!--<gdal.version>1.11.2</gdal.version>-->
     <gdal.version>1.10.1</gdal.version>
     <geotools.version>12.1</geotools.version>
     <geowave.version>0.8.5-SNAPSHOT</geowave.version>
@@ -2936,10 +2937,12 @@
       <groupId>org.geotools</groupId>
       <artifactId>gt-referencing</artifactId>
     </dependency>
+    <!--
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-imageio-ext-gdal</artifactId>
     </dependency>
+    -->
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-image</artifactId>
