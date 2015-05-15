@@ -182,15 +182,18 @@ public class ClassLoaderUtil
     }
 
     File[] files = directory.listFiles();
-    for (File file : files)
+    if (files != null)
     {
-      if (file.isDirectory())
+      for (File file : files)
       {
-        loadDirectory(file.getAbsolutePath());
-      }
-      else
-      {
-        result.add(new URL("file", null, file.getAbsolutePath()));
+        if (file.isDirectory())
+        {
+          loadDirectory(file.getAbsolutePath());
+        }
+        else
+        {
+          result.add(new URL("file", null, file.getAbsolutePath()));
+        }
       }
     }
     return result;

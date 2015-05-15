@@ -13,78 +13,71 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.services;
+package org.mrgeo.resources.about;
 
 import org.mrgeo.mapalgebra.MapAlgebraParser;
+import org.mrgeo.services.Configuration;
+import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.utils.ClassLoaderUtil;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URL;
+import java.security.Principal;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.Vector;
-//import org.mrgeo.core.wps.ProcessDefinitionConsumer;
 
-/**
- *
- */
-public class About extends HttpServlet
+@Path("/About")
+public class AboutResource
 {
-
   private static final long serialVersionUID = 1L;
+  private static final Logger log = LoggerFactory.getLogger(AboutResource.class);
 
-  private static final Logger log = LoggerFactory.getLogger(About.class);
+  @Context
+  UriInfo uriInfo;
 
-  private static boolean initialized = false;
+  @Context
+  SecurityContext sc;
+
   private Properties props;
 
-  /**
-   *
-   */
-  @Override
-  public void init(ServletConfig conf) throws ServletException
+  private Properties getConfiguration()
   {
-    if (initialized == true)
+    if (props == null)
     {
-      return;
+      try
+      {
+        props = Configuration.getInstance().getProperties();
+      }
+      catch (IllegalStateException e)
+      {
+        log.error("About error: " + e.getMessage(), e);
+      }
     }
-    try
-    {
-      props = Configuration.getInstance().getProperties();
-    }
-    catch (IllegalStateException e)
-    {
-      log.error("About error: " + e.getMessage(), e);
-    }
+    return props;
   }
 
-  @Override
-  @SuppressWarnings("rawtypes")
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException
+  @GET
+  @Produces(MediaType.APPLICATION_XML)
+  public Response doGet()
   {
+    boolean debugMode = uriInfo.getQueryParameters().containsKey("debug");
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
     factory.setProperty("javax.xml.stream.isRepairingNamespaces", Boolean.TRUE);
     XMLStreamWriter xmlWriter;
     try
     {
-      xmlWriter = factory.createXMLStreamWriter(response.getWriter());
+      StringWriter writer = new StringWriter();
+      xmlWriter = factory.createXMLStreamWriter(writer);
       xmlWriter.writeStartElement("About");
 
       URL buildInfoUrl = Thread.currentThread().getContextClassLoader().getResource(
@@ -97,11 +90,16 @@ public class About extends HttpServlet
       xmlWriter.writeAttribute("name", buildInfo.getProperty("name"));
       xmlWriter.writeAttribute("version", buildInfo.getProperty("version"));
       xmlWriter.writeAttribute("imagebase", imageBase);
-      String user = request.getRemoteUser();
+      String user = null;
+      Principal principal = sc.getUserPrincipal();
+      if (principal != null)
+      {
+        user = principal.getName();
+      }
       xmlWriter.writeAttribute("user", user != null ? user : "*unknown*");
 
       xmlWriter.writeStartElement("Properties");
-      Iterator it = props.entrySet().iterator();
+      Iterator it = getConfiguration().entrySet().iterator();
       while (it.hasNext())
       {
         Map.Entry prop = (Map.Entry)it.next();
@@ -119,7 +117,8 @@ public class About extends HttpServlet
       // constructed from calling a security layer with the web context. The security
       // layer should extract whatever it needs from the web request (like a PKI) and
       // set it into the properties so it can be used as needed by the providers.
-      MapAlgebraParser p = new MapAlgebraParser(HadoopUtils.createConfiguration(), "", null);
+      MapAlgebraParser p = new MapAlgebraParser(HadoopUtils.createConfiguration(), "",
+                                                SecurityUtils.getProviderProperties());
       for (String n : p.getMapOpNames())
       {
         xmlWriter.writeStartElement("Operation");
@@ -139,43 +138,49 @@ public class About extends HttpServlet
       xmlWriter.writeEndElement();
 
 
-      xmlWriter.writeStartElement("ClassPath");
-
-      xmlWriter.writeStartElement("SystemClassPath");
-      xmlWriter.writeCharacters(System.getProperty("java.class.path", null));
-      xmlWriter.writeEndElement();
-
-      xmlWriter.writeStartElement("ClassLoader");
-      xmlWriter.writeComment("This is not an exhaustive jar list, but it should be pretty good.");
-
-      for (String s : ClassLoaderUtil.getMostJars())
+      if (debugMode)
       {
-        xmlWriter.writeStartElement("jar");
-        xmlWriter.writeAttribute("url", s);
+        xmlWriter.writeStartElement("ClassPath");
+
+        xmlWriter.writeStartElement("SystemClassPath");
+        xmlWriter.writeCharacters(System.getProperty("java.class.path", null));
+        xmlWriter.writeEndElement();
+
+        xmlWriter.writeStartElement("ClassLoader");
+        xmlWriter.writeComment("This is not an exhaustive jar list, but it should be pretty good.");
+
+        for (String s : ClassLoaderUtil.getMostJars())
+        {
+          xmlWriter.writeStartElement("jar");
+          xmlWriter.writeAttribute("url", s);
+          xmlWriter.writeEndElement();
+        }
+
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        Enumeration<URL> urls = classLoader.getResources("");
+        while (urls.hasMoreElements())
+        {
+          URL resource = urls.nextElement();
+          xmlWriter.writeStartElement(resource.getProtocol());
+          xmlWriter.writeAttribute("url", resource.toString());
+          xmlWriter.writeEndElement();
+        }
+
+        xmlWriter.writeEndElement();
         xmlWriter.writeEndElement();
       }
-
-      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      Enumeration<URL> urls = classLoader.getResources("");
-      while (urls.hasMoreElements())
-      {
-        URL resource = urls.nextElement();
-        xmlWriter.writeStartElement(resource.getProtocol());
-        xmlWriter.writeAttribute("url", resource.toString());
-        xmlWriter.writeEndElement();
-      }
-
-      xmlWriter.writeEndElement();
-      xmlWriter.writeEndElement();
 
       xmlWriter.writeEndElement();
       xmlWriter.flush();
       xmlWriter.close();
-
+      writer.close();
+      return Response.status(Response.Status.ACCEPTED).entity(writer.getBuffer().toString()).build();
     }
-    catch (XMLStreamException e)
+    catch (Exception e)
     {
-      throw new ServletException("Error constructing or writing XML Stream", e);
+      log.error("Got exception", e);
+      throw new WebApplicationException(
+              Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build() );
     }
   }
 }

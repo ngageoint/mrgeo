@@ -21,7 +21,7 @@ import javax.ws.rs.ApplicationPath;
 import java.util.HashSet;
 import java.util.Set;
 
-@ApplicationPath("/api")
+@ApplicationPath("/mrgeo")
 public class Application extends javax.ws.rs.core.Application
 {
 

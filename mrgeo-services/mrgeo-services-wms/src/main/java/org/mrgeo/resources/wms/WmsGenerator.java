@@ -233,7 +233,6 @@ public class WmsGenerator
 
   @GET
   @Produces("image/*")
-  @Path("/")
   public Response doGet(@Context UriInfo uriInfo)
   {
     return handleRequest(uriInfo);
@@ -241,7 +240,6 @@ public class WmsGenerator
 
   @POST
   @Produces("image/*")
-  @Path("/")
   public Response doPost(@Context UriInfo uriInfo)
   {
     return handleRequest(uriInfo);

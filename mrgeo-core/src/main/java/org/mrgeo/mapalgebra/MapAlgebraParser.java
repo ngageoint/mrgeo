@@ -464,10 +464,21 @@ public class MapAlgebraParser implements MapOpFactory
   public ArrayList<String> getMapOpNames()
   {
     ArrayList<String> result = new ArrayList<String>();
-    for (String name : parser.getFunctionNames())
+    // Get and sort the map op function names first
+    for (String name: this.mapOps.keySet())
     {
-      result.add(name.toString());
+      result.add(name);
     }
+    Collections.sort(result);
+    // Commented out the following because it does not include
+    // all of the operators. It's missing "+", "-" for example.
+    // And those operators are just part of the map algebra syntax,
+    // so it's not really useful to report them here.
+//    // Now add the expression operators supported by map algebra
+//    for (String name : parser.getFunctionNames())
+//    {
+//      result.add(name.toString());
+//    }
     return result;
   }
 
@@ -482,7 +493,6 @@ public class MapAlgebraParser implements MapOpFactory
 
     parser = ParserAdapterFactory.createParserAdapter();
     parser.initialize();
-
 
     // register mapops
     Reflections reflections = new Reflections("org.mrgeo");
