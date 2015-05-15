@@ -16,6 +16,7 @@
 package org.mrgeo.mapalgebra.parser.jexl;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +103,12 @@ public class JexlParserAdapter implements ParserAdapter
   @Override
   public List<String> getFunctionNames()
   {
-    return null;
+    List<String> result = new ArrayList<String>();
+    for (String functionName : twoArgFunctions.values())
+    {
+      result.add(functionName);
+    }
+    return result;
   }
 
   @Override
