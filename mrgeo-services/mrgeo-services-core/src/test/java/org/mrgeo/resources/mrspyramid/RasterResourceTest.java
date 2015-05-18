@@ -31,6 +31,7 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
@@ -129,7 +130,7 @@ public class RasterResourceTest extends JerseyTest
     final String ma = ("a = [some points]; RasterizeVector(a, \"LAST\", 0.3, \"c\") ");
 
     final JobInfoResponse res = webResource.path("raster/testCreateJob/mapalgebra")
-        .queryParam("basePath", "/foo/bar").type("application/json")
+        .queryParam("basePath", "/foo/bar").type(MediaType.TEXT_PLAIN)
         .put(JobInfoResponse.class, ma);
     Assert.assertTrue(res.getJobId() != 0);
     Assert.assertTrue(res.getStatusUrl().startsWith("http:"));
@@ -160,7 +161,7 @@ public class RasterResourceTest extends JerseyTest
     final String ma = "a = [some points]; RasterizeVector(a, \"LAST\", 0.3, \"c\") ";
 
     final JobInfoResponse res = webResource.path("raster/testCreateJob/mapalgebra")
-        .queryParam("basePath", "/foo/bar").type("application/json")
+        .queryParam("basePath", "/foo/bar").type(MediaType.TEXT_PLAIN)
         .header("X-Forwarded-SSL", "on").put(JobInfoResponse.class, ma);
     Assert.assertTrue(res.getJobId() != 0);
     Assert.assertTrue("Status URL does not start with 'https:', was '" + res.getStatusUrl() + "'",

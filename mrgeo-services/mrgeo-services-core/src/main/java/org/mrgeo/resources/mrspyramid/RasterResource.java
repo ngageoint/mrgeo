@@ -89,7 +89,7 @@ public class RasterResource
   @PUT
   @Path("/{output}/mapalgebra/")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.TEXT_PLAIN)
   public Response createMapAlgebraJob(@PathParam("output") String outputId,
       @QueryParam("basePath") String basePath,
       @QueryParam("protectionLevel") @DefaultValue("") String protectionLevel,
