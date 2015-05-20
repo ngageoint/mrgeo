@@ -43,7 +43,6 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>1.7</version>
         <configuration>
           <acceptPomPackaging>true</acceptPomPackaging>
           <outputDirectory>${project.build.directory}/generated-sources/licenses</outputDirectory>
@@ -142,7 +141,6 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
@@ -171,6 +169,10 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-pig</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-yarn_${spark.scala.version}</artifactId>
     </dependency>
   </dependencies>
   <profiles>
