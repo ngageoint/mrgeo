@@ -51,56 +51,6 @@
       </resource>
     </resources>
     <plugins>
-      <!-- Unit Test plugin -->
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-<!--          <skipTests>${skip.mrgeo.dataprovider.tests}</skipTests> -->
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <configuration>
-<!--          <skipTests>${skip.mrgeo.dataprovider.integration.tests}</skipTests> -->
-        </configuration>
-      </plugin>
-      <!-- Make some soft links for the generated products, for convenience -->
-      <plugin>
-        <groupId>com.pyx4j</groupId>
-        <artifactId>maven-junction-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.mrgeo.plugins</groupId>
-        <artifactId>pomtools-maven-plugin</artifactId>
-        <executions>
-          <!-- turn on generate dependencies -->
-          <execution>
-            <id>generate-dependencies</id>
-            <phase>generate-sources</phase>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-libs</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-              <overWriteReleases>true</overWriteReleases>
-              <overWriteSnapshots>true</overWriteSnapshots>
-              <overWriteIfNewer>true</overWriteIfNewer>
-              <excludeScope>test</excludeScope>
-              <includeScope>runtime</includeScope>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
   <dependencies>
