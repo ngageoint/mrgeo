@@ -1,14 +1,14 @@
 package org.mrgeo.spark.job.yarn
 
 import java.io.File
-import java.net.URL
-
+import org.apache.spark.deploy.yarn.ApplicationMaster
 import org.apache.spark.SparkConf
+import org.mrgeo.core.{MrGeoProperties, MrGeoConstants}
 import org.mrgeo.spark.job.JobArguments
-import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.{GDALUtils, DependencyLoader, SparkUtils}
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
-import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
 
 object MrGeoYarnDriver {
   final val DRIVER:String = "mrgeo.driver.class"
@@ -67,8 +67,38 @@ class MrGeoYarnDriver {
     //        "  --files files              Comma separated list of files to be distributed with the job.\n" +
     //        "  --archives archives        Comma separated list of archives to be distributed with the job."
 
+    println("Looking for 'javax.servlet'")
+    val jars = SparkUtils.jarsForPackage("javax.servlet", cl)
+    jars.foreach(jar => { "  " + println(jar)})
+
+    val sparkClass = ApplicationMaster.getClass.getName.replaceAll("\\$", "")
+    val sparkJar = SparkUtils.jarForClass(sparkClass, cl)
+    conf.set("spark.yarn.jar", sparkJar)
+
+    val deps = DependencyLoader.getDependencies(MrGeoYarnJob.getClass)
+    val cpsb:StringBuilder = new StringBuilder
+
+    for (jar <- deps) {
+      //if (jar.contains("spark")) {
+        if (cpsb.length > 0) {
+          cpsb ++= ":"
+        }
+        cpsb ++= jar
+      //}
+    }
+    conf.set("spark.driver.extraClassPath", cpsb.toString())
+    conf.set("spark.executor.extraClassPath", cpsb.toString())
+
+    conf.set("spark.driver.extraLibraryPath",
+      MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, ""))
+    conf.set("spark.executor.extraLibraryPath",
+      MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, ""))
+
+    conf.set("spark.eventLog.overwrite", "true") // overwrite event logs
+
     val driverClass = MrGeoYarnJob.getClass.getName.replaceAll("\\$","")
     val driverJar =  SparkUtils.jarForClass(driverClass, cl)
+
 
     args += "--class"
     args += driverClass
@@ -117,6 +147,7 @@ class MrGeoYarnDriver {
         clean += jar
       }
     })
+
 
     args += "--addJars"
     args += clean

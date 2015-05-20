@@ -330,6 +330,7 @@ public class IngestImage extends Command
         GDALUtils.close(name);
         inputs.add(name);
 
+        local = true;
 
         System.out.println(" accepted ***");
       }
@@ -416,7 +417,8 @@ public class IngestImage extends Command
 
 //      GDALUtils.open("/user/tim.tisler/gis-data/small-elevation/small-elevation.tif");
 
-      CommandLine line = null;
+
+          CommandLine line = null;
       try
       {
         CommandLineParser parser = new GnuParser();
@@ -534,8 +536,11 @@ public class IngestImage extends Command
             }
             else if (local)
             {
-              success = IngestImageDriver.localIngest(inputs.toArray(new String[inputs.size()]),
-                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
+//              success = IngestImageDriver.localIngest(inputs.toArray(new String[inputs.size()]),
+//                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
+//                  tags, protectionLevel, providerProperties);
+              success = IngestImageSpark.localIngest(inputs.toArray(new String[inputs.size()]),
+                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
                   tags, protectionLevel, providerProperties);
             }
             else if (spark)

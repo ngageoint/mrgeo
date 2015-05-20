@@ -70,8 +70,7 @@ public class MrGeoConstants
    * Runtime configuration keys
    */
   public static final String MRGEO_JAR = "jar.path";
-  public static final String MRGEO_BASEURL = "base.url";
-  public static final String MRGEO_DBPATH = "db.path";
+  public static final String GDAL_PATH = "gdal.path";
 
   /*
    * Legion configuration keys
@@ -83,10 +82,6 @@ public class MrGeoConstants
    */
   public static final String MRGEO_MRS_TILESIZE = "mrsimage.tilesize";
   public static final int MRGEO_MRS_TILESIZE_DEFAULT = 512;
-  /*
-   * WMS configuration keys
-   */
-  public static final String MRGEO_WMS_PERMITS = "org.mrgeo.resources.WmsGenerator.permits";
 
   /*
    * Security classification keys
