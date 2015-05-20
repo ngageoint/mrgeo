@@ -1,7 +1,9 @@
 package org.mrgeo.spark.job.yarn
 
 import org.apache.spark.{Logging, SparkConf, SparkContext}
-import org.mrgeo.spark.job.{PrepareJob, JobArguments, MrGeoJob}
+import org.mrgeo.spark.job.{JobArguments, MrGeoJob}
+import org.mrgeo.utils.SparkUtils
+import sun.tools.jar.resources.jar
 
 object MrGeoYarnJob extends Logging {
 
@@ -11,6 +13,19 @@ object MrGeoYarnJob extends Logging {
     args.foreach(p => logInfo("   " + p))
 
     val job: JobArguments = new JobArguments(args)
+
+    var cl:ClassLoader = Thread.currentThread().getContextClassLoader
+    if (cl == null) {
+      cl = getClass.getClassLoader
+    }
+
+    println("Looking for 'javax.servlet.FilterRegistration'")
+    val jars = SparkUtils.jarsForClass("javax.servlet.FilterRegistration", cl)
+    jars.foreach(jar => { "  " + println(jar)})
+
+    println("Looking for 'javax.servlet'")
+    val pkgs = SparkUtils.jarsForPackage("javax.servlet", cl)
+    pkgs.foreach(pkg => { "  " + println(pkg)})
 
     if (job.params.contains(MrGeoYarnDriver.DRIVER)) {
       val driver: String = job.params.getOrElseUpdate(MrGeoYarnDriver.DRIVER, "")
@@ -27,7 +42,7 @@ object MrGeoYarnJob extends Logging {
         val conf = new SparkConf()
 
         logInfo("SparkConf parameters")
-        conf.getAll.foreach(kv => {logInfo("  " + kv._1 + ": " + kv._2)})
+        conf.getAll.foreach(kv => {logDebug("  " + kv._1 + ": " + kv._2)})
 
         val context = new SparkContext(conf)
 

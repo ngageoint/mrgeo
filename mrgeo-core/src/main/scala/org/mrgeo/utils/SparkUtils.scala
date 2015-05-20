@@ -15,11 +15,8 @@
 
 package org.mrgeo.utils
 
-import collection.JavaConversions._
-
 import java.net.URL
-import java.util.Enumeration
-import java.util.Properties
+import java.util.{Enumeration, Properties}
 
 import org.apache.hadoop.mapreduce.{InputFormat, Job}
 import org.apache.spark.SparkContext
@@ -29,8 +26,9 @@ import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.hdfs.input.image.HdfsMrsImagePyramidInputFormat
 import org.mrgeo.image.MrsImagePyramidMetadata
+
+import scala.collection.mutable
 
 object SparkUtils {
 
@@ -50,7 +48,6 @@ object SparkUtils {
 
     MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, imageName, providerProps)
 
-    // calculate the friction surface
     val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass.asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
     val image = context.newAPIHadoopRDD(job.getConfiguration,
       inputFormatClass,
@@ -103,18 +100,55 @@ object SparkUtils {
       iter = cll.getResources(classFile)
     }
 
-      while (iter.hasMoreElements) {
-        val url: URL = iter.nextElement
-        if (url.getProtocol == "jar") {
-          val path: String = url.getPath
-          if (path.startsWith("file:")) {
-            // strip off the "file:" and "!<classname>"
-            return path.substring("file:".length).replaceAll("!.*$", "")
-          }
+    while (iter.hasMoreElements) {
+      val url: URL = iter.nextElement
+      if (url.getProtocol == "jar") {
+        val path: String = url.getPath
+        if (path.startsWith("file:")) {
+          // strip off the "file:" and "!<classname>"
+          return path.substring("file:".length).replaceAll("!.*$", "")
         }
       }
+    }
 
     null
+  }
+
+  def jarsForClass(clazz:String, cl:ClassLoader = null): Array[String] = {
+    // now the hard part, need to look in the dependencies...
+    val classFile: String = clazz.replaceAll("\\.", "/") + ".class"
+
+    jarsForPackage(classFile, cl)
+  }
+
+  def jarsForPackage(pkg:String, cl:ClassLoader = null): Array[String] = {
+    // now the hard part, need to look in the dependencies...
+    var iter: Enumeration[URL] = null
+
+    val pkgFile: String = pkg.replaceAll("\\.", "/")
+
+    if (cl != null) {
+      iter = cl.getResources(pkgFile)
+    }
+    else
+    {
+      val cll = getClass.getClassLoader
+      iter = cll.getResources(pkgFile)
+    }
+
+    val ab:mutable.ArrayBuilder[String] = mutable.ArrayBuilder.make()
+    while (iter.hasMoreElements) {
+      val url: URL = iter.nextElement
+      if (url.getProtocol == "jar") {
+        val path: String = url.getPath
+        if (path.startsWith("file:")) {
+          // strip off the "file:" and "!<classname>"
+          ab += path.substring("file:".length).replaceAll("!.*$", "")
+        }
+      }
+    }
+
+    ab.result()
   }
 
 }

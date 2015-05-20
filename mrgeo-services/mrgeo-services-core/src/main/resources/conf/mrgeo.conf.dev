@@ -8,6 +8,10 @@ colorscale.base = /mrgeo/color-scales
 # This is the spot in HDFS where jars are distributed for the mappers/reducers
 distributed.base = /mrgeo/jars
 
+# Path(s) to gdal shared libraries, separated by ":".
+# Currently, we use: libgdal, libgdaljni.so, libgdalconstjni, and libosrjni.so
+gdal.path = /usr/lib:/usr/lib/jni
+
 # Denote which cluster type you have.  Mainly used for Spark processing.  Valid values
 # are: yarn, spark, and local
 cluster=yarn
@@ -21,14 +25,27 @@ development.mode=true
 # Additional classpath elements used for finding dependencies used in distributed
 # processing.  These are added AFTER MRGEO_HOME dependencies, but before
 # any others on the classpath
-#dependency.classpath=
-
-# This needs to be a location that MrGeo can write to.
-db.path = /tmp/mrgeo-services-db
+dependency.classpath=target/lib:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-core/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-vector/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-mapalgebra/mrgeo-mapalgebra-costdistance/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-mapalgebra/mrgeo-mapalgebra-image/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-mapalgebra/mrgeo-mapalgebra-integrationtests/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-mapalgebra/mrgeo-mapalgebra-rastermath/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-mapalgebra/mrgeo-mapalgebra-rasterizevector/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-mapalgebra/mrgeo-mapalgebra-vector/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-mapalgebra/mrgeo-mapalgebra-terrain/target:\
+                     $MRGEO_HOME/mrgeo-proprietary/mrgeo-proprietary-mapalgebra/mrgeo-mapalgebra-foresight/target:\
+                     $MRGEO_HOME/mrgeo-proprietary/mrgeo-proprietary-mapalgebra/mrgeo-mapalgebra-junkyard/target:\
+                     $MRGEO_HOME/mrgeo-proprietary/mrgeo-proprietary-mapalgebra/mrgeo-mapalgebra-mrsvector/target:\
+                     $MRGEO_HOME/mrgeo-proprietary/mrgeo-proprietary-mapalgebra/mrgeo-mapalgebra-paintellipse/target:\
+                     $MRGEO_HOME/mrgeo-proprietary/mrgeo-proprietary-mapalgebra/mrgeo-proprietary-mapalgebra-integrationtests/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-pig/target:\
+                     $MRGEO_HOME/mrgeo-opensource/mrgeo-cmd/mrgeo-cmd-distribution/target/lib:\
+                     $MRGEO_HOME/mrgeo-proprietary/mrgeo-cmd/mrgeo-cmd-distribution/target/lib:\
 
 # Use Kryo serialization for Spark jobs, if using Spark < 1.3.0, this _MUST_ be false!
 use.kryo.serialization=false
-
 
 # Additional hadoop parameters as well as parameters needed for Giraph.
 # Either hadoop.params with -libjars and the path to <giraph-with-dependencies>,
@@ -38,13 +55,8 @@ hadoop.params=-libjars /home/<user>/.m2/repository/org/apache/giraph/giraph-core
 
 # Modify this to match your server config. You may need to change the port, etc.  Do not remove
 # the trailing forward slash.
-base.url = http://localhost:8080/mrgeo-services/
-
-# The number of simultaneous WMS requests to process
-org.mrgeo.resources.WmsGenerator.permits = 9999
-
-# Default Legion to use CPU or GPU computing for operations that can use both
-legion.processortype.preference = GPU
+# NOTE:  This appears only to be used in the KMLGenerator and tests.  Look to remove it...
+base.url = http://localhost:8080/mrgeo/
 
 # Size of a mrsimage tile (this should not be changed unless there is a great reason)
 mrsimage.tilesize = 512
