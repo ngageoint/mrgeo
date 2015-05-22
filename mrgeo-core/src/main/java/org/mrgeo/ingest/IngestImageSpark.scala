@@ -136,6 +136,17 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
     //val start = System.currentTimeMillis()
 
+//    println("Starting Memory:")
+//    val startMem:com.sun.management.OperatingSystemMXBean =
+//      java.lang.management.ManagementFactory.getOperatingSystemMXBean.asInstanceOf[com.sun.management.OperatingSystemMXBean]
+//    println("  OS Total Swap Space: " + startMem.getTotalSwapSpaceSize)
+//    println("  OS Free Swap Sapce: " + startMem.getFreeSwapSpaceSize)
+//    println("  OS Total Physical Mem: " + startMem.getTotalPhysicalMemorySize)
+//    println("  OS Free Physical Mem: " + startMem.getFreePhysicalMemorySize)
+//
+//    val startSwap = startMem.getTotalSwapSpaceSize - startMem.getFreeSwapSpaceSize
+//    val startPh = startMem.getTotalPhysicalMemorySize - startMem.getFreePhysicalMemorySize
+
     // open the image
     val src = GDALUtils.open(image)
 
@@ -199,7 +210,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     //GDALUtils.saveRaster(scaled, "/data/export/scaled.tif")
 
     // close the image
-    GDALUtils.close(image)
+    GDALUtils.close(src)
 
     val bandlist = Array.ofDim[Int](bands)
     for (x <- 0 until bands)
@@ -246,7 +257,23 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       }
     }
 
-    scaled.delete()
+    GDALUtils.close(scaled)
+
+//    println("Ending Memory:")
+//    val endMem:com.sun.management.OperatingSystemMXBean =
+//    java.lang.management.ManagementFactory.getOperatingSystemMXBean.asInstanceOf[com.sun.management.OperatingSystemMXBean]
+//    println("  OS Total Swap Space: " + endMem.getTotalSwapSpaceSize)
+//    println("  OS Free Swap Sapce: " + endMem.getFreeSwapSpaceSize)
+//    println("  OS Total Physical Mem: " + endMem.getTotalPhysicalMemorySize)
+//    println("  OS Free Physical Mem: " + endMem.getFreePhysicalMemorySize)
+//
+//    val endSwap = endMem.getTotalSwapSpaceSize - endMem.getFreeSwapSpaceSize
+//    val endPh = endMem.getTotalPhysicalMemorySize - endMem.getFreePhysicalMemorySize
+//
+//    println("Leaked Mem:")
+//    println("  Swap: " + (endSwap - startSwap))
+//    println("  Physical: " + (endPh - startPh))
+
 
     result.iterator
   }
@@ -365,6 +392,17 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
+    println("Staring Execute Memory:")
+    val startMem:com.sun.management.OperatingSystemMXBean =
+      java.lang.management.ManagementFactory.getOperatingSystemMXBean.asInstanceOf[com.sun.management.OperatingSystemMXBean]
+    println("  OS Total Swap Space: " + startMem.getTotalSwapSpaceSize)
+    println("  OS Free Swap Sapce: " + startMem.getFreeSwapSpaceSize)
+    println("  OS Total Physical Mem: " + startMem.getTotalPhysicalMemorySize)
+    println("  OS Free Physical Mem: " + startMem.getFreePhysicalMemorySize)
+
+    val startSwap = startMem.getTotalSwapSpaceSize - startMem.getFreeSwapSpaceSize
+    val startPh = startMem.getTotalPhysicalMemorySize - startMem.getFreePhysicalMemorySize
+
     val in = context.makeRDD(inputs)
 
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
@@ -376,6 +414,21 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     })
 
     saveRDD(mergedTiles)
+
+    println("Ending Execute Memory:")
+    val endMem:com.sun.management.OperatingSystemMXBean =
+      java.lang.management.ManagementFactory.getOperatingSystemMXBean.asInstanceOf[com.sun.management.OperatingSystemMXBean]
+    println("  OS Total Swap Space: " + endMem.getTotalSwapSpaceSize)
+    println("  OS Free Swap Sapce: " + endMem.getFreeSwapSpaceSize)
+    println("  OS Total Physical Mem: " + endMem.getTotalPhysicalMemorySize)
+    println("  OS Free Physical Mem: " + endMem.getFreePhysicalMemorySize)
+
+    val endSwap = endMem.getTotalSwapSpaceSize - endMem.getFreeSwapSpaceSize
+    val endPh = endMem.getTotalPhysicalMemorySize - endMem.getFreePhysicalMemorySize
+
+    println("Leaked Mem:")
+    println("  Swap: " + (endSwap - startSwap))
+    println("  Physical: " + (endPh - startPh))
 
     true
   }
@@ -402,7 +455,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
 
-    val sorted = tiles.sortByKey().partitionBy(sparkPartitioner)
+    val sorted = tiles.partitionBy(sparkPartitioner).sortByKey()
     // this is missing in early spark APIs
     //val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
 
