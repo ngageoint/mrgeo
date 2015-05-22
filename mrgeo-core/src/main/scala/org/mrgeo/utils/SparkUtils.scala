@@ -77,12 +77,17 @@ object SparkUtils {
   }
 
   def kbtohuman(kb:Int):String = {
+    if (kb == 0) {
+      "0"
+    }
+    else {
     val unit = 1024
     val kbunit = unit * unit
     val exp: Int = (Math.log(kb) / Math.log(kbunit)).toInt
-    val pre: Char = new String("MGTPE").charAt(exp)
+      val pre: Char = new String("MGTPE").charAt(exp)
 
-    "%d%s".format((kb / Math.pow(unit, exp + 1)).toInt, pre)
+      "%d%s".format((kb / Math.pow(unit, exp + 1)).toInt, pre)
+    }
   }
 
   def jarForClass(clazz:String, cl:ClassLoader = null): String = {

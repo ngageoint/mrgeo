@@ -424,7 +424,11 @@ public class BuildPyramidDriver
       {
         int lo = level - tolevel;
 
+        System.out.println("calculating level: " + level);
+
+        System.out.println("before teardown");
         outputProviders[lo].teardown(job);
+        System.out.println("after teardown");
 
         final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(new TMSUtils.Bounds(bounds.getMinX(),
           bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY()), level, tilesize);
@@ -441,11 +445,19 @@ public class BuildPyramidDriver
         metadata.setName(level);
 
         // update the pyramid level stats
+        System.out.println("before readstats");
         final ImageStats[] levelStats = ImageStats.readStats(statsProviders[lo]);
+        System.out.println("after readstats");
+
+        System.out.println("before stats delete");
         statsProviders[lo].delete();
+        System.out.println("after stats delete");
+
         metadata.setImageStats(level, levelStats);
 
+        System.out.println("before metadata write");
         provider.getMetadataWriter().write();
+        System.out.println("after metadata write");
       }
 
     }

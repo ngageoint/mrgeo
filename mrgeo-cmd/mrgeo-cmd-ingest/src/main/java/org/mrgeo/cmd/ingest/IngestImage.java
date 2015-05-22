@@ -22,8 +22,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
-import org.gdal.gdal.Driver;
-import org.gdal.gdal.gdal;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -327,7 +325,7 @@ public class IngestImage extends Command
 
         calculateParams(dataset, name, conf);
 
-        GDALUtils.close(name);
+        GDALUtils.close(dataset);
         inputs.add(name);
 
         local = true;
@@ -369,7 +367,8 @@ public class IngestImage extends Command
               Dataset dataset = GDALUtils.open(name);
 
               calculateParams(dataset, name, conf);
-              GDALUtils.close(name);
+
+              GDALUtils.close(dataset);
               inputs.add(name);
 
               System.out.println(" accepted ***");
@@ -396,29 +395,75 @@ public class IngestImage extends Command
   {
     try
     {
+
       long start = System.currentTimeMillis();
 
-      System.out.println("Classpath: " + System.getProperty("java.class.path"));
-      System.out.println("Java Library Path: " + System.getProperty("java.library.path"));
+//      System.out.println("Starting ingest Memory:");
+//      com.sun.management.OperatingSystemMXBean startMem =
+//          (com.sun.management.OperatingSystemMXBean)java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+//      System.out.println("  OS Total Swap Space: " + startMem.getTotalSwapSpaceSize());
+//      System.out.println("  OS Free Swap Sapce: " + startMem.getFreeSwapSpaceSize());
+//      System.out.println("  OS Total Physical Mem: " + startMem.getTotalPhysicalMemorySize());
+//      System.out.println("  OS Free Physical Mem: " + startMem.getFreePhysicalMemorySize());
+//
+//      long startSwap = startMem.getTotalSwapSpaceSize() - startMem.getFreeSwapSpaceSize();
+//      long startPh = startMem.getTotalPhysicalMemorySize() - startMem.getFreePhysicalMemorySize();
+//
+//      startMem = null;
 
       GDALUtils.register();
+
 //      System.load("/usr/lib/jni/libgdaljni.so");
 //      System.load("/usr/lib/jni/libgdalconstjni.so");
 //      System.load("/usr/lib/libgdal.so");
 //
 //      gdal.AllRegister();
-      int drivers = gdal.GetDriverCount();
-      System.out.println("Found " + drivers + " gdal drivers");
-      for (int i = 0; i < drivers; i++)
-      {
-        Driver driver = gdal.GetDriver(i);
-        System.out.println("  " + driver.getShortName() + " (" + driver.getLongName() + ")");
-      }
+//      int drivers = gdal.GetDriverCount();
+//      System.out.println("Found " + drivers + " gdal drivers");
+//      for (int i = 0; i < drivers; i++)
+//      {
+//        Driver driver = gdal.GetDriver(i);
+//        System.out.println("  " + driver.getShortName() + " (" + driver.getLongName() + ")");
+//
+//        driver.delete();
+//      }
+//
+//
+//      int i = 0;
+//      while (true)
+//      {
+//        //Dataset d = GDALUtils.open("/data/gis-data/elevation/small-elevation/small-elevation.tif");
+//        //Dataset d = GDALUtils.open("file:///data/gis-data/elevation/small-elevation/small-elevation.tif");
+//        Dataset d = GDALUtils.open("/user/tim.tisler/gis-data/small-elevation/small-elevation.tif");
+//
+//        //gdal.Unlink("/vsimem//user/tim.tisler/gis-data/small-elevation/small-elevation.tif");
+//
+//        if (i++ % 100 == 0)
+//        {
+////          System.gc();
+////          Thread.sleep(1000);
+//
+////          System.out.println("Ending ingest Memory:");
+//          com.sun.management.OperatingSystemMXBean endMem =
+//              (com.sun.management.OperatingSystemMXBean)java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+////          System.out.println("  OS Total Swap Space: " + endMem.getTotalSwapSpaceSize());
+////          System.out.println("  OS Free Swap Sapce: " + endMem.getFreeSwapSpaceSize());
+////          System.out.println("  OS Total Physical Mem: " + endMem.getTotalPhysicalMemorySize());
+////          System.out.println("  OS Free Physical Mem: " + endMem.getFreePhysicalMemorySize());
+//
+//          long endSwap = endMem.getTotalSwapSpaceSize() - endMem.getFreeSwapSpaceSize();
+//          long endPh = endMem.getTotalPhysicalMemorySize() - endMem.getFreePhysicalMemorySize();
+//
+//          System.out.println("Leaked ingest Mem:");
+//          System.out.println("  Swap: " + SparkUtils.kbtohuman((int) (endSwap - startSwap) / 1024));
+//          System.out.println("  Physical: " + SparkUtils.kbtohuman((int) (endPh - startPh) / 1024));
+//
+//        }
+//
+//        GDALUtils.close(d);
+//      }
 
-//      GDALUtils.open("/user/tim.tisler/gis-data/small-elevation/small-elevation.tif");
-
-
-          CommandLine line = null;
+      CommandLine line = null;
       try
       {
         CommandLineParser parser = new GnuParser();

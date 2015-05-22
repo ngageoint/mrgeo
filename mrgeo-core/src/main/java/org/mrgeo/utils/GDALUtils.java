@@ -1,7 +1,6 @@
 package org.mrgeo.utils;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.gdal.gdal.Band;
@@ -17,13 +16,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Vector;
 
 public class GDALUtils
 {
@@ -34,6 +34,7 @@ public class GDALUtils
   private static final String VSI_PREFIX = "/vsimem/";
 
   public static final String GDAL_LIBS;
+
   static
   {
 
@@ -105,7 +106,8 @@ public class GDALUtils
     }
     else
     {
-      log.warn("Can't load GDAL libraries, " + MrGeoConstants.GDAL_PATH + " not found in the mrgeo configuration.  This may or may not be a problem.");
+      log.warn("Can't load GDAL libraries, " + MrGeoConstants.GDAL_PATH +
+          " not found in the mrgeo configuration.  This may or may not be a problem.");
 
 //      System.out.println("java.library.path: ");
 //      String property = System.getProperty("java.library.path");
@@ -118,13 +120,17 @@ public class GDALUtils
       GDAL_LIBS = null;
     }
 
-    gdal.AllRegister();
+    if (gdal.GetDriverCount() == 0)
+    {
+      gdal.AllRegister();
+    }
 
     final int drivers = gdal.GetDriverCount();
     if (drivers == 0)
     {
       log.error("GDAL libraries were not loaded!  This probibly an error.");
     }
+
 
 //    final SpatialReference sr = new SpatialReference();
 //    sr.ImportFromEPSG(4326);
@@ -144,8 +150,8 @@ public class GDALUtils
   {
     try
     {
-      GDALUtils.open(imagename);
-      GDALUtils.close(imagename);
+      Dataset image = GDALUtils.open(imagename);
+      GDALUtils.close(image);
 
       return true;
     }
@@ -161,48 +167,77 @@ public class GDALUtils
     try
     {
       final URI uri = new URI(imagename);
+      Dataset image = null;
+
       GDALUtils.log.debug("Loading image with GDAL: {}", imagename);
-      Dataset image = gdal.Open(uri.getPath());
 
-      if (image != null)
+      File file = new File(uri.getPath());
+      if (file.exists())
       {
-        GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
-        return image;
-      }
+        java.nio.file.Path p = Paths.get(file.toURI());
+        byte[] bytes = Files.readAllBytes(p);
+        gdal.FileFromMemBuffer(GDALUtils.VSI_PREFIX + imagename, bytes);
+        image = gdal.Open(GDALUtils.VSI_PREFIX + imagename);
 
+        //image = gdal.Open(uri.getPath());
+
+        if (image != null)
+        {
+          GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
+          return image;
+        }
+      }
       GDALUtils.log.debug("  Image not on the local filesystem, trying HDFS: {}", imagename);
 
       final Path p = new Path(uri);
       final FileSystem fs = HadoopFileUtils.getFileSystem(p);
-      FileStatus stats = fs.getFileStatus(p);
-
       final InputStream is = fs.open(p);
-
-      final byte[] bytes = IOUtils.toByteArray(is);
-
-      gdal.FileFromMemBuffer(GDALUtils.VSI_PREFIX + imagename, bytes);
-
-      image = gdal.Open(GDALUtils.VSI_PREFIX + imagename);
-      if (image != null)
+      final DataInputStream dis = new DataInputStream(is);
+      try
       {
-        GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
-        return image;
-      }
+        byte[] bytes = IOUtils.toByteArray(is);
+        gdal.FileFromMemBuffer(GDALUtils.VSI_PREFIX + imagename, bytes);
 
-      GDALUtils.log.info(
-          "Image not loaded, but unfortunately no exceptions were thrown, look for a logged explanation somewhere above");
+        image = gdal.Open(GDALUtils.VSI_PREFIX + imagename);
+
+        if (image != null)
+        {
+          GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
+          return image;
+        }
+
+        GDALUtils.log.info(
+            "Image not loaded, but unfortunately no exceptions were thrown, look for a logged explanation somewhere above");
+      }
+      finally
+      {
+        dis.close();
+        is.close();
+      }
     }
     catch (final URISyntaxException e)
     {
       throw new IOException("Error opening image file: " + imagename, e);
     }
 
-    throw new IOException("Error opening image file: " + imagename);
+    return null;
+    //throw new IOException("Error opening image file: " + imagename);
   }
 
-  public static void close(String imagename)
+  public static void close(Dataset image)
   {
-    gdal.Unlink(GDALUtils.VSI_PREFIX + imagename);
+    Vector<String> files = image.GetFileList();
+
+    image.delete();
+
+    for (String file: files)
+    {
+      if (file.startsWith(VSI_PREFIX))
+      {
+        gdal.Unlink(file);
+      }
+    }
+
   }
 
   public static Dataset createEmptyMemoryRaster(final Dataset src, final int width, final int height)
