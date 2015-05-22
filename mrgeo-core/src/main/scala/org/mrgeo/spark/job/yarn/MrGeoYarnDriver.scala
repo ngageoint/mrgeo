@@ -67,13 +67,14 @@ class MrGeoYarnDriver {
     //        "  --files files              Comma separated list of files to be distributed with the job.\n" +
     //        "  --archives archives        Comma separated list of archives to be distributed with the job."
 
-    println("Looking for 'javax.servlet'")
-    val jars = SparkUtils.jarsForPackage("javax.servlet", cl)
-    jars.foreach(jar => { "  " + println(jar)})
+//    println("Looking for 'javax.servlet'")
+//    val jars = SparkUtils.jarsForPackage("javax.servlet", cl)
+//    jars.foreach(jar => { "  " + println(jar)})
 
-    val sparkClass = ApplicationMaster.getClass.getName.replaceAll("\\$", "")
-    val sparkJar = SparkUtils.jarForClass(sparkClass, cl)
-    conf.set("spark.yarn.jar", sparkJar)
+//    val sparkClass = ApplicationMaster.getClass.getName.replaceAll("\\$", "")
+//    val sparkJar = SparkUtils.jarForClass(sparkClass, cl)
+//    conf.set("spark.yarn.jar", sparkJar)
+//    conf.set("spark.yarn.jar", "/home/hadoop/spark/lib/spark-assembly-1.3.1-hadoop2.4.0.jar")
 
     val deps = DependencyLoader.getDependencies(MrGeoYarnJob.getClass)
     val cpsb:StringBuilder = new StringBuilder
@@ -86,8 +87,8 @@ class MrGeoYarnDriver {
         cpsb ++= jar
       //}
     }
-    conf.set("spark.driver.extraClassPath", cpsb.toString())
-    conf.set("spark.executor.extraClassPath", cpsb.toString())
+    //conf.set("spark.driver.extraClassPath", cpsb.toString())
+    //conf.set("spark.executor.extraClassPath", cpsb.toString())
 
     conf.set("spark.driver.extraLibraryPath",
       MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, ""))
@@ -125,7 +126,6 @@ class MrGeoYarnDriver {
     //args += "--executor-memory"
     //args += job.memory
     conf.set("spark.executor.memory", job.memory)
-
 
     args += "--name"
     if (job.name != null && job.name.length > 0) {
