@@ -323,14 +323,21 @@ public class IngestImage extends Command
 
         Dataset dataset = GDALUtils.open(name);
 
-        calculateParams(dataset, name, conf);
+        if (dataset != null)
+        {
+          calculateParams(dataset, name, conf);
 
-        GDALUtils.close(dataset);
-        inputs.add(name);
+          GDALUtils.close(dataset);
+          inputs.add(name);
 
-        local = true;
+          local = true;
 
-        System.out.println(" accepted ***");
+          System.out.println(" accepted ***");
+        }
+        else
+        {
+          System.out.println(" can't load ***");
+        }
       }
       catch (IOException ignored)
       {
@@ -366,12 +373,19 @@ public class IngestImage extends Command
               String name = p.toUri().toString();
               Dataset dataset = GDALUtils.open(name);
 
-              calculateParams(dataset, name, conf);
+              if (dataset != null)
+              {
+                calculateParams(dataset, name, conf);
 
-              GDALUtils.close(dataset);
-              inputs.add(name);
+                GDALUtils.close(dataset);
+                inputs.add(name);
 
-              System.out.println(" accepted ***");
+                System.out.println(" accepted ***");
+              }
+              else
+              {
+                System.out.println(" can't load ***");
+              }
             }
             catch (IOException ignored)
             {
