@@ -8,7 +8,6 @@ import java.util.Properties
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
@@ -23,7 +22,7 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsImagePyramid
 import org.mrgeo.spark.SparkTileIdPartitioner
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
-import org.mrgeo.utils.{Bounds, GDALUtils, HadoopUtils, TMSUtils}
+import org.mrgeo.utils._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -31,6 +30,19 @@ import scala.collection.mutable.ListBuffer
 
 
 object IngestImageSpark extends MrGeoDriver with Externalizable {
+
+  final private val Inputs = "inputs"
+  final private val Output = "output"
+  final private val Bounds = "bounds"
+  final private val Zoom = "zoom"
+  final private val Tilesize = "tilesize"
+  final private val NoData = "nodata"
+  final private val Tiletype = "tiletype"
+  final private val Bands = "bands"
+  final private val Categorical = "categorical"
+  final private val Tags = "tags"
+  final private val Protection = "protection"
+  final private val ProviderProperties = "provider.properties"
 
   def ingest(inputs: Array[String], output: String,
       categorical: Boolean, conf: Configuration, bounds: Bounds,
@@ -54,15 +66,15 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
     val args =  mutable.Map[String, String]()
 
-    args += "inputs" -> input
-    args += "output" -> output
-    args += "bounds" -> bounds.toDelimitedString
-    args += "zoom" -> zoomlevel.toString
-    args += "tilesize" -> tilesize.toString
-    args += "nodata" -> nodata.toString
-    args += "bands" -> bands.toString
-    args += "tiletype" -> tiletype.toString
-    args += "categorical" -> categorical.toString
+    args += Inputs -> input
+    args += Output -> output
+    args += Bounds -> bounds.toDelimitedString
+    args += Zoom -> zoomlevel.toString
+    args += Tilesize -> tilesize.toString
+    args += NoData -> nodata.toString
+    args += Bands -> bands.toString
+    args += Tiletype -> tiletype.toString
+    args += Categorical -> categorical.toString
 
     var t: String = ""
     tags.foreach(kv => {
@@ -72,8 +84,8 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       t += kv._1 + "=" + kv._2
     })
 
-    args += "tags" -> t
-    args += "protection" -> protectionLevel
+    args += Tags -> t
+    args += Protection -> protectionLevel
 
     var p: String = ""
     providerProperties.foreach(kv => {
@@ -82,7 +94,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       }
       p += kv._1 + "=" + kv._2
     })
-    args += "providerproperties" -> p
+    args += ProviderProperties -> p
 
     args
   }
@@ -310,24 +322,24 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
   override def setup(job: JobArguments): Boolean = {
 
-    inputs = job.getSetting("inputs").split(",")
-    output = job.getSetting("output")
+    inputs = job.getSetting(IngestImageSpark.Inputs).split(",")
+    output = job.getSetting(IngestImageSpark.Output)
 
-    bounds = Bounds.fromDelimitedString(job.getSetting("bounds"))
-    zoom = job.getSetting("zoom").toInt
-    bands = job.getSetting("bands").toInt
-    tiletype = job.getSetting("tiletype").toInt
-    tilesize = job.getSetting("tilesize").toInt
-    nodata = job.getSetting("nodata").toDouble
-    categorical = job.getSetting("categorical").toBoolean
+    bounds = Bounds.fromDelimitedString(job.getSetting(IngestImageSpark.Bounds))
+    zoom = job.getSetting(IngestImageSpark.Zoom).toInt
+    bands = job.getSetting(IngestImageSpark.Bands).toInt
+    tiletype = job.getSetting(IngestImageSpark.Tiletype).toInt
+    tilesize = job.getSetting(IngestImageSpark.Tilesize).toInt
+    nodata = job.getSetting(IngestImageSpark.NoData).toDouble
+    categorical = job.getSetting(IngestImageSpark.Categorical).toBoolean
 
-    protectionlevel = job.getSetting("protection")
+    protectionlevel = job.getSetting(IngestImageSpark.Protection)
     if (protectionlevel == null)
     {
       protectionlevel = ""
     }
 
-    val props = job.getSetting("providerproperties").split("||")
+    val props = job.getSetting(IngestImageSpark.ProviderProperties).split("||")
     providerproperties = new Properties()
     props.foreach (prop => {
       if (prop.contains("=")) {
