@@ -94,16 +94,12 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
       metadata.addAttribute(desc.getName().getLocalPart());
     }
     FeatureBoundingBoxStatistics boundsStats = null;
-    String cqlFilter = dataProvider.getCqlFilter();
-    // We only want to try to read the bounds stats if there is no CQL filter because
-    // if there is a filter, the overall bounds for the data source will not be correct.
-    if (cqlFilter == null || cqlFilter.isEmpty())
-    {
-      DataStatistics<?> stats = GeoWaveVectorDataProvider.getStatisticsStore().getDataStatistics(
-              new ByteArrayId(dataProvider.getGeoWaveResourceName()),
-              FeatureBoundingBoxStatistics.composeId("the_geom"));
-      boundsStats = (FeatureBoundingBoxStatistics) stats;
-    }
+    String geometryField = sft.getGeometryDescriptor().getLocalName();
+    log.info("GeoWave geometry field is: " + geometryField);
+    DataStatistics<?> stats = GeoWaveVectorDataProvider.getStatisticsStore().getDataStatistics(
+            new ByteArrayId(dataProvider.getGeoWaveResourceName()),
+            FeatureBoundingBoxStatistics.composeId(geometryField));
+    boundsStats = (FeatureBoundingBoxStatistics) stats;
     Bounds bounds = null;
     if(boundsStats != null)
     {
@@ -113,23 +109,36 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
     }
     else
     {
-      VectorReader reader = dataProvider.getVectorReader();
-      CloseableKVIterator<LongWritable, Geometry> iter = reader.get();
-      double minX = Double.MAX_VALUE;
-      double minY = Double.MAX_VALUE;
-      double maxX = Double.MIN_VALUE;
-      double maxY = Double.MIN_VALUE;
-      while (iter.hasNext())
+      log.info("BBOX information was not found in GeoWave for field " + geometryField);
+      // See if the GeoWave data provider is configured to force a bounding
+      // box computation by iterating features.
+      if (GeoWaveVectorDataProvider.getConnectionInfo().getForceBboxCompute())
       {
-        Geometry geom = iter.next();
-        Bounds b = geom.getBounds();
-        minX = Math.min(minX, b.getMinX());
-        minY = Math.min(minY, b.getMinY());
-        maxX = Math.max(maxX, b.getMaxX());
-        maxY = Math.max(maxY, b.getMaxY());
+        log.info("Computing BBOX by iterating features");
+        VectorReader reader = dataProvider.getVectorReader();
+        CloseableKVIterator<LongWritable, Geometry> iter = reader.get();
+        double minX = Double.MAX_VALUE;
+        double minY = Double.MAX_VALUE;
+        double maxX = Double.MIN_VALUE;
+        double maxY = Double.MIN_VALUE;
+        while (iter.hasNext())
+        {
+          Geometry geom = iter.next();
+          Bounds b = geom.getBounds();
+          minX = Math.min(minX, b.getMinX());
+          minY = Math.min(minY, b.getMinY());
+          maxX = Math.max(maxX, b.getMaxX());
+          maxY = Math.max(maxY, b.getMaxY());
+        }
+        bounds = new Bounds(minX, minY, maxX, maxY);
+        log.info("Bounds for " + dataProvider.getGeoWaveResourceName() + " were computed as: " + bounds.toString());
       }
-		  bounds = new Bounds(minX, minY, maxX, maxY);
-      log.info("Bounds for " + dataProvider.getGeoWaveResourceName() + " were computed as: " + bounds.toString());
+      else
+      {
+        // Use world bounds, but log a warning
+        bounds = Bounds.world.clone();
+        log.warn("Using world bounds for " + dataProvider.getGeoWaveResourceName() + ": " + bounds.toString());
+      }
     }
     metadata.setBounds(bounds);
     return metadata;
