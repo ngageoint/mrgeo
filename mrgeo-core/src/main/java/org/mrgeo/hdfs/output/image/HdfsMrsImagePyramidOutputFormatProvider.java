@@ -23,16 +23,15 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.mrgeo.hadoop.multipleoutputs.DirectoryMultipleOutputs;
-import org.mrgeo.hadoop.multipleoutputs.MultipleOutputFormat;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledOutputFormatContext;
+import org.mrgeo.hadoop.multipleoutputs.DirectoryMultipleOutputs;
+import org.mrgeo.hadoop.multipleoutputs.MultipleOutputFormat;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator;
 import org.mrgeo.hdfs.partitioners.TileIdPartitioner;
@@ -43,6 +42,7 @@ import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
+import java.util.List;
 
 public class HdfsMrsImagePyramidOutputFormatProvider extends MrsImageOutputFormatProvider
 {

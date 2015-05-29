@@ -12,8 +12,9 @@ import sun.tools.jar.resources.jar
 object MrGeoYarnJob extends Logging {
 
   def main(args:Array[String]): Unit = {
-    logInfo("MrGeoYarnJob!!!")
+    logInfo("Running a MrGeoYarnJob!")
 
+    logInfo("Job Arguments: ")
     args.foreach(p => logInfo("   " + p))
 
     val job: JobArguments = new JobArguments(args)
@@ -59,6 +60,8 @@ object MrGeoYarnJob extends Logging {
         job.setSetting(key, null)
       }
 
+      job.params -= MrGeoYarnDriver.ARGFILE
+
       logInfo("*******************")
       logInfo("Arguments")
       job.params.foreach(kv => {logInfo("  " + kv._1 + ": " + kv._2)})
@@ -67,18 +70,17 @@ object MrGeoYarnJob extends Logging {
       input.close()
       HadoopFileUtils.delete(filename)
 
-      job.params -= MrGeoYarnDriver.ARGFILE
     }
 
     if (job.params.contains(MrGeoYarnDriver.DRIVER)) {
       val driver: String = job.params.getOrElseUpdate(MrGeoYarnDriver.DRIVER, "")
 
-      logInfo("driver: " + driver)
       val clazz = getClass.getClassLoader.loadClass(driver)
       if (clazz != null) {
+        logInfo("Found MrGeo driver: " + driver)
         val mrgeo: MrGeoJob = clazz.newInstance().asInstanceOf[MrGeoJob]
 
-        logInfo("Setting up job")
+        logInfo("Setting up job: " + job.name)
         mrgeo.setup(job)
 
         // set all the spark settings back...
@@ -91,7 +93,7 @@ object MrGeoYarnJob extends Logging {
         val context = new SparkContext(conf)
 
         try {
-          logInfo("Running job")
+          logInfo("Running job: " + job.name)
           mrgeo.execute(context)
         }
         finally {
@@ -99,6 +101,7 @@ object MrGeoYarnJob extends Logging {
           context.stop()
         }
 
+        logInfo("Teardown job: " + job.name)
         mrgeo.teardown(job)
       }
     }

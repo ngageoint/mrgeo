@@ -55,6 +55,8 @@ object MosaicDriver extends MrGeoDriver with Externalizable {
 
   override def writeExternal(out: ObjectOutput): Unit = {}
   override def readExternal(in: ObjectInput): Unit = {}
+
+  override def setup(job: JobArguments): Boolean = {true}
 }
 
 class MosaicDriver extends MrGeoJob with Externalizable {
@@ -246,7 +248,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
       tilesize, tiletype, numbands, "", null)
 
-    val sorted = mosaiced.sortByKey().partitionBy(sparkPartitioner)
+    val sorted = mosaiced.sortByKey().partitionBy(sparkPartitioner).persist(StorageLevel.MEMORY_AND_DISK)
     // this is missing in early spark APIs
     //val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
 
@@ -255,8 +257,11 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
     dp.teardown(job)
 
+
+    val stats = SparkUtils.calculateStats(sorted, numbands, nodata(0))
+
     // calculate and save metadata
-    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, null,
+    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, stats,
       nodata(0), bounds, job.getConfiguration, null, null)
 
     // write splits
