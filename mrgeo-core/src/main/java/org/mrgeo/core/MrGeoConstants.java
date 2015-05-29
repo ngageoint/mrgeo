@@ -66,6 +66,8 @@ public class MrGeoConstants
    *
    */
   public static final String MRGEO_USE_KRYO="use.kryo.serialization";
+  public static final String MRGEO_MEMORYINTENSIVE_MULTIPLIER="memoryintensive.multiplier";
+
   /*
    * Runtime configuration keys
    */

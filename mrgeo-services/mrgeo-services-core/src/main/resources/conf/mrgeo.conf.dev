@@ -47,6 +47,12 @@ dependency.classpath=target/lib:\
 # Use Kryo serialization for Spark jobs, if using Spark < 1.3.0, this _MUST_ be false!
 use.kryo.serialization=false
 
+# Memory intensive (Spark) job memory multiplier.  This parameter specifies a multiplier for the
+# amount of memory to give to memory intensive jobs.  For example, if YARN was configured to give
+# 2G (2048m) to a job, a multiplier of 2 would yield 4G, 1.5 would yield 3G.  The total number of
+# concurrent tasks will be be lowered by the appripriate amount
+memoryintensive.multiplier=2
+
 # Additional hadoop parameters as well as parameters needed for Giraph.
 # Either hadoop.params with -libjars and the path to <giraph-with-dependencies>,
 # or zooservers pointing to existing zookeeper host/port(s) need to be set
