@@ -59,6 +59,7 @@ public class IngestImage extends Command
   private int bands;
   private int tiletype;
   private boolean overrideNodata = false;
+  private boolean skippreprocessing = false;
   private boolean local = false;
   private boolean quick = false;
   private boolean ignoretags = false;
@@ -148,10 +149,17 @@ public class IngestImage extends Command
     quick.setRequired(false);
     result.addOption(quick);
 
-
     Option spark = new Option("k", "spark", false, "Use Spark");
     spark.setRequired(false);
     result.addOption(spark);
+
+    Option zoom = new Option("z", "zoom", true, "force zoom level");
+    zoom.setRequired(false);
+    result.addOption(zoom);
+
+    Option skippre = new Option("sk", "skippreprocessing", false, "Skip the preprocessing step (must specify zoom)");
+    skippre.setRequired(false);
+    result.addOption(skippre);
 
     Option protectionLevelOption = new Option("pl", "protectionLevel", true, "Protection level");
     // If mrgeo.conf security.classification.required is true and there is no
@@ -321,22 +329,32 @@ public class IngestImage extends Command
         System.out.print("*** checking (local file) " + f.getCanonicalPath());
         String name = f.getCanonicalFile().toURI().toString();
 
-        Dataset dataset = GDALUtils.open(name);
-
-        if (dataset != null)
+        if (skippreprocessing)
         {
-          calculateParams(dataset, name, conf);
-
-          GDALUtils.close(dataset);
           inputs.add(name);
-
           local = true;
 
           System.out.println(" accepted ***");
         }
         else
         {
-          System.out.println(" can't load ***");
+          Dataset dataset = GDALUtils.open(name);
+
+          if (dataset != null)
+          {
+            calculateParams(dataset, name, conf);
+
+            GDALUtils.close(dataset);
+            inputs.add(name);
+
+            local = true;
+
+            System.out.println(" accepted ***");
+          }
+          else
+          {
+            System.out.println(" can't load ***");
+          }
         }
       }
       catch (IOException ignored)
@@ -371,20 +389,30 @@ public class IngestImage extends Command
             {
               System.out.print("*** checking  " + p.toString());
               String name = p.toUri().toString();
-              Dataset dataset = GDALUtils.open(name);
 
-              if (dataset != null)
+              if (skippreprocessing)
               {
-                calculateParams(dataset, name, conf);
-
-                GDALUtils.close(dataset);
                 inputs.add(name);
-
                 System.out.println(" accepted ***");
               }
               else
               {
-                System.out.println(" can't load ***");
+
+                Dataset dataset = GDALUtils.open(name);
+
+                if (dataset != null)
+                {
+                  calculateParams(dataset, name, conf);
+
+                  GDALUtils.close(dataset);
+                  inputs.add(name);
+
+                  System.out.println(" accepted ***");
+                }
+                else
+                {
+                  System.out.println(" can't load ***");
+                }
               }
             }
             catch (IOException ignored)
@@ -412,24 +440,9 @@ public class IngestImage extends Command
 
       long start = System.currentTimeMillis();
 
-//      System.out.println("Starting ingest Memory:");
-//      com.sun.management.OperatingSystemMXBean startMem =
-//          (com.sun.management.OperatingSystemMXBean)java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-//      System.out.println("  OS Total Swap Space: " + startMem.getTotalSwapSpaceSize());
-//      System.out.println("  OS Free Swap Sapce: " + startMem.getFreeSwapSpaceSize());
-//      System.out.println("  OS Total Physical Mem: " + startMem.getTotalPhysicalMemorySize());
-//      System.out.println("  OS Free Physical Mem: " + startMem.getFreePhysicalMemorySize());
-//
-//      long startSwap = startMem.getTotalSwapSpaceSize() - startMem.getFreeSwapSpaceSize();
-//      long startPh = startMem.getTotalPhysicalMemorySize() - startMem.getFreePhysicalMemorySize();
-//
-//      startMem = null;
 
       GDALUtils.register();
 
-//      System.load("/usr/lib/jni/libgdaljni.so");
-//      System.load("/usr/lib/jni/libgdalconstjni.so");
-//      System.load("/usr/lib/libgdal.so");
 //
 //      gdal.AllRegister();
 //      int drivers = gdal.GetDriverCount();
@@ -443,39 +456,6 @@ public class IngestImage extends Command
 //      }
 //
 //
-//      int i = 0;
-//      while (true)
-//      {
-//        //Dataset d = GDALUtils.open("/data/gis-data/elevation/small-elevation/small-elevation.tif");
-//        //Dataset d = GDALUtils.open("file:///data/gis-data/elevation/small-elevation/small-elevation.tif");
-//        Dataset d = GDALUtils.open("/user/tim.tisler/gis-data/small-elevation/small-elevation.tif");
-//
-//        //gdal.Unlink("/vsimem//user/tim.tisler/gis-data/small-elevation/small-elevation.tif");
-//
-//        if (i++ % 100 == 0)
-//        {
-////          System.gc();
-////          Thread.sleep(1000);
-//
-////          System.out.println("Ending ingest Memory:");
-//          com.sun.management.OperatingSystemMXBean endMem =
-//              (com.sun.management.OperatingSystemMXBean)java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-////          System.out.println("  OS Total Swap Space: " + endMem.getTotalSwapSpaceSize());
-////          System.out.println("  OS Free Swap Sapce: " + endMem.getFreeSwapSpaceSize());
-////          System.out.println("  OS Total Physical Mem: " + endMem.getTotalPhysicalMemorySize());
-////          System.out.println("  OS Free Physical Mem: " + endMem.getFreePhysicalMemorySize());
-//
-//          long endSwap = endMem.getTotalSwapSpaceSize() - endMem.getFreeSwapSpaceSize();
-//          long endPh = endMem.getTotalPhysicalMemorySize() - endMem.getFreePhysicalMemorySize();
-//
-//          System.out.println("Leaked ingest Mem:");
-//          System.out.println("  Swap: " + SparkUtils.kbtohuman((int) (endSwap - startSwap) / 1024));
-//          System.out.println("  Physical: " + SparkUtils.kbtohuman((int) (endPh - startPh) / 1024));
-//
-//        }
-//
-//        GDALUtils.close(d);
-//      }
 
       CommandLine line = null;
       try
@@ -527,6 +507,8 @@ public class IngestImage extends Command
         boolean categorical = line.hasOption("c");
         boolean skipPyramids = line.hasOption("sp");
         boolean recurse = !line.hasOption("nr");
+
+        skippreprocessing = line.hasOption("sk");
         String output = line.getOptionValue("o");
 
         log.debug("categorical: " + categorical);
@@ -535,7 +517,21 @@ public class IngestImage extends Command
 
         List<String> inputs = new LinkedList<String>();
 
-        zoomlevel = 0;
+        if (line.hasOption("z"))
+        {
+          zoomlevel = Integer.parseInt(line.getOptionValue("z"));
+        }
+        else
+        {
+          zoomlevel = 0;
+        }
+
+        if (skippreprocessing && zoomlevel == 0)
+        {
+          log.error("Need to specify zoomlevel to skip preprocessing");
+          return -1;
+        }
+
         tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty("mrsimage.tilesize", "512"));
 
         for (String arg: line.getArgs())

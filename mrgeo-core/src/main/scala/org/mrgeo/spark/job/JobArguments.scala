@@ -23,14 +23,17 @@ class JobArguments() {
   var driverClass: String = null
   var driverJar: String = null
 
-  var memory:String = null
+  var memoryKb:Long = -1
   //var driverMem:String = null
   var executors:Int = -1
+  var executorMemKb:Long = -1
   var cores:Int = -1
   val params = collection.mutable.Map[String, String]()
 
   var jars: Array[String] = null
   var verbose: Boolean = false
+
+  var isMemoryIntensive:Boolean = false
 
   def this(args: Seq[String]) {
     this()
@@ -144,9 +147,9 @@ class JobArguments() {
       args += executors.toString
     }
 
-    if (memory != null) {
+    if (memoryKb > 0) {
       args += "memory"
-      args += memory
+      args += memoryKb.toString
     }
 
 //    if (driverMem != null) {
@@ -201,7 +204,7 @@ class JobArguments() {
     parse(tail)
 
   case ("--memory") :: value :: tail =>
-    memory = value
+    memoryKb = value.toInt
     parse(tail)
 
 //  case ("--driverMemory") :: value :: tail =>
@@ -289,6 +292,18 @@ class JobArguments() {
     setupMemory()
   }
 
+  def useSpark(master: String): Unit = {
+    if (master.startsWith(SPARK)) {
+      cluster = master
+    }
+    else {
+      cluster = SPARK + master
+    }
+
+    println("Setting cluster to: " + cluster)
+  }
+
+
   def isYarn: Boolean = {
     cluster.startsWith(YARN)
   }
@@ -301,24 +316,16 @@ class JobArguments() {
     cluster.startsWith(SPARK)
   }
 
+
+
   // taken from Spark:Utils (private methods)
 
-  def useSpark(master: String): Unit = {
-    if (master.startsWith(SPARK)) {
-      cluster = master
-    }
-    else {
-      cluster = SPARK + master
-    }
-
-    println("Setting cluster to: " + cluster)
-  }
 
   private def setupMemory(): Unit = {
     val maxMem = Runtime.getRuntime.maxMemory()
     if (maxMem != Long.MaxValue) {
       val mem = (maxMem * 0.95).round
-      memory = mem.toString
+      memoryKb = mem
       println("Setting max memory to: " + Memory.format(mem))
     }
   }

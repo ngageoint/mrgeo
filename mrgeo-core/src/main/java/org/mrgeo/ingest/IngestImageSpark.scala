@@ -1,7 +1,7 @@
 package org.mrgeo.ingest
 
 import java.awt.image.{DataBuffer, Raster, WritableRaster}
-import java.io.{Externalizable, ObjectInput, ObjectOutput}
+import java.io._
 import java.util
 import java.util.Properties
 
@@ -9,6 +9,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.storage.StorageLevel
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data.DataProviderFactory
@@ -19,7 +20,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.partitioners.{ImageSplitGenerator, TileIdPartitioner}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.image.MrsImagePyramid
+import org.mrgeo.image.{ImageStats, MrsImagePyramid}
 import org.mrgeo.spark.SparkTileIdPartitioner
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
@@ -64,11 +65,13 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       bands: Int, tiletype: Int, tags: util.Map[String, String], protectionLevel: String,
       providerProperties: Properties): mutable.Map[String, String] = {
 
-    val args =  mutable.Map[String, String]()
+    val args = mutable.Map[String, String]()
 
     args += Inputs -> input
     args += Output -> output
-    args += Bounds -> bounds.toDelimitedString
+    if (bounds != null) {
+      args += Bounds -> bounds.toDelimitedString
+    }
     args += Zoom -> zoomlevel.toString
     args += Tilesize -> tilesize.toString
     args += NoData -> nodata.toString
@@ -148,151 +151,134 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
     //val start = System.currentTimeMillis()
 
-//    println("Starting Memory:")
-//    val startMem:com.sun.management.OperatingSystemMXBean =
-//      java.lang.management.ManagementFactory.getOperatingSystemMXBean.asInstanceOf[com.sun.management.OperatingSystemMXBean]
-//    println("  OS Total Swap Space: " + startMem.getTotalSwapSpaceSize)
-//    println("  OS Free Swap Sapce: " + startMem.getFreeSwapSpaceSize)
-//    println("  OS Total Physical Mem: " + startMem.getTotalPhysicalMemorySize)
-//    println("  OS Free Physical Mem: " + startMem.getFreePhysicalMemorySize)
-//
-//    val startSwap = startMem.getTotalSwapSpaceSize - startMem.getFreeSwapSpaceSize
-//    val startPh = startMem.getTotalPhysicalMemorySize - startMem.getFreePhysicalMemorySize
-
     // open the image
-    val src = GDALUtils.open(image)
+    try {
+      val src = GDALUtils.open(image)
 
-    val datatype = src.GetRasterBand(1).getDataType
-    val datasize = gdal.GetDataTypeSize(datatype) / 8
+      val datatype = src.GetRasterBand(1).getDataType
+      val datasize = gdal.GetDataTypeSize(datatype) / 8
 
-    val bands = src.GetRasterCount()
+      val bands = src.GetRasterCount()
 
-    val imageBounds = GDALUtils.getBounds(src).getTMSBounds
-    val tiles = TMSUtils.boundsToTile(imageBounds, zoom, tilesize)
-    val tileBounds = TMSUtils.tileBounds(imageBounds, zoom, tilesize)
+      val imageBounds = GDALUtils.getBounds(src).getTMSBounds
+      val tiles = TMSUtils.boundsToTile(imageBounds, zoom, tilesize)
+      val tileBounds = TMSUtils.tileBounds(imageBounds, zoom, tilesize)
 
-    val w = tiles.width() * tilesize
-    val h = tiles.height() * tilesize
+      val w = tiles.width() * tilesize
+      val h = tiles.height() * tilesize
 
-    val res = TMSUtils.resolution(zoom, tilesize)
-
-
-    val scaledsize = w * h * bands * datasize
-
-    // TODO:  Figure out chunking...
-    val scaled = GDALUtils.createEmptyMemoryRaster(src, w.toInt, h.toInt)
-
-    val xform = Array.ofDim[Double](6)
-
-    xform(0) = tileBounds.w /* top left x */
-    xform(1) = res /* w-e pixel resolution */
-    xform(2) = 0 /* 0 */
-    xform(3) = tileBounds.n /* top left y */
-    xform(4) = 0 /* 0 */
-    xform(5) = -res /* n-s pixel resolution (negative value) */
-
-    scaled.SetGeoTransform(xform)
-    scaled.SetProjection(GDALUtils.EPSG4326)
+      val res = TMSUtils.resolution(zoom, tilesize)
 
 
-    var resample:Int = gdalconstConstants.GRA_Bilinear
-    if (categorical) {
-      // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
-      // in which case we will use GRA_NearestNeighbour
-      try {
-        val mode = classOf[gdalconstConstants].getDeclaredField("foo")
-        if (mode != null) {
-          resample = mode.getInt()
+      val scaledsize = w * h * bands * datasize
+
+      // TODO:  Figure out chunking...
+      val scaled = GDALUtils.createEmptyMemoryRaster(src, w.toInt, h.toInt)
+
+      val xform = Array.ofDim[Double](6)
+
+      xform(0) = tileBounds.w /* top left x */
+      xform(1) = res /* w-e pixel resolution */
+      xform(2) = 0 /* 0 */
+      xform(3) = tileBounds.n /* top left y */
+      xform(4) = 0 /* 0 */
+      xform(5) = -res /* n-s pixel resolution (negative value) */
+
+      scaled.SetGeoTransform(xform)
+      scaled.SetProjection(GDALUtils.EPSG4326)
+
+
+      var resample: Int = gdalconstConstants.GRA_Bilinear
+      if (categorical) {
+        // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
+        // in which case we will use GRA_NearestNeighbour
+        try {
+          val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
+          if (mode != null) {
+            resample = mode.getInt()
+          }
+        }
+        catch {
+          case e: Exception => resample = gdalconstConstants.GRA_NearestNeighbour
         }
       }
-      catch {
-        case e:Exception => resample = gdalconstConstants.GRA_NearestNeighbour
+
+      gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)
+
+      //    val time = System.currentTimeMillis() - start
+      //    println("scale: " + time)
+
+      //    val band = scaled.GetRasterBand(1)
+      //    val minmax = Array.ofDim[Double](2)
+      //    band.ComputeRasterMinMax(minmax, 0)
+
+      //GDALUtils.saveRaster(scaled, "/data/export/scaled.tif")
+
+      // close the image
+      GDALUtils.close(src)
+
+      val bandlist = Array.ofDim[Int](bands)
+      for (x <- 0 until bands) {
+        bandlist(x) = x + 1 // bands are ones based
       }
-    }
-
-    gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)
-
-    //    val time = System.currentTimeMillis() - start
-    //    println("scale: " + time)
-
-    //    val band = scaled.GetRasterBand(1)
-    //    val minmax = Array.ofDim[Double](2)
-    //    band.ComputeRasterMinMax(minmax, 0)
-
-    //GDALUtils.saveRaster(scaled, "/data/export/scaled.tif")
-
-    // close the image
-    GDALUtils.close(src)
-
-    val bandlist = Array.ofDim[Int](bands)
-    for (x <- 0 until bands)
-    {
-      bandlist(x) = x + 1  // bands are ones based
-    }
 
 
-    val buffer = Array.ofDim[Byte](datasize * tilesize * tilesize * bands)
+      val buffer = Array.ofDim[Byte](datasize * tilesize * tilesize * bands)
 
-    for (dty <- 0 until tiles.height.toInt) {
-      for (dtx <- 0 until tiles.width().toInt) {
+      for (dty <- 0 until tiles.height.toInt) {
+        for (dtx <- 0 until tiles.width().toInt) {
 
-        //val start = System.currentTimeMillis()
+          //val start = System.currentTimeMillis()
 
-        val tx:Long = dtx + tiles.w
-        val ty:Long = tiles.n - dty
+          val tx: Long = dtx + tiles.w
+          val ty: Long = tiles.n - dty
 
-        val x: Int = dtx * tilesize
-        val y: Int = dty * tilesize
+          val x: Int = dtx * tilesize
+          val y: Int = dty * tilesize
 
-        val success = scaled.ReadRaster(x, y, tilesize, tilesize, tilesize, tilesize, datatype, buffer, null)
+          val success = scaled.ReadRaster(x, y, tilesize, tilesize, tilesize, tilesize, datatype, buffer, null)
 
-        if (success != gdalconstConstants.CE_None)
-        {
-          println("Failed reading raster" + success)
+          if (success != gdalconstConstants.CE_None) {
+            println("Failed reading raster" + success)
+          }
+
+          // switch the byte order...
+          GDALUtils.swapBytes(buffer, datatype)
+
+          val writable = RasterWritable.toWritable(buffer, tilesize, tilesize,
+            bands, GDALUtils.toRasterDataBufferType(datatype))
+
+          // save the tile...
+          //        GDALUtils.saveRaster(RasterWritable.toRaster(writable),
+          //          "/data/export/tiles/tile-" + ty + "-" + tx, tx, ty, zoom, tilesize, GDALUtils.getnodata(scaled))
+
+          result.append((new TileIdWritable(TMSUtils.tileid(tx, ty, zoom)), writable))
+
+
+          //val time = System.currentTimeMillis() - start
+          //println(tx + ", " + ty + ", " + time)
         }
-
-        // switch the byte order...
-        GDALUtils.swapBytes(buffer, datatype)
-
-        val writable = RasterWritable.toWritable(buffer, tilesize, tilesize,
-          bands, GDALUtils.toRasterDataBufferType(datatype))
-
-        // save the tile...
-        //        GDALUtils.saveRaster(RasterWritable.toRaster(writable),
-        //          "/data/export/tiles/tile-" + ty + "-" + tx, tx, ty, zoom, tilesize, GDALUtils.getnodata(scaled))
-
-        result.append((new TileIdWritable(TMSUtils.tileid(tx, ty, zoom)), writable))
-
-
-        //val time = System.currentTimeMillis() - start
-        //println(tx + ", " + ty + ", " + time)
       }
+
+      GDALUtils.close(scaled)
+
     }
-
-    GDALUtils.close(scaled)
-
-//    println("Ending Memory:")
-//    val endMem:com.sun.management.OperatingSystemMXBean =
-//    java.lang.management.ManagementFactory.getOperatingSystemMXBean.asInstanceOf[com.sun.management.OperatingSystemMXBean]
-//    println("  OS Total Swap Space: " + endMem.getTotalSwapSpaceSize)
-//    println("  OS Free Swap Sapce: " + endMem.getFreeSwapSpaceSize)
-//    println("  OS Total Physical Mem: " + endMem.getTotalPhysicalMemorySize)
-//    println("  OS Free Physical Mem: " + endMem.getFreePhysicalMemorySize)
-//
-//    val endSwap = endMem.getTotalSwapSpaceSize - endMem.getFreeSwapSpaceSize
-//    val endPh = endMem.getTotalPhysicalMemorySize - endMem.getFreePhysicalMemorySize
-//
-//    println("Leaked Mem:")
-//    println("  Swap: " + (endSwap - startSwap))
-//    println("  Physical: " + (endPh - startPh))
-
-
+    catch {
+      case ioe: IOException => // no op, this can happen in "kkip preprocessing" mode
+    }
     result.iterator
   }
 
 
+
   override def readExternal(in: ObjectInput) {}
   override def writeExternal(out: ObjectOutput) {}
+
+  override def setup(job: JobArguments): Boolean = {
+    job.isMemoryIntensive = true
+
+    true
+  }
 }
 
 class IngestImageSpark extends MrGeoJob with Externalizable {
@@ -309,7 +295,6 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
   var protectionlevel:String = null
 
 
-
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
@@ -322,10 +307,19 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
   override def setup(job: JobArguments): Boolean = {
 
+    job.isMemoryIntensive = true
+
     inputs = job.getSetting(IngestImageSpark.Inputs).split(",")
     output = job.getSetting(IngestImageSpark.Output)
 
-    bounds = Bounds.fromDelimitedString(job.getSetting(IngestImageSpark.Bounds))
+    val boundstr = job.getSetting(IngestImageSpark.Bounds, null)
+    if (boundstr == null) {
+      bounds = new Bounds()
+    }
+    else {
+      bounds = Bounds.fromDelimitedString(boundstr)
+    }
+
     zoom = job.getSetting(IngestImageSpark.Zoom).toInt
     bands = job.getSetting(IngestImageSpark.Bands).toInt
     tiletype = job.getSetting(IngestImageSpark.Tiletype).toInt
@@ -404,18 +398,9 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    println("Staring Execute Memory:")
-    val startMem:com.sun.management.OperatingSystemMXBean =
-      java.lang.management.ManagementFactory.getOperatingSystemMXBean.asInstanceOf[com.sun.management.OperatingSystemMXBean]
-    println("  OS Total Swap Space: " + startMem.getTotalSwapSpaceSize)
-    println("  OS Free Swap Sapce: " + startMem.getFreeSwapSpaceSize)
-    println("  OS Total Physical Mem: " + startMem.getTotalPhysicalMemorySize)
-    println("  OS Free Physical Mem: " + startMem.getFreePhysicalMemorySize)
-
-    val startSwap = startMem.getTotalSwapSpaceSize - startMem.getFreeSwapSpaceSize
-    val startPh = startMem.getTotalPhysicalMemorySize - startMem.getFreePhysicalMemorySize
-
-    val in = context.makeRDD(inputs)
+    // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
+    // won't eat up too much memory
+    val in = context.makeRDD(inputs, inputs.length)
 
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
       IngestImageSpark.makeTiles(input, zoom, tilesize, categorical)
@@ -423,39 +408,37 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     val mergedTiles=rawtiles.reduceByKey((r1, r2) => {
       mergeTile(r1, r2)
-    })
+    }).persist(StorageLevel.MEMORY_AND_DISK)
 
     saveRDD(mergedTiles)
 
-    println("Ending Execute Memory:")
-    val endMem:com.sun.management.OperatingSystemMXBean =
-      java.lang.management.ManagementFactory.getOperatingSystemMXBean.asInstanceOf[com.sun.management.OperatingSystemMXBean]
-    println("  OS Total Swap Space: " + endMem.getTotalSwapSpaceSize)
-    println("  OS Free Swap Sapce: " + endMem.getFreeSwapSpaceSize)
-    println("  OS Total Physical Mem: " + endMem.getTotalPhysicalMemorySize)
-    println("  OS Free Physical Mem: " + endMem.getFreePhysicalMemorySize)
-
-    val endSwap = endMem.getTotalSwapSpaceSize - endMem.getFreeSwapSpaceSize
-    val endPh = endMem.getTotalPhysicalMemorySize - endMem.getFreePhysicalMemorySize
-
-    println("Leaked Mem:")
-    println("  Swap: " + (endSwap - startSwap))
-    println("  Physical: " + (endPh - startPh))
+    mergedTiles.unpersist()
 
     true
   }
+
 
   protected def saveRDD(tiles: RDD[(TileIdWritable, RasterWritable)]): Unit = {
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
-
-
     val job: Job = new Job(HadoopUtils.createConfiguration())
 
     val tileIncrement = 1
 
     job.getConfiguration.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
+
+    if (!bounds.isValid) {
+      bounds = SparkUtils.calculateBounds(tiles, zoom, tilesize)
+    }
+
+    if (bands <= 0  || tiletype <= 0) {
+      val tile = RasterWritable.toRaster(tiles.first()._2)
+
+      bands = tile.getNumBands
+      tiletype = tile.getTransferType
+    }
+
     // save the new pyramid
     val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
       tilesize, tiletype, bands, protectionlevel, providerproperties)
@@ -482,7 +465,10 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       nodatas(x) = nodata.doubleValue()
     }
 
-    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, null,
+    // calculate stats
+    val stats = SparkUtils.calculateStats(tiles, bands, nodatas)
+
+    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, stats,
       nodatas, bounds, job.getConfiguration, protectionlevel, providerproperties)
   }
 
@@ -491,36 +477,40 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
   }
 
   override def readExternal(in: ObjectInput) {
-    inputs = in.readUTF().split(",")
-    output = in.readUTF()
-    bounds = Bounds.fromDelimitedString(in.readUTF())
+//    val count = in.readInt()
+//    val ab = mutable.ArrayBuilder.make[String]()
+//    for (i <- 0 until count) {
+//      ab += in.readUTF()
+//    }
+//    inputs = ab.result()
+//
+//    output = in.readUTF()
+//    bounds = Bounds.fromDelimitedString(in.readUTF())
     zoom = in.readInt()
     tilesize = in.readInt()
-    tiletype = in.readInt()
-    bands = in.readInt()
-    nodata = in.readDouble()
+//    tiletype = in.readInt()
+//    bands = in.readInt()
+//    nodata = in.readDouble()
     categorical = in.readBoolean()
 
-    providerproperties = in.readObject().asInstanceOf[Properties]
-    protectionlevel = in.readUTF()
-
-
+//    providerproperties = in.readObject().asInstanceOf[Properties]
+//    protectionlevel = in.readUTF()
   }
 
   override def writeExternal(out: ObjectOutput) {
-    out.writeUTF(inputs.mkString(","))
-    out.writeUTF(output)
-    out.writeUTF(bounds.toDelimitedString)
-    out.writeInt(zoom)
-    out.writeInt(tilesize)
-    out.writeInt(tiletype)
-    out.writeInt(bands)
-    out.writeDouble(nodata.doubleValue())
-    out.writeBoolean(categorical)
-
-    out.writeObject(providerproperties)
-
-    out.writeUTF(protectionlevel)
-
+//      out.writeInt(inputs.length)
+//      inputs.foreach(input => { out.writeUTF(input)})
+//      out.writeUTF(output)
+//      out.writeUTF(bounds.toDelimitedString)
+      out.writeInt(zoom)
+      out.writeInt(tilesize)
+//      out.writeInt(tiletype)
+//      out.writeInt(bands)
+//      out.writeDouble(nodata.doubleValue())
+      out.writeBoolean(categorical)
+//
+//      out.writeObject(providerproperties)
+//
+//      out.writeUTF(protectionlevel)
   }
 }

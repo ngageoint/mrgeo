@@ -79,24 +79,8 @@ class MrGeoYarnDriver {
     //    conf.set("spark.yarn.jar", sparkJar)
     //    conf.set("spark.yarn.jar", "/home/hadoop/spark/lib/spark-assembly-1.3.1-hadoop2.4.0.jar")
 
-    var path:String = ""
-    if (conf.contains("spark.driver.extraLibraryPath")) {
-      path = ":" + conf.get("spark.driver.extraLibraryPath")
-    }
-    conf.set("spark.driver.extraLibraryPath",
-      MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, "") + path)
-
-    if (conf.contains("spark.executor.extraLibraryPath")) {
-      path = ":" + conf.get("spark.executor.extraLibraryPath")
-    }
-    conf.set("spark.executor.extraLibraryPath",
-      MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, ""))
-
-    conf.set("spark.eventLog.overwrite", "true") // overwrite event logs
-
     val driverClass = MrGeoYarnJob.getClass.getName.replaceAll("\\$","")
     val driverJar =  SparkUtils.jarForClass(driverClass, cl)
-
 
     args += "--class"
     args += driverClass
@@ -104,25 +88,25 @@ class MrGeoYarnDriver {
     args += "--jar"
     args += driverJar
 
+    val executors = conf.get("spark.executor.instances", "2").toInt
     args += "--num-executors"
-    args += job.executors.toString
-    conf.set("spark.executor.instances",  job.executors.toString)
+    args += executors.toString
 
     args += "--executor-cores"
-    args += "2" //  job.cores.toString
-    conf.set("spark.executor.cores", job.cores.toString)
+    args += conf.get("spark.executor.cores", "1")
 
-    val exmemory:Int = SparkUtils.humantokb(job.memory)
-    val dvmem = SparkUtils.kbtohuman(exmemory / (job.cores * job.executors))
-    //val dvmem = SparkUtils.kbtohuman((Runtime.getRuntime.maxMemory() / 1024).toInt)
+    // spark.executor.memory is the total memory available to spark,
+    // --executor-memory is the memory per executor.  Go figure...
+    val mem = SparkUtils.humantokb(conf.get("spark.executor.memory", "128k"))
+    args += "--executor-memory"
+    args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
-    //args += "--driver-memory"
-    //args += dvmem
-    conf.set("spark.driver.memory", dvmem)
+    args += "--driver-cores"
+    args += conf.get("spark.driver.cores", "1")
 
-    //args += "--executor-memory"
-    //args += job.memory
-    conf.set("spark.executor.memory", job.memory)
+//    args += "--driver-memory"
+//    args += conf.get("spark.driver.memory", "128k")
+
 
     args += "--name"
     if (job.name != null && job.name.length > 0) {
