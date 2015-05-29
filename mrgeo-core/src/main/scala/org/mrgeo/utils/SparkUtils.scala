@@ -26,18 +26,17 @@ import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.image.{ImageStats, MrsImagePyramidMetadata}
 
 import scala.collection.mutable
 
 object SparkUtils {
 
   def loadMrsPyramid(imageName: String, context: SparkContext):
-  (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) =
-  {
+  (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
     val keyclass = classOf[TileIdWritable]
     val valueclass = classOf[RasterWritable]
-    
+
     // build a phony job...
     val job = new Job()
 
@@ -48,7 +47,8 @@ object SparkUtils {
 
     MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, imageName, providerProps)
 
-    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass.asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
+    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
+        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
     val image = context.newAPIHadoopRDD(job.getConfiguration,
       inputFormatClass,
       keyclass,
@@ -56,6 +56,78 @@ object SparkUtils {
 
     (image, metadata)
   }
+
+  def calculateStats(rdd: RDD[(TileIdWritable, RasterWritable)], bands: Int,
+      nodata: Array[Double]): Array[ImageStats] = {
+
+    val zero = Array.ofDim[ImageStats](bands)
+
+    for (i <- 0 until zero.length) {
+      zero(i) = new ImageStats(Double.MaxValue, Double.MinValue, 0, 0)
+    }
+
+    val stats = rdd.aggregate(zero)((stats, t) => {
+      val tile = RasterWritable.toRaster(t._2)
+
+      val tilestat = stats.clone()
+
+      for (y <- 0 until tile.getHeight) {
+        for (x <- 0 until tile.getWidth) {
+          for (b <- 0 until tile.getNumBands) {
+            val p = tile.getSampleDouble(x, y, b)
+            if (nodata(b).isNaN && !p.isNaN || nodata(b) != p) {
+              tilestat(b).count += 1
+              tilestat(b).sum += p
+              tilestat(b).max = Math.max(tilestat(b).max, p)
+              tilestat(b).min = Math.min(tilestat(b).min, p)
+            }
+          }
+        }
+      }
+
+      tilestat
+    },
+      (stat1, stat2) => {
+        val aggstat = stat1.clone()
+
+        for (b <- 0 until aggstat.length) {
+          aggstat(b).count += stat2(b).count
+          aggstat(b).sum += stat2(b).sum
+          aggstat(b).max = Math.max(aggstat(b).max, stat2(b).max)
+          aggstat(b).min = Math.min(aggstat(b).min, stat2(b).min)
+        }
+
+        aggstat
+      })
+
+    for (i <- 0 until stats.length) {
+      if (stats(i).count > 0) {
+        stats(i).mean = stats(i).sum / stats(i).count
+      }
+    }
+
+    stats
+  }
+
+  def calculateBounds(rdd: RDD[(TileIdWritable, RasterWritable)], zoom:Int, tilesize:Int): Bounds = {
+
+    val bounds = rdd.aggregate(new Bounds())((bounds, t) => {
+      val tile = TMSUtils.tileid(t._1.get, zoom)
+
+      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize).asBounds()
+      tb.expand(bounds)
+
+      tb
+    },
+      (tb1, tb2) => {
+        tb1.expand(tb2)
+
+        tb1
+      })
+
+    bounds
+  }
+
 
   def humantokb(human:String):Int = {
     //val pre: Char = new String ("KMGTPE").charAt (exp - 1)
@@ -76,17 +148,26 @@ object SparkUtils {
     v * mult
   }
 
-  def kbtohuman(kb:Int):String = {
+  def kbtohuman(kb:Long, maxUnit:String = null):String = {
     if (kb == 0) {
       "0"
     }
     else {
-    val unit = 1024
-    val kbunit = unit * unit
-    val exp: Int = (Math.log(kb) / Math.log(kbunit)).toInt
-      val pre: Char = new String("MGTPE").charAt(exp)
+      val suffix = new String("kmgtpe")
+      val unit = 1024
+      var exp: Int = (Math.log(kb) / Math.log(unit)).toInt
 
-      "%d%s".format((kb / Math.pow(unit, exp + 1)).toInt, pre)
+      if (maxUnit != null) {
+        val maxexp = suffix.indexOf(maxUnit.trim.toLowerCase)
+        if (maxexp > 0 && exp > maxexp)
+        {
+          exp = maxexp
+        }
+      }
+
+      val pre: Char = suffix.charAt(exp)
+
+      "%d%s".format((kb / Math.pow(unit, exp)).toInt, pre)
     }
   }
 

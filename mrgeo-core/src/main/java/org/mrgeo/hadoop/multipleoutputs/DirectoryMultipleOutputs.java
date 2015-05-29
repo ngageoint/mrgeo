@@ -324,9 +324,14 @@ public class DirectoryMultipleOutputs<KEYOUT, VALUEOUT>
 
   static List<String> getNamedOutputsList(final JobContext job)
   {
+    return getNamedOutputsList(job.getConfiguration());
+  }
+
+  static public List<String> getNamedOutputsList(final Configuration conf)
+  {
     final List<String> names = new ArrayList<String>();
     final StringTokenizer st = new StringTokenizer(
-      job.getConfiguration().get(base, ""), " ");
+        conf.get(base, ""), " ");
     while (st.hasMoreTokens())
     {
       names.add(st.nextToken());

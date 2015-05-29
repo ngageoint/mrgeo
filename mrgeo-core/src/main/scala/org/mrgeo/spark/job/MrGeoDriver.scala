@@ -7,6 +7,7 @@ import java.util
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.util.ClassUtil
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
+import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.apache.spark.{Logging, SparkConf}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.spark.job.yarn.MrGeoYarnDriver
@@ -17,6 +18,8 @@ import scala.collection.mutable
 import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
 
 abstract class MrGeoDriver extends Logging {
+
+  def setup(job: JobArguments): Boolean
 
   def run(name:String, driver:String = this.getClass.getName, args:Map[String, String] = Map[String, String](), hadoopConf:Configuration) = {
     val job = new JobArguments()
@@ -41,10 +44,10 @@ abstract class MrGeoDriver extends Logging {
       new URL(FileUtils.resolveURL(jar))
     })
 
-    val conf = PrepareJob.prepareJob(job)
     val cl = new URLClassLoader(urls.toSeq, parentLoader)
 
     setupDriver(job, cl)
+
 
 
     if (HadoopUtils.isLocal(hadoopConf))
@@ -55,19 +58,24 @@ abstract class MrGeoDriver extends Logging {
       val cluster = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_CLUSTER, "local")
 
       cluster.toLowerCase match {
-      case "yarn" => job.useYarn()
-      case "spark" => {
+      case "yarn" =>
+        job.useYarn()
+        loadYarnSettings(job, cl)
+        addYarnClasses(cl)
+
+      case "spark" =>
+        val conf = PrepareJob.prepareJob(job)
         val master = conf.get("spark.master", "spark://localhost:7077")
         job.useSpark(master)
-      }
       case _ => job.useLocal()
       }
     }
 
+    setup(job)
+    val conf = PrepareJob.prepareJob(job)
+
     // yarn needs to be run in its own client code, so we'll set up it up separately
     if (job.isYarn) {
-      loadYarnSettings(job, cl)
-      addYarnClasses(cl)
 
       val jobclass = cl.loadClass(classOf[MrGeoYarnDriver].getCanonicalName)
       val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoYarnDriver]
@@ -77,6 +85,7 @@ abstract class MrGeoDriver extends Logging {
     else {
       val jobclass = cl.loadClass(job.driverClass)
       val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoJob]
+
       jobinstance.run(job, conf)
     }
   }
@@ -134,55 +143,70 @@ abstract class MrGeoDriver extends Logging {
 
 
   private def loadYarnSettings(job:JobArguments, cl: URLClassLoader) = {
-    // need to get the YARN classes by reflection, since we support non YARN setups
-    val clazz = getClass.getClassLoader.loadClass("org.apache.hadoop.yarn.conf.YarnConfiguration")
+    val conf = HadoopUtils.createConfiguration()
 
-    if (clazz != null) {
-      val conf = clazz.newInstance()
-      val getInt = clazz.getMethod("getInt", classOf[String], classOf[Int])
+    val res = calculateYarnResources()
 
-      val defcores:Integer = 1
-      val cores = getInt.invoke(conf, "yarn.nodemanager.resource.cpu-vcores", defcores).asInstanceOf[Int]
-      if (job.cores <= 0 || job.cores < cores) {
-        job.cores = cores
-      }
+    job.cores = 1 // 1 task per executor
+    job.executors = res._1 / job.cores
 
-      val res = calculateYarnResources()
+    val sparkConf:SparkConf = new SparkConf()
 
-      // TODO:  This calculation is just voodoo.  We need to figure out a better one
-      job.cores = 2
-      job.executors = res._1 / job.cores
+    // Additional memory to allocate to containers
+    // For now, use driver's memory overhead as our AM container's memory overhead
+    //val amMemoryOverhead = sparkConf.getInt("spark.yarn.driver.memoryOverhead", 384)
+    //val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
 
-      // This is what I _think_ these values should be, but job regularly fail with "out of memory"
-      // errors when I set them this way...
-      //job.executors = res._2 + 1 // total CPUs + 1 (for the driver)
-      //job.cores = res._1 / job.executors
+    val mem = res._3
+    job.memoryKb = mem * 1024 // mem is in mb, convert to kb
 
-      val sparkConf:SparkConf = new SparkConf()
+    val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
 
-      // Additional memory to allocate to containers
-      // For now, use driver's memory overhead as our AM container's memory overhead
-      val amMemoryOverhead = sparkConf.getInt("spark.yarn.driver.memoryOverhead", 384)
-      val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 364)
+    // this is not only a min memory, but a "unit of allocation", each allocation a multiple of this number
+    val minmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB)
+    val maxmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_MB,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_MB)
 
-      //      val defmem:Integer = 2048
-      //      val mem = (((getInt.invoke(conf, "yarn.nodemanager.resource.memory-mb", defmem).asInstanceOf[Int] * 1024)
-      //          - executorMemoryOverhead - amMemoryOverhead) * 0.95).toInt
+    var perex = mem / job.executors
 
-      val mem = ((res._3 - executorMemoryOverhead - amMemoryOverhead) * 0.98).toInt
-      job.memory = SparkUtils.kbtohuman(mem * 1024) // mem is in mb, convert to kb
+    log.info("Initial values:  min memory: " + minmemory + "  (" + SparkUtils.kbtohuman(minmemory * 1024, "m") +
+        ") max memory: " + maxmemory + "  (" + SparkUtils.kbtohuman(maxmemory * 1024, "m") +
+        ") overhead: " + executorMemoryOverhead + "  (" + SparkUtils.kbtohuman(executorMemoryOverhead * 1024, "m") +
+        ") executors: " + job.executors +
+        " cluster memory: " + mem + " (" + SparkUtils.kbtohuman(mem * 1024, "m") +
+        ") mem per executor: " + perex + " (" + SparkUtils.kbtohuman(perex * 1024, "m") + ")")
 
-      //      if (job.memory != null) {
-      //        val exmem = SparkUtils.humantokb(job.memory)
-      //
-      //        if (mem < exmem) {
-      //          job.memory = SparkUtils.kbtohuman(mem)
-      //        }
-      //      }
-      //      else {
-      //        job.memory = SparkUtils.kbtohuman(mem)
-      //      }
+    if (perex < minmemory)  {
+      job.executors = (mem / minmemory).toInt
     }
+
+    perex = mem / job.executors
+    if (perex > maxmemory) {
+      job.executors = (mem / maxmemory).toInt
+    }
+
+    // see if we have too many executors, based on the unit allocation
+    if (job.executors * (minmemory - executorMemoryOverhead) > mem)
+    {
+      job.executors = (mem / (minmemory - executorMemoryOverhead)).toInt
+    }
+
+    // ends up these parameters aren't set very often, so we can't rely on them...
+    //    val maxcores = conf.getInt(YarnConfiguration.NM_VCORES, YarnConfiguration.DEFAULT_NM_VCORES)
+    //    if (job.executors > maxcores) {
+    //      job.executors = maxcores
+    //    }
+    if (job.executors < 2)
+    {
+      job.executors = 2
+    }
+    
+    job.executorMemKb = ((((mem / job.executors) / minmemory) * minmemory) - executorMemoryOverhead) * 1024
+
+    log.info("Configuring job (" + job.name + ") with " + job.executors + " tasks and " + SparkUtils.kbtohuman(job.memoryKb, "m") +
+        " total memory (" + SparkUtils.kbtohuman(job.executorMemKb, "m") + " + " +
+        SparkUtils.kbtohuman(executorMemoryOverhead, "m") +" overhead per task)" )
   }
 
   private def calculateYarnResources():(Int, Int, Int) = {
@@ -209,8 +233,9 @@ abstract class MrGeoDriver extends Logging {
     val stop = client.getMethod("stop")
 
 
+    val conf = HadoopUtils.createConfiguration()
     val yc = create.invoke(null)
-    init.invoke(yc, HadoopUtils.createConfiguration())
+    init.invoke(yc, conf)
     start.invoke(yc)
 
     val na = new Array[NodeState](1)
@@ -218,21 +243,21 @@ abstract class MrGeoDriver extends Logging {
 
     val nr = getNodeReports.invoke(yc, na).asInstanceOf[util.ArrayList[NodeReport]]
 
-    var totalcores:Int = 0
-    var totalmem:Long = 0
+    var cores:Int = 0
+    var memory:Long = 0
 
     nr.foreach(rep => {
       val res = rep.getCapability
 
-      totalmem = totalmem + res.getMemory
-      totalcores = totalcores + res.getVirtualCores
+      memory = memory + res.getMemory
+      cores = cores + res.getVirtualCores
     })
 
-    val executors:Int = nr.length
+    val nodes:Int = nr.length
 
     stop.invoke(yc)
 
-    (totalcores, executors, totalmem.toInt)
+    (cores, nodes, memory.toInt)
 
     //
     //      val yc = YarnClient.createYarnClient()
@@ -278,10 +303,10 @@ abstract class MrGeoDriver extends Logging {
     for (jar <- qualified) {
       // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...
       //if (!jar.contains("spark-yarn")) {
-        if (jars.length > 0) {
-          jars ++= ","
-        }
-        jars ++= jar
+      if (jars.length > 0) {
+        jars ++= ","
+      }
+      jars ++= jar
       //}
     }
     job.setJars(jars.toString())
