@@ -49,6 +49,7 @@ abstract class MrGeoDriver extends Logging {
     setupDriver(job, cl)
 
 
+    setup(job)
 
     if (HadoopUtils.isLocal(hadoopConf))
     {
@@ -71,7 +72,6 @@ abstract class MrGeoDriver extends Logging {
       }
     }
 
-    setup(job)
     val conf = PrepareJob.prepareJob(job)
 
     // yarn needs to be run in its own client code, so we'll set up it up separately
@@ -158,7 +158,6 @@ abstract class MrGeoDriver extends Logging {
     //val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
 
     val mem = res._3
-    job.memoryKb = mem * 1024 // mem is in mb, convert to kb
 
     val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
 
@@ -168,15 +167,16 @@ abstract class MrGeoDriver extends Logging {
     val maxmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_MB,
       YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_MB)
 
-    var perex = mem / job.executors
-
     log.info("Initial values:  min memory: " + minmemory + "  (" + SparkUtils.kbtohuman(minmemory * 1024, "m") +
         ") max memory: " + maxmemory + "  (" + SparkUtils.kbtohuman(maxmemory * 1024, "m") +
         ") overhead: " + executorMemoryOverhead + "  (" + SparkUtils.kbtohuman(executorMemoryOverhead * 1024, "m") +
         ") executors: " + job.executors +
-        " cluster memory: " + mem + " (" + SparkUtils.kbtohuman(mem * 1024, "m") +
-        ") mem per executor: " + perex + " (" + SparkUtils.kbtohuman(perex * 1024, "m") + ")")
+        " cluster memory: " + mem + " (" + SparkUtils.kbtohuman(mem * 1024, "m") + ")")
 
+
+    var perex = mem / job.executors
+
+    job.memoryKb = mem * 1024 // mem is in mb, convert to kb
     if (perex < minmemory)  {
       job.executors = (mem / minmemory).toInt
     }
@@ -203,6 +203,12 @@ abstract class MrGeoDriver extends Logging {
     }
     
     job.executorMemKb = ((((mem / job.executors) / minmemory) * minmemory) - executorMemoryOverhead) * 1024
+
+    if (job.isMemoryIntensive) {
+      val mult = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MEMORYINTENSIVE_MULTIPLIER, "2.0").toDouble
+      job.executors = (job.executors / mult).toInt
+      job.executorMemKb = (job.executorMemKb * mult).toInt
+    }
 
     log.info("Configuring job (" + job.name + ") with " + job.executors + " tasks and " + SparkUtils.kbtohuman(job.memoryKb, "m") +
         " total memory (" + SparkUtils.kbtohuman(job.executorMemKb, "m") + " + " +
