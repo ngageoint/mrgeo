@@ -152,11 +152,6 @@ abstract class MrGeoDriver extends Logging {
 
     val sparkConf:SparkConf = new SparkConf()
 
-    // Additional memory to allocate to containers
-    // For now, use driver's memory overhead as our AM container's memory overhead
-    //val amMemoryOverhead = sparkConf.getInt("spark.yarn.driver.memoryOverhead", 384)
-    //val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
-
     val mem = res._3
 
     val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
@@ -173,41 +168,15 @@ abstract class MrGeoDriver extends Logging {
         ") executors: " + job.executors +
         " cluster memory: " + mem + " (" + SparkUtils.kbtohuman(mem * 1024, "m") + ")")
 
-
-    var perex = mem / job.executors
-
-    job.memoryKb = mem * 1024 // mem is in mb, convert to kb
-    if (perex < minmemory)  {
-      job.executors = (mem / minmemory).toInt
-    }
-
-    perex = mem / job.executors
-    if (perex > maxmemory) {
-      job.executors = (mem / maxmemory).toInt
-    }
-
-    // see if we have too many executors, based on the unit allocation
-    if (job.executors * (minmemory - executorMemoryOverhead) > mem)
-    {
-      job.executors = (mem / (minmemory - executorMemoryOverhead)).toInt
-    }
-
-    // ends up these parameters aren't set very often, so we can't rely on them...
-    //    val maxcores = conf.getInt(YarnConfiguration.NM_VCORES, YarnConfiguration.DEFAULT_NM_VCORES)
-    //    if (job.executors > maxcores) {
-    //      job.executors = maxcores
-    //    }
-    if (job.executors < 2)
-    {
-      job.executors = 2
-    }
-    
-    job.executorMemKb = ((((mem / job.executors) / minmemory) * minmemory) - executorMemoryOverhead) * 1024
+    configureYarnMemory(job, mem, minmemory, maxmemory, executorMemoryOverhead)
 
     if (job.isMemoryIntensive) {
       val mult = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MEMORYINTENSIVE_MULTIPLIER, "2.0").toDouble
       job.executors = (job.executors / mult).toInt
       job.executorMemKb = (job.executorMemKb * mult).toInt
+
+      // need to make sure we didn't blow out any mwmory parameters
+      configureYarnMemory(job, mem, minmemory, maxmemory, executorMemoryOverhead)
     }
 
     log.info("Configuring job (" + job.name + ") with " + job.executors + " tasks and " + SparkUtils.kbtohuman(job.memoryKb, "m") +
@@ -299,6 +268,46 @@ abstract class MrGeoDriver extends Logging {
     //
     //
     //   (totalcores, executors, (totalmem / 1024).toInt)
+  }
+
+  private def configureYarnMemory(job:JobArguments, memory:Long, minmemory:Long, maxmemory:Long, overhead:Long) = {
+    // Additional memory to allocate to containers
+    // For now, use driver's memory overhead as our AM container's memory overhead
+    //val amMemoryOverhead = sparkConf.getInt("spark.yarn.driver.memoryOverhead", 384)
+    //val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
+
+
+
+    var perex = memory / job.executors
+
+    job.memoryKb = memory * 1024 // mem is in mb, convert to kb
+    if (perex < minmemory)  {
+      job.executors = (memory / minmemory).toInt
+    }
+
+    perex = memory / job.executors
+    if (perex > maxmemory) {
+      job.executors = (memory / maxmemory).toInt
+    }
+
+    // see if we have too many executors, based on the unit allocation
+    if (job.executors * (minmemory - overhead) > memory)
+    {
+      job.executors = (memory / (minmemory - overhead)).toInt
+    }
+
+    // ends up these parameters aren't set very often, so we can't rely on them...
+    //    val maxcores = conf.getInt(YarnConfiguration.NM_VCORES, YarnConfiguration.DEFAULT_NM_VCORES)
+    //    if (job.executors > maxcores) {
+    //      job.executors = maxcores
+    //    }
+    if (job.executors < 2)
+    {
+      job.executors = 2
+    }
+
+    job.executorMemKb = ((((memory / job.executors) / minmemory) * minmemory) - overhead) * 1024
+
   }
   protected def setupDependencies(job:JobArguments): mutable.Set[String] = {
 
