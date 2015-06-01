@@ -155,116 +155,117 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     try {
       val src = GDALUtils.open(image)
 
-      val datatype = src.GetRasterBand(1).getDataType
-      val datasize = gdal.GetDataTypeSize(datatype) / 8
+      if (src != null) {
+        val datatype = src.GetRasterBand(1).getDataType
+        val datasize = gdal.GetDataTypeSize(datatype) / 8
 
-      val bands = src.GetRasterCount()
+        val bands = src.GetRasterCount()
 
-      val imageBounds = GDALUtils.getBounds(src).getTMSBounds
-      val tiles = TMSUtils.boundsToTile(imageBounds, zoom, tilesize)
-      val tileBounds = TMSUtils.tileBounds(imageBounds, zoom, tilesize)
+        val imageBounds = GDALUtils.getBounds(src).getTMSBounds
+        val tiles = TMSUtils.boundsToTile(imageBounds, zoom, tilesize)
+        val tileBounds = TMSUtils.tileBounds(imageBounds, zoom, tilesize)
 
-      val w = tiles.width() * tilesize
-      val h = tiles.height() * tilesize
+        val w = tiles.width() * tilesize
+        val h = tiles.height() * tilesize
 
-      val res = TMSUtils.resolution(zoom, tilesize)
-
-
-      val scaledsize = w * h * bands * datasize
-
-      // TODO:  Figure out chunking...
-      val scaled = GDALUtils.createEmptyMemoryRaster(src, w.toInt, h.toInt)
-
-      val xform = Array.ofDim[Double](6)
-
-      xform(0) = tileBounds.w /* top left x */
-      xform(1) = res /* w-e pixel resolution */
-      xform(2) = 0 /* 0 */
-      xform(3) = tileBounds.n /* top left y */
-      xform(4) = 0 /* 0 */
-      xform(5) = -res /* n-s pixel resolution (negative value) */
-
-      scaled.SetGeoTransform(xform)
-      scaled.SetProjection(GDALUtils.EPSG4326)
+        val res = TMSUtils.resolution(zoom, tilesize)
 
 
-      var resample: Int = gdalconstConstants.GRA_Bilinear
-      if (categorical) {
-        // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
-        // in which case we will use GRA_NearestNeighbour
-        try {
-          val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
-          if (mode != null) {
-            resample = mode.getInt()
+        val scaledsize = w * h * bands * datasize
+
+        // TODO:  Figure out chunking...
+        val scaled = GDALUtils.createEmptyMemoryRaster(src, w.toInt, h.toInt)
+
+        val xform = Array.ofDim[Double](6)
+
+        xform(0) = tileBounds.w /* top left x */
+        xform(1) = res /* w-e pixel resolution */
+        xform(2) = 0 /* 0 */
+        xform(3) = tileBounds.n /* top left y */
+        xform(4) = 0 /* 0 */
+        xform(5) = -res /* n-s pixel resolution (negative value) */
+
+        scaled.SetGeoTransform(xform)
+        scaled.SetProjection(GDALUtils.EPSG4326)
+
+
+        var resample: Int = gdalconstConstants.GRA_Bilinear
+        if (categorical) {
+          // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
+          // in which case we will use GRA_NearestNeighbour
+          try {
+            val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
+            if (mode != null) {
+              resample = mode.getInt()
+            }
+          }
+          catch {
+            case e: Exception => resample = gdalconstConstants.GRA_NearestNeighbour
           }
         }
-        catch {
-          case e: Exception => resample = gdalconstConstants.GRA_NearestNeighbour
+
+        gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)
+
+        //    val time = System.currentTimeMillis() - start
+        //    println("scale: " + time)
+
+        //    val band = scaled.GetRasterBand(1)
+        //    val minmax = Array.ofDim[Double](2)
+        //    band.ComputeRasterMinMax(minmax, 0)
+
+        //GDALUtils.saveRaster(scaled, "/data/export/scaled.tif")
+
+        // close the image
+        GDALUtils.close(src)
+
+        val bandlist = Array.ofDim[Int](bands)
+        for (x <- 0 until bands) {
+          bandlist(x) = x + 1 // bands are ones based
         }
-      }
-
-      gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)
-
-      //    val time = System.currentTimeMillis() - start
-      //    println("scale: " + time)
-
-      //    val band = scaled.GetRasterBand(1)
-      //    val minmax = Array.ofDim[Double](2)
-      //    band.ComputeRasterMinMax(minmax, 0)
-
-      //GDALUtils.saveRaster(scaled, "/data/export/scaled.tif")
-
-      // close the image
-      GDALUtils.close(src)
-
-      val bandlist = Array.ofDim[Int](bands)
-      for (x <- 0 until bands) {
-        bandlist(x) = x + 1 // bands are ones based
-      }
 
 
-      val buffer = Array.ofDim[Byte](datasize * tilesize * tilesize * bands)
+        val buffer = Array.ofDim[Byte](datasize * tilesize * tilesize * bands)
 
-      for (dty <- 0 until tiles.height.toInt) {
-        for (dtx <- 0 until tiles.width().toInt) {
+        for (dty <- 0 until tiles.height.toInt) {
+          for (dtx <- 0 until tiles.width().toInt) {
 
-          //val start = System.currentTimeMillis()
+            //val start = System.currentTimeMillis()
 
-          val tx: Long = dtx + tiles.w
-          val ty: Long = tiles.n - dty
+            val tx: Long = dtx + tiles.w
+            val ty: Long = tiles.n - dty
 
-          val x: Int = dtx * tilesize
-          val y: Int = dty * tilesize
+            val x: Int = dtx * tilesize
+            val y: Int = dty * tilesize
 
-          val success = scaled.ReadRaster(x, y, tilesize, tilesize, tilesize, tilesize, datatype, buffer, null)
+            val success = scaled.ReadRaster(x, y, tilesize, tilesize, tilesize, tilesize, datatype, buffer, null)
 
-          if (success != gdalconstConstants.CE_None) {
-            println("Failed reading raster" + success)
+            if (success != gdalconstConstants.CE_None) {
+              println("Failed reading raster" + success)
+            }
+
+            // switch the byte order...
+            GDALUtils.swapBytes(buffer, datatype)
+
+            val writable = RasterWritable.toWritable(buffer, tilesize, tilesize,
+              bands, GDALUtils.toRasterDataBufferType(datatype))
+
+            // save the tile...
+            //        GDALUtils.saveRaster(RasterWritable.toRaster(writable),
+            //          "/data/export/tiles/tile-" + ty + "-" + tx, tx, ty, zoom, tilesize, GDALUtils.getnodata(scaled))
+
+            result.append((new TileIdWritable(TMSUtils.tileid(tx, ty, zoom)), writable))
+
+
+            //val time = System.currentTimeMillis() - start
+            //println(tx + ", " + ty + ", " + time)
           }
-
-          // switch the byte order...
-          GDALUtils.swapBytes(buffer, datatype)
-
-          val writable = RasterWritable.toWritable(buffer, tilesize, tilesize,
-            bands, GDALUtils.toRasterDataBufferType(datatype))
-
-          // save the tile...
-          //        GDALUtils.saveRaster(RasterWritable.toRaster(writable),
-          //          "/data/export/tiles/tile-" + ty + "-" + tx, tx, ty, zoom, tilesize, GDALUtils.getnodata(scaled))
-
-          result.append((new TileIdWritable(TMSUtils.tileid(tx, ty, zoom)), writable))
-
-
-          //val time = System.currentTimeMillis() - start
-          //println(tx + ", " + ty + ", " + time)
         }
+
+        GDALUtils.close(scaled)
       }
-
-      GDALUtils.close(scaled)
-
     }
     catch {
-      case ioe: IOException => // no op, this can happen in "kkip preprocessing" mode
+      case ioe: IOException => // no op, this can happen in "skip preprocessing" mode
     }
     result.iterator
   }
