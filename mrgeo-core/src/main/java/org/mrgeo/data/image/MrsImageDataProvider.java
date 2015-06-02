@@ -76,6 +76,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
 
   public static void setupMrsPyramidMultipleOutputJob(final Job job)
   {
+    job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
     MapReduceUtils.setupTiledJob(job);
   }
   
@@ -509,6 +510,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
       zoomlevel, tilesize);
     
     job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
+    job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
     final MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(output,
         AccessMode.OVERWRITE, providerProperties);
     
@@ -548,6 +550,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
     final TiledOutputFormatContext context = new TiledOutputFormatContext(output, bounds,
       zoomlevel, tilesize, tiletype, bands);
     job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
+    job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
     final MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(output,
       AccessMode.OVERWRITE, providerProperties);
     if (provider == null)
