@@ -36,7 +36,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.services.KmlGenerator;
+import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
 import org.opengis.referencing.FactoryException;
