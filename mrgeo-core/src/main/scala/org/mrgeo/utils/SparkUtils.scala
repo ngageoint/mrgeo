@@ -15,11 +15,13 @@
 
 package org.mrgeo.utils
 
+import java.io.{IOException, FileInputStream, InputStreamReader, File}
 import java.net.URL
+import java.util
 import java.util.{Enumeration, Properties}
 
 import org.apache.hadoop.mapreduce.{InputFormat, Job}
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkException, SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.DataProviderFactory
@@ -28,9 +30,64 @@ import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.{ImageStats, MrsImagePyramidMetadata}
 
-import scala.collection.mutable
+import scala.collection.{Map, mutable}
+import scala.collection.JavaConversions._
 
 object SparkUtils {
+
+  def getConfiguration:SparkConf = {
+
+    val conf = new SparkConf()
+    loadDefaultSparkProperties(conf)
+
+    conf
+  }
+
+  // These 3 methods are taken almost verbatim from Spark's Utils class, but they are all
+  // private, so we needed to copy them here
+  /** Load properties present in the given file. */
+  private def getPropertiesFromFile(filename: String): Map[String, String] = {
+    val file = new File(filename)
+    require(file.exists(), s"Properties file $file does not exist")
+    require(file.isFile, s"Properties file $file is not a normal file")
+
+    val inReader = new InputStreamReader(new FileInputStream(file), "UTF-8")
+    try {
+      val properties = new Properties()
+      properties.load(inReader)
+      properties.stringPropertyNames().map(k => (k, properties(k).trim)).toMap
+    }
+    catch {
+      case e: IOException =>
+        throw new SparkException(s"Failed when loading Spark properties from $filename", e)
+    }
+    finally {
+      inReader.close()
+    }
+  }
+
+  private def getDefaultPropertiesFile(env: Map[String, String] = sys.env): String = {
+    env.get("SPARK_CONF_DIR")
+        .orElse(env.get("SPARK_HOME").map { t => s"$t${File.separator}conf"})
+        .map { t => new File(s"$t${File.separator}spark-defaults.conf")}
+        .filter(_.isFile)
+        .map(_.getAbsolutePath)
+        .orNull
+  }
+
+  private def loadDefaultSparkProperties(conf: SparkConf, filePath: String = null): String = {
+    val path = Option(filePath).getOrElse(getDefaultPropertiesFile())
+    Option(path).foreach { confFile =>
+      getPropertiesFromFile(confFile).filter { case (k, v) =>
+        k.startsWith("spark.")
+      }.foreach { case (k, v) =>
+        conf.setIfMissing(k, v)
+        sys.props.getOrElseUpdate(k, v)
+      }
+    }
+    path
+  }
+
 
   def loadMrsPyramid(imageName: String, context: SparkContext):
   (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
@@ -175,7 +232,7 @@ object SparkUtils {
     // now the hard part, need to look in the dependencies...
     val classFile: String = clazz.replaceAll("\\.", "/") + ".class"
 
-    var iter: Enumeration[URL] = null
+    var iter: util.Enumeration[URL] = null
 
     if (cl != null) {
       iter = cl.getResources(classFile)

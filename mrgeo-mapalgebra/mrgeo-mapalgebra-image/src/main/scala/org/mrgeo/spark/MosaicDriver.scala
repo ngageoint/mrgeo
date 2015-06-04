@@ -21,7 +21,7 @@ import java.io.{ObjectOutput, ObjectInput, Externalizable}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{Partition, Logging, SparkContext}
+import org.apache.spark.{SparkConf, Partition, Logging, SparkContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.{RDD, CoGroupedRDD}
 import org.mrgeo.data.image.MrsImageDataProvider
@@ -270,7 +270,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     true
   }
 
-  override def setup(job: JobArguments): Boolean = {
+  override def setup(job: JobArguments, conf:SparkConf): Boolean = {
 
     val in:String = job.getSetting("inputs")
 
@@ -281,7 +281,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
   }
 
 
-  override def teardown(job: JobArguments): Boolean = {
+  override def teardown(job: JobArguments, conf:SparkConf): Boolean = {
     true
   }
 
