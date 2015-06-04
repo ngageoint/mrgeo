@@ -309,8 +309,8 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     job.isMemoryIntensive = true
 
-    conf.set("spark.storage.memoryFraction", "0.01")  // don't need any storage, we're not caching
-    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle high...
+//    conf.set("spark.storage.memoryFraction", "0.25") //
+//    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle high...
 
     inputs = job.getSetting(IngestImageSpark.Inputs).split(",")
     output = job.getSetting(IngestImageSpark.Output)
@@ -401,6 +401,8 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
+    context.hadoopConfiguration.set("fs.s3n.impl", "org.apache.hadoop.fs.s3native.NativeS3FileSystem")
+
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
     // won't eat up too much memory
     val in = context.makeRDD(inputs, inputs.length)
@@ -413,21 +415,22 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       mergeTile(r1, r2)
     })
 
-    saveRDD(mergedTiles)
+    saveRDD(mergedTiles, context.hadoopConfiguration)
 
     true
   }
 
 
-  protected def saveRDD(tiles: RDD[(TileIdWritable, RasterWritable)]): Unit = {
+  protected def saveRDD(tiles: RDD[(TileIdWritable, RasterWritable)], conf:Configuration): Unit = {
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
-    val job: Job = new Job(HadoopUtils.createConfiguration())
+    //val job: Job = new Job(conf)
 
     val tileIncrement = 1
 
-    job.getConfiguration.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
+    //job.getConfiguration.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
+    conf.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
 
     //    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
     if (!bounds.isValid) {
@@ -462,22 +465,21 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     //logInfo("tiles has " + tiles.count() + " tiles in " + tiles.partitions.length + " partitions")
 
-    //val partitioned = tiles.partitionBy(sparkPartitioner)
+    val partitioned = tiles.partitionBy(sparkPartitioner)
 
     //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
     // free up the tile's cache, it's not needed any more...
     //    tiles.unpersist()
 
-    //val sorted = partitioned.sortByKey()
+    val sorted = partitioned.sortByKey()
     //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
 
     // this is missing in early spark APIs
-    val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+    //val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
 
     // save the image
-    //sorted.saveAsNewAPIHadoopDataset(job.getConfiguration)
+    sorted.saveAsNewAPIHadoopDataset(conf) // job.getConfiguration)
 
-    //val sorted = tiles.sortByKey()
     val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE,
       null.asInstanceOf[Properties])
 
@@ -488,8 +490,6 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     }
 
     sorted.foreachPartition(iter => {
-      val dp = DataProviderFactory.getMrsImageDataProviderNoCache(output, AccessMode.WRITE,
-        null.asInstanceOf[Properties])
       var writer:MrsTileWriter[Raster] = null
 
       try {
@@ -500,8 +500,13 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
           val value = item._2
 
           if (writer == null) {
+
             val partition = sparkPartitioner.getPartition(key)
             println("getting writer for: " + partition)
+
+            val dp = DataProviderFactory.getMrsImageDataProviderNoCache(output, AccessMode.WRITE,
+              null.asInstanceOf[Properties])
+
             val context = new MrsImagePyramidWriterContext(zoom, partition)
             writer = dp.getMrsTileWriter(context)
           }
@@ -518,13 +523,13 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       }
     })
 
-    sparkPartitioner.writeSplits(output, zoom, job.getConfiguration)
+    sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
     //dp.teardown(job)
 
     // calculate and save metadata
     MrsImagePyramid.calculateMetadata(output, zoom, idp.getMetadataWriter, stats,
-      nodatas, bounds, job.getConfiguration, protectionlevel, providerproperties)
+      nodatas, bounds, conf /* job.getConfiguration */, protectionlevel, providerproperties)
   }
 
   override def teardown(job: JobArguments, conf:SparkConf): Boolean = {
