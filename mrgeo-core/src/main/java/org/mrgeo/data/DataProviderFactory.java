@@ -1121,6 +1121,22 @@ public class DataProviderFactory
     return getMrsImageDataProvider(name, accessMode, getBasicConfig(), props);
   }
 
+  public static MrsImageDataProvider getMrsImageDataProviderNoCache(final String name,
+      AccessMode accessMode,
+      Properties props) throws DataProviderNotFound
+  {
+
+    try
+    {
+      return new MrsImageLoader(name, accessMode, getBasicConfig(), props).call();
+    }
+    catch (Exception e)
+    {
+      throw new DataProviderNotFound("Error loading " + name, e);
+    }
+  }
+
+
   /**
    * Create a data provider for a MrsImage data resource. This method should be
    * called to access a MrsImage (an image ingested into MrGeo) as well as

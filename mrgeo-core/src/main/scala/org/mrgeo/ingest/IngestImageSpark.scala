@@ -481,8 +481,14 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE,
       null.asInstanceOf[Properties])
 
+    val writers = Array.ofDim[MrsTileWriter[Raster]](sorted.partitions.length)
+    for (partition <- 0 until writers.length) {
+      val context = new MrsImagePyramidWriterContext(zoom, partition)
+      writers(partition) = idp.getMrsTileWriter(context)
+    }
+
     sorted.foreachPartition(iter => {
-      val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE,
+      val dp = DataProviderFactory.getMrsImageDataProviderNoCache(output, AccessMode.WRITE,
         null.asInstanceOf[Properties])
       var writer:MrsTileWriter[Raster] = null
 
@@ -495,9 +501,9 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
           if (writer == null) {
             val partition = sparkPartitioner.getPartition(key)
-            val context = new MrsImagePyramidWriterContext(zoom, partition)
-            writer = idp.getMrsTileWriter(context)
             println("getting writer for: " + partition)
+            val context = new MrsImagePyramidWriterContext(zoom, partition)
+            writer = dp.getMrsTileWriter(context)
           }
 
           println("writing: " + key.get + " to " + writer.getName )
@@ -505,10 +511,11 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
         }
         println("done looping")
       } finally {
-        println("closing: " + writer.getName)
-        writer.close()
+        if (writer != null) {
+          println("closing: " + writer.getName)
+          writer.close()
+        }
       }
-
     })
 
     sparkPartitioner.writeSplits(output, zoom, job.getConfiguration)
