@@ -16,56 +16,11 @@ import scala.collection.JavaConversions._
 
 object PrepareJob extends Logging {
 
-  // These 3 methods are taken almost verbatim from Spark's Utils class, but they are all
-  // private, so we needed to copy them here
-  /** Load properties present in the given file. */
-  private def getPropertiesFromFile(filename: String): Map[String, String] = {
-    val file = new File(filename)
-    require(file.exists(), s"Properties file $file does not exist")
-    require(file.isFile(), s"Properties file $file is not a normal file")
-
-    val inReader = new InputStreamReader(new FileInputStream(file), "UTF-8")
-    try {
-      val properties = new Properties()
-      properties.load(inReader)
-      properties.stringPropertyNames().map(k => (k, properties(k).trim)).toMap
-    }
-    catch {
-      case e: IOException =>
-        throw new SparkException(s"Failed when loading Spark properties from $filename", e)
-    }
-    finally {
-      inReader.close()
-    }
-  }
-
-  private def getDefaultPropertiesFile(env: Map[String, String] = sys.env): String = {
-    env.get("SPARK_CONF_DIR")
-        .orElse(env.get("SPARK_HOME").map { t => s"$t${File.separator}conf"})
-        .map { t => new File(s"$t${File.separator}spark-defaults.conf")}
-        .filter(_.isFile)
-        .map(_.getAbsolutePath)
-        .orNull
-  }
-
-  private[job] def loadDefaultSparkProperties(conf: SparkConf, filePath: String = null): String = {
-    val path = Option(filePath).getOrElse(getDefaultPropertiesFile())
-    Option(path).foreach { confFile =>
-      getPropertiesFromFile(confFile).filter { case (k, v) =>
-        k.startsWith("spark.")
-      }.foreach { case (k, v) =>
-        conf.setIfMissing(k, v)
-        sys.props.getOrElseUpdate(k, v)
-      }
-    }
-    path
-  }
 
 
   final def prepareJob(job: JobArguments): SparkConf = {
 
-    val conf: SparkConf = new SparkConf()
-    loadDefaultSparkProperties(conf)
+    val conf = SparkUtils.getConfiguration
 
     logInfo("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
     conf.setAppName(job.name)
@@ -118,10 +73,12 @@ object PrepareJob extends Logging {
       })
     }
 
-    // only 25% of storage is for caching datasets, 75% is available for processing
-    if (job.isMemoryIntensive) {
-      conf.set("spark.storage.memoryFraction", "0.25")
-    }
+//    // only 25% of storage is for caching datasets, 75% is available for processing
+//    if (job.isMemoryIntensive) {
+//      //conf.set("spark.storage.memoryFraction", "0.25")
+//      //conf.set("spark.shuffle.memoryFraction", "0.33")
+//    }
+
 
     conf
   }

@@ -322,7 +322,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
       final Properties providerProperties, final boolean mustExist) throws IOException
   {
     Path result = resolveNameToPath(conf, input, providerProperties, mustExist, false);
-    if (result != null && hasMetadata(conf, result))
+    if (result != null && (!mustExist || hasMetadata(conf, result)))
     {
       return result;
     }
