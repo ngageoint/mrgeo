@@ -16,7 +16,6 @@
 package org.mrgeo.hdfs.output.image;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
@@ -72,41 +71,49 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
     }
 
     Path file = getDefaultWorkFile(context, "");
-    FileSystem fs = file.getFileSystem(conf);
 
-    // ignore the progress parameter, since MapFile is local
-    final MapFile.Writer out =
-        new MapFile.Writer(conf, fs, file.toString(),
-            context.getOutputKeyClass().asSubclass(WritableComparable.class),
-            context.getOutputValueClass().asSubclass(Writable.class),
-            compressionType, codec, context);
+    final MapFile.Writer out =  new MapFile.Writer(conf, file,
+        MapFile.Writer.keyClass(context.getOutputKeyClass().asSubclass(WritableComparable.class)),
+        MapFile.Writer.valueClass(context.getOutputValueClass().asSubclass(Writable.class)),
+        MapFile.Writer.compression(compressionType, codec),
+        MapFile.Writer.progressable(context));
 
-    return new RecordWriter<WritableComparable<?>, Writable>() {
+    return new Writer(out);
+  }
 
-      private TileIdWritable tileid = new TileIdWritable();
+  private static class Writer extends RecordWriter<WritableComparable<?>, Writable>
+  {
+    private final MapFile.Writer out;
+    private TileIdWritable tileid;
 
-      @Override
-      public void write(WritableComparable<?> key, Writable value)
-          throws IOException {
+    public Writer(MapFile.Writer out)
+    {
+      this.out = out;
+      tileid = new TileIdWritable();
+    }
 
-        // there may ba a case or two where an extended TileIdWritable is written as the key
-        // (buildpyramid does it).  So we strip out any of that information when we write the
-        // actual key.
-        if (key instanceof TileIdWritable)
-        {
-          tileid.set(((TileIdWritable)key).get());
-          out.append(tileid, value);
-        }
-        else
-        {
-          out.append(key, value);
-        }
+    @Override
+    public void write(WritableComparable<?> key, Writable value)
+        throws IOException
+    {
+
+      // there may ba a case or two where an extended TileIdWritable is written as the key
+      // (buildpyramid does it).  So we strip out any of that information when we write the
+      // actual key.
+      if (key instanceof TileIdWritable)
+      {
+        tileid.set(((TileIdWritable)key).get());
+        out.append(tileid, value);
       }
-
-      @Override
-      public void close(TaskAttemptContext contxt) throws IOException {
-        out.close();
+      else
+      {
+        out.append(key, value);
       }
-    };
+    }
+
+    @Override
+    public void close(TaskAttemptContext contxt) throws IOException {
+      out.close();
+    }
   }
 }

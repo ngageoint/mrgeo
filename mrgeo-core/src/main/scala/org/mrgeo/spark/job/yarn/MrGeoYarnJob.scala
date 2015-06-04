@@ -80,11 +80,11 @@ object MrGeoYarnJob extends Logging {
         logInfo("Found MrGeo driver: " + driver)
         val mrgeo: MrGeoJob = clazz.newInstance().asInstanceOf[MrGeoJob]
 
-        logInfo("Setting up job: " + job.name)
-        mrgeo.setup(job)
-
         // set all the spark settings back...
-        val conf = new SparkConf()
+        val conf = SparkUtils.getConfiguration
+
+        logInfo("Setting up job: " + job.name)
+        mrgeo.setup(job, conf)
 
 
         logInfo("SparkConf parameters")
@@ -102,7 +102,7 @@ object MrGeoYarnJob extends Logging {
         }
 
         logInfo("Teardown job: " + job.name)
-        mrgeo.teardown(job)
+        mrgeo.teardown(job, conf)
       }
     }
   }

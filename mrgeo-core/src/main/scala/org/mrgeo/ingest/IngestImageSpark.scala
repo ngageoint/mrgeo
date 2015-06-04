@@ -6,21 +6,20 @@ import java.util
 import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.Job
-import org.apache.spark.SparkContext
+import org.apache.hadoop.mapreduce.{RecordWriter, Job}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
-import org.apache.spark.storage.StorageLevel
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.image.{MrsImagePyramidWriterContext, MrsImageDataProvider}
 import org.mrgeo.data.ingest.{ImageIngestDataProvider, ImageIngestWriterContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
-import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.tile.{MrsTileWriter, TileIdWritable}
 import org.mrgeo.hdfs.partitioners.{ImageSplitGenerator, TileIdPartitioner}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.image.{ImageStats, MrsImagePyramid}
+import org.mrgeo.image.MrsImagePyramid
 import org.mrgeo.spark.SparkTileIdPartitioner
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
@@ -306,9 +305,12 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
   }
 
-  override def setup(job: JobArguments): Boolean = {
+  override def setup(job: JobArguments, conf:SparkConf): Boolean = {
 
     job.isMemoryIntensive = true
+
+    conf.set("spark.storage.memoryFraction", "0.01")  // don't need any storage, we're not caching
+    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle high...
 
     inputs = job.getSetting(IngestImageSpark.Inputs).split(",")
     output = job.getSetting(IngestImageSpark.Output)
@@ -409,11 +411,9 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     val mergedTiles=rawtiles.reduceByKey((r1, r2) => {
       mergeTile(r1, r2)
-    }).persist(StorageLevel.MEMORY_AND_DISK)
+    })
 
     saveRDD(mergedTiles)
-
-    mergedTiles.unpersist()
 
     true
   }
@@ -429,6 +429,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     job.getConfiguration.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
 
+    //    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
     if (!bounds.isValid) {
       bounds = SparkUtils.calculateBounds(tiles, zoom, tilesize)
     }
@@ -440,27 +441,6 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       tiletype = tile.getTransferType
     }
 
-    // save the new pyramid
-    val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
-      tilesize, tiletype, bands, protectionlevel, providerproperties)
-
-    val tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
-
-    val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
-      tileBounds.e, tileBounds.n, zoom, tileIncrement)
-
-    val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
-
-    val sorted = tiles.partitionBy(sparkPartitioner).sortByKey()
-    // this is missing in early spark APIs
-    //val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
-
-    // save the image
-    sorted.saveAsNewAPIHadoopDataset(job.getConfiguration)
-
-    dp.teardown(job)
-
-    // calculate and save metadata
     val nodatas = Array.ofDim[Double](bands)
     for (x <- 0 until nodatas.length) {
       nodatas(x) = nodata.doubleValue()
@@ -469,49 +449,116 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     // calculate stats
     val stats = SparkUtils.calculateStats(tiles, bands, nodatas)
 
-    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, stats,
+    // save the new pyramid
+//    val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
+//      tilesize, tiletype, bands, protectionlevel, providerproperties)
+
+    val tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+
+    val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
+      tileBounds.e, tileBounds.n, zoom, tileIncrement)
+
+    val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
+
+    //logInfo("tiles has " + tiles.count() + " tiles in " + tiles.partitions.length + " partitions")
+
+    //val partitioned = tiles.partitionBy(sparkPartitioner)
+
+    //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
+    // free up the tile's cache, it's not needed any more...
+    //    tiles.unpersist()
+
+    //val sorted = partitioned.sortByKey()
+    //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
+
+    // this is missing in early spark APIs
+    val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+
+    // save the image
+    //sorted.saveAsNewAPIHadoopDataset(job.getConfiguration)
+
+    //val sorted = tiles.sortByKey()
+    val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE,
+      null.asInstanceOf[Properties])
+
+    sorted.foreachPartition(iter => {
+      val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE,
+        null.asInstanceOf[Properties])
+      var writer:MrsTileWriter[Raster] = null
+
+      try {
+        while (iter.hasNext) {
+          val item = iter.next()
+
+          val key = item._1
+          val value = item._2
+
+          if (writer == null) {
+            val partition = sparkPartitioner.getPartition(key)
+            val context = new MrsImagePyramidWriterContext(zoom, partition)
+            writer = idp.getMrsTileWriter(context)
+            println("getting writer for: " + partition)
+          }
+
+          println("writing: " + key.get + " to " + writer.getName )
+          writer.append(key, RasterWritable.toRaster(value))
+        }
+        println("done looping")
+      } finally {
+        println("closing: " + writer.getName)
+        writer.close()
+      }
+
+    })
+
+    sparkPartitioner.writeSplits(output, zoom, job.getConfiguration)
+
+    //dp.teardown(job)
+
+    // calculate and save metadata
+    MrsImagePyramid.calculateMetadata(output, zoom, idp.getMetadataWriter, stats,
       nodatas, bounds, job.getConfiguration, protectionlevel, providerproperties)
   }
 
-  override def teardown(job: JobArguments): Boolean = {
+  override def teardown(job: JobArguments, conf:SparkConf): Boolean = {
     true
   }
 
   override def readExternal(in: ObjectInput) {
-//    val count = in.readInt()
-//    val ab = mutable.ArrayBuilder.make[String]()
-//    for (i <- 0 until count) {
-//      ab += in.readUTF()
-//    }
-//    inputs = ab.result()
-//
-//    output = in.readUTF()
-//    bounds = Bounds.fromDelimitedString(in.readUTF())
+    //    val count = in.readInt()
+    //    val ab = mutable.ArrayBuilder.make[String]()
+    //    for (i <- 0 until count) {
+    //      ab += in.readUTF()
+    //    }
+    //    inputs = ab.result()
+    //
+    output = in.readUTF()
+    //    bounds = Bounds.fromDelimitedString(in.readUTF())
     zoom = in.readInt()
     tilesize = in.readInt()
-//    tiletype = in.readInt()
-//    bands = in.readInt()
-//    nodata = in.readDouble()
+    //    tiletype = in.readInt()
+    //    bands = in.readInt()
+    //    nodata = in.readDouble()
     categorical = in.readBoolean()
 
-//    providerproperties = in.readObject().asInstanceOf[Properties]
-//    protectionlevel = in.readUTF()
+    //    providerproperties = in.readObject().asInstanceOf[Properties]
+    //    protectionlevel = in.readUTF()
   }
 
   override def writeExternal(out: ObjectOutput) {
-//      out.writeInt(inputs.length)
-//      inputs.foreach(input => { out.writeUTF(input)})
-//      out.writeUTF(output)
-//      out.writeUTF(bounds.toDelimitedString)
-      out.writeInt(zoom)
-      out.writeInt(tilesize)
-//      out.writeInt(tiletype)
-//      out.writeInt(bands)
-//      out.writeDouble(nodata.doubleValue())
-      out.writeBoolean(categorical)
-//
-//      out.writeObject(providerproperties)
-//
-//      out.writeUTF(protectionlevel)
+    //      out.writeInt(inputs.length)
+    //      inputs.foreach(input => { out.writeUTF(input)})
+    out.writeUTF(output)
+    //      out.writeUTF(bounds.toDelimitedString)
+    out.writeInt(zoom)
+    out.writeInt(tilesize)
+    //      out.writeInt(tiletype)
+    //      out.writeInt(bands)
+    //      out.writeDouble(nodata.doubleValue())
+    out.writeBoolean(categorical)
+    //
+    //      out.writeObject(providerproperties)
+    //
+    //      out.writeUTF(protectionlevel)
   }
 }

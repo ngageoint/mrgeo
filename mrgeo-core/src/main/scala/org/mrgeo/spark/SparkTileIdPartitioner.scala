@@ -1,6 +1,6 @@
 package org.mrgeo.spark
 
-import java.io.PrintWriter
+import java.io._
 import java.nio.ByteBuffer
 
 import org.apache.commons.codec.binary.Base64
@@ -16,11 +16,21 @@ import org.mrgeo.image.MrsImagePyramid
 import scala.collection.JavaConverters._
 import org.mrgeo.tile.SplitGenerator
 
+import scala.collection.mutable
+
 @SerialVersionUID(-1)
-class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
+class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner with Externalizable
 {
 
-  private val splits = splitGenerator.getSplits.asScala.toArray
+  private var splits:Array[java.lang.Long] = null
+
+  if (splitGenerator != null) {
+    splits = splitGenerator.getSplits.asScala.toArray
+  }
+
+  def this() {
+    this(null)
+  }
 
 
   override def numPartitions: Int = {
@@ -118,5 +128,18 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
     binarySearch(list, target, mid + 1, end)
   }
 
+  override def readExternal(in: ObjectInput): Unit = {
+    val count = in.readInt()
 
+    val builder = mutable.ArrayBuilder.make[java.lang.Long]()
+    for (i <- 0 until count) {
+      builder += in.readLong()
+    }
+    splits = builder.result()
+  }
+
+  override def writeExternal(out: ObjectOutput): Unit = {
+    out.writeInt(splits.length)
+    splits.foreach(split => out.writeLong(split))
+  }
 }
