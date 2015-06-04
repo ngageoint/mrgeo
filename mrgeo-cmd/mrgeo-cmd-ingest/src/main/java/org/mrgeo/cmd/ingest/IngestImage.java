@@ -288,7 +288,8 @@ public class IngestImage extends Command
 //    }
   }
 
-  List<String> getInputs(String arg, boolean recurse, final Configuration conf)
+  List<String> getInputs(String arg, boolean recurse, final Configuration conf,
+                         boolean existsCheck, boolean argIsDir)
   {
     List<String> inputs = new LinkedList<String>();
 
@@ -313,7 +314,8 @@ public class IngestImage extends Command
         {
           if (s.isFile() || (s.isDirectory() && recurse))
           {
-            inputs.addAll(getInputs(s.getCanonicalFile().toURI().toString(), recurse, conf));
+            inputs.addAll(getInputs(s.getCanonicalFile().toURI().toString(), recurse, conf,
+                                    false, s.isDirectory()));
           }
         }
         catch (IOException e)
@@ -370,16 +372,22 @@ public class IngestImage extends Command
         Path p = new Path(arg);
         FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
 
-        if (fs.exists(p))
+        if (!existsCheck || fs.exists(p))
         {
-          FileStatus status = fs.getFileStatus(p);
+          boolean isADirectory = argIsDir;
+          if (existsCheck)
+          {
+            FileStatus status = fs.getFileStatus(p);
+            isADirectory = status.isDir();
+          }
 
-          if (status.isDir() && recurse)
+          if (isADirectory && recurse)
           {
             FileStatus[] files = fs.listStatus(p);
             for (FileStatus file : files)
             {
-              inputs.addAll(getInputs(file.getPath().toUri().toString(), recurse, conf));
+              inputs.addAll(getInputs(file.getPath().toUri().toString(), recurse, conf,
+                                      false, file.isDir()));
             }
           }
           else
@@ -536,7 +544,7 @@ public class IngestImage extends Command
 
         for (String arg: line.getArgs())
         {
-          inputs.addAll(getInputs(arg, recurse, conf));
+          inputs.addAll(getInputs(arg, recurse, conf, true, false));
         }
 
         log.info("Ingest inputs (" + inputs.size() + ")");
