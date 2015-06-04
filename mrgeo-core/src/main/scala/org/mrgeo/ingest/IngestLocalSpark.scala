@@ -38,7 +38,7 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
        mergeTile(r1, r2)
     })
 
-    saveRDD(tiles, context.hadoopConfiguration)
+    saveRDD(tiles)
 
     true
   }
