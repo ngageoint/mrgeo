@@ -105,10 +105,10 @@ public class HdfsMrsImageWriter extends MrsTileWriter<Raster>
   @Override
   public String getName() throws IOException
   {
-    Path imagePath = provider.getResourcePath(true);
+    Path imagePath; // = provider.getResourcePath(true);
     if (context != null)
     {
-      imagePath = new Path(provider.getResourcePath(true), context.getZoomlevel() + "/part-" + String.format("%05d", context.getPartNum()));
+      imagePath = new Path(provider.getResourcePath(false), context.getZoomlevel() + "/part-" + String.format("%05d", context.getPartNum()));
     }
     else
     {
@@ -127,4 +127,5 @@ public class HdfsMrsImageWriter extends MrsTileWriter<Raster>
     }
     return conf;
   }
+
 }
