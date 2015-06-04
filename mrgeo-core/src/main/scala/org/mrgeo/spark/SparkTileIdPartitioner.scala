@@ -12,6 +12,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.tile.{TiledInputFormatContext, TileIdWritable}
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
 import org.mrgeo.hdfs.tile.SplitFile
+import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsImagePyramid
 import scala.collection.JavaConverters._
 import org.mrgeo.tile.SplitGenerator
@@ -71,43 +72,44 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
   }
 
   def writeSplits(path:String, conf:Configuration): Unit = {
-    val HasPartitionNames: Long = -12345L
-    val SplitFile: String = "splits"
 
-    val fs: FileSystem = FileSystem.get(conf)
-    val fdos: FSDataOutputStream = fs.create(new Path(path, SplitFile))
+    if (splits.length > 1) {
+      val HasPartitionNames: Long = -12345L
+      val SplitFile: String = "splits"
 
-    val out: PrintWriter = new PrintWriter(fdos)
-    try
-    {
-      // write the magic number
-      val magic: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(HasPartitionNames).array)
+      val fs: FileSystem = HadoopFileUtils.getFileSystem(conf, new Path(path))
+      val fdos: FSDataOutputStream = fs.create(new Path(path, SplitFile))
 
-      out.println(new String(magic))
+      val out: PrintWriter = new PrintWriter(fdos)
+      try {
+        // write the magic number
+        val magic: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(HasPartitionNames).array)
 
-      println("\nsplits:")
-      splits.indices.foreach(ndx => {
-        val id: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(splits(ndx)).array)
-        out.println(new String(id))
-        val part: Array[Byte] = Base64.encodeBase64("part-r-%05d".format(ndx).getBytes)
+        out.println(new String(magic))
+
+        println("\nsplits:")
+        splits.indices.foreach(ndx => {
+          val id: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(splits(ndx)).array)
+          out.println(new String(id))
+          val part: Array[Byte] = Base64.encodeBase64("part-%05d".format(ndx).getBytes)
+          out.println(new String(part))
+
+          println("  " + splits(ndx) + " " + "part-%05d".format(ndx))
+        })
+
+        // just need to write the name of the last partition, we can use magic number
+        // for the tileid...
+        out.println(new String(magic))
+
+        val part: Array[Byte] = Base64.encodeBase64("part-%05d".format(numPartitions - 1).getBytes)
         out.println(new String(part))
 
-        //println("  " + splits(ndx) + " " + "part-r-%05d".format(ndx))
-      })
-
-      // just need to write the name of the last partition, we can use magic number
-      // for the tileid...
-      out.println(new String(magic))
-
-      val part: Array[Byte] = Base64.encodeBase64("part-r-%05d".format(numPartitions - 1).getBytes)
-      out.println(new String(part))
-
-      //println("  " + HasPartitionNames + " " + "part-r-%05d".format(numPartitions - 1))
-    }
-    finally
-    {
-      out.close()
-      fdos.close()
+        println("  " + HasPartitionNames + " " + "part-%05d".format(numPartitions - 1))
+      }
+      finally {
+        out.close()
+        fdos.close()
+      }
     }
   }
 
