@@ -48,13 +48,12 @@ object PrepareJob extends Logging {
       conf.set("spark.executor.extraLibraryPath",
         MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, ""))
 
-      val dvmem = 1024 * 1024
-      conf.set("spark.driver.memory", SparkUtils.kbtohuman(dvmem, "m"))
+      conf.set("spark.driver.memory", SparkUtils.kbtohuman(job.executorMemKb, "m"))
       conf.set("spark.driver.cores", "1")
 
-      val exmem = SparkUtils.kbtohuman(job.memoryKb - dvmem, "m") //  / (job.cores * job.executors)) - dvmem)
+      val exmem = SparkUtils.kbtohuman(job.memoryKb , "m")
       conf.set("spark.executor.memory", exmem)
-      conf.set("spark.executor.instances", job.executors.toString)
+      conf.set("spark.executor.instances", (job.executors - 1).toString)
       conf.set("spark.executor.cores", job.cores.toString)
 
     }
