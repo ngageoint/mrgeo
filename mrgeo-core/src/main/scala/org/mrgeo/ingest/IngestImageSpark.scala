@@ -6,7 +6,9 @@ import java.util
 import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.{RecordWriter, Job}
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.mapreduce.{OutputFormat, RecordWriter, Job}
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.gdal.gdal.gdal
@@ -16,7 +18,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.{MrsImagePyramidWriterContext, MrsImageDataProvider}
 import org.mrgeo.data.ingest.{ImageIngestDataProvider, ImageIngestWriterContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
-import org.mrgeo.data.tile.{MrsTileWriter, TileIdWritable}
+import org.mrgeo.data.tile.{TiledOutputFormatContext, MrsTileWriter, TileIdWritable}
 import org.mrgeo.hdfs.partitioners.{ImageSplitGenerator, TileIdPartitioner}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsImagePyramid
@@ -302,17 +304,19 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     classes += classOf[RasterWritable]
 
     classes.result()
-
   }
 
   override def setup(job: JobArguments, conf:SparkConf): Boolean = {
 
     job.isMemoryIntensive = true
 
-//    conf.set("spark.storage.memoryFraction", "0.25") //
-//    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle high...
+    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
+    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
 
     inputs = job.getSetting(IngestImageSpark.Inputs).split(",")
+    // This setting can use lots of memory, so we we'll set it to null here to clean up memory.
+    // WARNING!  This definately can have side-effects
+    job.setSetting(IngestImageSpark.Inputs, null)
     output = job.getSetting(IngestImageSpark.Output)
 
     val boundstr = job.getSetting(IngestImageSpark.Bounds, null)
@@ -407,6 +411,9 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     // won't eat up too much memory
     val in = context.makeRDD(inputs, inputs.length)
 
+    // This variable can get large, so we'll clear it out here to free up some memory
+    inputs = null
+
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
       IngestImageSpark.makeTiles(input, zoom, tilesize, categorical)
     }))
@@ -432,7 +439,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     //job.getConfiguration.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
     conf.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
 
-    //    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
+    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
     if (!bounds.isValid) {
       bounds = SparkUtils.calculateBounds(tiles, zoom, tilesize)
     }
@@ -452,11 +459,15 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     // calculate stats
     val stats = SparkUtils.calculateStats(tiles, bands, nodatas)
 
+
     // save the new pyramid
 //    val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
 //      tilesize, tiletype, bands, protectionlevel, providerproperties)
 
     val tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+
+    //val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
+    //  tileBounds.e, tileBounds.n, zoom, tileIncrement)
 
     val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
       tileBounds.e, tileBounds.n, zoom, tileIncrement)
@@ -465,63 +476,71 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     //logInfo("tiles has " + tiles.count() + " tiles in " + tiles.partitions.length + " partitions")
 
-    val partitioned = tiles.partitionBy(sparkPartitioner)
+    //val partitioned = tiles.partitionBy(sparkPartitioner)
 
     //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
     // free up the tile's cache, it's not needed any more...
-    //    tiles.unpersist()
 
-    val sorted = partitioned.sortByKey()
+    //val sorted = partitioned.sortByKey()
     //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
 
     // this is missing in early spark APIs
-    //val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+    val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+    tiles.unpersist()
 
     // save the image
-    sorted.saveAsNewAPIHadoopDataset(conf) // job.getConfiguration)
+    //sorted.saveAsNewAPIHadoopDataset(conf) // job.getConfiguration)
 
     val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE,
       null.asInstanceOf[Properties])
 
-    val writers = Array.ofDim[MrsTileWriter[Raster]](sorted.partitions.length)
-    for (partition <- 0 until writers.length) {
-      val context = new MrsImagePyramidWriterContext(zoom, partition)
-      writers(partition) = idp.getMrsTileWriter(context)
-    }
+//    path: String,
+//    keyClass: Class[_],
+//    valueClass: Class[_],
+//    outputFormatClass: Class[_ <: NewOutputFormat[_, _]],
+//    conf: Configuration = self.context.hadoopConfiguration)
 
-    sorted.foreachPartition(iter => {
-      var writer:MrsTileWriter[Raster] = null
+    val tofc = new TiledOutputFormatContext(output, bounds, zoom, tilesize)
+    val tofp = idp.getTiledOutputFormatProvider(tofc)
 
-      try {
-        while (iter.hasNext) {
-          val item = iter.next()
+    val writer = idp.getMrsTileWriter(zoom)
+    val name = new Path(writer.getName).getParent.toString
 
-          val key = item._1
-          val value = item._2
+    println("saving to: " + name)
+    sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
 
-          if (writer == null) {
-
-            val partition = sparkPartitioner.getPartition(key)
-            println("getting writer for: " + partition)
-
-            val dp = DataProviderFactory.getMrsImageDataProviderNoCache(output, AccessMode.WRITE,
-              null.asInstanceOf[Properties])
-
-            val context = new MrsImagePyramidWriterContext(zoom, partition)
-            writer = dp.getMrsTileWriter(context)
-          }
-
-          println("writing: " + key.get + " to " + writer.getName )
-          writer.append(key, RasterWritable.toRaster(value))
-        }
-        println("done looping")
-      } finally {
-        if (writer != null) {
-          println("closing: " + writer.getName)
-          writer.close()
-        }
-      }
-    })
+//    sorted.foreachPartition(iter => {
+//      var writer:MrsTileWriter[Raster] = null
+//
+//      try {
+//        while (iter.hasNext) {
+//          val item = iter.next()
+//
+//          val key = item._1
+//          val value = item._2
+//
+//          if (writer == null) {
+//            val partition = sparkPartitioner.getPartition(key)
+//            //println("getting writer for: " + partition)
+//
+//            val dp = DataProviderFactory.getMrsImageDataProviderNoCache(output, AccessMode.WRITE,
+//              null.asInstanceOf[Properties])
+//
+//            val context = new MrsImagePyramidWriterContext(zoom, partition)
+//            writer = dp.getMrsTileWriter(context)
+//          }
+//
+//          //println("writing: " + key.get + " to " + writer.getName )
+//          writer.append(key, RasterWritable.toRaster(value))
+//        }
+//        //println("done looping")
+//      } finally {
+//        if (writer != null) {
+//          //println("closing: " + writer.getName)
+//          writer.close()
+//        }
+//      }
+//    })
 
     sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
