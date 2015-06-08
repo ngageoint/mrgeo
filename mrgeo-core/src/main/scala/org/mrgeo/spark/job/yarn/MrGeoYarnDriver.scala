@@ -97,15 +97,14 @@ class MrGeoYarnDriver {
 
     // spark.executor.memory is the total memory available to spark,
     // --executor-memory is the memory per executor.  Go figure...
-    val mem = SparkUtils.humantokb(conf.get("spark.executor.memory", "128k"))
     args += "--executor-memory"
     args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
     args += "--driver-cores"
     args += conf.get("spark.driver.cores", "1")
 
-//    args += "--driver-memory"
-//    args += conf.get("spark.driver.memory", "128k")
+    args += "--driver-memory"
+    args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
 
     args += "--name"
