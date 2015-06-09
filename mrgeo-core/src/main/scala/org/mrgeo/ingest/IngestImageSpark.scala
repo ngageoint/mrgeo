@@ -420,10 +420,11 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     val mergedTiles=rawtiles.reduceByKey((r1, r2) => {
       mergeTile(r1, r2)
-    })
+    }).persist(StorageLevel.MEMORY_AND_DISK)
 
     saveRDD(mergedTiles, context.hadoopConfiguration)
 
+    mergedTiles.unpersist()
     true
   }
 
@@ -439,7 +440,6 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     //job.getConfiguration.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
     conf.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
 
-    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
     if (!bounds.isValid) {
       bounds = SparkUtils.calculateBounds(tiles, zoom, tilesize)
     }
@@ -476,17 +476,16 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     //logInfo("tiles has " + tiles.count() + " tiles in " + tiles.partitions.length + " partitions")
 
-    //val partitioned = tiles.partitionBy(sparkPartitioner)
+    val partitioned = tiles.partitionBy(sparkPartitioner)
 
     //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
     // free up the tile's cache, it's not needed any more...
 
-    //val sorted = partitioned.sortByKey()
+    val sorted = partitioned.sortByKey()
     //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
 
     // this is missing in early spark APIs
-    val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-    tiles.unpersist()
+    //val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
 
     // save the image
     //sorted.saveAsNewAPIHadoopDataset(conf) // job.getConfiguration)
@@ -506,10 +505,10 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     val writer = idp.getMrsTileWriter(zoom)
     val name = new Path(writer.getName).getParent.toString
 
-    println("saving to: " + name)
+    //println("saving to: " + name)
     sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
 
-//    sorted.foreachPartition(iter => {
+    //    sorted.foreachPartition(iter => {
 //      var writer:MrsTileWriter[Raster] = null
 //
 //      try {
