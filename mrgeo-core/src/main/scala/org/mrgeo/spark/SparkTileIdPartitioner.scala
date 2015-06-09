@@ -44,17 +44,17 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
     case id: TileIdWritable =>
       //print("*** " + id.get + " ")
       // lots of splits, binary search
-      if (splits.length > 1000) {
-        //println("# " + binarySearch(splits, id.get, 0, splits.length - 1))
-        return binarySearch(splits, id.get, 0, splits.length - 1)
-      }
+//      if (splits.length > 1000) {
+//        //println("# " + binarySearch(splits, id.get, 0, splits.length - 1))
+//        return binarySearch(splits, id.get, 0, splits.length - 1)
+//      }
       // few splits, brute force search
-      splits.foreach(split => {
-        if (id.get <= split) {
-          //println("@ " + split)
-          return split.toInt
+      for (split <- splits.indices) {
+        if (id.get <= splits(split)) {
+          //println(split)
+          return split
         }
-      })
+      }
 
       //println("& " + splits.length)
       return splits.length
@@ -91,7 +91,7 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
       else {
         prefix = "part-" // generic step
       }
-        val fdos: FSDataOutputStream = fs.create(new Path(path, SplitFile))
+      val fdos: FSDataOutputStream = fs.create(new Path(path, SplitFile))
 
       val out: PrintWriter = new PrintWriter(fdos)
       try {
@@ -127,12 +127,13 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
   }
 
   private def binarySearch(list: Array[java.lang.Long], target: Long, start: Int, end: Int): Int = {
-    // if not found at the end of the list, return the end + 1th partitiomm
+
+    // if not found at the end of the list, return the end + 1th partition, this should never happen
     if (start > end) {
-      return splits.length
+      return list.length
     }
 
-    // if not found at the start of the list, return the start
+    // if we get to the start of the list, return the start
     if (end == 0) {
       return 0
     }
@@ -144,7 +145,7 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
       mid
     }
     else if (list(mid) > target) {
-      binarySearch(list, target, start, mid)
+      binarySearch(list, target, start, mid - 1)
     }
     else {
       binarySearch(list, target, mid, end)
