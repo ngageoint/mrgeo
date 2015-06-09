@@ -14,12 +14,14 @@ public class GeoWaveConnectionInfo
   public static final String GEOWAVE_USERNAME_KEY = "geowave.username";
   public static final String GEOWAVE_PASSWORD_KEY = "geowave.password";
   public static final String GEOWAVE_NAMESPACE_KEY = "geowave.namespace";
+  public static final String GEOWAVE_FORCE_BBOX_COMPUTE_KEY = "geowave.force.bbox.compute";
 
   private String zookeeperServers;
   private String instanceName;
   private String userName;
   private String password;
   private String namespace;
+  private boolean forceBboxCompute = false;
 
   public static GeoWaveConnectionInfo load()
   {
@@ -49,8 +51,19 @@ public class GeoWaveConnectionInfo
     {
       return null;
     }
+    String strForceBboxCompute = props.getProperty(GEOWAVE_FORCE_BBOX_COMPUTE_KEY);
+    if (strForceBboxCompute != null)
+    {
+      strForceBboxCompute = strForceBboxCompute.trim();
+    }
+    boolean forceBboxCompute = false;
+    if (strForceBboxCompute != null &&
+            (strForceBboxCompute.equalsIgnoreCase("true") || strForceBboxCompute.equals("1")))
+    {
+      forceBboxCompute = true;
+    }
     return new GeoWaveConnectionInfo(zookeeperServers, instance, userName,
-        password, namespace);
+        password, namespace, forceBboxCompute);
   }
 
   public static GeoWaveConnectionInfo load(final Configuration conf)
@@ -92,8 +105,15 @@ public class GeoWaveConnectionInfo
     {
       throw new IllegalArgumentException("Missing namespace setting for GeoWave");
     }
+    String strForceBboxCompute = conf.get(GEOWAVE_FORCE_BBOX_COMPUTE_KEY);
+    boolean forceBboxCompute = false;
+    if (strForceBboxCompute != null &&
+            (strForceBboxCompute.equalsIgnoreCase("true") || strForceBboxCompute.equals("1")))
+    {
+      forceBboxCompute = true;
+    }
     return new GeoWaveConnectionInfo(zookeeperServers, instance, userName,
-        password, namespace);
+        password, namespace, forceBboxCompute);
   }
 
   public void writeToConfig(final Configuration conf)
@@ -109,13 +129,14 @@ public class GeoWaveConnectionInfo
   }
 
   public GeoWaveConnectionInfo(String zookeeperServers, String instanceName,
-      String userName, String password, String namespace)
+      String userName, String password, String namespace, boolean forceBboxCompute)
   {
     this.zookeeperServers = zookeeperServers;
     this.instanceName = instanceName;
     this.userName = userName;
     this.password = password;
     this.namespace = namespace;
+    this.forceBboxCompute = forceBboxCompute;
   }
 
   public String getZookeeperServers()
@@ -141,5 +162,10 @@ public class GeoWaveConnectionInfo
   public String getNamespace()
   {
     return namespace;
+  }
+
+  public boolean getForceBboxCompute()
+  {
+    return forceBboxCompute;
   }
 }

@@ -143,13 +143,13 @@ public class WebServer extends Command
     URI uri = UriBuilder.fromUri("http://" + getHostName() + "/").port(httpPort).build();
     Server server = new Server(httpPort);
     ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
-    context.setContextPath("/");
+    context.setContextPath("/mrgeo");
     server.setHandler(context);
     ServletHolder servletHolder = new ServletHolder(new ServletContainer());
     servletHolder.setInitParameter("javax.ws.rs.Application", "org.mrgeo.application.Application");
     servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
     servletHolder.setInitOrder(1);
-    context.addServlet(servletHolder, "/mrgeo/*");
+    context.addServlet(servletHolder, "/*");
 //    context.addServlet("org.mrgeo.services.wms.WmsGenerator", "/WmsGenerator/*");
     server.start();
     System.out.println(String.format("Web Server started at %s", uri));

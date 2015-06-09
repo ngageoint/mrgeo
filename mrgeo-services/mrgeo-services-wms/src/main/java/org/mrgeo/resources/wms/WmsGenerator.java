@@ -232,16 +232,12 @@ public class WmsGenerator
   }
 
   @GET
-  @Produces("image/*")
-  @Path("/")
   public Response doGet(@Context UriInfo uriInfo)
   {
     return handleRequest(uriInfo);
   }
 
   @POST
-  @Produces("image/*")
-  @Path("/")
   public Response doPost(@Context UriInfo uriInfo)
   {
     return handleRequest(uriInfo);
@@ -670,6 +666,13 @@ public class WmsGenerator
   private Response getTile(MultivaluedMap<String, String> allParams,
                            final Properties providerProperties)
   {
+    String versionStr = getQueryParam(allParams, "version", "1.4.0");
+    version = new Version(versionStr);
+    if (version.isLess("1.4.0"))
+    {
+      return writeError(Response.Status.BAD_REQUEST, "Get tile is only supported with version >= 1.4.0");
+    }
+
     OpImageRegistrar.registerMrGeoOps();
 
     String layer = getQueryParam(allParams, "layer");
@@ -931,7 +934,7 @@ public class WmsGenerator
       // DocumentUtils.checkForErrors(doc);
       DocumentUtils.writeDocument(doc, version, out);
       out.close();
-      return Response.ok(xmlStream.toString()).build();
+      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
     }
     catch (Exception e)
     {
@@ -1004,7 +1007,7 @@ public class WmsGenerator
       // DocumentUtils.checkForErrors(doc);
       DocumentUtils.writeDocument(doc, version, out);
       out.close();
-      return Response.ok(xmlStream.toString()).build();
+      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
     }
     catch (Exception e)
     {

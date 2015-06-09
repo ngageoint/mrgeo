@@ -111,11 +111,9 @@ public class HdfsMrsImagePyramidOutputFormatProvider extends MrsImageOutputForma
       if (splitFileTmp != null)
       {
         final String outputWithZoom = imagePath + "/" + context.getZoomlevel();
-
         final SplitFile sf = new SplitFile(job.getConfiguration());
         sf.copySplitFile(splitFileTmp.toString(), outputWithZoom);
       }
-      HadoopFileUtils.cleanDirectory(job.getConfiguration(), imagePath);
     }
     catch (final IOException e)
     {

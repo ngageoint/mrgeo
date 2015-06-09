@@ -536,7 +536,6 @@ public class TileMapServiceResource
 
   @GET
   @Produces("text/xml")
-  @Path("/")
   public Response getRootResource(@Context final HttpServletRequest hsr)
   {
     try

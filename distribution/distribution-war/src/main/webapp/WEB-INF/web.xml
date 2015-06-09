@@ -60,28 +60,8 @@
   <servlet-mapping>
     <servlet-name>mrgeo-api</servlet-name>
     <url-pattern>/version</url-pattern>
-    <url-pattern>/api/*</url-pattern>
-  </servlet-mapping>
-  <servlet>
-    <description></description>
-    <display-name>About</display-name>
-    <servlet-name>About</servlet-name>
-    <servlet-class>org.mrgeo.services.About</servlet-class>
-    <load-on-startup>1</load-on-startup>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>About</servlet-name>
     <url-pattern>/About</url-pattern>
-  </servlet-mapping>
-  <servlet>
-    <description></description>
-    <display-name>KmlGenerator</display-name>
-    <servlet-name>KmlGenerator</servlet-name>
-    <servlet-class>org.mrgeo.services.KmlGenerator</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>KmlGenerator</servlet-name>
-    <url-pattern>/KmlGenerator</url-pattern>
+    <url-pattern>/mrgeo/*</url-pattern>
   </servlet-mapping>
 <context-param>
     <param-name>webAppRootKey</param-name>
