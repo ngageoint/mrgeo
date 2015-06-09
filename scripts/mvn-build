@@ -126,7 +126,7 @@ CONF="/etc/hadoop/conf"
 LICENSE="-DskipLicenses"
 RELEASEPHASE=prepare
 
-# add any predefined options (for developer convencience)
+# add any predefined options (for developer convenience)
 if [ -n "$MRGEO_BUILD_OPTIONS" ]; then
     set -- $MRGEO_BUILD_OPTIONS "$@"
 fi
