@@ -752,7 +752,7 @@ public class WmsGenerator
       log.debug("Applying color scale to image {} ...", layer);
 
       ColorScale cs;
-      if (style != null)
+      if (style != null && !style.equalsIgnoreCase("default"))
       {
         cs = ColorScaleManager.fromName(style);
         if (cs == null)
