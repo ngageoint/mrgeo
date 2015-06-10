@@ -2,6 +2,7 @@ package org.mrgeo.ingest
 
 import java.awt.image.{DataBuffer, Raster, WritableRaster}
 import java.io._
+//import java.lang.NoSuchMethodException
 import java.util
 import java.util.Properties
 
@@ -9,11 +10,11 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.{OutputFormat, RecordWriter, Job}
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.{Partitioner, SparkConf, SparkContext}
+import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
-import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.{ProtectionLevelUtils, ProtectionLevelValidator, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.{MrsImagePyramidWriterContext, MrsImageDataProvider}
 import org.mrgeo.data.ingest.{ImageIngestDataProvider, ImageIngestWriterContext}
@@ -89,15 +90,19 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     })
 
     args += Tags -> t
-    args += Protection -> protectionLevel
+    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(output,
+      AccessMode.OVERWRITE, providerProperties);
+    args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
 
     var p: String = ""
-    providerProperties.foreach(kv => {
-      if (p.length > 0) {
-        p += "||"
-      }
-      p += kv._1 + "=" + kv._2
-    })
+    if (providerProperties != null && !providerProperties.isEmpty()) {
+      providerProperties.foreach(kv => {
+        if (p.length > 0) {
+          p += "||"
+        }
+        p += kv._1 + "=" + kv._2
+      })
+    }
     args += ProviderProperties -> p
 
     args
@@ -476,28 +481,8 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     //logInfo("tiles has " + tiles.count() + " tiles in " + tiles.partitions.length + " partitions")
 
-    val partitioned = tiles.partitionBy(sparkPartitioner)
-
-    //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
-    // free up the tile's cache, it's not needed any more...
-
-    val sorted = partitioned.sortByKey()
-    //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
-
-    // this is missing in early spark APIs
-    //val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-
-    // save the image
-    //sorted.saveAsNewAPIHadoopDataset(conf) // job.getConfiguration)
-
     val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE,
-      null.asInstanceOf[Properties])
-
-//    path: String,
-//    keyClass: Class[_],
-//    valueClass: Class[_],
-//    outputFormatClass: Class[_ <: NewOutputFormat[_, _]],
-//    conf: Configuration = self.context.hadoopConfiguration)
+      providerproperties)
 
     val tofc = new TiledOutputFormatContext(output, bounds, zoom, tilesize)
     val tofp = idp.getTiledOutputFormatProvider(tofc)
@@ -505,8 +490,80 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     val writer = idp.getMrsTileWriter(zoom)
     val name = new Path(writer.getName).getParent.toString
 
-    //println("saving to: " + name)
-    sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+    // this is missing in early spark APIs, so we have to use reflection in order
+    // to maintain backward compatibility. Ugh.
+    var repartitionMethod: java.lang.reflect.Method = null
+    try
+    {
+      repartitionMethod = tiles.getClass.getDeclaredMethod("repartitionAndSortWithinPartitions",
+        Partitioner.getClass)
+    }
+    catch
+    {
+      case nsm: NoSuchMethodException =>
+      {
+        // Ignore. On older versions of Spark, this method does not exist, and
+        // that is handled later in the code with repartitionMethod == null.
+      }
+    }
+    if (repartitionMethod != null)
+    {
+      // The new method exists, so let's call it through reflection because it's
+      // more efficient.
+      val sorted = repartitionMethod.invoke(tiles, sparkPartitioner)
+      val saveMethodName = "saveAsNewAPIHadoopFile"
+      val saveMethod = sorted.getClass.getDeclaredMethod(saveMethodName,
+        classOf[String] /* name */,
+        classOf[Class[Any]]  /* keyClass */,
+        classOf[Class[Any]] /*valueClass */,
+        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
+        classOf[Configuration] /* configuration */)
+      if (saveMethod != null)
+      {
+        println("saving to: " + name)
+        saveMethod.invoke(sorted, name, classOf[TileIdWritable], classOf[RasterWritable],
+          tofp.getOutputFormat.getClass, conf)
+//        sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+        //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
+      }
+      else
+      {
+        logError("Unable to find method " + saveMethodName + " in class " + sorted.getClass.getName)
+      }
+    }
+    else
+    {
+      // This is an older version of Spark, so use the old partition and sort.
+      val wrapped = new PairRDDFunctions(tiles)
+      val partitioned = wrapped.partitionBy(sparkPartitioner)
+
+      //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
+      // free up the tile's cache, it's not needed any more...
+
+      val wrapped1 = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](partitioned)
+      var s = new PairRDDFunctions(wrapped1.sortByKey())
+//      val saveMethod = s.getClass.getDeclaredMethod("saveAsNewAPIHadoopFile",
+//        classOf[String] /* name */,
+//        classOf[Class[Any]] /* keyClass */,
+//        classOf[Class[Any]] /*valueClass */,
+//        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
+//        classOf[Configuration] /* configuration */)
+      println("saving to: " + name)
+      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+    }
+    tiles.unpersist()
+
+    // save the image
+    //sorted.saveAsNewAPIHadoopDataset(conf) // job.getConfiguration)
+
+//    path: String,
+//    keyClass: Class[_],
+//    valueClass: Class[_],
+//    outputFormatClass: Class[_ <: NewOutputFormat[_, _]],
+//    conf: Configuration = self.context.hadoopConfiguration)
+
+//    val wrapped2 = new PairRDDFunctions(sorted)
+//    wrapped2.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
 
     //    sorted.foreachPartition(iter => {
 //      var writer:MrsTileWriter[Raster] = null

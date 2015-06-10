@@ -126,23 +126,21 @@ object SparkUtils {
     val stats = rdd.aggregate(zero)((stats, t) => {
       val tile = RasterWritable.toRaster(t._2)
 
-      val tilestat = stats.clone()
-
       for (y <- 0 until tile.getHeight) {
         for (x <- 0 until tile.getWidth) {
           for (b <- 0 until tile.getNumBands) {
             val p = tile.getSampleDouble(x, y, b)
             if (nodata(b).isNaN && !p.isNaN || nodata(b) != p) {
-              tilestat(b).count += 1
-              tilestat(b).sum += p
-              tilestat(b).max = Math.max(tilestat(b).max, p)
-              tilestat(b).min = Math.min(tilestat(b).min, p)
+              stats(b).count += 1
+              stats(b).sum += p
+              stats(b).max = Math.max(stats(b).max, p)
+              stats(b).min = Math.min(stats(b).min, p)
             }
           }
         }
       }
 
-      tilestat
+      stats
     },
       (stat1, stat2) => {
         val aggstat = stat1.clone()
