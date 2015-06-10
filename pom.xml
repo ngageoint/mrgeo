@@ -1609,8 +1609,6 @@
         <release.arguments />
         <gdal.version>1.9.2</gdal.version>
         <spark.version>1.3.1</spark.version>
-        <scala.version>2.11.1</scala.version>
-        <spark.scala.version>2.11</spark.scala.version>
       </properties>
     </profile>
     <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->

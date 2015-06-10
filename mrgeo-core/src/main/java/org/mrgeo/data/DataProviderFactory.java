@@ -486,24 +486,22 @@ public class DataProviderFactory
       {
         if (factory != null)
         {
-          return factory.createMrsImageDataProvider(name, props);
-
-//          if (props != null)
-//          {
-//            if (factory.canWrite(name, props))
-//            {
-//              return factory.createMrsImageDataProvider(name, props);
-//            }
-//            throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
-//          }
-//          else
-//          {
-//            if (factory.canWrite(name, conf))
-//            {
-//              return factory.createMrsImageDataProvider(name, conf);
-//            }
-//            throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
-//          }
+          if (props != null)
+          {
+            if (factory.canWrite(name, props))
+            {
+              return factory.createMrsImageDataProvider(name, props);
+            }
+            throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
+          }
+          else
+          {
+            if (factory.canWrite(name, conf))
+            {
+              return factory.createMrsImageDataProvider(name, conf);
+            }
+            throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
+          }
         }
         if (props != null)
         {
