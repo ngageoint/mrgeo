@@ -26,7 +26,7 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.aggregators.*;
-import org.mrgeo.buildpyramid.BuildPyramidDriver;
+import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -289,7 +289,7 @@ public class IngestImage extends Command
   }
 
   List<String> getInputs(String arg, boolean recurse, final Configuration conf,
-                         boolean existsCheck, boolean argIsDir)
+      boolean existsCheck, boolean argIsDir)
   {
     List<String> inputs = new LinkedList<String>();
 
@@ -315,7 +315,7 @@ public class IngestImage extends Command
           if (s.isFile() || (s.isDirectory() && recurse))
           {
             inputs.addAll(getInputs(s.getCanonicalFile().toURI().toString(), recurse, conf,
-                                    false, s.isDirectory()));
+                false, s.isDirectory()));
           }
         }
         catch (IOException e)
@@ -387,7 +387,7 @@ public class IngestImage extends Command
             for (FileStatus file : files)
             {
               inputs.addAll(getInputs(file.getPath().toUri().toString(), recurse, conf,
-                                      false, file.isDir()));
+                  false, file.isDir()));
             }
           }
           else
@@ -599,12 +599,18 @@ public class IngestImage extends Command
             }
             else if (local)
             {
-//              success = IngestImageDriver.localIngest(inputs.toArray(new String[inputs.size()]),
-//                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
-//                  tags, protectionLevel, providerProperties);
-              success = IngestImageSpark.localIngest(inputs.toArray(new String[inputs.size()]),
-                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
-                  tags, protectionLevel, providerProperties);
+              if (spark)
+              {
+                success = IngestImageSpark.localIngest(inputs.toArray(new String[inputs.size()]),
+                    output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+                    tags, protectionLevel, providerProperties);
+              }
+              else
+              {
+                success = IngestImageDriver.localIngest(inputs.toArray(new String[inputs.size()]),
+                    output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
+                    tags, protectionLevel, providerProperties);
+              }
             }
             else if (spark)
             {
@@ -652,7 +658,7 @@ public class IngestImage extends Command
                 aggregator = new MinAvgPairAggregator();
               }
 
-              BuildPyramidDriver.build(output, aggregator, conf, providerProperties);
+              BuildPyramidSpark.build(output, aggregator, conf, providerProperties);
             }
           }
           catch (Exception e)

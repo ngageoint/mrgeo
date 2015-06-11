@@ -20,9 +20,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
-import org.mrgeo.cmd.Command;
 import org.mrgeo.aggregators.*;
-import org.mrgeo.buildpyramid.BuildPyramidDriver;
+import org.mrgeo.buildpyramid.BuildPyramidSpark;
+import org.mrgeo.cmd.Command;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
@@ -171,7 +171,8 @@ public class BuildPyramid extends Command
           try
           {
             // TODO: Need to obtain provider properties
-            if (!BuildPyramidDriver.build(input, aggregator, conf, providerProperties))
+            //if (!BuildPyramidDriver.build(input, aggregator, conf, providerProperties))
+            if (!BuildPyramidSpark.build(input, aggregator, conf, providerProperties))
             {
               log.error("BuildPyramid exited with error");
               return -1;

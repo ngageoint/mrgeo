@@ -115,10 +115,26 @@ public class MrsImagePyramid extends MrsPyramid
       final String protectionLevel,
       final Properties providerProperties) throws IOException
   {
-    final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
+
+    MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(pyramidname,
+        AccessMode.READ, providerProperties);
+
+    MrsImagePyramidMetadata metadata;
+    try
+    {
+      metadata = provider.getMetadataReader().read();
+      if (metadata.getMaxZoomLevel() < zoom)
+      {
+        metadata.setMaxZoomLevel(zoom);
+      }
+    }
+    catch (IOException e)
+    {
+      metadata = new MrsImagePyramidMetadata();
+      metadata.setMaxZoomLevel(zoom);
+    }
 
     metadata.setPyramid(pyramidname);
-    metadata.setMaxZoomLevel(zoom);
     metadata.setBounds(bounds);
     metadata.setName(zoom);
     metadata.setDefaultValues(defaultValues);
@@ -130,8 +146,6 @@ public class MrsImagePyramid extends MrsPyramid
     //          MrsTileReader (it does a canOpen(), which makes sure metadata is present)
     metadataWriter.write(metadata);
 
-    MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(pyramidname,
-        AccessMode.READ, providerProperties);
 
     final MrsTileReader<Raster> reader = provider.getMrsTileReader(zoom);
     try
