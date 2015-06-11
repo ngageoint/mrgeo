@@ -19,6 +19,7 @@ import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -486,9 +487,10 @@ public class GeotoolsRasterUtilsTest
 
   @Test
   @Category(UnitTest.class)
-  public void fastAccepts()
+  public void fastAccepts() throws MalformedURLException
   {
-    Assert.assertEquals("Format not found", true, GeotoolsRasterUtils.fastAccepts(localGreeceTif));
+    java.net.URL url = new java.net.URL(localGreeceTif);
+    Assert.assertEquals("Format not found", true, GeotoolsRasterUtils.fastAccepts(url));
   }
 
   @Test
@@ -500,11 +502,11 @@ public class GeotoolsRasterUtilsTest
 
   @Test
   @Category(UnitTest.class)
-  public void fastFormatFinder()
+  public void fastFormatFinder() throws MalformedURLException
   {
     AbstractGridFormat format;
 
-    format = GeotoolsRasterUtils.fastFormatFinder(localGreeceTif);
+    format = GeotoolsRasterUtils.fastFormatFinder(new java.net.URL(localGreeceTif));
 
     Assert.assertEquals("Format not found", "GeoTiffFormat", format.getClass().getSimpleName());
   }

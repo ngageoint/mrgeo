@@ -13,7 +13,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
-import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.{ProtectionLevelUtils, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.{MrsImagePyramidWriterContext, MrsImageDataProvider}
 import org.mrgeo.data.ingest.{ImageIngestDataProvider, ImageIngestWriterContext}
@@ -89,15 +89,19 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     })
 
     args += Tags -> t
-    args += Protection -> protectionLevel
+    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(output,
+      AccessMode.OVERWRITE, providerProperties)
+    args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
 
     var p: String = ""
-    providerProperties.foreach(kv => {
-      if (p.length > 0) {
-        p += "||"
-      }
-      p += kv._1 + "=" + kv._2
-    })
+    if (providerProperties != null && !providerProperties.isEmpty) {
+      providerProperties.foreach(kv => {
+        if (p.length > 0) {
+          p += "||"
+        }
+        p += kv._1 + "=" + kv._2
+      })
+    }
     args += ProviderProperties -> p
 
     args

@@ -44,10 +44,10 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
     case id: TileIdWritable =>
       //print("*** " + id.get + " ")
       // lots of splits, binary search
-//      if (splits.length > 1000) {
-//        //println("# " + binarySearch(splits, id.get, 0, splits.length - 1))
-//        return binarySearch(splits, id.get, 0, splits.length - 1)
-//      }
+      if (splits.length > 1000) {
+        //println("# " + findSplit(splits, id.get))
+        return findSplit(splits, id.get)
+      }
       // few splits, brute force search
       for (split <- splits.indices) {
         if (id.get <= splits(split)) {
@@ -74,7 +74,7 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
 
   def writeSplits(path:String, conf:Configuration): Unit = {
 
-    if (splits.length > 0) {
+    if (splits.length > 1) {
       val HasPartitionNames: Long = -12345L
       val SplitFile: String = "splits"
 
@@ -123,26 +123,32 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
         out.close()
         fdos.close()
       }
-
-      println("wrote splits to: " + path)
-    }
-    else {
-      println("skipped split file, only 1 split (" + path + ")")
     }
   }
 
-  private def binarySearch(list: Array[java.lang.Long], target: Long, start: Int, end: Int): Int = {
-
-    // if not found at the end of the list, return the end + 1th partition, this should never happen
-    if (start > end) {
-      return list.length
-    }
-
-    // if we get to the start of the list, return the start
-    if (end == 0) {
+  def findSplit(list: Array[java.lang.Long], target: Long): Int =
+  {
+    // First check the min and max values before binary searching.
+    if (list.length == 0)
+    {
+      // All tiles fit in a single split
       return 0
     }
+    if (target <= list(0))
+    {
+      return 0
+    }
+    if (target > list(list.length - 1))
+    {
+      return list.length
+    }
+    // The target does not fall in the minimum or maximum split, so let's
+    // binary search to find it.
+    return binarySearch(list, target, 0, list.length - 1)
+  }
 
+  def binarySearch(list: Array[java.lang.Long], target: Long, start: Int, end: Int): Int =
+  {
     val mid:Int = start + (end - start + 1) / 2
 
     //println("s:" + list(start) + " m1:" + list(mid - 1) + " t:" + target + " m2:" + list(mid) + " e:" + list(end))

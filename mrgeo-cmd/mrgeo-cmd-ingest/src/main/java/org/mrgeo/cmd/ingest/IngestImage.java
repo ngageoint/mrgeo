@@ -289,7 +289,7 @@ public class IngestImage extends Command
   }
 
   List<String> getInputs(String arg, boolean recurse, final Configuration conf,
-      boolean existsCheck, boolean argIsDir)
+                         boolean existsCheck, boolean argIsDir)
   {
     List<String> inputs = new LinkedList<String>();
 
@@ -315,7 +315,7 @@ public class IngestImage extends Command
           if (s.isFile() || (s.isDirectory() && recurse))
           {
             inputs.addAll(getInputs(s.getCanonicalFile().toURI().toString(), recurse, conf,
-                false, s.isDirectory()));
+                                    false, s.isDirectory()));
           }
         }
         catch (IOException e)
@@ -387,7 +387,7 @@ public class IngestImage extends Command
             for (FileStatus file : files)
             {
               inputs.addAll(getInputs(file.getPath().toUri().toString(), recurse, conf,
-                  false, file.isDir()));
+                                      false, file.isDir()));
             }
           }
           else
