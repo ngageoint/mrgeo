@@ -1,28 +1,22 @@
 package org.mrgeo.ingest
 
-import java.awt.image.{DataBuffer, Raster, WritableRaster}
 import java.io._
 import java.util
 import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.{OutputFormat, RecordWriter, Job}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.rdd.PairRDDFunctions
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data.{ProtectionLevelUtils, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.{MrsImagePyramidWriterContext, MrsImageDataProvider}
+import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.ingest.{ImageIngestDataProvider, ImageIngestWriterContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
-import org.mrgeo.data.tile.{TiledOutputFormatContext, MrsTileWriter, TileIdWritable}
-import org.mrgeo.hdfs.partitioners.{ImageSplitGenerator, TileIdPartitioner}
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.image.MrsImagePyramid
-import org.mrgeo.spark.SparkTileIdPartitioner
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 
