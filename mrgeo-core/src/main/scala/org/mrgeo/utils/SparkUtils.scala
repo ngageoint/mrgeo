@@ -20,15 +20,20 @@ import java.net.URL
 import java.util
 import java.util.{Enumeration, Properties}
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.{InputFormat, Job}
 import org.apache.spark.{SparkException, SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.image.{ImageStats, MrsImagePyramidMetadata}
+import org.mrgeo.data.tile.{TiledOutputFormatContext, TileIdWritable}
+import org.mrgeo.hdfs.partitioners.{ImageSplitGenerator, TileIdPartitioner}
+import org.mrgeo.image.{MrsImagePyramid, ImageStats, MrsImagePyramidMetadata}
+import org.mrgeo.spark.SparkTileIdPartitioner
 
 import scala.collection.{Map, mutable}
 import scala.collection.JavaConversions._
@@ -89,7 +94,7 @@ object SparkUtils {
   }
 
 
-  def loadMrsPyramid(imageName: String, context: SparkContext):
+  def loadMrsPyramidAndMetadata(imageName: String, context: SparkContext):
   (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
     val keyclass = classOf[TileIdWritable]
     val valueclass = classOf[RasterWritable]
@@ -109,10 +114,205 @@ object SparkUtils {
     val image = context.newAPIHadoopRDD(job.getConfiguration,
       inputFormatClass,
       keyclass,
-      valueclass).persist(StorageLevel.MEMORY_AND_DISK_SER)
+      valueclass)
 
     (image, metadata)
   }
+
+  def loadMrsPyramid(imageName: String, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+    val providerProps: Properties = null
+    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
+      DataProviderFactory.AccessMode.READ, providerProps)
+
+    loadMrsPyramid(dp, context)
+  }
+
+  def loadMrsPyramid(imageName: String, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+    val providerProps: Properties = null
+    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
+      DataProviderFactory.AccessMode.READ, providerProps)
+
+    loadMrsPyramid(dp, zoom, context)
+  }
+
+  def loadMrsPyramid(provider:MrsImageDataProvider, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+    val keyclass = classOf[TileIdWritable]
+    val valueclass = classOf[RasterWritable]
+
+    // build a phony job...
+    val job = new Job()
+
+    val providerProps: Properties = null
+    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName, providerProps)
+
+    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
+        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
+
+    context.newAPIHadoopRDD(job.getConfiguration,
+      inputFormatClass,
+      keyclass,
+      valueclass)
+  }
+
+  def loadMrsPyramid(provider:MrsImageDataProvider, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+    val keyclass = classOf[TileIdWritable]
+    val valueclass = classOf[RasterWritable]
+
+    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+
+    // build a phony job...
+    val job = new Job()
+
+    val providerProps: Properties = null
+    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName, zoom,
+      metadata.getTilesize, metadata.getBounds, providerProps)
+
+    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
+        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
+
+    context.newAPIHadoopRDD(job.getConfiguration,
+      inputFormatClass,
+      keyclass,
+      valueclass)
+  }
+
+  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider:MrsImageDataProvider,
+      zoom:Int, conf:Configuration, providerproperties:Properties): Unit = {
+
+    val metadata = provider.getMetadataReader.read()
+
+    val bounds = metadata.getBounds
+    val bands = metadata.getBands
+    val tiletype = metadata.getTileType
+    val tilesize = metadata.getTilesize
+    val nodatas = metadata.getDefaultValues
+    val output = provider.getResourceName
+    val protectionlevel = metadata.getProtectionLevel
+
+    saveMrsPyramid(tiles, provider, output, zoom, tilesize, nodatas, conf,
+      tiletype, bounds, bands, protectionlevel, providerproperties)
+  }
+
+  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider:MrsImageDataProvider, output:String,
+      zoom:Int, tilesize:Int, nodatas:Array[Double], conf:Configuration, tiletype:Int = -1,
+      bounds:Bounds = new Bounds(), bands:Int = -1,
+      protectionlevel:String = null, providerproperties:Properties = new Properties()): Unit = {
+
+    implicit val tileIdOrdering = new Ordering[TileIdWritable] {
+      override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
+    }
+
+    val tileIncrement = 1
+
+    var localbounds = bounds
+    var localbands = bands
+    var localtiletype = tiletype
+    val output = provider.getResourceName
+
+    conf.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
+
+    if (!localbounds.isValid) {
+      localbounds = SparkUtils.calculateBounds(tiles, zoom, tilesize)
+    }
+
+    if (localbands <= 0  || localtiletype <= 0) {
+      val tile = RasterWritable.toRaster(tiles.first()._2)
+
+      localbands = tile.getNumBands
+      localtiletype = tile.getTransferType
+    }
+
+    // calculate stats
+    val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
+
+
+    // save the new pyramid
+    //    val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
+    //      tilesize, tiletype, bands, protectionlevel, providerproperties)
+
+    val tileBounds = TMSUtils.boundsToTile(localbounds.getTMSBounds, zoom, tilesize)
+
+    //val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
+    //  tileBounds.e, tileBounds.n, zoom, tileIncrement)
+
+    val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
+      tileBounds.e, tileBounds.n, zoom, tileIncrement)
+
+    val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
+
+    //logInfo("tiles has " + tiles.count() + " tiles in " + tiles.partitions.length + " partitions")
+
+    //val partitioned = tiles.partitionBy(sparkPartitioner)
+
+    //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
+    // free up the tile's cache, it's not needed any more...
+
+    //val sorted = partitioned.sortByKey()
+    //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
+
+    // this is missing in early spark APIs
+    val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+
+    // save the image
+    //sorted.saveAsNewAPIHadoopDataset(conf) // job.getConfiguration)
+
+    //    path: String,
+    //    keyClass: Class[_],
+    //    valueClass: Class[_],
+    //    outputFormatClass: Class[_ <: NewOutputFormat[_, _]],
+    //    conf: Configuration = self.context.hadoopConfiguration)
+
+    val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize)
+    val tofp = provider.getTiledOutputFormatProvider(tofc)
+
+    val writer = provider.getMrsTileWriter(zoom)
+    val name = new Path(writer.getName).getParent.toString
+
+    //println("saving to: " + name)
+    sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+
+    //    sorted.foreachPartition(iter => {
+    //      var writer:MrsTileWriter[Raster] = null
+    //
+    //      try {
+    //        while (iter.hasNext) {
+    //          val item = iter.next()
+    //
+    //          val key = item._1
+    //          val value = item._2
+    //
+    //          if (writer == null) {
+    //            val partition = sparkPartitioner.getPartition(key)
+    //            //println("getting writer for: " + partition)
+    //
+    //            val dp = DataProviderFactory.getMrsImageDataProviderNoCache(output, AccessMode.WRITE,
+    //              null.asInstanceOf[Properties])
+    //
+    //            val context = new MrsImagePyramidWriterContext(zoom, partition)
+    //            writer = dp.getMrsTileWriter(context)
+    //          }
+    //
+    //          //println("writing: " + key.get + " to " + writer.getName )
+    //          writer.append(key, RasterWritable.toRaster(value))
+    //        }
+    //        //println("done looping")
+    //      } finally {
+    //        if (writer != null) {
+    //          //println("closing: " + writer.getName)
+    //          writer.close()
+    //        }
+    //      }
+    //    })
+
+    sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
+
+    //dp.teardown(job)
+
+    // calculate and save metadata
+    MrsImagePyramid.calculateMetadata(output, zoom, provider.getMetadataWriter, stats,
+      nodatas, localbounds, conf,  protectionlevel, providerproperties)
+  }
+
 
   def calculateStats(rdd: RDD[(TileIdWritable, RasterWritable)], bands: Int,
       nodata: Array[Double]): Array[ImageStats] = {

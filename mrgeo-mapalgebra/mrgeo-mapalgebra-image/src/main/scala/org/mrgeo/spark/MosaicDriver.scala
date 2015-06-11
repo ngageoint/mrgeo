@@ -95,7 +95,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
       logInfo("Loading pyramid: " + input)
       try {
-        val pyramid = SparkUtils.loadMrsPyramid(input, context)
+        val pyramid = SparkUtils.loadMrsPyramidAndMetadata(input, context)
         pyramids(i) = pyramid._1
 
 
