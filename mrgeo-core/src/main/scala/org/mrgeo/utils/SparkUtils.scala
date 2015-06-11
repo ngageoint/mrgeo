@@ -22,9 +22,9 @@ import java.util.{Enumeration, Properties}
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.{InputFormat, Job}
-import org.apache.spark.{SparkException, SparkConf, SparkContext}
-import org.apache.spark.rdd.RDD
+import org.apache.hadoop.mapreduce.{OutputFormat, InputFormat, Job}
+import org.apache.spark._
+import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.DataProviderFactory.AccessMode
@@ -38,7 +38,7 @@ import org.mrgeo.spark.SparkTileIdPartitioner
 import scala.collection.{Map, mutable}
 import scala.collection.JavaConversions._
 
-object SparkUtils {
+object SparkUtils extends Logging {
 
   def getConfiguration:SparkConf = {
 
@@ -240,76 +240,68 @@ object SparkUtils {
 
     val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
 
-    //logInfo("tiles has " + tiles.count() + " tiles in " + tiles.partitions.length + " partitions")
-
-    //val partitioned = tiles.partitionBy(sparkPartitioner)
-
-    //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
-    // free up the tile's cache, it's not needed any more...
-
-    //val sorted = partitioned.sortByKey()
-    //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
-
-    // this is missing in early spark APIs
-    val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-
-    // save the image
-    //sorted.saveAsNewAPIHadoopDataset(conf) // job.getConfiguration)
-
-    //    path: String,
-    //    keyClass: Class[_],
-    //    valueClass: Class[_],
-    //    outputFormatClass: Class[_ <: NewOutputFormat[_, _]],
-    //    conf: Configuration = self.context.hadoopConfiguration)
-
     val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize)
     val tofp = provider.getTiledOutputFormatProvider(tofc)
 
     val writer = provider.getMrsTileWriter(zoom)
     val name = new Path(writer.getName).getParent.toString
 
-    //println("saving to: " + name)
-    sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
 
-    //    sorted.foreachPartition(iter => {
-    //      var writer:MrsTileWriter[Raster] = null
-    //
-    //      try {
-    //        while (iter.hasNext) {
-    //          val item = iter.next()
-    //
-    //          val key = item._1
-    //          val value = item._2
-    //
-    //          if (writer == null) {
-    //            val partition = sparkPartitioner.getPartition(key)
-    //            //println("getting writer for: " + partition)
-    //
-    //            val dp = DataProviderFactory.getMrsImageDataProviderNoCache(output, AccessMode.WRITE,
-    //              null.asInstanceOf[Properties])
-    //
-    //            val context = new MrsImagePyramidWriterContext(zoom, partition)
-    //            writer = dp.getMrsTileWriter(context)
-    //          }
-    //
-    //          //println("writing: " + key.get + " to " + writer.getName )
-    //          writer.append(key, RasterWritable.toRaster(value))
-    //        }
-    //        //println("done looping")
-    //      } finally {
-    //        if (writer != null) {
-    //          //println("closing: " + writer.getName)
-    //          writer.close()
-    //        }
-    //      }
-    //    })
+    // this is missing in early spark APIs, so we have to use reflection in order
+    // to maintain backward compatibility. Ugh.
+    var repartitionMethod: java.lang.reflect.Method = null
+    try {
+      repartitionMethod = tiles.getClass.getDeclaredMethod("repartitionAndSortWithinPartitions",
+        Partitioner.getClass)
+    }
+    catch {
+      case nsm: NoSuchMethodException => {
+        // Ignore. On older versions of Spark, this method does not exist, and
+        // that is handled later in the code with repartitionMethod == null.
+      }
+    }
+    if (repartitionMethod != null) {
+      // The new method exists, so let's call it through reflection because it's
+      // more efficient.
+      val sorted = repartitionMethod.invoke(tiles, sparkPartitioner)
+      val saveMethodName = "saveAsNewAPIHadoopFile"
+      val saveMethod = sorted.getClass.getDeclaredMethod(saveMethodName,
+        classOf[String] /* name */,
+        classOf[Class[Any]]  /* keyClass */,
+        classOf[Class[Any]] /*valueClass */,
+        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
+        classOf[Configuration] /* configuration */)
+      if (saveMethod != null) {
+        println("saving to: " + name)
+        saveMethod.invoke(sorted, name, classOf[TileIdWritable], classOf[RasterWritable],
+          tofp.getOutputFormat.getClass, conf)
+        //        sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+        //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
+      }
+      else {
+        logError("Unable to find method " + saveMethodName + " in class " + sorted.getClass.getName)
+      }
+    }
+    else {
+      // This is an older version of Spark, so use the old partition and sort.
+      val wrapped = new PairRDDFunctions(tiles)
+      val partitioned = wrapped.partitionBy(sparkPartitioner)
+
+      //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
+      // free up the tile's cache, it's not needed any more...
+
+      val wrapped1 = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](partitioned)
+      var s = new PairRDDFunctions(wrapped1.sortByKey())
+      println("saving to: " + name)
+      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+    }
 
     sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
     //dp.teardown(job)
 
     // calculate and save metadata
-    MrsImagePyramid.calculateMetadata(output, zoom, provider.getMetadataWriter, stats,
+    MrsImagePyramid.calculateMetadata(output, zoom, provider, stats,
       nodatas, localbounds, conf,  protectionlevel, providerproperties)
   }
 

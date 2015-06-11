@@ -232,7 +232,7 @@ public class RasterizeVectorDriver
       // defaultValues[0]= -9999;
       
       final Bounds outputBounds = MapReduceUtils.aggregateBounds(boundsProvider);
-      MrsImagePyramid.calculateMetadataWithProvider(output, zoom, provider.getMetadataWriter(),
+      MrsImagePyramid.calculateMetadataWithProvider(output, zoom, provider.getImageProvider(),
           statsProvider, defaultValues,
           outputBounds, conf, protectionLevel, providerProperties);
       statsProvider.delete();
