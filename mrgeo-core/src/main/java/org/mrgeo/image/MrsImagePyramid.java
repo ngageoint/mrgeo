@@ -89,7 +89,7 @@ public class MrsImagePyramid extends MrsPyramid
   }
 
   public static void calculateMetadataWithProvider(final String pyramidname, final int zoom,
-      final MrsImagePyramidMetadataWriter metadataWriter,
+      final MrsImageDataProvider provider,
       final AdHocDataProvider statsProvider,
       final double[] defaultValues,
       final Bounds bounds, final Configuration conf,
@@ -102,22 +102,19 @@ public class MrsImagePyramid extends MrsPyramid
       ImageStats[] levelStats = null;
       levelStats = ImageStats.readStats(statsProvider);
 
-      calculateMetadata(pyramidname, zoom, metadataWriter, levelStats, defaultValues,
+      calculateMetadata(pyramidname, zoom, provider, levelStats, defaultValues,
           bounds, conf, protectionLevel, providerProperties);
     }
   }
 
   public static void calculateMetadata(final String pyramidname, final int zoom,
-      final MrsImagePyramidMetadataWriter metadataWriter,
+      final MrsImageDataProvider provider,
       final ImageStats[] levelStats,
       final double[] defaultValues,
       final Bounds bounds, final Configuration conf,
       final String protectionLevel,
       final Properties providerProperties) throws IOException
   {
-
-    MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(pyramidname,
-        AccessMode.READ, providerProperties);
 
     MrsImagePyramidMetadata metadata;
     try
@@ -144,6 +141,7 @@ public class MrsImagePyramid extends MrsPyramid
 
     // HACK!!! (kinda...) Need to make metadata is there so the provider can get the
     //          MrsTileReader (it does a canOpen(), which makes sure metadata is present)
+    MrsImagePyramidMetadataWriter metadataWriter = provider.getMetadataWriter();
     metadataWriter.write(metadata);
 
 

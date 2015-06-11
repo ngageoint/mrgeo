@@ -24,6 +24,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterUtils;
@@ -42,7 +43,6 @@ import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
-import java.util.List;
 
 public class HdfsMrsImagePyramidOutputFormatProvider extends MrsImageOutputFormatProvider
 {
@@ -126,6 +126,12 @@ public class HdfsMrsImagePyramidOutputFormatProvider extends MrsImageOutputForma
   public MrsImagePyramidMetadataWriter getMetadataWriter()
   {
     return provider.getMetadataWriter();
+  }
+
+  @Override
+  public MrsImageDataProvider getImageProvider()
+  {
+    return provider;
   }
 
   private void setupMultipleOutputs(final Job job, final Path outputPath) throws IOException

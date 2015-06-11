@@ -261,7 +261,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     val stats = SparkUtils.calculateStats(sorted, numbands, nodata(0))
 
     // calculate and save metadata
-    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, stats,
+    MrsImagePyramid.calculateMetadata(output, zoom, dp.getImageProvider, stats,
       nodata(0), bounds, job.getConfiguration, null, null)
 
     // write splits
