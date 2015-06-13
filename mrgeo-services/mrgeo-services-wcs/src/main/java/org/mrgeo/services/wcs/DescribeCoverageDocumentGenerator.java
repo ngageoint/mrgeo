@@ -175,10 +175,14 @@ public class DescribeCoverageDocumentGenerator
   {
     dtr.setAttribute("version", version.toString());
     dtr.setAttribute("xmlns", "http://www.opengis.net/wcs");
-    dtr.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
     dtr.setAttribute("xmlns:ogc", "http://www.opengis.net/ogc");
     dtr.setAttribute("xmlns:gml", "http://www.opengis.net/gml");
+    dtr.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
     dtr.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    if (!version.isLess("1.1.0"))
+    {
+      dtr.setAttribute("xmlns:wcs", "http://www.opengis.net/wcs/" + version.toString());
+    }
     dtr.setAttribute("xsi:schemaLocation",
         "http://www.opengis.net/wcs http://schemas.opengis.net/wcs/" + version.toString() + "/describeCoverage.xsd");
   }
