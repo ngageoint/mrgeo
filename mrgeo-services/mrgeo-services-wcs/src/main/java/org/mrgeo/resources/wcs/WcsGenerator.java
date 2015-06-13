@@ -1,8 +1,14 @@
 package org.mrgeo.resources.wcs;
 
+import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
+import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
+import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.utils.DocumentUtils;
+import org.mrgeo.services.utils.RequestUtils;
+import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +24,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -29,8 +36,8 @@ public class WcsGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 
-  public static final String WCS_VERSION = "2.0.1";
-  private Version version = null;
+  public static final String WCS_VERSION = "1.1.0";
+  private Version version = new Version(WCS_VERSION);
 
   @GET
   public Response doGet(@Context UriInfo uriInfo)
@@ -47,7 +54,7 @@ public class WcsGenerator
   private Response handleRequest(UriInfo uriInfo)
   {
     long start = System.currentTimeMillis();
-    
+
     MultivaluedMap<String, String> allParams = uriInfo.getQueryParameters();
     String request = getQueryParam(allParams, "request", "GetCapabilities");
     Properties providerProperties = SecurityUtils.getProviderProperties();
@@ -57,11 +64,11 @@ public class WcsGenerator
       String serviceName = getQueryParam(allParams, "service");
       if (serviceName == null)
       {
-        return writeError(Response.Status.BAD_REQUEST, "Missing required SERVICE parameter. Should be set to \"WMS\"");
+        return writeError(Response.Status.BAD_REQUEST, "Missing required SERVICE parameter. Should be set to \"WCS\"");
       }
-      if (!serviceName.equalsIgnoreCase("wms"))
+      if (!serviceName.equalsIgnoreCase("wcs"))
       {
-        return writeError(Response.Status.BAD_REQUEST, "Invalid SERVICE parameter. Should be set to \"WMS\"");
+        return writeError(Response.Status.BAD_REQUEST, "Invalid SERVICE parameter. Should be set to \"WCS\"");
       }
 
       if (request.equalsIgnoreCase("getcapabilities"))
@@ -209,118 +216,110 @@ public class WcsGenerator
 
   private Response getCoverage(MultivaluedMap<String, String> allParams, Properties providerProperties)
   {
-//    OpImageRegistrar.registerMrGeoOps();
-//
-//    // Get all of the query parameter values needed and validate them
-//    String layers = getQueryParam(allParams, "layers");
-//    String[] layerNames = null;
-//    if (layers != null && !layers.isEmpty())
-//    {
-//      layerNames = layers.split(",");
-//    }
-//    if (layerNames == null || layerNames.length == 0)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Missing required LAYERS parameter");
-//    }
-//    if (layerNames.length > 1)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Only one LAYER is supported");
-//    }
-//    String styles = getQueryParam(allParams, "styles");
-//    String styleNames[] = null;
-//    if (styles != null && !styles.isEmpty())
-//    {
-//      styleNames = styles.split(",");
-////      if (styleNames.length != layerNames.length)
-////      {
-////        return writeError(Response.Status.BAD_REQUEST, "There are a different number of LAYERS (" + layerNames.length + ") than STYLES(" + styleNames.length + ")");
-////      }
-//    }
-////    else
-////    {
-////      return writeError(Response.Status.BAD_REQUEST, "Missing required STYLES parameter");
-////    }
-//    String srs = null;
-//    try
-//    {
-//      srs = getSrsParam(allParams);
-//    }
-//    catch (Exception e)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, e);
-//    }
-//    Bounds bounds = null;
-//    try
-//    {
-//      bounds = getBoundsParam(allParams, "bbox");
-//    }
-//    catch (Exception e)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
-//    }
-//    String format = getQueryParam(allParams, "format");
-//    if (format == null)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Missing required FORMAT parameter");
-//    }
-//    if (!paramExists(allParams, "width"))
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Missing required WIDTH parameter");
-//    }
-//    int width = getQueryParamAsInt(allParams, "width", 0);
-//    if (!paramExists(allParams, "height"))
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Missing required HEIGHT parameter");
-//    }
-//    int height = getQueryParamAsInt(allParams, "height", 0);
-//
-//    ImageRenderer renderer = null;
-//    try
-//    {
-//      renderer = (ImageRenderer) ImageHandlerFactory.getHandler(format, ImageRenderer.class);
-//    }
-//    catch (Exception e)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
-//    }
-//
-//    // Reproject bounds to EPSG:4326 if necessary
-//    try
-//    {
-//      bounds = RequestUtils.reprojectBounds(bounds, srs);
-//    }
-//    catch (org.opengis.referencing.NoSuchAuthorityCodeException e)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "InvalidCRS", e.getMessage());
-//    }
-//    catch (Exception e)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, e);
-//    }
-//
-//    // Return the resulting image
-//    try
-//    {
-//      Raster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
-//      result = colorRaster(layerNames[0],
-//          (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
-//          format,
-//          renderer,
-//          result);
-//
-//      Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
-//          .getHandler(format, ImageResponseWriter.class))
-//          .write(result, layerNames[0], bounds);
-//      return setupCaching(builder, allParams).build();
-//    }
-//    catch (Exception e)
-//    {
-//      log.error("Unable to render the image in getTile", e);
-//      return writeError(Response.Status.BAD_REQUEST, e);
-//    }
+    OpImageRegistrar.registerMrGeoOps();
 
-    return writeError(Response.Status.BAD_REQUEST, "Not Implemented");
+    // Get all of the query parameter values needed and validate them
+    String layers = getQueryParam(allParams, "coverage");
+    String[] layerNames = null;
+    if (layers != null && !layers.isEmpty())
+    {
+      layerNames = layers.split(",");
+    }
+    if (layerNames == null || layerNames.length == 0)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "Missing required COVERAGE parameter");
+    }
+    if (layerNames.length > 1)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "Only one COVERAGE is supported");
+    }
 
+    String srs = null;
+    try
+    {
+      srs = getCrsParam(allParams);
+    }
+    catch (Exception e)
+    {
+      return writeError(Response.Status.BAD_REQUEST, e);
+    }
+
+    Bounds bounds = null;
+    try
+    {
+      bounds = getBoundsParam(allParams, "bbox");
+    }
+    catch (Exception e)
+    {
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
+    }
+
+    String format = getQueryParam(allParams, "format");
+    if (format == null)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "Missing required FORMAT parameter");
+    }
+
+    int width = getQueryParamAsInt(allParams, "width", -1);
+    if (width < 0)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "Missing required WIDTH parameter");
+    }
+    else if (width == 0)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "WIDTH parameter must be greater than 0");
+    }
+
+    int height = getQueryParamAsInt(allParams, "height", -1);
+    if (height < 0)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "Missing required HEIGHT parameter");
+    }
+    else if (height == 0)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "HEIGHT parameter must be greater than 0");
+    }
+
+    ImageRenderer renderer = null;
+    try
+    {
+      renderer = (ImageRenderer) ImageHandlerFactory.getHandler(format, ImageRenderer.class);
+    }
+    catch (Exception e)
+    {
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
+    }
+
+    // Reproject bounds to EPSG:4326 if necessary
+    try
+    {
+      bounds = RequestUtils.reprojectBounds(bounds, srs);
+    }
+    catch (org.opengis.referencing.NoSuchAuthorityCodeException e)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "InvalidCRS", e.getMessage());
+    }
+    catch (Exception e)
+    {
+      return writeError(Response.Status.BAD_REQUEST, e);
+    }
+
+    // Return the resulting image
+    try
+    {
+      Raster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
+
+      Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
+          .getHandler(format, ImageResponseWriter.class))
+          .write(result, layerNames[0], bounds);
+
+      return builder.build();
+    }
+    catch (Exception e)
+    {
+      log.error("Unable to render the image in getCoverage", e);
+      return writeError(Response.Status.BAD_REQUEST, e);
+    }
   }
 
   /**
@@ -413,6 +412,48 @@ public class WcsGenerator
     }
     return defaultValue;
   }
+
+  private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName)
+      throws Exception
+  {
+    String bbox = getQueryParam(allParams, paramName);
+    if (bbox == null)
+    {
+      throw new Exception("Missing required BBOX parameter");
+    }
+    String[] bboxComponents = bbox.split(",");
+    if (bboxComponents.length != 4)
+    {
+      throw new Exception("Invalid BBOX parameter. Should contain minX, minY, maxX, maxY");
+    }
+    double[] bboxValues = new double[4];
+    for (int index=0; index < bboxComponents.length; index++)
+    {
+      try
+      {
+        bboxValues[index] = Double.parseDouble(bboxComponents[index]);
+      }
+      catch (NumberFormatException nfe)
+      {
+        throw new Exception("Invalid BBOX value: " + bboxComponents[index]);
+      }
+    }
+    return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+  }
+
+  private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exception
+  {
+    String crs = getQueryParam(allParams, "crs");
+    if (crs == null || crs.isEmpty())
+    {
+      return null;
+    }
+    else
+    {
+      return crs;
+    }
+  }
+
 
   /*
    * Writes OGC spec error messages to the response

@@ -58,7 +58,7 @@ public class DocumentUtils
     Transformer transformer = transformerFactory.newTransformer();
     transformer.setOutputProperty(OutputKeys.INDENT, "yes");
     transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, String.format(
-      "http://schemas.opengis.net/wms/%s/WMS_MS_Capabilities.dtd", version.toString()));
+      "http://schemas.opengis.net/wcs/%s/wcsAll.xsd", version.toString()));
     DOMSource source = new DOMSource(doc);
     StreamResult result = new StreamResult(out);
     transformer.transform(source, result);
