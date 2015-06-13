@@ -33,12 +33,12 @@ public class MapFileFilter implements PathFilter
   @Override
   public boolean accept(final Path path)
   {
-    if (path.getName().equals("index") || 
-        path.getName().equals(SplitFile.SPLIT_FILE) || 
-        path.getName().equals(SplitFile.OLD_SPLIT_FILE))
-    {
-      return false;
-    }
-    return true;
+    String name = path.getName();
+    return !(name.equals("index") ||
+        name.equals(SplitFile.SPLIT_FILE) ||
+        name.equals(SplitFile.OLD_SPLIT_FILE) ||
+        name.equals("_SUCCESS") ||    // these are sometimes created by hadoop
+        name.endsWith("$folder$"));   // these are automatically created in S3, yuck!
+
   }
 }

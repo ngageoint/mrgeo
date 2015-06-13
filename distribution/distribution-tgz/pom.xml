@@ -34,96 +34,62 @@
     <finalName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}</finalName>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
-        <configuration>
-          <skipIfEmpty>true</skipIfEmpty>
-          <archive>
-            <addMavenDescriptor>false</addMavenDescriptor>
-            <manifest>
-              <addClasspath>false</addClasspath>
-            </manifest>
-          </archive>
-        </configuration>
       </plugin>
-      <!-- make sure this runs before the maven assembly plugin -->
+      <!-- make sure this runs before the maven dependency plugin -->
       <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.7</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
         <executions>
           <execution>
-            <id>copy-resources</id>
-            <phase>generate-resources</phase>
+            <id>clean-libs</id>
+            <phase>package</phase>
             <goals>
-              <goal>copy-resources</goal>
+              <goal>clean</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/generated-sources/licenses</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${project.parent.basedir}/src/main/license/missing</directory>
-                </resource>
-              </resources>
+              <excludeDefaultDirectories>true</excludeDefaultDirectories>
+              <filesets>
+                <fileset>
+                  <directory>${project.build.directory}/lib</directory>
+                </fileset>
+              </filesets>
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <!-- make sure this runs before the maven assembly plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
       </plugin>
       <!-- make sure this runs before the maven assembly plugin -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <execution>
-            <id>download-licenses</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>download-licenses</goal>
-            </goals>
-            <configuration>
-              <skipDownloadLicenses>${skipLicenses}</skipDownloadLicenses>
-            </configuration>
-          </execution>
-          <execution>
-            <id>add-third-party-local</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-third-party</goal>
-            </goals>
-            <configuration>
-              <skipAddThirdParty>${skipLicenses}</skipAddThirdParty>
-              <fileTemplate>${project.parent.basedir}/src/main/license/third-party-file.ftl</fileTemplate>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.3</version>
-        <configuration>
-          <finalName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}</finalName>
-        </configuration>
-        <executions>
-          <execution>
-            <id>side-by-side</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>src/main/assembly/dist.xml</descriptor>
-              </descriptors>
-              <appendAssemblyId>false</appendAssemblyId>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.9</version>
         <executions>
+          <!-- make sure this runs before the maven assembly plugin -->
+          <execution>
+            <id>copy-libs</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <excludeScope>test</excludeScope>
+              <includeScope>runtime</includeScope>
+              <excludeGroupIds>org.mrgeo</excludeGroupIds>
+            </configuration>
+          </execution>
           <execution>
             <id>copy-installed</id>
             <phase>install</phase>
@@ -141,6 +107,25 @@
                 </artifactItem>
               </artifactItems>
               <outputDirectory>${project.parent.build.directory}</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>side-by-side</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/assembly/dist.xml</descriptor>
+              </descriptors>
+              <appendAssemblyId>false</appendAssemblyId>
             </configuration>
           </execution>
         </executions>
@@ -188,7 +173,7 @@
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-services-tms</artifactId>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-services-wms</artifactId>
     </dependency>

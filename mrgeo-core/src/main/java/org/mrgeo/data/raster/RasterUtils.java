@@ -208,6 +208,21 @@ public class RasterUtils
         basedOnSource.getColorModel());
   }
 
+  public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final int width, final int height,
+      final double nodata)
+  {
+    final WritableRaster newraster = raster.createCompatibleWritableRaster(width, height);
+    fillWithNodata(newraster, nodata);
+    return newraster;
+  }
+
+  public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final double nodata)
+  {
+    final WritableRaster newraster = raster.createCompatibleWritableRaster();
+    fillWithNodata(newraster, nodata);
+    return newraster;
+  }
+
   public static WritableRaster createEmptyRaster(final int width, final int height,
       final int bands, final int datatype,
       final double nodata)
@@ -298,6 +313,88 @@ public class RasterUtils
       default:
         throw new RasterWritable.RasterWritableException(
             "Error trying to get fill pixels in the raster with nodata value. Bad raster data type");
+      }
+    }
+  }
+
+  private static void copyPixel(final int x, final int y, final int b, final Raster src,
+      final WritableRaster dst, double[] nodatas)
+  {
+    switch (src.getTransferType())
+    {
+    case DataBuffer.TYPE_BYTE:
+    {
+      final byte p = (byte) src.getSample(x, y, b);
+      if (p != (byte)nodatas[b])
+      {
+        dst.setSample(x, y, b, p);
+      }
+      break;
+    }
+    case DataBuffer.TYPE_FLOAT:
+    {
+      final float p = src.getSampleFloat(x, y, b);
+      if (!Float.isNaN(p) && p != (float)nodatas[b])
+      {
+        dst.setSample(x, y, b, p);
+      }
+
+      break;
+    }
+    case DataBuffer.TYPE_DOUBLE:
+    {
+      final double p = src.getSampleDouble(x, y, b);
+      if (!Double.isNaN(p) && p != nodatas[b])
+      {
+        dst.setSample(x, y, b, p);
+      }
+
+      break;
+    }
+    case DataBuffer.TYPE_INT:
+    {
+      final int p = src.getSample(x, y, b);
+      if (p != (int)nodatas[b])
+      {
+        dst.setSample(x, y, b, p);
+      }
+
+      break;
+    }
+    case DataBuffer.TYPE_SHORT:
+    {
+      final short p = (short) src.getSample(x, y, b);
+      if (p != (short)nodatas[b])
+      {
+        dst.setSample(x, y, b, p);
+      }
+
+      break;
+    }
+    case DataBuffer.TYPE_USHORT:
+    {
+      final int p = src.getSample(x, y, b);
+      if (p != (int)nodatas[b])
+      {
+        dst.setSample(x, y, b, p);
+      }
+
+      break;
+    }
+
+    }
+  }
+
+  public static void mosaicTile(final Raster src, final WritableRaster dst, final double[] nodatas)
+  {
+    for (int y = 0; y < src.getHeight(); y++)
+    {
+      for (int x = 0; x < src.getWidth(); x++)
+      {
+        for (int b = 0; b < src.getNumBands(); b++)
+        {
+          copyPixel(x, y, b, src, dst, nodatas);
+        }
       }
     }
   }
@@ -1007,6 +1104,55 @@ public class RasterUtils
             double doubleSample = aggregator.aggregate(doublesamples, metadata.getDefaultValueDouble(b));
             //      ImageStats.updateStats(stats[b], doubleSample, metadata.getDefaultValue(b));
             child.setSample(x / 2, y / 2, b, doubleSample);
+            break;
+          default:
+            throw new RasterWritable.RasterWritableException(
+                "Error trying to get decimate pixels in the raster. Bad raster data type");
+          }
+        }
+      }
+    }
+  }
+
+  public static void decimate(final Raster parent, final WritableRaster child,
+      final Aggregator aggregator, final Number[] nodatas)
+  {
+    decimate(parent, child, 0, 0, aggregator, nodatas);
+  }
+
+  public static void decimate(final Raster parent, final WritableRaster child, final int startX, final int startY, final Aggregator aggregator, final Number[] nodatas)
+  {
+    final int w = parent.getWidth();
+    final int h = parent.getHeight();
+
+    for (int y = 0; y < h; y += 2)
+    {
+      for (int x = 0; x < w; x += 2)
+      {
+        for (int b = 0; b < child.getNumBands(); b++)
+        {
+          switch (child.getTransferType())
+          {
+          case DataBuffer.TYPE_BYTE:
+          case DataBuffer.TYPE_INT:
+          case DataBuffer.TYPE_SHORT:
+          case DataBuffer.TYPE_USHORT:
+            final int[] intsamples = new int[4];
+            parent.getSamples(x, y, 2, 2, b, intsamples);
+            int intSample = aggregator.aggregate(intsamples, nodatas[b].intValue());
+            child.setSample(startX + (x / 2), startY + (y / 2), b, intSample);
+            break;
+          case DataBuffer.TYPE_FLOAT:
+            final float[] floatsamples = new float[4];
+            parent.getSamples(x, y, 2, 2, b, floatsamples);
+            float floatSample = aggregator.aggregate(floatsamples, nodatas[b].floatValue());
+            child.setSample(startX + (x / 2), startY + (y / 2), b, floatSample);
+            break;
+          case DataBuffer.TYPE_DOUBLE:
+            final double[] doublesamples = new double[4];
+            parent.getSamples(x, y, 2, 2, b, doublesamples);
+            double doubleSample = aggregator.aggregate(doublesamples, nodatas[b].doubleValue());
+            child.setSample(startX + (x / 2), startY + (y / 2), b, doubleSample);
             break;
           default:
             throw new RasterWritable.RasterWritableException(

@@ -44,10 +44,10 @@ public class OpImageRegistrar
 
   static
   {
-            
-    // lower the Configuration classes log level.
+    // lower some log levels.
     LoggingUtils.setLogLevel(Configuration.class, LoggingUtils.WARN);
     LoggingUtils.setLogLevel("org.apache.hadoop.io.compress.CodecPool", LoggingUtils.WARN);
+    LoggingUtils.setLogLevel("org.apache.hadoop.hdfs.DFSClient", LoggingUtils.ERROR);
   }
 
   public static synchronized void registerMrGeoOps()

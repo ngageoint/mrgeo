@@ -1,17 +1,20 @@
 package org.mrgeo.spark.job.yarn
 
-import java.io.File
-import java.net.URL
-
+import java.io.{PrintWriter, File}
+import org.apache.spark.deploy.yarn.ApplicationMaster
 import org.apache.spark.SparkConf
+import org.mrgeo.core.{MrGeoProperties, MrGeoConstants}
+import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.spark.job.JobArguments
-import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.{HadoopUtils, GDALUtils, DependencyLoader, SparkUtils}
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
-import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
 
 object MrGeoYarnDriver {
   final val DRIVER:String = "mrgeo.driver.class"
+
+  final val ARGFILE:String = "--mrgeo-argfile"
 }
 
 class MrGeoYarnDriver {
@@ -64,8 +67,17 @@ class MrGeoYarnDriver {
     //        "  --name NAME                The name of your application (Default: Spark)\n" +
     //        "  --queue QUEUE              The hadoop queue to use for allocation requests (Default: 'default')\n" +
     //        "  --addJars jars             Comma separated list of local jars that want SparkContext.addJar to work with.\n" +
-    //        "  --files files              Comma separated list of files to be distributed with the job.\n" +
+    //        "  --files files              Comma separated list of files to be distributed with the job." +
     //        "  --archives archives        Comma separated list of archives to be distributed with the job."
+
+    //    println("Looking for 'javax.servlet'")
+    //    val jars = SparkUtils.jarsForPackage("javax.servlet", cl)
+    //    jars.foreach(jar => { "  " + println(jar)})
+
+    //    val sparkClass = ApplicationMaster.getClass.getName.replaceAll("\\$", "")
+    //    val sparkJar = SparkUtils.jarForClass(sparkClass, cl)
+    //    conf.set("spark.yarn.jar", sparkJar)
+    //    conf.set("spark.yarn.jar", "/home/hadoop/spark/lib/spark-assembly-1.3.1-hadoop2.4.0.jar")
 
     val driverClass = MrGeoYarnJob.getClass.getName.replaceAll("\\$","")
     val driverJar =  SparkUtils.jarForClass(driverClass, cl)
@@ -76,25 +88,23 @@ class MrGeoYarnDriver {
     args += "--jar"
     args += driverJar
 
+    val executors = conf.get("spark.executor.instances", "2").toInt
     args += "--num-executors"
-    args += "4" // job.executors.toString
-    conf.set("spark.executor.instances", "4")// job.executors.toString)
+    args += executors.toString
 
     args += "--executor-cores"
-    args += "2" //  job.cores.toString
-    conf.set("spark.executor.cores", "2") // job.cores.toString)
+    args += conf.get("spark.executor.cores", "1")
 
-    val exmemory:Int = SparkUtils.humantokb(job.memory)
-    val dvmem = SparkUtils.kbtohuman(exmemory / (job.cores * job.executors))
-    //val dvmem = SparkUtils.kbtohuman((Runtime.getRuntime.maxMemory() / 1024).toInt)
+    // spark.executor.memory is the total memory available to spark,
+    // --executor-memory is the memory per executor.  Go figure...
+    args += "--executor-memory"
+    args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
-    //args += "--driver-memory"
-    //args += dvmem
-    conf.set("spark.driver.memory", dvmem)
+    args += "--driver-cores"
+    args += conf.get("spark.driver.cores", "1")
 
-    //args += "--executor-memory"
-    //args += job.memory
-    conf.set("spark.executor.memory", job.memory)
+    args += "--driver-memory"
+    args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
 
     args += "--name"
@@ -118,6 +128,7 @@ class MrGeoYarnDriver {
       }
     })
 
+
     args += "--addJars"
     args += clean
 
@@ -127,13 +138,43 @@ class MrGeoYarnDriver {
     args += "--arg"
     args += job.driverClass
 
-    // map the user params
+    // this is silly, but arguments are passed simply as parameters to the java process that is spun
+    // off as the spark driver.  We need to make sure the command line isn't too long.  If it is, we'll
+    // put the params into a file that we'll send along to the driver...
+    var length:Int = 0
     job.params.foreach(p => {
-      args += "--arg"
-      args += "--" + p._1
-      args += "--arg"
-      args += p._2
+      length += 12 +       // 12 for the other text needed in the args
+          p._1.length +
+          { if (p._2 != null) { p._2.length } else 4 } // length of "null"
     })
+
+    // 100K is kinda arbitrary, but it's a nice pretty number
+    if (length < 100000) {
+      // map the user params
+      job.params.foreach(p => {
+        args += "--arg"
+        args += "--" + p._1
+        args += "--arg"
+        args += p._2
+      })
+    }
+    else {
+      val temp = HadoopFileUtils.createUniqueTmpPath()
+      val fs = HadoopFileUtils.getFileSystem(temp)
+
+      val stream = fs.create(temp, true)
+      val out = new PrintWriter(stream)
+      job.params.foreach(p => {
+        out.println("--" + p._1)
+        out.println(p._2)
+      })
+      out.close()
+
+      args += "--arg"
+      args += "--" + MrGeoYarnDriver.ARGFILE
+      args += "--arg"
+      args += temp.toUri.toString
+    }
 
     args.toArray
   }

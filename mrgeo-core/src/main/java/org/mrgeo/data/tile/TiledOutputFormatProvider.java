@@ -15,15 +15,16 @@
 
 package org.mrgeo.data.tile;
 
-import java.io.IOException;
-
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
+
+import java.io.IOException;
 
 public interface TiledOutputFormatProvider extends ProtectionLevelValidator
 {
@@ -47,4 +48,5 @@ public interface TiledOutputFormatProvider extends ProtectionLevelValidator
   public void teardown(final Job job) throws DataProviderException;
 
   public MrsImagePyramidMetadataWriter getMetadataWriter();
+  public MrsImageDataProvider getImageProvider();
 }
