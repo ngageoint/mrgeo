@@ -1,5 +1,7 @@
 package org.mrgeo.resources.wcs;
 
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
@@ -8,6 +10,7 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
+import org.mrgeo.services.wcs.WcsCapabilities;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
@@ -20,16 +23,22 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 @Path("/wcs")
 public class WcsGenerator
@@ -163,56 +172,78 @@ public class WcsGenerator
     // The versionParamName will be null if the request did not include the
     // version parameter.
     String versionParamName = getActualQueryParamName(allParams, "version");
-    String versionStr = getQueryParam(allParams, "version", "1.1.1");
+    String versionStr = getQueryParam(allParams, "version", "1.0.0");
     Version version = new Version(versionStr);
 
-//    final GetCapabilitiesDocumentGenerator docGen = new GetCapabilitiesDocumentGenerator();
-//    try
-//    {
-//      // The following code re-builds the request URI to include in the GetCapabilities
-//      // output. It sorts the parameters so that they are included in the URI in a
-//      // predictable order. The reason for this is so that test cases can compare XML
-//      // golden files against the XML generated here without worrying about parameters
-//      // shifting locations in the URI.
-//      Set<String> keys = uriInfo.getQueryParameters().keySet();
-//      String[] sortedKeys = new String[keys.size()];
-//      keys.toArray(sortedKeys);
-//      Arrays.sort(sortedKeys);
-//      UriBuilder builder = uriInfo.getBaseUriBuilder().path(uriInfo.getPath());
-//      for (String key : sortedKeys)
-//      {
-//        // Only include the VERSION parameter in the URI used in GetCapabilities
-//        // if it was included in the original URI request.
-//        if (key.equalsIgnoreCase("version"))
-//        {
-//          if (versionParamName != null)
-//          {
-//            builder = builder.queryParam(versionParamName, versionStr);
-//          }
-//        }
-//        else
-//        {
-//          builder = builder.queryParam(key, getQueryParam(allParams, key));
-//        }
-//      }
-//      final Document doc = docGen.generateDoc(version, builder.build().toString(),
-//          getPyramidFilesList(providerProperties));
-//
-//      ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-//      final PrintWriter out = new PrintWriter(xmlStream);
-//      // DocumentUtils.checkForErrors(doc);
-//      DocumentUtils.writeDocument(doc, version, out);
-//      out.close();
-//      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
-//    }
-//    catch (Exception e)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, e);
-//    }
+    final WcsCapabilities docGen = new WcsCapabilities();
+    try
+    {
+      // The following code re-builds the request URI to include in the GetCapabilities
+      // output. It sorts the parameters so that they are included in the URI in a
+      // predictable order. The reason for this is so that test cases can compare XML
+      // golden files against the XML generated here without worrying about parameters
+      // shifting locations in the URI.
+      Set<String> keys = uriInfo.getQueryParameters().keySet();
+      String[] sortedKeys = new String[keys.size()];
+      keys.toArray(sortedKeys);
+      Arrays.sort(sortedKeys);
+      UriBuilder builder = uriInfo.getBaseUriBuilder().path(uriInfo.getPath());
+      for (String key : sortedKeys)
+      {
+        // Only include the VERSION parameter in the URI used in GetCapabilities
+        // if it was included in the original URI request.
+        if (key.equalsIgnoreCase("version"))
+        {
+          if (versionParamName != null)
+          {
+            builder = builder.queryParam(versionParamName, versionStr);
+          }
+        }
+        else
+        {
+          builder = builder.queryParam(key, getQueryParam(allParams, key));
+        }
+      }
+      final Document doc = docGen.generateDoc(version, builder.build().toString(),
+          getPyramidFilesList(providerProperties));
 
-    return writeError(Response.Status.BAD_REQUEST, "Not Implemented");
+      ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
+      final PrintWriter out = new PrintWriter(xmlStream);
+      // DocumentUtils.checkForErrors(doc);
+      DocumentUtils.writeDocument(doc, version, out);
+      out.close();
+      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
+    }
+    catch (Exception e)
+    {
+      return writeError(Response.Status.BAD_REQUEST, e);
+    }
+
+//    return writeError(Response.Status.BAD_REQUEST, "Not Implemented");
   }
 
+
+  /*
+   * Returns a list of all MrsImagePyramid version 2 data in the home data directory
+   */
+  private static MrsImageDataProvider[] getPyramidFilesList(
+          final Properties providerProperties) throws IOException
+  {
+    String[] images = DataProviderFactory.listImages(providerProperties);
+
+    Arrays.sort(images);
+
+    MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
+
+    for (int i = 0; i < images.length; i++)
+    {
+      providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
+                                                                 DataProviderFactory.AccessMode.READ,
+                                                                 providerProperties);
+    }
+
+    return providers;
+  }
 
   private Response getCoverage(MultivaluedMap<String, String> allParams, Properties providerProperties)
   {
