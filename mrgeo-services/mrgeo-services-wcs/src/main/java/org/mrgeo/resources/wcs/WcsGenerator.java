@@ -317,11 +317,9 @@ public class WcsGenerator
     }
     catch (Exception e)
     {
-      log.error("Unable to render the image in getTile", e);
+      log.error("Unable to render the image in getCoverage", e);
       return writeError(Response.Status.BAD_REQUEST, e);
     }
-
-
   }
 
   /**
