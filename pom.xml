@@ -2147,6 +2147,11 @@
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-services-wcs</artifactId>
+        <version>${mrgeo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-vector</artifactId>
         <version>${mrgeo.version}</version>
       </dependency>
