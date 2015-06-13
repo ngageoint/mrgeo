@@ -130,16 +130,16 @@ public class WcsGenerator
       MultivaluedMap<String,String> allParams,
       final Properties providerProperties)
   {
-//    String versionStr = getQueryParam(allParams, "version", "1.4.0");
-//    version = new Version(versionStr);
-//    if (version.isLess("1.4.0"))
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Describe tiles is only supported with version >= 1.4.0");
-//    }
-//
+    String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
+    version = new Version(versionStr);
+    if (version.isLess("1.4.0"))
+    {
+      return writeError(Response.Status.BAD_REQUEST, "Describe tiles is only supported with version >= 1.4.0");
+    }
+
 //    try
 //    {
-//      final DescribeTilesDocumentGenerator docGen = new DescribeTilesDocumentGenerator();
+//      final DescribeCoverageDocumentGenerator docGen = new DescribeCoverageDocumentGenerator();
 //      final Document doc = docGen.generateDoc(version, uriInfo.getRequestUri().toString(),
 //          getPyramidFilesList(providerProperties));
 //
@@ -165,7 +165,7 @@ public class WcsGenerator
     // The versionParamName will be null if the request did not include the
     // version parameter.
     String versionParamName = getActualQueryParamName(allParams, "version");
-    String versionStr = getQueryParam(allParams, "version", "1.1.1");
+    String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
     Version version = new Version(versionStr);
 
 //    final GetCapabilitiesDocumentGenerator docGen = new GetCapabilitiesDocumentGenerator();
@@ -221,35 +221,45 @@ public class WcsGenerator
     OpImageRegistrar.registerMrGeoOps();
 
     // Get all of the query parameter values needed and validate them
-    String layers = getQueryParam(allParams, "coverage");
-    String[] layerNames = null;
-    if (layers != null && !layers.isEmpty())
+    String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
+    version = new Version(versionStr);
+
+    String layer = null;
+    if (version.isLess("1.1.0"))
     {
-      layerNames = layers.split(",");
+      layer = getQueryParam(allParams, "coverage");
     }
-    if (layerNames == null || layerNames.length == 0)
+    else
+    {
+      layer = getQueryParam(allParams, "identifier");
+    }
+
+    if (layer == null)
     {
       return writeError(Response.Status.BAD_REQUEST, "Missing required COVERAGE parameter");
     }
-    if (layerNames.length > 1)
-    {
-      return writeError(Response.Status.BAD_REQUEST, "Only one COVERAGE is supported");
-    }
 
-    String srs = null;
+
+    String crs = null;
+    Bounds bounds = new Bounds();
     try
     {
-      srs = getCrsParam(allParams);
-    }
-    catch (Exception e)
-    {
-      return writeError(Response.Status.BAD_REQUEST, e);
-    }
-
-    Bounds bounds = null;
-    try
-    {
-      bounds = getBoundsParam(allParams, "bbox");
+      if (version.isLess("1.1.0"))
+      {
+        crs = getBoundsParam(allParams, "bbox", bounds);
+        try
+        {
+          crs = getCrsParam(allParams);
+        }
+        catch (Exception e)
+        {
+          return writeError(Response.Status.BAD_REQUEST, e);
+        }
+      }
+      else
+      {
+        crs = getBoundsParam(allParams, "boundingbox", bounds);
+      }
     }
     catch (Exception e)
     {
@@ -295,7 +305,7 @@ public class WcsGenerator
     // Reproject bounds to EPSG:4326 if necessary
     try
     {
-      bounds = RequestUtils.reprojectBounds(bounds, srs);
+      bounds = RequestUtils.reprojectBounds(bounds, crs);
     }
     catch (org.opengis.referencing.NoSuchAuthorityCodeException e)
     {
@@ -309,11 +319,11 @@ public class WcsGenerator
     // Return the resulting image
     try
     {
-      Raster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
+      Raster result = renderer.renderImage(layer, bounds, width, height, providerProperties, crs);
 
       Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
           .getHandler(format, ImageResponseWriter.class))
-          .write(result, layerNames[0], bounds);
+          .write(result, layer, bounds);
 
       return builder.build();
     }
@@ -415,19 +425,25 @@ public class WcsGenerator
     return defaultValue;
   }
 
-  private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName)
+  private String getBoundsParam(MultivaluedMap<String, String> allParams, String paramName, Bounds bounds)
       throws Exception
   {
     String bbox = getQueryParam(allParams, paramName);
     if (bbox == null)
     {
-      throw new Exception("Missing required BBOX parameter");
+      throw new Exception("Missing required " + paramName.toUpperCase() + " parameter");
     }
     String[] bboxComponents = bbox.split(",");
-    if (bboxComponents.length != 4)
+    String crs = null;
+    if (bboxComponents.length == 5)
     {
-      throw new Exception("Invalid BBOX parameter. Should contain minX, minY, maxX, maxY");
+      crs = bboxComponents[4];
     }
+    else if (bboxComponents.length != 4)
+    {
+      throw new Exception("Invalid \" + paramName.toUpperCase() + \" parameter. Should contain minX, minY, maxX, maxY");
+    }
+
     double[] bboxValues = new double[4];
     for (int index=0; index < bboxComponents.length; index++)
     {
@@ -440,7 +456,10 @@ public class WcsGenerator
         throw new Exception("Invalid BBOX value: " + bboxComponents[index]);
       }
     }
-    return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+
+    bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+
+    return crs;
   }
 
   private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exception
