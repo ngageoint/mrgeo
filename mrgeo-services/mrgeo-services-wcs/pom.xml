@@ -17,14 +17,18 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.mrgeo</groupId>
-    <artifactId>mrgeo</artifactId>
+    <artifactId>mrgeo-services</artifactId>
     <version>${mrgeo.version}</version>
-    <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>mrgeo-services</artifactId>
+  <artifactId>mrgeo-services-wcs</artifactId>
   <version>${mrgeo.version}</version>
-  <name>mrgeo-services</name>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+  <name>mrgeo-services-wcs</name>
+  <url>http://mrgeo.org</url>
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
@@ -34,66 +38,64 @@
   </licenses>
   <build>
     <plugins>
-      <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
+      <!-- Unit Test plugin -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>deploy-pom-only</id>
-            <goals>
-              <goal>deploy-file</goal>
-            </goals>
-            <phase>deploy</phase>
-            <inherited>false</inherited>
-            <configuration>
-              <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
-              <file>${project.build.directory}/${project.build.finalName}.pom</file>
-              <packaging>pom</packaging>
-              <repositoryId>repository</repositoryId>
-              <url>${deploy.repository}</url>
-            </configuration>
-          </execution>
-        </executions>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skipTests>${skip.mrgeo.services.tests}</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <skipTests>${skip.mrgeo.services.integration.tests}</skipTests>
+        </configuration>
+      </plugin>
+      <!-- Make some soft links for the generated products, for convenience -->
+      <plugin>
+        <groupId>com.pyx4j</groupId>
+        <artifactId>maven-junction-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
-  <modules>
-    <module>mrgeo-services-core</module>
-    <module>mrgeo-services-tms</module>
-    <module>mrgeo-services-wms</module>
-    <module>mrgeo-services-wcs</module>
-  </modules>
   <dependencies>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-core</artifactId>
+      <artifactId>mrgeo-services-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-core</artifactId>
+      <artifactId>mrgeo-services-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-server</artifactId>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-process-raster</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.sun.jersey.contribs</groupId>
-      <artifactId>jersey-multipart</artifactId>
+      <groupId>httpunit</groupId>
+      <artifactId>httpunit</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-servlet</artifactId>
+      <groupId>xmlunit</groupId>
+      <artifactId>xmlunit</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-core</artifactId>
+      <groupId>rhino</groupId>
+      <artifactId>js</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-json</artifactId>
+      <groupId>com.sun.jersey.jersey-test-framework</groupId>
+      <artifactId>jersey-test-framework-grizzly2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey.jersey-test-framework</groupId>
+      <artifactId>jersey-test-framework-inmemory</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
   </dependencies>
 </project>
