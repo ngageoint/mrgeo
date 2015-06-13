@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.resources.wms;
+package org.mrgeo.services.utils;
 
 import org.mrgeo.services.Version;
 import org.slf4j.Logger;
@@ -54,10 +54,6 @@ public class DocumentUtils
   public static void writeDocument(Document doc, Version version, PrintWriter out)
     throws TransformerException
   {
-    if (version == null)
-    {
-      version = new Version(WmsGenerator.WMS_VERSION);
-    }
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
     Transformer transformer = transformerFactory.newTransformer();
     transformer.setOutputProperty(OutputKeys.INDENT, "yes");

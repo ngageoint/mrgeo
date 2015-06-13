@@ -144,6 +144,12 @@
               <type>jar</type>
               <targetPath>WEB-INF/classes</targetPath>
             </overlay>
+            <overlay>
+              <groupId>org.mrgeo</groupId>
+              <artifactId>mrgeo-services-wcs</artifactId>
+              <type>jar</type>
+              <targetPath>WEB-INF/classes</targetPath>
+            </overlay>
           </overlays>
           <webResources>
             <resource>
