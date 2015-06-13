@@ -36,8 +36,8 @@ public class WcsGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 
-  public static final String WCS_VERSION = "2.0.1";
-  private Version version = null;
+  public static final String WCS_VERSION = "1.1.0";
+  private Version version = new Version(WCS_VERSION);
 
   @GET
   public Response doGet(@Context UriInfo uriInfo)
@@ -64,11 +64,11 @@ public class WcsGenerator
       String serviceName = getQueryParam(allParams, "service");
       if (serviceName == null)
       {
-        return writeError(Response.Status.BAD_REQUEST, "Missing required SERVICE parameter. Should be set to \"WMS\"");
+        return writeError(Response.Status.BAD_REQUEST, "Missing required SERVICE parameter. Should be set to \"WCS\"");
       }
-      if (!serviceName.equalsIgnoreCase("wms"))
+      if (!serviceName.equalsIgnoreCase("wcs"))
       {
-        return writeError(Response.Status.BAD_REQUEST, "Invalid SERVICE parameter. Should be set to \"WMS\"");
+        return writeError(Response.Status.BAD_REQUEST, "Invalid SERVICE parameter. Should be set to \"WCS\"");
       }
 
       if (request.equalsIgnoreCase("getcapabilities"))
