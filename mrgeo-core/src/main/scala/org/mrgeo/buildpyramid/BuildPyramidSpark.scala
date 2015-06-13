@@ -81,6 +81,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 
 
   override def setup(job: JobArguments): Boolean = {
+    job.isMemoryIntensive = true
     true
   }
 
@@ -216,6 +217,11 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
           context.hadoopConfiguration, providerproperties = this.providerproperties)
 
         mergedTiles.unpersist()
+
+        //TODO: Fix this in S3
+        // in S3, sometimes the just-written data isn't available to read yet.  This sleep just gives
+        // S3 a chance to catch up...
+        Thread.sleep(5000)
       }
       else {
         buildlevellocal(provider, fromlevel)

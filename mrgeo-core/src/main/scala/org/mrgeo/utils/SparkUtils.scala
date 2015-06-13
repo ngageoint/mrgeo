@@ -22,6 +22,8 @@ import java.util.{Enumeration, Properties}
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFilter.Filter
+import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFilter, SequenceFileInputFormat, FileInputFormat}
 import org.apache.hadoop.mapreduce.{OutputFormat, InputFormat, Job}
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
@@ -31,6 +33,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.{TiledOutputFormatContext, TileIdWritable}
+import org.mrgeo.hdfs.input.MapFileFilter
 import org.mrgeo.hdfs.partitioners.{ImageSplitGenerator, TileIdPartitioner}
 import org.mrgeo.image.{MrsImagePyramid, ImageStats, MrsImagePyramidMetadata}
 import org.mrgeo.spark.SparkTileIdPartitioner
@@ -161,17 +164,24 @@ object SparkUtils extends Logging {
     val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
     // build a phony job...
-    val job = new Job()
+    val job = Job.getInstance(context.hadoopConfiguration)
 
     val providerProps: Properties = null
-    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName, zoom,
-      metadata.getTilesize, metadata.getBounds, providerProps)
+//    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName, zoom,
+//      metadata.getTilesize, metadata.getBounds, providerProps)
+//
+//    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
+//        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
+//    context.newAPIHadoopRDD(job.getConfiguration,
+//      inputFormatClass,
+//      keyclass,
+//      valueclass)
 
-    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
-        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
+    FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
+    FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
 
     context.newAPIHadoopRDD(job.getConfiguration,
-      inputFormatClass,
+      classOf[SequenceFileInputFormat[TileIdWritable, RasterWritable]],
       keyclass,
       valueclass)
   }
@@ -222,8 +232,6 @@ object SparkUtils extends Logging {
       localtiletype = tile.getTransferType
     }
 
-    // calculate stats
-    val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
 
 
     // save the new pyramid
@@ -249,54 +257,62 @@ object SparkUtils extends Logging {
 
     // this is missing in early spark APIs, so we have to use reflection in order
     // to maintain backward compatibility. Ugh.
-    var repartitionMethod: java.lang.reflect.Method = null
-    try {
-      repartitionMethod = tiles.getClass.getDeclaredMethod("repartitionAndSortWithinPartitions",
-        Partitioner.getClass)
-    }
-    catch {
-      case nsm: NoSuchMethodException => {
-        // Ignore. On older versions of Spark, this method does not exist, and
-        // that is handled later in the code with repartitionMethod == null.
-      }
-    }
-    if (repartitionMethod != null) {
-      // The new method exists, so let's call it through reflection because it's
-      // more efficient.
-      val sorted = repartitionMethod.invoke(tiles, sparkPartitioner)
-      val saveMethodName = "saveAsNewAPIHadoopFile"
-      val saveMethod = sorted.getClass.getDeclaredMethod(saveMethodName,
-        classOf[String] /* name */,
-        classOf[Class[Any]]  /* keyClass */,
-        classOf[Class[Any]] /*valueClass */,
-        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
-        classOf[Configuration] /* configuration */)
-      if (saveMethod != null) {
-        println("saving to: " + name)
-        saveMethod.invoke(sorted, name, classOf[TileIdWritable], classOf[RasterWritable],
-          tofp.getOutputFormat.getClass, conf)
-        //        sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
-        //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
-      }
-      else {
-        logError("Unable to find method " + saveMethodName + " in class " + sorted.getClass.getName)
-      }
-    }
-    else {
-      // This is an older version of Spark, so use the old partition and sort.
-      val wrapped = new PairRDDFunctions(tiles)
-      val partitioned = wrapped.partitionBy(sparkPartitioner)
+//    var repartitionMethod: java.lang.reflect.Method = null
+//    try {
+//      repartitionMethod = tiles.getClass.getDeclaredMethod("repartitionAndSortWithinPartitions",
+//        Partitioner.getClass)
+//    }
+//    catch {
+//      case nsm: NoSuchMethodException => {
+//        // Ignore. On older versions of Spark, this method does not exist, and
+//        // that is handled later in the code with repartitionMethod == null.
+//      }
+//    }
+//    if (repartitionMethod != null) {
+//      // The new method exists, so let's call it through reflection because it's
+//      // more efficient.
+//      val sorted = repartitionMethod.invoke(tiles, sparkPartitioner)
+//      val saveMethodName = "saveAsNewAPIHadoopFile"
+//      val saveMethod = sorted.getClass.getDeclaredMethod(saveMethodName,
+//        classOf[String] /* name */,
+//        classOf[Class[Any]]  /* keyClass */,
+//        classOf[Class[Any]] /*valueClass */,
+//        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
+//        classOf[Configuration] /* configuration */)
+//      if (saveMethod != null) {
+//        println("saving to: " + name)
+//        saveMethod.invoke(sorted, name, classOf[TileIdWritable], classOf[RasterWritable],
+//          tofp.getOutputFormat.getClass, conf)
+//        //        sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+//        //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
+//      }
+//      else {
+//        logError("Unable to find method " + saveMethodName + " in class " + sorted.getClass.getName)
+//      }
+//    }
+//    else {
+//      // This is an older version of Spark, so use the old partition and sort.
+//      val wrapped = new PairRDDFunctions(tiles)
+//      val partitioned = wrapped.partitionBy(sparkPartitioner)
+//
+//      //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
+//      // free up the tile's cache, it's not needed any more...
+//
+//      val wrapped1 = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](partitioned)
+//      var s = new PairRDDFunctions(wrapped1.sortByKey())
+//      println("saving to: " + name)
+//      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+//    }
 
-      //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
-      // free up the tile's cache, it's not needed any more...
-
-      val wrapped1 = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](partitioned)
-      var s = new PairRDDFunctions(wrapped1.sortByKey())
-      println("saving to: " + name)
-      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
-    }
+    val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+    sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
+      tofp.getOutputFormat.getClass, conf)
 
     sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
+
+    // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
+    // on.  This can be a problem for fast calculating/small partitions
+    val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
 
     //dp.teardown(job)
 

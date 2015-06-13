@@ -15,9 +15,6 @@
 
 package org.mrgeo.mapalgebra;
 
-import java.io.IOException;
-import java.util.Vector;
-
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
@@ -28,13 +25,16 @@ import org.mrgeo.opimage.CropRasterOpImage;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.utils.Bounds;
 
+import java.io.IOException;
+import java.util.Vector;
+
 /**
  * Crop the input image down to a smaller region. This is done in an intelligent
  * fashion to try and avoid excess processing
  */
 public class CropRasterMapOp extends RenderedImageMapOp implements BoundsCalculator
 {
-  private String _cropType = "FAST";
+  private String _cropType = CropRasterOpImage.FAST;
   private Bounds actualBounds = new Bounds();
 
   public CropRasterMapOp()
@@ -149,7 +149,7 @@ public class CropRasterMapOp extends RenderedImageMapOp implements BoundsCalcula
 
     if (children.size() == 6)
     {
-      _cropType = parseChildString(children.get(5), "crop type", parser);
+      _cropType = parseChildString(children.get(5), "crop type", parser).toUpperCase();
       if (!_cropType.equals(CropRasterOpImage.FAST) && !_cropType.equals(CropRasterOpImage.EXACT))
       {
         throw new IllegalArgumentException(String.format(
