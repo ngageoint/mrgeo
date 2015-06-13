@@ -81,6 +81,7 @@ public class WmsGenerator
 
   private Version version = null;
   public static final String WMS_VERSION = "1.3.0";
+  private static final String WMS_SERVICE = "wms";
 
   public WmsGenerator()
   {
@@ -930,7 +931,7 @@ public class WmsGenerator
       ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
       // DocumentUtils.checkForErrors(doc);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
       out.close();
       return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
     }
@@ -1003,7 +1004,7 @@ public class WmsGenerator
       ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
       // DocumentUtils.checkForErrors(doc);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
       out.close();
       return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
     }
@@ -1041,7 +1042,7 @@ public class WmsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
       out.close();
       return Response
               .status(httpStatus)
@@ -1079,7 +1080,7 @@ public class WmsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
       out.close();
       return Response
               .status(httpStatus)
@@ -1118,7 +1119,7 @@ public class WmsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
       out.close();
       return Response
               .status(httpStatus)
