@@ -8,6 +8,7 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
+import org.mrgeo.services.wcs.DescribeCoverageDocumentGenerator;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
@@ -132,30 +133,42 @@ public class WcsGenerator
   {
     String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
     version = new Version(versionStr);
-    if (version.isLess("1.4.0"))
+    String[] layers = null;
+    if (version.isLess("1.1.0"))
     {
-      return writeError(Response.Status.BAD_REQUEST, "Describe tiles is only supported with version >= 1.4.0");
+      String layer = getQueryParam(allParams, "coverage");
+      if (layer == null)
+      {
+        return writeError(Response.Status.BAD_REQUEST, "Missing required COVERAGE parameter");
+      }
+      layers = new String[]{layer};
+    }
+    else
+    {
+      String layerStr = getQueryParam(allParams, "identifiers");
+      if (layerStr == null)
+      {
+        return writeError(Response.Status.BAD_REQUEST, "Missing required IDENTIFIERS parameter");
+      }
+      layers = layerStr.split(",");
     }
 
-//    try
-//    {
-//      final DescribeCoverageDocumentGenerator docGen = new DescribeCoverageDocumentGenerator();
-//      final Document doc = docGen.generateDoc(version, uriInfo.getRequestUri().toString(),
-//          getPyramidFilesList(providerProperties));
-//
-//      ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-//      final PrintWriter out = new PrintWriter(xmlStream);
-//      // DocumentUtils.checkForErrors(doc);
-//      DocumentUtils.writeDocument(doc, version, out);
-//      out.close();
-//      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
-//    }
-//    catch (Exception e)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, e);
-//    }
+    try
+    {
+      final DescribeCoverageDocumentGenerator docGen = new DescribeCoverageDocumentGenerator();
+      final Document doc = docGen.generateDoc(version, uriInfo.getRequestUri().toString(), layers);
 
-    return writeError(Response.Status.BAD_REQUEST, "Not Implemented");
+      ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
+      final PrintWriter out = new PrintWriter(xmlStream);
+      // DocumentUtils.checkForErrors(doc);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
+      out.close();
+      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
+    }
+    catch (Exception e)
+    {
+      return writeError(Response.Status.BAD_REQUEST, e);
+    }
   }
 
 
