@@ -37,6 +37,8 @@ public class WcsGenerator
   private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 
   public static final String WCS_VERSION = "1.1.0";
+  private static final String WCS_SERVICE = "wms";
+
   private Version version = new Version(WCS_VERSION);
 
   @GET
@@ -483,7 +485,7 @@ public class WcsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
       out.close();
       return Response
           .status(httpStatus)
@@ -521,7 +523,7 @@ public class WcsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
       out.close();
       return Response
           .status(httpStatus)
@@ -529,10 +531,7 @@ public class WcsGenerator
           .entity(xmlStream.toString())
           .build();
     }
-    catch (ParserConfigurationException e1)
-    {
-    }
-    catch (TransformerException e1)
+    catch (ParserConfigurationException | TransformerException ignored)
     {
     }
     // Fallback in case there is an XML exception above
@@ -560,7 +559,7 @@ public class WcsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
       out.close();
       return Response
           .status(httpStatus)

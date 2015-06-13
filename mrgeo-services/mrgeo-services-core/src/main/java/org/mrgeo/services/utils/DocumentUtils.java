@@ -51,14 +51,14 @@ public class DocumentUtils
    * @param out output writer
    * @throws TransformerException
    */
-  public static void writeDocument(Document doc, Version version, PrintWriter out)
+  public static void writeDocument(Document doc, Version version, String service, PrintWriter out)
     throws TransformerException
   {
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
     Transformer transformer = transformerFactory.newTransformer();
     transformer.setOutputProperty(OutputKeys.INDENT, "yes");
     transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, String.format(
-      "http://schemas.opengis.net/wcs/%s/wcsAll.xsd", version.toString()));
+      "http://schemas.opengis.net/%s/%s/%sAll.xsd", service, service, version.toString()));
     DOMSource source = new DOMSource(doc);
     StreamResult result = new StreamResult(out);
     transformer.transform(source, result);
@@ -73,12 +73,12 @@ public class DocumentUtils
    * @throws TransformerException
    * @throws ParserConfigurationException
    */
-  public static void checkForErrors(Document doc, Version version) throws SAXException, IOException,
+  public static void checkForErrors(Document doc, String service, Version version) throws SAXException, IOException,
     TransformerException, ParserConfigurationException
   {
     ByteArrayOutputStream strm = new ByteArrayOutputStream();
     PrintWriter pw = new PrintWriter(strm);
-    DocumentUtils.writeDocument(doc, version, pw);
+    DocumentUtils.writeDocument(doc, version, service, pw);
 
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setValidating(true);
@@ -118,8 +118,8 @@ public class DocumentUtils
     TransformerFactory tf = TransformerFactory.newInstance();
     Transformer transformer = tf.newTransformer();
     //TODO: should version be dynamic here?
-    transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,
-        "http://schemas.opengis.net/wms/" + version.toString() + "/WMS_MS_Capabilities.dtd");
+    transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, String.format(
+        "http://schemas.opengis.net/%s/%s/%sAll.xsd", service, service, version.toString()));
     transformer.transform(source, result);
   }
 }
