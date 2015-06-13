@@ -11,6 +11,7 @@ import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.services.wcs.WcsCapabilities;
+import org.mrgeo.services.wcs.DescribeCoverageDocumentGenerator;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
@@ -45,7 +46,9 @@ public class WcsGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 
-  public static final String WCS_VERSION = "1.1.0";
+  public static final String WCS_VERSION = "1.0.0";
+  private static final String WCS_SERVICE = "wms";
+
   private Version version = new Version(WCS_VERSION);
 
   @GET
@@ -137,32 +140,44 @@ public class WcsGenerator
       MultivaluedMap<String,String> allParams,
       final Properties providerProperties)
   {
-//    String versionStr = getQueryParam(allParams, "version", "1.4.0");
-//    version = new Version(versionStr);
-//    if (version.isLess("1.4.0"))
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Describe tiles is only supported with version >= 1.4.0");
-//    }
-//
-//    try
-//    {
-//      final DescribeTilesDocumentGenerator docGen = new DescribeTilesDocumentGenerator();
-//      final Document doc = docGen.generateDoc(version, uriInfo.getRequestUri().toString(),
-//          getPyramidFilesList(providerProperties));
-//
-//      ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-//      final PrintWriter out = new PrintWriter(xmlStream);
-//      // DocumentUtils.checkForErrors(doc);
-//      DocumentUtils.writeDocument(doc, version, out);
-//      out.close();
-//      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
-//    }
-//    catch (Exception e)
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, e);
-//    }
+    String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
+    version = new Version(versionStr);
+    String[] layers = null;
+    if (version.isLess("1.1.0"))
+    {
+      String layer = getQueryParam(allParams, "coverage");
+      if (layer == null)
+      {
+        return writeError(Response.Status.BAD_REQUEST, "Missing required COVERAGE parameter");
+      }
+      layers = new String[]{layer};
+    }
+    else
+    {
+      String layerStr = getQueryParam(allParams, "identifiers");
+      if (layerStr == null)
+      {
+        return writeError(Response.Status.BAD_REQUEST, "Missing required IDENTIFIERS parameter");
+      }
+      layers = layerStr.split(",");
+    }
 
-    return writeError(Response.Status.BAD_REQUEST, "Not Implemented");
+    try
+    {
+      final DescribeCoverageDocumentGenerator docGen = new DescribeCoverageDocumentGenerator();
+      final Document doc = docGen.generateDoc(version, uriInfo.getRequestUri().toString(), layers);
+
+      ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
+      final PrintWriter out = new PrintWriter(xmlStream);
+      // DocumentUtils.checkForErrors(doc);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
+      out.close();
+      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
+    }
+    catch (Exception e)
+    {
+      return writeError(Response.Status.BAD_REQUEST, e);
+    }
   }
 
 
@@ -172,7 +187,7 @@ public class WcsGenerator
     // The versionParamName will be null if the request did not include the
     // version parameter.
     String versionParamName = getActualQueryParamName(allParams, "version");
-    String versionStr = getQueryParam(allParams, "version", "1.0.0");
+    String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
     Version version = new Version(versionStr);
 
     final WcsCapabilities docGen = new WcsCapabilities();
@@ -210,7 +225,7 @@ public class WcsGenerator
       ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
       // DocumentUtils.checkForErrors(doc);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
       out.close();
       return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
     }
@@ -250,35 +265,45 @@ public class WcsGenerator
     OpImageRegistrar.registerMrGeoOps();
 
     // Get all of the query parameter values needed and validate them
-    String layers = getQueryParam(allParams, "coverage");
-    String[] layerNames = null;
-    if (layers != null && !layers.isEmpty())
+    String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
+    version = new Version(versionStr);
+
+    String layer = null;
+    if (version.isLess("1.1.0"))
     {
-      layerNames = layers.split(",");
+      layer = getQueryParam(allParams, "coverage");
     }
-    if (layerNames == null || layerNames.length == 0)
+    else
+    {
+      layer = getQueryParam(allParams, "identifier");
+    }
+
+    if (layer == null)
     {
       return writeError(Response.Status.BAD_REQUEST, "Missing required COVERAGE parameter");
     }
-    if (layerNames.length > 1)
-    {
-      return writeError(Response.Status.BAD_REQUEST, "Only one COVERAGE is supported");
-    }
 
-    String srs = null;
+
+    String crs = null;
+    Bounds bounds = new Bounds();
     try
     {
-      srs = getCrsParam(allParams);
-    }
-    catch (Exception e)
-    {
-      return writeError(Response.Status.BAD_REQUEST, e);
-    }
-
-    Bounds bounds = null;
-    try
-    {
-      bounds = getBoundsParam(allParams, "bbox");
+      if (version.isLess("1.1.0"))
+      {
+        crs = getBoundsParam(allParams, "bbox", bounds);
+        try
+        {
+          crs = getCrsParam(allParams);
+        }
+        catch (Exception e)
+        {
+          return writeError(Response.Status.BAD_REQUEST, e);
+        }
+      }
+      else
+      {
+        crs = getBoundsParam(allParams, "boundingbox", bounds);
+      }
     }
     catch (Exception e)
     {
@@ -324,7 +349,7 @@ public class WcsGenerator
     // Reproject bounds to EPSG:4326 if necessary
     try
     {
-      bounds = RequestUtils.reprojectBounds(bounds, srs);
+      bounds = RequestUtils.reprojectBounds(bounds, crs);
     }
     catch (org.opengis.referencing.NoSuchAuthorityCodeException e)
     {
@@ -338,11 +363,11 @@ public class WcsGenerator
     // Return the resulting image
     try
     {
-      Raster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
+      Raster result = renderer.renderImage(layer, bounds, width, height, providerProperties, crs);
 
       Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
           .getHandler(format, ImageResponseWriter.class))
-          .write(result, layerNames[0], bounds);
+          .write(result, layer, bounds);
 
       return builder.build();
     }
@@ -444,19 +469,25 @@ public class WcsGenerator
     return defaultValue;
   }
 
-  private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName)
+  private String getBoundsParam(MultivaluedMap<String, String> allParams, String paramName, Bounds bounds)
       throws Exception
   {
     String bbox = getQueryParam(allParams, paramName);
     if (bbox == null)
     {
-      throw new Exception("Missing required BBOX parameter");
+      throw new Exception("Missing required " + paramName.toUpperCase() + " parameter");
     }
     String[] bboxComponents = bbox.split(",");
-    if (bboxComponents.length != 4)
+    String crs = null;
+    if (bboxComponents.length == 5)
     {
-      throw new Exception("Invalid BBOX parameter. Should contain minX, minY, maxX, maxY");
+      crs = bboxComponents[4];
     }
+    else if (bboxComponents.length != 4)
+    {
+      throw new Exception("Invalid \" + paramName.toUpperCase() + \" parameter. Should contain minX, minY, maxX, maxY");
+    }
+
     double[] bboxValues = new double[4];
     for (int index=0; index < bboxComponents.length; index++)
     {
@@ -469,7 +500,10 @@ public class WcsGenerator
         throw new Exception("Invalid BBOX value: " + bboxComponents[index]);
       }
     }
-    return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+
+    bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+
+    return crs;
   }
 
   private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exception
@@ -514,7 +548,7 @@ public class WcsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
       out.close();
       return Response
           .status(httpStatus)
@@ -552,7 +586,7 @@ public class WcsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
       out.close();
       return Response
           .status(httpStatus)
@@ -560,10 +594,7 @@ public class WcsGenerator
           .entity(xmlStream.toString())
           .build();
     }
-    catch (ParserConfigurationException e1)
-    {
-    }
-    catch (TransformerException e1)
+    catch (ParserConfigurationException | TransformerException ignored)
     {
     }
     // Fallback in case there is an XML exception above
@@ -591,7 +622,7 @@ public class WcsGenerator
       se.appendChild(msgNode);
       final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
       final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, out);
+      DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
       out.close();
       return Response
           .status(httpStatus)
