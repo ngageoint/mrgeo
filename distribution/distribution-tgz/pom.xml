@@ -177,5 +177,9 @@
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-services-wms</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-services-wcs</artifactId>
+    </dependency>
   </dependencies>
 </project>
