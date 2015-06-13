@@ -41,9 +41,23 @@ public class DescribeCoverageDocumentGenerator
     return doc;
   }
 
-  private void generateIdentifiers(Document doc, Version version, String[] layers)
+  private void generateIdentifiers(Document doc, Version version, String[] layers) throws IOException
   {
+    Element descriptions = XmlUtils.createElement(doc, "wcs:CoverageDescriptions");
+    setupNamespaces(descriptions, version);
 
+    for (MrsImageDataProvider provider : getLayers(layers))
+    {
+      MrsImagePyramidMetadata metadata = provider.getMetadataReader().read();
+
+      int maxzoom = metadata.getMaxZoomLevel();
+
+      Element description = XmlUtils.createElement(descriptions, "wcs:CoverageDescription");
+      // name and label
+      XmlUtils.createTextElement2(description, "ows:Title", provider.getResourceName());
+      XmlUtils.createTextElement2(description, "ows:Abstract", "Layer generated using MrGeo");
+      XmlUtils.createTextElement2(description, "wcs:Identifier", provider.getResourceName());
+    }
   }
 
   private void generageCoverage(Document doc, Version version, String[] layers) throws IOException
@@ -181,13 +195,14 @@ public class DescribeCoverageDocumentGenerator
     dtr.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
     if (!version.isLess("1.1.0"))
     {
+      dtr.setAttribute("xmlns:ows", "http://www.opengis.net/ows/1.1" + version.toString());
       dtr.setAttribute("xmlns:wcs", "http://www.opengis.net/wcs/" + version.toString());
     }
     dtr.setAttribute("xsi:schemaLocation",
         "http://www.opengis.net/wcs http://schemas.opengis.net/wcs/" + version.toString() + "/describeCoverage.xsd");
   }
 
-  private static MrsImageDataProvider[] getLayers(String[] layers) throws IOException
+  private MrsImageDataProvider[] getLayers(String[] layers) throws IOException
   {
     Properties providerProperties = SecurityUtils.getProviderProperties();
 
