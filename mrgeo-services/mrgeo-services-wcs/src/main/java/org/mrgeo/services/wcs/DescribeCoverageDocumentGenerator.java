@@ -31,17 +31,17 @@ public class DescribeCoverageDocumentGenerator
 
     if (version.isLess("1.1.0"))
     {
-      generageCoverage(doc, version, layers);
+      generate100(doc, version, layers);
     }
     else
     {
-      generateIdentifiers(doc, version, layers);
+      generate110(doc, version, layers);
     }
 
     return doc;
   }
 
-  private void generateIdentifiers(Document doc, Version version, String[] layers) throws IOException
+  private void generate110(Document doc, Version version, String[] layers) throws IOException
   {
     Element descriptions = XmlUtils.createElement(doc, "wcs:CoverageDescriptions");
     setupNamespaces(descriptions, version);
@@ -124,7 +124,7 @@ public class DescribeCoverageDocumentGenerator
     }
   }
 
-  private void generageCoverage(Document doc, Version version, String[] layers) throws IOException
+  private void generate100(Document doc, Version version, String[] layers) throws IOException
   {
 
     Element desc = XmlUtils.createElement(doc, "CoverageDescription");
