@@ -79,7 +79,7 @@ public class WmsGenerator
   public static final String PNG_MIME_TYPE = "image/png";
   public static final String TIFF_MIME_TYPE = "image/tiff";
 
-  private Version version = null;
+  private Version version = new Version(WMS_VERSION);
   public static final String WMS_VERSION = "1.3.0";
   private static final String WMS_SERVICE = "wms";
 
