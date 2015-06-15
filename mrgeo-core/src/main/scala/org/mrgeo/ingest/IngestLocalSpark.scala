@@ -35,7 +35,13 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
       classOf[TileIdWritable],
       classOf[RasterWritable])
 
-    val mergedTiles=rawtiles.reduceByKey((r1, r2) => {
+    // this is stupid, but because the way hadoop input formats may reuse the key/value objects,
+    // if we don't do this, all the data will eventually collapse into a single entry.
+    val mapped = rawtiles.map(tile => {
+      (new TileIdWritable(tile._1), RasterWritable.toWritable(RasterWritable.toRaster(tile._2)))
+    })
+
+    val mergedTiles = mapped.reduceByKey((r1, r2) => {
       val src = RasterWritable.toRaster(r1)
       val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
@@ -49,6 +55,7 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
 
     }).persist(StorageLevel.MEMORY_AND_DISK)
 
+
     val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
 
     val raster = RasterWritable.toRaster(mergedTiles.first()._2)
@@ -58,7 +65,9 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
     }
 
     SparkUtils.saveMrsPyramid(mergedTiles, idp, output, zoom, tilesize, nodatas, context.hadoopConfiguration,
+      bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
       protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
+
 
     mergedTiles.unpersist()
     true
