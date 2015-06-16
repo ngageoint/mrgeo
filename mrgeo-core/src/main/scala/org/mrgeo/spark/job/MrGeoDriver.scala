@@ -310,10 +310,10 @@ abstract class MrGeoDriver extends Logging {
     for (jar <- qualified) {
       // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...
       //if (!jar.contains("spark-yarn")) {
-        if (jars.length > 0) {
-          jars ++= ","
-        }
-        jars ++= jar
+      if (jars.length > 0) {
+        jars ++= ","
+      }
+      jars ++= jar
       //}
     }
     job.setJars(jars.toString())
