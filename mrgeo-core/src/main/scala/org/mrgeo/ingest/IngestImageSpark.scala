@@ -391,6 +391,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     }
 
     SparkUtils.saveMrsPyramid(mergedTiles, idp, output, zoom, tilesize, nodatas, context.hadoopConfiguration,
+      bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
       protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
 
     mergedTiles.unpersist()

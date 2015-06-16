@@ -74,7 +74,7 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
 
   def writeSplits(path:String, conf:Configuration): Unit = {
 
-    if (splits.length > 0) {
+    if (splits.length > 1) {
       val HasPartitionNames: Long = -12345L
       val SplitFile: String = "splits"
 
@@ -123,11 +123,6 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
         out.close()
         fdos.close()
       }
-
-      println("wrote splits to: " + path)
-    }
-    else {
-      println("skipped split file, only 1 split (" + path + ")")
     }
   }
 
