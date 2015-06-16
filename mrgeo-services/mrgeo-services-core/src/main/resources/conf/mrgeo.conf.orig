@@ -23,7 +23,7 @@ use.kryo.serialization=false
 # amount of memory to give to memory intensive jobs.  For example, if YARN was configured to give
 # 2G (2048m) to a job, a multiplier of 2 would yield 4G, 1.5 would yield 3G.  The total number of
 # concurrent tasks will be be lowered by the appripriate amount
-memoryintensive.multiplier=2
+memoryintensive.multiplier = 2
 
 # Additional classpath elements used for finding dependencies used in distributed
 # processing.  These are added AFTER MRGEO_HOME dependencies, but before
