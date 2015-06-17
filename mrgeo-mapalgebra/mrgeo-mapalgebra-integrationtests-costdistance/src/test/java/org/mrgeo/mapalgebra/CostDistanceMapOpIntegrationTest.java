@@ -91,6 +91,7 @@ public class CostDistanceMapOpIntegrationTest // extends LocalRunnerTest
   }
 
   @Test
+  @Ignore
   @Category(IntegrationTest.class)
   public void testCostDistance() throws Exception
   {
@@ -130,150 +131,150 @@ public class CostDistanceMapOpIntegrationTest // extends LocalRunnerTest
     }
   }
 
-  @Ignore
-  @Test
-  @Category(IntegrationTest.class)
-  public void testCostDistanceWithUniformFriction() throws Exception
-  {
-    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "false");
-    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "-1");
-
-    String uniformFrictionSurface = testUtils.getInputHdfs() + "/" +  ALL_ONES;
-    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.135 -17.945)'\");\n"
-        + "friction = [" + uniformFrictionSurface + "];\n"
-        + "result = CostDistance(src, " + ALL_ONES_ZOOM + ", friction, \"20000.0\");";
-
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
-
-      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
-          new Path(testUtils.getOutputHdfs(), testname.getMethodName()).toUri().toString(),
-          AccessMode.READ, (Properties)null);
-
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
-
-      ImageStats[] stats = metadata.getStats();
-      ImageStats[] imageStats = metadata.getImageStats(metadata.getMaxZoomLevel());
-      ImageStats bandStats = metadata.getStats(0);
-
-      Assert.assertArrayEquals(stats, imageStats);
-      Assert.assertEquals(bandStats, imageStats[0]);
-    }
-
-  }
-
-  @Ignore
-  @Test
-  @Category(IntegrationTest.class)
-  public void testCostDistanceWithBoundsAndDefaultZoom() throws Exception
-  {
-    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "true");
-    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "2");
-
-    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
-        + "friction = [" + frictionSurface + "];\n"
-        + "result = CostDistance(src, friction, \"50000.0\");";
-
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
-    }
-  }
-
-  @Ignore
-  @Test
-  @Category(IntegrationTest.class)
-  public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
-  {
-    final int lowerZoomLevel = TOBLER_MEDIUM_ZOOM - 1;
-
-    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "true");
-    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "2");
-
-    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
-        + "friction = [" + frictionSurface + "];\n"
-        + "result = CostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
-
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
-    }
-  }
-
-  @Ignore
-  @Test
-  @Category(IntegrationTest.class)
-  public void testCostDistanceWithLeastCostPath() throws Exception
-  {
-    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "true");
-    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "-1");
-
-    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
-        + "friction = [" + frictionSurface + "];\n"
-        + "cost = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");\n"
-        + "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(67.67 32.5)'\");\n"
-        + "result = LeastCostPath(cost, destPts);";
-
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      vectorutils.generateBaselineVector(conf, testname.getMethodName(), exp);
-    }
-    else
-    {
-      vectorutils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
-      vectorutils.compareVectors(conf, testname.getMethodName());
-    }
-
-//    LeastCostPathMapOpIntegrationTest.runLeastCostPath(HadoopUtils.createConfiguration(),
-//        testUtils.getOutputHdfs(),
-//        testname.getMethodName(),
-//        exp,
-//        false, // don't do path checks
-//        41783.9f,
-//        53631.8f,
-//        0.8d,
-//        2.1d,
-//        1.34d
-//    );
-  }
-
-
-  @Ignore
-  @Test
-  @Category(IntegrationTest.class)
-  public void testOpportunityVolume() throws Exception
-  {
-    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "true");
-    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "-1");
-
-    String exp = "srcPt = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
-        +   "destPt = InlineCsv(\"GEOMETRY\", \"'POINT(67.7 32.38)'\");\n"
-        +   "friction = [" + frictionSurface + "];\n"
-        +   "srcCost = CostDistance(srcPt, " + TOBLER_MEDIUM_ZOOM + ",friction, \"50000.0\");\n"
-        +   "destCost = CostDistance(destPt, " + TOBLER_MEDIUM_ZOOM + ",friction, \"50000.0\");\n"
-        +   "opvol = 50000 - (srcCost + destCost);\n"
-        +   "result = con(opvol < 0, 0, opvol);";
-
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
-    }
-  }
+//  @Ignore
+//  @Test
+//  @Category(IntegrationTest.class)
+//  public void testCostDistanceWithUniformFriction() throws Exception
+//  {
+//    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "false");
+//    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "-1");
+//
+//    String uniformFrictionSurface = testUtils.getInputHdfs() + "/" +  ALL_ONES;
+//    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.135 -17.945)'\");\n"
+//        + "friction = [" + uniformFrictionSurface + "];\n"
+//        + "result = CostDistance(src, " + ALL_ONES_ZOOM + ", friction, \"20000.0\");";
+//
+//    if (GEN_BASELINE_DATA_ONLY)
+//    {
+//      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+//    }
+//    else
+//    {
+//      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+//
+//      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
+//          new Path(testUtils.getOutputHdfs(), testname.getMethodName()).toUri().toString(),
+//          AccessMode.READ, (Properties)null);
+//
+//      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+//
+//      ImageStats[] stats = metadata.getStats();
+//      ImageStats[] imageStats = metadata.getImageStats(metadata.getMaxZoomLevel());
+//      ImageStats bandStats = metadata.getStats(0);
+//
+//      Assert.assertArrayEquals(stats, imageStats);
+//      Assert.assertEquals(bandStats, imageStats[0]);
+//    }
+//
+//  }
+//
+//  @Ignore
+//  @Test
+//  @Category(IntegrationTest.class)
+//  public void testCostDistanceWithBoundsAndDefaultZoom() throws Exception
+//  {
+//    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "true");
+//    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "2");
+//
+//    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
+//        + "friction = [" + frictionSurface + "];\n"
+//        + "result = CostDistance(src, friction, \"50000.0\");";
+//
+//    if (GEN_BASELINE_DATA_ONLY)
+//    {
+//      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+//    }
+//    else
+//    {
+//      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+//    }
+//  }
+//
+//  @Ignore
+//  @Test
+//  @Category(IntegrationTest.class)
+//  public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
+//  {
+//    final int lowerZoomLevel = TOBLER_MEDIUM_ZOOM - 1;
+//
+//    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "true");
+//    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "2");
+//
+//    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
+//        + "friction = [" + frictionSurface + "];\n"
+//        + "result = CostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
+//
+//    if (GEN_BASELINE_DATA_ONLY)
+//    {
+//      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+//    }
+//    else
+//    {
+//      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+//    }
+//  }
+//
+//  @Ignore
+//  @Test
+//  @Category(IntegrationTest.class)
+//  public void testCostDistanceWithLeastCostPath() throws Exception
+//  {
+//    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "true");
+//    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "-1");
+//
+//    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
+//        + "friction = [" + frictionSurface + "];\n"
+//        + "cost = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");\n"
+//        + "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(67.67 32.5)'\");\n"
+//        + "result = LeastCostPath(cost, destPts);";
+//
+//    if (GEN_BASELINE_DATA_ONLY)
+//    {
+//      vectorutils.generateBaselineVector(conf, testname.getMethodName(), exp);
+//    }
+//    else
+//    {
+//      vectorutils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+//      vectorutils.compareVectors(conf, testname.getMethodName());
+//    }
+//
+////    LeastCostPathMapOpIntegrationTest.runLeastCostPath(HadoopUtils.createConfiguration(),
+////        testUtils.getOutputHdfs(),
+////        testname.getMethodName(),
+////        exp,
+////        false, // don't do path checks
+////        41783.9f,
+////        53631.8f,
+////        0.8d,
+////        2.1d,
+////        1.34d
+////    );
+//  }
+//
+//
+//  @Ignore
+//  @Test
+//  @Category(IntegrationTest.class)
+//  public void testOpportunityVolume() throws Exception
+//  {
+//    MrGeoProperties.getInstance().setProperty("giraph.disableAutoBounds", "true");
+//    MrGeoProperties.getInstance().setProperty("giraph.boundsBuffer", "-1");
+//
+//    String exp = "srcPt = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
+//        +   "destPt = InlineCsv(\"GEOMETRY\", \"'POINT(67.7 32.38)'\");\n"
+//        +   "friction = [" + frictionSurface + "];\n"
+//        +   "srcCost = CostDistance(srcPt, " + TOBLER_MEDIUM_ZOOM + ",friction, \"50000.0\");\n"
+//        +   "destCost = CostDistance(destPt, " + TOBLER_MEDIUM_ZOOM + ",friction, \"50000.0\");\n"
+//        +   "opvol = 50000 - (srcCost + destCost);\n"
+//        +   "result = con(opvol < 0, 0, opvol);";
+//
+//    if (GEN_BASELINE_DATA_ONLY)
+//    {
+//      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+//    }
+//    else
+//    {
+//      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+//    }
+//  }
 }

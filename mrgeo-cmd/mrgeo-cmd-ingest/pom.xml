@@ -68,5 +68,9 @@
       <groupId>org.geotools</groupId>
       <artifactId>gt-coverage</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.gdal</groupId>
+      <artifactId>gdal</artifactId>
+    </dependency>
   </dependencies>
 </project>

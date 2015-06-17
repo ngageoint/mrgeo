@@ -8,8 +8,9 @@ colorscale.base = /mrgeo/color-scales
 # This is the spot in HDFS where jars are distributed for the mappers/reducers
 distributed.base = /mrgeo/jars
 
-# This needs to be a location that MrGeo can write to.
-db.path = /tmp/mrgeo-services-db
+# Path(s) to gdal shared libraries, separated by ":".
+# Currently, we use: libgdal, libgdaljni.so, libgdalconstjni, and libosrjni.so
+gdal.path = /usr/lib:/usr/lib/jni
 
 # Denote which cluster type you have.  Mainly used for Spark processing.  Valid values
 # are: yarn, spark, and local
@@ -18,6 +19,11 @@ cluster=yarn
 # Use Kryo serialization for Spark jobs, if using Spark < 1.3.0, this _MUST_ be false!
 use.kryo.serialization=false
 
+# Memory intensive (Spark) job memory multiplier.  This parameter specifies a multiplier for the
+# amount of memory to give to memory intensive jobs.  For example, if YARN was configured to give
+# 2G (2048m) to a job, a multiplier of 2 would yield 4G, 1.5 would yield 3G.  The total number of
+# concurrent tasks will be be lowered by the appripriate amount
+memoryintensive.multiplier = 2
 
 # Additional classpath elements used for finding dependencies used in distributed
 # processing.  These are added AFTER MRGEO_HOME dependencies, but before
@@ -32,13 +38,8 @@ use.kryo.serialization=false
 
 # Modify this to match your server config. You may need to change the port, etc.  Do not remove
 # the trailing forward slash.
+# NOTE:  This appears only to be used in the KMLGenerator and tests.  Look to remove it...
 base.url = http://localhost:8080/mrgeo/
-
-# The number of simultaneous WMS requests to process
-org.mrgeo.resources.WmsGenerator.permits = 9999
-
-# Default Legion to use CPU or GPU computing for operations that can use both
-legion.processortype.preference = GPU
 
 # Size of a mrsimage tile (this should not be changed unless there is a great reason)
 mrsimage.tilesize = 512

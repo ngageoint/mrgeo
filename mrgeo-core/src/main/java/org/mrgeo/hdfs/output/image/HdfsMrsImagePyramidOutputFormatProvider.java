@@ -23,16 +23,16 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.mrgeo.hadoop.multipleoutputs.DirectoryMultipleOutputs;
-import org.mrgeo.hadoop.multipleoutputs.MultipleOutputFormat;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledOutputFormatContext;
+import org.mrgeo.hadoop.multipleoutputs.DirectoryMultipleOutputs;
+import org.mrgeo.hadoop.multipleoutputs.MultipleOutputFormat;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator;
 import org.mrgeo.hdfs.partitioners.TileIdPartitioner;
@@ -126,6 +126,12 @@ public class HdfsMrsImagePyramidOutputFormatProvider extends MrsImageOutputForma
   public MrsImagePyramidMetadataWriter getMetadataWriter()
   {
     return provider.getMetadataWriter();
+  }
+
+  @Override
+  public MrsImageDataProvider getImageProvider()
+  {
+    return provider;
   }
 
   private void setupMultipleOutputs(final Job job, final Path outputPath) throws IOException

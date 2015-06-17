@@ -413,7 +413,7 @@ public class SplitFile
 
   public int writeSplits(final SplitGenerator splitGenerator, final String splitFile) throws IOException
   {
-    final FileSystem fs = FileSystem.get(conf);
+    final FileSystem fs = HadoopFileUtils.getFileSystem(conf, new Path(splitFile));
     final FSDataOutputStream fdos = fs.create(new Path(splitFile));
     try
     {

@@ -386,8 +386,7 @@ public class FillRasterDriver
       ofProvider.teardown(job);
       
       // save the metadata
-      // TODO: Pass a non-null statsProvider
-      MrsImagePyramid.calculateMetadata(output, zoomlevel, ofProvider.getMetadataWriter(),
+      MrsImagePyramid.calculateMetadataWithProvider(output, zoomlevel, ofProvider.getImageProvider(),
           statsProvider, metadata.getDefaultValues(), bounds, conf, protectionLevel,
           providerProperties);
     }

@@ -24,10 +24,11 @@ import org.apache.hadoop.io.compress.*;
 import java.awt.image.*;
 import java.io.*;
 import java.nio.*;
-import java.util.Arrays;
 
 public class RasterWritable extends BytesWritable implements Serializable
 {
+  private static int HEADERSIZE = 5;
+
   public static class RasterWritableException extends RuntimeException
   {
 
@@ -144,6 +145,26 @@ public class RasterWritable extends BytesWritable implements Serializable
     }
 
     throw new RasterWritableException("Unknown RasterSampleModel type");
+  }
+
+  public static RasterWritable toWritable(byte[] data, int width, int height, int bands, int datatype) throws IOException
+  {
+    return toWritable(data, width, height, bands, datatype, null);
+  }
+
+  public static RasterWritable toWritable(byte[] data, int width, int height, int bands, int datatype, Writable payload) throws IOException
+  {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+    writeHeader(width, height, bands, datatype, baos);
+    baos.write(data, 0, data.length);
+
+    if (payload != null)
+    {
+      writePayload(payload, baos);
+    }
+    baos.close();
+    return new RasterWritable(baos.toByteArray());
   }
 
   public static RasterWritable toWritable(final Raster raster) throws IOException
@@ -430,13 +451,26 @@ public class RasterWritable extends BytesWritable implements Serializable
     return raster;
   }
 
+  private static void writeHeader(int width, int height, int bands, int datatype, OutputStream out) throws IOException
+  {
+    final DataOutputStream dos = new DataOutputStream(out);
+
+    dos.writeInt(HEADERSIZE);
+    dos.writeInt(height);
+    dos.writeInt(width);
+    dos.writeInt(bands);
+    dos.writeInt(datatype);
+
+    dos.writeInt(SampleModelType.BANDED.ordinal());
+  }
+
   private static void writeHeader(final Raster raster, final OutputStream out) throws IOException
   {
     final DataOutputStream dos = new DataOutputStream(out);
 
+    int headersize = HEADERSIZE;
     // this is in integers!
     // MAKE SURE TO KEEP THIS CORRECT IF YOU ADD PARAMETERS TO THE HEADER!!!
-    int headersize = 5;
 
     final SampleModel model = raster.getSampleModel();
     final SampleModelType modeltype = toSampleModelType(model);

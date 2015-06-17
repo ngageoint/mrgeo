@@ -54,28 +54,28 @@ public class MrsImagePyramid extends MrsPyramid
       .maximumSize(IMAGE_CACHE_SIZE)
       .expireAfterAccess(IMAGE_CACHE_EXPIRE, TimeUnit.SECONDS)
       .removalListener(
-        new RemovalListener<Integer, Optional<MrsImage>>()
-        {
-          @Override
-          public void onRemoval(final RemovalNotification<Integer, Optional<MrsImage>> notification)
+          new RemovalListener<Integer, Optional<MrsImage>>()
           {
+            @Override
+            public void onRemoval(final RemovalNotification<Integer, Optional<MrsImage>> notification)
+            {
               if (notification.getValue().isPresent())
               {
                 log.debug("image cache removal: " + provider.getResourceName() + "/" + notification.getKey());
 
                 notification.getValue().get().close();
               }
-          }})
-          .build(new CacheLoader<Integer, Optional<MrsImage>>()
-            {
-            @Override
-            public Optional<MrsImage> load(final Integer level) throws IOException
-            {
-              log.debug("image cache miss: " + provider.getResourceName() + "/" + level);
+            }})
+      .build(new CacheLoader<Integer, Optional<MrsImage>>()
+      {
+        @Override
+        public Optional<MrsImage> load(final Integer level) throws IOException
+        {
+          log.debug("image cache miss: " + provider.getResourceName() + "/" + level);
 
-              return Optional.fromNullable(MrsImage.open(provider, level));
-            }
-            });
+          return Optional.fromNullable(MrsImage.open(provider, level));
+        }
+      });
 
 
   final protected MrsImageDataProvider provider;
@@ -83,88 +83,108 @@ public class MrsImagePyramid extends MrsPyramid
   protected MrsImagePyramid(MrsImageDataProvider provider)
   {
     super();
-    
+
     this.provider = provider;
 
   }
 
-  // TODO: Phase out the use of the ImageStats calculation based on HDFS paths
-  // to json stats files. All callers should eventually have to pass a non-null
-  // statsProvider.
-  public static void calculateMetadata(final String pyramidname, final int zoom,
-      final MrsImagePyramidMetadataWriter metadataWriter, 
+  public static void calculateMetadataWithProvider(final String pyramidname, final int zoom,
+      final MrsImageDataProvider provider,
       final AdHocDataProvider statsProvider,
-    final double[] defaultValues,
-    final Bounds bounds, final Configuration conf,
-    final String protectionLevel,
-    final Properties providerProperties) throws JsonGenerationException,
-    JsonMappingException,
-    IOException
+      final double[] defaultValues,
+      final Bounds bounds, final Configuration conf,
+      final String protectionLevel,
+      final Properties providerProperties) throws IOException
   {
-    final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
-  
+    // update the pyramid level stats
+    if (statsProvider != null)
+    {
+      ImageStats[] levelStats = null;
+      levelStats = ImageStats.readStats(statsProvider);
+
+      calculateMetadata(pyramidname, zoom, provider, levelStats, defaultValues,
+          bounds, conf, protectionLevel, providerProperties);
+    }
+  }
+
+  public static void calculateMetadata(final String pyramidname, final int zoom,
+      final MrsImageDataProvider provider,
+      final ImageStats[] levelStats,
+      final double[] defaultValues,
+      final Bounds bounds, final Configuration conf,
+      final String protectionLevel,
+      final Properties providerProperties) throws IOException
+  {
+
+    MrsImagePyramidMetadata metadata;
+    try
+    {
+      metadata = provider.getMetadataReader().read();
+      if (metadata.getMaxZoomLevel() < zoom)
+      {
+        metadata.setMaxZoomLevel(zoom);
+      }
+    }
+    catch (IOException e)
+    {
+      metadata = new MrsImagePyramidMetadata();
+      metadata.setMaxZoomLevel(zoom);
+    }
+
     metadata.setPyramid(pyramidname);
-    metadata.setMaxZoomLevel(zoom);
     metadata.setBounds(bounds);
     metadata.setName(zoom);
     metadata.setDefaultValues(defaultValues);
     if(protectionLevel != null){
-    	metadata.setProtectionLevel(protectionLevel);
+      metadata.setProtectionLevel(protectionLevel);
     }
 
     // HACK!!! (kinda...) Need to make metadata is there so the provider can get the
     //          MrsTileReader (it does a canOpen(), which makes sure metadata is present)
+    MrsImagePyramidMetadataWriter metadataWriter = provider.getMetadataWriter();
     metadataWriter.write(metadata);
 
-    MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(pyramidname,
-        AccessMode.READ, providerProperties);
 
     final MrsTileReader<Raster> reader = provider.getMrsTileReader(zoom);
     try
     {
       final KVIterator<TileIdWritable, Raster> rasterIter = reader.get();
-      
+
       if (rasterIter != null && rasterIter.hasNext())
       {
         final Raster raster = rasterIter.next();
-  
+
         final int tilesize = raster.getWidth();
-  
+
         // TMSUtils.Tile tll = TMSUtils.latLonToTile(bounds.getMinY(), bounds.getMinX(), zoom,
         // tilesize);
         // TMSUtils.Tile tur = TMSUtils.latLonToTile(bounds.getMaxY(), bounds.getMaxX(), zoom,
         // tilesize);
         // metadata.setTileBounds(zoom, new LongRectangle(tll.tx, tll.ty, tur.tx, tur.ty));
-  
+
         final TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
             bounds.getMaxX(), bounds.getMaxY());
-  
+
         final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(b, zoom, tilesize);
         metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
-  
+
         final TMSUtils.Pixel pll = TMSUtils.latLonToPixels(bounds.getMinY(), bounds.getMinX(), zoom,
             tilesize);
         final TMSUtils.Pixel pur = TMSUtils.latLonToPixels(bounds.getMaxY(), bounds.getMaxX(), zoom,
             tilesize);
         metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
-  
+
         metadata.setProtectionLevel(protectionLevel);
         metadata.setBands(raster.getNumBands());
         metadata.setTilesize(tilesize);
         metadata.setTileType(raster.getTransferType());
-  
         // update the pyramid level stats
-        if (statsProvider != null)
-        {
-          ImageStats[] levelStats = null;
-          levelStats = ImageStats.readStats(statsProvider);
-          metadata.setImageStats(metadata.getMaxZoomLevel(), levelStats);
-          // set the image level stats too which are the same as the max zoom level
-          metadata.setStats(levelStats);
-        }
-      }      
+        metadata.setImageStats(metadata.getMaxZoomLevel(), levelStats);
+
+        // set the image level stats too which are the same as the max zoom level
+        metadata.setStats(levelStats);
+      }
       provider.getMetadataWriter(null).write(metadata);
-      
     }
     finally
     {
@@ -222,7 +242,7 @@ public class MrsImagePyramid extends MrsPyramid
         AccessMode.READ, providerProperties);
     return new MrsImagePyramid(provider);
   }
-  
+
   public static MrsImagePyramid open(final String name,
       final Configuration conf) throws IOException
   {
@@ -230,7 +250,7 @@ public class MrsImagePyramid extends MrsPyramid
         AccessMode.READ, conf);
     return new MrsImagePyramid(provider);
   }
-  
+
   public static MrsImagePyramid open(final MrsImageDataProvider provider) throws IOException
   {
     return new MrsImagePyramid(provider);
@@ -243,7 +263,7 @@ public class MrsImagePyramid extends MrsPyramid
 
   /**
    * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
-   * 
+   *
    * @return
    * @throws IOException
    */
@@ -254,7 +274,7 @@ public class MrsImagePyramid extends MrsPyramid
 
   /**
    * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
-   * 
+   *
    * @return
    * @throws IOException
    */

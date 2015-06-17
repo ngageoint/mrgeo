@@ -355,38 +355,8 @@ public class HadoopFileUtils
   public static FileSystem getFileSystem(final Configuration conf, final Path path)
       throws IOException
   {
+    //return FileSystem.newInstance(path.toUri(), conf);
     return FileSystem.get(path.toUri(), conf);
-    //    FileSystem fs = null;
-    //    final String pstr = path.toString();
-    //    // if this is a hadoop archive
-    //    if (pstr.startsWith("har://"))
-    //    {
-    //      @SuppressWarnings("resource")
-    //      final HarFileSystem hfs = new HarFileSystem();
-    //      // I get a null pointer exception if I don't include this initialize
-    //      // step -- odd.
-    //      hfs.initialize(path.toUri(), conf);
-    //      fs = hfs;
-    //    }
-    //    else if (pstr.endsWith(".har"))
-    //    {
-    //      fs = path.getFileSystem(conf);
-    //      final Path p = new Path("har://" + path.makeQualified(fs).toString().replace("://", "-") +
-    //        "/");
-    //      @SuppressWarnings("resource")
-    //      final HarFileSystem hfs = new HarFileSystem();
-    //      // I get a null pointer exception if I don't include this initialize step -- odd.
-    //      hfs.initialize(p.toUri(), conf);
-    //      fs = hfs;
-    //    }
-    //    else
-    //    {
-    //      // NOTE: the bowels of path.getFileSystem() can throw and catch an IOException
-    //      // that is printed in log level DEBUG. This just means the file does not
-    //      // exist and getFileSystem() will return the DFS filesystem.
-    //      fs = path.getFileSystem(conf);
-    //    }
-    //    return fs;
   }
 
   /**

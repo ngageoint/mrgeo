@@ -15,16 +15,6 @@
 
 package org.mrgeo.mapreduce;
 
-import java.awt.image.DataBuffer;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
@@ -55,6 +45,11 @@ import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.awt.image.DataBuffer;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * 
@@ -237,7 +232,7 @@ public class RasterizeVectorDriver
       // defaultValues[0]= -9999;
       
       final Bounds outputBounds = MapReduceUtils.aggregateBounds(boundsProvider);
-      MrsImagePyramid.calculateMetadata(output, zoom, provider.getMetadataWriter(),
+      MrsImagePyramid.calculateMetadataWithProvider(output, zoom, provider.getImageProvider(),
           statsProvider, defaultValues,
           outputBounds, conf, protectionLevel, providerProperties);
       statsProvider.delete();

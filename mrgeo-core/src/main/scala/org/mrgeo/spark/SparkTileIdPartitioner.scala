@@ -1,6 +1,6 @@
 package org.mrgeo.spark
 
-import java.io.PrintWriter
+import java.io._
 import java.nio.ByteBuffer
 
 import org.apache.commons.codec.binary.Base64
@@ -12,15 +12,26 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.tile.{TiledInputFormatContext, TileIdWritable}
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
 import org.mrgeo.hdfs.tile.SplitFile
+import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsImagePyramid
 import scala.collection.JavaConverters._
 import org.mrgeo.tile.SplitGenerator
 
+import scala.collection.mutable
+
 @SerialVersionUID(-1)
-class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
+class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner with Externalizable
 {
 
-  private val splits = splitGenerator.getSplits.asScala.toArray
+  private var splits:Array[java.lang.Long] = null
+
+  if (splitGenerator != null) {
+    splits = splitGenerator.getSplits.asScala.toArray
+  }
+
+  def this() {
+    this(null)
+  }
 
 
   override def numPartitions: Int = {
@@ -34,8 +45,8 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
       //print("*** " + id.get + " ")
       // lots of splits, binary search
       if (splits.length > 1000) {
-        //println(binarySearch(splits, id.get, 0, splits.length - 1))
-        return binarySearch(splits, id.get, 0, splits.length - 1)
+        //println("# " + findSplit(splits, id.get))
+        return findSplit(splits, id.get)
       }
       // few splits, brute force search
       for (split <- splits.indices) {
@@ -44,7 +55,8 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
           return split
         }
       }
-      //println(splits.length)
+
+      //println("& " + splits.length)
       return splits.length
     }
 
@@ -61,62 +73,108 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner
   }
 
   def writeSplits(path:String, conf:Configuration): Unit = {
-    val HasPartitionNames: Long = -12345L
-    val SplitFile: String = "splits"
 
-    val fs: FileSystem = FileSystem.get(conf)
-    val fdos: FSDataOutputStream = fs.create(new Path(path, SplitFile))
+    if (splits.length > 1) {
+      val HasPartitionNames: Long = -12345L
+      val SplitFile: String = "splits"
 
-    val out: PrintWriter = new PrintWriter(fdos)
-    try
-    {
-      // write the magic number
-      val magic: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(HasPartitionNames).array)
+      val fs: FileSystem = HadoopFileUtils.getFileSystem(conf, new Path(path))
 
-      out.println(new String(magic))
+      // check which type of "part-" scheme we have.  This can change depending of what actually wrote the file
+      var prefix = ""
+      if (fs.exists(new Path(path, "part-r-00000"))) {
+        prefix = "part-r-" // created as a reduce step
+      }
+      else if (fs.exists(new Path(path, "part-m-00000"))) {
+        prefix = "part-m-" // created as a map-only step
+      }
+      else {
+        prefix = "part-" // generic step
+      }
+      val fdos: FSDataOutputStream = fs.create(new Path(path, SplitFile))
 
-      println("\nsplits:")
-      splits.indices.foreach(ndx => {
-        val id: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(splits(ndx)).array)
-        out.println(new String(id))
-        val part: Array[Byte] = Base64.encodeBase64("part-r-%05d".format(ndx).getBytes)
+      val out: PrintWriter = new PrintWriter(fdos)
+      try {
+        // write the magic number
+        val magic: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(HasPartitionNames).array)
+
+        out.println(new String(magic))
+
+        //println("\nsplits:")
+        splits.indices.foreach(ndx => {
+          val id: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(splits(ndx)).array)
+          out.println(new String(id))
+          val part: Array[Byte] = Base64.encodeBase64("%s%05d".format(prefix, ndx).getBytes)
+          out.println(new String(part))
+
+          //println("  " + splits(ndx) + " " + "%s%05d".format(prefix, ndx))
+        })
+
+        // just need to write the name of the last partition, we can use magic number
+        // for the tileid...
+        out.println(new String(magic))
+
+        val part: Array[Byte] = Base64.encodeBase64("%s%05d".format(prefix,numPartitions - 1).getBytes)
         out.println(new String(part))
 
-        //println("  " + splits(ndx) + " " + "part-r-%05d".format(ndx))
-      })
-
-      // just need to write the name of the last partition, we can use magic number
-      // for the tileid...
-      out.println(new String(magic))
-
-      val part: Array[Byte] = Base64.encodeBase64("part-r-%05d".format(numPartitions - 1).getBytes)
-      out.println(new String(part))
-
-      //println("  " + HasPartitionNames + " " + "part-r-%05d".format(numPartitions - 1))
-    }
-    finally
-    {
-      out.close()
-      fdos.close()
+        //println("  " + HasPartitionNames + " " + "%s%05d".format(prefix, numPartitions - 1))
+      }
+      finally {
+        out.close()
+        fdos.close()
+      }
     }
   }
 
-  private def binarySearch(list: Array[java.lang.Long], target: Long, start: Int, end: Int): Int = {
-    // if not found at the end of the list, return the end + 1th partitiomm
-    if (start > end) return splits.length
+  def findSplit(list: Array[java.lang.Long], target: Long): Int =
+  {
+    // First check the min and max values before binary searching.
+    if (list.length == 0)
+    {
+      // All tiles fit in a single split
+      return 0
+    }
+    if (target <= list(0))
+    {
+      return 0
+    }
+    if (target > list(list.length - 1))
+    {
+      return list.length
+    }
+    // The target does not fall in the minimum or maximum split, so let's
+    // binary search to find it.
+    return binarySearch(list, target, 0, list.length - 1)
+  }
 
+  def binarySearch(list: Array[java.lang.Long], target: Long, start: Int, end: Int): Int =
+  {
     val mid:Int = start + (end - start + 1) / 2
 
-    if (list(mid) == target) {
+    //println("s:" + list(start) + " m1:" + list(mid - 1) + " t:" + target + " m2:" + list(mid) + " e:" + list(end))
+    if (list(mid - 1) < target && list(mid) >= target) {
       mid
     }
-
-    if (list(mid) > target) {
+    else if (list(mid) > target) {
       binarySearch(list, target, start, mid - 1)
     }
-
-    binarySearch(list, target, mid + 1, end)
+    else {
+      binarySearch(list, target, mid, end)
+    }
   }
 
+  override def readExternal(in: ObjectInput): Unit = {
+    val count = in.readInt()
 
+    val builder = mutable.ArrayBuilder.make[java.lang.Long]()
+    for (i <- 0 until count) {
+      builder += in.readLong()
+    }
+    splits = builder.result()
+  }
+
+  override def writeExternal(out: ObjectOutput): Unit = {
+    out.writeInt(splits.length)
+    splits.foreach(split => out.writeLong(split))
+  }
 }

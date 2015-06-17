@@ -16,16 +16,13 @@
 package org.mrgeo.utils;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.JobID;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -71,6 +68,12 @@ public class HadoopUtils
     Configuration.addDefaultResource("hdfs-site.xml");
 
     LoggingUtils.setLogLevel("org.apache.hadoop.mapred.LocalDistributedCacheManager", LoggingUtils.WARN);
+
+    // S3 is very chatty
+    LoggingUtils.setLogLevel("org.apache.hadoop.fs.s3native", LoggingUtils.WARN);
+
+    // Amazon EMR has a custom S3 implementation
+    LoggingUtils.setLogLevel("com.amazon.ws.emr.hadoop.fs.s3n", LoggingUtils.WARN);
   }
 
   /**

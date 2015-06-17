@@ -62,6 +62,7 @@
     <module>mrgeo-services-core</module>
     <module>mrgeo-services-tms</module>
     <module>mrgeo-services-wms</module>
+    <module>mrgeo-services-wcs</module>
   </modules>
   <dependencies>
     <dependency>
