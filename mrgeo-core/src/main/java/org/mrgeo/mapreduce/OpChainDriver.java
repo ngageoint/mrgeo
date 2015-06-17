@@ -216,8 +216,8 @@ public class OpChainDriver
     if (result && job.isComplete() && job.isSuccessful())
     {
       context._ofProvider.teardown(job);
-      MrsImagePyramid.calculateMetadata(context._output, context._zoom,
-          context._ofProvider.getMetadataWriter(), context._statsProvider,
+      MrsImagePyramid.calculateMetadataWithProvider(context._output, context._zoom,
+          context._ofProvider.getImageProvider(), context._statsProvider,
           context._defaults, context._bounds, context._userConf,
           context.protectionLevel, context.providerProperties);
       context._statsProvider.delete();
@@ -277,8 +277,8 @@ public class OpChainDriver
     MapReduceUtils.runJob(job, progress, null);
 
     context._ofProvider.teardown(job);
-    MrsImagePyramid.calculateMetadata(output, zoom,
-        context._ofProvider.getMetadataWriter(), context._statsProvider,
+    MrsImagePyramid.calculateMetadataWithProvider(output, zoom,
+        context._ofProvider.getImageProvider(), context._statsProvider,
         context._defaults, bounds, context._userConf, context.protectionLevel,
         context.providerProperties);
     context._statsProvider.delete();

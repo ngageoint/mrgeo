@@ -21,7 +21,7 @@ import java.io.{ObjectOutput, ObjectInput, Externalizable}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{Partition, Logging, SparkContext}
+import org.apache.spark.{SparkConf, Partition, Logging, SparkContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.{RDD, CoGroupedRDD}
 import org.mrgeo.data.image.MrsImageDataProvider
@@ -55,6 +55,8 @@ object MosaicDriver extends MrGeoDriver with Externalizable {
 
   override def writeExternal(out: ObjectOutput): Unit = {}
   override def readExternal(in: ObjectInput): Unit = {}
+
+  override def setup(job: JobArguments): Boolean = {true}
 }
 
 class MosaicDriver extends MrGeoJob with Externalizable {
@@ -93,7 +95,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
       logInfo("Loading pyramid: " + input)
       try {
-        val pyramid = SparkUtils.loadMrsPyramid(input, context)
+        val pyramid = SparkUtils.loadMrsPyramidAndMetadata(input, context)
         pyramids(i) = pyramid._1
 
 
@@ -246,7 +248,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
       tilesize, tiletype, numbands, "", null)
 
-    val sorted = mosaiced.sortByKey().partitionBy(sparkPartitioner)
+    val sorted = mosaiced.sortByKey().partitionBy(sparkPartitioner).persist(StorageLevel.MEMORY_AND_DISK)
     // this is missing in early spark APIs
     //val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
 
@@ -255,8 +257,11 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
     dp.teardown(job)
 
+
+    val stats = SparkUtils.calculateStats(sorted, numbands, nodata(0))
+
     // calculate and save metadata
-    MrsImagePyramid.calculateMetadata(output, zoom, dp.getMetadataWriter, null,
+    MrsImagePyramid.calculateMetadata(output, zoom, dp.getImageProvider, stats,
       nodata(0), bounds, job.getConfiguration, null, null)
 
     // write splits
@@ -265,7 +270,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     true
   }
 
-  override def setup(job: JobArguments): Boolean = {
+  override def setup(job: JobArguments, conf:SparkConf): Boolean = {
 
     val in:String = job.getSetting("inputs")
 
@@ -276,7 +281,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
   }
 
 
-  override def teardown(job: JobArguments): Boolean = {
+  override def teardown(job: JobArguments, conf:SparkConf): Boolean = {
     true
   }
 

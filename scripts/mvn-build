@@ -43,6 +43,8 @@ usage() {
     echo "  cdh532    - Cloudera hadoop 5.3.2"
     echo "  cdh533    - Cloudera hadoop 5.3.3"
     echo "  cdh540    - Cloudera hadoop 5.4.0"
+    echo "  cdh541    - Cloudera hadoop 5.4.1"
+    echo "  cdh542    - Cloudera hadoop 5.4.2"
     echo "  mapr      - mapr hadoop"
     echo "phase:"
     echo "  build     - build a deployable version"
@@ -124,7 +126,7 @@ CONF="/etc/hadoop/conf"
 LICENSE="-DskipLicenses"
 RELEASEPHASE=prepare
 
-# add any predefined options (for developer convencience)
+# add any predefined options (for developer convenience)
 if [ -n "$MRGEO_BUILD_OPTIONS" ]; then
     set -- $MRGEO_BUILD_OPTIONS "$@"
 fi
@@ -339,6 +341,12 @@ while [ $# -gt 0 ] ; do
         ;;
     "cdh540")
         BUILD="CDH540"
+        ;;
+    "cdh541")
+        BUILD="CDH541"
+        ;;
+    "cdh542")
+        BUILD="CDH542"
         ;;
     "build")
         PHASE="build"

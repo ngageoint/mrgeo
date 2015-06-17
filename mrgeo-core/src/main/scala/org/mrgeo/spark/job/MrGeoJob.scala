@@ -8,18 +8,18 @@ import scala.collection.JavaConversions._
 abstract class MrGeoJob extends Logging {
   def registerClasses(): Array[Class[_]]
 
-  def setup(job: JobArguments): Boolean
+  def setup(job: JobArguments, conf:SparkConf): Boolean
 
   def execute(context: SparkContext): Boolean
 
-  def teardown(job: JobArguments): Boolean
+  def teardown(job: JobArguments, conf:SparkConf): Boolean
 
   private[job] def run(job:JobArguments, conf:SparkConf) = {
     // need to do this here, so we can call registerClasses() on the job.
     PrepareJob.setupSerializer(this, job, conf)
 
     logInfo("Setting up job")
-    setup(job)
+    setup(job, conf)
 
     val context = new SparkContext(conf)
     try {
@@ -31,7 +31,7 @@ abstract class MrGeoJob extends Logging {
       context.stop()
     }
 
-    teardown(job)
+    teardown(job, conf)
   }
 
 

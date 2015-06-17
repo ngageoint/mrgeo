@@ -15,17 +15,6 @@
 
 package org.mrgeo.data.accumulo.output.image;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.Pair;
@@ -57,6 +46,13 @@ import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputFormatProvider
 {
@@ -175,6 +171,12 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   public MrsImagePyramidMetadataWriter getMetadataWriter()
   {
     return provider.getMetadataWriter();
+  }
+
+  @Override
+  public MrsImageDataProvider getImageProvider()
+  {
+    return provider;
   }
 
   @Override

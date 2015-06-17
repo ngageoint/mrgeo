@@ -20,6 +20,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.mrgeo.data.image.MrsImagePyramidWriterContext;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.MrsTileWriter;
@@ -64,7 +66,8 @@ public class HdfsMrsImageWriter extends MrsTileWriter<Raster>
 
   private void openWriter() throws IOException
   {
-    Path imagePath = provider.getResourcePath(true);
+    //Path imagePath = provider.getResourcePath(true);
+    Path imagePath = provider.getResourcePath(false);
     if (context != null)
     {
       imagePath = new Path(provider.getResourcePath(true), context.getZoomlevel() + "/part-" + String.format("%05d", context.getPartNum()));
@@ -82,8 +85,10 @@ public class HdfsMrsImageWriter extends MrsTileWriter<Raster>
     // tile
     localConf.set("dfs.client.write-packet-size", "786500");
 
-    writer = new MapFile.Writer(localConf, fs, imagePath.toString(), TileIdWritable.class, RasterWritable.class,
-      SequenceFile.CompressionType.RECORD);
+    writer = new MapFile.Writer(conf, imagePath,
+        MapFile.Writer.keyClass(TileIdWritable.class.asSubclass(WritableComparable.class)),
+        MapFile.Writer.valueClass(RasterWritable.class.asSubclass(Writable.class)),
+        MapFile.Writer.compression(SequenceFile.CompressionType.RECORD));
 
     writer.setIndexInterval(1);
   }
@@ -100,18 +105,14 @@ public class HdfsMrsImageWriter extends MrsTileWriter<Raster>
   @Override
   public String getName() throws IOException
   {
-    Path imagePath = provider.getResourcePath(true);
     if (context != null)
     {
-      imagePath = new Path(provider.getResourcePath(true), context.getZoomlevel() + "/part-" + String.format("%05d", context.getPartNum()));
-    }
-    else
-    {
-      throw new IOException("Context is not present.  Look at this if it's correct behaviour...  May need to uncomment the line below this...");
-      //imagePath = new Path(imagePath, "/part-00000");
+      return new Path(provider.getResourcePath(false),
+          context.getZoomlevel() + "/part-" + String.format("%05d", context.getPartNum())).toUri().toString();
     }
 
-    return imagePath.toUri().toString();
+    throw new IOException(
+        "Context is not present.  Look at this if it's correct behaviour...  May need to uncomment the line below this...");
   }
 
   private Configuration getConfiguration()
@@ -122,4 +123,5 @@ public class HdfsMrsImageWriter extends MrsTileWriter<Raster>
     }
     return conf;
   }
+
 }

@@ -212,6 +212,10 @@
       <artifactId>reflections</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.gdal</groupId>
+      <artifactId>gdal</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-jdbc</artifactId>
       <scope>runtime</scope>
@@ -282,15 +286,15 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-streaming_2.10</artifactId>
+      <artifactId>spark-streaming_${spark.scala.version}</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-graphx_2.10</artifactId>
+      <artifactId>spark-graphx_${spark.scala.version}</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-yarn_2.10</artifactId>
+      <artifactId>spark-yarn_${spark.scala.version}</artifactId>
     </dependency>
     <dependency>
       <groupId>org.scala-lang</groupId>
@@ -298,7 +302,7 @@
     </dependency>
     <dependency>
       <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_2.10</artifactId>
+      <artifactId>scalatest_${spark.scala.version}</artifactId>
     </dependency>
     <dependency>
       <groupId>com.esotericsoftware.kryo</groupId>

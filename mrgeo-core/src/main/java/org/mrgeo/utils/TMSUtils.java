@@ -420,6 +420,17 @@ public class TMSUtils
       this.e = t.tx;
       this.w = t.tx;
     }
+
+    public long width()
+    {
+      return e - w + 1;
+    }
+
+    public long height()
+    {
+      return n - s + 1;
+    }
+
     public LongRectangle toLongRectangle()
     {
       return new LongRectangle(w, s, e, n);

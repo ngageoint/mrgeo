@@ -36,7 +36,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-eclipse-plugin</artifactId>
-        <version>2.9</version>
         <inherited>true</inherited>
         <configuration>
           <additionalProjectFacets>
@@ -50,8 +49,8 @@
       </plugin>
       <!-- make sure this runs before the maven war plugin -->
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>2.7</version>
         <executions>
           <!-- for the war, need to copy to both generated-sources and generated-resources -->
           <execution>
@@ -90,7 +89,6 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>1.7</version>
         <executions>
           <execution>
             <id>download-licenses</id>
@@ -116,8 +114,8 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
-        <version>2.4</version>
         <configuration>
           <packagingExcludes>WEB-INF/lib/mrgeo-services*</packagingExcludes>
           <archive>
@@ -146,6 +144,12 @@
               <type>jar</type>
               <targetPath>WEB-INF/classes</targetPath>
             </overlay>
+            <overlay>
+              <groupId>org.mrgeo</groupId>
+              <artifactId>mrgeo-services-wcs</artifactId>
+              <type>jar</type>
+              <targetPath>WEB-INF/classes</targetPath>
+            </overlay>
           </overlays>
           <webResources>
             <resource>
@@ -167,7 +171,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.9</version>
         <executions>
           <execution>
             <id>copy-installed</id>
@@ -205,6 +208,10 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-services-tms</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-services-wcs</artifactId>
     </dependency>
   </dependencies>
 </project>
