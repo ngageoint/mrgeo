@@ -254,13 +254,16 @@ object SparkUtils extends Logging {
     val writer = provider.getMrsTileWriter(zoom)
     val name = new Path(writer.getName).getParent.toString
 
-
-    // this is missing in early spark APIs, so we have to use reflection in order
-    // to maintain backward compatibility. Ugh.
+    // The following commented out section was in place for older versions of Spark
+    // that did not include the OrderRDDFunctions.repartitionAndSortWithinPartitions
+    // method. Since we're standardizing on Spark 1.2.0 as a minimum, we leave the
+    // following commented out.
 //    var repartitionMethod: java.lang.reflect.Method = null
+//    val orderedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
+//    val repartitionMethodName = "repartitionAndSortWithinPartitions"
 //    try {
-//      repartitionMethod = tiles.getClass.getDeclaredMethod("repartitionAndSortWithinPartitions",
-//        Partitioner.getClass)
+//      repartitionMethod = orderedTiles.getClass.getDeclaredMethod(repartitionMethodName,
+//        classOf[Partitioner])
 //    }
 //    catch {
 //      case nsm: NoSuchMethodException => {
@@ -271,27 +274,31 @@ object SparkUtils extends Logging {
 //    if (repartitionMethod != null) {
 //      // The new method exists, so let's call it through reflection because it's
 //      // more efficient.
-//      val sorted = repartitionMethod.invoke(tiles, sparkPartitioner)
+//      log.info("Saving MrsPyramid using new repartition method")
+//      val sorted: RDD[(TileIdWritable, RasterWritable)] = repartitionMethod.invoke(orderedTiles, sparkPartitioner).asInstanceOf[RDD[(TileIdWritable, RasterWritable)]]
+//      val saveSorted = new PairRDDFunctions(sorted)
 //      val saveMethodName = "saveAsNewAPIHadoopFile"
-//      val saveMethod = sorted.getClass.getDeclaredMethod(saveMethodName,
+//      val saveMethod = saveSorted.getClass.getDeclaredMethod(saveMethodName,
 //        classOf[String] /* name */,
 //        classOf[Class[Any]]  /* keyClass */,
 //        classOf[Class[Any]] /*valueClass */,
 //        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
 //        classOf[Configuration] /* configuration */)
 //      if (saveMethod != null) {
-//        println("saving to: " + name)
-//        saveMethod.invoke(sorted, name, classOf[TileIdWritable], classOf[RasterWritable],
+//        saveMethod.invoke(saveSorted, name, classOf[TileIdWritable], classOf[RasterWritable],
 //          tofp.getOutputFormat.getClass, conf)
 //        //        sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
 //        //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
 //      }
 //      else {
-//        logError("Unable to find method " + saveMethodName + " in class " + sorted.getClass.getName)
+//        val msg = "Unable to find method " + saveMethodName + " in class " + saveSorted.getClass.getName
+//        logError(msg)
+//        throw new IllegalArgumentException(msg)
 //      }
 //    }
 //    else {
 //      // This is an older version of Spark, so use the old partition and sort.
+//      log.info("Saving MrsPyramid using old repartition method")
 //      val wrapped = new PairRDDFunctions(tiles)
 //      val partitioned = wrapped.partitionBy(sparkPartitioner)
 //
@@ -300,7 +307,6 @@ object SparkUtils extends Logging {
 //
 //      val wrapped1 = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](partitioned)
 //      var s = new PairRDDFunctions(wrapped1.sortByKey())
-//      println("saving to: " + name)
 //      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
 //    }
 
@@ -320,7 +326,6 @@ object SparkUtils extends Logging {
     MrsImagePyramid.calculateMetadata(output, zoom, provider, stats,
       nodatas, localbounds, conf,  protectionlevel, providerproperties)
   }
-
 
   def calculateStats(rdd: RDD[(TileIdWritable, RasterWritable)], bands: Int,
       nodata: Array[Double]): Array[ImageStats] = {

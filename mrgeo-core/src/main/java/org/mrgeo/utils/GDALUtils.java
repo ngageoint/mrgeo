@@ -272,6 +272,10 @@ public class GDALUtils
   {
     final Driver driver = gdal.GetDriverByName("MEM");
     final Dataset raster = driver.Create("InMem", width, height, bands, datatype);
+    if (raster == null)
+    {
+      return null;
+    }
 
     for (int i = 1; i <= raster.getRasterCount(); i++)
     {
