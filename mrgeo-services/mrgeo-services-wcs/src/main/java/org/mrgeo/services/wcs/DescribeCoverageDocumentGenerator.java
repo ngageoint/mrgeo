@@ -31,22 +31,100 @@ public class DescribeCoverageDocumentGenerator
 
     if (version.isLess("1.1.0"))
     {
-      generageCoverage(doc, version, layers);
+      generate100(doc, version, layers);
     }
     else
     {
-      generateIdentifiers(doc, version, layers);
+      generate110(doc, version, layers);
     }
 
     return doc;
   }
 
-  private void generateIdentifiers(Document doc, Version version, String[] layers)
+  private void generate110(Document doc, Version version, String[] layers) throws IOException
   {
+    Element descriptions = XmlUtils.createElement(doc, "wcs:CoverageDescriptions");
+    setupNamespaces(descriptions, version);
 
+    for (MrsImageDataProvider provider : getLayers(layers))
+    {
+      MrsImagePyramidMetadata metadata = provider.getMetadataReader().read();
+
+      int maxzoom = metadata.getMaxZoomLevel();
+
+      Element description = XmlUtils.createElement(descriptions, "wcs:CoverageDescription");
+      // name and label
+      XmlUtils.createTextElement2(description, "ows:Title", provider.getResourceName());
+      XmlUtils.createTextElement2(description, "ows:Abstract", "Layer generated using MrGeo");
+      XmlUtils.createTextElement2(description, "wcs:Identifier", provider.getResourceName());
+
+      // spatial data
+      Element spatial = XmlUtils.createElement(XmlUtils.createElement(description, "wcs:Domain"), "wcs:SpatialDomain");
+
+      // bounds
+      Bounds bounds = metadata.getBounds();
+
+      Element envelope = XmlUtils.createElement(spatial, "ows:BoundingBox");
+      envelope.setAttribute("crs", "urn:ogc:def:crs:OGC:1.3:CRS84");
+      envelope.setAttribute("dimensions", "2");
+      XmlUtils.createTextElement2(envelope, "ows:LowerCorner",
+          String.format("%.8f %.8f", bounds.getMinX(), bounds.getMinY()));
+      XmlUtils.createTextElement2(envelope, "ows:UpperCorner",
+          String.format("%.8f %.8f", bounds.getMaxX(), bounds.getMaxY()));
+
+       envelope = XmlUtils.createElement(spatial, "ows:BoundingBox");
+      envelope.setAttribute("crs", "urn:ogc:def:crs:EPSG::4326");
+      envelope.setAttribute("dimensions", "2");
+      XmlUtils.createTextElement2(envelope, "ows:LowerCorner",
+          String.format("%.8f %.8f", bounds.getMinY(), bounds.getMinX()));
+      XmlUtils.createTextElement2(envelope, "ows:UpperCorner",
+          String.format("%.8f %.8f", bounds.getMaxY(), bounds.getMaxX()));
+
+
+
+      double res = TMSUtils.resolution(maxzoom, metadata.getTilesize());
+
+      Element grid = XmlUtils.createElement(spatial, "wcs:GridCRS");
+      XmlUtils.createTextElement2(grid, "wcs:GridBaseCRS", "urn:ogc:def:crs:EPSG::4326");
+      XmlUtils.createTextElement2(grid, "wcs:GridType", "urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs");
+      // origin
+      XmlUtils.createTextElement2(grid, "wcs:GridOrigin", String.format("%.8f %.8f", bounds.getMinX(), bounds.getMinY()));
+      XmlUtils.createTextElement2(grid, "wcs:GridCS", "urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS");
+
+      // pixel size
+      XmlUtils.createTextElement2(grid, "wcs:GridOffsets", String.format("%.8f 0.0 0.0 %.8f", res, -res));
+
+      // band info
+      Element bands = XmlUtils.createElement(XmlUtils.createElement(description, "wcs:Range"), "wcs:Field");
+      XmlUtils.createTextElement2(bands, "wcs:Identifier", "contents");
+      XmlUtils.createElement(XmlUtils.createElement(bands, "wcs:Definition"), "wcs:AnyValue");
+
+      // Interpolations
+      Element interp = XmlUtils.createElement(bands, "wcs:InterpolationMethods");
+      if (metadata.getClassification() == MrsImagePyramidMetadata.Classification.Categorical)
+      {
+        XmlUtils.createTextElement2(interp, "wcs:Default", "nearest neighbour");
+      }
+      else
+      {
+        XmlUtils.createTextElement2(interp, "wcs:Default", "linear");
+      }
+
+      XmlUtils.createTextElement2(description, "wcs:SupportedCRS", "urn:ogc:def:crs:EPSG::4326");
+      XmlUtils.createTextElement2(description, "wcs:SupportedCRS", "EPSG:4326");
+
+      String[] formatStr = ImageHandlerFactory.getMimeFormats(ImageRenderer.class);
+
+      Arrays.sort(formatStr);
+      for (String format: formatStr)
+      {
+        XmlUtils.createTextElement2(description, "wcs:SupportedFormat", format);
+      }
+
+    }
   }
 
-  private void generageCoverage(Document doc, Version version, String[] layers) throws IOException
+  private void generate100(Document doc, Version version, String[] layers) throws IOException
   {
 
     Element desc = XmlUtils.createElement(doc, "CoverageDescription");
@@ -162,9 +240,21 @@ public class DescribeCoverageDocumentGenerator
       Arrays.sort(formatStr);
       for (String format: formatStr)
       {
-        XmlUtils.createTextElement2(formats, "format", format);
+        XmlUtils.createTextElement2(formats, "formats", format);
       }
 
+      // Interpolations
+      Element interp = XmlUtils.createElement(offering, "supportedInterpolations");
+      if (metadata.getClassification() == MrsImagePyramidMetadata.Classification.Categorical)
+      {
+        interp.setAttribute("default", "nearest neighbour");
+        XmlUtils.createTextElement2(interp, "interpolationMethod", "nearest neighbour");
+      }
+      else
+      {
+        interp.setAttribute("default", "bilinear");
+        XmlUtils.createTextElement2(interp, "interpolationMethod", "bilinear");
+      }
 
       break;  // only 1 layer for CoverageDescription
     }
@@ -181,13 +271,14 @@ public class DescribeCoverageDocumentGenerator
     dtr.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
     if (!version.isLess("1.1.0"))
     {
+      dtr.setAttribute("xmlns:ows", "http://www.opengis.net/ows/1.1" + version.toString());
       dtr.setAttribute("xmlns:wcs", "http://www.opengis.net/wcs/" + version.toString());
     }
     dtr.setAttribute("xsi:schemaLocation",
         "http://www.opengis.net/wcs http://schemas.opengis.net/wcs/" + version.toString() + "/describeCoverage.xsd");
   }
 
-  private static MrsImageDataProvider[] getLayers(String[] layers) throws IOException
+  private MrsImageDataProvider[] getLayers(String[] layers) throws IOException
   {
     Properties providerProperties = SecurityUtils.getProviderProperties();
 

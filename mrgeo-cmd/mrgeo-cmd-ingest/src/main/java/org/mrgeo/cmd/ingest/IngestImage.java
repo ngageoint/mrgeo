@@ -53,11 +53,11 @@ public class IngestImage extends Command
 
   private static Logger log = LoggerFactory.getLogger(IngestImage.class);
 
-  private int zoomlevel;
-  private int tilesize;
+  private int zoomlevel = -1;
+  private int tilesize = -1;
   private Number nodata = null;
-  private int bands;
-  private int tiletype;
+  private int bands = -1;
+  private int tiletype = -1;
   private boolean overrideNodata = false;
   private boolean skippreprocessing = false;
   private boolean local = false;
@@ -148,10 +148,6 @@ public class IngestImage extends Command
     Option quick = new Option("q", "quick", false, "Quick ingest (for small files only)");
     quick.setRequired(false);
     result.addOption(quick);
-
-    Option spark = new Option("k", "spark", false, "Use Spark");
-    spark.setRequired(false);
-    result.addOption(spark);
 
     Option zoom = new Option("z", "zoom", true, "force zoom level");
     zoom.setRequired(false);
@@ -289,7 +285,7 @@ public class IngestImage extends Command
   }
 
   List<String> getInputs(String arg, boolean recurse, final Configuration conf,
-                         boolean existsCheck, boolean argIsDir)
+      boolean existsCheck, boolean argIsDir)
   {
     List<String> inputs = new LinkedList<String>();
 
@@ -315,7 +311,7 @@ public class IngestImage extends Command
           if (s.isFile() || (s.isDirectory() && recurse))
           {
             inputs.addAll(getInputs(s.getCanonicalFile().toURI().toString(), recurse, conf,
-                                    false, s.isDirectory()));
+                false, s.isDirectory()));
           }
         }
         catch (IOException e)
@@ -387,7 +383,7 @@ public class IngestImage extends Command
             for (FileStatus file : files)
             {
               inputs.addAll(getInputs(file.getPath().toUri().toString(), recurse, conf,
-                                      false, file.isDir()));
+                  false, file.isDir()));
             }
           }
           else
@@ -448,22 +444,6 @@ public class IngestImage extends Command
 
       long start = System.currentTimeMillis();
 
-
-      GDALUtils.register();
-
-//
-//      gdal.AllRegister();
-//      int drivers = gdal.GetDriverCount();
-//      System.out.println("Found " + drivers + " gdal drivers");
-//      for (int i = 0; i < drivers; i++)
-//      {
-//        Driver driver = gdal.GetDriver(i);
-//        System.out.println("  " + driver.getShortName() + " (" + driver.getLongName() + ")");
-//
-//        driver.delete();
-//      }
-//
-//
 
       CommandLine line = null;
       try
@@ -529,12 +509,8 @@ public class IngestImage extends Command
         {
           zoomlevel = Integer.parseInt(line.getOptionValue("z"));
         }
-        else
-        {
-          zoomlevel = 0;
-        }
 
-        if (skippreprocessing && zoomlevel == 0)
+        if (skippreprocessing && zoomlevel < 1)
         {
           log.error("Need to specify zoomlevel to skip preprocessing");
           return -1;
@@ -578,9 +554,9 @@ public class IngestImage extends Command
 
         quick = quick | line.hasOption("q");
         local = local | line.hasOption("lc");
+
         String protectionLevel = line.getOptionValue("pl");
 
-        Boolean spark = line.hasOption("k");
         if (inputs.size() > 0)
         {
 
@@ -599,31 +575,17 @@ public class IngestImage extends Command
             }
             else if (local)
             {
-              if (spark)
-              {
                 success = IngestImageSpark.localIngest(inputs.toArray(new String[inputs.size()]),
                     output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
                     tags, protectionLevel, providerProperties);
-              }
-              else
-              {
-                success = IngestImageDriver.localIngest(inputs.toArray(new String[inputs.size()]),
-                    output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
-                    tags, protectionLevel, providerProperties);
-              }
             }
-            else if (spark)
+            else
             {
               success = IngestImageSpark.ingest(inputs.toArray(new String[inputs.size()]),
                   output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
                   tags, protectionLevel, providerProperties);
             }
-            else
-            {
-              success = IngestImageDriver.ingest(inputs.toArray(new String[inputs.size()]),
-                  output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands,
-                  tags, protectionLevel, providerProperties);
-            }
+
             if (!success)
             {
               log.error("IngestImage exited with error");

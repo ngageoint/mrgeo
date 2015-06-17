@@ -105,18 +105,14 @@ public class HdfsMrsImageWriter extends MrsTileWriter<Raster>
   @Override
   public String getName() throws IOException
   {
-    Path imagePath; // = provider.getResourcePath(true);
     if (context != null)
     {
-      imagePath = new Path(provider.getResourcePath(false), context.getZoomlevel() + "/part-" + String.format("%05d", context.getPartNum()));
-    }
-    else
-    {
-      throw new IOException("Context is not present.  Look at this if it's correct behaviour...  May need to uncomment the line below this...");
-      //imagePath = new Path(imagePath, "/part-00000");
+      return new Path(provider.getResourcePath(false),
+          context.getZoomlevel() + "/part-" + String.format("%05d", context.getPartNum())).toUri().toString();
     }
 
-    return imagePath.toUri().toString();
+    throw new IOException(
+        "Context is not present.  Look at this if it's correct behaviour...  May need to uncomment the line below this...");
   }
 
   private Configuration getConfiguration()

@@ -47,18 +47,18 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 
   def build (pyramidName: String, aggregator: Aggregator,
       conf: Configuration, progress: Progress, jobListener: JobListener, providerProperties: Properties): Boolean = {
-    true
+    throw new NotImplementedError("Not yet implemented")
   }
 
   def buildlevel (pyramidName: String, level: Int, aggregator: Aggregator,
       conf: Configuration, providerProperties: Properties):Boolean = {
-    true
+    throw new NotImplementedError("Not yet implemented")
   }
 
   def buildlevel (pyramidName: String, level: Int, aggregator: Aggregator,
       conf: Configuration, progress: Progress, jobListener: JobListener,
       providerProperties: Properties): Boolean = {
-    true
+    throw new NotImplementedError("Not yet implemented")
   }
 
   private def setupArguments(pyramid: String, aggregator: Aggregator, providerProperties: Properties):mutable.Map[String, String] = {
@@ -68,12 +68,14 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
     args += Aggregator -> aggregator.getClass.getName
 
     var p: String = ""
-    providerProperties.foreach(kv => {
-      if (p.length > 0) {
-        p += "||"
-      }
-      p += kv._1 + "=" + kv._2
-    })
+    if (providerProperties != null && !providerProperties.isEmpty) {
+      providerProperties.foreach(kv => {
+        if (p.length > 0) {
+          p += "||"
+        }
+        p += kv._1 + "=" + kv._2
+      })
+    }
     args += ProviderProperties -> p
 
     args

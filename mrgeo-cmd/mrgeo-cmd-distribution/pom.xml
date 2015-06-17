@@ -233,6 +233,16 @@
         </dependency>
       </dependencies>
     </profile>
+    <!-- for some reason, this is missing in intellij, so I'll manually add it -->
+    <profile>
+      <id>intellij</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-yarn_${spark.scala.version}</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
   </profiles>
   <dependencies>
     <dependency>
@@ -291,7 +301,7 @@
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-vector</artifactId>
     </dependency>
-        <dependency>
+    <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-services-core</artifactId>
     </dependency>
