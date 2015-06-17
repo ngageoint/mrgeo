@@ -8,7 +8,7 @@ import java.util.Properties
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.MapFile
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{PairRDDFunctions, OrderedRDDFunctions, RDD}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkContext, SparkConf}
 import org.mrgeo.aggregators.{AggregatorRegistry, MeanAggregator, Aggregator}
@@ -136,6 +136,10 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
+    implicit val tileIdOrdering = new Ordering[TileIdWritable] {
+      override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
+    }
+
     val provider: MrsImageDataProvider =
       DataProviderFactory.getMrsImageDataProvider(pyramidName, AccessMode.READ, null.asInstanceOf[Properties])
 
@@ -199,7 +203,8 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
         val tileBounds = TMSUtils.boundsToTile(metadata.getBounds.getTMSBounds, tolevel, tilesize)
 
-        val mergedTiles = decimated.reduceByKey((r1, r2) => {
+        val wrappedDecimated = new PairRDDFunctions(decimated)
+        val mergedTiles = wrappedDecimated.reduceByKey((r1, r2) => {
           val src = RasterWritable.toRaster(r1)
           val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
