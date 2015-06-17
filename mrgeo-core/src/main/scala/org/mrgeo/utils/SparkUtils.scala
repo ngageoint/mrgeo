@@ -310,8 +310,10 @@ object SparkUtils extends Logging {
 //      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
 //    }
 
-    val sorted = tiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-    sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
+    val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
+    val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+    var wrappedSorted = new PairRDDFunctions(sorted)
+    wrappedSorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
       tofp.getOutputFormat.getClass, conf)
 
     sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
