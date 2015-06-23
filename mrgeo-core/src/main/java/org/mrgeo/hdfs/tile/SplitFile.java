@@ -425,7 +425,7 @@ public class SplitFile
     }
   }
 
-  public int writeSplits(final List<Long> splits, final String[] partitions, final String splitFile) throws IOException
+  private int writeSplits(final List<Long> splits, final String[] partitions, final String splitFile) throws IOException
   {
     final Path splitFilePath = new Path(splitFile);
     final FileSystem fs = HadoopFileUtils.getFileSystem(conf, splitFilePath);
@@ -455,7 +455,7 @@ public class SplitFile
     return splits.size();
   }
 
-  public int writeSplits(final List<Long> splits, final String[] partitions,
+  private int writeSplits(final List<Long> splits, final String[] partitions,
       final OutputStream splitFileOutputStream) throws IOException
   {
     final PrintWriter out = new PrintWriter(splitFileOutputStream);
