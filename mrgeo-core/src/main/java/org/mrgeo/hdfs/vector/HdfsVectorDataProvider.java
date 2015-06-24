@@ -1,33 +1,24 @@
 package org.mrgeo.hdfs.vector;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.vector.VectorDataProvider;
-import org.mrgeo.data.vector.VectorInputFormatContext;
-import org.mrgeo.data.vector.VectorInputFormatProvider;
-import org.mrgeo.data.vector.VectorMetadataReader;
-import org.mrgeo.data.vector.VectorMetadataWriter;
-import org.mrgeo.data.vector.VectorOutputFormatContext;
-import org.mrgeo.data.vector.VectorOutputFormatProvider;
-import org.mrgeo.data.vector.VectorReader;
-import org.mrgeo.data.vector.VectorReaderContext;
-import org.mrgeo.data.vector.VectorWriter;
-import org.mrgeo.data.vector.VectorWriterContext;
+import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Properties;
 
 public class HdfsVectorDataProvider extends VectorDataProvider
 {
@@ -300,7 +291,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
 
   static Path getBasePath(final Configuration conf)
   {
-    String basePathKey = "hdfs.vector.base";
+    String basePathKey = "hdfs." + MrGeoConstants.MRGEO_HDFS_VECTOR;
     Path basePath = null;
     String strBasePath = null;
     // First check to see if the vector base path is defined in the configuration.
@@ -314,7 +305,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     }
     if (strBasePath == null)
     {
-      strBasePath = MrGeoProperties.getInstance().getProperty("vector.base");
+      strBasePath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR);
     }
     if (strBasePath != null)
     {
