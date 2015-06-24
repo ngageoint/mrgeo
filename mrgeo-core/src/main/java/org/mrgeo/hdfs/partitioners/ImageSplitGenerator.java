@@ -96,9 +96,15 @@ public class ImageSplitGenerator implements SplitGenerator {
     // the tiles will fit in a single block.
     if (increment > 0)
     {
-      for(long i=minTileY; i < maxTileY; i+=increment) {
+      // The first split is increment rows above the minTileY, and there
+      // are subsequent splits increment rows high up until maxTileY. The
+      // final split may be <= increment rows high.
+      for(long i = minTileY + increment - 1; i < maxTileY; i+=increment)
+      {
         splits.add(TMSUtils.tileid(maxTileX, i, zoomLevel));
       }
+      // Add the last split
+      splits.add(TMSUtils.tileid(maxTileX, maxTileY, zoomLevel));
     }
     return splits;
   }

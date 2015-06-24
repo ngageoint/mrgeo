@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,8 +81,8 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
      @Override
      public MapFile.Reader load(final Integer partition) throws IOException
      {
-       final String part = partitions.get(partition);
-       final Path path = new Path(imagePath, part);
+       final SplitFile.SplitInfo part = splits.get(partition);
+       final Path path = new Path(imagePath, part.getPartitionName());
        final FileSystem fs = path.getFileSystem(conf);
 
        MapFile.Reader reader = new MapFile.Reader(fs, path.toString(), conf);
@@ -218,8 +219,8 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   }
 
   // object for keeping track of zoom levels and directories
-  List<String> partitions;
-  private long[] splits;
+//  List<String> partitions;
+  private List<SplitFile.SplitInfo> splits = new ArrayList<SplitFile.SplitInfo>();
 
   // private final MapFile.Reader[] readers;
 
@@ -248,7 +249,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
    *          is the location of the data in HDFS
    * @throws IOException 
    */
-  public HdfsMrsTileReader(final String path) throws IOException
+  public HdfsMrsTileReader(final String path, final int zoom) throws IOException
   {
       // get the Hadoop configuration
       conf = HadoopUtils.createConfiguration();
@@ -274,7 +275,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
       // get the path to the splits file
       final Path splitFilePath = new Path(sf.findSplitFile(imagePath.toString()));
 
-      initPartitions(splitFilePath);
+      initPartitions(splitFilePath, zoom);
 
       // set the profile
       if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
@@ -476,81 +477,49 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
         getZoomlevel(), getTileSize());
   }
 
-  private void initPartitions(final Path splitsFilePath)
+  private void initPartitions(final Path splitsFilePath, final int zoom) throws IOException
   {
-    final List<Long> splitsA = new ArrayList<Long>();
-    partitions = new ArrayList<String>();
-
-    sf.readSplits(splitsFilePath.toString(), splitsA, partitions);
-
-    // because of the way splits work, there should be 1 more partition name than splits
-    if (splitsA.size() > 0 && partitions.size() != splitsA.size() + 1)
+    try
     {
-      // This is kinda hacky, but if this is an old style splits file, we need to upgrade it.
-      // This _should_ be the only place it is necessary.
-      try
-      {
-        final Path tmp = new Path(HadoopFileUtils.getTempDir(conf), HadoopUtils.createRandomString(4) + "_splits");
-        
-        FileUtil.copy(HadoopFileUtils.getFileSystem(conf, splitsFilePath), splitsFilePath, 
-          HadoopFileUtils.getFileSystem(conf, tmp), tmp, false, true, conf);
-        
-        sf.copySplitFile(tmp.toString(), splitsFilePath.getParent().toString(), true);
-        sf.readSplits(splitsFilePath.toString(), splitsA, partitions);
-      }
-      catch (final IOException e)
-      {
-        e.printStackTrace();
-      }
+      sf.readSplits(splitsFilePath.toString(), splits, zoom);
     }
-
+    catch(FileNotFoundException fnf)
+    {
+      // When there is no splits file, the whole image is a single split
+    }
     // if we have no partitions, it probably means no splits file, look for mapfiles...
-    if (partitions.size() == 0)
+    if (splits.size() == 0)
     {
-      try
+      // get a Hadoop file system handle
+      final FileSystem fs = splitsFilePath.getFileSystem(conf);
+
+      // get the list of paths of the subdirectories of the parent
+      final Path[] paths = FileUtil.stat2Paths(fs.listStatus(splitsFilePath.getParent()));
+
+      Arrays.sort(paths);
+
+      // look inside each subdirectory for a data dir and keep track
+      for (final Path p : paths)
       {
-        // get a Hadoop file system handle
-        final FileSystem fs = splitsFilePath.getFileSystem(conf);
-
-        // get the list of paths of the subdirectories of the parent
-        final Path[] paths = FileUtil.stat2Paths(fs.listStatus(splitsFilePath.getParent()));
-
-        Arrays.sort(paths);
-
-        // look inside each subdirectory for a data dir and keep track
-        for (final Path p : paths)
+        boolean isMapFileDir = false;
+        final FileStatus[] dirFiles = fs.listStatus(p);
+        for (final FileStatus dirFile : dirFiles)
         {
-          boolean isMapFileDir = false;
-          final FileStatus[] dirFiles = fs.listStatus(p);
-          for (final FileStatus dirFile : dirFiles)
+          if (dirFile.getPath().getName().equals("data"))
           {
-            if (dirFile.getPath().getName().equals("data"))
-            {
-              isMapFileDir = true;
-              break;
-            }
-          }
-
-          if (isMapFileDir)
-          {
-            final String name = p.toString();
-            partitions.add(name);
+            isMapFileDir = true;
+            break;
           }
         }
 
-        if (partitions.size() == 1)
+        if (isMapFileDir)
         {
-          splitsA.clear();
-          splitsA.add(Long.MAX_VALUE);
+          final String name = p.getName();
+          long maxTileId = TMSUtils.maxTileId(zoom);
+          splits.add(new SplitFile.SplitInfo(name, 0, maxTileId));
         }
-      }
-      catch (final IOException e)
-      {
-
       }
     }
-
-    splits = Longs.toArray(splitsA);
   } // end initPartitions
 
   /**
@@ -560,7 +529,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
    */
   public int getMaxPartitions()
   {
-    return partitions.size();
+    return splits.size();
   } // end getMaxPartitions
 
   /**

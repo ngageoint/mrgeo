@@ -22,20 +22,18 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Partitioner;
-import org.mrgeo.tile.SplitGenerator;
-import org.mrgeo.tile.TileIdZoomWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.SplitFile;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.tile.SplitGenerator;
+import org.mrgeo.tile.TileIdZoomWritable;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,40 +68,13 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
   // split file has partition names
 
   private Configuration conf;
-  private final Map<Integer, TileIdWritable[]> splitPoints = new HashMap<Integer, TileIdWritable[]>();
+  private final Map<Integer, List<SplitFile.SplitInfo>> splitPoints = new HashMap<Integer, List<SplitFile.SplitInfo>>();
 
   // If we're using a multiple split point case (not SINGLE_SPLIT), we need to offset each zoom
   // level's
   // partitions based on the total number of partitions in all the higher (lower numbered) zoom
   // levels
   private final Map<Integer, Integer> splitPointOffsets = new HashMap<Integer, Integer>();
-
-  public static List<String> readPartitionNames(final Path splitFile, final Configuration conf)
-  {
-    try
-    {
-      final InputStream stream = HadoopFileUtils.open(conf, splitFile);
-      final List<Long> splits = new ArrayList<Long>();
-      final List<String> partitions = new ArrayList<String>();
-
-      SplitFile sf = new SplitFile(conf);
-      sf.readSplits(stream, splits, partitions);
-      return partitions;
-    }
-    catch (final FileNotFoundException e)
-    {
-      return new ArrayList<String>();
-    }
-    catch (final IOException e)
-    {
-    }
-    return null;
-  }
-
-  public static List<String> readPartitionNames(final String splitFile, final Configuration conf)
-  {
-    return readPartitionNames(new Path(splitFile), conf);
-  }
 
   /**
    * @param file
@@ -206,11 +177,11 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
     return setup(job, splitGenerator, null, zoom);
       }
 
-  private synchronized static TileIdWritable[] getSplitPointsFromDistributedCache(
+  private synchronized static List<SplitFile.SplitInfo> getSplitPointsFromDistributedCache(
     final String splitFileName, final Configuration config) throws IOException
     {
     final Path[] cf = DistributedCache.getLocalCacheFiles(config);
-    TileIdWritable[] splitPoints = null;
+    List<SplitFile.SplitInfo> splitPoints = null;
     if (cf != null)
     {
       SplitFile sf = new SplitFile(config);
@@ -220,7 +191,7 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
             .endsWith(splitFileName.substring(splitFileName.lastIndexOf('/'))))
         {
           final String modifiedPath = "file://" + path.toString();
-          splitPoints = sf.readSplitsAsTileId(modifiedPath);
+          splitPoints = sf.readSplitsCurrentVersion(modifiedPath);
           break;
         }
       }
@@ -258,13 +229,14 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
     }
     else
     {
-      numSplits = sf.numSplits(splitFile.toString());
+      numSplits = sf.numSplitsCurrentVersion(splitFile.toString());
     }
 
     int original = job.getNumReduceTasks();
     
     // remember, the number of partitions (reducers) is one more than the splits
-    job.setNumReduceTasks(original + (numSplits > 0 ? numSplits + 1 : 1));
+//    job.setNumReduceTasks(original + (numSplits > 0 ? numSplits + 1 : 1));
+    job.setNumReduceTasks(numSplits);
 
     log.debug("Increasing reduce tasks from: " + original + " to: " + job.getNumReduceTasks());
 
@@ -289,12 +261,12 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
       {
         final int zoom = ((TileIdZoomWritable) key).getZoom();
 
-        return SplitFile.findPartition((TileIdWritable) key, getSplitPoints(zoom)) +
+        return SplitFile.findPartition(((TileIdWritable) key).get(), getSplitPoints(zoom)) +
             splitPointOffsets.get(zoom);
       }
       if (key instanceof TileIdWritable)
       {
-        return SplitFile.findPartition((TileIdWritable) key, getSplitPoints());
+        return SplitFile.findPartition(((TileIdWritable) key).get(), getSplitPoints());
       }
     }
     catch (final IOException e)
@@ -325,12 +297,12 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
     this.conf = conf;
   }
 
-  private TileIdWritable[] getSplitPoints() throws IOException
+  private List<SplitFile.SplitInfo> getSplitPoints() throws IOException
   {
     return getSplitPoints(SINGLE_SPLIT);
   }
 
-  private synchronized TileIdWritable[] getSplitPoints(final int zoom) throws IOException
+  private synchronized List<SplitFile.SplitInfo> getSplitPoints(final int zoom) throws IOException
   {
     SplitFile sf = new SplitFile(conf);
     if (!splitPoints.containsKey(zoom))
@@ -341,7 +313,7 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
       {
         if (!splitPoints.containsKey(i))
         {
-          TileIdWritable[] splitPointArray = null;
+          List<SplitFile.SplitInfo> splitPoints = null;
 
           final String splitFileName = conf.get(SPLITFILE_KEY + i, null);
           if (splitFileName != null)
@@ -350,23 +322,23 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
               false);
             if (useDistributedCache)
             {
-              splitPointArray = getSplitPointsFromDistributedCache(splitFileName, conf);
+              splitPoints = getSplitPointsFromDistributedCache(splitFileName, conf);
             }
 
             // if we don't have a cache, or we can't find the splits in the cache, try a normal
             // read.
-            if (splitPointArray == null)
+            if (splitPoints == null)
             {
-              splitPointArray = sf.readSplitsAsTileId(splitFileName);
+              splitPoints = sf.readSplitsCurrentVersion(splitFileName);
             }
 
-            if (splitPointArray == null)
+            if (splitPoints == null)
             {
               throw new FileNotFoundException(" Unable to read split file \"" + splitFileName +
                 "\". useDistributedCache = " + useDistributedCache);
             }
 
-            splitPoints.put(i, splitPointArray);
+            this.splitPoints.put(i, splitPoints);
           }
         }
       }
@@ -377,7 +349,7 @@ public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> imple
         {
           splitPointOffsets.put(i, offset);
 
-          final int len = splitPoints.get(i).length;
+          final int len = splitPoints.get(i).size();
 
           offset += len > 0 ? len : 1;
         }

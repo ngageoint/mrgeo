@@ -127,7 +127,8 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
       // we renamed the split file, so if we can't find the new one, try the old name.
       splitPath = new Path(inputWithZoom, SplitFile.OLD_SPLIT_FILE);
     }
-    List<Long> splitFileSplits = sf.readSplits(fs.makeQualified(splitPath).toString());
+    List<SplitFile.SplitInfo> splitFileSplits = sf.readSplits(fs.makeQualified(splitPath).toString(),
+                                                              ifContext.getZoomLevel());
     // TODO: Not sure if the following really makes sense. I left it in here
     // commented out just in case.
 //    MrsImagePyramidMetadata metadata = getSingleMetadata(conf);
@@ -155,57 +156,36 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
       }
       // Example file name is "part-r-00000". Parse the number from the end because that
       // will be the index of the corresponding entry in the splits file
-      String indexStr = partFile.substring(partFile.lastIndexOf('-')+1, partFile.length());
+      String indexStr = partFile.substring(partFile.lastIndexOf('-') + 1, partFile.length());
       int index = Integer.valueOf(indexStr);
-      if (index < 0 || index > splitFileSplits.size())
+      if (index < 0 || index > splitFileSplits.size() - 1)
       {
         throw new IOException("Invalid split index " + index + " obtained from split " +
             partFile + ". Value should be inclusively between 0 and " + (splitFileSplits.size() - 1));
       }
 
-      long endTileId = -1;
-      if (index < splitFileSplits.size())
+      SplitFile.SplitInfo matchingSplit = splitFileSplits.get(index);
+      if (matchingSplit.getPartitionName() != null &&
+              !matchingSplit.getPartitionName().equals(partFile))
       {
-        endTileId = splitFileSplits.get(index);
+        throw new IOException("The partition read from the split file for index " +
+                                      index + " is " + matchingSplit.getPartitionName() +
+                                      " and does not match the expected partition file of " +
+                                      partFile);
       }
-      else
-      {
-        endTileId = TMSUtils.tileid(tileBounds.getMaxX(), tileBounds.getMaxY(), ifContext.getZoomLevel());
-      }
-      TMSUtils.Tile endTile = TMSUtils.tileid(endTileId, ifContext.getZoomLevel());
-      // The splits file contains only the end tile id. Getting the start tile id is more
-      // complicated.
-      // note we can't just do below because it assumes that each partition contains only a single 
-      // row of data - it can contain more than a row
-      //long startTileId = TMSUtils.tileid(tileBounds.getMinX(), endTile.ty, zoomLevel);
-      
-      // We read the first entry from the index for the partition corresponding to the split
-      // to get the start tile id
-      Path indexPath = new Path(fileSplit.getPath().getParent(), "index");
-      SequenceFile.Reader reader = new SequenceFile.Reader(fs, indexPath, conf);
-      TileIdWritable key;
-      try
-      {
-        key = (TileIdWritable) reader.getKeyClass().newInstance();
-        reader.next(key);
-      }
-      catch (InstantiationException e)
-      {
-        throw new IOException(e);
-      }
-      catch (IllegalAccessException e)
-      {
-        throw new IOException(e);
-      }
-      finally
-      {
-        if (reader != null)
-        {
-          reader.close();
-        }
-      }
-      long startTileId = key.get();
+      long endTileId = matchingSplit.getEndTileId();
+//      long endTileId = -1;
+//      if (index < splitFileSplits.size())
+//      {
+//        endTileId = matchingSplit.getEndTileId();
+//      }
+//      else
+//      {
+//        endTileId = TMSUtils.tileid(tileBounds.getMaxX(), tileBounds.getMaxY(), ifContext.getZoomLevel());
+//      }
+      long startTileId = matchingSplit.getStartTileId();
       TMSUtils.Tile startTile = TMSUtils.tileid(startTileId, ifContext.getZoomLevel());
+      TMSUtils.Tile endTile = TMSUtils.tileid(endTileId, ifContext.getZoomLevel());
       TileBounds partFileTileBounds = new TileBounds(startTile.tx, startTile.ty, endTile.tx,
           endTile.ty);
       Bounds partFileBounds = TMSUtils.tileToBounds(partFileTileBounds, ifContext.getZoomLevel(),

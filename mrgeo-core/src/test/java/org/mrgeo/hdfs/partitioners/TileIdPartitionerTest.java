@@ -113,26 +113,6 @@ public class TileIdPartitionerTest {
 	
 	@Test
 	@Category(UnitTest.class)
-	public void testSetSplitFileWithoutScheme() throws URISyntaxException {
-		// no file:// scheme in the path
-	  java.net.URI u = new java.net.URI(allOnesImage + "/splits");
-		String splitFilePath = u.getPath();
-		final int numSplits = 4;
-
-		TileIdPartitioner<?, ?> partitioner = new TileIdPartitioner<Object, Object>();
-		Configuration conf = HadoopUtils.createConfiguration();
-		partitioner.setConf(conf);
-		TileIdPartitioner.setSplitFile(splitFilePath, conf);
-		
-		TileIdWritable key = new TileIdWritable();
-		
-		// without scheme, getPartition will end up defaulting to empty splitPointArray, which
-		// would always result in the partition=0, obviously incorrectly
-		key.set(210835);
-		Assert.assertEquals(0, partitioner.getPartition(key, null, numSplits));
-	}
-	@Test
-	@Category(UnitTest.class)
 	public void testSetSplitFileWithScheme() throws URISyntaxException {
 		// has three splits, so four part directories
 		final int numSplits = 3;

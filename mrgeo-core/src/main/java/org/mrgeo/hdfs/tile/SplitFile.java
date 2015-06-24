@@ -20,21 +20,21 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.MapFile;
-import org.mrgeo.image.MrsImage;
-import org.mrgeo.tile.SplitGenerator;
+import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.tile.SplitGenerator;
 import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class SplitFile
 {
@@ -42,8 +42,60 @@ public class SplitFile
   protected static final long HAS_PARTITION_NAMES = -12345; // negative magic
                                                           // number telling if
                                                           // the
+  private static final String SPLITS_VERSION_3 = "Version3";
+  private static final String SPLIT_DELIMITER = " ";
+
   public final static String SPLIT_FILE = "splits";
   public final static String OLD_SPLIT_FILE = "splits.txt";
+
+  public static class SplitInfo
+  {
+    private String partitionName;
+    private long startTileId;
+    private long endTileId;
+
+    public SplitInfo(final int zoom)
+    {
+      partitionName = null;
+      startTileId = 0;
+      endTileId = TMSUtils.maxTileId(zoom);
+    }
+
+    public SplitInfo(String partitionName, long startTileId, long endTileId)
+    {
+      this.partitionName = partitionName;
+      this.startTileId = startTileId;
+      this.endTileId = endTileId;
+    }
+
+    public String getPartitionName()
+    {
+      return partitionName;
+    }
+
+    public long getStartTileId()
+    {
+      return startTileId;
+    }
+
+    public long getEndTileId()
+    {
+      return endTileId;
+    }
+
+    public String toString()
+    {
+      StringBuilder sb = new StringBuilder();
+      sb.append("startTileId = ");
+      sb.append(startTileId);
+      sb.append(", endTileId = ");
+      sb.append(endTileId);
+      sb.append(", partitionName = ");
+      sb.append(partitionName);
+      return sb.toString();
+    }
+  }
+
   protected Configuration conf;
 
   public SplitFile(Configuration conf)
@@ -51,59 +103,53 @@ public class SplitFile
     this.conf = conf;
   }
 
-  public void readSplits(final MrsImage image, final List<Long> splits,
-      final List<String> partitions)
+  public void readSplits(final MrsImage image, final List<SplitInfo> splits) throws IOException
   {
+    int imageZoom = image.getZoomlevel();
     try
     {
-      final InputStream stream = openSplitFile(image.getMetadata().getPyramid(),
-          image.getZoomlevel());
-      readSplits(stream, splits, partitions);
+      final InputStream stream = openSplitFile(image.getMetadata().getPyramid(), imageZoom);
+      readSplits(stream, splits, image.getZoomlevel());
     }
     catch (final FileNotFoundException e)
     {
-    }
-    catch (final IOException e)
-    {
+      // When there is no splits file, return a single split for the entire image.
+      LongRectangle tb = image.getMetadata().getTileBounds(image.getZoomlevel());
+      splits.add(new SplitFile.SplitInfo(null,
+                                         TMSUtils.tileid(tb.getMinX(), tb.getMinY(), imageZoom),
+                                         TMSUtils.tileid(tb.getMaxX(), tb.getMaxY(), imageZoom)));
     }
   }
 
-  public void readSplits(final InputStream stream, final List<Long> splits,
-      final List<String> partitions)
+  private void readSplits(final InputStream stream, final List<SplitInfo> splits,
+                          int zoom) throws IOException
   {
     splits.clear();
-    partitions.clear();
 
     final Scanner in = new Scanner(new BufferedReader(new InputStreamReader(stream)));
     try
     {
-      boolean firstline = true;
       boolean hasPartitionNames = false;
-      while (in.hasNextLine())
+      if (in.hasNextLine())
       {
-        final long split = ByteBuffer.wrap(Base64.decodeBase64(in.nextLine().getBytes())).getLong();
-        if (firstline)
+        String firstLine = in.nextLine();
+        // Version 3 of the splits file format is not base 64 encoded, but the
+        // earlier versions are.
+        if (firstLine.equals(SPLITS_VERSION_3))
         {
-          firstline = false;
-          if (split == HAS_PARTITION_NAMES)
-          {
-            hasPartitionNames = true;
-          }
-          else
-          {
-            splits.add(split);
-          }
+          readSplitsV3(in, splits);
         }
         else
         {
-          if (split != HAS_PARTITION_NAMES)
+          final long value = ByteBuffer.wrap(Base64.decodeBase64(firstLine.getBytes())).getLong();
+          if (value == HAS_PARTITION_NAMES)
           {
-            splits.add(split);
+            readSplitsV2(in, splits, zoom);
           }
-          if (hasPartitionNames)
+          else
           {
-            final String partition = new String(Base64.decodeBase64(in.nextLine().getBytes()));
-            partitions.add(partition);
+            splits.add(new SplitInfo(null, 0, value));
+            readSplitsV1(in, splits, zoom);
           }
         }
       }
@@ -122,93 +168,120 @@ public class SplitFile
     }
   }
 
-  public TileIdWritable[] readSplitsAsTileId(final MrsImage image)
+  /**
+   * Version 3 of the splits file is not base 64 encoded. The first line contains the
+   * literal SPLITS_VERSION_3 string. Each line after that is a space delimited list
+   * of fields that can contain either one or three fields. When it is one field, it
+   * will be the end tile id of the split. If it is three fields, then it is the
+   * start tile id, then end tile id, then partition name for the split.
+   *
+   * @param in
+   * @param splits
+   */
+  private void readSplitsV3(final Scanner in, final List<SplitInfo> splits) throws IOException
   {
-    try
+    while (in.hasNextLine())
     {
-      final InputStream stream = openSplitFile(image.getMetadata().getPyramid(),
-          image.getZoomlevel());
-      return readSplitsAsTileId(stream);
-    }
-    catch (final FileNotFoundException e)
-    {
-      return new TileIdWritable[0];
-    }
-    catch (final IOException e)
-    {
-    }
-    return null;
-  }
-
-  protected TileIdWritable[] readSplitsAsTileId(final InputStream stream)
-  {
-    final List<Long> splits = new ArrayList<Long>();
-    final List<String> partitions = new ArrayList<String>();
-
-    readSplits(stream, splits, partitions);
-
-    final TileIdWritable[] tiles = new TileIdWritable[splits.size()];
-    int cnt = 0;
-    for (final Long split : splits)
-    {
-      tiles[cnt++] = new TileIdWritable(split);
-    }
-
-    return tiles;
-  }
-
-  public synchronized TileIdWritable[] readSplitsAsTileId(final String splitFileName)
-  {
-    InputStream stream = null;
-    try
-    {
-      stream = HadoopFileUtils.open(conf, new Path(splitFileName));
-  
-      return readSplitsAsTileId(stream);
-    }
-    catch (final FileNotFoundException e)
-    {
-      return new TileIdWritable[0];
-    }
-    catch (final IOException e)
-    {
-    }
-    finally
-    {
-      if (stream != null)
+      String entry = in.nextLine();
+      // This version of the splits file can contain a single field (just the end tile id)
+      // or three fields that are space delimited.
+      if (entry.indexOf(' ') > 0)
+      {
+        String[] fields = entry.split(SPLIT_DELIMITER);
+        if (fields.length != 3)
+        {
+          throw new IOException("Invalid splits file. Expected space delimited set of three fields instead of: " + entry);
+        }
+        long startTileId = -1;
+        try
+        {
+          startTileId = Long.parseLong(fields[0]);
+        }
+        catch (NumberFormatException nfe)
+        {
+          throw new IOException("Invalid splits file. Expected start tile id in field 1: " + entry);
+        }
+        long endTileId = -1;
+        try
+        {
+          endTileId = Long.parseLong(fields[1]);
+        }
+        catch (NumberFormatException nfe)
+        {
+          throw new IOException("Invalid splits file. Expected end tile id in field 2: " + entry);
+        }
+        String partition = fields[2];
+        splits.add(new SplitInfo(partition, startTileId, endTileId));
+      }
+      else
       {
         try
         {
-          stream.close();
+          long endTileId = Long.parseLong(entry);
+          splits.add(new SplitInfo(null, -1, endTileId));
         }
-        catch (IOException e)
+        catch(NumberFormatException nfe)
         {
-          log.error("Exception while closing stream in readSplitsAsTileId", e);
+          throw new IOException("Invalid splits file, expected a tile id instead of: " + entry);
         }
       }
     }
-    return null;
   }
 
-  public void copySplitFile(final String splitFileFrom, final String splitFileToDir)
+  /**
+   * Read version 2 of the splits file. All of the values in the file are base 64
+   * encoded. The first line contains a magic number that identifies the file as
+   * version 2 (HAS_PARTITION_NAMES). After that first line, there are repeating
+   * sequences of end tile id then partition name for each partition. There will be
+   * one entry in the splits file for each partition.
+   *
+   * @param in
+   * @param splits
+   */
+  private void readSplitsV2(final Scanner in, List<SplitInfo> splits, final int zoom)
+  {
+    while (in.hasNextLine())
+    {
+      long endTileId = ByteBuffer.wrap(Base64.decodeBase64(in.nextLine().getBytes())).getLong();
+      if (endTileId == HAS_PARTITION_NAMES)
+      {
+        endTileId = TMSUtils.maxTileId(zoom);
+      }
+      final String partition = new String(Base64.decodeBase64(in.nextLine().getBytes()));
+      splits.add(new SplitInfo(partition, -1, endTileId));
+    }
+  }
+
+  /**
+   * Reads version 1 of the splits file format. In this case, there is no "magic number"
+   * indicating a version number. Each line in the file is a base 64 encoding of the
+   * ending tile id for the split. There is an entry in the splits file for all the
+   * partitions except the last one, so we add an entry for that.
+   *
+   * @param in
+   * @param splits
+   */
+  private void readSplitsV1(final Scanner in, final List<SplitInfo> splits, final int zoom)
+  {
+    // The caller already processed the 0 partition
+    int partitionNumber = 1;
+    while (in.hasNextLine())
+    {
+      final long endTileId = ByteBuffer.wrap(Base64.decodeBase64(in.nextLine().getBytes())).getLong();
+      splits.add(new SplitInfo(null, -1, endTileId));
+      partitionNumber++;
+    }
+    splits.add(new SplitInfo(null, -1, TMSUtils.maxTileId(zoom)));
+  }
+
+  public void copySplitFile(final String splitFileFrom, final String splitFileToDir, final int zoomlevel)
       throws IOException
   {
-    copySplitFile(splitFileFrom, splitFileToDir, null, true);
+    copySplitFile(splitFileFrom, splitFileToDir, true, zoomlevel);
   }
 
   public void copySplitFile(final String splitFileFrom, final String splitFileToDir,
-      final boolean deleteSource) throws IOException
-  {
-    copySplitFile(splitFileFrom, splitFileToDir, null, deleteSource);
-  }
-
-  public void copySplitFile(final String splitFileFrom, final String splitFileToDir,
-      final int[] partitionsUsed) throws IOException
-  {
-    copySplitFile(splitFileFrom, splitFileToDir, partitionsUsed, true);
-  }
-
-  public void copySplitFile(final String splitFileFrom, final String splitFileToDir, final int[] partitionsUsed, final boolean deleteSource)
+                            final boolean deleteSource, final int zoomlevel)
       throws IOException
   {
     // move split file into the output directory
@@ -235,41 +308,22 @@ public class SplitFile
             // no partitions in the split file, make one...
             fsTo.delete(splitFileTo, false);
   
-            String[] partitions = findPartitions(splitFileToDir);
-            List<Long> splits = readSplits(splitFileFrom);
+            List<SplitInfo> partitions = findPartitions(splitFileToDir);
+            List<SplitInfo> splits = readSplits(splitFileFrom, zoomlevel);
   
-            if ((splits.size() + 1) > partitions.length)
+            if (splits.size() != partitions.size())
             {
-  
-              if (partitionsUsed != null)
-              {
-                final List<Long> tmpSplits = new ArrayList<Long>();
-  
-                // make sure the array is sorted...
-                Arrays.sort(partitionsUsed);
-                for (final int used : partitionsUsed)
-                {
-                  if (used < splits.size())
-                  {
-                    tmpSplits.add(splits.get(used));
-                  }
-                }
-  
-                splits = tmpSplits;
-              }
-            }
-            else if ((splits.size() + 1) < partitions.length)
-            {
+              // Debugging output only
               if (log.isDebugEnabled())
               {
                 log.debug("original splits:");
-                for (Long split : splits)
+                for (SplitInfo split : splits)
                 {
                   log.debug("  " + split);
                 }
   
                 log.debug("partitions found:");
-                for (String part : partitions)
+                for (SplitInfo part : partitions)
                 {
                   log.debug("  " + part);
                   FileStatus st = fsTo.getFileStatus(new Path(splitFileToDir, part + "/index"));
@@ -280,21 +334,21 @@ public class SplitFile
   
                 List<String> tmpPartitions = new ArrayList<String>();
   
-                for (String part : partitions)
+                for (SplitInfo part : partitions)
                 {
   
                   MapFile.Reader reader = null;
   
                   try
                   {
-                    reader = new MapFile.Reader(fsTo, (new Path(splitFileToDir, part)).toString(),
+                    reader = new MapFile.Reader(fsTo, (new Path(splitFileToDir, part.getPartitionName())).toString(),
                         conf);
   
                     TileIdWritable key = new TileIdWritable();
                     RasterWritable val = new RasterWritable();
                     if (reader.next(key, val))
                     {
-                      tmpPartitions.add(part);
+                      tmpPartitions.add(part.getPartitionName());
                     }
                   }
                   finally
@@ -314,11 +368,11 @@ public class SplitFile
               }
             }
   
-            if (splits.size() + 1 != partitions.length)
+            if (splits.size() + 1 != partitions.size())
             {
               throw new IOException(
                   "splits file and file partitions mismatch (splits should be 1 less than partitions)!  Splits length: "
-                      + splits.size() + " number of partitions: " + partitions.length);
+                      + splits.size() + " number of partitions: " + partitions.size());
             }
   
             writeSplits(splits, partitions, splitFileTo.toString());
@@ -342,10 +396,21 @@ public class SplitFile
     final Scanner in = new Scanner(new BufferedReader(new InputStreamReader(splitFileInputStream)));
     try
     {
-      while (in.hasNextLine())
+      if (in.hasNextLine())
       {
-        final long split = ByteBuffer.wrap(Base64.decodeBase64(in.nextLine().getBytes())).getLong();
-        return (split == HAS_PARTITION_NAMES);
+        String line = in.nextLine();
+        if (line.equals(SPLITS_VERSION_3))
+        {
+          if (in.hasNextLine())
+          {
+            line = in.nextLine();
+            String[] fields = line.split(SPLIT_DELIMITER);
+            if (fields.length == 3)
+            {
+              return true;
+            }
+          }
+        }
       }
     }
     finally
@@ -355,60 +420,10 @@ public class SplitFile
     return false;
   }
 
-  public int numSplits(final String file) throws IOException
+  public int numSplitsCurrentVersion(final String file) throws IOException
   {
-    final InputStream fdis = HadoopFileUtils.open(conf, new Path(file));
-    try
-    {
-      return numSplits(fdis);
-    }
-    finally
-    {
-      fdis.close();
-    }
-  }
-
-  public int numSplits(final InputStream splitFileInputStream) throws IOException
-  {
-    final java.util.Scanner in = new java.util.Scanner(new BufferedReader(new InputStreamReader(
-        splitFileInputStream)));
-    int numSplits = 0;
-    try
-    {
-      boolean firstline = true;
-      boolean hasPartitionNames = false;
-      while (in.hasNextLine())
-      {
-        if (firstline)
-        {
-          firstline = false;
-          final long split = ByteBuffer.wrap(Base64.decodeBase64(in.nextLine().getBytes()))
-              .getLong();
-          if (split == HAS_PARTITION_NAMES)
-          {
-            hasPartitionNames = true;
-          }
-          else
-          {
-            numSplits++;
-          }
-        }
-        else
-        {
-          in.nextLine();
-          numSplits++;
-          if (hasPartitionNames)
-          {
-            in.nextLine();
-          }
-        }
-      }
-    }
-    finally
-    {
-      in.close();
-    }
-    return numSplits;
+    List<SplitFile.SplitInfo> splits = readSplitsCurrentVersion(file);
+    return splits.size();
   }
 
   public int writeSplits(final SplitGenerator splitGenerator, final String splitFile) throws IOException
@@ -425,7 +440,8 @@ public class SplitFile
     }
   }
 
-  private int writeSplits(final List<Long> splits, final String[] partitions, final String splitFile) throws IOException
+  private int writeSplits(final List<SplitInfo> splits, final List<SplitInfo> partitions,
+                          final String splitFile) throws IOException
   {
     final Path splitFilePath = new Path(splitFile);
     final FileSystem fs = HadoopFileUtils.getFileSystem(conf, splitFilePath);
@@ -445,43 +461,59 @@ public class SplitFile
   {
     final List<Long> splits = splitGenerator.getSplits();
     final PrintWriter out = new PrintWriter(splitFileOutputStream);
+    // Only write the version header if there are actually splits to write
+    if (splits.size() > 0)
+    {
+      out.println(SPLITS_VERSION_3);
+    }
     for (final long split : splits)
     {
-      final byte[] encoded = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(split).array());
-      out.println(new String(encoded));
+      out.println("" + split);
     }
     out.close();
 
     return splits.size();
   }
 
-  private int writeSplits(final List<Long> splits, final String[] partitions,
+  /**
+   * The list of splits contains the end tile id for each of the splits from the splits
+   * file. The list of partitions contains the start tile id and partition name for each
+   * of the partitions found within the image file structure. We combine these two sets
+   * of data to write out a new splits file that contains all three fields.
+   *
+   * There should always be one more partition found in the image's directory structure
+   * than there are splits from the splits file. This is because no entry is written to
+   * the splits file for the last
+   * @param splits
+   * @param partitions
+   * @param splitFileOutputStream
+   * @return
+   * @throws IOException
+   */
+  private int writeSplits(final List<SplitInfo> splits, final List<SplitInfo> partitions,
       final OutputStream splitFileOutputStream) throws IOException
   {
+    if (splits.size() != partitions.size())
+    {
+      throw new IOException("The number of splits (" + splits.size() +
+                                    ") must be equal to the number of partitions found (" +
+                                    partitions.size() + ")");
+    }
     final PrintWriter out = new PrintWriter(splitFileOutputStream);
 
     try
     {
-      // write the magic number
-      final byte[] magic = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(HAS_PARTITION_NAMES)
-          .array());
-      out.println(new String(magic));
+      // write the version string
+      out.println(SPLITS_VERSION_3);
 
       int cnt = 0;
-      for (final long split : splits)
+      for (int i=0; i < splits.size(); i++)
       {
-        final byte[] id = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(split).array());
-
-        out.println(new String(id));
-
-        final byte[] part = Base64.encodeBase64(partitions[cnt++].getBytes());
-        out.println(new String(part));
+        SplitInfo split = splits.get(i);
+        SplitInfo partition = partitions.get(i);
+        String entry = partition.getStartTileId() + SPLIT_DELIMITER + split.getEndTileId() + SPLIT_DELIMITER + partition.getPartitionName();
+        out.println(entry);
       }
-      // need to write the name of the last partition, we can use magic number
-      // for the tileid...
-      out.println(new String(magic));
-      final byte[] part = Base64.encodeBase64(partitions[cnt].getBytes());
-      out.println(new String(part));
     }
     finally
     {
@@ -509,42 +541,65 @@ public class SplitFile
     return stream;
   }
 
-  public List<Long> readSplits(final String splitFile)
+  /**
+   * This method should only be called for reading splits that are guaranteed to be
+   * in the current format because no zoom level is included. In order to read splits
+   * files that *may* be in an older format, call the readSplits method that takes
+   * a zoom level as an argument as well.
+   *
+   * @param splitFile
+   * @return
+   * @throws IOException
+   */
+  public List<SplitInfo> readSplitsCurrentVersion(final String splitFile) throws IOException
+  {
+    return readSplits(splitFile, -1);
+  }
+
+  /**
+   * This method can read splits files in older formats as well as the current format. The
+   * difference is that the older splits files do not contain the last split, so it has
+   * to be computed using the max tile id for the zoom level. As a result, the zoom level
+   * has to be passed in.
+   *
+   * @param splitFile
+   * @param zoom
+   * @return
+   * @throws IOException
+   */
+  public List<SplitInfo> readSplits(final String splitFile, final int zoom) throws IOException
   {
     try
     {
       final Path splitFilePath = new Path(splitFile);
       final InputStream stream = HadoopFileUtils.open(conf, splitFilePath);
-      final List<Long> splits = new ArrayList<Long>();
-      final List<String> partitions = new ArrayList<String>();
-  
-      readSplits(stream, splits, partitions);
+      final List<SplitInfo> splits = new ArrayList<SplitInfo>();
+
+      readSplits(stream, splits, zoom);
       return splits;
     }
     catch (final FileNotFoundException e)
     {
-      return new ArrayList<Long>();
+      // If there is no splits file, that means that one split includes the entire image
+      List<SplitFile.SplitInfo> result = new ArrayList<SplitInfo>();
+      result.add(new SplitFile.SplitInfo(zoom));
+      return result;
     }
-    catch (final IOException e)
-    {
-    }
-    return null;
   }
 
-  public void readSplits(final String splitFile, final List<Long> splits, final List<String> partitions)
+  /**
+   * Read the content of the specified splits file. The caller must properly handle both
+   * the FileNotFoundException and IOException.
+   *
+   * @param splitFile
+   * @param splits
+   * @throws IOException
+   */
+  public void readSplits(final String splitFile, final List<SplitInfo> splits, int zoom) throws IOException
   {
-    try
-    {
-      final InputStream stream = HadoopFileUtils.open(conf, new Path(splitFile));
-  
-      readSplits(stream, splits, partitions);
-    }
-    catch (final FileNotFoundException e)
-    {
-    }
-    catch (final IOException e)
-    {
-    }
+    final Path splitsPath = new Path(splitFile);
+    final InputStream stream = HadoopFileUtils.open(conf, splitsPath);
+    readSplits(stream, splits, zoom);
   }
 
   public String findSplitFile(final String imageName) throws IOException
@@ -565,7 +620,7 @@ public class SplitFile
     return splits.toString();
   }
 
-  protected boolean hasPartitionNames(final String splitFile)
+  private boolean hasPartitionNames(final String splitFile)
   {
     try
     {
@@ -596,11 +651,19 @@ public class SplitFile
   
   }
 
-  private String[] findPartitions(final String splitFileDir) throws IOException
+  /**
+   * Scans the diratory Path passed in for any directory that contains a "data" file.
+   * This will correspond to a "part" directory for the image.
+   *
+   * @param splitFileDir
+   * @return
+   * @throws IOException
+   */
+  private List<SplitInfo> findPartitions(final String splitFileDir) throws IOException
   {
   
     Path path = new Path(splitFileDir);
-    final ArrayList<String> partitions = new ArrayList<String>();
+    final ArrayList<SplitInfo> partitions = new ArrayList<SplitInfo>();
   
     // get a Hadoop file system handle
     final FileSystem fs = path.getFileSystem(conf);
@@ -626,38 +689,62 @@ public class SplitFile
   
       if (isMapFileDir)
       {
-        // need to be relative to the path, so we can just use getName()
-        partitions.add(p.getName());
+        // We found a map file directory. Now we need to open it as a MapFile
+        // and get the first key value which is the start tile id of that partition.
+        Path indexPath = new Path(p, "index");
+        SequenceFile.Reader reader = new SequenceFile.Reader(fs, indexPath, conf);
+        TileIdWritable key;
+        try
+        {
+          key = (TileIdWritable) reader.getKeyClass().newInstance();
+          reader.next(key);
+        }
+        catch (InstantiationException e)
+        {
+          throw new IOException(e);
+        }
+        catch (IllegalAccessException e)
+        {
+          throw new IOException(e);
+        }
+        finally
+        {
+          if (reader != null)
+          {
+            reader.close();
+          }
+        }
+        long startTileId = key.get();
+        partitions.add(new SplitInfo(p.getName(), startTileId, -1));
       }
     }
-  
-    return partitions.toArray(new String[0]);
+    return partitions;
   }
 
-  public static int findPartition(final long key, final long[] array)
+  public static int findPartition(final long key, final List<SplitInfo> partitions)
   {
+    Comparator<SplitInfo> c = new Comparator<SplitInfo>()
+    {
+      public int compare(SplitInfo s1, SplitInfo s2)
+      {
+        long e1 = s1.getEndTileId();
+        long e2 = s2.getEndTileId();
+        if (e1 == e2)
+        {
+          return 0;
+        }
+        else if (e1 > e2)
+        {
+          return 1;
+        }
+        return -1;
+      }
+    };
+    SplitInfo search = new SplitInfo(null, -1, key);
     // find the bin for the range, and guarantee it is positive
-    int index = Arrays.binarySearch(array, key);
+    int index = Collections.binarySearch(partitions, search, c);
     index = index < 0 ? (index + 1) * -1 : index;
 
     return index;
   }
-
-  public static int findPartition(final TileIdWritable key, final TileIdWritable[] array)
-  {
-    // find the bin for the range, and guarantee it is positive
-    int index = Arrays.binarySearch(array, key);
-    index = index < 0 ? (index + 1) * -1 : index;
-
-    return index;
-  }
-
-//  private static int findPartition(final TileIdZoomWritable key, final TileIdWritable[] array)
-//  {
-//    // get zoom
-//    // get array for zoom
-//
-//    // return findPartition(key, array)
-//    return -1;
-//  }
 }

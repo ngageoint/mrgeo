@@ -52,10 +52,8 @@ public class PrintSplitFile extends Command
       final String splitFile = line.getArgs()[0];
 
       int index = 0;
-      final List<Long> splits = new ArrayList<Long>();
-      final List<String> partitions = new ArrayList<String>();
+      final List<SplitFile.SplitInfo> splits = new ArrayList<SplitFile.SplitInfo>();
       final SplitFile sf = new SplitFile(conf);
-      sf.readSplits(splitFile, splits, partitions);
 
       int zoomlevel = -1;
 
@@ -71,34 +69,20 @@ public class PrintSplitFile extends Command
 
       }
 
+      sf.readSplits(splitFile, splits, zoomlevel);
       System.out.println("Splits: " + splitFile);
-      for (final long split : splits)
+      for (final SplitFile.SplitInfo split : splits)
       {
-        System.out.print("" + index + " " + split);
+        System.out.print("" + index + " => " + split);
         if (zoomlevel > 0)
         {
-          final TMSUtils.Tile tile = TMSUtils.tileid(split, zoomlevel);
-          System.out.print(" tx: " + tile.tx + " ty: " + tile.ty);
+          TMSUtils.Tile tile = TMSUtils.tileid(split.getStartTileId(), zoomlevel);
+          System.out.print(" start tx: " + tile.tx + " start ty: " + tile.ty);
+          tile = TMSUtils.tileid(split.getEndTileId(), zoomlevel);
+          System.out.print(" end tx: " + tile.tx + " end ty: " + tile.ty);
         }
 
-        try
-        {
-          System.out.print(" " + partitions.get(index));
-        }
-        catch (final IndexOutOfBoundsException e)
-        {
-
-        }
         index++;
-        System.out.println();
-      }
-
-      if (partitions.size() > splits.size())
-      {
-        for (int i = splits.size(); i < partitions.size(); i++)
-        {
-          System.out.print("" + index + " (to end) " + partitions.get(index));
-        }
         System.out.println();
       }
       return 0;

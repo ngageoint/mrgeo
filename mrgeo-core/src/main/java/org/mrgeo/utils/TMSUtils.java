@@ -873,6 +873,11 @@ public class TMSUtils
     return (ty * (long) Math.pow(2, zoomlevel)) + tx;
   }
 
+  public static long maxTileId(final int zoomlevel)
+  {
+    return numXTiles(zoomlevel) * numYTiles(zoomlevel) - 1;
+  }
+
   // Returns bounds of the given tile in the SWNE form
   public static double[] tileSWNEBoundsArray(final long tx, final long ty, final int zoom,
     final int tilesize)

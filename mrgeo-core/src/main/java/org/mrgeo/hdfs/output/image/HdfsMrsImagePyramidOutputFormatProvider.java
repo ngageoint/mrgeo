@@ -112,7 +112,7 @@ public class HdfsMrsImagePyramidOutputFormatProvider extends MrsImageOutputForma
       {
         final String outputWithZoom = imagePath + "/" + context.getZoomlevel();
         final SplitFile sf = new SplitFile(job.getConfiguration());
-        sf.copySplitFile(splitFileTmp.toString(), outputWithZoom);
+        sf.copySplitFile(splitFileTmp.toString(), outputWithZoom, context.getZoomlevel());
       }
     }
     catch (final IOException e)
