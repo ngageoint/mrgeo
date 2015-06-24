@@ -15,38 +15,29 @@
 
 package org.mrgeo.mapalgebra;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
-
+import com.vividsolutions.jts.geom.Envelope;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
-import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.GeometryInputStream;
-import org.mrgeo.data.csv.CsvGeometryInputStreamOld;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.shp.ShapefileReader;
-import org.mrgeo.data.tsv.TsvGeometryInputStreamOld;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorMetadata;
 import org.mrgeo.data.vector.VectorMetadataReader;
 import org.mrgeo.data.vector.VectorReader;
-import org.mrgeo.format.CsvInputFormat;
 import org.mrgeo.format.FeatureInputFormatFactory;
 import org.mrgeo.format.InlineCsvInputFormat;
 import org.mrgeo.format.PgQueryInputFormat;
 import org.mrgeo.format.ShpInputFormat;
-import org.mrgeo.format.TsvInputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
@@ -65,7 +56,10 @@ import org.mrgeo.vector.mrsvector.mapalgebra.HdfsMrsVectorPyramidInputFormatDesc
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vividsolutions.jts.geom.Envelope;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Vector;
 
 public class RasterizeVectorMapOp extends RasterMapOp
     implements InputsCalculator, BoundsCalculator, TileSizeCalculator, MaximumZoomLevelCalculator
@@ -302,7 +296,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
     }
 
     tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(
-        "mrsimage.tilesize", "512"));
+        MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
     String cs = MapOp.parseChildString(children.get(2), "cell size", parser);
     if (cs.endsWith("m"))

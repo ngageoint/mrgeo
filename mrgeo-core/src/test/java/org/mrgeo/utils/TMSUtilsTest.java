@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
 
 @SuppressWarnings("static-method")
@@ -41,7 +42,7 @@ public class TMSUtilsTest
     // the zoom level and tilesize
     b = new Bounds(141.7066, -18.3733, 142.5600, -17.5200);
     zoom = 10;
-    ts = 512;
+    ts = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
 
     tiles = new LongRectangle(915, 203, 917, 206);
     // remember, tile bounds are usually larger than the actual image bounds.
@@ -155,11 +156,11 @@ public class TMSUtilsTest
     Assert.assertEquals("Bad ur tile y", tiles.getMaxY(), ur.ty);
     
     // Check a value that's just to the right of a tile x border
-    TMSUtils.Tile check = TMSUtils.latLonToTile(0.0, 0.00001, 1, 512);
+    TMSUtils.Tile check = TMSUtils.latLonToTile(0.0, 0.00001, 1, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     Assert.assertEquals(1, check.tx);
     Assert.assertEquals(0, check.ty);
     // Check a value that's just above a y tile border
-    check = TMSUtils.latLonToTile(0.00001, -180.0, 2, 512);
+    check = TMSUtils.latLonToTile(0.00001, -180.0, 2, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     Assert.assertEquals(0, check.tx);
     Assert.assertEquals(1, check.ty);
   }
@@ -171,7 +172,7 @@ public class TMSUtilsTest
     double lat = -90.0;
     double lon = 0.0;
     zoom = 1;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     TMSUtils.Tile tile = TMSUtils.latLonToTile(lat, lon, zoom, tileSize);
     TMSUtils.Pixel ptUl = TMSUtils.latLonToTilePixelUL(lat, lon, tile.tx, tile.ty, zoom, tileSize);
     TMSUtils.Pixel pt = TMSUtils.latLonToTilePixel(lat, lon, tile.tx, tile.ty, zoom, tileSize);
@@ -193,7 +194,7 @@ public class TMSUtilsTest
     double lat = -90.0;
     double lon = 0.0;
     zoom = 1;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     TMSUtils.Pixel pt = TMSUtils.latLonToPixels(lat, lon, zoom, tileSize);
     TMSUtils.Pixel ptUl = TMSUtils.latLonToPixelsUL(lat, lon, zoom, tileSize);
     Assert.assertEquals(0, pt.py);
@@ -461,7 +462,7 @@ public class TMSUtilsTest
   public void testPixelToLatLon()
   {
     zoom = 1;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     long height = tileSize * (long)Math.pow(2.0, zoom - 1);
     long width = 2 * height;
     double resolution = TMSUtils.resolution(zoom, tileSize);
@@ -492,7 +493,7 @@ public class TMSUtilsTest
   public void testPixelToLatLonUL()
   {
     zoom = 1;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     long height = tileSize * (long)Math.pow(2.0, zoom - 1);
     long width = 2 * height;
     double resolution = TMSUtils.resolution(zoom, tileSize);

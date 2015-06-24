@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.formats.TileCollection;
 import org.mrgeo.tile.TileIdZoomWritable;
@@ -47,7 +48,7 @@ public class BuildPyramidMapperTest
   @BeforeClass
   public static void setUp() throws Exception
   {
-    int tile = 512;
+    int tile = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
 
     rasters = new Raster[10];
     for (int i = 0; i < 10; i++)
@@ -74,7 +75,7 @@ public class BuildPyramidMapperTest
 
     // only need to set the metadata params we'll use in the splitter
     MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
-    metadata.setTilesize(512);
+    metadata.setTilesize(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     metadata.setPyramid("foo");
 
     try

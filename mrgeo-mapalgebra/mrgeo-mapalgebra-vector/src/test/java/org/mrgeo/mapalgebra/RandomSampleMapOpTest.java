@@ -8,6 +8,7 @@ import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.Point;
@@ -117,7 +118,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
   {
     int numSamples = 200;
     int zoomLevel = 12;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     double minX = -180.0;
     double minY = -90.0;
     double maxX = -178.0;
@@ -186,7 +187,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
   public void testExclusionsFromBounds() throws Exception
   {
     int zoomLevel = 5;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     double minX = -180.0;
     double minY = -90.0;
     double maxX = -178.0;

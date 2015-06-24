@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
@@ -36,11 +37,11 @@ import static org.junit.Assert.assertFalse;
 public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
 {
   private static final Logger log = LoggerFactory.getLogger(ImageFormatTypeVariantsTest.class);
-  
-  @BeforeClass 
+
+  @BeforeClass
   public static void setUpForJUnit()
-  {    
-    try 
+  {
+    try
     {
       baselineInput = TestUtils.composeInputDir(ImageFormatTypeVariantsTest.class);
       WmsGeneratorTestAbstract.setUpForJUnit();
@@ -50,21 +51,21 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
       e.printStackTrace();
     }
   }
-  
+
   private ClientResponse testGetMapWithVariant(String format) throws IOException, SAXException
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", format)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", format)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
     return response;
   }
-  
+
   /*
    * These are variants from the standard mime types we're allowing to be flexible.  Its debatable
    * how useful this test is, since it requires maintenance every time a new image format is added.
@@ -73,8 +74,8 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
    * same for all WMS request types.  Also, only a non-zero response length is checked for here, 
    * rather than a full image comparison, since that coverage is in other tests.
    */
-  @Test 
-  @Category(IntegrationTest.class)  
+  @Test
+  @Category(IntegrationTest.class)
   public void testVariants() throws Exception
   {
     ClientResponse response  = null;
@@ -98,8 +99,8 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
         }
       }
       //correct format is "image/jpeg"
-      String[] jpgVariants = new String[]{ "jpeg", "jpg", "JPG", "JPEG", "image/jpg", "IMAGE/JPG", 
-        "image/JPG", "IMAGE/JPEG", "image/JPEG" };
+      String[] jpgVariants = new String[]{ "jpeg", "jpg", "JPG", "JPEG", "image/jpg", "IMAGE/JPG",
+          "image/JPG", "IMAGE/JPEG", "image/JPEG" };
       for (int i = 0; i < jpgVariants.length; i++)
       {
         log.info("Checking image format: " + jpgVariants[i] + " ...");
@@ -115,10 +116,10 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
           response.close();
         }
       }
-      
+
       //correct format is "image/tiff"
-      String[] tifVariants = new String[]{ "tiff", "tif", "TIF", "TIFF", "image/tif", "IMAGE/TIF", 
-        "image/TIF", "IMAGE/TIFF", "image/TIFF" };
+      String[] tifVariants = new String[]{ "tiff", "tif", "TIF", "TIFF", "image/tif", "IMAGE/TIF",
+          "image/TIF", "IMAGE/TIFF", "image/TIFF" };
       for (int i = 0; i < tifVariants.length; i++)
       {
         log.info("Checking image format: " + tifVariants[i] + " ...");

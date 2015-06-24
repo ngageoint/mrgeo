@@ -16,6 +16,7 @@
 package org.mrgeo.mapreduce;
 
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.paint.*;
@@ -81,7 +82,7 @@ public class RasterizeVectorPainter
       {
         throw new IllegalArgumentException("Invalid zoom, specify zoom.");
       }
-      tileSize = conf.getInt(TILE_SIZE, 512);
+      tileSize = conf.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     }
     catch (final Exception e)
     {

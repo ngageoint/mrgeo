@@ -516,7 +516,7 @@ public class IngestImage extends Command
           return -1;
         }
 
-        tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty("mrsimage.tilesize", "512"));
+        tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
         for (String arg: line.getArgs())
         {

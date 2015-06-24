@@ -81,7 +81,8 @@ public class MrGeoConstants
    * Image configuration keys
    */
   public static final String MRGEO_MRS_TILESIZE = "mrsimage.tilesize";
-  public static final int MRGEO_MRS_TILESIZE_DEFAULT = 512;
+  public static final int MRGEO_MRS_TILESIZE_DEFAULT_INT = 512;
+  public static final String MRGEO_MRS_TILESIZE_DEFAULT = Integer.toString(MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
   /*
    * Security classification keys

@@ -15,10 +15,8 @@
 
 package org.mrgeo.mapalgebra;
 
-import java.io.IOException;
-import java.util.Vector;
-
 import org.apache.hadoop.fs.Path;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
@@ -28,6 +26,9 @@ import org.mrgeo.progress.Progress;
 import org.mrgeo.progress.ProgressHierarchy;
 import org.mrgeo.rasterops.RandomSamplesToTsv;
 import org.mrgeo.utils.Bounds;
+
+import java.io.IOException;
+import java.util.Vector;
 
 public class RandomSampleMapOp extends VectorMapOp implements BoundsCalculator
 {
@@ -73,7 +74,7 @@ public class RandomSampleMapOp extends VectorMapOp implements BoundsCalculator
   public void build(Progress p) throws IOException, JobFailedException, JobCancelledException
   {
     int tileSize = Integer.parseInt(MrGeoProperties.getInstance()
-        .getProperty("mrsimage.tilesize", "512"));
+        .getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
     ProgressHierarchy ph = new ProgressHierarchy(p);
     ph.createChild(1.0f);
     ph.createChild(1.0f);

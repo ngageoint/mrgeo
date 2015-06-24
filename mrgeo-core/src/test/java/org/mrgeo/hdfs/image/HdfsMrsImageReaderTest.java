@@ -77,7 +77,6 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
 
   private static String all_ones = Defs.INPUT + "all-ones";
   private static final int zoomlevel = 10;
-  private static final int tilesize = 512;
 
   @BeforeClass
   static public void setup() throws IOException

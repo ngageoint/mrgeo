@@ -19,6 +19,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
@@ -55,14 +56,14 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
   }
@@ -75,14 +76,14 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
     {
       String contentType = "image/jpeg";
       ClientResponse response = resource().path("/wms")
-              .queryParam("SERVICE", "WMS")
-              .queryParam("REQUEST", "getmap")
-              .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-              .queryParam("FORMAT", contentType)
-              .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-              .queryParam("WIDTH", "512")
-              .queryParam("HEIGHT", "512")
-              .get(ClientResponse.class);
+          .queryParam("SERVICE", "WMS")
+          .queryParam("REQUEST", "getmap")
+          .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+          .queryParam("FORMAT", contentType)
+          .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+          .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+          .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+          .get(ClientResponse.class);
 
       processImageResponse(response, contentType, "jpg");
     }
@@ -99,14 +100,14 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/tiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
   }
@@ -122,12 +123,12 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmosaic")
-            .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmosaic")
+        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
   }
@@ -138,12 +139,12 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/jpeg";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmosaic")
-            .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmosaic")
+        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "jpg");
   }
@@ -154,12 +155,12 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/tiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmosaic")
-            .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmosaic")
+        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
   }
@@ -175,14 +176,14 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "gettile")
-            .queryParam("LAYER", "IslandsElevation-v2-no-stats")
-            .queryParam("FORMAT", contentType)
-            .queryParam("TILEROW", "56")
-            .queryParam("TILECOL", "242")
-            .queryParam("SCALE", "0.0027465820") // zoom level 8
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "gettile")
+        .queryParam("LAYER", "IslandsElevation-v2-no-stats")
+        .queryParam("FORMAT", contentType)
+        .queryParam("TILEROW", "56")
+        .queryParam("TILECOL", "242")
+        .queryParam("SCALE", "0.0027465820") // zoom level 8
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
   }
@@ -193,14 +194,14 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/jpeg";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "gettile")
-            .queryParam("LAYER", "IslandsElevation-v2-no-stats")
-            .queryParam("FORMAT", contentType)
-            .queryParam("TILEROW", "56")
-            .queryParam("TILECOL", "242")
-            .queryParam("SCALE", "0.0027465820") // zoom level 8
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "gettile")
+        .queryParam("LAYER", "IslandsElevation-v2-no-stats")
+        .queryParam("FORMAT", contentType)
+        .queryParam("TILEROW", "56")
+        .queryParam("TILECOL", "242")
+        .queryParam("SCALE", "0.0027465820") // zoom level 8
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "jpg");
   }
@@ -211,14 +212,14 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/tiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "gettile")
-            .queryParam("LAYER", "IslandsElevation-v2-no-stats")
-            .queryParam("FORMAT", contentType)
-            .queryParam("TILEROW", "56")
-            .queryParam("TILECOL", "242")
-            .queryParam("SCALE", "0.0027465820") // zoom level 8
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "gettile")
+        .queryParam("LAYER", "IslandsElevation-v2-no-stats")
+        .queryParam("FORMAT", contentType)
+        .queryParam("TILEROW", "56")
+        .queryParam("TILECOL", "242")
+        .queryParam("SCALE", "0.0027465820") // zoom level 8
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
   }

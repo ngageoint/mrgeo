@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.data.DataProviderFactory;
@@ -46,7 +47,7 @@ public class IngestImageMapperTest
   @Before
   public void setUp()
   {
-    BufferedImage image = new BufferedImage(512, 512, ColorSpace.TYPE_RGB);
+    BufferedImage image = new BufferedImage(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, ColorSpace.TYPE_RGB);
     raster = image.getData();
 
   }
@@ -71,7 +72,7 @@ public class IngestImageMapperTest
 
     // only need to set the metadata params we'll use in the splitter
     MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
-    metadata.setTilesize(512);
+    metadata.setTilesize(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     
     try
     {

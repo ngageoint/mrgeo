@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -538,8 +539,8 @@ public class OpChainDriver
     }
     if (tilesize == 0)
     {
-      tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty("mrsimage.tilesize",
-          "512"));
+      tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE,
+          MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
     }
     return tilesize;
   }

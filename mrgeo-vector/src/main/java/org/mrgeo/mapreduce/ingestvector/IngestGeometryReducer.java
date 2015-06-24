@@ -17,6 +17,7 @@ package org.mrgeo.mapreduce.ingestvector;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.mapreduce.GeometryWritable;
 import org.mrgeo.mapreduce.MapGeometryToTiles;
@@ -86,7 +87,7 @@ public class IngestGeometryReducer extends Reducer<TileIdWritable, GeometryWrita
     Configuration conf = context.getConfiguration();
 
     zoom = conf.getInt(MapGeometryToTiles.ZOOMLEVEL, 20);
-    tilesize = conf.getInt(MapGeometryToTiles.TILESIZE, 512);
+    tilesize = conf.getInt(MapGeometryToTiles.TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
   }
 
 }
