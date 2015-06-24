@@ -569,7 +569,7 @@ public class MrsPyramidServiceTest {
     Properties unusedMrgeoProperties = new Properties();
     mrgeoProperties.put(MrGeoConstants.MRGEO_ENV_HOME, TestUtils.composeInputDir(RasterResourceTest.class));
     mrgeoProperties.put("image.base", "file://" + TestUtils.composeInputDir(RasterResourceTest.class));
-    mrgeoProperties.put("colorscale.base", "file://" + TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
+    mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
     MrsPyramidService service = new MrsPyramidService(unusedMrgeoProperties);
 
     String[] bBoxValues = bbox.split(",");
