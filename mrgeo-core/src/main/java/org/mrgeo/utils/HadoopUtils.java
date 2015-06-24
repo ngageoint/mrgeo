@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -52,10 +53,6 @@ public class HadoopUtils
 {
   private static final Logger log = LoggerFactory.getLogger(HadoopUtils.class);
   private static Random random = new Random(System.currentTimeMillis());
-
-  public static String IMAGE_BASE = "image.base";
-  public static String VECTOR_BASE = "vector.base";
-  public static String COLOR_SCALE_BASE = "colorscale.base";
 
   private static Constructor<?> taskAttempt = null;
   private static Constructor<?> jobContext = null;
@@ -244,7 +241,7 @@ public class HadoopUtils
 
   public static String getDefaultColorScalesBaseDirectory(final Properties props)
   {
-    final String dir = props.getProperty(COLOR_SCALE_BASE, null);
+    final String dir = props.getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, null);
     return dir;
   }
 
@@ -256,14 +253,14 @@ public class HadoopUtils
 
   public static String getDefaultImageBaseDirectory(final Properties props)
   {
-    return props.getProperty(IMAGE_BASE, null);
+    return props.getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, null);
   }
 
   public static String[] getDefaultVectorBaseDirectories(final Properties props)
   {
     final String defaultDirs[] = null;
 
-    final String listDirs = props.getProperty(VECTOR_BASE, null);
+    final String listDirs = props.getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, null);
     if (listDirs != null)
     {
       final String[] dirs = listDirs.split(",");

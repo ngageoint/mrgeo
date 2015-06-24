@@ -21,11 +21,11 @@ import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,7 @@ public class CustomColorScaleTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)  
   public void testMissingSystemColorScale() throws Exception
   {
-    MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, "foo/bar");
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "foo/bar");
 
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
