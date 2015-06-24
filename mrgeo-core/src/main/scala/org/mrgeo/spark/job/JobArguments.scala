@@ -6,6 +6,17 @@ import org.mrgeo.utils.{FileUtils, Memory}
 import scala.collection.mutable.ArrayBuffer
 
 class JobArguments() {
+
+  final private val NAME:String =  "name"
+  final private val CLUSTER:String =  "cluster"
+  final private val DRIVER:String = "driver"
+  final private val JARS:String =  "jars"
+  final private val DRIVERJAR:String = "driverjar"
+  final private val VERBOSE:String =  "verbose"
+  final private val CORES:String =  "cores"
+  final private val EXECUTORS:String =  "executors"
+  final private val MEMORY:String =  "memory"
+
   /**
    * Pattern for matching a Windows drive, which contains only a single alphabet character.
    */
@@ -109,53 +120,48 @@ class JobArguments() {
   def toArray: Array[String] = {
     val args = new ArrayBuffer[String]()
     if (name != null) {
-      args += "name"
+      args += NAME
       args += name
     }
 
     if (cluster != null) {
-      args += "cluster"
+      args += CLUSTER
       args += cluster
     }
 
     if (driverClass != null) {
-      args += "driver"
+      args += DRIVER
       args += driverClass
     }
 
     if (jars != null) {
-      args += "jars"
+      args += JARS
       args += jars.mkString(",")
     }
 
     if (driverJar != null) {
-      args += "driverjar"
+      args += DRIVERJAR
       args += driverJar
     }
 
     if (verbose) {
-      args += "verbose"
+      args += VERBOSE
     }
 
     if (cores > 0) {
-      args += "cores"
+      args += CORES
       args += cores.toString
     }
 
     if (executors > 0) {
-      args += "executors"
+      args += EXECUTORS
       args += executors.toString
     }
 
     if (memoryKb > 0) {
-      args += "memory"
+      args += MEMORY
       args += memoryKb.toString
     }
-
-//    if (driverMem != null) {
-//      args += "driverMemory"
-//      args += driverMem
-//    }
 
     for (param <- params) {
       args += param._1
@@ -207,10 +213,6 @@ class JobArguments() {
     memoryKb = value.toInt
     parse(tail)
 
-//  case ("--driverMemory") :: value :: tail =>
-//    driverMem = value
-//    parse(tail)
-
   case key :: value :: tail =>
     if (key.startsWith("--")) {
       if (value.startsWith("--")) {
@@ -227,32 +229,6 @@ class JobArguments() {
     else {
       throw new Exception("Invalid switch " + key + ": must start with --")
     }
-  //      if (inSparkOpts) {
-  //        value match {
-  //          // convert --foo=bar to --foo bar
-  //        case v if v.startsWith("--") && v.contains("=") && v.split("=").size == 2 =>
-  //          val parts = v.split("=")
-  //          parse(Seq(parts(0), parts(1)) ++ tail)
-  //        case v if v.startsWith("-") =>
-  //          val errMessage = s"Unrecognized option '$value'."
-  //          printErrorAndExit(errMessage)
-  //        case v =>
-  //          primaryResource =
-  //              if (!SparkSubmit.isShell(v)) {
-  //                Utils.resolveURI(v).toString
-  //              } else {
-  //                v
-  //              }
-  //          inSparkOpts = false
-  //          isPython = SparkSubmit.isPython(v)
-  //          parse(tail)
-  //        }
-  //      } else {
-  //        if (!value.isEmpty) {
-  //          childArgs += value
-  //        }
-  //        parse(tail)
-  //      }
 
   case key :: Nil =>
     if (key.startsWith("--")) {
