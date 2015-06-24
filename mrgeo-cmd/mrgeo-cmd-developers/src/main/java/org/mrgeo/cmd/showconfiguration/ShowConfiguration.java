@@ -84,14 +84,14 @@ public class ShowConfiguration extends Command
     Properties psp = new Properties();
     InputStream is = MrGeoProperties.class.getClass().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS);
     if(is == null){
-      sb.append("MrGeo default file settings.properties does not exist.\n");
+      sb.append("MrGeo default file " + MrGeoConstants.MRGEO_SETTINGS + " does not exist.\n");
     } else {
-      sb.append("Found default configuration file settings.properties.\n");
+      sb.append("Found default configuration file " + MrGeoConstants.MRGEO_SETTINGS + ".\n");
       try{
         psp.load(is);
         is.close();
       } catch(IOException ioe){
-        sb.append("\tProblem loading settings.properties file.\n");
+        sb.append("\tProblem loading " + MrGeoConstants.MRGEO_SETTINGS + " file.\n");
       }
       sb.append(reportProperties("\t", psp) + "\n");
     }
