@@ -319,11 +319,11 @@ public class DependencyLoader
     }
 
     // prepend MRGEO_HOME
-    String mrgeo = System.getenv("MRGEO_HOME");
+    String mrgeo = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
     if (mrgeo == null)
     {
-      log.info("MRGEO_HOME environment variable is undefined. Trying system property");
-      mrgeo = System.getProperty("MRGEO_HOME");
+      log.info(MrGeoConstants.MRGEO_ENV_HOME + " environment variable is undefined. Trying system property");
+      mrgeo = System.getProperty(MrGeoConstants.MRGEO_ENV_HOME);
     }
     if (mrgeo != null)
     {
@@ -338,7 +338,7 @@ public class DependencyLoader
     }
     else
     {
-      log.error("MRGEO_HOME is not defined, and may result in inability to find dependent JAR files");
+      log.error(MrGeoConstants.MRGEO_ENV_HOME + " is not defined, and may result in inability to find dependent JAR files");
     }
 
     // now perform any variable replacement in the classpath

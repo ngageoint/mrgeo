@@ -33,6 +33,7 @@ import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -167,7 +168,7 @@ public class WmsGeneratorTestAbstract extends JerseyTest
     
     Properties mrgeoProperties = MrGeoProperties.getInstance();
 
-    mrgeoProperties.put("MRGEO_HOME", inputHdfs.toString());
+    mrgeoProperties.put(MrGeoConstants.MRGEO_ENV_HOME, inputHdfs.toString());
     mrgeoProperties.put(HadoopUtils.IMAGE_BASE, inputHdfs.toString());
     mrgeoProperties.put(HadoopUtils.COLOR_SCALE_BASE, inputHdfs.toString());
     mrgeoProperties.put("base.path", inputHdfs.toString());

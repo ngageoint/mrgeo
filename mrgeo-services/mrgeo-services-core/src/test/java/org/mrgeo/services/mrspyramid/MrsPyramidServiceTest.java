@@ -14,34 +14,14 @@
  */
 package org.mrgeo.services.mrspyramid;
 
-import static org.junit.Assert.assertEquals;
-
-import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
-
 import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.raster.RasterUtils;
@@ -54,6 +34,19 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.ImageUtils;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Steve Ingram
@@ -574,7 +567,7 @@ public class MrsPyramidServiceTest {
     ColorScale cs = null;
     Properties mrgeoProperties = MrGeoProperties.getInstance();
     Properties unusedMrgeoProperties = new Properties();
-    mrgeoProperties.put("MRGEO_HOME", TestUtils.composeInputDir(RasterResourceTest.class));
+    mrgeoProperties.put(MrGeoConstants.MRGEO_ENV_HOME, TestUtils.composeInputDir(RasterResourceTest.class));
     mrgeoProperties.put("image.base", "file://" + TestUtils.composeInputDir(RasterResourceTest.class));
     mrgeoProperties.put("colorscale.base", "file://" + TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
     MrsPyramidService service = new MrsPyramidService(unusedMrgeoProperties);

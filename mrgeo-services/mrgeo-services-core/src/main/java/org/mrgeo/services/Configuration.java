@@ -15,6 +15,8 @@
 
 package org.mrgeo.services;
 
+import org.mrgeo.core.MrGeoConstants;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -51,7 +53,7 @@ public class Configuration
   {
     properties = new Properties();
 
-    String home = System.getenv("MRGEO_HOME");
+    String home = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
     if (home == null)
     {
 
@@ -66,11 +68,11 @@ public class Configuration
         // An empty props object is fine
       }
 
-      home = properties.getProperty("MRGEO_HOME");
+      home = properties.getProperty(MrGeoConstants.MRGEO_ENV_HOME);
 
       if (home == null)
       {
-        throw new IllegalStateException("MRGEO_HOME environment variable must be set.");
+        throw new IllegalStateException(MrGeoConstants.MRGEO_ENV_HOME + " environment variable must be set.");
       }
     }
     // If we read it from JBoss module, no need to load properties from file system

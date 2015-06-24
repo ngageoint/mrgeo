@@ -21,6 +21,7 @@ import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.commons.codec.binary.Base64;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Properties;
-import java.util.SortedSet;
 
 public class AccumuloConnector {
 
@@ -93,7 +93,7 @@ public class AccumuloConnector {
 	// TODO: need to make sure the path is correctly set - think about MRGEO
 	// environment variables
 	public static String getAccumuloPropertiesLocation() {
-		String conf = System.getenv("MRGEO_HOME");
+		String conf = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
 		if (conf == null) {
 			conf = "/opt/mrgeo";
 		}
