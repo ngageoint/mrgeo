@@ -416,8 +416,6 @@ public class ShowConfiguration extends Command
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_COLORSCALE));
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_IMAGE));
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_KML));
-      sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_RESOURCE));
-      sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_SHAPE));
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_TSV));
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_VECTOR));
     }

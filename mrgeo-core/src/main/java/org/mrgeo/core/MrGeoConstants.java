@@ -52,8 +52,6 @@ public class MrGeoConstants
   /*
    * HDFS configuration keys
    */
-  public static final String MRGEO_HDFS_RESOURCE = "resource.base";
-  public static final String MRGEO_HDFS_SHAPE = "shp.base";
   public static final String MRGEO_HDFS_TSV = "tsv.base";
   public static final String MRGEO_HDFS_VECTOR = "vector.base";
   public static final String MRGEO_HDFS_COLORSCALE = "colorscale.base";
