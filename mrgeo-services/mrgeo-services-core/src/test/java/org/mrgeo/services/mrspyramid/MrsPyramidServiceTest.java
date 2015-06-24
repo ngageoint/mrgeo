@@ -383,7 +383,7 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngLargerThanTileSize() throws Exception
   {
     testIslandsElevationFor("png",
-        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        "1024", "1024",
         ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getDefaultColorScale(), "testGetRasterPngLargerThanTileSize.png",
       "[image/png]", ImageUtils.createImageReader("image/png"));
