@@ -15,24 +15,6 @@
 
 package org.mrgeo.resources.wms;
 
-import java.awt.image.Raster;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.*;
-
-import javax.servlet.ServletException;
-//import javax.servlet.http.HttpServlet;
-//import javax.servlet.http.HttpServletRequest;
-//import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-
 import org.apache.commons.lang.StringUtils;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -44,19 +26,38 @@ import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.ColorScaleManager;
-import org.mrgeo.services.mrspyramid.rendering.ColorScaleApplier;
-import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
-import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
-import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
-import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
-import org.mrgeo.utils.*;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.LatLng;
+import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import javax.servlet.ServletException;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import java.awt.image.Raster;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.*;
+
+//import javax.servlet.http.HttpServlet;
+//import javax.servlet.http.HttpServletRequest;
+//import javax.servlet.http.HttpServletResponse;
 
 //import org.mrgeo.utils.LoggingUtils;
 
@@ -774,140 +775,6 @@ public class WmsGenerator
     return result;
   }
 
-//  /**
-//   * Sets up the home data directory
-//   */
-//  @Override
-//  public void init(final ServletConfig conf) throws ServletException
-//  {
-//    super.init(conf);
-//    try
-//    {
-//      if (basePath == null)
-//      {
-//        basePath = new Path(Configuration.getInstance().getProperties().getProperty("image.base"));
-//      }
-//      System.out.println("image base path: " + basePath.toString());
-//      log.debug("image base path: {}", basePath.toString());
-//      if (colorScaleBasePath == null)
-//      {
-//        colorScaleBasePath = new Path(Configuration.getInstance().getProperties().getProperty(
-//          "colorscale.base"));
-//      }
-//      System.out.println("color scale base path: " + colorScaleBasePath.toString());
-//    }
-//    catch (final IllegalStateException e)
-//    {
-//      throw new ServletException("image.base must be specified in the MrGeo configuration file (" +
-//        e.getMessage() + ")");
-//    }
-//  }
-
-  /**
-   * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-   */
-  /*
-  @Override
-  protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
-      throws ServletException, IOException
-  {
-    final long start = System.currentTimeMillis();
-    try
-    {
-      ServletUtils.printRequestURL(request);
-      ServletUtils.printRequestAttributes(request);
-      ServletUtils.printRequestParams(request);
-
-      final String cache = ServletUtils.getParamValue(request, "cache");
-      if (!StringUtils.isEmpty(cache) && cache.toLowerCase().equals("off"))
-      {
-        response.setHeader("Cache-Control", "no-store");
-        response.setHeader("Pragma", "no-cache");
-        response.setDateHeader("Expires", 0);
-      }
-      else
-      {
-        response.setHeader("Cache-Control", "max-age=3600");
-        response.setHeader("Pragma", "");
-        response.setDateHeader("Expires", 3600);
-      }
-
-      String requestParam = ServletUtils.getParamValue(request, "request");
-      if (requestParam == null || requestParam.isEmpty())
-      {
-        requestParam = "GetCapabilities";
-      }
-      requestParam = requestParam.toLowerCase();
-
-      String serviceParam = ServletUtils.getParamValue(request, "service");
-      if (serviceParam == null || serviceParam.isEmpty())
-      {
-        serviceParam = "wms";
-      }
-      if (!serviceParam.toLowerCase().equals("wms"))
-      {
-        throw new Exception("Invalid service type was requested. (only WMS is supported '" +
-            serviceParam + "')");
-      }
-
-      // TODO: Need to construct provider properties from the WebRequest using
-      // a new security layer and pass those properties to MapAlgebraJob.
-      Properties providerProperties = SecurityUtils.getProviderProperties();
-      if (requestParam.equals("getcapabilities"))
-      {
-        getCapabilities(request, response, providerProperties);
-      }
-      else if (requestParam.equals("getmap"))
-      {
-        getMap(request, response, providerProperties);
-      }
-      else if (requestParam.equals("getmosaic"))
-      {
-        getMosaic(request, response, providerProperties);
-      }
-      else if (requestParam.equals("gettile"))
-      {
-        getTile(request, response, providerProperties);
-      }
-      else if (requestParam.equals("describetiles"))
-      {
-        describeTiles(request, response, providerProperties);
-      }
-      else
-      {
-        throw new Exception("Invalid request type made.");
-      }
-    }
-    catch (final Exception e)
-    {
-      e.printStackTrace();
-      try
-      {
-        response.setContentType("text/xml");
-        writeError(e, response);
-      }
-      // we already started writing out to HTTP, instead return an error.
-      catch (final Exception exception)
-      {
-        log.warn("Exception writing error: {}", exception);
-        throw new IOException("Exception while writing XML exception (ah, the irony). " +
-            "Original Exception is below." + exception.getLocalizedMessage(), e);
-      }
-    }
-    finally
-    {
-      if (log.isDebugEnabled())
-      {
-        log.debug("WMS request time: {}ms", (System.currentTimeMillis() - start));
-        // this can be resource intensive.
-        System.gc();
-        final Runtime rt = Runtime.getRuntime();
-        log.debug(String.format("WMS request memory: %.1fMB / %.1fMB\n", (rt.totalMemory() - rt
-            .freeMemory()) / 1e6, rt.maxMemory() / 1e6));
-      }
-    }
-  }
-*/
   /*
    * DescribeTiles implementation
    */

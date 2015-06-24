@@ -39,11 +39,6 @@ import java.util.Properties;
  */
 @SuppressWarnings("static-method")
 public class ColorScaleManagerTest {
-//    private static String baseDir = TestUtils.composeInputDir(RasterResourceTest.class);
-//    private static String islandsElevation = "IslandsElevation-v2-2";
-//    private static String islandsElevationColorScale = "IslandsElevation-v2-2-color-scale";
-//    private static String islandsElevation_unqualified = baseDir + islandsElevation;
-//    private static String islandsElevationColorScale_unqualified = baseDir + islandsElevationColorScale;
 
     @Before
     public void init()
@@ -56,9 +51,6 @@ public class ColorScaleManagerTest {
     public void testGetColorScale_ColorScaleBaseDirNotExist() throws Exception
     {
       final Properties mrgeoConf = new Properties();
-//      mrgeoConf.put("MRGEO_HOME", TestUtils.composeInputDir(RasterResourceTest.class));
-//      mrgeoConf.put("image.base", TestUtils.composeInputDir(RasterResourceTest.class));
-//      mrgeoConf.put("colorscale.base", TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
 
       @SuppressWarnings("unused")
       final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest", mrgeoConf);
@@ -74,115 +66,31 @@ public class ColorScaleManagerTest {
       final Properties mrgeoConf = new Properties();
       mrgeoConf.put(MrGeoConstants.MRGEO_ENV_HOME, TestUtils.composeInputDir(SharedTestFiles.class));
       mrgeoConf.put("image.base", TestUtils.composeInputDir(SharedTestFiles.class));
-      mrgeoConf.put("colorscale.base", "file://" + TestUtils.composeInputDir(SharedTestFiles.class));
+      mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(SharedTestFiles.class));
 
       final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest", mrgeoConf);
       Assert.assertEquals(true, cs.equals(csExp));
     }
 
-//    @Test
-//    @Category(UnitTest.class)
-//    public void testGetColorScale_DefaultColorScale() throws Exception
-//    {
-//      final Properties mrgeoConf = new Properties();
-//      mrgeoConf.put("MRGEO_HOME", TestUtils.composeInputDir(RasterResourceTest.class));
-//      mrgeoConf.put("image.base", TestUtils.composeInputDir(RasterResourceTest.class));
-//
-//      final ColorScale csDefault = ColorScale.createDefault();
-//      final ColorScale cs = ColorScaleManager.fromPyramid(islandsElevation_unqualified, mrgeoConf, new DesktopFileDriver());
-//      Assert.assertTrue("ColorScales are not equal!", cs.equals(csDefault));
-//      // test dir1 does not have Default.xml, hence color scale used will be
-//      // ColorScale.createDefault()
-//      mrgeoConf.put("colorscale.base", TestUtils.composeInputDir(ColorScaleResourceTest.class));
-//      final ColorScale cs1 = ColorScaleManager.fromPyramid(islandsElevation_unqualified, mrgeoConf, new DesktopFileDriver());
-//      Assert.assertTrue("ColorScales are not equal!", cs1.equals(csDefault));
-//    }
 
-//    @Test
-//    @Category(UnitTest.class)
-//    public void testGetColorScale_DefaultColorScaleFromColorScaleBaseDir1() throws Exception
-//    {
-//      final String colorScaleJSON = getDefaultColorScale();
-//      final ColorScale csExp = ColorScale.loadFromJSON(colorScaleJSON);
-//      final Properties mrgeoConf = new Properties();
-//      mrgeoConf.put("colorscale.base", TestUtils.composeInputDir(RasterResourceTest.class));
-//      final ColorScale cs = ColorScaleManager.fromPyramid(islandsElevation_unqualified, mrgeoConf, new DesktopFileDriver());
-//      Assert.assertEquals(true, cs.equals(csExp));
-//    }
-
-//    @Test
-//    @Category(UnitTest.class)
-//    public void testGetColorScale_PyramidWithColorScale() throws Exception
-//    {
-//      final String colorScaleJSON = getRainbowColorScale();
-//      final ColorScale csExp = ColorScale.loadFromJSON(colorScaleJSON);
-//      final Properties mrgeoConf = new Properties();
-//      mrgeoConf.put("MRGEO_HOME", TestUtils.composeInputDir(RasterResourceTest.class));
-//      mrgeoConf.put("image.base", TestUtils.composeInputDir(RasterResourceTest.class));
-//      final ColorScale cs = ColorScaleManager.fromPyramid(islandsElevationColorScale_unqualified, mrgeoConf, new DesktopFileDriver());
-//
-//      Assert.assertEquals(true, cs.equals(csExp));
-//    }
-
-  // We no longer allow color scales to be specified with ".xml"
-//    @Test
-//    @Category(UnitTest.class)
-//    public void testGetColorScale_WithColorScaleName() throws Exception
-//    {
-//      final String colorScaleJSON = getTestColorScale();
-//      final Properties mrgeoConf = new Properties();
-//      mrgeoConf.put("colorscale.base", TestUtils.composeInputDir(SharedTestFiles.class));
-//      final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest.xml", mrgeoConf);
-//      final ColorScale csExpected = ColorScale.loadFromJSON(colorScaleJSON);
-//      Assert.assertEquals(true, cs.equals(csExpected));
-//    }
-
-    // We no longer allow color scales to be specified by an absolute path
-//    @Test
-//    @Category(UnitTest.class)
-//    public void testGetColorScale_WithColorScaleNameFullPath() throws Exception
-//    {
-//      final String colorScaleJSON = getTestColorScale();
-//      final Properties mrgeoConf = new Properties();
-//      
-//      final String fullPath = TestUtils.composeInputDir(RasterResourceTest.class) + "ColorScaleTest.xml";
-//      final ColorScale cs = ColorScaleManager.fromName(fullPath, mrgeoConf);
-//      final ColorScale csExpected = ColorScale.loadFromJSON(colorScaleJSON);
-//      Assert.assertEquals(true, cs.equals(csExpected));
-//    }
-    
     @Test
     @Category(UnitTest.class)
     public void testGetColorScale_WithColorScaleNameNoXML() throws Exception
     {
       final String colorScaleJSON = getTestColorScale();
       final Properties mrgeoConf = new Properties();
-      mrgeoConf.put("colorscale.base", TestUtils.composeInputDir(SharedTestFiles.class));
+      mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, TestUtils.composeInputDir(SharedTestFiles.class));
       final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest", mrgeoConf);
       final ColorScale csExpected = ColorScale.loadFromJSON(colorScaleJSON);
       Assert.assertEquals(true, cs.equals(csExpected));
     }
-    
-    // We no longer allow color scales to be specified by an absolute path
-//    @Test
-//    @Category(UnitTest.class)
-//    public void testGetColorScale_WithColorScaleNameFullPathNoXML() throws Exception
-//    {
-//      final String colorScaleJSON = getTestColorScale();
-//      final Properties mrgeoConf = new Properties();
-//      
-//      final String fullPath = TestUtils.composeInputDir(RasterResourceTest.class) + "ColorScaleTest";
-//      final ColorScale cs = ColorScaleManager.fromName(fullPath, mrgeoConf);
-//      final ColorScale csExpected = ColorScale.loadFromJSON(colorScaleJSON);
-//      Assert.assertEquals(true, cs.equals(csExpected));
-//    }
 
     @Test(expected = Exception.class)
     @Category(UnitTest.class)
     public void testGetColorScale_WithColorScaleNameNotExist() throws Exception
     {
       final Properties mrgeoConf = new Properties();
-      mrgeoConf.put("colorscale.base",  TestUtils.composeInputDir(SharedTestFiles.class));
+      mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE,  TestUtils.composeInputDir(SharedTestFiles.class));
       ColorScaleManager.fromName("ColorScaleTest123", mrgeoConf);
     }
 
