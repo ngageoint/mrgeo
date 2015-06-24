@@ -77,7 +77,7 @@ public class Configuration
     }
     // If we read it from JBoss module, no need to load properties from file system
 
-    String conf = home + "/conf/mrgeo.conf";
+    String conf = home + MrGeoConstants.MRGEO_CONF;
 
     try {
       FileInputStream fis = new FileInputStream(conf);
