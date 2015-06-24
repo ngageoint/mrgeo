@@ -13,7 +13,7 @@ public class InMemoryWritableRasterTest {
 	@Test
 	@Category(UnitTest.class)
 	public void printThirdBandRasterConversion() {
-		final float RASTER_SIZE = 512;
+		final float RASTER_SIZE = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
 		float PIXEL_VALUE = 1.0f;
 		Raster parent = ConstantDescriptor.create(RASTER_SIZE, RASTER_SIZE, new Float[]{PIXEL_VALUE,PIXEL_VALUE+1,PIXEL_VALUE+2}, null).getData();
 		Raster thirdBandRaster = parent.createChild

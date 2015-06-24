@@ -23,6 +23,7 @@ import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.processing.Operations;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.referencing.CRS;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsImagePyramid;
@@ -120,7 +121,7 @@ public abstract class ImageRendererAbstract implements ImageRenderer
     requestUrl += "KmlGenerator";
     final String wmsHost = url.getHost() + ":" + url.getPort();
     return KmlGenerator
-        .getKmlBodyAsString("kml", requestUrl, bounds, pyrName, wmsHost, null, "512",
+        .getKmlBodyAsString("kml", requestUrl, bounds, pyrName, wmsHost, null, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
             providerProperties);
     }
 

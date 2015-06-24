@@ -72,8 +72,8 @@ public class CustomColorScaleTest extends WmsGeneratorTestAbstract
             .queryParam("LAYERS", "IslandsElevation-v2")
             .queryParam("FORMAT", contentType)
             .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
+            .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+            .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
             .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");

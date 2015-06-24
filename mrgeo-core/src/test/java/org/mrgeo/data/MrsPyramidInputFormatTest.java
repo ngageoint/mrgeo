@@ -15,20 +15,14 @@
 
 package org.mrgeo.data;
 
-import java.awt.image.Raster;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
+import com.google.common.collect.Sets;
 import junit.framework.Assert;
-
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.image.MrsImagePyramidInputFormat;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.image.MrsImagePyramid;
@@ -39,14 +33,19 @@ import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 
-import com.google.common.collect.Sets;
+import java.awt.image.Raster;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 public class MrsPyramidInputFormatTest extends LocalRunnerTest
 {
   private static String allones = Defs.INPUT + "all-ones";
   private static Bounds bounds;
   private static int zoomLevel = 10;
-  private static int tileSize = 512;
+  private static int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
   private static LongRectangle imageTileBounds;
 
   @BeforeClass

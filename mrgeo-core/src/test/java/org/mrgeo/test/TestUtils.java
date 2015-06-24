@@ -273,7 +273,7 @@ public class TestUtils
 
   public static DiffStats calculateDiffStats(RenderedImage i1, RenderedImage i2, double tolerance)
   {
-    final int tileSize=512;
+    final int tileSize=MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     return calculateDiffStats(i1, i2, tolerance, tileSize);
   }
 
@@ -318,7 +318,7 @@ public class TestUtils
   public static DiffStats calculateDiffStats(RenderedImage base, RenderedImage test)
   {
     // default tile size = 512
-    final int tileSize = 512;
+    final int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     // Default tolerance is 1e-5 for pixel comparisons
     final double tolerance = 1e-5;
 

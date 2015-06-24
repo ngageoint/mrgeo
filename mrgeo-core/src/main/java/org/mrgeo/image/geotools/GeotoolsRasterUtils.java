@@ -39,6 +39,7 @@ import org.jaitools.media.jai.zonalstats.ZonalStats;
 import org.jaitools.media.jai.zonalstats.ZonalStatsDescriptor;
 import org.jaitools.numeric.Range;
 import org.jaitools.numeric.Statistic;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -681,7 +682,7 @@ public class GeotoolsRasterUtils
 
       // this will basically read 4 tiles worth of data at once from the disk...
       final ParameterValue<String> gridsize = AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
-      gridsize.setValue(512 * 4 + "," + 512);
+      gridsize.setValue(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT * 4 + "," + MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
       // Setting read type: use JAI ImageRead (true) or ImageReaders read methods (false)
       final ParameterValue<Boolean> useJaiRead = AbstractGridFormat.USE_JAI_IMAGEREAD.createValue();
@@ -1010,7 +1011,7 @@ public class GeotoolsRasterUtils
     metadata.setPyramid(output);
 
     final Properties mrgeoProperties = MrGeoProperties.getInstance();
-    final int tilesize = Integer.parseInt(mrgeoProperties.getProperty("mrsimage.tilesize", "512"));
+    final int tilesize = Integer.parseInt(mrgeoProperties.getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
     metadata.setTilesize(tilesize);
 

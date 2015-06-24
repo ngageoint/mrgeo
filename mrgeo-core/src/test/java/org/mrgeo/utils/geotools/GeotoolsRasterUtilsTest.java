@@ -15,12 +15,6 @@
 
 package org.mrgeo.utils.geotools;
 
-import java.awt.image.Raster;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -28,14 +22,10 @@ import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.processing.CoverageProcessingException;
 import org.json.JSONObject;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.ImageMetadata;
@@ -48,6 +38,12 @@ import org.mrgeo.utils.LongRectangle;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.operation.TransformException;
+
+import java.awt.image.Raster;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
 
 @SuppressWarnings("static-method")
 public class GeotoolsRasterUtilsTest
@@ -299,7 +295,7 @@ public class GeotoolsRasterUtilsTest
   {
     final AbstractGridCoverage2DReader reader = GeotoolsRasterUtils.openImage(hdfsGreeceTif);
 
-    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
+    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     Assert.assertEquals("Bad zoomlevel", 9, zoom);
 
@@ -322,7 +318,7 @@ public class GeotoolsRasterUtilsTest
   {
     final AbstractGridCoverage2DReader reader = GeotoolsRasterUtils.openImage(hdfsChessTif);
 
-    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
+    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     String protectionLevel = "abc";
     final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString(),
@@ -357,7 +353,7 @@ public class GeotoolsRasterUtilsTest
   {
     final AbstractGridCoverage2DReader reader = GeotoolsRasterUtils.openImage(hdfsChessTif);
 
-    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
+    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     String protectionLevel = "abc";
     final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString(),
@@ -390,7 +386,7 @@ public class GeotoolsRasterUtilsTest
   {
     final AbstractGridCoverage2DReader reader = GeotoolsRasterUtils.openImage(hdfsChessTif);
 
-    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
+    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     String protectionLevel = "abc";
     final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString(),
@@ -424,7 +420,7 @@ public class GeotoolsRasterUtilsTest
   {
     final AbstractGridCoverage2DReader reader = GeotoolsRasterUtils.openImage(hdfsHighLatTif);
 
-    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
+    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     String protectionLevel = "abc";
     final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsHighLatTif.toString(),
@@ -461,7 +457,7 @@ public class GeotoolsRasterUtilsTest
   {
     final AbstractGridCoverage2DReader reader = GeotoolsRasterUtils.openImage(hdfsChessTif);
 
-    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, 512);
+    final int zoom = GeotoolsRasterUtils.calculateZoomlevel(reader, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     String protectionLevel = "abc";
     final MrsImagePyramidMetadata metadata = GeotoolsRasterUtils.calculateMetaData(hdfsChessTif.toString(),
@@ -611,7 +607,7 @@ public class GeotoolsRasterUtilsTest
 
     Assert.assertEquals("Bad image metadata length", max + 1, im.length);
 
-    Assert.assertEquals("Bad tilesize", 512, metadata.getTilesize());
+    Assert.assertEquals("Bad tilesize", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, metadata.getTilesize());
 
     Assert.assertEquals("Bad tiletype", 2, metadata.getTileType());
 
@@ -661,7 +657,7 @@ public class GeotoolsRasterUtilsTest
 
     Assert.assertEquals("Bad image metadata length", max + 1, im.length);
 
-    Assert.assertEquals("Bad tilesize", 512, metadata.getTilesize());
+    Assert.assertEquals("Bad tilesize", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, metadata.getTilesize());
 
     Assert.assertEquals("Bad tiletype", 2, metadata.getTileType());
 

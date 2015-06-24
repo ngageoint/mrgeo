@@ -143,7 +143,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   {
     Set<String> inputs = new HashSet<String>();
     inputs.add(all_ones);
-    TiledInputFormatContext context = new TiledInputFormatContext(10, 512, inputs, null);
+    TiledInputFormatContext context = new TiledInputFormatContext(10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, inputs, null);
 
     MrsImageInputFormatProvider p = provider.getTiledInputFormatProvider(context);
 
@@ -154,7 +154,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetTiledOutputFormatProvider() throws Exception
   {
-    TiledOutputFormatContext context = new TiledOutputFormatContext("foo", new Bounds(), 10, 512);
+    TiledOutputFormatContext context = new TiledOutputFormatContext("foo", new Bounds(), 10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     MrsImageOutputFormatProvider p = provider.getTiledOutputFormatProvider(context);
 

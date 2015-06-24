@@ -17,6 +17,7 @@ package org.mrgeo.resources.tms;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.Bounds;
@@ -146,7 +147,7 @@ public class TileMapServiceResourceTest
     MrsImagePyramidMetadata mpm = new MrsImagePyramidMetadata();
     mpm.setBounds(new Bounds(68, 33, 72, 35));
     mpm.setMaxZoomLevel(10);
-    mpm.setTilesize(512);
+    mpm.setTilesize(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     
     try {
       Document doc = TileMapServiceResource.mrsPyramidMetadataToTileMapXml(raster, "http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/", mpm);
@@ -170,14 +171,16 @@ public class TileMapServiceResourceTest
   {
     TileMapServiceResource tms = new TileMapServiceResource();
     try {
-      Response resp = tms.returnEmptyTile(ImageUtils.createImageWriter("image/png"), 512, 512, "png");
+      Response resp = tms.returnEmptyTile(ImageUtils.createImageWriter("image/png"),
+          MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "png");
       assertEquals(Response.Status.OK.getStatusCode(), resp.getStatus());
     } catch (IOException ex) {
       log.error("IOException occurred", ex);
       fail();
     }
     try {
-      Response resp = tms.returnEmptyTile(ImageUtils.createImageWriter("image/jpeg"), 512, 512, "jpg");
+      Response resp = tms.returnEmptyTile(ImageUtils.createImageWriter("image/jpeg"),
+          MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "jpg");
       assertEquals(Response.Status.OK.getStatusCode(), resp.getStatus());
     } catch (IOException ex) {
       log.error("IOException occurred", ex);
