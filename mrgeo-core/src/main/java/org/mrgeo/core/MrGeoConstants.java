@@ -72,6 +72,8 @@ public class MrGeoConstants
   public static final String MRGEO_JAR = "jar.path";
   public static final String GDAL_PATH = "gdal.path";
 
+  public static final String DEPENDENCY_CLASSPATH = "dependency.classpath";
+
   /*
    * Legion configuration keys
    */

@@ -305,7 +305,7 @@ public class DependencyLoader
     // add the system classpath, including the cwd
     String classpath = System.getProperty("java.class.path", "");
 
-    String depclasspath = MrGeoProperties.getInstance().getProperty("dependency.classpath", null);
+    String depclasspath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.DEPENDENCY_CLASSPATH, null);
     if (depclasspath != null)
     {
       if (classpath == null || classpath.isEmpty())
