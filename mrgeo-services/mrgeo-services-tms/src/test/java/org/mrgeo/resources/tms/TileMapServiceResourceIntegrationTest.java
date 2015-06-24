@@ -116,7 +116,7 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
       super.setUp();
       Mockito.reset(request, service);
       Properties props = MrGeoProperties.getInstance();
-      props.put("image.base", TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class) + "/");
+      props.put(MrGeoConstants.MRGEO_HDFS_IMAGE, TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class) + "/");
       props.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, TestUtils.composeInputDir(SharedTestFiles.class) + "color-scales");
       
       baselineInput = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);

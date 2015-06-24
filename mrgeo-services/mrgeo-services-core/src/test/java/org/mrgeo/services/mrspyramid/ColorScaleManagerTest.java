@@ -65,7 +65,7 @@ public class ColorScaleManagerTest {
       
       final Properties mrgeoConf = new Properties();
       mrgeoConf.put(MrGeoConstants.MRGEO_ENV_HOME, TestUtils.composeInputDir(SharedTestFiles.class));
-      mrgeoConf.put("image.base", TestUtils.composeInputDir(SharedTestFiles.class));
+      mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_IMAGE, TestUtils.composeInputDir(SharedTestFiles.class));
       mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(SharedTestFiles.class));
 
       final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest", mrgeoConf);
