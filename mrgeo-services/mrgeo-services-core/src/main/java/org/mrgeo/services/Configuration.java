@@ -61,7 +61,7 @@ public class Configuration
       // JBoss deployments
       try
       {
-        properties.load(this.getClass().getClassLoader().getResourceAsStream("settings.properties"));
+        properties.load(this.getClass().getClassLoader().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS));
       }
       catch(Exception e)
       {
