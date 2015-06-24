@@ -944,7 +944,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   public void rasterExistsDefaultSearchPath() throws Exception
   {
     final Path p = new Path(smallElevation).getParent();
-    MrGeoProperties.getInstance().setProperty("image.base", p.toString());
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, p.toString());
 
     final String expr = String.format("a = [%s] + [%s]", smallElevationName, smallElevationName);
     final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);

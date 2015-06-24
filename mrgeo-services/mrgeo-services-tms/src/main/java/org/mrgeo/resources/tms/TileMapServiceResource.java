@@ -32,6 +32,7 @@ import org.geotools.geometry.Envelope2D;
 import org.geotools.process.ProcessException;
 import org.geotools.process.raster.ContourProcess;
 import org.geotools.util.NullProgressListener;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsImagePyramid;
@@ -119,7 +120,7 @@ public class TileMapServiceResource
     }
     catch (final IllegalStateException e)
     {
-      log.error("image.base must be specified in the MrGeo configuration file (" + e.getMessage() +
+      log.error(MrGeoConstants.MRGEO_HDFS_IMAGE + " must be specified in the MrGeo configuration file (" + e.getMessage() +
           ")");
     }
   }
