@@ -14,7 +14,6 @@
  */
 package org.mrgeo.test;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -23,9 +22,11 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.junit.Assert;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.raster.RasterUtils;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.parser.ParserException;
@@ -33,8 +34,6 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.rasterops.GeoTiffExporter;
 import org.mrgeo.rasterops.OpImageRegistrar;
-import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.FileUtils;
 import org.mrgeo.utils.TMSUtils;
@@ -46,7 +45,6 @@ import java.io.*;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Properties;
 
 public class TestUtils
 {
@@ -223,7 +221,7 @@ public class TestUtils
 
     if (jar.exists())
     {
-      MrGeoProperties.getInstance().setProperty("jar.path",
+      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_JAR,
           jar.getCanonicalPath());
     }
 

@@ -63,8 +63,8 @@ public class MrGeoConstants
   /* Spark configuration keys
    *
    */
-  public static final String MRGEO_USE_KRYO="use.kryo.serialization";
-  public static final String MRGEO_MEMORYINTENSIVE_MULTIPLIER="memoryintensive.multiplier";
+  public static final String MRGEO_USE_KRYO = "use.kryo.serialization";
+  public static final String MRGEO_MEMORYINTENSIVE_MULTIPLIER = "memoryintensive.multiplier";
 
   /*
    * Runtime configuration keys
