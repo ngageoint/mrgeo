@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.SharedTestFiles;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.rasterops.ColorScale;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
@@ -71,7 +72,7 @@ public class ColorScaleManagerTest {
       final ColorScale csExp = ColorScale.loadFromJSON(colorScaleJSON);
       
       final Properties mrgeoConf = new Properties();
-      mrgeoConf.put("MRGEO_HOME", TestUtils.composeInputDir(SharedTestFiles.class));
+      mrgeoConf.put(MrGeoConstants.MRGEO_ENV_HOME, TestUtils.composeInputDir(SharedTestFiles.class));
       mrgeoConf.put("image.base", TestUtils.composeInputDir(SharedTestFiles.class));
       mrgeoConf.put("colorscale.base", "file://" + TestUtils.composeInputDir(SharedTestFiles.class));
 

@@ -110,9 +110,9 @@ public class ShowConfiguration extends Command
     StringBuffer sb = new StringBuffer();
     String mgh = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
     if(mgh == null){
-      sb.append("MRGEO_HOME environment variable not set for the user running Hadoop.\n");
+      sb.append(MrGeoConstants.MRGEO_ENV_HOME + " environment variable not set for the user running Hadoop.\n");
     } else {
-      sb.append("MRGEO_HOME environment variable points to: " + mgh + "\n");
+      sb.append(MrGeoConstants.MRGEO_ENV_HOME + "environment variable points to: " + mgh + "\n");
       if(!mgh.endsWith(File.separator)){
         mgh += File.separator;
       }
