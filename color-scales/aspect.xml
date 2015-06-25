@@ -12,8 +12,8 @@
   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific language governing permissions and limitations under the License.
   -->
-
-<ColorMap name="Aspect">
+<ColorMap name="aspect">
+<!-- Color scale for aspect values - North, East, South, West -->
   <Scaling>MinMax</Scaling>
   <!-- null values will be transparent -->
   <NullColor color="0,0,0" opacity="0"/>
