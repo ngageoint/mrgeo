@@ -84,14 +84,14 @@ public class ShowConfiguration extends Command
     Properties psp = new Properties();
     InputStream is = MrGeoProperties.class.getClass().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS);
     if(is == null){
-      sb.append("MrGeo default file settings.properties does not exist.\n");
+      sb.append("MrGeo default file " + MrGeoConstants.MRGEO_SETTINGS + " does not exist.\n");
     } else {
-      sb.append("Found default configuration file settings.properties.\n");
+      sb.append("Found default configuration file " + MrGeoConstants.MRGEO_SETTINGS + ".\n");
       try{
         psp.load(is);
         is.close();
       } catch(IOException ioe){
-        sb.append("\tProblem loading settings.properties file.\n");
+        sb.append("\tProblem loading " + MrGeoConstants.MRGEO_SETTINGS + " file.\n");
       }
       sb.append(reportProperties("\t", psp) + "\n");
     }
@@ -110,9 +110,9 @@ public class ShowConfiguration extends Command
     StringBuffer sb = new StringBuffer();
     String mgh = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
     if(mgh == null){
-      sb.append("MRGEO_HOME environment variable not set for the user running Hadoop.\n");
+      sb.append(MrGeoConstants.MRGEO_ENV_HOME + " environment variable not set for the user running Hadoop.\n");
     } else {
-      sb.append("MRGEO_HOME environment variable points to: " + mgh + "\n");
+      sb.append(MrGeoConstants.MRGEO_ENV_HOME + "environment variable points to: " + mgh + "\n");
       if(!mgh.endsWith(File.separator)){
         mgh += File.separator;
       }
@@ -416,8 +416,6 @@ public class ShowConfiguration extends Command
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_COLORSCALE));
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_IMAGE));
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_KML));
-      sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_RESOURCE));
-      sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_SHAPE));
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_TSV));
       sb.append(reportHDFSPath(MrGeoConstants.MRGEO_HDFS_VECTOR));
     }

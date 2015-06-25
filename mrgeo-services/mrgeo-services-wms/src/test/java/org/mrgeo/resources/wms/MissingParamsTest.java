@@ -21,6 +21,7 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.IntegrationTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,11 +70,11 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
     }
     if (!paramName.equals("WIDTH"))
     {
-      webResource = webResource.queryParam("WIDTH", "512");
+      webResource = webResource.queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     }
     if (!paramName.equals("HEIGHT"))
     {
-      webResource = webResource.queryParam("HEIGHT", "512");
+      webResource = webResource.queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     }
 
     ClientResponse response = webResource.get(ClientResponse.class);

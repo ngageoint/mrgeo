@@ -43,8 +43,8 @@ public class WcsGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 
-  public static final String WCS_VERSION = "1.0.0";
-  private static final String WCS_SERVICE = "wms";
+  public static final String WCS_VERSION = "1.1.0";
+  private static final String WCS_SERVICE = "wcs";
 
   private Version version = new Version(WCS_VERSION);
 
@@ -200,23 +200,23 @@ public class WcsGenerator
       keys.toArray(sortedKeys);
       Arrays.sort(sortedKeys);
       UriBuilder builder = uriInfo.getBaseUriBuilder().path(uriInfo.getPath());
-      for (String key : sortedKeys)
-      {
-        // Only include the VERSION parameter in the URI used in GetCapabilities
-        // if it was included in the original URI request.
-        if (key.equalsIgnoreCase("version"))
-        {
-          if (versionParamName != null)
-          {
-            builder = builder.queryParam(versionParamName, versionStr);
-          }
-        }
-        else
-        {
-          builder = builder.queryParam(key, getQueryParam(allParams, key));
-        }
-      }
-      final Document doc = docGen.generateDoc(version, builder.build().toString(),
+//      for (String key : sortedKeys)
+//      {
+//        // Only include the VERSION parameter in the URI used in GetCapabilities
+//        // if it was included in the original URI request.
+//        if (key.equalsIgnoreCase("version"))
+//        {
+//          if (versionParamName != null)
+//          {
+//            builder = builder.queryParam(versionParamName, versionStr);
+//          }
+//        }
+//        else
+//        {
+//          builder = builder.queryParam(key, getQueryParam(allParams, key));
+//        }
+//      }
+      final Document doc = docGen.generateDoc(version, builder.build().toString() + "?",
           getPyramidFilesList(providerProperties));
 
       ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();

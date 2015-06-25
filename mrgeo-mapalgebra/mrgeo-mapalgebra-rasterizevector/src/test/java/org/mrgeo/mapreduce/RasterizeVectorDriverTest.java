@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.geometry.GeometryFactory;
@@ -20,7 +21,6 @@ import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.opengis.referencing.FactoryException;
 
-import java.awt.*;
 import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class RasterizeVectorDriverTest extends LocalRunnerTest
   private static List<GeometryWritable> polygonWithInnerRing;
   private static List<GeometryWritable> multiPolygonsWithHolesFirst;
   private static List<GeometryWritable> multiPolygonsWithHolesLast;
-  private static int tileSize = 512;
+  private static int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
   private static int zoom = 1;
   // The following coordinates must match the coordinates used in the POLYGON WKT definitions
   // used below for the features being painted.
@@ -108,9 +108,9 @@ public class RasterizeVectorDriverTest extends LocalRunnerTest
   {
     conf.setBoolean(RasterizeVectorDriver.TEST_REDUCER, true);
     conf.set(FeatureToTilesMapper.ZOOM, "1");
-    conf.set(FeatureToTilesMapper.TILE_SIZE, "512");
+    conf.set(FeatureToTilesMapper.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     conf.set(RasterizeVectorPainter.ZOOM, "1");
-    conf.set(RasterizeVectorPainter.TILE_SIZE, "512");
+    conf.set(RasterizeVectorPainter.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     conf.setBoolean("skip.stats", true);
 
   }

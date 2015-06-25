@@ -33,13 +33,13 @@ import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.services.mrspyramid.ColorScaleManager;
 import org.mrgeo.services.utils.ImageTestUtils;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,8 +120,8 @@ public class WmsGeneratorTestAbstract extends JerseyTest
       inputHdfs = TestUtils.composeInputHdfs(WmsGeneratorTestAbstract.class, true);
       copyInputData();
 //      launchServlet();
-      MrGeoProperties.getInstance().setProperty(HadoopUtils.IMAGE_BASE, inputHdfs.toString());
-      MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, inputHdfs.toString());
+      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, inputHdfs.toString());
+      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, inputHdfs.toString());
 
       if (GEN_BASELINE_DATA_ONLY)
       {
@@ -167,9 +167,9 @@ public class WmsGeneratorTestAbstract extends JerseyTest
     
     Properties mrgeoProperties = MrGeoProperties.getInstance();
 
-    mrgeoProperties.put("MRGEO_HOME", inputHdfs.toString());
-    mrgeoProperties.put(HadoopUtils.IMAGE_BASE, inputHdfs.toString());
-    mrgeoProperties.put(HadoopUtils.COLOR_SCALE_BASE, inputHdfs.toString());
+    mrgeoProperties.put(MrGeoConstants.MRGEO_ENV_HOME, inputHdfs.toString());
+    mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, inputHdfs.toString());
+    mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, inputHdfs.toString());
     mrgeoProperties.put("base.path", inputHdfs.toString());
 
 //    WmsGenerator.setBasePath(inputHdfs);

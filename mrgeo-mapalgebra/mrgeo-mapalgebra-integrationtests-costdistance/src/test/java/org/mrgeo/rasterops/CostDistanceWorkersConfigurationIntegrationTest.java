@@ -23,7 +23,7 @@ import org.mrgeo.utils.TMSUtils.TileBounds;
 public class CostDistanceWorkersConfigurationIntegrationTest
 {
   private final static int zoomLevel = 12;
-  private final static int tileSize = 512;
+  private final static int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
   private static Configuration conf;
   private static MrsImagePyramidMetadata metadata;
   

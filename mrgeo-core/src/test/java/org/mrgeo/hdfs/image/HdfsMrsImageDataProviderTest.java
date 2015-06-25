@@ -22,6 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.image.*;
 import org.mrgeo.data.tile.TiledInputFormatContext;
@@ -60,7 +61,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Before
   public void init()
   {
-    MrGeoProperties.getInstance().setProperty("image.base", (new File(Defs.INPUT)).toURI().toString());
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, (new File(Defs.INPUT)).toURI().toString());
     provider = new HdfsMrsImageDataProvider(conf, all_ones, null);
   }
 
@@ -142,7 +143,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   {
     Set<String> inputs = new HashSet<String>();
     inputs.add(all_ones);
-    TiledInputFormatContext context = new TiledInputFormatContext(10, 512, inputs, null);
+    TiledInputFormatContext context = new TiledInputFormatContext(10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, inputs, null);
 
     MrsImageInputFormatProvider p = provider.getTiledInputFormatProvider(context);
 
@@ -153,7 +154,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetTiledOutputFormatProvider() throws Exception
   {
-    TiledOutputFormatContext context = new TiledOutputFormatContext("foo", new Bounds(), 10, 512);
+    TiledOutputFormatContext context = new TiledOutputFormatContext("foo", new Bounds(), 10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     MrsImageOutputFormatProvider p = provider.getTiledOutputFormatProvider(context);
 

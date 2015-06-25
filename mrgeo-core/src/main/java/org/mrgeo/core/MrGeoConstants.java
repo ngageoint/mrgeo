@@ -52,8 +52,6 @@ public class MrGeoConstants
   /*
    * HDFS configuration keys
    */
-  public static final String MRGEO_HDFS_RESOURCE = "resource.base";
-  public static final String MRGEO_HDFS_SHAPE = "shp.base";
   public static final String MRGEO_HDFS_TSV = "tsv.base";
   public static final String MRGEO_HDFS_VECTOR = "vector.base";
   public static final String MRGEO_HDFS_COLORSCALE = "colorscale.base";
@@ -65,14 +63,16 @@ public class MrGeoConstants
   /* Spark configuration keys
    *
    */
-  public static final String MRGEO_USE_KRYO="use.kryo.serialization";
-  public static final String MRGEO_MEMORYINTENSIVE_MULTIPLIER="memoryintensive.multiplier";
+  public static final String MRGEO_USE_KRYO = "use.kryo.serialization";
+  public static final String MRGEO_MEMORYINTENSIVE_MULTIPLIER = "memoryintensive.multiplier";
 
   /*
    * Runtime configuration keys
    */
   public static final String MRGEO_JAR = "jar.path";
   public static final String GDAL_PATH = "gdal.path";
+
+  public static final String DEPENDENCY_CLASSPATH = "dependency.classpath";
 
   /*
    * Legion configuration keys
@@ -83,7 +83,8 @@ public class MrGeoConstants
    * Image configuration keys
    */
   public static final String MRGEO_MRS_TILESIZE = "mrsimage.tilesize";
-  public static final int MRGEO_MRS_TILESIZE_DEFAULT = 512;
+  public static final int MRGEO_MRS_TILESIZE_DEFAULT_INT = 512;
+  public static final String MRGEO_MRS_TILESIZE_DEFAULT = Integer.toString(MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
   /*
    * Security classification keys

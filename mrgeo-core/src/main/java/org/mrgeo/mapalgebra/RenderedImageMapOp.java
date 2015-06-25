@@ -17,6 +17,7 @@ package org.mrgeo.mapalgebra;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.mapreduce.OpChainDriver;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
@@ -172,7 +173,7 @@ public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor,
       int tilesize = MapAlgebraExecutioner.calculateTileSize(findRoot());
       if (tilesize <= 0)
       {
-        tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty("tilesize", "512"));
+        tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty("tilesize", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
       }
       jaiParams.add(tilesize);
     }

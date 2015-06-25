@@ -18,6 +18,7 @@ package org.mrgeo.mapreduce.formats;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.*;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -270,7 +271,7 @@ public class EmptyTileInputFormat extends InputFormat<TileIdWritable, TileCollec
 
     final int zoom = conf.getInt(ZOOMLEVEL, 0);
     final int tilesize = conf.getInt(TILESIZE,
-        Integer.valueOf(MrGeoProperties.getInstance().getProperty("mrsimage.tilesize", "512")));
+        Integer.valueOf(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)));
     final int bands = conf.getInt(BANDS, 1);
     final int datatype = conf.getInt(DATATYPE, DataBuffer.TYPE_DOUBLE);
     final double nodata = conf.getFloat(NODATA, Float.NaN);

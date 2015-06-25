@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -175,7 +176,7 @@ public class RasterizeVectorDriver
 
     HadoopUtils.setJar(job, this.getClass());
     final int tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(
-        "mrsimage.tilesize", "512"));
+        MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
     conf.set(FeatureToTilesMapper.ZOOM, String.valueOf(zoom));
     conf.set(FeatureToTilesMapper.TILE_SIZE, String.valueOf(tilesize));
@@ -197,7 +198,7 @@ public class RasterizeVectorDriver
     job.setMapperClass(FeatureToTilesMapper.class);
     final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
     metadata.setMaxZoomLevel(zoom);
-    metadata.setTilesize(512);
+    metadata.setTilesize(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     metadata.setBands(1);
     metadata.setTileType(DataBuffer.TYPE_DOUBLE);
     metadata.setProtectionLevel(protectionLevel);
