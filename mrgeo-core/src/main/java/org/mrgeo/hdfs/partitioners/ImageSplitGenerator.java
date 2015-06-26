@@ -15,7 +15,9 @@
 
 package org.mrgeo.hdfs.partitioners;
 
-import org.mrgeo.tile.SplitGenerator;
+import org.mrgeo.hdfs.tile.FileSplit;
+import org.mrgeo.hdfs.tile.PartitionerSplit;
+import org.mrgeo.hdfs.tile.SplitInfo;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 
@@ -90,8 +92,10 @@ public class ImageSplitGenerator implements SplitGenerator {
   }
 
   @Override
-  public List<Long> getSplits() {
-    List<Long> splits = new ArrayList<Long>();
+  public SplitInfo[] getSplits()
+  {
+    List<FileSplit.FileSplitInfo> splits = new ArrayList<FileSplit.FileSplitInfo>();
+
     // If increment < 0, then that means no splits are required because all of
     // the tiles will fit in a single block.
     if (increment > 0)
@@ -99,13 +103,51 @@ public class ImageSplitGenerator implements SplitGenerator {
       // The first split is increment rows above the minTileY, and there
       // are subsequent splits increment rows high up until maxTileY. The
       // final split may be <= increment rows high.
-      for(long i = minTileY + increment - 1; i < maxTileY; i+=increment)
+      int partition = 0;
+      for(long i = minTileY + increment - 1; i < maxTileY; i+=increment, partition++)
       {
-        splits.add(TMSUtils.tileid(maxTileX, i, zoomLevel));
+        splits.add(new FileSplit.FileSplitInfo(
+            TMSUtils.tileid(minTileX, i, zoomLevel),
+            TMSUtils.tileid(maxTileX, i, zoomLevel),
+            "", partition));
       }
       // Add the last split
-      splits.add(TMSUtils.tileid(maxTileX, maxTileY, zoomLevel));
+      splits.add(new FileSplit.FileSplitInfo(
+          TMSUtils.tileid(minTileX, maxTileY, zoomLevel),
+          TMSUtils.tileid(maxTileX, maxTileY, zoomLevel),
+          "", partition));
     }
-    return splits;
+
+    return splits.toArray(new FileSplit.FileSplitInfo[splits.size()]);
   }
+
+  @Override
+  public SplitInfo[] getPartitions()
+  {
+    List<PartitionerSplit.PartitionerSplitInfo> splits =
+        new ArrayList<PartitionerSplit.PartitionerSplitInfo>();
+
+    // If increment < 0, then that means no splits are required because all of
+    // the tiles will fit in a single block.
+    if (increment > 0)
+    {
+      // The first split is increment rows above the minTileY, and there
+      // are subsequent splits increment rows high up until maxTileY. The
+      // final split may be <= increment rows high.
+      int partition = 0;
+      for(long i = minTileY + increment - 1; i < maxTileY; i+=increment, partition++)
+      {
+        splits.add(new PartitionerSplit.PartitionerSplitInfo(
+            TMSUtils.tileid(maxTileX, i, zoomLevel),
+            partition));
+      }
+      // Add the last split
+      splits.add(new PartitionerSplit.PartitionerSplitInfo(
+          TMSUtils.tileid(maxTileX, maxTileY, zoomLevel),
+          partition));
+    }
+
+    return splits.toArray(new PartitionerSplit.PartitionerSplitInfo[splits.size()]);
+  }
+
 }

@@ -18,16 +18,15 @@ package org.mrgeo.data.image;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.*;
 import org.mrgeo.image.BoundsCropper;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.MapReduceUtils;
-import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
-import org.mrgeo.data.DataProviderNotFound;
-import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.*;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.TMSUtils;
@@ -74,120 +73,6 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
     super(resourceName);
   }
 
-  public static void setupMrsPyramidMultipleOutputJob(final Job job)
-  {
-    job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
-    MapReduceUtils.setupTiledJob(job);
-  }
-  
-  /**
-   * Convenience method that is called to setup image pyramid output when the
-   * map/reduce job will generate multiple outputs for the same image pyramid
-   * at different zoom levels. This method should be called multiple times, once
-   * for each zoom level being generated.
-   * 
-   * @param job
-   * @param output
-   * @param name
-   * @param bounds
-   * @param zoomlevel
-   * @param tilesize
-   * @param tiletype
-   * @param bands
-   * @param providerProperties
-   * @return
-   * @throws IOException
-   */
-  public static MrsImageOutputFormatProvider addMrsPyramidMultipleOutputFormat(final Job job, final String output,
-    final String name,final Bounds bounds, final int zoomlevel, final int tilesize, final int tiletype,
-    final int bands, final String protectionLevel,
-    final Properties providerProperties) throws IOException
-  {
-    TiledOutputFormatContext context = new TiledOutputFormatContext(output, name, bounds, zoomlevel,
-      tilesize, tiletype, bands);
-
-    // The data provider _may_ exist (as in the case of BuildPyramid), but it is also OK that the
-    // provider _doesn't_ exist.  So we try to open the provider as READ, then WRITE if that fails.
-    MrsImageDataProvider provider = null;
-    job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
-    try
-    {
-      provider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.READ,
-          providerProperties);
-    }
-    catch (DataProviderNotFound e)
-    {
-      provider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE,
-          providerProperties);
-    }
-
-    if (provider == null)
-    {
-      throw new IOException("No data provider available for output " + name);
-    }
-    
-    MrsImageOutputFormatProvider ofProvider = provider.getTiledOutputFormatProvider(context);
-    if (ofProvider == null)
-    {
-      throw new IOException("No output format provider available for " + name);
-    }
-    
-    ofProvider.setupJob(job);
-    return ofProvider;
-  }
-  
-  /**
-   * Convenience method that is called to setup image pyramid output when the
-   * map/reduce job will generate multiple outputs for the same image pyramid
-   * at different zoom levels. This method should be called multiple times, once
-   * for each zoom level being generated.
-   * 
-   * @param job
-   * @param output
-   * @param name
-   * @param bounds
-   * @param zoomlevel
-   * @param tilesize
-   * @param providerProperties
-   * @return
-   * @throws IOException
-   */
-  public static MrsImageOutputFormatProvider addMrsPyramidMultipleOutputFormat(final Job job, final String output,
-    final String name,final Bounds bounds, final int zoomlevel, final int tilesize,
-    final String protectionLevel, final Properties providerProperties) throws IOException
-  {
-    TiledOutputFormatContext context = new TiledOutputFormatContext(output, name, bounds, zoomlevel,
-      tilesize);
-
-    // The data provider _may_ exist (as in the case of BuildPyramid), but it is also OK that the
-    // provider _doesn't_ exist.  So we try to open the provider as READ, then WRITE if that fails.
-    MrsImageDataProvider provider = null;
-    job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
-    try
-    {
-      provider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.READ,
-          providerProperties);
-    }
-    catch (DataProviderNotFound e)
-    {
-      provider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE,
-          providerProperties);
-    }
-
-    if (provider == null)
-    {
-      throw new IOException("No data provider available for output " + name);
-    }
-    
-    MrsImageOutputFormatProvider ofProvider = provider.getTiledOutputFormatProvider(context);
-    if (ofProvider == null)
-    {
-      throw new IOException("No output format provider available for " + name);
-    }
-    
-    ofProvider.setupJob(job);
-    return ofProvider;
-  }
 
   /**
    * Convenience function for setting up an image pyramid as the input for a

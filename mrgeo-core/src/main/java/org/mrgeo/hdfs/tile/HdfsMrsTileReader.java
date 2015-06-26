@@ -16,7 +16,6 @@
 package org.mrgeo.hdfs.tile;
 
 import com.google.common.cache.*;
-import com.google.common.primitives.Longs;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -39,9 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -81,11 +78,13 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
      @Override
      public MapFile.Reader load(final Integer partition) throws IOException
      {
-       final SplitFile.SplitInfo part = splits.get(partition);
-       final Path path = new Path(imagePath, part.getPartitionName());
+       final FileSplit.FileSplitInfo part =
+           (FileSplit.FileSplitInfo) splits.getSplits()[partition];
+
+       final Path path = new Path(imagePath, part.getName());
        final FileSystem fs = path.getFileSystem(conf);
 
-       MapFile.Reader reader = new MapFile.Reader(fs, path.toString(), conf);
+       MapFile.Reader reader = new MapFile.Reader(path, conf);
 
        if (profile)
        {
@@ -102,73 +101,9 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
      }
    });
 
-//  private static class ReaderLRUCache extends LRUMap
-//  {
-//
-//    // keep track of the version
-//    private static final long serialVersionUID = 1L;
-//
-//    /**
-//     * Creates a LRUCache of specified size
-//     * 
-//     * @param cacheSize
-//     *          size of cache to create
-//     */
-//    public ReaderLRUCache(final int cacheSize)
-//    {
-//      super(cacheSize);
-//    } // end constructor
-//
-//    /**
-//     * Remove an item from the cache. If the reader removed is not null it is closed.
-//     * 
-//     * @param entry
-//     *          is the object to remove from the cache
-//     * @return success or failure of operation
-//     */
-//    @Override
-//    protected boolean removeLRU(final AbstractLinkedMap.LinkEntry entry)
-//    {
-//
-//      // get the reader from the entry
-//      final MapFile.Reader reader = (Reader) entry.getValue();
-//
-//      // close the reader
-//      if (reader != null)
-//      {
-//        try
-//        {
-//          LOG.debug("removing partition: {} file: {}", entry.getKey(), reader.toString());
-//
-//          reader.close();
-//
-//          return true; // success
-//        }
-//        catch (final IOException e)
-//        {
-//          e.printStackTrace();
-//
-//          return false; // failure
-//        }
-//      }
-//
-//      return false; // failure because reader was null
-//
-//    } // end removeLRU
-//
-//  } // end ReaderLRUCache
-
   /*
    * HdfsReader globals
    */
-
-//  // default cache size
-//  private static final int CACHE_SIZE = 20;
-
-  // create the cache
-//  @SuppressWarnings("unchecked")
-//  private final Map<Integer, MapFile.Reader> readers = Collections
-//    .synchronizedMap(new ReaderLRUCache(CACHE_SIZE));
 
   public class BoundsResultScanner implements KVIterator<Bounds, T>
   {
@@ -218,24 +153,15 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     }
   }
 
-  // object for keeping track of zoom levels and directories
-//  List<String> partitions;
-  private List<SplitFile.SplitInfo> splits = new ArrayList<SplitFile.SplitInfo>();
-
-  // private final MapFile.Reader[] readers;
+  final private FileSplit splits = new FileSplit();
 
   // location of data
   final Path imagePath;
 
-  //
-//  private final TileIdPartitioner<?, ?> partitioner;
-
   // Hadoop Configuration for connection to HDFS
-  final Configuration conf;
+  final Configuration conf = HadoopUtils.createConfiguration();
 
-  //
   final boolean profile;
-  private SplitFile sf;
 
   protected Path getTilePath()
   {
@@ -252,12 +178,9 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   public HdfsMrsTileReader(final String path, final int zoom) throws IOException
   {
       // get the Hadoop configuration
-      conf = HadoopUtils.createConfiguration();
-      sf = new SplitFile(conf);
 
       String modifiedPath = path;
 
-      // TODO - this seems dangerous because a local file might have the same name as an hdfs file
       final File file = new File(path);
       if (file.exists())
       {
@@ -269,13 +192,10 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
       FileSystem fs = HadoopFileUtils.getFileSystem(conf, imagePath);
       if (!fs.exists(imagePath))
       {
-        throw new IOException("Cannot open HdfsMrsTileReader for: " + modifiedPath );
+        throw new IOException("Cannot open HdfsMrsTileReader for " + modifiedPath + ".  Path does not exist." );
       }
 
-      // get the path to the splits file
-      final Path splitFilePath = new Path(sf.findSplitFile(imagePath.toString()));
-
-      initPartitions(splitFilePath, zoom);
+      readSplits(modifiedPath);
 
       // set the profile
       if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
@@ -336,35 +256,6 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   public void close()
   {
     readerCache.invalidateAll();
-//    // close the readers
-//    try
-//    {
-//      for (final MapFile.Reader reader : readers.values())
-//      {
-//        try
-//        {
-//          LOG.debug("removing reader: {}", reader.toString());
-//
-//          if (profile)
-//          {
-//            LeakChecker.instance().remove(reader);
-//          }
-//
-//          reader.close();
-//
-//        }
-//        catch (final IOException e)
-//        {
-//          throw new MrsTileException(e);
-//        }
-//      }
-//    }
-//    finally
-//    {
-//      // clear out the
-//      readers.clear();
-//    }
-
   } // end close
 
   /**
@@ -400,18 +291,10 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   @Override
   public T get(final TileIdWritable key)
   {
-
-    // TODO: determine if the zoom level is needed for the request - right now it
-    // is the default zoom level
-
     try
     {
-
-      // determine the partition where the tile is
-      final int partition = getPartition(key);
-
       // get the reader that handles the partition/map file
-      final MapFile.Reader reader = getReader(partition);
+      final MapFile.Reader reader = getReader(getPartition(key));
 
       // return object
       TWritable val = (TWritable)reader.getValueClass().newInstance();
@@ -477,50 +360,20 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
         getZoomlevel(), getTileSize());
   }
 
-  private void initPartitions(final Path splitsFilePath, final int zoom) throws IOException
+  private void readSplits(final String parent) throws IOException
   {
     try
     {
-      sf.readSplits(splitsFilePath.toString(), splits, zoom);
+      splits.readSplits(new Path(parent));
+      return;
     }
     catch(FileNotFoundException fnf)
     {
       // When there is no splits file, the whole image is a single split
     }
-    // if we have no partitions, it probably means no splits file, look for mapfiles...
-    if (splits.size() == 0)
-    {
-      // get a Hadoop file system handle
-      final FileSystem fs = splitsFilePath.getFileSystem(conf);
 
-      // get the list of paths of the subdirectories of the parent
-      final Path[] paths = FileUtil.stat2Paths(fs.listStatus(splitsFilePath.getParent()));
-
-      Arrays.sort(paths);
-
-      // look inside each subdirectory for a data dir and keep track
-      for (final Path p : paths)
-      {
-        boolean isMapFileDir = false;
-        final FileStatus[] dirFiles = fs.listStatus(p);
-        for (final FileStatus dirFile : dirFiles)
-        {
-          if (dirFile.getPath().getName().equals("data"))
-          {
-            isMapFileDir = true;
-            break;
-          }
-        }
-
-        if (isMapFileDir)
-        {
-          final String name = p.getName();
-          long maxTileId = TMSUtils.maxTileId(zoom);
-          splits.add(new SplitFile.SplitInfo(name, 0, maxTileId));
-        }
-      }
-    }
-  } // end initPartitions
+    splits.generateSplits(new Path(parent), conf);
+  }
 
   /**
    * Get the number of directories with imagery files
@@ -529,20 +382,20 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
    */
   public int getMaxPartitions()
   {
-    return splits.size();
-  } // end getMaxPartitions
+    return splits.length();
+  }
 
   /**
    * This will return the partition for the tile requested.
-   * 
+   *
    * @param key
    *          the item to find the range for
    * @return the partition of the requested key
    */
   public int getPartition(final TileIdWritable key)
   {
-    return SplitFile.findPartition(key.get(), splits);
-  } // end getPartition
+    return splits.getSplit(key.get()).getPartition();
+  }
 
   /**
    * This method will Get a MapFile.Reader for the partition specified
@@ -566,30 +419,6 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
       }
       throw new IOException(e);
     }
-//    // get the reader from the LRU cache
-//    MapFile.Reader reader = readers.get(partition);
-//
-//    // set the cache if needed
-//    if (reader == null)
-//    {
-//      final String part = partitions.get(partition);
-//      final Path path = new Path(imagePath, part);
-//      final FileSystem fs = path.getFileSystem(conf);
-//
-//      reader = new MapFile.Reader(fs, path.toString(), conf);
-//      readers.put(partition, reader);
-//
-//      if (profile)
-//      {
-//        LeakChecker.instance().add(
-//          reader,
-//          ExceptionUtils.getFullStackTrace(new Throwable(
-//            "HdfsMrsVectorReader creation stack(ignore the Throwable...)")));
-//      }
-//      LOG.debug("opening (not in cache) partition: {} file: {}", partition, part);
-//    }
-//
-//    return reader;
   } // end getReader
 
 } // end HdfsReader

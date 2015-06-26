@@ -219,8 +219,6 @@ object SparkUtils extends Logging {
     var localtiletype = tiletype
     val output = provider.getResourceName
 
-    conf.setInt(TileIdPartitioner.INCREMENT_KEY, tileIncrement)
-
     if (!localbounds.isValid) {
       localbounds = SparkUtils.calculateBounds(tiles, zoom, tilesize)
     }
