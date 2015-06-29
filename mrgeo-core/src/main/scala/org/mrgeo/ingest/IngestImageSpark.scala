@@ -226,7 +226,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
         val buffer = Array.ofDim[Byte](datasize * tilesize * tilesize * bands)
 
         for (dty <- 0 until tiles.height.toInt) {
-          for (dtx <- 0 until tiles.width().toInt) {
+          for (dtx <- 0 until tiles.width.toInt) {
 
             //val start = System.currentTimeMillis()
 
@@ -417,7 +417,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     tilesize = in.readInt()
     //    tiletype = in.readInt()
     //    bands = in.readInt()
-    //    nodata = in.readDouble()
+    nodata = in.readDouble()
     categorical = in.readBoolean()
 
     //    providerproperties = in.readObject().asInstanceOf[Properties]
@@ -433,7 +433,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     out.writeInt(tilesize)
     //      out.writeInt(tiletype)
     //      out.writeInt(bands)
-    //      out.writeDouble(nodata.doubleValue())
+    out.writeDouble(nodata.doubleValue())
     out.writeBoolean(categorical)
     //
     //      out.writeObject(providerproperties)

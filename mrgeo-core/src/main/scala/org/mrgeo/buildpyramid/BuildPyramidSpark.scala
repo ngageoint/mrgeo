@@ -257,7 +257,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
+    var metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
 
     val bounds: Bounds = metadata.getBounds
     val tilesize: Int = metadata.getTilesize
@@ -320,6 +320,11 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
     val b: LongRectangle = new LongRectangle(tb.w, tb.s, tb.e, tb.n)
     val psw: TMSUtils.Pixel = TMSUtils.latLonToPixels(bounds.getMinY, bounds.getMinX, outputLevel, tilesize)
     val pne: TMSUtils.Pixel = TMSUtils.latLonToPixels(bounds.getMaxY, bounds.getMaxX, outputLevel, tilesize)
+
+
+    // while we were running, there is chance the pyramid was removed from the cache and
+    // reopened by another process. Re-opening it here will avoid some potential conflicts.
+    metadata = MrsImagePyramid.open(provider).getMetadata
 
     metadata.setPixelBounds(outputLevel, new LongRectangle(0, 0, pne.px - psw.px, pne.py - psw.py))
     metadata.setTileBounds(outputLevel, b)

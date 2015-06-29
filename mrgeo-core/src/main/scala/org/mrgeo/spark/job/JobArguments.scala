@@ -288,6 +288,10 @@ class JobArguments() {
     cluster.startsWith(LOCAL)
   }
 
+  def isDebug: Boolean = {
+    cluster.startsWith(LOCAL + "[1]")
+  }
+
   def isSpark: Boolean = {
     cluster.startsWith(SPARK)
   }
