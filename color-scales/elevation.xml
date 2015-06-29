@@ -14,7 +14,8 @@
   ~ See the License for the specific language governing permissions and limitations under the License.
   
 -->
-<ColorMap name="Elevation">
+<ColorMap name="elevation">
+<!-- An elevation theme color scale intended for small scale maps -->
   <Scaling>MinMax</Scaling>
   <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>
