@@ -75,6 +75,11 @@ public class Configuration
         throw new IllegalStateException(MrGeoConstants.MRGEO_ENV_HOME + " environment variable must be set.");
       }
     }
+    if (!home.endsWith("/"))
+    {
+      home += "/";
+    }
+
     // If we read it from JBoss module, no need to load properties from file system
 
     String conf = home + MrGeoConstants.MRGEO_CONF;
