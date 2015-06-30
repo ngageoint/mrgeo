@@ -33,24 +33,23 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
     {
     case id: TileIdWritable =>
       val split = splits.getSplit(id.get())
-      split.getPartition
-    }
-
-    throw new RuntimeException("Bad type sent into SparkTileIdPartitioner.getPartition(): " +
+       split.getPartition
+    case _ =>     throw new RuntimeException("Bad type sent into SparkTileIdPartitioner.getPartition(): " +
         key.getClass + ". Expected org.mrgeo.data.tile.TileIdWritable or a subclass.")
+    }
   }
 
-  def writeSplits(pyramid:String, zoom:Int, conf:Configuration): Unit = {
-    val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
-
-    val inputWithZoom: Path = new Path(dp.getResourcePath(false), "" + zoom)
-
-    writeSplits(inputWithZoom.toString, conf)
-  }
-
-  def writeSplits(path:String, conf:Configuration): Unit = {
-    splits.writeSplits(new Path(path))
-  }
+//  def writeSplits(pyramid:String, zoom:Int, conf:Configuration): Unit = {
+//    val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
+//
+//    val inputWithZoom: Path = new Path(dp.getResourcePath(false), "" + zoom)
+//
+//    writeSplits(inputWithZoom.toString, conf)
+//  }
+//
+//  def writeSplits(path:String, conf:Configuration): Unit = {
+//    splits.writeSplits(new Path(path))
+//  }
 
   def findSplit(list: Array[java.lang.Long], target: Long): Int =
   {
@@ -90,13 +89,7 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-//    val count = in.readInt()
-//
-//    val builder = mutable.ArrayBuilder.make[PartitionerSplitInfo}]()
-//    for (i <- 0 until count) {
-//      builder += in.readLong()
-//    }
-//    splits = builder.result()
+    splits.readExternal(in)
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {

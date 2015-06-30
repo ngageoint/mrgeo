@@ -198,17 +198,18 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
         Bounds requestedBounds = ifContext.getBounds().getTMSBounds();
 
         // Only include the split if it intersects the requested bounds.
-        Bounds userBounds = requestedBounds;
-        if (userBounds.intersect(partFileBounds, false /* include adjacent splits */))
+        if (requestedBounds.intersect(partFileBounds, false /* include adjacent splits */))
         {
-          Bounds intersected = userBounds.intersection(requestedBounds, false);
+          Bounds intersected = requestedBounds.intersection(partFileBounds, false);
 
           TMSUtils.TileBounds tb = TMSUtils.boundsToTile(intersected, zoom, tilesize);
 
           // If the tile bounds of the actual split intersects the user bounds,
           // then return the actual split bounds (instead of the full theoretical
           // range allowed).
-          result.add(new TiledInputSplit(actualSplit, tb.w, tb.n, zoom, metadata.getTilesize()));
+          long s = TMSUtils.tileid(tb.w, tb.s, zoom);
+          long e = TMSUtils.tileid(tb.e, tb.n, zoom);
+          result.add(new TiledInputSplit(actualSplit, s, e, zoom, metadata.getTilesize()));
         }
       }
       else

@@ -16,6 +16,7 @@
 package org.mrgeo.hdfs.partitioners;
 
 import junit.framework.Assert;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.junit.Before;
@@ -23,7 +24,14 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
+import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.hdfs.tile.PartitionerSplit;
+import org.mrgeo.hdfs.tile.SplitInfo;
+import org.mrgeo.hdfs.tile.Splits;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.TestUtils;
@@ -31,23 +39,47 @@ import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Random;
 
 @SuppressWarnings("static-method")
 public class TileIdPartitionerTest extends LocalRunnerTest {
 
-  @Rule
-  public TestName testName = new TestName();
+@Rule public TemporaryFolder folder = new TemporaryFolder();
+@Rule public TestName testName = new TestName();
 
-  private static Path inputHdfs;
-  private static Path outputHdfs;
+static Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
 
-  private static Path allonesPath;
-
-  @BeforeClass
-  public static void init() throws IOException
+class TestGenerator implements SplitGenerator
+{
+  @Override
+  public SplitInfo[] getSplits()
   {
-    inputHdfs = TestUtils.composeInputHdfs(TileIdPartitionerTest.class, true);
-    outputHdfs = TestUtils.composeOutputHdfs(TileIdPartitionerTest.class);
+    PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
+    for (int i = 0; i < splits.length; i++)
+    {
+      splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
+    }
+
+    return splits;
+  }
+
+  @Override
+  public SplitInfo[] getPartitions()
+  {
+    return getSplits();
+  }
+}
+
+private static Path inputHdfs;
+private static Path outputHdfs;
+
+private static Path allonesPath;
+
+@BeforeClass
+public static void init() throws IOException
+{
+  inputHdfs = TestUtils.composeInputHdfs(TileIdPartitionerTest.class, true);
+  outputHdfs = TestUtils.composeOutputHdfs(TileIdPartitionerTest.class);
 
 //    String allones = "all-ones";
 //    System.out.println(Defs.INPUT + " | " + inputHdfs.toString() + " | " + allones);
@@ -55,55 +87,188 @@ public class TileIdPartitionerTest extends LocalRunnerTest {
 //    HadoopFileUtils.copyToHdfs(Defs.INPUT, inputHdfs, allones);
 //
 //    allonesPath = new Path(inputHdfs, allones);
-  }
+}
 
-	@Before
-	public void setUp() throws IOException
-	{
-	}
+@Before
+public void setUp() throws IOException
+{
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void setSplitFile() throws IOException
+@Test
+@Category(UnitTest.class)
+public void setSplitFile() throws IOException
+{
+  String file = new Path(outputHdfs, testName.getMethodName()).toString();
+  Job job = Job.getInstance(conf);
+
+  TileIdPartitioner.setSplitFile(file, job);
+
+  conf = job.getConfiguration();
+
+  Assert.assertEquals("TileIdPartitioner.splitFile not set", file, conf.get("TileIdPartitioner.splitFile", file));
+  Assert.assertFalse("TileIdPartitioner.useDistributedCache should not be set",
+      conf.getBoolean("TileIdPartitioner.useDistributedCache", false));
+
+  URI files[] = job.getCacheFiles();
+  Assert.assertNull("Cache files should not be set", files);
+}
+
+@Test
+@Category(UnitTest.class)
+public void setSplitFileNonLocal() throws IOException
+{
+  conf = HadoopUtils.createConfiguration(); // force local mode off...
+
+  String file = new Path(outputHdfs, testName.getMethodName()).toString();
+  Job job = Job.getInstance(conf);
+
+  TileIdPartitioner.setSplitFile(file, job);
+
+  conf = job.getConfiguration();
+
+  Assert.assertEquals("TileIdPartitioner.splitFile not set",
+      file, conf.get("TileIdPartitioner.splitFile", null));
+  Assert.assertTrue("TileIdPartitioner.useDistributedCache should be set",
+      conf.getBoolean("TileIdPartitioner.useDistributedCache", false));
+
+  URI files[] = job.getCacheFiles();
+  Assert.assertEquals("Cache files should have 1 file", 1, files.length);
+
+  Assert.assertEquals("Cache file name wrong", file, files[0].toString());
+}
+
+@Test
+@Category(UnitTest.class)
+public void setupPartitionerLocal() throws IOException
+{
+  Job job = Job.getInstance(conf, testName.getMethodName());
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf);
+
+  SplitGenerator sg = new TestGenerator();
+
+  Path splitfile = TileIdPartitioner.setup(job, sg);
+
+  Assert.assertEquals("Bad number of reducers", 1, job.getNumReduceTasks());
+  Assert.assertNull("Splitfile should be null", splitfile);
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void setupPartitioner() throws IOException
+{
+  conf = HadoopUtils.createConfiguration();
+
+  Job job = Job.getInstance(conf, testName.getMethodName());
+  conf = job.getConfiguration();
+
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf);
+
+  SplitGenerator sg = new TestGenerator();
+
+  Path splitfile = TileIdPartitioner.setup(job, sg);
+
+  Assert.assertTrue("Reducers should be greater than zero", job.getNumReduceTasks() > 0);
+  Assert.assertNotNull("Splitfile should not be null", splitfile);
+
+  Assert.assertEquals("TileIdPartitioner.splitFile not set",
+      splitfile.toString(), conf.get("TileIdPartitioner.splitFile", null));
+  Assert.assertTrue("TileIdPartitioner.useDistributedCache should be set",
+      conf.getBoolean("TileIdPartitioner.useDistributedCache", false));
+
+  URI files[] = job.getCacheFiles();
+  Assert.assertEquals("Cache files should have 1 file", 1, files.length);
+
+  Assert.assertEquals("Cache file name wrong", splitfile.toString(), files[0].toString());
+
+  Assert.assertTrue("Partition Splits directory does not exist", fs.exists(splitfile));
+  Assert.assertTrue("Partition Splits file does not exist",
+      fs.exists(new Path(splitfile, PartitionerSplit.SPLIT_FILE)));
+
+  Splits splits = new PartitionerSplit();
+  splits.readSplits(splitfile);
+
+  PartitionerSplit.PartitionerSplitInfo[] si =
+      (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
+
+  Assert.assertEquals("Splits length not correct", generated.length, si.length);
+  for (int i = 0; i < generated.length; i++)
   {
-    String file = new Path(outputHdfs, testName.getMethodName()).toString();
-    Job job = Job.getInstance(conf);
-
-    TileIdPartitioner.setSplitFile(file, job);
-
-    conf = job.getConfiguration();
-
-    Assert.assertEquals("TileIdPartitioner.splitFile not set", file, conf.get("TileIdPartitioner.splitFile", file));
-    Assert.assertFalse("TileIdPartitioner.useDistributedCache should not be set",
-        conf.getBoolean("TileIdPartitioner.useDistributedCache", false));
-
-    URI files[] = job.getCacheFiles();
-    Assert.assertNull("Cache files should not be set", files);
+    Assert.assertEquals("Splits entry not correct", generated[i].longValue(), si[i].getTileId());
   }
 
-  @Test
-  @Category(UnitTest.class)
-  public void setSplitFileNonLocal() throws IOException
+  fs.delete(splitfile, true);
+}
+
+@Test
+@Category(UnitTest.class)
+public void getSetConf() throws IOException
+{
+  TileIdPartitioner partitioner = new TileIdPartitioner();
+  Assert.assertNull("Configuration should initialize to null", partitioner.getConf());
+  partitioner.setConf(conf);
+  Assert.assertEquals("Confugration objects don't match", conf, partitioner.getConf());
+}
+
+@Test
+@Category(UnitTest.class)
+public void getPartition() throws IOException
+{
+  conf = HadoopUtils.createConfiguration();
+
+  Job job = Job.getInstance(conf, testName.getMethodName());
+  conf = job.getConfiguration();
+
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf);
+
+  SplitGenerator sg = new TestGenerator();
+
+  Path splitfile = TileIdPartitioner.setup(job, sg);
+
+  Assert.assertTrue("Reducers should be greater than zero", job.getNumReduceTasks() > 0);
+  Assert.assertNotNull("Splitfile should not be null", splitfile);
+
+  TileIdPartitioner<TileIdWritable, RasterWritable> partitioner =
+      new TileIdPartitioner<TileIdWritable, RasterWritable>();
+
+  partitioner.setConf(conf);
+
+  TileIdWritable key = new TileIdWritable();
+  RasterWritable value = new RasterWritable();
+
+  int partitions = generated.length;
+  int partition;
+
+  Random rand = new Random();
+  for (int i = 0; i < 1000; i++)
   {
-    conf = HadoopUtils.createConfiguration(); // force local mode off...
+    long test = rand.nextInt(generated[generated.length - 1].intValue());
+    long testPartition = findSplit(generated, test);
 
-    String file = new Path(outputHdfs, testName.getMethodName()).toString();
-    Job job = Job.getInstance(conf);
+    key.set(test);
 
-    TileIdPartitioner.setSplitFile(file, job);
+    // test the 3 ways of getting a partition
+    partition = partitioner.getPartition(key, value, partitions);
+    Assert.assertEquals("Splits entry not correct", testPartition, partition);
 
-    conf = job.getConfiguration();
-
-    Assert.assertEquals("TileIdPartitioner.splitFile not set", file, conf.get("TileIdPartitioner.splitFile", file));
-    Assert.assertTrue("TileIdPartitioner.useDistributedCache should be set",
-        conf.getBoolean("TileIdPartitioner.useDistributedCache", false));
-
-    URI files[] = job.getCacheFiles();
-    Assert.assertEquals("Cache files should have 1 file", 1, files.length);
-
-    Assert.assertEquals("Cache file name wrong", file, files[0].toString());
+    partition = partitioner.getPartition(key);
+    Assert.assertEquals("Splits entry not correct", testPartition, partition);
   }
 
+  fs.delete(splitfile, true);
+}
+
+private long findSplit(Long[] splits, long value)
+{
+  for (int i = 0; i < splits.length; i++)
+  {
+    if (value <= splits[i])
+    {
+      return i;
+    }
+  }
+  return -1;
+}
 
 //	@Test
 //	@Category(UnitTest.class)

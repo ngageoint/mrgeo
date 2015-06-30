@@ -130,7 +130,7 @@ public class PartitionerSplit extends Splits
   }
 
   @Override
-  public void writeSplits(OutputStream stream)
+  public void writeSplits(OutputStream stream) throws SplitException
   {
     if (splits == null)
     {

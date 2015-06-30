@@ -304,6 +304,11 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
         }
       }
     }
+    // if the tiles are out of bounds, this exception will be thrown.
+    catch (Splits.SplitException se)
+    {
+      currentKey = null;
+    }
     catch (final IOException e)
     {
       throw new MrsImageException(e);

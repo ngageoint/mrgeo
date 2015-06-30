@@ -15,65 +15,9 @@ import java.util.*;
 
 public class PartitionerSplitTest
 {
+  static Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
   @Rule public TemporaryFolder folder = new TemporaryFolder();
   @Rule public TestName testName = new TestName();
-
-  static Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
-  class TestGenerator implements SplitGenerator
-  {
-    @Override
-    public SplitInfo[] getSplits()
-    {
-      PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
-      for (int i = 0; i < splits.length; i++)
-      {
-        splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
-      }
-
-      return splits;
-    }
-
-    @Override
-    public SplitInfo[] getPartitions()
-    {
-      return getSplits();
-    }
-  }
-
-  class BigTestGenerator implements SplitGenerator
-  {
-    Long[] generated = null;
-    public BigTestGenerator()
-    {
-      Random rand = new Random();
-      Set<Long> raw = new TreeSet<>();
-      while (raw.size() < 10000)
-      {
-        raw.add((long) rand.nextInt(Integer.MAX_VALUE));
-      }
-
-      generated = raw.toArray(new Long[raw.size()]);
-    }
-
-    @Override
-    public SplitInfo[] getSplits()
-    {
-      PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
-      for (int i = 0; i < splits.length; i++)
-      {
-        splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
-      }
-
-      return splits;
-    }
-
-    @Override
-    public SplitInfo[] getPartitions()
-    {
-      return getSplits();
-    }
-  }
-
 
   @Test
   @Category(UnitTest.class)
@@ -113,7 +57,7 @@ public class PartitionerSplitTest
 
   @Test
   @Category(UnitTest.class)
-  public void getSplit()
+  public void getSplit() throws Splits.SplitException
   {
     Splits splits = new PartitionerSplit();
     splits.generateSplits(new TestGenerator());
@@ -131,21 +75,9 @@ public class PartitionerSplitTest
     }
   }
 
-  private long findSplit(Long[] splits, long value)
-  {
-    for (int i = 0; i < splits.length; i++)
-    {
-      if (value <= splits[i])
-      {
-        return i;
-      }
-    }
-    return -1;
-  }
-
   @Test
   @Category(UnitTest.class)
-  public void getSplitLow()
+  public void getSplitLow() throws Splits.SplitException
   {
     Splits splits = new PartitionerSplit();
     splits.generateSplits(new TestGenerator());
@@ -158,7 +90,7 @@ public class PartitionerSplitTest
 
   @Test(expected = Splits.SplitException.class)
   @Category(UnitTest.class)
-  public void getSplitHigh()
+  public void getSplitHigh() throws Splits.SplitException
   {
     Splits splits = new PartitionerSplit();
     splits.generateSplits(new TestGenerator());
@@ -168,7 +100,7 @@ public class PartitionerSplitTest
 
   @Test(expected = Splits.SplitException.class)
   @Category(UnitTest.class)
-  public void getSplitNotGenerated()
+  public void getSplitNotGenerated() throws Splits.SplitException
   {
     Splits splits = new PartitionerSplit();
     splits.getSplit(10);
@@ -176,7 +108,7 @@ public class PartitionerSplitTest
 
   @Test
   @Category(UnitTest.class)
-  public void getSplitLotsOfPartitions()
+  public void getSplitLotsOfPartitions() throws Splits.SplitException
   {
     Splits splits = new PartitionerSplit();
     BigTestGenerator btg = new BigTestGenerator();
@@ -319,6 +251,73 @@ public class PartitionerSplitTest
       Assert.assertEquals("Splits entry not correct", generated[i].longValue(), si[i].getTileId());
     }
 
+  }
+
+  private long findSplit(Long[] splits, long value)
+  {
+    for (int i = 0; i < splits.length; i++)
+    {
+      if (value <= splits[i])
+      {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  class TestGenerator implements SplitGenerator
+  {
+    @Override
+    public SplitInfo[] getSplits()
+    {
+      PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
+      for (int i = 0; i < splits.length; i++)
+      {
+        splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
+      }
+
+      return splits;
+    }
+
+    @Override
+    public SplitInfo[] getPartitions()
+    {
+      return getSplits();
+    }
+  }
+
+  class BigTestGenerator implements SplitGenerator
+  {
+    Long[] generated = null;
+    public BigTestGenerator()
+    {
+      Random rand = new Random();
+      Set<Long> raw = new TreeSet<>();
+      while (raw.size() < 10000)
+      {
+        raw.add((long) rand.nextInt(Integer.MAX_VALUE));
+      }
+
+      generated = raw.toArray(new Long[raw.size()]);
+    }
+
+    @Override
+    public SplitInfo[] getSplits()
+    {
+      PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
+      for (int i = 0; i < splits.length; i++)
+      {
+        splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
+      }
+
+      return splits;
+    }
+
+    @Override
+    public SplitInfo[] getPartitions()
+    {
+      return getSplits();
+    }
   }
 
 }

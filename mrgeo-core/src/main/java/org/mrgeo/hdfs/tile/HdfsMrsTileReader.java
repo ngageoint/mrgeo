@@ -392,7 +392,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
    *          the item to find the range for
    * @return the partition of the requested key
    */
-  public int getPartition(final TileIdWritable key)
+  public int getPartition(final TileIdWritable key) throws IOException
   {
     return splits.getSplit(key.get()).getPartition();
   }

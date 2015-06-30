@@ -314,7 +314,7 @@ object SparkUtils extends Logging {
     wrappedSorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
       tofp.getOutputFormat.getClass, conf)
 
-    sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
+    // sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
     // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
     // on.  This can be a problem for fast calculating/small partitions

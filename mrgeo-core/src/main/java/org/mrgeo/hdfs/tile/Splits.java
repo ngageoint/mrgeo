@@ -11,29 +11,22 @@ public abstract class Splits implements Externalizable
 {
   SplitInfo[] splits = null;
 
-  public class SplitException extends RuntimeException
+  public class SplitException extends IOException
   {
-    private static final long serialVersionUID = 1L;
-    private final Exception origException;
+    static final long serialVersionUID = 7818375828146090155L;
 
-    public SplitException(final Exception e)
-    {
-      this.origException = e;
-      printStackTrace();
+    public SplitException() {
+      super();
     }
-
-    public SplitException(final String msg)
-    {
-      final Exception e = new Exception(msg);
-      this.origException = e;
+    public SplitException(String message) {
+      super(message);
     }
-
-    @Override
-    public void printStackTrace()
-    {
-      origException.printStackTrace();
+    public SplitException(String message, Throwable cause) {
+      super(message, cause);
     }
-
+    public SplitException(Throwable cause) {
+      super(cause);
+    }
   }
 
   public abstract String findSpitFile(Path parent) throws IOException;
@@ -70,7 +63,7 @@ public abstract class Splits implements Externalizable
 
   final public SplitInfo getSplit(long tileId) throws SplitException
   {
-    if (splits == null)
+    if (splits == null || splits.length == 0)
     {
       throw new SplitException("Splits not generated, call readSplits() or generateSplits() first");
     }
@@ -93,7 +86,7 @@ public abstract class Splits implements Externalizable
         ".  splits: min: " + splits[0].getTileId() + ", max: " + splits[splits.length - 1].getTileId());
   }
 
-  private SplitInfo findSplit(long tileId)
+  private SplitInfo findSplit(long tileId) throws SplitException
   {
     // First check the min and max values before binary searching.
     if (splits[0].compareLE(tileId))
@@ -128,25 +121,25 @@ public abstract class Splits implements Externalizable
     }
   }
 
-  public abstract void readSplits(InputStream stream);
+  public abstract void readSplits(InputStream stream) throws SplitException;
   public void readSplits(Path parent) throws IOException
   {
     FileSystem fs = HadoopFileUtils.getFileSystem(parent);
-    InputStream stream =  fs.open(parent);
-
-    readSplits(stream);
-    stream.close();
+    try (InputStream stream = fs.open(parent))
+    {
+      readSplits(stream);
+    }
   }
 
 
-  public abstract void writeSplits(OutputStream stream);
+  public abstract void writeSplits(OutputStream stream) throws SplitException;
   public void writeSplits(Path parent) throws IOException
   {
     FileSystem fs = HadoopFileUtils.getFileSystem(parent);
-    OutputStream stream =  fs.create(parent, true);
-
-    writeSplits(stream);
-    stream.close();
+    try (OutputStream stream =  fs.create(parent, true))
+    {
+      writeSplits(stream);
+    }
   }
 
   @Override
