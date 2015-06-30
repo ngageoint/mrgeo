@@ -3,5 +3,3 @@ org.mrgeo.cmd.mrsimageinfo.MrsImageInfoSpi
 org.mrgeo.cmd.findholes.FindHolesSpi
 org.mrgeo.cmd.printsplitfile.PrintSplitFileSpi
 org.mrgeo.cmd.showconfiguration.ShowConfigurationSpi
-org.mrgeo.cmd.updatesplitfile.UpdateSplitFileSpi
-org.mrgeo.cmd.upgradepyramid.UpgradePyramidSpi

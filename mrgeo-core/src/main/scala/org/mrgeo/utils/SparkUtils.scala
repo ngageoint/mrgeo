@@ -15,33 +15,68 @@
 
 package org.mrgeo.utils
 
-import java.io.{IOException, FileInputStream, InputStreamReader, File}
+import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util
-import java.util.{Enumeration, Properties}
+import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFilter.Filter
-import org.apache.hadoop.mapreduce.lib.input.{SequenceFileInputFilter, SequenceFileInputFormat, FileInputFormat}
-import org.apache.hadoop.mapreduce.{OutputFormat, InputFormat, Job}
+import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, SequenceFileInputFormat}
+import org.apache.hadoop.mapreduce.{InputFormat, Job}
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
-import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.tile.{TiledOutputFormatContext, TileIdWritable}
+import org.mrgeo.data.tile.{TileIdWritable, TiledOutputFormatContext}
 import org.mrgeo.hdfs.input.MapFileFilter
-import org.mrgeo.hdfs.partitioners.{ImageSplitGenerator, TileIdPartitioner}
-import org.mrgeo.image.{MrsImagePyramid, ImageStats, MrsImagePyramidMetadata}
+import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
+import org.mrgeo.hdfs.tile.FileSplit
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
+import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
 import org.mrgeo.spark.SparkTileIdPartitioner
 
-import scala.collection.{Map, mutable}
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
+import scala.collection.{Map, mutable}
 
 object SparkUtils extends Logging {
+  def calculateSplitData(rdd: RDD[(TileIdWritable, RasterWritable)]) = {
+
+    // calculate the min/max tile id for each partition
+    val partitions = rdd.mapPartitionsWithIndex((partition, data) => {
+      var startId = Long.MaxValue
+      var endId = Long.MinValue
+
+      // not sure if the name is always part-r-xxxxx, but we'll use it for now.
+      val name = f"part-r-$partition%05d"
+
+      data.foreach(tile => {
+        startId = Math.min(startId, tile._1.get())
+        endId = Math.max(endId, tile._1.get())
+      })
+
+      val split = new FileSplitInfo(startId, endId, name, partition)
+
+      val result = ListBuffer[(Int, FileSplitInfo)]()
+
+      result.append((partition, split))
+
+      result.iterator
+    }, preservesPartitioning = true)
+
+
+    val splits = Array.ofDim[FileSplitInfo](rdd.partitions.length)
+
+    // collect the results and set the up the array
+    partitions.collect().foreach(part => {
+      splits(part._1) = part._2
+    })
+
+    splits
+  }
+
 
   def getConfiguration:SparkConf = {
 
@@ -103,7 +138,7 @@ object SparkUtils extends Logging {
     val valueclass = classOf[RasterWritable]
 
     // build a phony job...
-    val job = new Job()
+    val job = Job.getInstance(context.hadoopConfiguration)
 
     val providerProps: Properties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
@@ -143,7 +178,7 @@ object SparkUtils extends Logging {
     val valueclass = classOf[RasterWritable]
 
     // build a phony job...
-    val job = new Job()
+    val job = Job.getInstance(context.hadoopConfiguration)
 
     val providerProps: Properties = null
     MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName, providerProps)
@@ -310,11 +345,12 @@ object SparkUtils extends Logging {
 
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
     val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-    var wrappedSorted = new PairRDDFunctions(sorted)
+    val wrappedSorted = new PairRDDFunctions(sorted)
     wrappedSorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
       tofp.getOutputFormat.getClass, conf)
 
-    // sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
+    sparkPartitioner.generateFileSplits(sorted, output, zoom, conf)
+    //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
     // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
     // on.  This can be a problem for fast calculating/small partitions
@@ -332,7 +368,7 @@ object SparkUtils extends Logging {
 
     val zero = Array.ofDim[ImageStats](bands)
 
-    for (i <- 0 until zero.length) {
+    for (i <- zero.indices) {
       zero(i) = new ImageStats(Double.MaxValue, Double.MinValue, 0, 0)
     }
 
@@ -358,7 +394,7 @@ object SparkUtils extends Logging {
       (stat1, stat2) => {
         val aggstat = stat1.clone()
 
-        for (b <- 0 until aggstat.length) {
+        for (b <- aggstat.indices) {
           aggstat(b).count += stat2(b).count
           aggstat(b).sum += stat2(b).sum
           aggstat(b).max = Math.max(aggstat(b).max, stat2(b).max)
@@ -368,7 +404,7 @@ object SparkUtils extends Logging {
         aggstat
       })
 
-    for (i <- 0 until stats.length) {
+    for (i <- stats.indices) {
       if (stats(i).count > 0) {
         stats(i).mean = stats(i).sum / stats(i).count
       }
@@ -477,7 +513,7 @@ object SparkUtils extends Logging {
 
   def jarsForPackage(pkg:String, cl:ClassLoader = null): Array[String] = {
     // now the hard part, need to look in the dependencies...
-    var iter: Enumeration[URL] = null
+    var iter: util.Enumeration[URL] = null
 
     val pkgFile: String = pkg.replaceAll("\\.", "/")
 

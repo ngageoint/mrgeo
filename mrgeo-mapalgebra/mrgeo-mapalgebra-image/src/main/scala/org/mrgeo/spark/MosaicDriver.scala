@@ -57,7 +57,6 @@ object MosaicDriver extends MrGeoDriver with Externalizable {
   override def readExternal(in: ObjectInput): Unit = {}
 
   override def setup(job: JobArguments): Boolean = {
-    job.useDebug()
     true
   }
 }

@@ -93,7 +93,7 @@ public abstract class Splits implements Externalizable
     {
       return splits[0];
     }
-    if (splits[splits.length - 1].compareGT(tileId))
+    else if (splits[splits.length - 1].compareGT(tileId))
     {
       throw new SplitException("TileId out of range.  tile id: " + tileId +
           ".  splits: min: " + splits[0].getTileId() + ", max: " + splits[splits.length - 1].getTileId());

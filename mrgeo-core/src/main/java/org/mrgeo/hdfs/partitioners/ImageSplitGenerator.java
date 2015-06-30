@@ -104,7 +104,7 @@ public class ImageSplitGenerator implements SplitGenerator {
       // are subsequent splits increment rows high up until maxTileY. The
       // final split may be <= increment rows high.
       int partition = 0;
-      for(long i = minTileY + increment - 1; i < maxTileY; i+=increment, partition++)
+      for(long i = minTileY + increment - 1; i < maxTileY; i += increment, partition++)
       {
         splits.add(new FileSplit.FileSplitInfo(
             TMSUtils.tileid(minTileX, i, zoomLevel),

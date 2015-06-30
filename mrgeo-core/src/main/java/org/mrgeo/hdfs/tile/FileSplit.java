@@ -39,6 +39,9 @@ public static class FileSplitInfo extends SplitInfo
   private long endId;
   private int partition;
 
+  // constructor for serialization
+  public FileSplitInfo() {}
+
   public FileSplitInfo(long startId, long endId, String name, int partition)
   {
     this.name = name;
@@ -126,6 +129,21 @@ public static class FileSplitInfo extends SplitInfo
   }
 }
 
+public void generateSplits(FileSplitInfo[] splits)
+{
+  this.splits = new FileSplitInfo[splits.length];
+  System.arraycopy(splits, 0, this.splits, 0, splits.length);
+}
+
+public void generateSplits(long[] startIds, long[] endIds, String[] names)
+{
+  splits = new SplitInfo[names.length];
+
+  for (int i = 0; i < names.length; i++)
+  {
+    splits[i] = new FileSplitInfo(startIds[i], endIds[i], names[i], i);
+  }
+}
 
 public void generateSplits(Path parent, Configuration conf) throws IOException
 {

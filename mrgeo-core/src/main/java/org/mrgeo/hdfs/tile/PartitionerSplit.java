@@ -65,7 +65,7 @@ public class PartitionerSplit extends Splits
 
     public String toString()
     {
-      return "tile id = " + tileid;
+      return "tile id = " + tileid + ", partition = " + partition;
     }
 
     @Override
