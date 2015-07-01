@@ -17,10 +17,10 @@ package org.mrgeo.hdfs.partitioners;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
-import org.apache.hadoop.mapreduce.filecache.DistributedCache;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.PartitionerSplit;
 import org.mrgeo.hdfs.tile.Splits;
