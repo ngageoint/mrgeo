@@ -17,11 +17,9 @@ package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.rasterops.ColorScale;
 import org.mrgeo.utils.Bounds;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.ws.rs.core.Response;
-
 import java.io.IOException;
 import java.util.Properties;
 
@@ -30,54 +28,52 @@ import java.util.Properties;
  */
 public class KmlResponseBuilder implements RasterResponseBuilder
 {
-  CoordinateReferenceSystem coordSys;
 
-  public KmlResponseBuilder(final CoordinateReferenceSystem crs)
-  {
-    coordSys = crs;
-  }
+public KmlResponseBuilder()
+{
+}
 
-  @Override
-  public String getFormatSuffix()
-  {
-    return "kml";
-  }
+@Override
+public String getFormatSuffix()
+{
+  return "kml";
+}
 
-  @Override
-  public String getMimeType()
-  {
-    return "application/vnd.google-earth.kml+xml";
-  }
+@Override
+public String getMimeType()
+{
+  return "application/vnd.google-earth.kml+xml";
+}
 
-  @Override
-  public Response getResponse(final String pyrName, final Bounds bounds, final int width,
+@Override
+public Response getResponse(final String pyrName, final Bounds bounds, final int width,
     final int height, final ColorScale cs, final String reqUrl, final int zoomLevel,
     final Properties providerProperties)
+{
+  try
   {
-    try
-    {
-      final String kmlBody = ImageRendererAbstract
+    final String kmlBody = ImageRendererAbstract
         .asKml(pyrName, bounds, width, height, cs, reqUrl, providerProperties);
-      final String type = new MimetypesFileTypeMap().getContentType(getFormatSuffix());
-      final String headerInfo = "attachment; filename=" + pyrName + "." + getFormatSuffix();
-      return Response.ok(kmlBody, type).header("Content-Disposition", headerInfo).header(
+    final String type = new MimetypesFileTypeMap().getContentType(getFormatSuffix());
+    final String headerInfo = "attachment; filename=" + pyrName + "." + getFormatSuffix();
+    return Response.ok(kmlBody, type).header("Content-Disposition", headerInfo).header(
         "Content-type", getMimeType()).build();
-    }
-    catch (final IOException e)
-    {
-      if (e.getMessage() != null)
-      {
-        return Response.serverError().entity(e.getMessage()).build();
-      }
-      return Response.serverError().entity("Internal Error").build();
-    }
-    catch (final Exception e)
-    {
-      if (e.getMessage() != null)
-      {
-        return Response.serverError().entity(e.getMessage()).build();
-      }
-      return Response.serverError().entity("Internal Error").build();
-    }
   }
+  catch (final IOException e)
+  {
+    if (e.getMessage() != null)
+    {
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+    return Response.serverError().entity("Internal Error").build();
+  }
+  catch (final Exception e)
+  {
+    if (e.getMessage() != null)
+    {
+      return Response.serverError().entity(e.getMessage()).build();
+    }
+    return Response.serverError().entity("Internal Error").build();
+  }
+}
 }
