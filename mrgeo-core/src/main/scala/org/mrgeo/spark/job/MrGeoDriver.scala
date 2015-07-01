@@ -66,9 +66,10 @@ abstract class MrGeoDriver extends Logging {
 
     setup(job)
 
-    if (HadoopUtils.isLocal(hadoopConf))
-    {
-      job.useLocal()
+    if (HadoopUtils.isLocal(hadoopConf)) {
+      if (!job.isDebug) {
+        job.useLocal()
+      }
     }
     else {
       val cluster = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_CLUSTER, "local")
