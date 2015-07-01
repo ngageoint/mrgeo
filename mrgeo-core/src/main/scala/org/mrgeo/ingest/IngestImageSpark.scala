@@ -7,6 +7,7 @@ import java.util.Properties
 import javax.media.jai.{PlanarImage, BorderExtenderConstant, BorderExtender}
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.io.SequenceFile
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.PairRDDFunctions
@@ -116,32 +117,34 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: Properties): Boolean = {
 
-    val provider: ImageIngestDataProvider = DataProviderFactory
-        .getImageIngestDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri.toString, AccessMode.OVERWRITE)
+//    val provider: ImageIngestDataProvider = DataProviderFactory
+//        .getImageIngestDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri.toString, AccessMode.OVERWRITE)
+
 
     var conf: Configuration = config
     if (conf == null) {
       conf = HadoopUtils.createConfiguration
     }
 
-    //    final Path unique = HadoopFileUtils.createUniqueTmpPath();
-    val context = new ImageIngestWriterContext()
-    context.setZoomlevel(zoomlevel)
-    context.setPartNum(0)
-
-    val writer = provider.getMrsTileWriter(context)
+    val tmpname = HadoopFileUtils.createUniqueTmpPath()
+    val writer = SequenceFile.createWriter(conf,
+      SequenceFile.Writer.file(tmpname),
+      SequenceFile.Writer.keyClass(classOf[TileIdWritable]),
+      SequenceFile.Writer.valueClass(classOf[RasterWritable]),
+      SequenceFile.Writer.compression(SequenceFile.CompressionType.BLOCK)
+    )
 
     inputs.foreach(input => {
       val tiles = IngestImageSpark.makeTiles(input, zoomlevel, tilesize, categorical)
 
       tiles.foreach(kv => {
-        writer.append(new TileIdWritable(kv._1.get()), RasterWritable.toRaster(kv._2))
+        writer.append(new TileIdWritable(kv._1.get()), kv._2)
       })
     })
 
     writer.close()
 
-    val args = setupParams(writer.getName, output, categorical, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+    val args = setupParams(tmpname.toUri.toString, output, categorical, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
       tags, protectionLevel,
       providerProperties)
 
@@ -149,7 +152,6 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
     run(name, classOf[IngestLocalSpark].getName, args.toMap, conf)
 
-    provider.delete()
 
     true
   }
