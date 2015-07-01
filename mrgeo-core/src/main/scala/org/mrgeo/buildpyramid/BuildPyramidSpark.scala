@@ -47,7 +47,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 
   def build (pyramidName: String, aggregator: Aggregator,
       conf: Configuration, progress: Progress, jobListener: JobListener, providerProperties: Properties): Boolean = {
-    throw new NotImplementedError("Not yet implemented")
+    build(pyramidName, aggregator, conf, providerProperties)
   }
 
   def buildlevel (pyramidName: String, level: Int, aggregator: Aggregator,

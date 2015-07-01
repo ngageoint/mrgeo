@@ -15,13 +15,9 @@
 
 package org.mrgeo.mapalgebra;
 
-import java.awt.image.RenderedImage;
-import java.io.IOException;
-import java.util.Vector;
-
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.aggregators.AggregatorRegistry;
-import org.mrgeo.buildpyramid.BuildPyramidDriver;
+import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
@@ -32,6 +28,10 @@ import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.awt.image.RenderedImage;
+import java.io.IOException;
+import java.util.Vector;
 
 public class BuildPyramidMapOp extends RasterMapOp
 {
@@ -78,7 +78,7 @@ public class BuildPyramidMapOp extends RasterMapOp
     String rasterInput = sourceRaster.getOutputName();
     try
     {
-      BuildPyramidDriver.build(rasterInput, aggregatorClass.newInstance(), createConfiguration(),
+      BuildPyramidSpark.build(rasterInput, aggregatorClass.newInstance(), createConfiguration(),
           getProviderProperties());
     }
     catch (InstantiationException e)

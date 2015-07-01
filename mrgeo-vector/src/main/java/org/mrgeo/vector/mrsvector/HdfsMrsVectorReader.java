@@ -56,7 +56,7 @@ public class HdfsMrsVectorReader extends HdfsMrsTileReader<VectorTile, VectorTil
 
   public HdfsMrsVectorReader(final String path) throws IOException
   {
-    super(path);
+    super(path, 1);
   }
 
   /**

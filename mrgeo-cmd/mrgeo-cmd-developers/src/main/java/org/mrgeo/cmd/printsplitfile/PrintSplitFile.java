@@ -15,99 +15,124 @@
 
 package org.mrgeo.cmd.printsplitfile;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.PosixParser;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.mrgeo.cmd.Command;
-import org.mrgeo.hdfs.tile.SplitFile;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
+import org.mrgeo.hdfs.tile.FileSplit;
+import org.mrgeo.hdfs.tile.SplitInfo;
+import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.rasterops.OpImageRegistrar;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 import java.util.Properties;
 
 /**
  * A utility class to print split files on the command line
- * 
+ *
  * PrintSplitFile <split filename>
  **/
 
 public class PrintSplitFile extends Command
 {
 
+  public static Options createOptions()
+  {
+    final Options result = new Options();
+
+    final Option zoom = new Option("z", "zoom", true, "Zoom level");
+    zoom.setRequired(false);
+    result.addOption(zoom);
+
+    return result;
+  }
+
   @Override
   public int run(final String[] args, final Configuration conf,
       final Properties providerProperties)
   {
 
+    OpImageRegistrar.registerMrGeoOps();
     try
     {
+      final Options options = PrintSplitFile.createOptions();
+      CommandLine line;
       final CommandLineParser parser = new PosixParser();
-      final CommandLine line = parser.parse(new Options(), args);
-
-      final String splitFile = line.getArgs()[0];
-
-      int index = 0;
-      final List<Long> splits = new ArrayList<Long>();
-      final List<String> partitions = new ArrayList<String>();
-      final SplitFile sf = new SplitFile(conf);
-      sf.readSplits(splitFile, splits, partitions);
+      line = parser.parse(options, args);
 
       int zoomlevel = -1;
-
-      final File f = new File(splitFile);
-      final String dir = StringUtils.substringAfterLast(f.getParent(), "/");
-
-      try
+      if (line.hasOption("z"))
       {
-        zoomlevel = Integer.parseInt(dir);
-      }
-      catch (final NumberFormatException e)
-      {
-
+        zoomlevel = Integer.valueOf(line.getOptionValue("z"));
       }
 
-      System.out.println("Splits: " + splitFile);
-      for (final long split : splits)
+      for (final String name : line.getArgs())
       {
-        System.out.print("" + index + " " + split);
+        MrsImageDataProvider dp =
+            DataProviderFactory.getMrsImageDataProvider(name, DataProviderFactory.AccessMode.READ,
+                conf);
+
+        if (!(dp instanceof HdfsMrsImageDataProvider))
+        {
+          System.out.println("PrintSplitFile only works on HDFS images");
+          return -1;
+        }
+
+        MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+
         if (zoomlevel > 0)
         {
-          final TMSUtils.Tile tile = TMSUtils.tileid(split, zoomlevel);
-          System.out.print(" tx: " + tile.tx + " ty: " + tile.ty);
+          for (int i = metadata.getMaxZoomLevel(); i > 0; i--)
+          {
+            System.out.println("Zoom level: " + i);
+            printlevel(dp, i);
+            System.out.println("---------------");
+          }
         }
-
-        try
+        else
         {
-          System.out.print(" " + partitions.get(index));
+          printlevel(dp, zoomlevel);
         }
-        catch (final IndexOutOfBoundsException e)
-        {
-
-        }
-        index++;
-        System.out.println();
       }
-
-      if (partitions.size() > splits.size())
-      {
-        for (int i = splits.size(); i < partitions.size(); i++)
-        {
-          System.out.print("" + index + " (to end) " + partitions.get(index));
-        }
-        System.out.println();
-      }
-      return 0;
     }
-    catch (final Exception e)
+    catch (DataProviderNotFound | ParseException dataProviderNotFound)
+    {
+      dataProviderNotFound.printStackTrace();
+    }
+    catch (IOException e)
     {
       e.printStackTrace();
     }
 
-    return -1;
+    return 0;
+  }
+
+  private void printlevel(MrsImageDataProvider dp, int zoomlevel) throws IOException
+  {
+    Path parent = new Path(new Path(dp.getResourceName()), "" + zoomlevel);
+    FileSplit fs = new FileSplit();
+
+    String splitname = fs.findSpitFile(parent);
+    System.out.println("split file: " + splitname);
+
+    fs.readSplits(parent);
+    System.out.println("min\tmax\tpartition\tname");
+
+    SplitInfo[] splits = fs.getSplits();
+    for (SplitInfo split: splits)
+    {
+      System.out.println(((FileSplit.FileSplitInfo) split).getStartId());
+      System.out.println("\t");
+      System.out.println(((FileSplit.FileSplitInfo) split).getEndId());
+      System.out.println("\t");
+      System.out.println(((FileSplit.FileSplitInfo) split).getName());
+      System.out.println("\t");
+      System.out.println(split.getPartition());
+    }
+
   }
 }
