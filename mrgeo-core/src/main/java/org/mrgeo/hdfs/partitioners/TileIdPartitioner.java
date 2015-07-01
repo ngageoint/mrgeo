@@ -20,6 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
+import org.apache.hadoop.mapreduce.filecache.DistributedCache;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.PartitionerSplit;
 import org.mrgeo.hdfs.tile.Splits;
@@ -72,7 +73,10 @@ public static void setSplitFile(final String file, final Job job)
   if (!HadoopUtils.isLocal(conf))
   {
     final URI uri = new Path(file).toUri();
-    job.addCacheFile(uri);
+
+    // this method doesn't exist in older Hadoop versions
+    //job.addCacheFile(uri);
+    DistributedCache.addCacheFile(uri, conf);
 
     log.debug("Adding: \"" + uri.toString() + "\" to Distributed cache");
     conf.setBoolean(SPLITFILE_USE_DISTRIBUTED_CACHE, true);
@@ -168,9 +172,10 @@ private void loadSplits() throws IOException
   {
     try
     {
-      final Job job = Job.getInstance(conf);
-
-      final URI[] cf = job.getCacheFiles();
+      // this method does not exist in older Hadoop versions
+//      final Job job = Job.getInstance(conf);
+//      final URI[] cf = job.getCacheFiles();
+      final URI[] cf = DistributedCache.getCacheFiles(conf);
       for (final URI uri : cf)
       {
         if (uri.toString().contains(file))
