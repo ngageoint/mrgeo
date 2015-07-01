@@ -15,9 +15,35 @@
 
 package org.mrgeo.services.mrspyramid;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Transparency;
+import com.sun.media.jai.codec.ByteArraySeekableStream;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.geotools.referencing.CRS;
+import org.mrgeo.aggregators.MeanAggregator;
+import org.mrgeo.buildpyramid.BuildPyramidSpark;
+import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.geotools.GeotoolsRasterUtils;
+import org.mrgeo.ingest.IngestImageSpark;
+import org.mrgeo.mapreduce.job.JobManager;
+import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.services.SecurityUtils;
+import org.mrgeo.services.mrspyramid.rendering.*;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.ImageUtils;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.NoSuchAuthorityCodeException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.activation.MimetypesFileTypeMap;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
+import javax.media.jai.FloatDoubleColorModel;
+import javax.ws.rs.core.Response;
+import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -29,40 +55,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
-import javax.activation.MimetypesFileTypeMap;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
-import javax.media.jai.FloatDoubleColorModel;
-import javax.ws.rs.core.Response;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.geotools.referencing.CRS;
-import org.mrgeo.aggregators.MeanAggregator;
-import org.mrgeo.buildpyramid.BuildPyramidDriver;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.geotools.GeotoolsRasterUtils;
-import org.mrgeo.ingest.IngestImageDriver;
-import org.mrgeo.mapreduce.job.JobManager;
-import org.mrgeo.rasterops.ColorScale;
-import org.mrgeo.services.SecurityUtils;
-import org.mrgeo.services.mrspyramid.rendering.ColorScaleApplier;
-import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
-import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
-import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
-import org.mrgeo.services.mrspyramid.rendering.KmlResponseBuilder;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.ImageUtils;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.sun.media.jai.codec.ByteArraySeekableStream;
 
 /**
  * @author Steve Ingram
@@ -306,9 +298,9 @@ public class MrsPyramidService {
             String pyramidOutput = HadoopUtils.getDefaultImageBaseDirectory() + output;
             byte[] bytes = IOUtils.toByteArray(input);
             ByteArraySeekableStream seekableInput = new ByteArraySeekableStream(bytes);
-            IngestImageDriver.quickIngest(seekableInput, pyramidOutput, false, null,
+            IngestImageSpark.quickIngest(seekableInput, pyramidOutput, false, null,
                 false, protectionLevel, 0d);
-            BuildPyramidDriver.build(pyramidOutput, new MeanAggregator(),
+          BuildPyramidSpark.build(pyramidOutput, new MeanAggregator(),
                 HadoopUtils.createConfiguration(), providerProperties);
             return pyramidOutput;
         } catch (Exception e) {
