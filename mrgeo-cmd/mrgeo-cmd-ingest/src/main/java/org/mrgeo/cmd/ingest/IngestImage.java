@@ -51,7 +51,8 @@ private static Logger log = LoggerFactory.getLogger(IngestImage.class);
 
 private int zoomlevel = -1;
 private int tilesize = -1;
-private Number nodata = null;
+private Number[] nodata;
+private Number nodataOverride = null;
 private int bands = -1;
 private int tiletype = -1;
 private boolean skippreprocessing = false;
@@ -216,23 +217,19 @@ private void calculateParams(final Dataset image)
 
   try
   {
-    if (nodata == null)
+    if (nodataOverride == null)
     {
+      nodata = new Double[bands];
       for (int b = 1; b <= bands; b++)
       {
         Double[] val = new Double[1];
         Band band = image.GetRasterBand(b);
         band.GetNoDataValue(val);
 
-        nodata = val[0];
-
-        if (nodata != null)
-        {
-          log.debug("nodata: b: " + nodata.byteValue() + " d: " + nodata.doubleValue() +
-              " f: " + nodata.floatValue() + " i: " + nodata.intValue() +
-              " s: " + nodata.shortValue() + " l: " + nodata.longValue());
-          break;
-        }
+        nodata[b-1] = val[0];
+        log.debug("nodata: b: " + nodata[b-1].byteValue() + " d: " + nodata[b-1].doubleValue() +
+                          " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
+                          " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
       }
     }
   }
@@ -442,12 +439,18 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
         String str = line.getOptionValue("nd");
         if (str.compareToIgnoreCase("nan") != 0)
         {
-          nodata = Double.parseDouble(line.getOptionValue("nd"));
-          log.info("overriding nodata with: " + nodata);
+          nodataOverride = Double.parseDouble(line.getOptionValue("nd"));
+          log.info("overriding nodata with: " + nodataOverride);
         }
         else
         {
-          nodata = Double.NaN;
+          nodataOverride = Double.NaN;
+          log.info("overriding nodata with: NaN");
+        }
+        nodata = new Double[bands];
+        for (int b = 0; b < bands; b++)
+        {
+          nodata[b] = nodataOverride;
         }
       }
 
@@ -505,11 +508,6 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
 
           tags.put(s[0], s[1]);
         }
-      }
-
-      if (nodata == null)
-      {
-        nodata = Double.NaN;
       }
 
       quick = quick | line.hasOption("q");
