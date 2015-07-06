@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.mrgeo.mapreduce.ingestvector;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.mapreduce.GeometryWritable;
 import org.mrgeo.mapreduce.MapGeometryToTiles;
@@ -86,7 +87,7 @@ public class IngestGeometryReducer extends Reducer<TileIdWritable, GeometryWrita
     Configuration conf = context.getConfiguration();
 
     zoom = conf.getInt(MapGeometryToTiles.ZOOMLEVEL, 20);
-    tilesize = conf.getInt(MapGeometryToTiles.TILESIZE, 512);
+    tilesize = conf.getInt(MapGeometryToTiles.TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ public class TiledOutputFormatContext
   private Bounds bounds;
   private int tiletype;
   final private boolean calculatePartitions;
-  private String name;
-  final private boolean multipleOutputFormat;
 
   /**
    * This constructor is used when producing a single image output.
@@ -42,8 +40,6 @@ public class TiledOutputFormatContext
     this.tilesize = tilesize;
     // don't have bands, and tiletype, can't calculate partitions based on size
     this.calculatePartitions = false;
-    
-    this.multipleOutputFormat = false;
   }
   
   public TiledOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, int tiletype, int bands)
@@ -55,70 +51,14 @@ public class TiledOutputFormatContext
     this.tilesize =  tilesize;
     this.tiletype = tiletype;
     this.calculatePartitions = true;
-    
-    this.multipleOutputFormat = false;
   }
 
-  /**
-   * This constructor is used for producing multiple outputs to the specified output.
-   * It adds "name" as one output to the "output" location.
-   * @param output
-   * @param name
-   * @param keyClass
-   * @param valueClass
-   */
-  public TiledOutputFormatContext(final String output, final String name,
-    Bounds bounds, int zoomlevel, int tilesize, int tiletype, int bands)
-  {
-    this.output = output;
-    this.name = name;
-    
-    this.bounds = bounds.clone();
-    this.bands = bands;
-    this.zoomlevel = zoomlevel;
-    this.tilesize =  tilesize;
-    this.tiletype = tiletype;
-
-    
-    // don't have tilesize, bands, and tiletype, can't calculate partitions based on size
-    this.calculatePartitions = false;
-
-    this.multipleOutputFormat = true;
-  }
-  /**
-   * This constructor is used for producing multiple outputs to the specified output.
-   * It adds "name" as one output to the "output" location.
-   * @param output
-   * @param name
-   * @param keyClass
-   * @param valueClass
-   */
-  public TiledOutputFormatContext(final String output, final String name,
-    Bounds bounds, int zoomlevel, int tilesize)
-  {
-    this.output = output;
-    this.name = name;
-    
-    this.bounds = bounds.clone();
-    this.zoomlevel = zoomlevel;
-    this.tilesize =  tilesize;
-
-    // don't have tilesize, bands, and tiletype, can't calculate partitions based on size
-    this.calculatePartitions = false;
-
-    this.multipleOutputFormat = true;
-  }
 
   public String getOutput()
   {
     return output;
   }
 
-  public String getName()
-  {
-    return name;
-  }
-  
   public int getZoomlevel()
   {
     return zoomlevel;
@@ -149,8 +89,4 @@ public class TiledOutputFormatContext
     return calculatePartitions;
   }
 
-  public boolean isMultipleOutputFormat()
-  {
-    return multipleOutputFormat;
-  }
 }

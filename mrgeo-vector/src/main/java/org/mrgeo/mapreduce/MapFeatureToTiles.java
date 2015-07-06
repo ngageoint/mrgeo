@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.vividsolutions.jts.geom.Envelope;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.featurefilter.FeatureFilter;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.rasterops.OpImageRegistrar;
@@ -69,7 +70,7 @@ public class MapFeatureToTiles extends Mapper<LongWritable, Geometry, TileIdWrit
     {
       Configuration conf = context.getConfiguration();
       zoom = conf.getInt(ZOOM, 0);
-      tileSize = conf.getInt(TILE_SIZE, 512);
+      tileSize = conf.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
       if (conf.get(FEATURE_FILTER) != null)
       {
         filter = (FeatureFilter) Base64Utils.decodeToObject(conf.get(FEATURE_FILTER));

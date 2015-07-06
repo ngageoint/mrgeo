@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,24 @@
 
 package org.mrgeo.mapalgebra;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.aggregators.MeanAggregator;
-import org.mrgeo.buildpyramid.BuildPyramidDriver;
+import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapreduce.job.JobCancelFailedException;
-import org.mrgeo.mapreduce.job.JobCancelledException;
-import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.mapreduce.job.JobListener;
-import org.mrgeo.mapreduce.job.RunnableJob;
-import org.mrgeo.mapreduce.job.TaskProgress;
+import org.mrgeo.mapreduce.job.*;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.progress.ProgressHierarchy;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Properties;
 
 public class MapAlgebraJob implements RunnableJob
 {
@@ -148,7 +143,7 @@ public class MapAlgebraJob implements RunnableJob
       if (op instanceof RasterMapOp)
       {        
         taskProg.starting();
-        BuildPyramidDriver.build(_output, new MeanAggregator(),
+        BuildPyramidSpark.build(_output, new MeanAggregator(),
             conf, taskProg, null, providerProperties);
         taskProg.complete();
       }
@@ -156,18 +151,6 @@ public class MapAlgebraJob implements RunnableJob
       {
         taskProg.notExecuted();
       }
-    }
-    catch (JobCancelledException j)
-    {
-      //not sure if this will ever happen - can cancel a job after it is finished ???
-      //anyways will cancel the progress and throw.
-      _log.error("Exception occurred while processing mapalgebra job " + j.getMessage());      
-      taskProg.cancelled();      
-      throw j;
-    }
-    catch (JobFailedException j) {
-      _log.error("Exception occurred while processing mapalgebra job " + j.getMessage());      
-      taskProg.cancelled();
     }
     catch (Exception e)
     {

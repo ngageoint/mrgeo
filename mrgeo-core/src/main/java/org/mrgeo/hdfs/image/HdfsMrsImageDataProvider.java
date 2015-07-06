@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.image.*;
 import org.mrgeo.data.raster.RasterWritable;
@@ -283,7 +284,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
 
   static Path getBasePath(final Configuration conf)
   {
-    String basePathKey = "hdfs.image.base";
+    String basePathKey = "hdfs." + MrGeoConstants.MRGEO_HDFS_IMAGE;
     Path basePath = null;
     String strBasePath = null;
     // First check to see if thte image base path is defined in the configuration.
@@ -297,7 +298,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     }
     if (strBasePath == null)
     {
-      strBasePath = MrGeoProperties.getInstance().getProperty("image.base");
+      strBasePath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE);
     }
     if (strBasePath != null)
     {

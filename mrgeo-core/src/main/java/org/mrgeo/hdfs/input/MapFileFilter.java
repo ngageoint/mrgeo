@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.mrgeo.hdfs.input;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.mrgeo.hdfs.tile.SplitFile;
+import org.mrgeo.hdfs.tile.FileSplit;
 
 /**
  * SequenceFileInputFormat, when given a path to a directory containing a mapfile "data" and
@@ -35,8 +35,8 @@ public class MapFileFilter implements PathFilter
   {
     String name = path.getName();
     return !(name.equals("index") ||
-        name.equals(SplitFile.SPLIT_FILE) ||
-        name.equals(SplitFile.OLD_SPLIT_FILE) ||
+        name.equals(FileSplit.SPLIT_FILE) ||
+        name.equals(FileSplit.OLD_SPLIT_FILE) ||
         name.equals("_SUCCESS") ||    // these are sometimes created by hadoop
         name.endsWith("$folder$"));   // these are automatically created in S3, yuck!
 

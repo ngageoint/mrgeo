@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -454,14 +454,14 @@ public class RasterUtils
 
       if (scale > 2.0)
       {
-        dw = (int) (src.getWidth() * 2.0);
-        dh = (int) (src.getHeight() * 2.0);
+        dw = (int) (s.getWidth() * 2.0);
+        dh = (int) (s.getHeight() * 2.0);
 
       }
       else if (scale < 0.50)
       {
-        dw = (int) (src.getWidth() * 0.50);
-        dh = (int) (src.getHeight() * 0.50);
+        dw = (int) (s.getWidth() * 0.50);
+        dh = (int) (s.getHeight() * 0.50);
       }
       else
       {
@@ -516,8 +516,8 @@ public class RasterUtils
       }
 
       s = dst;
-      scaleW = (double) dst.getWidth() / src.getWidth();
-      scaleH = (double) dst.getHeight() / src.getHeight();
+      scaleW = (double) dst.getWidth() / s.getWidth();
+      scaleH = (double) dst.getHeight() / s.getHeight();
     }
   }
 

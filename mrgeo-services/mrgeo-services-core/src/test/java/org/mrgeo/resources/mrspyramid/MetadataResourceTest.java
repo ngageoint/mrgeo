@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
 import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
-
 import junit.framework.Assert;
-
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
@@ -34,15 +32,14 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.resources.mrspyramid.MetadataResource;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 
 import javax.ws.rs.core.Context;
-
 import java.awt.image.DataBuffer;
 
 
@@ -130,7 +127,7 @@ public class MetadataResourceTest extends JerseyTest
     Assert.assertEquals("Bad bounds - max x", 142.56, bounds.getMaxX(), 0.0001);
     Assert.assertEquals("Bad bounds - max y", -17.52, bounds.getMaxY(), 0.0001);
 
-    Assert.assertEquals(512, md.getTilesize());
+    Assert.assertEquals(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, md.getTilesize());
     Assert.assertEquals(DataBuffer.TYPE_FLOAT, md.getTileType());
 
     LongRectangle tb = md.getTileBounds(10);

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapreduce;
 
 import com.vividsolutions.jts.io.ParseException;
@@ -9,6 +24,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.geometry.GeometryFactory;
@@ -20,7 +36,6 @@ import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.opengis.referencing.FactoryException;
 
-import java.awt.*;
 import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +47,7 @@ public class RasterizeVectorDriverTest extends LocalRunnerTest
   private static List<GeometryWritable> polygonWithInnerRing;
   private static List<GeometryWritable> multiPolygonsWithHolesFirst;
   private static List<GeometryWritable> multiPolygonsWithHolesLast;
-  private static int tileSize = 512;
+  private static int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
   private static int zoom = 1;
   // The following coordinates must match the coordinates used in the POLYGON WKT definitions
   // used below for the features being painted.
@@ -108,9 +123,9 @@ public class RasterizeVectorDriverTest extends LocalRunnerTest
   {
     conf.setBoolean(RasterizeVectorDriver.TEST_REDUCER, true);
     conf.set(FeatureToTilesMapper.ZOOM, "1");
-    conf.set(FeatureToTilesMapper.TILE_SIZE, "512");
+    conf.set(FeatureToTilesMapper.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     conf.set(RasterizeVectorPainter.ZOOM, "1");
-    conf.set(RasterizeVectorPainter.TILE_SIZE, "512");
+    conf.set(RasterizeVectorPainter.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     conf.setBoolean("skip.stats", true);
 
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class HdfsMrsVectorReader extends HdfsMrsTileReader<VectorTile, VectorTil
 
   public HdfsMrsVectorReader(final String path) throws IOException
   {
-    super(path);
+    super(path, 1);
   }
 
   /**

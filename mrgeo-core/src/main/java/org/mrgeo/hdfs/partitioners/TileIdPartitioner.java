@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,371 +20,183 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Partitioner;
-import org.mrgeo.tile.SplitGenerator;
-import org.mrgeo.tile.TileIdZoomWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.tile.SplitFile;
+import org.mrgeo.hdfs.tile.PartitionerSplit;
+import org.mrgeo.hdfs.tile.Splits;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The TileIdPartitioner works by reading split points from a file and producing partition numbers
  * based on these split points. This split file is usually resident in the distributed cache, from
  * where it can be read by map tasks for properly partitioning tiles amongst reducers.
- * 
+ * <p/>
  * There is also a use case for reading it from the file system - hdfs or local for non-map/reduce
  * clients (e.g., MrsImageReader). These clients use setSplitFile to point a configuration variable
  * to a file in the local/hdfs file system.
- * 
+ * <p/>
  * If callers are using TileIdPartitioner in the map/reduce job, they should rely on
  * TileIdPartitioner to set the number of reduce tasks. Doing so themselves can cause inconsistent
  * results. See documentation for setup() below.
- * 
  */
 public class TileIdPartitioner<KEY, VALUE> extends Partitioner<KEY, VALUE> implements Configurable
 {
-  private static final Logger log = LoggerFactory.getLogger(TileIdPartitioner.class);
-  private static final String PREFIX = TileIdPartitioner.class.getSimpleName();
-  private static final String SPLITFILE_KEY = PREFIX + ".splitFile.";
+private static final Logger log = LoggerFactory.getLogger(TileIdPartitioner.class);
+private static final String PREFIX = TileIdPartitioner.class.getSimpleName();
+public static final String INCREMENT_KEY = PREFIX + ".increment";
+public static final String MAX_PARTITIONS_KEY = PREFIX + ".maxPartitions";
+private static final String SPLITFILE_KEY = PREFIX + ".splitFile";
+private static final String SPLITFILE_USE_DISTRIBUTED_CACHE = PREFIX + ".useDistributedCache";
+private Configuration conf = null;
+private Splits splits = null;
 
-  private static final String SPLITFILE_USE_DISTRIBUTED_CACHE = PREFIX + ".useDistributedCache";
-  public static final String INCREMENT_KEY = PREFIX + ".increment";
-  public static final String MAX_PARTITIONS_KEY = PREFIX + ".maxPartitions";
+/**
+ * @param file - local/hdfs path to split file
+ * @param job  - the Hadoop job
+ *             <p/>
+ *             <p/>
+ *             Set split file path.
+ */
+public static void setSplitFile(final String file, final Job job)
+{
+  Configuration conf = job.getConfiguration();
 
-  // zoom-level entry to use for the single split point case
-  private static final int SINGLE_SPLIT = 0;
+  conf.set(SPLITFILE_KEY, file);
+  log.debug("Adding \"" + SPLITFILE_KEY + " = " + file + "\" to configuration");
 
-  // split file has partition names
-
-  private Configuration conf;
-  private final Map<Integer, TileIdWritable[]> splitPoints = new HashMap<Integer, TileIdWritable[]>();
-
-  // If we're using a multiple split point case (not SINGLE_SPLIT), we need to offset each zoom
-  // level's
-  // partitions based on the total number of partitions in all the higher (lower numbered) zoom
-  // levels
-  private final Map<Integer, Integer> splitPointOffsets = new HashMap<Integer, Integer>();
-
-  public static List<String> readPartitionNames(final Path splitFile, final Configuration conf)
+  if (!HadoopUtils.isLocal(conf))
   {
-    try
-    {
-      final InputStream stream = HadoopFileUtils.open(conf, splitFile);
-      final List<Long> splits = new ArrayList<Long>();
-      final List<String> partitions = new ArrayList<String>();
+    final URI uri = new Path(file).toUri();
 
-      SplitFile sf = new SplitFile(conf);
-      sf.readSplits(stream, splits, partitions);
-      return partitions;
-    }
-    catch (final FileNotFoundException e)
+    // this method doesn't exist in older Hadoop versions
+    //job.addCacheFile(uri);
+    DistributedCache.addCacheFile(uri, conf);
+
+    log.debug("Adding: \"" + uri.toString() + "\" to Distributed cache");
+    conf.setBoolean(SPLITFILE_USE_DISTRIBUTED_CACHE, true);
+  }
+}
+
+
+public static Path setup(final Job job, final SplitGenerator splitGenerator) throws IOException
+{
+  // don't set up a partitioner in local mode
+  if (HadoopUtils.isLocal(job.getConfiguration()))
+  {
+    // make sure we have at least 1 reducer...
+    if (job.getNumReduceTasks() < 1)
     {
-      return new ArrayList<String>();
-    }
-    catch (final IOException e)
-    {
+      job.setNumReduceTasks(1);
     }
     return null;
   }
 
-  public static List<String> readPartitionNames(final String splitFile, final Configuration conf)
-  {
-    return readPartitionNames(new Path(splitFile), conf);
-  }
+  PartitionerSplit splits = new PartitionerSplit();
 
-  /**
-   * @param file
-   *          - local/hdfs path to split file
-   * @param conf
-   * 
-   *          <p>
-   *          Set split file path.
-   * 
-   */
-  public static void setSplitFile(final String file, final Configuration conf)
-  {
-    setSplitFile(file, conf, SINGLE_SPLIT);
-  }
+  splits.generateSplits(splitGenerator);
 
-  public static void setSplitFile(final String file, final Configuration conf, final int zoom)
-  {
-    conf.set(SPLITFILE_KEY + zoom, file);
-    log.debug("Adding: [" + file + "] to conf: " + (SPLITFILE_KEY + zoom));
-  }
+  // create a split file in the hadoop tmp directory
+  // this is copied into the job's output directory upon job completion
+  final int uniquePrefixLen = 5;
+  Path splitFile = new Path(HadoopFileUtils.getTempDir(job.getConfiguration()),
+      HadoopUtils.createRandomString(uniquePrefixLen) +
+          "_" + PartitionerSplit.SPLIT_FILE);
 
-  /**
-   * @param file
-   *          - local/hdfs path to split file
-   * @param job
-   * 
-   *          <p>
-   *          Set split file path, add file to distributed cache, and set useDistributedCache flag
-   *          to true
-   */
-  public static void setSplitFile(final String file, final JobContext job)
-  {
-    setSplitFile(file, job, SINGLE_SPLIT);
-  }
+  splits.writeSplits(splitFile);
 
-  /**
-   * @param file
-   *          - local/hdfs path to split file
-   * @param job
-   * 
-   *          <p>
-   *          Set split file path, add file to distributed cache, and set useDistributedCache flag
-   *          to true
-   */
-  public static void setSplitFile(final String file, final JobContext job, final int zoom)
-  {
-    final Configuration conf = job.getConfiguration();
-    setSplitFile(file, conf, zoom);
-    final URI uri = new Path(file).toUri();
-    DistributedCache.addCacheFile(uri, conf);
-    log.debug("Adding: " + uri.toString() + " to Distributed cache");
-    conf.setBoolean(SPLITFILE_USE_DISTRIBUTED_CACHE, true);
-  }
+  job.setNumReduceTasks(splits.length());
+  job.setPartitionerClass(TileIdPartitioner.class);
 
-  /**
-   * @param job
-   * @param splitFile
-   * @return
-   * @throws IOException
-   * 
-   *           <p>
-   *           Sets up the partitioner and the number of reduce tasks based on the number of splits.
-   *           Caller should not also set the number of reduce tasks - bad things can happen. If
-   *           splitFile is null, then a new one is created in hadoop's tmp directory, and its path
-   *           is returned. If it is not null, it is used by the partitioner, and also returned.
-   * 
-   *           See copySplitFile() also.
-   */
-  public static Path setup(final Job job, final Path splitFile) throws IOException
-  {
-    return setup(job, null, splitFile, SINGLE_SPLIT);
-  }
+  setSplitFile(splitFile.toString(), job);
 
-  public static Path setup(final Job job, final Path splitFile, final int zoom) throws IOException
-  {
-    return setup(job, null, splitFile, zoom);
-  }
+  return splitFile;
+}
 
-  /**
-   * @param job
-   * @param splitGenerator
-   * @return path to splits.txt in hadoop's tmp directory.
-   * @throws IOException
-   * 
-   *           <p>
-   *           Sets up the partitioner and the number of reduce tasks based on the number of splits.
-   *           Caller should not also set the number of reduce tasks - bad things can happen. As
-   *           part of the setup process, a "splits" file is created in hadoop's tmp directory.
-   * 
-   *           See copySplitFile() also.
-   */
-  public static Path setup(final Job job, final SplitGenerator splitGenerator) throws IOException
-  {
-    return setup(job, splitGenerator, null, SINGLE_SPLIT);
-  }
+@Override
+public Configuration getConf()
+{
+  return conf;
+}
 
-  public static Path setup(final Job job, final SplitGenerator splitGenerator, final int zoom)
-      throws IOException
+@Override
+public void setConf(final Configuration conf)
+{
+  this.conf = conf;
+}
+
+@Override
+public int getPartition(final KEY key, final VALUE value, final int numPartitions)
+{
+  if (key instanceof TileIdWritable)
+  {
+    try
+    {
+      if (splits == null)
       {
-    return setup(job, splitGenerator, null, zoom);
+        loadSplits();
       }
 
-  private synchronized static TileIdWritable[] getSplitPointsFromDistributedCache(
-    final String splitFileName, final Configuration config) throws IOException
+      return splits.getSplit(((TileIdWritable) key).get()).getPartition();
+    }
+    catch (Exception e)
     {
-    final Path[] cf = DistributedCache.getLocalCacheFiles(config);
-    TileIdWritable[] splitPoints = null;
-    if (cf != null)
+      throw new RuntimeException("Error getting partition", e);
+    }
+  }
+
+  throw new RuntimeException("Bad type sent into TileIdPartitioner.getPartition(): " +
+      key.getClass());
+}
+
+@SuppressWarnings("unchecked")
+public int getPartition(final TileIdWritable key)
+{
+  return getPartition((KEY) key, null, 0);
+}
+
+private void loadSplits() throws IOException
+{
+  if (conf == null)
+  {
+    throw new RuntimeException("Configuration has not been set in TileIdPartitioner");
+  }
+
+  String file = conf.get(SPLITFILE_KEY);
+  if (conf.getBoolean(SPLITFILE_USE_DISTRIBUTED_CACHE, false))
+  {
+    try
     {
-      SplitFile sf = new SplitFile(config);
-      for (final Path path : cf)
+      // this method does not exist in older Hadoop versions
+//      final Job job = Job.getInstance(conf);
+//      final URI[] cf = job.getCacheFiles();
+      final URI[] cf = DistributedCache.getCacheFiles(conf);
+      for (final URI uri : cf)
       {
-        if (path.toUri().getPath()
-            .endsWith(splitFileName.substring(splitFileName.lastIndexOf('/'))))
+        if (uri.toString().contains(file))
         {
-          final String modifiedPath = "file://" + path.toString();
-          splitPoints = sf.readSplitsAsTileId(modifiedPath);
+          splits = new PartitionerSplit();
+          splits.readSplits(new Path(uri));
           break;
         }
       }
     }
-    return splitPoints;
-    }
-
-  private static Path setup(final Job job, final SplitGenerator splitGenerator, Path splitFile,
-    final int zoom) throws IOException
+    catch (IOException e)
     {
-    // don't set up a partitioner in local mode
-      if (HadoopUtils.isLocal(job.getConfiguration()))
-    {
-      // make sure we have at least 1 reducer...
-      if (job.getNumReduceTasks() < 1)
-      {
-        job.setNumReduceTasks(1);
-      }
-      return null;
+      throw new IOException("Error trying to read splits from distributed cache: " + file, e);
     }
-
-    int numSplits;
-    SplitFile sf = new SplitFile(job.getConfiguration());
-    if (splitFile == null)
-    {
-      // create a split file in the hadoop tmp directory
-      // this is copied into the job's output directory upon job completion
-      final int uniquePrefixLen = 5;
-      splitFile = new Path(HadoopFileUtils.getTempDir(job.getConfiguration()),
-          HadoopUtils.createRandomString(uniquePrefixLen) +
-        "_" + SplitFile.SPLIT_FILE);
-
-      assert (splitGenerator != null);
-      numSplits = sf.writeSplits(splitGenerator, splitFile.toString());
-    }
-    else
-    {
-      numSplits = sf.numSplits(splitFile.toString());
-    }
-
-    int original = job.getNumReduceTasks();
-    
-    // remember, the number of partitions (reducers) is one more than the splits
-    job.setNumReduceTasks(original + (numSplits > 0 ? numSplits + 1 : 1));
-
-    log.debug("Increasing reduce tasks from: " + original + " to: " + job.getNumReduceTasks());
-
-    job.setPartitionerClass(TileIdPartitioner.class);
-
-    TileIdPartitioner.setSplitFile(splitFile.toString(), job, zoom);
-    return splitFile;
-    }
-
-  @Override
-  public Configuration getConf()
-  {
-    return conf;
   }
-
-  @Override
-  public int getPartition(final KEY key, final VALUE value, final int numPartitions)
+  else
   {
-    try
-    {
-      if (key instanceof TileIdZoomWritable)
-      {
-        final int zoom = ((TileIdZoomWritable) key).getZoom();
-
-        return SplitFile.findPartition((TileIdWritable) key, getSplitPoints(zoom)) +
-            splitPointOffsets.get(zoom);
-      }
-      if (key instanceof TileIdWritable)
-      {
-        return SplitFile.findPartition((TileIdWritable) key, getSplitPoints());
-      }
-    }
-    catch (final IOException e)
-    {
-      throw new RuntimeException(e);
-    }
-
-    throw new RuntimeException("Bad type sent into TileIdPartitioner.getPartition(): " +
-        key.getClass());
+    splits = new PartitionerSplit();
+    splits.readSplits(new Path(file));
   }
+}
 
-  @SuppressWarnings("unchecked")
-  public int getPartition(final TileIdWritable key)
-  {
-    return getPartition((KEY) key, null, 0);
-  }
-
-  @SuppressWarnings("unchecked")
-  public int getPartition(final TileIdWritable key, final VALUE value, final int size)
-  {
-    return getPartition((KEY) key, value, size);
-  }
-
-
-  @Override
-  public void setConf(final Configuration conf)
-  {
-    this.conf = conf;
-  }
-
-  private TileIdWritable[] getSplitPoints() throws IOException
-  {
-    return getSplitPoints(SINGLE_SPLIT);
-  }
-
-  private synchronized TileIdWritable[] getSplitPoints(final int zoom) throws IOException
-  {
-    SplitFile sf = new SplitFile(conf);
-    if (!splitPoints.containsKey(zoom))
-    {
-      // to calculate the offsets, we'll need to calculate all the zoom levels up to the one we're
-      // interested in...
-      for (int i = 0; i <= zoom; i++)
-      {
-        if (!splitPoints.containsKey(i))
-        {
-          TileIdWritable[] splitPointArray = null;
-
-          final String splitFileName = conf.get(SPLITFILE_KEY + i, null);
-          if (splitFileName != null)
-          {
-            final boolean useDistributedCache = conf.getBoolean(SPLITFILE_USE_DISTRIBUTED_CACHE,
-              false);
-            if (useDistributedCache)
-            {
-              splitPointArray = getSplitPointsFromDistributedCache(splitFileName, conf);
-            }
-
-            // if we don't have a cache, or we can't find the splits in the cache, try a normal
-            // read.
-            if (splitPointArray == null)
-            {
-              splitPointArray = sf.readSplitsAsTileId(splitFileName);
-            }
-
-            if (splitPointArray == null)
-            {
-              throw new FileNotFoundException(" Unable to read split file \"" + splitFileName +
-                "\". useDistributedCache = " + useDistributedCache);
-            }
-
-            splitPoints.put(i, splitPointArray);
-          }
-        }
-      }
-      int offset = 0;
-      for (int i = 0; i <= zoom; i++)
-      {
-        if (splitPoints.containsKey(i))
-        {
-          splitPointOffsets.put(i, offset);
-
-          final int len = splitPoints.get(i).length;
-
-          offset += len > 0 ? len : 1;
-        }
-      }
-    }
-    return splitPoints.get(zoom);
-
-  }
 
 }

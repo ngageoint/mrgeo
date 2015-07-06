@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -65,9 +66,9 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
   @Before
   public void init()
   {
-    oldImageBase = MrGeoProperties.getInstance().getProperty("image.base", "");
+    oldImageBase = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
 
-    MrGeoProperties.getInstance().setProperty("image.base", (new File(Defs.INPUT)).toURI().toString());
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, (new File(Defs.INPUT)).toURI().toString());
     factory = new HdfsMrsImageDataProviderFactory();
     conf = HadoopUtils.createConfiguration();
     providerProperties = new Properties();
@@ -76,7 +77,7 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
   @After
   public void teardown()
   {
-    MrGeoProperties.getInstance().setProperty("image.base", oldImageBase);
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, oldImageBase);
   }
 
   @Test
@@ -320,7 +321,7 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
     try
     {
-      MrGeoProperties.getInstance().setProperty("image.base", p.toUri().toString());
+      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, p.toUri().toString());
       // test with conf
       String[] images = factory.listImages(providerProperties);
 
@@ -338,7 +339,7 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testListImagesBadBase() throws Exception
   {
-    MrGeoProperties.getInstance().setProperty("image.base", "bad-name");
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "bad-name");
     factory.listImages(providerProperties);
   }
 
@@ -346,7 +347,7 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testListImagesBadUri() throws Exception
   {
-    MrGeoProperties.getInstance().setProperty("image.base", "abcd:bad-name");
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "abcd:bad-name");
     factory.listImages(providerProperties);
   }
 
@@ -354,7 +355,7 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testListImagesNoBase1() throws Exception
   {
-    MrGeoProperties.getInstance().remove("image.base");
+    MrGeoProperties.getInstance().remove(MrGeoConstants.MRGEO_HDFS_IMAGE);
 
     // should fall back to /mrgeo/images
     FileSystem fs = HadoopFileUtils.getFileSystem(conf);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.mrgeo.mapreduce.ingestvector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.geometry.*;
 import org.mrgeo.mapreduce.GeometryWritable;
 import org.mrgeo.tile.TileIdZoomWritable;
@@ -48,7 +49,7 @@ public class CalculateZoomMapper extends Mapper<LongWritable, GeometryWritable, 
     Configuration conf = context.getConfiguration();
 
     maxzoom = conf.getInt(IngestVectorDriver.MAX_ZOOM, 20);
-    tilesize = conf.getInt(IngestVectorDriver.TILESIZE, 512);
+    tilesize = conf.getInt(IngestVectorDriver.TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
   }
 
   @Override

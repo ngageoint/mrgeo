@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -305,7 +305,7 @@ public class DependencyLoader
     // add the system classpath, including the cwd
     String classpath = System.getProperty("java.class.path", "");
 
-    String depclasspath = MrGeoProperties.getInstance().getProperty("dependency.classpath", null);
+    String depclasspath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.DEPENDENCY_CLASSPATH, null);
     if (depclasspath != null)
     {
       if (classpath == null || classpath.isEmpty())
@@ -319,11 +319,11 @@ public class DependencyLoader
     }
 
     // prepend MRGEO_HOME
-    String mrgeo = System.getenv("MRGEO_HOME");
+    String mrgeo = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
     if (mrgeo == null)
     {
-      log.info("MRGEO_HOME environment variable is undefined. Trying system property");
-      mrgeo = System.getProperty("MRGEO_HOME");
+      log.info(MrGeoConstants.MRGEO_ENV_HOME + " environment variable is undefined. Trying system property");
+      mrgeo = System.getProperty(MrGeoConstants.MRGEO_ENV_HOME);
     }
     if (mrgeo != null)
     {
@@ -338,7 +338,7 @@ public class DependencyLoader
     }
     else
     {
-      log.error("MRGEO_HOME is not defined, and may result in inability to find dependent JAR files");
+      log.error(MrGeoConstants.MRGEO_ENV_HOME + " is not defined, and may result in inability to find dependent JAR files");
     }
 
     // now perform any variable replacement in the classpath

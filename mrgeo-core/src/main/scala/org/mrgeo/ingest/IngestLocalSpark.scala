@@ -1,8 +1,24 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.ingest
 
 import java.io.Externalizable
 import java.util.Properties
 
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
 import org.apache.hadoop.mapreduce.{InputFormat, Job}
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
@@ -19,21 +35,13 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
   override def execute(context: SparkContext): Boolean = {
 
     val input = inputs(0) // there is only 1 input here...
-    val provider: ImageIngestDataProvider = DataProviderFactory.getImageIngestDataProvider(input, AccessMode.READ)
 
-    val format = provider.getTiledInputFormat
-    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] =
-      format.getInputFormat(input).getClass.asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
+    val format = new SequenceFileInputFormat[TileIdWritable, RasterWritable]
+
+    val job: Job = Job.getInstance(HadoopUtils.createConfiguration())
 
 
-    val job: Job = new Job(HadoopUtils.createConfiguration())
-
-    format.setupJob(job, providerproperties)
-
-    val rawtiles = context.newAPIHadoopRDD(job.getConfiguration,
-      inputFormatClass,
-      classOf[TileIdWritable],
-      classOf[RasterWritable])
+    val rawtiles = context.sequenceFile(input, classOf[TileIdWritable], classOf[RasterWritable])
 
     // this is stupid, but because the way hadoop input formats may reuse the key/value objects,
     // if we don't do this, all the data will eventually collapse into a single entry.
@@ -46,7 +54,7 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
       val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
       val nodatas = Array.ofDim[Double](src.getNumBands)
-      for (x <- 0 until nodatas.length) {
+      for (x <- nodatas.indices) {
         nodatas(x) = nodata.doubleValue()
       }
 
@@ -60,7 +68,7 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
 
     val raster = RasterWritable.toRaster(mergedTiles.first()._2)
     val nodatas = Array.ofDim[Double](raster.getNumBands)
-    for (x <- 0 until nodatas.length) {
+    for (x <- nodatas.indices) {
       nodatas(x) = nodata.doubleValue()
     }
 

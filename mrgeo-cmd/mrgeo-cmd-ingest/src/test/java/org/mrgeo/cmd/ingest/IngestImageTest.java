@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class IngestImageTest
     String[] args = { all_ones_input, "-l","-o", all_ones_output };
     int res = new IngestImage().run(args, conf, providerProperties);
 
-    Assert.assertEquals("IngestImage comand exited with error", 0, res);
+    Assert.assertEquals("IngestImage command exited with error", 0, res);
     
     // now look at the files built.  We really not interested in the actual data, just that
     // things were build. (this is testing the command, not the algorithms)
@@ -183,7 +183,7 @@ public class IngestImageTest
     String[] args = { all_ones_input, "-l","-o", all_ones_output };
     int res = new IngestImage().run(args, conf, providerProperties);
 
-    Assert.assertEquals("IngestImage comand exited with error", 0, res);
+    Assert.assertEquals("IngestImage command exited with error", 0, res);
     
     // now look at the files built.  We really not interested in the actual data, just that
     // things were build. (this is testing the command, not the algorithms)
@@ -221,7 +221,7 @@ public class IngestImageTest
     String[] args = { all_ones_input, "-l","-o", all_ones_output, "-pl", protectionLevel };
     int res = new IngestImage().run(args, conf, providerProperties);
 
-    Assert.assertEquals("IngestImage comand exited with error", 0, res);
+    Assert.assertEquals("IngestImage command exited with error", 0, res);
     
     // now look at the files built.  We really not interested in the actual data, just that
     // things were build. (this is testing the command, not the algorithms)
@@ -254,7 +254,7 @@ public class IngestImageTest
     String[] args = { all_ones_input, "-o", all_ones_output, "-sp" };
     int res= new IngestImage().run(args, conf, providerProperties);
 
-    Assert.assertEquals("IngestImage comand exited with error", 0, res);
+    Assert.assertEquals("IngestImage command exited with error", 0, res);
     
     // now look at the files built.  We really not interested in the actual data, just that
     // things were build. (this is testing the command, not the algorithms)

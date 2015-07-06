@@ -1,8 +1,24 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.rasterops;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.Bounds;
@@ -195,7 +211,7 @@ public class RandomSamplerTest
   {
     RandomSampler rs = new RandomSampler();
     int zoomLevel = 5;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     double resolution = TMSUtils.resolution(zoomLevel, tileSize);
     TMSUtils.Pixel topLeftPixel = new TMSUtils.Pixel(2, 4);
     TMSUtils.Pixel bottomRightPixel = new TMSUtils.Pixel(5, 8);
@@ -227,7 +243,7 @@ public class RandomSamplerTest
     // test that we use the total number of AOI points.
     RandomSampler rs = new RandomSampler();
     int zoomLevel = 5;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     double resolution = TMSUtils.resolution(zoomLevel, tileSize);
     TMSUtils.Pixel topLeftPixel = new TMSUtils.Pixel(2, 4);
     TMSUtils.Pixel bottomRightPixel = new TMSUtils.Pixel(101, 83);
@@ -251,7 +267,7 @@ public class RandomSamplerTest
     // test that we use the total number of AOI points.
     RandomSampler rs = new RandomSampler();
     int zoomLevel = 5;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     double resolution = TMSUtils.resolution(zoomLevel, tileSize);
     TMSUtils.Pixel topLeftPixel = new TMSUtils.Pixel(2, 4);
     TMSUtils.Pixel bottomRightPixel = new TMSUtils.Pixel(101, 1003);
@@ -274,7 +290,7 @@ public class RandomSamplerTest
     // generated points should be 100,000.
     RandomSampler rs = new RandomSampler();
     int zoomLevel = 5;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     double resolution = TMSUtils.resolution(zoomLevel, tileSize);
     TMSUtils.Pixel topLeftPixel = new TMSUtils.Pixel(2, 4);
     TMSUtils.Pixel bottomRightPixel = new TMSUtils.Pixel(601, 603);
@@ -297,7 +313,7 @@ public class RandomSamplerTest
     // generated points should be 20% of the AOI points.
     RandomSampler rs = new RandomSampler();
     int zoomLevel = 5;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     double resolution = TMSUtils.resolution(zoomLevel, tileSize);
     TMSUtils.Pixel topLeftPixel = new TMSUtils.Pixel(2, 4);
     TMSUtils.Pixel bottomRightPixel = new TMSUtils.Pixel(551, 1003);
@@ -320,7 +336,7 @@ public class RandomSamplerTest
     // Test a specified sample count of at least the expected minimum
     RandomSampler rs = new RandomSampler();
     int zoomLevel = 8;
-    int tileSize = 512;
+    int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     double minX = -180.0;
     double minY = -90.0;
     double maxX = -178.0;

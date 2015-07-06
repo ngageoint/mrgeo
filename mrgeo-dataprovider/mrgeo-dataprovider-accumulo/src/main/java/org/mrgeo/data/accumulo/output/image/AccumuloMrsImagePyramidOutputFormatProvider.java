@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledOutputFormatContext;
-import org.mrgeo.hadoop.multipleoutputs.DirectoryMultipleOutputs;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -195,19 +194,7 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
         job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL, Integer.toString(zoomLevel));
       }
 
-      
-      
-      if(context.isMultipleOutputFormat()){
-        // get ready for multiple outputs!!!
-        
-        DirectoryMultipleOutputs.addNamedOutput(job, context.getName(),
-            new Path("accumulo-"+context.getName()),
-            AccumuloMrsImagePyramidOutputFormat.class,
-            TileIdWritable.class,
-            RasterWritable.class);
-        
-      }
-      
+
       //job.getConfiguration().set("zoomLevel", Integer.toString(zoomLevel));
       if(doBulk){
         job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_JOBTYPE,
@@ -223,12 +210,9 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
       }
       Properties props = AccumuloConnector.getAccumuloProperties();
       if(props != null){
-        String n = context.getName();
-        if(n == null){
-          n = "";
-        }
 
-        String enc = AccumuloConnector.encodeAccumuloProperties(n);
+        // this used to be the variable "name" in TiledOutputFormatContext, but was always "".
+        String enc = AccumuloConnector.encodeAccumuloProperties("");
         job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE, enc);
         
         job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,

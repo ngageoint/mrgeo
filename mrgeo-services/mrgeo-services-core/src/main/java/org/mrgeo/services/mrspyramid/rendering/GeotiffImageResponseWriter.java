@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.rasterops.GeoTiffExporter;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.services.ServletUtils;
@@ -30,6 +33,7 @@ import javax.ws.rs.core.Response;
 import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Properties;
 
 public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 {
@@ -166,7 +170,11 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
     {
       final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
-      writeStream(raster, bounds, Double.NaN, byteStream);
+      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
+          (Properties) null);
+      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+
+      writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);
 
       return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
         getResponseMimeType()).header("Content-Disposition",

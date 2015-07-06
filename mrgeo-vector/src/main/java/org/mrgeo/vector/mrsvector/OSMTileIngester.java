@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,9 @@
 
 package org.mrgeo.vector.mrsvector;
 
-import java.io.DataInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-import java.util.UUID;
-
+import com.carrotsearch.hppc.ObjectIntOpenHashMap;
+import com.google.protobuf.GeneratedMessage;
+import com.vividsolutions.jts.geom.TopologyException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -44,6 +32,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -57,17 +46,16 @@ import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.HadoopVectorUtils;
 import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.vector.mrsvector.pbf.OsmFormat.DenseNodes;
-import org.mrgeo.vector.mrsvector.pbf.OsmFormat.HeaderBBox;
-import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Node;
-import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Relation;
+import org.mrgeo.vector.mrsvector.pbf.OsmFormat.*;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Relation.MemberType;
-import org.mrgeo.vector.mrsvector.pbf.OsmFormat.StringTable;
-import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Way;
 
-import com.carrotsearch.hppc.ObjectIntOpenHashMap;
-import com.google.protobuf.GeneratedMessage;
-import com.vividsolutions.jts.geom.TopologyException;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class OSMTileIngester extends WritableVectorTile
 {
@@ -199,7 +187,7 @@ public class OSMTileIngester extends WritableVectorTile
       final Configuration conf = context.getConfiguration();
 
       zoomlevel = conf.getInt(ZOOMLEVEL, 18);
-      tilesize = conf.getInt(TILESIZE, 512);
+      tilesize = conf.getInt(TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
       final Path output = new Path(conf.get(OUTPUT, ""));
 
       granularity = conf.getInt(GRANULATIRY, 100);
@@ -492,7 +480,7 @@ public class OSMTileIngester extends WritableVectorTile
       final Configuration conf = context.getConfiguration();
 
       zoomlevel = conf.getInt(ZOOMLEVEL, 18);
-      tilesize = conf.getInt(TILESIZE, 512);
+      tilesize = conf.getInt(TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
       granularity = conf.getInt(GRANULATIRY, 100);
       latOffset = conf.getLong(LATOFFSET, 0);
@@ -684,7 +672,7 @@ public class OSMTileIngester extends WritableVectorTile
       lonOffset = conf.getLong(LONOFFSET, 0);
 
       zoomlevel = conf.getInt(ZOOMLEVEL, 18);
-      tilesize = conf.getInt(TILESIZE, 512);
+      tilesize = conf.getInt(TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
       final Path output = new Path(conf.get(OUTPUT, ""));
 
       final Map<Long, String> stringMap = new TreeMap<Long, String>();
@@ -876,7 +864,7 @@ public class OSMTileIngester extends WritableVectorTile
       final Configuration conf = context.getConfiguration();
 
       zoomlevel = conf.getInt(ZOOMLEVEL, 18);
-      tilesize = conf.getInt(TILESIZE, 512);
+      tilesize = conf.getInt(TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
       final Path output = new Path(conf.get(OUTPUT, ""));
 
       granularity = conf.getInt(GRANULATIRY, 100);
@@ -1476,7 +1464,7 @@ public class OSMTileIngester extends WritableVectorTile
 
       conf.setInt(ZOOMLEVEL, zoomlevel);
       final int tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(
-        "mrsimage.tilesize", "512"));
+          MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
       conf.setInt(TILESIZE, tilesize);
       conf.set(OUTPUT, tmpDir.toString());
 
@@ -1591,7 +1579,7 @@ public class OSMTileIngester extends WritableVectorTile
 
       conf.setInt(ZOOMLEVEL, zoomlevel);
       conf.setInt(TILESIZE, Integer.parseInt(MrGeoProperties.getInstance().getProperty(
-        "mrsimage.tilesize", "512")));
+          MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)));
       conf.set(OUTPUT, tmpDir.toString());
 
       conf.setInt(GRANULATIRY, granularity);
@@ -1665,7 +1653,7 @@ public class OSMTileIngester extends WritableVectorTile
 
         conf.setInt(ZOOMLEVEL, zoomlevel);
         conf.setInt(TILESIZE, Integer.parseInt(MrGeoProperties.getInstance().getProperty(
-          "mrsimage.tilesize", "512")));
+            MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)));
         conf.set(OUTPUT, tmpDir.toString());
 
         conf.setInt(GRANULATIRY, granularity);
@@ -1758,7 +1746,7 @@ public class OSMTileIngester extends WritableVectorTile
 
       conf.setInt(ZOOMLEVEL, zoomlevel);
       conf.setInt(TILESIZE, Integer.parseInt(MrGeoProperties.getInstance().getProperty(
-        "mrsimage.tilesize", "512")));
+          MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)));
       conf.set(OUTPUT, tmpDir.toString());
 
       conf.setInt(GRANULATIRY, granularity);

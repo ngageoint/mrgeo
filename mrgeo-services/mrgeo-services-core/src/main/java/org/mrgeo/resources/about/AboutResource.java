@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 package org.mrgeo.resources.about;
 
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.mapalgebra.MapAlgebraParser;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.SecurityUtils;
@@ -85,7 +86,7 @@ public class AboutResource
       Properties buildInfo = new Properties();
       buildInfo.load(buildInfoUrl.openStream());
 
-      String imageBase = Configuration.getInstance().getProperties().getProperty("image.base", "");
+      String imageBase = Configuration.getInstance().getProperties().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
 
       xmlWriter.writeAttribute("name", buildInfo.getProperty("name"));
       xmlWriter.writeAttribute("version", buildInfo.getProperty("version"));

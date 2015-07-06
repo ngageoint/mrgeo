@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.resources.wcs;
 
 import org.mrgeo.data.DataProviderFactory;
@@ -43,8 +58,8 @@ public class WcsGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 
-  public static final String WCS_VERSION = "1.0.0";
-  private static final String WCS_SERVICE = "wms";
+  public static final String WCS_VERSION = "1.1.0";
+  private static final String WCS_SERVICE = "wcs";
 
   private Version version = new Version(WCS_VERSION);
 
@@ -200,23 +215,23 @@ public class WcsGenerator
       keys.toArray(sortedKeys);
       Arrays.sort(sortedKeys);
       UriBuilder builder = uriInfo.getBaseUriBuilder().path(uriInfo.getPath());
-      for (String key : sortedKeys)
-      {
-        // Only include the VERSION parameter in the URI used in GetCapabilities
-        // if it was included in the original URI request.
-        if (key.equalsIgnoreCase("version"))
-        {
-          if (versionParamName != null)
-          {
-            builder = builder.queryParam(versionParamName, versionStr);
-          }
-        }
-        else
-        {
-          builder = builder.queryParam(key, getQueryParam(allParams, key));
-        }
-      }
-      final Document doc = docGen.generateDoc(version, builder.build().toString(),
+//      for (String key : sortedKeys)
+//      {
+//        // Only include the VERSION parameter in the URI used in GetCapabilities
+//        // if it was included in the original URI request.
+//        if (key.equalsIgnoreCase("version"))
+//        {
+//          if (versionParamName != null)
+//          {
+//            builder = builder.queryParam(versionParamName, versionStr);
+//          }
+//        }
+//        else
+//        {
+//          builder = builder.queryParam(key, getQueryParam(allParams, key));
+//        }
+//      }
+      final Document doc = docGen.generateDoc(version, builder.build().toString() + "?",
           getPyramidFilesList(providerProperties));
 
       ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();

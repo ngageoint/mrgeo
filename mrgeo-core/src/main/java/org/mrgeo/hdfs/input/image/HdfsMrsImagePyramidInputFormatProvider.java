@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.mrgeo.hdfs.input.image;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -55,8 +56,8 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
   {
     super.setupJob(job, providerProperties);
     Configuration conf = job.getConfiguration();
-    String strBasePath = MrGeoProperties.getInstance().getProperty("image.base", "/mrgeo/images");
-    conf.set("hdfs.image.base", strBasePath);
+    String strBasePath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "/mrgeo/images");
+    conf.set("hdfs." + MrGeoConstants.MRGEO_HDFS_IMAGE, strBasePath);
     // This is list of actual filenames of the input files (not just the
     // pyramids)
     final HashSet<String> zoomInputs = new HashSet<String>(context.getInputs().size());

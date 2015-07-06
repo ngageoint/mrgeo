@@ -1,32 +1,40 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.spark
 
 import java.io._
-import java.nio.ByteBuffer
 
-import org.apache.commons.codec.binary.Base64
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, FSDataOutputStream, FileSystem}
-import org.apache.spark.{SparkContext, Partitioner}
-import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.tile.{TiledInputFormatContext, TileIdWritable}
+import org.apache.hadoop.fs.Path
+import org.apache.spark.Partitioner
+import org.apache.spark.rdd.RDD
+import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
-import org.mrgeo.hdfs.tile.SplitFile
-import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.image.MrsImagePyramid
-import scala.collection.JavaConverters._
-import org.mrgeo.tile.SplitGenerator
-
-import scala.collection.mutable
+import org.mrgeo.hdfs.partitioners.SplitGenerator
+import org.mrgeo.hdfs.tile.{FileSplit, PartitionerSplit}
+import org.mrgeo.utils.SparkUtils
 
 @SerialVersionUID(-1)
-class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner with Externalizable
-{
+class SparkTileIdPartitioner(splitGenerator: SplitGenerator) extends Partitioner with Externalizable {
 
-  private var splits:Array[java.lang.Long] = null
+  private val splits = new PartitionerSplit
 
   if (splitGenerator != null) {
-    splits = splitGenerator.getSplits.asScala.toArray
+    splits.generateSplits(splitGenerator)
   }
 
   def this() {
@@ -35,146 +43,36 @@ class SparkTileIdPartitioner(splitGenerator:SplitGenerator) extends Partitioner 
 
 
   override def numPartitions: Int = {
-    splits.length + 1
+    splits.length
   }
 
   override def getPartition(key: Any): Int = {
-    key match
-    {
+    key match {
     case id: TileIdWritable =>
-      //print("*** " + id.get + " ")
-      // lots of splits, binary search
-      if (splits.length > 1000) {
-        //println("# " + findSplit(splits, id.get))
-        return findSplit(splits, id.get)
-      }
-      // few splits, brute force search
-      for (split <- splits.indices) {
-        if (id.get <= splits(split)) {
-          //println(split)
-          return split
-        }
-      }
-
-      //println("& " + splits.length)
-      return splits.length
-    }
-
-    throw new RuntimeException("Bad type sent into SparkTileIdPartitioner.getPartition(): " +
+      val split = splits.getSplit(id.get())
+      split.getPartition
+    case _ => throw new RuntimeException("Bad type sent into SparkTileIdPartitioner.getPartition(): " +
         key.getClass + ". Expected org.mrgeo.data.tile.TileIdWritable or a subclass.")
+    }
   }
 
-  def writeSplits(pyramid:String, zoom:Int, conf:Configuration): Unit = {
+  def generateFileSplits(rdd:RDD[(TileIdWritable, RasterWritable)], pyramid:String, zoom:Int, conf:Configuration) = {
+    val fileSplits = new FileSplit
+
+    val splitinfo = SparkUtils.calculateSplitData(rdd)
+    fileSplits.generateSplits(splitinfo)
+
     val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
+    val inputWithZoom = new Path(dp.getResourcePath(false), "" + zoom)
 
-    val inputWithZoom: Path = new Path(dp.getResourcePath(false), "" + zoom)
-
-    writeSplits(inputWithZoom.toString, conf)
-  }
-
-  def writeSplits(path:String, conf:Configuration): Unit = {
-
-    if (splits.length > 1) {
-      val HasPartitionNames: Long = -12345L
-      val SplitFile: String = "splits"
-
-      val fs: FileSystem = HadoopFileUtils.getFileSystem(conf, new Path(path))
-
-      // check which type of "part-" scheme we have.  This can change depending of what actually wrote the file
-      var prefix = ""
-      if (fs.exists(new Path(path, "part-r-00000"))) {
-        prefix = "part-r-" // created as a reduce step
-      }
-      else if (fs.exists(new Path(path, "part-m-00000"))) {
-        prefix = "part-m-" // created as a map-only step
-      }
-      else {
-        prefix = "part-" // generic step
-      }
-      val fdos: FSDataOutputStream = fs.create(new Path(path, SplitFile))
-
-      val out: PrintWriter = new PrintWriter(fdos)
-      try {
-        // write the magic number
-        val magic: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(HasPartitionNames).array)
-
-        out.println(new String(magic))
-
-        //println("\nsplits:")
-        splits.indices.foreach(ndx => {
-          val id: Array[Byte] = Base64.encodeBase64(ByteBuffer.allocate(8).putLong(splits(ndx)).array)
-          out.println(new String(id))
-          val part: Array[Byte] = Base64.encodeBase64("%s%05d".format(prefix, ndx).getBytes)
-          out.println(new String(part))
-
-          //println("  " + splits(ndx) + " " + "%s%05d".format(prefix, ndx))
-        })
-
-        // just need to write the name of the last partition, we can use magic number
-        // for the tileid...
-        out.println(new String(magic))
-
-        val part: Array[Byte] = Base64.encodeBase64("%s%05d".format(prefix,numPartitions - 1).getBytes)
-        out.println(new String(part))
-
-        //println("  " + HasPartitionNames + " " + "%s%05d".format(prefix, numPartitions - 1))
-      }
-      finally {
-        out.close()
-        fdos.close()
-      }
-    }
-  }
-
-  def findSplit(list: Array[java.lang.Long], target: Long): Int =
-  {
-    // First check the min and max values before binary searching.
-    if (list.length == 0)
-    {
-      // All tiles fit in a single split
-      return 0
-    }
-    if (target <= list(0))
-    {
-      return 0
-    }
-    if (target > list(list.length - 1))
-    {
-      return list.length
-    }
-    // The target does not fall in the minimum or maximum split, so let's
-    // binary search to find it.
-    return binarySearch(list, target, 0, list.length - 1)
-  }
-
-  def binarySearch(list: Array[java.lang.Long], target: Long, start: Int, end: Int): Int =
-  {
-    val mid:Int = start + (end - start + 1) / 2
-
-    //println("s:" + list(start) + " m1:" + list(mid - 1) + " t:" + target + " m2:" + list(mid) + " e:" + list(end))
-    if (list(mid - 1) < target && list(mid) >= target) {
-      mid
-    }
-    else if (list(mid) > target) {
-      binarySearch(list, target, start, mid - 1)
-    }
-    else {
-      binarySearch(list, target, mid, end)
-    }
+    fileSplits.writeSplits(inputWithZoom)
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-    val count = in.readInt()
-
-    val builder = mutable.ArrayBuilder.make[java.lang.Long]()
-    for (i <- 0 until count) {
-      builder += in.readLong()
-    }
-    splits = builder.result()
+    splits.readExternal(in)
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeInt(splits.length)
-    splits.foreach(split => out.writeLong(split))
+    splits.writeExternal(out)
   }
 }

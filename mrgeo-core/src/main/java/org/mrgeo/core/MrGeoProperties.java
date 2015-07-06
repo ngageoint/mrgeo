@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class MrGeoProperties {
                         }
                         home = properties.getProperty( MrGeoConstants.MRGEO_ENV_HOME );
                         // If we loaded properties from JBoss module, no need to load from file system
-                        if ( home == null ) log.error("MRGEO_HOME environment variable not set!");
+                        if ( home == null ) log.error(MrGeoConstants.MRGEO_ENV_HOME + " environment variable not set!");
                     }
                     if ( home != null )
                     {
@@ -74,7 +74,7 @@ public class MrGeoProperties {
                             e.printStackTrace();
                         }
                     } else {
-                        log.error("MRGEO_HOME environment variable not set!");
+                        log.error(MrGeoConstants.MRGEO_ENV_HOME + " environment variable not set!");
                     }
                 }
             }

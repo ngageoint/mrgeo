@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
 
 package org.mrgeo.mapalgebra;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
-
 import junit.framework.Assert;
-
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -38,9 +37,12 @@ import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.OpImageTestUtils;
-import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * @author jason.surratt
@@ -97,8 +99,8 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Before
   public void setup()
   {
-    MrGeoProperties.getInstance().setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
-    MrGeoProperties.getInstance().setProperty(HadoopUtils.VECTOR_BASE, testUtils.getInputHdfs().toUri().toString());
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, testUtils.getInputHdfs().toUri().toString());
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, testUtils.getInputHdfs().toUri().toString());
   }
 
   @BeforeClass
@@ -942,7 +944,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   public void rasterExistsDefaultSearchPath() throws Exception
   {
     final Path p = new Path(smallElevation).getParent();
-    MrGeoProperties.getInstance().setProperty("image.base", p.toString());
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, p.toString());
 
     final String expr = String.format("a = [%s] + [%s]", smallElevationName, smallElevationName);
     final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);

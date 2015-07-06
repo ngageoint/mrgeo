@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  */
 
 package org.mrgeo.services;
+
+import org.mrgeo.core.MrGeoConstants;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -51,7 +53,7 @@ public class Configuration
   {
     properties = new Properties();
 
-    String home = System.getenv("MRGEO_HOME");
+    String home = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
     if (home == null)
     {
 
@@ -59,23 +61,28 @@ public class Configuration
       // JBoss deployments
       try
       {
-        properties.load(this.getClass().getClassLoader().getResourceAsStream("settings.properties"));
+        properties.load(this.getClass().getClassLoader().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS));
       }
       catch(Exception e)
       {
         // An empty props object is fine
       }
 
-      home = properties.getProperty("MRGEO_HOME");
+      home = properties.getProperty(MrGeoConstants.MRGEO_ENV_HOME);
 
       if (home == null)
       {
-        throw new IllegalStateException("MRGEO_HOME environment variable must be set.");
+        throw new IllegalStateException(MrGeoConstants.MRGEO_ENV_HOME + " environment variable must be set.");
       }
     }
+    if (!home.endsWith("/"))
+    {
+      home += "/";
+    }
+
     // If we read it from JBoss module, no need to load properties from file system
 
-    String conf = home + "/conf/mrgeo.conf";
+    String conf = home + MrGeoConstants.MRGEO_CONF;
 
     try {
       FileInputStream fis = new FileInputStream(conf);

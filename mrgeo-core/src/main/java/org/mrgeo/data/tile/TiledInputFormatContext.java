@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
 
 package org.mrgeo.data.tile;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.utils.Bounds;
+
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.mrgeo.utils.Bounds;
 
 /**
  * This interface marks an implementing class as containing configuration
@@ -194,7 +195,7 @@ public class TiledInputFormatContext
       }
     }
     context.zoomLevel = conf.getInt(ZOOM_LEVEL, 1);
-    context.tileSize = conf.getInt(TILE_SIZE, 512);
+    context.tileSize = conf.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     String confBounds = conf.get(BOUNDS);
     if (confBounds != null)
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
@@ -119,8 +120,8 @@ public class BadRequestTest extends WmsGeneratorTestAbstract
             .queryParam("FORMAT", "image/png")
             .queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750")
             .queryParam("CRS", "CRS:85")
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
+            .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+            .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
             .get(ClientResponse.class);
 
     Assert.assertNotNull(response);

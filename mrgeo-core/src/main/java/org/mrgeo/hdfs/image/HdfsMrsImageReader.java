@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ public class HdfsMrsImageReader extends HdfsMrsTileReader<Raster, RasterWritable
   public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     MrsImagePyramidReaderContext context) throws IOException
   {
-    super(new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString());
+    super(new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString(),
+          context.getZoomlevel());
     
     this.provider = provider;
     this.context = context;

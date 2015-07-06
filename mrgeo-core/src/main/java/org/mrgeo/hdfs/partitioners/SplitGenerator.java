@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.cmd.upgradepyramid;
-
-import org.mrgeo.cmd.Command;
-import org.mrgeo.cmd.CommandSpi;
+package org.mrgeo.hdfs.partitioners;
 
 
-public class UpgradePyramidSpi extends CommandSpi
-{
+import org.mrgeo.hdfs.tile.SplitInfo;
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return UpgradePyramid.class;
-  }
-
-  @Override
-  public String getCommandName()
-  {
-    return "upgradepyramid";
-  }
-
-  @Override
-  public String getDescription()
-  {
-    return "Upgrade a MrsPyramid from v1 to v2 (developer cmd)";
-  }
-  
+public interface SplitGenerator {
+  SplitInfo[] getSplits();
+  SplitInfo[] getPartitions();
 }

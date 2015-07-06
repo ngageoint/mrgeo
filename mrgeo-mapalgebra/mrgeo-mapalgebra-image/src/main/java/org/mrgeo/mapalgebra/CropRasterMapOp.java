@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 package org.mrgeo.mapalgebra;
 
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
@@ -115,7 +116,8 @@ public class CropRasterMapOp extends RenderedImageMapOp implements BoundsCalcula
 
     if (tilesize <= 0)
     {
-      tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty("mrsimage.tilesize", "512"));
+      tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE,
+          MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
     }
 
     getParameters().set(zoomlevel, 4);

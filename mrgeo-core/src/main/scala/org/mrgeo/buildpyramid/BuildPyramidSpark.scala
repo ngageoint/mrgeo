@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.buildpyramid
 
 import java.awt.image.{Raster, WritableRaster}
@@ -47,7 +62,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 
   def build (pyramidName: String, aggregator: Aggregator,
       conf: Configuration, progress: Progress, jobListener: JobListener, providerProperties: Properties): Boolean = {
-    throw new NotImplementedError("Not yet implemented")
+    build(pyramidName, aggregator, conf, providerProperties)
   }
 
   def buildlevel (pyramidName: String, level: Int, aggregator: Aggregator,
@@ -257,7 +272,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
+    var metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
 
     val bounds: Bounds = metadata.getBounds
     val tilesize: Int = metadata.getTilesize
@@ -320,6 +335,11 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
     val b: LongRectangle = new LongRectangle(tb.w, tb.s, tb.e, tb.n)
     val psw: TMSUtils.Pixel = TMSUtils.latLonToPixels(bounds.getMinY, bounds.getMinX, outputLevel, tilesize)
     val pne: TMSUtils.Pixel = TMSUtils.latLonToPixels(bounds.getMaxY, bounds.getMaxX, outputLevel, tilesize)
+
+
+    // while we were running, there is chance the pyramid was removed from the cache and
+    // reopened by another process. Re-opening it here will avoid some potential conflicts.
+    metadata = MrsImagePyramid.open(provider).getMetadata
 
     metadata.setPixelBounds(outputLevel, new LongRectangle(0, 0, pne.px - psw.px, pne.py - psw.py))
     metadata.setTileBounds(outputLevel, b)

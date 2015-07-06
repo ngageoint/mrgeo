@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
 
 package org.mrgeo.resources.wms;
 
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.services.utils.ImageTestUtils;
 import org.mrgeo.test.TestUtils;
@@ -52,13 +51,13 @@ public class GetMapTest extends WmsGeneratorTestAbstract
     System.out.println("starting");
     long start = System.currentTimeMillis();
     WebResource webResource = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/png")
-            .queryParam("BBOX", "160.0,-12.0,164.0,-8.0")
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512");
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/png")
+        .queryParam("BBOX", "160.0,-12.0,164.0,-8.0")
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
 
     System.out.println("time: " + (System.currentTimeMillis() - start));
 
@@ -113,15 +112,15 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS",
-                        "/mrgeo/test-files/org.mrgeo.resources.wms/WmsGeneratorTestAbstract/IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS",
+            "/mrgeo/test-files/org.mrgeo.resources.wms/WmsGeneratorTestAbstract/IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -133,14 +132,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/geotiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "1024")
-            .queryParam("HEIGHT", "1024")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", "1024")
+        .queryParam("HEIGHT", "1024")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
     response.close();
@@ -151,14 +150,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testGetMapGeoTifMultipleSourceTiles() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/geotif")
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/geotif")
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/geotiff", "tif");
     response.close();
@@ -170,15 +169,15 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/geotiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
             // pyramid only goes up to zoom level = 10; pass in zoom level = 11
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
     response.close();
@@ -190,14 +189,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/geotiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "700")
-            .queryParam("HEIGHT", "300")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", "700")
+        .queryParam("HEIGHT", "300")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
     response.close();
@@ -208,14 +207,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testGetMapGeoTifSingleSourceTile() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/geotif")
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/geotif")
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/geotiff", "tif");
     response.close();
@@ -227,19 +226,19 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/abc";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750")
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750")
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     String content = response.getEntity(String.class);
     assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Unsupported image format - image/abc]]></ServiceException>"));
+        content.contains("<ServiceException><![CDATA[Unsupported image format - image/abc]]></ServiceException>"));
     response.close();
   }
 
@@ -249,20 +248,20 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v3")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750")
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v3")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750")
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     String content = response.getEntity(String.class);
     assertTrue("Unexpected response: " + content,
-               content.contains(
-                       "org.mrgeo.data.DataProviderNotFound: Unable to find a MrsImage data provider for IslandsElevation-v3"));
+        content.contains(
+            "org.mrgeo.data.DataProviderNotFound: Unable to find a MrsImage data provider for IslandsElevation-v3"));
     response.close();
   }
 
@@ -272,14 +271,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/jpeg";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "1024")
-            .queryParam("HEIGHT", "1024")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", "1024")
+        .queryParam("HEIGHT", "1024")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "jpg");
     response.close();
@@ -290,14 +289,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testGetMapJpgMultipleSourceTiles() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/jpg")
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/jpg")
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/jpeg", "jpg");
     response.close();
@@ -309,15 +308,15 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/jpeg";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
             // pyramid only goes up to zoom level = 10; pass in zoom level = 11
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "jpg");
     response.close();
@@ -329,14 +328,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/jpeg";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "700")
-            .queryParam("HEIGHT", "300")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", "700")
+        .queryParam("HEIGHT", "300")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "jpg");
     response.close();
@@ -347,14 +346,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testGetMapJpgSingleSourceTile() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/jpg")
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/jpg")
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/jpeg", "jpg");
     response.close();
@@ -366,14 +365,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("request", "getmap")
-            .queryParam("layers", "IslandsElevation-v2")
-            .queryParam("format", contentType)
-            .queryParam("bbox", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("width", "512")
-            .queryParam("height", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("request", "getmap")
+        .queryParam("layers", "IslandsElevation-v2")
+        .queryParam("format", contentType)
+        .queryParam("bbox", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("width", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("height", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -389,19 +388,19 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("request", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2,IslandsElevation-v3")
-            .queryParam("format", contentType)
-            .queryParam("bbox", "160.312500,-11.250000,161.718750,-9.843750")
-            .queryParam("width", "512")
-            .queryParam("height", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("request", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2,IslandsElevation-v3")
+        .queryParam("format", contentType)
+        .queryParam("bbox", "160.312500,-11.250000,161.718750,-9.843750")
+        .queryParam("width", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("height", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     String content = response.getEntity(String.class);
     assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Only one LAYER is supported]]></ServiceException>"));
+        content.contains("<ServiceException><![CDATA[Only one LAYER is supported]]></ServiceException>"));
     response.close();
   }
 
@@ -414,14 +413,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testGetMapOutOfBoundsJpg() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/jpg")
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/jpg")
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/jpeg", "jpg");
     response.close();
@@ -437,14 +436,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -455,14 +454,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testGetMapOutOfBoundsTif() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/tif")
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/tif")
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/tiff", "tif");
     response.close();
@@ -474,14 +473,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "1024")
-            .queryParam("HEIGHT", "1024")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", "1024")
+        .queryParam("HEIGHT", "1024")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -493,14 +492,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -516,15 +515,15 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
             // pyramid only goes up to zoom level = 10; pass in zoom level = 11
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -536,14 +535,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "700")
-            .queryParam("HEIGHT", "300")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", "700")
+        .queryParam("HEIGHT", "300")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -555,14 +554,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -574,14 +573,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/tiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "1024")
-            .queryParam("HEIGHT", "1024")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", "1024")
+        .queryParam("HEIGHT", "1024")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
     response.close();
@@ -592,14 +591,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testGetMapTifMultipleSourceTiles() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/tif")
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/tif")
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/tiff", "tif");
     response.close();
@@ -615,15 +614,15 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/tiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
             // pyramid only goes up to zoom level = 10; pass in zoom level = 11
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
     response.close();
@@ -635,14 +634,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/tiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "700")
-            .queryParam("HEIGHT", "300")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", "700")
+        .queryParam("HEIGHT", "300")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tif");
     response.close();
@@ -653,14 +652,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testGetMapTifSingleSourceTile() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", "IslandsElevation-v2")
-            .queryParam("FORMAT", "image/tif")
-            .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", "IslandsElevation-v2")
+        .queryParam("FORMAT", "image/tif")
+        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/tiff", "tif");
     response.close();
@@ -674,14 +673,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", imageStretchUnqualified)
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", "69.14932562595378,34.85619123437472,69.37012237404623,35.038450765625285")
-            .queryParam("WIDTH", "800")
-            .queryParam("HEIGHT", "600")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", imageStretchUnqualified)
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", "69.14932562595378,34.85619123437472,69.37012237404623,35.038450765625285")
+        .queryParam("WIDTH", "800")
+        .queryParam("HEIGHT", "600")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -693,14 +692,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", imageStretch2Unqualified)
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", "-112.53799295569956,35.768445274925874,-111.64052704430043,36.49839472507413")
-            .queryParam("WIDTH", "900")
-            .queryParam("HEIGHT", "700")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", imageStretch2Unqualified)
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", "-112.53799295569956,35.768445274925874,-111.64052704430043,36.49839472507413")
+        .queryParam("WIDTH", "900")
+        .queryParam("HEIGHT", "700")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -711,14 +710,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   public void testJpg3band() throws Exception
   {
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", small3bandUnqualified)
-            .queryParam("FORMAT", "image/jpg")
-            .queryParam("BBOX", "8.200266813859766,54.86003345745267,8.482915124747016,55.0210075283041")
-            .queryParam("WIDTH", "800")
-            .queryParam("HEIGHT", "600")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", small3bandUnqualified)
+        .queryParam("FORMAT", "image/jpg")
+        .queryParam("BBOX", "8.200266813859766,54.86003345745267,8.482915124747016,55.0210075283041")
+        .queryParam("WIDTH", "800")
+        .queryParam("HEIGHT", "600")
+        .get(ClientResponse.class);
 
     processImageResponse(response, "image/jpeg", "jpg");
     response.close();
@@ -730,14 +729,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", small3bandUnqualified)
-            .queryParam("FORMAT", contentType)
-            .queryParam("BBOX", "8.200266813859766,54.86003345745267,8.482915124747016,55.0210075283041")
-            .queryParam("WIDTH", "800")
-            .queryParam("HEIGHT", "600")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", small3bandUnqualified)
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", "8.200266813859766,54.86003345745267,8.482915124747016,55.0210075283041")
+        .queryParam("WIDTH", "800")
+        .queryParam("HEIGHT", "600")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");
     response.close();
@@ -749,14 +748,14 @@ public class GetMapTest extends WmsGeneratorTestAbstract
   {
     String contentType = "image/tiff";
     ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap")
-            .queryParam("LAYERS", small3bandUnqualified)
-            .queryParam("FORMAT", contentType)
-                  .queryParam("BBOX", "8.200266813859766,54.86003345745267,8.482915124747016,55.0210075283041")
-            .queryParam("WIDTH", "800")
-            .queryParam("HEIGHT", "600")
-            .get(ClientResponse.class);
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "getmap")
+        .queryParam("LAYERS", small3bandUnqualified)
+        .queryParam("FORMAT", contentType)
+        .queryParam("BBOX", "8.200266813859766,54.86003345745267,8.482915124747016,55.0210075283041")
+        .queryParam("WIDTH", "800")
+        .queryParam("HEIGHT", "600")
+        .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "tiff");
     response.close();

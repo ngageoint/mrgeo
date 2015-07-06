@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,15 @@
 package org.mrgeo.data.accumulo.metadata;
 
 import junit.framework.Assert;
-
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.accumulo.AccumuloDefs;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
+import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
 
 import java.io.*;
@@ -129,7 +122,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
     
     Assert.assertEquals("Classification incorrect", Classification.Continuous, meta.getClassification());
     Assert.assertEquals("Max zoom incorrect", 10, meta.getMaxZoomLevel());
-    Assert.assertEquals("Tile size incorrect", 512, meta.getTilesize());
+    Assert.assertEquals("Tile size incorrect", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, meta.getTilesize());
   }
 
   @Ignore
@@ -184,7 +177,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
     // check the values have reverted
     Assert.assertEquals("Classification wasn't reloaded correctly", Classification.Continuous, meta.getClassification());
     Assert.assertEquals("Max zoom wasn't reloaded correctly", 10, meta.getMaxZoomLevel());
-    Assert.assertEquals("Tile size wasn't reloaded correctly", 512, meta.getTilesize());
+    Assert.assertEquals("Tile size wasn't reloaded correctly", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, meta.getTilesize());
     
     final ByteArrayOutputStream os = new ByteArrayOutputStream();
     meta.save(os);

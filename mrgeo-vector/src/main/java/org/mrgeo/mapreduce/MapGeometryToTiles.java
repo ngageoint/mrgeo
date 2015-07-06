@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.mrgeo.mapreduce;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.Bounds;
@@ -129,7 +130,7 @@ public class MapGeometryToTiles extends Mapper<LongWritable, GeometryWritable, T
     Configuration conf = context.getConfiguration();
 
     zoom = conf.getInt(ZOOMLEVEL, 20);
-    tilesize = conf.getInt(TILESIZE, 512);
+    tilesize = conf.getInt(TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
     String bstr = conf.get(BOUNDS, null);
     if (bstr == null)

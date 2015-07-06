@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapreduce;
 
 import com.vividsolutions.jts.io.WKTReader;
@@ -8,6 +23,7 @@ import org.apache.hadoop.mrunit.types.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.featurefilter.BaseFeatureFilter;
 import org.mrgeo.geometry.Geometry;
@@ -64,7 +80,7 @@ public class GeometryToTilesMapperTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testMapper() throws Exception {    
     conf.set(FeatureToTilesMapper.ZOOM, "1");    
-    conf.set(FeatureToTilesMapper.TILE_SIZE, "512");    
+    conf.set(FeatureToTilesMapper.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     
 
     String baseGeom = "POLYGON ((0 0,0 1,1 1,1 0,0 0))";
@@ -91,8 +107,8 @@ public class GeometryToTilesMapperTest extends LocalRunnerTest
   @Test
   @Category(UnitTest.class)
   public void testMapperWithBounds() throws Exception {    
-    conf.set(FeatureToTilesMapper.ZOOM, "1");    
-    conf.set(FeatureToTilesMapper.TILE_SIZE, "512");
+    conf.set(FeatureToTilesMapper.ZOOM, "1");
+    conf.set(FeatureToTilesMapper.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     conf.set(FeatureToTilesMapper.BOUNDS, "-0.5, -0.5, 0.5, 0.5");
 
     String baseGeom = "POLYGON ((0 0,0 1,1 1,1 0,0 0))";
@@ -119,8 +135,8 @@ public class GeometryToTilesMapperTest extends LocalRunnerTest
   @Test
   @Category(UnitTest.class)
   public void testMapperWithOutOfBounds() throws Exception {    
-    conf.set(FeatureToTilesMapper.ZOOM, "1");    
-    conf.set(FeatureToTilesMapper.TILE_SIZE, "512");
+    conf.set(FeatureToTilesMapper.ZOOM, "1");
+    conf.set(FeatureToTilesMapper.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     conf.set(FeatureToTilesMapper.BOUNDS, "9.5, 9.5, 10.5, 10.5");
 
     String baseGeom = "POLYGON ((0 0,0 1,1 1,1 0,0 0))";
@@ -146,8 +162,8 @@ public class GeometryToTilesMapperTest extends LocalRunnerTest
   //mapper with filter
   public void testMapperWithFilter() throws Exception {    
 
-    conf.set(FeatureToTilesMapper.ZOOM, "1");    
-    conf.set(FeatureToTilesMapper.TILE_SIZE, "512");    
+    conf.set(FeatureToTilesMapper.ZOOM, "1");
+    conf.set(FeatureToTilesMapper.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     conf.set(FeatureToTilesMapper.FEATURE_FILTER, Base64Utils.encodeObject(new FeatureToTilesMapperTest()));
 
     String baseGeom = "POLYGON ((0 0,0 1,1 1,1 0,0 0))";
@@ -177,8 +193,8 @@ public class GeometryToTilesMapperTest extends LocalRunnerTest
   @Category(UnitTest.class)
   //mapper with no geometry 
   public void testMapperNoGeometry() throws Exception {    
-    conf.set(FeatureToTilesMapper.ZOOM, "1");    
-    conf.set(FeatureToTilesMapper.TILE_SIZE, "512");    
+    conf.set(FeatureToTilesMapper.ZOOM, "1");
+    conf.set(FeatureToTilesMapper.TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
 
     //do not set geometry
     Geometry geom = GeometryFactory.createEmptyGeometry();

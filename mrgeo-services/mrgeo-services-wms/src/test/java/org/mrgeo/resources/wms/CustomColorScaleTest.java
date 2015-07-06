@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,7 @@ public class CustomColorScaleTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)  
   public void testMissingSystemColorScale() throws Exception
   {
-    MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, "foo/bar");
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "foo/bar");
 
     String contentType = "image/png";
     ClientResponse response = resource().path("/wms")
@@ -72,8 +72,8 @@ public class CustomColorScaleTest extends WmsGeneratorTestAbstract
             .queryParam("LAYERS", "IslandsElevation-v2")
             .queryParam("FORMAT", contentType)
             .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-            .queryParam("WIDTH", "512")
-            .queryParam("HEIGHT", "512")
+            .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+            .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
             .get(ClientResponse.class);
 
     processImageResponse(response, contentType, "png");

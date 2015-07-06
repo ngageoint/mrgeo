@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.apache.hadoop.mapred.TaskCompletionEvent;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.format.PgQueryInputFormat;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -51,10 +52,6 @@ public class HadoopVectorUtils
 {
   private static final Logger log = LoggerFactory.getLogger(HadoopUtils.class);
   private static Random random = new Random(System.currentTimeMillis());
-
-  public static String IMAGE_BASE = "image.base";
-  public static String VECTOR_BASE = "vector.base";
-  public static String COLOR_SCALE_BASE = "colorscale.base";
 
   private static Constructor<?> taskAttempt = null;
   private static Constructor<?> jobContext = null;
@@ -218,67 +215,11 @@ public class HadoopVectorUtils
     return jobName;
   }
 
-  public static String getDefaultColorScalesBaseDirectory()
-  {
-    return getDefaultColorScalesBaseDirectory(MrGeoProperties.getInstance());
-  }
-
-  public static String getDefaultColorScalesBaseDirectory(final Properties props)
-  {
-    final String dir = props.getProperty(COLOR_SCALE_BASE, null);
-    return dir;
-  }
-
-  public static String[] getDefaultImageBaseDirectories()
-  {
-    return getDefaultImageBaseDirectories(MrGeoProperties.getInstance());
-  }
-
-  public static String[] getDefaultImageBaseDirectories(final Properties props)
-  {
-    final String defaultImageDirs[] = null;
-
-    final String listDirs = props.getProperty(IMAGE_BASE, null);
-    if (listDirs != null)
-    {
-      final String[] dirs = listDirs.split(",");
-      if (dirs != null && dirs.length != 0)
-      {
-        for (int i = 0; i < dirs.length; i++)
-        {
-          if (!dirs[i].endsWith("/"))
-          {
-            dirs[i] += "/";
-          }
-        }
-        return dirs;
-      }
-    }
-    return defaultImageDirs;
-  }
-
-  public static String getDefaultImageBaseDirectory()
-  {
-    return getDefaultImageBaseDirectory(MrGeoProperties.getInstance());
-  }
-
-  public static String getDefaultImageBaseDirectory(final Properties props)
-  {
-    final String defaultImageDir = null;
-    final String[] dirs = getDefaultImageBaseDirectories(props);
-
-    if (dirs != null && dirs.length != 0)
-    {
-      return dirs[0];
-    }
-    return defaultImageDir;
-  }
-
   public static String[] getDefaultVectorBaseDirectories(final Properties props)
   {
     final String defaultDirs[] = null;
 
-    final String listDirs = props.getProperty(VECTOR_BASE, null);
+    final String listDirs = props.getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, null);
     if (listDirs != null)
     {
       final String[] dirs = listDirs.split(",");

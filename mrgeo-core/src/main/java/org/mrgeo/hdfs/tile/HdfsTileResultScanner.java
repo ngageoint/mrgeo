@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,6 +303,11 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
           partition++;
         }
       }
+    }
+    // if the tiles are out of bounds, this exception will be thrown.
+    catch (Splits.SplitException se)
+    {
+      currentKey = null;
     }
     catch (final IOException e)
     {

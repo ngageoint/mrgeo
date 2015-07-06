@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.rasterops.OpImageUtils;
 import org.mrgeo.data.raster.RasterUtils;
@@ -52,8 +53,8 @@ public class CropRasterOpImageTest
   @BeforeClass
   public static void init()
   {
-    width = 512;
-    height = 512;
+    width = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
+    height = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     
     numbered = TestUtils.createNumberedRaster(width, height);
 //    numberedWithNoData = 
@@ -103,7 +104,7 @@ public class CropRasterOpImageTest
   {
     try
     {
-      runOperation(numbered, Double.NaN, 0.0, 0.0, 0.1, 0.1, 1, 512, "BAD", 0, 0);
+      runOperation(numbered, Double.NaN, 0.0, 0.0, 0.1, 0.1, 1, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "BAD", 0, 0);
       Assert.fail("Expected exception for bad crop type");
     }
     catch(IllegalArgumentException e)

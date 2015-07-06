@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,6 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
 
   private static String all_ones = Defs.INPUT + "all-ones";
   private static final int zoomlevel = 10;
-  private static final int tilesize = 512;
 
   @BeforeClass
   static public void setup() throws IOException

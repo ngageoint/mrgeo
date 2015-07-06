@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.mrgeo.mapalgebra;
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.aggregators.ModeAggregator;
-import org.mrgeo.buildpyramid.BuildPyramidDriver;
+import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
@@ -102,7 +102,7 @@ public abstract class RasterMapOp extends MapOp implements OutputProducer
       {
         aggregator = new ModeAggregator();
       }
-      BuildPyramidDriver.build(_outputName, aggregator, createConfiguration(), getProviderProperties());
+      BuildPyramidSpark.build(_outputName, aggregator, createConfiguration(), getProviderProperties());
     }
     p.complete();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,12 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.adhoc.AdHocDataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageDataProviderFactory;
-import org.mrgeo.data.ingest.ImageIngestDataProvider;
-import org.mrgeo.data.ingest.ImageIngestDataProviderFactory;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorDataProviderFactory;
 import org.mrgeo.utils.DependencyLoader;
@@ -36,13 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -52,19 +43,15 @@ import java.util.concurrent.TimeUnit;
  * A data provider is an abstraction that provides read/write access to data in a
  * back-end data store without knowing the actual type of the back-end data store
  * (e.g. HDFS, Accumulo, ...). There is an abstract data provider class for each
- * type of data to be accessed, including AdHoc data, MrsImage data, and ImageIngest data.
+ * type of data to be accessed, including AdHoc data, and MrsImage data.
  * These are described below. Each instance of a data provider returned by the methods
  * in this class are for a specific piece of data (like a java.io.File instance references
  * a specific file on the disk). Data providers are implemented in data plugins
  * and the providers are discovered dynamically at runtime through the Java
  * ServiceLoader.
  *
- * ImageIngest data providers access a source of raw imagery that is to be ingested
- * into MrGeo. The image ingest functionality uses this data provider to read the
- * actual bytes of source imagery while ingesting that imagery into MrGeo.
- *
  * MrsImage data providers access a MrGeo image (referred to as a MrsImage). A MrsImage
- * data provider is for writing to a MrsImage while ingesting a raw image into MrGeo.
+ * data provider is for writing to a MrsImage.
  *
  * AdHoc data providers are used for accessing other types of data besides raw
  * images and MrsImages. This data provider is used within MrGeo while performing
@@ -299,104 +286,6 @@ public class DataProviderFactory
 
       return null;
     }
-  }
-
-  private static class ImageIngestLoader implements Callable<ImageIngestDataProvider>
-  {
-    private String prefix;
-    private String name;
-    private AccessMode accessMode;
-
-    public ImageIngestLoader(final String name, final AccessMode accessMode)
-    {
-      this.prefix = getPrefix(name);
-      if (prefix != null)
-      {
-        this.name = name.substring(this.prefix.length() + PREFIX_CHAR.length());
-      }
-      else
-      {
-        this.name = name;
-      }
-      this.name = name;
-      this.accessMode = accessMode;
-    }
-
-
-    @Override
-    public ImageIngestDataProvider call() throws Exception
-    {
-      initialize(null, null);
-      final ImageIngestDataProviderFactory factory = findFactory();
-      if (accessMode == AccessMode.READ)
-      {
-        if (factory != null)
-        {
-          if (factory.canOpen(name))
-          {
-            return factory.createImageIngestDataProvider(name);
-          }
-        }
-        throw new DataProviderNotFound("Unable to find an image ingest data provider for " + name);
-      }
-      else if (accessMode == AccessMode.OVERWRITE)
-      {
-        if (factory != null)
-        {
-          if (factory.exists(name))
-          {
-            factory.delete(name);
-          }
-          return factory.createImageIngestDataProvider(name);
-        }
-        return getPreferredProvider().createImageIngestDataProvider(name);
-      }
-      else
-      {
-        if (factory != null)
-        {
-          if (factory.canWrite(name))
-          {
-            return factory.createImageIngestDataProvider(name);
-          }
-          throw new DataProviderNotFound("Unable to find an image ingest data provider for " + name);
-        }
-        return getPreferredProvider().createImageIngestDataProvider(name);
-      }
-
-    }
-
-    private ImageIngestDataProviderFactory getPreferredProvider() throws DataProviderNotFound
-    {
-      if (imageIngestProviderFactories.containsKey(preferredIngestProviderName))
-      {
-        return imageIngestProviderFactories.get(preferredIngestProviderName);
-      }
-
-      throw new DataProviderNotFound("No ad hoc data providers found ");
-    }
-
-    private ImageIngestDataProviderFactory findFactory() throws IOException
-    {
-      if (prefix != null)
-      {
-        if (imageIngestProviderFactories.containsKey(prefix))
-        {
-          return imageIngestProviderFactories.get(prefix);
-        }
-      }
-      for (final ImageIngestDataProviderFactory factory : imageIngestProviderFactories.values())
-      {
-        if (factory.exists(name))
-        {
-          return factory;
-        }
-        log.debug("resource cache load: " + name);
-      }
-
-      return null;
-    }
-
   }
 
   private static class MrsImageLoader implements Callable<MrsImageDataProvider>
@@ -806,19 +695,6 @@ public class DataProviderFactory
             }
           }).build();
 
-  private static Cache<String, ImageIngestDataProvider> imageIngestProviderCache = CacheBuilder
-      .newBuilder().maximumSize(PROVIDER_CACHE_SIZE).expireAfterAccess(
-          PROVIDER_CACHE_EXPIRE, TimeUnit.MINUTES).removalListener(
-          new RemovalListener<String, ImageIngestDataProvider>()
-          {
-            @Override
-            public void onRemoval(
-                final RemovalNotification<String, ImageIngestDataProvider> notification)
-            {
-              log.debug("resource cache removal: " + notification.getKey());
-            }
-          }).build();
-
   private static Cache<String, MrsImageDataProvider> mrsImageProviderCache = CacheBuilder
       .newBuilder().maximumSize(PROVIDER_CACHE_SIZE).expireAfterAccess(
           PROVIDER_CACHE_EXPIRE, TimeUnit.MINUTES).removalListener(
@@ -845,12 +721,10 @@ public class DataProviderFactory
 
 
   protected static Map<String, AdHocDataProviderFactory> adHocProviderFactories;
-  protected static Map<String, ImageIngestDataProviderFactory> imageIngestProviderFactories;
   protected static Map<String, MrsImageDataProviderFactory> mrsImageProviderFactories;
   protected static Map<String, VectorDataProviderFactory> vectorProviderFactories;
 
   protected static String preferredAdHocProviderName = null;
-  protected static String preferredIngestProviderName = null;
   protected static String preferredImageProviderName = null;
   protected static String preferredVectorProviderName = null;
 
@@ -994,43 +868,6 @@ public class DataProviderFactory
     }
   }
 
-  /**
-   * Create a data provider for accessing raw imagery such as GeoTIFF data and
-   * storing it during ingest processing to a format that can be used as input
-   * for map/reduce processing.
-   *
-   * During ingest, the raw imagery is read and tiled, and each individual tile
-   * is written to an intermediate data format which is then used as input to a
-   * map/reduce job which outputs a MrsImage.
-   *
-   * TODO: Add information about how it chooses the appropriate provider for the
-   * name passed in.
-   *
-   * @param name
-   * @return
-   * @throws DataProviderNotFound
-   */
-  public static ImageIngestDataProvider getImageIngestDataProvider(final String name,
-      AccessMode accessMode) throws DataProviderNotFound
-  {
-    try
-    {
-      if (accessMode == AccessMode.OVERWRITE || accessMode == AccessMode.WRITE)
-      {
-        invalidateCache(name);
-      }
-      return imageIngestProviderCache.get(name,
-          new ImageIngestLoader(name, accessMode));
-    }
-    catch (ExecutionException e)
-    {
-      if (e.getCause() instanceof DataProviderNotFound)
-      {
-        throw (DataProviderNotFound)e.getCause();
-      }
-      throw new DataProviderNotFound(e);
-    }
-  }
 
   /**
    * Returns a list of MrsImages available from all data sources. The names returned
@@ -1249,7 +1086,6 @@ public class DataProviderFactory
   public static void invalidateCache()
   {
     adHocProviderCache.invalidateAll();
-    imageIngestProviderCache.invalidateAll();
     mrsImageProviderCache.invalidateAll();
     vectorProviderCache.invalidateAll();
   }
@@ -1264,7 +1100,6 @@ public class DataProviderFactory
     if (resource != null && !resource.isEmpty())
     {
       adHocProviderCache.invalidate(resource);
-      imageIngestProviderCache.invalidate(resource);
       mrsImageProviderCache.invalidate(resource);
       vectorProviderCache.invalidate(resource);
 
@@ -1300,14 +1135,6 @@ public class DataProviderFactory
       return;
     }
 
-    ImageIngestDataProvider ingestProvider = getImageIngestDataProvider(resource, AccessMode.OVERWRITE);
-    if (ingestProvider != null)
-    {
-      ingestProvider.delete();
-      imageIngestProviderCache.invalidate(resource);
-      return;
-    }
-
     VectorDataProvider vectorProvider = getVectorDataProvider(resource, AccessMode.OVERWRITE,
         providerProperties);
     if (vectorProvider != null)
@@ -1340,34 +1167,6 @@ public class DataProviderFactory
       }
     }
 
-    if (imageIngestProviderFactories == null)
-    {
-      imageIngestProviderFactories = new HashMap<String, ImageIngestDataProviderFactory>();
-      // Find the imageIngestProviderFactories
-
-      final ServiceLoader<ImageIngestDataProviderFactory> dataProviderLoader = ServiceLoader
-          .load(ImageIngestDataProviderFactory.class);
-      for (final ImageIngestDataProviderFactory dp : dataProviderLoader)
-      {
-        try
-        {
-          if (dp.isValid())
-          {
-            imageIngestProviderFactories.put(dp.getPrefix(), dp);
-          }
-          else
-          {
-            log.info("Skipping image ingest data provider " + dp.getClass().getName() +
-                " because isValid returned false");
-          }
-        }
-        catch (Exception e)
-        {
-          // no op, just won't put the provider in the list
-        }
-
-      }
-    }
     if (mrsImageProviderFactories == null)
     {
       mrsImageProviderFactories = new HashMap<String, MrsImageDataProviderFactory>();
@@ -1469,13 +1268,6 @@ public class DataProviderFactory
       }
     }
 
-    if (imageIngestProviderFactories != null)
-    {
-      for (final ImageIngestDataProviderFactory dp : imageIngestProviderFactories.values())
-      {
-    	  DependencyLoader.addDependencies(conf, dp.getClass());
-      }
-    }
     if (mrsImageProviderFactories != null)
     {
       for (final MrsImageDataProviderFactory dp : mrsImageProviderFactories.values())
@@ -1518,16 +1310,6 @@ public class DataProviderFactory
       }
     }
 
-    preferredIngestProviderName = findValue(conf, p, PREFERRED_INGEST_PROVIDER_NAME, PREFERRED_INGEST_PROPERTYNAME);
-    // no preferred provider, use the 1st one...
-    if (preferredIngestProviderName == null)
-    {
-      for (final ImageIngestDataProviderFactory factory : imageIngestProviderFactories.values())
-      {
-        preferredIngestProviderName = factory.getPrefix();
-        break;
-      }
-    }
 
     preferredVectorProviderName = findValue(conf, p, PREFERRED_VECTOR_PROVIDER_NAME, PREFERRED_VECTOR_PROPERTYNAME);
     // no preferred provider, use the 1st one...

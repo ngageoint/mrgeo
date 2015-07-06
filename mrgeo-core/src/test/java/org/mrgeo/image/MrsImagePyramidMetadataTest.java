@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
 
 package org.mrgeo.image;
 
-import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.exc.UnrecognizedPropertyException;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
 import org.slf4j.Logger;
@@ -61,7 +60,7 @@ public class MrsImagePyramidMetadataTest
       assertEquals(meta.getBounds().getMaxX(), 25, epsilon);
       assertEquals(meta.getBounds().getMinX(), 24, epsilon);
       assertEquals(meta.getBounds().getMinY(), 40.5, epsilon);
-      assertEquals(meta.getTilesize(), 512);
+      assertEquals(meta.getTilesize(), MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
       assertEquals(meta.getBands(), 1);
       assertEquals(meta.getDefaultValues()[0], -32768, epsilon);
     }

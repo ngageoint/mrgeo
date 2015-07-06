@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.SharedTestFiles;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -115,8 +116,8 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
       super.setUp();
       Mockito.reset(request, service);
       Properties props = MrGeoProperties.getInstance();
-      props.put("image.base", TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class) + "/");
-      props.put("colorscale.base", TestUtils.composeInputDir(SharedTestFiles.class) + "color-scales");
+      props.put(MrGeoConstants.MRGEO_HDFS_IMAGE, TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class) + "/");
+      props.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, TestUtils.composeInputDir(SharedTestFiles.class) + "color-scales");
       
       baselineInput = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);
 

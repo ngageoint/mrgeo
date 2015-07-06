@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,14 @@
  */
 package org.mrgeo.services.mrspyramid;
 
-import static org.junit.Assert.assertEquals;
-
-import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
-
 import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.raster.RasterUtils;
@@ -54,6 +34,19 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.ImageUtils;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Steve Ingram
@@ -161,7 +154,9 @@ public class MrsPyramidServiceTest {
   @Category(UnitTest.class)
   public void testGetRasterNonExistent() throws Exception
   {
-    testIslandsElevationFor("jpeg", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("jpeg",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
             islandsElevationNonExistant, null, "testGetRasterJpgMultipleSourceTiles.jpg",
       "[image/jpeg]", ImageUtils.createImageReader("image/jpeg"));
   }
@@ -182,7 +177,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterJpgMultipleSourceTilesAspectColorScale() throws Exception
   {
     // test jpg, multiple source tile with color scale passed in
-    testIslandsElevationFor("jpeg", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("jpeg",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getAspectColorScale(),
       "testGetRasterJpgMultipleSourceTilesAspectColorScale.jpg", "[image/jpeg]",
       ImageUtils.createImageReader("image/jpeg"));
@@ -193,7 +190,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterJpgMultipleSourceTilesAspectColorScaleWithZoom() throws Exception
   {
     // test jpg, multiple source tile with color scale passed in
-    testIslandsElevationFor("jpeg", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("jpeg",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getAspectColorScale(), 8,
       "testGetRasterJpgMultipleSourceTilesAspectColorScale.jpg", "[image/jpeg]",
       ImageUtils.createImageReader("image/jpeg"));
@@ -253,7 +252,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterJpgSingleSourceTileAspectColorScale() throws Exception
   {
     // test jpg, single source tile with color scale passed in
-    testIslandsElevationFor("jpeg", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("jpeg",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getAspectColorScale(),
       "testGetRasterJpgSingleSourceTileAspectColorScale.jpg", "[image/jpeg]",
       ImageUtils.createImageReader("image/jpeg"));
@@ -264,7 +265,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterJpgSingleSourceTileAspectColorScaleWithZoom() throws Exception
   {
     // test jpg, single source tile with color scale passed in
-    testIslandsElevationFor("jpeg", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("jpeg",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getAspectColorScale(), 7,
       "testGetRasterJpgSingleSourceTileAspectColorScale.jpg", "[image/jpeg]",
       ImageUtils.createImageReader("image/jpeg"));
@@ -322,7 +325,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterOutOfBoundsJpgWithZoom() throws Exception
   {
     // test out of bounds jpg
-    testIslandsElevationFor("jpg", "512", "512", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
+    testIslandsElevationFor("jpg",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
       islandsElevation_unqualified, getAspectColorScale(), -1, "testGetRasterOutOfBoundsJpg.jpg", "[image/jpeg]",
       ImageUtils.createImageReader("image/jpeg"));
   }
@@ -331,7 +336,9 @@ public class MrsPyramidServiceTest {
   @Category(UnitTest.class)
   public void testGetRasterOutOfBoundsPng() throws Exception
   {
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
       islandsElevation_unqualified, getAspectColorScale(), "testGetRasterOutOfBoundsPng.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
   }
@@ -341,7 +348,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterOutOfBoundsPngWithZoom() throws Exception
   {
     // test out of bounds png
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
       islandsElevation_unqualified, getAspectColorScale(), -1, "testGetRasterOutOfBoundsPng.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
   }
@@ -350,7 +359,9 @@ public class MrsPyramidServiceTest {
   @Category(UnitTest.class)
   public void testGetRasterOutOfBoundsTif() throws Exception
   {
-    testIslandsElevationFor("tiff", "512", "512", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
+    testIslandsElevationFor("tiff",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
       islandsElevation_unqualified, getAspectColorScale(), "testGetRasterOutOfBoundsTif.tif", "[image/tiff]",
       ImageUtils.createImageReader("image/tiff"));
   }
@@ -360,7 +371,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterOutOfBoundsTifWithZoom() throws Exception
   {
     // test out of bounds tiff
-    testIslandsElevationFor("tiff", "512", "512", ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
+    testIslandsElevationFor("tiff",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
       islandsElevation_unqualified, getAspectColorScale(), -1, "testGetRasterOutOfBoundsTif.tif", "[image/tiff]",
       ImageUtils.createImageReader("image/tiff"));
   }
@@ -369,7 +382,9 @@ public class MrsPyramidServiceTest {
   @Category(UnitTest.class)
   public void testGetRasterPngLargerThanTileSize() throws Exception
   {
-    testIslandsElevationFor("png", "1024", "1024", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("png",
+        "1024", "1024",
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getDefaultColorScale(), "testGetRasterPngLargerThanTileSize.png",
       "[image/png]", ImageUtils.createImageReader("image/png"));
   }
@@ -378,7 +393,9 @@ public class MrsPyramidServiceTest {
   @Category(UnitTest.class)
   public void testGetRasterPngMultipleSourceTiles() throws Exception
   {
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getDefaultColorScale(), "testGetRasterPngMultipleSourceTiles.png",
       "[image/png]", ImageUtils.createImageReader("image/png"));
   }
@@ -388,7 +405,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngMultipleSourceTilesWithAspectColorScale() throws Exception
   {
     // test png, multiple source tiles with color scale passed in
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getAspectColorScale(),
       "testGetRasterPngMultipleSourceTilesWithAspectColorScale.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -399,7 +418,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngMultipleSourceTilesWithColorScale() throws Exception
   {
     // test png, multiple source tile with color scale defined in Pyramid
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevationColorScale_unqualified, getDefaultColorScale(),
       "testGetRasterPngMultipleSourceTilesWithColorScale.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -410,7 +431,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngMultipleSourceTilesWithColorScaleWithZoom() throws Exception
   {
     // test png, multiple source tile with color scale defined in Pyramid
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevationColorScale_unqualified, getDefaultColorScale(), 8,
       "testGetRasterPngMultipleSourceTilesWithColorScale.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -421,7 +444,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngMultipleSourceTilesWithZoom() throws Exception
   {
     // test png, multiple source tiles
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getDefaultColorScale(), 8, "testGetRasterPngMultipleSourceTiles.png",
       "[image/png]", ImageUtils.createImageReader("image/png"));
   }
@@ -431,7 +456,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngNonExistingZoomLevelAboveWithoutPyramids() throws Exception
   {
     // pyramid only has a single zoom level = 10; pass in zoom level = 8
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevationNoPyramid_unqualified, getAspectColorScale(),
       "testGetRasterPngNonExistingZoomLevelAboveWithoutPyramids.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -450,7 +477,9 @@ public class MrsPyramidServiceTest {
   @Category(UnitTest.class)
   public void testGetRasterPngSingleSourceTile() throws Exception
   {
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getDefaultColorScale(), "testGetRasterPngSingleSourceTile.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
   }
@@ -460,7 +489,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngSingleSourceTileWithAspectColorScale() throws Exception
   {
     // test png, single source tile with color scale passed in
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getAspectColorScale(),
       "testGetRasterPngSingleSourceTileWithAspectColorScale.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -471,7 +502,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngSingleSourceTileWithAspectColorScaleWithZoom() throws Exception
   {
     // test png, single source tile with color scale passed in
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getAspectColorScale(), 7,
       "testGetRasterPngSingleSourceTileWithAspectColorScale.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -482,7 +515,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngSingleSourceTileWithColorScale() throws Exception
   {
     // test png, single source tile with color scale defined in Pyramid
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevationColorScale_unqualified, getDefaultColorScale(),
       "testGetRasterPngSingleSourceTileWithColorScale.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -493,7 +528,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngSingleSourceTileWithColorScaleWithZoom() throws Exception
   {
     // test png, single source tile with color scale defined in Pyramid
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevationColorScale_unqualified, getDefaultColorScale(), 7,
       "testGetRasterPngSingleSourceTileWithColorScale.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -504,7 +541,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngSingleSourceTileWithZoom() throws Exception
   {
     // test png, single source tile
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getDefaultColorScale(), 7, "testGetRasterPngSingleSourceTile.png",
       "[image/png]", ImageUtils.createImageReader("image/png"));
   }
@@ -514,7 +553,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterTifMultipleSourceTiles() throws Exception
   {
     // test tif, multiple source tile
-    testIslandsElevationFor("tiff", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("tiff",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getAspectColorScale(), "testGetRasterTifMultipleSourceTiles.tif",
       "[image/tiff]", ImageUtils.createImageReader("image/tiff"));
   }
@@ -524,7 +565,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterTifMultipleSourceTilesWithZoom() throws Exception
   {
     // test tif, multiple source tile
-    testIslandsElevationFor("tiff", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("tiff",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getAspectColorScale(), 8, "testGetRasterTifMultipleSourceTiles.tif",
       "[image/tiff]", ImageUtils.createImageReader("image/tiff"));
   }
@@ -534,7 +577,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterTifSingleSourceTile() throws Exception
   {
     // test tif, single source tile
-    testIslandsElevationFor("tiff", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("tiff",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getAspectColorScale(), "testGetRasterTifSingleSourceTile.tif", "[image/tiff]",
       ImageUtils.createImageReader("image/tiff"));
   }
@@ -544,7 +589,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterTifSingleSourceTileWithZoom() throws Exception
   {
     // test tif, single source tile
-    testIslandsElevationFor("tiff", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
+    testIslandsElevationFor("tiff",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getAspectColorScale(), 7, "testGetRasterTifSingleSourceTile.tif",
       "[image/tiff]", ImageUtils.createImageReader("image/tiff"));
   }
@@ -555,7 +602,9 @@ public class MrsPyramidServiceTest {
   public void testGetRasterPngMultipleSourceTilesWithAspectColorScaleWithZoom() throws Exception
   {
     // test png, multiple source tiles with color scale passed in
-    testIslandsElevationFor("png", "512", "512", ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
+    testIslandsElevationFor("png",
+        MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+        ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getAspectColorScale(), 8,
       "testGetRasterPngMultipleSourceTilesWithAspectColorScale.png", "[image/png]",
       ImageUtils.createImageReader("image/png"));
@@ -574,9 +623,9 @@ public class MrsPyramidServiceTest {
     ColorScale cs = null;
     Properties mrgeoProperties = MrGeoProperties.getInstance();
     Properties unusedMrgeoProperties = new Properties();
-    mrgeoProperties.put("MRGEO_HOME", TestUtils.composeInputDir(RasterResourceTest.class));
-    mrgeoProperties.put("image.base", "file://" + TestUtils.composeInputDir(RasterResourceTest.class));
-    mrgeoProperties.put("colorscale.base", "file://" + TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
+    mrgeoProperties.put(MrGeoConstants.MRGEO_ENV_HOME, TestUtils.composeInputDir(RasterResourceTest.class));
+    mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class));
+    mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
     MrsPyramidService service = new MrsPyramidService(unusedMrgeoProperties);
 
     String[] bBoxValues = bbox.split(",");

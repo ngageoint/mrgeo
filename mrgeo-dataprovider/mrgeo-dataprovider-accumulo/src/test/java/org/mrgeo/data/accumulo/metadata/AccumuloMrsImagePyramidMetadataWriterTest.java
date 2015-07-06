@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.mrgeo.data.accumulo.metadata;
 import org.apache.accumulo.core.client.Connector;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.data.accumulo.AccumuloDefs;
@@ -114,7 +115,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
 
     Assert.assertEquals("Classification incorrect", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Max zoom incorrect", 10, metadata.getMaxZoomLevel());
-    Assert.assertEquals("Tile size incorrect", 512, metadata.getTilesize());
+    Assert.assertEquals("Tile size incorrect", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, metadata.getTilesize());
 
     // set a couple values in meta.
     metadata.setClassification(Classification.Categorical);
@@ -145,7 +146,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     // now set the metadata back to the old values
     metadata.setClassification(Classification.Continuous);
     metadata.setMaxZoomLevel(10);
-    metadata.setTilesize(512);
+    metadata.setTilesize(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     
     writer.write(metadata);
   
@@ -159,7 +160,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
   {
     Assert.assertEquals("Classification incorrect", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Max zoom incorrect", 10, metadata.getMaxZoomLevel());
-    Assert.assertEquals("Tile size incorrect", 512, metadata.getTilesize());
+    Assert.assertEquals("Tile size incorrect", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, metadata.getTilesize());
     
     // set a couple values in meta.
     metadata.setClassification(Classification.Categorical);
@@ -191,7 +192,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     // now set the metadata back to the old values
     metadata.setClassification(Classification.Continuous);
     metadata.setMaxZoomLevel(10);
-    metadata.setTilesize(512);
+    metadata.setTilesize(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     
     writer.write(metadata);
     
@@ -207,7 +208,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     
     Assert.assertEquals("Classification incorrect", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Max zoom incorrect", 10, metadata.getMaxZoomLevel());
-    Assert.assertEquals("Tile size incorrect", 512, metadata.getTilesize());
+    Assert.assertEquals("Tile size incorrect", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, metadata.getTilesize());
     
     // make a new metadata object
     MrsImagePyramidMetadata newmeta = new MrsImagePyramidMetadata();

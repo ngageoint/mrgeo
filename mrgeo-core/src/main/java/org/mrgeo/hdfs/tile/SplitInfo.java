@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.tile;
+package org.mrgeo.hdfs.tile;
 
-import java.util.List;
+import java.io.Externalizable;
 
-public interface SplitGenerator {
-	List<Long> getSplits(); 
+abstract public class SplitInfo implements Externalizable
+{
+  abstract boolean compareEQ(long tileId);
+  abstract boolean compareLE(long tileId);
+  abstract boolean compareLT(long tileId);
+  abstract boolean compareGE(long tileId);
+  abstract boolean compareGT(long tileId);
+
+  public abstract long getTileId();
+  public abstract int getPartition();
 }

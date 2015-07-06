@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -871,6 +871,11 @@ public class TMSUtils
   public static long tileid(final long tx, final long ty, final int zoomlevel)
   {
     return (ty * (long) Math.pow(2, zoomlevel)) + tx;
+  }
+
+  public static long maxTileId(final int zoomlevel)
+  {
+    return numXTiles(zoomlevel) * numYTiles(zoomlevel) - 1;
   }
 
   // Returns bounds of the given tile in the SWNE form

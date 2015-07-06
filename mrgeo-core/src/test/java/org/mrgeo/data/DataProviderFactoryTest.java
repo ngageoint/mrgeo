@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 DigitalGlobe, Inc.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package org.mrgeo.data;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -30,7 +27,6 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.ingest.ImageIngestDataProvider;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
@@ -372,228 +368,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
   @Test
   @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForReadWithMissing() throws IOException
-  {
-    String missingResource = "DoesNotExist";
-    try
-    {
-      @SuppressWarnings("unused")
-      ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(missingResource, AccessMode.READ);
-      Assert.fail("Expected DataProviderNotFound exception");
-    }
-    catch(DataProviderNotFound e)
-    {
-      // expected
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForReadWithDirectory() throws IOException
-  {
-    // Using an existing resource
-    Path testPath = HadoopFileUtils.createUniqueTmp();
-    try
-    {
-      @SuppressWarnings("unused")
-      ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(testPath.toString(), AccessMode.READ);
-      Assert.fail("Expected DataProviderNotFound exception because the resource is not a file");
-    }
-    catch(DataProviderNotFound e)
-    {
-      // expected
-    }
-    finally
-    {
-      HadoopFileUtils.delete(testPath);
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForReadWithFile() throws IOException
-  {
-    // Using an existing resource
-    Path testPath = HadoopFileUtils.createUniqueTmp();
-    Path testFile = new Path(testPath, "test.txt");
-    try
-    {
-      // Now try with a file - should work
-      FileSystem fs = HadoopFileUtils.getFileSystem(testPath);
-      FSDataOutputStream os = fs.create(testFile);
-      try
-      {
-        os.writeUTF("test");
-      }
-      finally
-      {
-        os.close();
-      }
-      ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(testFile.toString(), AccessMode.READ);
-      Assert.assertNotNull(dp);
-    }
-    finally
-    {
-      HadoopFileUtils.delete(testFile);
-      HadoopFileUtils.delete(testPath);
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForOverwriteWhenMissing() throws IOException
-  {
-    String missingResource = HadoopUtils.createRandomString(10);
-    ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(missingResource, AccessMode.OVERWRITE);
-    Assert.assertNotNull(dp);
-    Assert.assertFalse(HadoopFileUtils.exists(missingResource));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForOverwriteWhenExists() throws IOException
-  {
-    // Using an existing resource
-    Path testPath = HadoopFileUtils.createUniqueTmp();
-    try
-    {
-      ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(testPath.toString(), AccessMode.OVERWRITE);
-      Assert.assertNotNull(dp);
-      Assert.assertFalse(HadoopFileUtils.exists(testPath));
-    }
-    finally
-    {
-      HadoopFileUtils.delete(testPath);
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForOverwriteAfterRead() throws IOException
-  {
-    // Using an existing resource
-    Path testPath = HadoopFileUtils.createUniqueTmp();
-    Path testFile = new Path(testPath, "test.txt");
-    try
-    {
-      // Now try with a file - should work
-      FileSystem fs = HadoopFileUtils.getFileSystem(testPath);
-      FSDataOutputStream os = fs.create(testFile);
-      try
-      {
-        os.writeUTF("test");
-      }
-      finally
-      {
-        os.close();
-      }
-      ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(testFile.toString(), AccessMode.READ);
-      dp = DataProviderFactory.getImageIngestDataProvider(testFile.toString(), AccessMode.OVERWRITE);
-      Assert.assertNotNull(dp);
-      Assert.assertFalse(HadoopFileUtils.exists(testFile));
-    }
-    finally
-    {
-      HadoopFileUtils.delete(testFile);
-      HadoopFileUtils.delete(testPath);
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForWriteWhenMissing() throws IOException
-  {
-    // Using an existing resource
-    String missingResource = "DoesNotExist";
-    ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(missingResource, AccessMode.WRITE);
-    Assert.assertNotNull(dp);
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForWriteWhenExisting() throws IOException
-  {
-    // Using an existing resource
-    Path testPath = HadoopFileUtils.createUniqueTmp();
-    try
-    {
-      try
-      {
-        @SuppressWarnings("unused")
-        ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(testPath.toString(), AccessMode.WRITE);
-        Assert.fail("Should not be able to use WRITE with an existing resource");
-      }
-      catch(DataProviderNotFound e)
-      {
-        // expected
-      }
-    }
-    finally
-    {
-      HadoopFileUtils.delete(testPath);
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetImageIngestDataProviderForWriteAfterRead() throws IOException
-  {
-    // Using an existing resource
-    Path testPath = HadoopFileUtils.createUniqueTmp();
-    Path testFile = new Path(testPath, "test.txt");
-    try
-    {
-      // Now try with a file - should work
-      FileSystem fs = HadoopFileUtils.getFileSystem(testPath);
-      FSDataOutputStream os = fs.create(testFile);
-      try
-      {
-        os.writeUTF("test");
-      }
-      finally
-      {
-        os.close();
-      }
-      ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(testFile.toString(), AccessMode.READ);
-      try
-      {
-        dp = DataProviderFactory.getImageIngestDataProvider(testFile.toString(), AccessMode.WRITE);
-        Assert.fail("Should not be able to get a WRITE provider when the resource exists");
-      }
-      catch(DataProviderNotFound e)
-      {
-        // expected
-      }
-    }
-    finally
-    {
-      HadoopFileUtils.delete(testFile);
-      HadoopFileUtils.delete(testPath);
-    }
-    // Using an existing resource
-//    Path testPath = HadoopFileUtils.createUniqueTmp();
-//    try
-//    {
-//      @SuppressWarnings("unused")
-//      ImageIngestDataProvider dp = DataProviderFactory.getImageIngestDataProvider(testPath.toString(), AccessMode.READ);
-//      try
-//      {
-//        dp = DataProviderFactory.getImageIngestDataProvider(testPath.toString(), AccessMode.WRITE);
-//        Assert.fail("Should not be able to get a WRITE provider when the resource exists");
-//      }
-//      catch(DataProviderNotFound e)
-//      {
-//        // expected
-//      }
-//    }
-//    finally
-//    {
-//      HadoopFileUtils.delete(testPath);
-//    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
   public void testGetVectorDataProviderForReadWhenMissing() throws IOException
   {
     // Resource does not exist
@@ -919,7 +693,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -938,7 +711,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -957,7 +729,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -975,7 +746,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -993,7 +763,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -1011,7 +780,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -1029,7 +797,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -1045,7 +812,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -1062,7 +828,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", good, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", good, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", good, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", good, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
@@ -1079,7 +844,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     Assert.assertEquals("Bad adhoc preferred provider!", hdfs, DataProviderFactory.preferredAdHocProviderName);
     Assert.assertEquals("Bad image preferred provider!", hdfs, DataProviderFactory.preferredImageProviderName);
-    Assert.assertEquals("Bad ingest preferred provider!", hdfs, DataProviderFactory.preferredIngestProviderName);
     Assert.assertEquals("Bad vector preferred provider!", hdfs, DataProviderFactory.preferredVectorProviderName);
 
     teardownPreferred(conf, providerProperties);
