@@ -51,8 +51,8 @@ private static Logger log = LoggerFactory.getLogger(IngestImage.class);
 
 private int zoomlevel = -1;
 private int tilesize = -1;
+private Number[] nodataOverride = null;
 private Number[] nodata;
-private Number nodataOverride = null;
 private int bands = -1;
 private int tiletype = -1;
 private boolean skippreprocessing = false;
@@ -215,28 +215,63 @@ private void calculateParams(final Dataset image)
     bounds.expand(imageBounds);
   }
 
-  try
+  nodata = new Double[bands];
+  // If the nodata values were not overridden on the command line, then we
+  // read them from each band of the source data.
+  if (nodataOverride != null)
   {
-    if (nodataOverride == null)
+    if (nodataOverride.length == 1)
     {
-      nodata = new Double[bands];
-      for (int b = 1; b <= bands; b++)
+      log.info("overriding nodata for all " + bands + " bands with: " + nodataOverride[0]);
+      // Use the same nodata value override for all bands
+      for (int i = 0; i < bands; i++)
       {
-        Double[] val = new Double[1];
-        Band band = image.GetRasterBand(b);
-        band.GetNoDataValue(val);
-
-        nodata[b-1] = val[0];
+        nodata[i] = nodataOverride[0];
+      }
+    }
+    else if (nodataOverride.length == bands)
+    {
+      for (int i = 0; i < bands; i++)
+      {
+        log.info("overriding nodata for band " + i + " with: " + nodataOverride[i]);
+        nodata[i] = nodataOverride[i];
+      }
+    }
+    else
+    {
+      String msg =
+              "The argument to the nodata option must either be a single value to use for" +
+              " all bands or be a comma-separated list of values, one for each band starting" +
+              " with band 0. The source image has " + bands + " bands.";
+      throw new IllegalArgumentException(msg);
+    }
+  }
+  else
+  {
+    for (int b = 1; b <= bands; b++)
+    {
+      System.out.println("assigning band nodata value for band " + (b-1));
+      Double[] val = new Double[1];
+      Band band = image.GetRasterBand(b);
+      band.GetNoDataValue(val);
+      if (val[0] != null)
+      {
+        nodata[b - 1] = val[0];
+        System.out.println("nodata: b: " + (b-1) + " " + nodata[b-1].byteValue() + " d: " + nodata[b-1].doubleValue() +
+                  " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
+                  " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
         log.debug("nodata: b: " + nodata[b-1].byteValue() + " d: " + nodata[b-1].doubleValue() +
-                          " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
-                          " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
+                  " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
+                  " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
+      }
+      else
+      {
+        System.out.println("Unable to retrieve nodata from source, using NaN for band " + (b-1));
+        log.debug("Unable to retrieve nodata from source, using NaN");
+        nodata[b-1] = Double.NaN;
       }
     }
   }
-  catch (IllegalArgumentException ignored)
-  {
-  }
-
 }
 
 List<String> getInputs(String arg, boolean recurse, final Configuration conf,
@@ -392,6 +427,18 @@ List<String> getInputs(String arg, boolean recurse, final Configuration conf,
   return inputs;
 }
 
+private double parseNoData(String fromArg) throws NumberFormatException
+{
+  String arg = fromArg.trim();
+  if (arg.compareToIgnoreCase("nan") != 0)
+  {
+    return Double.parseDouble(arg);
+  }
+  else
+  {
+    return Double.NaN;
+  }
+}
 
 @Override
 public int run(String[] args, Configuration conf, Properties providerProperties)
@@ -437,20 +484,19 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
       if (overrideNodata)
       {
         String str = line.getOptionValue("nd");
-        if (str.compareToIgnoreCase("nan") != 0)
+        String[] strElements = str.split(",");
+        nodataOverride = new Double[strElements.length];
+        for (int i=0; i < nodataOverride.length; i++)
         {
-          nodataOverride = Double.parseDouble(line.getOptionValue("nd"));
-          log.info("overriding nodata with: " + nodataOverride);
-        }
-        else
-        {
-          nodataOverride = Double.NaN;
-          log.info("overriding nodata with: NaN");
-        }
-        nodata = new Double[bands];
-        for (int b = 0; b < bands; b++)
-        {
-          nodata[b] = nodataOverride;
+          try
+          {
+            nodataOverride[i] = parseNoData(strElements[i]);
+          }
+          catch(NumberFormatException nfe)
+          {
+            System.out.println("Invalid nodata value: " + strElements[i]);
+            return -1;
+          }
         }
       }
 
@@ -481,9 +527,17 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
 
       tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
-      for (String arg: line.getArgs())
+      try
       {
-        inputs.addAll(getInputs(arg, recurse, conf, true, false));
+        for (String arg : line.getArgs())
+        {
+          inputs.addAll(getInputs(arg, recurse, conf, true, false));
+        }
+      }
+      catch(IllegalArgumentException e)
+      {
+        System.out.println(e.getMessage());
+        return -1;
       }
 
       log.info("Ingest inputs (" + inputs.size() + ")");
