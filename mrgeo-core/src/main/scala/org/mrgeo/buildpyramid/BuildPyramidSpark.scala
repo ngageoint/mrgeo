@@ -201,7 +201,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
           // create a compatible writable raster
           val toraster: WritableRaster =
-            RasterUtils.createCompatibleEmptyRaster(fromraster, tilesize, tilesize, nodatas(0).doubleValue())
+            RasterUtils.createCompatibleEmptyRaster(fromraster, tilesize, tilesize, nodatas)
 
           logDebug("from  tx: " + fromtile.tx + " ty: " + fromtile.ty + " (" + fromlevel + ") to tx: " + totile.tx +
               " ty: " + totile.ty + " (" + tolevel + ") x: "

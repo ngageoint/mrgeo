@@ -29,7 +29,7 @@ import scala.collection.mutable.ArrayBuffer
 object MrGeoYarnDriver {
   final val DRIVER:String = "mrgeo.driver.class"
 
-  final val ARGFILE:String = "--mrgeo-argfile"
+  final val ARGFILE:String = "mrgeo-argfile"
 }
 
 class MrGeoYarnDriver {
