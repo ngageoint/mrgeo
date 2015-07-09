@@ -209,7 +209,7 @@ public class RasterUtils
   }
 
   public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final int width, final int height,
-      final double nodata)
+      final Number[] nodata)
   {
     final WritableRaster newraster = raster.createCompatibleWritableRaster(width, height);
     fillWithNodata(newraster, nodata);
@@ -245,7 +245,7 @@ public class RasterUtils
   public static WritableRaster createGBRRaster(final int width, final int height)
   {
     return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-        width * 3, 3, new int[]{2, 1, 0}, null);
+                                          width * 3, 3, new int[]{2, 1, 0}, null);
   }
 
   public static WritableRaster createAGBRRaster(final int width, final int height)
@@ -313,6 +313,50 @@ public class RasterUtils
       default:
         throw new RasterWritable.RasterWritableException(
             "Error trying to get fill pixels in the raster with nodata value. Bad raster data type");
+      }
+    }
+  }
+
+  public static void fillWithNodata(final WritableRaster raster, final Number[] nodata)
+  {
+    if (raster.getNumBands() != nodata.length)
+    {
+      throw new RasterWritable.RasterWritableException(
+              "Error - cannot fill fill " + raster.getNumBands() +
+              " band raster with nodata array containing " + nodata.length +
+              " values");
+    }
+    final int elements = raster.getHeight() * raster.getWidth();
+
+    final int type = raster.getTransferType();
+    for (int b = 0; b < raster.getNumBands(); b++)
+    {
+      switch (type)
+      {
+        case DataBuffer.TYPE_BYTE:
+        case DataBuffer.TYPE_INT:
+        case DataBuffer.TYPE_SHORT:
+        case DataBuffer.TYPE_USHORT:
+          final int[] intsamples = new int[elements];
+          final int inodata = nodata[b].intValue();
+          Arrays.fill(intsamples, inodata);
+          raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, intsamples);
+          break;
+        case DataBuffer.TYPE_FLOAT:
+          final float[] floatsamples = new float[elements];
+
+          final float fnodata = nodata[b].floatValue();
+          Arrays.fill(floatsamples, fnodata);
+          raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, floatsamples);
+          break;
+        case DataBuffer.TYPE_DOUBLE:
+          final double[] doublesamples = new double[elements];
+          Arrays.fill(doublesamples, nodata[b].doubleValue());
+          raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, doublesamples);
+          break;
+        default:
+          throw new RasterWritable.RasterWritableException(
+                  "Error trying to get fill pixels in the raster with nodata value. Bad raster data type");
       }
     }
   }

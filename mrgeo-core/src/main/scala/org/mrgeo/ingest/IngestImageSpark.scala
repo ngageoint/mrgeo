@@ -65,7 +65,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
   def ingest(inputs: Array[String], output: String,
       categorical: Boolean, conf: Configuration, bounds: Bounds,
-      zoomlevel: Int, tilesize: Int, nodata: Number, bands: Int, tiletype: Int,
+      zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: Properties): Boolean = {
 
@@ -81,7 +81,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
   }
 
   private def setupParams(input: String, output: String, categorical: Boolean, bounds: Bounds, zoomlevel: Int,
-      tilesize: Int, nodata: Number,
+      tilesize: Int, nodata: Array[Number],
       bands: Int, tiletype: Int, tags: util.Map[String, String], protectionLevel: String,
       providerProperties: Properties): mutable.Map[String, String] = {
 
@@ -94,7 +94,9 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     }
     args += Zoom -> zoomlevel.toString
     args += Tilesize -> tilesize.toString
-    args += NoData -> nodata.toString
+    if (nodata != null) {
+      args += NoData -> nodata.mkString(" ")
+    }
     args += Bands -> bands.toString
     args += Tiletype -> tiletype.toString
     args += Categorical -> categorical.toString
@@ -128,7 +130,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
   def localIngest(inputs: Array[String], output: String,
       categorical: Boolean, config: Configuration, bounds: Bounds,
-      zoomlevel: Int, tilesize: Int, nodata: Number, bands: Int, tiletype: Int,
+      zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: Properties): Boolean = {
 
@@ -354,7 +356,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
   @throws(classOf[Exception])
   def quickIngest(input: String, output: String, categorical: Boolean, config: Configuration, overridenodata: Boolean,
-      nodata: Number, tags: java.util.Map[String, String], protectionLevel: String, providerProperties: Properties): Boolean = {
+      nodata: Array[Number], tags: java.util.Map[String, String], protectionLevel: String, providerProperties: Properties): Boolean = {
     val provider: MrsImageDataProvider = DataProviderFactory
         .getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
     var conf: Configuration = config
@@ -370,7 +372,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     if (overridenodata) {
       val defaults: Array[Double] = metadata.getDefaultValues
       for (i <- defaults.indices) {
-        defaults(i) = nodata.doubleValue
+        defaults(i) = nodata(i).doubleValue
       }
       metadata.setDefaultValues(defaults)
     }
@@ -428,7 +430,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
   var bands:Int = -1
   var tiletype:Int = -1
   var tilesize:Int = -1
-  var nodata:Number = Double.NaN
+  var nodata:Array[Double] = null
   var categorical:Boolean = false
   var providerproperties:Properties = null
   var protectionlevel:String = null
@@ -468,7 +470,12 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     bands = job.getSetting(IngestImageSpark.Bands).toInt
     tiletype = job.getSetting(IngestImageSpark.Tiletype).toInt
     tilesize = job.getSetting(IngestImageSpark.Tilesize).toInt
-    nodata = job.getSetting(IngestImageSpark.NoData).toDouble
+    if (job.hasSetting(IngestImageSpark.NoData)) {
+      nodata = job.getSetting(IngestImageSpark.NoData).split(" ").map(_.toDouble)
+    }
+    else {
+      nodata = Array.fill[Double](bands)(Double.NaN)
+    }
     categorical = job.getSetting(IngestImageSpark.Categorical).toBoolean
 
     protectionlevel = job.getSetting(IngestImageSpark.Protection)
@@ -512,24 +519,14 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       val src = RasterWritable.toRaster(r1)
       val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
-      val nodatas = Array.ofDim[Double](src.getNumBands)
-      for (x <- nodatas.indices) {
-        nodatas(x) = nodata.doubleValue()
-      }
-
-      RasterUtils.mosaicTile(src, dst, nodatas)
+      RasterUtils.mosaicTile(src, dst, nodata)
       RasterWritable.toWritable(dst)
 
     }).persist(StorageLevel.MEMORY_AND_DISK)
 
 
     val raster = RasterWritable.toRaster(mergedTiles.first()._2)
-    val nodatas = Array.ofDim[Double](raster.getNumBands)
-    for (x <- nodatas.indices) {
-      nodatas(x) = nodata.doubleValue()
-    }
-
-    SparkUtils.saveMrsPyramid(mergedTiles, idp, output, zoom, tilesize, nodatas, context.hadoopConfiguration,
+    SparkUtils.saveMrsPyramid(mergedTiles, idp, output, zoom, tilesize, nodata, context.hadoopConfiguration,
       bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
       protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
 
@@ -556,7 +553,11 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     tilesize = in.readInt()
     //    tiletype = in.readInt()
     //    bands = in.readInt()
-    nodata = in.readDouble()
+    val nodataLen = in.readInt()
+    nodata = new Array[Double](nodataLen)
+    for (i <- 0 until nodataLen) {
+      nodata(i) = in.readDouble()
+    }
     categorical = in.readBoolean()
 
     //    providerproperties = in.readObject().asInstanceOf[Properties]
@@ -572,7 +573,10 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     out.writeInt(tilesize)
     //      out.writeInt(tiletype)
     //      out.writeInt(bands)
-    out.writeDouble(nodata.doubleValue())
+    out.writeInt(nodata.length);
+    for(i <- 0 until nodata.length) {
+      out.writeDouble(nodata(i).doubleValue())
+    }
     out.writeBoolean(categorical)
     //
     //      out.writeObject(providerproperties)
