@@ -552,9 +552,10 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     zoom = in.readInt()
     tilesize = in.readInt()
     //    tiletype = in.readInt()
-    bands = in.readInt()
-    nodata = new Array[Double](bands)
-    for (i <- 0 until bands) {
+    //    bands = in.readInt()
+    val nodataLen = in.readInt()
+    nodata = new Array[Double](nodataLen)
+    for (i <- 0 until nodataLen) {
       nodata(i) = in.readDouble()
     }
     categorical = in.readBoolean()
@@ -571,8 +572,9 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     out.writeInt(zoom)
     out.writeInt(tilesize)
     //      out.writeInt(tiletype)
-    out.writeInt(bands)
-    for(i <- 0 until bands) {
+    //      out.writeInt(bands)
+    out.writeInt(nodata.length);
+    for(i <- 0 until nodata.length) {
       out.writeDouble(nodata(i).doubleValue())
     }
     out.writeBoolean(categorical)

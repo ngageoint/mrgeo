@@ -60,6 +60,7 @@ private boolean local = false;
 private boolean quick = false;
 private Map<String, String> tags = new HashMap<>();
 private Bounds bounds = null;
+private boolean firstInput = true;
 
 public IngestImage()
 {
@@ -196,14 +197,11 @@ private void calculateParams(final Dataset image)
     zoomlevel = zy;
   }
 
-  bands = image.GetRasterCount();
-  tiletype = GDALUtils.toRasterDataBufferType(image.GetRasterBand(1).getDataType());
-
   Bounds imageBounds = GDALUtils.getBounds(image);
 
   log.debug("    image bounds: (lon/lat) " +
-      imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
-      imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
+            imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
+            imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
 
 
   if (bounds == null)
@@ -214,6 +212,28 @@ private void calculateParams(final Dataset image)
   {
     bounds.expand(imageBounds);
   }
+
+  // Calculate some parameters only for the first input file because they should
+  // not differ among all the input files for one source.
+  if (firstInput)
+  {
+    firstInput = false;
+    calculateMinimalParams(image);
+  }
+}
+
+  /**
+   * This is called when the user requests to skip pre-processing of all of the input
+   * files, and it is only called for the first input file. It's job is to compute
+   * parameters that are expected to be the same across all of the input files for
+   * this data source - namely bands, tiletype, and nodata.
+   *
+   * @param image
+   */
+private void calculateMinimalParams(final Dataset image)
+{
+  bands = image.GetRasterCount();
+  tiletype = GDALUtils.toRasterDataBufferType(image.GetRasterBand(1).getDataType());
 
   nodata = new Double[bands];
   // If the nodata values were not overridden on the command line, then we
@@ -250,23 +270,18 @@ private void calculateParams(final Dataset image)
   {
     for (int b = 1; b <= bands; b++)
     {
-      System.out.println("assigning band nodata value for band " + (b-1));
       Double[] val = new Double[1];
       Band band = image.GetRasterBand(b);
       band.GetNoDataValue(val);
       if (val[0] != null)
       {
         nodata[b - 1] = val[0];
-        System.out.println("nodata: b: " + (b-1) + " " + nodata[b-1].byteValue() + " d: " + nodata[b-1].doubleValue() +
-                  " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
-                  " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
         log.debug("nodata: b: " + nodata[b-1].byteValue() + " d: " + nodata[b-1].doubleValue() +
                   " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
                   " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
       }
       else
       {
-        System.out.println("Unable to retrieve nodata from source, using NaN for band " + (b-1));
         log.debug("Unable to retrieve nodata from source, using NaN");
         nodata[b-1] = Double.NaN;
       }
@@ -275,7 +290,7 @@ private void calculateParams(final Dataset image)
 }
 
 List<String> getInputs(String arg, boolean recurse, final Configuration conf,
-    boolean existsCheck, boolean argIsDir)
+  boolean existsCheck, boolean argIsDir)
 {
   List<String> inputs = new LinkedList<>();
 
@@ -321,6 +336,23 @@ List<String> getInputs(String arg, boolean recurse, final Configuration conf,
 
       if (skippreprocessing)
       {
+        if (firstInput)
+        {
+          firstInput = false;
+          Dataset dataset = GDALUtils.open(name);
+
+          if (dataset != null)
+          {
+            try
+            {
+              calculateMinimalParams(dataset);
+            }
+            finally
+            {
+              GDALUtils.close(dataset);
+            }
+          }
+        }
         inputs.add(name);
         local = true;
 
@@ -388,6 +420,23 @@ List<String> getInputs(String arg, boolean recurse, final Configuration conf,
 
             if (skippreprocessing)
             {
+              if (firstInput)
+              {
+                firstInput = false;
+                Dataset dataset = GDALUtils.open(name);
+
+                if (dataset != null)
+                {
+                  try
+                  {
+                    calculateMinimalParams(dataset);
+                  }
+                  finally
+                  {
+                    GDALUtils.close(dataset);
+                  }
+                }
+              }
               inputs.add(name);
               System.out.println(" accepted ***");
             }
