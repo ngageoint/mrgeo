@@ -580,7 +580,7 @@ public class GDALUtils
     // 8 byte value... swap bytes 1 & 8, 2 & 7, 3 & 6, 4 & 5
     if (gdaldatatype == gdalconstConstants.GDT_Float64)
     {
-      for (int i = 0; i < bytes.length; i += 2)
+      for (int i = 0; i < bytes.length; i += 8)
       {
         // swap 0 and 7
         tmp = bytes[i];
