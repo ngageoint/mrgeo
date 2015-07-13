@@ -26,20 +26,18 @@ import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.image.geotools.GeotoolsRasterUtils;
-import org.mrgeo.mapreduce.ingestvector.IngestVectorDriver;
-import org.mrgeo.vector.mrsvector.OSMTileIngester;
-import org.mrgeo.utils.geotools.GeotoolsVectorReader;
-import org.mrgeo.utils.geotools.GeotoolsVectorUtils;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.mapreduce.ingestvector.IngestVectorDriver;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
+import org.mrgeo.utils.geotools.GeotoolsVectorReader;
+import org.mrgeo.utils.geotools.GeotoolsVectorUtils;
+import org.mrgeo.vector.mrsvector.OSMTileIngester;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
@@ -206,100 +204,6 @@ public class IngestVector extends Command
     return inputs;
   }
 
-
-  List<String> oldGetInputs(String arg, boolean recurse) throws IOException 
-  {
-    List<String> inputs = new LinkedList<String>();
-
-    File f = new File(arg);
-
-    // recurse through directories
-    if (f.isDirectory())
-    {
-      File[] dir = f.listFiles();
-
-      for (File s: dir)
-      {
-        try
-        {
-          if (s.isFile() || (s.isDirectory() && recurse))
-          {
-            inputs.addAll(getInputs(s.getCanonicalPath(), recurse));
-          }
-        }
-        catch (IOException e)
-        {
-        }
-      }
-    }
-    else if (f.isFile())
-    {
-      // is this an geospatial image file?
-      System.out.print("*** checking " + f.getCanonicalPath());
-      if (GeotoolsRasterUtils.fastAccepts(f))
-      {
-        try
-        {
-          System.out.println(" accepted ***");
-          inputs.add(f.getCanonicalPath());
-        }
-        catch (IOException e)
-        {
-          e.printStackTrace();
-        }
-      }
-      else
-      {
-        System.out.println(" can't load ***");
-      }
-    }
-    else
-    {
-      Path p = new Path(arg);
-      FileSystem fs = HadoopFileUtils.getFileSystem(config, p);
-      if (fs.exists(p))
-      {              
-        FileStatus status = fs.getFileStatus(p);
-
-        if (status.isDir() && recurse)
-        {
-          FileStatus[] files = fs.listStatus(p);
-          for (FileStatus file: files)
-          {
-            inputs.addAll(getInputs(file.getPath().toString(), recurse));
-          }
-        }
-        else
-        {
-          InputStream stream = null;
-          try
-          {
-            stream = HadoopFileUtils.open(config, p);
-            // is this an geospatial image file?
-            System.out.print("*** checking " + p.toString());
-            if (GeotoolsRasterUtils.fastAccepts(stream))
-            {
-              System.out.println(" accepted ***");
-              inputs.add(p.toString());
-            }
-            else
-            {
-              System.out.println(" can't load ***");
-            }
-          }
-          finally
-          {
-            if (stream != null)
-            {
-              stream.close();
-            }
-          }
-        }
-      }
-    }
-
-    return inputs;
-  }
 
   @Override
   public int run(String[] args, Configuration conf, Properties providerProperties)

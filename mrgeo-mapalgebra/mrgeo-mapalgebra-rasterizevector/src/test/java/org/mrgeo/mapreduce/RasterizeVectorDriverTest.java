@@ -29,12 +29,10 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
-import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
-import org.opengis.referencing.FactoryException;
 
 import java.awt.image.Raster;
 import java.io.IOException;
@@ -169,18 +167,6 @@ public class RasterizeVectorDriverTest extends LocalRunnerTest
   // Check the output when rasterizing the holey polygon
   private static void compareRastersForHoley(final Raster raster, final double maskValue)
   {
-    try
-    {
-      GeotoolsRasterUtils.saveLocalGeotiff("/export/home/dave.johnson/out.tif", raster, tx, ty, zoom, tileSize, Double.NaN);
-    }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    }
-    catch (FactoryException e)
-    {
-      System.out.println("Unable to save raster " + e);
-    }
     TMSUtils.Pixel outerLL = TMSUtils.latLonToTilePixelUL(minY2, minX2, tx, ty, zoom, tileSize);
     TMSUtils.Pixel outerUR = TMSUtils.latLonToTilePixelUL(maxY2, maxX2, tx, ty, zoom, tileSize);
     TMSUtils.Pixel innerLL1 = TMSUtils.latLonToTilePixelUL(minYinner1, minXinner1, tx, ty, zoom, tileSize);
@@ -238,18 +224,6 @@ public class RasterizeVectorDriverTest extends LocalRunnerTest
 
   private static void compareRastersForOverlappingHoleyFirst(final Raster raster, final double maskValue)
   {
-    try
-    {
-      GeotoolsRasterUtils.saveLocalGeotiff("/export/home/dave.johnson/out.tif", raster, tx, ty, zoom, tileSize, Double.NaN);
-    }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    }
-    catch (FactoryException e)
-    {
-      System.out.println("Unable to save raster " + e);
-    }
     TMSUtils.Pixel outerLL = TMSUtils.latLonToTilePixelUL(minY2, minX2, tx, ty, zoom, tileSize);
     TMSUtils.Pixel outerUR = TMSUtils.latLonToTilePixelUL(maxY2, maxX2, tx, ty, zoom, tileSize);
     TMSUtils.Pixel innerLL1 = TMSUtils.latLonToTilePixelUL(minYinner1, minXinner1, tx, ty, zoom, tileSize);
@@ -327,18 +301,6 @@ public class RasterizeVectorDriverTest extends LocalRunnerTest
 
   private static void compareRastersForOverlappingHoleyLast(final Raster raster, final double maskValue)
   {
-    try
-    {
-      GeotoolsRasterUtils.saveLocalGeotiff("/export/home/dave.johnson/out.tif", raster, tx, ty, zoom, tileSize, Double.NaN);
-    }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    }
-    catch (FactoryException e)
-    {
-      System.out.println("Unable to save raster " + e);
-    }
     TMSUtils.Pixel outerLL = TMSUtils.latLonToTilePixelUL(minY2, minX2, tx, ty, zoom, tileSize);
     TMSUtils.Pixel outerUR = TMSUtils.latLonToTilePixelUL(maxY2, maxX2, tx, ty, zoom, tileSize);
     TMSUtils.Pixel innerLL1 = TMSUtils.latLonToTilePixelUL(minYinner1, minXinner1, tx, ty, zoom, tileSize);

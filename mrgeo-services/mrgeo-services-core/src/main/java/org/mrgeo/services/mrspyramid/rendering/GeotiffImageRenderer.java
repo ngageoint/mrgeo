@@ -15,7 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.gdal.osr.SpatialReference;
 
 public class GeotiffImageRenderer extends TiffImageRenderer
 {
@@ -25,9 +25,9 @@ public class GeotiffImageRenderer extends TiffImageRenderer
     super();
   }
 
-  public GeotiffImageRenderer(final CoordinateReferenceSystem coordSys)
+  public GeotiffImageRenderer(final SpatialReference srs)
   {
-    super(coordSys);
+    super(srs);
   }
 
   @Override

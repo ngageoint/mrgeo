@@ -29,7 +29,6 @@ import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
 import org.mrgeo.image.MrsImagePyramid
-import org.mrgeo.image.geotools.GeotoolsRasterUtils
 import org.mrgeo.spark.job.{MrGeoJob, MrGeoDriver, JobArguments}
 import org.mrgeo.utils.TMSUtils.TileBounds
 import org.mrgeo.utils._
