@@ -53,12 +53,7 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
       val src = RasterWritable.toRaster(r1)
       val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
-      val nodatas = Array.ofDim[Double](src.getNumBands)
-      for (x <- nodatas.indices) {
-        nodatas(x) = nodata.doubleValue()
-      }
-
-      RasterUtils.mosaicTile(src, dst, nodatas)
+      RasterUtils.mosaicTile(src, dst, nodata)
       RasterWritable.toWritable(dst)
 
     }).persist(StorageLevel.MEMORY_AND_DISK)
@@ -67,12 +62,7 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
     val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
 
     val raster = RasterWritable.toRaster(mergedTiles.first()._2)
-    val nodatas = Array.ofDim[Double](raster.getNumBands)
-    for (x <- nodatas.indices) {
-      nodatas(x) = nodata.doubleValue()
-    }
-
-    SparkUtils.saveMrsPyramid(mergedTiles, idp, output, zoom, tilesize, nodatas, context.hadoopConfiguration,
+    SparkUtils.saveMrsPyramid(mergedTiles, idp, output, zoom, tilesize, nodata, context.hadoopConfiguration,
       bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
       protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
 

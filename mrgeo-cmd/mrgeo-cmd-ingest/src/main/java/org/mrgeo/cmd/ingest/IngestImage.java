@@ -51,7 +51,8 @@ private static Logger log = LoggerFactory.getLogger(IngestImage.class);
 
 private int zoomlevel = -1;
 private int tilesize = -1;
-private Number nodata = null;
+private Number[] nodataOverride = null;
+private Number[] nodata;
 private int bands = -1;
 private int tiletype = -1;
 private boolean skippreprocessing = false;
@@ -59,6 +60,7 @@ private boolean local = false;
 private boolean quick = false;
 private Map<String, String> tags = new HashMap<>();
 private Bounds bounds = null;
+private boolean firstInput = true;
 
 public IngestImage()
 {
@@ -195,14 +197,11 @@ private void calculateParams(final Dataset image)
     zoomlevel = zy;
   }
 
-  bands = image.GetRasterCount();
-  tiletype = GDALUtils.toRasterDataBufferType(image.GetRasterBand(1).getDataType());
-
   Bounds imageBounds = GDALUtils.getBounds(image);
 
   log.debug("    image bounds: (lon/lat) " +
-      imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
-      imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
+            imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
+            imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
 
 
   if (bounds == null)
@@ -214,36 +213,84 @@ private void calculateParams(final Dataset image)
     bounds.expand(imageBounds);
   }
 
-  try
+  // Calculate some parameters only for the first input file because they should
+  // not differ among all the input files for one source.
+  if (firstInput)
   {
-    if (nodata == null)
+    firstInput = false;
+    calculateMinimalParams(image);
+  }
+}
+
+  /**
+   * This is called when the user requests to skip pre-processing of all of the input
+   * files, and it is only called for the first input file. It's job is to compute
+   * parameters that are expected to be the same across all of the input files for
+   * this data source - namely bands, tiletype, and nodata.
+   *
+   * @param image
+   */
+private void calculateMinimalParams(final Dataset image)
+{
+  bands = image.GetRasterCount();
+  tiletype = GDALUtils.toRasterDataBufferType(image.GetRasterBand(1).getDataType());
+
+  nodata = new Double[bands];
+  // If the nodata values were not overridden on the command line, then we
+  // read them from each band of the source data.
+  if (nodataOverride != null)
+  {
+    if (nodataOverride.length == 1)
     {
-      for (int b = 1; b <= bands; b++)
+      log.info("overriding nodata for all " + bands + " bands with: " + nodataOverride[0]);
+      // Use the same nodata value override for all bands
+      for (int i = 0; i < bands; i++)
       {
-        Double[] val = new Double[1];
-        Band band = image.GetRasterBand(b);
-        band.GetNoDataValue(val);
-
-        nodata = val[0];
-
-        if (nodata != null)
-        {
-          log.debug("nodata: b: " + nodata.byteValue() + " d: " + nodata.doubleValue() +
-              " f: " + nodata.floatValue() + " i: " + nodata.intValue() +
-              " s: " + nodata.shortValue() + " l: " + nodata.longValue());
-          break;
-        }
+        nodata[i] = nodataOverride[0];
+      }
+    }
+    else if (nodataOverride.length == bands)
+    {
+      for (int i = 0; i < bands; i++)
+      {
+        log.info("overriding nodata for band " + i + " with: " + nodataOverride[i]);
+        nodata[i] = nodataOverride[i];
+      }
+    }
+    else
+    {
+      String msg =
+              "The argument to the nodata option must either be a single value to use for" +
+              " all bands or be a comma-separated list of values, one for each band starting" +
+              " with band 0. The source image has " + bands + " bands.";
+      throw new IllegalArgumentException(msg);
+    }
+  }
+  else
+  {
+    for (int b = 1; b <= bands; b++)
+    {
+      Double[] val = new Double[1];
+      Band band = image.GetRasterBand(b);
+      band.GetNoDataValue(val);
+      if (val[0] != null)
+      {
+        nodata[b - 1] = val[0];
+        log.debug("nodata: b: " + nodata[b-1].byteValue() + " d: " + nodata[b-1].doubleValue() +
+                  " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
+                  " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
+      }
+      else
+      {
+        log.debug("Unable to retrieve nodata from source, using NaN");
+        nodata[b-1] = Double.NaN;
       }
     }
   }
-  catch (IllegalArgumentException ignored)
-  {
-  }
-
 }
 
 List<String> getInputs(String arg, boolean recurse, final Configuration conf,
-    boolean existsCheck, boolean argIsDir)
+  boolean existsCheck, boolean argIsDir)
 {
   List<String> inputs = new LinkedList<>();
 
@@ -289,6 +336,23 @@ List<String> getInputs(String arg, boolean recurse, final Configuration conf,
 
       if (skippreprocessing)
       {
+        if (firstInput)
+        {
+          firstInput = false;
+          Dataset dataset = GDALUtils.open(name);
+
+          if (dataset != null)
+          {
+            try
+            {
+              calculateMinimalParams(dataset);
+            }
+            finally
+            {
+              GDALUtils.close(dataset);
+            }
+          }
+        }
         inputs.add(name);
         local = true;
 
@@ -356,6 +420,23 @@ List<String> getInputs(String arg, boolean recurse, final Configuration conf,
 
             if (skippreprocessing)
             {
+              if (firstInput)
+              {
+                firstInput = false;
+                Dataset dataset = GDALUtils.open(name);
+
+                if (dataset != null)
+                {
+                  try
+                  {
+                    calculateMinimalParams(dataset);
+                  }
+                  finally
+                  {
+                    GDALUtils.close(dataset);
+                  }
+                }
+              }
               inputs.add(name);
               System.out.println(" accepted ***");
             }
@@ -395,6 +476,18 @@ List<String> getInputs(String arg, boolean recurse, final Configuration conf,
   return inputs;
 }
 
+private double parseNoData(String fromArg) throws NumberFormatException
+{
+  String arg = fromArg.trim();
+  if (arg.compareToIgnoreCase("nan") != 0)
+  {
+    return Double.parseDouble(arg);
+  }
+  else
+  {
+    return Double.NaN;
+  }
+}
 
 @Override
 public int run(String[] args, Configuration conf, Properties providerProperties)
@@ -440,14 +533,19 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
       if (overrideNodata)
       {
         String str = line.getOptionValue("nd");
-        if (str.compareToIgnoreCase("nan") != 0)
+        String[] strElements = str.split(",");
+        nodataOverride = new Double[strElements.length];
+        for (int i=0; i < nodataOverride.length; i++)
         {
-          nodata = Double.parseDouble(line.getOptionValue("nd"));
-          log.info("overriding nodata with: " + nodata);
-        }
-        else
-        {
-          nodata = Double.NaN;
+          try
+          {
+            nodataOverride[i] = parseNoData(strElements[i]);
+          }
+          catch(NumberFormatException nfe)
+          {
+            System.out.println("Invalid nodata value: " + strElements[i]);
+            return -1;
+          }
         }
       }
 
@@ -478,9 +576,17 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
 
       tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
-      for (String arg: line.getArgs())
+      try
       {
-        inputs.addAll(getInputs(arg, recurse, conf, true, false));
+        for (String arg : line.getArgs())
+        {
+          inputs.addAll(getInputs(arg, recurse, conf, true, false));
+        }
+      }
+      catch(IllegalArgumentException e)
+      {
+        System.out.println(e.getMessage());
+        return -1;
       }
 
       log.info("Ingest inputs (" + inputs.size() + ")");
@@ -505,11 +611,6 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
 
           tags.put(s[0], s[1]);
         }
-      }
-
-      if (nodata == null)
-      {
-        nodata = Double.NaN;
       }
 
       quick = quick | line.hasOption("q");
