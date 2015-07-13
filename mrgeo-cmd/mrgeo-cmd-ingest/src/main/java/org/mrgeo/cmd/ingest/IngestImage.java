@@ -625,8 +625,10 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
           final boolean success;
           if (quick)
           {
-            success = IngestImageSpark.quickIngest(inputs.get(0), output, categorical,
-                conf, overrideNodata, nodata, tags, protectionLevel, providerProperties);
+//            success = IngestImageSpark.quickIngest(inputs.get(0), output, categorical,
+//                conf, overrideNodata, nodata, tags, protectionLevel, providerProperties);
+            log.error("Quick Ingest is not yet implemented");
+            return -1;
           }
           else if (local)
           {
