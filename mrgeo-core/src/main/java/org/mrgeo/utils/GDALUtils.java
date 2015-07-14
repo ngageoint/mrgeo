@@ -573,13 +573,8 @@ public static int toRasterDataBufferType(int gdaldatatype)
 
 public static void swapBytes(byte[] bytes, int gdaldatatype)
 {
-  if (gdaldatatype == gdalconstConstants.GDT_Byte)
-  {
-    // nothing to do for bytes...
-    return;
-  }
-
   byte tmp;
+
   // 2 byte value... swap byte 1 with 2
   if ((gdaldatatype == gdalconstConstants.GDT_UInt16) ||
       (gdaldatatype == gdalconstConstants.GDT_Int16))
@@ -591,12 +586,9 @@ public static void swapBytes(byte[] bytes, int gdaldatatype)
       bytes[i] = bytes[i + 1];
       bytes[i + 1] = tmp;
     }
-
-    return;
   }
-
   // 4 byte value... swap bytes 1 & 4, 2 & 3
-  if ((gdaldatatype == gdalconstConstants.GDT_UInt32) ||
+  else if ((gdaldatatype == gdalconstConstants.GDT_UInt32) ||
       (gdaldatatype == gdalconstConstants.GDT_Int32) ||
       (gdaldatatype == gdalconstConstants.GDT_Float32))
   {
@@ -612,14 +604,12 @@ public static void swapBytes(byte[] bytes, int gdaldatatype)
       bytes[i + 1] = bytes[i + 2];
       bytes[i + 2] = tmp;
     }
-
-    return;
   }
 
   // 8 byte value... swap bytes 1 & 8, 2 & 7, 3 & 6, 4 & 5
-  if (gdaldatatype == gdalconstConstants.GDT_Float64)
+  else if (gdaldatatype == gdalconstConstants.GDT_Float64)
   {
-    for (int i = 0; i < bytes.length; i += 2)
+    for (int i = 0; i < bytes.length; i += 8)
     {
       // swap 0 and 7
       tmp = bytes[i];
@@ -641,7 +631,6 @@ public static void swapBytes(byte[] bytes, int gdaldatatype)
       bytes[i + 3] = bytes[i + 4];
       bytes[i + 4] = tmp;
     }
-
   }
 }
 
