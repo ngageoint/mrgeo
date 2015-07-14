@@ -70,7 +70,7 @@ private MrsImage image;
 
 public ImageRendererAbstract()
 {
-    this.srs = GDALUtils.EPSG4326;
+  this.srs = GDALUtils.EPSG4326;
 }
 
 public ImageRendererAbstract(final SpatialReference srs)
@@ -315,16 +315,51 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 
       TMSUtils.Pixel requestedUL =
           TMSUtils.latLonToPixelsUL(requestedBounds.w, requestedBounds.n, zoomLevel, tilesize);
+      TMSUtils.Pixel requestedLR =
+          TMSUtils.latLonToPixelsUL(requestedBounds.e, requestedBounds.s, zoomLevel, tilesize);
+
       TMSUtils.Pixel actualUL =
           TMSUtils.latLonToPixelsUL(actualBounds.w, actualBounds.n, zoomLevel, tilesize);
+      TMSUtils.Pixel actualLR =
+          TMSUtils.latLonToPixelsUL(actualBounds.e, actualBounds.s, zoomLevel, tilesize);
 
-      long offsetX = requestedUL.px - actualUL.px;
-      long offsetY = requestedUL.py - actualUL.py;
+      int offsetX = (int)(requestedUL.px - actualUL.px);
+      int offsetY = (int)(requestedUL.py - actualUL.py);
 
-      Raster cropped = merged.createChild((int)offsetX, (int)offsetY, width, height, 0, 0, null);
+      int croppedW = (int)(requestedUL.px - requestedLR.px);
+      int croppedH = (int)(requestedUL.py - requestedLR.py);
+
+      Raster cropped = merged.createChild(offsetX, offsetY, croppedW, croppedH, 0, 0, null);
       Dataset src = GDALUtils.toDataset(cropped, pyramidMetadata.getDefaultValue(0));
 
       Dataset dst = GDALUtils.createEmptyMemoryRaster(src, width, height);
+
+      final double res = TMSUtils.resolution(zoomLevel, tilesize);
+
+      final double[] srcxform = new double[6];
+
+      // set the transform for the src
+      srcxform[0] = requestedBounds.w; /* top left x */
+      srcxform[1] = res; /* w-e pixel resolution */
+      srcxform[2] = 0; /* 0 */
+      srcxform[3] = requestedBounds.n; /* top left y */
+      srcxform[4] = 0; /* 0 */
+      srcxform[5] = -res; /* n-s pixel resolution (negative value) */
+
+      src.SetGeoTransform(srcxform);
+
+      // now change only the resolution for the dst
+      final double[] dstxform = new double[6];
+
+      dstxform[0] = requestedBounds.w; /* top left x */
+      dstxform[1] = (requestedBounds.e - requestedBounds.w) / width;; /* w-e pixel resolution */
+      dstxform[2] = 0; /* 0 */
+      dstxform[3] = requestedBounds.n; /* top left y */
+      dstxform[4] = 0; /* 0 */
+      dstxform[5] = (requestedBounds.s - requestedBounds.n) / height; /* n-s pixel resolution (negative value) */
+
+      dst.SetGeoTransform(dstxform);
+
 
       int resample = gdalconstConstants.GRA_Bilinear;
       if (pyramidMetadata.getClassification() == MrsImagePyramidMetadata.Classification.Categorical) {
@@ -342,13 +377,19 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
         }
       }
 
-      SpatialReference dstcrs = new SpatialReference();
-      dstcrs.SetWellKnownGeogCS(epsg);
+      // default is WGS84
+      String dstcrs = GDALUtils.EPSG4326;
+      if (epsg != null && !epsg.equalsIgnoreCase("epsg:4326"))
+      {
+        SpatialReference crs = new SpatialReference();
+        crs.SetWellKnownGeogCS(epsg);
+
+        dstcrs = crs.ExportToWkt();
+      }
 
       log.debug("Scaling image...");
-      gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326, dstcrs.ExportToWkt(), resample);
+      gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326, dstcrs, resample);
       log.debug("Image scaled.");
-
 
       return GDALUtils.toRaster(dst);
     }

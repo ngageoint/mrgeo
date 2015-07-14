@@ -404,37 +404,42 @@ public static Dataset toDataset(Raster raster, final double nodata)
   final Dataset ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth(), raster.getHeight(),
       raster.getNumBands(), type, nodatas);
 
-  for (int b = 0; b < raster.getNumBands(); b++)
+  if (ds != null)
   {
-    final Band band = ds.GetRasterBand(b + 1);
+    ds.SetProjection(GDALUtils.EPSG4326);
 
-    Object elements = raster.getDataElements(raster.getMinX(), raster.getMinY(),
-        raster.getWidth(), raster.getHeight(), null);
+    for (int b = 0; b < raster.getNumBands(); b++)
+    {
+      final Band band = ds.GetRasterBand(b + 1);
 
-    if (type == gdalconstConstants.GDT_Byte)
-    {
-      band.WriteRaster(0, 0, raster.getWidth(),
-          raster.getHeight(), (byte[]) elements);
-    }
-    else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
-    {
-      band.WriteRaster(0, 0, raster.getWidth(),
-          raster.getHeight(), (short[]) elements);
-    }
-    else if (type == gdalconstConstants.GDT_Int32)
-    {
-      band.WriteRaster(0, 0, raster.getWidth(),
-          raster.getHeight(), (int[]) elements);
-    }
-    else if (type == gdalconstConstants.GDT_Float32)
-    {
-      band.WriteRaster(0, 0, raster.getWidth(),
-          raster.getHeight(), (float[]) elements);
-    }
-    else if (type == gdalconstConstants.GDT_Float64)
-    {
-      band.WriteRaster(0, 0, raster.getWidth(),
-          raster.getHeight(), (double[]) elements);
+      Object elements = raster.getDataElements(raster.getMinX(), raster.getMinY(),
+          raster.getWidth(), raster.getHeight(), null);
+
+      if (type == gdalconstConstants.GDT_Byte)
+      {
+        band.WriteRaster(0, 0, raster.getWidth(),
+            raster.getHeight(), (byte[]) elements);
+      }
+      else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
+      {
+        band.WriteRaster(0, 0, raster.getWidth(),
+            raster.getHeight(), (short[]) elements);
+      }
+      else if (type == gdalconstConstants.GDT_Int32)
+      {
+        band.WriteRaster(0, 0, raster.getWidth(),
+            raster.getHeight(), (int[]) elements);
+      }
+      else if (type == gdalconstConstants.GDT_Float32)
+      {
+        band.WriteRaster(0, 0, raster.getWidth(),
+            raster.getHeight(), (float[]) elements);
+      }
+      else if (type == gdalconstConstants.GDT_Float64)
+      {
+        band.WriteRaster(0, 0, raster.getWidth(),
+            raster.getHeight(), (double[]) elements);
+      }
     }
   }
 
@@ -447,7 +452,7 @@ public static Raster toRaster(Dataset image)
   final int[] bandlist = new int[bands];
   for (int x = 0; x < bands; x++)
   {
-    bandlist[x] = x;
+    bandlist[x] = x + 1;
   }
 
   final int datatype = image.GetRasterBand(1).getDataType();
@@ -456,10 +461,14 @@ public static Raster toRaster(Dataset image)
   final int w = image.getRasterXSize();
   final int h = image.getRasterYSize();
 
-  final ByteBuffer buf = ByteBuffer.allocateDirect(datasize * w * h * bands);
+  final int size = datasize * w * h * bands;
+  final ByteBuffer buf = ByteBuffer.allocateDirect(size);
+  buf.order(ByteOrder.nativeOrder());
   image.ReadRaster_Direct(0, 0, w, h, w, h, datatype, buf, bandlist);
 
-  return GDALUtils.toRaster(h, w, bands, datatype, buf.array());
+  byte[] data = new byte[size];
+  buf.get(data);
+  return GDALUtils.toRaster(h, w, bands, datatype, data);
 }
 
 public static Raster toRaster(int height, int width, int bands,
