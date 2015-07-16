@@ -46,13 +46,12 @@ import java.util.Vector;
 
 public class GDALUtils
 {
-// it's quicker (the EPSG doesn't change) to just hardcode this instead of trying to get it from GDAL/
-public static final String EPSG4326 = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]\n";
 private static final Logger log = LoggerFactory.getLogger(GDALUtils.class);
 
-private static final String VSI_PREFIX = "/vsimem/";
-
+// it's quicker (the EPSG doesn't change) to just hardcode this instead of trying to get it from GDAL/
+public static final String EPSG4326 = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]\n";
 public static final String GDAL_LIBS;
+private static final String VSI_PREFIX = "/vsimem/";
 
 static
 {
@@ -445,127 +444,6 @@ public static Dataset toDataset(Raster raster)
   return ds;
 }
 
-private static void copyToDataset(Dataset ds, Raster raster)
-{
-  final int type = GDALUtils.toGDALDataType(raster.getTransferType());
-
-  ds.SetProjection(GDALUtils.EPSG4326);
-
-  final int bands = raster.getNumBands();
-  final int[] bandlist = new int[bands];
-
-  final int width = raster.getWidth();
-  final int height = raster.getHeight();
-
-  //boolean interleaved = raster.getSampleModel() instanceof PixelInterleavedSampleModel;
-
-  for (int i = 0; i < bands; i++)
-  {
-    bandlist[i] = i + 1; // remember, GDAL bands are 1's based
-  }
-
-  // data coming from getDataElements is always interleaved (pixel1, pixel2, pixel3...), so we need to make the
-  // GDAL dataset also interleaved (using pixelstride, linestride, and badstride)
-  Object elements = raster.getDataElements(raster.getMinX(), raster.getMinY(),
-      raster.getWidth(), raster.getHeight(), null);
-
-
-  int pixelsize = gdal.GetDataTypeSize(type) / 8;
-  int pixelstride = pixelsize * bands;
-  int linestride = pixelstride * width;
-  int bandstride = pixelsize;
-
-//  for (int y = 0, j = 0; y < raster.getHeight(); y++)
-//  {
-//    for (int x = 0; x < raster.getWidth(); x++, j += bands)
-//    {
-//      byte red = ((byte[])elements)[j + 0];
-//      byte green = ((byte[])elements)[j + 1];
-//      byte blue =  ((byte[])elements)[j + 2];
-//
-//      System.out.print(red + " " + green + " " + blue + " | ");
-//    }
-//    System.out.println(j);
-//  }
-
-  if (type == gdalconstConstants.GDT_Byte)
-  {
-//    byte[] bytedata;
-//    if (interleaved)
-//    {
-//      // need to "deinterleave" the data
-//      bytedata = RasterUtils.deinterleave((byte[]) elements, bands);
-//    }
-//    else
-//    {
-//      bytedata = (byte[])elements;
-//    }
-//
-//    ds.WriteRaster(0, 0, width, height, width, height, type, bytedata, bandlist, pixelstride, linestride, bandstride);
-    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-  }
-  else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
-  {
-//    short[] shortdata;
-//    if (interleaved)
-//    {
-//      // need to "deinterleave" the data
-//      shortdata = RasterUtils.deinterleave((short[]) elements, bands);
-//    }
-//    else
-//    {
-//      shortdata = (short[])elements;
-//    }
-//    ds.WriteRaster(0, 0, width, height, width, height, type, shortdata, bandlist); // (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-  }
-  else if (type == gdalconstConstants.GDT_Int32)
-  {
-//    int[] intdata;
-//    if (interleaved)
-//    {
-//      // need to "deinterleave" the data
-//      intdata = RasterUtils.deinterleave((int[]) elements, bands);
-//    }
-//    else
-//    {
-//      intdata = (int[])elements;
-//    }
-//    ds.WriteRaster(0, 0, width, height, width, height, type, intdata, bandlist); // (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-  }
-  else if (type == gdalconstConstants.GDT_Float32)
-  {
-//    float[] floatdata;
-//    if (interleaved)
-//    {
-//      // need to "deinterleave" the data
-//      floatdata = RasterUtils.deinterleave((float[]) elements, bands);
-//    }
-//    else
-//    {
-//      floatdata = (float[])elements;
-//    }
-//    ds.WriteRaster(0, 0, width, height, width, height, type, floatdata, bandlist); // (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-  }
-  else if (type == gdalconstConstants.GDT_Float64)
-  {
-//    double[] doubledata;
-//    if (interleaved)
-//    {
-//      // need to "deinterleave" the data
-//      doubledata = RasterUtils.deinterleave((double[]) elements, bands);
-//    }
-//    else
-//    {
-//      doubledata = (double[])elements;
-//    }
-//    ds.WriteRaster(0, 0, width, height, width, height, type, doubledata, bandlist); // (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
-  }
-}
-
 public static Raster toRaster(Dataset image)
 {
   final int bands = image.GetRasterCount();
@@ -674,7 +552,6 @@ public static Raster toRaster(int height, int width, int bands,
 
   return raster;
 }
-
 
 public static int toRasterDataBufferType(int gdaldatatype)
 {
@@ -840,29 +717,79 @@ public static double[] getnodatas(Dataset src)
   return nodatas;
 }
 
-@SuppressWarnings("unused")
-public static class GDALException extends RuntimeException
+
+public static void iowrite(Raster raster, String filename, String type)
 {
-
-  private static final long serialVersionUID = 1L;
-  private final Exception origException;
-
-  public GDALException(Exception e)
+  try
   {
-    super();
-    origException = e;
+    ImageIO.write(RasterUtils.makeBufferedImage(raster), type, new File(filename));
+  }
+  catch (IOException e)
+  {
+    e.printStackTrace();
+  }
+}
+
+private static void copyToDataset(Dataset ds, Raster raster)
+{
+  final int type = GDALUtils.toGDALDataType(raster.getTransferType());
+
+  ds.SetProjection(GDALUtils.EPSG4326);
+
+  final int bands = raster.getNumBands();
+  final int[] bandlist = new int[bands];
+
+  final int width = raster.getWidth();
+  final int height = raster.getHeight();
+
+  //boolean interleaved = raster.getSampleModel() instanceof PixelInterleavedSampleModel;
+
+  for (int i = 0; i < bands; i++)
+  {
+    bandlist[i] = i + 1; // remember, GDAL bands are 1's based
   }
 
-  public GDALException(String msg)
-  {
-    super();
-    origException = new Exception(msg);
-  }
+  // data coming from getDataElements is always interleaved (pixel1, pixel2, pixel3...), so we need to make the
+  // GDAL dataset also interleaved (using pixelstride, linestride, and badstride)
+  Object elements =
+      raster.getDataElements(raster.getMinX(), raster.getMinY(), raster.getWidth(), raster.getHeight(), null);
 
-  @Override
-  public void printStackTrace()
+  int pixelsize = gdal.GetDataTypeSize(type) / 8;
+  int pixelstride = pixelsize * bands;
+  int linestride = pixelstride * width;
+  int bandstride = pixelsize;
+
+  if (type == gdalconstConstants.GDT_Byte)
   {
-    this.origException.printStackTrace();
+//    byte[] bytedata;
+//    if (interleaved)
+//    {
+//      // need to "deinterleave" the data
+//      bytedata = RasterUtils.deinterleave((byte[]) elements, bands);
+//    }
+//    else
+//    {
+//      bytedata = (byte[])elements;
+//    }
+//
+//    ds.WriteRaster(0, 0, width, height, width, height, type, bytedata, bandlist, pixelstride, linestride, bandstride);
+    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
+  else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
+  {
+    ds.WriteRaster(0, 0, width, height, width, height, type, (short[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
+  else if (type == gdalconstConstants.GDT_Int32)
+  {
+    ds.WriteRaster(0, 0, width, height, width, height, type, (int[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
+  else if (type == gdalconstConstants.GDT_Float32)
+  {
+    ds.WriteRaster(0, 0, width, height, width, height, type, (float[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
+  else if (type == gdalconstConstants.GDT_Float64)
+  {
+    ds.WriteRaster(0, 0, width, height, width, height, type, (double[])elements, bandlist, pixelstride, linestride, bandstride);
   }
 }
 
@@ -953,15 +880,29 @@ private static void banded()
   GDALUtils.saveRaster(raster2, path + "banded_raster2.tif");
 }
 
-public static void iowrite(Raster raster, String filename, String type)
+@SuppressWarnings("unused")
+public static class GDALException extends RuntimeException
 {
-  try
+
+  private static final long serialVersionUID = 1L;
+  private final Exception origException;
+
+  public GDALException(Exception e)
   {
-    ImageIO.write(RasterUtils.makeBufferedImage(raster), type, new File(filename));
+    super();
+    origException = e;
   }
-  catch (IOException e)
+
+  public GDALException(String msg)
   {
-    e.printStackTrace();
+    super();
+    origException = new Exception(msg);
+  }
+
+  @Override
+  public void printStackTrace()
+  {
+    this.origException.printStackTrace();
   }
 }
 }
