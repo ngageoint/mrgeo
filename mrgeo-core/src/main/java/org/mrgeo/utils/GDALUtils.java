@@ -30,8 +30,12 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import java.awt.image.*;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.*;
@@ -285,8 +289,8 @@ public static Dataset createEmptyMemoryRaster(final Dataset src, final int width
 public static Dataset createEmptyMemoryRaster(final int width, final int height, final int bands,
     final int datatype, final double[] nodatas)
 {
-  final Driver driver = gdal.GetDriverByName("MEM");
-  final Dataset raster = driver.Create("InMem", width, height, bands, datatype);
+  final Dataset raster = createEmptyMemoryRaster(width, height, bands, datatype);
+
   if (raster == null)
   {
     return null;
@@ -296,6 +300,7 @@ public static Dataset createEmptyMemoryRaster(final int width, final int height,
   {
     final double nodata = nodatas[i - 1];
     final Band band = raster.GetRasterBand(i);
+
     band.Fill(nodata);
     band.SetNoDataValue(nodata);
   }
@@ -303,9 +308,22 @@ public static Dataset createEmptyMemoryRaster(final int width, final int height,
   return raster;
 }
 
+public static Dataset createEmptyMemoryRaster(final int width, final int height, final int bands,
+    final int datatype)
+{
+  final Driver driver = gdal.GetDriverByName("MEM");
+  return driver.Create("InMem", width, height, bands, datatype);
+}
+
 public static void saveRaster(Dataset raster, String filename)
 {
   GDALUtils.saveRaster(raster, filename, "GTiff");
+}
+
+public static void saveRaster(Raster raster, String filename)
+{
+  final Dataset src = GDALUtils.toDataset(raster);
+  GDALUtils.saveRaster(src, filename, "GTiff");
 }
 
 public static void saveRaster(Dataset raster, String filename, String type)
@@ -406,44 +424,146 @@ public static Dataset toDataset(Raster raster, final double nodata)
 
   if (ds != null)
   {
-    ds.SetProjection(GDALUtils.EPSG4326);
+    copyToDataset(ds, raster);
 
-    for (int b = 0; b < raster.getNumBands(); b++)
-    {
-      final Band band = ds.GetRasterBand(b + 1);
-
-      Object elements = raster.getDataElements(raster.getMinX(), raster.getMinY(),
-          raster.getWidth(), raster.getHeight(), null);
-
-      if (type == gdalconstConstants.GDT_Byte)
-      {
-        band.WriteRaster(0, 0, raster.getWidth(),
-            raster.getHeight(), (byte[]) elements);
-      }
-      else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
-      {
-        band.WriteRaster(0, 0, raster.getWidth(),
-            raster.getHeight(), (short[]) elements);
-      }
-      else if (type == gdalconstConstants.GDT_Int32)
-      {
-        band.WriteRaster(0, 0, raster.getWidth(),
-            raster.getHeight(), (int[]) elements);
-      }
-      else if (type == gdalconstConstants.GDT_Float32)
-      {
-        band.WriteRaster(0, 0, raster.getWidth(),
-            raster.getHeight(), (float[]) elements);
-      }
-      else if (type == gdalconstConstants.GDT_Float64)
-      {
-        band.WriteRaster(0, 0, raster.getWidth(),
-            raster.getHeight(), (double[]) elements);
-      }
-    }
   }
 
   return ds;
+}
+
+public static Dataset toDataset(Raster raster)
+{
+  final int type = GDALUtils.toGDALDataType(raster.getTransferType());
+  final Dataset ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth(), raster.getHeight(),
+      raster.getNumBands(), type);
+
+  if (ds != null)
+  {
+    copyToDataset(ds, raster);
+  }
+
+  return ds;
+}
+
+private static void copyToDataset(Dataset ds, Raster raster)
+{
+  final int type = GDALUtils.toGDALDataType(raster.getTransferType());
+
+  ds.SetProjection(GDALUtils.EPSG4326);
+
+  final int bands = raster.getNumBands();
+  final int[] bandlist = new int[bands];
+
+  final int width = raster.getWidth();
+  final int height = raster.getHeight();
+
+  //boolean interleaved = raster.getSampleModel() instanceof PixelInterleavedSampleModel;
+
+  for (int i = 0; i < bands; i++)
+  {
+    bandlist[i] = i + 1; // remember, GDAL bands are 1's based
+  }
+
+  // data coming from getDataElements is always interleaved (pixel1, pixel2, pixel3...), so we need to make the
+  // GDAL dataset also interleaved (using pixelstride, linestride, and badstride)
+  Object elements = raster.getDataElements(raster.getMinX(), raster.getMinY(),
+      raster.getWidth(), raster.getHeight(), null);
+
+
+  int pixelsize = gdal.GetDataTypeSize(type) / 8;
+  int pixelstride = pixelsize * bands;
+  int linestride = pixelstride * width;
+  int bandstride = pixelsize;
+
+//  for (int y = 0, j = 0; y < raster.getHeight(); y++)
+//  {
+//    for (int x = 0; x < raster.getWidth(); x++, j += bands)
+//    {
+//      byte red = ((byte[])elements)[j + 0];
+//      byte green = ((byte[])elements)[j + 1];
+//      byte blue =  ((byte[])elements)[j + 2];
+//
+//      System.out.print(red + " " + green + " " + blue + " | ");
+//    }
+//    System.out.println(j);
+//  }
+
+  if (type == gdalconstConstants.GDT_Byte)
+  {
+//    byte[] bytedata;
+//    if (interleaved)
+//    {
+//      // need to "deinterleave" the data
+//      bytedata = RasterUtils.deinterleave((byte[]) elements, bands);
+//    }
+//    else
+//    {
+//      bytedata = (byte[])elements;
+//    }
+//
+//    ds.WriteRaster(0, 0, width, height, width, height, type, bytedata, bandlist, pixelstride, linestride, bandstride);
+    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
+  else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
+  {
+//    short[] shortdata;
+//    if (interleaved)
+//    {
+//      // need to "deinterleave" the data
+//      shortdata = RasterUtils.deinterleave((short[]) elements, bands);
+//    }
+//    else
+//    {
+//      shortdata = (short[])elements;
+//    }
+//    ds.WriteRaster(0, 0, width, height, width, height, type, shortdata, bandlist); // (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
+  else if (type == gdalconstConstants.GDT_Int32)
+  {
+//    int[] intdata;
+//    if (interleaved)
+//    {
+//      // need to "deinterleave" the data
+//      intdata = RasterUtils.deinterleave((int[]) elements, bands);
+//    }
+//    else
+//    {
+//      intdata = (int[])elements;
+//    }
+//    ds.WriteRaster(0, 0, width, height, width, height, type, intdata, bandlist); // (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
+  else if (type == gdalconstConstants.GDT_Float32)
+  {
+//    float[] floatdata;
+//    if (interleaved)
+//    {
+//      // need to "deinterleave" the data
+//      floatdata = RasterUtils.deinterleave((float[]) elements, bands);
+//    }
+//    else
+//    {
+//      floatdata = (float[])elements;
+//    }
+//    ds.WriteRaster(0, 0, width, height, width, height, type, floatdata, bandlist); // (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
+  else if (type == gdalconstConstants.GDT_Float64)
+  {
+//    double[] doubledata;
+//    if (interleaved)
+//    {
+//      // need to "deinterleave" the data
+//      doubledata = RasterUtils.deinterleave((double[]) elements, bands);
+//    }
+//    else
+//    {
+//      doubledata = (double[])elements;
+//    }
+//    ds.WriteRaster(0, 0, width, height, width, height, type, doubledata, bandlist); // (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+  }
 }
 
 public static Raster toRaster(Dataset image)
@@ -461,81 +581,100 @@ public static Raster toRaster(Dataset image)
   final int w = image.getRasterXSize();
   final int h = image.getRasterYSize();
 
-  final int size = datasize * w * h * bands;
-  final ByteBuffer buf = ByteBuffer.allocateDirect(size);
-  buf.order(ByteOrder.nativeOrder());
-  image.ReadRaster_Direct(0, 0, w, h, w, h, datatype, buf, bandlist);
+  final int size = datasize * w * h;
 
-  byte[] data = new byte[size];
-  buf.get(data);
+  ByteBuffer data = ByteBuffer.allocateDirect(size * bands);
+  data.order(ByteOrder.nativeOrder());
+
+  image.ReadRaster_Direct(0, 0, w, h, w, h, datatype, data, bandlist);
+
+  data.rewind();
   return GDALUtils.toRaster(h, w, bands, datatype, data);
 }
 
 public static Raster toRaster(int height, int width, int bands,
     int gdaldatatype, final byte[] data)
 {
+  return toRaster(height, width, bands, gdaldatatype, ByteBuffer.wrap(data));
+}
+
+public static Raster toRaster(int height, int width, int bands,
+    int gdaldatatype, ByteBuffer data)
+{
   final int datatype = GDALUtils.toRasterDataBufferType(gdaldatatype);
 
-  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
+  final int bandbytes = height * width * (gdal.GetDataTypeSize(gdaldatatype) / 8);
+  final int databytes = bandbytes * bands;
 
-  // the corner of the raster is always 0,0
-  final WritableRaster raster = Raster.createWritableRaster(model, null);
+  int[] bankIndices = new int[bands];
+  int[] bandOffsets = new int[bands];
+  for (int i = 0; i < bands; i++) {
+    bankIndices[i] = 0;
+    bandOffsets[i] = i * width * height;
+  }
 
-  ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
-  rasterBuffer.order(ByteOrder.nativeOrder());
+  //SampleModel sm = new BandedSampleModel(datatype, width, height, width, bankIndices, bandOffsets);
+  SampleModel sm = new ComponentSampleModel(datatype, width, height, 1, width, bandOffsets);
 
-  final int databytes = model.getHeight() * model.getWidth() * (gdal.GetDataTypeSize(gdaldatatype) / 8);
-
+  DataBuffer db;
+  WritableRaster raster = null;
 
   switch (datatype)
   {
   case DataBuffer.TYPE_BYTE:
-    // we can't use the byte buffer explicitly because the header info is
-    // still in it...
     byte[] bytedata = new byte[databytes];
-    rasterBuffer.get(bytedata);
+    data.get(bytedata);
 
-    raster.setDataElements(0, 0, width, height, bytedata);
+    db = new DataBufferByte(bytedata, bytedata.length);
+
     break;
   case DataBuffer.TYPE_FLOAT:
-    FloatBuffer floatbuff = rasterBuffer.asFloatBuffer();
+    FloatBuffer floatbuff = data.asFloatBuffer();
     float[] floatdata = new float[databytes / RasterUtils.FLOAT_BYTES];
 
     floatbuff.get(floatdata);
 
-    raster.setDataElements(0, 0, width, height, floatdata);
+    db = new DataBufferFloat(floatdata, floatdata.length);
     break;
   case DataBuffer.TYPE_DOUBLE:
-    DoubleBuffer doublebuff = rasterBuffer.asDoubleBuffer();
+    DoubleBuffer doublebuff = data.asDoubleBuffer();
     double[] doubledata = new double[databytes / RasterUtils.DOUBLE_BYTES];
 
     doublebuff.get(doubledata);
 
-    raster.setDataElements(0, 0, width, height, doubledata);
-
+    db = new DataBufferDouble(doubledata, doubledata.length);
     break;
   case DataBuffer.TYPE_INT:
-    IntBuffer intbuff = rasterBuffer.asIntBuffer();
+    IntBuffer intbuff = data.asIntBuffer();
     int[] intdata = new int[databytes / RasterUtils.INT_BYTES];
 
     intbuff.get(intdata);
 
-    raster.setDataElements(0, 0, width, height, intdata);
-
+    db = new DataBufferInt(intdata, intdata.length);
     break;
   case DataBuffer.TYPE_SHORT:
-  case DataBuffer.TYPE_USHORT:
-    ShortBuffer shortbuff = rasterBuffer.asShortBuffer();
+    ShortBuffer shortbuff = data.asShortBuffer();
     short[] shortdata = new short[databytes / RasterUtils.SHORT_BYTES];
     shortbuff.get(shortdata);
-    raster.setDataElements(0, 0, width, height, shortdata);
+
+    db = new DataBufferShort(shortdata, shortdata.length);
+    break;
+  case DataBuffer.TYPE_USHORT:
+    ShortBuffer ushortbuff = data.asShortBuffer();
+    short[] ushortdata = new short[databytes / RasterUtils.SHORT_BYTES];
+    ushortbuff.get(ushortdata);
+
+    db = new DataBufferUShort(ushortdata, ushortdata.length);
     break;
   default:
     throw new GDALUtils.GDALException("Error trying to read raster.  Bad raster data type");
   }
 
+  raster = Raster.createWritableRaster(sm, db, null);
+
   return raster;
 }
+
 
 public static int toRasterDataBufferType(int gdaldatatype)
 {
@@ -724,6 +863,105 @@ public static class GDALException extends RuntimeException
   public void printStackTrace()
   {
     this.origException.printStackTrace();
+  }
+}
+
+public static void main(final String[] args) throws Exception
+{
+  interleaved();
+  banded();
+}
+
+private static void interleaved()
+{
+  final int[] offsets = new int[]{0, 1, 2};
+  final SampleModel model = new PixelInterleavedSampleModel(DataBuffer.TYPE_BYTE, 10, 10, 3, 3 * 10, offsets);
+
+  WritableRaster raw = Raster.createWritableRaster(model, null);
+  for (int y = 0, pixel = 0; y < raw.getHeight(); y++)
+  {
+    for (int x = 0; x < raw.getWidth(); x++, pixel++)
+    {
+      for (int b = 0; b < raw.getNumBands(); b++)
+      {
+        raw.setSample(x, y, b, pixel);
+      }
+    }
+  }
+
+  String path = System.getProperty("user.home") + "/tmp/raster/";
+
+  GDALUtils.saveRaster(raw, path + "interleaved_raw.tif");
+  iowrite(raw, path + "io_interleaved_raw.png", "png");
+
+  Dataset ds = GDALUtils.toDataset(raw);
+
+  GDALUtils.saveRaster(ds, path + "interleaved_dataset.tif");
+
+  Raster raster = GDALUtils.toRaster(ds);
+
+  GDALUtils.saveRaster(raster, path + "interleaved_raster.tif");
+  iowrite(raster, path + "io_interleaved_raster.png", "png");
+
+  Dataset ds2 = GDALUtils.toDataset(raster);
+
+  GDALUtils.saveRaster(ds2, path + "interleaved_dataset2.tif");
+
+  Raster raster2 = GDALUtils.toRaster(ds2);
+
+  iowrite(raster2, path + "io_interleaved_raster2.png", "png");
+  GDALUtils.saveRaster(raster2, path + "interleaved_raster2.tif");
+}
+
+private static void banded()
+{
+  final SampleModel model = new BandedSampleModel(DataBuffer.TYPE_BYTE, 10, 10, 3);
+
+  WritableRaster raw = Raster.createWritableRaster(model, null);
+  for (int y = 0, pixel = 0; y < raw.getHeight(); y++)
+  {
+    for (int x = 0; x < raw.getWidth(); x++, pixel++)
+    {
+      for (int b = 0; b < raw.getNumBands(); b++)
+      {
+        raw.setSample(x, y, b, pixel);
+      }
+    }
+  }
+
+  String path = System.getProperty("user.home") + "/tmp/raster/";
+
+  GDALUtils.saveRaster(raw, path + "banded_raw.tif");
+  iowrite(raw, path + "io_banded_raw.png", "png");
+
+  Dataset ds = GDALUtils.toDataset(raw);
+
+  GDALUtils.saveRaster(ds, path + "banded_dataset.tif");
+
+  Raster raster = GDALUtils.toRaster(ds);
+
+  iowrite(raster, path + "io_banded_raster.png", "png");
+  GDALUtils.saveRaster(raster, path + "banded_raster.tif");
+
+  Dataset ds2 = GDALUtils.toDataset(raster);
+
+  GDALUtils.saveRaster(ds2, path + "banded_dataset.2tif");
+
+  Raster raster2 = GDALUtils.toRaster(ds2);
+
+  iowrite(raster2, path + "io_banded_raster2.png", "png");
+  GDALUtils.saveRaster(raster2, path + "banded_raster2.tif");
+}
+
+public static void iowrite(Raster raster, String filename, String type)
+{
+  try
+  {
+    ImageIO.write(RasterUtils.makeBufferedImage(raster), type, new File(filename));
+  }
+  catch (IOException e)
+  {
+    e.printStackTrace();
   }
 }
 }

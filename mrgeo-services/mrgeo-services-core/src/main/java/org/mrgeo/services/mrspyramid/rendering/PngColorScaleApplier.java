@@ -15,9 +15,9 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
+import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.rasterops.ColorScale;
 import org.mrgeo.rasterops.ColorScale.Scaling;
-import org.mrgeo.data.raster.RasterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,96 +30,92 @@ import java.awt.image.WritableRaster;
  */
 public class PngColorScaleApplier extends ColorScaleApplier
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(PngColorScaleApplier.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(PngColorScaleApplier.class);
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ColorScaleApplier#renderImage(java.awt.image.RenderedImage,
-   * org.mrgeo.rasterops.ColorScale, double[], double)
-   */
-  @Override
-  public Raster applyColorScale(final Raster raster, ColorScale colorScale, final double[] extrema,
+/*
+ * (non-Javadoc)
+ *
+ * @see org.mrgeo.services.wms.ColorScaleApplier#renderImage(java.awt.image.RenderedImage,
+ * org.mrgeo.rasterops.ColorScale, double[], double)
+ */
+@Override
+public Raster applyColorScale(final Raster raster, ColorScale colorScale, final double[] extrema,
     final double[] defaultValues) throws Exception
+{
+
+  if (raster.getNumBands() == 3 || raster.getNumBands() == 4)
+  {
+    // no work to do...
+    if (raster.getTransferType() == DataBuffer.TYPE_BYTE)
     {
+      return raster;
+    }
 
-    if (raster.getNumBands() == 3 || raster.getNumBands() == 4)
+    final WritableRaster colored =
+        Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, raster.getWidth(), raster.getHeight(),
+            raster.getNumBands(), null);
+
+    final int w = raster.getMinX() + raster.getWidth();
+    final int h = raster.getMinY() + raster.getHeight();
+
+    for (int y = raster.getMinY(), pixel = 0; y < h; y++)
     {
-      // no work to do...
-      if (raster.getTransferType() == DataBuffer.TYPE_BYTE)
+      for (int x = raster.getMinX(); x < w; x++, pixel++)
       {
-        return raster;
-      }
-
-      final WritableRaster colored;
-      if (raster.getNumBands() == 4)
-      {
-        colored = RasterUtils.createAGBRRaster(raster.getWidth(), raster.getHeight());
-      }
-      else
-      {
-        colored = RasterUtils.createGBRRaster(raster.getWidth(), raster.getHeight());
-      }
-
-      final int w = raster.getMinX() + raster.getWidth();
-      final int h = raster.getMinY() + raster.getHeight();
-
-      for (int y = raster.getMinY(); y < h; y++)
-      {
-        for (int x = raster.getMinX(); x < w; x++)
+        for (int b = 0; b < raster.getNumBands(); b++)
         {
-          for (int b = 0; b < raster.getNumBands(); b++)
-          {
-            final double s = raster.getSampleDouble(x, y, b);
-            colored.setSample(x, y, b, s);
-          }
+          final int s = raster.getSample(x, y, b);
+
+          colored.setSample(x, y, b, s & 0xff);
         }
       }
-      return colored;
     }
-
-    if (colorScale == null)
-    {
-      if (raster.getNumBands() == 1)
-      {
-        colorScale = ColorScale.createDefaultGrayScale();
-      }
-      else
-      {
-        colorScale = ColorScale.createDefault();
-      }
-    }
-
-    // if we don't have min/max make the color scale modulo with
-    if (extrema == null)
-    {
-      colorScale.setScaling(Scaling.Modulo);
-      colorScale.setScaleRange(0.0, 10.0);
-    }
-    else if (colorScale.getScaling() == Scaling.MinMax)
-    {
-      colorScale.setScaleRange(extrema[0], extrema[1]);
-    }
-
-    colorScale.setTransparent(defaultValues[0]);
-
-    final WritableRaster colored = RasterUtils.createAGBRRaster(raster.getWidth(), raster.getHeight());
-    apply(raster, colored, colorScale);
 
     return colored;
+  }
+
+  if (colorScale == null)
+  {
+    if (raster.getNumBands() == 1)
+    {
+      colorScale = ColorScale.createDefaultGrayScale();
     }
-
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/png" };
+    else
+    {
+      colorScale = ColorScale.createDefault();
+    }
   }
 
-  @Override
-  public String[] getWmsFormats()
+// if we don't have min/max make the color scale modulo with
+  if (extrema == null)
   {
-    return new String[] { "png" };
+    colorScale.setScaling(Scaling.Modulo);
+    colorScale.setScaleRange(0.0, 10.0);
   }
+  else if (colorScale.getScaling() == Scaling.MinMax)
+  {
+    colorScale.setScaleRange(extrema[0], extrema[1]);
+  }
+
+  colorScale.setTransparent(defaultValues[0]);
+
+  final WritableRaster colored = RasterUtils.createAGBRRaster(raster.getWidth(), raster.getHeight());
+  apply(raster, colored, colorScale);
+
+  return colored;
+}
+
+@Override
+public String[] getMimeTypes()
+{
+  return new String[] { "image/png" };
+}
+
+@Override
+public String[] getWmsFormats()
+{
+  return new String[] { "png" };
+}
 
 }

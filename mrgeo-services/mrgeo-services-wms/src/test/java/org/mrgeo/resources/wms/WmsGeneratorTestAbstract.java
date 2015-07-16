@@ -66,7 +66,7 @@ public class WmsGeneratorTestAbstract extends JerseyTest
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
   // tests won't be run when is set to true
-  public final static boolean GEN_BASELINE_DATA_ONLY = true;
+  public final static boolean GEN_BASELINE_DATA_ONLY = false;
   // bounds is completely outside of the image bounds
   public final static String ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS =
       "160.312500,-12.656250,161.718750,-11.250000";

@@ -29,10 +29,7 @@ import org.mrgeo.services.mrspyramid.ColorScaleManager;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.LatLng;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.XmlUtils;
+import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.CDATASection;
@@ -420,11 +417,12 @@ public class WmsGenerator
     try
     {
       Raster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
+
       result = colorRaster(layerNames[0],
-                           (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
-                           format,
-                           renderer,
-                           result);
+          (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
+          format,
+          renderer,
+          result);
 
       Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
               .getHandler(format, ImageResponseWriter.class))

@@ -84,7 +84,6 @@ public ImageRendererAbstract(final String srsWkt)
 }
 
 /**
- *
  * @return KML String
  * @throws IOException
  */
@@ -107,14 +106,10 @@ public static String asKml(final String pyrName, final Bounds bounds, final int 
 /**
  * Determines the appropriate image zoom level for an image request
  *
- * @param metadata
- *          source pyramid metadata
- * @param bounds
- *          requested bounds
- * @param width
- *          requested output image width
- * @param height
- *          requested output image height
+ * @param metadata source pyramid metadata
+ * @param bounds   requested bounds
+ * @param width    requested output image width
+ * @param height   requested output image height
  * @return a zoom level
  * @throws Exception
  */
@@ -147,15 +142,13 @@ private static int getZoomLevel(final MrsImagePyramidMetadata metadata, final Bo
  * support non-pyramid data requests against the MrsImagePyramid interface. *This is not a long
  * term solution.*
  *
- * @param metadata
- *          source pyramid metadata
- * @param zoomLevel
- *          requested zoom level
+ * @param metadata  source pyramid metadata
+ * @param zoomLevel requested zoom level
  * @return true if the source data contains an image at the requested zoom level; false otherwise
  * @throws IOException
  * @todo poorly implemented method, I think...but enough to get by for now; rewrite so no
- *       exception is thrown in case where image doesn't exist OR this more likely this won't be
- *       needed at all once we rework MrsImagePyramid/MrsImage for non-pyramid data
+ * exception is thrown in case where image doesn't exist OR this more likely this won't be
+ * needed at all once we rework MrsImagePyramid/MrsImage for non-pyramid data
  */
 private static boolean isZoomLevelValid(final MrsImagePyramidMetadata metadata,
     final int zoomLevel) throws IOException
@@ -181,6 +174,23 @@ private static void printImageInfo(final RenderedImage image, final String prefi
   }
 }
 
+private static MrsImage getImageForScale(final MrsImagePyramid pyramid, final double scale)
+    throws JsonGenerationException, JsonMappingException, IOException
+{
+  log.debug("Retrieving image for for scale {} ...", scale);
+
+  final int zoom = TMSUtils.zoomForPixelSize(scale, pyramid.getMetadata().getTilesize());
+
+  final MrsImage image = pyramid.getImage(zoom);
+  if (image == null)
+  {
+    throw new IllegalArgumentException("A valid scale couldn't be matched.");
+  }
+
+  log.debug("Image for scale {} retrieved", scale);
+  return image;
+}
+
 /*
  * (non-Javadoc)
  *
@@ -193,7 +203,7 @@ public double[] getDefaultValues()
   {
     return image.getMetadata().getDefaultValuesDouble();
   }
-  return new double[] { -1.0 };
+  return new double[]{-1.0};
 }
 
 /*
@@ -229,14 +239,10 @@ public boolean outputIsTransparent()
 /**
  * Implements image rendering for GetMap requests
  *
- * @param pyramidName
- *          name of the source data
- * @param bounds
- *          requested bounds
- * @param width
- *          requested width
- * @param height
- *          requested height
+ * @param pyramidName name of the source data
+ * @param bounds      requested bounds
+ * @param width       requested width
+ * @param height      requested height
  * @return image rendering of the requested bounds at the requested size
  * @throws Exception
  */
@@ -314,24 +320,25 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       TMSUtils.Bounds actualBounds = TMSUtils.tileToBounds(tb, zoomLevel, tilesize);
 
       TMSUtils.Pixel requestedUL =
-          TMSUtils.latLonToPixelsUL(requestedBounds.w, requestedBounds.n, zoomLevel, tilesize);
+          TMSUtils.latLonToPixelsUL(requestedBounds.n, requestedBounds.w, zoomLevel, tilesize);
       TMSUtils.Pixel requestedLR =
-          TMSUtils.latLonToPixelsUL(requestedBounds.e, requestedBounds.s, zoomLevel, tilesize);
+          TMSUtils.latLonToPixelsUL(requestedBounds.s, requestedBounds.e, zoomLevel, tilesize);
+
 
       TMSUtils.Pixel actualUL =
-          TMSUtils.latLonToPixelsUL(actualBounds.w, actualBounds.n, zoomLevel, tilesize);
-      TMSUtils.Pixel actualLR =
-          TMSUtils.latLonToPixelsUL(actualBounds.e, actualBounds.s, zoomLevel, tilesize);
+          TMSUtils.latLonToPixelsUL(actualBounds.n, actualBounds.w, zoomLevel, tilesize);
+//      TMSUtils.Pixel actualLR =
+//          TMSUtils.latLonToPixelsUL(actualBounds.s, actualBounds.e, zoomLevel, tilesize);
 
-      int offsetX = (int)(requestedUL.px - actualUL.px);
-      int offsetY = (int)(requestedUL.py - actualUL.py);
+      int offsetX = (int) (requestedUL.px - actualUL.px);
+      int offsetY = (int) (requestedUL.py - actualUL.py);
 
-      int croppedW = (int)(requestedUL.px - requestedLR.px);
-      int croppedH = (int)(requestedUL.py - requestedLR.py);
+      int croppedW = (int) (requestedLR.px - requestedUL.px);
+      int croppedH = (int) (requestedLR.py - requestedUL.py);
 
       Raster cropped = merged.createChild(offsetX, offsetY, croppedW, croppedH, 0, 0, null);
-      Dataset src = GDALUtils.toDataset(cropped, pyramidMetadata.getDefaultValue(0));
 
+      Dataset src = GDALUtils.toDataset(cropped, pyramidMetadata.getDefaultValue(0));
       Dataset dst = GDALUtils.createEmptyMemoryRaster(src, width, height);
 
       final double res = TMSUtils.resolution(zoomLevel, tilesize);
@@ -352,7 +359,8 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       final double[] dstxform = new double[6];
 
       dstxform[0] = requestedBounds.w; /* top left x */
-      dstxform[1] = (requestedBounds.e - requestedBounds.w) / width;; /* w-e pixel resolution */
+      dstxform[1] = (requestedBounds.e - requestedBounds.w) / width;
+      ; /* w-e pixel resolution */
       dstxform[2] = 0; /* 0 */
       dstxform[3] = requestedBounds.n; /* top left y */
       dstxform[4] = 0; /* 0 */
@@ -362,12 +370,15 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 
 
       int resample = gdalconstConstants.GRA_Bilinear;
-      if (pyramidMetadata.getClassification() == MrsImagePyramidMetadata.Classification.Categorical) {
+      if (pyramidMetadata.getClassification() == MrsImagePyramidMetadata.Classification.Categorical)
+      {
         // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
         // in which case we will use GRA_NearestNeighbour
-        try {
+        try
+        {
           Field mode = gdalconstConstants.class.getDeclaredField("GRA_Mode");
-          if (mode != null) {
+          if (mode != null)
+          {
             resample = mode.getInt(gdalconstConstants.class);
           }
         }
@@ -418,10 +429,8 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 /**
  * Implements image rendering for GetMosaic requests
  *
- * @param pyramidName
- *          name of the source data
- * @param bounds
- *          requested bounds
+ * @param pyramidName name of the source data
+ * @param bounds      requested bounds
  * @return image rendering of the requested bounds
  * @throws Exception
  */
@@ -438,14 +447,10 @@ public Raster renderImage(final String pyramidName, final Bounds bounds,
 /**
  * Implements the image rendering for GetTile requests
  *
- * @param pyramidName
- *          name of the source data
- * @param tileColumn
- *          x tile coordinate
- * @param tileRow
- *          y tile coordinate
- * @param scale
- *          requested image resolution
+ * @param pyramidName name of the source data
+ * @param tileColumn  x tile coordinate
+ * @param tileRow     y tile coordinate
+ * @param scale       requested image resolution
  * @return image rendering of the requested tile
  * @throws Exception
  */
@@ -708,12 +713,9 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
 /**
  * Calculates the envelope of all image tiles that touch the requested bounds
  *
- * @param bounds
- *          requested bounds
- * @param zoom
- *          calculated zoom level for the requested bounds
- * @param tilesize
- *          tile size of the source data
+ * @param bounds   requested bounds
+ * @param zoom     calculated zoom level for the requested bounds
+ * @param tilesize tile size of the source data
  * @return an envelope containing all source image tiles touching the requested bounds
  */
 protected double[] getImageTileEnvelope(final Bounds bounds, final int zoom,
@@ -734,23 +736,6 @@ protected double[] getImageTileEnvelope(final Bounds bounds, final int zoom,
   xform[5] = -res; /* n-s pixel resolution (negative value) */
 
   return xform;
-}
-
-private static MrsImage getImageForScale(final MrsImagePyramid pyramid, final double scale)
-    throws JsonGenerationException, JsonMappingException, IOException
-{
-  log.debug("Retrieving image for for scale {} ...", scale);
-
-  final int zoom = TMSUtils.zoomForPixelSize(scale, pyramid.getMetadata().getTilesize());
-
-  final MrsImage image = pyramid.getImage(zoom);
-  if (image == null)
-  {
-    throw new IllegalArgumentException("A valid scale couldn't be matched.");
-  }
-
-  log.debug("Image for scale {} retrieved", scale);
-  return image;
 }
 
 }
