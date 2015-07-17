@@ -2115,11 +2115,6 @@
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-cmd-ingestvector</artifactId>
-        <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-mapalgebra</artifactId>
         <version>${mrgeo.version}</version>
       </dependency>
@@ -2671,6 +2666,7 @@
         <artifactId>gdal</artifactId>
         <version>${gdal.version}</version>
       </dependency>
+      <!--
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-cql</artifactId>
@@ -2718,18 +2714,6 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
-        <artifactId>gt-epsg-hsql</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-epsg-wkt</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
         <artifactId>gt-process</artifactId>
         <version>${geotools.version}</version>
       </dependency>
@@ -2744,14 +2728,6 @@
         <version>${geotools.version}</version>
         <scope>runtime</scope>
       </dependency>
-      <!--
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-imageio-ext-gdal</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-      -->
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-geotiff</artifactId>
@@ -2765,18 +2741,13 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
-        <artifactId>gt-shapefile</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
         <artifactId>gt-geometry</artifactId>
         <version>${geotools.version}</version>
         <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
-        <artifactId>gt-referencing</artifactId>
+        <artifactId>gt-shapefile</artifactId>
         <version>${geotools.version}</version>
       </dependency>
       <dependency>
@@ -2838,6 +2809,25 @@
         <version>${geotools.version}</version>
         <scope>runtime</scope>
       </dependency>
+      -->
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-referencing</artifactId>
+        <version>${geotools.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-epsg-hsql</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-epsg-wkt</artifactId>
+        <version>${geotools.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
       <dependency>
         <groupId>geotiff</groupId>
         <artifactId>geotiff-jai</artifactId>
@@ -3225,24 +3215,6 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-wkt</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-referencing</artifactId>
-    </dependency>
-    <!--
-         <dependency>
-         <groupId>org.geotools</groupId>
-         <artifactId>gt-imageio-ext-gdal</artifactId>
-         </dependency>
-    -->
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-image</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-geotiff</artifactId>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->

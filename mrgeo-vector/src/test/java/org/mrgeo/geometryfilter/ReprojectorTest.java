@@ -18,11 +18,11 @@ package org.mrgeo.geometryfilter;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.GeometryInputStream;
+import org.mrgeo.data.shp.ShapefileReader;
 import org.mrgeo.geometry.WellKnownProjections;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.geometry.WritablePoint;
-import org.mrgeo.data.GeometryInputStream;
-import org.mrgeo.data.shp.ShapefileReader;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 

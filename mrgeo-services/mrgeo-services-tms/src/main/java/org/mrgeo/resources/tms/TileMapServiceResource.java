@@ -18,38 +18,17 @@
  */
 package org.mrgeo.resources.tms;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.LineString;
-
-import org.apache.commons.lang.StringUtils;
-import org.geotools.coverage.CoverageFactoryFinder;
-import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.grid.GridCoverageFactory;
-import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.factory.GeoTools;
-import org.geotools.geometry.Envelope2D;
-import org.geotools.process.ProcessException;
-import org.geotools.process.raster.ContourProcess;
-import org.geotools.util.NullProgressListener;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
-import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.ImageMetadata;
 import org.mrgeo.rasterops.ColorScale;
-import org.mrgeo.rasterops.OpImageRegistrar;
-import org.mrgeo.tile.TileNotFoundException;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.ColorScaleManager;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.tms.TmsService;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.tile.TileNotFoundException;
 import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.TMSUtils;
-import org.opengis.feature.simple.SimpleFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
@@ -69,17 +48,16 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -98,7 +76,6 @@ public class TileMapServiceResource
   public static String KML_VERSION = "http://www.opengis.net/kml/2.2";
   public static String KML_EXTENSIONS = "http://www.google.com/kml/ext/2.2";
   public static String KML_MIME_TYPE = "application/vnd.google-earth.kml+xml";
-  private static Double MIN_CONTOUR_LENGTH = 0.01;
 
   @Context
   TmsService service;
@@ -131,7 +108,7 @@ public class TileMapServiceResource
   {
     // return an empty image
     final int dataType;
-    if (writer.getResponseMimeType() == "image/jpeg")
+    if (writer.getResponseMimeType().equals("image/jpeg"))
     {
       dataType = BufferedImage.TYPE_3BYTE_BGR;
     }
@@ -273,169 +250,7 @@ public class TileMapServiceResource
     return doc;
     }
 
-  protected static Document mrsPyramidTileToContourKml(final Raster tile,
-    final Envelope2D envelope, final Double interval) throws ProcessException,
-    ParserConfigurationException
-    {
 
-    final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-    final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-
-    // root elements
-    final Document doc = docBuilder.newDocument();
-    final Element rootElement = doc.createElement("kml");
-    doc.appendChild(rootElement);
-    final Attr ns = doc.createAttribute("xmlns");
-    ns.setValue(KML_VERSION);
-    rootElement.setAttributeNode(ns);
-    /*
-     * Attr gxns = doc.createAttribute("xmlns:gx"); gxns.setValue(KML_EXTENSIONS);
-     * rootElement.setAttributeNode(gxns);
-     */
-    // child elements
-    final Element d = doc.createElement("Document");
-    rootElement.appendChild(d);
-
-    final Element nm = doc.createElement("name");
-    nm.setTextContent("contours");
-    d.appendChild(nm);
-    final Element dsc = doc.createElement("description");
-    dsc.setTextContent("interval = " + interval);
-    d.appendChild(dsc);
-
-    final Element sty = doc.createElement("Style");
-    d.appendChild(sty);
-    final Element lsty = doc.createElement("ListStyle");
-    sty.appendChild(lsty);
-    final Element lit = doc.createElement("listItemType");
-    lit.setTextContent("checkHideChildren");
-    lsty.appendChild(lit);
-
-    final Element normalStyle = doc.createElement("Style");
-    normalStyle.setAttribute("id", "normalState");
-    final Element iconStyle = doc.createElement("IconStyle");
-    final Element icon = doc.createElement("Icon");
-    final Element scale = doc.createElement("scale");
-    scale.setTextContent("0");
-    iconStyle.appendChild(scale.cloneNode(true));
-    iconStyle.appendChild(icon.cloneNode(true));
-    final Element highlightScale = doc.createElement("scale");
-    highlightScale.setTextContent("1.0");
-    final Element highlightColor = doc.createElement("color");
-    highlightColor.setTextContent("ffffffff");
-    final Element labelStyle = doc.createElement("LabelStyle");
-    labelStyle.appendChild(scale.cloneNode(true));
-    final Element highlightStyle = doc.createElement("Style");
-    highlightStyle.setAttribute("id", "highlightState");
-    final Element contourStyle = doc.createElement("StyleMap");
-    contourStyle.setAttribute("id", "styleMapContour");
-    final Element normalPair = doc.createElement("Pair");
-    final Element highlightPair = doc.createElement("Pair");
-    final Element normalKey = doc.createElement("key");
-    normalKey.setTextContent("normal");
-    final Element highlightKey = doc.createElement("key");
-    highlightKey.setTextContent("highlight");
-    final Element normalStyleUrl = doc.createElement("styleUrl");
-    normalStyleUrl.setTextContent("#normalState");
-    final Element highlightStyleUrl = doc.createElement("styleUrl");
-    highlightStyleUrl.setTextContent("#highlightState");
-
-    d.appendChild(normalStyle);
-    normalStyle.appendChild(iconStyle.cloneNode(true));
-    normalStyle.appendChild(labelStyle.cloneNode(true));
-
-    d.appendChild(highlightStyle);
-    highlightStyle.appendChild(iconStyle);
-    final Element highlightLabelStyle = doc.createElement("LabelStyle");
-    highlightStyle.appendChild(highlightLabelStyle);
-    highlightLabelStyle.appendChild(highlightScale);
-    highlightLabelStyle.appendChild(highlightColor);
-    final Element highlightLineStyle = doc.createElement("LineStyle");
-    highlightStyle.appendChild(highlightLineStyle);
-    final Element highlightLineWidth = doc.createElement("width");
-    highlightLineWidth.setTextContent("2");
-    highlightLineStyle.appendChild(highlightLineWidth);
-    // Element highlightLabelVis = doc.createElement("gx:labelVisibility");
-    // highlightLabelVis.setTextContent("1");
-    // highlightLineStyle.appendChild(highlightLabelVis);
-
-    d.appendChild(contourStyle);
-    contourStyle.appendChild(normalPair);
-    normalPair.appendChild(normalKey);
-    normalPair.appendChild(normalStyleUrl);
-
-    contourStyle.appendChild(highlightPair);
-    highlightPair.appendChild(highlightKey);
-    highlightPair.appendChild(highlightStyleUrl);
-
-    final WritableRaster wRaster = tile.createCompatibleWritableRaster();
-    wRaster.setRect(-tile.getMinX(), -tile.getMinY(), tile);
-    final GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(GeoTools
-      .getDefaultHints());
-    final GridCoverage2D coverage = factory.create("GridCoverage", wRaster, envelope);
-
-    final ContourProcess cp = new ContourProcess();
-    final SimpleFeatureCollection features = cp.execute(coverage, 0, null,
-      Double.valueOf(interval), true, true, null, new NullProgressListener());
-
-    final SimpleFeatureIterator iterator = features.features();
-    try
-    {
-      while (iterator.hasNext())
-      {
-        final SimpleFeature feature = iterator.next();
-        final LineString geom = (LineString) feature.getDefaultGeometry();
-        if (geom.getLength() > MIN_CONTOUR_LENGTH)
-        {
-          final Double attrValue = (Double) feature.getAttribute("value");
-
-          final Element plm = doc.createElement("Placemark");
-          d.appendChild(plm);
-          final Element plmStyle = doc.createElement("styleUrl");
-          plmStyle.setTextContent("#styleMapContour");
-          plm.appendChild(plmStyle);
-          final Element plmname = doc.createElement("name");
-          plmname.setTextContent(String.valueOf(attrValue));
-          plm.appendChild(plmname);
-
-          final Element mgeom = doc.createElement("MultiGeometry");
-          plm.appendChild(mgeom);
-
-          final Element line = doc.createElement("LineString");
-          mgeom.appendChild(line);
-          final Element coords = doc.createElement("coordinates");
-
-          final Coordinate[] linecoords = geom.getCoordinates();
-          final List<String> coordList = new ArrayList<String>();
-          for (int i = 0; i < linecoords.length; i++)
-          {
-            final Coordinate coo = linecoords[i];
-            coordList.add(coo.x + "," + coo.y + "," + "0");
-
-            // Add a point label every 5000th vertice
-            if (i == 0 || i % 5000 == 0)
-            {
-              final Element pt = doc.createElement("Point");
-              mgeom.appendChild(pt);
-              final Element ptcoords = doc.createElement("coordinates");
-              ptcoords.setTextContent(coo.x + "," + coo.y + "," + "0");
-              pt.appendChild(ptcoords);
-            }
-
-          }
-          coords.setTextContent(StringUtils.join(coordList, "\n"));
-
-          line.appendChild(coords);
-        }
-      }
-    }
-    finally
-    {
-      iterator.close();
-    }
-
-    return doc;
-    }
 
   protected static Document mrsPyramidToTileMapServiceXml(final String url,
     final List<String> pyramidNames) throws ParserConfigurationException,
@@ -554,251 +369,6 @@ public class TileMapServiceResource
 
   }
 
-  // @GET
-  // @Produces("image/*")
-  // @Path("old/{version}/{raster}/{z}/{x}/{y}.{format}")
-  // public Response oldGetTile(@PathParam("version") final String version,
-  // @PathParam("raster") String raster, @PathParam("z") final Integer z,
-  // @PathParam("x") final Integer x, @PathParam("y") final Integer y,
-  // @PathParam("format") final String format,
-  // @QueryParam("color-scale-name") final String colorScaleName,
-  // @QueryParam("color-scale") final String colorScale, @QueryParam("min") final Double min,
-  // @QueryParam("max") final Double max,
-  // @DefaultValue("1") @QueryParam("maskMax") final Double maskMax,
-  // @QueryParam("mask") final String mask)
-  // {
-  //
-  // try
-  // {
-  // // check the request format
-  // final int formatHash = format.hashCode();
-  // ImageWriter writer;
-  // switch (formatHash)
-  // {
-  // case 114833:
-  // writer = ImageUtils.createImageWriter("image/tiff");
-  // break;
-  // case 111145:
-  // writer = ImageUtils.createImageWriter("image/png");
-  // break;
-  // case 105441:
-  // writer = ImageUtils.createImageWriter("image/jpeg");
-  // break;
-  // default:
-  // return Response.status(Status.BAD_REQUEST).entity("Unsupported image format - " + format)
-  // .build();
-  // }
-  //
-  // if (Base64.isBase64(raster))
-  // {
-  // raster = new String(Base64.decode(raster));
-  // }
-  //
-  // // Check cache for metadata, if not found read from pyramid
-  // // and store in cache
-  // MrsImagePyramidMetadata mpm;
-  // try
-  // {
-  // mpm = service.getMetadata(raster);
-  // final ImageMetadata zlm = mpm.getImageMetadata()[z];
-  // if (zlm.tileBounds == null)
-  // {
-  // return Response.status(Status.NOT_FOUND).entity("Tile not found").build();
-  // }
-  // if (!zlm.tileBounds.contains(x, y))
-  // {
-  // return returnEmptyTile(writer, mpm.getTilesize(), mpm.getTilesize(), format);
-  // }
-  // }
-  // catch (final ExecutionException e)
-  // {
-  // return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + raster).build();
-  // }
-  //
-  // OpImageRegistrar.registerMrGeoOps();
-  //
-  // // FIXME: Will we ever have to support multiband images here?
-  // double[] extrema = new double[2];
-  // final ImageStats stats = mpm.getStats(0);
-  //
-  // if (min != null && max != null)
-  // {
-  // extrema[0] = min;
-  // extrema[1] = max;
-  // }
-  // else if (stats != null)
-  // {
-  // extrema[0] = stats.min;
-  // extrema[1] = stats.max;
-  //
-  // // Check for min/max override values from the request
-  // if (min != null)
-  // {
-  // extrema[0] = min;
-  // }
-  // if (max != null)
-  // {
-  // extrema[1] = max;
-  // }
-  // }
-  // else
-  // {
-  // extrema = null;
-  // }
-  //
-  // final double transparentValue = mpm.getDefaultValue(0);
-  //
-  // ColorScale cs = null;
-  // try
-  // {
-  // cs = service.getColorScale(colorScale, colorScaleName, raster, new ColorScaleInfo.Builder()
-  // .transparent(transparentValue).extrema(extrema));
-  // }
-  // catch (final Exception te)
-  // {
-  // return Response.status(Status.NOT_FOUND).type("text/plain").entity(te.getMessage()).build();
-  // }
-  //
-  // // load the pyramid, and get the TMS tile if it exists
-  // // or else return blank image
-  // final MrsImagePyramid mp = service.getPyramid(raster);
-  // final MrsImage zImage = mp.getImage(z);
-  // // If the zImage is null that means the pyramid level does not exist
-  // if (zImage == null)
-  // {
-  // return Response.status(Status.NOT_FOUND).build();
-  // }
-  // final int width = zImage.getTileWidth();
-  // final int height = zImage.getTileHeight();
-  //
-  // BufferedImage bufImg;
-  // if (zImage.isTileEmpty(x, y))
-  // {
-  // return returnEmptyTile(writer, width, height, format);
-  // }
-  //
-  // try
-  // {
-  // final Raster xyTile = zImage.getTile(x, y);
-  //
-  // final WritableRaster wr = Raster.createWritableRaster(xyTile.getSampleModel(), xyTile
-  // .getDataBuffer(), null);
-  // final ColorModel cm = RasterUtils.createColorModel(xyTile);
-  // bufImg = new BufferedImage(cm, wr, false, null);
-  //
-  // final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-  //
-  // // Apply mask if requested
-  // if (mask != null && !mask.isEmpty())
-  // {
-  // final int b = 0;
-  // final MrsImagePyramidMetadata maskMpm = service.getMetadata(mask);
-  //
-  // final MrsImagePyramid maskMp = service.getPyramid(mask);
-  // final MrsImage maskZImage = maskMp.getImage(z);
-  // if (maskZImage != null)
-  // {
-  // try
-  // {
-  // final Raster maskXyTile = maskZImage.getTile(x, y);
-  // for (int w = 0; w < maskXyTile.getWidth(); w++)
-  // {
-  // for (int h = 0; h < maskXyTile.getHeight(); h++)
-  // {
-  // final double maskPixel = maskXyTile.getSampleDouble(w, h, b);
-  // if (maskPixel > maskMax ||
-  // Double.compare(maskPixel, maskMpm.getDefaultValue(b)) == 0)
-  // {
-  // wr.setSample(w, h, b, mpm.getDefaultValue(b));
-  // }
-  // }
-  // }
-  // }
-  // catch (final TileNotFoundException ex)
-  // {
-  // // If not mask tile exists, a blank tile should be returned
-  // return returnEmptyTile(writer, width, height, format);
-  // }
-  // finally
-  // {
-  // maskZImage.close();
-  // }
-  // }
-  // }
-  //
-  // // return a non-colormapped geotiff for tiff format
-  // switch (formatHash)
-  // {
-  // case 114833:
-  // final Bounds bnds = new Bounds(TMSUtils.tileBoundsArray(x, y, z, width));
-  // GeoTiffExporter.export(bufImg, bnds, baos, false, null, mpm.getDefaultValue(0));
-  // break;
-  // case 111145:
-  // final MemoryCacheImageOutputStream imageStreamPng = new MemoryCacheImageOutputStream(baos);
-  // writer.setOutput(imageStreamPng);
-  // // Assume 3 band images are RGB and should NOT have a color scale applied
-  // if (mpm.getBands() == 3)
-  // {
-  // // Read nodata from metadata and assign to color
-  // final int[] defaultValues = mpm.getDefaultValuesInt();
-  // final Color nodataColor = new Color(defaultValues[0], defaultValues[1],
-  // defaultValues[2]);
-  //
-  // writer.write(ImageUtils.imageToRgbaBufferedImage(ImageUtils.makeColorTransparent(
-  // bufImg, nodataColor)));
-  // }
-  // else
-  // {
-  // // writer.write(ImageUtils.bufferRenderedImage(
-  // // ColorScaleApplier.applyToRgba(bufImg, cs)
-  // // ));
-  // new PngImageResponseWriter().writeToStream(org.mrgeo.rasterops.ColorScaleApplier
-  // .applyToRgba(bufImg, cs).getData(), baos);
-  // }
-  // imageStreamPng.close();
-  // break;
-  // case 105441:
-  // final MemoryCacheImageOutputStream imageStreamJpg = new MemoryCacheImageOutputStream(baos);
-  // writer.setOutput(imageStreamJpg);
-  // // Assume 3 band images are RGB and should NOT have a color scale applied
-  // if (mpm.getBands() == 3)
-  // {
-  // writer.write(bufImg);
-  // }
-  // else
-  // {
-  // writer.write(org.mrgeo.rasterops.ColorScaleApplier.applyToRgb(bufImg, cs));
-  // }
-  // imageStreamJpg.close();
-  // break;
-  // default:
-  // return Response.status(Status.BAD_REQUEST).entity("Unsupported image format - " + format)
-  // .build();
-  // }
-  // final byte[] imageData = baos.toByteArray();
-  // baos.close();
-  //
-  // final String type = mimeTypeMap.getContentType("output." + format);
-  // return Response.ok(imageData).header("Content-Type", type).build();
-  // }
-  // catch (final TileNotFoundException ex)
-  // {
-  // // requested tile is outside of image bounds,
-  // // return a blank tile
-  // return returnEmptyTile(writer, width, height, format);
-  // }
-  // finally
-  // {
-  // zImage.close();
-  // }
-  // }
-  // catch (final Exception e)
-  // {
-  // log.error("Exception occurred getting tile " + raster + "/" + z + "/" + x + "/" + y + "." +
-  // format, e);
-  // return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
-  // }
-  // }
 
   @SuppressWarnings("static-method")
   @GET
@@ -960,93 +530,6 @@ public class TileMapServiceResource
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
 
-  @GET
-  @Produces("text/xml")
-  @Path("/{version}/{raster}/{z}/{x}/{y}/{interval}.kml")
-  public Response getTileContours(@PathParam("version") final String version,
-    @PathParam("raster") String raster, @PathParam("z") final Integer z,
-    @PathParam("x") final Integer x, @PathParam("y") final Integer y,
-    @PathParam("interval") final Double interval)
-  {
-
-    try
-    {
-      // Check cache for metadata, if not found read from pyramid
-      // and store in cache
-      MrsImagePyramidMetadata mpm;
-      try
-      {
-        mpm = service.getMetadata(raster);
-        // If not close enough to max zoom level, bail out
-        if (mpm.getMaxZoomLevel() != z)
-        {
-          return Response.ok("<kml/>").header("Content-type", "text/xml").build();
-        }
-        final ImageMetadata zlm = mpm.getImageMetadata()[z];
-        if (zlm.tileBounds == null)
-        {
-          return Response.status(Status.NOT_FOUND).entity("Tile not found").build();
-        }
-        if (!zlm.tileBounds.contains(x, y))
-        {
-          return Response.status(Status.NOT_FOUND).entity("Tile is empty").build();
-        }
-      }
-      catch (final ExecutionException e)
-      {
-        return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + raster).build();
-      }
-
-      OpImageRegistrar.registerMrGeoOps();
-
-      // load the pyramid, and get the TMS tile if it exists
-      // or else return blank image
-      final MrsImagePyramid mp = service.getPyramid(raster);
-      final MrsImage zImage = mp.getImage(z);
-      // If the zImage is null that means the pyramid level does not exist
-      if (zImage == null)
-      {
-        return Response.status(Status.NOT_FOUND).build();
-      }
-      if (zImage.isTileEmpty(x, y))
-      {
-        return Response.status(Status.NOT_FOUND).entity("Tile is empty").build();
-      }
-
-      try
-      {
-        final Raster xyTile = zImage.getTile(x, y);
-        final Bounds tileBounds = TMSUtils.tileBounds(x, y, z, mpm.getTilesize())
-            .convertNewToOldBounds();
-        final Envelope2D envelope = new Envelope2D();
-        envelope.setRect(tileBounds.toRectangle2D());
-
-        final Document kml = mrsPyramidTileToContourKml(xyTile, envelope, interval);
-
-        // return Response.ok(kml, new
-        // MimetypesFileTypeMap().getContentType("kml")).header("Content-type",
-        // KmlService.KML_MIME_TYPE).build();
-        return Response.ok(kml).header("Content-type", "text/xml").build();
-
-      }
-      catch (final IllegalArgumentException ex)
-      {
-        // requested tile is outside of image bounds,
-        // return a blank tile
-        return Response.status(Status.NOT_FOUND).entity("Tile is empty").build();
-      }
-      finally
-      {
-        zImage.close();
-      }
-    }
-    catch (final Exception e)
-    {
-      log.error("Exception occurred getting tile " + raster + "/" + z + "/" + x + "/" + y + ".kml",
-        e);
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
-    }
-  }
 
   @GET
   @Produces("text/xml")

@@ -82,6 +82,7 @@ public class RasterTileMerger
   {
     final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), image
       .getZoomlevel(), image.getTilesize());
+
     return RasterTileMerger.mergeTiles(image, tb);
   }
 

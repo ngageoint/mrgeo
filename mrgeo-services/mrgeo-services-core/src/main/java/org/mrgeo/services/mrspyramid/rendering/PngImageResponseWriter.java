@@ -19,10 +19,7 @@ import ar.com.hjg.pngj.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.ComponentSampleModel;
-import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
-import java.awt.image.SampleModel;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -62,51 +59,29 @@ public class PngImageResponseWriter extends ImageResponseWriterAbstract
   {
     // final long start = System.currentTimeMillis();
 
-    final int[] bandOffsets;
-
-    final SampleModel model = raster.getSampleModel();
-    if (model instanceof ComponentSampleModel)
-    {
-      final ComponentSampleModel cm = (ComponentSampleModel) model;
-      bandOffsets = cm.getBandOffsets();
-    }
-    else
-    {
-      bandOffsets = new int[raster.getNumBands()];
-      for (int i = 0; i < raster.getNumBands(); i++)
-      {
-        bandOffsets[i] = i;
-      }
-    }
-
     final boolean alpha = raster.getNumBands() == 4;
 
-    final byte[] bytes = ((DataBufferByte) raster.getDataBuffer()).getData();
-
     final int bands = raster.getNumBands();
-    final int scanlinestride = raster.getWidth() * bands;
 
-    // final ImageInfo imi = new ImageInfo(raster.getWidth(), raster.getHeight(), 8, alpha);
     final ImageInfo imi = new ImageInfo(raster.getWidth(), raster.getHeight(), 8, true);
-
     final ImageLineInt line = new ImageLineInt(imi);
 
     final PngWriter writer = new PngWriter(byteStream, imi);
     writer.setFilterType(FilterType.FILTER_NONE); // no filtering
     writer.setCompLevel(6);
 
-    final int r = bandOffsets[0];
-    final int g = bandOffsets[1];
-    final int b = bandOffsets[2];
-    final int a = alpha ? bandOffsets[3] : 0;
+    final int r = 0;
+    final int g = 1;
+    final int b = 2;
+    final int a = alpha ? 3 : 0;
 
     int rnodata;
     int gnodata;
     int bnodata;
 
-    int red;
-    int green;
-    int blue;
+    byte red;
+    byte green;
+    byte blue;
 
     if (!alpha)
     {
@@ -121,31 +96,31 @@ public class PngImageResponseWriter extends ImageResponseWriterAbstract
       bnodata = 0;
     }
 
-    for (int row = 0, rowoffset = 0; row < imi.rows; row++, rowoffset += scanlinestride)
+    byte[] pixels = (byte[]) raster.getDataElements(0, 0, raster.getWidth(), raster.getHeight(), null);
+
+    for (int y = 0, j = 0; y < raster.getHeight(); y++)
     {
-      for (int col = 0, j = rowoffset; col < imi.cols; col++, j += bands)
+      for (int x = 0; x < raster.getWidth(); x++, j += bands)
       {
+
+        int[] pixel = raster.getPixel(x, y, (int[])null);
         if (alpha)
         {
-          ImageLineHelper.setPixelRGBA8(line, col, bytes[j + r], bytes[j + g], bytes[j + b],
-            bytes[j + a]);
+          ImageLineHelper.setPixelRGBA8(line, x, pixels[j + r], pixels[j + g], pixels[j + b], pixels[j + a]);
         }
         else
         {
-          // ImageLineHelper.setPixelRGB8(line, col, bytes[j + r], bytes[j + g], bytes[j + b]);
-          red = bytes[j + r];
-          green = bytes[j + g];
-          blue = bytes[j + b];
+          red = (byte)pixel[0];
+          green = (byte)pixel[1];
+          blue =  (byte)pixel[2];
 
-          ImageLineHelper.setPixelRGBA8(line, col, red, green, blue, (red == rnodata &&
-            green == gnodata && blue == bnodata) ? 0 : 255);
+          ImageLineHelper.setPixelRGBA8(line, x, red, green, blue, (red == rnodata &&
+              green == gnodata && blue == bnodata) ? 0 : 255);
         }
       }
       writer.writeRow(line);
     }
     writer.end();
-
-    // ImageIO.write(RasterUtils.makeBufferedImage(raster), "PNG", byteStream);
 
     byteStream.close();
   }

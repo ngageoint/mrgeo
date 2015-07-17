@@ -24,6 +24,7 @@ import javax.media.jai.PlanarImage;
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
+import java.nio.*;
 import java.util.Arrays;
 
 /**
@@ -245,7 +246,7 @@ public class RasterUtils
   public static WritableRaster createGBRRaster(final int width, final int height)
   {
     return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-                                          width * 3, 3, new int[]{2, 1, 0}, null);
+        width * 3, 3, new int[]{2, 1, 0}, null);
   }
 
   public static WritableRaster createAGBRRaster(final int width, final int height)
@@ -1305,4 +1306,119 @@ public class RasterUtils
       }
     }
   }
+
+public static byte[] deinterleave(byte[] data, int numbands)
+{
+  byte[] deinterlaced = new byte[data.length];
+
+  ByteBuffer[] bands = new ByteBuffer[numbands];
+  int bandoffset = data.length / numbands;
+
+  for (int band = 0; band < numbands; band++)
+  {
+    bands[band] = ByteBuffer.wrap(deinterlaced, band * bandoffset, bandoffset);
+  }
+
+  for (int pixel = 0; pixel < data.length; pixel += numbands)
+  {
+    for (int band = 0; band < numbands; band++)
+    {
+      bands[band].put(data[pixel]);
+    }
+  }
+
+  return deinterlaced;
+}
+
+public static short[] deinterleave(short[] data, int numbands)
+{
+  short[] deinterlaced = new short[data.length];
+
+  ShortBuffer[] bands = new ShortBuffer[numbands];
+  int bandoffset = data.length / numbands;
+
+  for (int band = 0; band < numbands; band++)
+  {
+    bands[band] = ShortBuffer.wrap(deinterlaced, band * bandoffset, bandoffset);
+  }
+
+  for (int pixel = 0; pixel < data.length; pixel += numbands)
+  {
+    for (int band = 0; band < numbands; band++)
+    {
+      bands[band].put(data[pixel]);
+    }
+  }
+
+  return deinterlaced;
+}
+
+public static int[] deinterleave(int[] data, int numbands)
+{
+  int[] deinterlaced = new int[data.length];
+
+  IntBuffer[] bands = new IntBuffer[numbands];
+  int bandoffset = data.length / numbands;
+
+  for (int band = 0; band < numbands; band++)
+  {
+    bands[band] = IntBuffer.wrap(deinterlaced, band * bandoffset, bandoffset);
+  }
+
+  for (int pixel = 0; pixel < data.length; pixel += numbands)
+  {
+    for (int band = 0; band < numbands; band++)
+    {
+      bands[band].put(data[pixel]);
+    }
+  }
+
+  return deinterlaced;
+}
+
+public static float[] deinterleave(float[] data, int numbands)
+{
+  float[] deinterlaced = new float[data.length];
+
+  FloatBuffer[] bands = new FloatBuffer[numbands];
+  int bandoffset = data.length / numbands;
+
+  for (int band = 0; band < numbands; band++)
+  {
+    bands[band] = FloatBuffer.wrap(deinterlaced, band * bandoffset, bandoffset);
+  }
+
+  for (int pixel = 0; pixel < data.length; pixel += numbands)
+  {
+    for (int band = 0; band < numbands; band++)
+    {
+      bands[band].put(data[pixel]);
+    }
+  }
+
+  return deinterlaced;
+}
+
+public static double[] deinterleave(double[] data, int numbands)
+{
+  double[] deinterlaced = new double[data.length];
+
+  DoubleBuffer[] bands = new DoubleBuffer[numbands];
+  int bandoffset = data.length / numbands;
+
+  for (int band = 0; band < numbands; band++)
+  {
+    bands[band] = DoubleBuffer.wrap(deinterlaced, band * bandoffset, bandoffset);
+  }
+
+  for (int pixel = 0; pixel < data.length; pixel += numbands)
+  {
+    for (int band = 0; band < numbands; band++)
+    {
+      bands[band].put(data[pixel]);
+    }
+  }
+
+  return deinterlaced;
+}
 }
