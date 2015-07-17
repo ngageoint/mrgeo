@@ -17,8 +17,8 @@ package org.mrgeo.hdfs.tile;
 
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Writable;
-import org.mrgeo.image.MrsImageException;
 import org.mrgeo.data.KVIterator;
+import org.mrgeo.image.MrsImageException;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -31,7 +31,6 @@ import java.io.IOException;
  */
 public abstract class HdfsTileResultScanner<T, TWritable extends Writable> implements KVIterator<TileIdWritable, T>
 {
-
   // reader used for pulling items
   private final HdfsMrsTileReader<T, TWritable> reader;
 
@@ -101,7 +100,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
 
     primeScanner(startTileId, endTileId);
 
-  } // end constructor
+  }
 
   @Override
   public TileIdWritable currentKey()
@@ -170,8 +169,6 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
               {
                 return true;
               }
-
-              System.out.println("skipping: " + t.toString());
             }
             else
             {
@@ -189,6 +186,10 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
           {
             return false;
           }
+          if (!reader.isCachingEnabled() && mapfile != null)
+          {
+            mapfile.close();
+          }
           mapfile = reader.getReader(curPartition);
         }
       }
@@ -197,7 +198,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
     {
       throw new MrsImageException(e);
     }
-  } // end hasNext
+  }
 
   /**
    * Get the value from the MapFile and prepares the Raster output.
@@ -205,7 +206,6 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
   @Override
   public T next()
   {
-    // System.out.println("Current key returned is " + currentKey.get());
     try
     {
       return toNonWritable(currentValue);
@@ -214,7 +214,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
     {
       throw new MrsImageException(e);
     }
-  } // end next
+  }
 
   /**
    * The remove method does nothing
@@ -268,6 +268,10 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
       TileIdWritable startKey = null;
       while (curPartition == -1 && partition < reader.getMaxPartitions())
       {
+        if (!reader.isCachingEnabled() && mapfile != null)
+        {
+          mapfile.close();
+        }
         mapfile = reader.getReader(partition);
         try
         {

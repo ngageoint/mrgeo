@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -49,11 +50,29 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends MrsTileReader<T>
 {
-  static final Logger LOG = LoggerFactory.getLogger(HdfsMrsTileReader.class);
-  
+  private static Logger log = LoggerFactory.getLogger(HdfsMrsTileReader.class);
   private final static int READER_CACHE_SIZE = 100;
   private final static int READER_CACHE_EXPIRE = 10; // minutes
 
+  private MapFile.Reader loadReader(int partition) throws IOException
+  {
+    final FileSplit.FileSplitInfo part =
+            (FileSplit.FileSplitInfo) splits.getSplits()[partition];
+
+    final Path path = new Path(imagePath, part.getName());
+    MapFile.Reader reader = new MapFile.Reader(path, conf);
+
+    if (profile)
+    {
+      LeakChecker.instance().add(
+              reader,
+              ExceptionUtils.getFullStackTrace(new Throwable(
+                      "HdfsMrsVectorReader creation stack(ignore the Throwable...)")));
+    }
+    return reader;
+  }
+
+  private boolean cachingEnabled = true;
   private final LoadingCache<Integer, MapFile.Reader> readerCache = CacheBuilder.newBuilder()
       .maximumSize(READER_CACHE_SIZE)
      .expireAfterAccess(READER_CACHE_EXPIRE, TimeUnit.SECONDS)
@@ -78,26 +97,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
      @Override
      public MapFile.Reader load(final Integer partition) throws IOException
      {
-       final FileSplit.FileSplitInfo part =
-           (FileSplit.FileSplitInfo) splits.getSplits()[partition];
-
-       final Path path = new Path(imagePath, part.getName());
-       final FileSystem fs = path.getFileSystem(conf);
-
-       MapFile.Reader reader = new MapFile.Reader(path, conf);
-
-       if (profile)
-       {
-         LeakChecker.instance().add(
-           reader,
-           ExceptionUtils.getFullStackTrace(new Throwable(
-             "HdfsMrsVectorReader creation stack(ignore the Throwable...)")));
-       }
-       LOG.debug("opening (not in cache) partition: {} file: {}", partition, part);
-     
-
-     return reader;
-
+       return loadReader(partition);
      }
    });
 
@@ -177,36 +177,51 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
    */
   public HdfsMrsTileReader(final String path, final int zoom) throws IOException
   {
-      // get the Hadoop configuration
+    // get the Hadoop configuration
 
-      String modifiedPath = path;
+    String modifiedPath = path;
 
-      final File file = new File(path);
-      if (file.exists())
-      {
-        modifiedPath = "file://" + file.getAbsolutePath();
-      }
+    final File file = new File(path);
+    if (file.exists())
+    {
+      modifiedPath = "file://" + file.getAbsolutePath();
+    }
 
-      imagePath = new Path(modifiedPath);
-      
-      FileSystem fs = HadoopFileUtils.getFileSystem(conf, imagePath);
-      if (!fs.exists(imagePath))
-      {
-        throw new IOException("Cannot open HdfsMrsTileReader for " + modifiedPath + ".  Path does not exist." );
-      }
+    imagePath = new Path(modifiedPath);
+    FileSystem fs = HadoopFileUtils.getFileSystem(conf, imagePath);
+    if (!fs.exists(imagePath))
+    {
+      throw new IOException("Cannot open HdfsMrsTileReader for " + modifiedPath + ".  Path does not exist." );
+    }
 
-      readSplits(modifiedPath);
+    // Do not perform caching when S3 is being used because it is accessed through
+    // a REST interface using HTTP, and there is a connection pool that can be
+    // filled and cause deadlock when too many readers are opened at once.
+    Path qualifiedImagePath = imagePath.makeQualified(fs);
+    URI imagePathUri = qualifiedImagePath.toUri();
+    String imageScheme = imagePathUri.getScheme().toLowerCase();
+    if (imageScheme.equals("s3") || imageScheme.equals("s3n"))
+    {
+      cachingEnabled = false;
+    }
 
-      // set the profile
-      if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
-      {
-        profile = true;
-      }
-      else
-      {
-        profile = false;
-      }
-  } // end constructor
+    readSplits(modifiedPath);
+
+    // set the profile
+    if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
+    {
+      profile = true;
+    }
+    else
+    {
+      profile = false;
+    }
+  }
+
+  public boolean isCachingEnabled()
+  {
+    return cachingEnabled;
+  }
 
   @Override
   public long calculateTileCount()
@@ -256,7 +271,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   public void close()
   {
     readerCache.invalidateAll();
-  } // end close
+  }
 
   /**
    * Check if a tile exists in the data.
@@ -266,7 +281,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   {
     // check for a successful retrieval
     return get(key) != null;
-  } // end exists
+  }
 
   @Override
   public KVIterator<TileIdWritable, T> get()
@@ -333,7 +348,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     {
       throw new MrsTileException(e);
     }
-  } // end get
+  }
 
   /**
    * This will retrieve tiles in a specified range.
@@ -398,7 +413,11 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   }
 
   /**
-   * This method will Get a MapFile.Reader for the partition specified
+   * This method will get a MapFile.Reader for the partition specified.
+   * Before closing the returned reader, the caller should make sure it
+   * is not cached in this class by calling isCachingEnabled(). If that
+   * method returns true, the caller should not close the reader. It will
+   * be automatically closed when it drops out of the cache.
    * 
    * @param partition
    *          is the particular reader being accessed
@@ -409,7 +428,16 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   {
     try
     {
-      return readerCache.get(partition);
+      if (cachingEnabled)
+      {
+        log.info("Loading reader for partition " + partition + " through the cache");
+        return readerCache.get(partition);
+      }
+      else
+      {
+        log.info("Loading reader for partition " + partition + " without the cache");
+        return loadReader(partition);
+      }
     }
     catch (ExecutionException e)
     {
@@ -419,7 +447,6 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
       }
       throw new IOException(e);
     }
-  } // end getReader
-
-} // end HdfsReader
+  }
+}
 
