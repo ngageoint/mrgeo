@@ -98,6 +98,11 @@
       <groupId>com.carrotsearch</groupId>
       <artifactId>hppc</artifactId>
     </dependency>
+    <!--
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-geometry</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
@@ -117,11 +122,16 @@
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
-      <artifactId>gt-geometry</artifactId>
+      <artifactId>gt-shapefile</artifactId>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
-      <artifactId>gt-shapefile</artifactId>
+      <artifactId>gt-api</artifactId>
+    </dependency>
+    -->
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-referencing</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
@@ -146,10 +156,6 @@
     <dependency>
       <groupId>javax.media</groupId>
       <artifactId>jai_imageio</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-api</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.media</groupId>

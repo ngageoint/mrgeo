@@ -267,10 +267,6 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-cmd-ingestvector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-cmd-developers</artifactId>
     </dependency>
     <dependency>

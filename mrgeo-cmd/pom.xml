@@ -71,7 +71,6 @@
     <module>mrgeo-cmd-core</module>
     <module>mrgeo-cmd-developers</module>
     <module>mrgeo-cmd-distribution</module>
-    <module>mrgeo-cmd-ingestvector</module>
     <module>mrgeo-cmd-ingest</module>
     <module>mrgeo-cmd-buildpyramid</module>
     <module>mrgeo-cmd-export</module>

@@ -69,10 +69,12 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <!--
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-process-raster</artifactId>
     </dependency>
+    -->
     <dependency>
       <groupId>httpunit</groupId>
       <artifactId>httpunit</artifactId>

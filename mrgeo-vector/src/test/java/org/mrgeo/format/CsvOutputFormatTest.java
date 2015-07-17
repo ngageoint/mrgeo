@@ -15,8 +15,6 @@
 
 package org.mrgeo.format;
 
-import junit.framework.Assert;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -24,7 +22,6 @@ import org.apache.hadoop.fs.RawLocalFileSystem;
 import org.apache.hadoop.io.LongWritable;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.junit.UnitTest;

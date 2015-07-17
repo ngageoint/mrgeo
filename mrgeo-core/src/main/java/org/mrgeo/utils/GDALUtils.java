@@ -454,20 +454,24 @@ public static Raster toRaster(Dataset image)
   }
 
   final int datatype = image.GetRasterBand(1).getDataType();
-  final int datasize = gdal.GetDataTypeSize(datatype) / 8;
+  final int pixelsize = gdal.GetDataTypeSize(datatype) / 8;
 
-  final int w = image.getRasterXSize();
-  final int h = image.getRasterYSize();
+  final int width = image.getRasterXSize();
+  final int height = image.getRasterYSize();
 
-  final int size = datasize * w * h;
+  final int pixelstride = pixelsize * bands;
+  final int linestride = pixelstride * width;
 
-  ByteBuffer data = ByteBuffer.allocateDirect(size * bands);
+  final int rastersize = linestride * height;
+
+  ByteBuffer data = ByteBuffer.allocateDirect(rastersize);
   data.order(ByteOrder.nativeOrder());
 
-  image.ReadRaster_Direct(0, 0, w, h, w, h, datatype, data, bandlist);
+  // read the data interleaved (it _should_ be much more efficient reading)
+  image.ReadRaster_Direct(0, 0, width, height, width, height, datatype, data, bandlist, pixelstride, linestride, 1);
 
   data.rewind();
-  return GDALUtils.toRaster(h, w, bands, datatype, data);
+  return GDALUtils.toRaster(height, width, bands, datatype, data);
 }
 
 public static Raster toRaster(int height, int width, int bands,
@@ -484,15 +488,13 @@ public static Raster toRaster(int height, int width, int bands,
   final int bandbytes = height * width * (gdal.GetDataTypeSize(gdaldatatype) / 8);
   final int databytes = bandbytes * bands;
 
-  int[] bankIndices = new int[bands];
   int[] bandOffsets = new int[bands];
   for (int i = 0; i < bands; i++) {
-    bankIndices[i] = 0;
-    bandOffsets[i] = i * width * height;
+    bandOffsets[i] = i;
   }
 
-  //SampleModel sm = new BandedSampleModel(datatype, width, height, width, bankIndices, bandOffsets);
-  SampleModel sm = new ComponentSampleModel(datatype, width, height, 1, width, bandOffsets);
+  // keep the raster interleaved
+  SampleModel sm = new PixelInterleavedSampleModel(datatype, width, height, bands, bands * width, bandOffsets);
 
   DataBuffer db;
   WritableRaster raster = null;
