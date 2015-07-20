@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2009-2015 DigitalGlobe, Inc.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~ http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and limitations under the License.
-  -->
+     ~ Copyright 2009-2015 DigitalGlobe, Inc.
+     ~
+     ~ Licensed under the Apache License, Version 2.0 (the "License");
+     ~ you may not use this file except in compliance with the License.
+     ~ You may obtain a copy of the License at
+     ~
+     ~ http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
@@ -2115,11 +2115,6 @@
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-cmd-ingestvector</artifactId>
-        <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-mapalgebra</artifactId>
         <version>${mrgeo.version}</version>
       </dependency>
@@ -2419,6 +2414,10 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -2671,16 +2670,17 @@
         <artifactId>gdal</artifactId>
         <version>${gdal.version}</version>
       </dependency>
+      <!-- This geotools dependency is used in mrgeo-dataprovider-geowave -->
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-cql</artifactId>
         <version>${geotools.version}</version>
       </dependency>
+      <!-- gt-cql includes gt-main & gt-wps, but we need to exclude common-logging from these -->
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-main</artifactId>
         <version>${geotools.version}</version>
-        <scope>runtime</scope>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -2690,31 +2690,146 @@
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
-        <artifactId>gt-api</artifactId>
+        <artifactId>gt-wps</artifactId>
         <version>${geotools.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
+      <!--
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-api</artifactId>
+           <version>${geotools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-imagemosaic</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-jdbc</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-opengis</artifactId>
+           <version>${geotools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-property</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-process</artifactId>
+           <version>${geotools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-process-raster</artifactId>
+           <version>${geotools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-image</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-geotiff</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-coverage</artifactId>
+           <version>${geotools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-geometry</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-shapefile</artifactId>
+           <version>${geotools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-transform</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-xml</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools.xsd</groupId>
+           <artifactId>gt-xsd-kml</artifactId>
+           <version>${geotools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-process-feature</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-svg</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-wfs-ng</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-wms</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools</groupId>
+           <artifactId>gt-wms</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools.xsd</groupId>
+           <artifactId>gt-xsd-sld</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+           <dependency>
+           <groupId>org.geotools.ogc</groupId>
+           <artifactId>net.opengis.wfs</artifactId>
+           <version>${geotools.version}</version>
+           <scope>runtime</scope>
+           </dependency>
+      -->
       <dependency>
         <groupId>org.geotools</groupId>
-        <artifactId>gt-imagemosaic</artifactId>
+        <artifactId>gt-referencing</artifactId>
         <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-jdbc</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-opengis</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-property</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.geotools</groupId>
@@ -2725,116 +2840,6 @@
       <dependency>
         <groupId>org.geotools</groupId>
         <artifactId>gt-epsg-wkt</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-process</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-process-raster</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-image</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <!--
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-imageio-ext-gdal</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-      -->
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-geotiff</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-coverage</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-shapefile</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-geometry</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-referencing</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-transform</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-xml</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools.xsd</groupId>
-        <artifactId>gt-xsd-kml</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-process-feature</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-svg</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-wfs-ng</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-wms</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-wms</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools.xsd</groupId>
-        <artifactId>gt-xsd-sld</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools.ogc</groupId>
-        <artifactId>net.opengis.wfs</artifactId>
         <version>${geotools.version}</version>
         <scope>runtime</scope>
       </dependency>
@@ -2963,6 +2968,12 @@
         <groupId>org.springframework</groupId>
         <artifactId>spring-core</artifactId>
         <version>${spring.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -3164,6 +3175,10 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
     </dependencies>
@@ -3225,24 +3240,6 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-wkt</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-referencing</artifactId>
-    </dependency>
-    <!--
-         <dependency>
-         <groupId>org.geotools</groupId>
-         <artifactId>gt-imageio-ext-gdal</artifactId>
-         </dependency>
-    -->
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-image</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-geotiff</artifactId>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->

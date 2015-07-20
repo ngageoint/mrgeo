@@ -18,24 +18,15 @@ package org.mrgeo.cmd.export;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.geotools.coverage.CoverageFactoryFinder;
-import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.grid.GridCoverageFactory;
-import org.geotools.geometry.GeneralEnvelope;
-import org.geotools.referencing.CRS;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.image.*;
-import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.pyramid.MrsPyramid;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.tile.TileNotFoundException;
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.utils.*;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
@@ -147,8 +138,8 @@ public class Export extends Command
 
       if (raster != null)
       {
-        GeotoolsRasterUtils.saveLocalGeotiff(output, raster, tx, ty, image.getZoomlevel(), image
-          .getTilesize(), metadata.getDefaultValue(0));
+        GDALUtils.saveRaster(raster, output, tx, ty, image.getZoomlevel(),
+            image.getTilesize(), metadata.getDefaultValue(0));
         System.out.println("Wrote output to " + output);
         return true;
       }
@@ -166,15 +157,16 @@ public class Export extends Command
 
 
 
-  private static boolean saveMultipleTiles(final String output, final MrsImage image, final long[] tiles)
+  private static boolean saveMultipleTiles(String output, final MrsImage image, final long[] tiles)
   {
     try
     {
       final MrsImagePyramidMetadata metadata = image.getMetadata();
 
       final Raster raster = RasterTileMerger.mergeTiles(image, tiles);
-      GeneralEnvelope envelope = null;
       Raster sampleRaster = null;
+
+      TMSUtils.Bounds imageBounds = null;
 
       final int tilesize = image.getTilesize();
       final int zoomlevel = image.getZoomlevel();
@@ -183,17 +175,14 @@ public class Export extends Command
         final TMSUtils.Tile tile = TMSUtils.tileid(lid, zoomlevel);
         final TMSUtils.Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
 
-        final GeneralEnvelope tileBounds = new GeneralEnvelope(new double[] { bounds.w, bounds.s },
-          new double[] { bounds.e, bounds.n });
-
         // expand the image bounds by the tile
-        if (envelope == null)
+        if (imageBounds == null)
         {
-          envelope = tileBounds;
+          imageBounds = bounds;
         }
         else
         {
-          envelope.add(tileBounds);
+          imageBounds.expand(bounds);
         }
 
         if (sampleRaster == null)
@@ -209,7 +198,7 @@ public class Export extends Command
         }
       }
 
-      if (envelope == null)
+      if (imageBounds == null)
       {
         throw new MrsImageException("Error, could not calculate the bounds of the tiles");
       }
@@ -218,28 +207,15 @@ public class Export extends Command
         throw new MrsImageException("Error, could not load any tiles");
       }
 
-      final CoordinateReferenceSystem crs = CRS.decode("EPSG:4326");
-      envelope.setCoordinateReferenceSystem(crs);
-
-      // now build a PlanarImage from the raster
-      @SuppressWarnings("unused")
-      final int type = raster.getTransferType();
-      final int bands = raster.getNumBands();
-      final int offsets[] = new int[bands];
-      for (int i = 0; i < offsets.length; i++)
+      if (!output.endsWith(".tiff"))
       {
-        offsets[i] = 0;
+        output += ".tiff";
       }
+      GDALUtils.saveRaster(raster, output + ".tiff", imageBounds,
+          zoomlevel, tilesize, metadata.getDefaultValue(0));
 
-      final BufferedImage img = RasterUtils.makeBufferedImage(raster);
-
-      final GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(null);
-      final GridCoverage2D coverage = factory.create(output, img, envelope);
-
-      GeotoolsRasterUtils.saveLocalGeotiff(output + ".tif", coverage, metadata.getDefaultValue(0));
-      System.out.println("Wrote output to " + output + ".tif");
+      System.out.println("Wrote output to " + output);
       return true;
-
     }
     catch (final Exception e)
     {

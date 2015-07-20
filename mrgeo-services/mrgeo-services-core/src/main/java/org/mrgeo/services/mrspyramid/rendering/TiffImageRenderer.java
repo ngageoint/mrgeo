@@ -15,7 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.gdal.osr.SpatialReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +32,9 @@ public class TiffImageRenderer extends ImageRendererAbstract
     super();
   }
 
-  public TiffImageRenderer(final CoordinateReferenceSystem coordSys)
+  public TiffImageRenderer(final SpatialReference srs)
   {
-    super(coordSys);
+    super(srs);
   }
 
   /*

@@ -15,15 +15,15 @@
 
 package org.mrgeo.services.utils;
 
-import org.geotools.geometry.jts.JTS;
+import org.geotools.geometry.DirectPosition2D;
 import org.geotools.referencing.CRS;
 import org.mrgeo.utils.Bounds;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
+import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.vividsolutions.jts.geom.Envelope;
 
 /**
  * General utilities for dealing with WMS requests
@@ -71,8 +71,20 @@ public class RequestUtils
       Bounds output = bounds.clone();
       //If SRS requires reprojection, adjust the input bounds here to Geographic EPSG:4326
       if (epsg != null && !(epsg.equalsIgnoreCase("EPSG:4326"))) {
-          Envelope prjBounds = JTS.toGeographic(bounds.toEnvelope(), CRS.decode(epsg, true));
-          output = new Bounds(prjBounds.getMinX(), prjBounds.getMinY(), prjBounds.getMaxX(), prjBounds.getMaxY());
+
+        MathTransform xform = CRS.findMathTransform(CRS.decode(epsg, true), CRS.decode("EPSG:4326", true), true);
+
+        DirectPosition2D source = new DirectPosition2D(bounds.getMinX(), bounds.getMinY());
+        DirectPosition2D min = new DirectPosition2D();
+
+        xform.transform(source, min);
+
+        source = new DirectPosition2D(bounds.getMaxX(), bounds.getMaxY());
+        DirectPosition2D max = new DirectPosition2D();
+
+        xform.transform(source, max);
+
+        output = new Bounds(min.x, min.y, max.x, max.y);
       }
       return output;
   }

@@ -25,7 +25,6 @@ import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import com.sun.jersey.test.framework.spi.container.TestContainerException;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
 import junit.framework.Assert;
-import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -43,26 +42,14 @@ import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import javax.imageio.ImageReader;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response.Status;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.math.BigInteger;
 import java.net.URLEncoder;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -763,71 +750,7 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //    verifyNoMoreInteractions(request, service);
   }
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileContours() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 2846;
-    int y = 1411;
-    int z = 12;
-    double interval = 1000;
-    String format = "kml";
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
-
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y + "/" + interval + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
-
-    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
-
-    MultivaluedMap<String, String> headers = resp.getHeaders();
-    Assert.assertEquals("[text/xml]", headers.get("Content-Type").toString());
-    InputStream inputStream = resp.getEntityInputStream();
-
-    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-    DocumentBuilder db = null;
-    db = dbf.newDocumentBuilder();
-    //db.setEntityResolver(new NullResolver());
-    Document doc = db.parse(inputStream);
-
-    Assert.assertEquals(doc.getElementsByTagName("kml").getLength(), 1);
-    Assert.assertTrue(doc.getElementsByTagName("Style").getLength() > 1);
-    Assert.assertTrue(doc.getElementsByTagName("Placemark").getLength() > 1);
-    Assert.assertTrue(doc.getElementsByTagName("MultiGeometry").getLength() > 1);
-    Assert.assertTrue(doc.getElementsByTagName("LineString").getLength() > 1);
-    Assert.assertTrue(doc.getElementsByTagName("Point").getLength() > 1);
-
-    TransformerFactory tf = TransformerFactory.newInstance();
-    Transformer transformer = tf.newTransformer();
-    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-    StringWriter writer = new StringWriter();
-    transformer.transform(new DOMSource(doc), new StreamResult(writer));
-    String output = writer.getBuffer().toString();
-
-    MessageDigest m = MessageDigest.getInstance("MD5");
-    m.reset();
-    m.update(output.getBytes());
-    byte[] digest = m.digest();
-    BigInteger bigInt = new BigInteger(1,digest);
-    String hashtext = bigInt.toString(16);
-    // Now we need to zero pad it if you actually want the full 32 chars.
-    while(hashtext.length() < 32 ){
-      hashtext = "0"+hashtext;
-    }
-    //log.info(hashtext);
-    Assert.assertEquals(hashtext, "94cc8e6de9728c827dd3442216bee095");
-
-    IOUtils.closeQuietly(inputStream);
-
-//    verify(service, times(1)).getMetadata(raster);
-//    verify(service, times(1));
-//    verifyNoMoreInteractions(request, service);
-  }
-  
   protected static void processImageResponse(final ClientResponse response, final String extension)
       throws IOException
   {
