@@ -157,4 +157,13 @@ public abstract class MrsTileReader<T>
    */
   public abstract KVIterator<TileIdWritable, T> get(TileIdWritable startKey,
     TileIdWritable endKey);
+
+  /**
+   * Return true if this reader can be cached by the caller. Implementors should
+   * return false if this reader requires a resource that is limited, like
+   * a connection to a backend data source.
+   *
+   * @return
+   */
+  public abstract boolean canBeCached();
 }

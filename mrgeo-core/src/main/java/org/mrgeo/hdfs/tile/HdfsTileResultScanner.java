@@ -186,7 +186,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
           {
             return false;
           }
-          if (!reader.isCachingEnabled() && mapfile != null)
+          if (!reader.canBeCached() && mapfile != null)
           {
             mapfile.close();
           }
@@ -268,7 +268,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
       TileIdWritable startKey = null;
       while (curPartition == -1 && partition < reader.getMaxPartitions())
       {
-        if (!reader.isCachingEnabled() && mapfile != null)
+        if (!reader.canBeCached() && mapfile != null)
         {
           mapfile.close();
         }

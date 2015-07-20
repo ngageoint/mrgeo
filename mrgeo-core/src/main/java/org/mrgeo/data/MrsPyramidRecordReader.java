@@ -15,6 +15,8 @@
 
 package org.mrgeo.data;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -32,9 +34,12 @@ import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the base class Hadoop RecordReader to be used for all pyramid-based
@@ -315,10 +320,12 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     }
   }
 
+  private Configuration myconf;
   private RecordReader<TileIdWritable, TWritable> scannedInputReader;
   private MrsTileReader<T> primaryReader;
   private String scannedInput;
   private HashMap<String, MrsTileReader<T>> readers;
+  private List<String> secondaryPyramidNames = new ArrayList<String>();
   private TiledInputFormatContext ifContext;
   private TileIdWritable key;
   private TileCollection<T> value;
@@ -334,6 +341,10 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
   // not the Hadoop concept of an InputSplit.  That is also used extensively in this RecordReader.
   private TileSplit tilesplit = null;
   private HashMap<String, Map<TileIdWritable, T> > tilecache;
+  private final Cache<Long, T> readerTileCache = CacheBuilder.newBuilder()
+          .maximumSize(25)
+          .expireAfterAccess(10, TimeUnit.SECONDS)
+          .build();
 
   private int tilesize;
   private int zoomLevel;
@@ -438,6 +449,7 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
+    this.myconf = context.getConfiguration();
     if (split instanceof MrsPyramidInputSplit)
     {
       final MrsPyramidInputSplit fsplit = (MrsPyramidInputSplit) split;
@@ -472,8 +484,13 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
         }
         else
         {
-          readers.put(inputPyramidName, getMrsTileReader(inputPyramidName,
-              ifContext.getZoomLevel(), conf));
+          secondaryPyramidNames.add(inputPyramidName);
+          MrsTileReader<T> tileReader = getMrsTileReader(inputPyramidName,
+                                                         ifContext.getZoomLevel(), conf);
+          if (tileReader.canBeCached())
+          {
+            readers.put(inputPyramidName, tileReader);
+          }
         }
       }
 
@@ -661,7 +678,7 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     tilesplit.currentTy = tb.s;
   }
 
-  private boolean splitTile()
+  private boolean splitTile() throws IOException
   {
     // use a while true here to avoid recursion.
     while (true)
@@ -701,7 +718,7 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     }  // do the next one...
   }
 
-  private void setNextKeyValue(final long tileid, final T tileValue)
+  private void setNextKeyValue(final long tileid, final T tileValue) throws IOException
   {
 //    long start = System.currentTimeMillis();
 //    log.info("setNextKeyValue");
@@ -727,6 +744,7 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     value.clear();
     value.setTileid(tileid);
 
+    readerTileCache.put(tileid, tileValue);
     // Add tile(s) from the primary/first image input.  We know this is the proper zoom level,
     // so we don't need to do anything weird.
     value.set(scannedInput, tileid, tileValue);
@@ -746,20 +764,24 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     }
 
     // Add tiles from additional inputs
-    for (final Entry<String, MrsTileReader<T>> entry : readers.entrySet())
+    for (final String inputPyramidName : secondaryPyramidNames)
+//    for (final Entry<String, MrsTileReader<T>> entry : readers.entrySet())
     {
-      final String inputKey = entry.getKey();
-      final MrsTileReader<T> inputReader = entry.getValue();
-      
+      MrsTileReader<T> inputReader = readers.get(inputPyramidName);
+      if (inputReader == null)
+      {
+        inputReader = getMrsTileReader(inputPyramidName,
+                                  ifContext.getZoomLevel(), myconf);
+      }
       // we'll need to make sure this base raster is in the correct zoomlevel.
-      setTile(inputKey, inputReader, tileid);
+      setTile(inputPyramidName, inputReader, tileid);
       
       // Add neighboring tiles from additional inputs to the cluster if needed
       if (tileClusterInfo != null && neighborTileIds != null)
       {
         for (int index = 0; index < neighborCountForTile; index++)
         {
-          setTile(inputKey, inputReader, neighborTileIds[index]);
+          setTile(inputPyramidName, inputReader, neighborTileIds[index]);
         }
       }
     }
@@ -791,7 +813,17 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     // one-to-one tile
     else
     {
-      final T r = reader.get(new TileIdWritable(tileid));
+      System.err.println("setTile " + tileid + "(" + TMSUtils.tileid(tileid, zoomLevel) + ")");
+      T r = readerTileCache.getIfPresent(tileid);
+      if (value == null)
+      {
+        System.err.println("Loading tile from reader: " + tileid);
+        r = reader.get(new TileIdWritable(tileid));
+      }
+      else
+      {
+        System.err.println("Found tile in readerTileCache: " + tileid);
+      }
       if (r != null)
       {
         value.set(k, tileid, r);
@@ -811,8 +843,10 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     Map<TileIdWritable, T> cache = tilecache.get(k);
     if (cache.containsKey(id))
     {
+      System.err.println("Returning tile from cache: " + id.get());
       return cache.get(id);
     }
+    System.err.println("Loading tile " + id.get() + " from file");
     T r = reader.get(id);
     cache.put(id,  r);
 

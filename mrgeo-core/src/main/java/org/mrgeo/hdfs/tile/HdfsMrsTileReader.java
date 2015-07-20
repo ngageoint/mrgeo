@@ -72,7 +72,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     return reader;
   }
 
-  private boolean cachingEnabled = true;
+  private boolean canBeCached = true;
   private final LoadingCache<Integer, MapFile.Reader> readerCache = CacheBuilder.newBuilder()
       .maximumSize(READER_CACHE_SIZE)
      .expireAfterAccess(READER_CACHE_EXPIRE, TimeUnit.SECONDS)
@@ -202,7 +202,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     String imageScheme = imagePathUri.getScheme().toLowerCase();
     if (imageScheme.equals("s3") || imageScheme.equals("s3n"))
     {
-      cachingEnabled = false;
+      canBeCached = false;
     }
 
     readSplits(modifiedPath);
@@ -218,9 +218,10 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     }
   }
 
-  public boolean isCachingEnabled()
+  @Override
+  public boolean canBeCached()
   {
-    return cachingEnabled;
+    return canBeCached;
   }
 
   @Override
@@ -306,10 +307,11 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   @Override
   public T get(final TileIdWritable key)
   {
+    MapFile.Reader reader = null;
     try
     {
       // get the reader that handles the partition/map file
-      final MapFile.Reader reader = getReader(getPartition(key));
+      reader = getReader(getPartition(key));
 
       // return object
       TWritable val = (TWritable)reader.getValueClass().newInstance();
@@ -347,6 +349,20 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     catch (IllegalAccessException e)
     {
       throw new MrsTileException(e);
+    }
+    finally
+    {
+      if (reader != null && !canBeCached())
+      {
+        try
+        {
+          reader.close();
+        }
+        catch (IOException e)
+        {
+          log.error("Unable to close reader for " + this.imagePath, e);
+        }
+      }
     }
   }
 
@@ -428,7 +444,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   {
     try
     {
-      if (cachingEnabled)
+      if (canBeCached)
       {
         log.info("Loading reader for partition " + partition + " through the cache");
         return readerCache.get(partition);
