@@ -341,10 +341,8 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
   // not the Hadoop concept of an InputSplit.  That is also used extensively in this RecordReader.
   private TileSplit tilesplit = null;
   private HashMap<String, Map<TileIdWritable, T> > tilecache;
-  private final Cache<Long, T> readerTileCache = CacheBuilder.newBuilder()
-          .maximumSize(25)
-          .expireAfterAccess(10, TimeUnit.SECONDS)
-          .build();
+  // The tile reader cache uses imageName.tileid key
+  private Cache<String, T> readerTileCache = null;
 
   private int tilesize;
   private int zoomLevel;
@@ -466,6 +464,13 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
 
       readers = new HashMap<String, MrsTileReader<T>>();
       tilecache = new HashMap<String, Map<TileIdWritable, T>>();
+      int readerTileCacheSize = (tileClusterInfo == null) ?
+              ifContext.getInputs().size() :
+              (tileClusterInfo.getNeighborCount() + 1) * ifContext.getInputs().size();
+      readerTileCache = CacheBuilder.newBuilder()
+              .maximumSize(readerTileCacheSize)
+              .expireAfterAccess(10, TimeUnit.SECONDS)
+              .build();
       for (final String inputPyramidName : ifContext.getInputs())
       {
         // If it's the same pyramid as us, we instantiate primaryReader so
@@ -744,7 +749,7 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     value.clear();
     value.setTileid(tileid);
 
-    readerTileCache.put(tileid, tileValue);
+    readerTileCache.put(buildReaderTileCacheKey(scannedInput, tileid), tileValue);
     // Add tile(s) from the primary/first image input.  We know this is the proper zoom level,
     // so we don't need to do anything weird.
     value.set(scannedInput, tileid, tileValue);
@@ -788,6 +793,11 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
 //    log.info("After setNextKeyValue took" + (System.currentTimeMillis() - start));
   }
 
+  private String buildReaderTileCacheKey(String imageName, long tileId)
+  {
+    return imageName + "." + tileId;
+  }
+
   private void setTile(final String k, final MrsTileReader<T> reader, final long tileid)
   {
     // need to split one tile into many
@@ -802,7 +812,7 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
       T r = getTileFromCache(k, reader, id);
 
       T split = splitTile(r, id.get(), zl, tileid, zoomLevel, tilesize);
-      
+
       value.set(k, tileid, split);
     }
     // need to join many tiles into one
@@ -813,12 +823,14 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     // one-to-one tile
     else
     {
-      System.err.println("setTile " + tileid + "(" + TMSUtils.tileid(tileid, zoomLevel) + ")");
-      T r = readerTileCache.getIfPresent(tileid);
-      if (value == null)
+      System.err.println("setTile " + k + "." + tileid + "(" + TMSUtils.tileid(tileid, zoomLevel) + ")");
+      String key = buildReaderTileCacheKey(k, tileid);
+      T r = readerTileCache.getIfPresent(key);
+      if (r == null)
       {
         System.err.println("Loading tile from reader: " + tileid);
         r = reader.get(new TileIdWritable(tileid));
+        readerTileCache.put(key, r);
       }
       else
       {
@@ -847,7 +859,13 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
       return cache.get(id);
     }
     System.err.println("Loading tile " + id.get() + " from file");
-    T r = reader.get(id);
+    String key = buildReaderTileCacheKey(k, id.get());
+    T r = readerTileCache.getIfPresent(key);
+    if (r == null)
+    {
+      r = reader.get(id);
+      readerTileCache.put(key, r);
+    }
     cache.put(id,  r);
 
     return r;
