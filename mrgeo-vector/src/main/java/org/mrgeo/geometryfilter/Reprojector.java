@@ -15,8 +15,7 @@
 
 package org.mrgeo.geometryfilter;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import org.geotools.geometry.jts.JTS;
+import org.geotools.geometry.DirectPosition2D;
 import org.geotools.referencing.CRS;
 import org.mrgeo.geometry.PointFilter;
 import org.mrgeo.geometry.WritablePoint;
@@ -62,8 +61,8 @@ public class Reprojector implements PointFilter
    * Creates a Reprojector from a source and destination WKT projection. to
    * "EPSG:4326".
    * 
-   * @param codeSrc
-   * @param codeDest
+   * @param wktSrc
+   * @param wktDest
    * @return
    */
   public static Reprojector createFromWkt(String wktSrc, String wktDest)
@@ -135,10 +134,11 @@ public class Reprojector implements PointFilter
       x = p.getX();
       y = p.getY();
     }
-    Coordinate source = new Coordinate(x, y);
-    Coordinate dest = new Coordinate();
 
-    JTS.transform(source, dest, mathTransform);
+    DirectPosition2D source = new DirectPosition2D(x, y);
+    DirectPosition2D dest = new DirectPosition2D();
+
+    mathTransform.transform(source, dest);
 
     if (swapOutputXy)
     {

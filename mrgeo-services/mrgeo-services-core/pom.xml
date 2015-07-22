@@ -205,7 +205,7 @@
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
-      <artifactId>gt-coverage</artifactId>
+      <artifactId>gt-referencing</artifactId>
     </dependency>
     <dependency>
       <groupId>org.reflections</groupId>

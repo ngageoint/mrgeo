@@ -19,11 +19,9 @@ import com.sun.media.jai.codec.ByteArraySeekableStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.geotools.referencing.CRS;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.ingest.IngestImageSpark;
 import org.mrgeo.mapreduce.job.JobManager;
 import org.mrgeo.rasterops.ColorScale;
@@ -32,8 +30,6 @@ import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.ImageUtils;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,21 +62,12 @@ public class MrsPyramidService {
     private static final Logger log = LoggerFactory.getLogger(MrsPyramidService.class);
     private static final MimetypesFileTypeMap mimeTypeMap = new MimetypesFileTypeMap();
 
-    private CoordinateReferenceSystem coordSys;
     private JobManager jobManager = JobManager.getInstance();
     private Properties config;
 
     public MrsPyramidService(Properties configuration) {
         config = configuration;
 
-        try {
-            GeotoolsRasterUtils.addMissingEPSGCodes();
-            coordSys = CRS.decode("EPSG:4326", true);
-        } catch (NoSuchAuthorityCodeException e) {
-            log.error("Unable to load CoordinateReferenceSystem", e);
-        } catch (FactoryException e) {
-            log.error("Unable to load CoordinateReferenceSystem", e);
-        }
     }
 
     public JobManager getJobManager() { return jobManager; }
@@ -150,7 +137,7 @@ public class MrsPyramidService {
 
     public ImageRenderer getImageRenderer(String format) throws Exception {
         return (ImageRenderer)ImageHandlerFactory.getHandler(format, ImageRenderer.class,
-                new Object[] { coordSys }, new Class<?>[] { CoordinateReferenceSystem.class });
+                new Object[] { }, new Class<?>[] { CoordinateReferenceSystem.class });
     }
 
     public Raster applyColorScaleToImage(String format, Raster result, ColorScale cs, ImageRenderer renderer, double[] extrema) throws Exception {
@@ -168,7 +155,7 @@ public class MrsPyramidService {
         int zoomLevel, final Properties providerProperties)
     {
         String baseUrl = config.getProperty("base.url");
-        KmlResponseBuilder kmlGenerator = new KmlResponseBuilder(coordSys);
+        KmlResponseBuilder kmlGenerator = new KmlResponseBuilder();
         return kmlGenerator.getResponse(
                 pyramidPathStr, bounds, width, height, cs, baseUrl, zoomLevel,
                 providerProperties);

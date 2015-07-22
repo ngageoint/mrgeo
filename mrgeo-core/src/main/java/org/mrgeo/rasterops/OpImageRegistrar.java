@@ -16,7 +16,6 @@
 package org.mrgeo.rasterops;
 
 import org.apache.hadoop.conf.Configuration;
-import org.mrgeo.image.geotools.GeotoolsRasterUtils;
 import org.mrgeo.utils.ClassLoaderUtil;
 import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
@@ -58,12 +57,7 @@ public class OpImageRegistrar
     }
     log.info("Registering image ops.");
 
-    GeotoolsRasterUtils.addMissingEPSGCodes();
-
     ImageIO.scanForPlugins();
-    // Since the Geotools SPI's have been re-loaded at this point, we need to
-    // re-order them to put the MrGeo SPI first.
-    GeotoolsRasterUtils.orderInputStreamProviders();
 
     // increase the tile cache size to speed things up, 256MB
     long memCapacity = 268435456;

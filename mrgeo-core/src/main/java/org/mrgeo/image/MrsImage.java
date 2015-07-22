@@ -315,35 +315,63 @@ public class MrsImage
    */
   public RenderedImage getRenderedImage(final Bounds bounds)
   {
-    log.debug("Merging to rendered image...");
-    Raster mergedRaster = null;
+    Raster mergedRaster = getRaster(bounds);
     BufferedImage mergedImage = null;
-    try
-    {
-      log.debug("Merging tiles...");
-      if (bounds != null)
-      {
-        log.debug("with bounds: " + bounds.toString());
-        mergedRaster = RasterTileMerger.mergeTiles(this, bounds);
-      }
-      else
-      {
-        mergedRaster = RasterTileMerger.mergeTiles(this);
-      }
-      log.debug("Tiles merged.");
-    }
-    catch (final MrsImageException e)
-    {
-      log.error(e.getMessage());
-    }
+
     if (mergedRaster != null)
     {
       log.debug("Rendering merged image...");
       mergedImage = RasterUtils.makeBufferedImage(mergedRaster);
       log.debug("Merged image rendered.");
     }
+
     return mergedImage;
   }
+
+/**
+ * Returns a raster for the MrsImage data
+ *
+ * @return raster
+ * @throws IOException
+ */
+public Raster getRaster() throws IOException
+{
+  return getRaster(null);
+}
+
+/**
+ * Returns a raster image for the MrsImage data
+ *
+ * @param bounds
+ *          requested bounds
+ * @return raster
+ */
+public Raster getRaster(final Bounds bounds)
+{
+  log.debug("Merging to raster...");
+  Raster mergedRaster = null;
+  try
+  {
+    log.debug("Merging tiles...");
+    if (bounds != null)
+    {
+      log.debug("with bounds: " + bounds.toString());
+      mergedRaster = RasterTileMerger.mergeTiles(this, bounds);
+    }
+    else
+    {
+      mergedRaster = RasterTileMerger.mergeTiles(this);
+    }
+    log.debug("Tiles merged.");
+  }
+  catch (final MrsImageException e)
+  {
+    log.error(e.getMessage());
+  }
+
+  return mergedRaster;
+}
+
 
   public Raster getTile(final long tx, final long ty) throws TileNotFoundException
   {
