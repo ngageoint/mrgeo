@@ -41,6 +41,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Map, mutable}
 
+import sun.misc.Unsafe
+
 object SparkUtils extends Logging {
   def calculateSplitData(rdd: RDD[(TileIdWritable, RasterWritable)]) = {
 
@@ -134,27 +136,13 @@ object SparkUtils extends Logging {
 
   def loadMrsPyramidAndMetadata(imageName: String, context: SparkContext):
   (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
-    val keyclass = classOf[TileIdWritable]
-    val valueclass = classOf[RasterWritable]
-
-    // build a phony job...
-    val job = Job.getInstance(context.hadoopConfiguration)
 
     val providerProps: Properties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
     val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
 
-    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, imageName, providerProps)
-
-    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
-        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
-    val image = context.newAPIHadoopRDD(job.getConfiguration,
-      inputFormatClass,
-      keyclass,
-      valueclass)
-
-    (image, metadata)
+    (loadMrsPyramid(dp, metadata.getMaxZoomLevel, context), metadata)
   }
 
   def loadMrsPyramid(imageName: String, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
@@ -162,7 +150,9 @@ object SparkUtils extends Logging {
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
 
-    loadMrsPyramid(dp, context)
+    val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
+
+    loadMrsPyramid(dp, metadata.getMaxZoomLevel, context)
   }
 
   def loadMrsPyramid(imageName: String, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
@@ -174,13 +164,19 @@ object SparkUtils extends Logging {
   }
 
   def loadMrsPyramid(provider:MrsImageDataProvider, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val keyclass = classOf[TileIdWritable]
-    val valueclass = classOf[RasterWritable]
+    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+
+    loadMrsPyramid(provider, metadata.getMaxZoomLevel, context)
+  }
+
+  def loadMrsPyramid(provider:MrsImageDataProvider, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
     // build a phony job...
     val job = Job.getInstance(context.hadoopConfiguration)
 
     val providerProps: Properties = null
+
     MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName, providerProps)
 
     val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
@@ -188,37 +184,16 @@ object SparkUtils extends Logging {
 
     context.newAPIHadoopRDD(job.getConfiguration,
       inputFormatClass,
-      keyclass,
-      valueclass)
-  }
+      classOf[TileIdWritable],
+      classOf[RasterWritable])
 
-  def loadMrsPyramid(provider:MrsImageDataProvider, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val keyclass = classOf[TileIdWritable]
-    val valueclass = classOf[RasterWritable]
-
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
-
-    // build a phony job...
-    val job = Job.getInstance(context.hadoopConfiguration)
-
-    val providerProps: Properties = null
-//    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName, zoom,
-//      metadata.getTilesize, metadata.getBounds, providerProps)
-//
-//    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
-//        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
-//    context.newAPIHadoopRDD(job.getConfiguration,
-//      inputFormatClass,
-//      keyclass,
-//      valueclass)
-
-    FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
-    FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
-
-    context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[SequenceFileInputFormat[TileIdWritable, RasterWritable]],
-      keyclass,
-      valueclass)
+    //    FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
+    //    FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
+    //
+    //    context.newAPIHadoopRDD(job.getConfiguration,
+    //      classOf[SequenceFileInputFormat[TileIdWritable, RasterWritable]],
+    //      classOf[TileIdWritable],
+    //      classOf[RasterWritable])
   }
 
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider:MrsImageDataProvider,
@@ -235,6 +210,25 @@ object SparkUtils extends Logging {
     val protectionlevel = metadata.getProtectionLevel
 
     saveMrsPyramid(tiles, provider, output, zoom, tilesize, nodatas, conf,
+      tiletype, bounds, bands, protectionlevel, providerproperties)
+  }
+
+  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)],
+      outputProvider:MrsImageDataProvider, inputprovider:MrsImageDataProvider,
+      zoom:Int, conf:Configuration, providerproperties:Properties): Unit = {
+
+    val metadata = inputprovider.getMetadataReader.read()
+
+    val bounds = metadata.getBounds
+    val bands = metadata.getBands
+    val tiletype = metadata.getTileType
+    val tilesize = metadata.getTilesize
+    val nodatas = metadata.getDefaultValues
+    val protectionlevel = metadata.getProtectionLevel
+
+    val output = outputProvider.getResourceName
+
+    saveMrsPyramid(tiles, outputProvider, output, zoom, tilesize, nodatas, conf,
       tiletype, bounds, bands, protectionlevel, providerproperties)
   }
 
@@ -291,57 +285,57 @@ object SparkUtils extends Logging {
     // that did not include the OrderRDDFunctions.repartitionAndSortWithinPartitions
     // method. Since we're standardizing on Spark 1.2.0 as a minimum, we leave the
     // following commented out.
-//    var repartitionMethod: java.lang.reflect.Method = null
-//    val orderedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
-//    val repartitionMethodName = "repartitionAndSortWithinPartitions"
-//    try {
-//      repartitionMethod = orderedTiles.getClass.getDeclaredMethod(repartitionMethodName,
-//        classOf[Partitioner])
-//    }
-//    catch {
-//      case nsm: NoSuchMethodException => {
-//        // Ignore. On older versions of Spark, this method does not exist, and
-//        // that is handled later in the code with repartitionMethod == null.
-//      }
-//    }
-//    if (repartitionMethod != null) {
-//      // The new method exists, so let's call it through reflection because it's
-//      // more efficient.
-//      log.info("Saving MrsPyramid using new repartition method")
-//      val sorted: RDD[(TileIdWritable, RasterWritable)] = repartitionMethod.invoke(orderedTiles, sparkPartitioner).asInstanceOf[RDD[(TileIdWritable, RasterWritable)]]
-//      val saveSorted = new PairRDDFunctions(sorted)
-//      val saveMethodName = "saveAsNewAPIHadoopFile"
-//      val saveMethod = saveSorted.getClass.getDeclaredMethod(saveMethodName,
-//        classOf[String] /* name */,
-//        classOf[Class[Any]]  /* keyClass */,
-//        classOf[Class[Any]] /*valueClass */,
-//        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
-//        classOf[Configuration] /* configuration */)
-//      if (saveMethod != null) {
-//        saveMethod.invoke(saveSorted, name, classOf[TileIdWritable], classOf[RasterWritable],
-//          tofp.getOutputFormat.getClass, conf)
-//        //        sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
-//        //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
-//      }
-//      else {
-//        val msg = "Unable to find method " + saveMethodName + " in class " + saveSorted.getClass.getName
-//        logError(msg)
-//        throw new IllegalArgumentException(msg)
-//      }
-//    }
-//    else {
-//      // This is an older version of Spark, so use the old partition and sort.
-//      log.info("Saving MrsPyramid using old repartition method")
-//      val wrapped = new PairRDDFunctions(tiles)
-//      val partitioned = wrapped.partitionBy(sparkPartitioner)
-//
-//      //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
-//      // free up the tile's cache, it's not needed any more...
-//
-//      val wrapped1 = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](partitioned)
-//      var s = new PairRDDFunctions(wrapped1.sortByKey())
-//      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
-//    }
+    //    var repartitionMethod: java.lang.reflect.Method = null
+    //    val orderedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
+    //    val repartitionMethodName = "repartitionAndSortWithinPartitions"
+    //    try {
+    //      repartitionMethod = orderedTiles.getClass.getDeclaredMethod(repartitionMethodName,
+    //        classOf[Partitioner])
+    //    }
+    //    catch {
+    //      case nsm: NoSuchMethodException => {
+    //        // Ignore. On older versions of Spark, this method does not exist, and
+    //        // that is handled later in the code with repartitionMethod == null.
+    //      }
+    //    }
+    //    if (repartitionMethod != null) {
+    //      // The new method exists, so let's call it through reflection because it's
+    //      // more efficient.
+    //      log.info("Saving MrsPyramid using new repartition method")
+    //      val sorted: RDD[(TileIdWritable, RasterWritable)] = repartitionMethod.invoke(orderedTiles, sparkPartitioner).asInstanceOf[RDD[(TileIdWritable, RasterWritable)]]
+    //      val saveSorted = new PairRDDFunctions(sorted)
+    //      val saveMethodName = "saveAsNewAPIHadoopFile"
+    //      val saveMethod = saveSorted.getClass.getDeclaredMethod(saveMethodName,
+    //        classOf[String] /* name */,
+    //        classOf[Class[Any]]  /* keyClass */,
+    //        classOf[Class[Any]] /*valueClass */,
+    //        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
+    //        classOf[Configuration] /* configuration */)
+    //      if (saveMethod != null) {
+    //        saveMethod.invoke(saveSorted, name, classOf[TileIdWritable], classOf[RasterWritable],
+    //          tofp.getOutputFormat.getClass, conf)
+    //        //        sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+    //        //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
+    //      }
+    //      else {
+    //        val msg = "Unable to find method " + saveMethodName + " in class " + saveSorted.getClass.getName
+    //        logError(msg)
+    //        throw new IllegalArgumentException(msg)
+    //      }
+    //    }
+    //    else {
+    //      // This is an older version of Spark, so use the old partition and sort.
+    //      log.info("Saving MrsPyramid using old repartition method")
+    //      val wrapped = new PairRDDFunctions(tiles)
+    //      val partitioned = wrapped.partitionBy(sparkPartitioner)
+    //
+    //      //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
+    //      // free up the tile's cache, it's not needed any more...
+    //
+    //      val wrapped1 = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](partitioned)
+    //      var s = new PairRDDFunctions(wrapped1.sortByKey())
+    //      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
+    //    }
 
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
     val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
@@ -539,6 +533,31 @@ object SparkUtils extends Logging {
     }
 
     ab.result()
+  }
+
+
+  def address(obj:Object):String = {
+    var addr = "0x"
+
+    val array = Array(obj)
+    val f = classOf[sun.misc.Unsafe].getDeclaredField("theUnsafe")
+    f.setAccessible(true)
+    val unsafe =  f.get(null).asInstanceOf[sun.misc.Unsafe]
+
+
+    val offset:Long = unsafe.arrayBaseOffset(classOf[Array[Object]])
+    val scale = unsafe.arrayIndexScale(classOf[Array[Object]])
+
+    scale match {
+    case 4 =>
+      val factor = 8
+      val i1 = (unsafe.getInt(array, offset) & 0xFFFFFFFFL) * factor
+      addr += i1.toHexString
+    case 8 =>
+      throw new AssertionError("Not supported")
+    }
+
+    addr
   }
 
 }

@@ -33,6 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -1375,6 +1379,18 @@ public class DataProviderFactory
     int ndx = name.indexOf(PREFIX_CHAR);
     if (ndx > 0)
     {
+      // 1st check if the system see's the name as a valid URI
+      try
+      {
+        URI uri = new URL(name).toURI();
+        return null;
+      }
+      catch (URISyntaxException | MalformedURLException e)
+      {
+        // no op
+      }
+
+      // now check for the :// part (usually for URI's not added to the system, like hdfs://, or s3://
       int afterPrefixIndex = ndx + PREFIX_CHAR.length();
       // If the prefix character is a colon, we need to make sure that the name is
       // not actually a URL. So if the name has at least two more characters, and
