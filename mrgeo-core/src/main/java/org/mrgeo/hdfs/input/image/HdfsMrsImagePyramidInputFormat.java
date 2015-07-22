@@ -153,7 +153,7 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
     List<InputSplit> result = new ArrayList<InputSplit>(actualSplits.size());
     for (InputSplit actualSplit : actualSplits)
     {
-      // Read the HDFS index file for this split to 
+      // Read the HDFS index file for this split to
       if (!(actualSplit instanceof FileSplit))
       {
         throw new IOException("Expected (Hadoop) FileSplit, got " + actualSplit.getClass().getCanonicalName());
@@ -170,17 +170,16 @@ public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<Tile
       try
       {
         splitinfo =
-            (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo) splitfile.getSplitByName(partFile);
+                (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo) splitfile.getSplitByName(partFile);
       }
-      catch (Splits.SplitException e)
+      catch(Splits.SplitNotFoundException e)
       {
-        // Example file name is "part-r-00000". Parse the number from the end because that
-        // will be the index of the corresponding entry in the splits file
-        String indexStr = partFile.substring(partFile.lastIndexOf('-') + 1, partFile.length());
-        int partition = Integer.valueOf(indexStr);
-
-        splitinfo =
-            (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo) splitfile.getSplitByPartition(partition);
+        LOG.info("Skipping missing partition returned from " + super.getClass().getName() + ": " + partFile);
+        // The FileInputFormat getSplits method will return partitions that do not
+        // actually exist (e.g. when there are "holes" in images). We know this happens
+        // when we can't find the partition referenced in our splits file, so we just
+        // ignore that split.
+        continue;
       }
 
       long endTileId = splitinfo.getEndId();

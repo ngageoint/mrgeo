@@ -17,8 +17,8 @@ package org.mrgeo.hdfs.tile;
 
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Writable;
-import org.mrgeo.image.MrsImageException;
 import org.mrgeo.data.KVIterator;
+import org.mrgeo.image.MrsImageException;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -31,7 +31,6 @@ import java.io.IOException;
  */
 public abstract class HdfsTileResultScanner<T, TWritable extends Writable> implements KVIterator<TileIdWritable, T>
 {
-
   // reader used for pulling items
   private final HdfsMrsTileReader<T, TWritable> reader;
 
@@ -39,7 +38,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
   private MapFile.Reader mapfile;
 
   // keep track of where the reader is
-  private int curPartition;
+  private int curPartitionIndex;
 
   // return item
   private TWritable currentValue;
@@ -101,7 +100,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
 
     primeScanner(startTileId, endTileId);
 
-  } // end constructor
+  }
 
   @Override
   public TileIdWritable currentKey()
@@ -149,8 +148,8 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
       }
 
       /*
-       * 1. found = readers[curPartition].next(currentKey, value) 2. if !found increment
-       * curPartition, ensure that its within limits, and run 1. again. if its not within limits,
+       * 1. found = readers[curPartitionIndex].next(currentKey, value) 2. if !found increment
+       * curPartitionIndex, ensure that its within limits, and run 1. again. if its not within limits,
        * return false 3. if currentKey <= endKey return true, else return false;
        */
       while (true)
@@ -170,8 +169,6 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
               {
                 return true;
               }
-
-              System.out.println("skipping: " + t.toString());
             }
             else
             {
@@ -185,11 +182,15 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
         }
         else
         {
-          if (++curPartition >= reader.getMaxPartitions())
+          if (++curPartitionIndex >= reader.getMaxPartitions())
           {
             return false;
           }
-          mapfile = reader.getReader(curPartition);
+          if (!reader.canBeCached() && mapfile != null)
+          {
+            mapfile.close();
+          }
+          mapfile = reader.getReader(curPartitionIndex);
         }
       }
     }
@@ -197,7 +198,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
     {
       throw new MrsImageException(e);
     }
-  } // end hasNext
+  }
 
   /**
    * Get the value from the MapFile and prepares the Raster output.
@@ -205,7 +206,6 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
   @Override
   public T next()
   {
-    // System.out.println("Current key returned is " + currentKey.get());
     try
     {
       return toNonWritable(currentValue);
@@ -214,7 +214,7 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
     {
       throw new MrsImageException(e);
     }
-  } // end next
+  }
 
   /**
    * The remove method does nothing
@@ -262,13 +262,17 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
     try
     {
       // find the partition containing the first key in the range
-      // if found, set curPartition to its partition
-      curPartition = -1;
-      int partition = reader.getPartition(new TileIdWritable(startTileId));
+      // if found, set curPartitionIndex to its partition
+      curPartitionIndex = -1;
+      int partitionIndex = reader.getPartitionIndex(new TileIdWritable(startTileId));
       TileIdWritable startKey = null;
-      while (curPartition == -1 && partition < reader.getMaxPartitions())
+      while (curPartitionIndex == -1 && partitionIndex < reader.getMaxPartitions())
       {
-        mapfile = reader.getReader(partition);
+        if (!reader.canBeCached() && mapfile != null)
+        {
+          mapfile.close();
+        }
+        mapfile = reader.getReader(partitionIndex);
         try
         {
           // We need the mapfile in order to do the following, but we only
@@ -296,11 +300,11 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
         if (currentKey != null && inRange(currentKey))
         {
           readFirstKey = true;
-          curPartition = partition;
+          curPartitionIndex = partitionIndex;
         }
         else
         {
-          partition++;
+          partitionIndex++;
         }
       }
     }

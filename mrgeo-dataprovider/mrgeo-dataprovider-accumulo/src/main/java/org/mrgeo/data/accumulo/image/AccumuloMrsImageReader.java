@@ -88,7 +88,13 @@ public class AccumuloMrsImageReader extends AccumuloMrsTileReader<Raster, Raster
       return -1;
     }
   } // end calculateTileCount
-  
+
+  @Override
+  public boolean canBeCached()
+  {
+    return true;
+  }
+
   @Override
   protected Raster toNonWritable(byte[] val, CompressionCodec codec, Decompressor decompressor)
       throws IOException

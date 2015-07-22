@@ -72,6 +72,36 @@ public class PartitionerSplitTest
 
   @Test
   @Category(UnitTest.class)
+  public void getSplitIndexLow() throws Splits.SplitException
+  {
+    Splits splits = new PartitionerSplit();
+    splits.generateSplits(new TestGenerator());
+
+    Assert.assertEquals(0, splits.getSplitIndex(0));
+  }
+
+  @Test
+  @Category(UnitTest.class)
+  public void getSplitIndex() throws Splits.SplitException
+  {
+    Splits splits = new PartitionerSplit();
+    splits.generateSplits(new TestGenerator());
+
+    Assert.assertEquals(5, splits.getSplitIndex(16));
+  }
+
+  @Test
+  @Category(UnitTest.class)
+  public void getSplitIndexHigh() throws Splits.SplitException
+  {
+    Splits splits = new PartitionerSplit();
+    splits.generateSplits(new TestGenerator());
+
+    Assert.assertEquals(splits.length() - 1, splits.getSplitIndex(1000));
+  }
+
+  @Test
+  @Category(UnitTest.class)
   public void getSplit() throws Splits.SplitException
   {
     Splits splits = new PartitionerSplit();
