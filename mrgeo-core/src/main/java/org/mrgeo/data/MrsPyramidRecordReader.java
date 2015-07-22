@@ -464,12 +464,17 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
 
       readers = new HashMap<String, MrsTileReader<T>>();
       tilecache = new HashMap<String, Map<TileIdWritable, T>>();
+      // The reader tile cache is configured to store two times the neighborhood
+      // size for each of the inputs. This allows all tiles from the previous
+      // tile neighborhood to be accessed while reading in the current tile
+      // neighboorhood so that none of the overlapping tiles between the
+      // neighborhoods should drop out of the cache while reading.
       int readerTileCacheSize = (tileClusterInfo == null) ?
               ifContext.getInputs().size() :
-              (tileClusterInfo.getNeighborCount() + 1) * ifContext.getInputs().size();
+              (tileClusterInfo.getNeighborCount() + 1) * 2 * ifContext.getInputs().size();
       readerTileCache = CacheBuilder.newBuilder()
               .maximumSize(readerTileCacheSize)
-              .expireAfterAccess(10, TimeUnit.SECONDS)
+              .expireAfterAccess(120, TimeUnit.SECONDS)
               .build();
       for (final String inputPyramidName : ifContext.getInputs())
       {
@@ -823,18 +828,15 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     // one-to-one tile
     else
     {
-      System.err.println("setTile " + k + "." + tileid + "(" + TMSUtils.tileid(tileid, zoomLevel) + ")");
       String key = buildReaderTileCacheKey(k, tileid);
       T r = readerTileCache.getIfPresent(key);
       if (r == null)
       {
-        System.err.println("Loading tile from reader: " + tileid);
         r = reader.get(new TileIdWritable(tileid));
-        readerTileCache.put(key, r);
-      }
-      else
-      {
-        System.err.println("Found tile in readerTileCache: " + tileid);
+        if (r != null)
+        {
+          readerTileCache.put(key, r);
+        }
       }
       if (r != null)
       {
@@ -855,16 +857,17 @@ public abstract class MrsPyramidRecordReader<T, TWritable> extends RecordReader<
     Map<TileIdWritable, T> cache = tilecache.get(k);
     if (cache.containsKey(id))
     {
-      System.err.println("Returning tile from cache: " + id.get());
       return cache.get(id);
     }
-    System.err.println("Loading tile " + id.get() + " from file");
     String key = buildReaderTileCacheKey(k, id.get());
     T r = readerTileCache.getIfPresent(key);
     if (r == null)
     {
       r = reader.get(id);
-      readerTileCache.put(key, r);
+      if (r != null)
+      {
+        readerTileCache.put(key, r);
+      }
     }
     cache.put(id,  r);
 

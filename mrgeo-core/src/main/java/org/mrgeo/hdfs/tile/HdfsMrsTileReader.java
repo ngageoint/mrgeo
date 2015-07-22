@@ -54,10 +54,10 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
   private final static int READER_CACHE_SIZE = 100;
   private final static int READER_CACHE_EXPIRE = 10; // minutes
 
-  private MapFile.Reader loadReader(int partition) throws IOException
+  private MapFile.Reader loadReader(int partitionIndex) throws IOException
   {
     final FileSplit.FileSplitInfo part =
-            (FileSplit.FileSplitInfo) splits.getSplits()[partition];
+            (FileSplit.FileSplitInfo) splits.getSplits()[partitionIndex];
 
     final Path path = new Path(imagePath, part.getName());
     MapFile.Reader reader = new MapFile.Reader(path, conf);
@@ -95,9 +95,9 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
    {
 
      @Override
-     public MapFile.Reader load(final Integer partition) throws IOException
+     public MapFile.Reader load(final Integer partitionIndex) throws IOException
      {
-       return loadReader(partition);
+       return loadReader(partitionIndex);
      }
    });
 
@@ -311,7 +311,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     try
     {
       // get the reader that handles the partition/map file
-      reader = getReader(getPartition(key));
+      reader = getReader(getPartitionIndex(key));
 
       // return object
       TWritable val = (TWritable)reader.getValueClass().newInstance();
@@ -340,6 +340,9 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     }
     catch (final IOException e)
     {
+      log.error("Got IOException when reading tile", e);
+      System.err.println("Got IOException when reading tile");
+      e.printStackTrace();
       throw new MrsTileException(e);
     }
     catch (InstantiationException e)
@@ -423,9 +426,9 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
    *          the item to find the range for
    * @return the partition of the requested key
    */
-  public int getPartition(final TileIdWritable key) throws IOException
+  public int getPartitionIndex(final TileIdWritable key) throws IOException
   {
-    return splits.getSplit(key.get()).getPartition();
+    return splits.getSplitIndex(key.get());
   }
 
   /**
@@ -435,24 +438,24 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
    * method returns true, the caller should not close the reader. It will
    * be automatically closed when it drops out of the cache.
    * 
-   * @param partition
+   * @param partitionIndex
    *          is the particular reader being accessed
    * @return the reader for the partition specified
    * @throws IOException
    */
-  public MapFile.Reader getReader(final int partition) throws IOException
+  public MapFile.Reader getReader(final int partitionIndex) throws IOException
   {
     try
     {
       if (canBeCached)
       {
-        log.info("Loading reader for partition " + partition + " through the cache");
-        return readerCache.get(partition);
+        log.info("Loading reader for partitionIndex " + partitionIndex + " through the cache");
+        return readerCache.get(partitionIndex);
       }
       else
       {
-        log.info("Loading reader for partition " + partition + " without the cache");
-        return loadReader(partition);
+        log.info("Loading reader for partitionIndex " + partitionIndex + " without the cache");
+        return loadReader(partitionIndex);
       }
     }
     catch (ExecutionException e)
