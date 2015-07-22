@@ -211,7 +211,7 @@ public class Export extends Command
       {
         output += ".tiff";
       }
-      GDALUtils.saveRaster(raster, output + ".tiff", imageBounds,
+      GDALUtils.saveRaster(raster, output, imageBounds,
           zoomlevel, tilesize, metadata.getDefaultValue(0));
 
       System.out.println("Wrote output to " + output);
