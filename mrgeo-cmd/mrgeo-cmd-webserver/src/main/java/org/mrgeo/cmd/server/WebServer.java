@@ -15,31 +15,29 @@
 
 package org.mrgeo.cmd.server;
 
-import com.sun.jersey.api.container.httpserver.HttpServerFactory;
-import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
-import com.sun.net.httpserver.HttpServer;
-
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.cmd.Command;
-import org.mrgeo.utils.*;
+import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.UriBuilder;
-import java.io.IOException;
+import java.io.File;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.Properties;
 
 public class WebServer extends Command
 {
@@ -142,9 +140,43 @@ public class WebServer extends Command
     System.out.println("Starting embedded web server on port " + httpPort);
     URI uri = UriBuilder.fromUri("http://" + getHostName() + "/").port(httpPort).build();
     Server server = new Server(httpPort);
+    HandlerCollection coll = new HandlerCollection();
     ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
     context.setContextPath("/mrgeo");
-    server.setHandler(context);
+    coll.addHandler(context);
+    // If the MrGeo configuration defines a static web root path,
+    // then add a resource handler for being able to access resources
+    // from that path statically from the root context path.
+    String webRoot = MrGeoProperties.getInstance().getProperty("web.server.static.root");
+    if (webRoot != null && !webRoot.isEmpty())
+    {
+      boolean goodWebRoot = false;
+      File f = new File(webRoot);
+      if (f.exists())
+      {
+        if (f.isDirectory())
+        {
+          goodWebRoot = true;
+        }
+        else
+        {
+          System.out.println("Not serving static web content because web.server.static.root is not a directory: " + webRoot);
+        }
+      }
+      else
+      {
+        System.out.println("Not serving static web content because web.server.static.root does not exist: " + webRoot);
+      }
+      if (goodWebRoot)
+      {
+        System.out.println("Serving static web content from: " + webRoot);
+        ResourceHandler rh = new ResourceHandler();
+        rh.setDirectoriesListed(true);
+        rh.setResourceBase(webRoot);
+        coll.addHandler(rh);
+      }
+    }
+    server.setHandler(coll);
     ServletHolder servletHolder = new ServletHolder(new ServletContainer());
     servletHolder.setInitParameter("javax.ws.rs.Application", "org.mrgeo.application.Application");
     servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
