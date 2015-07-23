@@ -212,7 +212,7 @@ public void generateSplits(Path parent, Configuration conf) throws IOException
   splits = list.toArray(new FileSplit.FileSplitInfo[list.size()]);
 }
 
-final public SplitInfo getSplitByName(String name) throws SplitException
+final public SplitInfo getSplitByName(String name) throws SplitException, SplitNotFoundException
 {
   if (splits == null)
   {
@@ -226,7 +226,7 @@ final public SplitInfo getSplitByName(String name) throws SplitException
     }
   }
 
-  throw new SplitException("Split not found (" + name + ")");
+  throw new SplitNotFoundException("Split not found (" + name + ")");
 }
 
 @Override

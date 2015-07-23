@@ -44,6 +44,22 @@ public abstract class Splits implements Externalizable
     }
   }
 
+  public class SplitNotFoundException extends IOException
+  {
+    public SplitNotFoundException() {
+      super();
+    }
+    public SplitNotFoundException(String message) {
+      super(message);
+    }
+    public SplitNotFoundException(String message, Throwable cause) {
+      super(message, cause);
+    }
+    public SplitNotFoundException(Throwable cause) {
+      super(cause);
+    }
+  }
+
   public abstract String findSpitFile(Path parent) throws IOException;
   public abstract void generateSplits(SplitGenerator generator);
 
@@ -62,18 +78,18 @@ public abstract class Splits implements Externalizable
     return 0;
   }
 
-  final public SplitInfo getSplitByPartition(int partition) throws SplitException
+  final public SplitInfo getSplitByPartitionIndex(int partitionIndex) throws SplitException
   {
     if (splits == null)
     {
       throw new SplitException("Splits not generated, call readSplits() or generateSplits() first");
     }
-    else if (partition < 0 || partition >= splits.length)
+    else if (partitionIndex < 0 || partitionIndex >= splits.length)
     {
-      throw new SplitException("Partition " + partition +
+      throw new SplitException("Partition " + partitionIndex +
           " out of bounds. range 0 - " + (splits.length -1));
     }
-    return splits[partition];
+    return splits[partitionIndex];
   }
 
   final public SplitInfo getSplit(long tileId) throws SplitException
@@ -86,7 +102,7 @@ public abstract class Splits implements Externalizable
     // lots of splits, use binary search
     if (splits.length > 1000)
     {
-      return findSplit(tileId);
+      return splits[findSplitIndex(tileId)];
     }
     // few splits, brute force search
     for (SplitInfo split: splits)
@@ -101,12 +117,50 @@ public abstract class Splits implements Externalizable
         ".  splits: min: " + splits[0].getTileId() + ", max: " + splits[splits.length - 1].getTileId());
   }
 
-  private SplitInfo findSplit(long tileId) throws SplitException
+  final public int getSplitIndex(long tileId) throws SplitException
+  {
+    if (splits == null || splits.length == 0)
+    {
+      throw new SplitException("Splits not generated, call readSplits() or generateSplits() first");
+    }
+
+    // If a tile before the start of the first tile is requested,
+    // return the first split.
+    if (splits[0].compareLT(tileId))
+    {
+      return 0;
+    }
+    // If a tile after the end of the last tile is requested,
+    // return the last split.
+    if (splits[splits.length-1].compareGT(tileId))
+    {
+      return splits.length - 1;
+    }
+
+    // lots of splits, use binary search
+    if (splits.length > 1000)
+    {
+      return findSplitIndex(tileId);
+    }
+    // few splits, brute force search
+    for (int i=0; i < splits.length; i++)
+    {
+      if (splits[i].compareLE(tileId))
+      {
+        return i;
+      }
+    }
+    return splits.length - 1;
+//    throw new SplitException("TileId out of range.  tile id: " + tileId +
+//                             ".  splits: min: " + splits[0].getTileId() + ", max: " + splits[splits.length - 1].getTileId());
+  }
+
+  private int findSplitIndex(long tileId) throws SplitException
   {
     // First check the min and max values before binary searching.
     if (splits[0].compareLE(tileId))
     {
-      return splits[0];
+      return 0;
     }
     else if (splits[splits.length - 1].compareGT(tileId))
     {
@@ -119,13 +173,13 @@ public abstract class Splits implements Externalizable
     return binarySearch(tileId, 0, splits.length - 1);
   }
 
-  private SplitInfo binarySearch(long target, int start, int end)
+  private int binarySearch(long target, int start, int end)
   {
     int mid = start + (end - start + 1) / 2;
 
     if (splits[mid - 1].compareGT(target) && splits[mid].compareLE(target))
     {
-      return splits[mid];
+      return mid;
     }
     else if (splits[mid].compareLT(target))
     {
