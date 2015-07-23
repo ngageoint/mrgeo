@@ -102,22 +102,22 @@ object TileNeighborhood extends Logging {
       sendMsg = buildNeighborhood,
       mergeMsg = mergeNeighborhood)
 
-    println("***: " + neighborhoods.count() + " ***")
-    neighborhoods.foreach(n => {
-      println("id: " + n._1)
-      val neighborhood = n._2.neighborhood
-      for (y <- neighborhood.indices) {
-        for (x <- neighborhood(y).indices) {
-          if (neighborhood(y)(x) == null){
-            print(" null    ")
-          }
-          else {
-            print(neighborhood(y)(x)._1 + "(" + SparkUtils.address(neighborhood(y)(x)._2) + ")  ")
-          }
-        }
-        println()
-      }
-    })
+//    println("***: " + neighborhoods.count() + " ***")
+//    neighborhoods.foreach(n => {
+//      println("id: " + n._1)
+//      val neighborhood = n._2.neighborhood
+//      for (y <- neighborhood.indices) {
+//        for (x <- neighborhood(y).indices) {
+//          if (neighborhood(y)(x) == null){
+//            print(" null    ")
+//          }
+//          else {
+//            print(neighborhood(y)(x)._1 + "(" + SparkUtils.address(neighborhood(y)(x)._2) + ")  ")
+//          }
+//        }
+//        println()
+//      }
+//    })
 
     neighborhoods
 

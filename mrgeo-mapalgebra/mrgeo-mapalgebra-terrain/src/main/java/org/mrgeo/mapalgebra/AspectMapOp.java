@@ -18,61 +18,78 @@ package org.mrgeo.mapalgebra;
 
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
-import org.mrgeo.mapreduce.formats.TileClusterInfo;
-import org.mrgeo.opimage.AspectDescriptor;
+import org.mrgeo.mapreduce.job.JobCancelledException;
+import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.progress.Progress;
+import org.mrgeo.spark.AspectDriver;
 
+import java.io.IOException;
 import java.util.Vector;
 
-public class AspectMapOp extends RenderedImageMapOp implements TileClusterInfoCalculator
+public class AspectMapOp extends RasterMapOp
 {
-  public static String[] register()
+String units = "rad";
+
+public static String[] register()
+{
+  return new String[] { "aspect" };
+}
+
+@Override
+public void addInput(MapOp n) throws IllegalArgumentException
+{
+  if (!(n instanceof RasterMapOp))
   {
-    return new String[] { "aspect" };
+    throw new IllegalArgumentException("Can only run aspect() on raster inputs");
+  }
+  if (_inputs.size() >= 1)
+  {
+    throw new IllegalArgumentException("Can only run aspect() on a single raster input");
   }
 
-  public AspectMapOp()
+  _inputs.add(n);
+}
+
+@Override
+public void build(Progress p) throws IOException, JobFailedException, JobCancelledException
+{
+  p.starting();
+  String input = ((RasterMapOp) _inputs.get(0)).getOutputName();
+
+  AspectDriver.aspect(input, units, getOutputName(), createConfiguration());
+
+  p.complete();
+}
+
+@Override
+public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapter parser)
+{
+  Vector<ParserNode> result = new Vector<ParserNode>();
+
+  if (children.size() > 2)
   {
-    _factory = new AspectDescriptor();
+    throw new IllegalArgumentException(
+        "Aspect takes one or two arguments. single-band raster elevation and optional unit format (\"deg\" or \"rad\")");
   }
 
-  @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
-  {
-    Vector<ParserNode> result = new Vector<ParserNode>();
+  result.add(children.get(0));
 
-    if (children.size() > 2)
+  if (children.size() == 2)
+  {
+    String units = MapOp.parseChildString(children.get(1), "units", parser);
+    if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")))
     {
-      throw new IllegalArgumentException(
-          "Aspect takes one or two arguments. single-band raster elevation and optional unit format (\"deg\" or \"rad\")");
+      throw new IllegalArgumentException("Units must be \"deg\", or \"rad\".");
     }
-
-    result.add(children.get(0));
-
-    if (children.size() == 2)
-    {
-      String units = MapOp.parseChildString(children.get(1), "units", parser);
-      if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")))
-      {
-        throw new IllegalArgumentException("Units must be \"deg\" or \"rad\".");
-      }
-      getParameters().add(units);
-    }
-
-    return result;
+    this.units = units;
   }
 
-  @Override
-  public TileClusterInfo calculateTileClusterInfo()
-  {
-    // Aspect uses HornNormalOpImage which needs access to the
-    // eight pixels surrounding each pixel. This means we need
-    // to get the eight surrounding tiles.
-    return new TileClusterInfo(-1, -1, 3, 3, 1);
-  }
+  return result;
+}
 
-  @Override
-  public String toString()
-  {
-    return "aspect()";
-  }
+@Override
+public String toString()
+{
+  return "aspect()";
+}
 }

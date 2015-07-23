@@ -20,7 +20,7 @@ import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.slope.SlopeDriver;
+import org.mrgeo.spark.SlopeDriver;
 
 import java.io.IOException;
 import java.util.Vector;
@@ -92,60 +92,4 @@ public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAda
   {
     return "slope()";
   }
-
-
 }
-//public class SlopeMapOp extends RenderedImageMapOp implements TileClusterInfoCalculator
-//{
-//  public static String[] register()
-//  {
-//    return new String[] { "slope" };
-//  }
-//
-//  public SlopeMapOp()
-//  {
-//    _factory = new SlopeDescriptor();
-//  }
-//
-//  @Override
-//  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
-//  {
-//    Vector<ParserNode> result = new Vector<ParserNode>();
-//
-//    if (children.size() > 2)
-//    {
-//      throw new IllegalArgumentException(
-//          "Slope takes one or two arguments. single-band raster elevation and optional unit format (\"deg\", \"rad\", \"gradient\", or \"percent\")");
-//    }
-//
-//    result.add(children.get(0));
-//
-//    if (children.size() == 2)
-//    {
-//      String units = MapOp.parseChildString(children.get(1), "units", parser);
-//      if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")
-//          || units.equalsIgnoreCase("gradient") || units.equalsIgnoreCase("percent")))
-//      {
-//        throw new IllegalArgumentException("Units must be \"deg\", \"rad\", \"gradient\", or \"percent\".");
-//      }
-//      getParameters().add(units);
-//    }
-//
-//    return result;
-//  }
-//
-//  @Override
-//  public TileClusterInfo calculateTileClusterInfo()
-//  {
-//    // Slope uses HornNormalOpImage which needs access to the
-//    // eight pixels surrounding each pixel. This means we need
-//    // to get the eight surrounding tiles.
-//    return new TileClusterInfo(-1, -1, 3, 3, 1);
-//  }
-//
-//  @Override
-//  public String toString()
-//  {
-//    return "slope()";
-//  }
-//}

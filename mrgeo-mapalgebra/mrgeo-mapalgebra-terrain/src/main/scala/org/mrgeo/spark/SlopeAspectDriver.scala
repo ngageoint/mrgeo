@@ -13,59 +13,50 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.slope
+package org.mrgeo.spark
 
 import java.awt.image.{DataBuffer, Raster}
-import java.io.{ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import java.util.Properties
 import javax.vecmath.Vector3d
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.spark.TileNeighborhood
-import org.mrgeo.spark.job.{MrGeoJob, JobArguments, MrGeoDriver}
-import org.mrgeo.utils.{LatLng, TMSUtils, SparkUtils}
+import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.utils.{LatLng, SparkUtils, TMSUtils}
 
 import scala.collection.mutable
 
-object SlopeDriver extends MrGeoDriver with Externalizable {
-  final private val Input = "input"
-  final private val Output = "output"
-  final private val Units = "units"
+object SlopeAspectDriver {
+  final val Input = "input"
+  final val Output = "output"
+  final val Units = "units"
+  final val Type = "type"
 
+  final val Slope = "slope"
+  final val Aspect = "aspect"
 
-  def slope(input:String, units:String, output:String, conf:Configuration) = {
-    val args =  mutable.Map[String, String]()
-
-    val name = "Slope (" + input + ")"
-
-    args += Input -> input
-    args += Units -> units
-    args += Output -> output
-
-    run(name, classOf[SlopeDriver].getName, args.toMap, conf)
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {}
-  override def readExternal(in: ObjectInput): Unit = {}
-
-  override def setup(job: JobArguments): Boolean = {
-    true
-  }
 }
 
-class SlopeDriver extends MrGeoJob with Externalizable {
+
+
+
+class SlopeAspectDriver extends MrGeoJob with Externalizable {
+
+  final val DEG_2_RAD: Double = 0.0174532925
+  final val RAD_2_DEG: Double = 57.2957795
 
   var input:String = null
   var output:String = null
   var units:String = null
+  var slope:Boolean = true
 
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
@@ -74,18 +65,18 @@ class SlopeDriver extends MrGeoJob with Externalizable {
     classes += classOf[RasterWritable]
 
     classes.result()
-
   }
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    input = job.getSetting(SlopeDriver.Input)
-    output = job.getSetting(SlopeDriver.Output)
-    units = job.getSetting(SlopeDriver.Units)
+    input = job.getSetting(SlopeAspectDriver.Input)
+    output = job.getSetting(SlopeAspectDriver.Output)
+    units = job.getSetting(SlopeAspectDriver.Units)
 
+    slope = job.getSetting(SlopeAspectDriver.Type).equals(SlopeAspectDriver.Slope)
     true
   }
 
-  private def calculateSlope(tiles:RDD[(Long, TileNeighborhood)], dx:Double, dy:Double, nodata:Double) = {
+  private def calculate(tiles:RDD[(Long, TileNeighborhood)], nodata:Double, zoom:Int, tilesize:Int) = {
 
     tiles.map(tile => {
       val anchor = RasterWritable.toRaster(tile._2.anchor)
@@ -101,6 +92,14 @@ class SlopeDriver extends MrGeoJob with Externalizable {
       val nn = 6
       val zn = 7
       val pn = 8
+
+      val bounds = TMSUtils.tileBounds(TMSUtils.tileid(tile._1, zoom), zoom, tilesize)
+
+      // calculate the great circle distance of the tile (through the middle)
+      val midx = bounds.w + ((bounds.e - bounds.w) / 2.0)
+      val midy = bounds.s + ((bounds.n - bounds.s) / 2.0)
+      val dx = LatLng.calculateGreatCircleDistance(new LatLng(midy, bounds.w), new LatLng(midy, bounds.e)) / tilesize
+      val dy = LatLng.calculateGreatCircleDistance(new LatLng(bounds.n, midx), new LatLng(bounds.s, midx)) / tilesize
 
       val elevations = {
         val neighborhood = tile._2
@@ -196,16 +195,23 @@ class SlopeDriver extends MrGeoJob with Externalizable {
         (normal.x, normal.y, normal.z)
       }
 
-      def calculateSlope(x: Int, y: Int, normal: (Double, Double, Double)): Float = {
+      def calculateAngle(x: Int, y: Int, normal: (Double, Double, Double)): Float = {
         if (normal._1.isNaN) {
           return Float.NaN
         }
 
-        val up: Vector3d = new Vector3d(0, 0, 1.0)
-        val theta: Double = Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
+        var theta:Double = 0
+
+        if (slope) {
+          var up = new Vector3d(0, 0, 1.0)  // z (up) direction
+          theta  = Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
+        }
+        else {  // aspect
+          theta = Math.atan2(normal._2, normal._1)//  + Math.PI  // change from (-Pi to Pi) to (0 to 2Pi)
+        }
 
         if (units.equalsIgnoreCase("deg")) {
-          (theta * 180.0 / Math.PI).toFloat
+          (theta * RAD_2_DEG).toFloat
         }
         else if (units.equalsIgnoreCase("rad")) {
           theta.toFloat
@@ -219,24 +225,23 @@ class SlopeDriver extends MrGeoJob with Externalizable {
       }
 
       val sample = elevations(0)(0)
-      val slope = RasterUtils.createEmptyRaster(sample.getWidth, sample.getHeight, 1, DataBuffer.TYPE_FLOAT, Float.NaN)
+      val raster = RasterUtils.createEmptyRaster(sample.getWidth, sample.getHeight, 1, DataBuffer.TYPE_FLOAT, Float.NaN)
 
       for (y <- 0 until sample.getHeight) {
         for (x <- 0 until sample.getWidth) {
           val normal = calculateNormal(x, y)
 
-          slope.setSample(x, y, 0, calculateSlope(x, y, normal))
+          raster.setSample(x, y, 0, calculateAngle(x, y, normal))
         }
       }
 
-      (new TileIdWritable(tile._1), RasterWritable.toWritable(slope))
+      (new TileIdWritable(tile._1), RasterWritable.toWritable(raster))
     })
   }
 
 
   override def execute(context: SparkContext): Boolean =
   {
-
     val ip = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, null.asInstanceOf[Properties])
 
     val metadata: MrsImagePyramidMetadata = ip.getMetadataReader.read
@@ -246,19 +251,14 @@ class SlopeDriver extends MrGeoJob with Externalizable {
     val tiles = TileNeighborhood.createNeighborhood(pyramid, -1, -1, 3, 3,
       zoom, metadata.getTilesize, metadata.getDefaultValue(0), context)
 
-    // todo:  The old code used great circle to calculate this.  I don't think that was necessarry, but we
-    //        may want to investigate
-    val res = TMSUtils.resolution(zoom, metadata.getTilesize) * LatLng.METERS_PER_DEGREE
-
-    tiles.count()
-
-    val slope = calculateSlope(tiles, res, res, metadata.getDefaultValue(0))
-
-    slope.count()
+    val answer = calculate(tiles, metadata.getDefaultValue(0), zoom, metadata.getTilesize).persist(StorageLevel.MEMORY_AND_DISK)
 
     val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
-    SparkUtils.saveMrsPyramid(slope, op, ip, zoom, context.hadoopConfiguration, null)
 
+    SparkUtils.saveMrsPyramid(answer, op, output, zoom, metadata.getTilesize, Array[Double](Float.NaN),
+      context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, 1, metadata.getProtectionLevel, null)
+
+    answer.unpersist()
     true
   }
 
@@ -273,11 +273,13 @@ class SlopeDriver extends MrGeoJob with Externalizable {
     input = in.readUTF()
     output = in.readUTF()
     units = in.readUTF()
+    slope = in.readBoolean()
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
     out.writeUTF(input)
     out.writeUTF(output)
     out.writeUTF(units)
+    out.writeBoolean(slope)
   }
 }
