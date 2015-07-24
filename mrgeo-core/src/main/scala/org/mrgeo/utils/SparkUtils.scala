@@ -177,7 +177,8 @@ object SparkUtils extends Logging {
 
     val providerProps: Properties = null
 
-    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName, providerProps)
+    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
+      zoom, metadata.getTilesize, null, providerProps)
 
     val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
         .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
@@ -340,6 +341,7 @@ object SparkUtils extends Logging {
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
     val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
     val wrappedSorted = new PairRDDFunctions(sorted)
+
     wrappedSorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
       tofp.getOutputFormat.getClass, conf)
 
