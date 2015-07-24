@@ -63,6 +63,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
 
     classes += classOf[TileIdWritable]
     classes += classOf[RasterWritable]
+    classes += classOf[TileNeighborhood]
 
     classes.result()
   }
