@@ -116,7 +116,7 @@ public class PrintSplitFile extends Command
     Path parent = new Path(new Path(dp.getResourceName()), "" + zoomlevel);
     FileSplit fs = new FileSplit();
 
-    String splitname = fs.findSpitFile(parent);
+    String splitname = fs.findSplitFile(parent);
     System.out.println("split file: " + splitname);
 
     fs.readSplits(parent);
