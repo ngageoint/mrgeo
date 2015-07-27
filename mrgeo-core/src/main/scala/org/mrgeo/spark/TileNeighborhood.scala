@@ -86,7 +86,8 @@ object TileNeighborhood extends Logging {
 
     // map the tiles so the key is the tileid as a long
     val vertices = tiles.map(tile => {
-      (tile._1.get(), tile._2)
+      // NOTE:  Some record readers reuse key/value objects, so we make these unique here
+      (tile._1.get(), new RasterWritable(tile._2))
     })
 
     val sample = RasterWritable.toRaster(tiles.first()._2)
@@ -102,22 +103,22 @@ object TileNeighborhood extends Logging {
       sendMsg = buildNeighborhood,
       mergeMsg = mergeNeighborhood)
 
-//    println("***: " + neighborhoods.count() + " ***")
-//    neighborhoods.foreach(n => {
-//      println("id: " + n._1)
-//      val neighborhood = n._2.neighborhood
-//      for (y <- neighborhood.indices) {
-//        for (x <- neighborhood(y).indices) {
-//          if (neighborhood(y)(x) == null){
-//            print(" null    ")
-//          }
-//          else {
-//            print(neighborhood(y)(x)._1 + "(" + SparkUtils.address(neighborhood(y)(x)._2) + ")  ")
-//          }
-//        }
-//        println()
-//      }
-//    })
+    //    println("***: " + neighborhoods.count() + " ***")
+    //    neighborhoods.foreach(n => {
+    //      println("id: " + n._1)
+    //      val neighborhood = n._2.neighborhood
+    //      for (y <- neighborhood.indices) {
+    //        for (x <- neighborhood(y).indices) {
+    //          if (neighborhood(y)(x) == null){
+    //            print(" null    ")
+    //          }
+    //          else {
+    //            print(neighborhood(y)(x)._1 + "(" + SparkUtils.address(neighborhood(y)(x)._2) + ")  ")
+    //          }
+    //        }
+    //        println()
+    //      }
+    //    })
 
     neighborhoods
 
@@ -226,5 +227,16 @@ class TileNeighborhood() extends Externalizable {
   }
   def anchorY():Int = {
     -offsetY
+  }
+
+  def sizeof() = {
+    println("Approximate neighborhood size: ")
+
+    val size = (neighborhood(0)(0)._2.getBytes.length * width * height) + 16 + 8
+    println(" class vars: 16b")
+    println(neighborhood(0)(0)._2.getBytes.length + "b per raster tile (value)")
+    println(" 8b per tileid (key)")
+    println(" " + (width * height) + " neighbors")
+    println("  total: " + size + "b (" + SparkUtils.kbtohuman(size / 1024) + ")")
   }
 }

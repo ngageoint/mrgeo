@@ -20,7 +20,6 @@ import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import java.util.Properties
 import javax.vecmath.Vector3d
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
@@ -29,10 +28,8 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.spark.job.{JobArguments, MrGeoJob}
 import org.mrgeo.utils.{LatLng, SparkUtils, TMSUtils}
-
-import scala.collection.mutable
 
 object SlopeAspectDriver {
   final val Input = "input"
@@ -45,13 +42,12 @@ object SlopeAspectDriver {
 
 }
 
-
-
-
 class SlopeAspectDriver extends MrGeoJob with Externalizable {
 
   final val DEG_2_RAD: Double = 0.0174532925
   final val RAD_2_DEG: Double = 57.2957795
+  final val TWO_PI:Double = 6.28318530718
+  final val THREE_PI_OVER_2:Double = 4.71238898038
 
   var input:String = null
   var output:String = null
@@ -69,21 +65,22 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
   }
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+
+    conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
+    conf.set("spark.shuffle.memoryFraction", "0.3") // set the shuffle higher
+
     input = job.getSetting(SlopeAspectDriver.Input)
     output = job.getSetting(SlopeAspectDriver.Output)
     units = job.getSetting(SlopeAspectDriver.Units)
 
     slope = job.getSetting(SlopeAspectDriver.Type).equals(SlopeAspectDriver.Slope)
+
     true
   }
 
   private def calculate(tiles:RDD[(Long, TileNeighborhood)], nodata:Double, zoom:Int, tilesize:Int) = {
 
     tiles.map(tile => {
-      val anchor = RasterWritable.toRaster(tile._2.anchor)
-      val anchorX = tile._2.anchorX()
-      val anchorY = tile._2.anchorY()
-
       val np = 0
       val zp = 1
       val pp = 2
@@ -102,8 +99,19 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
       val dx = LatLng.calculateGreatCircleDistance(new LatLng(midy, bounds.w), new LatLng(midy, bounds.e)) / tilesize
       val dy = LatLng.calculateGreatCircleDistance(new LatLng(bounds.n, midx), new LatLng(bounds.s, midx)) / tilesize
 
+      val z = Array.ofDim[Double](9)
+
+      val vx = new Vector3d(dx, 0.0, 0.0)
+      val vy = new Vector3d(0.0, dy, 0.0)
+      val normal = new Vector3d()
+      val up = new Vector3d(0, 0, 1.0)  // z (up) direction
+
+
+      var theta:Double = 0.0
+
       val elevations = {
         val neighborhood = tile._2
+
         val rasters = Array.ofDim[Raster](neighborhood.height, neighborhood.width)
 
         for (y <- 0 until neighborhood.height) {
@@ -111,32 +119,35 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
             rasters(y)(x) = RasterWritable.toRaster(neighborhood.neighborAbsolute(x, y))
           }
         }
+
+        //neighborhood.sizeof()
+
         rasters
       }
 
-      def isnodata(v:Double, nodata:Double):Boolean = {
-        (nodata.isNaN && v.isNaN) || (v == nodata)
-      }
+      val anchorX = tile._2.anchorX()
+      val anchorY = tile._2.anchorY()
+      val anchor = elevations(anchorY)(anchorX)
+
+      def isnodata(v:Double, nodata:Double):Boolean = (nodata.isNaN && v.isNaN) || (v == nodata)
 
       def getElevation(x:Int, y:Int):Double = {
 
         var offsetX = 0
         var offsetY = 0
+
         if (x < 0) {
           offsetX = -1
         }
         else if (x >= anchor.getWidth) {
           offsetX = 1
         }
+
         if (y < 0) {
           offsetY = -1
         }
         else if (y >= anchor.getWidth) {
           offsetY = 1
-        }
-
-        if (offsetX == 0 && offsetY == 0) {
-          return anchor.getSampleDouble(x, y, 0)
         }
 
         var px:Int = x
@@ -155,9 +166,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
           py = y - anchor.getHeight
         }
 
-        val elevation = elevations(anchorY + offsetY)(anchorX + offsetX)
-
-        elevation.getSampleDouble(px, py, 0)
+        elevations(anchorY + offsetY)(anchorX + offsetX).getSampleDouble(px, py, 0)
       }
 
       def calculateNormal(x: Int, y: Int): (Double, Double, Double) = {
@@ -165,12 +174,11 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
         // if the origin pixel is nodata, the normal is nodata
         val origin = anchor.getSampleDouble(x, y, 0)
         if (isnodata(origin, nodata)) {
-          return (nodata, nodata, nodata)
+          return (Double.NaN, Double.NaN, Double.NaN)
         }
 
         // get the elevations of the 3x3 grid of elevations, if a neighbor is nodata, make the elevation
         // the same as the origin, this makes the slopes a little prettier
-        val z = Array.ofDim[Double](9)
         var ndx = 0
         for (dy <- y - 1 to y + 1) {
           for (dx <- x - 1 to x + 1) {
@@ -183,56 +191,50 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
           }
         }
 
-        val vx = new Vector3d(dx, 0.0, ((z(pp) + z(pz) * 2 + z(pn)) - (z(np) + z(nz) * 2 + z(nn))) / 8.0)
-        val vy = new Vector3d(0.0, dy, ((z(pp) + z(zp) * 2 + z(np)) - (z(pn) + z(zn) * 2 + z(nn))) / 8.0)
-
-        val normal = new Vector3d()
+        vx.z = ((z(pp) + z(pz) * 2 + z(pn)) - (z(np) + z(nz) * 2 + z(nn))) / 8.0
+        vy.z = ((z(pp) + z(zp) * 2 + z(np)) - (z(pn) + z(zn) * 2 + z(nn))) / 8.0
 
         normal.cross(vx, vy)
         normal.normalize()
+
         // we want the normal to always point up.
         normal.z = Math.abs(normal.z)
 
         (normal.x, normal.y, normal.z)
       }
 
-      def calculateAngle(x: Int, y: Int, normal: (Double, Double, Double)): Float = {
+      def calculateAngle(normal: (Double, Double, Double)): Float = {
         if (normal._1.isNaN) {
           return Float.NaN
         }
 
-        var theta:Double = 0
-
         if (slope) {
-          var up = new Vector3d(0, 0, 1.0)  // z (up) direction
           theta  = Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
         }
         else {  // aspect
-          theta = Math.atan2(normal._2, normal._1)//  + Math.PI  // change from (-Pi to Pi) to (0 to 2Pi)
+          // change from (-Pi to Pi) to (0 to 2Pi)
+          // make 0 deg north
+          // convert to clockwise
+          theta = TWO_PI - (-Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
         }
 
-        if (units.equalsIgnoreCase("deg")) {
-          (theta * RAD_2_DEG).toFloat
+
+        units match {
+        case "deg"  => (theta * RAD_2_DEG).toFloat
+        case "rad" => theta.toFloat
+        case "percent" => (Math.tan(theta) * 100.0).toFloat
+        case _ => Math.tan(theta).toFloat
         }
-        else if (units.equalsIgnoreCase("rad")) {
-          theta.toFloat
-        }
-        else if (units.equalsIgnoreCase("percent")) {
-          (Math.tan(theta) * 100.0).toFloat
-        }
-        else {
-          Math.tan(theta).toFloat
-        }
+
       }
 
-      val sample = elevations(0)(0)
-      val raster = RasterUtils.createEmptyRaster(sample.getWidth, sample.getHeight, 1, DataBuffer.TYPE_FLOAT, Float.NaN)
+      val raster = RasterUtils.createEmptyRaster(anchor.getWidth, anchor.getHeight, 1, DataBuffer.TYPE_FLOAT) // , Float.NaN)
 
-      for (y <- 0 until sample.getHeight) {
-        for (x <- 0 until sample.getWidth) {
+      for (y <- 0 until anchor.getHeight) {
+        for (x <- 0 until anchor.getWidth) {
           val normal = calculateNormal(x, y)
 
-          raster.setSample(x, y, 0, calculateAngle(x, y, normal))
+          raster.setSample(x, y, 0, calculateAngle(normal))
         }
       }
 
