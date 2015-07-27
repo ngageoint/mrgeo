@@ -21,9 +21,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -56,9 +59,14 @@ public class MrGeo extends Configured implements Tool
     }
 
     System.out.println("Generic options supported are:");
-    System.out.println("  -v    verbose logging");
-    System.out.println("  -d    debug (very verbose) logging");
-    System.out.println("Most commands print help when invoked without parameters.");
+    new HelpFormatter().printHelp("ingest <options> <input>", createOptions());
+//    System.out.println("  -l    verbose logging");
+//    System.out.println("  -mm   memory multiplier (spark only), multiple of the \"yarn.scheduler.minimum-allocation-mb\"");
+//    System.out.println("        parameter to allocate east worker in a spark job.  This parameter overrides the");
+//    System.out.println("        setting in mrgeo.conf");
+//    System.out.println("  -v    verbose logging");
+//    System.out.println("  -d    debug (very verbose) logging");
+//    System.out.println("Most commands print help when invoked without parameters.");
   }
 
   /**
@@ -68,7 +76,7 @@ public class MrGeo extends Configured implements Tool
    */
   private static void loadCommands()
   {
-    commands = new TreeMap<String, CommandSpi>();
+    commands = new TreeMap<>();
 
     ServiceLoader<CommandSpi> loader = ServiceLoader.load(CommandSpi.class);
 
@@ -110,10 +118,17 @@ public class MrGeo extends Configured implements Tool
    *
    * @return Options The generic {@link Options} for all commands.
    */
-  private static Options createOptions()
+  public static Options createOptions()
   {
     Options result = new Options();
 
+    Option mm = new Option("mm", "memory-multiplier", true, "memory multiplier (spark only), " +
+        "multiple of the \"yarn.scheduler.minimum-allocation-mb\" parameter to allocate each worker " +
+        "in a spark job.  This parameter overrides the setting in mrgeo.conf");
+    mm.setRequired(false);
+    result.addOption(mm);
+
+    result.addOption(new Option("l", "local-runner", false, "Use Hadoop & Spark's local runner (used for debugging)"));
     result.addOption(new Option("v", "verbose", false, "Verbose logging"));
     result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
     result.addOption(new Option("h", "help", false, "Display help for this command"));
@@ -127,7 +142,7 @@ public class MrGeo extends Configured implements Tool
    * @see org.apache.hadoop.util.Tool#run(String[])
    */
   @Override
-  public int run(String[] args)
+  public int run(String[] args) throws IOException
   {
     if (commands == null)
     {
@@ -142,7 +157,7 @@ public class MrGeo extends Configured implements Tool
 
     Options options = createOptions();
 
-    CommandLine line = null;
+    CommandLine line;
     try
     {
       CommandLineParser parser = new ExtendedGnuParser(true);
@@ -154,18 +169,18 @@ public class MrGeo extends Configured implements Tool
       return -1;
     }
 
-    if (line == null || line.hasOption("-h"))
+    if (line == null)
     {
       usage();
       return 0;
     }
     else
     {
-      if (line.hasOption("-v"))
+      if (line.hasOption("v"))
       {
         LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
       }
-      else if (line.hasOption("-d"))
+      else if (line.hasOption("d"))
       {
         LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
       }
@@ -175,13 +190,29 @@ public class MrGeo extends Configured implements Tool
       }
     }
 
+    if (line.hasOption("l"))
+    {
+      System.out.println("Using local runner");
+      HadoopUtils.setupLocalRunner(getConf());
+    }
+
+    if (line.hasOption("mm"))
+    {
+      float mult = Float.parseFloat(line.getOptionValue("mm"));
+      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_FORCE_MEMORYINTENSIVE, "true");
+      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_MEMORYINTENSIVE_MULTIPLIER, Float.toString(mult));
+    }
 
     String cmdStr = args[0];
 
     if (!commands.containsKey(cmdStr))
     {
-      System.out.println("Command not found: " + cmdStr);
-      System.out.println();
+      if (!line.hasOption("h"))
+      {
+        System.out.println("Command not found: " + cmdStr);
+        System.out.println();
+      }
+
       usage();
       return -1;
     }
