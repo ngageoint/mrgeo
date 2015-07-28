@@ -28,6 +28,7 @@ import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.aggregators.*;
 import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.cmd.Command;
+import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -70,7 +71,7 @@ public IngestImage()
 
 public static Options createOptions()
 {
-  Options result = new Options();
+  Options result = MrGeo.createOptions();
 
   Option output = new Option("o", "output", true, "MrsImagePyramid image name");
   output.setRequired(true);
@@ -134,10 +135,6 @@ public static Options createOptions()
   local.setRequired(false);
   result.addOption(local);
 
-  Option lcl = new Option("l", "local-runner", false, "Use Hadoop's local runner (used for debugging)");
-  lcl.setRequired(false);
-  result.addOption(lcl);
-
   Option quick = new Option("q", "quick", false, "Quick ingest (for small files only)");
   quick.setRequired(false);
   result.addOption(quick);
@@ -170,10 +167,6 @@ public static Options createOptions()
   }
   result.addOption(protectionLevelOption);
 
-
-  result.addOption(new Option("v", "verbose", false, "Verbose logging"));
-  result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
-
   return result;
 }
 
@@ -200,8 +193,8 @@ private void calculateParams(final Dataset image)
   Bounds imageBounds = GDALUtils.getBounds(image);
 
   log.debug("    image bounds: (lon/lat) " +
-            imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
-            imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
+      imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
+      imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
 
 
   if (bounds == null)
@@ -222,14 +215,14 @@ private void calculateParams(final Dataset image)
   }
 }
 
-  /**
-   * This is called when the user requests to skip pre-processing of all of the input
-   * files, and it is only called for the first input file. It's job is to compute
-   * parameters that are expected to be the same across all of the input files for
-   * this data source - namely bands, tiletype, and nodata.
-   *
-   * @param image
-   */
+/**
+ * This is called when the user requests to skip pre-processing of all of the input
+ * files, and it is only called for the first input file. It's job is to compute
+ * parameters that are expected to be the same across all of the input files for
+ * this data source - namely bands, tiletype, and nodata.
+ *
+ * @param image
+ */
 private void calculateMinimalParams(final Dataset image)
 {
   bands = image.GetRasterCount();
@@ -260,7 +253,7 @@ private void calculateMinimalParams(final Dataset image)
     else
     {
       String msg =
-              "The argument to the nodata option must either be a single value to use for" +
+          "The argument to the nodata option must either be a single value to use for" +
               " all bands or be a comma-separated list of values, one for each band starting" +
               " with band 0. The source image has " + bands + " bands.";
       throw new IllegalArgumentException(msg);
@@ -277,8 +270,8 @@ private void calculateMinimalParams(final Dataset image)
       {
         nodata[b - 1] = val[0];
         log.debug("nodata: b: " + nodata[b-1].byteValue() + " d: " + nodata[b-1].doubleValue() +
-                  " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
-                  " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
+            " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
+            " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
       }
       else
       {
@@ -290,7 +283,7 @@ private void calculateMinimalParams(final Dataset image)
 }
 
 List<String> getInputs(String arg, boolean recurse, final Configuration conf,
-  boolean existsCheck, boolean argIsDir)
+    boolean existsCheck, boolean argIsDir)
 {
   List<String> inputs = new LinkedList<>();
 
@@ -494,7 +487,6 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
 {
   try
   {
-
     long start = System.currentTimeMillis();
 
 
@@ -508,184 +500,174 @@ public int run(String[] args, Configuration conf, Properties providerProperties)
     {
       System.out.println(e.getMessage());
       new HelpFormatter().printHelp("ingest <options> <input>", options);
+
       return -1;
     }
 
 
-    if (line != null)
+    if (line == null || line.hasOption("h"))
     {
-      if (line.hasOption("v"))
-      {
-        LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
-      }
-      if (line.hasOption("d"))
-      {
-        LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
-      }
-
-      if (line.hasOption("l"))
-      {
-        System.out.println("Using local runner");
-        HadoopUtils.setupLocalRunner(conf);
-      }
-
-      boolean overrideNodata = line.hasOption("nd");
-      if (overrideNodata)
-      {
-        String str = line.getOptionValue("nd");
-        String[] strElements = str.split(",");
-        nodataOverride = new Double[strElements.length];
-        for (int i=0; i < nodataOverride.length; i++)
-        {
-          try
-          {
-            nodataOverride[i] = parseNoData(strElements[i]);
-          }
-          catch(NumberFormatException nfe)
-          {
-            System.out.println("Invalid nodata value: " + strElements[i]);
-            return -1;
-          }
-        }
-      }
+      new HelpFormatter().printHelp("ingest <options> <input>", options);
+      return -1;
+    }
 
 
-      boolean categorical = line.hasOption("c");
-      boolean skipPyramids = line.hasOption("sp");
-      boolean recurse = !line.hasOption("nr");
-
-      skippreprocessing = line.hasOption("sk");
-      String output = line.getOptionValue("o");
-
-      log.debug("categorical: " + categorical);
-      log.debug("skip pyramids: " + skipPyramids);
-      log.debug("output: " + output);
-
-      List<String> inputs = new LinkedList<>();
-
-      if (line.hasOption("z"))
-      {
-        zoomlevel = Integer.parseInt(line.getOptionValue("z"));
-      }
-
-      if (skippreprocessing && zoomlevel < 1)
-      {
-        log.error("Need to specify zoomlevel to skip preprocessing");
-        return -1;
-      }
-
-      tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
-
-      try
-      {
-        for (String arg : line.getArgs())
-        {
-          inputs.addAll(getInputs(arg, recurse, conf, true, false));
-        }
-      }
-      catch(IllegalArgumentException e)
-      {
-        System.out.println(e.getMessage());
-        return -1;
-      }
-
-      log.info("Ingest inputs (" + inputs.size() + ")");
-      for (String input:inputs)
-      {
-        log.info("   " + input);
-      }
-
-      if (line.hasOption("t"))
-      {
-        String rawTags = line.getOptionValue("t");
-
-        String splittags[] = rawTags.split(",");
-        for (String t: splittags)
-        {
-          String[] s = t.split(":");
-          if (s.length != 2)
-          {
-            log.error("Bad tag format.  Should be: k1:v1,k2:v2,...  is: " + rawTags);
-            return -1;
-          }
-
-          tags.put(s[0], s[1]);
-        }
-      }
-
-      quick = quick | line.hasOption("q");
-      local = local | line.hasOption("lc");
-
-      String protectionLevel = line.getOptionValue("pl");
-
-      if (inputs.size() > 0)
+    boolean overrideNodata = line.hasOption("nd");
+    if (overrideNodata)
+    {
+      String str = line.getOptionValue("nd");
+      String[] strElements = str.split(",");
+      nodataOverride = new Double[strElements.length];
+      for (int i=0; i < nodataOverride.length; i++)
       {
         try
         {
-          final boolean success;
-          if (quick)
-          {
+          nodataOverride[i] = parseNoData(strElements[i]);
+        }
+        catch(NumberFormatException nfe)
+        {
+          System.out.println("Invalid nodata value: " + strElements[i]);
+          return -1;
+        }
+      }
+    }
+
+
+    boolean categorical = line.hasOption("c");
+    boolean skipPyramids = line.hasOption("sp");
+    boolean recurse = !line.hasOption("nr");
+
+    skippreprocessing = line.hasOption("sk");
+    String output = line.getOptionValue("o");
+
+    log.debug("categorical: " + categorical);
+    log.debug("skip pyramids: " + skipPyramids);
+    log.debug("output: " + output);
+
+    List<String> inputs = new LinkedList<>();
+
+    if (line.hasOption("z"))
+    {
+      zoomlevel = Integer.parseInt(line.getOptionValue("z"));
+    }
+
+    if (skippreprocessing && zoomlevel < 1)
+    {
+      log.error("Need to specify zoomlevel to skip preprocessing");
+      return -1;
+    }
+
+    tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
+
+    try
+    {
+      for (String arg : line.getArgs())
+      {
+        inputs.addAll(getInputs(arg, recurse, conf, true, false));
+      }
+    }
+    catch(IllegalArgumentException e)
+    {
+      System.out.println(e.getMessage());
+      return -1;
+    }
+
+    log.info("Ingest inputs (" + inputs.size() + ")");
+    for (String input:inputs)
+    {
+      log.info("   " + input);
+    }
+
+    if (line.hasOption("t"))
+    {
+      String rawTags = line.getOptionValue("t");
+
+      String splittags[] = rawTags.split(",");
+      for (String t: splittags)
+      {
+        String[] s = t.split(":");
+        if (s.length != 2)
+        {
+          log.error("Bad tag format.  Should be: k1:v1,k2:v2,...  is: " + rawTags);
+          return -1;
+        }
+
+        tags.put(s[0], s[1]);
+      }
+    }
+
+    quick = quick | line.hasOption("q");
+    local = local | line.hasOption("lc");
+
+    String protectionLevel = line.getOptionValue("pl");
+
+    if (inputs.size() > 0)
+    {
+      try
+      {
+        final boolean success;
+        if (quick)
+        {
 //            success = IngestImageSpark.quickIngest(inputs.get(0), output, categorical,
 //                conf, overrideNodata, nodata, tags, protectionLevel, providerProperties);
-            log.error("Quick Ingest is not yet implemented");
-            return -1;
-          }
-          else if (local)
-          {
-            success = IngestImageSpark.localIngest(inputs.toArray(new String[inputs.size()]),
-                output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
-                tags, protectionLevel, providerProperties);
-          }
-          else
-          {
-            success = IngestImageSpark.ingest(inputs.toArray(new String[inputs.size()]),
-                output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
-                tags, protectionLevel, providerProperties);
-          }
-
-          if (!success)
-          {
-            log.error("IngestImage exited with error");
-            return 1;
-          }
-
-          if (!skipPyramids)
-          {
-            Aggregator aggregator = new MeanAggregator();
-            if (line.hasOption("c"))
-            {
-              aggregator = new ModeAggregator();
-            }
-            else if (line.hasOption("s"))
-            {
-              aggregator = new SumAggregator();
-            }
-            else if (line.hasOption("n"))
-            {
-              aggregator = new NearestAggregator();
-            }
-            else if (line.hasOption("min"))
-            {
-              aggregator = new MinAggregator();
-            }
-            else if (line.hasOption("max"))
-            {
-              aggregator = new MaxAggregator();
-            }
-            else if (line.hasOption("minavgpair"))
-            {
-              aggregator = new MinAvgPairAggregator();
-            }
-
-            BuildPyramidSpark.build(output, aggregator, conf, providerProperties);
-          }
+          log.error("Quick Ingest is not yet implemented");
+          return -1;
         }
-        catch (Exception e)
+        else if (local)
         {
-          e.printStackTrace();
-          log.error("IngestImage exited with error", e);
+          success = IngestImageSpark.localIngest(inputs.toArray(new String[inputs.size()]),
+              output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+              tags, protectionLevel, providerProperties);
+        }
+        else
+        {
+          success = IngestImageSpark.ingest(inputs.toArray(new String[inputs.size()]),
+              output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+              tags, protectionLevel, providerProperties);
+        }
+
+        if (!success)
+        {
+          log.error("IngestImage exited with error");
           return 1;
         }
+
+        if (!skipPyramids)
+        {
+          Aggregator aggregator = new MeanAggregator();
+          if (line.hasOption("c"))
+          {
+            aggregator = new ModeAggregator();
+          }
+          else if (line.hasOption("s"))
+          {
+            aggregator = new SumAggregator();
+          }
+          else if (line.hasOption("n"))
+          {
+            aggregator = new NearestAggregator();
+          }
+          else if (line.hasOption("min"))
+          {
+            aggregator = new MinAggregator();
+          }
+          else if (line.hasOption("max"))
+          {
+            aggregator = new MaxAggregator();
+          }
+          else if (line.hasOption("minavgpair"))
+          {
+            aggregator = new MinAvgPairAggregator();
+          }
+
+          BuildPyramidSpark.build(output, aggregator, conf, providerProperties);
+        }
+      }
+      catch (Exception e)
+      {
+        e.printStackTrace();
+        log.error("IngestImage exited with error", e);
+        return 1;
       }
     }
 

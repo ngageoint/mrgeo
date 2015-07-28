@@ -19,6 +19,7 @@ import org.apache.commons.cli.*;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
+import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.image.*;
 import org.mrgeo.pyramid.MrsPyramid;
 import org.mrgeo.rasterops.OpImageRegistrar;
@@ -51,7 +52,7 @@ public class Export extends Command
 
   public static Options createOptions()
   {
-    final Options result = new Options();
+    Options result = MrGeo.createOptions();
 
     final Option output = new Option("o", "output", true, "Output directory");
     output.setRequired(true);
@@ -89,17 +90,9 @@ public class Export extends Command
     bounds.setRequired(false);
     result.addOption(bounds);
 
-    final Option local = new Option("l", "local-runner", false,
-        "Use Hadoop's local runner (used for debugging)");
-    local.setRequired(false);
-    result.addOption(local);
-
     final Option all = new Option("a", "all-levels", false, "Output all levels");
     all.setRequired(false);
     result.addOption(all);
-
-    result.addOption(new Option("v", "verbose", false, "Verbose logging"));
-    result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
 
     return result;
   }
@@ -207,11 +200,11 @@ public class Export extends Command
         throw new MrsImageException("Error, could not load any tiles");
       }
 
-      if (!output.endsWith(".tiff"))
+      if (!output.endsWith(".tif") || !output.endsWith(".tiff"))
       {
-        output += ".tiff";
+        output += ".tif";
       }
-      GDALUtils.saveRaster(raster, output + ".tiff", imageBounds,
+      GDALUtils.saveRaster(raster, output, imageBounds,
           zoomlevel, tilesize, metadata.getDefaultValue(0));
 
       System.out.println("Wrote output to " + output);
@@ -238,6 +231,11 @@ public class Export extends Command
       {
         final CommandLineParser parser = new PosixParser();
         line = parser.parse(options, args);
+
+        if (line == null || line.hasOption("h")) {
+          new HelpFormatter().printHelp("Export", options);
+          return 1;
+        }
 
         if (line.hasOption("b") &&
             (line.hasOption("t") || line.hasOption("c") || line.hasOption("r")))

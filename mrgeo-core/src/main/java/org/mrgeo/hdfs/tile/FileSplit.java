@@ -230,7 +230,7 @@ final public SplitInfo getSplitByName(String name) throws SplitException, SplitN
 }
 
 @Override
-public String findSpitFile(Path parent) throws IOException
+public String findSplitFile(Path parent) throws IOException
 {
   Path file = new Path(parent, SPLIT_FILE);
   try

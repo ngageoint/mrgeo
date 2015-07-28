@@ -43,13 +43,6 @@ import java.io.IOException;
  */
 public abstract class RasterMapOp extends MapOp implements OutputProducer
 {
-  /**
-   * Creates a new empty pyramid and puts it on the temporary file list.
-   * 
-   * @param image
-   * @return
-   * @throws IOException 
-   */
   public static MrsImagePyramid flushRasterMapOpOutput(MapOp op, int argumentNumber)
       throws IOException, JobFailedException, JobCancelledException
   {
@@ -129,10 +122,8 @@ public abstract class RasterMapOp extends MapOp implements OutputProducer
   {
     if (_outputName == null)
     {
-      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
-          HadoopUtils.createRandomString(40),
-          AccessMode.OVERWRITE,
-          getProviderProperties());
+      MrsImageDataProvider dp =
+          DataProviderFactory.createTempMrsImageDataProvider(getProviderProperties());
       _outputName = dp.getResourceName();
       addTempResource(_outputName);
     }
