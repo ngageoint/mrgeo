@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
@@ -39,520 +38,500 @@ import java.util.concurrent.Future;
 
 public class MapAlgebraExecutioner
 {
-  private static final Logger _log = LoggerFactory.getLogger(MapAlgebraExecutioner.class);
-  private JobListener jobListener = null;
-  private static ExecutorService executorSvc = null;
-  private Vector<Future<RunnableMapOp>> futures = new Vector<Future<RunnableMapOp>>();
+private static final Logger _log = LoggerFactory.getLogger(MapAlgebraExecutioner.class);
+private JobListener jobListener = null;
+private static ExecutorService executorSvc = null;
+private final Vector<Future<RunnableMapOp>> futures = new Vector<>();
 
-  private class RunnableMapOp implements Runnable
+private class RunnableMapOp implements Runnable
+{
+  Throwable exception = null;
+  MapOp _op;
+  ProgressHierarchy _progress;
+
+  RunnableMapOp(Configuration conf, MapOp op, ProgressHierarchy progress)
   {
-    Throwable exception = null;
-    MapOp _op;
-    ProgressHierarchy _progress;
-
-    RunnableMapOp(Configuration conf, MapOp op, ProgressHierarchy progress)
-    {
-      _op = op;
-      _progress = progress;
-    }
-
-    @Override
-    public void run()
-    {
-      try
-      {
-        // Set up progress for execute listeners if there are any
-        Progress opProgress = _progress;
-        List<MapOp> executeListeners = _op.getExecuteListeners();
-        if (_progress != null)
-        {
-          _progress.starting();
-        }
- 
-        // Run the operation itself
-        if (opProgress != null)
-        {
-          opProgress.starting();
-        }
-        if (_op instanceof OutputProducer)
-        {
-          ((OutputProducer)_op).resolveOutputName();
-        }
-        _op.build(opProgress);
-        if (opProgress != null)
-        {
-          opProgress.complete();
-        }
-        
-        // Build execute listeners if there are any
-        if (executeListeners != null)
-        {
-          for (MapOp listener : executeListeners)
-          {
-            if (listener != null)
-            {
-              ProgressHierarchy listenerProgress = new ProgressHierarchy();
-              if (listener instanceof OutputProducer)
-              {
-                ((OutputProducer) listener).resolveOutputName();
-              }
-              listener.build(listenerProgress);
-            }
-          }
-        }
-        if (_progress != null)
-        {
-          _progress.complete();
-        }
-      }
-      catch (Throwable t)
-      {
-        t.printStackTrace();
-        exception = t;
-      }
-    }
+    _op = op;
+    _progress = progress;
   }
 
-  MapOp _root;
-  String output = null;
-
-  public void setOutputName(String p)
-  {
-    output = p;
-  }
-
-  public void setRoot(MapOp root)
-  {
-    _root = root;
-  }
-
-  public void setJobListener(JobListener jl)
-  {
-    jobListener = jl;
-  }
-
-  public void cancel()
-  {
-    synchronized (futures)
-    {
-      for (Future<RunnableMapOp> future : futures)
-      {
-        // cancel (true - may interrupt the job if running)
-        future.cancel(true);
-      }
-    }
-  }
-
-  public void execute(Configuration conf, Progress p) throws JobFailedException,
-  JobCancelledException
-  {
-    // TODO:  Change the default here to TRUE
-    execute(conf, p, false);
-  }
-
-  public void execute(Configuration conf, Progress progress, boolean buildPyramid) throws 
-  JobFailedException, JobCancelledException
+  @Override
+  public void run()
   {
     try
     {
-      if (_root == null)
+      // Set up progress for execute listeners if there are any
+      Progress opProgress = _progress;
+      List<MapOp> executeListeners = _op.getExecuteListeners();
+      if (_progress != null)
       {
-        throw new IllegalArgumentException("You must specify a root node.");
+        _progress.starting();
       }
-      if (!(_root instanceof OutputProducer))
-      {
-        throw new IllegalArgumentException("The last operation in the map algebra must produce output");
-      }
-      ProgressHierarchy ph = new ProgressHierarchy(progress);
-      ph.createChild(1f);
-      ph.createChild(4f);
-      ph.createChild(2f);
-      if (Thread.currentThread().isInterrupted())
-      {
-        throw new InterruptedException();
-      }
-      TileClusterInfo tileClusterInfo = calculateTileClusterInfo(_root);
-      MapAlgebraExecutioner.setOverallTileClusterInfo(_root, tileClusterInfo);
-      executeChildren(conf, _root, ph.getChild(0));
-      // If the root is deferred, then at this point it has been "prepared"
-      // but not built. So we need to build it to get the final result.
-      ((OutputProducer)_root).setOutputName(output);
-      _root.build(ph.getChild(1));
-      _root.postBuild(ph.getChild(2), buildPyramid);
-    }
-    catch (JobFailedException e)
-    {
-      // job interrupted
-      cancel();
-      throw (e);
-    }
-    catch (JobCancelledException e)
-    {
-      // job interrupted
-      cancel();
-      throw (e);
-    }
-    catch (InterruptedException e)
-    {
-      // job interrupted
-      cancel();
-      throw new JobCancelledException(e.getMessage());
-    }
-    catch (Exception e)
-    {
-      cancel();
-      e.printStackTrace();
-      throw new JobFailedException(e.getMessage());
-    }
-    finally
-    {
-      // Free up unneeded memory in the MapOp tree we just executed and saved
-      _log.info("Clearing memory from the map op tree");
-      _root.clear();
-      try
-      {
-        _log.info("Cleaning temp files from the map op tree");
-        cleanupMapOp(_root);
-      }
-      catch (IOException e)
-      {
-        _log.error("Failure while deleting temporary resources", e);
-      }
-    }
-  }
 
-  void executeChildren(final Configuration conf, final MapOp mapOp,
-      final ProgressHierarchy ph) throws JobFailedException,
-      InterruptedException, ExecutionException
-  {
-    // Set up all of the progress hierarchy we need ahead of time
-    ProgressHierarchy phParent = null;
-    ProgressHierarchy phChildren = null;
-    if (ph != null)
-    {
-      ph.starting();
-      phParent = ph.createChild(1f);
-      phChildren = ph.createChild(1f);
-      for (int i=0; i < mapOp.getInputs().size(); i++)
+      // Run the operation itself
+      if (opProgress != null)
       {
-        ProgressHierarchy phChild = phChildren.createChild(1f);
-        phChild.createChild(1f);
-        phChild.createChild(2f);
+        opProgress.starting();
       }
-    }
-    mapOp.setJobListener(jobListener);
-    // Store a list of the children that need to be built. After we've traversed
-    // all the children, they are built in parallel.
-    Vector<RunnableMapOp> v = new Vector<RunnableMapOp>();
-    int i = 0;
-    for (MapOp child : mapOp.getInputs())
-    {
-      ProgressHierarchy pc1 = null;
-      ProgressHierarchy pc2 = null;
-      if (ph != null)
+      if (_op instanceof OutputProducer && ((OutputProducer)_op).getOutputName() == null)
       {
-        pc1 = phChildren.getChild(i).getChild(0);
-        pc2 = phChildren.getChild(i).getChild(1);
+        ((OutputProducer) _op).resolveOutputName();
       }
-      executeChildren(conf, child, pc2);
-      // The build() call to the MapOp must be invoked while processing it's
-      // parent because at the child level, there is not enough context
-      // to decide if build() should be called.
-      if (!(child instanceof DeferredExecutor) || !(mapOp instanceof DeferredExecutor))
+      _op.build(opProgress);
+
+      if (opProgress != null)
       {
-        v.add(new RunnableMapOp(conf, child, pc1));
+        opProgress.complete();
       }
-      // see if the child has any execute listeners (like a save(...)), if so, make sure we run
-      // it here, otherwise the listeners are quietly ignored
-      else if (child.getExecuteListeners() != null && child.getExecuteListeners().size() > 0)
+
+      // Build execute listeners if there are any
+      if (executeListeners != null)
       {
-        v.add(new RunnableMapOp(conf, child, pc1));
-      }
-      else
-      {
-        // If both the child and the parent are deferred executors, but the child
-        // is a different type of deferred executor, then we need to build the
-        // child since they can't built together.
-        DeferredExecutor deferredChild = (DeferredExecutor) child;
-        DeferredExecutor deferredMapOp = (DeferredExecutor) mapOp;
-        if (!deferredChild.getOperationId().equals(deferredMapOp.getOperationId()))
+        for (MapOp listener : executeListeners)
         {
-          v.add(new RunnableMapOp(conf, child, pc1));
+          if (listener != null)
+          {
+            ProgressHierarchy listenerProgress = new ProgressHierarchy();
+            if (listener instanceof OutputProducer)
+            {
+              ((OutputProducer) listener).resolveOutputName();
+            }
+            listener.build(listenerProgress);
+          }
         }
       }
-      i++;
-    }
-    // If there are children to be built, do so in parallel
-    if (v.size() != 0)
-    {
-      runThreads(conf, v);
-    }
-
-
-    // The prepare() is called at the level being recursed because there is
-    // nothing more to know than whether or not it is a deferred map op.
-    if (mapOp instanceof DeferredExecutor)
-    {
-      try
+      if (_progress != null)
       {
-        ((DeferredExecutor)mapOp).prepare(phParent);
-      }
-      catch (IOException e)
-      {
-        _log.error("Failure running map algebra", e);
-        throw new JobFailedException(e.getMessage());
+        _progress.complete();
       }
     }
-    if (ph != null)
+    catch (Throwable t)
     {
-      ph.complete();
+      t.printStackTrace();
+      exception = t;
     }
   }
+}
 
-  private static void cleanupMapOp(final MapOp mapOp) throws IOException
+MapOp _root;
+String output = null;
+
+public void setOutputName(String p)
+{
+  output = p;
+}
+
+public void setRoot(MapOp root)
+{
+  _root = root;
+}
+
+public void setJobListener(JobListener jl)
+{
+  jobListener = jl;
+}
+
+public void cancel()
+{
+  synchronized (futures)
   {
-    // Cleanup the entire tree of map ops
-    for (MapOp child : mapOp.getInputs())
+    for (Future<RunnableMapOp> future : futures)
     {
-      cleanupMapOp(child);
+      // cancel (true - may interrupt the job if running)
+      future.cancel(true);
     }
-    mapOp.cleanup();
   }
+}
 
-  private void addToFutures(Future<RunnableMapOp> f)
+public void execute(Configuration conf, Progress p) throws JobFailedException,
+    JobCancelledException
+{
+  execute(conf, p, false);
+}
+
+public void execute(Configuration conf, Progress progress, boolean buildPyramid) throws
+    JobFailedException, JobCancelledException
+{
+  try
   {
-    synchronized (futures)
+    if (_root == null)
     {
-      futures.add(f);
+      throw new IllegalArgumentException("You must specify a root node.");
     }
-  }
-
-  private void runThreads(Configuration conf, Vector<? extends RunnableMapOp> threads)
-      throws JobFailedException, InterruptedException, ExecutionException
-      {
+    if (!(_root instanceof OutputProducer))
+    {
+      throw new IllegalArgumentException("The last operation in the map algebra must produce output");
+    }
+    ProgressHierarchy ph = new ProgressHierarchy(progress);
+    ph.createChild(1f);
+    ph.createChild(4f);
+    ph.createChild(2f);
     if (Thread.currentThread().isInterrupted())
     {
       throw new InterruptedException();
     }
-
-    Vector<Future<RunnableMapOp>> futureList = new Vector<Future<RunnableMapOp>>();
-    for (RunnableMapOp r : threads)
-    {
-      Future<RunnableMapOp> future = submit(conf, r);
-      addToFutures(future);
-      futureList.add(future);
-    }
-
-    // wait for all tasks to complete before continuing
-    for (Future<RunnableMapOp> f : futureList)
-    {
-      f.get();
-    }
-
-    Throwable firstProblem = null;
-    for (RunnableMapOp thread : threads)
-    {
-      if (thread.exception != null)
-      {
-        if (firstProblem == null)
-        {
-          firstProblem = thread.exception;
-        }
-        thread.exception.printStackTrace();
-      }
-    }
-
-    if (firstProblem != null)
-    {
-      throw new JobFailedException(firstProblem.getMessage());
-    }
-      }
-
-  private synchronized Future<RunnableMapOp> submit(Configuration conf, RunnableMapOp r)
-  {
-    if (executorSvc == null)
-    {
-      // we don't want to overload Hadoop w/ lots of job requests. 10 at a time
-      // should be plenty to maximize use of the system. - TODO: move to a
-      // config?
-      // if we're using the local job tracker, we only want 1 thread, because
-      // many versions of the
-      // localJobTracker class are NOT threadsafe.
-
-      if (HadoopUtils.isLocal(conf))
-      {
-        executorSvc = Executors.newFixedThreadPool(1);
-      }
-      else
-      {
-        executorSvc = Executors.newFixedThreadPool(10);
-      }
-    }
-    @SuppressWarnings("unchecked")
-    Future<RunnableMapOp> future = (Future<RunnableMapOp>) executorSvc.submit(r);
-    return future;
+    TileClusterInfo tileClusterInfo = calculateTileClusterInfo(_root);
+    MapAlgebraExecutioner.setOverallTileClusterInfo(_root, tileClusterInfo);
+    executeChildren(conf, _root, ph.getChild(0));
+    // If the root is deferred, then at this point it has been "prepared"
+    // but not built. So we need to build it to get the final result.
+    ((OutputProducer)_root).setOutputName(output);
+    _root.build(ph.getChild(1));
+    _root.postBuild(ph.getChild(2), buildPyramid);
   }
-
-  /**
-   * Calculate the input pyramid paths from the entire tree this image. This should _not_ call
-   * getOutput() on its input MapOps.
-   * 
-   * @param mapOp
-   * @param inputPyramids
-   * @return
-   * @throws IOException
-   */
-  public static void calculateInputs(MapOp mapOp, Set<String> inputPyramids)
+  catch (JobFailedException | JobCancelledException e)
   {
-    if (mapOp instanceof InputsCalculator)
+    // job interrupted
+    cancel();
+    throw (e);
+  }
+  catch (InterruptedException e)
+  {
+    // job interrupted
+    cancel();
+    throw new JobCancelledException(e.getMessage());
+  }
+  catch (Exception e)
+  {
+    cancel();
+    e.printStackTrace();
+    throw new JobFailedException(e.getMessage());
+  }
+  finally
+  {
+    // Free up unneeded memory in the MapOp tree we just executed and saved
+    _log.info("Clearing memory from the map op tree");
+    _root.clear();
+    try
     {
-      inputPyramids.addAll(((InputsCalculator)mapOp).calculateInputs());
+      _log.info("Cleaning temp files from the map op tree");
+      cleanupMapOp(_root);
+    }
+    catch (IOException e)
+    {
+      _log.error("Failure while deleting temporary resources", e);
+    }
+  }
+}
+
+void executeChildren(final Configuration conf, final MapOp mapOp,
+    final ProgressHierarchy ph) throws JobFailedException,
+    InterruptedException, ExecutionException
+{
+  // Set up all of the progress hierarchy we need ahead of time
+  ProgressHierarchy phParent = null;
+  ProgressHierarchy phChildren = null;
+  if (ph != null)
+  {
+    ph.starting();
+    phParent = ph.createChild(1f);
+    phChildren = ph.createChild(1f);
+    for (int i=0; i < mapOp.getInputs().size(); i++)
+    {
+      ProgressHierarchy phChild = phChildren.createChild(1f);
+      phChild.createChild(1f);
+      phChild.createChild(2f);
+    }
+  }
+  mapOp.setJobListener(jobListener);
+  // Store a list of the children that need to be built. After we've traversed
+  // all the children, they are built in parallel.
+  Vector<RunnableMapOp> v = new Vector<>();
+  int i = 0;
+  for (MapOp child : mapOp.getInputs())
+  {
+    ProgressHierarchy pc1 = null;
+    ProgressHierarchy pc2 = null;
+    if (ph != null)
+    {
+      pc1 = phChildren.getChild(i).getChild(0);
+      pc2 = phChildren.getChild(i).getChild(1);
+    }
+    executeChildren(conf, child, pc2);
+    // The build() call to the MapOp must be invoked while processing it's
+    // parent because at the child level, there is not enough context
+    // to decide if build() should be called.
+    if (!(child instanceof DeferredExecutor) || !(mapOp instanceof DeferredExecutor))
+    {
+      v.add(new RunnableMapOp(conf, child, pc1));
+    }
+    // see if the child has any execute listeners (like a save(...)), if so, make sure we run
+    // it here, otherwise the listeners are quietly ignored
+    else if (child.getExecuteListeners() != null && child.getExecuteListeners().size() > 0)
+    {
+      v.add(new RunnableMapOp(conf, child, pc1));
     }
     else
     {
-      for (final MapOp input : mapOp.getInputs())
+      // If both the child and the parent are deferred executors, but the child
+      // is a different type of deferred executor, then we need to build the
+      // child since they can't built together.
+      DeferredExecutor deferredChild = (DeferredExecutor) child;
+      DeferredExecutor deferredMapOp = (DeferredExecutor) mapOp;
+      if (!deferredChild.getOperationId().equals(deferredMapOp.getOperationId()))
       {
-        calculateInputs(input, inputPyramids);
+        v.add(new RunnableMapOp(conf, child, pc1));
       }
+    }
+    i++;
+  }
+  // If there are children to be built, do so in parallel
+  if (v.size() != 0)
+  {
+    runThreads(conf, v);
+  }
+
+
+  // The prepare() is called at the level being recursed because there is
+  // nothing more to know than whether or not it is a deferred map op.
+  if (mapOp instanceof DeferredExecutor)
+  {
+    try
+    {
+      ((DeferredExecutor)mapOp).prepare(phParent);
+    }
+    catch (IOException e)
+    {
+      _log.error("Failure running map algebra", e);
+      throw new JobFailedException(e.getMessage());
+    }
+  }
+  if (ph != null)
+  {
+    ph.complete();
+  }
+}
+
+private static void cleanupMapOp(final MapOp mapOp) throws IOException
+{
+  // Cleanup the entire tree of map ops
+  for (MapOp child : mapOp.getInputs())
+  {
+    cleanupMapOp(child);
+  }
+  mapOp.cleanup();
+}
+
+private void addToFutures(Future<RunnableMapOp> f)
+{
+  synchronized (futures)
+  {
+    futures.add(f);
+  }
+}
+
+private void runThreads(Configuration conf, Vector<? extends RunnableMapOp> threads)
+    throws JobFailedException, InterruptedException, ExecutionException
+{
+  if (Thread.currentThread().isInterrupted())
+  {
+    throw new InterruptedException();
+  }
+
+  Vector<Future<RunnableMapOp>> futureList = new Vector<>();
+  for (RunnableMapOp r : threads)
+  {
+    Future<RunnableMapOp> future = submit(conf, r);
+    addToFutures(future);
+    futureList.add(future);
+  }
+
+  // wait for all tasks to complete before continuing
+  for (Future<RunnableMapOp> f : futureList)
+  {
+    f.get();
+  }
+
+  Throwable firstProblem = null;
+  for (RunnableMapOp thread : threads)
+  {
+    if (thread.exception != null)
+    {
+      if (firstProblem == null)
+      {
+        firstProblem = thread.exception;
+      }
+      thread.exception.printStackTrace();
     }
   }
 
-  /**
-   * Calculate the combined bounds of all the inputs, which gives us the total bounds of this image.
-   * This should _not_ call getOutput() on its input MapOps.
-   * 
-   * @param mapOp
-   * @return
-   * @throws IOException
-   */
-  public static Bounds calculateBounds(MapOp mapOp) throws IOException
+  if (firstProblem != null)
   {
-    if (mapOp instanceof BoundsCalculator)
+    throw new JobFailedException(firstProblem.getMessage());
+  }
+}
+
+private synchronized Future<RunnableMapOp> submit(Configuration conf, RunnableMapOp r)
+{
+  if (executorSvc == null)
+  {
+    // we don't want to overload Hadoop w/ lots of job requests. 10 at a time
+    // should be plenty to maximize use of the system. - TODO: move to a
+    // config?
+    // if we're using the local job tracker, we only want 1 thread, because
+    // many versions of the
+    // localJobTracker class are NOT threadsafe.
+
+    if (HadoopUtils.isLocal(conf))
     {
-      return ((BoundsCalculator)mapOp).calculateBounds();
+      executorSvc = Executors.newFixedThreadPool(1);
     }
     else
     {
-      final Bounds b = new Bounds();
-      for (final MapOp input : mapOp.getInputs())
-      {
-        if (input != null)
-        {
-          b.expand(calculateBounds(input));
-        }
-      }
-      return b;
+      executorSvc = Executors.newFixedThreadPool(10);
     }
   }
+  @SuppressWarnings("unchecked")
+  Future<RunnableMapOp> future = (Future<RunnableMapOp>) executorSvc.submit(r);
+  return future;
+}
 
-  /**
-   * Calculate the maximum (most detailed) zoom level of all the inputs below the
-   * mapOp passed in. This should _not_ call getOutput() on its input MapOps.
-   * 
-   * @param mapOp
-   * @return
-   * @throws IOException
-   */
-  public static int calculateMaximumZoomlevel(MapOp mapOp) throws IOException
+/**
+ * Calculate the input pyramid paths from the entire tree this image. This should _not_ call
+ * getOutput() on its input MapOps.
+ *
+ */
+public static void calculateInputs(MapOp mapOp, Set<String> inputPyramids)
+{
+  if (mapOp instanceof InputsCalculator)
   {
-    if (mapOp instanceof MaximumZoomLevelCalculator)
+    inputPyramids.addAll(((InputsCalculator)mapOp).calculateInputs());
+  }
+  else
+  {
+    for (final MapOp input : mapOp.getInputs())
     {
-      return ((MaximumZoomLevelCalculator)mapOp).calculateMaximumZoomlevel();
-    }
-    else
-    {
-      int zoom = 0;
-      for (final MapOp input : mapOp.getInputs())
-      {
-        final int z = calculateMaximumZoomlevel(input);
-        if (z > zoom)
-        {
-          zoom = z;
-        }
-      }
-      return zoom;
+      calculateInputs(input, inputPyramids);
     }
   }
+}
 
-  /**
-   * Calculates the combined neighborhood of raster tiles to input.
-   * @throws IOException 
-   */
-  public static TileClusterInfo calculateTileClusterInfo(MapOp mapOp) throws IOException
+/**
+ * Calculate the combined bounds of all the inputs, which gives us the total bounds of this image.
+ * This should _not_ call getOutput() on its input MapOps.
+ *
+ */
+public static Bounds calculateBounds(MapOp mapOp) throws IOException
+{
+  if (mapOp instanceof BoundsCalculator)
   {
-    if (mapOp instanceof TileClusterInfoCalculator)
-    {
-      return ((TileClusterInfoCalculator)mapOp).calculateTileClusterInfo();
-    }
-    else
-    {
-      final TileClusterInfo tileClusterInfo = new TileClusterInfo();
-      if (mapOp.getInputs() != null)
-      {
-        for (final MapOp input : mapOp.getInputs())
-        {
-          if (input != null)
-          {
-            tileClusterInfo.expand(calculateTileClusterInfo(input));
-          }
-        }
-      }
-      return tileClusterInfo;
-    }
+    return ((BoundsCalculator)mapOp).calculateBounds();
   }
-
-  /**
-   * Calculate the tile size of all the inputs. The tile size is expected to be the same for all
-   * inputs. This should _not_ call getOutput() on its input MapOps.
-   * 
-   * @param mapOp
-   * @return
-   * @throws IOException
-   */
-  public static int calculateTileSize(MapOp mapOp) throws IOException
+  else
   {
-    // Return the first tile size greater than 0. It is assumed at this point
-    // that tile sizes of all rasters will be the same.
-    if (mapOp instanceof TileSizeCalculator)
+    final Bounds b = new Bounds();
+    for (final MapOp input : mapOp.getInputs())
     {
-      return ((TileSizeCalculator)mapOp).calculateTileSize();
-    }
-    else
-    {
-      for (final MapOp input : mapOp.getInputs())
+      if (input != null)
       {
-        int tileSize = calculateTileSize(input);
-        if (tileSize > 0)
-        {
-          return tileSize;
-        }
+        b.expand(calculateBounds(input));
       }
     }
-    return 0;
+    return b;
   }
+}
 
-  /**
-   * After the tile cluster info has been computed across the entire MapOp tree, the results are set
-   * using this method. MapOp's that require neighborhood tiles to do their job should store the
-   * passed tileClusterInfo for use during their execution. The base MapOp implementation of this
-   * function does not store the tile cluster info, it only passes it along to its children.
-   * 
-   * @param tileClusterInfo
-   */
-  public static void setOverallTileClusterInfo(final MapOp mapOp,
-      final TileClusterInfo tileClusterInfo)
+/**
+ * Calculate the maximum (most detailed) zoom level of all the inputs below the
+ * mapOp passed in. This should _not_ call getOutput() on its input MapOps.
+ *
+ */
+public static int calculateMaximumZoomlevel(MapOp mapOp) throws IOException
+{
+  if (mapOp instanceof MaximumZoomLevelCalculator)
   {
-    if (mapOp instanceof TileClusterInfoConsumer)
+    return ((MaximumZoomLevelCalculator)mapOp).calculateMaximumZoomlevel();
+  }
+  else
+  {
+    int zoom = 0;
+    for (final MapOp input : mapOp.getInputs())
     {
-      ((TileClusterInfoConsumer)mapOp).setOverallTileClusterInfo(tileClusterInfo);
+      final int z = calculateMaximumZoomlevel(input);
+      if (z > zoom)
+      {
+        zoom = z;
+      }
     }
-    // Recurse through the children
+    return zoom;
+  }
+}
+
+/**
+ * Calculates the combined neighborhood of raster tiles to input.
+ * @throws IOException
+ */
+public static TileClusterInfo calculateTileClusterInfo(MapOp mapOp) throws IOException
+{
+  if (mapOp instanceof TileClusterInfoCalculator)
+  {
+    return ((TileClusterInfoCalculator)mapOp).calculateTileClusterInfo();
+  }
+  else
+  {
+    final TileClusterInfo tileClusterInfo = new TileClusterInfo();
     if (mapOp.getInputs() != null)
     {
       for (final MapOp input : mapOp.getInputs())
       {
-        setOverallTileClusterInfo(input, tileClusterInfo);
+        if (input != null)
+        {
+          tileClusterInfo.expand(calculateTileClusterInfo(input));
+        }
+      }
+    }
+    return tileClusterInfo;
+  }
+}
+
+/**
+ * Calculate the tile size of all the inputs. The tile size is expected to be the same for all
+ * inputs. This should _not_ call getOutput() on its input MapOps.
+ *
+ */
+public static int calculateTileSize(MapOp mapOp) throws IOException
+{
+  // Return the first tile size greater than 0. It is assumed at this point
+  // that tile sizes of all rasters will be the same.
+  if (mapOp instanceof TileSizeCalculator)
+  {
+    return ((TileSizeCalculator)mapOp).calculateTileSize();
+  }
+  else
+  {
+    for (final MapOp input : mapOp.getInputs())
+    {
+      int tileSize = calculateTileSize(input);
+      if (tileSize > 0)
+      {
+        return tileSize;
       }
     }
   }
+  return 0;
+}
+
+/**
+ * After the tile cluster info has been computed across the entire MapOp tree, the results are set
+ * using this method. MapOp's that require neighborhood tiles to do their job should store the
+ * passed tileClusterInfo for use during their execution. The base MapOp implementation of this
+ * function does not store the tile cluster info, it only passes it along to its children.
+ *
+ */
+public static void setOverallTileClusterInfo(final MapOp mapOp,
+    final TileClusterInfo tileClusterInfo)
+{
+  if (mapOp instanceof TileClusterInfoConsumer)
+  {
+    ((TileClusterInfoConsumer)mapOp).setOverallTileClusterInfo(tileClusterInfo);
+  }
+  // Recurse through the children
+  if (mapOp.getInputs() != null)
+  {
+    for (final MapOp input : mapOp.getInputs())
+    {
+      setOverallTileClusterInfo(input, tileClusterInfo);
+    }
+  }
+}
 }

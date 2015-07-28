@@ -940,6 +940,49 @@ public class DataProviderFactory
     return resourceName;
   }
 
+public static MrsImageDataProvider createTempMrsImageDataProvider(Properties props)
+    throws DataProviderNotFound, DataProviderException
+{
+  return createTempMrsImageDataProvider(getBasicConfig(), props);
+}
+
+public static MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf)
+    throws DataProviderNotFound, DataProviderException
+{
+  return createTempMrsImageDataProvider(conf, null);
+}
+
+private static MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf,
+    final Properties providerProperties) throws DataProviderNotFound, DataProviderException
+{
+
+  initialize(conf, providerProperties);
+  for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
+  {
+    MrsImageDataProvider provider;
+    try
+    {
+      if (providerProperties != null)
+      {
+        provider = factory.createTempMrsImageDataProvider(providerProperties);
+      }
+      else
+      {
+        provider = factory.createTempMrsImageDataProvider(conf);
+      }
+    }
+    catch (IOException e)
+    {
+      throw new DataProviderException("Can not create temporary mrs image data provider", e);
+    }
+
+    mrsImageProviderCache.put(provider.getResourceName(), provider);
+    return provider;
+  }
+
+  throw new DataProviderException("Can not create temporary mrs image data provider");
+}
+
   /**
    * Create a data provider for a MrsImage data resource. This method should be
    * called to access a MrsImage (an image ingested into MrGeo) as well as

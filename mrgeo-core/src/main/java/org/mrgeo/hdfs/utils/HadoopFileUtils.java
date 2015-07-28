@@ -418,7 +418,7 @@ public class HadoopFileUtils
     Path parent;
     parent = fs.getHomeDirectory();
     final Path tmp = new Path(parent, "tmp");
-    if (fs.exists(tmp) == false)
+    if (!fs.exists(tmp))
     {
       fs.mkdirs(tmp);
     }
