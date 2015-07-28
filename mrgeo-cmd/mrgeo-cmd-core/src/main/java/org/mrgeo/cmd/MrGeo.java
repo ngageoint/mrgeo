@@ -207,14 +207,16 @@ public class MrGeo extends Configured implements Tool
 
     if (!commands.containsKey(cmdStr))
     {
+      int ret = 0;
       if (!line.hasOption("h"))
       {
         System.out.println("Command not found: " + cmdStr);
         System.out.println();
+        ret = -1;
       }
 
       usage();
-      return -1;
+      return ret;
     }
 
     CommandSpi spi = commands.get(cmdStr);
