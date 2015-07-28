@@ -47,7 +47,8 @@ public class OptionsParser
   @SuppressWarnings("static-access")
   private static Options getOptions()
   {
-    final Options options = new Options();
+    Options options = MrGeo.createOptions();
+
     options.addOption(OptionBuilder.withArgName("instance").hasArg().withDescription(
       "accumulo instance name").create("instance"));
     options.addOption(OptionBuilder.withArgName("zooservers").hasArg().withDescription(

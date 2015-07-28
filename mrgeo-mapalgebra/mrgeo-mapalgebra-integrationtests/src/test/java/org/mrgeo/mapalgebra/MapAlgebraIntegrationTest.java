@@ -240,21 +240,37 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
   }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void aspectRad() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void aspectDeg() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-          String.format("aspect([%s], \"rad\")", smallElevation), Double.NaN);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-          String.format("aspect([%s], \"rad\")", smallElevation));
-    }
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("aspect([%s], \"deg\")", smallElevation), Double.NaN);
   }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        String.format("aspect([%s], \"deg\")", smallElevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void aspectRad() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("aspect([%s], \"rad\")", smallElevation), Double.NaN);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        String.format("aspect([%s], \"rad\")", smallElevation));
+  }
+}
 
   @Test
   @Category(IntegrationTest.class)
@@ -905,7 +921,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   public void parseInvalidArguments4() throws Exception
   {
     final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
-    final String ex = String.format("costDistance");
+    final String ex = "costDistance";
 
     parser.parse(ex);
   }
@@ -1001,7 +1017,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void rasterNotExistsDefaultSearchPath() throws Exception
   {
-    final String expr = String.format("a = ([something.tif])");
+    final String expr = "a = ([something.tif])";
     final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
 
     uut.parse(expr);
@@ -1011,7 +1027,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void rasterNotExistsUserDefinedSearchPath() throws Exception
   {
-    final String expr = String.format("a = [thingone.tif] + " + "[thingtwo.tif];");
+    final String expr = "a = [thingone.tif] + " + "[thingtwo.tif];";
     final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
 //    uut.addPath(testUtils.getInputHdfs().toString());
     uut.parse(expr);
@@ -1034,23 +1050,41 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
     }
   }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void slope() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void slope() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-          String.format("slope([%s], \"gradient\")", smallElevation), Double.NaN);
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("slope([%s])", smallElevation), Double.NaN);
 
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-          String.format("slope([%s], \"gradient\")", smallElevation));
-
-    }
   }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        String.format("slope([%s])", smallElevation));
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void slopeGradient() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("slope([%s], \"gradient\")", smallElevation), Double.NaN);
+
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        String.format("slope([%s], \"gradient\")", smallElevation));
+
+  }
+}
   @Test
   @Category(IntegrationTest.class)
   public void slopeRad() throws Exception

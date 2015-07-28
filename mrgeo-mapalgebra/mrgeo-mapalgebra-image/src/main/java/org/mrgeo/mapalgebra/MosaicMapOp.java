@@ -15,17 +15,22 @@
 
 package org.mrgeo.mapalgebra;
 
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.spark.MosaicDriver;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
-public class MosaicMapOp extends RasterMapOp
+public class MosaicMapOp extends RasterMapOp implements InputsCalculator
 {
   public static String[] register()
   {
@@ -48,13 +53,21 @@ public class MosaicMapOp extends RasterMapOp
   {
     p.starting();
 
-    String[] names = new String[_inputs.size()];
-    int i = 0;
-    for (MapOp input:_inputs)
+    // check that we haven't already calculated ourselves
+    if (_output == null)
     {
-      names[i++] = ((RasterMapOp)(input)).getOutputName();
+      String[] names = new String[_inputs.size()];
+      int i = 0;
+      for (MapOp input : _inputs)
+      {
+        names[i++] = ((RasterMapOp) (input)).getOutputName();
+      }
+      MosaicDriver.mosaic(names, getOutputName(), createConfiguration());
+
+      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(getOutputName(),
+          DataProviderFactory.AccessMode.READ, getProviderProperties());
+      _output = MrsPyramidDescriptor.create(dp);
     }
-    MosaicDriver.mosaic(names, getOutputName(), createConfiguration());
 
     p.complete();
   }
@@ -77,6 +90,17 @@ public class MosaicMapOp extends RasterMapOp
 
     return results;
   }
+
+@Override
+public Set<String> calculateInputs()
+{
+  Set<String> inputPyramids = new HashSet<String>();
+  if (_outputName != null)
+  {
+    inputPyramids.add(_outputName);
+  }
+  return inputPyramids;
+}
 
   @Override
   public String toString()

@@ -16,63 +16,104 @@
 package org.mrgeo.mapalgebra;
 
 
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
-import org.mrgeo.mapreduce.formats.TileClusterInfo;
-import org.mrgeo.opimage.AspectDescriptor;
+import org.mrgeo.mapreduce.job.JobCancelledException;
+import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.opimage.MrsPyramidDescriptor;
+import org.mrgeo.progress.Progress;
+import org.mrgeo.spark.AspectDriver;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
-public class AspectMapOp extends RenderedImageMapOp implements TileClusterInfoCalculator
+public class AspectMapOp extends RasterMapOp implements InputsCalculator
 {
-  public static String[] register()
+String units = "rad";
+
+public static String[] register()
+{
+  return new String[] { "aspect" };
+}
+
+@Override
+public void addInput(MapOp n) throws IllegalArgumentException
+{
+  if (!(n instanceof RasterMapOp))
   {
-    return new String[] { "aspect" };
+    throw new IllegalArgumentException("Can only run aspect() on raster inputs");
+  }
+  if (_inputs.size() >= 1)
+  {
+    throw new IllegalArgumentException("Can only run aspect() on a single raster input");
   }
 
-  public AspectMapOp()
+  _inputs.add(n);
+}
+
+@Override
+public void build(Progress p) throws IOException, JobFailedException, JobCancelledException
+{
+  p.starting();
+  // check that we haven't already calculated ourselves
+  if (_output == null)
   {
-    _factory = new AspectDescriptor();
+
+    String input = ((RasterMapOp) _inputs.get(0)).getOutputName();
+
+    AspectDriver.aspect(input, units, getOutputName(), createConfiguration());
+
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(getOutputName(),
+        DataProviderFactory.AccessMode.READ, getProviderProperties());
+    _output = MrsPyramidDescriptor.create(dp);
+  }
+  p.complete();
+}
+
+@Override
+public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapter parser)
+{
+  Vector<ParserNode> result = new Vector<ParserNode>();
+
+  if (children.size() > 2)
+  {
+    throw new IllegalArgumentException(
+        "Aspect takes one or two arguments. single-band raster elevation and optional unit format (\"deg\" or \"rad\")");
   }
 
-  @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
-  {
-    Vector<ParserNode> result = new Vector<ParserNode>();
+  result.add(children.get(0));
 
-    if (children.size() > 2)
+  if (children.size() == 2)
+  {
+    String units = MapOp.parseChildString(children.get(1), "units", parser);
+    if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")))
     {
-      throw new IllegalArgumentException(
-          "Aspect takes one or two arguments. single-band raster elevation and optional unit format (\"deg\" or \"rad\")");
+      throw new IllegalArgumentException("Units must be \"deg\", or \"rad\".");
     }
-
-    result.add(children.get(0));
-
-    if (children.size() == 2)
-    {
-      String units = MapOp.parseChildString(children.get(1), "units", parser);
-      if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")))
-      {
-        throw new IllegalArgumentException("Units must be \"deg\" or \"rad\".");
-      }
-      getParameters().add(units);
-    }
-
-    return result;
+    this.units = units;
   }
 
-  @Override
-  public TileClusterInfo calculateTileClusterInfo()
+  return result;
+}
+@Override
+public Set<String> calculateInputs()
+{
+  Set<String> inputPyramids = new HashSet<String>();
+  if (_outputName != null)
   {
-    // Aspect uses HornNormalOpImage which needs access to the
-    // eight pixels surrounding each pixel. This means we need
-    // to get the eight surrounding tiles.
-    return new TileClusterInfo(-1, -1, 3, 3, 1);
+    inputPyramids.add(_outputName);
   }
+  return inputPyramids;
+}
 
-  @Override
-  public String toString()
-  {
-    return "aspect()";
-  }
+
+@Override
+public String toString()
+{
+  return "aspect()";
+}
 }
