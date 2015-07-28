@@ -15,24 +15,29 @@
 
 package org.mrgeo.mapalgebra;
 
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.spark.SlopeDriver;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
-public class SlopeMapOp extends RasterMapOp
+public class SlopeMapOp extends RasterMapOp implements InputsCalculator
 {
-  String units = "rad";
+String units = "rad";
 
-  public static String[] register()
-  {
-    return new String[] { "slope" };
-  }
+public static String[] register()
+{
+  return new String[] { "slope" };
+}
 
 @Override
 public void addInput(MapOp n) throws IllegalArgumentException
@@ -53,43 +58,65 @@ public void addInput(MapOp n) throws IllegalArgumentException
 public void build(Progress p) throws IOException, JobFailedException, JobCancelledException
 {
   p.starting();
-  String input = ((RasterMapOp) _inputs.get(0)).getOutputName();
 
-  SlopeDriver.slope(input, units, getOutputName(), createConfiguration());
+  // check that we haven't already calculated ourselves
+  if (_output == null)
+  {
+    String input = ((RasterMapOp) _inputs.get(0)).getOutputName();
 
+    //final MrsImagePyramid sourcepyramid = RasterMapOp.flushRasterMapOpOutput(_inputs.get(0), 0);
+    //String input = sourcepyramid.getName();
+
+    SlopeDriver.slope(input, units, getOutputName(), createConfiguration());
+
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(getOutputName(),
+        DataProviderFactory.AccessMode.READ, getProviderProperties());
+    _output = MrsPyramidDescriptor.create(dp);
+  }
   p.complete();
 }
 
 @Override
 public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapter parser)
 {
-    Vector<ParserNode> result = new Vector<ParserNode>();
+  Vector<ParserNode> result = new Vector<ParserNode>();
 
-    if (children.size() > 2)
+  if (children.size() > 2)
+  {
+    throw new IllegalArgumentException(
+        "Slope takes one or two arguments. single-band raster elevation and optional unit format (\"deg\", \"rad\", \"gradient\", or \"percent\")");
+  }
+
+  result.add(children.get(0));
+
+  if (children.size() == 2)
+  {
+    String units = MapOp.parseChildString(children.get(1), "units", parser);
+    if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")
+        || units.equalsIgnoreCase("gradient") || units.equalsIgnoreCase("percent")))
     {
-      throw new IllegalArgumentException(
-          "Slope takes one or two arguments. single-band raster elevation and optional unit format (\"deg\", \"rad\", \"gradient\", or \"percent\")");
+      throw new IllegalArgumentException("Units must be \"deg\", \"rad\", \"gradient\", or \"percent\".");
     }
+    this.units = units;
+  }
 
-    result.add(children.get(0));
-
-    if (children.size() == 2)
-    {
-      String units = MapOp.parseChildString(children.get(1), "units", parser);
-      if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")
-          || units.equalsIgnoreCase("gradient") || units.equalsIgnoreCase("percent")))
-      {
-        throw new IllegalArgumentException("Units must be \"deg\", \"rad\", \"gradient\", or \"percent\".");
-      }
-      this.units = units;
-    }
-
-    return result;
+  return result;
 }
 
-  @Override
-  public String toString()
+@Override
+public String toString()
+{
+  return "slope()";
+}
+
+@Override
+public Set<String> calculateInputs()
+{
+  Set<String> inputPyramids = new HashSet<String>();
+  if (_outputName != null)
   {
-    return "slope()";
+    inputPyramids.add(_outputName);
   }
+  return inputPyramids;
+}
 }

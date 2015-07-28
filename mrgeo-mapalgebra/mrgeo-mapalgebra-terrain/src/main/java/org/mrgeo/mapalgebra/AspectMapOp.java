@@ -16,17 +16,22 @@
 package org.mrgeo.mapalgebra;
 
 
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.spark.AspectDriver;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
-public class AspectMapOp extends RasterMapOp
+public class AspectMapOp extends RasterMapOp implements InputsCalculator
 {
 String units = "rad";
 
@@ -54,10 +59,18 @@ public void addInput(MapOp n) throws IllegalArgumentException
 public void build(Progress p) throws IOException, JobFailedException, JobCancelledException
 {
   p.starting();
-  String input = ((RasterMapOp) _inputs.get(0)).getOutputName();
+  // check that we haven't already calculated ourselves
+  if (_output == null)
+  {
 
-  AspectDriver.aspect(input, units, getOutputName(), createConfiguration());
+    String input = ((RasterMapOp) _inputs.get(0)).getOutputName();
 
+    AspectDriver.aspect(input, units, getOutputName(), createConfiguration());
+
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(getOutputName(),
+        DataProviderFactory.AccessMode.READ, getProviderProperties());
+    _output = MrsPyramidDescriptor.create(dp);
+  }
   p.complete();
 }
 
@@ -86,6 +99,17 @@ public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAda
 
   return result;
 }
+@Override
+public Set<String> calculateInputs()
+{
+  Set<String> inputPyramids = new HashSet<String>();
+  if (_outputName != null)
+  {
+    inputPyramids.add(_outputName);
+  }
+  return inputPyramids;
+}
+
 
 @Override
 public String toString()
