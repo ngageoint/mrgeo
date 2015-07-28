@@ -212,12 +212,10 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
           theta  = Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
         }
         else {  // aspect
-          // change from (-Pi to Pi) to (0 to 2Pi)
-          // make 0 deg north
-          // convert to clockwise
-          theta = TWO_PI - (-Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
+          // change from (-Pi to Pi) to (0 to 2Pi), make 0 deg north (+ 3pi/2)
+          // convert to clockwise (2pi -)
+          theta = TWO_PI - (Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
         }
-
 
         units match {
         case "deg"  => (theta * RAD_2_DEG).toFloat
@@ -225,7 +223,6 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
         case "percent" => (Math.tan(theta) * 100.0).toFloat
         case _ => Math.tan(theta).toFloat
         }
-
       }
 
       val raster = RasterUtils.createEmptyRaster(anchor.getWidth, anchor.getHeight, 1, DataBuffer.TYPE_FLOAT) // , Float.NaN)
