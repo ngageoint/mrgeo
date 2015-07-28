@@ -200,9 +200,9 @@ public class Export extends Command
         throw new MrsImageException("Error, could not load any tiles");
       }
 
-      if (!output.endsWith(".tiff"))
+      if (!output.endsWith(".tif") || !output.endsWith(".tiff"))
       {
-        output += ".tiff";
+        output += ".tif";
       }
       GDALUtils.saveRaster(raster, output, imageBounds,
           zoomlevel, tilesize, metadata.getDefaultValue(0));
