@@ -16,7 +16,7 @@
 package org.mrgeo.cmd.export;
 
 import org.apache.commons.cli.*;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;

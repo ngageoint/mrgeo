@@ -16,7 +16,7 @@
 package org.mrgeo.utils;
 
 import com.vividsolutions.jts.geom.Envelope;
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.awt.geom.Rectangle2D;
@@ -275,7 +275,7 @@ public class Bounds implements Comparable<Bounds>, Serializable
   @SuppressWarnings({ "unused", "static-method" })
   public boolean intersectsLine(final double x1, final double y1, final double x2, final double y2)
   {
-    throw new NotImplementedException();
+    throw new NotImplementedException("intersectsLine() not implemented");
   }
 
   public boolean containsPoint(final double x, final double y)

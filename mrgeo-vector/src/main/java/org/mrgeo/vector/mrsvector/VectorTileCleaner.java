@@ -20,7 +20,7 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectIntCursor;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.mrgeo.vector.mrsvector.pbf.FileFormat.BlobHeader;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.*;
 import org.mrgeo.vector.mrsvector.pbf.OsmFormat.Relation.MemberType;

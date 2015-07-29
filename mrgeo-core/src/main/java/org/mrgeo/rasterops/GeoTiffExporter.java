@@ -17,7 +17,7 @@ package org.mrgeo.rasterops;
 
 import com.sun.media.jai.codec.TIFFEncodeParam;
 import com.sun.media.jai.codec.TIFFField;
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.geotiff.image.jai.GeoTIFFDirectory;
 import org.libtiff.jai.codec.XTIFFField;
 import org.mrgeo.utils.Bounds;

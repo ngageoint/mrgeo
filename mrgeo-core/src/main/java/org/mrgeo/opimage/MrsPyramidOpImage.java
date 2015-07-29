@@ -15,7 +15,7 @@
 
 package org.mrgeo.opimage;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.mrgeo.image.MrsImage;
@@ -166,8 +166,11 @@ public class MrsPyramidOpImage extends SourcelessOpImage implements Serializable
     final int height = tileClusterInfo.getHeight() * tileSize;
 
     MrsTileReader<Raster> tileReader = dp.getMrsTileReader(zoomlevel);
+
     final Iterator<Raster> it = tileReader.get();
     Raster raster = it.next();
+
+
     final SampleModel sampleModel = raster.getSampleModel();
     final ImageLayout layout = calculateLayout(dp, zoomlevel);
     return new MrsPyramidOpImage(dp, zoomlevel, layout, null, sampleModel, minX, minY,

@@ -17,7 +17,7 @@ package org.mrgeo.services.mrspyramid;
 
 import com.sun.media.jai.codec.ByteArraySeekableStream;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramidSpark;

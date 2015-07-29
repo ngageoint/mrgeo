@@ -18,7 +18,7 @@ package org.mrgeo.mapalgebra;
 import java.io.IOException;
 import java.util.Vector;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.featurefilter.ColumnFeatureFilter;
 import org.mrgeo.featurefilter.DateColumnFeatureFilter;

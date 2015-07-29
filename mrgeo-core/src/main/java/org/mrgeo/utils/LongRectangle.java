@@ -15,7 +15,7 @@
 
 package org.mrgeo.utils;
 
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.awt.geom.Rectangle2D;
@@ -64,13 +64,13 @@ public class LongRectangle implements Serializable
   static public void intersect(final LongRectangle src1, final LongRectangle src2,
       final LongRectangle dest)
   {
-    throw new NotImplementedException();
+    throw new NotImplementedException("intersect() not implemented");
   }
 
   @SuppressWarnings("unused")
   static void union(final LongRectangle src1, final LongRectangle src2, final LongRectangle dest)
   {
-    throw new NotImplementedException();
+    throw new NotImplementedException("union() not implemented");
 
   }
 
@@ -135,13 +135,13 @@ public class LongRectangle implements Serializable
   @SuppressWarnings("unused")
   public LongRectangle createIntersection(final LongRectangle r)
   {
-    throw new NotImplementedException();
+    throw new NotImplementedException("createIntersection() not implemented");
   }
 
   @SuppressWarnings("unused")
   public LongRectangle createUnion(final LongRectangle r)
   {
-    throw new NotImplementedException();
+    throw new NotImplementedException("createUnion() not implemented");
   }
 
   @Override
@@ -221,19 +221,19 @@ public class LongRectangle implements Serializable
   @SuppressWarnings("unused")
   public boolean intersects(final long srcMinX, final long srcMinY, final long srcMaxX, final long srcMaxY)
   {
-    throw new NotImplementedException();
+    throw new NotImplementedException("intersects() not implemented");
   }
 
   @SuppressWarnings("unused")
   public boolean intersects(final LongRectangle r)
   {
-    throw new NotImplementedException();
+    throw new NotImplementedException("intersects() not implemented");
   }
 
   @SuppressWarnings("unused")
   public boolean intersectsLine(final long x1, final long y1, final long x2, final long y2)
   {
-    throw new NotImplementedException();
+    throw new NotImplementedException("intersectsLine() not implemented");
   }
 
   @JsonIgnore

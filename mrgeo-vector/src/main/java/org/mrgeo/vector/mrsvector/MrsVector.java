@@ -15,7 +15,7 @@
 
 package org.mrgeo.vector.mrsvector;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mrgeo.tile.TileNotFoundException;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.tile.MrsTileException;
@@ -76,7 +76,7 @@ public class MrsVector
     {
       LeakChecker.instance().add(
         this,
-        ExceptionUtils.getFullStackTrace(new Throwable(
+        ExceptionUtils.getStackTrace(new Throwable(
           "MrsVector creation stack(ignore the Throwable...)")));
     }
   }

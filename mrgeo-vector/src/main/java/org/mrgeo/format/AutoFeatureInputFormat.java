@@ -15,7 +15,7 @@
 
 package org.mrgeo.format;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -118,7 +118,7 @@ public class AutoFeatureInputFormat extends InputFormat<LongWritable, Geometry> 
       if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
       {
         profile = true;
-        LeakChecker.instance().add(this, ExceptionUtils.getFullStackTrace(new Throwable("AutoRecordReader creation stack(ignore the Throwable...)")));
+        LeakChecker.instance().add(this, ExceptionUtils.getStackTrace(new Throwable("AutoRecordReader creation stack(ignore the Throwable...)")));
       }
       else
       {

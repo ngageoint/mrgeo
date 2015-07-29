@@ -15,8 +15,8 @@
 
 package org.mrgeo.image;
 
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mrgeo.tile.TileNotFoundException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -69,7 +69,7 @@ public class MrsImage
     {
       LeakChecker.instance().add(
         this,
-        ExceptionUtils.getFullStackTrace(new Throwable(
+        ExceptionUtils.getStackTrace(new Throwable(
             "MrsImage creation stack(ignore the Throwable...)")));
     }
   }
