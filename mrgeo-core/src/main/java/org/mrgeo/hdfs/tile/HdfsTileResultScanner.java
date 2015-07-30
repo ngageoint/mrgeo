@@ -17,9 +17,9 @@ package org.mrgeo.hdfs.tile;
 
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Writable;
-import org.mrgeo.data.KVIterator;
-import org.mrgeo.image.MrsImageException;
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 
@@ -29,7 +29,7 @@ import java.io.IOException;
  * HdfsResultScanner is for pulling items from the data store / MapFiles in HDFS in a Iterator
  * format.
  */
-public abstract class HdfsTileResultScanner<T, TWritable extends Writable> implements KVIterator<TileIdWritable, T>
+public abstract class HdfsTileResultScanner<T, TWritable extends Writable> implements CloseableKVIterator<TileIdWritable, T>
 {
   // reader used for pulling items
   private final HdfsMrsTileReader<T, TWritable> reader;
@@ -58,7 +58,16 @@ public abstract class HdfsTileResultScanner<T, TWritable extends Writable> imple
   // workaround for MapFile.Reader.seek behavior
   private boolean readFirstKey;
 
-  // For image: return RasterWritable.toRaster(currentValue)
+@Override
+public void close() throws IOException
+{
+  if (mapfile != null)
+  {
+    mapfile.close();
+  }
+}
+
+// For image: return RasterWritable.toRaster(currentValue)
   protected abstract T toNonWritable(TWritable val) throws IOException;
   
   public HdfsTileResultScanner(final LongRectangle bounds,
