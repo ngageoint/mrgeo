@@ -15,7 +15,7 @@
 
 package org.mrgeo.tile;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 

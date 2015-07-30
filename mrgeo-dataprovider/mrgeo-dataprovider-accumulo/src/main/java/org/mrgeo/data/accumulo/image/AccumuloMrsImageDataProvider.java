@@ -16,7 +16,7 @@
 package org.mrgeo.data.accumulo.image;
 
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -355,7 +355,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * is not handled in this code base.  It is left to the Data Administrator
    * to delete data.
    * 
-   * @param zoomLevle - the zoom level to delete.
+   * @param zoomLevel - the zoom level to delete.
    */
   @Override
   public void delete(int zoomLevel)
@@ -377,7 +377,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
   public void move(final String toResource)
   {
     // TODO: Need to implement
-    throw new NotImplementedException();
+    throw new NotImplementedException("move() not implemented");
   } // end move
   
 

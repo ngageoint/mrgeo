@@ -15,17 +15,15 @@
 
 package org.mrgeo.opimage;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
+import org.apache.commons.lang3.ArrayUtils;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.formats.TileCollection;
 import org.mrgeo.rasterops.OpImageUtils;
-import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.data.tile.MrsTileReader;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
@@ -42,7 +40,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
@@ -60,8 +57,7 @@ public class MrsPyramidOpImage extends SourcelessOpImage implements Serializable
 
     public MrsImageOpImageException(final String msg)
     {
-      final Exception e = new Exception(msg);
-      this.origException = e;
+      this.origException = new Exception(msg);
     }
 
     @Override
@@ -152,7 +148,7 @@ public class MrsPyramidOpImage extends SourcelessOpImage implements Serializable
 
   public static MrsPyramidOpImage create(final MrsImageDataProvider dp, final Long level,
     final TileClusterInfo tileClusterInfo)
-        throws JsonGenerationException, JsonMappingException, IOException
+        throws IOException
   {
     // since this is a SourcelessOpImage, we'll need to calculate the layout
     // ourselves...
@@ -165,9 +161,10 @@ public class MrsPyramidOpImage extends SourcelessOpImage implements Serializable
     final int width = tileClusterInfo.getWidth() * tileSize;
     final int height = tileClusterInfo.getHeight() * tileSize;
 
-    MrsTileReader<Raster> tileReader = dp.getMrsTileReader(zoomlevel);
-    final Iterator<Raster> it = tileReader.get();
-    Raster raster = it.next();
+    MrsImagePyramid pyramid = MrsImagePyramid.open(dp);
+    MrsImage image = pyramid.getImage(zoomlevel);
+    Raster raster = image.getAnyTile();
+
     final SampleModel sampleModel = raster.getSampleModel();
     final ImageLayout layout = calculateLayout(dp, zoomlevel);
     return new MrsPyramidOpImage(dp, zoomlevel, layout, null, sampleModel, minX, minY,
@@ -175,10 +172,10 @@ public class MrsPyramidOpImage extends SourcelessOpImage implements Serializable
   }
 
   public static MrsPyramidOpImage create(MrsImageDataProvider dp, final TileClusterInfo tileClusterInfo)
-      throws JsonGenerationException, JsonMappingException, IOException
+      throws IOException
   {
     int zoomlevel = dp.getMetadataReader().read().getMaxZoomLevel();
-    return create(dp, new Long(zoomlevel), tileClusterInfo);
+    return create(dp, (long) zoomlevel, tileClusterInfo);
   }
 
   private static ImageLayout calculateLayout(final MrsImageDataProvider dp,
@@ -188,17 +185,15 @@ public class MrsPyramidOpImage extends SourcelessOpImage implements Serializable
 
     final LongRectangle pixelbounds = metadata.getPixelBounds(zoomlevel);
 
-    MrsTileReader<Raster> tileReader = dp.getMrsTileReader(zoomlevel);
-    final Iterator<Raster> it = tileReader.get();
-    Raster raster = it.next();
+    MrsImagePyramid pyramid = MrsImagePyramid.open(dp);
+    MrsImage image = pyramid.getImage(zoomlevel);
+    Raster raster = image.getAnyTile();
 
     final ColorModel colorModel = RasterUtils.createColorModel(raster);
 
-    final ImageLayout layout = new ImageLayout(0, 0, (int) pixelbounds.getWidth(),
+    return new ImageLayout(0, 0, (int) pixelbounds.getWidth(),
       (int) pixelbounds.getHeight(), 0, 0, metadata.getTilesize(), metadata.getTilesize(),
       raster.getSampleModel(), colorModel);
-
-    return layout;
   }
 
   @Override
@@ -332,7 +327,7 @@ public class MrsPyramidOpImage extends SourcelessOpImage implements Serializable
     final String[] props = {
       OpImageUtils.NODATA_PROPERTY };
 
-    return (String[]) ArrayUtils.addAll(parentprops, props);
+    return ArrayUtils.addAll(parentprops, props);
   }
 
   public MrsImageDataProvider getDataProvider()
@@ -343,29 +338,7 @@ public class MrsPyramidOpImage extends SourcelessOpImage implements Serializable
   @Override
   public Raster getTile(final int tileX, final int tileY)
   {
-    // Need to change the sign on the Y tile because JAI tiles are numbered
-    // top to bottom, left to right, but MrGeo tiles are numbered bottom to
-    // top, left to right.
-    final Raster result = super.getTile(tileX, -tileY);
-    // try
-    // {
-    // QuickExport.saveLocalGeotiff("/export/home/dave.johnson/crap",
-    // result, tileX, tileY, pyramid.getMaximumLevel(), pyramid.getMetadata().getTilesize(),
-    // pyramid.getMetadata().getDefaultValue(0));
-    // }
-    // catch (NoSuchAuthorityCodeException e)
-    // {
-    // e.printStackTrace();
-    // }
-    // catch (IOException e)
-    // {
-    // e.printStackTrace();
-    // }
-    // catch (FactoryException e)
-    // {
-    // e.printStackTrace();
-    // }
-    return result;
+    return super.getTile(tileX, -tileY);
   }
 
   @Override

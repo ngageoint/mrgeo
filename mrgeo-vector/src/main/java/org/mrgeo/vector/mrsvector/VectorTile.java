@@ -18,7 +18,7 @@ package org.mrgeo.vector.mrsvector;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Message;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.mrgeo.geometry.*;
 import org.mrgeo.vector.mrsvector.pbf.FileFormat.Blob;
 import org.mrgeo.vector.mrsvector.pbf.FileFormat.BlobHeader;

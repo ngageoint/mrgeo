@@ -16,6 +16,7 @@
 package org.mrgeo.spark.job
 
 import org.apache.commons.lang3.SystemUtils
+import org.apache.commons.lang3.SystemUtils
 import org.mrgeo.utils.{FileUtils, Memory}
 
 import scala.collection.mutable.ArrayBuffer

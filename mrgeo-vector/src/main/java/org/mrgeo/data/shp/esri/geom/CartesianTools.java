@@ -15,7 +15,7 @@
 
 package org.mrgeo.data.shp.esri.geom;
 
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Vector;
 

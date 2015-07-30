@@ -16,7 +16,7 @@
 package org.mrgeo.imageio;
 
 import com.sun.media.jai.codec.SeekableStream;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -40,7 +40,7 @@ public class HdfsSeekableStream extends SeekableStream
       profile = true;
       if (profile)
       {
-        LeakChecker.instance().add(this, ExceptionUtils.getFullStackTrace(new Throwable("HdfsMrsImageReader creation stack(ignore the Throwable...)")));
+        LeakChecker.instance().add(this, ExceptionUtils.getStackTrace(new Throwable("HdfsMrsImageReader creation stack(ignore the Throwable...)")));
       }
 
     }
@@ -60,7 +60,7 @@ public class HdfsSeekableStream extends SeekableStream
       profile = true;
       if (profile)
       {
-        LeakChecker.instance().add(this, ExceptionUtils.getFullStackTrace(new Throwable("HdfsMrsImageReader creation stack(ignore the Throwable...)")));
+        LeakChecker.instance().add(this, ExceptionUtils.getStackTrace(new Throwable("HdfsMrsImageReader creation stack(ignore the Throwable...)")));
       }
 
     }

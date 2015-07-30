@@ -22,9 +22,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.MrsPyramidSimpleRecordReader;
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.MrsTileReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.image.MrsImage;
@@ -32,7 +30,6 @@ import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.TMSUtils;
 
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -102,23 +99,30 @@ public class MrsImagePyramidSimpleRecordReader extends MrsPyramidSimpleRecordRea
   @Override
   protected Raster createBlankTile(final double fill)
   {
-    Raster anyTile = image.getAnyTile();
-
-    if (anyTile != null)
+    try
     {
-      WritableRaster wr = anyTile.createCompatibleWritableRaster();
+      Raster anyTile = image.getAnyTile();
 
-      for (int y = wr.getMinY(); y < wr.getMinY() + wr.getHeight(); y++)
+      if (anyTile != null)
       {
-        for (int x = wr.getMinX(); x < wr.getMinX() + wr.getWidth(); x++)
+        WritableRaster wr = anyTile.createCompatibleWritableRaster();
+
+        for (int y = wr.getMinY(); y < wr.getMinY() + wr.getHeight(); y++)
         {
-          for (int b = 0; b < wr.getNumBands(); b++)
+          for (int x = wr.getMinX(); x < wr.getMinX() + wr.getWidth(); x++)
           {
-            wr.setSample(x, y, b, fill);
+            for (int b = 0; b < wr.getNumBands(); b++)
+            {
+              wr.setSample(x, y, b, fill);
+            }
           }
         }
+        return wr.createTranslatedChild(0, 0);
       }
-      return wr.createTranslatedChild(0, 0);
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
     }
     return null;
   }

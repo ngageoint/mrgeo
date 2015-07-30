@@ -15,7 +15,7 @@
 
 package org.mrgeo.format;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -58,7 +58,7 @@ public class KmlOutputFormat extends FileOutputFormat<LongWritable, GeometryWrit
     {
       if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
       {
-        LeakChecker.instance().add(this, ExceptionUtils.getFullStackTrace(new Throwable("KMLGeometryOutputFormat creation stack(ignore the Throwable...)")));
+        LeakChecker.instance().add(this, ExceptionUtils.getStackTrace(new Throwable("KMLGeometryOutputFormat creation stack(ignore the Throwable...)")));
         profile = true;
       }
       else
