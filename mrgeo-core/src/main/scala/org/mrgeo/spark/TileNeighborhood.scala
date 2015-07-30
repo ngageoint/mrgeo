@@ -15,20 +15,17 @@
 
 package org.mrgeo.spark
 
-import java.awt.image.DataBuffer
-import java.io.{ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
-import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec.A
-import org.apache.spark.Logging
-import org.apache.spark.SparkContext
-import org.apache.spark.graphx.{EdgeContext, Graph, EdgeDirection, Edge}
-import org.apache.spark.rdd.{RDD, PairRDDFunctions}
+import org.apache.spark.{Logging, SparkContext}
+import org.apache.spark.SparkContext._
+import org.apache.spark.graphx.{Edge, EdgeContext, EdgeDirection, Graph}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.utils.{SparkUtils, Bounds, TMSUtils}
+import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
-import org.apache.spark.SparkContext._
 import scala.collection.mutable.ListBuffer
 
 
