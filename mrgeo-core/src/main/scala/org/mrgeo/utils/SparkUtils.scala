@@ -177,24 +177,24 @@ object SparkUtils extends Logging {
 
     val providerProps: Properties = null
 
-//    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
-//      zoom, metadata.getTilesize, null, providerProps) // null for bounds means use all tiles (no cropping)
-//
-//    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
-//        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
-//
-//    context.newAPIHadoopRDD(job.getConfiguration,
-//      inputFormatClass,
-//      classOf[TileIdWritable],
-//      classOf[RasterWritable])
+    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
+      zoom, metadata.getTilesize, null, providerProps) // null for bounds means use all tiles (no cropping)
 
-        FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
-        FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
+    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
+        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
 
-        context.newAPIHadoopRDD(job.getConfiguration,
-          classOf[SequenceFileInputFormat[TileIdWritable, RasterWritable]],
-          classOf[TileIdWritable],
-          classOf[RasterWritable])
+    context.newAPIHadoopRDD(job.getConfiguration,
+      inputFormatClass,
+      classOf[TileIdWritable],
+      classOf[RasterWritable])
+
+//        FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
+//        FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
+//
+//        context.newAPIHadoopRDD(job.getConfiguration,
+//          classOf[SequenceFileInputFormat[TileIdWritable, RasterWritable]],
+//          classOf[TileIdWritable],
+//          classOf[RasterWritable])
   }
 
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider:MrsImageDataProvider,
