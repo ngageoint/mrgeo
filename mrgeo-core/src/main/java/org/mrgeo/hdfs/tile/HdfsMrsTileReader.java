@@ -16,7 +16,7 @@
 package org.mrgeo.hdfs.tile;
 
 import com.google.common.cache.*;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -66,7 +66,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
     {
       LeakChecker.instance().add(
               reader,
-              ExceptionUtils.getFullStackTrace(new Throwable(
+              ExceptionUtils.getStackTrace(new Throwable(
                       "HdfsMrsVectorReader creation stack(ignore the Throwable...)")));
     }
     return reader;

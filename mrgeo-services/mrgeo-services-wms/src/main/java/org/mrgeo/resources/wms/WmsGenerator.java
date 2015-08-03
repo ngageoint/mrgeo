@@ -15,7 +15,7 @@
 
 package org.mrgeo.resources.wms;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImage;

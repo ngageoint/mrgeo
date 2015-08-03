@@ -33,6 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -936,6 +940,49 @@ public class DataProviderFactory
     return resourceName;
   }
 
+public static MrsImageDataProvider createTempMrsImageDataProvider(Properties props)
+    throws DataProviderNotFound, DataProviderException
+{
+  return createTempMrsImageDataProvider(getBasicConfig(), props);
+}
+
+public static MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf)
+    throws DataProviderNotFound, DataProviderException
+{
+  return createTempMrsImageDataProvider(conf, null);
+}
+
+private static MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf,
+    final Properties providerProperties) throws DataProviderNotFound, DataProviderException
+{
+
+  initialize(conf, providerProperties);
+  for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
+  {
+    MrsImageDataProvider provider;
+    try
+    {
+      if (providerProperties != null)
+      {
+        provider = factory.createTempMrsImageDataProvider(providerProperties);
+      }
+      else
+      {
+        provider = factory.createTempMrsImageDataProvider(conf);
+      }
+    }
+    catch (IOException e)
+    {
+      throw new DataProviderException("Can not create temporary mrs image data provider", e);
+    }
+
+    mrsImageProviderCache.put(provider.getResourceName(), provider);
+    return provider;
+  }
+
+  throw new DataProviderException("Can not create temporary mrs image data provider");
+}
+
   /**
    * Create a data provider for a MrsImage data resource. This method should be
    * called to access a MrsImage (an image ingested into MrGeo) as well as
@@ -1375,6 +1422,18 @@ public class DataProviderFactory
     int ndx = name.indexOf(PREFIX_CHAR);
     if (ndx > 0)
     {
+      // 1st check if the system see's the name as a valid URI
+      try
+      {
+        URI uri = new URL(name).toURI();
+        return null;
+      }
+      catch (URISyntaxException | MalformedURLException e)
+      {
+        // no op
+      }
+
+      // now check for the :// part (usually for URI's not added to the system, like hdfs://, or s3://
       int afterPrefixIndex = ndx + PREFIX_CHAR.length();
       // If the prefix character is a colon, we need to make sure that the name is
       // not actually a URL. So if the name has at least two more characters, and

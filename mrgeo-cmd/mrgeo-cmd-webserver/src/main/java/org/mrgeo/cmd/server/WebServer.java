@@ -27,6 +27,7 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.cmd.Command;
+import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
@@ -42,169 +43,172 @@ import java.util.Properties;
 public class WebServer extends Command
 {
 
-  private Options options;
+private Options options;
 
-  private static Logger log = LoggerFactory.getLogger(WebServer.class);
+private static Logger log = LoggerFactory.getLogger(WebServer.class);
 
-  public WebServer()
+public WebServer()
+{
+  options = createOptions();
+}
+
+
+public static Options createOptions()
+{
+  Options result = MrGeo.createOptions();
+
+  Option output = new Option("p", "port", true, "The HTTP port on which the server will listen (default 8080)");
+  result.addOption(output);
+
+  return result;
+}
+
+@Override
+public int run(String[] args, Configuration conf, Properties providerProperties)
+{
+  try
   {
-    options = createOptions();
-  }
+    long start = System.currentTimeMillis();
 
-
-  public static Options createOptions()
-  {
-    Options result = new Options();
-
-    Option output = new Option("p", "port", true, "The HTTP port on which the server will listen (default 8080)");
-    result.addOption(output);
-
-    result.addOption(new Option("v", "verbose", false, "Verbose logging"));
-    result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
-
-    return result;
-  }
-
-  @Override
-  public int run(String[] args, Configuration conf, Properties providerProperties)
-  {
+    CommandLine line = null;
     try
     {
-      long start = System.currentTimeMillis();
-
-      CommandLine line = null;
-      try
-      {
-        CommandLineParser parser = new GnuParser();
-        line = parser.parse(options, args);
-      }
-      catch (ParseException e)
-      {
-        System.out.println(e.getMessage());
-        new HelpFormatter().printHelp("webserver <options> <operation>", options);
-        return -1;
-      }
-
-      int httpPort = 8080;
-      if (line != null)
-      {
-        if (line.hasOption("p"))
-        {
-          try
-          {
-            httpPort = Integer.parseInt(line.getOptionValue("p", "8080"));
-          }
-          catch (NumberFormatException nfe)
-          {
-            System.err.println("Invalid HTTP port specified: " + line.getOptionValue("p"));
-            return -1;
-          }
-        }
-        if (line.hasOption("v"))
-        {
-          LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
-        }
-        if (line.hasOption("d"))
-        {
-          LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
-        }
-      }
-
-      runWebServer(httpPort);
-
-      long end = System.currentTimeMillis();
-      long duration = end - start;
-      PeriodFormatter formatter = new PeriodFormatterBuilder()
-          .appendHours()
-          .appendSuffix("h:")
-          .appendMinutes()
-          .appendSuffix("m:")
-          .appendSeconds()
-          .appendSuffix("s")
-          .toFormatter();
-      String formatted = formatter.print(new Period(duration));
-      log.info("IngestImage complete in " + formatted);
-
-      return 0;
+      CommandLineParser parser = new GnuParser();
+      line = parser.parse(options, args);
     }
-    catch (Exception e)
+    catch (ParseException e)
     {
-      e.printStackTrace();
+      System.out.println(e.getMessage());
+      new HelpFormatter().printHelp("webserver <options> <operation>", options);
+      return -1;
     }
 
-    return -1;
+    if (line == null || line.hasOption("h"))
+    {
+      new HelpFormatter().printHelp("webserver <options> <operation>", options);
+      return -1;
+    }
+
+    int httpPort = 8080;
+    if (line != null)
+    {
+      if (line.hasOption("p"))
+      {
+        try
+        {
+          httpPort = Integer.parseInt(line.getOptionValue("p", "8080"));
+        }
+        catch (NumberFormatException nfe)
+        {
+          System.err.println("Invalid HTTP port specified: " + line.getOptionValue("p"));
+          return -1;
+        }
+      }
+      if (line.hasOption("v"))
+      {
+        LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+      }
+      if (line.hasOption("d"))
+      {
+        LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
+      }
+    }
+
+    runWebServer(httpPort);
+
+    long end = System.currentTimeMillis();
+    long duration = end - start;
+    PeriodFormatter formatter = new PeriodFormatterBuilder()
+        .appendHours()
+        .appendSuffix("h:")
+        .appendMinutes()
+        .appendSuffix("m:")
+        .appendSeconds()
+        .appendSuffix("s")
+        .toFormatter();
+    String formatted = formatter.print(new Period(duration));
+    log.info("IngestImage complete in " + formatted);
+
+    return 0;
+  }
+  catch (Exception e)
+  {
+    e.printStackTrace();
   }
 
-  private Server startWebServer(int httpPort) throws Exception
+  return -1;
+}
+
+private Server startWebServer(int httpPort) throws Exception
+{
+  System.out.println("Starting embedded web server on port " + httpPort);
+  URI uri = UriBuilder.fromUri("http://" + getHostName() + "/").port(httpPort).build();
+  Server server = new Server(httpPort);
+  HandlerCollection coll = new HandlerCollection();
+  ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
+  context.setContextPath("/mrgeo");
+  coll.addHandler(context);
+  // If the MrGeo configuration defines a static web root path,
+  // then add a resource handler for being able to access resources
+  // from that path statically from the root context path.
+  String webRoot = MrGeoProperties.getInstance().getProperty("web.server.static.root");
+  if (webRoot != null && !webRoot.isEmpty())
   {
-    System.out.println("Starting embedded web server on port " + httpPort);
-    URI uri = UriBuilder.fromUri("http://" + getHostName() + "/").port(httpPort).build();
-    Server server = new Server(httpPort);
-    HandlerCollection coll = new HandlerCollection();
-    ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
-    context.setContextPath("/mrgeo");
-    coll.addHandler(context);
-    // If the MrGeo configuration defines a static web root path,
-    // then add a resource handler for being able to access resources
-    // from that path statically from the root context path.
-    String webRoot = MrGeoProperties.getInstance().getProperty("web.server.static.root");
-    if (webRoot != null && !webRoot.isEmpty())
+    boolean goodWebRoot = false;
+    File f = new File(webRoot);
+    if (f.exists())
     {
-      boolean goodWebRoot = false;
-      File f = new File(webRoot);
-      if (f.exists())
+      if (f.isDirectory())
       {
-        if (f.isDirectory())
-        {
-          goodWebRoot = true;
-        }
-        else
-        {
-          System.out.println("Not serving static web content because web.server.static.root is not a directory: " + webRoot);
-        }
+        goodWebRoot = true;
       }
       else
       {
-        System.out.println("Not serving static web content because web.server.static.root does not exist: " + webRoot);
-      }
-      if (goodWebRoot)
-      {
-        System.out.println("Serving static web content from: " + webRoot);
-        ResourceHandler rh = new ResourceHandler();
-        rh.setDirectoriesListed(true);
-        rh.setResourceBase(webRoot);
-        coll.addHandler(rh);
+        System.out.println("Not serving static web content because web.server.static.root is not a directory: " + webRoot);
       }
     }
-    server.setHandler(coll);
-    ServletHolder servletHolder = new ServletHolder(new ServletContainer());
-    servletHolder.setInitParameter("javax.ws.rs.Application", "org.mrgeo.application.Application");
-    servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
-    servletHolder.setInitOrder(1);
-    context.addServlet(servletHolder, "/*");
+    else
+    {
+      System.out.println("Not serving static web content because web.server.static.root does not exist: " + webRoot);
+    }
+    if (goodWebRoot)
+    {
+      System.out.println("Serving static web content from: " + webRoot);
+      ResourceHandler rh = new ResourceHandler();
+      rh.setDirectoriesListed(true);
+      rh.setResourceBase(webRoot);
+      coll.addHandler(rh);
+    }
+  }
+  server.setHandler(coll);
+  ServletHolder servletHolder = new ServletHolder(new ServletContainer());
+  servletHolder.setInitParameter("javax.ws.rs.Application", "org.mrgeo.application.Application");
+  servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
+  servletHolder.setInitOrder(1);
+  context.addServlet(servletHolder, "/*");
 //    context.addServlet("org.mrgeo.services.wms.WmsGenerator", "/WmsGenerator/*");
-    server.start();
-    System.out.println(String.format("Web Server started at %s", uri));
-    return server;
-  }
+  server.start();
+  System.out.println(String.format("Web Server started at %s", uri));
+  return server;
+}
 
-  private void runWebServer(int httpPort) throws Exception
-  {
-    Server server = startWebServer(httpPort);
-    System.out.println("Use ctrl-C to stop the web server");
-    server.join();
-  }
+private void runWebServer(int httpPort) throws Exception
+{
+  Server server = startWebServer(httpPort);
+  System.out.println("Use ctrl-C to stop the web server");
+  server.join();
+}
 
-  private String getHostName()
+private String getHostName()
+{
+  try
   {
-    try
-    {
-      return InetAddress.getLocalHost().getCanonicalHostName();
-    }
-    catch (UnknownHostException e)
-    {
-      System.err.println("Unknown host");
-    }
-    return "localhost";
+    return InetAddress.getLocalHost().getCanonicalHostName();
   }
+  catch (UnknownHostException e)
+  {
+    System.err.println("Unknown host");
+  }
+  return "localhost";
+}
 }

@@ -15,11 +15,6 @@
 
 package org.mrgeo.hdfs.image;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -30,165 +25,183 @@ import org.mrgeo.data.image.MrsImageDataProviderFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.HadoopUtils;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
 public class HdfsMrsImageDataProviderFactory implements MrsImageDataProviderFactory
 {
-  private static Configuration basicConf;
+private static Configuration basicConf;
 
-  private class OnlyDirectoriesFilter implements PathFilter
+private class OnlyDirectoriesFilter implements PathFilter
+{
+  private FileSystem fs;
+
+  public OnlyDirectoriesFilter(FileSystem fs)
   {
-    private FileSystem fs;
+    this.fs = fs;
+  }
 
-    public OnlyDirectoriesFilter(FileSystem fs)
+  @Override
+  public boolean accept(Path item)
+  {
+    try
     {
-      this.fs = fs;
-    }
-
-    @Override
-    public boolean accept(Path item)
-    {
-      try
+      if (fs.exists(item) && fs.isDirectory(item))
       {
-        if (fs.exists(item) && fs.isDirectory(item))
-        {
-          return true;
-        }
+        return true;
       }
-      catch(IOException e)
+    }
+    catch(IOException e)
+    {
+    }
+    return false;
+  }
+}
+
+@Override
+public boolean isValid()
+{
+  return true;
+}
+
+@Override
+public String getPrefix()
+{
+  return "hdfs";
+}
+
+@Override
+public MrsImageDataProvider createMrsImageDataProvider(final String input,
+    final Configuration conf)
+{
+
+  return new HdfsMrsImageDataProvider(conf, input, null);
+}
+
+@Override
+public MrsImageDataProvider createMrsImageDataProvider(final String input,
+    final Properties providerProperties)
+{
+  return new HdfsMrsImageDataProvider(getBasicConf(), input, providerProperties);
+}
+
+@Override
+public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf) throws IOException
+{
+  return createMrsImageDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri().toString(), conf);
+}
+
+@Override
+public MrsImageDataProvider createTempMrsImageDataProvider(final Properties providerProperties) throws IOException
+{
+  return createMrsImageDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri().toString(), providerProperties);
+}
+
+@Override
+public boolean canOpen(final String input,
+    final Configuration conf) throws IOException
+{
+  return HdfsMrsImageDataProvider.canOpen(conf, input, null);
+}
+
+@Override
+public boolean canOpen(final String input,
+    final Properties providerProperties) throws IOException
+{
+  return HdfsMrsImageDataProvider.canOpen(getBasicConf(), input, providerProperties);
+}
+
+@Override
+public boolean canWrite(final String input,
+    final Configuration conf) throws IOException
+{
+  return HdfsMrsImageDataProvider.canWrite(conf, input, null);
+}
+
+@Override
+public boolean canWrite(final String input,
+    final Properties providerProperties) throws IOException
+{
+  return HdfsMrsImageDataProvider.canWrite(getBasicConf(), input, providerProperties);
+}
+
+private String[] listImages(final Configuration conf, Path usePath, String userName,
+    String[] authorizations) throws IOException
+{
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf, usePath);
+  FileStatus[] fileStatuses = fs.listStatus(usePath, new OnlyDirectoriesFilter(fs));
+  if (fileStatuses != null)
+  {
+    List<String> results = new ArrayList<String>(fileStatuses.length);
+    for (FileStatus status : fileStatuses)
+    {
+      if (canOpen(status.getPath().toString(), conf))
       {
+        results.add(status.getPath().getName());
       }
-      return false;
     }
+    String[] retVal = new String[results.size()];
+    return results.toArray(retVal);
   }
+  return new String[0];
+}
 
-  @Override
-  public boolean isValid()
-  {
-    return true;
-  }
+@Override
+public String[] listImages(final Properties providerProperties) throws IOException
+{
+  // TODO: Extract user name and authorizations from providerProperties
+  // and pass them along.
+  Path usePath = getBasePath();
+  return listImages(HadoopUtils.createConfiguration(), usePath, "", new String[0]);
+}
 
-  @Override
-  public String getPrefix()
-  {
-    return "hdfs";
-  }
+private Path getBasePath()
+{
+  return HdfsMrsImageDataProvider.getBasePath(getBasicConf());
+}
 
-  @Override
-  public MrsImageDataProvider createMrsImageDataProvider(final String input,
-      final Configuration conf)
-  {
-    return new HdfsMrsImageDataProvider(conf, input, null);
-  }
+@Override
+public boolean exists(final String input,
+    final Configuration conf) throws IOException
+{
+  return HdfsMrsImageDataProvider.exists(conf, input, null);
+}
 
-  @Override
-  public MrsImageDataProvider createMrsImageDataProvider(final String input,
-      final Properties providerProperties)
-  {
-    return new HdfsMrsImageDataProvider(getBasicConf(), input, providerProperties);
-  }
+@Override
+public boolean exists(final String input,
+    final Properties providerProperties) throws IOException
+{
+  return HdfsMrsImageDataProvider.exists(getBasicConf(), input, providerProperties);
+}
 
-  @Override
-  public boolean canOpen(final String input,
-      final Configuration conf) throws IOException
+@Override
+public void delete(final String name,
+    final Configuration conf) throws IOException
+{
+  if (exists(name, conf))
   {
-    return HdfsMrsImageDataProvider.canOpen(conf, input, null);
+    HdfsMrsImageDataProvider.delete(conf, name, null);
   }
+}
 
-  @Override
-  public boolean canOpen(final String input,
-      final Properties providerProperties) throws IOException
+@Override
+public void delete(final String name,
+    final Properties providerProperties) throws IOException
+{
+  if (exists(name, providerProperties))
   {
-    return HdfsMrsImageDataProvider.canOpen(getBasicConf(), input, providerProperties);
+    HdfsMrsImageDataProvider.delete(getBasicConf(), name, providerProperties);
   }
+}
 
-  @Override
-  public boolean canWrite(final String input,
-      final Configuration conf) throws IOException
+private static Configuration getBasicConf()
+{
+  if (basicConf == null)
   {
-    return HdfsMrsImageDataProvider.canWrite(conf, input, null);
+    basicConf = HadoopUtils.createConfiguration();
   }
-
-  @Override
-  public boolean canWrite(final String input,
-      final Properties providerProperties) throws IOException
-  {
-    return HdfsMrsImageDataProvider.canWrite(getBasicConf(), input, providerProperties);
-  }
-
-  private String[] listImages(final Configuration conf, Path usePath, String userName,
-      String[] authorizations) throws IOException
-  {
-    FileSystem fs = HadoopFileUtils.getFileSystem(conf, usePath);
-    FileStatus[] fileStatuses = fs.listStatus(usePath, new OnlyDirectoriesFilter(fs));
-    if (fileStatuses != null)
-    {
-      List<String> results = new ArrayList<String>(fileStatuses.length);
-      for (FileStatus status : fileStatuses)
-      {
-        if (canOpen(status.getPath().toString(), conf))
-        {
-          results.add(status.getPath().getName());
-        }
-      }
-      String[] retVal = new String[results.size()];
-      return results.toArray(retVal);
-    }
-    return new String[0];
-  }
-
-  @Override
-  public String[] listImages(final Properties providerProperties) throws IOException
-  {
-    // TODO: Extract user name and authorizations from providerProperties
-    // and pass them along.
-    Path usePath = getBasePath();
-    return listImages(HadoopUtils.createConfiguration(), usePath, "", new String[0]);
-  }
-
-  private Path getBasePath()
-  {
-    return HdfsMrsImageDataProvider.getBasePath(getBasicConf());
-  }
-
-  @Override
-  public boolean exists(final String input,
-      final Configuration conf) throws IOException
-  {
-    return HdfsMrsImageDataProvider.exists(conf, input, null);
-  }
-
-  @Override
-  public boolean exists(final String input,
-      final Properties providerProperties) throws IOException
-  {
-    return HdfsMrsImageDataProvider.exists(getBasicConf(), input, providerProperties);
-  }
-
-  @Override
-  public void delete(final String name,
-      final Configuration conf) throws IOException
-  {
-    if (exists(name, conf))
-    {
-      HdfsMrsImageDataProvider.delete(conf, name, null);
-    }
-  }
-
-  @Override
-  public void delete(final String name,
-      final Properties providerProperties) throws IOException
-  {
-    if (exists(name, providerProperties))
-    {
-      HdfsMrsImageDataProvider.delete(getBasicConf(), name, providerProperties);
-    }
-  }
-
-  private static Configuration getBasicConf()
-  {
-    if (basicConf == null)
-    {
-      basicConf = HadoopUtils.createConfiguration();
-    }
-    return basicConf;
-  }
+  return basicConf;
+}
 }

@@ -60,7 +60,7 @@ public abstract class Splits implements Externalizable
     }
   }
 
-  public abstract String findSpitFile(Path parent) throws IOException;
+  public abstract String findSplitFile(Path parent) throws IOException;
   public abstract void generateSplits(SplitGenerator generator);
 
   public SplitInfo[] getSplits()

@@ -14,7 +14,7 @@
  */
 
 package org.mrgeo.featurefilter;
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.mrgeo.databinner.EqualSizeDataBinner;
 import org.mrgeo.geometry.Geometry;
 

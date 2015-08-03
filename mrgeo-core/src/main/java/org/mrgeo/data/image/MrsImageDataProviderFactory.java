@@ -57,29 +57,48 @@ public interface MrsImageDataProviderFactory
    */
   public String getPrefix();
 
-  /**
-   * Return the image data provider for the specified input. The MrGeo core code
-   * will ensure that this method is invoked on the proper data plugin for the
-   * resource passed in. This method should only be called from mappers and
-   * reducers.
-   * 
-   * @param input
-   * @return
-   */
-  public MrsImageDataProvider createMrsImageDataProvider(final String input,
-      final Configuration conf);
+/**
+ * Return a temporary (ephemeral) image data provider. The MrGeo core code
+ * will ensure that this method is invoked on the proper data plugin for the
+ * resource passed in.
+ *
+ * @return
+ */
+public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf) throws IOException;
 
-  /**
-   * Return the image data provider for the specified input. The MrGeo core code
-   * will ensure that this method is invoked on the proper data plugin for the
-   * resource passed in. This method should only be called from the server side,
-   * not from mappers and reducers.
-   * 
-   * @param input
-   * @return
-   */
-  public MrsImageDataProvider createMrsImageDataProvider(final String input,
-      final Properties providerProperties);
+/**
+ * Return a temporary (ephemeral) image data provider. The MrGeo core code
+ * will ensure that this method is invoked on the proper data plugin for the
+ * resource passed in. This method should only be called from the server side,
+ * not from mappers and reducers.
+ *
+ * @return
+ */
+public MrsImageDataProvider createTempMrsImageDataProvider(final Properties providerProperties) throws IOException;
+
+/**
+ * Return the image data provider for the specified input. The MrGeo core code
+ * will ensure that this method is invoked on the proper data plugin for the
+ * resource passed in. This method should only be called from mappers and
+ * reducers.
+ *
+ * @param input
+ * @return
+ */
+public MrsImageDataProvider createMrsImageDataProvider(final String input,
+    final Configuration conf);
+
+/**
+ * Return the image data provider for the specified input. The MrGeo core code
+ * will ensure that this method is invoked on the proper data plugin for the
+ * resource passed in. This method should only be called from the server side,
+ * not from mappers and reducers.
+ *
+ * @param input
+ * @return
+ */
+public MrsImageDataProvider createMrsImageDataProvider(final String input,
+    final Properties providerProperties);
 
   /**
    * Return a list of all of the images that the data plugin knows about. This method

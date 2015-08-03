@@ -145,24 +145,32 @@ public class MrsImagePyramidRecordReader extends MrsPyramidRecordReader<Raster, 
   @Override
   protected Raster createBlankTile(final double fill)
   {
-    Raster anyTile = image.getAnyTile();
-
-    if (anyTile != null)
+    try
     {
-      WritableRaster wr = anyTile.createCompatibleWritableRaster();
+      Raster anyTile = image.getAnyTile();
 
-      for (int y = wr.getMinY(); y < wr.getMinY() + wr.getHeight(); y++)
+      if (anyTile != null)
       {
-        for (int x = wr.getMinX(); x < wr.getMinX() + wr.getWidth(); x++)
+        WritableRaster wr = anyTile.createCompatibleWritableRaster();
+
+        for (int y = wr.getMinY(); y < wr.getMinY() + wr.getHeight(); y++)
         {
-          for (int b = 0; b < wr.getNumBands(); b++)
+          for (int x = wr.getMinX(); x < wr.getMinX() + wr.getWidth(); x++)
           {
-            wr.setSample(x, y, b, fill);
+            for (int b = 0; b < wr.getNumBands(); b++)
+            {
+              wr.setSample(x, y, b, fill);
+            }
           }
         }
+        return wr.createTranslatedChild(0, 0);
       }
-      return wr.createTranslatedChild(0, 0);
     }
+    catch (IOException e)
+    {
+      e.printStackTrace();
+    }
+
     return null;
   }
 

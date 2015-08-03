@@ -15,7 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang3.ClassUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +71,7 @@ public class ImageHandlerFactory
       loadHandlers();
     }
 
-    if (org.apache.commons.lang.StringUtils.isEmpty(imageFormat))
+    if ( org.apache.commons.lang3.StringUtils.isEmpty(imageFormat))
     {
       throw new IllegalArgumentException("NULL image format requested.");
     }

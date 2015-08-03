@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapreduce.formats;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.mapreduce.Job;
 
 import java.util.Set;
