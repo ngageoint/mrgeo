@@ -1,5 +1,5 @@
 # Friction Surface Builder script
-import sys, os, subprocess, datetime, argparse, random
+import sys, os, subprocess, datetime, argparse
 
 now = datetime.datetime.now()
 nowf = now.strftime("%Y%m%d-%s")
