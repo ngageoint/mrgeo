@@ -43,7 +43,6 @@ object TileNeighborhood extends Logging {
         val from = TMSUtils.tileid(tile._1.get(), zoom)
         for (y <- (from.ty + offsetY) to (from.ty - offsetY)) {
           for (x <- (from.tx + offsetX) to (from.tx - offsetX)) {
-
             if (tilebounds.contains(x, y)) {
               val to = TMSUtils.tileid(x, y, zoom)
               edges.append(new Edge(to, tile._1.get, EdgeDirection.In))
@@ -92,7 +91,7 @@ object TileNeighborhood extends Logging {
       a
     }
 
-    val edges = buildEdges(tiles, offsetX, offsetY, width)
+    val edges = buildEdges(tiles, offsetX, offsetY, zoom)
 
     // map the tiles so the key is the tileid as a long
     val vertices = tiles.map(tile => {
