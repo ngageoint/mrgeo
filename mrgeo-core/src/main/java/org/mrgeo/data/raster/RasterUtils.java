@@ -209,13 +209,21 @@ public class RasterUtils
         basedOnSource.getColorModel());
   }
 
-  public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final int width, final int height,
-      final Number[] nodata)
-  {
-    final WritableRaster newraster = raster.createCompatibleWritableRaster(width, height);
-    fillWithNodata(newraster, nodata);
-    return newraster;
-  }
+public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final int width, final int height,
+    final Number[] nodata)
+{
+  final WritableRaster newraster = raster.createCompatibleWritableRaster(width, height);
+  fillWithNodata(newraster, nodata);
+  return newraster;
+}
+
+public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final int width, final int height,
+    final double nodata)
+{
+  final WritableRaster newraster = raster.createCompatibleWritableRaster(width, height);
+  fillWithNodata(newraster, nodata);
+  return newraster;
+}
 
   public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final double nodata)
   {
@@ -224,16 +232,26 @@ public class RasterUtils
     return newraster;
   }
 
-  public static WritableRaster createEmptyRaster(final int width, final int height,
-      final int bands, final int datatype,
-      final double nodata)
-  {
-    // we'll force the empty raster to be a banded model, for simplicity of the code.
-    final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
-    final WritableRaster raster = Raster.createWritableRaster(model, null);
-    fillWithNodata(raster, nodata);
-    return raster;
-  }
+public static WritableRaster createEmptyRaster(final int width, final int height,
+    final int bands, final int datatype,
+    final double nodata)
+{
+  // we'll force the empty raster to be a banded model, for simplicity of the code.
+  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
+  final WritableRaster raster = Raster.createWritableRaster(model, null);
+  fillWithNodata(raster, nodata);
+  return raster;
+}
+public static WritableRaster createEmptyRaster(final int width, final int height,
+    final int bands, final int datatype,
+    final Number[] nodatas)
+{
+  // we'll force the empty raster to be a banded model, for simplicity of the code.
+  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
+  final WritableRaster raster = Raster.createWritableRaster(model, null);
+  fillWithNodata(raster, nodatas);
+  return raster;
+}
 
   public static WritableRaster createEmptyRaster(final int width, final int height,
       final int bands, final int datatype)
@@ -430,19 +448,29 @@ public class RasterUtils
     }
   }
 
-  public static void mosaicTile(final Raster src, final WritableRaster dst, final double[] nodatas)
+public static void mosaicTile(final Raster src, final WritableRaster dst, final double[] nodatas)
+{
+  for (int y = 0; y < src.getHeight(); y++)
   {
-    for (int y = 0; y < src.getHeight(); y++)
+    for (int x = 0; x < src.getWidth(); x++)
     {
-      for (int x = 0; x < src.getWidth(); x++)
+      for (int b = 0; b < src.getNumBands(); b++)
       {
-        for (int b = 0; b < src.getNumBands(); b++)
-        {
-          copyPixel(x, y, b, src, dst, nodatas);
-        }
+        copyPixel(x, y, b, src, dst, nodatas);
       }
     }
   }
+}
+
+public static void mosaicTile(final Raster src, final WritableRaster dst, final Number[] nodatas)
+{
+  double[] dnodata = new double[nodatas.length];
+  for (int i = 0; i < dnodata.length; i++)
+  {
+    dnodata[i] = nodatas[i].doubleValue();
+  }
+  mosaicTile(src, dst, dnodata);
+}
 
   public static BufferedImage makeBufferedImage(Raster raster)
   {
