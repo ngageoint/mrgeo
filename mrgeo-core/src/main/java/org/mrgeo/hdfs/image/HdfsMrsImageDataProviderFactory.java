@@ -28,6 +28,7 @@ import org.mrgeo.utils.HadoopUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class HdfsMrsImageDataProviderFactory implements MrsImageDataProviderFactory
@@ -72,7 +73,18 @@ public String getPrefix()
   return "hdfs";
 }
 
-@Override
+  @Override
+  public Map<String, String> getConfiguration()
+  {
+    return null;
+  }
+
+  @Override
+  public void setConfiguration(Map<String, String> properties)
+  {
+  }
+
+  @Override
 public MrsImageDataProvider createMrsImageDataProvider(final String input,
     final Configuration conf)
 {

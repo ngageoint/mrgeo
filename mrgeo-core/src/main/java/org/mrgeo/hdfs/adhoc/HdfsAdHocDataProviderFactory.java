@@ -21,6 +21,7 @@ import org.mrgeo.data.adhoc.AdHocDataProviderFactory;
 import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
@@ -37,6 +38,17 @@ public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
   public String getPrefix()
   {
     return "hdfs";
+  }
+
+  @Override
+  public Map<String, String> getConfiguration()
+  {
+    return null;
+  }
+
+  @Override
+  public void setConfiguration(Map<String, String> properties)
+  {
   }
 
   @Override

@@ -18,6 +18,7 @@ package org.mrgeo.hdfs.vector;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -49,6 +50,17 @@ public class HdfsVectorDataProviderFactory implements VectorDataProviderFactory
   public String getPrefix()
   {
     return "hdfs";
+  }
+
+  @Override
+  public Map<String, String> getConfiguration()
+  {
+    return null;
+  }
+
+  @Override
+  public void setConfiguration(Map<String, String> properties)
+  {
   }
 
   @Override

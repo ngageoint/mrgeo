@@ -65,20 +65,23 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccumuloUtils {
-
+	static Logger log = LoggerFactory.getLogger(AccumuloUtils.class);
   /*
    * Start tileId (long) transformation utilities
    */
-  
-  /**
-   * Convert a tile id (long) to a Text object.
-   * 
-   * @param tileId is a long to be put into a text object
-   * @return Text object with the bytes being the value of the tileId (long)
-   */
-  public static Text toText(long tileId) {
+
+	/**
+	 * Convert a tile id (long) to a Text object.
+	 *
+	 * @param tileId is a long to be put into a text object
+	 * @return Text object with the bytes being the value of the tileId (long)
+	 */
+
+	public static Text toText(long tileId) {
 		byte[] bytes = ByteBuffer.allocate(8).putLong(tileId).array();
 		return new Text(bytes);
 	} // end toText
@@ -237,10 +240,10 @@ public class AccumuloUtils {
 		
 		// get the connector to Accumulo
 		Connector connector = AccumuloConnector.getConnector(
-		    MrGeoProperties.getInstance().getProperty("accumulo.instance")
-				,MrGeoProperties.getInstance().getProperty("zooservers")
-				,MrGeoProperties.getInstance().getProperty("accumulo.user")
-				,MrGeoProperties.getInstance().getProperty("accumulo.password"));
+						MrGeoProperties.getInstance().getProperty("accumulo.instance")
+						, MrGeoProperties.getInstance().getProperty("zooservers")
+						, MrGeoProperties.getInstance().getProperty("accumulo.user")
+						, MrGeoProperties.getInstance().getProperty("accumulo.password"));
 		if(! connector.tableOperations().exists(tableName)){
 			try{
 				connector.tableOperations().create(tableName, true);
@@ -600,6 +603,10 @@ public class AccumuloUtils {
 	public static Set<String> getListOfTables(Properties properties) {
 
 		Properties props = AccumuloConnector.getAccumuloProperties();
+		if (props == null)
+		{
+			throw new IllegalArgumentException("Unable to find accumulo configuration");
+		}
 		if(properties != null){
 			props.putAll(properties);
 			if(properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES) != null){
@@ -608,8 +615,6 @@ public class AccumuloUtils {
 			}
 		}
 
-		Authorizations auths = new Authorizations(props.getProperty(
-				MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
 		Connector conn;
 		try {
 			//conn = AccumuloConnector.getConnector();
@@ -621,7 +626,6 @@ public class AccumuloUtils {
 			conn = inst.getConnector(
 					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
 					token);
-			
 		} catch(AccumuloSecurityException ase){
 			ase.printStackTrace();
 			return null;

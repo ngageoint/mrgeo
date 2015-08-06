@@ -128,7 +128,18 @@ public String getPrefix()
   return MrGeoAccumuloConstants.MRGEO_ACC_PREFIX_NC;
 }
 
-@Override
+  @Override
+  public Map<String, String> getConfiguration()
+  {
+    return null;
+  }
+
+  @Override
+  public void setConfiguration(Map<String, String> properties)
+  {
+  }
+
+  @Override
 public MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf) throws IOException
 {
   return createMrsImageDataProvider(HadoopUtils.createRandomString(40), conf);

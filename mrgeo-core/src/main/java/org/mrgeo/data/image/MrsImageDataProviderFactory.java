@@ -18,6 +18,7 @@ package org.mrgeo.data.image;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -57,48 +58,83 @@ public interface MrsImageDataProviderFactory
    */
   public String getPrefix();
 
-/**
- * Return a temporary (ephemeral) image data provider. The MrGeo core code
- * will ensure that this method is invoked on the proper data plugin for the
- * resource passed in.
- *
- * @return
- */
-public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf) throws IOException;
+  /**
+   * This method is called before a Spark job runs in order to get back a set of
+   * properties that the data provider needs for instantiating providers on the
+   * remote side of a Spark job. Since MrGeo is not installed across the cluster,
+   * the configuration settings for the data provider are only available before
+   * the job is submitted. The MrGeo framework will ensure that the returned
+   * properties are passed along with the job, and on the remote side, the
+   * setConfiguration() method will be invoked.
+   *
+   * Some providers require login credentials for connecting to the source data,
+   * and this method would have to be implemented in that case to get those
+   * credentials passed to the remote side.
+   *
+   * IMPORTANT: The implementor should prefix any settings returned from this
+   * method so they do not interfere with other settings in Spark job configuration
+   * (including configuration settings from other providers). We suggest using the
+   * data provider class name as a prefix for example.
+   */
+  public Map<String, String> getConfiguration();
 
-/**
- * Return a temporary (ephemeral) image data provider. The MrGeo core code
- * will ensure that this method is invoked on the proper data plugin for the
- * resource passed in. This method should only be called from the server side,
- * not from mappers and reducers.
- *
- * @return
- */
-public MrsImageDataProvider createTempMrsImageDataProvider(final Properties providerProperties) throws IOException;
+  /**
+   * This method is called on the remote side of a Spark job to allow provider
+   * factories to re-instantiate their configuration settings. This is required
+   * because MrGeo is not installed across the cluster, and so configuration files
+   * or environment variables containing their settings are not available on the
+   * remote side.
+   *
+   * The properties passed in will include all the settings from the Spark job,
+   * including settings from other providers. So each provider must filter based
+   * on the prefix they used for their settings in the getConfiguration() method.
+   *
+   * @param properties
+   */
+  public void setConfiguration(Map<String, String> properties);
 
-/**
- * Return the image data provider for the specified input. The MrGeo core code
- * will ensure that this method is invoked on the proper data plugin for the
- * resource passed in. This method should only be called from mappers and
- * reducers.
- *
- * @param input
- * @return
- */
-public MrsImageDataProvider createMrsImageDataProvider(final String input,
-    final Configuration conf);
+  /**
+   * Return a temporary (ephemeral) image data provider. The MrGeo core code
+   * will ensure that this method is invoked on the proper data plugin for the
+   * resource passed in.
+   *
+   * @return
+   */
+  public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf) throws IOException;
 
-/**
- * Return the image data provider for the specified input. The MrGeo core code
- * will ensure that this method is invoked on the proper data plugin for the
- * resource passed in. This method should only be called from the server side,
- * not from mappers and reducers.
- *
- * @param input
- * @return
- */
-public MrsImageDataProvider createMrsImageDataProvider(final String input,
-    final Properties providerProperties);
+  /**
+   * Return a temporary (ephemeral) image data provider. The MrGeo core code
+   * will ensure that this method is invoked on the proper data plugin for the
+   * resource passed in. This method should only be called from the server side,
+   * not from mappers and reducers.
+   *
+   * @return
+   */
+  public MrsImageDataProvider createTempMrsImageDataProvider(final Properties providerProperties) throws IOException;
+
+  /**
+   * Return the image data provider for the specified input. The MrGeo core code
+   * will ensure that this method is invoked on the proper data plugin for the
+   * resource passed in. This method should only be called from mappers and
+   * reducers.
+   *
+   * @param input
+   * @return
+   */
+  public MrsImageDataProvider createMrsImageDataProvider(final String input,
+      final Configuration conf);
+
+  /**
+   * Return the image data provider for the specified input. The MrGeo core code
+   * will ensure that this method is invoked on the proper data plugin for the
+   * resource passed in. This method should only be called from the server side,
+   * not from mappers and reducers.
+   *
+   * @param input
+   * @return
+   */
+  public MrsImageDataProvider createMrsImageDataProvider(final String input,
+      final Properties providerProperties);
 
   /**
    * Return a list of all of the images that the data plugin knows about. This method

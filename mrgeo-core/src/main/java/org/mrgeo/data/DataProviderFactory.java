@@ -115,6 +115,72 @@ public class DataProviderFactory
     }
   }
 
+  public static Map<String, String> getConfigurationFromProviders()
+  {
+    Map<String, String> result = new HashMap<String, String>();
+    if (adHocProviderFactories != null)
+    {
+      for (final AdHocDataProviderFactory dpf : adHocProviderFactories.values())
+      {
+        Map<String, String> p = dpf.getConfiguration();
+        if (p != null)
+        {
+          result.putAll(p);
+        }
+      }
+    }
+
+    if (mrsImageProviderFactories != null)
+    {
+      for (final MrsImageDataProviderFactory dpf : mrsImageProviderFactories.values())
+      {
+        Map<String, String> p = dpf.getConfiguration();
+        if (p != null)
+        {
+          result.putAll(p);
+        }
+      }
+    }
+    if (vectorProviderFactories != null)
+    {
+      for (final VectorDataProviderFactory dpf : vectorProviderFactories.values())
+      {
+        Map<String, String> p = dpf.getConfiguration();
+        if (p != null)
+        {
+          result.putAll(p);
+        }
+      }
+    }
+    return result;
+  }
+
+  public static void setConfigurationForProviders(Map<String, String> properties)
+  {
+    if (adHocProviderFactories != null)
+    {
+      for (final AdHocDataProviderFactory dpf : adHocProviderFactories.values())
+      {
+        dpf.setConfiguration(properties);
+      }
+    }
+
+    if (mrsImageProviderFactories != null)
+    {
+      for (final MrsImageDataProviderFactory dpf : mrsImageProviderFactories.values())
+      {
+        dpf.setConfiguration(properties);
+      }
+    }
+    if (vectorProviderFactories != null)
+    {
+      for (final VectorDataProviderFactory dpf : vectorProviderFactories.values())
+      {
+        dpf.setConfiguration(properties);
+      }
+    }
+  }
+
   public static String getProviderProperty(final String key,
       final Properties providerProperties)
   {
@@ -1204,6 +1270,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
       {
         if (dp.isValid())
         {
+          log.info("Found ad hoc data provider factory " + dp.getClass().getName());
           adHocProviderFactories.put(dp.getPrefix(), dp);
         }
         else
@@ -1227,6 +1294,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
         {
           if (dp.isValid())
           {
+            log.info("Found mrs image data provider factory " + dp.getClass().getName());
             mrsImageProviderFactories.put(dp.getPrefix(), dp);
           }
           else
@@ -1329,32 +1397,82 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
     	  DependencyLoader.addDependencies(conf, dp.getClass());
       }
     }
+  }
 
-  } // end addDependencies
-  
-  
+  public static Set<String> getDependencies() throws IOException
+  {
+    Set<String> dependencies = new HashSet<String>();
+    if (adHocProviderFactories != null)
+    {
+      for (final AdHocDataProviderFactory dp : adHocProviderFactories.values())
+      {
+        Set<String> d = DependencyLoader.getDependencies(dp.getClass());
+        if (d != null)
+        {
+          dependencies.addAll(d);
+        }
+      }
+    }
+
+    if (mrsImageProviderFactories != null)
+    {
+      for (final MrsImageDataProviderFactory dp : mrsImageProviderFactories.values())
+      {
+        Set<String> d = DependencyLoader.getDependencies(dp.getClass());
+        if (d != null)
+        {
+          dependencies.addAll(d);
+        }
+      }
+    }
+    if (vectorProviderFactories != null)
+    {
+      for (final VectorDataProviderFactory dp : vectorProviderFactories.values())
+      {
+        Set<String> d = DependencyLoader.getDependencies(dp.getClass());
+        if (d != null)
+        {
+          dependencies.addAll(d);
+        }
+      }
+    }
+    return dependencies;
+  }
+
   private static void findPreferredProvider(Configuration conf, Properties p)
   {
     preferredAdHocProviderName = findValue(conf, p, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
     // no preferred provider, use the 1st one...
     if (preferredAdHocProviderName == null)
     {
+      log.info("Looking for preferred ad hoc provider name " + preferredAdHocProviderName);
       for (final AdHocDataProviderFactory factory : adHocProviderFactories.values())
       {
         preferredAdHocProviderName = factory.getPrefix();
+        log.info("Found preferred ad hoc provider name " + preferredAdHocProviderName);
         break;
       }
+    }
+    else
+    {
+      log.info("Using preferred ad hoc provider " + preferredAdHocProviderName);
     }
 
     preferredImageProviderName = findValue(conf, p, PREFERRED_MRSIMAGE_PROVIDER_NAME, PREFERRED_MRSIMAGE_PROPERTYNAME);
     // no preferred provider, use the 1st one...
     if (preferredImageProviderName == null)
     {
+      log.info("Looking for preferred image provider name " + preferredImageProviderName);
       for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
       {
         preferredImageProviderName = factory.getPrefix();
+        log.info("Found preferred image provider name " + preferredImageProviderName);
         break;
       }
+    }
+    else
+    {
+      log.info("Using preferred image provider " + preferredImageProviderName);
     }
 
 
@@ -1362,13 +1480,18 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
     // no preferred provider, use the 1st one...
     if (preferredVectorProviderName == null)
     {
+      log.info("Looking for preferred vector provider name " + preferredVectorProviderName);
       for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
       {
         preferredVectorProviderName = factory.getPrefix();
+        log.info("Found preferred vector provider name " + preferredVectorProviderName);
         break;
       }
     }
-
+    else
+    {
+      log.info("Using preferred vector provider " + preferredVectorProviderName);
+    }
   }
 
   private static String findValue(final Configuration conf, final Properties p, final String confName, final String propName)

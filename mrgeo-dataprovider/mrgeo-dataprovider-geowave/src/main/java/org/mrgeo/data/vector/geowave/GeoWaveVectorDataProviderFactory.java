@@ -1,6 +1,7 @@
 package org.mrgeo.data.vector.geowave;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.accumulo.core.client.AccumuloException;
@@ -27,6 +28,17 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   public String getPrefix()
   {
     return "geowave";
+  }
+
+  @Override
+  public Map<String, String> getConfiguration()
+  {
+    return null;
+  }
+
+  @Override
+  public void setConfiguration(Map<String, String> properties)
+  {
   }
 
   @Override
