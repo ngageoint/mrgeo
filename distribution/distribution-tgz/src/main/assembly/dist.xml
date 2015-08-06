@@ -23,7 +23,7 @@
     <!-- mrgeo jars -->
     <dependencySet>
       <outputDirectory>.</outputDirectory>
-      <outputFileNameMapping>${artifact.artifactId}-${mrgeo.opensource.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}-${mrgeo.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
       <useProjectArtifact>false</useProjectArtifact>
       <unpack>false</unpack>
       <scope>runtime</scope>
