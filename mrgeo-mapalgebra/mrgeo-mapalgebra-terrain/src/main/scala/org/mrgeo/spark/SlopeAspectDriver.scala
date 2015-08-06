@@ -246,17 +246,20 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
 
     val metadata: MrsImagePyramidMetadata = ip.getMetadataReader.read
     val zoom = metadata.getMaxZoomLevel
+    val tilesize = metadata.getTilesize
     val pyramid = SparkUtils.loadMrsPyramid(ip, zoom, context)
 
-    val tiles = TileNeighborhood.createNeighborhood(pyramid, -1, -1, 3, 3,
-      zoom, metadata.getTilesize, metadata.getDefaultValue(0), context)
+    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(metadata.getBounds), zoom, tilesize)
+    val tiles = TileNeighborhood.createNeighborhood(pyramid, -1, -1, 3, 3, tb,
+      zoom, tilesize, metadata.getDefaultValue(0), context)
 
-    val answer = calculate(tiles, metadata.getDefaultValue(0), zoom, metadata.getTilesize).persist(StorageLevel.MEMORY_AND_DISK)
+    val answer = calculate(tiles, metadata.getDefaultValue(0), zoom, tilesize).persist(StorageLevel.MEMORY_AND_DISK)
 
     val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
 
-    SparkUtils.saveMrsPyramid(answer, op, output, zoom, metadata.getTilesize, Array[Double](Float.NaN),
-      context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, 1, metadata.getProtectionLevel, null)
+    SparkUtils.saveMrsPyramid(answer, op, output, zoom, tilesize, Array[Double](Float.NaN),
+      context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, bands = 1,
+      protectionlevel = metadata.getProtectionLevel)
 
     answer.unpersist()
     true
