@@ -161,12 +161,11 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     val mosaiced:RDD[(TileIdWritable, RasterWritable)] = groups.map(U => {
 
       def isnodata(sample:Double, nodata:Double): Boolean = {
-        if (nodata.isNaN && sample.isNaN) {
-          true
+        if (nodata.isNaN) {
+          if (sample.isNaN) true
         }
-        else {
-          nodata == sample
-        }
+        else if (nodata == sample) true
+        false
       }
 
       var dst: WritableRaster = null

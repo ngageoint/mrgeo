@@ -120,8 +120,6 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
           }
         }
 
-        //neighborhood.sizeof()
-
         rasters
       }
 
@@ -129,7 +127,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
       val anchorY = tile._2.anchorY()
       val anchor = elevations(anchorY)(anchorX)
 
-      def isnodata(v:Double, nodata:Double):Boolean = (nodata.isNaN && v.isNaN) || (v == nodata)
+      def isnodata(v:Double, nodata:Double):Boolean = if (nodata.isNaN) v.isNaN  else v == nodata
 
       def getElevation(x:Int, y:Int):Double = {
 
