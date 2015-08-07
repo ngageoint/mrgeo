@@ -74,5 +74,13 @@
       <groupId>org.gdal</groupId>
       <artifactId>gdal</artifactId>
     </dependency>
+    <!-- This is to work around an apparent bug in maven 3.0.3 which prevented
+         the spark-yarn JAR file from being in the classpath when running the
+         IngestImageTest from the command line. It resulted in a ClassDefNotFoundException -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-yarn_${spark.scala.version}</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
