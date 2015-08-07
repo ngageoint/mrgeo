@@ -202,7 +202,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
           maxpartitions = p.partitions.length
         }
       })
-      new CoGroupedRDD(pyramids, new HashPartitioner(maxpartitions)).persist(StorageLevel.MEMORY_AND_DISK)
+      new CoGroupedRDD(pyramids, new HashPartitioner(maxpartitions))
     }
 
     val answer = tiles.map(tile =>  {
@@ -230,7 +230,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
 
       (new TileIdWritable(key), RasterWritable.toWritable(output))
 
-    }).persist(StorageLevel.MEMORY_AND_DISK)
+    }).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
 
