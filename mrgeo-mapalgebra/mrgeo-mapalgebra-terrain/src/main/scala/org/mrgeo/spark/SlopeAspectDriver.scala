@@ -15,7 +15,7 @@
 
 package org.mrgeo.spark
 
-import java.awt.image.{DataBuffer, Raster}
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import java.util.Properties
 import javax.vecmath.Vector3d
@@ -78,7 +78,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
     true
   }
 
-  private def calculate(tiles:RDD[(Long, RasterWritable)], bufferX:Int, bufferY: Int, nodata:Double, zoom:Int, tilesize:Int) = {
+  private def calculate(tiles:RDD[(TileIdWritable, RasterWritable)], bufferX:Int, bufferY: Int, nodata:Double, zoom:Int, tilesize:Int) = {
 
     tiles.map(tile => {
 
@@ -94,7 +94,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
       val zn = 7
       val pn = 8
 
-      val bounds = TMSUtils.tileBounds(TMSUtils.tileid(tile._1, zoom), zoom, tilesize)
+      val bounds = TMSUtils.tileBounds(TMSUtils.tileid(tile._1.get, zoom), zoom, tilesize)
 
       // calculate the great circle distance of the tile (through the middle)
       val midx = bounds.w + ((bounds.e - bounds.w) / 2.0)
@@ -200,8 +200,6 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
 
     val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(metadata.getBounds), zoom, tilesize)
 
-//    val tiles = TileNeighborhood.createNeighborhood(pyramid, -1, -1, 3, 3, tb,
-//      zoom, tilesize, metadata.getDefaultValue(0), context)
     val nodatas = Array.ofDim[Number](metadata.getBands)
     for (i <- nodatas.indices) {
       nodatas(i) = metadata.getDefaultValue(i)
@@ -210,7 +208,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
     val bufferX = 1
     val bufferY = 1
 
-    val tiles = FocalBuilder.create(pyramid, bufferX, bufferY, zoom, nodatas, context)
+    val tiles = FocalBuilder.create(pyramid, bufferX, bufferY, metadata.getBounds, zoom, nodatas, context)
 
     val answer = calculate(tiles, bufferX, bufferY, metadata.getDefaultValue(0), zoom, tilesize).persist(StorageLevel.MEMORY_AND_DISK)
 
