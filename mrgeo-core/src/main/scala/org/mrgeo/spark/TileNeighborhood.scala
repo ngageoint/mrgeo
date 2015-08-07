@@ -105,8 +105,8 @@ object TileNeighborhood extends Logging {
       RasterWritable.toWritable(
         RasterUtils.createEmptyRaster(tilesize, tilesize, 1, sample.getTransferType, nodata), zoom)
     val graph = Graph(vertices, edges, defaultVertex,
-      edgeStorageLevel = StorageLevel.MEMORY_AND_DISK,
-      vertexStorageLevel = StorageLevel.MEMORY_AND_DISK)
+      edgeStorageLevel = StorageLevel.MEMORY_AND_DISK_SER,
+      vertexStorageLevel = StorageLevel.MEMORY_AND_DISK_SER)
 
     val neighborhoods = graph.aggregateMessages[TileNeighborhood](
       sendMsg = buildNeighborhood,

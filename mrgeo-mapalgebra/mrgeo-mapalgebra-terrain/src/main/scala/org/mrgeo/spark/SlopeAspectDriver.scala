@@ -57,10 +57,6 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
-    classes += classOf[TileIdWritable]
-    classes += classOf[RasterWritable]
-    classes += classOf[TileNeighborhood]
-
     classes.result()
   }
 
@@ -210,7 +206,8 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
 
     val tiles = FocalBuilder.create(pyramid, bufferX, bufferY, metadata.getBounds, zoom, nodatas, context)
 
-    val answer = calculate(tiles, bufferX, bufferY, metadata.getDefaultValue(0), zoom, tilesize).persist(StorageLevel.MEMORY_AND_DISK)
+    val answer =
+      calculate(tiles, bufferX, bufferY, metadata.getDefaultValue(0), zoom, tilesize).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
 

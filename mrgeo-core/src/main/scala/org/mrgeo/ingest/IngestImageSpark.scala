@@ -514,7 +514,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       RasterUtils.mosaicTile(src, dst, nodata)
       RasterWritable.toWritable(dst)
 
-    }).persist(StorageLevel.MEMORY_AND_DISK)
+    }).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
 
     val raster = RasterWritable.toRaster(mergedTiles.first()._2)

@@ -24,7 +24,7 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{Logging, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.utils.{Bounds, GDALUtils, TMSUtils}
+import org.mrgeo.utils.{Bounds, TMSUtils}
 
 import scala.collection.mutable.ListBuffer
 
@@ -57,7 +57,6 @@ object FocalBuilder extends Logging {
       val srcW = src.getWidth
       val srcH = src.getHeight
 
-
       for (y <- -offsetY to offsetY) {
         for (x <- -offsetX to offsetX) {
           val to = new TMSUtils.Tile(from.tx + x, from.ty + y)
@@ -76,7 +75,7 @@ object FocalBuilder extends Logging {
             }
             else {
               srcX = 0
-              dstX = bufferX + (x * srcW).toInt
+              dstX = bufferX + (x * srcW)
               width = srcW
             }
 
@@ -94,7 +93,7 @@ object FocalBuilder extends Logging {
             }
             else {
               srcY = 0
-              dstY = bufferY + (y * srcH).toInt
+              dstY = bufferY + (y * srcH)
               height = srcH
             }
 
@@ -106,7 +105,6 @@ object FocalBuilder extends Logging {
       pieces.iterator
 
     })).groupByKey()
-
 
     val focal = pieces.map(tile => {
       val first = RasterWritable.toRaster(tile._2.head._5)
@@ -125,15 +123,8 @@ object FocalBuilder extends Logging {
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })
 
-//    focal.foreach(tile => {
-//      val t = TMSUtils.tileid(tile._1.get(), zoom)
-//      val fn:String = "/data/export/slope-test/" + tile._1 + ".tif"
-//      GDALUtils.saveRaster(RasterWritable.toRaster(tile._2), fn, t.tx, t.ty, zoom, 512, nodatas(0).doubleValue())
-//    })
-
     focal
   }
-
 
   def create2(tiles:RDD[(TileIdWritable, RasterWritable)],
       bufferX:Int, bufferY:Int, zoom:Int, nodatas:Array[Number], context:SparkContext):RDD[(Long, RasterWritable)] = {
@@ -283,8 +274,8 @@ object FocalBuilder extends Logging {
         sample.getTransferType, nodatas))
 
     val graph = Graph(vertices, edges, defaultVertex,
-      edgeStorageLevel = StorageLevel.MEMORY_AND_DISK,
-      vertexStorageLevel = StorageLevel.MEMORY_AND_DISK)
+      edgeStorageLevel = StorageLevel.MEMORY_AND_DISK_SER,
+      vertexStorageLevel = StorageLevel.MEMORY_AND_DISK_SER)
 
     val focal = graph.aggregateMessages[RasterWritable](
       sendMsg = buildFocal,

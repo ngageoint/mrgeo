@@ -56,7 +56,7 @@ class IngestLocalSpark extends IngestImageSpark with Externalizable {
       RasterUtils.mosaicTile(src, dst, nodata)
       RasterWritable.toWritable(dst)
 
-    }).persist(StorageLevel.MEMORY_AND_DISK)
+    }).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
 
     val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
