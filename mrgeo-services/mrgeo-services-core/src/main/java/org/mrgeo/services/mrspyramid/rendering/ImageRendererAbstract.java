@@ -269,6 +269,28 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
   zoomLevel = getZoomLevel(pyramidMetadata, bounds, width, height);
   int tilesize = pyramidMetadata.getTilesize();
 
+  // return empty data when requested bounds is completely outside of the
+  // image
+  if (!bounds.intersects(pyramidMetadata.getBounds()))
+  {
+    log.debug("request bounds does not intersect image bounds");
+    isTransparent = true;
+    return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
+        pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
+  }
+
+  // there is no way to handle non-existing zoom levels above non-pyramid'd
+  // data yet; no need to
+  // check zoom level validity if we know there are pyramids present
+  // TODO: get rid of this
+  if (!pyramidMetadata.hasPyramids() && !isZoomLevelValid(pyramidMetadata, zoomLevel))
+  {
+    log.warn("Requested zoom level {} does not exist in source imagery.", zoomLevel);
+    isTransparent = true;
+    return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
+        pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
+  }
+
   // get the correct image in the pyramid based on the zoom level
   if (!pyramidMetadata.hasPyramids())
   {
@@ -286,27 +308,6 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 
   try
   {
-    // return empty data when requested bounds is completely outside of the
-    // image
-    if (!bounds.intersects(pyramidMetadata.getBounds()))
-    {
-      log.debug("request bounds does not intersect image bounds");
-      isTransparent = true;
-      return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
-          pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
-    }
-
-    // there is no way to handle non-existing zoom levels above non-pyramid'd
-    // data yet; no need to
-    // check zoom level validity if we know there are pyramids present
-    // TODO: get rid of this
-    if (!pyramidMetadata.hasPyramids() && !isZoomLevelValid(pyramidMetadata, zoomLevel))
-    {
-      log.warn("Requested zoom level {} does not exist in source imagery.", zoomLevel);
-      isTransparent = true;
-      return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
-          pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
-    }
 
     // merge together all tiles that fall within the requested bounds
     final Raster merged = image.getRaster(bounds);

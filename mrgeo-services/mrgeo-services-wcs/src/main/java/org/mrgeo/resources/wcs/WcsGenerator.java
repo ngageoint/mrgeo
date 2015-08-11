@@ -66,14 +66,14 @@ public class WcsGenerator
   @GET
   public Response doGet(@Context UriInfo uriInfo)
   {
-    log.debug("GET URI: {}", uriInfo.getRequestUri().toString());
+    log.info("GET URI: {}", uriInfo.getRequestUri().toString());
     return handleRequest(uriInfo);
   }
 
   @POST
   public Response doPost(@Context UriInfo uriInfo)
   {
-    log.debug("POST URI: {}", uriInfo.getRequestUri().toString());
+    log.info("POST URI: {}", uriInfo.getRequestUri().toString());
     return handleRequest(uriInfo);
   }
 
@@ -114,13 +114,13 @@ public class WcsGenerator
     }
     finally
     {
-      if (log.isDebugEnabled())
+      //if (log.isDebugEnabled())
       {
-        log.debug("WCS request time: {}ms", (System.currentTimeMillis() - start));
+        log.info("WCS request time: {}ms", (System.currentTimeMillis() - start));
         // this can be resource intensive.
         System.gc();
         final Runtime rt = Runtime.getRuntime();
-        log.debug(String.format("WMS request memory: %.1fMB / %.1fMB\n", (rt.totalMemory() - rt
+        log.info(String.format("WMS request memory: %.1fMB / %.1fMB\n", (rt.totalMemory() - rt
             .freeMemory()) / 1e6, rt.maxMemory() / 1e6));
       }
     }
@@ -200,9 +200,25 @@ public class WcsGenerator
   {
     // The versionParamName will be null if the request did not include the
     // version parameter.
-    String versionParamName = getActualQueryParamName(allParams, "version");
-    String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
-    Version version = new Version(versionStr);
+    String acceptVersions = getQueryParam(allParams, "acceptversions", null);
+    Version version = null;
+    if (acceptVersions != null)
+    {
+      String[] versions = acceptVersions.split(",");
+
+      for (String ver: versions)
+      {
+        if (version == null || version.isLess(ver))
+        {
+          version = new Version(ver);
+        }
+      }
+    }
+    else {
+      version = new Version(getQueryParam(allParams, "version", WCS_VERSION));
+    }
+
+
 
     final WcsCapabilities docGen = new WcsCapabilities();
     try
@@ -377,12 +393,15 @@ public class WcsGenerator
     // Return the resulting image
     try
     {
+      log.info("Rendering " + layer);
       Raster result = renderer.renderImage(layer, bounds, width, height, providerProperties, crs);
 
+      log.info("Generating response");
       Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
           .getHandler(format, ImageResponseWriter.class))
           .write(result, layer, bounds);
 
+      log.info("Building and returning response");
       return builder.build();
     }
     catch (Exception e)

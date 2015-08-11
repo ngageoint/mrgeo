@@ -15,6 +15,7 @@
 
 package org.mrgeo.image;
 
+import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.tile.TileNotFoundException;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -271,7 +272,7 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
     }
   }
 
-  log.info("Merging tiles: zoom: {}  {}, {} ({}) to {}, {} ({})", new Object[]{zoom, tileBounds.w, tileBounds.s,
+  log.debug("Merging tiles: zoom: {}  {}, {} ({}) to {}, {} ({})", new Object[]{zoom, tileBounds.w, tileBounds.s,
       TMSUtils.tileid(tileBounds.w, tileBounds.s, zoom),
       tileBounds.e, tileBounds.n, TMSUtils.tileid(tileBounds.e, tileBounds.n, zoom)
   });
@@ -299,7 +300,7 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
         final TMSUtils.Pixel start = TMSUtils
             .latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize);
 
-        log.info("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", new Object[]{tile.tx,
+        log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", new Object[]{tile.tx,
             tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py});
 
 
@@ -307,7 +308,18 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
         // stamp in the source tile.
         merged.setDataElements((int) (start.px - ul.px), (int) (start.py - ul.py), source);
       }
-
+      
+      if (iter instanceof CloseableKVIterator)
+      {
+        try
+        {
+          ((CloseableKVIterator)iter).close();
+        }
+        catch (IOException e)
+        {
+          e.printStackTrace();
+        }
+      }
     }
   }
   return merged;

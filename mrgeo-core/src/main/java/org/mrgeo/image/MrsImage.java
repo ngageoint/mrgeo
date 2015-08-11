@@ -171,6 +171,7 @@ public Raster getAnyTile() throws IOException
     if (!reader.canBeCached() && it instanceof Closeable)
     {
       ((Closeable) it).close();
+      reader.close();
       reader = null;
     }
   }
