@@ -16,7 +16,6 @@
 package org.mrgeo.hdfs.tile;
 
 import com.google.common.cache.*;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -31,7 +30,10 @@ import org.mrgeo.data.tile.MrsTileException;
 import org.mrgeo.data.tile.MrsTileReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.*;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,16 +62,16 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
             (FileSplit.FileSplitInfo) splits.getSplits()[partitionIndex];
 
     final Path path = new Path(imagePath, part.getName());
-    MapFile.Reader reader = new MapFile.Reader(path, conf);
+    return new MapFile.Reader(path, conf);
 
-    if (profile)
-    {
-      LeakChecker.instance().add(
-              reader,
-              ExceptionUtils.getStackTrace(new Throwable(
-                      "HdfsMrsVectorReader creation stack(ignore the Throwable...)")));
-    }
-    return reader;
+//    if (profile)
+//    {
+//      LeakChecker.instance().add(
+//              reader,
+//              ExceptionUtils.getStackTrace(new Throwable(
+//                      "MapFile.Reader creation stack(ignore the Throwable...)")));
+//    }
+//    return reader;
   }
 
   private boolean canBeCached = true;
@@ -100,8 +102,7 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
        return loadReader(partitionIndex);
      }
    });
-
-  /*
+ /*
    * HdfsReader globals
    */
 
@@ -455,7 +456,8 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
       else
       {
         log.info("Loading reader for partitionIndex " + partitionIndex + " without the cache");
-        return loadReader(partitionIndex);
+        MapFile.Reader reader = loadReader(partitionIndex);
+        return reader;
       }
     }
     catch (ExecutionException e)

@@ -16,9 +16,9 @@
 package org.mrgeo.image;
 
 import org.mrgeo.data.CloseableKVIterator;
-import org.mrgeo.tile.TileNotFoundException;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.tile.TileNotFoundException;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -308,17 +308,16 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
         // stamp in the source tile.
         merged.setDataElements((int) (start.px - ul.px), (int) (start.py - ul.py), source);
       }
-      
-      if (iter instanceof CloseableKVIterator)
+    }
+    if (iter instanceof CloseableKVIterator)
+    {
+      try
       {
-        try
-        {
-          ((CloseableKVIterator)iter).close();
-        }
-        catch (IOException e)
-        {
-          e.printStackTrace();
-        }
+        ((CloseableKVIterator)iter).close();
+      }
+      catch (IOException e)
+      {
+        e.printStackTrace();
       }
     }
   }
