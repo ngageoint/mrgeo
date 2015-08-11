@@ -26,11 +26,15 @@ public class MrsImageException extends RuntimeException
     printStackTrace();
   }
 
-  public MrsImageException(final String msg)
-  {
-    final Exception e = new Exception(msg);
-    this.origException = e;
-  }
+public MrsImageException(final String msg)
+{
+  final Exception e = new Exception(msg);
+  this.origException = e;
+}
+public MrsImageException(final String msg, Exception e)
+{
+  this.origException = e;
+}
 
   @Override
   public void printStackTrace()

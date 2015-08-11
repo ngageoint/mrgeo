@@ -66,12 +66,14 @@ public class WcsGenerator
   @GET
   public Response doGet(@Context UriInfo uriInfo)
   {
+    log.debug("GET URI: {}", uriInfo.getRequestUri().toString());
     return handleRequest(uriInfo);
   }
 
   @POST
   public Response doPost(@Context UriInfo uriInfo)
   {
+    log.debug("POST URI: {}", uriInfo.getRequestUri().toString());
     return handleRequest(uriInfo);
   }
 
