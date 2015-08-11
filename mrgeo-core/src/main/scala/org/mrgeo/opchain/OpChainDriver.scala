@@ -230,7 +230,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
 
       (new TileIdWritable(key), RasterWritable.toWritable(output))
 
-    }).persist(StorageLevel.MEMORY_AND_DISK_SER)
+    })
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
 
@@ -239,8 +239,6 @@ class OpChainDriver extends MrGeoJob with Externalizable {
 
     SparkUtils.saveMrsPyramid(answer, dp, output, zoom, raster.getWidth, Array[Double](Double.NaN),
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, bounds, 1, protectionlevel, providerproperties)
-
-    answer.unpersist()
 
     true
   }
