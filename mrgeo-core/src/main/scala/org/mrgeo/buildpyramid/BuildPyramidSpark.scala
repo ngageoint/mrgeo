@@ -117,11 +117,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
-    classes += classOf[TileIdWritable]
-    classes += classOf[RasterWritable]
-
     classes.result()
-
   }
 
   private def makeAggregator(classname: String) = {
@@ -226,7 +222,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
           RasterUtils.mosaicTile(src, dst, metadata.getDefaultValues)
 
           RasterWritable.toWritable(dst)
-        }).persist(StorageLevel.MEMORY_AND_DISK_SER)
+        })
 
         // while we were running, there is chance the pyramid was removed from the cache and
         // reopened by another process. Re-opening it here will avoid some potential conflicts.
@@ -237,8 +233,6 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
         SparkUtils.saveMrsPyramid(mergedTiles, provider, tolevel,
           context.hadoopConfiguration, providerproperties = this.providerproperties)
-
-        mergedTiles.unpersist()
 
         //TODO: Fix this in S3
         // in S3, sometimes the just-written data isn't available to read yet.  This sleep just gives

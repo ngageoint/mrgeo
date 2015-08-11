@@ -236,7 +236,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
       // write the tile...
       (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
-    }).persist(StorageLevel.MEMORY_AND_DISK_SER)
+    })
 
 
     val job:Job = new Job(HadoopUtils.createConfiguration())

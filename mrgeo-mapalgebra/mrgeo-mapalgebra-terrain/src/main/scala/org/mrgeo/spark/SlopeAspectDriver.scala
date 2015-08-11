@@ -207,7 +207,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
     val tiles = FocalBuilder.create(pyramid, bufferX, bufferY, metadata.getBounds, zoom, nodatas, context)
 
     val answer =
-      calculate(tiles, bufferX, bufferY, metadata.getDefaultValue(0), zoom, tilesize).persist(StorageLevel.MEMORY_AND_DISK_SER)
+      calculate(tiles, bufferX, bufferY, metadata.getDefaultValue(0), zoom, tilesize)
 
     val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
 
@@ -215,7 +215,6 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, bands = 1,
       protectionlevel = metadata.getProtectionLevel)
 
-    answer.unpersist()
     true
   }
 

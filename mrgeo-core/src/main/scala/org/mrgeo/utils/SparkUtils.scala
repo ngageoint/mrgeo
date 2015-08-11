@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, SequenceFileInputFormat}
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
+import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
@@ -240,6 +241,8 @@ object SparkUtils extends Logging {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
+//    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
+
     val tileIncrement = 1
 
     var localbounds = bounds
@@ -258,6 +261,9 @@ object SparkUtils extends Logging {
       localtiletype = tile.getTransferType
     }
 
+    // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
+    // on.  This can be a problem for fast calculating/small partitions
+    val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
 
 
     // save the new pyramid
@@ -340,15 +346,14 @@ object SparkUtils extends Logging {
     val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
     val wrappedSorted = new PairRDDFunctions(sorted)
 
+//    tiles.unpersist()
+
     wrappedSorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
       tofp.getOutputFormat.getClass, conf)
 
     sparkPartitioner.generateFileSplits(sorted, output, zoom, conf)
-    //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
-    // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
-    // on.  This can be a problem for fast calculating/small partitions
-    val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
+    //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
     //dp.teardown(job)
 
