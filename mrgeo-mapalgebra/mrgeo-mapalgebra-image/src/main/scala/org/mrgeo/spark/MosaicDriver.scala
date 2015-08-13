@@ -15,25 +15,28 @@
 
 package org.mrgeo.spark
 
-import java.awt.image.WritableRaster
-import java.io.{ObjectOutput, ObjectInput, Externalizable}
+import java.awt.image.{DataBuffer, WritableRaster}
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
+import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
+import org.apache.spark.rdd.{CoGroupedRDD, RDD}
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{SparkConf, Partition, Logging, SparkContext}
-import org.apache.spark.SparkContext._
-import org.apache.spark.rdd.{RDD, CoGroupedRDD}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
 import org.mrgeo.image.MrsImagePyramid
-import org.mrgeo.spark.job.{MrGeoJob, MrGeoDriver, JobArguments}
+import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.TMSUtils.TileBounds
 import org.mrgeo.utils._
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 import scala.util.control._
 
 object MosaicDriver extends MrGeoDriver with Externalizable {
@@ -67,8 +70,8 @@ class MosaicDriver extends MrGeoJob with Externalizable {
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
-    classes += classOf[TileIdWritable]
-    classes += classOf[RasterWritable]
+    // yuck!  need to register spark private classes
+    classes += ClassTag(Class.forName("org.apache.spark.util.collection.CompactBuffer")).wrap.runtimeClass
 
     classes.result()
   }
@@ -156,15 +159,15 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
     val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
 
-    val groups = new CoGroupedRDD(pyramids, sparkPartitioner).persist(StorageLevel.MEMORY_AND_DISK_SER)
+    val groups = new CoGroupedRDD(pyramids, sparkPartitioner)
 
     val mosaiced:RDD[(TileIdWritable, RasterWritable)] = groups.map(U => {
 
       def isnodata(sample:Double, nodata:Double): Boolean = {
         if (nodata.isNaN) {
-          if (sample.isNaN) true
+          if (sample.isNaN) return true
         }
-        else if (nodata == sample) true
+        else if (nodata == sample) return true
         false
       }
 
@@ -175,8 +178,8 @@ class MosaicDriver extends MrGeoJob with Externalizable {
       var img:Int = 0
       done.breakable {
         for (wr<- U._2) {
-          if (wr != null && wr.size > 0) {
-            val writable = wr.asInstanceOf[Seq[RasterWritable]](0)
+          if (wr != null && wr.nonEmpty) {
+            val writable = wr.asInstanceOf[Seq[RasterWritable]].head
 
             if (dst == null) {
               // the tile conversion is a WritableRaster, we can just typecast here
@@ -239,30 +242,11 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     })
 
 
-    val job:Job = new Job(HadoopUtils.createConfiguration())
+    val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
 
-    // save the new pyramid
-    //TODO:  protection level & properties
-    val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
-      tilesize, tiletype, numbands, "", null)
-
-    //val sorted = mosaiced.sortByKey().partitionBy(sparkPartitioner).persist(StorageLevel.MEMORY_AND_DISK)
-    // this is missing in early spark APIs
-    val sorted = mosaiced.repartitionAndSortWithinPartitions(sparkPartitioner)
-
-    // save the image
-    sorted.saveAsNewAPIHadoopDataset(job.getConfiguration)
-
-    dp.teardown(job)
-
-    val stats = SparkUtils.calculateStats(sorted, numbands, nodata(0))
-
-    // calculate and save metadata
-    MrsImagePyramid.calculateMetadata(output, zoom, dp.getImageProvider, stats,
-      nodata(0), bounds, job.getConfiguration, null, null)
-
-    // write splits
-    //sparkPartitioner.writeSplits(output, zoom, job.getConfiguration)
+    SparkUtils.saveMrsPyramid(mosaiced, op, output, zoom, tilesize, Array[Double](Float.NaN),
+      context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, bounds, bands = 1,
+      protectionlevel = null) // metadata.getProtectionLevel)
 
     true
   }
