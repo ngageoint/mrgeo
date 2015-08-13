@@ -58,7 +58,7 @@ public static Set<Long> getTileIdsFromBounds( final Bounds bounds, final int zoo
   // with nodata in the missing tile areas.
 
   // create a list of all tileIds for the given bounding box.
-  final Set<Long> tileIds = new HashSet<Long>();
+  final Set<Long> tileIds = new HashSet<>();
 
   for (long tx = tb.w; tx <= tb.e; tx++)
   {
@@ -66,7 +66,7 @@ public static Set<Long> getTileIdsFromBounds( final Bounds bounds, final int zoo
     {
       final long tileid = TMSUtils.tileid(tx, ty, zoomlevel);
 
-      log.debug("mergeTiles adding tile {}, {} ({})", new Object[] {tx, ty, tileid});
+      log.debug("mergeTiles adding tile {}, {} ({})", tx, ty, tileid);
 
       tileIds.add(tileid);
     }
@@ -170,15 +170,15 @@ public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Til
     final TMSUtils.Pixel start = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, image
         .getZoomlevel(), image.getTilesize());
 
-    Raster source = null;
+    Raster source;
     try
     {
       source = image.getTile((int) tile.tx, (int) tile.ty);
 
       if (source != null)
       {
-        log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", new Object[] {tile.tx,
-            tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py});
+        log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,
+            tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);
 
         if (merged == null)
         {
@@ -205,19 +205,12 @@ public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Til
           }
         }
 
-        if (merged == null)
-        {
-          throw new MrsImageException(
-              "Catastrophic error merging tiles!  Can't create empty merged image");
-        }
-
         merged.setDataElements((int) (start.px - ul.px), (int) (start.py - ul.py), source);
       }
     }
     catch (final TileNotFoundException e)
     {
       // bad tile - tile could be out of bounds - ignore it
-      continue;
     }
 
   }
@@ -233,7 +226,7 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
 
   // 1st calculate the pixel size of the merged image.
   final TMSUtils.Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoom, tilesize);
-  WritableRaster merged = null;
+  WritableRaster merged;
 
   final TMSUtils.Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, image
       .getZoomlevel(), image.getTilesize());
@@ -272,10 +265,9 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
     }
   }
 
-  log.debug("Merging tiles: zoom: {}  {}, {} ({}) to {}, {} ({})", new Object[]{zoom, tileBounds.w, tileBounds.s,
+  log.debug("Merging tiles: zoom: {}  {}, {} ({}) to {}, {} ({})", zoom, tileBounds.w, tileBounds.s,
       TMSUtils.tileid(tileBounds.w, tileBounds.s, zoom),
-      tileBounds.e, tileBounds.n, TMSUtils.tileid(tileBounds.e, tileBounds.n, zoom)
-  });
+      tileBounds.e, tileBounds.n, TMSUtils.tileid(tileBounds.e, tileBounds.n, zoom));
 
   // the iterator is _much_ faster than requesting individual tiles...
   // final KVIterator<TileIdWritable, Raster> iter = image.getTiles(TMSUtils.TileBounds
@@ -300,9 +292,8 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
         final TMSUtils.Pixel start = TMSUtils
             .latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize);
 
-        log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", new Object[]{tile.tx,
-            tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py});
-
+        log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,
+            tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);
 
 
         // stamp in the source tile.
