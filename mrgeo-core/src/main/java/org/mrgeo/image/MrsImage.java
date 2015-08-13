@@ -375,6 +375,7 @@ public Raster getRaster(final Bounds bounds)
     {
       mergedRaster = RasterTileMerger.mergeTiles(this);
     }
+
     log.debug("Tiles merged.");
   }
   catch (final MrsImageException e)
@@ -534,6 +535,11 @@ private void openReader()
 {
   try
   {
+    if (reader != null )
+    {
+      reader.close();
+    }
+
     reader = provider.getMrsTileReader(context);
     if (reader == null)
     {

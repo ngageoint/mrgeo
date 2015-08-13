@@ -66,6 +66,7 @@ public void close() throws IOException
   if (mapfile != null)
   {
     mapfile.close();
+    mapfile = null;
   }
 }
 
@@ -142,6 +143,11 @@ public boolean hasNext()
 {
   try
   {
+    if (mapfile == null)
+    {
+      throw new MrsImageException("Mapfile.Reader has been closed");
+    }
+
     if (currentKey == null)
     {
       return false;
@@ -269,6 +275,12 @@ private void primeScanner(final long startTileId, final long endTileId)
      */
   try
   {
+    if (mapfile != null)
+    {
+      mapfile.close();
+      mapfile = null;
+    }
+
     // find the partition containing the first key in the range
     // if found, set curPartitionIndex to its partition
     curPartitionIndex = -1;
@@ -276,7 +288,7 @@ private void primeScanner(final long startTileId, final long endTileId)
     TileIdWritable startKey = null;
     while (curPartitionIndex == -1 && partitionIndex < reader.getMaxPartitions())
     {
-      if (!reader.canBeCached() && mapfile != null)
+      if (mapfile != null)
       {
         mapfile.close();
       }
