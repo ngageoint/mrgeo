@@ -16,7 +16,6 @@
 package org.mrgeo.spark
 
 import java.awt.image.{Raster, WritableRaster}
-import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
 import org.apache.spark.graphx.{Edge, EdgeContext, EdgeDirection, Graph}
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
@@ -48,6 +47,10 @@ object FocalBuilder extends Logging {
     val minY = tb.s
     val maxX = tb.e
     val maxY = tb.n
+
+    val partitions = Math.min(context.getConf.getInt("spark.executor.cores", Int.MaxValue) * 2, tiles.partitions.length)
+
+    logInfo("Using " + partitions + " partitions for grouping")
 
     val pieces = new PairRDDFunctions[TileIdWritable, (Int, Int, Int, Int, RasterWritable)](tiles.flatMap(tile => {
       val pieces = ListBuffer[(TileIdWritable, (Int, Int, Int, Int, RasterWritable))]()
@@ -104,7 +107,7 @@ object FocalBuilder extends Logging {
       }
       pieces.iterator
 
-    })).groupByKey()
+    })).groupByKey() // .groupByKey(partitions)
 
     val focal = pieces.map(tile => {
       val first = RasterWritable.toRaster(tile._2.head._5)
@@ -284,36 +287,4 @@ object FocalBuilder extends Logging {
     focal
   }
 
-}
-
-
-class FocalNeighborhood extends Externalizable {
-  var offsetX:Int = Int.MinValue
-  var offsetY:Int = Int.MinValue
-  var writable:RasterWritable = null
-
-  def this(offsetX: Int, offsetY: Int, writable:RasterWritable) {
-    this()
-    this.offsetX = offsetX
-    this.offsetY = offsetY
-    this.writable = writable
-  }
-
-  override def readExternal(in: ObjectInput): Unit = {
-    offsetX = in.readInt()
-    offsetY = in.readInt()
-    val len = in.readInt()
-    val bytes = Array.ofDim[Byte](len)
-    in.read(bytes)
-    writable = new RasterWritable(bytes)
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeInt(offsetX)
-    out.writeInt(offsetY)
-
-    val bytes = writable.getBytes
-    out.writeInt(bytes.length)
-    out.write(bytes)
-  }
 }

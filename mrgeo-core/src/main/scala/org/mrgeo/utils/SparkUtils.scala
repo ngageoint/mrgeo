@@ -241,7 +241,7 @@ object SparkUtils extends Logging {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-//    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
+    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     val tileIncrement = 1
 
@@ -346,10 +346,11 @@ object SparkUtils extends Logging {
     val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
     val wrappedSorted = new PairRDDFunctions(sorted)
 
-//    tiles.unpersist()
 
     wrappedSorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
       tofp.getOutputFormat.getClass, conf)
+
+    tiles.unpersist()
 
     sparkPartitioner.generateFileSplits(sorted, output, zoom, conf)
 
