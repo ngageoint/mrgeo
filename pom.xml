@@ -2443,6 +2443,12 @@
         <scope>${hadoop.scope}</scope>
       </dependency>
       <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-aws</artifactId>
+        <version>${hadoop.version}</version>
+        <scope>${hadoop.scope}</scope>
+      </dependency>
+      <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
@@ -3225,6 +3231,11 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <!-- and s3 access -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-aws</artifactId>
     </dependency>
     <!-- and junit, mrunit, cpsuite in test... -->
     <dependency>
