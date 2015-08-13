@@ -451,13 +451,24 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
       if (canBeCached)
       {
         log.info("Loading reader for partitionIndex " + partitionIndex + " through the cache");
-        return readerCache.get(partitionIndex);
+        MapFile.Reader reader = readerCache.get(partitionIndex);
+        try
+        {
+          // there is a slim chance the cached reader was closed, this will check, close the reader, then reopen it
+          reader.reset();
+          return reader;
+        }
+        catch (IOException e)
+        {
+          reader = loadReader(partitionIndex);
+          readerCache.put(partitionIndex, reader);
+          return reader;
+        }
       }
       else
       {
         log.info("Loading reader for partitionIndex " + partitionIndex + " without the cache");
-        MapFile.Reader reader = loadReader(partitionIndex);
-        return reader;
+        return loadReader(partitionIndex);
       }
     }
     catch (ExecutionException e)
