@@ -1,0 +1,21 @@
+#!/bin/bash
+
+MACHINE="Linux/UNIX"
+ZONE="us-east-1a"
+
+NOW="$(date +'%FT%T.%z')"
+MINUTE_AGO="$(date --date='1 minute ago' +'%FT%T.%z')"
+
+TYPE=$1
+
+RESULT="$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW)"
+
+echo aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW
+PRICE=`echo ${RESULT} | awk '{print $5;}'`
+
+if [ -z $PRICE ]
+then
+  echo "Can't find spot price for "$TYPE" ("$MACHINE") in "$ZONE
+else
+  echo "Current spot price for "$TYPE" ("$MACHINE") in "$ZONE" is "$PRICE
+fi

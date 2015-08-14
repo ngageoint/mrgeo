@@ -1,1 +1,0 @@
-Use hadoop-ec2-init-remote-mrgeo.sh with the Hadoop Amazon EC2 scripts in https://duff.spadac.com/trac/sa/browser/SpadacJava/scripts/ec2 to launch MrGeo on EC2.  Eventually only MrGeo specific install commands will be in this script. See https://duff.spadac.com/trac/mrgeo/wiki/AmazonEc2 for more details.

@@ -15,18 +15,16 @@
 
 package org.mrgeo.test;
 
-import java.awt.Point;
-import java.awt.Rectangle;
+import org.mrgeo.rasterops.OpImageRegistrar;
+import org.mrgeo.rasterops.OpImageUtils;
+import org.mrgeo.utils.TMSUtils;
+
+import javax.media.jai.TiledImage;
+import java.awt.*;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.SampleModel;
 import java.io.IOException;
-
-import javax.media.jai.TiledImage;
-
-import org.mrgeo.rasterops.OpImageRegistrar;
-import org.mrgeo.rasterops.OpImageUtils;
-import org.mrgeo.utils.TMSUtils;
 
 /**
  * This class contains helper methods for unit testing OpImage classes.
@@ -72,7 +70,7 @@ public class OpImageTestUtils extends TestUtils
   public int zoom;
   public long tx;
   public long ty;
-  public TestUtils.ValueTranslator nanTranslatorToMinus9999;
+public TestUtils.ValueTranslator nanTranslatorToMinus9999;
   public TestUtils.ValueTranslator nanTranslatorToMinus32767;
 
   public OpImageTestUtils(final Class<?> testClass) throws IOException

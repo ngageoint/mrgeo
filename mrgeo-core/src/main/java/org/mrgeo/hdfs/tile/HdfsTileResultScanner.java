@@ -31,32 +31,34 @@ import java.io.IOException;
  */
 public abstract class HdfsTileResultScanner<T, TWritable extends Writable> implements CloseableKVIterator<TileIdWritable, T>
 {
-  // reader used for pulling items
-  private final HdfsMrsTileReader<T, TWritable> reader;
+//private static final Logger log = LoggerFactory.getLogger(HdfsTileResultScanner.class);
 
-  // hdfs specific reader
-  private MapFile.Reader mapfile;
+// reader used for pulling items
+private final HdfsMrsTileReader<T, TWritable> reader;
 
-  // keep track of where the reader is
-  private int curPartitionIndex;
+// hdfs specific reader
+private MapFile.Reader mapfile;
 
-  // return item
-  private TWritable currentValue;
+// keep track of where the reader is
+private int curPartitionIndex;
 
-  // keep track of where things are
-  private TileIdWritable currentKey;
+// return item
+private TWritable currentValue;
 
-  // stop condition
-  private TileIdWritable endKey;
+// keep track of where things are
+private TileIdWritable currentKey;
 
-  private final long rowStart;
-  private final long rowEnd;
-  private final int zoom;
+// stop condition
+private TileIdWritable endKey;
 
-  // private final TileIdPartitioner partitioner;
+private final long rowStart;
+private final long rowEnd;
+private final int zoom;
 
-  // workaround for MapFile.Reader.seek behavior
-  private boolean readFirstKey;
+// private final TileIdPartitioner partitioner;
+
+// workaround for MapFile.Reader.seek behavior
+private boolean readFirstKey;
 
 @Override
 public void close() throws IOException
@@ -64,202 +66,205 @@ public void close() throws IOException
   if (mapfile != null)
   {
     mapfile.close();
+    mapfile = null;
   }
 }
 
 // For image: return RasterWritable.toRaster(currentValue)
-  protected abstract T toNonWritable(TWritable val) throws IOException;
-  
-  public HdfsTileResultScanner(final LongRectangle bounds,
-      final HdfsMrsTileReader<T, TWritable> reader)
-  {
-    this.reader = reader;
+protected abstract T toNonWritable(TWritable val) throws IOException;
 
-    rowStart = bounds.getMinX();
-    rowEnd = bounds.getMaxX();
-    zoom = reader.getZoomlevel();
-
-    primeScanner(TMSUtils.tileid(bounds.getMinX(), bounds.getMinY(), zoom),
-        TMSUtils.tileid(bounds.getMaxX(), bounds.getMaxY(), zoom));
-  }
-
-  /**
-   * Constructor will initialize the conditions for pulling tiles
-   * 
-   * @param startKey
-   *          start of the list of tiles to pull
-   * @param endKey
-   *          end (inclusive) of tile to pull
-   * @param reader
-   *          the reader being used
-   */
-  public HdfsTileResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
+public HdfsTileResultScanner(final LongRectangle bounds,
     final HdfsMrsTileReader<T, TWritable> reader)
+{
+  this.reader = reader;
+
+  rowStart = bounds.getMinX();
+  rowEnd = bounds.getMaxX();
+  zoom = reader.getZoomlevel();
+
+  primeScanner(TMSUtils.tileid(bounds.getMinX(), bounds.getMinY(), zoom),
+      TMSUtils.tileid(bounds.getMaxX(), bounds.getMaxY(), zoom));
+}
+
+/**
+ * Constructor will initialize the conditions for pulling tiles
+ *
+ * @param startKey
+ *          start of the list of tiles to pull
+ * @param endKey
+ *          end (inclusive) of tile to pull
+ * @param reader
+ *          the reader being used
+ */
+public HdfsTileResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
+    final HdfsMrsTileReader<T, TWritable> reader)
+{
+  // this.partitions = partitions;
+  this.reader = reader;
+
+  // initialize startKey
+  long startTileId = (startKey == null) ? Long.MIN_VALUE : startKey.get();
+  long endTileId = (endKey == null) ? Long.MAX_VALUE : endKey.get();
+
+  rowStart = Long.MIN_VALUE;
+  rowEnd = Long.MAX_VALUE;
+  zoom = -1;
+
+  primeScanner(startTileId, endTileId);
+
+}
+
+@Override
+public TileIdWritable currentKey()
+{
+  // don't reuse the tileidwritable, spark persist() doesn't like it...
+  return new TileIdWritable(currentKey);
+}
+
+@Override
+public T currentValue()
+{
+  try
   {
-    // this.partitions = partitions;
-    this.reader = reader;
-
-    // initialize startKey
-    long startTileId = (startKey == null) ? Long.MIN_VALUE : startKey.get();
-    long endTileId = (endKey == null) ? Long.MAX_VALUE : endKey.get();
-
-    rowStart = Long.MIN_VALUE;
-    rowEnd = Long.MAX_VALUE;
-    zoom = -1;
-
-    primeScanner(startTileId, endTileId);
-
+    return toNonWritable(currentValue);
   }
-
-  @Override
-  public TileIdWritable currentKey()
+  catch (final IOException e)
   {
-    // don't reuse the tileidwritable, spark persist() doesn't like it...
-    return new TileIdWritable(currentKey);
+    throw new MrsImageException(e);
   }
+}
 
-  @Override
-  public T currentValue()
+/**
+ * Keeping track of what is being sent back and possibly finish using one MapFile and then
+ * opening another MapFile if needed.
+ */
+@Override
+public boolean hasNext()
+{
+  try
   {
-    try
+    if (mapfile == null)
     {
-      return toNonWritable(currentValue);
+      throw new MrsImageException("Mapfile.Reader has been closed");
     }
-    catch (final IOException e)
+
+    if (currentKey == null)
     {
-      throw new MrsImageException(e);
+      return false;
     }
-  }
 
-  /**
-   * Keeping track of what is being sent back and possibly finish using one MapFile and then
-   * opening another MapFile if needed.
-   */
-  @Override
-  public boolean hasNext()
-  {
-    try
+    if (readFirstKey)
     {
-      if (currentKey == null)
-      {
-        return false;
-      }
-
-      if (readFirstKey)
-      {
-        readFirstKey = false;
-        // handle boundary cases: startKey >= endKey
-        if (currentKey.compareTo(endKey) <= 0)
-        {
-          return true;
-        }
-        return false;
-      }
+      readFirstKey = false;
+      // handle boundary cases: startKey >= endKey
+      return (currentKey.compareTo(endKey) <= 0);
+    }
 
       /*
        * 1. found = readers[curPartitionIndex].next(currentKey, value) 2. if !found increment
        * curPartitionIndex, ensure that its within limits, and run 1. again. if its not within limits,
        * return false 3. if currentKey <= endKey return true, else return false;
        */
-      while (true)
+    while (true)
+    {
+      final boolean found = mapfile.next(currentKey, currentValue);
+      if (found)
       {
-        final boolean found = mapfile.next(currentKey, currentValue);
-        if (found)
+        if (currentKey.compareTo(endKey) <= 0)
         {
-          if (currentKey.compareTo(endKey) <= 0)
+          // only need to check start/end tx if we've set the zoom...
+          if (zoom > 0)
           {
-            // only need to check start/end tx if we've set the zoom...
-            if (zoom > 0)
-            {
-              // if we fall within the boundries return positive, otherwise slerp up the tile and
-              // try the next one.
-              final TMSUtils.Tile t = TMSUtils.tileid(currentKey.get(), zoom);
-              if (t.tx >= rowStart && t.tx <= rowEnd)
-              {
-                return true;
-              }
-            }
-            else
+            // if we fall within the boundries return positive, otherwise slerp up the tile and
+            // try the next one.
+            final TMSUtils.Tile t = TMSUtils.tileid(currentKey.get(), zoom);
+            if (t.tx >= rowStart && t.tx <= rowEnd)
             {
               return true;
             }
           }
           else
           {
-            return false;
+            return true;
           }
         }
         else
         {
-          if (++curPartitionIndex >= reader.getMaxPartitions())
-          {
-            return false;
-          }
-          if (!reader.canBeCached() && mapfile != null)
-          {
-            mapfile.close();
-          }
-          mapfile = reader.getReader(curPartitionIndex);
-        }
-      }
-    }
-    catch (final IOException e)
-    {
-      throw new MrsImageException(e);
-    }
-  }
-
-  /**
-   * Get the value from the MapFile and prepares the Raster output.
-   */
-  @Override
-  public T next()
-  {
-    try
-    {
-      return toNonWritable(currentValue);
-    }
-    catch (final IOException e)
-    {
-      throw new MrsImageException(e);
-    }
-  }
-
-  /**
-   * The remove method does nothing
-   */
-  @Override
-  public void remove()
-  {
-    throw new UnsupportedOperationException("iterator is read-only");
-  }
-
-  private boolean inRange(TileIdWritable key)
-  {
-    if (currentKey.compareTo(endKey) <= 0)
-    {
-      // only need to check start/end tx if we've set the zoom...
-      if (zoom > 0)
-      {
-        // if we fall within the boundries return positive, otherwise slerp up the tile and
-        // try the next one.
-        final TMSUtils.Tile t = TMSUtils.tileid(currentKey.get(), zoom);
-        if (t.tx >= rowStart && t.tx <= rowEnd)
-        {
-          return true;
+          return false;
         }
       }
       else
       {
+        if (++curPartitionIndex >= reader.getMaxPartitions())
+        {
+          return false;
+        }
+        if (!reader.canBeCached() && mapfile != null)
+        {
+          mapfile.close();
+        }
+
+        mapfile = reader.getReader(curPartitionIndex);
+      }
+    }
+  }
+  catch (final IOException e)
+  {
+    throw new MrsImageException(e);
+  }
+}
+
+/**
+ * Get the value from the MapFile and prepares the Raster output.
+ */
+@Override
+public T next()
+{
+  try
+  {
+    return toNonWritable(currentValue);
+  }
+  catch (final IOException e)
+  {
+    throw new MrsImageException(e);
+  }
+}
+
+/**
+ * The remove method does nothing
+ */
+@Override
+public void remove()
+{
+  throw new UnsupportedOperationException("iterator is read-only");
+}
+
+private boolean inRange(TileIdWritable key)
+{
+  if (key.compareTo(endKey) <= 0)
+  {
+    // only need to check start/end tx if we've set the zoom...
+    if (zoom > 0)
+    {
+      // if we fall within the boundries return positive, otherwise slerp up the tile and
+      // try the next one.
+      final TMSUtils.Tile t = TMSUtils.tileid(key.get(), zoom);
+      if (t.tx >= rowStart && t.tx <= rowEnd)
+      {
         return true;
       }
     }
-    return false;
+    else
+    {
+      return true;
+    }
   }
+  return false;
+}
 
-  @SuppressWarnings("unchecked")
-  private void primeScanner(final long startTileId, final long endTileId)
-  {
+@SuppressWarnings("unchecked")
+private void primeScanner(final long startTileId, final long endTileId)
+{
     /*
      * Workaround for MapFile.Reader.seek ----------------------------------- Normally,
      * Reader.seek() should position the pointer at the beginning of a row, so that Reader.next()
@@ -268,63 +273,74 @@ public void close() throws IOException
      * position the pointer at the end of the first row and also return the first row in the
      * next() method below.
      */
-    try
+  try
+  {
+    if (mapfile != null)
     {
-      // find the partition containing the first key in the range
-      // if found, set curPartitionIndex to its partition
-      curPartitionIndex = -1;
-      int partitionIndex = reader.getPartitionIndex(new TileIdWritable(startTileId));
-      TileIdWritable startKey = null;
-      while (curPartitionIndex == -1 && partitionIndex < reader.getMaxPartitions())
+      mapfile.close();
+      mapfile = null;
+    }
+
+    // find the partition containing the first key in the range
+    // if found, set curPartitionIndex to its partition
+    curPartitionIndex = -1;
+    int partitionIndex = reader.getPartitionIndex(new TileIdWritable(startTileId));
+    TileIdWritable startKey = null;
+    while (curPartitionIndex == -1 && partitionIndex < reader.getMaxPartitions())
+    {
+      if (mapfile != null)
       {
-        if (!reader.canBeCached() && mapfile != null)
+        mapfile.close();
+      }
+      mapfile = reader.getReader(partitionIndex);
+      try
+      {
+        // We need the mapfile in order to do the following, but we only
+        // need to do it once.
+        if (startKey == null)
         {
-          mapfile.close();
+          startKey = (TileIdWritable)mapfile.getKeyClass().newInstance();
+          startKey.set(startTileId);
+          endKey = (TileIdWritable)mapfile.getKeyClass().newInstance();
+          endKey.set(endTileId);
+          // Because package names for some of our Writable value classes changed,
+          // we need to create the
+          currentValue = (TWritable)mapfile.getValueClass().newInstance();
         }
-        mapfile = reader.getReader(partitionIndex);
-        try
-        {
-          // We need the mapfile in order to do the following, but we only
-          // need to do it once.
-          if (startKey == null)
-          {
-            startKey = (TileIdWritable)mapfile.getKeyClass().newInstance();
-            startKey.set(startTileId);
-            endKey = (TileIdWritable)mapfile.getKeyClass().newInstance();
-            endKey.set(endTileId);
-            // Because package names for some of our Writable value classes changed,
-            // we need to create the 
-            currentValue = (TWritable)mapfile.getValueClass().newInstance();
-          }
-        }
-        catch (InstantiationException e)
-        {
-          throw new MrsImageException(e);
-        }
-        catch (IllegalAccessException e)
-        {
-          throw new MrsImageException(e);
-        }
-        currentKey = (TileIdWritable) mapfile.getClosest(startKey, currentValue);
-        if (currentKey != null && inRange(currentKey))
+      }
+      catch (InstantiationException | IllegalAccessException e)
+      {
+        throw new MrsImageException(e);
+      }
+      currentKey = (TileIdWritable) mapfile.getClosest(startKey, currentValue);
+      if (currentKey != null)
+      {
+        // Did we get a key and have we not run past the end key
+        if ((currentKey.compareTo(endKey) <= 0) && inRange(currentKey))
         {
           readFirstKey = true;
           curPartitionIndex = partitionIndex;
         }
         else
         {
-          partitionIndex++;
+          currentKey = null;
+          return;
         }
       }
-    }
-    // if the tiles are out of bounds, this exception will be thrown.
-    catch (Splits.SplitException se)
-    {
-      currentKey = null;
-    }
-    catch (final IOException e)
-    {
-      throw new MrsImageException(e);
+      else
+      {
+        partitionIndex++;
+      }
     }
   }
+  // if the tiles are out of bounds, this exception will be thrown.
+  catch (Splits.SplitException se)
+  {
+    currentKey = null;
+  }
+  catch (final IOException e)
+  {
+    throw new MrsImageException(e);
+  }
+}
 }

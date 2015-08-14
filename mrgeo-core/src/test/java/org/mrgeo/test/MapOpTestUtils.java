@@ -15,10 +15,6 @@
 
 package org.mrgeo.test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -40,186 +36,208 @@ import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
 public class MapOpTestUtils extends TestUtils
 {
-  private static final Logger log = LoggerFactory.getLogger(MapOpTestUtils.class);
+private static final Logger log = LoggerFactory.getLogger(MapOpTestUtils.class);
 
-  public MapOpTestUtils(final Class<?> testClass) throws IOException
+public MapOpTestUtils(final Class<?> testClass) throws IOException
+{
+  super(testClass);
+
+  OpImageRegistrar.registerMrGeoOps();
+}
+
+
+public void generateBaselinePyramid(final Configuration conf, final String testName,
+    final String ex) throws IOException, JobFailedException, JobCancelledException,
+    ParserException
+{
+
+  runMapAlgebraExpression(conf, testName, ex);
+
+  final Path src = new Path(outputHdfs, testName);
+  final MrsImagePyramid pyramid = MrsImagePyramid.open(src.toString(), (Properties)null);
+  if (pyramid != null)
   {
-    super(testClass);
-
-    OpImageRegistrar.registerMrGeoOps();
+    final Path dst = new Path(inputLocal, testName);
+    final FileSystem fs = dst.getFileSystem(conf);
+    fs.copyToLocalFile(src, dst);
   }
+}
 
+public void generateBaselineTif(final Configuration conf, final String testName, final String ex)
+    throws IOException, JobFailedException, JobCancelledException, ParserException
+{
+  generateBaselineTif(conf, testName, ex, Double.NaN);
+}
 
-  public void generateBaselinePyramid(final Configuration conf, final String testName,
-      final String ex) throws IOException, JobFailedException, JobCancelledException,
-      ParserException
-      {
+public void generateBaselineTif(final Configuration conf, final String testName,
+    final String ex, double nodata)
+    throws IOException, JobFailedException, JobCancelledException, ParserException
+{
+  runMapAlgebraExpression(conf, testName, ex);
 
-    runMapAlgebraExpression(conf, testName, ex);
+  final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
+      (Properties)null);
+  final MrsImage image = pyramid.getHighestResImage();
 
-    final Path src = new Path(outputHdfs, testName);
-    final MrsImagePyramid pyramid = MrsImagePyramid.open(src.toString(), (Properties)null);
-    if (pyramid != null)
-    {
-      final Path dst = new Path(inputLocal, testName);
-      final FileSystem fs = dst.getFileSystem(conf);
-      fs.copyToLocalFile(src, dst);
-    }
-      }
-
-  public void generateBaselineTif(final Configuration conf, final String testName, final String ex)
-      throws IOException, JobFailedException, JobCancelledException, ParserException
-      {
-    generateBaselineTif(conf, testName, ex, Double.NaN);
-      }
-  
-  public void generateBaselineTif(final Configuration conf, final String testName,
-      final String ex, double nodata)
-      throws IOException, JobFailedException, JobCancelledException, ParserException
-      {
-    runMapAlgebraExpression(conf, testName, ex);
-
-    final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
-        (Properties)null);
-    final MrsImage image = pyramid.getHighestResImage();
-
-    Bounds bounds = pyramid.getBounds();
-    TMSUtils.Bounds tb = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
-        bounds.getMaxY());
-    tb = TMSUtils.tileBounds(tb, pyramid.getMaximumLevel(), pyramid.getMetadata().getTilesize());
-    bounds = new Bounds(tb.w, tb.s, tb.e, tb.n);
-    try
-    {
-      final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-      GeoTiffExporter
-      .export(image.getRenderedImage(bounds), bounds, baselineTif, false, nodata);
-    }
-    finally
-    {
-      if (image != null)
-      {
-        image.close();
-      }
-    }
-      }
-
-  public MapOp
-  runRasterExpression(final Configuration conf, final String testName, final String ex)
-      throws ParserException, IOException, JobFailedException, JobCancelledException
+  Bounds bounds = pyramid.getBounds();
+  TMSUtils.Bounds tb = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
+      bounds.getMaxY());
+  tb = TMSUtils.tileBounds(tb, pyramid.getMaximumLevel(), pyramid.getMetadata().getTilesize());
+  bounds = new Bounds(tb.w, tb.s, tb.e, tb.n);
+  try
   {
-    return runRasterExpression(conf, testName, null, ex);
+    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+    GeoTiffExporter
+        .export(image.getRenderedImage(bounds), bounds, baselineTif, false, nodata);
   }
-
-  public MapOp
-  runRasterExpression(final Configuration conf, final String testName,
-      final TestUtils.ValueTranslator baselineTranslator, final String ex)
-      throws ParserException, IOException, JobFailedException, JobCancelledException
+  finally
   {
-    final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
-
-    compareRasterOutput(testName, baselineTranslator, (Properties)null);
-    return mapOp;
-  }
-
-  public MapOp runRasterExpressionMultipleOutputs(final Configuration conf,
-      final String testName,
-      final String[] testOutputs, final String ex, final Properties providerProperties)
-          throws ParserException, IOException, JobFailedException, JobCancelledException
-          {
-    final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
-    for (final String testOutput : testOutputs)
+    if (image != null)
     {
-      compareRasterOutput(testName + "/" + testOutput, providerProperties);
+      image.close();
     }
-    return mapOp;
-          }
-
-
-  private void compareRasterOutput(final String testName, final Properties providerProperties) throws IOException
-  {
-    compareRasterOutput(testName, null, providerProperties);
   }
+}
 
-  private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
-      final Properties providerProperties) throws IOException
+public MapOp
+runRasterExpression(final Configuration conf, final String testName, final String ex)
+    throws ParserException, IOException, JobFailedException, JobCancelledException
+{
+  return runRasterExpression(conf, testName, null, ex);
+}
+
+public MapOp
+runRasterExpression(final Configuration conf, final String testName,
+    final TestUtils.ValueTranslator testTranslator, final String ex)
+    throws ParserException, IOException, JobFailedException, JobCancelledException
+{
+  final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
+
+  compareRasterOutput(testName, testTranslator, (Properties)null);
+  return mapOp;
+}
+
+public MapOp
+runRasterExpression(final Configuration conf, final String testName,
+    final TestUtils.ValueTranslator baselineTranslator, final TestUtils.ValueTranslator testTranslator, final String ex)
+    throws ParserException, IOException, JobFailedException, JobCancelledException
+{
+  final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
+
+  compareRasterOutput(testName, baselineTranslator, testTranslator, (Properties)null);
+  return mapOp;
+}
+
+public MapOp runRasterExpressionMultipleOutputs(final Configuration conf,
+    final String testName,
+    final String[] testOutputs, final String ex, final Properties providerProperties)
+    throws ParserException, IOException, JobFailedException, JobCancelledException
+{
+  final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
+  for (final String testOutput : testOutputs)
   {
-    final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
-        providerProperties);
-    final MrsImage image = pyramid.getHighestResImage();
+    compareRasterOutput(testName + "/" + testOutput, providerProperties);
+  }
+  return mapOp;
+}
 
-    try
+
+private void compareRasterOutput(final String testName, final Properties providerProperties) throws IOException
+{
+  compareRasterOutput(testName, null, null, providerProperties);
+}
+
+
+private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
+    final Properties providerProperties) throws IOException
+{
+  compareRasterOutput(testName, null, testTranslator, providerProperties);
+}
+
+private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
+    final TestUtils.ValueTranslator testTranslator, final Properties providerProperties) throws IOException
+{
+  final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
+      providerProperties);
+  final MrsImage image = pyramid.getHighestResImage();
+
+  try
+  {
+    // The output against which to compare could either be a tif or a MrsImagePyramid.
+    // We check for the tif first.
+    final File file = new File(inputLocal);
+    final File baselineTif = new File(file, testName + ".tif");
+    if (baselineTif.exists())
     {
-      // The output against which to compare could either be a tif or a MrsImagePyramid.
-      // We check for the tif first.
-      final File file = new File(inputLocal);
-      final File baselineTif = new File(file, testName + ".tif");
-      if (baselineTif.exists())
+      TestUtils.compareRasters(baselineTif, baselineTranslator, RasterTileMerger.mergeTiles(image), testTranslator);
+    }
+    else
+    {
+      final String inputLocalAbs = file.getCanonicalFile().toURI().toString();
+      final MrsImagePyramid goldenPyramid = MrsImagePyramid.open(inputLocalAbs + "/" + testName,
+          providerProperties);
+      final MrsImage goldenImage = goldenPyramid.getImage(image.getZoomlevel());
+      try
       {
-        TestUtils.compareRasters(baselineTif, baselineTranslator, RasterTileMerger.mergeTiles(image), null);
+        TestUtils
+            .compareRasters(RasterTileMerger.mergeTiles(goldenImage), RasterTileMerger.mergeTiles(image));
       }
-      else
+      finally
       {
-        final String inputLocalAbs = file.getCanonicalFile().toURI().toString();
-        final MrsImagePyramid goldenPyramid = MrsImagePyramid.open(inputLocalAbs + "/" + testName,
-            providerProperties);
-        final MrsImage goldenImage = goldenPyramid.getImage(image.getZoomlevel());
-        try
+        if (goldenImage != null)
         {
-          TestUtils
-          .compareRasters(RasterTileMerger.mergeTiles(goldenImage), RasterTileMerger.mergeTiles(image));
+          goldenImage.close();
         }
-        finally
-        {
-          if (goldenImage != null)
-          {
-            goldenImage.close();
-          }
-        }
-      }
-    }
-    finally
-    {
-      if (image != null)
-      {
-        image.close();
       }
     }
   }
-
-  /**
-   * Runs the map algebra expression and stores the results to outputHdfs in  a
-   * subdirectory that matches the testName. No comparison against expected
-   * output is done. See other methods in this class like runVectorExpression and
-   * runRasterExpression for that capability.
-   * 
-   * @param conf
-   * @param testName
-   * @param ex
-   * @return
-   * @throws IOException
-   * @throws JobFailedException
-   * @throws JobCancelledException
-   * @throws ParserException
-   */
-  public MapOp runMapAlgebraExpression(final Configuration conf, final String testName, final String ex)
-          throws IOException, JobFailedException, JobCancelledException, ParserException
+  finally
   {
-    HadoopFileUtils.delete(new Path(outputHdfs, testName));
+    if (image != null)
+    {
+      image.close();
+    }
+  }
+}
 
-    log.info(ex);
-    final MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
+/**
+ * Runs the map algebra expression and stores the results to outputHdfs in  a
+ * subdirectory that matches the testName. No comparison against expected
+ * output is done. See other methods in this class like runVectorExpression and
+ * runRasterExpression for that capability.
+ *
+ * @param conf
+ * @param testName
+ * @param ex
+ * @return
+ * @throws IOException
+ * @throws JobFailedException
+ * @throws JobCancelledException
+ * @throws ParserException
+ */
+public MapOp runMapAlgebraExpression(final Configuration conf, final String testName, final String ex)
+    throws IOException, JobFailedException, JobCancelledException, ParserException
+{
+  HadoopFileUtils.delete(new Path(outputHdfs, testName));
+
+  log.info(ex);
+  final MapAlgebraParser parser = new MapAlgebraParser(conf, "", null);
 //    parser.addPath(inputHdfs.toString());
-    final MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
-    
-    final MapOp mapOp = parser.parse(ex);
-    log.info("\nMap Algebra Expression:\n" + MapAlgebraParser.toString(mapOp));
+  final MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
 
-    mae.setRoot(mapOp);
-    mae.setOutputName(new Path(outputHdfs, testName).toString());
-    mae.execute(conf, new ProgressHierarchy());
+  final MapOp mapOp = parser.parse(ex);
+  log.info("\nMap Algebra Expression:\n" + MapAlgebraParser.toString(mapOp));
 
-    return mapOp;
-  }
+  mae.setRoot(mapOp);
+  mae.setOutputName(new Path(outputHdfs, testName).toString());
+  mae.execute(conf, new ProgressHierarchy());
+
+  return mapOp;
+}
 }
