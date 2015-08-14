@@ -22,7 +22,7 @@ import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.{InputFormat, Job}
 import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, SequenceFileInputFormat}
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
@@ -176,24 +176,24 @@ object SparkUtils extends Logging {
 
     val providerProps: Properties = null
 
-    //    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
-    //      zoom, metadata.getTilesize, null, providerProps) // null for bounds means use all tiles (no cropping)
-    //
-    //    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
-    //        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
-    //
-    //    context.newAPIHadoopRDD(job.getConfiguration,
-    //      inputFormatClass,
-    //      classOf[TileIdWritable],
-    //      classOf[RasterWritable])
+    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
+      zoom, metadata.getTilesize, null, providerProps) // null for bounds means use all tiles (no cropping)
 
-    FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
-    FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
+    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
+        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
 
     context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[SequenceFileInputFormat[TileIdWritable, RasterWritable]],
+      inputFormatClass,
       classOf[TileIdWritable],
       classOf[RasterWritable])
+
+//        FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
+//        FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
+//
+//        context.newAPIHadoopRDD(job.getConfiguration,
+//          classOf[SequenceFileInputFormat[TileIdWritable, RasterWritable]],
+//          classOf[TileIdWritable],
+//          classOf[RasterWritable])
   }
 
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider,

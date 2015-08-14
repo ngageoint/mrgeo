@@ -44,6 +44,7 @@ abstract class MrGeoDriver extends Logging {
 
     job.name = name
     job.setAllSettings(args)
+    job.addMrGeoProperties()
 
 
     logInfo("Configuring application")
