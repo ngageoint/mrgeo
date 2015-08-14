@@ -454,12 +454,16 @@ public abstract class HdfsMrsTileReader<T, TWritable extends Writable> extends M
         MapFile.Reader reader = readerCache.get(partitionIndex);
         try
         {
-          // there is a slim chance the cached reader was closed, this will check, close the reader, then reopen it
+          // there is a slim chance the cached reader was closed, this will check, close the reader,
+          // then reopen it if needed
+          TileIdWritable key = new TileIdWritable();
+          reader.finalKey(key);
           reader.reset();
           return reader;
         }
         catch (IOException e)
         {
+          log.info("Reader had been previously closed, opening a new one");
           reader = loadReader(partitionIndex);
           readerCache.put(partitionIndex, reader);
           return reader;
