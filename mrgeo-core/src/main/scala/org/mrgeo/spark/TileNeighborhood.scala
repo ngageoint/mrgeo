@@ -31,11 +31,11 @@ import scala.collection.mutable.ListBuffer
 
 object TileNeighborhood extends Logging {
   def createNeighborhood(tiles:RDD[(TileIdWritable, RasterWritable)],
-      offsetX:Int, offsetY:Int, width:Int, height:Int,
+      offsetX:Int, offsetY:Int, width:Int, height:Int, tilebounds: TMSUtils.TileBounds,
       zoom:Int, tilesize:Int, nodata:Double, context:SparkContext):RDD[(Long, TileNeighborhood)] = {
 
     def buildEdges(tiles: RDD[(TileIdWritable, RasterWritable)],
-        offsetX: Int, offsetY: Int, width: Int, height: Int, zoom: Int): RDD[Edge[EdgeDirection]] = {
+        offsetX: Int, offsetY: Int, zoom: Int): RDD[Edge[EdgeDirection]] = {
 
       tiles.flatMap(tile => {
         val edges = ListBuffer[Edge[EdgeDirection]]()
@@ -43,9 +43,10 @@ object TileNeighborhood extends Logging {
         val from = TMSUtils.tileid(tile._1.get(), zoom)
         for (y <- (from.ty + offsetY) to (from.ty - offsetY)) {
           for (x <- (from.tx + offsetX) to (from.tx - offsetX)) {
-            val to = TMSUtils.tileid(x, y, zoom)
-
-            edges.append(new Edge(to, tile._1.get, EdgeDirection.In))
+            if (tilebounds.contains(x, y)) {
+              val to = TMSUtils.tileid(x, y, zoom)
+              edges.append(new Edge(to, tile._1.get, EdgeDirection.In))
+            }
           }
         }
 
@@ -62,8 +63,19 @@ object TileNeighborhood extends Logging {
       val x = (src.tx - dst.tx).toInt - offsetX // left to right
       val y = (dst.ty - src.ty).toInt - offsetY // bottom to top
 
-      ec.sendToDst(new TileNeighborhood(offsetX, offsetY, width, height, x, y,
-        (ec.srcId, ec.srcAttr)))
+      try {
+        ec.sendToDst(new TileNeighborhood(offsetX, offsetY, width, height, x, y,
+          (ec.srcId, ec.srcAttr)))
+      }
+      catch {
+        case e: ArrayIndexOutOfBoundsException =>
+          logError("src: id: " + ec.srcId + " tx: " + src.tx + " ty: " + src.ty)
+          logError("dst: id: " + ec.dstId + " tx: " + dst.tx + " ty: " + dst.ty)
+          logError("offset: x: " + offsetX + " y: " + offsetY)
+          logError("x: " + x + " y: " + y)
+
+          throw e
+      }
     }
 
 
@@ -79,7 +91,7 @@ object TileNeighborhood extends Logging {
       a
     }
 
-    val edges = buildEdges(tiles, offsetX, offsetY, width, height, zoom)
+    val edges = buildEdges(tiles, offsetX, offsetY, zoom)
 
     // map the tiles so the key is the tileid as a long
     val vertices = tiles.map(tile => {
@@ -93,8 +105,8 @@ object TileNeighborhood extends Logging {
       RasterWritable.toWritable(
         RasterUtils.createEmptyRaster(tilesize, tilesize, 1, sample.getTransferType, nodata), zoom)
     val graph = Graph(vertices, edges, defaultVertex,
-      edgeStorageLevel = StorageLevel.MEMORY_AND_DISK,
-      vertexStorageLevel = StorageLevel.MEMORY_AND_DISK)
+      edgeStorageLevel = StorageLevel.MEMORY_AND_DISK_SER,
+      vertexStorageLevel = StorageLevel.MEMORY_AND_DISK_SER)
 
     val neighborhoods = graph.aggregateMessages[TileNeighborhood](
       sendMsg = buildNeighborhood,

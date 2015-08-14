@@ -514,15 +514,13 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       RasterUtils.mosaicTile(src, dst, nodata)
       RasterWritable.toWritable(dst)
 
-    }).persist(StorageLevel.MEMORY_AND_DISK)
+    })
 
 
     val raster = RasterWritable.toRaster(mergedTiles.first()._2)
     SparkUtils.saveMrsPyramid(mergedTiles, idp, output, zoom, tilesize, nodata, context.hadoopConfiguration,
       bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
       protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
-
-    mergedTiles.unpersist()
     true
   }
 

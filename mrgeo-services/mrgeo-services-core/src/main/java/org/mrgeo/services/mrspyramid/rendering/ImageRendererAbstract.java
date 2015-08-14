@@ -15,8 +15,6 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
@@ -24,6 +22,7 @@ import org.gdal.osr.SpatialReference;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
 import org.mrgeo.data.raster.RasterUtils;
@@ -66,7 +65,7 @@ protected int zoomLevel = -1;
 // true if an empty image is being returned
 protected boolean isTransparent = false;
 
-private MrsImage image;
+private String imageName = null;
 
 public ImageRendererAbstract()
 {
@@ -146,7 +145,7 @@ private static int getZoomLevel(final MrsImagePyramidMetadata metadata, final Bo
  * @param zoomLevel requested zoom level
  * @return true if the source data contains an image at the requested zoom level; false otherwise
  * @throws IOException
- * @todo poorly implemented method, I think...but enough to get by for now; rewrite so no
+ * @TODO poorly implemented method, I think...but enough to get by for now; rewrite so no
  * exception is thrown in case where image doesn't exist OR this more likely this won't be
  * needed at all once we rework MrsImagePyramid/MrsImage for non-pyramid data
  */
@@ -175,7 +174,7 @@ private static void printImageInfo(final RenderedImage image, final String prefi
 }
 
 private static MrsImage getImageForScale(final MrsImagePyramid pyramid, final double scale)
-    throws JsonGenerationException, JsonMappingException, IOException
+    throws IOException
 {
   log.debug("Retrieving image for for scale {} ...", scale);
 
@@ -199,12 +198,43 @@ private static MrsImage getImageForScale(final MrsImagePyramid pyramid, final do
 @Override
 public double[] getDefaultValues()
 {
-  if (image != null)
+  try
   {
-    return image.getMetadata().getDefaultValuesDouble();
+    MrsImageDataProvider dp = getDataProvider();
+    if (dp != null)
+    {
+      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      return metadata.getDefaultValues();
+    }
   }
+  catch (IOException e)
+  {
+    e.printStackTrace();
+  }
+
   return new double[]{-1.0};
 }
+
+
+private MrsImageDataProvider getDataProvider()
+{
+  if (imageName != null)
+  {
+    try
+    {
+      return
+          DataProviderFactory.getMrsImageDataProvider(imageName, AccessMode.READ, (Properties) null);
+
+
+    }
+    catch (DataProviderNotFound ignored)
+    {
+    }
+  }
+
+  return null;
+}
+
 
 /*
  * (non-Javadoc)
@@ -214,14 +244,27 @@ public double[] getDefaultValues()
 @Override
 public double[] getExtrema()
 {
-  if (image != null)
+  try
   {
-    if (zoomLevel == -1)
+    MrsImageDataProvider dp = getDataProvider();
+    if (dp != null)
     {
-      return image.getExtrema();
+      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      if (zoomLevel == -1)
+      {
+        return metadata.getExtrema(0);
+      }
+      else
+      {
+        return metadata.getExtrema(zoomLevel);
+      }
     }
-    return image.getMetadata().getExtrema(zoomLevel);
   }
+  catch (IOException e)
+  {
+    e.printStackTrace();
+  }
+
   return null;
 }
 
@@ -250,6 +293,8 @@ public boolean outputIsTransparent()
 public Raster renderImage(final String pyramidName, final Bounds bounds, final int width,
     final int height, final Properties providerProperties, final String epsg) throws Exception
 {
+  imageName = pyramidName;
+
   if (log.isDebugEnabled())
   {
     log.debug("requested bounds: {}", bounds.toString());
@@ -269,6 +314,29 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
   zoomLevel = getZoomLevel(pyramidMetadata, bounds, width, height);
   int tilesize = pyramidMetadata.getTilesize();
 
+  // return empty data when requested bounds is completely outside of the
+  // image
+  if (!bounds.intersects(pyramidMetadata.getBounds()))
+  {
+    log.debug("request bounds does not intersect image bounds");
+    isTransparent = true;
+    return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
+        pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
+  }
+
+  // there is no way to handle non-existing zoom levels above non-pyramid'd
+  // data yet; no need to
+  // check zoom level validity if we know there are pyramids present
+  // TODO: get rid of this
+  if (!pyramidMetadata.hasPyramids() && !isZoomLevelValid(pyramidMetadata, zoomLevel))
+  {
+    log.warn("Requested zoom level {} does not exist in source imagery.", zoomLevel);
+    isTransparent = true;
+    return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
+        pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
+  }
+
+  MrsImage image;
   // get the correct image in the pyramid based on the zoom level
   if (!pyramidMetadata.hasPyramids())
   {
@@ -286,27 +354,6 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 
   try
   {
-    // return empty data when requested bounds is completely outside of the
-    // image
-    if (!bounds.intersects(pyramidMetadata.getBounds()))
-    {
-      log.debug("request bounds does not intersect image bounds");
-      isTransparent = true;
-      return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
-          pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
-    }
-
-    // there is no way to handle non-existing zoom levels above non-pyramid'd
-    // data yet; no need to
-    // check zoom level validity if we know there are pyramids present
-    // TODO: get rid of this
-    if (!pyramidMetadata.hasPyramids() && !isZoomLevelValid(pyramidMetadata, zoomLevel))
-    {
-      log.warn("Requested zoom level {} does not exist in source imagery.", zoomLevel);
-      isTransparent = true;
-      return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
-          pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
-    }
 
     // merge together all tiles that fall within the requested bounds
     final Raster merged = image.getRaster(bounds);
@@ -359,8 +406,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       final double[] dstxform = new double[6];
 
       dstxform[0] = requestedBounds.w; /* top left x */
-      dstxform[1] = (requestedBounds.e - requestedBounds.w) / width;
-      ; /* w-e pixel resolution */
+      dstxform[1] = (requestedBounds.e - requestedBounds.w) / width; /* w-e pixel resolution */
       dstxform[2] = 0; /* 0 */
       dstxform[3] = requestedBounds.n; /* top left y */
       dstxform[4] = 0; /* 0 */
@@ -438,6 +484,8 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 public Raster renderImage(final String pyramidName, final Bounds bounds,
     final Properties providerProperties, final String epsg) throws Exception
 {
+  imageName = pyramidName;
+
   // assuming dimensions for tiles at all image levels are the same
   final MrsImagePyramid p = MrsImagePyramid.open(pyramidName, providerProperties);
   final int tileSize = p.getMetadata().getTilesize();
@@ -458,33 +506,27 @@ public Raster renderImage(final String pyramidName, final Bounds bounds,
 public Raster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
     final double scale, final Properties providerProperties) throws Exception
 {
+  imageName = pyramidName;
 
   try
   {
     MrsImagePyramid pyramid = MrsImagePyramid.open(pyramidName, providerProperties);
-    image = getImageForScale(pyramid, scale);
+    MrsImage image = getImageForScale(pyramid, scale);
     if (image == null)
     {
       throw new MrsImageException("Can't open image for scale: " + pyramidName + " scale: " + scale);
     }
     final Raster raster = image.getTile(tileColumn, tileRow);
     log.debug("Retrieving tile {}, {}", tileColumn, tileRow);
+
+    image.close();
+
     return raster;
   }
   catch (final IOException e)
   {
     throw new IOException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName));
   }
-  // don't need to close, the image cache will take care of it...
-  // finally
-  // {
-  // if (image != null)
-  // {
-  // image.close();
-  // }
-  // }
-
-
 }
 
 @Override
@@ -492,12 +534,14 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
     final double scale, final String maskName, final double maskMax,
     Properties providerProperties) throws Exception
 {
+  imageName = pyramidName;
+
   MrsImagePyramid pyramid = null;
   MrsImagePyramidMetadata metadata = null;
   try
   {
     pyramid = MrsImagePyramid.open(pyramidName, providerProperties);
-    image = getImageForScale(pyramid, scale);
+    MrsImage image = getImageForScale(pyramid, scale);
     if (image == null)
     {
       throw new MrsImageException("Can't open image for scale: " + pyramidName + " scale: " + scale);
@@ -543,6 +587,7 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
         }
       }
     }
+    image.close();
 
     return writable;
   }
@@ -586,31 +631,28 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
 public Raster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
     final int zoom, final Properties providerProperties) throws Exception
 {
+  imageName = pyramidName;
+
   try
   {
     MrsImagePyramid pyramid = MrsImagePyramid.open(pyramidName, providerProperties);
 
-    image = pyramid.getImage(zoom);
+    MrsImage image = pyramid.getImage(zoom);
     if (image == null)
     {
       throw new MrsImageException("Zoom level not found: " + pyramidName + " level: " + zoom);
     }
     final Raster raster = image.getTile(tileColumn, tileRow);
     log.debug("Retrieving tile {}, {}", tileColumn, tileRow);
+
+    image.close();
+
     return raster;
   }
   catch (final IOException e)
   {
     throw new IOException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName));
   }
-  // don't need to close, the image cache will take care of it...
-  // finally
-  // {
-  // if (image != null)
-  // {
-  // image.close();
-  // }
-  // }
 }
 
 @Override
@@ -618,12 +660,14 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
     final int zoom, final String maskName, final double maskMax,
     final Properties providerProperties) throws Exception
 {
+  imageName = pyramidName;
+
   MrsImagePyramid pyramid = null;
   MrsImagePyramidMetadata metadata = null;
   try
   {
     pyramid = MrsImagePyramid.open(pyramidName, providerProperties);
-    image = pyramid.getImage(zoom);
+    MrsImage image = pyramid.getImage(zoom);
     if (image == null)
     {
       throw new MrsImageException("Zoom level not found: " + pyramidName + " level: " + zoom);
@@ -668,6 +712,8 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
         }
       }
     }
+
+    image.close();
 
     return writable;
   }

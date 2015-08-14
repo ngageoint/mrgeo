@@ -22,17 +22,17 @@ import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, SequenceFileInputFormat}
 import org.apache.hadoop.mapreduce.{InputFormat, Job}
+import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, SequenceFileInputFormat}
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
+import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.{TileIdWritable, TiledOutputFormatContext}
 import org.mrgeo.hdfs.input.MapFileFilter
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
-import org.mrgeo.hdfs.tile.FileSplit
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
 import org.mrgeo.spark.SparkTileIdPartitioner
@@ -40,8 +40,6 @@ import org.mrgeo.spark.SparkTileIdPartitioner
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Map, mutable}
-
-import sun.misc.Unsafe
 
 object SparkUtils extends Logging {
   def calculateSplitData(rdd: RDD[(TileIdWritable, RasterWritable)]) = {
@@ -80,7 +78,7 @@ object SparkUtils extends Logging {
   }
 
 
-  def getConfiguration:SparkConf = {
+  def getConfiguration: SparkConf = {
 
     val conf = new SparkConf()
     loadDefaultSparkProperties(conf)
@@ -113,8 +111,8 @@ object SparkUtils extends Logging {
 
   private def getDefaultPropertiesFile(env: Map[String, String] = sys.env): String = {
     env.get("SPARK_CONF_DIR")
-        .orElse(env.get("SPARK_HOME").map { t => s"$t${File.separator}conf"})
-        .map { t => new File(s"$t${File.separator}spark-defaults.conf")}
+        .orElse(env.get("SPARK_HOME").map { t => s"$t${File.separator}conf" })
+        .map { t => new File(s"$t${File.separator}spark-defaults.conf") }
         .filter(_.isFile)
         .map(_.getAbsolutePath)
         .orNull
@@ -155,7 +153,7 @@ object SparkUtils extends Logging {
     loadMrsPyramid(dp, metadata.getMaxZoomLevel, context)
   }
 
-  def loadMrsPyramid(imageName: String, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+  def loadMrsPyramid(imageName: String, zoom: Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
     val providerProps: Properties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
@@ -163,13 +161,14 @@ object SparkUtils extends Logging {
     loadMrsPyramid(dp, zoom, context)
   }
 
-  def loadMrsPyramid(provider:MrsImageDataProvider, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+  def loadMrsPyramid(provider: MrsImageDataProvider, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
     val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
     loadMrsPyramid(provider, metadata.getMaxZoomLevel, context)
   }
 
-  def loadMrsPyramid(provider:MrsImageDataProvider, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+  def loadMrsPyramid(provider: MrsImageDataProvider, zoom: Int,
+      context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
     val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
     // build a phony job...
@@ -197,8 +196,8 @@ object SparkUtils extends Logging {
 //          classOf[RasterWritable])
   }
 
-  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider:MrsImageDataProvider,
-      zoom:Int, conf:Configuration, providerproperties:Properties): Unit = {
+  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider,
+      zoom: Int, conf: Configuration, providerproperties: Properties): Unit = {
 
     val metadata = provider.getMetadataReader.read()
 
@@ -215,8 +214,8 @@ object SparkUtils extends Logging {
   }
 
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)],
-      outputProvider:MrsImageDataProvider, inputprovider:MrsImageDataProvider,
-      zoom:Int, conf:Configuration, providerproperties:Properties): Unit = {
+      outputProvider: MrsImageDataProvider, inputprovider: MrsImageDataProvider,
+      zoom: Int, conf: Configuration, providerproperties: Properties): Unit = {
 
     val metadata = inputprovider.getMetadataReader.read()
 
@@ -233,14 +232,16 @@ object SparkUtils extends Logging {
       tiletype, bounds, bands, protectionlevel, providerproperties)
   }
 
-  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider:MrsImageDataProvider, output:String,
-      zoom:Int, tilesize:Int, nodatas:Array[Double], conf:Configuration, tiletype:Int = -1,
-      bounds:Bounds = new Bounds(), bands:Int = -1,
-      protectionlevel:String = null, providerproperties:Properties = new Properties()): Unit = {
+  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider, output: String,
+      zoom: Int, tilesize: Int, nodatas: Array[Double], conf: Configuration, tiletype: Int = -1,
+      bounds: Bounds = new Bounds(), bands: Int = -1,
+      protectionlevel: String = null, providerproperties: Properties = new Properties()): Unit = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
+
+    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     val tileIncrement = 1
 
@@ -253,13 +254,16 @@ object SparkUtils extends Logging {
       localbounds = SparkUtils.calculateBounds(tiles, zoom, tilesize)
     }
 
-    if (localbands <= 0  || localtiletype <= 0) {
+    if (localbands <= 0 || localtiletype <= 0) {
       val tile = RasterWritable.toRaster(tiles.first()._2)
 
       localbands = tile.getNumBands
       localtiletype = tile.getTransferType
     }
 
+    // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
+    // on.  This can be a problem for fast calculating/small partitions
+    val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
 
 
     // save the new pyramid
@@ -342,21 +346,21 @@ object SparkUtils extends Logging {
     val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
     val wrappedSorted = new PairRDDFunctions(sorted)
 
+
     wrappedSorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
       tofp.getOutputFormat.getClass, conf)
 
-    sparkPartitioner.generateFileSplits(sorted, output, zoom, conf)
-    //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
+    tiles.unpersist()
 
-    // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
-    // on.  This can be a problem for fast calculating/small partitions
-    val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
+    sparkPartitioner.generateFileSplits(sorted, output, zoom, conf)
+
+    //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
     //dp.teardown(job)
 
     // calculate and save metadata
     MrsImagePyramid.calculateMetadata(output, zoom, provider, stats,
-      nodatas, localbounds, conf,  protectionlevel, providerproperties)
+      nodatas, localbounds, conf, protectionlevel, providerproperties)
   }
 
   def calculateStats(rdd: RDD[(TileIdWritable, RasterWritable)], bands: Int,
@@ -375,7 +379,15 @@ object SparkUtils extends Logging {
         for (x <- 0 until tile.getWidth) {
           for (b <- 0 until tile.getNumBands) {
             val p = tile.getSampleDouble(x, y, b)
-            if (nodata(b).isNaN && !p.isNaN || nodata(b) != p) {
+            if (nodata(b).isNaN) {
+              if (!p.isNaN) {
+                stats(b).count += 1
+                stats(b).sum += p
+                stats(b).max = Math.max(stats(b).max, p)
+                stats(b).min = Math.min(stats(b).min, p)
+              }
+            }
+            else if (p != nodata(b)) {
               stats(b).count += 1
               stats(b).sum += p
               stats(b).max = Math.max(stats(b).max, p)
@@ -409,7 +421,7 @@ object SparkUtils extends Logging {
     stats
   }
 
-  def calculateBounds(rdd: RDD[(TileIdWritable, RasterWritable)], zoom:Int, tilesize:Int): Bounds = {
+  def calculateBounds(rdd: RDD[(TileIdWritable, RasterWritable)], zoom: Int, tilesize: Int): Bounds = {
 
     val bounds = rdd.aggregate(new Bounds())((bounds, t) => {
       val tile = TMSUtils.tileid(t._1.get, zoom)
@@ -429,7 +441,7 @@ object SparkUtils extends Logging {
   }
 
 
-  def humantokb(human:String):Int = {
+  def humantokb(human: String): Int = {
     //val pre: Char = new String ("KMGTPE").charAt (exp - 1)
     val trimmed = human.trim.toLowerCase
     val units = trimmed.charAt(trimmed.length - 1)
@@ -444,11 +456,11 @@ object SparkUtils extends Logging {
 
     val mult = Math.pow(1024, exp).toInt
 
-    val v:Int = trimmed.substring(0, trimmed.length - 1).toInt
+    val v: Int = trimmed.substring(0, trimmed.length - 1).toInt
     v * mult
   }
 
-  def kbtohuman(kb:Long, maxUnit:String = null):String = {
+  def kbtohuman(kb: Long, maxUnit: String = null): String = {
     if (kb == 0) {
       "0"
     }
@@ -459,8 +471,7 @@ object SparkUtils extends Logging {
 
       if (maxUnit != null) {
         val maxexp = suffix.indexOf(maxUnit.trim.toLowerCase)
-        if (maxexp > 0 && exp > maxexp)
-        {
+        if (maxexp > 0 && exp > maxexp) {
           exp = maxexp
         }
       }
@@ -471,7 +482,7 @@ object SparkUtils extends Logging {
     }
   }
 
-  def jarForClass(clazz:String, cl:ClassLoader = null): String = {
+  def jarForClass(clazz: String, cl: ClassLoader = null): String = {
     // now the hard part, need to look in the dependencies...
     val classFile: String = clazz.replaceAll("\\.", "/") + ".class"
 
@@ -480,8 +491,7 @@ object SparkUtils extends Logging {
     if (cl != null) {
       iter = cl.getResources(classFile)
     }
-    else
-    {
+    else {
       val cll = getClass.getClassLoader
       iter = cll.getResources(classFile)
     }
@@ -500,14 +510,14 @@ object SparkUtils extends Logging {
     null
   }
 
-  def jarsForClass(clazz:String, cl:ClassLoader = null): Array[String] = {
+  def jarsForClass(clazz: String, cl: ClassLoader = null): Array[String] = {
     // now the hard part, need to look in the dependencies...
     val classFile: String = clazz.replaceAll("\\.", "/") + ".class"
 
     jarsForPackage(classFile, cl)
   }
 
-  def jarsForPackage(pkg:String, cl:ClassLoader = null): Array[String] = {
+  def jarsForPackage(pkg: String, cl: ClassLoader = null): Array[String] = {
     // now the hard part, need to look in the dependencies...
     var iter: util.Enumeration[URL] = null
 
@@ -516,13 +526,12 @@ object SparkUtils extends Logging {
     if (cl != null) {
       iter = cl.getResources(pkgFile)
     }
-    else
-    {
+    else {
       val cll = getClass.getClassLoader
       iter = cll.getResources(pkgFile)
     }
 
-    val ab:mutable.ArrayBuilder[String] = mutable.ArrayBuilder.make()
+    val ab: mutable.ArrayBuilder[String] = mutable.ArrayBuilder.make()
     while (iter.hasMoreElements) {
       val url: URL = iter.nextElement
       if (url.getProtocol == "jar") {
@@ -538,16 +547,16 @@ object SparkUtils extends Logging {
   }
 
 
-  def address(obj:Object):String = {
+  def address(obj: Object): String = {
     var addr = "0x"
 
     val array = Array(obj)
     val f = classOf[sun.misc.Unsafe].getDeclaredField("theUnsafe")
     f.setAccessible(true)
-    val unsafe =  f.get(null).asInstanceOf[sun.misc.Unsafe]
+    val unsafe = f.get(null).asInstanceOf[sun.misc.Unsafe]
 
 
-    val offset:Long = unsafe.arrayBaseOffset(classOf[Array[Object]])
+    val offset: Long = unsafe.arrayBaseOffset(classOf[Array[Object]])
     val scale = unsafe.arrayIndexScale(classOf[Array[Object]])
 
     scale match {
