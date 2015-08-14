@@ -53,6 +53,7 @@
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
     <hadoop.scope>provided</hadoop.scope>
+    <hadoop.aws.version>2.7.1</hadoop.aws.version>
     <hadoop.yarn.version>${hadoop.version}</hadoop.yarn.version>
     <hppc.version>0.5.2</hppc.version>
     <imageio.version>1.1.7</imageio.version>
@@ -2369,10 +2370,12 @@
             <groupId>hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
           </exclusion>
+          <!--
           <exclusion>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
           </exclusion>
+          -->
           <exclusion>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
@@ -2440,12 +2443,6 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-yarn-client</artifactId>
         <version>${hadoop.yarn.version}</version>
-        <scope>${hadoop.scope}</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-aws</artifactId>
-        <version>${hadoop.version}</version>
         <scope>${hadoop.scope}</scope>
       </dependency>
       <dependency>
@@ -3231,11 +3228,6 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
-    </dependency>
-    <!-- and s3 access -->
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-aws</artifactId>
     </dependency>
     <!-- and junit, mrunit, cpsuite in test... -->
     <dependency>
