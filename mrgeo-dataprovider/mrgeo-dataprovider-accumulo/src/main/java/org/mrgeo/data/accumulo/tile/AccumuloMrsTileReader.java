@@ -142,29 +142,44 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
     this.zoomLevel = zoomLevel;
 
     // get the properties for connecting out to Accumulo
-    Properties props;
+    Properties props = null;
     if(AccumuloConnector.isEncoded(enc)){
     	props = AccumuloConnector.decodeAccumuloProperties(enc);
     	table = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
     } else {
     	table = enc;
-    	props = AccumuloConnector.getAccumuloProperties();
-    }
-    
-    // set up all needed information
-    initialize(props);
-    
-    try{
-      reader = new AccumuloMrsImagePyramidMetadataReader(table);
-      metadata = reader.read();
-    } catch(DataProviderException dpe){
-      log.warn("no connection to accumulo: " + dpe.getMessage());
-    } catch(IOException ioe){
-      
+      try
+      {
+        props = AccumuloConnector.getAccumuloProperties();
+      }
+      catch (Exception e)
+      {
+        log.error("Unable to get Accumulo connection properties", e);
+      }
     }
 
-    // get the metadata!
-    initializeScanners();
+    if (props != null)
+    {
+      // set up all needed information
+      initialize(props);
+
+      try
+      {
+        reader = new AccumuloMrsImagePyramidMetadataReader(table);
+        metadata = reader.read();
+      }
+      catch (DataProviderException dpe)
+      {
+        log.warn("no connection to accumulo: " + dpe.getMessage());
+      }
+      catch (IOException ioe)
+      {
+
+      }
+
+      // get the metadata!
+      initializeScanners();
+    }
 
   } // end constructor
 
@@ -195,14 +210,23 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
    * @param props - the object that has the information for connecting out to Accumulo.
    */
   private void initialize(Properties props){
-	  Properties tmpProps = AccumuloConnector.getAccumuloProperties();
+    Properties tmpProps = null;
+    try
+    {
+      tmpProps = AccumuloConnector.getAccumuloProperties();
+    }
+    catch (Exception e)
+    {
+      log.error("Unable to get Accumulo connection properties", e);
+      return;
+    }
     // initialize properties
     if(AMTR_props == null){
       AMTR_props = new Properties();
     }
     AMTR_props.putAll(tmpProps);
     
-    String authsString = AMTR_props.getProperty(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS));
+    String authsString = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
     
     // pull in all properties for input
     if(props != null){
@@ -227,11 +251,7 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
     //log.info("provider rolses = " + AMTR_props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
     
     // authorizations - this will need to be set on a per query basis
-	  if(authsString != null && authsString.length() > 0){
-		  auths = new Authorizations(authsString.split(","));
-	  } else {
-		  auths = new Authorizations();
-	  }
+    auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsString);
   } // end initialize
 
   
@@ -288,12 +308,8 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
       }
     }
 
-    if(MrGeoProperties.getInstance().containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS)){
-      authStr = MrGeoProperties.getInstance().getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
-      auths = new Authorizations(authStr.split(","));
-    } else {
-      auths = new Authorizations();
-    }
+    authStr = MrGeoProperties.getInstance().getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authStr);
 
     initializeScanners();
     
@@ -307,10 +323,9 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
     
     if(AMTR_props != null){
 
-      if(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null){    
-        this.auths = new Authorizations(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
-      }
-      
+      String authsStr = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+      this.auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsStr);
+
       if(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS) != null){    
         String tmp = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS);
         useCompression = Boolean.parseBoolean(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS));
@@ -614,16 +629,9 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
      */
     
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null){
-      auths = new Authorizations(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
-    } else {
-      auths = new Authorizations(MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS);
-    }
-    String authsStr = "";
-    for(byte[] b : auths.getAuthorizations()){
-    	authsStr += new String(b) + " ";
-    }
-    
+    String strAuths = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    auths = AccumuloUtils.createAuthorizationsFromDelimitedString(strAuths);
+
     if(connector == null){
       try{
         connector = AccumuloConnector.getConnector();
@@ -631,11 +639,19 @@ public abstract class AccumuloMrsTileReader<T, TWritable extends Writable> exten
         //throw new IOException(dpe.getMessage());
       }
     }
-    
-    //log.info("startkey = " + startKey.get() + " endkey = " + endKey.get());
-    log.debug("accStartkey = " + AccumuloUtils.toLong(sKey.getRow()) +
-        " accEndKey = " + AccumuloUtils.toLong(eKey.getRow()) +
-        " zoomLevel = " + zoomLevel + "\tonetile = " + oneTile + "\tauths = " + authsStr);
+
+    if (log.isDebugEnabled())
+    {
+      String authsStr = "";
+      for (byte[] b : auths.getAuthorizations())
+      {
+        authsStr += new String(b) + " ";
+      }
+      //log.info("startkey = " + startKey.get() + " endkey = " + endKey.get());
+      log.debug("accStartkey = " + AccumuloUtils.toLong(sKey.getRow()) +
+                " accEndKey = " + AccumuloUtils.toLong(eKey.getRow()) +
+                " zoomLevel = " + zoomLevel + "\tonetile = " + oneTile + "\tauths = " + authsStr);
+    }
     
     Range r;
     if(oneTile){

@@ -21,6 +21,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
@@ -51,10 +52,32 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
   }
 
   @Override
-  public void setupJob(Job job,
-      final ProviderProperties providerProperties) throws DataProviderException
+  public Configuration setupSparkJob(final Configuration conf, MrsImageDataProvider provider)
+          throws DataProviderException
   {
-    super.setupJob(job, providerProperties);
+    try
+    {
+      Configuration conf1 = super.setupSparkJob(conf, provider);
+      Job job = new Job(conf1);
+      setupConfig(job);
+      return job.getConfiguration();
+    }
+    catch (IOException e)
+    {
+      throw new DataProviderException("Failure configuring map/reduce job with HDFS input info", e);
+    }
+  }
+
+  @Override
+  public void setupJob(Job job,
+      final MrsImageDataProvider provider) throws DataProviderException
+  {
+    super.setupJob(job, provider);
+    setupConfig(job);
+  }
+
+  private void setupConfig(Job job) throws DataProviderException
+  {
     Configuration conf = job.getConfiguration();
     String strBasePath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "/mrgeo/images");
     conf.set("hdfs." + MrGeoConstants.MRGEO_HDFS_IMAGE, strBasePath);
@@ -66,13 +89,13 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
     for (final String input : context.getInputs())
     {
       HdfsMrsImageDataProvider dp = new HdfsMrsImageDataProvider(job.getConfiguration(),
-          input, null);
+                                                                 input, null);
       String image = HdfsMrsImagePyramidInputFormat.getZoomName(dp, context.getZoomLevel());
       // if we don't have this zoom level, use the max, then we'll decimate/subsample that one
       if (image == null)
       {
         log.error("Could not get image in setupJob() at zoom level " +
-            context.getZoomLevel() + " for " + input);
+                  context.getZoomLevel() + " for " + input);
 
         try
         {
@@ -88,7 +111,7 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
           final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
 
           log.debug("In setupJob(), loading pyramid for " + input +
-              " pyramid instance is " + pyramid + " metadata instance is " + metadata);
+                    " pyramid instance is " + pyramid + " metadata instance is " + metadata);
 
           image = HdfsMrsImagePyramidInputFormat.getZoomName(dp, metadata.getMaxZoomLevel());
         }

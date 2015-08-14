@@ -26,13 +26,8 @@ import org.mrgeo.data.DataProviderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Properties;
+import java.io.*;
+import java.util.*;
 
 public class AccumuloConnector {
 
@@ -41,6 +36,7 @@ public class AccumuloConnector {
 
 	private static Connector conn = null;
 	private static Properties connectionInfo = null;
+	private static Properties accumuloProperties;
 
 	public static void initialize() throws DataProviderException
 	{
@@ -54,7 +50,7 @@ public class AccumuloConnector {
 		}
 	}
 
-	public static String encodeAccumuloProperties(String r) {
+	public static String encodeAccumuloProperties(String r) throws DataProviderException {
 		StringBuffer sb = new StringBuffer();
 		// sb.append(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX);
 		Properties props = getAccumuloProperties();
@@ -82,7 +78,7 @@ public class AccumuloConnector {
 			return retProps;
 		}
 		String enc = s.replaceFirst(
-				MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX, "");
+						MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX, "");
 		byte[] decBytes = Base64.decodeBase64(enc.getBytes());
 		String dec = new String(decBytes);
 		String[] pairs = dec
@@ -127,42 +123,93 @@ public class AccumuloConnector {
 		return conf;
 	}
 
-	public static Properties getAccumuloProperties() {
-
-		if (checkMock()) {
-			Properties p = new Properties();
-			p.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE, System
-					.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
-			p.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER, System
-					.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
-			p.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD, System
-					.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
-			p.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS,
-					MrGeoAccumuloConstants.MRGEO_ACC_AUTHS_U);
-			return p;
-		}
-
-		// find the config file
-		String conf = getAccumuloPropertiesLocation();
-		if (conf != null) {
-			File f = new File(conf);
-			if (!f.exists()) {
-				return null;
-			}
-			log.debug("using " + f.getAbsolutePath());
-
-			Properties p = new Properties();
-			try {
-				p.load(new FileInputStream(f));
-				return p;
-			} catch (FileNotFoundException fnfe) {
-				return null;
-			} catch (Exception e) {
-				return null;
+	public static void setAccumuloProperties(Map<String, String> props)
+	{
+		log.warn("Called setAccumuloProperties");
+		accumuloProperties = new Properties();
+		for (String key : props.keySet())
+		{
+			log.warn("  " + key + " = " + props.get(key));
+			String value = props.get(key);
+			if (value != null)
+			{
+				accumuloProperties.put(key, value);
 			}
 		}
-		return null;
+	}
+
+	public static Properties getAccumuloProperties() throws DataProviderException
+	{
+		if (accumuloProperties == null)
+		{
+			if (checkMock())
+			{
+				accumuloProperties = new Properties();
+				accumuloProperties.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
+																			 System.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
+				accumuloProperties.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
+																			 System.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
+				accumuloProperties.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
+																			 System.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
+				accumuloProperties.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS,
+																			 MrGeoAccumuloConstants.MRGEO_ACC_AUTHS_U);
+				return accumuloProperties;
+			}
+
+			// find the config file
+			String conf = getAccumuloPropertiesLocation();
+			if (conf != null)
+			{
+				File f = new File(conf);
+				if (!f.exists())
+				{
+					throw new DataProviderException("Unable to get accumulo connection properties");
+				}
+				log.debug("using " + f.getAbsolutePath());
+
+				accumuloProperties = new Properties();
+				try
+				{
+					log.warn("Loading accumulo properties from " + f.getAbsolutePath());
+					accumuloProperties.load(new FileInputStream(f));
+					log.warn("Successfully loaded properties");
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+					throw new DataProviderException(e);
+				}
+				return accumuloProperties;
+			}
+			throw new DataProviderException("Unable to determine accumulo connection properties location");
+		}
+		log.warn("In getAccumuloProperties, the properties are:");
+		for (String key : accumuloProperties.stringPropertyNames())
+		{
+			log.warn("  " + key + " = " + accumuloProperties.getProperty(key));
+		}
+		return accumuloProperties;
 	} // end getAccumuloProperties
+
+	public static Map<String, String> getAccumuloPropertiesAsMap()
+	{
+		Map<String, String> result = null;
+		try
+		{
+			result = new HashMap<String, String>();
+			Properties props = AccumuloConnector.getAccumuloProperties();
+			Set<String> keys = props.stringPropertyNames();
+			for (String key : keys)
+			{
+				result.put(key, props.getProperty(key));
+			}
+		}
+		catch (DataProviderException e)
+		{
+			e.printStackTrace();
+		}
+		return result;
+	}
 
 	public static Connector getConnector() throws DataProviderException {
 
@@ -171,56 +218,16 @@ public class AccumuloConnector {
 		}
 
 		// find the config file
-		String conf = getAccumuloPropertiesLocation();
-		if (conf != null) {
-			File f = new File(conf);
-			if (f.exists()) {
-
-				log.debug("connector from information in "
-						+ f.getAbsolutePath());
-
-				return getConnector(f);
-			}
-		}
-
-		// if you are here - now look for the file in the CLASSPATH
-		try {
-			InputStream is = AccumuloConnector.class
-					.getResourceAsStream(MrGeoAccumuloConstants.MRGEO_ACC_CONF_FILE_NAME);
-			Properties p = new Properties();
-			p.load(is);
-			is.close();
-
-			log.debug("connector information found in classpath file.");
-
+		try
+		{
+			Properties p = getAccumuloProperties();
 			return getConnector(p);
-
-		} catch (Exception e) {
-			log.debug("failure to load file from classpath file");
-			e.printStackTrace();
-			throw new DataProviderException(
-					"failure to load file from classpath file - "
-							+ e.getMessage());
-
 		}
-
-		// return null;
+		catch(Exception e)
+		{
+			throw new DataProviderException(e);
+		}
 	} // end getConnector
-
-	public static Connector getConnector(File f) throws DataProviderException {
-		Properties p = new Properties();
-		try {
-			p.load(new FileInputStream(f));
-		} catch (FileNotFoundException fnfe) {
-			throw new DataProviderException(fnfe.getLocalizedMessage());
-		} catch (Exception e) {
-			throw new DataProviderException(
-					"problem loading connector for file " + f.getAbsolutePath()
-							+ " - " + e.getMessage());
-		}
-
-		return getConnector(p);
-	} // end getConnector - File
 
 	public static Connector getConnector(Properties p)
 			throws DataProviderException {
@@ -234,11 +241,17 @@ public class AccumuloConnector {
 			}
 		}
 
-		return getConnector(
+		log.warn("Returning connector for " +
+						 p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE) + ", " +
+						 p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS) + ", " +
+						 p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER) + ", " +
+						 pw);
+		Connector conn =  getConnector(
 				p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
 				p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS),
 				p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER), pw);
-
+		log.warn("Got connector successfully");
+		return conn;
 	} // end getConnector - File
 
 	public static Connector getConnector(String instance, String zookeepers,
@@ -301,7 +314,7 @@ public class AccumuloConnector {
 		return conn;
 	} // end getMockConnector
 
-	public static String getReadAuthorizations(String curAuths) {
+	public static String getReadAuthorizations(String curAuths) throws DataProviderException {
 
 		// if the incoming string is valid - use that
 		if (curAuths != null) {
@@ -330,7 +343,7 @@ public class AccumuloConnector {
 	} // end getReadAuthorizations
 	
 	
-	public static boolean deleteTable(String table){
+	public static boolean deleteTable(String table) throws DataProviderException {
 		ArrayList<String> ignore = AccumuloUtils.getIgnoreTables();
 		try{
 			Connector conn = AccumuloConnector.getConnector();

@@ -114,7 +114,7 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
    * Set all the initial parameters needed in this class for connectivity
    * out to Accumulo.
    * 
-   * @param conf
+   * @param context
    */
   private void initialize(JobContext context){//Configuration conf){
 
@@ -127,13 +127,17 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
         zoomLevel = Integer.parseInt(conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL));
       }
 
-      
       table = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE);
       username = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
       instanceName = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE);
       zooKeepers = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS);
 
       String pl = conf.get(MrGeoConstants.MRGEO_PROTECTION_LEVEL);
+      log.warn("In initialize, table = " + table +
+               ", username = " + username +
+               ", instanceName = " + instanceName +
+               ", zooKeppers = " + zooKeepers +
+               ", pl = " + pl);
 	  if(pl != null){
 		  colViz = new ColumnVisibility(pl);
 	  } else if(colViz == null){
@@ -164,8 +168,9 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
 //      log.info("Setting output with: z = " + zooKeepers);
       
       boolean connSet = ConfiguratorBase.isConnectorInfoSet(AccumuloOutputFormat.class, conf);
-      if(!connSet){
-    	  // job not always available - do it how Accumulo does it
+      if (!connSet)
+      {
+        // job not always available - do it how Accumulo does it
 	      OutputConfigurator.setConnectorInfo(AccumuloOutputFormat.class,
 	    		  conf,
 	    		  username,
@@ -173,6 +178,7 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
 	      ClientConfiguration cc = ClientConfiguration.loadDefault().withInstance(instanceName);
 	      cc.setProperty(ClientProperty.INSTANCE_ZK_HOST, zooKeepers);
 
+        log.warn("Finished setConnectorInfo");
 	      OutputConfigurator.setZooKeeperInstance(AccumuloOutputFormat.class, conf, cc);
 	      OutputConfigurator.setDefaultTableName(AccumuloOutputFormat.class, conf, table);
 	      OutputConfigurator.setCreateTables(AccumuloOutputFormat.class, conf, true);
@@ -285,6 +291,7 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
     public void write(TileIdWritable key, RasterWritable value) throws IOException,
         InterruptedException
     {
+      log.warn("Writing record to table for tile " + key.get());
       int zoom = zoomLevel;
       if(key instanceof TileIdZoomWritable){
         zoom = ((TileIdZoomWritable) key).getZoom();

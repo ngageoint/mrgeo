@@ -340,16 +340,23 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
   // get the correct image in the pyramid based on the zoom level
   if (!pyramidMetadata.hasPyramids())
   {
+    log.warn("Getting image at max zoom " + pyramidMetadata.getMaxZoomLevel());
     image = MrsImage.open(dp, pyramidMetadata.getMaxZoomLevel());
   }
   else
   {
+    log.warn("Getting image at zoom " + zoomLevel);
     image = MrsImage.open(dp, zoomLevel);
 
     if (image == null)
     {
+      log.warn("Could not image at expected zoom, getting image at max zoom " + pyramidMetadata.getMaxZoomLevel());
       image = MrsImage.open(dp, pyramidMetadata.getMaxZoomLevel());
     }
+  }
+  if (image == null)
+  {
+    log.warn("image is null");
   }
 
   try

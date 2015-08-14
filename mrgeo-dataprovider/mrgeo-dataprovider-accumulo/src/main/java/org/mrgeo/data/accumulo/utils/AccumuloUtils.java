@@ -272,12 +272,7 @@ public class AccumuloUtils {
 	 */
 	public static MrsImagePyramidMetadata getMetadataFromTable(String table, Connector conn, String auths){
 	  MrsImagePyramidMetadata retMeta = null;
-	  Authorizations authorizations = null;
-	  if(auths == null){
-	    authorizations = new Authorizations();
-	  } else {
-	    authorizations = new Authorizations(auths);
-	  }
+	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
 
 	  Scanner scanner = null;
 	  try{
@@ -322,12 +317,7 @@ public class AccumuloUtils {
 	@Deprecated
 	public static MrsImagePyramidMetadata buildMetadataFromTable(String table, Connector conn, String auths){
 	  MrsImagePyramidMetadata retMeta = new MrsImagePyramidMetadata();
-	  Authorizations authorizations = null;
-    if(auths == null){
-      authorizations = new Authorizations();
-    } else {
-      authorizations = new Authorizations(auths);
-    }
+	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
 
     Scanner scanner = null;
     try{
@@ -569,13 +559,8 @@ public class AccumuloUtils {
 	@Deprecated
 	public static RasterWritable getRaster(String table, long tid, int zl, Connector conn, String auths){
 	  RasterWritable retRaster = null;
-	  Authorizations authorizations = null;
-    if(auths == null){
-      authorizations = new Authorizations();
-    } else {
-      authorizations = new Authorizations(auths);
-    }
-	  
+	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
+
     Scanner scanner = null;
     try{
       scanner = conn.createScanner(table, authorizations);
@@ -602,24 +587,25 @@ public class AccumuloUtils {
 	} // getRaster
 	
 	
-	public static Set<String> getListOfTables(Properties properties) {
+	public static Set<String> getListOfTables(Properties properties) throws DataProviderException{
 
+		Thread.dumpStack();
 		Properties props = AccumuloConnector.getAccumuloProperties();
-		if (props == null)
-		{
-			throw new IllegalArgumentException("Unable to find accumulo configuration");
-		}
 		if(properties != null){
 			props.putAll(properties);
-			if(properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES) != null){
-				props.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, 
-						properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
+			String userRoles = properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
+			if(userRoles != null){
+				props.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS,  userRoles);
 			}
 		}
 
 		Connector conn;
 		try {
 			//conn = AccumuloConnector.getConnector();
+			log.warn("in getListOfTables, instance is " + props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
+			log.warn("in getListOfTables, zookeepers is " + props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+			log.warn("in getListOfTables, user is " + props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
+			log.warn("in getListOfTables, password is " + props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
 			Instance inst = new ZooKeeperInstance(
 					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
 					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
@@ -673,7 +659,7 @@ public class AccumuloUtils {
 
 	} // end getListOfTables
 	
-	public static ArrayList<String> getIgnoreTables(){
+	public static ArrayList<String> getIgnoreTables() throws DataProviderException {
 		Properties props = AccumuloConnector.getAccumuloProperties();
 		ArrayList<String> ignoreTables = new ArrayList<String>();
 		ignoreTables.add("!METADATA");
@@ -687,7 +673,8 @@ public class AccumuloUtils {
 	} // end 
 	
 	
-	public static Hashtable<String, String> getGeoTables(Properties providerProperties) {
+	public static Hashtable<String, String> getGeoTables(Properties providerProperties)
+					throws DataProviderException {
 
 		Properties props = AccumuloConnector.getAccumuloProperties();
 		if(providerProperties != null){
@@ -699,42 +686,37 @@ public class AccumuloUtils {
 			strAuths = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
 		}
 
-		if (strAuths != null && !strAuths.isEmpty()) {
-			Authorizations auths = new Authorizations(strAuths.split(","));
-			Connector conn;
-			try {
-				//conn = AccumuloConnector.getConnector();
-				Instance inst = new ZooKeeperInstance(
-						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
-						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
-				AuthenticationToken token = new PasswordToken(
-						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
-				conn = inst.getConnector(
-						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
-						token);
-			} catch(AccumuloSecurityException ase){
-				ase.printStackTrace();
-				return null;
-			} catch(AccumuloException ae){
-				ae.printStackTrace();
-				return null;
-			} //catch (DataProviderException dpe) {
-				//dpe.printStackTrace();
-				//return null;
-			//}
-			
+		Authorizations auths = createAuthorizationsFromDelimitedString(strAuths);
+		Connector conn;
+		try {
+			//conn = AccumuloConnector.getConnector();
+			Instance inst = new ZooKeeperInstance(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+			AuthenticationToken token = new PasswordToken(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+			conn = inst.getConnector(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
+					token);
+		} catch(AccumuloSecurityException ase){
+			ase.printStackTrace();
+			return null;
+		} catch(AccumuloException ae){
+			ae.printStackTrace();
+			return null;
+		} //catch (DataProviderException dpe) {
+			//dpe.printStackTrace();
+			//return null;
+		//}
+
 //			TCredentials tcr = new TCredentials();
 //			tcr.setInstanceId(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
 //			tcr.setPrincipal(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
 //			tcr.setToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
 
-			AuthenticationToken at = new PasswordToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
-			
-			return getGeoTables(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES), at, auths, conn);
-		}
+		AuthenticationToken at = new PasswordToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
 
-		return new Hashtable<String, String>();
-
+		return getGeoTables(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES), at, auths, conn);
 	} // end getGeoTables
 	
 	
@@ -861,11 +843,23 @@ public class AccumuloUtils {
 		{
 			return null;
 		}
+
 		Properties p = new Properties();
 		p.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_NAME,
 									providerProperties.getUserName());
 		p.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES,
 									StringUtils.join(providerProperties.getRoles(), ","));
 		return p;
+	}
+
+	public static Authorizations createAuthorizationsFromDelimitedString(String auths)
+	{
+		Authorizations authorizations = null;
+		if(auths == null || auths.isEmpty()){
+			authorizations = new Authorizations();
+		} else {
+			authorizations = new Authorizations(auths.split(","));
+		}
+		return authorizations;
 	}
 } // end AccumuloUtils

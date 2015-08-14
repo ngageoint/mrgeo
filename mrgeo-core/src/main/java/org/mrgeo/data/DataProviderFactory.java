@@ -82,11 +82,14 @@ public class DataProviderFactory
   final static String PREFERRED_MRSIMAGE_PROVIDER_NAME = BASECLASS + PREFERRED_MRSIMAGE_PROPERTYNAME;
   final static String PREFERRED_VECTOR_PROVIDER_NAME = BASECLASS + PREFERRED_VECTOR_PROPERTYNAME;
 
+  final static String DATA_PROVIDER_CONFIG_PREFIX = BASECLASS + "config.";
+
   private final static String PREFIX_CHAR = ":"; // use ":" for the prefix delimiter
   private final static int PROVIDER_CACHE_SIZE = 50;
   private final static int PROVIDER_CACHE_EXPIRE = 10; // minutes
 
   private static Configuration basicConf;
+  private static Map<String, String> configSettings;
 
   /**
    * The key for the caller's user name that MrGeo will include in provider properties
@@ -107,15 +110,42 @@ public class DataProviderFactory
   public static void saveProviderPropertiesToConfig(final ProviderProperties providerProperties,
                                                     final Configuration conf)
   {
+    log.warn("In saveProviderPropertiesToConfig");
     if (providerProperties != null)
     {
       conf.set(PROVIDER_PROPERTY_USER_NAME, providerProperties.getUserName());
       conf.set(PROVIDER_PROPERTY_USER_ROLES, StringUtils.join(providerProperties.getRoles(), ","));
     }
+    // Also, we want to save the configuration settings for each data provider
+    // in the Configuration as well so they can be re-instantiated on the remote
+    // side of a map/reduce 1 job.
+    Map<String, String> configSettings = getConfigurationFromProviders();
+    Set<String> keys = configSettings.keySet();
+    for (String key : keys)
+    {
+      log.warn("In saveProviderPropertiesToConfig, " + key + " = " + configSettings.get(key));
+      conf.set(DATA_PROVIDER_CONFIG_PREFIX + key, configSettings.get(key));
+    }
   }
 
   public static ProviderProperties loadProviderPropertiesFromConfig(Configuration conf)
   {
+    // Tell each data provider to load their config settings from the Configuration.
+    // This is the inverse operation to saveProviderPropertiesToConfig.
+    Iterator<Map.Entry<String, String>> iter = conf.iterator();
+    Map<String, String> configSettings = new HashMap<String, String>();
+    int prefixLen = DATA_PROVIDER_CONFIG_PREFIX.length();
+    while (iter.hasNext())
+    {
+      Map.Entry<String, String> entry = iter.next();
+      if (entry.getKey().startsWith(DATA_PROVIDER_CONFIG_PREFIX))
+      {
+        configSettings.put(entry.getKey().substring(prefixLen),
+                           entry.getValue());
+      }
+    }
+    setConfigurationForProviders(configSettings);
+
     String userName = conf.get(PROVIDER_PROPERTY_USER_NAME, "");
     List<String> roles = new ArrayList<String>();
     String strRoles = conf.get(PROVIDER_PROPERTY_USER_ROLES, "");
@@ -130,6 +160,16 @@ public class DataProviderFactory
   public static Map<String, String> getConfigurationFromProviders()
   {
     Map<String, String> result = new HashMap<String, String>();
+    try
+    {
+      initialize(getBasicConfig());
+    }
+    catch (DataProviderException e)
+    {
+      log.error("Unable to initialize data providers", e);
+      return result;
+    }
+
     if (adHocProviderFactories != null)
     {
       for (final AdHocDataProviderFactory dpf : adHocProviderFactories.values())
@@ -169,28 +209,29 @@ public class DataProviderFactory
 
   public static void setConfigurationForProviders(Map<String, String> properties)
   {
-    if (adHocProviderFactories != null)
-    {
-      for (final AdHocDataProviderFactory dpf : adHocProviderFactories.values())
-      {
-        dpf.setConfiguration(properties);
-      }
-    }
-
-    if (mrsImageProviderFactories != null)
-    {
-      for (final MrsImageDataProviderFactory dpf : mrsImageProviderFactories.values())
-      {
-        dpf.setConfiguration(properties);
-      }
-    }
-    if (vectorProviderFactories != null)
-    {
-      for (final VectorDataProviderFactory dpf : vectorProviderFactories.values())
-      {
-        dpf.setConfiguration(properties);
-      }
-    }
+    configSettings = properties;
+//    if (adHocProviderFactories != null)
+//    {
+//      for (final AdHocDataProviderFactory dpf : adHocProviderFactories.values())
+//      {
+//        dpf.setConfiguration(properties);
+//      }
+//    }
+//
+//    if (mrsImageProviderFactories != null)
+//    {
+//      for (final MrsImageDataProviderFactory dpf : mrsImageProviderFactories.values())
+//      {
+//        dpf.setConfiguration(properties);
+//      }
+//    }
+//    if (vectorProviderFactories != null)
+//    {
+//      for (final VectorDataProviderFactory dpf : vectorProviderFactories.values())
+//      {
+//        dpf.setConfiguration(properties);
+//      }
+//    }
   }
 
   private static class AdHocLoader implements Callable<AdHocDataProvider>
@@ -335,6 +376,10 @@ public class DataProviderFactory
           {
             return factory.createMrsImageDataProvider(name, props);
           }
+          else
+          {
+            log.warn("Could not open " + name + " using factory " + factory.getClass().getName());
+          }
         }
         throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
       }
@@ -376,13 +421,16 @@ public class DataProviderFactory
 
     private MrsImageDataProviderFactory findFactory() throws IOException
     {
+      log.warn("mrs image prefix = " + prefix);
       if (prefix != null)
       {
         if (mrsImageProviderFactories.containsKey(prefix))
         {
+          log.warn("returning " + mrsImageProviderFactories.get(prefix).getClass().getName());
           return mrsImageProviderFactories.get(prefix);
         }
       }
+      log.warn("mrs image scanning all factories = " + prefix);
       for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
       {
         if (factory.exists(name, props))
@@ -1051,6 +1099,15 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
 
   protected static void initialize(final Configuration conf) throws DataProviderException
   {
+//    log.warn("In initialize, config settings are:");
+//    Iterator<Map.Entry<String, String>> entries = conf.iterator();
+//    while (entries.hasNext())
+//    {
+//      Map.Entry<String, String> entry = entries.next();
+//      log.warn("  " + entry.getKey() + " = " + entry.getValue());
+//    }
+//    Thread.dumpStack();;
+    log.info("Initializing data provider factories");
     if (adHocProviderFactories == null)
     {
       adHocProviderFactories = new HashMap<String, AdHocDataProviderFactory>();
@@ -1059,6 +1116,10 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
           .load(AdHocDataProviderFactory.class);
       for (final AdHocDataProviderFactory dp : dataProviderLoader)
       {
+        if (configSettings != null)
+        {
+          dp.setConfiguration(configSettings);
+        }
         if (dp.isValid())
         {
           log.info("Found ad hoc data provider factory " + dp.getClass().getName());
@@ -1068,7 +1129,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
         else
         {
           log.info("Skipping ad hoc data provider " + dp.getClass().getName() +
-              " because isValid returned false");
+                   " because isValid returned false");
         }
       }
     }
@@ -1084,6 +1145,10 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
       {
         try
         {
+          if (configSettings != null)
+          {
+            dp.setConfiguration(configSettings);
+          }
           if (dp.isValid())
           {
             log.info("Found mrs image data provider factory " + dp.getClass().getName());
@@ -1099,6 +1164,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
         catch (Exception e)
         {
           // no op, just won't put the provider in the list
+          log.warn("Ignoring " + dp.getClass().getName(), e);
         }
       }
     }
@@ -1122,6 +1188,10 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
           if (debugEnabled)
           {
             log.debug("Checking if vector factory is valid: " + dp.getClass().getName() + " with config " + ((conf == null) ? "null" : "not null"));
+          }
+          if (configSettings != null)
+          {
+            dp.setConfiguration(configSettings);
           }
           if (dp.isValid())
           {
@@ -1186,6 +1256,8 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
 
   public static Set<String> getDependencies() throws IOException
   {
+    log.warn("Getting dependencies for all providers");
+    initialize(getBasicConfig());
     Set<String> dependencies = new HashSet<String>();
     if (adHocProviderFactories != null)
     {
@@ -1203,6 +1275,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
     {
       for (final MrsImageDataProviderFactory dp : mrsImageProviderFactories.values())
       {
+        log.warn("Getting dependencies for " + dp.getClass().getName());
         Set<String> d = DependencyLoader.getDependencies(dp.getClass());
         if (d != null)
         {

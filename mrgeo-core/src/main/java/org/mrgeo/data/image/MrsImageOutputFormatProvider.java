@@ -15,8 +15,13 @@
 
 package org.mrgeo.data.image;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobContext;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledOutputFormatContext;
 import org.mrgeo.data.tile.TiledOutputFormatProvider;
 
@@ -39,7 +44,33 @@ public abstract class MrsImageOutputFormatProvider implements TiledOutputFormatP
    * Sub-classes that override this method must call super.setupJob(job).
    */
   @Override
-  public void setupJob(Job job) throws DataProviderException, IOException
+  public void setupJob(Job job) throws DataProviderException
   {
+    setupConfig(job);
+  }
+
+  /**
+   * Sub-classes that override this method must call super.setupJob(job).
+   */
+  @Override
+  public Configuration setupSparkJob(Configuration conf) throws DataProviderException
+  {
+    try
+    {
+      Job job = new Job(conf);
+      setupConfig(job);
+      return job.getConfiguration();
+    }
+    catch(IOException e)
+    {
+      throw new DataProviderException("Error configuring a spark job ", e);
+    }
+  }
+
+  private void setupConfig(Job job)
+  {
+    job.setOutputKeyClass(TileIdWritable.class);
+    job.setOutputValueClass(RasterWritable.class);
+    job.setOutputFormatClass(getOutputFormat().getClass());
   }
 }

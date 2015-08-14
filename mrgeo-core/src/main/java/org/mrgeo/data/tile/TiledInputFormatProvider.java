@@ -15,10 +15,14 @@
 
 package org.mrgeo.data.tile;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
+
+import java.io.IOException;
 
 public interface TiledInputFormatProvider<V>
 {
@@ -56,7 +60,26 @@ public interface TiledInputFormatProvider<V>
    * @param job
    */
   public void setupJob(final Job job,
-      final ProviderProperties providerProperties) throws DataProviderException;
+      final MrsImageDataProvider provider) throws DataProviderException;
+
+  /**
+   * Perform all Spark job setup required for your input format here. Typically that
+   * involves job configuration settings for passing values to mappers and/or
+   * reducers. Do not call setInputFormatClass. The core framework sets the
+   * input format class to a core class like MrsImagePyramidInputFormat which
+   * in turn uses your class returned from getInputFormat().
+   *
+   * If you do call setInputFormatClass, you will likely get class incompatibility
+   * exceptions when you run the job because mappers will expect to receive
+   * TileCollections. Please see the description of getInputFormat() for more
+   * information.
+   *
+   * @param conf
+   * @param provider
+   */
+  public Configuration setupSparkJob(final Configuration conf,
+                                     final MrsImageDataProvider provider)
+          throws DataProviderException;
 
   /**
    * Perform any processing required after the map/reduce has completed.

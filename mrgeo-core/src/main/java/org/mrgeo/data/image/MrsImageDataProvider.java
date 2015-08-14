@@ -15,10 +15,12 @@
 
 package org.mrgeo.data.image;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
@@ -61,6 +63,31 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
   protected MrsImageDataProvider()
   {
     super();
+  }
+
+  /**
+   * Override this method if your data provider needs to perform Hadoop job
+   * setup the same way for handling image input and output.
+   *
+   * @param job
+   * @throws DataProviderException
+   * @throws IOException
+   */
+  public void setupJob(final Job job) throws DataProviderException
+  {
+  }
+
+  /**
+   * Override this method if your data provider needs to perform Spark job
+   * setup the same way for handling image input and output.
+   *
+   * @param conf
+   * @throws DataProviderException
+   * @throws IOException
+   */
+  public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
+  {
+    return conf;
   }
 
   public ProviderProperties getProviderProperties()
@@ -142,7 +169,7 @@ public static void setupMrsImagePyramidAllTilesSingleInputFormat(final Job job,
   {
     throw new IOException("No input format provider available for " + input);
   }
-  ifProvider.setupJob(job, providerProperties);
+  ifProvider.setupJob(job, provider);
   job.setInputFormatClass(MrsImagePyramidInputFormat.class);
 }
 
@@ -204,7 +231,7 @@ public static void setupMrsPyramidInputFormat(final Job job, final Set<String> i
   {
     throw new IOException("No input format provider available for " + firstInput);
   }
-  ifProvider.setupJob(job, providerProperties);
+  ifProvider.setupJob(job, provider);
   job.setInputFormatClass(MrsImagePyramidInputFormat.class);
   // The following must be after the setupJob() call so that we overwrite the metadata
   // stored into the config during setupJob() with the cropped metadata.
@@ -367,7 +394,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
     {
       throw new IOException("No input format provider available for " + input);
     }
-    ifProvider.setupJob(job, providerProperties);
+    ifProvider.setupJob(job, provider);
     // The following must be after the setupJob() call so that we overwrite the metadata
     // stored into the config during setupJob() with the cropped metadata.
     HadoopUtils.setMetadata(job, croppedMetadata);
@@ -495,9 +522,11 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
    */
   public abstract MrsTileReader<Raster> getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException;
 
-  public MrsTileWriter<Raster> getMrsTileWriter(final int zoomlevel) throws IOException
+  public MrsTileWriter<Raster> getMrsTileWriter(final int zoomlevel,
+                                                final String protectionLevel) throws IOException
   {
-    final MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(zoomlevel, 0);
+    final MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(zoomlevel, 0,
+                                                                                  protectionLevel);
     return getMrsTileWriter(context);
   }
 

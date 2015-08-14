@@ -106,6 +106,7 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     
     // what if the loadMetadata fails?
     if(metadata == null){
+      Thread.dumpStack();
     	log.info("Did not read metadata for " + name);
         throw new IOException("Can not load metadata, resource name is empty!");
 
@@ -238,13 +239,9 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     	authsString = mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
     }
 
-    if(authsString.length() > 0){
-    	auths = new Authorizations(authsString.split(","));
-    } else {
-    	auths = new Authorizations();
-    }
-    
-    log.debug("authorizations = " + auths);
+    auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsString);
+
+    log.warn("authorizations = " + auths);
     
     if(conn == null){
       try{
@@ -271,9 +268,12 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     scan.setRange(range);
     scan.fetchColumn(new Text(MrGeoAccumuloConstants.MRGEO_ACC_METADATA), new Text(MrGeoAccumuloConstants.MRGEO_ACC_CQALL));
     for(Entry<Key, Value> entry : scan){
-
+      log.warn("Got metadata value size " + entry.getValue().getSize());
       ByteArrayInputStream bis = new ByteArrayInputStream(entry.getValue().get());
       retMeta = MrsImagePyramidMetadata.load(bis);
+      log.warn("Here we are");
+      log.warn("bands: " + retMeta.getBands());
+      log.warn("max zoom: " + retMeta.getMaxZoomLevel());
       bis.close();
       break;
     }

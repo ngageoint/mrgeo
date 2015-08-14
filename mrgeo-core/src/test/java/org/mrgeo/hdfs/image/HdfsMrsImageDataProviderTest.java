@@ -189,7 +189,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetMrsTileWriter() throws Exception
   {
-    MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(10, 1);
+    MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(10, 1, "");
 
     Assert.assertEquals("Wrong class", HdfsMrsImageWriter.class, provider.getMrsTileWriter(context).getClass());
   }

@@ -317,6 +317,7 @@ abstract class MrGeoDriver extends Logging {
       jars ++= jar
       //}
     }
+    log.warn("Getting data provider dependencies")
     val dpfDependencies = DataProviderFactory.getDependencies()
     val dpfQualified = DependencyLoader.copyDependencies(dpfDependencies)
     for (jar <- dpfQualified) {

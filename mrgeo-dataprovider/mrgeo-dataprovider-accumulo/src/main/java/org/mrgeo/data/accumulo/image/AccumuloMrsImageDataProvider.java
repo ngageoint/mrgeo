@@ -16,11 +16,15 @@
 package org.mrgeo.data.accumulo.image;
 
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.accumulo.input.image.AccumuloMrsImagePyramidInputFormatProvider;
 import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataReader;
 import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataWriter;
@@ -31,11 +35,13 @@ import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.*;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.*;
+import org.mrgeo.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 
 
@@ -95,7 +101,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    */
   public AccumuloMrsImageDataProvider(final String resourceName)
   {
-    super();
+    this(new ProviderProperties(), resourceName);
     
     // Determine if the resourceName is resolved or not. If it is, then call
     // setResourceName. If not, then we'll need to resolve it on demand - see
@@ -128,9 +134,10 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * information in the resourceName.  The encoded information will have all the information
    * needed to connect to Accumulo.
    */
-  public AccumuloMrsImageDataProvider(Properties props, String resourceName) {
+  public AccumuloMrsImageDataProvider(ProviderProperties props, String resourceName) {
 	  super();
-	  
+
+    this.providerProperties = props;
 	  // check if the resourceName is encoded
 	  boolean nameIsResolved = resourceName.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX);
 
@@ -153,8 +160,15 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 	  String auths = null;// = MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS;
 
 	  // check for auths in the query
-	  if(props != null && props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES) != null){
-		  auths = props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
+	  if(props != null){
+      List<String> roles = props.getRoles();
+      log.warn("In provider roles = " + roles);
+      log.warn("roles size = " + roles.size());
+      if (roles != null && roles.size() > 0)
+      {
+        auths = StringUtils.join(roles, ",");
+        log.warn("auths = " + auths);
+      }
 	  }
 
 	  // set the authorizations in the query properties
@@ -164,96 +178,70 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 	  
 	  // get the connection information
 	  if(props != null) {
-		  queryProps.putAll(props);
+      Properties p = AccumuloUtils.providerPropertiesToProperties(props);
+		  queryProps.putAll(p);
 	  } else {
 		  // ???????
-		  queryProps.putAll(AccumuloConnector.getAccumuloProperties());
-	  }
+      try
+      {
+        queryProps.putAll(AccumuloConnector.getAccumuloProperties());
+      }
+      catch (DataProviderException e)
+      {
+        log.error("Unable to get Accumulo connection properties", e);
+      }
+    }
 	  
   } // end constructor
-  
 
-  /**
-   * This constructor is used within mappers and reducers.
-   * 
-   * 
-   * @param conf the configuration of the job
-   * @param props the properties containing authorizations for scans and
-   * protection levels for writing.
-   * @param resourceName is the name of the table in use.  This could also be
-   * an encoded string with connector information.
-   */
-  public AccumuloMrsImageDataProvider(Configuration conf, Properties props, String resourceName){
-    super();
-    
-    this.conf = conf;
-    
-    // check if there is encoded information
-    boolean nameIsResolved = resourceName.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX);
 
-    if (nameIsResolved){
-      resolvedResourceName = resourceName;
-    } else {
-      setResourceName(resourceName);
+  @Override
+  public void setupJob(final Job job) throws DataProviderException
+  {
+    setupConfig(job.getConfiguration());
+  }
+
+  @Override
+  public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
+  {
+    setupConfig(conf);
+    return conf;
+  }
+
+  private void setupConfig(final Configuration conf) throws DataProviderException
+  {
+    Properties props = AccumuloConnector.getAccumuloProperties();
+    if (props != null)
+    {
+      conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
+               props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
+      conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
+               props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+      // username and password
+      conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
+               props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
+
+      // make sure the password is set with Base64Encoding
+      String pw = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
+      String isEnc = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
+
+      if (isEnc.equalsIgnoreCase("true"))
+      {
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
+                 props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
+      }
+      else
+      {
+        byte[] p = Base64.encodeBase64(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
+                 new String(p));
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64,
+                 new String("true"));
+      }
     }
-    
-    // it is possible that we are being called for the first time
-    if(queryProps == null){
-      queryProps = new Properties();
-    }
-    
-    // get the scan authorizations
-    String auths; // = props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
-    if(props == null){
-    	auths = MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS;
-    } else {
-    	auths = props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
-    }
+  }
 
-    // set the authorizations in the query properties
-    if(auths != null){
-    	queryProps.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, auths);
-    } else {
-    	queryProps.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS,
-    			MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS);
-    }
-    
-    // make sure the Accumulo properties are set
-    if(props != null){
-      queryProps.putAll(props);
-    } else {
-      queryProps.putAll(AccumuloConnector.getAccumuloProperties());
-    }
-    
-    // get the protection level out of the configuration
-    pl = conf.get(MrGeoAccumuloConstants.MRGEO_KEY_PROTECTIONLEVEL);
-    if(pl == null){
-    	if(conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ) != null){
-    		log.info("Ingest will use protection of: " + conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
-
-    		// get the column visibility
-    		cv = new ColumnVisibility(conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
-
-    		// set the protection level variable
-    		pl = new String(cv.getExpression());
-
-    	} else {
-    		log.info("Ingest has no protection level set.");
-    	
-    		// use the empty column visibility
-    		cv = new ColumnVisibility();
-    		pl = "";
-    	}
-    } else {
-    	cv = new ColumnVisibility(pl);
-    	conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ, pl);
-    }
-
-    log.info("protection level is: " + pl);
-    
-  } // end constructor
-  
-  
   /**
    * If the resourceName is null, then this method should extract/compute it
    * from the resolvedResourceName and return it.
@@ -288,7 +276,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * 
    * @return The encoded elements used to connect to Accumulo.
    */
-  public String getResolvedName(){
+  public String getResolvedName() throws DataProviderException {
     if (resolvedResourceName == null){
       resolvedResourceName = AccumuloConnector.encodeAccumuloProperties(this.getResourceName());
     }
@@ -458,11 +446,8 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
   @Override
   public MrsTileWriter<Raster> getMrsTileWriter(MrsImagePyramidWriterContext context) throws IOException
   {
-	  // TODO Auto-generated method stub
 	  // get the protection level set within the metadata of the tabe
-	  String pltmp = getMetadataReader().read().getProtectionLevel();
-	  return new AccumuloMrsImageWriter(this, context, pltmp);
-	  
+	  return new AccumuloMrsImageWriter(this, context, context.getProtectionLevel());
   } // end getMrsTileWriter
   
 
@@ -473,7 +458,6 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
   @Override
   public RecordReader<TileIdWritable, RasterWritable> getRecordReader()
   {
-    // TODO Auto-generated method stub
     log.info("trying to load record reader.");
     
     return AccumuloMrsImagePyramidInputFormat.makeRecordReader();
@@ -486,7 +470,6 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
   @Override
   public RecordWriter<TileIdWritable, RasterWritable> getRecordWriter()
   {
-    // TODO Auto-generated method stub
     log.info("failing to load record writer.");
     return null;
   } // end getRecordWriter

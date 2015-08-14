@@ -139,6 +139,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
+    log.warn("Building pyramid for " + pyramidName);
     val provider: MrsImageDataProvider =
       DataProviderFactory.getMrsImageDataProvider(pyramidName, AccessMode.READ, null.asInstanceOf[ProviderProperties])
 
@@ -153,6 +154,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
       nodatas(i) = metadata.getDefaultValueDouble(i)
     }
 
+    DataProviderFactory.saveProviderPropertiesToConfig(providerproperties, context.hadoopConfiguration)
     // build the levels
     for (level <- maxLevel until 1 by -1) {
       val fromlevel = level
@@ -316,7 +318,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
     val stats: Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
     log.debug("Writing output file: " + provider.getResourceName + " level: " + outputLevel)
-    val writer: MrsTileWriter[Raster] = provider.getMrsTileWriter(outputLevel)
+    val writer: MrsTileWriter[Raster] = provider.getMrsTileWriter(outputLevel, metadata.getProtectionLevel)
     import scala.collection.JavaConversions._
     for (tile <- outputTiles.entrySet) {
       logDebug("  writing tile: " + tile.getKey.get)

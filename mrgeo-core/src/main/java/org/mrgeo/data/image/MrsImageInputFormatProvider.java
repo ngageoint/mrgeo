@@ -15,8 +15,8 @@
 
 package org.mrgeo.data.image;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
-import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
@@ -47,49 +47,76 @@ public abstract class MrsImageInputFormatProvider implements TiledInputFormatPro
   }
 
   /**
+   * Sub-classes that override this method must call super.setupJob(job).
+   */
+  @Override
+  public Configuration setupSparkJob(Configuration conf, MrsImageDataProvider provider)
+          throws DataProviderException
+  {
+    try
+    {
+      Configuration conf1 = provider.setupSparkJob(conf);
+      Job job = new Job(conf1);
+      setupConfig(job, provider);
+      return job.getConfiguration();
+    }
+    catch (IOException e)
+    {
+      throw new DataProviderException("Failure configuring map/reduce job " + context.toString(), e);
+    }
+  }
+
+  /**
    * Any sub-classes that need to override this method to do additional setup
    * work should call super.setupJob(job) to perform default job setup too.
    */
   @Override
-  public void setupJob(Job job,
-      final ProviderProperties providerProperties) throws DataProviderException
+  public void setupJob(Job job, final MrsImageDataProvider provider) throws DataProviderException
+  {
+    provider.setupJob(job);
+    setupConfig(job, provider);
+  }
+
+  private void setupConfig(final Job job,
+                           final MrsImageDataProvider provider)
+          throws DataProviderException
   {
     try
     {
-    DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
-                                                       job.getConfiguration());
-    context.save(job.getConfiguration());
-    // Add the input pyramid metadata to the job configuration
-    for (final String input : context.getInputs())
-    {
-      MrsImagePyramid pyramid;
-      try
+      Configuration conf = job.getConfiguration();
+      DataProviderFactory.saveProviderPropertiesToConfig(provider.getProviderProperties(), conf);
+      context.save(conf);
+      // Add the input pyramid metadata to the job configuration
+      for (final String input : context.getInputs())
       {
-        pyramid = MrsImagePyramid.open(input, context.getProviderProperties());
-      }
-      catch (IOException e)
-      {
-        throw new DataProviderException("Failure opening input image pyramid: " + input, e);
-      }
-      final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-      log.debug("In HadoopUtils.setupMrsPyramidInputFormat, loading pyramid for " + input +
-        " pyramid instance is " + pyramid + " metadata instance is " + metadata);
+        MrsImagePyramid pyramid;
+        try
+        {
+          pyramid = MrsImagePyramid.open(input, context.getProviderProperties());
+        }
+        catch (IOException e)
+        {
+          throw new DataProviderException("Failure opening input image pyramid: " + input, e);
+        }
+        final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+        log.debug("In HadoopUtils.setupMrsPyramidInputFormat, loading pyramid for " + input +
+                  " pyramid instance is " + pyramid + " metadata instance is " + metadata);
 
-      String image = metadata.getName(context.getZoomLevel());
-      // if we don't have this zoom level, use the max, then we'll decimate/subsample that one
-      if (image == null)
-      {
-        log.error("Could not get image in setupMrsPyramidInputFormat at zoom level " +
-            context.getZoomLevel() + " for " + pyramid);
-        image = metadata.getName(metadata.getMaxZoomLevel());
-      }
+        String image = metadata.getName(context.getZoomLevel());
+        // if we don't have this zoom level, use the max, then we'll decimate/subsample that one
+        if (image == null)
+        {
+          log.error("Could not get image in setupMrsPyramidInputFormat at zoom level " +
+                    context.getZoomLevel() + " for " + pyramid);
+          image = metadata.getName(metadata.getMaxZoomLevel());
+        }
 
-        HadoopUtils.setMetadata(job, metadata);
+        HadoopUtils.setMetadata(conf, metadata);
       }
     }
-      catch (IOException e)
-      {
-        throw new DataProviderException("Failure configuring map/reduce job "+ context.toString(), e);
-      }
+    catch (IOException e)
+    {
+      throw new DataProviderException("Failure configuring map/reduce job " + context.toString(), e);
+    }
   }
 }

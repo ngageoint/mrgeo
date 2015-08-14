@@ -82,7 +82,6 @@ private String table = null;
 
 // the object for connecting to Accumulo with authorizations
 //private Properties connectionProps = null;  // this hangs around longer then the queryProps
-private Properties queryProps = null; // this should be user/query specific
 
 private String[] KEYS_CONN = { MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
     MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
@@ -107,12 +106,22 @@ public boolean isValid()
 {
   // TODO: This is an initial guess at how this method should be
   // implemented. We need to revisit.
-  Properties props = AccumuloConnector.getAccumuloProperties();
-  if (props == null)
+  try
   {
-    return false;
+    Properties props = AccumuloConnector.getAccumuloProperties();
+    log.warn("Got props back from getAccumuloProperties " + props);
+    if (props != null)
+    {
+      log.warn("Returning true");
+      return true;
+    }
   }
-  return true;
+  catch (DataProviderException e)
+  {
+    // Got an error - Accumulo provider is not valid
+  }
+  log.warn("Returning false");
+  return false;
 }
 
 @Override
@@ -143,12 +152,18 @@ public String getPrefix()
   @Override
   public Map<String, String> getConfiguration()
   {
-    return null;
+    return AccumuloConnector.getAccumuloPropertiesAsMap();
   }
 
   @Override
   public void setConfiguration(Map<String, String> properties)
   {
+    log.warn("In setConfiguration, settings are:");
+    for (String key : properties.keySet())
+    {
+      log.warn("  " + key + " = " + properties.get(key));
+    }
+    AccumuloConnector.setAccumuloProperties(properties);
   }
 
 @Override
@@ -171,15 +186,8 @@ public MrsImageDataProvider createMrsImageDataProvider(String input,
   if(input.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX)){
     table = table.replace(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX, "");
   }
-  if(queryProps == null){
-    queryProps = new Properties();
-  }
-  if(providerProperties != null){
-    Properties oldProviderProperties = AccumuloUtils.providerPropertiesToProperties(providerProperties);
-    queryProps.putAll(oldProviderProperties);
-  }
   // return a new interface to the accumulo data instance
-  return new AccumuloMrsImageDataProvider(queryProps, table);
+  return new AccumuloMrsImageDataProvider(providerProperties, table);
 
 } // end createMrsImageDataProvider
 
@@ -211,18 +219,24 @@ public boolean canOpen(String input, final ProviderProperties providerProperties
 //    	String[] els = input.split("-");
 //    	t = els[0];
 //    }
-  //queryProps = AccumuloConnector.getAccumuloProperties();
 
   Properties oldProviderProperties = AccumuloUtils.providerPropertiesToProperties(providerProperties);
-  ADPF_AllTables = AccumuloUtils.getListOfTables(oldProviderProperties);
-  ADPF_ImageToTable = AccumuloUtils.getGeoTables(oldProviderProperties);
+  try
+  {
+    ADPF_AllTables = AccumuloUtils.getListOfTables(oldProviderProperties);
+    ADPF_ImageToTable = AccumuloUtils.getGeoTables(oldProviderProperties);
 
 
-  log.info("Asked to open: " + input + " ("+t+")");
+    log.info("Asked to open: " + input + " (" + t + ")");
 
 
-  return ADPF_AllTables.contains(t);
-
+    return ADPF_AllTables.contains(t);
+  }
+  catch (DataProviderException e)
+  {
+    log.error("Failure in Accumulo MrsImage canOpen for input " + input, e);
+  }
+  return false;
 } // end canOpen
 
 /**
@@ -238,6 +252,7 @@ public boolean canOpen(String input, final ProviderProperties providerProperties
 @Override
 public String[] listImages(final ProviderProperties providerProperties) throws IOException
 {
+  log.warn("In accumulo listImages");
   Properties oldProviderProperties = AccumuloUtils.providerPropertiesToProperties(providerProperties);
   ADPF_ImageToTable = AccumuloUtils.getGeoTables(oldProviderProperties);
 
@@ -302,23 +317,29 @@ public boolean exists(String input, final ProviderProperties providerProperties)
 //    	t = els[0];
 //    }
 
-  // prepare some information for logging
-  StringBuffer sb = new StringBuffer();
-  for(String k : ADPF_ImageToTable.keySet()){
-    if(sb.length() != 0){
-      sb.append(" ");
+  if (ADPF_ImageToTable != null)
+  {
+    // prepare some information for logging
+    StringBuffer sb = new StringBuffer();
+    for (String k : ADPF_ImageToTable.keySet())
+    {
+      if (sb.length() != 0)
+      {
+        sb.append(" ");
+      }
+      sb.append(k);
     }
-    sb.append(k);
+
+    log.info("table " + t + " exists=" +
+             Boolean.toString(ADPF_AllTables.contains(t)) +
+             " and is a map table=" +
+             Boolean.toString(ADPF_ImageToTable.containsKey(t)));
+    //log.info("search for '" + input + " -> " + t + "' was " + Boolean.toString(ADPF_ImageToTable.containsKey(t)) + " : " + sb.toString());
+
+    // does the table exist
+    return ADPF_ImageToTable.containsKey(t);
   }
-
-  log.info("table " + t + " exists=" +
-      Boolean.toString(ADPF_AllTables.contains(t)) +
-      " and is a map table=" +
-      Boolean.toString(ADPF_ImageToTable.containsKey(t)));
-  //log.info("search for '" + input + " -> " + t + "' was " + Boolean.toString(ADPF_ImageToTable.containsKey(t)) + " : " + sb.toString());
-
-  // does the table exist
-  return ADPF_ImageToTable.containsKey(t);
+  return false;
 } // end exists
 
 

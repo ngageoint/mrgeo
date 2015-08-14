@@ -142,6 +142,7 @@ public class AccumuloMrsImagePyramidFileOutputFormat extends FileOutputFormat<Ke
     public void write(TileIdWritable key, RasterWritable value) throws IOException,
         InterruptedException
     {
+      log.warn("Writing record to file for tile " + key.get());
       int z = zoomLevel;
       if(key instanceof TileIdZoomWritable){
         z = ((TileIdZoomWritable)key).getZoom();

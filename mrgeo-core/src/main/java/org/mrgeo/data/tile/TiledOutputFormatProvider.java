@@ -15,6 +15,7 @@
 
 package org.mrgeo.data.tile;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
@@ -38,7 +39,17 @@ public interface TiledOutputFormatProvider extends ProtectionLevelValidator
    * @param job
    * @throws IOException 
    */
-  public void setupJob(final Job job) throws DataProviderException, IOException;
+  public void setupJob(final Job job) throws DataProviderException;
+
+  /**
+   * For any additional Spark configuration besides setting
+   * the actual output format class (see getOutputFormatClass method in
+   * this interface), place that initialization code in this method.
+   *
+   * @param conf
+   * @throws IOException
+   */
+  public Configuration setupSparkJob(final Configuration conf) throws DataProviderException;
 
   /**
    * Perform any processing required after the map/reduce has completed.

@@ -1,6 +1,7 @@
 package org.mrgeo.data.accumulo.utils;
 
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.DataProviderException;
 
 import java.util.Properties;
 
@@ -17,7 +18,7 @@ public class AccumuloConnectionInfo
   private String userName;
   private String password;
 
-  public static AccumuloConnectionInfo load()
+  public static AccumuloConnectionInfo load() throws DataProviderException
   {
     Properties props = AccumuloConnector.getAccumuloProperties();
     String zookeeperServers = props.getProperty(ACCUMULO_ZOOKEEPER_SERVERS_KEY);
@@ -43,7 +44,7 @@ public class AccumuloConnectionInfo
     return new AccumuloConnectionInfo(zookeeperServers, instance, userName, password);
   }
 
-  public static AccumuloConnectionInfo load(final Configuration conf)
+  public static AccumuloConnectionInfo load(final Configuration conf) throws DataProviderException
   {
     // Check to see if connection info exists in this configuration before attempting
     // to load it. Otherwise, we attempt to load it from its default location.

@@ -1,6 +1,8 @@
 package org.mrgeo.data;
 
 import org.mrgeo.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.util.List;
 
 public class ProviderProperties implements Externalizable
 {
+  private static Logger log = LoggerFactory.getLogger(ProviderProperties.class);
   private String userName;
   private List<String> roles;
 
@@ -53,12 +56,21 @@ public class ProviderProperties implements Externalizable
 
   public static ProviderProperties fromDelimitedString(String value)
   {
-    String[] values = value.split("||");
-    String userName = values[0];
+    String[] values = value.split("\\|\\|");
+    log.warn("fromDelimitedString:");
+    String userName = "";
     List<String> roles = new ArrayList<String>();
-    for (int i=1; i < values.length; i++)
+    for (String v : values)
     {
-      roles.add(values[i]);
+      log.warn("property value: " + v);
+    }
+    if (values.length > 0)
+    {
+      userName = values[0];
+      for (int i = 1; i < values.length; i++)
+      {
+        roles.add(values[i]);
+      }
     }
     return new ProviderProperties(userName, roles);
   }
