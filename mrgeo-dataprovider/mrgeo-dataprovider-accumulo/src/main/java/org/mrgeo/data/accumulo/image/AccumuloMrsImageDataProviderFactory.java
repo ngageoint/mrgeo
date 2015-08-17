@@ -104,23 +104,20 @@ public AccumuloMrsImageDataProviderFactory(){
 @Override
 public boolean isValid()
 {
-  // TODO: This is an initial guess at how this method should be
-  // implemented. We need to revisit.
   try
   {
     Properties props = AccumuloConnector.getAccumuloProperties();
-    log.warn("Got props back from getAccumuloProperties " + props);
     if (props != null)
     {
-      log.warn("Returning true");
       return true;
     }
   }
   catch (DataProviderException e)
   {
     // Got an error - Accumulo provider is not valid
+    log.info("Unable to load accumulo connection properties, accumulo data provider is not valid", e);
   }
-  log.warn("Returning false");
+  log.info("Unable to load accumulo connection properties, accumulo data provider is not valid");
   return false;
 }
 
@@ -158,11 +155,6 @@ public String getPrefix()
   @Override
   public void setConfiguration(Map<String, String> properties)
   {
-    log.warn("In setConfiguration, settings are:");
-    for (String key : properties.keySet())
-    {
-      log.warn("  " + key + " = " + properties.get(key));
-    }
     AccumuloConnector.setAccumuloProperties(properties);
   }
 
@@ -252,7 +244,6 @@ public boolean canOpen(String input, final ProviderProperties providerProperties
 @Override
 public String[] listImages(final ProviderProperties providerProperties) throws IOException
 {
-  log.warn("In accumulo listImages");
   Properties oldProviderProperties = AccumuloUtils.providerPropertiesToProperties(providerProperties);
   ADPF_ImageToTable = AccumuloUtils.getGeoTables(oldProviderProperties);
 

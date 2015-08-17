@@ -359,7 +359,6 @@ public void writeSplits(OutputStream stream) throws SplitException
 @Override
 public void writeSplits(Path parent) throws IOException
 {
-  Thread.dumpStack();
   super.writeSplits(new Path(parent, SPLIT_FILE));
 }
 

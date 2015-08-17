@@ -125,11 +125,9 @@ public class AccumuloConnector {
 
 	public static void setAccumuloProperties(Map<String, String> props)
 	{
-		log.warn("Called setAccumuloProperties");
 		accumuloProperties = new Properties();
 		for (String key : props.keySet())
 		{
-			log.warn("  " + key + " = " + props.get(key));
 			String value = props.get(key);
 			if (value != null)
 			{
@@ -170,9 +168,7 @@ public class AccumuloConnector {
 				accumuloProperties = new Properties();
 				try
 				{
-					log.warn("Loading accumulo properties from " + f.getAbsolutePath());
 					accumuloProperties.load(new FileInputStream(f));
-					log.warn("Successfully loaded properties");
 				}
 				catch (Exception e)
 				{
@@ -182,11 +178,6 @@ public class AccumuloConnector {
 				return accumuloProperties;
 			}
 			throw new DataProviderException("Unable to determine accumulo connection properties location");
-		}
-		log.warn("In getAccumuloProperties, the properties are:");
-		for (String key : accumuloProperties.stringPropertyNames())
-		{
-			log.warn("  " + key + " = " + accumuloProperties.getProperty(key));
 		}
 		return accumuloProperties;
 	} // end getAccumuloProperties
@@ -241,16 +232,10 @@ public class AccumuloConnector {
 			}
 		}
 
-		log.warn("Returning connector for " +
-						 p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE) + ", " +
-						 p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS) + ", " +
-						 p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER) + ", " +
-						 pw);
 		Connector conn =  getConnector(
 				p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
 				p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS),
 				p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER), pw);
-		log.warn("Got connector successfully");
 		return conn;
 	} // end getConnector - File
 

@@ -589,7 +589,6 @@ public class AccumuloUtils {
 	
 	public static Set<String> getListOfTables(Properties properties) throws DataProviderException{
 
-		Thread.dumpStack();
 		Properties props = AccumuloConnector.getAccumuloProperties();
 		if(properties != null){
 			props.putAll(properties);
@@ -602,10 +601,6 @@ public class AccumuloUtils {
 		Connector conn;
 		try {
 			//conn = AccumuloConnector.getConnector();
-			log.warn("in getListOfTables, instance is " + props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
-			log.warn("in getListOfTables, zookeepers is " + props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
-			log.warn("in getListOfTables, user is " + props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
-			log.warn("in getListOfTables, password is " + props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
 			Instance inst = new ZooKeeperInstance(
 					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
 					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));

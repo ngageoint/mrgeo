@@ -162,12 +162,9 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 	  // check for auths in the query
 	  if(props != null){
       List<String> roles = props.getRoles();
-      log.warn("In provider roles = " + roles);
-      log.warn("roles size = " + roles.size());
       if (roles != null && roles.size() > 0)
       {
         auths = StringUtils.join(roles, ",");
-        log.warn("auths = " + auths);
       }
 	  }
 

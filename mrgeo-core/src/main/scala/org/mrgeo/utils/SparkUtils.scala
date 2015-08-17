@@ -286,10 +286,7 @@ object SparkUtils extends Logging {
 
     val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize)
     val tofp = provider.getTiledOutputFormatProvider(tofc)
-    log.warn("Calling setupSparkJob on " + tofp.getClass.getName)
     val conf1 = tofp.setupSparkJob(conf)
-    log.warn("TiledOutputFormatProvider is " + tofp.getClass.getName)
-    log.warn("  output format class " + tofp.getOutputFormat.getClass.getName)
 
     // The following commented out section was in place for older versions of Spark
     // that did not include the OrderRDDFunctions.repartitionAndSortWithinPartitions
@@ -350,17 +347,7 @@ object SparkUtils extends Logging {
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
     val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
     val wrappedSorted = new PairRDDFunctions(sorted)
-
-    // The first argument to saveAsNewAPIHadoopFile is used to set the mapred.output.dir
-    // setting in the Configuration. Since we don't care about this (because it's already
-    // set up in our Configuration), we just grab the current value of that settings and
-    // pass it in.
-    val mapredOutputDir = conf1.get("mapred.output.dir", "");
-    log.warn("output dir = " + mapredOutputDir)
-    log.warn("output passed in = " + output)
     wrappedSorted.saveAsNewAPIHadoopDataset(conf1)
-//    wrappedSorted.saveAsNewAPIHadoopFile(output, classOf[TileIdWritable], classOf[RasterWritable],
-//      tofp.getOutputFormat.getClass, conf)
 
     sparkPartitioner.generateFileSplits(sorted, output, zoom, conf1)
     //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)

@@ -118,7 +118,6 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
     try{
       metadata.save(baos);
       metadataStr = baos.toString();
-      log.warn("metadata string = " + metadataStr);
       baos.close();
       
     } catch(IOException ioe){
@@ -154,9 +153,6 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
       bw.addMutation(m);
       bw.flush();
       bw.close();
-      log.warn("Done writing metadata to accumulo");
-      log.warn("  zoom: " + metadata.getMaxZoomLevel());
-      log.warn("  bands: " + metadata.getBands());
     } catch(TableNotFoundException tnfe){
       //throw new DataProviderException("Table for " + table + " does not exist. " + tnfe.getLocalizedMessage());
     } catch(MutationsRejectedException mre){

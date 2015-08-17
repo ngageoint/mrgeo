@@ -153,12 +153,10 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
     // TODO Auto-generated method stub
 
     if(doBulk || forceBulk){
-      log.warn("file output format being used at zoom level = " + zoomLevel);
       return new AccumuloMrsImagePyramidFileOutputFormat(zoomLevel, cv);
       //return new AccumuloMrsImagePyramidFileOutputFormat();
     } else {
-      log.warn("accumulo going direct for output at zoom level = " + zoomLevel);
-      
+
       return new AccumuloMrsImagePyramidOutputFormat(zoomLevel, cv);
     }
   } // end getOutputFormat
@@ -189,8 +187,6 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   @Override
   public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
   {
-    log.warn("In accumulo setupSparkJob");
-    Thread.dumpStack();
     Configuration conf1 = provider.setupSparkJob(conf);
     Configuration conf2 = super.setupSparkJob(conf1);
     setupConfig(conf2, null);
@@ -215,7 +211,6 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
         conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL, Integer.toString(zoomLevel));
       }
 
-      log.warn("In setupJob, doBulk = " + doBulk + " and forceBulk = " + forceBulk);
       //conf.set("zoomLevel", Integer.toString(zoomLevel));
       if(doBulk || forceBulk){
         conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_JOBTYPE,
@@ -379,7 +374,6 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
 
           job.setOutputFormatClass(AccumuloMrsImagePyramidFileOutputFormat.class);
         }
-        log.warn("Accumulo setting output path to " + workDir);
         Path workFilesPath = new Path(workDir + "files");
         if (job != null)
         {

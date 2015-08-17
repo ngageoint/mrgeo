@@ -133,11 +133,6 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
       zooKeepers = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS);
 
       String pl = conf.get(MrGeoConstants.MRGEO_PROTECTION_LEVEL);
-      log.warn("In initialize, table = " + table +
-               ", username = " + username +
-               ", instanceName = " + instanceName +
-               ", zooKeppers = " + zooKeepers +
-               ", pl = " + pl);
 	  if(pl != null){
 		  colViz = new ColumnVisibility(pl);
 	  } else if(colViz == null){
@@ -178,7 +173,6 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
 	      ClientConfiguration cc = ClientConfiguration.loadDefault().withInstance(instanceName);
 	      cc.setProperty(ClientProperty.INSTANCE_ZK_HOST, zooKeepers);
 
-        log.warn("Finished setConnectorInfo");
 	      OutputConfigurator.setZooKeeperInstance(AccumuloOutputFormat.class, conf, cc);
 	      OutputConfigurator.setDefaultTableName(AccumuloOutputFormat.class, conf, table);
 	      OutputConfigurator.setCreateTables(AccumuloOutputFormat.class, conf, true);
@@ -291,7 +285,6 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
     public void write(TileIdWritable key, RasterWritable value) throws IOException,
         InterruptedException
     {
-      log.warn("Writing record to table for tile " + key.get());
       int zoom = zoomLevel;
       if(key instanceof TileIdZoomWritable){
         zoom = ((TileIdZoomWritable) key).getZoom();

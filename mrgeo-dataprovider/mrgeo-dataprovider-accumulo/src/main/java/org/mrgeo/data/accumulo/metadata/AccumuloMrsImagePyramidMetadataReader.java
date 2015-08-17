@@ -106,10 +106,9 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     
     // what if the loadMetadata fails?
     if(metadata == null){
-      Thread.dumpStack();
     	log.info("Did not read metadata for " + name);
+      Thread.dumpStack();
         throw new IOException("Can not load metadata, resource name is empty!");
-
     } else {
     	metadata.setPyramid(name);        
     	log.info("Read metadata for " + name + " with max zoom level at " + metadata.getMaxZoomLevel());
@@ -241,8 +240,6 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
 
     auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsString);
 
-    log.warn("authorizations = " + auths);
-    
     if(conn == null){
       try{
         conn = AccumuloConnector.getConnector(mrgeoAccProps);
@@ -268,12 +265,8 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     scan.setRange(range);
     scan.fetchColumn(new Text(MrGeoAccumuloConstants.MRGEO_ACC_METADATA), new Text(MrGeoAccumuloConstants.MRGEO_ACC_CQALL));
     for(Entry<Key, Value> entry : scan){
-      log.warn("Got metadata value size " + entry.getValue().getSize());
       ByteArrayInputStream bis = new ByteArrayInputStream(entry.getValue().get());
       retMeta = MrsImagePyramidMetadata.load(bis);
-      log.warn("Here we are");
-      log.warn("bands: " + retMeta.getBands());
-      log.warn("max zoom: " + retMeta.getMaxZoomLevel());
       bis.close();
       break;
     }
