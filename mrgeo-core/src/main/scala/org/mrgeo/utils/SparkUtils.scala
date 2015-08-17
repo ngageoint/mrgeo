@@ -28,9 +28,9 @@ import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
-import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.image.{MrsImagePyramidSimpleInputFormat, MrsImageDataProvider}
 import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.tile.{TileIdWritable, TiledOutputFormatContext}
+import org.mrgeo.data.tile.{TiledInputFormatContext, TileIdWritable, TiledOutputFormatContext}
 import org.mrgeo.hdfs.input.MapFileFilter
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
@@ -349,12 +349,9 @@ object SparkUtils extends Logging {
     val wrappedSorted = new PairRDDFunctions(sorted)
     wrappedSorted.saveAsNewAPIHadoopDataset(conf1)
 
+    tiles.unpersist()
     sparkPartitioner.generateFileSplits(sorted, output, zoom, conf1)
     //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
-
-    // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
-    // on.  This can be a problem for fast calculating/small partitions
-    val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
 
     //dp.teardown(job)
 
