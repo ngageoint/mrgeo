@@ -28,6 +28,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
@@ -42,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * @author jason.surratt
@@ -94,7 +94,7 @@ private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationT
 //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
-private Properties props = null;
+  private ProviderProperties props = null;
 
 @Before
 public void setup()

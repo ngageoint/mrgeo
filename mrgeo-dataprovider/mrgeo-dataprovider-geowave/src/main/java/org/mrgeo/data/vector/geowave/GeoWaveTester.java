@@ -2,6 +2,7 @@ package org.mrgeo.data.vector.geowave;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ import org.geotools.filter.text.cql2.CQLException;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorDataProviderFactory;
 import org.mrgeo.data.vector.VectorInputFormat;
@@ -55,15 +57,14 @@ public class GeoWaveTester
     {
       String input = args[0];
       String output = args[1];
-      String userRoles = null;
+      ProviderProperties providerProperties = null;
       if (args.length == 3)
       {
-        userRoles = args[2];
+        providerProperties = new ProviderProperties("", args[2]);
       }
-      Properties providerProperties = new Properties();
-      if (userRoles != null)
+      else
       {
-        providerProperties.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES, userRoles);
+        providerProperties = new ProviderProperties("", (List<String>)null);
       }
 
 //      String[] vectors = DataProviderFactory.listVectors(providerProperties);
@@ -124,7 +125,7 @@ public class GeoWaveTester
     {
     }
 
-    public void run(String input, String output, Properties providerProperties)
+    public void run(String input, String output, ProviderProperties providerProperties)
     {
       try
       {
@@ -172,7 +173,7 @@ public class GeoWaveTester
     }
   }
 
-  public void runTest(String input, String output, Properties providerProperties) throws IOException
+  public void runTest(String input, String output, ProviderProperties providerProperties) throws IOException
   {
 //    VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider("geowave:Af_Clip", AccessMode.READ);
 //    VectorMetadataReader reader = vdp.getMetadataReader();

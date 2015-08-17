@@ -17,6 +17,7 @@ package org.mrgeo.opimage;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.data.DataProviderFactory;
@@ -32,7 +33,6 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.awt.image.renderable.RenderedImageFactory;
 import java.io.IOException;
-import java.util.Properties;
 
 
 public class MrsPyramidDescriptor extends OperationDescriptorImpl implements RenderedImageFactory
@@ -53,7 +53,7 @@ public class MrsPyramidDescriptor extends OperationDescriptorImpl implements Ren
         new String[] { RenderedRegistryMode.MODE_NAME },
         0,
         new String[] { "path", "level", "tileClusterInfo", "providerProperties" },
-        new Class[] { String.class , Long.class, TileClusterInfo.class, Properties.class },
+        new Class[] { String.class , Long.class, TileClusterInfo.class, ProviderProperties.class },
         new Object[] { NO_PARAMETER_DEFAULT, new Long(-1),
                       NO_PARAMETER_DEFAULT, NO_PARAMETER_DEFAULT },
         null);
@@ -92,7 +92,7 @@ public class MrsPyramidDescriptor extends OperationDescriptorImpl implements Ren
   }
 
   public static RenderedImage create(MrsImageDataProvider dp,
-      int level, TileClusterInfo tileClusterInfo, final Properties providerProperties)
+      int level, TileClusterInfo tileClusterInfo, final ProviderProperties providerProperties)
   {
     ParameterBlock paramBlock = new ParameterBlock();
     paramBlock.add(dp.getResourceName());
@@ -100,7 +100,7 @@ public class MrsPyramidDescriptor extends OperationDescriptorImpl implements Ren
     paramBlock.add(tileClusterInfo);
     if (providerProperties == null)
     {
-      paramBlock.add(new Properties());
+      paramBlock.add(new ProviderProperties());
     }
     else
     {
@@ -125,7 +125,7 @@ public class MrsPyramidDescriptor extends OperationDescriptorImpl implements Ren
       // specific data provider. Normally this is a Configuration object.
       Long level = (Long)params.getObjectParameter(1);
       TileClusterInfo tileClusterInfo = (TileClusterInfo)params.getObjectParameter(2);
-      Properties providerProperties = (Properties)params.getObjectParameter(3);
+      ProviderProperties providerProperties = (ProviderProperties)params.getObjectParameter(3);
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
           (String) params.getObjectParameter(0),
           AccessMode.READ, providerProperties);

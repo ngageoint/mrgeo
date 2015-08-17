@@ -16,12 +16,12 @@
 package org.mrgeo.mapalgebra;
 
 import java.io.IOException;
-import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.mapreduce.job.JobCancelledException;
@@ -31,14 +31,14 @@ import org.mrgeo.progress.Progress;
 public class VectorReaderMapOp extends VectorMapOp
 {
   private VectorDataProvider dp;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
 
   public VectorReaderMapOp(String vectorName)
   {
     _outputName = vectorName;
   }
 
-  public VectorReaderMapOp(VectorDataProvider dp, Properties providerProperties)
+  public VectorReaderMapOp(VectorDataProvider dp, ProviderProperties providerProperties)
   {
     this.dp = dp;
     _outputName = dp.getPrefixedResourceName();

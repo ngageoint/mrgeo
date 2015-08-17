@@ -20,11 +20,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Vector;
 
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserException;
@@ -67,7 +67,7 @@ public abstract class MapOp implements Cloneable
   private final HashSet<String> tmpPaths = new HashSet<String>();
   private final HashSet<String> tmpResources = new HashSet<String>();
   private Configuration defaultConf;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
   private String protectionLevel;
   protected JobListener jobListener = null;
 
@@ -488,7 +488,7 @@ public abstract class MapOp implements Cloneable
    * Return the provider properties that the map op was configured with.
    * @return
    */
-  public Properties getProviderProperties()
+  public ProviderProperties getProviderProperties()
   {
     return providerProperties;
   }
@@ -573,7 +573,7 @@ public abstract class MapOp implements Cloneable
     return children;
   }
 
-  public void setProviderProperties(final Properties props)
+  public void setProviderProperties(final ProviderProperties props)
   {
     providerProperties = props;
   }

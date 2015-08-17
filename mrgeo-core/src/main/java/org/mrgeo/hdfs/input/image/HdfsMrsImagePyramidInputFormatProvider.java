@@ -20,6 +20,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
@@ -33,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Properties;
 
 public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatProvider
 {
@@ -52,7 +52,7 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
 
   @Override
   public void setupJob(Job job,
-      final Properties providerProperties) throws DataProviderException
+      final ProviderProperties providerProperties) throws DataProviderException
   {
     super.setupJob(job, providerProperties);
     Configuration conf = job.getConfiguration();

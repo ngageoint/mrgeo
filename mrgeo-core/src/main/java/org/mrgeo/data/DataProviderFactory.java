@@ -19,6 +19,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
@@ -103,16 +104,27 @@ public class DataProviderFactory
    */
   public static final String PROVIDER_PROPERTY_USER_ROLES = "mrgeo.security.user.roles";
 
-  public static void saveProviderPropertiesToConfig(final Properties providerProperties,
-      final Configuration conf)
+  public static void saveProviderPropertiesToConfig(final ProviderProperties providerProperties,
+                                                    final Configuration conf)
   {
     if (providerProperties != null)
     {
-      for (Map.Entry<Object,Object> entry : providerProperties.entrySet())
-      {
-        conf.set(entry.getKey().toString(), entry.getValue().toString());
-      }
+      conf.set(PROVIDER_PROPERTY_USER_NAME, providerProperties.getUserName());
+      conf.set(PROVIDER_PROPERTY_USER_ROLES, StringUtils.join(providerProperties.getRoles(), ","));
     }
+  }
+
+  public static ProviderProperties loadProviderPropertiesFromConfig(Configuration conf)
+  {
+    String userName = conf.get(PROVIDER_PROPERTY_USER_NAME, "");
+    List<String> roles = new ArrayList<String>();
+    String strRoles = conf.get(PROVIDER_PROPERTY_USER_ROLES, "");
+    String[] separated = strRoles.split(",");
+    for (String r : separated)
+    {
+      roles.add(r);
+    }
+    return new ProviderProperties(userName, roles);
   }
 
   public static Map<String, String> getConfigurationFromProviders()
@@ -181,36 +193,18 @@ public class DataProviderFactory
     }
   }
 
-  public static String getProviderProperty(final String key,
-      final Properties providerProperties)
-  {
-    return providerProperties.getProperty(key);
-  }
-
-  public static String getProviderProperty(final String key,
-      final Configuration conf)
-  {
-    return conf.get(key);
-  }
-
-  public static void setProviderProperty(final String key, final String value,
-      final Properties providerProperties)
-  {
-    providerProperties.setProperty(key, value);
-  }
-
   private static class AdHocLoader implements Callable<AdHocDataProvider>
   {
     private String prefix;
     private String name;
     private AccessMode accessMode;
     private Configuration conf;
-    private Properties props;
+    private ProviderProperties props;
 
     public AdHocLoader(final String name,
         final AccessMode accessMode,
         final Configuration conf,
-        final Properties props)
+        final ProviderProperties props)
     {
       this.conf = conf;
       this.props = props;
@@ -229,25 +223,15 @@ public class DataProviderFactory
     @Override
     public AdHocDataProvider call() throws Exception
     {
-      initialize(conf, props);
+      initialize(conf);
       final AdHocDataProviderFactory factory = findFactory();
       if (accessMode == AccessMode.READ)
       {
         if (factory != null)
         {
-          if (props != null)
+          if (factory.canOpen(name, props))
           {
-            if (factory.canOpen(name, props))
-            {
-              return factory.createAdHocDataProvider(name, props);
-            }
-          }
-          else
-          {
-            if (factory.canOpen(name, conf))
-            {
-              return factory.createAdHocDataProvider(name, conf);
-            }
+            return factory.createAdHocDataProvider(name, props);
           }
         }
         throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
@@ -256,61 +240,25 @@ public class DataProviderFactory
       {
         if (factory != null)
         {
-          if (props != null)
+          if (factory.exists(name, props))
           {
-            if (factory.exists(name, props))
-            {
-              factory.delete(name, props);
-            }
-            return factory.createAdHocDataProvider(name, props);
+            factory.delete(name, props);
           }
-          else
-          {
-            if (factory.exists(name, conf))
-            {
-              factory.delete(name, conf);
-            }
-            return factory.createAdHocDataProvider(name, conf);
-          }
+          return factory.createAdHocDataProvider(name, props);
         }
-        if (props != null)
-        {
-          return getPreferredProvider().createAdHocDataProvider(name, props);
-        }
-        else
-        {
-          return getPreferredProvider().createAdHocDataProvider(name, conf);
-        }
+        return getPreferredProvider().createAdHocDataProvider(name, props);
       }
       else
       {
         if (factory != null)
         {
-          if (props != null)
+          if (factory.canWrite(name, props))
           {
-            if (factory.canWrite(name, props))
-            {
-              return factory.createAdHocDataProvider(name, props);
-            }
-            throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
+            return factory.createAdHocDataProvider(name, props);
           }
-          else
-          {
-            if (factory.canWrite(name, conf))
-            {
-              return factory.createAdHocDataProvider(name, conf);
-            }
-            throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
-          }
+          throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
         }
-        if (props != null)
-        {
-          return getPreferredProvider().createAdHocDataProvider(name, props);
-        }
-        else
-        {
-          return getPreferredProvider().createAdHocDataProvider(name, conf);
-        }
+        return getPreferredProvider().createAdHocDataProvider(name, props);
       }
 
     }
@@ -336,22 +284,11 @@ public class DataProviderFactory
       }
       for (final AdHocDataProviderFactory factory : adHocProviderFactories.values())
       {
-        if (props != null)
+        if (factory.exists(name, props))
         {
-          if (factory.exists(name, props))
-          {
-            return factory;
-          }
-          log.debug("resource cache load: " + name);
+          return factory;
         }
-        else
-        {
-          if (factory.exists(name, conf))
-          {
-            return factory;
-          }
-          log.debug("resource cache load: " + name);
-        }
+        log.debug("resource cache load: " + name);
       }
 
       return null;
@@ -364,12 +301,12 @@ public class DataProviderFactory
     private String name;
     private AccessMode accessMode;
     private Configuration conf;
-    private Properties props;
+    private ProviderProperties props;
 
     public MrsImageLoader(final String name,
         final AccessMode accessMode,
         final Configuration conf,
-        final Properties props)
+        final ProviderProperties props)
     {
       this.conf = conf;
       this.props = props;
@@ -388,25 +325,15 @@ public class DataProviderFactory
     @Override
     public MrsImageDataProvider call() throws Exception
     {
-      initialize(conf, props);
+      initialize(conf);
       final MrsImageDataProviderFactory factory = findFactory();
       if (accessMode == AccessMode.READ)
       {
         if (factory != null)
         {
-          if (props != null)
+          if (factory.canOpen(name, props))
           {
-            if (factory.canOpen(name, props))
-            {
-              return factory.createMrsImageDataProvider(name, props);
-            }
-          }
-          else
-          {
-            if (factory.canOpen(name, conf))
-            {
-              return factory.createMrsImageDataProvider(name, conf);
-            }
+            return factory.createMrsImageDataProvider(name, props);
           }
         }
         throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
@@ -415,61 +342,25 @@ public class DataProviderFactory
       {
         if (factory != null)
         {
-          if (props != null)
+          if (factory.exists(name, props))
           {
-            if (factory.exists(name, props))
-            {
-              factory.delete(name, props);
-            }
-            return factory.createMrsImageDataProvider(name, props);
+            factory.delete(name, props);
           }
-          else
-          {
-            if (factory.exists(name, conf))
-            {
-              factory.delete(name, conf);
-            }
-            return factory.createMrsImageDataProvider(name, conf);
-          }
+          return factory.createMrsImageDataProvider(name, props);
         }
-        if (props != null)
-        {
-          return getPreferredProvider().createMrsImageDataProvider(name, props);
-        }
-        else
-        {
-          return getPreferredProvider().createMrsImageDataProvider(name, conf);
-        }
+        return getPreferredProvider().createMrsImageDataProvider(name, props);
       }
       else
       {
         if (factory != null)
         {
-          if (props != null)
+          if (factory.canWrite(name, props))
           {
-            if (factory.canWrite(name, props))
-            {
-              return factory.createMrsImageDataProvider(name, props);
-            }
-            throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
+            return factory.createMrsImageDataProvider(name, props);
           }
-          else
-          {
-            if (factory.canWrite(name, conf))
-            {
-              return factory.createMrsImageDataProvider(name, conf);
-            }
-            throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
-          }
+          throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
         }
-        if (props != null)
-        {
-          return getPreferredProvider().createMrsImageDataProvider(name, props);
-        }
-        else
-        {
-          return getPreferredProvider().createMrsImageDataProvider(name, conf);
-        }
+        return getPreferredProvider().createMrsImageDataProvider(name, props);
       }
     }
 
@@ -494,22 +385,11 @@ public class DataProviderFactory
       }
       for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
       {
-        if (props != null)
+        if (factory.exists(name, props))
         {
-          if (factory.exists(name, props))
-          {
-            return factory;
-          }
-          log.debug("resource cache load: " + name);
+          return factory;
         }
-        else
-        {
-          if (factory.exists(name, conf))
-          {
-            return factory;
-          }
-          log.debug("resource cache load: " + name);
-        }
+        log.debug("resource cache load: " + name);
       }
 
       return null;
@@ -523,17 +403,17 @@ public class DataProviderFactory
     private String prefix;
     private AccessMode accessMode;
     private Configuration conf;
-    private Properties props;
+    private ProviderProperties props;
 
     public VectorLoader(final String name,
         final AccessMode accessMode,
         final Configuration conf,
-        final Properties props)
+        final ProviderProperties props)
     {
       this.conf = conf;
       if (conf == null && props == null)
       {
-        this.props = new Properties();
+        this.props = new ProviderProperties();
       }
       else
       {
@@ -554,29 +434,18 @@ public class DataProviderFactory
     @Override
     public VectorDataProvider call() throws Exception
     {
-      initialize(conf, props);
+      initialize(conf);
       final VectorDataProviderFactory factory = findFactory();
       if (accessMode == AccessMode.READ)
       {
         if (factory != null)
         {
           log.debug("For " + name + ", found factory: " + factory.getClass().getName());
-          if (props != null)
+          if (factory.canOpen(name, props))
           {
-            if (factory.canOpen(name, props))
-            {
-              return factory.createVectorDataProvider(prefix, name, props);
-            }
-            log.debug("Unable to open " + name + " using provider properties");
+            return factory.createVectorDataProvider(prefix, name, props);
           }
-          else
-          {
-            if (factory.canOpen(name, conf))
-            {
-              return factory.createVectorDataProvider(prefix, name, conf);
-            }
-            log.debug("Unable to open " + name + " using configuration");
-          }
+          log.debug("Unable to open " + name + " using provider properties");
         }
         // Log some useful debug information
         String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
@@ -597,85 +466,37 @@ public class DataProviderFactory
       {
         if (factory != null)
         {
-          if (props != null)
+          if (factory.exists(name, props))
           {
-            if (factory.exists(name, props))
-            {
-              factory.delete(name, props);
-            }
-            return factory.createVectorDataProvider(prefix, name, props);
+            factory.delete(name, props);
           }
-          else
-          {
-            if (factory.exists(name, conf))
-            {
-              factory.delete(name, conf);
-            }
-            return factory.createVectorDataProvider(prefix, name, conf);
-          }
+          return factory.createVectorDataProvider(prefix, name, props);
         }
-        if (props != null)
-        {
-          return getPreferredProvider().createVectorDataProvider(prefix, name, props);
-        }
-        else
-        {
-          return getPreferredProvider().createVectorDataProvider(prefix, name, conf);
-        }
+        return getPreferredProvider().createVectorDataProvider(prefix, name, props);
       }
       else
       {
         if (factory != null)
         {
-          if (props != null)
+          if (factory.canWrite(name, props))
           {
-            if (factory.canWrite(name, props))
-            {
-              return factory.createVectorDataProvider(prefix, name, props);
-            }
-            String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
-            if (log.isDebugEnabled())
-            {
-              log.debug(msg);
-              log.debug("Available vector provider factories: " + vectorProviderFactories.size());
-              for (VectorDataProviderFactory f: vectorProviderFactories.values())
-              {
-                log.debug(f.getPrefix() + " using " + f.getClass().getName());
-              }
-              String cp = System.getProperty("java.class.path");
-              log.debug("java.class.path=" + cp);
-            }
-            throw new DataProviderNotFound(msg);
+            return factory.createVectorDataProvider(prefix, name, props);
           }
-          else
+          String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
+          if (log.isDebugEnabled())
           {
-            if (factory.canWrite(name, conf))
+            log.debug(msg);
+            log.debug("Available vector provider factories: " + vectorProviderFactories.size());
+            for (VectorDataProviderFactory f: vectorProviderFactories.values())
             {
-              return factory.createVectorDataProvider(prefix, name, conf);
+              log.debug(f.getPrefix() + " using " + f.getClass().getName());
             }
-            String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
-            if (log.isDebugEnabled())
-            {
-              log.debug(msg);
-              log.debug("Available vector provider factories: " + vectorProviderFactories.size());
-              for (VectorDataProviderFactory f: vectorProviderFactories.values())
-              {
-                log.debug(f.getPrefix() + " using " + f.getClass().getName());
-              }
-              String cp = System.getProperty("java.class.path");
-              log.debug("java.class.path=" + cp);
-            }
-            throw new DataProviderNotFound(msg);
+            String cp = System.getProperty("java.class.path");
+            log.debug("java.class.path=" + cp);
           }
+          throw new DataProviderNotFound(msg);
         }
-        if (props != null)
-        {
-          return getPreferredProvider().createVectorDataProvider(prefix, name, props);
-        }
-        else
-        {
-          return getPreferredProvider().createVectorDataProvider(prefix, name, conf);
-        }
+        return getPreferredProvider().createVectorDataProvider(prefix, name, props);
       }
     }
 
@@ -714,35 +535,17 @@ public class DataProviderFactory
         {
           log.debug("Checking factory: " + factory.getClass().getName());
         }
-        if (props != null)
+        if (factory.exists(name, props))
         {
-          if (factory.exists(name, props))
-          {
-            if (debugEnabled)
-            {
-              log.debug("Returning factory from provider properties: " + factory.getClass().getName());
-            }
-            return factory;
-          }
           if (debugEnabled)
           {
-            log.debug("resource cache load: " + name);
+            log.debug("Returning factory from provider properties: " + factory.getClass().getName());
           }
+          return factory;
         }
-        else
+        if (debugEnabled)
         {
-          if (factory.exists(name, conf))
-          {
-            if (debugEnabled)
-            {
-              log.debug("Returning factory from configuration: " + factory.getClass().getName());
-            }
-            return factory;
-          }
-          if (debugEnabled)
-          {
-            log.debug("resource cache load: " + name);
-          }
+          log.debug("resource cache load: " + name);
         }
       }
       if (debugEnabled)
@@ -828,7 +631,7 @@ public class DataProviderFactory
    * @return An ad hoc data provider for a newly created, randomly named resource.
    * @throws DataProviderNotFound
    */
-  public static AdHocDataProvider createAdHocDataProvider(final Properties providerProperties)
+  public static AdHocDataProvider createAdHocDataProvider(final ProviderProperties providerProperties)
       throws DataProviderNotFound, DataProviderException
   {
     return createAdHocDataProvider(getBasicConfig(), providerProperties);
@@ -850,26 +653,19 @@ public class DataProviderFactory
   public static AdHocDataProvider createAdHocDataProvider(final Configuration conf)
       throws DataProviderNotFound, DataProviderException
   {
-    return createAdHocDataProvider(conf, null);
+    return createAdHocDataProvider(conf, loadProviderPropertiesFromConfig(conf));
   }
 
   private static AdHocDataProvider createAdHocDataProvider(final Configuration conf,
-      final Properties props) throws DataProviderNotFound, DataProviderException
+      final ProviderProperties props) throws DataProviderNotFound, DataProviderException
   {
-    initialize(conf, props);
+    initialize(conf);
     for (final AdHocDataProviderFactory factory : adHocProviderFactories.values())
     {
       AdHocDataProvider provider;
       try
       {
-        if (props != null)
-        {
-          provider = factory.createAdHocDataProvider(props);
-        }
-        else
-        {
-          provider = factory.createAdHocDataProvider(conf);
-        }
+        provider = factory.createAdHocDataProvider(props);
       }
       catch (IOException e)
       {
@@ -900,7 +696,7 @@ public class DataProviderFactory
    */
   public static AdHocDataProvider getAdHocDataProvider(final String name,
       final AccessMode mode,
-      final Properties providerProperties) throws DataProviderNotFound
+      final ProviderProperties providerProperties) throws DataProviderNotFound
   {
     return getAdHocDataProvider(name, mode, getBasicConfig(), providerProperties);
   }
@@ -909,13 +705,14 @@ public class DataProviderFactory
       final AccessMode mode,
       final Configuration conf) throws DataProviderNotFound
   {
-    return getAdHocDataProvider(name, mode, conf, null);
+    return getAdHocDataProvider(name, mode, conf,
+                                loadProviderPropertiesFromConfig(conf));
   }
 
   private static AdHocDataProvider getAdHocDataProvider(final String name,
       final AccessMode mode,
       final Configuration conf,
-      final Properties props) throws DataProviderNotFound
+      final ProviderProperties props) throws DataProviderNotFound
   {
     try
     {
@@ -946,9 +743,9 @@ public class DataProviderFactory
    * @return
    * @throws IOException
    */
-  public static String[] listImages(final Properties providerProperties) throws IOException
+  public static String[] listImages(final ProviderProperties providerProperties) throws IOException
   {
-    initialize(null, providerProperties);
+    initialize(getBasicConfig());
     List<String> results = new ArrayList<String>();
     for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
     {
@@ -969,9 +766,9 @@ public class DataProviderFactory
    * @return
    * @throws IOException
    */
-  public static String[] listVectors(final Properties providerProperties) throws IOException
+  public static String[] listVectors(final ProviderProperties providerProperties) throws IOException
   {
-    initialize(null, providerProperties);
+    initialize(getBasicConfig());
     List<String> results = new ArrayList<String>();
     for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
     {
@@ -992,12 +789,11 @@ public class DataProviderFactory
   // is executed for one user.
   private static String getResourceCacheKey(final String resourceName,
       final Configuration conf,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
   {
     if (providerProperties != null)
     {
-      String userName = getProviderProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_NAME,
-          providerProperties);
+      String userName = providerProperties.getUserName();
       if (userName != null && !userName.isEmpty())
       {
         return resourceName + "," + userName;
@@ -1006,7 +802,7 @@ public class DataProviderFactory
     return resourceName;
   }
 
-public static MrsImageDataProvider createTempMrsImageDataProvider(Properties props)
+public static MrsImageDataProvider createTempMrsImageDataProvider(ProviderProperties props)
     throws DataProviderNotFound, DataProviderException
 {
   return createTempMrsImageDataProvider(getBasicConfig(), props);
@@ -1015,27 +811,20 @@ public static MrsImageDataProvider createTempMrsImageDataProvider(Properties pro
 public static MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf)
     throws DataProviderNotFound, DataProviderException
 {
-  return createTempMrsImageDataProvider(conf, null);
+  return createTempMrsImageDataProvider(conf, loadProviderPropertiesFromConfig(conf));
 }
 
 private static MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf,
-    final Properties providerProperties) throws DataProviderNotFound, DataProviderException
+    final ProviderProperties providerProperties) throws DataProviderNotFound, DataProviderException
 {
 
-  initialize(conf, providerProperties);
+  initialize(conf);
   for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
   {
     MrsImageDataProvider provider;
     try
     {
-      if (providerProperties != null)
-      {
-        provider = factory.createTempMrsImageDataProvider(providerProperties);
-      }
-      else
-      {
-        provider = factory.createTempMrsImageDataProvider(conf);
-      }
+      provider = factory.createTempMrsImageDataProvider(providerProperties);
     }
     catch (IOException e)
     {
@@ -1066,14 +855,14 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
    */
   public static MrsImageDataProvider getMrsImageDataProvider(final String name,
       AccessMode accessMode,
-      Properties props) throws DataProviderNotFound
+      ProviderProperties props) throws DataProviderNotFound
   {
     return getMrsImageDataProvider(name, accessMode, getBasicConfig(), props);
   }
 
   public static MrsImageDataProvider getMrsImageDataProviderNoCache(final String name,
       AccessMode accessMode,
-      Properties props) throws DataProviderNotFound
+      ProviderProperties props) throws DataProviderNotFound
   {
 
     try
@@ -1107,13 +896,14 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
       AccessMode accessMode,
       final Configuration conf) throws DataProviderNotFound
   {
-    return getMrsImageDataProvider(name, accessMode, conf, null);
+    return getMrsImageDataProvider(name, accessMode, conf,
+                                   loadProviderPropertiesFromConfig(conf));
   }
 
   private static MrsImageDataProvider getMrsImageDataProvider(final String name,
       AccessMode accessMode,
       final Configuration conf,
-      final Properties providerProperties) throws DataProviderNotFound
+      final ProviderProperties providerProperties) throws DataProviderNotFound
   {
     try
     {
@@ -1148,23 +938,24 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
    * @throws DataProviderNotFound
    */
   public static VectorDataProvider getVectorDataProvider(final String name,
-      AccessMode accessMode,
-      Properties providerProperties) throws DataProviderNotFound
+       AccessMode accessMode,
+       ProviderProperties providerProperties) throws DataProviderNotFound
   {
-    return getVectorDataProvider(name, accessMode, null, providerProperties);
+    return getVectorDataProvider(name, accessMode, getBasicConfig(), providerProperties);
   }
 
   public static VectorDataProvider getVectorDataProvider(final Configuration conf,
       final String name,
       AccessMode accessMode) throws DataProviderNotFound
   {
-    return getVectorDataProvider(name, accessMode, conf, null);
+    return getVectorDataProvider(name, accessMode, conf,
+                                 loadProviderPropertiesFromConfig(conf));
   }
 
   private static VectorDataProvider getVectorDataProvider(final String name,
       AccessMode accessMode,
       final Configuration conf,
-      final Properties providerProperties) throws DataProviderNotFound
+      final ProviderProperties providerProperties) throws DataProviderNotFound
   {
     try
     {
@@ -1228,7 +1019,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
    * @throws IOException
    */
   public static void delete(final String resource,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     MrsImageDataProvider mrsImageProvider = getMrsImageDataProvider(resource,
         AccessMode.OVERWRITE, providerProperties);
@@ -1258,7 +1049,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
     }
   }
 
-  protected static void initialize(final Configuration conf, final Properties p)
+  protected static void initialize(final Configuration conf) throws DataProviderException
   {
     if (adHocProviderFactories == null)
     {
@@ -1272,6 +1063,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
         {
           log.info("Found ad hoc data provider factory " + dp.getClass().getName());
           adHocProviderFactories.put(dp.getPrefix(), dp);
+          dp.initialize(conf);
         }
         else
         {
@@ -1296,6 +1088,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
           {
             log.info("Found mrs image data provider factory " + dp.getClass().getName());
             mrsImageProviderFactories.put(dp.getPrefix(), dp);
+            dp.initialize(conf);
           }
           else
           {
@@ -1330,22 +1123,14 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
           {
             log.debug("Checking if vector factory is valid: " + dp.getClass().getName() + " with config " + ((conf == null) ? "null" : "not null"));
           }
-          boolean valid = false;
-          if (conf != null)
-          {
-            valid = dp.isValid(conf);
-          }
-          else
-          {
-            valid = dp.isValid();
-          }
-          if (valid)
+          if (dp.isValid())
           {
             if (debugEnabled)
             {
               log.debug("Factory " + dp.getClass().getName() + " is valid, uses prefix: " + dp.getPrefix());
             }
             vectorProviderFactories.put(dp.getPrefix(), dp);
+            dp.initialize(conf);
             count++;
           }
           else
@@ -1369,7 +1154,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
       }
     }
 
-    findPreferredProvider(conf, p);
+    findPreferredProvider(conf);
   }
 
   
@@ -1439,9 +1224,9 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
     return dependencies;
   }
 
-  private static void findPreferredProvider(Configuration conf, Properties p)
+  private static void findPreferredProvider(Configuration conf)
   {
-    preferredAdHocProviderName = findValue(conf, p, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
+    preferredAdHocProviderName = findValue(conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
     // no preferred provider, use the 1st one...
     if (preferredAdHocProviderName == null)
     {
@@ -1458,7 +1243,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
       log.info("Using preferred ad hoc provider " + preferredAdHocProviderName);
     }
 
-    preferredImageProviderName = findValue(conf, p, PREFERRED_MRSIMAGE_PROVIDER_NAME, PREFERRED_MRSIMAGE_PROPERTYNAME);
+    preferredImageProviderName = findValue(conf, PREFERRED_MRSIMAGE_PROVIDER_NAME, PREFERRED_MRSIMAGE_PROPERTYNAME);
     // no preferred provider, use the 1st one...
     if (preferredImageProviderName == null)
     {
@@ -1476,7 +1261,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
     }
 
 
-    preferredVectorProviderName = findValue(conf, p, PREFERRED_VECTOR_PROVIDER_NAME, PREFERRED_VECTOR_PROPERTYNAME);
+    preferredVectorProviderName = findValue(conf, PREFERRED_VECTOR_PROVIDER_NAME, PREFERRED_VECTOR_PROPERTYNAME);
     // no preferred provider, use the 1st one...
     if (preferredVectorProviderName == null)
     {
@@ -1494,7 +1279,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
     }
   }
 
-  private static String findValue(final Configuration conf, final Properties p, final String confName, final String propName)
+  private static String findValue(final Configuration conf, final String confName, final String propName)
   {
     String name = null;
 
@@ -1506,12 +1291,6 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
 
     if (name == null)
     {
-      if (p != null)
-      {
-        // now look in the properties
-        name = p.getProperty(propName, null);
-      }
-
       if (name == null)
       {
         Properties mp = MrGeoProperties.getInstance();
@@ -1521,11 +1300,6 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
         }
       }
       // look for the generic name
-      if (name == null && p != null)
-      {
-        name = p.getProperty(PREFERRED_PROPERTYNAME, null);
-      }
-
       if (name == null)
       {
         Properties mp = MrGeoProperties.getInstance();

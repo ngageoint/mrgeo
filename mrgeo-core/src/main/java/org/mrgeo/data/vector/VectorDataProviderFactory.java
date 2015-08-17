@@ -17,9 +17,10 @@ package org.mrgeo.data.vector;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.ProviderProperties;
 
 public interface VectorDataProviderFactory
 {
@@ -37,6 +38,15 @@ public interface VectorDataProviderFactory
    * job setup so that it will be available in the mapper and reducer.
    */
   public boolean isValid(final Configuration conf);
+
+  /**
+   * This method is called once when DataProviderFactory finds this factory.
+   * The factory can perform whatever initialization functionality it needs
+   * within this method.
+   *
+   * @param conf
+   */
+  public void initialize(Configuration conf) throws DataProviderException;
 
   /**
    * This function is called by MrGeo so that providers can make sure they have
@@ -93,30 +103,19 @@ public interface VectorDataProviderFactory
 
   public VectorDataProvider createVectorDataProvider(final String prefix,
                                                      final String input,
-                                                     final Configuration conf);
-  public VectorDataProvider createVectorDataProvider(final String prefix,
-                                                     final String input,
-                                                     final Properties providerProperties);
+                                                     final ProviderProperties providerProperties);
 
-  public String[] listVectors(final Properties providerProperties) throws IOException;
+  public String[] listVectors(final ProviderProperties providerProperties) throws IOException;
   
   public boolean canOpen(final String input,
-      final Configuration conf) throws IOException;
-  public boolean canOpen(final String input,
-      final Properties providerProperties) throws IOException;
+      final ProviderProperties providerProperties) throws IOException;
 
   public boolean canWrite(final String input,
-      final Configuration conf) throws IOException;
-  public boolean canWrite(final String input,
-      final Properties providerProperties) throws IOException;
+      final ProviderProperties providerProperties) throws IOException;
 
   public boolean exists(final String name,
-      final Configuration conf) throws IOException;
-  public boolean exists(final String name,
-      final Properties providerProperties) throws IOException;
+      final ProviderProperties providerProperties) throws IOException;
 
   public void delete(final String name,
-      final Configuration conf) throws IOException;
-  public void delete(final String name,
-      final Properties providerProperties) throws IOException;
+      final ProviderProperties providerProperties) throws IOException;
 }

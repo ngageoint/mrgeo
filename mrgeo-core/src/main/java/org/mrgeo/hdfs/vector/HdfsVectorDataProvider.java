@@ -23,6 +23,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -33,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Properties;
 
 public class HdfsVectorDataProvider extends VectorDataProvider
 {
@@ -41,10 +41,10 @@ public class HdfsVectorDataProvider extends VectorDataProvider
 
   private Configuration conf;
   private Path resourcePath;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
 
   public HdfsVectorDataProvider(final Configuration conf,
-      final String prefix, final String resourceName, final Properties providerProperties)
+      final String prefix, final String resourceName, final ProviderProperties providerProperties)
   {
     super(prefix, resourceName);
     this.conf = conf;
@@ -148,7 +148,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   public static boolean canOpen(final Configuration conf, String input,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     Path p;
     try
@@ -166,13 +166,13 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
   
   public static boolean exists(final Configuration conf, String input,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     return resolveNameToPath(conf, input, providerProperties, true) != null;
   }
   
   public static void delete(final Configuration conf, String input,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     Path p = resolveNameToPath(conf, input, providerProperties, false);
     Path columns = new Path(p.toString() + ".columns");
@@ -188,7 +188,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   public static boolean canWrite(final Configuration conf, String input,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     // The return value of resolveNameToPath will be null if the input
     // path does not exist. It wil throw an exception if there is a problem
@@ -198,7 +198,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   private static Path resolveName(final Configuration conf, final String input,
-      final Properties providerProperties, final boolean mustExist) throws IOException
+      final ProviderProperties providerProperties, final boolean mustExist) throws IOException
   {
     Path result = resolveNameToPath(conf, input, providerProperties, mustExist);
     if (result != null && hasMetadata(conf, result))
@@ -210,7 +210,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   private static Path resolveNameToPath(final Configuration conf, final String input,
-      final Properties providerProperties, final boolean mustExist) throws IOException
+      final ProviderProperties providerProperties, final boolean mustExist) throws IOException
   {
     if (input.indexOf('/') >= 0)
     {

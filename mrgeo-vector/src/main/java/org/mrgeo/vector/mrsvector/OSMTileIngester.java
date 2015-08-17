@@ -37,6 +37,7 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -890,7 +891,7 @@ public class OSMTileIngester extends WritableVectorTile
 
   private int zoomlevel;
   private String protectionLevel;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
 
   // this is stolen from VectorTileCleaner...
   int[] chunkstringmap = null; // maps the old stringtable key (offset) to the new stringtable
@@ -963,7 +964,7 @@ public class OSMTileIngester extends WritableVectorTile
       final String output = "osm-ingest";
 
       final String protectionLevel = "";
-      Properties providerProperties = null;
+      ProviderProperties providerProperties = null;
       ingestOsm(inputs, output, conf, 11, protectionLevel, providerProperties);
     }
     catch (final Exception ex)
@@ -974,7 +975,7 @@ public class OSMTileIngester extends WritableVectorTile
 
   public static void ingestOsm(final String[] inputs, final String output,
     Configuration conf, int zoomLevel, String protectionLevel,
-    Properties providerProperties) throws Exception
+                               ProviderProperties providerProperties) throws Exception
   {
     long start = System.currentTimeMillis();
 
@@ -1197,7 +1198,7 @@ public class OSMTileIngester extends WritableVectorTile
   public void ingest(final String[] inputs, final Configuration conf, final String output,
     final int zoomlevel, final Path tmpDir,
     final String protectionLevel,
-    final Properties providerProperties) throws IOException
+    final ProviderProperties providerProperties) throws IOException
     {
     this.config = conf;
     this.providerProperties = providerProperties;

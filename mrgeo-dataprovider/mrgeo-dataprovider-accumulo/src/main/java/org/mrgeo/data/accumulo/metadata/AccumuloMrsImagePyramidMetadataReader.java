@@ -26,6 +26,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
@@ -215,7 +216,7 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     } else {
 
     	// get authorizations from dataProvider
-    	p1 = dataProvider.getProviderProperties();
+    	p1 = AccumuloUtils.providerPropertiesToProperties(dataProvider.getProviderProperties());
     	p2 = dataProvider.getQueryProperties();
       if(p1 != null){
     	  mrgeoAccProps.putAll(p1);

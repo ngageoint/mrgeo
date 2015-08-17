@@ -15,11 +15,10 @@
 
 package org.mrgeo.data.tile;
 
-import java.util.Properties;
-
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.ProviderProperties;
 
 public interface TiledInputFormatProvider<V>
 {
@@ -57,7 +56,7 @@ public interface TiledInputFormatProvider<V>
    * @param job
    */
   public void setupJob(final Job job,
-      final Properties providerProperties) throws DataProviderException;
+      final ProviderProperties providerProperties) throws DataProviderException;
 
   /**
    * Perform any processing required after the map/reduce has completed.

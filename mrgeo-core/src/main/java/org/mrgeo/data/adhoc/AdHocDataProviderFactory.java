@@ -17,9 +17,10 @@ package org.mrgeo.data.adhoc;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.ProviderProperties;
 
 
 /**
@@ -49,6 +50,15 @@ public interface AdHocDataProviderFactory
    * @return
    */
   public boolean isValid();
+
+  /**
+   * This method is called once when DataProviderFactory finds this factory.
+   * The factory can perform whatever initialization functionality it needs
+   * within this method.
+   *
+   * @param conf
+   */
+  public void initialize(Configuration conf) throws DataProviderException;
 
   public String getPrefix();
 
@@ -96,9 +106,7 @@ public interface AdHocDataProviderFactory
    * @return
    */
   public AdHocDataProvider createAdHocDataProvider(final String name,
-      final Configuration conf) throws IOException;
-  public AdHocDataProvider createAdHocDataProvider(final String name,
-      final Properties providerProperties) throws IOException;
+      final ProviderProperties providerProperties) throws IOException;
 
   /**
    * Give back an ad hoc data provider for a resource that is named by this method.
@@ -109,16 +117,10 @@ public interface AdHocDataProviderFactory
    * @return
    */
   public AdHocDataProvider createAdHocDataProvider(
-      final Configuration conf) throws IOException;
-  public AdHocDataProvider createAdHocDataProvider(
-      final Properties providerProperties) throws IOException;
+      final ProviderProperties providerProperties) throws IOException;
 
-  public boolean canOpen(final String name, final Configuration conf) throws IOException;
-  public boolean canOpen(final String name, final Properties providerProperties) throws IOException;
-  public boolean canWrite(final String name, final Configuration conf) throws IOException;
-  public boolean canWrite(final String name, final Properties providerProperties) throws IOException;
-  public boolean exists(final String name, final Configuration conf) throws IOException;
-  public boolean exists(final String name, final Properties providerProperties) throws IOException;
-  public void delete(final String name, final Configuration conf) throws IOException;
-  public void delete(final String name, final Properties providerProperties) throws IOException;
+  public boolean canOpen(final String name, final ProviderProperties providerProperties) throws IOException;
+  public boolean canWrite(final String name, final ProviderProperties providerProperties) throws IOException;
+  public boolean exists(final String name, final ProviderProperties providerProperties) throws IOException;
+  public void delete(final String name, final ProviderProperties providerProperties) throws IOException;
 }

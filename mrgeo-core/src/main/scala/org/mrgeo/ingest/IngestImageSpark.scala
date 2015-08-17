@@ -17,7 +17,6 @@ package org.mrgeo.ingest
 
 import java.io._
 import java.util
-import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile
@@ -30,7 +29,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils}
+import org.mrgeo.data.{ProviderProperties, DataProviderFactory, ProtectionLevelUtils}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
@@ -59,7 +58,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       categorical: Boolean, conf: Configuration, bounds: Bounds,
       zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
-      providerProperties: Properties): Boolean = {
+      providerProperties: ProviderProperties): Boolean = {
 
     val name = "IngestImage"
 
@@ -75,7 +74,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
   private def setupParams(input: String, output: String, categorical: Boolean, bounds: Bounds, zoomlevel: Int,
       tilesize: Int, nodata: Array[Number],
       bands: Int, tiletype: Int, tags: util.Map[String, String], protectionLevel: String,
-      providerProperties: Properties): mutable.Map[String, String] = {
+      providerProperties: ProviderProperties): mutable.Map[String, String] = {
 
     val args = mutable.Map[String, String]()
 
@@ -107,15 +106,13 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
 
     var p: String = ""
-    if (providerProperties != null && !providerProperties.isEmpty) {
-      providerProperties.foreach(kv => {
-        if (p.length > 0) {
-          p += "||"
-        }
-        p += kv._1 + "=" + kv._2
-      })
+    if (providerProperties != null) {
+      args += ProviderProperties -> providerProperties.toDelimitedString
     }
-    args += ProviderProperties -> p
+    else
+    {
+      args += ProviderProperties -> ""
+    }
 
     args
   }
@@ -124,7 +121,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       categorical: Boolean, config: Configuration, bounds: Bounds,
       zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
-      providerProperties: Properties): Boolean = {
+      providerProperties: ProviderProperties): Boolean = {
 
 //    val provider: ImageIngestDataProvider = DataProviderFactory
 //        .getImageIngestDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri.toString, AccessMode.OVERWRITE)
@@ -348,7 +345,8 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
   @throws(classOf[Exception])
   def quickIngest(input: String, output: String, categorical: Boolean, config: Configuration, overridenodata: Boolean,
-      nodata: Number, tags: java.util.Map[String, String], protectionLevel: String, providerProperties: Properties): Boolean = {
+      nodata: Number, tags: java.util.Map[String, String], protectionLevel: String,
+                  providerProperties: ProviderProperties): Boolean = {
 //    val provider: MrsImageDataProvider = DataProviderFactory
 //        .getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
 //    var conf: Configuration = config
@@ -424,7 +422,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
   var tilesize:Int = -1
   var nodata:Array[Double] = null
   var categorical:Boolean = false
-  var providerproperties:Properties = null
+  var providerproperties:ProviderProperties = null
   var protectionlevel:String = null
 
 
@@ -476,14 +474,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       protectionlevel = ""
     }
 
-    val props = job.getSetting(IngestImageSpark.ProviderProperties).split("||")
-    providerproperties = new Properties()
-    props.foreach (prop => {
-      if (prop.contains("=")) {
-        val kv = prop.split("=")
-        providerproperties.put(kv(0), kv(1))
-      }
-    })
+    providerproperties = ProviderProperties.fromDelimitedString(job.getSetting(IngestImageSpark.ProviderProperties))
 
     true
   }

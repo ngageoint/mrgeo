@@ -15,13 +15,13 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.rasterops.ColorScale;
 import org.mrgeo.utils.Bounds;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * Builds an HTTP response for KML data
@@ -48,7 +48,7 @@ public String getMimeType()
 @Override
 public Response getResponse(final String pyrName, final Bounds bounds, final int width,
     final int height, final ColorScale cs, final String reqUrl, final int zoomLevel,
-    final Properties providerProperties)
+    final ProviderProperties providerProperties)
 {
   try
   {

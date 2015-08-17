@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,6 +31,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorInputFormat;
 import org.mrgeo.data.vector.VectorInputFormatContext;
@@ -77,7 +77,7 @@ public class RandomizeVectorDriver
 
   public void run(final Configuration conf, final String input, final Path output,
       final Progress progress, final JobListener jobListener,
-      Properties providerProperties)
+      ProviderProperties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     final Job job = new Job(conf);

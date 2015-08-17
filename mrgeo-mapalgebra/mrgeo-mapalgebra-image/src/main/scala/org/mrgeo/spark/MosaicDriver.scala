@@ -24,7 +24,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.rdd.{CoGroupedRDD, RDD}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
@@ -242,7 +242,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     })
 
 
-    val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
+    val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[ProviderProperties])
 
     SparkUtils.saveMrsPyramid(mosaiced, op, output, zoom, tilesize, Array[Double](Float.NaN),
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, bounds, bands = 1,

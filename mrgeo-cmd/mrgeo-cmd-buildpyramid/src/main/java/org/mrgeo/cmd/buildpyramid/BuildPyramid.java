@@ -24,10 +24,9 @@ import org.mrgeo.aggregators.*;
 import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
+import org.mrgeo.data.ProviderProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Properties;
 
 /**
  *
@@ -76,7 +75,7 @@ public static Options createOptions()
 
 @Override
 public int run(String[] args, final Configuration conf,
-    final Properties providerProperties)
+    final ProviderProperties providerProperties)
 {
   log.info("BuildPyramid");
 

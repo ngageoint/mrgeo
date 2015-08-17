@@ -23,6 +23,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
 import org.mrgeo.data.raster.RasterUtils;
@@ -46,7 +47,6 @@ import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.Properties;
 
 /**
  * Base class for WMS image response handlers; Each image format should subclass this.
@@ -88,7 +88,7 @@ public ImageRendererAbstract(final String srsWkt)
  */
 public static String asKml(final String pyrName, final Bounds bounds, final int width,
     final int height, final ColorScale cs, String requestUrl,
-    final Properties providerProperties) throws IOException
+    final ProviderProperties providerProperties) throws IOException
 {
   final URL url = new URL(requestUrl);
   if (!requestUrl.endsWith("/"))
@@ -223,7 +223,7 @@ private MrsImageDataProvider getDataProvider()
     try
     {
       return
-          DataProviderFactory.getMrsImageDataProvider(imageName, AccessMode.READ, (Properties) null);
+          DataProviderFactory.getMrsImageDataProvider(imageName, AccessMode.READ, (ProviderProperties) null);
 
 
     }
@@ -291,7 +291,7 @@ public boolean outputIsTransparent()
  */
 @Override
 public Raster renderImage(final String pyramidName, final Bounds bounds, final int width,
-    final int height, final Properties providerProperties, final String epsg) throws Exception
+    final int height, final ProviderProperties providerProperties, final String epsg) throws Exception
 {
   imageName = pyramidName;
 
@@ -482,7 +482,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
  */
 @Override
 public Raster renderImage(final String pyramidName, final Bounds bounds,
-    final Properties providerProperties, final String epsg) throws Exception
+    final ProviderProperties providerProperties, final String epsg) throws Exception
 {
   imageName = pyramidName;
 
@@ -504,7 +504,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds,
  */
 @Override
 public Raster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final double scale, final Properties providerProperties) throws Exception
+    final double scale, final ProviderProperties providerProperties) throws Exception
 {
   imageName = pyramidName;
 
@@ -532,7 +532,7 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
 @Override
 public Raster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
     final double scale, final String maskName, final double maskMax,
-    Properties providerProperties) throws Exception
+    ProviderProperties providerProperties) throws Exception
 {
   imageName = pyramidName;
 
@@ -622,14 +622,14 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
 
 @Override
 public Raster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final double scale, final String maskName, final Properties providerProperties) throws Exception
+    final double scale, final String maskName, final ProviderProperties providerProperties) throws Exception
 {
   return renderImage(pyramidName, tileColumn, tileRow, scale, maskName, Double.MAX_VALUE, providerProperties);
 }
 
 @Override
 public Raster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final int zoom, final Properties providerProperties) throws Exception
+    final int zoom, final ProviderProperties providerProperties) throws Exception
 {
   imageName = pyramidName;
 
@@ -658,7 +658,7 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
 @Override
 public Raster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
     final int zoom, final String maskName, final double maskMax,
-    final Properties providerProperties) throws Exception
+    final ProviderProperties providerProperties) throws Exception
 {
   imageName = pyramidName;
 
@@ -750,7 +750,7 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
 @Override
 public Raster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
     final int zoom, final String maskName,
-    final Properties providerProperties) throws Exception
+    final ProviderProperties providerProperties) throws Exception
 {
   return renderImage(pyramidName, tileColumn, tileRow, zoom, maskName, Double.MAX_VALUE,
       providerProperties);

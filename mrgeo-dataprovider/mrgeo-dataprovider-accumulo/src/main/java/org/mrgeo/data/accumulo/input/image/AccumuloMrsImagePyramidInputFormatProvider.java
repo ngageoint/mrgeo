@@ -27,8 +27,10 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImagePyramidInputFormat;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
+import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
@@ -102,24 +104,25 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
   
   @Override
   public void setupJob(Job job,
-      final Properties providerProperties) throws DataProviderException
+      final ProviderProperties providerProperties) throws DataProviderException
   {
     super.setupJob(job, providerProperties);
 
+    Properties oldProviderProperties = AccumuloUtils.providerPropertiesToProperties(providerProperties);
     //zoomLevelsInPyramid = new ArrayList<Integer>();
 
     log.info("Setting up job " + job.getJobName());
     
     // lets look into the properties coming in
-    if(providerProperties != null){
-    	Set<Object> k1 = providerProperties.keySet();
+    if(oldProviderProperties != null){
+    	Set<Object> k1 = oldProviderProperties.keySet();
     	ArrayList<String> k2 = new ArrayList<String>();
     	for(Object o : k1){
     		k2.add(o.toString());
     	}
     	Collections.sort(k2);
     	for(int x = 0; x < k2.size(); x++){
-    		log.info("provider property " + x + ": k='" + k2.get(x) + "' v='" + providerProperties.getProperty(k2.get(x)) + "'");
+    		log.info("provider property " + x + ": k='" + k2.get(x) + "' v='" + oldProviderProperties.getProperty(k2.get(x)) + "'");
     	}
     }
     
@@ -132,8 +135,8 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     String connUser = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
     log.info("connecting to accumulo as user " + connUser);
     
-    if(providerProperties != null){
-    	props.putAll(providerProperties);
+    if(oldProviderProperties != null){
+    	props.putAll(oldProviderProperties);
     }
     if(props.size() == 0){
       throw new RuntimeException("No configuration for Accumulo!");

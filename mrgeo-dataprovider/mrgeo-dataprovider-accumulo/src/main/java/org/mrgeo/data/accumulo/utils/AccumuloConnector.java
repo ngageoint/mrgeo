@@ -40,6 +40,19 @@ public class AccumuloConnector {
 			.getLogger(AccumuloConnector.class);
 
 	private static Connector conn = null;
+	private static Properties connectionInfo = null;
+
+	public static void initialize() throws DataProviderException
+	{
+		if (connectionInfo == null)
+		{
+			connectionInfo = getAccumuloProperties();
+			if (connectionInfo == null)
+			{
+				throw new DataProviderException("No Accumulo connection properties available");
+			}
+		}
+	}
 
 	public static String encodeAccumuloProperties(String r) {
 		StringBuffer sb = new StringBuffer();

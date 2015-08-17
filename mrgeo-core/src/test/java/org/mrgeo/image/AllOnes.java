@@ -17,17 +17,17 @@ package org.mrgeo.image;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
-import java.util.Properties;
 
 public class AllOnes extends TestFiles
 {
   public AllOnes() throws JsonGenerationException, JsonMappingException, IOException {
     super.setup(org.mrgeo.core.Defs.CWD + "/" + org.mrgeo.core.Defs.INPUT + "/" + "all-ones",
-        (Properties)null);
+        (ProviderProperties)null);
   }
   
   public static void main(String args[]) throws JsonGenerationException, JsonMappingException, IOException {

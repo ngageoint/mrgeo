@@ -23,6 +23,7 @@ import mil.nga.giat.geowave.vector.VectorDataStore;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -30,6 +31,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
@@ -61,19 +63,9 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   private Filter filter;
   private String cqlFilter;
   private GeoWaveVectorMetadataReader metaReader;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
 
-  public GeoWaveVectorDataProvider(String inputPrefix, String input, Configuration conf)
-  {
-    super(inputPrefix, input);
-    initConnectionInfo(conf);
-    // We are on the task execution side of map/reduce, and the provider
-    // properties are stored in the job configuration. Get them from there.
-    providerProperties = new Properties();
-    loadProviderProperties(providerProperties, conf);
-  }
-
-  public GeoWaveVectorDataProvider(String inputPrefix, String input, Properties providerProperties)
+  public GeoWaveVectorDataProvider(String inputPrefix, String input, ProviderProperties providerProperties)
   {
     super(inputPrefix, input);
     // This constructor is only called from driver-side (i.e. not in
@@ -284,7 +276,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return (connectionInfo != null);
   }
 
-  public static String[] listVectors(final Properties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
+  public static String[] listVectors(final ProviderProperties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
   {
     initConnectionInfo();
     initDataSource();
@@ -316,23 +308,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return results.toArray(resultArray);
   }
 
-  public static boolean canOpen(String input, Configuration conf) throws AccumuloException, AccumuloSecurityException, IOException
-  {
-    initConnectionInfo(conf);
-    initDataSource();
-    Properties providerProperties = new Properties();
-    loadProviderProperties(providerProperties, conf);
-    String[] specs = parseResourceName(input);
-    ByteArrayId adapterId = new ByteArrayId(specs[0]);
-    DataAdapter<?> adapter = adapterStore.getAdapter(adapterId);
-    if (adapter == null)
-    {
-      return false;
-    }
-    return checkAuthorizations(adapterId, providerProperties);
-  }
-
-  public static boolean canOpen(String input, Properties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
+  public static boolean canOpen(String input, ProviderProperties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
   {
     initConnectionInfo();
     initDataSource();
@@ -347,7 +323,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   }
 
   private static boolean checkAuthorizations(ByteArrayId adapterId,
-      Properties providerProperties) throws IOException, AccumuloException, AccumuloSecurityException
+      ProviderProperties providerProperties) throws IOException, AccumuloException, AccumuloSecurityException
   {
     // Check to see if the requester is authorized to see any of the data in
     // the adapter.
@@ -355,13 +331,15 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   }
 
   public static long getAdapterCount(ByteArrayId adapterId,
-      Properties providerProperties) throws IOException, AccumuloException, AccumuloSecurityException
+                                     ProviderProperties providerProperties)
+          throws IOException, AccumuloException, AccumuloSecurityException
   {
     initConnectionInfo();
     initDataSource();
-    String auths = providerProperties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
-    if (auths != null)
+    List<String> roles = providerProperties.getRoles();
+    if (roles != null && roles.size() > 0)
     {
+      String auths = StringUtils.join(providerProperties.getRoles(), ",");
       CountDataStatistics<?> count = (CountDataStatistics<?>)statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID, auths);
       if (count != null && count.isSet())
       {
@@ -377,38 +355,6 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
       }
     }
     return 0L;
-  }
-
-  public static void storeProviderProperties(Properties providerProperties, Configuration conf)
-  {
-    int index = 1;
-    conf.setInt(PROVIDER_PROPERTIES_SIZE, providerProperties.size());
-    for (Object key: providerProperties.keySet())
-    {
-      if (key != null)
-      {
-        conf.set(PROVIDER_PROPERTIES_KEY_PREFIX + "." + index, (String)key);
-        String value = providerProperties.getProperty((String)key);
-        if (value != null)
-        {
-          conf.set(PROVIDER_PROPERTIES_VALUE_PREFIX + "." + index, value);
-        }
-      }
-    }
-  }
-
-  public static void loadProviderProperties(Properties providerProperties, Configuration conf)
-  {
-    int size = conf.getInt(PROVIDER_PROPERTIES_SIZE, 0);
-    for (int index = 0; index < size; index++)
-    {
-      String key = conf.get(PROVIDER_PROPERTIES_KEY_PREFIX + "." + index);
-      if (key != null)
-      {
-        String value = conf.get(PROVIDER_PROPERTIES_VALUE_PREFIX + "." + index);
-        providerProperties.put(key, value);
-      }
-    }
   }
 
   private void init() throws AccumuloSecurityException, AccumuloException, IOException

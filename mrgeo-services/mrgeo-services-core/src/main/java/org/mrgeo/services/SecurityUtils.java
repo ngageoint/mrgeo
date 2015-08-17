@@ -15,43 +15,37 @@
 
 package org.mrgeo.services;
 
-import java.util.Properties;
-
 import org.apache.commons.lang3.StringUtils;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SecurityUtils
 {
-  public static Properties getProviderProperties()
+  public static ProviderProperties getProviderProperties()
   {
-    Properties providerProperties = null;
+    ProviderProperties providerProperties = null;
     SecurityContext secCtx = SecurityContextHolder.getContext();
     if (secCtx != null)
     {
       Authentication a = secCtx.getAuthentication();
       if (a != null)
       {
-        providerProperties = new Properties();
         java.util.Collection<? extends GrantedAuthority> auths = a.getAuthorities();
-        String[] roles = new String[auths.size()];
+        List<String> roles = new ArrayList<String>(auths.size());
         int i = 0;
         for (GrantedAuthority auth : auths)
         {
-          roles[i] = auth.getAuthority();
+          roles.add(auth.getAuthority());
           i++;
         }
-        DataProviderFactory.setProviderProperty(
-            DataProviderFactory.PROVIDER_PROPERTY_USER_NAME,
-            a.getName(),
-            providerProperties);
-        DataProviderFactory.setProviderProperty(
-            DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES,
-            StringUtils.join(roles, ","),
-            providerProperties);
+        providerProperties = new ProviderProperties(a.getName(), roles);
       }
     }
     return providerProperties;

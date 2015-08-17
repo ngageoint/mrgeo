@@ -49,6 +49,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.security.Credentials;
 import org.apache.accumulo.core.security.thrift.TCredentials;
 import org.apache.accumulo.core.util.BadArgumentException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -57,6 +58,7 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.data.DataProviderException;
@@ -841,5 +843,29 @@ public class AccumuloUtils {
 		
 		return true;
   } // end validateProtectionLevel
-	
+
+	/**
+	 * This is a backward compatibility method. The data provider API used to pass
+	 * provider properties as a Properties object. It now uses a specialized class
+	 * called ProviderProperties. This method converts back to the Properties
+	 * object to prevent having to change a bunch of code in the Accumulo data provider.
+	 * TODO: it would be best to change the data provider at some point to
+	 * get rid of this inefficiency.
+	 *
+	 * @param providerProperties
+	 * @return
+	 */
+	public static Properties providerPropertiesToProperties(ProviderProperties providerProperties)
+	{
+		if (providerProperties == null)
+		{
+			return null;
+		}
+		Properties p = new Properties();
+		p.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_NAME,
+									providerProperties.getUserName());
+		p.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES,
+									StringUtils.join(providerProperties.getRoles(), ","));
+		return p;
+	}
 } // end AccumuloUtils

@@ -18,11 +18,11 @@ package org.mrgeo.test;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
 
 import java.io.IOException;
-import java.util.Properties;
 
 public class LocalRunnerTest {
 
@@ -52,7 +52,7 @@ public class LocalRunnerTest {
     return conf;
   }
 
-  protected Properties getProviderProperties()
+  protected ProviderProperties getProviderProperties()
   {
     return null;
   }

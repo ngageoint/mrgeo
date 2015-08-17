@@ -16,6 +16,7 @@
 package org.mrgeo.data.image;
 
 import org.apache.hadoop.mapreduce.Job;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
@@ -28,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * The base class for data plugins to use when implementing their own
@@ -52,13 +52,12 @@ public abstract class MrsImageInputFormatProvider implements TiledInputFormatPro
    */
   @Override
   public void setupJob(Job job,
-      final Properties providerProperties) throws DataProviderException
+      final ProviderProperties providerProperties) throws DataProviderException
   {
     try
     {
-
     DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
-        job.getConfiguration());
+                                                       job.getConfiguration());
     context.save(job.getConfiguration());
     // Add the input pyramid metadata to the job configuration
     for (final String input : context.getInputs())

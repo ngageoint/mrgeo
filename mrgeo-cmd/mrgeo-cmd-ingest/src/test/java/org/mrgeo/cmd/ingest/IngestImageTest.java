@@ -25,6 +25,7 @@ import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -62,7 +63,7 @@ public class IngestImageTest
   private final static String aster_sample = "AsterSample";
 
   private static Configuration conf;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
   private static String origProtectionLevelRequired;
   private static String origProtectionLevelDefault;
   private static String origProtectionLevel;

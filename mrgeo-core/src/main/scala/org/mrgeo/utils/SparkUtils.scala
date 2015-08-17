@@ -27,7 +27,7 @@ import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, SequenceFileInput
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.{TileIdWritable, TiledOutputFormatContext}
@@ -135,7 +135,7 @@ object SparkUtils extends Logging {
   def loadMrsPyramidAndMetadata(imageName: String, context: SparkContext):
   (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
 
-    val providerProps: Properties = null
+    val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
     val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
@@ -144,7 +144,7 @@ object SparkUtils extends Logging {
   }
 
   def loadMrsPyramid(imageName: String, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val providerProps: Properties = null
+    val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
 
@@ -154,7 +154,7 @@ object SparkUtils extends Logging {
   }
 
   def loadMrsPyramid(imageName: String, zoom: Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val providerProps: Properties = null
+    val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
 
@@ -174,7 +174,7 @@ object SparkUtils extends Logging {
     // build a phony job...
     val job = Job.getInstance(context.hadoopConfiguration)
 
-    val providerProps: Properties = null
+    val providerProps: ProviderProperties = null
 
     MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
       zoom, metadata.getTilesize, null, providerProps) // null for bounds means use all tiles (no cropping)
@@ -197,7 +197,7 @@ object SparkUtils extends Logging {
   }
 
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider,
-      zoom: Int, conf: Configuration, providerproperties: Properties): Unit = {
+      zoom:Int, conf:Configuration, providerproperties:ProviderProperties): Unit = {
 
     val metadata = provider.getMetadataReader.read()
 
@@ -215,7 +215,7 @@ object SparkUtils extends Logging {
 
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)],
       outputProvider: MrsImageDataProvider, inputprovider: MrsImageDataProvider,
-      zoom: Int, conf: Configuration, providerproperties: Properties): Unit = {
+      zoom:Int, conf:Configuration, providerproperties:ProviderProperties): Unit = {
 
     val metadata = inputprovider.getMetadataReader.read()
 
@@ -235,7 +235,7 @@ object SparkUtils extends Logging {
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider, output: String,
       zoom: Int, tilesize: Int, nodatas: Array[Double], conf: Configuration, tiletype: Int = -1,
       bounds: Bounds = new Bounds(), bands: Int = -1,
-      protectionlevel: String = null, providerproperties: Properties = new Properties()): Unit = {
+      protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
