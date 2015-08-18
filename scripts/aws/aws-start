@@ -1,0 +1,361 @@
+#!/bin/bash
+
+set -e
+
+ZONE="us-east-1a"
+
+MASTER_TYPE="m3.xlarge"
+
+WORKER_NODES="5"
+WORKER_TYPE="m3.xlarge"
+
+TASK_NODES="5"
+TASK_TYPE="m3.xlarge"
+
+MACHINE="Linux/UNIX"
+
+NOW="$(date +'%FT%T')"
+NAME="MrGeo Cluster"
+
+SPOT="no"
+
+usage() {
+    echo "Usage: $0 <args>"
+    echo "-----------------------------"
+    echo "args:"
+    echo "  -p   --pem-file            - PEM file to use for connecting"
+    echo "  -n   --name                - cluster name ($NAME)"
+    echo "  -m   --machine-type        - AMI machine type ($MACHINE)"
+    echo "  -s   --spot                - use spot instances for both data and task nodes ($SPOT)"
+    echo "  -sd  --spot-data           - use spot instances for data nodes only"
+    echo "  -st  --spot-task           - use spot instance for task nodes only"
+    echo "  -sp  --spot-price          - force spot price for both data and task nodes (must be lower than reserved price)"
+    echo "  -spd --spot-price-data     - force spot price for data nodes only"
+    echo "  -spt --spot-price-task     - force spot price for task nodes only"
+    echo "  -z   --zone                - availability zone ($ZONE)"
+    echo "  -mt  --master-type         - master node instance type ($MASTER_TYPE)"
+    echo "  -d   --data-nodes          - number of data nodes ($WORKER_NODES)"
+    echo "  -dt  --data-type           - data node instance type ($WORKER_TYPE)"
+    echo "  -t   --task-nodes          - number of task (non-HDFS) nodes ($TASK_NODES)"
+    echo "  -tt  --task_type           - task node instance type ($TASK_TYPE)"
+    echo "  -a   --attach              - attach to existing cluster ID"
+}
+
+# add any predefined options (for developer convenience)
+if [ -n "$EMR_OPTIONS" ]; then
+    set -- $EMR_OPTIONS "$@"
+fi
+
+if [ $# -lt 1 ]; then
+  usage
+  exit 1
+fi
+
+
+
+while [ "$#" -gt 0 ] ; do
+  case $1 in
+  "-h" | "--help" | "-?" | "help")
+        usage
+        exit 0
+        ;;
+  "-n" | "--name")
+     NAME=$2
+     shift 1
+     if [[ $NAME == \"* ]]; then
+       until [[ $NAME == *\" ]]; do
+         shift 1
+         NAME="$NAME $1"
+       done
+        NAME=${NAME:1:-1}
+     fi
+     if [[ $NAME == \'* ]]; then
+       until [[ $NAME == *\' ]]; do
+         shift 1
+         NAME="$NAME $1"
+       done
+       NAME=${NAME:1:-1}
+     fi
+
+     NAME=`echo "$NAME" | sed 's/\\\//g'`
+     ;;
+  "-p" | "--pem-file")
+     PEMFILE=$2
+     shift 1
+     ;;
+  "-m" | "--machine-type")
+     MACHINE=$2
+     shift 1
+     ;;
+  "-s" | "--spot")
+     SPOT="yes"
+     ;;
+  "-sd" | "--spot-data")
+     SPOT_WORKER="yes"
+     ;;
+  "-st" | "--spot-task")
+     SPOT_TASK="yes"
+     ;;
+  "-sp" | "--spot-price")
+     SPOT_PRICE=$2
+     shift 1
+     ;;
+  "-sdp" | "--spot-data-price")
+     SPOT_WORKER_PRICE=$2
+     shift 1
+     ;;
+  "-stp" | "--spot-task-price")
+     SPOT_TASK_PRICE=$2
+     shift 1
+     ;;
+  "-z" | "--zone")
+     ZONE=$2
+     shift 1
+     ;;
+  "-mt" | "--master-type")
+     MASTER_TYPE=$2
+     shift 1
+     ;;
+  "-d" | "--data-nodes")
+     WORKER_NODES=$2
+     shift 1
+     ;;
+  "-dt" | "--data-type")
+     WORKER_TYPE=$2
+     shift 1
+     ;;
+  "-t" | "--task-nodes")
+     TASK_NODES=$2
+     shift 1
+     ;;
+  "-tt" | "--task_type")
+     TASK_TYPE=$2
+     shift 1
+     ;;
+  "-a" | "--attach")
+     CLUSTER_ID=$2
+     shift 1
+     ;;
+  esac
+
+  shift 1
+done
+
+seconds2time ()
+{
+   local retval=$1
+   T=$2
+   D=$((T/60/60/24))
+   H=$((T/60/60%24))
+   M=$((T/60%60))
+   S=$((T%60))
+
+   if [[ ${D} != 0 ]]
+   then
+      eval "$retval='$(printf '%dd %02d:%02d:%02d' $D $H $M $S)'"
+   else
+      eval "$retval='$(printf '%02d:%02d:%02d' $H $M $S)'"
+   fi
+}
+
+spotbid ()
+{
+    local r1=$1
+    local r2=$2
+
+    BIDPRICE=$4
+    TYPE=$3
+
+    NOW="$(date +'%FT%T.%z')"
+    MINUTE_AGO="$(date --date='1 minute ago' +'%FT%T.%z')"
+
+    RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW)
+
+    PRICE=`echo ${RESULT} | awk '{print $5;}'`
+    eval "$r1='$PRICE'"
+
+    if [ -z $BIDPRICE ]
+    then
+      BIDPRICE=$(expr $PRICE*2 | bc)
+    fi
+
+    RESULT=$(aws --output text ec2 describe-reserved-instances-offerings --instance-tenancy "default" --instance-type $TYPE --availability-zone $ZONE --product-description $MACHINE --offering-type "No Upfront")
+
+    FULLPRICE=`echo ${RESULT} | awk '{print $15;}'`
+
+    COMP=`echo $BIDPRICE">="$FULLPRICE | bc`
+    if [ $COMP -eq 1 ]
+    then
+      echo "Bid price $BIDPRICE is greater than the reserved price $FULLPRICE, quitting"
+      exit 1
+    fi
+
+
+    BIDPRICE=${BIDPRICE:0:4}
+    if [ ${BIDPRICE:0:1} != "0" ]
+    then
+      BIDPRICE="0"$BIDPRICE
+    fi
+
+    eval "$r2='$BIDPRICE'"
+}
+
+if [ -z $CLUSTER_ID ]
+then
+
+  if [ -z $PEMFILE ]
+  then
+    echo "You must include a pem file to use (-p <pemfile>)"
+    echo
+    usage
+    exit -1
+  fi
+
+
+  if [ -n $SPOT ] && [ $SPOT != "no" ] 2> /dev/null
+  then
+    SPOT_TASK="yes"
+    SPOT_WORKER="yes"
+  fi
+
+  if [ -n $SPOT_PRICE ] 2> /dev/null
+  then
+    if [ -z $SPOT_TASK_PRICE ]
+    then
+      SPOT_TASK_PRICE=$SPOT_PRICE
+    fi
+
+    if [ -z $SPOT_WORKER_PRICE ]
+    then
+      SPOT_WORKER_PRICE=$SPOT_PRICE
+    fi
+  fi
+
+
+  if [ $WORKER_NODES -gt 0 ];
+  then
+    if [ -n $SPOT_WORKER ] && [ $SPOT_WORKER != "no" ] 2> /dev/null
+    then
+      spotbid SPOT_PRICE BID_PRICE $WORKER_TYPE $SPOT_WORKER_PRICE
+      WORKER_BID=",BidPrice="$BID_PRICE
+      echo "Core nodes - spot price: $SPOT_PRICE bid price $BID_PRICE"
+    else
+      WORKER_BID=
+    fi
+    WORKERS=InstanceCount=$WORKER_NODES,Name=Core,InstanceGroupType=CORE,InstanceType=$WORKER_TYPE$WORKER_BID
+  else
+    WORKERS=
+  fi
+
+  if [ $TASK_NODES -gt 0 ]
+  then
+    if [ -n $SPOT_TASK ] && [ $SPOT_TASK != "no" ] 2> /dev/null
+    then
+      spotbid SPOT_PRICE BID_PRICE $TASK_TYPE $SPOT_TASK_PRICE
+      TASK_BID=",BidPrice="$BID_PRICE
+      echo "Task nodes - spot price: $SPOT_PRICE bid price $BID_PRICE"
+    else
+      TASK_BID=
+    fi
+
+    TASKS=InstanceCount=$TASK_NODES,Name=Task,InstanceGroupType=TASK,InstanceType=$TASK_TYPE$TASK_BID
+  else
+    TASKS=
+  fi
+
+  echo "starting cluster " $NAME
+
+  YARN_ARGS=()
+  YARN_ARGS+=("-y" "yarn.nodemanager.pmem-check-enabled=false")
+  YARN_ARGS+=("-y","yarn.nodemanager.vmem-check-enabled=false")
+  YARN_ARGS+=("-y","yarn.scheduler.minimum-allocation-mb=1024")   # 2048
+  YARN_ARGS+=("-m","yarn.app.mapreduce.am.resource.mb=1024")      # 2048
+  YARN_ARGS+=("-y","yarn.app.mapreduce.am.command-opts=-Xmx820m") # 1638
+
+  SPARK_ARGS=()
+  SPARK_ARGS+=("spark.yarn.jar=/home/hadoop/spark/lib/spark-assembly-1.4.0-hadoop2.4.0.jar")
+  SPARK_ARGS+=("spark.network.timeout=300")
+  #SPARK_ARGS+=("spark.akka.askTimeout=180")
+  #SPARK_ARGS+=("spark.akka.timeout=600")
+  #SPARK_ARGS+=("spark.core.connection.auth.wait.timeout=300")
+  #SPARK_ARGS+=("spark.core.connection.ack.wait.timeout=300")
+  SPARK_ARGS+=("spark.akka.framesize=50")
+  SPARK_ARGS+=("spark.tasks.schedule.aggression=RACK_LOCAL")
+  SPARK_ARGS+=("spark.tasks.revive_periodic.interval=200")
+  #SPARK_ARGS+=("spark.speculation=true")
+  #SPARK_ARGS+=("spark.shuffle.consolidateFiles=true")
+  #SPARK_ARGS+=("spark.rdd.compress=true")
+
+  IFS=',';
+  YARN_CONF="${YARN_ARGS[*]// /|}"
+  SPARK_CONF="${SPARK_ARGS[*]// /|}"
+  IFS=$' \t\n'
+
+
+  CLUSTER_ID=$(aws --output text emr create-cluster --name "$NAME $NOW" --ami-version 3.7 --ec2-attributes KeyName=$PEMFILE,AvailabilityZone=$ZONE \
+  --log-uri "s3://mrgeo-deploy/logs" \
+  --instance-groups InstanceCount=1,Name=Master,InstanceGroupType=MASTER,InstanceType=$MASTER_TYPE $WORKERS $TASKS\
+  --tags mrgeo= --no-auto-terminate --no-termination-protected  \
+  --bootstrap-actions \
+  Path=s3://mrgeo-deploy/mrgeo-emr-bootstrap.sh,Name="Fix Up EMR for MrGeo" \
+  Path=s3://mrgeo-deploy/install-gdal.sh,Name="Install GDAL" \
+  Path=s3://mrgeo-deploy/yarn-setup.sh,Name="Setup YARN" \
+  Path=s3://support.elasticmapreduce/spark/install-spark,Name="Install Spark",Args=[-l,INFO,-v,1.4.0.b] \
+  Path=s3://elasticmapreduce/bootstrap-actions/configure-hadoop,Name="Configure YARN",Args=[$YARN_CONF] \
+  --steps \
+  Name="Install MrGeo",Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://mrgeo-deploy/mrgeo-setup.sh \
+  Name="Start Spark HistoryServer",Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://support.elasticmapreduce/spark/start-history-server \
+  Name="Configure Spark",Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=[s3://support.elasticmapreduce/spark/configure-spark.bash,$SPARK_CONF] \
+  --use-default-roles --enable-debugging)
+
+#Name=RunIngest,Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://mrgeo-deploy/mrgeo-ingest-aster.sh
+#Path=s3://mrgeo-deploy/install-scala.sh,Name="Install Scala"
+#  Path=s3://elasticmapreduce/bootstrap-actions/configure-hadoop,Name="Configure YARN",Args=["-y","yarn.scheduler.minimum-allocation-mb=1024","-m","yarn.app.mapreduce.am.resource.mb=1024","-y","yarn.app.mapreduce.am.command-opts=-Xmx1638m","-y","yarn.nodemanager.delete.debug-delay-sec=7200","-y","yarn.nodemanager.aux-services=spark_shuffle","-y","yarn.nodemanager.aux-services.spark_shuffle.class=org.apache.spark.network.yarn.YarnShuffleService"] \
+
+fi
+
+while true
+do
+  STATUS=`aws emr describe-cluster --cluster-id $CLUSTER_ID`
+
+  CLUSTERSTATUS=`echo $STATUS | jq -r '.Cluster.Status.State'`
+
+  STARTTIME=`echo $STATUS | jq -r '.Cluster.Status.Timeline.CreationDateTime'`
+  STARTTIME=${STARTTIME%.*}
+
+  INSTANCESTR=`echo $STATUS | jq -r '.Cluster.InstanceGroups[] | .Name, .RequestedInstanceCount, .InstanceType, .Status.State, .RunningInstanceCount'`
+
+  INSTANCES=( $INSTANCESTR )
+
+
+  len=${#INSTANCES[@]}
+
+  if [ $CLUSTERSTATUS == "TERMINATED" ] || [ $CLUSTERSTATUS == "TERMINATED_WITH_ERRORS" ]
+  then
+    break
+  else
+    ENDTIME=$(date +%s)
+    ELAPSED=$((ENDTIME - STARTTIME))
+    RETURN=''
+    seconds2time VAL $ELAPSED
+    echo "Cluster: "$NAME" ("$CLUSTER_ID") : "$CLUSTERSTATUS"   elapsed: "$VAL
+
+    i=0
+    while [ $i -lt $len ]
+    do
+      if [ ${INSTANCES[i+1]} == ${INSTANCES[i+4]} ]
+      then
+        NODES=${INSTANCES[i+1]}
+      else
+        NODES=${INSTANCES[i+4]}"/"${INSTANCES[i+1]}
+      fi
+
+      echo "  "${INSTANCES[i]}" ("${NODES}"-"${INSTANCES[i+2]}") : "${INSTANCES[i+3]}
+      i=$((i+5))
+    done
+  fi
+  sleep 15
+
+done
+
+echo "Cluster Terminated!"

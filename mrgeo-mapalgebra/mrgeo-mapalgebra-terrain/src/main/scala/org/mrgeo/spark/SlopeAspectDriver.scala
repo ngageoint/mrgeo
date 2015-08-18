@@ -15,7 +15,7 @@
 
 package org.mrgeo.spark
 
-import java.awt.image.{DataBuffer, Raster}
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import java.util.Properties
 import javax.vecmath.Vector3d
@@ -57,10 +57,6 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
-    classes += classOf[TileIdWritable]
-    classes += classOf[RasterWritable]
-    classes += classOf[TileNeighborhood]
-
     classes.result()
   }
 
@@ -78,9 +74,12 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
     true
   }
 
-  private def calculate(tiles:RDD[(Long, TileNeighborhood)], nodata:Double, zoom:Int, tilesize:Int) = {
+  private def calculate(tiles:RDD[(TileIdWritable, RasterWritable)], bufferX:Int, bufferY: Int, nodata:Double, zoom:Int, tilesize:Int) = {
 
     tiles.map(tile => {
+
+      val raster = RasterWritable.toRaster(tile._2)
+
       val np = 0
       val zp = 1
       val pp = 2
@@ -91,7 +90,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
       val zn = 7
       val pn = 8
 
-      val bounds = TMSUtils.tileBounds(TMSUtils.tileid(tile._1, zoom), zoom, tilesize)
+      val bounds = TMSUtils.tileBounds(TMSUtils.tileid(tile._1.get, zoom), zoom, tilesize)
 
       // calculate the great circle distance of the tile (through the middle)
       val midx = bounds.w + ((bounds.e - bounds.w) / 2.0)
@@ -106,73 +105,16 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
       val normal = new Vector3d()
       val up = new Vector3d(0, 0, 1.0)  // z (up) direction
 
-
       var theta:Double = 0.0
 
-      val elevations = {
-        val neighborhood = tile._2
 
-        val rasters = Array.ofDim[Raster](neighborhood.height, neighborhood.width)
-
-        for (y <- 0 until neighborhood.height) {
-          for (x <- 0 until neighborhood.width) {
-            rasters(y)(x) = RasterWritable.toRaster(neighborhood.neighborAbsolute(x, y))
-          }
-        }
-
-        //neighborhood.sizeof()
-
-        rasters
-      }
-
-      val anchorX = tile._2.anchorX()
-      val anchorY = tile._2.anchorY()
-      val anchor = elevations(anchorY)(anchorX)
-
-      def isnodata(v:Double, nodata:Double):Boolean = (nodata.isNaN && v.isNaN) || (v == nodata)
-
-      def getElevation(x:Int, y:Int):Double = {
-
-        var offsetX = 0
-        var offsetY = 0
-
-        if (x < 0) {
-          offsetX = -1
-        }
-        else if (x >= anchor.getWidth) {
-          offsetX = 1
-        }
-
-        if (y < 0) {
-          offsetY = -1
-        }
-        else if (y >= anchor.getWidth) {
-          offsetY = 1
-        }
-
-        var px:Int = x
-        if (offsetX < 0) {
-          px = anchor.getWidth + x
-        }
-        else if (offsetX > 0) {
-          px = x - anchor.getWidth
-        }
-
-        var py:Int = y
-        if (offsetY < 0) {
-          py = anchor.getHeight + y
-        }
-        else if (offsetY > 0) {
-          py = y - anchor.getHeight
-        }
-
-        elevations(anchorY + offsetY)(anchorX + offsetX).getSampleDouble(px, py, 0)
-      }
+      def isnodata(v:Double, nodata:Double):Boolean = if (nodata.isNaN) v.isNaN  else v == nodata
 
       def calculateNormal(x: Int, y: Int): (Double, Double, Double) = {
 
         // if the origin pixel is nodata, the normal is nodata
-        val origin = anchor.getSampleDouble(x, y, 0)
+
+        val origin = raster.getSampleDouble(x, y, 0)
         if (isnodata(origin, nodata)) {
           return (Double.NaN, Double.NaN, Double.NaN)
         }
@@ -182,7 +124,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
         var ndx = 0
         for (dy <- y - 1 to y + 1) {
           for (dx <- x - 1 to x + 1) {
-            z(ndx) = getElevation(dx, dy)
+            z(ndx) = raster.getSampleDouble(dx, dy, 0)
             if (isnodata(z(ndx), nodata)) {
               z(ndx) = origin
             }
@@ -225,17 +167,20 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
         }
       }
 
-      val raster = RasterUtils.createEmptyRaster(anchor.getWidth, anchor.getHeight, 1, DataBuffer.TYPE_FLOAT) // , Float.NaN)
+      val width = raster.getWidth - bufferX * 2
+      val height = raster.getHeight - bufferY * 2
 
-      for (y <- 0 until anchor.getHeight) {
-        for (x <- 0 until anchor.getWidth) {
-          val normal = calculateNormal(x, y)
+      val answer = RasterUtils.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT) // , Float.NaN)
 
-          raster.setSample(x, y, 0, calculateAngle(normal))
+      for (y <- 0 until height) {
+        for (x <- 0 until width) {
+          val normal = calculateNormal(x + bufferX, y + bufferY)
+
+          answer.setSample(x, y, 0, calculateAngle(normal))
         }
       }
 
-      (new TileIdWritable(tile._1), RasterWritable.toWritable(raster))
+      (new TileIdWritable(tile._1), RasterWritable.toWritable(answer))
     })
   }
 
@@ -246,19 +191,30 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
 
     val metadata: MrsImagePyramidMetadata = ip.getMetadataReader.read
     val zoom = metadata.getMaxZoomLevel
+    val tilesize = metadata.getTilesize
     val pyramid = SparkUtils.loadMrsPyramid(ip, zoom, context)
 
-    val tiles = TileNeighborhood.createNeighborhood(pyramid, -1, -1, 3, 3,
-      zoom, metadata.getTilesize, metadata.getDefaultValue(0), context)
+    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(metadata.getBounds), zoom, tilesize)
 
-    val answer = calculate(tiles, metadata.getDefaultValue(0), zoom, metadata.getTilesize).persist(StorageLevel.MEMORY_AND_DISK)
+    val nodatas = Array.ofDim[Number](metadata.getBands)
+    for (i <- nodatas.indices) {
+      nodatas(i) = metadata.getDefaultValue(i)
+    }
+
+    val bufferX = 1
+    val bufferY = 1
+
+    val tiles = FocalBuilder.create(pyramid, bufferX, bufferY, metadata.getBounds, zoom, nodatas, context)
+
+    val answer =
+      calculate(tiles, bufferX, bufferY, metadata.getDefaultValue(0), zoom, tilesize)
 
     val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
 
-    SparkUtils.saveMrsPyramid(answer, op, output, zoom, metadata.getTilesize, Array[Double](Float.NaN),
-      context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, 1, metadata.getProtectionLevel, null)
+    SparkUtils.saveMrsPyramid(answer, op, output, zoom, tilesize, Array[Double](Float.NaN),
+      context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, bands = 1,
+      protectionlevel = metadata.getProtectionLevel)
 
-    answer.unpersist()
     true
   }
 

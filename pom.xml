@@ -53,6 +53,7 @@
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
     <hadoop.scope>provided</hadoop.scope>
+    <hadoop.aws.version>2.7.1</hadoop.aws.version>
     <hadoop.yarn.version>${hadoop.version}</hadoop.yarn.version>
     <hppc.version>0.5.2</hppc.version>
     <imageio.version>1.1.7</imageio.version>
@@ -1462,7 +1463,7 @@
         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
-        <slf4j.version>1.6.5</slf4j.version>
+        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.2.0</final.classifier>
@@ -2369,10 +2370,12 @@
             <groupId>hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
           </exclusion>
+          <!--
           <exclusion>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
           </exclusion>
+          -->
           <exclusion>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>

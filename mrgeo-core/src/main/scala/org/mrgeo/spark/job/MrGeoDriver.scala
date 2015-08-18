@@ -36,13 +36,15 @@ abstract class MrGeoDriver extends Logging {
 
   def setup(job: JobArguments): Boolean
 
-  def run(name:String, driver:String = this.getClass.getName, args:Map[String, String] = Map[String, String](), hadoopConf:Configuration) = {
+  def run(name:String, driver:String = this.getClass.getName, args:Map[String, String] = Map[String, String](),
+      hadoopConf:Configuration) = {
     val job = new JobArguments()
 
     job.driverClass = driver
 
     job.name = name
     job.setAllSettings(args)
+    job.addMrGeoProperties()
 
 
     logInfo("Configuring application")
@@ -212,7 +214,7 @@ abstract class MrGeoDriver extends Logging {
 
   }
 
-  private def calculateYarnResources():(Int, Int, Int) = {
+  private def calculateYarnResources():(Int, Int, Long) = {
 
     val cl = getClass.getClassLoader
 
@@ -259,7 +261,7 @@ abstract class MrGeoDriver extends Logging {
 
     stop.invoke(yc)
 
-    (cores, nodes, memory.toInt)
+    (cores, nodes, memory)
   }
 
   private def configureYarnMemory(job:JobArguments, memory:Long, minmemory:Long,

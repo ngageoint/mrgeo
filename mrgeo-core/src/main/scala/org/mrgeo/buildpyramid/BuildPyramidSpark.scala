@@ -16,31 +16,27 @@
 package org.mrgeo.buildpyramid
 
 import java.awt.image.{Raster, WritableRaster}
-import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.MapFile
-import org.apache.spark.rdd.{PairRDDFunctions, OrderedRDDFunctions, RDD}
-import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.aggregators.{AggregatorRegistry, MeanAggregator, Aggregator}
-import org.mrgeo.data.{KVIterator, DataProviderFactory}
+import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.{MrsTileReader, MrsTileWriter, TileIdWritable}
+import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator}
 import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
-import org.mrgeo.spark.job.{MrGeoJob, JobArguments, MrGeoDriver}
-import org.mrgeo.utils.{LongRectangle, Bounds, TMSUtils, SparkUtils}
+import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
 
-import scala.collection.immutable.TreeMap
-import scala.collection.mutable
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 
@@ -117,11 +113,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
-    classes += classOf[TileIdWritable]
-    classes += classOf[RasterWritable]
-
     classes.result()
-
   }
 
   private def makeAggregator(classname: String) = {
@@ -165,7 +157,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
     val tilesize: Int = metadata.getTilesize
 
     val nodatas:Array[Number] = Array.ofDim[Number](metadata.getBands)
-    for (i <- 0 until nodatas.length) {
+    for (i <- nodatas.indices) {
       nodatas(i) = metadata.getDefaultValueDouble(i)
     }
 
@@ -226,7 +218,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
           RasterUtils.mosaicTile(src, dst, metadata.getDefaultValues)
 
           RasterWritable.toWritable(dst)
-        }).persist(StorageLevel.MEMORY_AND_DISK)
+        })
 
         // while we were running, there is chance the pyramid was removed from the cache and
         // reopened by another process. Re-opening it here will avoid some potential conflicts.
@@ -237,8 +229,6 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
         SparkUtils.saveMrsPyramid(mergedTiles, provider, tolevel,
           context.hadoopConfiguration, providerproperties = this.providerproperties)
-
-        mergedTiles.unpersist()
 
         //TODO: Fix this in S3
         // in S3, sometimes the just-written data isn't available to read yet.  This sleep just gives
@@ -318,6 +308,19 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
             outputTile.tx + " ty: " + outputTile.ty + " (" + outputLevel + ") x: " + tox + " y: " + toy)
       outputRaster.setDataElements(tox, toy, toraster)
     }
+
+    iter match {
+    case value: CloseableKVIterator[_, _] =>
+      try {
+        value.close()
+      }
+      catch {
+        case e: IOException =>
+          e.printStackTrace()
+      }
+    case _ =>
+    }
+
 
     val stats: Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
     log.debug("Writing output file: " + provider.getResourceName + " level: " + outputLevel)

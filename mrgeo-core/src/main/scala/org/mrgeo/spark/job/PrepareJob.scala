@@ -21,7 +21,11 @@ import java.util.Properties
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.{Logging, SparkException, SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.hdfs.utils.HadoopFileUtils
+import org.mrgeo.image.ImageStats
 import org.mrgeo.spark.job.yarn.MrGeoYarnJob
 import org.mrgeo.utils.SparkUtils
 
@@ -87,12 +91,6 @@ object PrepareJob extends Logging {
       })
     }
 
-//    // only 25% of storage is for caching datasets, 75% is available for processing
-//    if (job.isMemoryIntensive) {
-//      //conf.set("spark.storage.memoryFraction", "0.25")
-//      //conf.set("spark.shuffle.memoryFraction", "0.33")
-//    }
-
 
     conf
   }
@@ -104,7 +102,28 @@ object PrepareJob extends Logging {
       // Check and invoke for registerKryoClasses() with reflection, because isn't in pre Spark 1.2.0
       try {
         val method = conf.getClass.getMethod("registerKryoClasses", classOf[Array[Class[_]]])
-        method.invoke(conf, mrgeoJob.registerClasses())
+        val classes = Array.newBuilder[Class[_]]
+
+        // automatically include common classes
+        classes += classOf[TileIdWritable]
+        classes += classOf[RasterWritable]
+
+        classes += classOf[Array[(TileIdWritable, RasterWritable)]]
+
+        classes += classOf[ImageStats]
+        classes += classOf[Array[ImageStats]]
+
+        // include the old TileIdWritable & RasterWritable
+        classes += classOf[org.mrgeo.core.mapreduce.formats.TileIdWritable]
+        classes += classOf[org.mrgeo.core.mapreduce.formats.RasterWritable]
+
+
+        // TODO:  Need to call DataProviders to register classes
+        classes += classOf[FileSplitInfo]
+
+        classes ++= mrgeoJob.registerClasses()
+
+        method.invoke(conf, classes.result())
       }
       catch {
         case nsme: NoSuchMethodException => conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")

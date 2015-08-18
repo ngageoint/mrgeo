@@ -15,8 +15,10 @@
 
 package org.mrgeo.spark.job
 
+import collection.JavaConversions.asScalaSet
 import org.apache.commons.lang3.SystemUtils
 import org.apache.commons.lang3.SystemUtils
+import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.utils.{FileUtils, Memory}
 
 import scala.collection.mutable.ArrayBuffer
@@ -32,6 +34,7 @@ class JobArguments() {
   final private val CORES:String =  "cores"
   final private val EXECUTORS:String =  "executors"
   final private val MEMORY:String =  "memory"
+  final private val MRGEO_CONF_PREFIX = "MrGeoConf:"
 
   /**
    * Pattern for matching a Windows drive, which contains only a single alphabet character.
@@ -85,12 +88,31 @@ class JobArguments() {
     }
   }
 
+  def addMrGeoProperties(): Unit =
+  {
+    val props = MrGeoProperties.getInstance()
+    props.stringPropertyNames().foreach(U => {
+      val key = MRGEO_CONF_PREFIX + U
+      params += key -> props.getProperty(U)
+    })
+  }
+
   def setSetting(key:String, value:String) = {
-    params += key -> value
+    if (key.startsWith(MRGEO_CONF_PREFIX))
+    {
+      val mrGeoKey = key.substring(MRGEO_CONF_PREFIX.length)
+      MrGeoProperties.getInstance().setProperty(mrGeoKey, value)
+    }
+    else
+    {
+      params += key -> value
+    }
   }
 
   def setAllSettings(values: Map[String, String]) = {
-    params ++= values
+    values.foreach(U => {
+      setSetting(U._1, U._2)
+    })
   }
 
   def setJars(paths:String) = {
@@ -234,11 +256,11 @@ class JobArguments() {
       if (value.startsWith("--")) {
         // The key is an on/off switch because the value is not really
         // a value, so continue parsing with the value
-        params(key.substring(2)) = null
+        setSetting(key.substring(2), null)
         parse(value :: tail)
       }
       else {
-        params(key.substring(2)) = value
+        setSetting(key.substring(2), value)
         parse(tail)
       }
     }
@@ -248,7 +270,7 @@ class JobArguments() {
 
   case key :: Nil =>
     if (key.startsWith("--")) {
-      params(key.substring(2)) = null
+      setSetting(key.substring(2), null)
     }
     else {
       throw new Exception("Invalid switch " + key + ": must start with --")
