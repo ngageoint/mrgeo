@@ -61,7 +61,9 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
     }
     else
     {
-      conf.set(HdfsMrsPyramidOutputFormat.OUTDIR, output);
+//      conf.set(HdfsMrsPyramidOutputFormat.OUTDIR, output);
+      conf.set("mapred.output.dir", output);
+      conf.set("mapreduce.output.fileoutputformat.outputdir", output);
     }
   }
 
