@@ -121,6 +121,17 @@ private void setup(final Configuration conf, Job job) throws IOException
 @Override
 public void teardown(final Job job) throws DataProviderException
 {
+  performTeardown(job.getConfiguration());
+}
+
+@Override
+public void teardownForSpark(final Configuration conf) throws DataProviderException
+{
+  performTeardown(conf);
+}
+
+private void performTeardown(final Configuration conf) throws DataProviderException
+{
   try
   {
     String imagePath = provider.getResolvedResourceName(true);
@@ -132,7 +143,7 @@ public void teardown(final Job job) throws DataProviderException
     final Path outputWithZoom = new Path(imagePath + "/" + context.getZoomlevel());
 
     FileSplit split = new FileSplit();
-    split.generateSplits(outputWithZoom, job.getConfiguration());
+    split.generateSplits(outputWithZoom, conf);
 
     split.writeSplits(outputWithZoom);
   }

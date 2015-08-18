@@ -58,6 +58,13 @@ public interface TiledOutputFormatProvider extends ProtectionLevelValidator
    */
   public void teardown(final Job job) throws DataProviderException;
 
+  /**
+   * Perform any processing required after a Spark job has completed.
+   *
+   * @param conf
+   */
+  public void teardownForSpark(final Configuration conf) throws DataProviderException;
+
   public MrsImagePyramidMetadataWriter getMetadataWriter();
   public MrsImageDataProvider getImageProvider();
 }

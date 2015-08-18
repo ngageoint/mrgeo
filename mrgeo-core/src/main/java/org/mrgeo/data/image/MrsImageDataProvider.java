@@ -419,7 +419,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
     final ProviderProperties providerProperties) throws IOException
   {
     final TiledOutputFormatContext context = new TiledOutputFormatContext(output, bounds,
-      zoomlevel, tilesize);
+      zoomlevel, tilesize, protectionLevel);
     
     job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
     job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
@@ -460,7 +460,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
     final int bands, final String protectionLevel, final ProviderProperties providerProperties) throws IOException
   {
     final TiledOutputFormatContext context = new TiledOutputFormatContext(output, bounds,
-      zoomlevel, tilesize, tiletype, bands);
+      zoomlevel, tilesize, protectionLevel, tiletype, bands);
     job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
     job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
     final MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(output,

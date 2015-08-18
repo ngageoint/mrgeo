@@ -284,7 +284,7 @@ object SparkUtils extends Logging {
 
     val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
 
-    val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize)
+    val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize, protectionlevel)
     val tofp = provider.getTiledOutputFormatProvider(tofc)
     val conf1 = tofp.setupSparkJob(conf)
 
@@ -353,7 +353,7 @@ object SparkUtils extends Logging {
     sparkPartitioner.generateFileSplits(sorted, output, zoom, conf1)
     //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
-    //dp.teardown(job)
+    tofp.teardownForSpark(conf1)
 
     // calculate and save metadata
     MrsImagePyramid.calculateMetadata(output, zoom, provider, stats,

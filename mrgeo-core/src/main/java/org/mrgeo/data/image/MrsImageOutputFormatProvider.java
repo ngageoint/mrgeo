@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobContext;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -72,5 +73,10 @@ public abstract class MrsImageOutputFormatProvider implements TiledOutputFormatP
     job.setOutputKeyClass(TileIdWritable.class);
     job.setOutputValueClass(RasterWritable.class);
     job.setOutputFormatClass(getOutputFormat().getClass());
+    if (context.getProtectionLevel() != null)
+    {
+      job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, context.getProtectionLevel());
+    }
+    job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
   }
 }

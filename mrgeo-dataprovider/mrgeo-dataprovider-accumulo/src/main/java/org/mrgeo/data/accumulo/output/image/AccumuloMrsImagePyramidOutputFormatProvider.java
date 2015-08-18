@@ -304,12 +304,12 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
 //            File.separator;
 
         // delete the work dir if possible
-//        Path wd = new Path(workDir);
-//        FileSystem fs = HadoopFileUtils.getFileSystem(wd);
-//        if (fs.exists(wd))
-//        {
-//          fs.delete(wd, false);
-//        }
+        Path wd = new Path(workDir);
+        FileSystem fs = FileSystem.get(conf);
+        if (fs.exists(wd))
+        {
+          fs.delete(wd, true);
+        }
 
         conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR, workDir);
 
@@ -334,19 +334,10 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
 
           // we now have our list of split points
           // now build the splits file!!!
-          FileSystem fs = null;
-          //FileSystem.get(conf);
           PrintStream out = null;
 
           try
           {
-            Path wd = new Path(workDir);
-            fs = FileSystem.get(conf);
-            if (fs.exists(wd))
-            {
-              fs.delete(wd, true);
-            }
-
             out = new PrintStream(new BufferedOutputStream(fs.create(new Path(workDir + "splits.txt"))));
 
             for (Pair<Long, Long> p : splitPoints)
@@ -419,7 +410,18 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   @Override
   public void teardown(Job job) throws DataProviderException
   {
-    String myJobType = job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel));
+    performTeardown(job.getConfiguration());
+  }
+
+  @Override
+  public void teardownForSpark(final Configuration conf) throws DataProviderException
+  {
+    performTeardown(conf);
+  }
+
+  private void performTeardown(final Configuration conf) throws DataProviderException
+  {
+    String myJobType = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel));
     
     
     
@@ -431,12 +433,12 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
       PrintStream out = null;
 
       if(workDir == null){
-        workDir = job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR);
+        workDir = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR);
       }
       
       try{
         log.info("Bulk ingest starting from working directory of " + workDir);
-        fs = FileSystem.get(job.getConfiguration());
+        fs = FileSystem.get(conf);
 
         
         Path working = new Path(workDir + File.separator, MrGeoAccumuloConstants.MRGEO_ACC_FILE_NAME_BULK_WORKING);
