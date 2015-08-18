@@ -8,12 +8,15 @@ import javax.media.jai.KernelJAI
 import akka.actor.FSM.->
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data
+import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.{ProtectionLevelUtils, ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.KernelMapOp
+import org.mrgeo.opchain.OpChainDriver
 import org.mrgeo.opimage.geographickernel.{GeographicKernel, LaplacianGeographicKernel, GaussianGeographicKernel}
 import org.mrgeo.spark.job.{MrGeoJob, JobArguments, MrGeoDriver}
 import org.mrgeo.utils.{GDALUtils, TMSUtils, SparkUtils}
@@ -28,8 +31,10 @@ object KernelDriver extends MrGeoDriver with Externalizable {
   final val Output = "output"
   final val Method = "method"
   final val Sigma = "sigma"
+  final val ProviderProperties = "providerproperties"
+  final val Protection = "protectionlevel"
 
-  def gaussian(input:String, output:String, sigma: Double, conf:Configuration) = {
+  def gaussian(input:String, output:String, sigma: Double, protectionLevel: String, providerProperties: ProviderProperties, conf:Configuration) = {
 
     val args =  mutable.Map[String, String]()
 
@@ -40,10 +45,16 @@ object KernelDriver extends MrGeoDriver with Externalizable {
     args += Output -> output
     args += Sigma -> sigma.toString
 
+    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(output,
+      AccessMode.OVERWRITE, providerProperties)
+
+    args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
+    args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
+
     run(name, classOf[KernelDriver].getName, args.toMap, conf)
   }
 
-  def laplacian(input:String, output:String, sigma:Double, conf:Configuration) = {
+  def laplacian(input:String, output:String, sigma:Double, protectionLevel: String, providerProperties: ProviderProperties, conf:Configuration) = {
     val args =  mutable.Map[String, String]()
 
     val name = "Kernel (" + KernelMapOp.Laplacian + ", " + input + ")"
@@ -52,6 +63,12 @@ object KernelDriver extends MrGeoDriver with Externalizable {
     args += Input -> input
     args += Output -> output
     args += Sigma -> sigma.toString
+
+    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(output,
+      AccessMode.OVERWRITE, providerProperties)
+
+    args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
+    args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
 
     run(name, classOf[KernelDriver].getName, args.toMap, conf)
   }
@@ -74,6 +91,9 @@ class KernelDriver extends MrGeoJob with Externalizable {
 
   var geographicKernel:GeographicKernel = null
 
+  var providerproperties:ProviderProperties = null
+  var protectionlevel:String = null
+
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
@@ -90,12 +110,21 @@ class KernelDriver extends MrGeoJob with Externalizable {
     case KernelMapOp.Gaussian | KernelMapOp.Laplacian =>
       sigma = job.getSetting(KernelDriver.Sigma).toDouble
     }
+
+    protectionlevel = job.getSetting(KernelDriver.Protection)
+    if (protectionlevel == null)
+    {
+      protectionlevel = ""
+    }
+
+    providerproperties = ProviderProperties.fromDelimitedString(job.getSetting(KernelDriver.ProviderProperties))
+
     true
   }
 
   override def execute(context: SparkContext): Boolean = {
 
-    val ip = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, null.asInstanceOf[Properties])
+    val ip = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, providerproperties)
 
     val metadata: MrsImagePyramidMetadata = ip.getMetadataReader.read
     val zoom = metadata.getMaxZoomLevel
@@ -208,7 +237,7 @@ class KernelDriver extends MrGeoJob with Externalizable {
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })
 
-    val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
+    val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, providerproperties)
 
     SparkUtils.saveMrsPyramid(answer, op, output, zoom, tilesize, Array[Double](Float.NaN),
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, bands = 1,

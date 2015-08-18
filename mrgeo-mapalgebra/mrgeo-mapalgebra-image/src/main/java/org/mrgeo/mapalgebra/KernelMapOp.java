@@ -21,19 +21,10 @@ public class KernelMapOp extends RasterMapOp implements InputsCalculator
 final public static String Gaussian = "gaussian";
 final public static String Laplacian = "laplacian";
 
-final private static double EPSILON = 1e-8;
-
 private String method;
 
 // gaussian & laplacian
 private Double sigma;
-
-// triangular
-private Double min;
-private Double max;
-private Double mode;
-private Double bin;
-
 
 public static String[] register()
 {
@@ -76,10 +67,10 @@ public void build(Progress p) throws IOException, JobFailedException, JobCancell
     switch (method.toLowerCase())
     {
     case Gaussian:
-      KernelDriver.gaussian(input, output, sigma, conf);
+      KernelDriver.gaussian(input, output, sigma, getProtectionLevel(), getProviderProperties(), conf);
       break;
     case Laplacian:
-      KernelDriver.laplacian(input, output, sigma, conf);
+      KernelDriver.laplacian(input, output, sigma, getProtectionLevel(), getProviderProperties(), conf);
       break;
     }
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(output,
