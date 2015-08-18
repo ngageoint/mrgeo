@@ -16,6 +16,7 @@
 package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -33,7 +34,6 @@ import javax.ws.rs.core.Response;
 import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Properties;
 
 public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 {
@@ -171,7 +171,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
       final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
-          (Properties) null);
+          (ProviderProperties) null);
       MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
 
       writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);

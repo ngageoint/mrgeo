@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
@@ -30,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Properties;
 
 @SuppressWarnings("static-method")
 public class RasterizeVectorMapOpIntegrationTest
@@ -41,7 +41,7 @@ public class RasterizeVectorMapOpIntegrationTest
   private static String input;
   private static String shapefile = "major_road_intersections_exploded.shp";
   private static String hdfsShapefile;
-  private Properties props;
+  private ProviderProperties props;
 
 
   @BeforeClass

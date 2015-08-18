@@ -16,6 +16,7 @@
 package org.mrgeo.resources;
 
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.data.DataProviderFactory;
@@ -51,7 +52,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Properties;
 import java.util.zip.ZipOutputStream;
 
 @Path("/kml")
@@ -185,7 +185,7 @@ public class KmlGenerator
  * Returns a list of all MrsImagePyramid version 2 data in the home data directory
  */
   private static MrsImageDataProvider[] getPyramidFilesList(
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     String[] images = DataProviderFactory.listImages(providerProperties);
 
@@ -213,7 +213,7 @@ public class KmlGenerator
    *
    */
   private void addLayersToCapability(Element capability, Version kmlVersion,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
 
     MrsImageDataProvider[] providers = getPyramidFilesList(providerProperties);
@@ -401,7 +401,7 @@ public class KmlGenerator
               + serviceParam + "')");
         }
 
-        Properties providerProperties = null;
+        ProviderProperties providerProperties = null;
         if (requestParam.toLowerCase().equals("getcapabilities"))
         {
           getCapabilities(request, response, providerProperties);
@@ -466,7 +466,7 @@ public class KmlGenerator
    *
    */
   private void getCapabilities(HttpServletRequest request, HttpServletResponse response,
-      final Properties providerProperties) throws Exception
+      final ProviderProperties providerProperties) throws Exception
   {
     Document doc;
     DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
@@ -768,7 +768,7 @@ public class KmlGenerator
    *
    */
   private void getNetworkKmlRootNode(HttpServletRequest request,
-      HttpServletResponse response, final Properties providerProperties)
+      HttpServletResponse response, final ProviderProperties providerProperties)
       throws IOException
   {
     OpImageRegistrar.registerMrGeoOps();
@@ -809,7 +809,7 @@ public class KmlGenerator
   }
 
 //  public static String getKmlBodyAsString(String service, String url, Bounds inputBounds, String layer, String wmsHost,
-//    String levelStr, String res, final Properties providerProperties) throws IOException {
+//    String levelStr, String res, final ProviderProperties providerProperties) throws IOException {
 //    String bbox="";
 //    if (layer == null)
 //    {
@@ -907,7 +907,7 @@ public class KmlGenerator
 //  }
 
   public static String getKmlBodyAsString(String service, String url, Bounds inputBounds, String layer, String wmsHost,
-      String levelStr, String res, final Properties providerProperties) throws IOException {
+      String levelStr, String res, final ProviderProperties providerProperties) throws IOException {
     String bbox="";
     if (layer == null)
     {

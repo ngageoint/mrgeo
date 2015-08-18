@@ -23,6 +23,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
 
@@ -225,7 +226,7 @@ public int run(String[] args) throws IOException
     Command cmd = spi.getCommandClass().newInstance();
 
     // strip the 1st argument (the command name) and pass the rest to the command
-    Properties providerProperties = new Properties();
+      ProviderProperties providerProperties = new ProviderProperties();
     return cmd.run(Arrays.copyOfRange(args, 1, args.length), getConf(), providerProperties);
   }
   catch (Exception e)

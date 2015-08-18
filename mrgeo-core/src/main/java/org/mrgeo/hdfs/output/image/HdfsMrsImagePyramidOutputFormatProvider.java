@@ -35,6 +35,8 @@ import org.mrgeo.hdfs.partitioners.ImageSplitGenerator;
 import org.mrgeo.hdfs.partitioners.TileIdPartitioner;
 import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.org.mrgeo.hdfs.HdfsSparkTileIdPartitioner;
+import org.mrgeo.spark.SparkTileIdPartitioner;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -67,22 +69,8 @@ public void setupJob(final Job job) throws DataProviderException
   try
   {
     super.setupJob(job);
-
-    job.setOutputKeyClass(TileIdWritable.class);
-    job.setOutputValueClass(RasterWritable.class);
-
-    // make sure the directory is empty
-
-    final String outputWithZoom = provider.getResolvedResourceName(false) + "/" + context.getZoomlevel();
-
-    final Path outputPath = new Path(outputWithZoom);
-    final FileSystem fs = HadoopFileUtils.getFileSystem(job.getConfiguration(), outputPath);
-    if (fs.exists(outputPath))
-    {
-      fs.delete(outputPath, true);
-    }
-
-    setupSingleOutput(job, outputWithZoom);
+    setupConfig(job);
+    setup(job.getConfiguration(), job);
   }
   catch (final IOException e)
   {
@@ -91,7 +79,60 @@ public void setupJob(final Job job) throws DataProviderException
 }
 
 @Override
+public Configuration setupSparkJob(Configuration conf) throws DataProviderException
+{
+  try
+  {
+    Configuration conf1 = super.setupSparkJob(conf);
+    Job job = new Job(conf1);
+    setupConfig(job);
+    Configuration conf2 = job.getConfiguration();
+    // Do not pass the job into the setup method. That will configure things like
+    // a partitioner which is not needed/wanted for a spark job.
+    setup(conf2, null);
+    return conf2;
+  }
+  catch (final IOException e)
+  {
+    throw new DataProviderException("Error running spark job setup", e);
+  }
+}
+
+private void setupConfig(final Job job) throws DataProviderException
+{
+  job.setOutputKeyClass(TileIdWritable.class);
+  job.setOutputValueClass(RasterWritable.class);
+}
+
+private void setup(final Configuration conf, Job job) throws IOException
+{
+  // make sure the directory is empty
+
+  final String outputWithZoom = provider.getResolvedResourceName(false) + "/" + context.getZoomlevel();
+
+  final Path outputPath = new Path(outputWithZoom);
+  final FileSystem fs = HadoopFileUtils.getFileSystem(conf, outputPath);
+  if (fs.exists(outputPath))
+  {
+    fs.delete(outputPath, true);
+  }
+
+  setupSingleOutput(conf, job, outputWithZoom);
+}
+
+@Override
 public void teardown(final Job job) throws DataProviderException
+{
+  performTeardown(job.getConfiguration());
+}
+
+@Override
+public void teardownForSpark(final Configuration conf) throws DataProviderException
+{
+  performTeardown(conf);
+}
+
+private void performTeardown(final Configuration conf) throws DataProviderException
 {
   try
   {
@@ -104,7 +145,7 @@ public void teardown(final Job job) throws DataProviderException
     final Path outputWithZoom = new Path(imagePath + "/" + context.getZoomlevel());
 
     FileSplit split = new FileSplit();
-    split.generateSplits(outputWithZoom, job.getConfiguration());
+    split.generateSplits(outputWithZoom, conf);
 
     split.writeSplits(outputWithZoom);
   }
@@ -126,57 +167,68 @@ public MrsImageDataProvider getImageProvider()
   return provider;
 }
 
-private void setupSingleOutput(final Job job, final String outputWithZoom) throws IOException
+private void setupSingleOutput(final Configuration conf, final Job job, final String outputWithZoom) throws IOException
 {
-  job.setOutputFormatClass(HdfsMrsPyramidOutputFormat.class);
-  HdfsMrsPyramidOutputFormat.setOutputInfo(job, outputWithZoom);
-
-  final Configuration conf = job.getConfiguration();
-  final FileSystem fs = HadoopFileUtils.getFileSystem(conf);
-
-  // Set up partitioner
-  final int tilesize = context.getTilesize();
-  final int zoom = context.getZoomlevel();
-  final Bounds bounds = context.getBounds();
-
-  final LongRectangle tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds(), zoom, tilesize)
-      .toLongRectangle();
-
-  final int increment = conf.getInt(TileIdPartitioner.INCREMENT_KEY, -1);
-  if (increment != -1)
+  if (job != null)
   {
-    // if increment is provided, use it to setup the partitioner
-    splitFileTmp = TileIdPartitioner.setup(job, new ImageSplitGenerator(tileBounds.getMinX(),
-        tileBounds.getMinY(), tileBounds.getMaxX(), tileBounds.getMaxY(), zoom, increment));
+    job.setOutputFormatClass(HdfsMrsPyramidOutputFormat.class);
   }
-  else if (!context.isCalculatePartitions())
+
+  HdfsMrsPyramidOutputFormat.setOutputInfo(conf, job, outputWithZoom);
+
+  if (job != null)
   {
-    // can't calculate partitions on size, just use increment of 1 (1 row per partition)
-    splitFileTmp = TileIdPartitioner.setup(job, new ImageSplitGenerator(tileBounds.getMinX(),
-        tileBounds.getMinY(), tileBounds.getMaxX(), tileBounds.getMaxY(), zoom, 1));
-  }
-  else
-  {
+    final FileSystem fs = HadoopFileUtils.getFileSystem(conf);
 
-    final int bands = context.getBands();
-    final int tiletype = context.getTiletype();
+    // Set up partitioner
+    final int tilesize = context.getTilesize();
+    final int zoom = context.getZoomlevel();
+    final Bounds bounds = context.getBounds();
 
-    final int tileSizeBytes = tilesize * tilesize * bands * RasterUtils.getElementSize(tiletype);
+    final LongRectangle tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds(), zoom, tilesize)
+            .toLongRectangle();
 
-    // if increment is not provided, set up the partitioner using max partitions
-    final String strMaxPartitions = conf.get(TileIdPartitioner.MAX_PARTITIONS_KEY);
-    if (strMaxPartitions != null)
+    final int increment = conf.getInt(TileIdPartitioner.INCREMENT_KEY, -1);
+    if (increment != -1)
     {
-      // We know the max partitions conf setting exists, let's go read it. The
-      // 1000 hard-coded default value is never used.
-      final int maxPartitions = conf.getInt(TileIdPartitioner.MAX_PARTITIONS_KEY, 1000);
-      splitFileTmp = TileIdPartitioner.setup(job, new ImageSplitGenerator(tileBounds, zoom,
-          tileSizeBytes, fs.getDefaultBlockSize(new Path("/")), maxPartitions));
+      // if increment is provided, use it to setup the partitioner
+      splitFileTmp = TileIdPartitioner.setup(job, new ImageSplitGenerator(tileBounds.getMinX(),
+                                                                          tileBounds.getMinY(), tileBounds.getMaxX(),
+                                                                          tileBounds.getMaxY(), zoom, increment));
+    }
+    else if (!context.isCalculatePartitions())
+    {
+      // can't calculate partitions on size, just use increment of 1 (1 row per partition)
+      splitFileTmp = TileIdPartitioner.setup(job, new ImageSplitGenerator(tileBounds.getMinX(),
+                                                                          tileBounds.getMinY(), tileBounds.getMaxX(),
+                                                                          tileBounds.getMaxY(), zoom, 1));
     }
     else
     {
-      splitFileTmp = TileIdPartitioner.setup(job, new ImageSplitGenerator(tileBounds, zoom,
-          tileSizeBytes, fs.getDefaultBlockSize(new Path("/"))));
+
+      final int bands = context.getBands();
+      final int tiletype = context.getTiletype();
+
+      final int tileSizeBytes = tilesize * tilesize * bands * RasterUtils.getElementSize(tiletype);
+
+      // if increment is not provided, set up the partitioner using max partitions
+      final String strMaxPartitions = conf.get(TileIdPartitioner.MAX_PARTITIONS_KEY);
+      if (strMaxPartitions != null)
+      {
+        // We know the max partitions conf setting exists, let's go read it. The
+        // 1000 hard-coded default value is never used.
+        final int maxPartitions = conf.getInt(TileIdPartitioner.MAX_PARTITIONS_KEY, 1000);
+        splitFileTmp = TileIdPartitioner.setup(job, new ImageSplitGenerator(tileBounds, zoom,
+                                                                            tileSizeBytes,
+                                                                            fs.getDefaultBlockSize(new Path("/")),
+                                                                            maxPartitions));
+      }
+      else
+      {
+        splitFileTmp = TileIdPartitioner.setup(job, new ImageSplitGenerator(tileBounds, zoom,
+                                                                            tileSizeBytes,
+                                                                            fs.getDefaultBlockSize(new Path("/"))));
+      }
     }
   }
 }
@@ -185,5 +237,14 @@ private void setupSingleOutput(final Job job, final String outputWithZoom) throw
 public boolean validateProtectionLevel(String protectionLevel)
 {
   return true;
+}
+
+@Override
+public SparkTileIdPartitioner getPartitionerForSpark(TMSUtils.TileBounds tileBounds, int zoom)
+{
+  int tileIncrement = 1;
+  ImageSplitGenerator splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
+                                               tileBounds.e, tileBounds.n, zoom, tileIncrement);
+  return new HdfsSparkTileIdPartitioner(splitGenerator);
 }
 }

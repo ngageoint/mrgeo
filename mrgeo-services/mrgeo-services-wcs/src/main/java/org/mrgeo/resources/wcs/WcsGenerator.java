@@ -16,6 +16,7 @@
 package org.mrgeo.resources.wcs;
 
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.services.SecurityUtils;
@@ -50,7 +51,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 @Path("/wcs")
@@ -83,7 +83,7 @@ public class WcsGenerator
 
     MultivaluedMap<String, String> allParams = uriInfo.getQueryParameters();
     String request = getQueryParam(allParams, "request", "GetCapabilities");
-    Properties providerProperties = SecurityUtils.getProviderProperties();
+    ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
 
     try
     {
@@ -152,7 +152,7 @@ public class WcsGenerator
 
   private Response describeCoverage(UriInfo uriInfo,
       MultivaluedMap<String,String> allParams,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
   {
     String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
     version = new Version(versionStr);
@@ -196,7 +196,7 @@ public class WcsGenerator
 
 
   private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String> allParams,
-      Properties providerProperties)
+                                   ProviderProperties providerProperties)
   {
     // The versionParamName will be null if the request did not include the
     // version parameter.
@@ -272,7 +272,7 @@ public class WcsGenerator
    * Returns a list of all MrsImagePyramid version 2 data in the home data directory
    */
   private static MrsImageDataProvider[] getPyramidFilesList(
-          final Properties providerProperties) throws IOException
+          final ProviderProperties providerProperties) throws IOException
   {
     String[] images = DataProviderFactory.listImages(providerProperties);
 
@@ -290,7 +290,8 @@ public class WcsGenerator
     return providers;
   }
 
-  private Response getCoverage(MultivaluedMap<String, String> allParams, Properties providerProperties)
+  private Response getCoverage(MultivaluedMap<String, String> allParams,
+                               ProviderProperties providerProperties)
   {
     OpImageRegistrar.registerMrGeoOps();
 

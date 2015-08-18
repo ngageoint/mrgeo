@@ -17,13 +17,12 @@ package org.mrgeo.spark
 
 import java.awt.image.DataBuffer
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
-import java.util.Properties
 import javax.vecmath.Vector3d
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
@@ -187,7 +186,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean =
   {
-    val ip = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, null.asInstanceOf[Properties])
+    val ip = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, null.asInstanceOf[ProviderProperties])
 
     val metadata: MrsImagePyramidMetadata = ip.getMetadataReader.read
     val zoom = metadata.getMaxZoomLevel
@@ -209,7 +208,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
     val answer =
       calculate(tiles, bufferX, bufferY, metadata.getDefaultValue(0), zoom, tilesize)
 
-    val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
+    val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[ProviderProperties])
 
     SparkUtils.saveMrsPyramid(answer, op, output, zoom, tilesize, Array[Double](Float.NaN),
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, bands = 1,

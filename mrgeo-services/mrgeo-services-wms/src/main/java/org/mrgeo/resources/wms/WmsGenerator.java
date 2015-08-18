@@ -17,6 +17,7 @@ package org.mrgeo.resources.wms;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
@@ -247,7 +248,7 @@ public class WmsGenerator
     {
       MultivaluedMap<String, String> allParams = uriInfo.getQueryParameters();
       String request = getQueryParam(allParams, "request", "GetCapabilities");
-      Properties providerProperties = SecurityUtils.getProviderProperties();
+      ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
 
       String serviceName = getQueryParam(allParams, "service");
       if (serviceName == null)
@@ -322,7 +323,7 @@ public class WmsGenerator
     }
   }
 
-  private Response getMap(MultivaluedMap<String, String> allParams, Properties providerProperties)
+  private Response getMap(MultivaluedMap<String, String> allParams, ProviderProperties providerProperties)
   {
     OpImageRegistrar.registerMrGeoOps();
 
@@ -500,7 +501,7 @@ public class WmsGenerator
   /*
    * GetMosaic implementation
    */
-  private Response getMosaic(MultivaluedMap<String, String> allParams, Properties providerProperties)
+  private Response getMosaic(MultivaluedMap<String, String> allParams, ProviderProperties providerProperties)
   {
     OpImageRegistrar.registerMrGeoOps();
 
@@ -608,7 +609,7 @@ public class WmsGenerator
    * Returns a list of all MrsImagePyramid version 2 data in the home data directory
    */
   private static MrsImageDataProvider[] getPyramidFilesList(
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     String[] images = DataProviderFactory.listImages(providerProperties);
 
@@ -662,7 +663,7 @@ public class WmsGenerator
    * GetTile implementation
    */
   private Response getTile(MultivaluedMap<String, String> allParams,
-                           final Properties providerProperties)
+                           final ProviderProperties providerProperties)
   {
     String versionStr = getQueryParam(allParams, "version", "1.4.0");
     version = new Version(versionStr);
@@ -778,7 +779,7 @@ public class WmsGenerator
    */
   private Response describeTiles(UriInfo uriInfo,
                                  MultivaluedMap<String,String> allParams,
-                                 final Properties providerProperties)
+                                 final ProviderProperties providerProperties)
   {
     String versionStr = getQueryParam(allParams, "version", "1.4.0");
     version = new Version(versionStr);
@@ -810,7 +811,7 @@ public class WmsGenerator
    * GetCapabilities implementation
    */
   private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String> allParams,
-                                   Properties providerProperties)
+                                   ProviderProperties providerProperties)
   {
     // The versionParamName will be null if the request did not include the
     // version parameter.

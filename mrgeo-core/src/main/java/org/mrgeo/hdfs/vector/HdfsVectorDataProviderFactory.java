@@ -18,12 +18,13 @@ package org.mrgeo.hdfs.vector;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorDataProviderFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -31,12 +32,21 @@ import org.mrgeo.utils.HadoopUtils;
 
 public class HdfsVectorDataProviderFactory implements VectorDataProviderFactory
 {
-  private static Configuration basicConf;
+  private static Configuration conf;
 
   @Override
   public boolean isValid(Configuration conf)
   {
     return true;
+  }
+
+  @Override
+  public void initialize(Configuration conf)
+  {
+    if (this.conf == null)
+    {
+      this.conf = conf;
+    }
   }
 
   @Override
@@ -52,22 +62,27 @@ public class HdfsVectorDataProviderFactory implements VectorDataProviderFactory
   }
 
   @Override
-  public VectorDataProvider createVectorDataProvider(String prefix, String input, Configuration conf)
+  public Map<String, String> getConfiguration()
   {
-    return new HdfsVectorDataProvider(conf, prefix, input, null);
+    return null;
   }
 
   @Override
-  public VectorDataProvider createVectorDataProvider(String prefix, String input, Properties providerProperties)
+  public void setConfiguration(Map<String, String> properties)
   {
-    return new HdfsVectorDataProvider(getBasicConf(), prefix, input, providerProperties);
   }
 
   @Override
-  public String[] listVectors(Properties providerProperties) throws IOException
+  public VectorDataProvider createVectorDataProvider(String prefix, String input, ProviderProperties providerProperties)
+  {
+    return new HdfsVectorDataProvider(getConf(), prefix, input, providerProperties);
+  }
+
+  @Override
+  public String[] listVectors(ProviderProperties providerProperties) throws IOException
   {
     Path usePath = getBasePath();
-    Configuration conf = getBasicConf();
+    Configuration conf = getConf();
     FileSystem fs = HadoopFileUtils.getFileSystem(conf, usePath);
     FileStatus[] fileStatuses = fs.listStatus(usePath);
     if (fileStatuses != null)
@@ -75,7 +90,7 @@ public class HdfsVectorDataProviderFactory implements VectorDataProviderFactory
       List<String> results = new ArrayList<String>(fileStatuses.length);
       for (FileStatus status : fileStatuses)
       {
-        if (canOpen(status.getPath().toString(), conf))
+        if (canOpen(status.getPath().toString(), providerProperties))
         {
           results.add(status.getPath().getName());
         }
@@ -88,69 +103,42 @@ public class HdfsVectorDataProviderFactory implements VectorDataProviderFactory
 
   private Path getBasePath()
   {
-    return HdfsVectorDataProvider.getBasePath(getBasicConf());
+    return HdfsVectorDataProvider.getBasePath(getConf());
   }
 
   @Override
-  public boolean canOpen(String input, Configuration conf) throws IOException
+  public boolean canOpen(String input, ProviderProperties providerProperties) throws IOException
   {
-    return HdfsVectorDataProvider.canOpen(conf, input, null);
+    return HdfsVectorDataProvider.canOpen(getConf(), input, providerProperties);
   }
 
   @Override
-  public boolean canOpen(String input, Properties providerProperties) throws IOException
+  public boolean canWrite(String input, ProviderProperties providerProperties) throws IOException
   {
-    return HdfsVectorDataProvider.canOpen(getBasicConf(), input, providerProperties);
+    return HdfsVectorDataProvider.canWrite(getConf(), input, providerProperties);
   }
 
   @Override
-  public boolean canWrite(String input, Configuration conf) throws IOException
+  public boolean exists(String name, ProviderProperties providerProperties) throws IOException
   {
-    return HdfsVectorDataProvider.canWrite(conf, input, null);
+    return HdfsVectorDataProvider.exists(getConf(), name, providerProperties);
   }
 
   @Override
-  public boolean canWrite(String input, Properties providerProperties) throws IOException
-  {
-    return HdfsVectorDataProvider.canWrite(getBasicConf(), input, providerProperties);
-  }
-
-  @Override
-  public boolean exists(String name, Configuration conf) throws IOException
-  {
-    return HdfsVectorDataProvider.exists(conf, name, null);
-  }
-
-  @Override
-  public boolean exists(String name, Properties providerProperties) throws IOException
-  {
-    return HdfsVectorDataProvider.exists(getBasicConf(), name, providerProperties);
-  }
-
-  @Override
-  public void delete(String name, Configuration conf) throws IOException
-  {
-    if (exists(name, conf))
-    {
-      HdfsVectorDataProvider.delete(conf, name, null);
-    }
-  }
-
-  @Override
-  public void delete(String name, Properties providerProperties) throws IOException
+  public void delete(String name, ProviderProperties providerProperties) throws IOException
   {
     if (exists(name, providerProperties))
     {
-      HdfsVectorDataProvider.delete(getBasicConf(), name, providerProperties);
+      HdfsVectorDataProvider.delete(getConf(), name, providerProperties);
     }
   }
 
-  private static Configuration getBasicConf()
+  private static Configuration getConf()
   {
-    if (basicConf == null)
+    if (conf == null)
     {
-      basicConf = HadoopUtils.createConfiguration();
+      throw new IllegalArgumentException("The configuration was not initialized");
     }
-    return basicConf;
+    return conf;
   }
 }

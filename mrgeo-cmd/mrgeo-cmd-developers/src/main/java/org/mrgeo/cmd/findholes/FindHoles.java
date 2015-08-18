@@ -16,7 +16,6 @@
 package org.mrgeo.cmd.findholes;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -31,6 +30,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.findholes.mapreduce.FindHolesDriver;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
@@ -85,7 +85,7 @@ public class FindHoles extends Command{
 	
 	@Override
 	public int run(String[] args, Configuration conf,
-			Properties providerProperties) {
+			ProviderProperties providerProperties) {
 
 		CommandLine line = null;
 		try
@@ -130,9 +130,13 @@ public class FindHoles extends Command{
 			out = line.getOptionValue("o");
 
 			// DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES
-			Properties props = new Properties();
+			ProviderProperties props = null;
 			if(line.hasOption("r")){
-				props.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES, line.getOptionValue("r"));
+				props = new ProviderProperties("", line.getOptionValue("r"));
+			}
+			else
+			{
+				props = new ProviderProperties();
 			}
 			
 			

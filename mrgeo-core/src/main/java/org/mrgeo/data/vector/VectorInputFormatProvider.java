@@ -15,13 +15,12 @@
 
 package org.mrgeo.data.vector;
 
-import java.util.Properties;
-
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.geometry.Geometry;
 
 public abstract class VectorInputFormatProvider
@@ -49,7 +48,7 @@ public abstract class VectorInputFormatProvider
    * @param job
    */
   public void setupJob(final Job job,
-      final Properties providerProperties) throws DataProviderException
+      final ProviderProperties providerProperties) throws DataProviderException
   {
     DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
         job.getConfiguration());

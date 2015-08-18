@@ -28,7 +28,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.{MrsTileReader, MrsTileWriter, TileIdWritable}
-import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator}
+import org.mrgeo.data.{ProviderProperties, CloseableKVIterator, DataProviderFactory, KVIterator}
 import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
@@ -45,7 +45,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
   final private val ProviderProperties = "provider.properties"
 
   def build(pyramidName: String, aggregator: Aggregator, conf: Configuration,
-      providerProperties: Properties):Boolean = {
+      providerProperties: ProviderProperties):Boolean = {
 
     val name = "BuildPyramid"
 
@@ -57,7 +57,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
   }
 
   def build (pyramidName: String, aggregator: Aggregator,
-      conf: Configuration, progress: Progress, jobListener: JobListener, providerProperties: Properties): Boolean = {
+      conf: Configuration, progress: Progress, jobListener: JobListener, providerProperties: ProviderProperties): Boolean = {
     build(pyramidName, aggregator, conf, providerProperties)
   }
 
@@ -68,26 +68,24 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 
   def buildlevel (pyramidName: String, level: Int, aggregator: Aggregator,
       conf: Configuration, progress: Progress, jobListener: JobListener,
-      providerProperties: Properties): Boolean = {
+      providerProperties: ProviderProperties): Boolean = {
     throw new NotImplementedError("Not yet implemented")
   }
 
-  private def setupArguments(pyramid: String, aggregator: Aggregator, providerProperties: Properties):mutable.Map[String, String] = {
+  private def setupArguments(pyramid: String, aggregator: Aggregator, providerProperties: ProviderProperties):mutable.Map[String, String] = {
     val args = mutable.Map[String, String]()
 
     args += Pyramid -> pyramid
     args += Aggregator -> aggregator.getClass.getName
 
-    var p: String = ""
-    if (providerProperties != null && !providerProperties.isEmpty) {
-      providerProperties.foreach(kv => {
-        if (p.length > 0) {
-          p += "||"
+    if (providerProperties != null)
+    {
+      args += ProviderProperties -> providerProperties.toDelimitedString()
         }
-        p += kv._1 + "=" + kv._2
-      })
+    else
+    {
+      args += ProviderProperties -> ""
     }
-    args += ProviderProperties -> p
 
     args
   }
@@ -108,7 +106,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
   var pyramidName:String = null
   var aggregator:Aggregator = null
-  var providerproperties:Properties = null
+  var providerproperties:ProviderProperties = null
 
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
@@ -129,14 +127,8 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
     makeAggregator(aggclass)
 
-    val props = job.getSetting(BuildPyramidSpark.ProviderProperties).split("||")
-    providerproperties = new Properties()
-    props.foreach (prop => {
-      if (prop.contains("=")) {
-        val kv = prop.split("=")
-        providerproperties.put(kv(0), kv(1))
-      }
-    })
+    providerproperties = ProviderProperties.fromDelimitedString(
+      job.getSetting(BuildPyramidSpark.ProviderProperties))
 
     true
   }
@@ -147,8 +139,9 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
+    log.warn("Building pyramid for " + pyramidName);
     val provider: MrsImageDataProvider =
-      DataProviderFactory.getMrsImageDataProvider(pyramidName, AccessMode.READ, null.asInstanceOf[Properties])
+      DataProviderFactory.getMrsImageDataProvider(pyramidName, AccessMode.READ, null.asInstanceOf[ProviderProperties])
 
     var metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
 
@@ -161,6 +154,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
       nodatas(i) = metadata.getDefaultValueDouble(i)
     }
 
+    DataProviderFactory.saveProviderPropertiesToConfig(providerproperties, context.hadoopConfiguration)
     // build the levels
     for (level <- maxLevel until 1 by -1) {
       val fromlevel = level
@@ -324,7 +318,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
     val stats: Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
     log.debug("Writing output file: " + provider.getResourceName + " level: " + outputLevel)
-    val writer: MrsTileWriter[Raster] = provider.getMrsTileWriter(outputLevel)
+    val writer: MrsTileWriter[Raster] = provider.getMrsTileWriter(outputLevel, metadata.getProtectionLevel)
     import scala.collection.JavaConversions._
     for (tile <- outputTiles.entrySet) {
       logDebug("  writing tile: " + tile.getKey.get)

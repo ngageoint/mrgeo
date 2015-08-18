@@ -20,6 +20,7 @@ import org.apache.hadoop.fs.Path;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.format.FeatureInputFormatFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -29,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Properties;
 
 public class VectorFileMapOpLoader implements ResourceMapOpLoader
 {
@@ -42,7 +42,7 @@ public class VectorFileMapOpLoader implements ResourceMapOpLoader
 
   @Override
   public MapOp loadMapOpFromResource(String resourceName,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     try
     {

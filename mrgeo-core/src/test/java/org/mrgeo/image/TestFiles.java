@@ -19,6 +19,7 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -26,7 +27,6 @@ import org.mrgeo.utils.TMSUtils.Bounds;
 import org.mrgeo.utils.TMSUtils.TileBounds;
 
 import java.io.IOException;
-import java.util.Properties;
 
 public abstract class TestFiles
 {
@@ -37,7 +37,7 @@ public abstract class TestFiles
   private MrsImagePyramidMetadata metadata;
   
   protected void setup(String testFile,
-      final Properties providerProperties) throws JsonGenerationException, JsonMappingException, IOException {
+      final ProviderProperties providerProperties) throws JsonGenerationException, JsonMappingException, IOException {
     
     MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(testFile,
         AccessMode.READ, providerProperties);

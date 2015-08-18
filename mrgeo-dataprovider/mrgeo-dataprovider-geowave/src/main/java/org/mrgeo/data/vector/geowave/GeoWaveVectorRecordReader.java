@@ -14,9 +14,12 @@ import org.mrgeo.data.vector.VectorInputSplit;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geometry>
 {
+  static Logger log = LoggerFactory.getLogger(GeoWaveVectorRecordReader.class);
   public static final String CQL_FILTER = GeoWaveVectorRecordReader.class.getName() + ".cqlFilter";
 
   private GeoWaveRecordReader<Object> delegateReader;
@@ -47,7 +50,9 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
     }
     delegateReader = new GeoWaveRecordReader<Object>();
     // Pass the native split wrapped by VectorInputSplit back into the native reader.
-    delegateReader.initialize(((VectorInputSplit)split).getWrappedInputSplit(), context);
+    log.info("Calling GeoWave delegate reader initialize()");
+    delegateReader.initialize(((VectorInputSplit) split).getWrappedInputSplit(), context);
+    log.info("Done calling GeoWave delegate reader initialize()");
   }
 
   @Override
@@ -56,7 +61,9 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
     // Get records from the delegate record reader. If there is a CQL filter
     // being applied, loop until the returned value satisfies that filter or
     // there are no more records.
+    log.info("Calling GeoWave delegate reader nextKeyValue()");
     boolean result = delegateReader.nextKeyValue();
+    log.info("Done calling GeoWave delegate reader nextKeyValue()");
     while (result)
     {
       Object value = delegateReader.getCurrentValue();
@@ -75,7 +82,9 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
         }
         return true;
       }
+      log.info("Calling GeoWave delegate reader nextKeyValue() in while loop");
       result = delegateReader.nextKeyValue();
+      log.info("Done calling GeoWave delegate reader nextKeyValue() in while loop");
     }
     if (!result)
     {

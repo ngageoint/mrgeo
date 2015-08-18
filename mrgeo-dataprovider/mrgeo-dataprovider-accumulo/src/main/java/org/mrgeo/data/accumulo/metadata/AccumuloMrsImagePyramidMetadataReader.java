@@ -26,6 +26,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
@@ -106,8 +107,8 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     // what if the loadMetadata fails?
     if(metadata == null){
     	log.info("Did not read metadata for " + name);
+      Thread.dumpStack();
         throw new IOException("Can not load metadata, resource name is empty!");
-
     } else {
     	metadata.setPyramid(name);        
     	log.info("Read metadata for " + name + " with max zoom level at " + metadata.getMaxZoomLevel());
@@ -215,7 +216,7 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     } else {
 
     	// get authorizations from dataProvider
-    	p1 = dataProvider.getProviderProperties();
+    	p1 = AccumuloUtils.providerPropertiesToProperties(dataProvider.getProviderProperties());
     	p2 = dataProvider.getQueryProperties();
       if(p1 != null){
     	  mrgeoAccProps.putAll(p1);
@@ -237,14 +238,8 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     	authsString = mrgeoAccProps.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
     }
 
-    if(authsString.length() > 0){
-    	auths = new Authorizations(authsString.split(","));
-    } else {
-    	auths = new Authorizations();
-    }
-    
-    log.debug("authorizations = " + auths);
-    
+    auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsString);
+
     if(conn == null){
       try{
         conn = AccumuloConnector.getConnector(mrgeoAccProps);
@@ -270,7 +265,6 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     scan.setRange(range);
     scan.fetchColumn(new Text(MrGeoAccumuloConstants.MRGEO_ACC_METADATA), new Text(MrGeoAccumuloConstants.MRGEO_ACC_CQALL));
     for(Entry<Key, Value> entry : scan){
-
       ByteArrayInputStream bis = new ByteArrayInputStream(entry.getValue().get());
       retMeta = MrsImagePyramidMetadata.load(bis);
       bis.close();

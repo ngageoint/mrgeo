@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
@@ -30,19 +31,20 @@ import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Properties;
 
 public class HdfsAdHocDataProviderFactoryTest
 {
   HdfsAdHocDataProviderFactory factory;
   AdHocDataProvider provider = null;
   Configuration conf;
+  ProviderProperties providerProperties = null;
 
   @Before
   public void setup()
   {
     conf = HadoopUtils.createConfiguration();
     factory = new HdfsAdHocDataProviderFactory();
+    factory.initialize(conf);
   }
 
   @After
@@ -64,32 +66,11 @@ public class HdfsAdHocDataProviderFactoryTest
 
   @Test
   @Category(UnitTest.class)
-  public void testCreateAdHocDataProvider1() throws Exception
-  {
-    provider = factory.createAdHocDataProvider(conf);
-    Assert.assertEquals("Created wrong provider type", HdfsAdHocDataProvider.class, provider.getClass());
-
-  }
-
-  @Test
-  @Category(UnitTest.class)
   public void testCreateAdHocDataProvider2() throws Exception
   {
-    provider = factory.createAdHocDataProvider((Properties) null);
+    provider = factory.createAdHocDataProvider(providerProperties);
     Assert.assertEquals("Created wrong provider type", HdfsAdHocDataProvider.class, provider.getClass());
 
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCreateAdHocDataProviderName1() throws Exception
-  {
-    String name = "foo";
-    provider = factory.createAdHocDataProvider(name, conf);
-    Assert.assertEquals("Created wrong provider type", HdfsAdHocDataProvider.class, provider.getClass());
-
-    Path path = new Path(provider.getResourceName());
-    Assert.assertEquals("Created wrong name!", name, path.getName());
   }
 
   @Test
@@ -97,7 +78,7 @@ public class HdfsAdHocDataProviderFactoryTest
   public void testCreateAdHocDataProviderName2() throws Exception
   {
     String name = "foo";
-    provider = factory.createAdHocDataProvider(name, (Properties)null);
+    provider = factory.createAdHocDataProvider(name, providerProperties);
     Assert.assertEquals("Created wrong provider type", HdfsAdHocDataProvider.class, provider.getClass());
 
     Path path = new Path(provider.getResourceName());
@@ -108,30 +89,30 @@ public class HdfsAdHocDataProviderFactoryTest
   @Category(UnitTest.class)
   public void testCanOpen() throws Exception
   {
-    provider = factory.createAdHocDataProvider(conf);
+    provider = factory.createAdHocDataProvider(providerProperties);
     String name = provider.getResourceName();
 
     OutputStream outputStream = provider.add();
     outputStream.close();
 
-    Assert.assertTrue("Should be able to open!", factory.canOpen(name, conf));
+    Assert.assertTrue("Should be able to open!", factory.canOpen(name, providerProperties));
   }
 
   @Test
   @Category(UnitTest.class)
   public void testCanOpenNothingWritten() throws Exception
   {
-    provider = factory.createAdHocDataProvider(conf);
+    provider = factory.createAdHocDataProvider(providerProperties);
     String name = provider.getResourceName();
 
-    Assert.assertFalse("Should not be able to open!", factory.canOpen(name, conf));
+    Assert.assertFalse("Should not be able to open!", factory.canOpen(name, providerProperties));
   }
 
   @Test
   @Category(UnitTest.class)
   public void testCanOpenMissing() throws Exception
   {
-    Assert.assertFalse("Should not be able to open!", factory.canOpen("foo", conf));
+    Assert.assertFalse("Should not be able to open!", factory.canOpen("foo", providerProperties));
   }
 
   @Test
@@ -139,42 +120,42 @@ public class HdfsAdHocDataProviderFactoryTest
   public void testCanWrite() throws Exception
   {
     // always returns true for now
-    Assert.assertTrue("Should be able to write!", factory.canWrite("foo", conf));
+    Assert.assertTrue("Should be able to write!", factory.canWrite("foo", providerProperties));
   }
 
   @Test
   @Category(UnitTest.class)
   public void testExists() throws Exception
   {
-    provider = factory.createAdHocDataProvider(conf);
+    provider = factory.createAdHocDataProvider(providerProperties);
     // need to make sure there is something added
     OutputStream stream = provider.add();
     stream.close();
 
-    Assert.assertTrue("Name should exist!", factory.exists(provider.getResourceName(), conf));
+    Assert.assertTrue("Name should exist!", factory.exists(provider.getResourceName(), providerProperties));
   }
 
   @Test
   @Category(UnitTest.class)
   public void testExistsNothingWritten() throws Exception
   {
-    provider = factory.createAdHocDataProvider(conf);
+    provider = factory.createAdHocDataProvider(providerProperties);
 
-    Assert.assertFalse("Name should not exist!", factory.exists(provider.getResourceName(), conf));
+    Assert.assertFalse("Name should not exist!", factory.exists(provider.getResourceName(), providerProperties));
   }
 
   @Test
   @Category(UnitTest.class)
   public void testExistsMissing() throws Exception
   {
-    Assert.assertFalse("Name should not exist!", factory.exists("foo", conf));
+    Assert.assertFalse("Name should not exist!", factory.exists("foo", providerProperties));
   }
 
   @Test
   @Category(UnitTest.class)
   public void testDeleteNamed() throws Exception
   {
-    provider = factory.createAdHocDataProvider(conf);
+    provider = factory.createAdHocDataProvider(providerProperties);
     Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(provider.getResourceName()));
 
     // need to make sure there is something added, so the directories are actually created...
@@ -183,7 +164,7 @@ public class HdfsAdHocDataProviderFactoryTest
 
     Assert.assertTrue("Directory should  exist", HadoopFileUtils.exists(provider.getResourceName()));
 
-    factory.delete(provider.getResourceName(), conf);
+    factory.delete(provider.getResourceName(), providerProperties);
 
     Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(provider.getResourceName()));
   }
@@ -192,10 +173,10 @@ public class HdfsAdHocDataProviderFactoryTest
   @Category(UnitTest.class)
   public void testDeleteNamedNoData() throws Exception
   {
-    provider = factory.createAdHocDataProvider(conf);
+    provider = factory.createAdHocDataProvider(providerProperties);
     Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(provider.getResourceName()));
 
-    factory.delete(provider.getResourceName(), conf);
+    factory.delete(provider.getResourceName(), providerProperties);
 
     Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(provider.getResourceName()));
 
@@ -209,7 +190,7 @@ public class HdfsAdHocDataProviderFactoryTest
 
     Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(name));
 
-    factory.delete(name, conf);
+    factory.delete(name, providerProperties);
 
     Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(name));
 

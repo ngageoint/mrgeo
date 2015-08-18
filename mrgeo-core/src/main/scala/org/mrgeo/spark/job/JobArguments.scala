@@ -15,13 +15,15 @@
 
 package org.mrgeo.spark.job
 
+import org.mrgeo.data.DataProviderFactory
+
 import collection.JavaConversions.asScalaSet
-import org.apache.commons.lang3.SystemUtils
 import org.apache.commons.lang3.SystemUtils
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.utils.{FileUtils, Memory}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConversions._
 
 class JobArguments() {
 
@@ -68,6 +70,7 @@ class JobArguments() {
   def this(args: Seq[String]) {
     this()
     parse(args.toList)
+    DataProviderFactory.setConfigurationForProviders(params)
   }
 
 
@@ -136,6 +139,7 @@ class JobArguments() {
 
     str.toString()
   }
+
 
   def toArgArray: Array[String] = {
     val args = new ArrayBuffer[String]()
@@ -209,7 +213,7 @@ class JobArguments() {
     args.toArray
   }
 
-  def parse(opts: Seq[String]): Unit = opts match {
+  private def parse(opts: Seq[String]): Unit = opts match {
   case ("--name") :: value :: tail =>
     name = value
     parse(tail)

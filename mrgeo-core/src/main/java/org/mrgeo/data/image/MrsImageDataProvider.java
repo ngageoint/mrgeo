@@ -15,12 +15,15 @@
 
 package org.mrgeo.data.image;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.*;
 import org.mrgeo.image.BoundsCropper;
@@ -35,7 +38,6 @@ import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -56,14 +58,39 @@ import java.util.Set;
  */
 public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
 {
-  protected Properties providerProperties;
+  protected ProviderProperties providerProperties;
 
   protected MrsImageDataProvider()
   {
     super();
   }
 
-  public Properties getProviderProperties()
+  /**
+   * Override this method if your data provider needs to perform Hadoop job
+   * setup the same way for handling image input and output.
+   *
+   * @param job
+   * @throws DataProviderException
+   * @throws IOException
+   */
+  public void setupJob(final Job job) throws DataProviderException
+  {
+  }
+
+  /**
+   * Override this method if your data provider needs to perform Spark job
+   * setup the same way for handling image input and output.
+   *
+   * @param conf
+   * @throws DataProviderException
+   * @throws IOException
+   */
+  public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
+  {
+    return conf;
+  }
+
+  public ProviderProperties getProviderProperties()
   {
     return providerProperties;
   }
@@ -90,7 +117,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
    */
   public static void
   setupMrsImagePyramidAllTilesSingleInputFormat(final Job job, final String input,
-      final Bounds bounds, final double fillValue, final Properties providerProperties)
+      final Bounds bounds, final double fillValue, final ProviderProperties providerProperties)
     throws IOException
 {
 
@@ -125,7 +152,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
    */
 public static void setupMrsImagePyramidAllTilesSingleInputFormat(final Job job,
   final String input, final int zoomlevel, final int tileSize, final Bounds bounds,
-  final double fillValue, final Properties providerProperties) throws IOException
+  final double fillValue, final ProviderProperties providerProperties) throws IOException
 {
   Set<String> inputs = new HashSet<String>(1);
   inputs.add(input);
@@ -142,7 +169,7 @@ public static void setupMrsImagePyramidAllTilesSingleInputFormat(final Job job,
   {
     throw new IOException("No input format provider available for " + input);
   }
-  ifProvider.setupJob(job, providerProperties);
+  ifProvider.setupJob(job, provider);
   job.setInputFormatClass(MrsImagePyramidInputFormat.class);
 }
 
@@ -159,7 +186,7 @@ public static void setupMrsImagePyramidAllTilesSingleInputFormat(final Job job,
  * @throws IOException
  */
 public static void setupMrsPyramidInputFormat(final Job job, final Set<String> inputs,
-    final int zoomlevel, final int tileSize, final Properties providerProperties) throws IOException
+    final int zoomlevel, final int tileSize, final ProviderProperties providerProperties) throws IOException
 {
   setupMrsPyramidInputFormat(job, inputs, zoomlevel, tileSize, null, providerProperties);
 }
@@ -179,7 +206,7 @@ public static void setupMrsPyramidInputFormat(final Job job, final Set<String> i
  */
 public static void setupMrsPyramidInputFormat(final Job job, final Set<String> inputs,
   final int zoomlevel, final int tileSize, final Bounds bounds,
-  final Properties providerProperties) throws IOException
+  final ProviderProperties providerProperties) throws IOException
 {
   String firstInput = inputs.iterator().next();
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(firstInput,
@@ -204,7 +231,7 @@ public static void setupMrsPyramidInputFormat(final Job job, final Set<String> i
   {
     throw new IOException("No input format provider available for " + firstInput);
   }
-  ifProvider.setupJob(job, providerProperties);
+  ifProvider.setupJob(job, provider);
   job.setInputFormatClass(MrsImagePyramidInputFormat.class);
   // The following must be after the setupJob() call so that we overwrite the metadata
   // stored into the config during setupJob() with the cropped metadata.
@@ -232,7 +259,7 @@ public static void setupMrsPyramidInputFormat(final Job job, final Set<String> i
  * @throws IOException
  */
 public static void setupMrsPyramidInputFormat(final Job job, final String input,
-  final int zoomlevel, final int tileSize, final Properties providerProperties) throws IOException
+  final int zoomlevel, final int tileSize, final ProviderProperties providerProperties) throws IOException
 {
   final Set<String> a = new HashSet<String>();
   a.add(input);
@@ -251,7 +278,7 @@ public static void setupMrsPyramidInputFormat(final Job job, final String input,
  * @throws IOException
  */
 public static void setupMrsPyramidSingleInputFormat(final Job job, final String input,
-    final Properties providerProperties)
+    final ProviderProperties providerProperties)
   throws IOException
 {
 
@@ -282,7 +309,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
  */
   public static void setupMrsPyramidSingleInputFormat(final Job job, final String input,
     final int zoomlevel, final int tileSize, final Bounds bounds,
-    final Properties providerProperties) throws IOException
+    final ProviderProperties providerProperties) throws IOException
   {
     setupCommonMrsPyramidSingleInputFormat(job, input, zoomlevel, tileSize, bounds, providerProperties);
     job.setInputFormatClass(MrsImagePyramidInputFormat.class);
@@ -299,7 +326,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
    * @throws IOException
    */
   public static void setupMrsPyramidSingleSimpleInputFormat(final Job job, final String input,
-                                                            final Properties providerProperties)
+                                                            final ProviderProperties providerProperties)
           throws IOException
   {
 
@@ -331,7 +358,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
   public static void setupMrsPyramidSingleSimpleInputFormat(final Job job, final String input,
                                                             final int zoomlevel, final int tileSize,
                                                             final Bounds bounds,
-                                                            final Properties providerProperties) throws IOException
+                                                            final ProviderProperties providerProperties) throws IOException
   {
     setupCommonMrsPyramidSingleInputFormat(job, input, zoomlevel, tileSize, bounds, providerProperties);
     job.setInputFormatClass(MrsImagePyramidSimpleInputFormat.class);
@@ -340,7 +367,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
   private static void setupCommonMrsPyramidSingleInputFormat(final Job job, final String input,
                                                              final int zoomlevel, final int tileSize,
                                                              final Bounds bounds,
-                                                             final Properties providerProperties) throws IOException
+                                                             final ProviderProperties providerProperties) throws IOException
   {
     final MrsImagePyramid pyramid = MrsImagePyramid.open(input, providerProperties);
     MrsImagePyramidMetadata croppedMetadata = pyramid.getMetadata();
@@ -367,7 +394,7 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
     {
       throw new IOException("No input format provider available for " + input);
     }
-    ifProvider.setupJob(job, providerProperties);
+    ifProvider.setupJob(job, provider);
     // The following must be after the setupJob() call so that we overwrite the metadata
     // stored into the config during setupJob() with the cropped metadata.
     HadoopUtils.setMetadata(job, croppedMetadata);
@@ -389,10 +416,10 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
   public static MrsImageOutputFormatProvider setupMrsPyramidOutputFormat(final Job job, final String output,
     final Bounds bounds, final int zoomlevel, final int tilesize,
     final String protectionLevel,
-    final Properties providerProperties) throws IOException
+    final ProviderProperties providerProperties) throws IOException
   {
     final TiledOutputFormatContext context = new TiledOutputFormatContext(output, bounds,
-      zoomlevel, tilesize);
+      zoomlevel, tilesize, protectionLevel);
     
     job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
     job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
@@ -430,10 +457,10 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
    */
   public static MrsImageOutputFormatProvider setupMrsPyramidOutputFormat(final Job job, final String output,
     final Bounds bounds, final int zoomlevel, final int tilesize, final int tiletype,
-    final int bands, final String protectionLevel, final Properties providerProperties) throws IOException
+    final int bands, final String protectionLevel, final ProviderProperties providerProperties) throws IOException
   {
     final TiledOutputFormatContext context = new TiledOutputFormatContext(output, bounds,
-      zoomlevel, tilesize, tiletype, bands);
+      zoomlevel, tilesize, protectionLevel, tiletype, bands);
     job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, protectionLevel);
     job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
     final MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(output,
@@ -495,9 +522,11 @@ public static void setupMrsPyramidSingleInputFormat(final Job job, final String 
    */
   public abstract MrsTileReader<Raster> getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException;
 
-  public MrsTileWriter<Raster> getMrsTileWriter(final int zoomlevel) throws IOException
+  public MrsTileWriter<Raster> getMrsTileWriter(final int zoomlevel,
+                                                final String protectionLevel) throws IOException
   {
-    final MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(zoomlevel, 0);
+    final MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(zoomlevel, 0,
+                                                                                  protectionLevel);
     return getMrsTileWriter(context);
   }
 

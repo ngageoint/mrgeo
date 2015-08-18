@@ -27,6 +27,7 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
 import org.mrgeo.mapalgebra.MapAlgebraParser;
@@ -92,7 +93,7 @@ public static Options createOptions()
 }
 
 @Override
-public int run(String[] args, Configuration conf, final Properties providerProperties)
+public int run(String[] args, Configuration conf, final ProviderProperties providerProperties)
 {
 
   System.out.println(log.getClass().getName());

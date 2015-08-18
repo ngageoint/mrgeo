@@ -20,6 +20,7 @@ import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -32,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Properties;
 
 @Ignore
 public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
@@ -52,7 +52,7 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   private static String smallElevationNoPyramids = "small-elevation-nopyramids";
   private static Path smallElevationNoPyramidsPath;
 
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
 
   @BeforeClass
   public static void init() throws IOException

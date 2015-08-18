@@ -114,7 +114,7 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
    * Set all the initial parameters needed in this class for connectivity
    * out to Accumulo.
    * 
-   * @param conf
+   * @param context
    */
   private void initialize(JobContext context){//Configuration conf){
 
@@ -127,7 +127,6 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
         zoomLevel = Integer.parseInt(conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL));
       }
 
-      
       table = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE);
       username = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
       instanceName = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE);
@@ -164,8 +163,9 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
 //      log.info("Setting output with: z = " + zooKeepers);
       
       boolean connSet = ConfiguratorBase.isConnectorInfoSet(AccumuloOutputFormat.class, conf);
-      if(!connSet){
-    	  // job not always available - do it how Accumulo does it
+      if (!connSet)
+      {
+        // job not always available - do it how Accumulo does it
 	      OutputConfigurator.setConnectorInfo(AccumuloOutputFormat.class,
 	    		  conf,
 	    		  username,

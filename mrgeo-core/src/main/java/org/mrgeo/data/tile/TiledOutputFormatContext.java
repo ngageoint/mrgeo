@@ -25,6 +25,7 @@ public class TiledOutputFormatContext
   private int bands;
   private Bounds bounds;
   private int tiletype;
+  private String protectionLevel;
   final private boolean calculatePartitions;
 
   /**
@@ -32,17 +33,19 @@ public class TiledOutputFormatContext
    * 
    * @param output
    */
-  public TiledOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize)
+  public TiledOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
   {
     this.output = output;
     this.bounds = bounds.clone();
     this.zoomlevel = zoomlevel;
     this.tilesize = tilesize;
+    this.protectionLevel = protectionLevel;
     // don't have bands, and tiletype, can't calculate partitions based on size
     this.calculatePartitions = false;
   }
   
-  public TiledOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, int tiletype, int bands)
+  public TiledOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize,
+                                  String protectionLevel, int tiletype, int bands)
   {
     this.output = output;
     this.bounds = bounds.clone();
@@ -50,6 +53,7 @@ public class TiledOutputFormatContext
     this.zoomlevel = zoomlevel;
     this.tilesize =  tilesize;
     this.tiletype = tiletype;
+    this.protectionLevel = protectionLevel;
     this.calculatePartitions = true;
   }
 
@@ -89,4 +93,8 @@ public class TiledOutputFormatContext
     return calculatePartitions;
   }
 
+  public String getProtectionLevel()
+  {
+    return protectionLevel;
+  }
 }

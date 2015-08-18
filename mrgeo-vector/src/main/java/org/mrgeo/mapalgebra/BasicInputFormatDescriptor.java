@@ -18,6 +18,7 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorInputFormat;
 import org.mrgeo.data.vector.VectorInputFormatContext;
@@ -29,7 +30,6 @@ import org.mrgeo.format.FilteredFeatureInputFormat;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 public class BasicInputFormatDescriptor implements InputFormatDescriptor
@@ -37,14 +37,14 @@ public class BasicInputFormatDescriptor implements InputFormatDescriptor
   private FeatureFilterChain _chain = new FeatureFilterChain();
   private String _path = null;
   private VectorDataProvider dp;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
   
   public BasicInputFormatDescriptor(String path)
   {
     _path = path;
   }
 
-  public BasicInputFormatDescriptor(VectorDataProvider dp, Properties providerProperties)
+  public BasicInputFormatDescriptor(VectorDataProvider dp, ProviderProperties providerProperties)
   {
     this.dp = dp;
     this.providerProperties = providerProperties;

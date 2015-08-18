@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.Random;
 import java.util.TreeSet;
 
@@ -31,6 +30,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.OptionsParser;
+import org.mrgeo.data.ProviderProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,7 +209,7 @@ public class GenerateKeys extends Command {
   }
 
   @Override
-  public int run(String[] args, Configuration conf, Properties providerProperties)
+  public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
   {
     try
     {

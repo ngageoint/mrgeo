@@ -27,7 +27,6 @@ import java.awt.image.Raster;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
@@ -47,6 +46,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.MapAlgebraJob;
@@ -213,8 +213,8 @@ public class RasterResourceTest extends JerseyTest
   public void testGetImageAsKML() throws Exception
   {
     MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
-    when(service.getPyramid(anyString(), (Properties) any())).thenReturn(pyramidMock);
-    when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (Properties)anyObject()))
+    when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
+    when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
             .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
 
     final WebResource webResource = resource();
@@ -241,7 +241,7 @@ public class RasterResourceTest extends JerseyTest
   public void testGetImageBadColorScaleName() throws Exception
   {
     MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
-    when(service.getPyramid(anyString(), (Properties) any())).thenReturn(pyramidMock);
+    when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
     when(service.getColorScaleFromName(anyString())).thenAnswer(new Answer() {
           public Object answer(InvocationOnMock invocation) throws FileNotFoundException {
               StringBuilder builder = new StringBuilder();
@@ -250,7 +250,7 @@ public class RasterResourceTest extends JerseyTest
               throw new FileNotFoundException(builder.toString());
           }
       });
-    when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (Properties)anyObject()))
+    when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
             .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
 
     final WebResource webResource = resource();
@@ -276,7 +276,7 @@ public class RasterResourceTest extends JerseyTest
   {
     MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
     when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
-    when(service.getPyramid((String) any(), (Properties) any())).thenReturn(pyramidMock);
+    when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
     when(service.getImageRenderer(anyString())).thenThrow(new IllegalArgumentException("INVALID FORMAT"));
     final WebResource webResource = resource();
 
@@ -299,7 +299,7 @@ public class RasterResourceTest extends JerseyTest
   {
     ImageRenderer renderer = mock(ImageRenderer.class);
 
-    when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (Properties)anyObject()))
+    when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
               .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
     final WebResource webResource = resource();
     final String resultImage = "badpathtest";
@@ -320,12 +320,12 @@ public class RasterResourceTest extends JerseyTest
       String typ = "image/png";
       MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
       when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
-      when(service.getPyramid((String) any(), (Properties) any())).thenReturn(pyramidMock);
+      when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
       when(service.getColorScaleFromName(anyString())).thenReturn(null);
       ImageRenderer renderer = mock(ImageRenderer.class);
       // TODO: Source a legit PNG
       //Mockito.when(renderer.getMimeType()).thenReturn( typ );
-      when(renderer.renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (Properties)anyObject(), anyString()))
+      when(renderer.renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (ProviderProperties)anyObject(), anyString()))
               .thenReturn(null); // Nothing to return, we aren't validating response
 
       when(service.getImageRenderer(anyString())).thenReturn(renderer);
@@ -364,12 +364,12 @@ public class RasterResourceTest extends JerseyTest
       String typ = "image/tiff";
       MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
       when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
-      when(service.getPyramid((String) any(), (Properties) any())).thenReturn(pyramidMock);
+      when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
       when(service.getColorScaleFromName(anyString())).thenReturn(null);
       ImageRenderer renderer = mock(ImageRenderer.class);
       // TODO: Source a legit TIFF
       //Mockito.when(renderer.getMimeType()).thenReturn( typ );
-      when(renderer.renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (Properties)anyObject(), anyString()))
+      when(renderer.renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (ProviderProperties)anyObject(), anyString()))
               .thenReturn(null); // Nothing to return, we aren't validating response
 
       when(service.getImageRenderer(anyString())).thenReturn(renderer);

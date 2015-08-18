@@ -31,24 +31,38 @@ import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.output.MapFileOutputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
 {
-  public static void setInfo(final Job job)
+  private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidOutputFormat.class);
+
+  public static void setInfo(final Configuration conf, final Job job)
   {
     // index every entry
-    job.getConfiguration().set("io.map.index.interval", "1");
+    conf.set("io.map.index.interval", "1");
 
-    // compress at a record level
-    SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.RECORD);
+    if (job != null)
+    {
+      // compress at a record level
+      SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.RECORD);
+    }
   }
 
-  public static void setOutputInfo(final Job job, final String output)
+  public static void setOutputInfo(final Configuration conf, final Job job, final String output)
   {
-    setInfo(job);
-    FileOutputFormat.setOutputPath(job, new Path(output));
+    setInfo(conf, job);
+    if (job != null)
+    {
+      FileOutputFormat.setOutputPath(job, new Path(output));
+    }
+    else
+    {
+      conf.set(HdfsMrsPyramidOutputFormat.OUTDIR, output);
+    }
   }
 
   @Override
@@ -96,7 +110,7 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
     public void write(WritableComparable<?> key, Writable value)
         throws IOException
     {
-
+      log.warn("Writing HDFS record for tile " + key.toString());
       // there may ba a case or two where an extended TileIdWritable is written as the key
       // (buildpyramid does it).  So we strip out any of that information when we write the
       // actual key.
