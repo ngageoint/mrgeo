@@ -16,7 +16,7 @@ import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.KernelMapOp
 import org.mrgeo.opimage.geographickernel.{GeographicKernel, LaplacianGeographicKernel, GaussianGeographicKernel}
 import org.mrgeo.spark.job.{MrGeoJob, JobArguments, MrGeoDriver}
-import org.mrgeo.utils.{TMSUtils, SparkUtils}
+import org.mrgeo.utils.{GDALUtils, TMSUtils, SparkUtils}
 import sun.management.counter.Units
 
 import scala.collection.{mutable, parallel}
@@ -115,7 +115,7 @@ class KernelDriver extends MrGeoJob with Externalizable {
       new LaplacianGeographicKernel(sigma)
     }
 
-    kernel.createMaxSizeKernel(zoom, tilesize)
+    val weights = kernel.createMaxSizeKernel(zoom, tilesize)
 
     val kernelW: Int = kernel.getWidth
     val kernelH: Int = kernel.getHeight
@@ -132,7 +132,7 @@ class KernelDriver extends MrGeoJob with Externalizable {
       val nodata = nodatas(0).doubleValue()
       def isNodata(value:Double):Boolean = {
         if (nodata.isNaN) {
-           value.isNaN
+          value.isNaN
         }
         else {
           value == nodata
@@ -165,36 +165,45 @@ class KernelDriver extends MrGeoJob with Externalizable {
           }
         }
         else {
-          val weights = kernel.createKernel(ll.lat, resolution, resolution)
-
-          val kernelW: Int = kernel.getWidth
-          val kernelH: Int = kernel.getHeight
+          //          val weights = kernel.createKernel(ll.lat, resolution, resolution)
+          //
+          //          val kernelW: Int = kernel.getWidth
+          //          val kernelH: Int = kernel.getHeight
 
           for (x <- 0 until tilesize) {
-            var result: Double = 0.0f
-            var weight: Double = 0.0f
 
-            for (ky <- 0 until kernelH) {
-              for (kx <- 0 until kernelW) {
-                val w: Double = weights(ky * kernelW + kx)
-                //println("x: " + (x + kx - halfKernelW) + " y: " + (y + ky - halfKernelH))
-                //val v: Double = src.getSampleDouble(x + kx - halfKernelW, y + ky - halfKernelH, 0)
-                val v: Double = src.getSampleDouble(x + kx, y + ky, 0)
-                if (!isNodata(v)) {
-                  weight += w
-                  result += v * w
+            if (!isNodata(src.getSampleDouble(x + halfKernelW, y + halfKernelH, 0))) {
+              var result: Double = 0.0f
+              var weight: Double = 0.0f
+
+              for (ky <- 0 until kernelH) {
+                for (kx <- 0 until kernelW) {
+                  val w: Double = weights(ky * kernelW + kx)
+                  //println("x: " + (x + kx - halfKernelW) + " y: " + (y + ky - halfKernelH))
+                  //val v: Double = src.getSampleDouble(x + kx - halfKernelW, y + ky - halfKernelH, 0)
+                  val v: Double = src.getSampleDouble(x + kx, y + ky, 0)
+                  if (!isNodata(v)) {
+                    weight += w
+                    result += v * w
+                  }
                 }
               }
-            }
-            if (weight == 0.0f) {
-              dst.setSample(x, y, 0, Float.NaN)
+              if (weight == 0.0f) {
+                dst.setSample(x, y, 0, Float.NaN)
+              }
+              else {
+                dst.setSample(x, y, 0, result / weight)
+              }
             }
             else {
-              dst.setSample(x, y, 0, result / weight)
+              dst.setSample(x, y, 0, Float.NaN)
             }
           }
         }
       }
+
+      val fn:String = "/data/export/kernel-test/" + t.ty + "-" + t.tx + ".tif"
+      GDALUtils.saveRaster(dst, fn, t.tx, t.ty, zoom, 512, nodatas(0).doubleValue())
 
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })
