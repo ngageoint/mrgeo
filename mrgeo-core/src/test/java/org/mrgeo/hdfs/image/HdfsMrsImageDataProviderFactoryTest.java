@@ -28,6 +28,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
@@ -41,13 +42,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 {
   HdfsMrsImageDataProviderFactory factory;
   Configuration conf;
-  Properties providerProperties;
+  ProviderProperties providerProperties;
 
 
   private static String all_ones = Defs.INPUT + "all-ones";
@@ -71,7 +71,7 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
     MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, (new File(Defs.INPUT)).toURI().toString());
     factory = new HdfsMrsImageDataProviderFactory();
     conf = HadoopUtils.createConfiguration();
-    providerProperties = new Properties();
+    providerProperties = new ProviderProperties();
   }
 
   @After
@@ -89,17 +89,6 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
   @Test
   @Category(UnitTest.class)
-  public void testCreateMrsImageDataProvider1() throws Exception
-  {
-    String name = "foo";
-    MrsImageDataProvider provider = factory.createMrsImageDataProvider(name, conf);
-
-    Assert.assertNotNull("Provider not created!", provider);
-    Assert.assertEquals("Name not set properly", name, provider.getResourceName());
-  }
-
-  @Test
-  @Category(UnitTest.class)
   public void testCreateMrsImageDataProvider2() throws Exception
   {
     String name = "foo";
@@ -111,13 +100,6 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
   @Test
   @Category(UnitTest.class)
-  public void testCanOpen1() throws Exception
-  {
-    Assert.assertTrue("Can not open image!", factory.canOpen("all-ones", conf));
-  }
-
-  @Test
-  @Category(UnitTest.class)
   public void testCanOpen2() throws Exception
   {
     Assert.assertTrue("Can not open image!", factory.canOpen("all-ones", providerProperties));
@@ -125,24 +107,9 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
   @Test
   @Category(UnitTest.class)
-  public void testCanOpenMissing1() throws Exception
-  {
-    Assert.assertFalse("Can not open image!", factory.canOpen( "missing", conf));
-  }
-
-  @Test
-  @Category(UnitTest.class)
   public void testCanOpenMissing2() throws Exception
   {
     Assert.assertFalse("Can not open image!", factory.canOpen( "missing", providerProperties));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCanOpenBadUri1() throws Exception
-  {
-    boolean result = factory.canOpen( "abcd:bad-name", conf);
-    Assert.assertFalse(result);
   }
 
   @Test
@@ -155,23 +122,9 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
   @Test(expected = NullPointerException.class)
   @Category(UnitTest.class)
-  public void testCanOpenNull1() throws Exception
-  {
-    factory.canOpen( null, conf);
-  }
-
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
   public void testCanOpenNull2() throws Exception
   {
     factory.canOpen( null, providerProperties);
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testExists1() throws Exception
-  {
-    Assert.assertTrue("Can not open file!", factory.exists(all_ones, conf));
   }
 
   @Test
@@ -183,23 +136,9 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
   @Test
   @Category(UnitTest.class)
-  public void testExistsMissing1() throws Exception
-  {
-    Assert.assertFalse("Can not open file!", factory.exists( "missing", conf));
-  }
-
-  @Test
-  @Category(UnitTest.class)
   public void testExistsMissing2() throws Exception
   {
     Assert.assertFalse("Can not open file!", factory.exists( "missing", providerProperties));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testExistsBadUri1() throws Exception
-  {
-    Assert.assertFalse(factory.exists( "abcd:bad-name", conf));
   }
 
   @Test
@@ -211,23 +150,9 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
   @Test(expected = NullPointerException.class)
   @Category(UnitTest.class)
-  public void testExistsNull1() throws Exception
-  {
-    factory.exists( null, conf);
-  }
-
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
   public void testExistsNull2() throws Exception
   {
     factory.exists( null, providerProperties);
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCanWrite1() throws Exception
-  {
-    Assert.assertFalse("Can not write existing file!", factory.canWrite(all_ones, conf));
   }
 
   @Test
@@ -239,13 +164,6 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
   @Test
   @Category(UnitTest.class)
-  public void testCanWriteMissing1() throws Exception
-  {
-    Assert.assertTrue("Can not write!", factory.canWrite( "missing", conf));
-  }
-
-  @Test
-  @Category(UnitTest.class)
   public void testCanWriteMissing2() throws Exception
   {
     Assert.assertTrue("Can not write!", factory.canWrite( "missing", providerProperties));
@@ -253,23 +171,9 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 
   @Test
   @Category(UnitTest.class)
-  public void testCanWriteBadUri1() throws Exception
-  {
-    Assert.assertFalse(factory.canWrite( "abcd:bad-name", conf));
-  }
-
-  @Test
-  @Category(UnitTest.class)
   public void testCanWriteBadUri2() throws Exception
   {
     Assert.assertFalse(factory.canWrite( "abcd:bad-name", providerProperties));
-  }
-
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
-  public void testCanWriteNull1() throws Exception
-  {
-    factory.canWrite( null, conf);
   }
 
   @Test(expected = NullPointerException.class)
@@ -378,20 +282,6 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
       {
       }
     }
-
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testDelete1() throws Exception
-  {
-    String name = HadoopFileUtils.createUniqueTmpPath().toString();
-    HadoopFileUtils.copyToHdfs(all_ones, name);
-
-    Assert.assertTrue("Image should exist!", HadoopFileUtils.exists(name));
-    factory.delete(name, conf);
-
-    Assert.assertFalse("Image was not deleted!", HadoopFileUtils.exists(name));
 
   }
 

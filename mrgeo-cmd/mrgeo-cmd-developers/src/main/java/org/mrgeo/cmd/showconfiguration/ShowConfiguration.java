@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -435,7 +436,7 @@ public class ShowConfiguration extends Command
   
   
   @Override
-  public int run(String[] args, Configuration conf, Properties providerProperties)
+  public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
   {
     initialize(conf);
     System.out.println(buildReport());

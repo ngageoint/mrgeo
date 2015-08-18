@@ -18,6 +18,7 @@ package org.mrgeo.test;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
@@ -60,7 +61,7 @@ public void generateBaselinePyramid(final Configuration conf, final String testN
   runMapAlgebraExpression(conf, testName, ex);
 
   final Path src = new Path(outputHdfs, testName);
-  final MrsImagePyramid pyramid = MrsImagePyramid.open(src.toString(), (Properties)null);
+    final MrsImagePyramid pyramid = MrsImagePyramid.open(src.toString(), (ProviderProperties)null);
   if (pyramid != null)
   {
     final Path dst = new Path(inputLocal, testName);
@@ -82,7 +83,7 @@ public void generateBaselineTif(final Configuration conf, final String testName,
   runMapAlgebraExpression(conf, testName, ex);
 
   final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
-      (Properties)null);
+        (ProviderProperties)null);
   final MrsImage image = pyramid.getHighestResImage();
 
   Bounds bounds = pyramid.getBounds();
@@ -119,7 +120,7 @@ runRasterExpression(final Configuration conf, final String testName,
 {
   final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
 
-  compareRasterOutput(testName, testTranslator, (Properties)null);
+  compareRasterOutput(testName, testTranslator, (ProviderProperties)null);
   return mapOp;
 }
 
@@ -130,13 +131,13 @@ runRasterExpression(final Configuration conf, final String testName,
 {
   final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
 
-  compareRasterOutput(testName, baselineTranslator, testTranslator, (Properties)null);
+  compareRasterOutput(testName, baselineTranslator, testTranslator, (ProviderProperties)null);
   return mapOp;
 }
 
 public MapOp runRasterExpressionMultipleOutputs(final Configuration conf,
     final String testName,
-    final String[] testOutputs, final String ex, final Properties providerProperties)
+      final String[] testOutputs, final String ex, final ProviderProperties providerProperties)
     throws ParserException, IOException, JobFailedException, JobCancelledException
 {
   final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
@@ -148,20 +149,20 @@ public MapOp runRasterExpressionMultipleOutputs(final Configuration conf,
 }
 
 
-private void compareRasterOutput(final String testName, final Properties providerProperties) throws IOException
+  private void compareRasterOutput(final String testName, final ProviderProperties providerProperties) throws IOException
 {
   compareRasterOutput(testName, null, null, providerProperties);
 }
 
 
 private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
-    final Properties providerProperties) throws IOException
+    final ProviderProperties providerProperties) throws IOException
 {
   compareRasterOutput(testName, null, testTranslator, providerProperties);
 }
 
 private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
-    final TestUtils.ValueTranslator testTranslator, final Properties providerProperties) throws IOException
+    final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
 {
   final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
       providerProperties);

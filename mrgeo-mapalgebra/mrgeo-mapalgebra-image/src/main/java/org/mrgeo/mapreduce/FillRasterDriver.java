@@ -18,6 +18,7 @@ package org.mrgeo.mapreduce;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -334,7 +335,7 @@ public class FillRasterDriver
   public static void run(final Job job, final MrsImagePyramid input, final String output,
     final double value, final String fillType, final Bounds bounds, final Progress progress,
     final JobListener jobListener, final String protectionLevel,
-    final Properties providerProperties) throws IOException, JobFailedException, JobCancelledException
+    final ProviderProperties providerProperties) throws IOException, JobFailedException, JobCancelledException
   {
     // create a new unique job name
     final String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());

@@ -1,6 +1,7 @@
 package org.mrgeo.data.vector.geowave;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 
 import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveInputConfigurator;
@@ -16,6 +17,7 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.geometry.Geometry;
@@ -40,7 +42,7 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
   }
 
   @Override
-  public void setupJob(Job job, Properties providerProperties) throws DataProviderException
+  public void setupJob(Job job, ProviderProperties providerProperties) throws DataProviderException
   {
     super.setupJob(job, providerProperties);
     Configuration conf = job.getConfiguration();
@@ -53,7 +55,6 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
         connectionInfo.getPassword(),
         connectionInfo.getNamespace());
     connectionInfo.writeToConfig(conf);
-    GeoWaveVectorDataProvider.storeProviderProperties(providerProperties, conf);
     DataAdapter<?> adapter;
     try
     {
@@ -87,12 +88,7 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
     {
       throw new DataProviderException(e);
     }
-    String strUserRoles = providerProperties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
-    String[] userRoles = null;
-    if (strUserRoles != null)
-    {
-      userRoles = strUserRoles.split(",");
-    }
+    List<String> userRoles = providerProperties.getRoles();
     if (userRoles != null)
     {
       for (String role: userRoles)

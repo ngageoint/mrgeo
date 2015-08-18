@@ -17,17 +17,17 @@ package org.mrgeo.mapalgebra;
 
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 
 import java.io.IOException;
-import java.util.Properties;
 
 public class RasterMapOpLoader implements ResourceMapOpLoader
 {
 
   @Override
   public MapOp loadMapOpFromResource(String resourceName,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
   {
     MrsImageDataProvider dp = null;
     try

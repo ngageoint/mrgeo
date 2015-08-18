@@ -31,6 +31,7 @@ import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.ingest.IngestImageSpark;
 import org.mrgeo.utils.*;
@@ -483,7 +484,7 @@ private double parseNoData(String fromArg) throws NumberFormatException
 }
 
 @Override
-public int run(String[] args, Configuration conf, Properties providerProperties)
+public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
 {
   try
   {

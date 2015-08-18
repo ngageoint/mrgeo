@@ -16,7 +16,6 @@
 package org.mrgeo.hdfs.vector;
 
 import java.io.IOException;
-import java.util.Properties;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -26,6 +25,7 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
@@ -45,7 +45,7 @@ public class HdfsVectorInputFormatProvider extends VectorInputFormatProvider
   }
 
   @Override
-  public void setupJob(Job job, Properties providerProperties) throws DataProviderException
+  public void setupJob(Job job, ProviderProperties providerProperties) throws DataProviderException
   {
     super.setupJob(job, providerProperties);
     long featureCount = getContext().getFeatureCount();

@@ -18,12 +18,10 @@ package org.mrgeo.data.ingest;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TiledInputFormatProvider;
-import org.mrgeo.utils.HadoopUtils;
-
-import java.io.IOException;
-import java.util.Properties;
 
 public abstract class ImageIngestRawInputFormatProvider implements TiledInputFormatProvider<RasterWritable>
 {
@@ -31,10 +29,10 @@ public abstract class ImageIngestRawInputFormatProvider implements TiledInputFor
 //
   @Override
   public void setupJob(final Job job,
-      final Properties providerProperties) throws DataProviderException
+      final MrsImageDataProvider provider) throws DataProviderException
   {
-    DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
-        job.getConfiguration());
+//    DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
+//        job.getConfiguration());
   }
 //  public abstract void teardown(final Job job) throws DataProviderException;
 

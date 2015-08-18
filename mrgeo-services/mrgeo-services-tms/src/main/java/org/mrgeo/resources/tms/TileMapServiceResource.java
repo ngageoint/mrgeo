@@ -19,6 +19,7 @@
 package org.mrgeo.resources.tms;
 
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.rasterops.ColorScale;
@@ -395,7 +396,7 @@ public class TileMapServiceResource
       // TODO: Need to construct provider properties from the WebRequest using
       // a new security layer and pass those properties.
       // Apply mask if requested
-      Properties providerProperties = SecurityUtils.getProviderProperties();
+      ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
       if (mask != null && !mask.isEmpty())
       {
         raster = renderer.renderImage(pyramid, x, y, z, mask, maskMax, providerProperties);

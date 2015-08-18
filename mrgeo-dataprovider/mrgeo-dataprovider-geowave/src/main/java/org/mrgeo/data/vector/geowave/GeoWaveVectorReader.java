@@ -2,7 +2,6 @@ package org.mrgeo.data.vector.geowave;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 import mil.nga.giat.geowave.store.CloseableIterator;
@@ -18,6 +17,7 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.hadoop.io.LongWritable;
 import org.geotools.factory.CommonFactoryFinder;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
@@ -37,10 +37,10 @@ public class GeoWaveVectorReader implements VectorReader
   private Query query;
   private Index index;
   private Filter filter;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
 
   public GeoWaveVectorReader(VectorDataStore dataStore, DataAdapter<?> adapter,
-      Query query, Index index, Filter filter, Properties providerProperties)
+      Query query, Index index, Filter filter, ProviderProperties providerProperties)
   {
     this.dataStore = dataStore;
     this.adapter = adapter;

@@ -18,10 +18,10 @@ package org.mrgeo.data.tile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.Bounds;
 
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -39,7 +39,7 @@ public class TiledInputFormatContext
   private Bounds bounds;
   private boolean includeEmptyTiles = false;
   private double fillValue = Double.NaN;
-  private Properties inputProviderProperties;
+  private ProviderProperties inputProviderProperties;
 
   private static final String className = TiledInputFormatContext.class.getSimpleName();
   private static final String ZOOM_LEVEL = className + ".zoomLevel";
@@ -48,9 +48,7 @@ public class TiledInputFormatContext
   private static final String BOUNDS = className + ".bounds";
   private static final String INCLUDE_EMPTY_TILES = className + ".includeEmptyTiles";
   private static final String FILL_VALUE = className + ".fillValue";
-  private static final String PROVIDER_PROPERTY_COUNT = className + "provPropCount";
-  private static final String PROVIDER_PROPERTY_KEY = className + "provPropKey.";
-  private static final String PROVIDER_PROPERTY_VALUE = className + "provPropValue.";
+  private static final String PROVIDER_PROPERTY_KEY = className + "provProps";
 
   /**
    * Use this constructor to include input at a zoom level from all of the specified
@@ -60,7 +58,7 @@ public class TiledInputFormatContext
    * @param zoomlevel
    */
   public TiledInputFormatContext(final int zoomlevel, final int tileSize,
-      final Set<String> inputs, final Properties inputProviderProperties)
+      final Set<String> inputs, final ProviderProperties inputProviderProperties)
   {
     this.zoomLevel = zoomlevel;
     this.tileSize = tileSize;
@@ -78,7 +76,7 @@ public class TiledInputFormatContext
    */
   public TiledInputFormatContext(final int zoomlevel, final int tileSize,
       final Set<String> inputs, final Bounds bounds,
-      final Properties inputProviderProperties)
+      final ProviderProperties inputProviderProperties)
   {
     this.zoomLevel = zoomlevel;
     this.tileSize = tileSize;
@@ -89,7 +87,7 @@ public class TiledInputFormatContext
 
   public TiledInputFormatContext(final int zoomlevel, final int tileSize,
       final Set<String> inputs, final Bounds bounds, final double fillValue,
-      final Properties inputProviderProperties)
+      final ProviderProperties inputProviderProperties)
   {
     this.zoomLevel = zoomlevel;
     this.tileSize = tileSize;
@@ -109,7 +107,7 @@ public class TiledInputFormatContext
     return inputs;
   }
 
-  public Properties getProviderProperties()
+  public ProviderProperties getProviderProperties()
   {
     return inputProviderProperties;
   }
@@ -162,22 +160,9 @@ public class TiledInputFormatContext
     {
       conf.setFloat(FILL_VALUE, (float)fillValue);
     }
-    conf.setInt(PROVIDER_PROPERTY_COUNT,
-        ((inputProviderProperties == null) ? 0 : inputProviderProperties.size()));
     if (inputProviderProperties != null)
     {
-      Set<String> keySet = inputProviderProperties.stringPropertyNames();
-      String[] keys = new String[keySet.size()];
-      keySet.toArray(keys);
-      for (int i=0; i < keys.length; i++)
-      {
-        conf.set(PROVIDER_PROPERTY_KEY + i, keys[i]);
-        String v = inputProviderProperties.getProperty(keys[i]);
-        if (v != null)
-        {
-          conf.set(PROVIDER_PROPERTY_VALUE + i, v);
-        }
-      }
+      conf.set(PROVIDER_PROPERTY_KEY, inputProviderProperties.toDelimitedString());
     }
   }
 
@@ -206,16 +191,10 @@ public class TiledInputFormatContext
     {
       context.fillValue = conf.getFloat(FILL_VALUE, Float.NaN);
     }
-    int providerPropertyCount = conf.getInt(PROVIDER_PROPERTY_COUNT, 0);
-    if (providerPropertyCount > 0)
+    String strProviderProperties = conf.get(PROVIDER_PROPERTY_KEY);
+    if (strProviderProperties != null)
     {
-      context.inputProviderProperties = new Properties();
-      for (int i=0; i < providerPropertyCount; i++)
-      {
-        String key = conf.get(PROVIDER_PROPERTY_KEY + i);
-        String value = conf.get(PROVIDER_PROPERTY_VALUE + i);
-        context.inputProviderProperties.setProperty(key, value);
-      }
+      context.inputProviderProperties = ProviderProperties.fromDelimitedString(strProviderProperties);
     }
     return context;
   }

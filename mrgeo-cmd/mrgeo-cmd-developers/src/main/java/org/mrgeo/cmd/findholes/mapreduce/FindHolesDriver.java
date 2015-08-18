@@ -30,6 +30,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
@@ -47,17 +48,15 @@ public class FindHolesDriver {
 	
 	
 	
-	public boolean runJob(String input, String output, int zoom, Properties props, Configuration conf) throws Exception{
+	public boolean runJob(String input, String output, int zoom, ProviderProperties props, Configuration conf) throws Exception{
 
 	    System.out.println("Input:     " + input);
 	    System.out.println("Output:    " + output);
 	    System.out.println("ZoomLevel: " + zoom);
 		
 		conf.set("zoom", Integer.toString(zoom));
-		if(props != null && props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES) != null){
-			conf.set(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES, props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
-		}
-		
+		DataProviderFactory.saveProviderPropertiesToConfig(props, conf);
+
 		MrsImageDataProvider midp = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, conf); 
 		MrsImagePyramidMetadata mipm = midp.getMetadataReader().read();
 

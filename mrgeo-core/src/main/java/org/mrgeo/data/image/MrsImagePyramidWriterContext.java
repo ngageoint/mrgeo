@@ -19,14 +19,16 @@ public class MrsImagePyramidWriterContext
 {
   private int zoomlevel;
   private int partNum;
+  private String protectionLevel;
 
   public MrsImagePyramidWriterContext()
   {
   }
-  public MrsImagePyramidWriterContext(int zoomlevel, int partition)
+  public MrsImagePyramidWriterContext(int zoomlevel, int partition, String protectionLevel)
   {
     this.zoomlevel = zoomlevel;
     this.partNum = partition;
+    this.protectionLevel = protectionLevel;
   }
 
   public int getZoomlevel()
@@ -47,5 +49,10 @@ public class MrsImagePyramidWriterContext
   public void setPartNum(int part)
   {
     partNum = part;
+  }
+
+  public String getProtectionLevel()
+  {
+    return protectionLevel;
   }
 }

@@ -19,12 +19,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
@@ -39,7 +39,7 @@ public abstract class ColumnFeatureFilterTest
     File testFile = new File(testDir, fileName);
     String resolvedFileName = testFile.toURI().toString();
     VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider(resolvedFileName,
-        AccessMode.READ, new Properties());
+        AccessMode.READ, new ProviderProperties());
     VectorReader reader = vdp.getVectorReader();
     CloseableKVIterator<LongWritable, Geometry> iter = reader.get();
     try

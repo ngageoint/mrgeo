@@ -20,6 +20,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.*;
 import org.mrgeo.pyramid.MrsPyramid;
 import org.mrgeo.rasterops.OpImageRegistrar;
@@ -32,7 +33,6 @@ import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 public class Export extends Command
@@ -218,7 +218,7 @@ public class Export extends Command
   }
 
   @Override
-  public int run(final String[] args, Configuration conf, Properties providerProperties) 
+  public int run(final String[] args, Configuration conf, ProviderProperties providerProperties)
   {
     log.info("Export");
 

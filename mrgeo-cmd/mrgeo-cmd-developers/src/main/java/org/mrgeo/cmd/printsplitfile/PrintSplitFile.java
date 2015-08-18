@@ -21,6 +21,7 @@ import org.apache.hadoop.fs.Path;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.tile.FileSplit;
@@ -29,7 +30,6 @@ import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.rasterops.OpImageRegistrar;
 
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * A utility class to print split files on the command line
@@ -53,7 +53,7 @@ public class PrintSplitFile extends Command
 
   @Override
   public int run(final String[] args, final Configuration conf,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
   {
 
     OpImageRegistrar.registerMrGeoOps();

@@ -15,8 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import java.util.Properties;
-
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.rasterops.ColorScale;
 import org.mrgeo.utils.Bounds;
 
@@ -34,5 +33,5 @@ public interface RasterResponseBuilder
   String getMimeType();
 
   Response getResponse(String pyrName, Bounds bounds, int width, int height, ColorScale cs,
-    String requestUrl, int zoomLevel, Properties providerProperties);
+    String requestUrl, int zoomLevel, ProviderProperties providerProperties);
 }

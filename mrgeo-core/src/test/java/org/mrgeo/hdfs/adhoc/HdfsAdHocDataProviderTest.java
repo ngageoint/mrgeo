@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
@@ -34,11 +35,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.Properties;
 
 public class HdfsAdHocDataProviderTest extends LocalRunnerTest
 {
-  private static Properties providerProperties = null;
+  private static ProviderProperties providerProperties = null;
   HdfsAdHocDataProvider provider = null;
 
   @Before

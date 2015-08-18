@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.mapalgebra.parser.*;
 import org.mrgeo.opimage.ConstantDescriptor;
@@ -62,7 +63,7 @@ public class MapAlgebraParser implements MapOpFactory
 
   private TreeMap<Integer, MapAlgebraPreprocessor> _preprocessors = null;
   private Configuration conf;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
   private String protectionLevel;
 
   private ParserAdapter parser;
@@ -72,7 +73,7 @@ public class MapAlgebraParser implements MapOpFactory
     init();
   }
   public MapAlgebraParser(final Configuration conf, final String protectionLevel,
-      final Properties providerProps)
+      final ProviderProperties providerProps)
   {
     init();
     this.conf = conf;

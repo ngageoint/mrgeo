@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.joda.time.format.DateTimeFormat;
 import org.mrgeo.cmd.Command;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -41,7 +42,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.Properties;
 
 public class MrsImageInfo extends Command
 {
@@ -147,7 +147,7 @@ public class MrsImageInfo extends Command
 
   @Override
   public int run(final String[] args, final Configuration conf,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
   {
     log.info("MrsImageInfo");
 
@@ -252,7 +252,7 @@ public class MrsImageInfo extends Command
   }
 
   private void printMetadata(final MrsImagePyramidMetadata metadata,
-      final Properties providerProperties) throws DataProviderNotFound
+      final ProviderProperties providerProperties) throws DataProviderNotFound
   {
     System.out.println("name: \"" + metadata.getPyramid() + "\"");
     if (verbose)

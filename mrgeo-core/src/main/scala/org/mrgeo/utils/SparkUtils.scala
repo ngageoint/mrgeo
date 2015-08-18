@@ -27,10 +27,10 @@ import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, SequenceFileInput
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
+import org.mrgeo.data.image.{MrsImagePyramidSimpleInputFormat, MrsImageDataProvider}
 import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.tile.{TileIdWritable, TiledOutputFormatContext}
+import org.mrgeo.data.tile.{TiledInputFormatContext, TileIdWritable, TiledOutputFormatContext}
 import org.mrgeo.hdfs.input.MapFileFilter
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
@@ -135,7 +135,7 @@ object SparkUtils extends Logging {
   def loadMrsPyramidAndMetadata(imageName: String, context: SparkContext):
   (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
 
-    val providerProps: Properties = null
+    val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
     val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
@@ -144,7 +144,7 @@ object SparkUtils extends Logging {
   }
 
   def loadMrsPyramid(imageName: String, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val providerProps: Properties = null
+    val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
 
@@ -154,7 +154,7 @@ object SparkUtils extends Logging {
   }
 
   def loadMrsPyramid(imageName: String, zoom: Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val providerProps: Properties = null
+    val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
 
@@ -167,23 +167,27 @@ object SparkUtils extends Logging {
     loadMrsPyramid(provider, metadata.getMaxZoomLevel, context)
   }
 
-  def loadMrsPyramid(provider: MrsImageDataProvider, zoom: Int,
-      context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
+  def loadMrsPyramid(provider:MrsImageDataProvider, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
     val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
+    val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
+    val inputs = Set(provider.getResourceName)
+    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize, inputs, provider.getProviderProperties)
+    val ifp = provider.getTiledInputFormatProvider(tifc)
+    val conf2 = ifp.setupSparkJob(conf1, provider)
+
+//    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
+//      zoom, metadata.getTilesize, null, providerProps) // null for bounds means use all tiles (no cropping)
+
     // build a phony job...
-    val job = Job.getInstance(context.hadoopConfiguration)
+    val job = Job.getInstance(conf2)
+//    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
+//        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
 
-    val providerProps: Properties = null
-
-    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
-      zoom, metadata.getTilesize, null, providerProps) // null for bounds means use all tiles (no cropping)
-
-    val inputFormatClass: Class[InputFormat[TileIdWritable, RasterWritable]] = job.getInputFormatClass
-        .asInstanceOf[Class[InputFormat[TileIdWritable, RasterWritable]]]
-
+//    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
+//      inputFormatClass.getName)
     context.newAPIHadoopRDD(job.getConfiguration,
-      inputFormatClass,
+      classOf[MrsImagePyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
 
@@ -197,7 +201,7 @@ object SparkUtils extends Logging {
   }
 
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider,
-      zoom: Int, conf: Configuration, providerproperties: Properties): Unit = {
+      zoom:Int, conf:Configuration, providerproperties:ProviderProperties): Unit = {
 
     val metadata = provider.getMetadataReader.read()
 
@@ -215,7 +219,7 @@ object SparkUtils extends Logging {
 
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)],
       outputProvider: MrsImageDataProvider, inputprovider: MrsImageDataProvider,
-      zoom: Int, conf: Configuration, providerproperties: Properties): Unit = {
+      zoom:Int, conf:Configuration, providerproperties:ProviderProperties): Unit = {
 
     val metadata = inputprovider.getMetadataReader.read()
 
@@ -235,15 +239,13 @@ object SparkUtils extends Logging {
   def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider, output: String,
       zoom: Int, tilesize: Int, nodatas: Array[Double], conf: Configuration, tiletype: Int = -1,
       bounds: Bounds = new Bounds(), bands: Int = -1,
-      protectionlevel: String = null, providerproperties: Properties = new Properties()): Unit = {
+      protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
     tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
-
-    val tileIncrement = 1
 
     var localbounds = bounds
     var localbands = bands
@@ -264,27 +266,11 @@ object SparkUtils extends Logging {
     // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
     // on.  This can be a problem for fast calculating/small partitions
     val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
-
-
-    // save the new pyramid
-    //    val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
-    //      tilesize, tiletype, bands, protectionlevel, providerproperties)
-
     val tileBounds = TMSUtils.boundsToTile(localbounds.getTMSBounds, zoom, tilesize)
-
-    //val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
-    //  tileBounds.e, tileBounds.n, zoom, tileIncrement)
-
-    val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
-      tileBounds.e, tileBounds.n, zoom, tileIncrement)
-
-    val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
-
-    val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize)
+    val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize, protectionlevel)
     val tofp = provider.getTiledOutputFormatProvider(tofc)
-
-    val writer = provider.getMrsTileWriter(zoom)
-    val name = new Path(writer.getName).getParent.toString
+    val sparkPartitioner = tofp.getPartitionerForSpark(tileBounds, zoom)
+    val conf1 = tofp.setupSparkJob(conf)
 
     // The following commented out section was in place for older versions of Spark
     // that did not include the OrderRDDFunctions.repartitionAndSortWithinPartitions
@@ -342,25 +328,30 @@ object SparkUtils extends Logging {
     //      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
     //    }
 
+    // Repartition the output if the output data provider requires it
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
-    val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-    val wrappedSorted = new PairRDDFunctions(sorted)
+    var sorted: RDD[(TileIdWritable, RasterWritable)] = null
+    if (sparkPartitioner != null) {
+      sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+    }
+    else
+    {
+      sorted = wrappedTiles.sortByKey()
+    }
 
-
-    wrappedSorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable],
-      tofp.getOutputFormat.getClass, conf)
-
+    val wrappedForSave = new PairRDDFunctions(sorted)
+    wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
     tiles.unpersist()
 
-    sparkPartitioner.generateFileSplits(sorted, output, zoom, conf)
-
-    //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
-
-    //dp.teardown(job)
+    if (sparkPartitioner != null)
+    {
+      sparkPartitioner.generateFileSplits(sorted, output, zoom, conf1)
+    }
+    tofp.teardownForSpark(conf1)
 
     // calculate and save metadata
     MrsImagePyramid.calculateMetadata(output, zoom, provider, stats,
-      nodatas, localbounds, conf, protectionlevel, providerproperties)
+      nodatas, localbounds, conf1,  protectionlevel, providerproperties)
   }
 
   def calculateStats(rdd: RDD[(TileIdWritable, RasterWritable)], bands: Int,
@@ -486,7 +477,7 @@ object SparkUtils extends Logging {
     // now the hard part, need to look in the dependencies...
     val classFile: String = clazz.replaceAll("\\.", "/") + ".class"
 
-    var iter: util.Enumeration[URL] = null
+    var iter: java.util.Enumeration[URL] = null
 
     if (cl != null) {
       iter = cl.getResources(classFile)
@@ -519,7 +510,7 @@ object SparkUtils extends Logging {
 
   def jarsForPackage(pkg: String, cl: ClassLoader = null): Array[String] = {
     // now the hard part, need to look in the dependencies...
-    var iter: util.Enumeration[URL] = null
+    var iter: java.util.Enumeration[URL] = null
 
     val pkgFile: String = pkg.replaceAll("\\.", "/")
 

@@ -16,21 +16,31 @@
 package org.mrgeo.hdfs.adhoc;
 
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.adhoc.AdHocDataProviderFactory;
 import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.util.Map;
 
 public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
 {
-  private static Configuration basicConf;
+  private static Configuration conf;
 
   @Override
   public boolean isValid()
   {
     return true;
+  }
+
+  @Override
+  public void initialize(Configuration conf)
+  {
+    if (this.conf == null)
+    {
+      this.conf = conf;
+    }
   }
 
   @Override
@@ -40,85 +50,59 @@ public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
   }
 
   @Override
-  public AdHocDataProvider createAdHocDataProvider(String name,
-      final Configuration conf) throws IOException
+  public Map<String, String> getConfiguration()
   {
-    return new HdfsAdHocDataProvider(conf, name, null);
+    return null;
+  }
+
+  @Override
+  public void setConfiguration(Map<String, String> properties)
+  {
+  }
+
+  @Override
+  public AdHocDataProvider createAdHocDataProvider(String name,
+      final ProviderProperties providerProperties) throws IOException
+  {
+    return new HdfsAdHocDataProvider(getConf(), name, providerProperties);
   }  
 
   @Override
-  public AdHocDataProvider createAdHocDataProvider(String name,
-      final Properties providerProperties) throws IOException
+  public AdHocDataProvider createAdHocDataProvider(final ProviderProperties providerProperties) throws IOException
   {
-    return new HdfsAdHocDataProvider(getBasicConf(), name, providerProperties);
-  }  
-
-  @Override
-  public AdHocDataProvider createAdHocDataProvider(final Configuration conf) throws IOException
-  {
-    return new HdfsAdHocDataProvider(conf, null);
+    return new HdfsAdHocDataProvider(getConf(), providerProperties);
   }
 
   @Override
-  public AdHocDataProvider createAdHocDataProvider(final Properties providerProperties) throws IOException
+  public boolean canOpen(final String name, final ProviderProperties providerProperties) throws IOException
   {
-    return new HdfsAdHocDataProvider(getBasicConf(), providerProperties);
+    return HdfsAdHocDataProvider.canOpen(getConf(), name, providerProperties);
   }
 
   @Override
-  public boolean canOpen(final String name, final Configuration conf) throws IOException
+  public boolean canWrite(final String name, final ProviderProperties providerProperties) throws IOException
   {
-    return HdfsAdHocDataProvider.canOpen(conf, name, null);
+    return HdfsAdHocDataProvider.canWrite(name, getConf(), providerProperties);
   }
 
   @Override
-  public boolean canOpen(final String name, final Properties providerProperties) throws IOException
+  public boolean exists(String name, final ProviderProperties providerProperties) throws IOException
   {
-    return HdfsAdHocDataProvider.canOpen(getBasicConf(), name, providerProperties);
+    return HdfsAdHocDataProvider.exists(getConf(), name, providerProperties);
   }
 
   @Override
-  public boolean canWrite(final String name, final Configuration conf) throws IOException
+  public void delete(String name, final ProviderProperties providerProperties) throws IOException
   {
-    return HdfsAdHocDataProvider.canWrite(name, conf, null);
+    HdfsAdHocDataProvider.delete(getConf(), name, null);
   }
 
-  @Override
-  public boolean canWrite(final String name, final Properties providerProperties) throws IOException
+  private static Configuration getConf()
   {
-    return HdfsAdHocDataProvider.canWrite(name, getBasicConf(), providerProperties);
-  }
-
-  @Override
-  public boolean exists(String name, final Configuration conf) throws IOException
-  {
-    return HdfsAdHocDataProvider.exists(conf, name, null);
-  }
-
-  @Override
-  public boolean exists(String name, final Properties providerProperties) throws IOException
-  {
-    return HdfsAdHocDataProvider.exists(getBasicConf(), name, providerProperties);
-  }
-
-  @Override
-  public void delete(String name, final Configuration conf) throws IOException
-  {
-    HdfsAdHocDataProvider.delete(conf, name, null);
-  }
-
-  @Override
-  public void delete(String name, final Properties providerProperties) throws IOException
-  {
-    HdfsAdHocDataProvider.delete(getBasicConf(), name, null);
-  }
-
-  private static Configuration getBasicConf()
-  {
-    if (basicConf == null)
+    if (conf == null)
     {
-      basicConf = HadoopUtils.createConfiguration();
+      throw new IllegalArgumentException("The configuration was not initialized");
     }
-    return basicConf;
+    return conf;
   }
 }

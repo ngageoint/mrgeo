@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramidSpark;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.ingest.IngestImageSpark;
 import org.mrgeo.mapreduce.job.JobManager;
@@ -129,7 +130,8 @@ public class MrsPyramidService {
     }
 
     public boolean isZoomLevelValid(String pyramid,
-        Properties providerProperties, int zoomLevel) throws IOException
+                                    ProviderProperties providerProperties,
+                                    int zoomLevel) throws IOException
     {
         MrsImagePyramid mp = getPyramid(pyramid, providerProperties);
         return (mp.getMetadata().getName(zoomLevel) != null);
@@ -152,7 +154,7 @@ public class MrsPyramidService {
     }
 
     public Response renderKml(String pyramidPathStr, Bounds bounds, int width, int height, ColorScale cs,
-        int zoomLevel, final Properties providerProperties)
+        int zoomLevel, final ProviderProperties providerProperties)
     {
         String baseUrl = config.getProperty("base.url");
         KmlResponseBuilder kmlGenerator = new KmlResponseBuilder();
@@ -223,7 +225,7 @@ public class MrsPyramidService {
     }
 
     public MrsImagePyramid getPyramid(String name,
-        Properties providerProperties) throws IOException
+        ProviderProperties providerProperties) throws IOException
     {
         return MrsImagePyramid.open(name, providerProperties);
     }
@@ -279,8 +281,8 @@ public class MrsPyramidService {
      * @throws IOException
      */
     public String ingestImage(InputStream input, String output,
-        String protectionLevel,
-        Properties providerProperties) throws Exception {
+                              String protectionLevel,
+                              ProviderProperties providerProperties) throws Exception {
         try {
             String pyramidOutput = HadoopUtils.getDefaultImageBaseDirectory() + output;
             byte[] bytes = IOUtils.toByteArray(input);

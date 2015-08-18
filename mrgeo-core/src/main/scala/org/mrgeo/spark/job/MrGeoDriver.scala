@@ -25,6 +25,7 @@ import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.apache.spark.Logging
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.spark.job.yarn.MrGeoYarnDriver
 import org.mrgeo.utils._
 
@@ -45,6 +46,8 @@ abstract class MrGeoDriver extends Logging {
     job.name = name
     job.setAllSettings(args)
     job.addMrGeoProperties()
+    val dpfProperties = DataProviderFactory.getConfigurationFromProviders
+    job.setAllSettings(dpfProperties.toMap)
 
 
     logInfo("Configuring application")
@@ -306,6 +309,18 @@ abstract class MrGeoDriver extends Logging {
     val jars:StringBuilder = new StringBuilder
 
     for (jar <- qualified) {
+      // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...
+      //if (!jar.contains("spark-yarn")) {
+      if (jars.nonEmpty) {
+        jars ++= ","
+      }
+      jars ++= jar
+      //}
+    }
+    log.warn("Getting data provider dependencies")
+    val dpfDependencies = DataProviderFactory.getDependencies()
+    val dpfQualified = DependencyLoader.copyDependencies(dpfDependencies)
+    for (jar <- dpfQualified) {
       // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...
       //if (!jar.contains("spark-yarn")) {
       if (jars.nonEmpty) {

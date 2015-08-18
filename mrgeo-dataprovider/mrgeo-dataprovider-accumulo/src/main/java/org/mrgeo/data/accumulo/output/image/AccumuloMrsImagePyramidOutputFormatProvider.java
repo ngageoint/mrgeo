@@ -20,6 +20,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.Pair;
 import org.apache.accumulo.core.util.TextUtil;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -39,6 +40,7 @@ import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledOutputFormatContext;
+import org.mrgeo.spark.SparkTileIdPartitioner;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -69,7 +71,7 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   private long tileCount = -1;
   
   private boolean doBulk = false;
-  private boolean forceBulk = true;
+  private boolean forceBulk = false;
 
   private Properties props;
   
@@ -113,30 +115,37 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
 
     // figure out the size of output
     tileCount = (this.tileBounds.e - this.tileBounds.w + 1) * (this.tileBounds.n - this.tileBounds.s + 1);
-    
-    props = AccumuloConnector.getAccumuloProperties();
-    
-    if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_BULK_THRESHOLD)){
-      bulkThreshold = Long.parseLong(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_BULK_THRESHOLD));
-    }
-    if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_FORCE_BULK)){
-      if(Boolean.parseBoolean(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_FORCE_BULK))){
-        log.info("Forcing bulk ingest!");
-        forceBulk = true;
+
+    try
+    {
+      props = AccumuloConnector.getAccumuloProperties();
+
+      if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_BULK_THRESHOLD)){
+        bulkThreshold = Long.parseLong(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_BULK_THRESHOLD));
+      }
+      if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_FORCE_BULK)){
+        if(Boolean.parseBoolean(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_FORCE_BULK))){
+          log.info("Forcing bulk ingest!");
+          forceBulk = true;
+          doBulk = true;
+        }
+      }
+
+      log.info("working with output tile count of " + tileCount +
+          " (" + (this.tileBounds.e - this.tileBounds.w + 1) + "x" +
+          (this.tileBounds.n - this.tileBounds.s + 1) + ") threshold at " + bulkThreshold);
+
+      if(tileCount > bulkThreshold){
+        // doing bulk ingest
+        log.info("Doing Bulk ingest");
         doBulk = true;
       }
     }
-    
-    log.info("working with output tile count of " + tileCount +
-        " (" + (this.tileBounds.e - this.tileBounds.w + 1) + "x" +
-        (this.tileBounds.n - this.tileBounds.s + 1) + ") threshold at " + bulkThreshold);
-    
-    if(tileCount > bulkThreshold){
-      // doing bulk ingest
-      log.info("Doing Bulk ingest");
-      doBulk = true;
+    catch (Exception e)
+    {
+      log.error("Unable to get Accumulo connection properties", e);
     }
-    
+
   } // end constructor
 
   @Override
@@ -145,12 +154,10 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
     // TODO Auto-generated method stub
 
     if(doBulk || forceBulk){
-      log.info("file output format being used at zoom level = " + zoomLevel);
       return new AccumuloMrsImagePyramidFileOutputFormat(zoomLevel, cv);
       //return new AccumuloMrsImagePyramidFileOutputFormat();
     } else {
-      log.info("accumulo going direct for output at zoom level = " + zoomLevel);
-      
+
       return new AccumuloMrsImagePyramidOutputFormat(zoomLevel, cv);
     }
   } // end getOutputFormat
@@ -179,98 +186,108 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   }
 
   @Override
-  public void setupJob(final Job job) throws DataProviderException{
+  public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
+  {
+    Configuration conf1 = provider.setupSparkJob(conf);
+    Configuration conf2 = super.setupSparkJob(conf1);
+    setupConfig(conf2, null);
+    return conf2;
+  }
+
+  @Override
+  public void setupJob(final Job job) throws DataProviderException {
+    provider.setupJob(job);
+    super.setupJob(job);
+    setupConfig(job.getConfiguration(), job);
+  } // end setupJob
+
+
+  private void setupConfig(final Configuration conf, final Job job) throws DataProviderException
+  {
     try{
-      //TODO: there is an assumption here that the output is going to accumulo directly - not bulk
-      super.setupJob(job);
-      
-      job.getConfiguration().addResource(AccumuloConnector.getAccumuloPropertiesLocation());
-      
-      
       // zoom level - output zoom level
       zoomLevel = context.getZoomlevel();
-//      zoomLevel = job.getConfiguration().getInt("zoomlevel", 0);
+//      zoomLevel = conf.getInt("zoomlevel", 0);
       if(zoomLevel != 0){
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL, Integer.toString(zoomLevel));
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL, Integer.toString(zoomLevel));
       }
 
-
-      //job.getConfiguration().set("zoomLevel", Integer.toString(zoomLevel));
-      if(doBulk){
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_JOBTYPE,
-                                   MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_BULK);
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel),
-            MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_BULK);
+      //conf.set("zoomLevel", Integer.toString(zoomLevel));
+      if(doBulk || forceBulk){
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_JOBTYPE,
+                 MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_BULK);
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel),
+                 MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_BULK);
       } else {
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_JOBTYPE,
-                                   MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_DIRECT);
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel),
-            MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_DIRECT);
-        
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_JOBTYPE,
+                 MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_DIRECT);
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel),
+                 MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_DIRECT);
+
       }
       Properties props = AccumuloConnector.getAccumuloProperties();
       if(props != null){
 
         // this used to be the variable "name" in TiledOutputFormatContext, but was always "".
         String enc = AccumuloConnector.encodeAccumuloProperties("");
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE, enc);
-        
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
-            props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
-            props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE, enc);
+
+//        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
+//                 props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
+//        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
+//                 props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
 
         if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE) == null){
-          job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE, this.table);
+          conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE, this.table);
         } else {
-          job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE,
-              props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE));
+          conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE,
+                   props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE));
         }
-        
-        // username and password
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
-            props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
 
-        // make sure the password is set with Base64Encoding
-        String pw = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
-        String isEnc = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
-        
-        if(isEnc.equalsIgnoreCase("true")){
-          job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
-              props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
-        } else {
-          byte[] p = Base64.encodeBase64(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+//        // username and password
+//        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
+//                 props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
+//
+//        // make sure the password is set with Base64Encoding
+//        String pw = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
+//        String isEnc = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
+//
+//        if(isEnc.equalsIgnoreCase("true")){
+//          conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
+//                   props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
+//        } else {
+//          byte[] p = Base64.encodeBase64(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+//
+//          conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
+//                   new String(p));
+//          conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64,
+//                   new String("true"));
+//        }
 
-          job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
-              new String(p));
-          job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64,
-              new String("true"));
-        }
-        
-        if(job.getConfiguration().get(MrGeoConstants.MRGEO_PROTECTION_LEVEL) != null){
-        	cv = new ColumnVisibility(job.getConfiguration().get(MrGeoConstants.MRGEO_PROTECTION_LEVEL));
+        if(conf.get(MrGeoConstants.MRGEO_PROTECTION_LEVEL) != null){
+          cv = new ColumnVisibility(conf.get(MrGeoConstants.MRGEO_PROTECTION_LEVEL));
         }
         if(cv == null){
 
-        	if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ)){
-          	
-        		job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ,
-        				props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
+          if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ)){
 
-          		cv = new ColumnVisibility(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
+            conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ,
+                     props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
 
-        	}
-          	
+            cv = new ColumnVisibility(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
+
+          }
+
         } else {
-          	job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ, new String(cv.getExpression()));
+          conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ, new String(cv.getExpression()));
         }
-        
+
       }
 
-      if(doBulk){
-        
+      if(doBulk || forceBulk){
+
         LongRectangle outTileBounds = tileBounds.toLongRectangle();
-        
+
         // setup the output for the job
         if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR)){
           workDir = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR);
@@ -281,105 +298,131 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
           workDir = "";
         }
         workDir += AccumuloMrsImagePyramidFileOutputFormat.class.getSimpleName() +
-            File.separator +
-            this.table +
-            File.separator;// +
+                   File.separator +
+                   this.table +
+                   File.separator;// +
 //            System.currentTimeMillis() +
 //            File.separator;
-        
+
         // delete the work dir if possible
-//        Path wd = new Path(workDir);
-//        FileSystem fs = HadoopFileUtils.getFileSystem(wd);        
-//        if (fs.exists(wd))
-//        {
-//          fs.delete(wd, false);
-//        }
-        
-        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR, workDir);
-        
-     // determine the starting points for the splits
-        ArrayList<Pair<Long, Long>> splitPoints = new ArrayList<Pair<Long, Long>>();
-        
-        // think about the multiple levels and creating other splits!!!
-        
-        long step = bulkThreshold / outTileBounds.getWidth();
-        long rem = bulkThreshold % outTileBounds.getWidth();
-        if(rem > 0){
-          step++;
+        Path wd = new Path(workDir);
+        FileSystem fs = FileSystem.get(conf);
+        if (fs.exists(wd))
+        {
+          fs.delete(wd, true);
         }
-        for(long y = outTileBounds.getMinY(); y <= outTileBounds.getMaxY(); y += step){
-          Pair<Long, Long> cur = new Pair<Long, Long>(outTileBounds.getMinX(), y);
-          splitPoints.add(cur);
-        }
-        
-        // we now have our list of split points
-        // now build the splits file!!!
-        FileSystem fs = null;
-        //FileSystem.get(job.getConfiguration());
-        PrintStream out = null;
 
-        try{
-          Path wd = new Path(workDir);
-          fs = FileSystem.get(job.getConfiguration());
-          if(fs.exists(wd)){
-            fs.delete(wd, true);
+        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR, workDir);
+
+        if (job != null)
+        {
+          // determine the starting points for the splits
+          ArrayList<Pair<Long, Long>> splitPoints = new ArrayList<Pair<Long, Long>>();
+
+          // think about the multiple levels and creating other splits!!!
+
+          long step = bulkThreshold / outTileBounds.getWidth();
+          long rem = bulkThreshold % outTileBounds.getWidth();
+          if (rem > 0)
+          {
+            step++;
           }
-          
-          out = new PrintStream(new BufferedOutputStream(fs.create(new Path(workDir + "splits.txt"))));
-          
-          for(Pair<Long, Long> p : splitPoints){
-            long split = TMSUtils.tileid(p.getFirst(), p.getSecond(), zoomLevel);
-            //TileIdWritable t = new TileIdWritable(split);
-            Text t = new Text(longToBytes(split));
-            out.println(new String(Base64.encodeBase64(TextUtil.getBytes(t))));
-            log.debug("Point: " + p.getFirst() + "\t" + p.getSecond() + "\t" + split + "\t" + t.getLength());
+          for (long y = outTileBounds.getMinY(); y <= outTileBounds.getMaxY(); y += step)
+          {
+            Pair<Long, Long> cur = new Pair<Long, Long>(outTileBounds.getMinX(), y);
+            splitPoints.add(cur);
           }
 
-          job.setNumReduceTasks(splitPoints.size() + 1);
-          out.close();
+          // we now have our list of split points
+          // now build the splits file!!!
+          PrintStream out = null;
 
-          job.setPartitionerClass(AccumuloMrGeoRangePartitioner.class);
-          AccumuloMrGeoRangePartitioner.setSplitFile(job, workDir + "splits.txt");
-          
-        
-        } catch(IOException ioe){
-          ioe.printStackTrace();
-          throw new DataProviderException("Problem creating output splits.txt for bulk ingest directory.");
+          try
+          {
+            out = new PrintStream(new BufferedOutputStream(fs.create(new Path(workDir + "splits.txt"))));
+
+            for (Pair<Long, Long> p : splitPoints)
+            {
+              long split = TMSUtils.tileid(p.getFirst(), p.getSecond(), zoomLevel);
+              //TileIdWritable t = new TileIdWritable(split);
+              Text t = new Text(longToBytes(split));
+              out.println(new String(Base64.encodeBase64(TextUtil.getBytes(t))));
+              log.debug("Point: " + p.getFirst() + "\t" + p.getSecond() + "\t" + split + "\t" + t.getLength());
+            }
+
+            job.setNumReduceTasks(splitPoints.size() + 1);
+            out.close();
+
+            job.setPartitionerClass(AccumuloMrGeoRangePartitioner.class);
+            AccumuloMrGeoRangePartitioner.setSplitFile(job, workDir + "splits.txt");
+
+
+          }
+          catch (IOException ioe)
+          {
+            ioe.printStackTrace();
+            throw new DataProviderException("Problem creating output splits.txt for bulk ingest directory.");
+          }
+
+          job.setOutputFormatClass(AccumuloMrsImagePyramidFileOutputFormat.class);
         }
-        
-        job.setOutputFormatClass(AccumuloMrsImagePyramidFileOutputFormat.class);
-        
-        AccumuloMrsImagePyramidFileOutputFormat.setOutputPath(job, new Path(workDir + "files"));
-        //AccumuloMrsImagePyramidFileOutputFormat.setZoomLevel(zoomLevel);
-        
+        Path workFilesPath = new Path(workDir + "files");
+        if (job != null)
+        {
+          AccumuloMrsImagePyramidFileOutputFormat.setOutputPath(job, workFilesPath);
+          //AccumuloMrsImagePyramidFileOutputFormat.setZoomLevel(zoomLevel);
+        }
+        else
+        {
+          Path outputDir = workFilesPath.getFileSystem(conf).makeQualified(
+                  workFilesPath);
+          conf.set(AccumuloMrsImagePyramidFileOutputFormat.OUTDIR, outputDir.toString());
+        }
+
       } else {
-        
-    	  log.info("Setting the output format of: " +
-    			  	AccumuloMrsImagePyramidOutputFormat.class.getCanonicalName());
-    	
-    	  job.setOutputFormatClass(AccumuloMrsImagePyramidOutputFormat.class);
-    	  AccumuloMrsImagePyramidOutputFormat.setJob(job);
+        if (job != null)
+        {
+          log.info("Setting the output format of: " +
+                   AccumuloMrsImagePyramidOutputFormat.class.getCanonicalName());
 
-    	  log.info("Setting zoom level to " + zoomLevel);
-    	  log.info("Visibility is " + cv.toString());
-    	  log.info("Setting the number of reducers to " + MrGeoAccumuloConstants.MRGEO_DEFAULT_NUM_REDUCERS);
-    	  job.setNumReduceTasks(MrGeoAccumuloConstants.MRGEO_DEFAULT_NUM_REDUCERS);
+          job.setOutputFormatClass(AccumuloMrsImagePyramidOutputFormat.class);
+          AccumuloMrsImagePyramidOutputFormat.setJob(job);
+
+          log.info("Setting zoom level to " + zoomLevel);
+          log.info("Visibility is " + cv.toString());
+          log.info("Setting the number of reducers to " + MrGeoAccumuloConstants.MRGEO_DEFAULT_NUM_REDUCERS);
+          job.setNumReduceTasks(MrGeoAccumuloConstants.MRGEO_DEFAULT_NUM_REDUCERS);
+        }
       }
-      
-      job.setOutputKeyClass(TileIdWritable.class);
-      job.setOutputValueClass(RasterWritable.class);
-      
+
+      if (job != null)
+      {
+        job.setOutputKeyClass(TileIdWritable.class);
+        job.setOutputValueClass(RasterWritable.class);
+      }
+
     } catch(IOException ioe){
       throw new DataProviderException("Error running job setup", ioe);
     }
-    
+
   } // end setupJob
-  
-  
+
+
   @Override
   public void teardown(Job job) throws DataProviderException
   {
-    String myJobType = job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel));
+    performTeardown(job.getConfiguration());
+  }
+
+  @Override
+  public void teardownForSpark(final Configuration conf) throws DataProviderException
+  {
+    performTeardown(conf);
+  }
+
+  private void performTeardown(final Configuration conf) throws DataProviderException
+  {
+    String myJobType = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel));
     
     
     
@@ -391,12 +434,12 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
       PrintStream out = null;
 
       if(workDir == null){
-        workDir = job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR);
+        workDir = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR);
       }
       
       try{
         log.info("Bulk ingest starting from working directory of " + workDir);
-        fs = FileSystem.get(job.getConfiguration());
+        fs = FileSystem.get(conf);
 
         
         Path working = new Path(workDir + File.separator, MrGeoAccumuloConstants.MRGEO_ACC_FILE_NAME_BULK_WORKING);
@@ -480,4 +523,9 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
     return AccumuloUtils.validateProtectionLevel(protectionLevel);
   }
 
+  @Override
+  public SparkTileIdPartitioner getPartitionerForSpark(TMSUtils.TileBounds tileBounds, int zoom)
+  {
+    return null;
+  }
 } // end AccumuloMrsImagePyramidOutputFormatProvider

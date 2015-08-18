@@ -29,6 +29,7 @@ import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,6 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.Properties;
 
 public class WebServer extends Command
 {
@@ -64,7 +64,7 @@ public static Options createOptions()
 }
 
 @Override
-public int run(String[] args, Configuration conf, Properties providerProperties)
+public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
 {
   try
   {
