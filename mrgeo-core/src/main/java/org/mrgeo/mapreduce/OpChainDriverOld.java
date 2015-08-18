@@ -21,16 +21,13 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-<<<<<<< HEAD:mrgeo-core/src/main/java/org/mrgeo/mapreduce/OpChainDriverOld.java
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-=======
 import org.mrgeo.data.ProviderProperties;
->>>>>>> aabfd2528bd71bcafc0172f86ff538b3c9949ff8:mrgeo-core/src/main/java/org/mrgeo/mapreduce/OpChainDriver.java
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapalgebra.RasterMapOp;

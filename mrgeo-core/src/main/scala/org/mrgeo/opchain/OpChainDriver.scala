@@ -24,12 +24,15 @@ import javax.media.jai.{PlanarImage, RenderedOp}
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{CoGroupedRDD, RDD}
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.util.collection.CompactBuffer
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
+import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils}
+import org.mrgeo.data.{ProviderProperties, DataProviderFactory, ProtectionLevelUtils}
+import org.mrgeo.ingest.IngestImageSpark
 import org.mrgeo.mapalgebra.{RasterMapOp, RenderedImageMapOp}
 import org.mrgeo.opimage.MrsPyramidOpImage
 import org.mrgeo.progress.Progress
@@ -51,19 +54,19 @@ object OpChainDriver extends MrGeoDriver with Externalizable {
   final private val ProviderProperties = "provider.properties"
 
   def opchain(rimop: RenderedImageMapOp, inputs: java.util.Set[String], output: String, zoom: Int, userConf: Configuration,
-      progress: Progress, protectionLevel: String, providerProperties: Properties):Unit = {
+      progress: Progress, protectionLevel: String, providerProperties: ProviderProperties):Unit = {
     opchain(rimop, inputs, output, zoom, Bounds.world, userConf, progress, protectionLevel, providerProperties)
   }
 
   final def opchain(rimop: RenderedImageMapOp, inputs: java.util.Set[String], output: String, zoom: Int, bounds: Bounds,
-      userConf: Configuration, progress: Progress, protectionLevel: String, providerProperties: Properties):Unit = {
+      userConf: Configuration, progress: Progress, protectionLevel: String, providerProperties: ProviderProperties):Unit = {
 
     val rop: RenderedImage = rimop.asInstanceOf[RasterMapOp].getRasterOutput
     opchain(rop, inputs, output, zoom, bounds, userConf, progress, protectionLevel, providerProperties)
   }
 
   final def opchain(rop: RenderedImage, inputs: java.util.Set[String], output: String, zoom: Int, bounds: Bounds,
-      conf: Configuration, progress: Progress, protectionLevel: String, providerProperties: Properties):Unit = {
+      conf: Configuration, progress: Progress, protectionLevel: String, providerProperties: ProviderProperties):Unit = {
 
     val now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date())
     val name = "OpChain-" + now + "-" + HadoopUtils.createRandomString(10)
@@ -82,20 +85,9 @@ object OpChainDriver extends MrGeoDriver with Externalizable {
 
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(output,
       AccessMode.OVERWRITE, providerProperties)
-    args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
 
     args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
-
-    var p: String = ""
-    if (providerProperties != null && !providerProperties.isEmpty) {
-      providerProperties.foreach(kv => {
-        if (p.length > 0) {
-          p += "||"
-        }
-        p += kv._1 + "=" + kv._2
-      })
-    }
-    args += ProviderProperties -> p
+    args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
 
     run(name, classOf[OpChainDriver].getName, args.toMap, conf)
   }
@@ -114,7 +106,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
   var zoom:Int = 0
   var optree: RenderedOp = null
   var bounds:Bounds = null
-  var providerproperties:Properties = null
+  var providerproperties:ProviderProperties = null
   var protectionlevel:String = null
 
   var inputOps:Array[Array[MrsPyramidOpImage]] = null
@@ -157,14 +149,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
       protectionlevel = ""
     }
 
-    val props = job.getSetting(OpChainDriver.ProviderProperties).split("||")
-    providerproperties = new Properties()
-    props.foreach (prop => {
-      if (prop.contains("=")) {
-        val kv = prop.split("=")
-        providerproperties.put(kv(0), kv(1))
-      }
-    })
+    providerproperties = ProviderProperties.fromDelimitedString(job.getSetting(OpChainDriver.ProviderProperties))
 
     inputOps = findMrsPyramidOpImages()
 
@@ -205,16 +190,23 @@ class OpChainDriver extends MrGeoJob with Externalizable {
       new CoGroupedRDD(pyramids, new HashPartitioner(maxpartitions))
     }
 
+
     val answer = tiles.map(tile =>  {
       val key = tile._1
-      val group:Array[RasterWritable] = tile._2 match {
-      case rw:RasterWritable => Array(rw)
-      case a:Array[RasterWritable] => a
+      val group:Seq[_] = tile._2 match {
+      case rw: RasterWritable => Array(rw)
+      case s: Seq[_] => s
+      case a: Array[_] => a
       }
 
       for (i <- group.indices) {
         for (op <- inputOps(i)) {
-          op.setInputRaster(key.get, RasterWritable.toRaster(group(i)))
+          val rw = group(i) match {
+          case s: Seq[RasterWritable] => s.head
+          case r: RasterWritable => r
+          }
+
+          op.setInputRaster(key.get, RasterWritable.toRaster(rw))
         }
       }
 
@@ -232,7 +224,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
 
     })
 
-    val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[Properties])
+    val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, providerproperties)
 
     val tile = answer.first()
     val raster = RasterWritable.toRaster(tile._2)
