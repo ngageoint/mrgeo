@@ -35,6 +35,8 @@ import org.mrgeo.hdfs.partitioners.ImageSplitGenerator;
 import org.mrgeo.hdfs.partitioners.TileIdPartitioner;
 import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.org.mrgeo.hdfs.HdfsSparkTileIdPartitioner;
+import org.mrgeo.spark.SparkTileIdPartitioner;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -235,5 +237,14 @@ private void setupSingleOutput(final Configuration conf, final Job job, final St
 public boolean validateProtectionLevel(String protectionLevel)
 {
   return true;
+}
+
+@Override
+public SparkTileIdPartitioner getPartitionerForSpark(TMSUtils.TileBounds tileBounds, int zoom)
+{
+  int tileIncrement = 1;
+  ImageSplitGenerator splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
+                                               tileBounds.e, tileBounds.n, zoom, tileIncrement);
+  return new HdfsSparkTileIdPartitioner(splitGenerator);
 }
 }

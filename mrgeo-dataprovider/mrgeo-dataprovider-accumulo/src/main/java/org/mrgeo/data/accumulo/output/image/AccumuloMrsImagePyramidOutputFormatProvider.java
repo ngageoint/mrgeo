@@ -40,6 +40,7 @@ import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledOutputFormatContext;
+import org.mrgeo.spark.SparkTileIdPartitioner;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -522,4 +523,9 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
     return AccumuloUtils.validateProtectionLevel(protectionLevel);
   }
 
+  @Override
+  public SparkTileIdPartitioner getPartitionerForSpark(TMSUtils.TileBounds tileBounds, int zoom)
+  {
+    return null;
+  }
 } // end AccumuloMrsImagePyramidOutputFormatProvider

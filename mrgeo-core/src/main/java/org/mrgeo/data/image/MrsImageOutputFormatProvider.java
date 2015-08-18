@@ -16,9 +16,7 @@
 package org.mrgeo.data.image;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobContext;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.raster.RasterWritable;

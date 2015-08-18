@@ -24,6 +24,8 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
+import org.mrgeo.spark.SparkTileIdPartitioner;
+import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
 
@@ -67,4 +69,12 @@ public interface TiledOutputFormatProvider extends ProtectionLevelValidator
 
   public MrsImagePyramidMetadataWriter getMetadataWriter();
   public MrsImageDataProvider getImageProvider();
+
+  /**
+   * If a data provider needs tiled data partitioned when a Spark job produces
+   * output, then the data provider implementation should return that partitioner
+   * from this method. Otherwise, return null.
+   *
+   */
+  public SparkTileIdPartitioner getPartitionerForSpark(TMSUtils.TileBounds tileBounds, int zoom);
 }

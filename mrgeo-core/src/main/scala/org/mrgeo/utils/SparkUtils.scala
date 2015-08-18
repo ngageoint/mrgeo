@@ -247,8 +247,6 @@ object SparkUtils extends Logging {
 
     tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
-    val tileIncrement = 1
-
     var localbounds = bounds
     var localbands = bands
     var localtiletype = tiletype
@@ -268,24 +266,10 @@ object SparkUtils extends Logging {
     // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
     // on.  This can be a problem for fast calculating/small partitions
     val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
-
-
-    // save the new pyramid
-    //    val dp = MrsImageDataProvider.setupMrsPyramidOutputFormat(job, output, bounds, zoom,
-    //      tilesize, tiletype, bands, protectionlevel, providerproperties)
-
     val tileBounds = TMSUtils.boundsToTile(localbounds.getTMSBounds, zoom, tilesize)
-
-    //val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
-    //  tileBounds.e, tileBounds.n, zoom, tileIncrement)
-
-    val splitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s,
-      tileBounds.e, tileBounds.n, zoom, tileIncrement)
-
-    val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
-
     val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize, protectionlevel)
     val tofp = provider.getTiledOutputFormatProvider(tofc)
+    val sparkPartitioner = tofp.getPartitionerForSpark(tileBounds, zoom)
     val conf1 = tofp.setupSparkJob(conf)
 
     // The following commented out section was in place for older versions of Spark
@@ -344,15 +328,25 @@ object SparkUtils extends Logging {
     //      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
     //    }
 
+    // Repartition the output if the output data provider requires it
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
-    val sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-    val wrappedSorted = new PairRDDFunctions(sorted)
-    wrappedSorted.saveAsNewAPIHadoopDataset(conf1)
+    var sorted: RDD[(TileIdWritable, RasterWritable)] = null
+    if (sparkPartitioner != null) {
+      sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+    }
+    else
+    {
+      sorted = wrappedTiles.sortByKey()
+    }
 
+    val wrappedForSave = new PairRDDFunctions(sorted)
+    wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
     tiles.unpersist()
-    sparkPartitioner.generateFileSplits(sorted, output, zoom, conf1)
-    //sparkPartitioner.writeSplits(output, zoom, conf) // job.getConfiguration)
 
+    if (sparkPartitioner != null)
+    {
+      sparkPartitioner.generateFileSplits(sorted, output, zoom, conf1)
+    }
     tofp.teardownForSpark(conf1)
 
     // calculate and save metadata

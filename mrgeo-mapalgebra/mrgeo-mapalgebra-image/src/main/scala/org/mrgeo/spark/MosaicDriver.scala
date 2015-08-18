@@ -17,20 +17,14 @@ package org.mrgeo.spark
 
 import java.awt.image.{DataBuffer, WritableRaster}
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
-import java.util.Properties
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.rdd.{CoGroupedRDD, RDD}
-import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.hdfs.partitioners.ImageSplitGenerator
-import org.mrgeo.image.MrsImagePyramid
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.TMSUtils.TileBounds
 import org.mrgeo.utils._
@@ -154,12 +148,13 @@ class MosaicDriver extends MrGeoJob with Externalizable {
     logDebug("TileBounds: " + tileBounds.toString)
 
     // cogroup needs a partitioner, so we'll give one here...
-    val splitGenerator =  new ImageSplitGenerator(tileBounds.w, tileBounds.s,
-      tileBounds.e, tileBounds.n, zoom, 1)
-
-    val sparkPartitioner = new SparkTileIdPartitioner(splitGenerator)
-
-    val groups = new CoGroupedRDD(pyramids, sparkPartitioner)
+    var maxpartitions = 0
+    val partitions = pyramids.foreach(p => {
+      if (p.partitions.length > maxpartitions) {
+        maxpartitions = p.partitions.length
+      }
+    })
+    val groups = new CoGroupedRDD(pyramids, new HashPartitioner(maxpartitions))
 
     val mosaiced:RDD[(TileIdWritable, RasterWritable)] = groups.map(U => {
 
