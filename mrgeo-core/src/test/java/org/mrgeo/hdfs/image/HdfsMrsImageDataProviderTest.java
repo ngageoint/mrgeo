@@ -154,7 +154,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetTiledOutputFormatProvider() throws Exception
   {
-    TiledOutputFormatContext context = new TiledOutputFormatContext("foo", new Bounds(), 10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
+    TiledOutputFormatContext context = new TiledOutputFormatContext("foo", new Bounds(), 10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "");
 
     MrsImageOutputFormatProvider p = provider.getTiledOutputFormatProvider(context);
 
@@ -189,7 +189,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetMrsTileWriter() throws Exception
   {
-    MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(10, 1);
+    MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(10, 1, "");
 
     Assert.assertEquals("Wrong class", HdfsMrsImageWriter.class, provider.getMrsTileWriter(context).getClass());
   }

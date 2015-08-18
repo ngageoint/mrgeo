@@ -18,7 +18,6 @@ package org.mrgeo.image;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -28,6 +27,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.utils.Bounds;
@@ -45,7 +45,7 @@ public class MrsImageTest extends LocalRunnerTest
   private static String allOnes = Defs.INPUT + allonesName;
 
   private MrsImage allOnesImage;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
 
   @BeforeClass
   public static void init() throws Exception

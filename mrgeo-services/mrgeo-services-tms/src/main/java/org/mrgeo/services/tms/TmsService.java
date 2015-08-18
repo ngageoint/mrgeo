@@ -18,11 +18,11 @@ package org.mrgeo.services.tms;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
@@ -54,7 +54,7 @@ public class TmsService {
 
     @SuppressWarnings("static-method")
     public MrsImagePyramid getPyramid(String raster) throws IOException {
-        return MrsImagePyramid.open(raster, (Properties)null);
+        return MrsImagePyramid.open(raster, (ProviderProperties)null);
     }
 
     public MrsImagePyramidMetadata getMetadata(String raster) throws ExecutionException {

@@ -21,6 +21,7 @@ import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.*;
@@ -32,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Properties;
 
 public class MapAlgebraJob implements RunnableJob
 {
@@ -42,11 +42,11 @@ public class MapAlgebraJob implements RunnableJob
   Progress _progress;
   JobListener jobListener = null;
   private String protectionLevel;
-  private Properties providerProperties;
+  private ProviderProperties providerProperties;
 
   public MapAlgebraJob(String expression, String output,
       final String protectionLevel,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
   {
     _expression = expression;
     _output = output;
@@ -136,7 +136,7 @@ public class MapAlgebraJob implements RunnableJob
   }
   
   private void buildPyramid(MapOp op, Configuration conf,
-      Properties providerProperties) throws Exception
+                            ProviderProperties providerProperties) throws Exception
   {
     TaskProgress taskProg = new TaskProgress(_progress);
     try {

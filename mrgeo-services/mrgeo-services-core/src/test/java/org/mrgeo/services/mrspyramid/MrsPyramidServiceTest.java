@@ -24,6 +24,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.rasterops.ColorScale;
@@ -657,7 +658,7 @@ public class MrsPyramidServiceTest {
 
     if (zoomLevel != -1)
     {
-      if ( !service.isZoomLevelValid(reqImgName, (Properties)null, zoomLevel) ) {
+      if ( !service.isZoomLevelValid(reqImgName, (ProviderProperties)null, zoomLevel) ) {
         throw new IllegalArgumentException("Zoom level " + zoomLevel + " is not in pyramid " + reqImgName);
       }
     }
@@ -666,7 +667,7 @@ public class MrsPyramidServiceTest {
     ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
     InputStream is = null;
     ImageRenderer renderer = service.getImageRenderer(format);
-    Raster result = renderer.renderImage(reqImgName, bounds, w, h, (Properties)null, null);
+    Raster result = renderer.renderImage(reqImgName, bounds, w, h, (ProviderProperties)null, null);
     double[] extrema = renderer.getExtrema();
     if ( !format.equalsIgnoreCase("TIFF") )
       result = service.applyColorScaleToImage(format, result, cs, renderer, extrema);

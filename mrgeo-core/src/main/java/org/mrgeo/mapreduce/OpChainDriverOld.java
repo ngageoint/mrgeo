@@ -21,12 +21,16 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+<<<<<<< HEAD:mrgeo-core/src/main/java/org/mrgeo/mapreduce/OpChainDriverOld.java
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
+=======
+import org.mrgeo.data.ProviderProperties;
+>>>>>>> aabfd2528bd71bcafc0172f86ff538b3c9949ff8:mrgeo-core/src/main/java/org/mrgeo/mapreduce/OpChainDriver.java
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapalgebra.RasterMapOp;
@@ -52,7 +56,6 @@ import java.awt.image.SampleModel;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
@@ -76,7 +79,7 @@ public class OpChainDriverOld
     MrsImageOutputFormatProvider _ofProvider;
     AdHocDataProvider _statsProvider;
     String protectionLevel;
-    Properties providerProperties;
+    ProviderProperties providerProperties;
 
     public OpChainContext(final Set<String> inputs, final Bounds bounds, final String output,
         final int zoom, final Configuration userConf,
@@ -85,7 +88,7 @@ public class OpChainDriverOld
         final AdHocDataProvider statsProvider,
         final Progress progress, final JobListener jobListener,
         final String protectionLevel,
-        final Properties providerProperties)
+        final ProviderProperties providerProperties)
     {
       _inputs = inputs;
       _bounds = bounds;
@@ -241,7 +244,7 @@ public class OpChainDriverOld
       final int zoom,
       final Bounds bounds, final Configuration userConf, final Progress progress,
       final String protectionLevel,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     final RenderedImage rop = ((RasterMapOp)rimop).getRasterOutput();
@@ -254,7 +257,7 @@ public class OpChainDriverOld
       final int zoom,
       final Configuration userConf, final Progress progress,
       final String protectionLevel,
-      final Properties providerProperties) throws IOException,
+      final ProviderProperties providerProperties) throws IOException,
       JobFailedException, JobCancelledException
   {
     run(rimop, inputs, output, zoom, Bounds.world, userConf, progress, protectionLevel,
@@ -265,7 +268,7 @@ public class OpChainDriverOld
       final int zoom,
       final Bounds bounds, final Configuration userConf, final Progress progress,
       final String protectionLevel,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     final OpChainContext context = _setUpJob(rop, inputs, output, zoom, bounds, userConf, progress,
@@ -289,7 +292,7 @@ public class OpChainDriverOld
       final int zoom,
       final Configuration userConf, final Progress progress,
       final String protectionLevel,
-      final Properties providerProperties) throws IOException,
+      final ProviderProperties providerProperties) throws IOException,
       JobFailedException, JobCancelledException
   {
     run(rop, inputs, output, zoom, Bounds.world, userConf, progress, protectionLevel,
@@ -300,7 +303,7 @@ public class OpChainDriverOld
       final String output, final int zoom,
       final Bounds bounds, final Configuration userConf, final Progress progress,
       final JobListener jl, final String protectionLevel,
-      final Properties providerProperties) throws IOException, JobFailedException,
+      final ProviderProperties providerProperties) throws IOException, JobFailedException,
       JobCancelledException
   {
     final OpChainContext context = _setUpJob(rop, inputs, output, zoom, bounds, userConf, progress,
@@ -318,7 +321,7 @@ public class OpChainDriverOld
       final String output, final int zoom,
       final Bounds bounds, final Configuration userConf, final Progress progress,
       final JobListener jl, final String protectionLevel,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
       throws IOException
   {
 
@@ -524,7 +527,7 @@ public class OpChainDriverOld
   }
 
   private static int getTileSize(final Set<String> inputs,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     int tilesize = 0;
     for (final String input : inputs)

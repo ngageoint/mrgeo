@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.HadoopUtils;
@@ -31,7 +32,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Properties;
 
 public class HdfsAdHocDataProvider extends AdHocDataProvider
 {
@@ -64,7 +64,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   private final ArrayList<Path> files = new ArrayList<Path>();
 
   public HdfsAdHocDataProvider(final Configuration conf,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     super(HadoopFileUtils.unqualifyPath(new Path(HadoopFileUtils.getTempDir(conf),
         HadoopUtils.createRandomString(10))).toString());
@@ -72,7 +72,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   }
 
   public HdfsAdHocDataProvider(final Configuration conf, final String resourceName,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     super(resourceName);
     this.conf = conf;
@@ -200,7 +200,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   }
 
   public static boolean canOpen(final Configuration conf,
-      final String name, final Properties providerProperties) throws IOException
+      final String name, final ProviderProperties providerProperties) throws IOException
   {
     try
     {
@@ -216,7 +216,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   }
 
   public static boolean canWrite(final String name, final Configuration conf,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     // I think Ad hoc should always be able to write...
     
@@ -251,7 +251,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   }
 
   public static boolean exists(final Configuration conf, String name,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     try
     {
@@ -265,7 +265,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   }
 
   public static void delete(final Configuration conf, String name,
-      final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
   {
     try
     {

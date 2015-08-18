@@ -15,6 +15,7 @@
 
 package org.mrgeo.data.tile;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
@@ -23,6 +24,8 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
+import org.mrgeo.spark.SparkTileIdPartitioner;
+import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
 
@@ -38,7 +41,17 @@ public interface TiledOutputFormatProvider extends ProtectionLevelValidator
    * @param job
    * @throws IOException 
    */
-  public void setupJob(final Job job) throws DataProviderException, IOException;
+  public void setupJob(final Job job) throws DataProviderException;
+
+  /**
+   * For any additional Spark configuration besides setting
+   * the actual output format class (see getOutputFormatClass method in
+   * this interface), place that initialization code in this method.
+   *
+   * @param conf
+   * @throws IOException
+   */
+  public Configuration setupSparkJob(final Configuration conf) throws DataProviderException;
 
   /**
    * Perform any processing required after the map/reduce has completed.
@@ -47,6 +60,21 @@ public interface TiledOutputFormatProvider extends ProtectionLevelValidator
    */
   public void teardown(final Job job) throws DataProviderException;
 
+  /**
+   * Perform any processing required after a Spark job has completed.
+   *
+   * @param conf
+   */
+  public void teardownForSpark(final Configuration conf) throws DataProviderException;
+
   public MrsImagePyramidMetadataWriter getMetadataWriter();
   public MrsImageDataProvider getImageProvider();
+
+  /**
+   * If a data provider needs tiled data partitioned when a Spark job produces
+   * output, then the data provider implementation should return that partitioner
+   * from this method. Otherwise, return null.
+   *
+   */
+  public SparkTileIdPartitioner getPartitionerForSpark(TMSUtils.TileBounds tileBounds, int zoom);
 }

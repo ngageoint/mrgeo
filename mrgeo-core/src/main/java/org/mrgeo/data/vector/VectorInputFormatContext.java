@@ -16,9 +16,9 @@
 package org.mrgeo.data.vector;
 
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.ProviderProperties;
 
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 public class VectorInputFormatContext
@@ -28,9 +28,7 @@ public class VectorInputFormatContext
   private static final String INPUTS_PREFIX = className + ".inputs.";
   private static final String FEATURE_COUNT_KEY = className + ".featureCount";
   private static final String MIN_FEATURES_PER_SPLIT_KEY = className + ".minFeaturesPerSplit";
-  private static final String PROVIDER_PROPERTY_COUNT = className + ".provPropCount";
-  private static final String PROVIDER_PROPERTY_KEY = className + ".provPropKey.";
-  private static final String PROVIDER_PROPERTY_VALUE = className + ".provPropValue.";
+  private static final String PROVIDER_PROPERTY_KEY = className + ".provProps";
 
   // TODO: Might need to include properties for spatial filtering
   // here - like a geometry collection. We could also add a flag for
@@ -42,22 +40,19 @@ public class VectorInputFormatContext
   // TODO: Also should consider properties for attribute filtering.
 
   private Set<String> inputs;
-  private Properties inputProviderProperties = new Properties();
+  private ProviderProperties inputProviderProperties = new ProviderProperties();
   private long featureCount = -1L;
   private int minFeaturesPerSplit = -1;
 
   public VectorInputFormatContext(final Set<String> inputs,
-      final Properties inputProviderProperties)
+      final ProviderProperties inputProviderProperties)
   {
     this.inputs = inputs;
-    if (inputProviderProperties != null)
-    {
-      this.inputProviderProperties.putAll(inputProviderProperties);
-    }
+    this.inputProviderProperties = inputProviderProperties;
   }
 
   public VectorInputFormatContext(final Set<String> inputs,
-      final Properties inputProviderProperties, long featureCount,
+      final ProviderProperties inputProviderProperties, long featureCount,
       int minFeaturesPerSplit)
   {
     this(inputs, inputProviderProperties);
@@ -73,7 +68,7 @@ public class VectorInputFormatContext
     return inputs;
   }
 
-  public Properties getProviderProperties()
+  public ProviderProperties getProviderProperties()
   {
     return inputProviderProperties;
   }
@@ -99,22 +94,9 @@ public class VectorInputFormatContext
     }
     conf.setLong(FEATURE_COUNT_KEY, featureCount);
     conf.setInt(MIN_FEATURES_PER_SPLIT_KEY, minFeaturesPerSplit);
-    conf.setInt(PROVIDER_PROPERTY_COUNT,
-        ((inputProviderProperties == null) ? 0 : inputProviderProperties.size()));
     if (inputProviderProperties != null)
     {
-      Set<String> keySet = inputProviderProperties.stringPropertyNames();
-      String[] keys = new String[keySet.size()];
-      keySet.toArray(keys);
-      for (int i=0; i < keys.length; i++)
-      {
-        conf.set(PROVIDER_PROPERTY_KEY + i, keys[i]);
-        String v = inputProviderProperties.getProperty(keys[i]);
-        if (v != null)
-        {
-          conf.set(PROVIDER_PROPERTY_VALUE + i, v);
-        }
-      }
+      conf.set(PROVIDER_PROPERTY_KEY, inputProviderProperties.toDelimitedString());
     }
   }
 
@@ -130,16 +112,10 @@ public class VectorInputFormatContext
       String input = conf.get(INPUTS_PREFIX + inputIndex);
       context.inputs.add(input);
     }
-    int providerPropertyCount = conf.getInt(PROVIDER_PROPERTY_COUNT, 0);
-    if (providerPropertyCount > 0)
+    String strProviderProperties = conf.get(PROVIDER_PROPERTY_KEY);
+    if (strProviderProperties != null)
     {
-      context.inputProviderProperties = new Properties();
-      for (int i=0; i < providerPropertyCount; i++)
-      {
-        String key = conf.get(PROVIDER_PROPERTY_KEY + i);
-        String value = conf.get(PROVIDER_PROPERTY_VALUE + i);
-        context.inputProviderProperties.setProperty(key, value);
-      }
+      context.inputProviderProperties = ProviderProperties.fromDelimitedString(strProviderProperties);
     }
     return context;
   }

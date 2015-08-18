@@ -16,6 +16,7 @@
 package org.mrgeo.services.wcs;
 
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
@@ -32,7 +33,6 @@ import org.w3c.dom.Element;
 import java.awt.image.DataBuffer;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Properties;
 
 public class DescribeCoverageDocumentGenerator
 {
@@ -295,7 +295,7 @@ public class DescribeCoverageDocumentGenerator
 
   private MrsImageDataProvider[] getLayers(String[] layers) throws IOException
   {
-    Properties providerProperties = SecurityUtils.getProviderProperties();
+    ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
 
     MrsImageDataProvider[] providers = new MrsImageDataProvider[layers.length];
 

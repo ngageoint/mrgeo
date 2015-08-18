@@ -15,10 +15,10 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.Bounds;
 
 import java.awt.image.Raster;
-import java.util.Properties;
 
 
 /**
@@ -78,10 +78,10 @@ public interface ImageRenderer
    * @return rendered image
    * @throws Exception
    */
-  Raster renderImage(String pyramidName, Bounds bounds, int width, int height, Properties providerProperties,
+  Raster renderImage(String pyramidName, Bounds bounds, int width, int height, ProviderProperties providerProperties,
     String epsg) throws Exception;
 
-  Raster renderImage(String pyramidName, Bounds bounds, Properties providerProperties, String epsg)
+  Raster renderImage(String pyramidName, Bounds bounds, ProviderProperties providerProperties, String epsg)
     throws Exception;
 
   /**
@@ -99,21 +99,21 @@ public interface ImageRenderer
    * @throws Exception
    */
   Raster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
-      Properties providerProperties) throws Exception;
+    ProviderProperties providerProperties) throws Exception;
 
   Raster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
     String maskName, double maskMax,
-    Properties providerProperties) throws Exception;
+    ProviderProperties providerProperties) throws Exception;
 
   Raster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
-    String maskName, Properties providerProperties) throws Exception;
+    String maskName, ProviderProperties providerProperties) throws Exception;
 
   Raster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom,
-      Properties providerProperties) throws Exception;
+    ProviderProperties providerProperties) throws Exception;
 
   Raster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
-    double maskMax, Properties providerProperties) throws Exception;
+    double maskMax, ProviderProperties providerProperties) throws Exception;
 
   Raster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
-      final Properties providerProperties) throws Exception;
+      final ProviderProperties providerProperties) throws Exception;
 }

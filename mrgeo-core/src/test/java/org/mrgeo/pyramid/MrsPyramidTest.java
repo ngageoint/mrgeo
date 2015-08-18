@@ -21,13 +21,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.Bounds;
 
 import java.io.IOException;
-import java.util.Properties;
 
 @SuppressWarnings("static-method")
 public class MrsPyramidTest
@@ -37,7 +37,7 @@ public class MrsPyramidTest
   MrsImagePyramid noPyramids = null;
   MrsImagePyramidMetadata noPyramidsMeta = null;
   MrsImagePyramid pyramid = null;
-  Properties providerProperties;
+  ProviderProperties providerProperties;
   
   @Before
   public void setUp() throws Exception

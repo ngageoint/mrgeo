@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 public class MrsPyramidInputFormatTest extends LocalRunnerTest
 {
@@ -54,7 +53,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
     File f = new File(allones);
     allones = f.getCanonicalFile().toURI().toString();
 
-    MrsImagePyramid p = MrsImagePyramid.open(allones, (Properties)null);
+    MrsImagePyramid p = MrsImagePyramid.open(allones, (ProviderProperties)null);
     bounds = p.getBounds();
     imageTileBounds = p.getTileBounds(zoomLevel); // (915, 203) (917, 206)
   }
@@ -79,7 +78,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
         50);
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     long startId = TMSUtils.tileid(1, 50, fill.getZoomLevel());
     long endId = TMSUtils.tileid(9, 50,  fill.getZoomLevel());
@@ -109,7 +108,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
         50);
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     long startId = TMSUtils.tileid(21, 50, fill.getZoomLevel());
     long endId = TMSUtils.tileid(29, 50,  fill.getZoomLevel());
@@ -139,7 +138,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
         50);
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     long startId = TMSUtils.tileid(1, 51, fill.getZoomLevel());
     long endId = TMSUtils.tileid(29, 51,  fill.getZoomLevel());
@@ -169,7 +168,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
         50);
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     long startId = TMSUtils.tileid(1, 49, fill.getZoomLevel());
     long endId = TMSUtils.tileid(29, 49,  fill.getZoomLevel());
@@ -200,7 +199,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
         ty);
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     long startId = TMSUtils.tileid(5, ty, fill.getZoomLevel());
     long endId = TMSUtils.tileid(15, ty,  fill.getZoomLevel());
@@ -233,7 +232,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
         ty);
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     long startId = TMSUtils.tileid(15, ty, fill.getZoomLevel());
     long endId = TMSUtils.tileid(25, ty,  fill.getZoomLevel());
@@ -266,7 +265,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
         ty);
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     long startId = TMSUtils.tileid(11, ty, fill.getZoomLevel());
     long endId = TMSUtils.tileid(19, ty,  fill.getZoomLevel());
@@ -301,7 +300,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
         ty);
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     long startId = TMSUtils.tileid(8, ty, fill.getZoomLevel());
     long endId = TMSUtils.tileid(22, ty,  fill.getZoomLevel());
@@ -812,7 +811,7 @@ public class MrsPyramidInputFormatTest extends LocalRunnerTest
   {
     TiledInputFormatContext fill =
         new TiledInputFormatContext(zoomLevel, tileSize, Sets.newHashSet(allones),
-            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (Properties)null);
+            TMSUtils.tileToBounds(crop, zoomLevel, tileSize).convertNewToOldBounds(), 0, (ProviderProperties)null);
 
     List<TiledInputSplit> splits = new ArrayList<TiledInputSplit>();
     for (TestSplit split: spec.splits)

@@ -19,16 +19,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Map;
-import java.util.Properties;
 
 import junit.framework.Assert;
 
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.accumulo.AccumuloDefs;
-import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataReader;
 import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataWriter;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
@@ -36,11 +33,9 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.utils.HadoopUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -58,9 +53,8 @@ public class AccumuloMrsImageDataProviderFactoryTest
   private AccumuloMrsImageDataProviderFactory factory;
   private AccumuloMrsImageDataProvider provider;
   private AccumuloMrsImagePyramidMetadataWriter writer;
-  private Configuration conf;
-  private Properties providerProperties;
-  
+  private ProviderProperties providerProperties;
+
   private static Connector conn = null;
   
   @BeforeClass
@@ -71,8 +65,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
   @Before
   public void init() throws Exception{
     
-    conf = HadoopUtils.createConfiguration();
-    providerProperties = new Properties();
+    providerProperties = new ProviderProperties();
 //    conn = AccumuloConnector.getMockConnector(AccumuloDefs.INSTANCE, AccumuloDefs.USER, AccumuloDefs.PASSWORDBLANK);
     conn = AccumuloConnector.getConnector();
     try{
@@ -148,13 +141,13 @@ public class AccumuloMrsImageDataProviderFactoryTest
   public void testCreateMrsImageDataProvider() throws Exception{
     
     String name = "bar";
-    MrsImageDataProvider provider = factory.createMrsImageDataProvider(name, conf);
+    MrsImageDataProvider provider = factory.createMrsImageDataProvider(name, providerProperties);
     Assert.assertNotNull("Provider not created!", provider);
     Assert.assertEquals("Name not set properly!", name, provider.getResourceName());
     
     String name2 = "foo";
     String name3 = MrGeoAccumuloConstants.MRGEO_ACC_PREFIX + name2;
-    MrsImageDataProvider provider2 = factory.createMrsImageDataProvider(name3, conf);
+    MrsImageDataProvider provider2 = factory.createMrsImageDataProvider(name3, providerProperties);
     Assert.assertNotNull("Provider not created!", provider2);
     Assert.assertEquals("Name not set properly!", name2, provider2.getResourceName());
     
@@ -164,7 +157,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
   @Category(UnitTest.class)
   public void testCanOpen() throws Exception {
     String ds = MrGeoAccumuloConstants.MRGEO_ACC_PREFIX + junk;
-    Assert.assertTrue("Can not open image!", factory.canOpen(ds, conf));
+    Assert.assertTrue("Can not open image!", factory.canOpen(ds, providerProperties));
   } // end testCanOpen
 
   
@@ -172,7 +165,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
   @Category(UnitTest.class)
   public void testCanOpenMissing() throws Exception
   {
-    Assert.assertFalse("Can not open image!", factory.canOpen("missing", conf));
+    Assert.assertFalse("Can not open image!", factory.canOpen("missing", providerProperties));
   } // end testCanOpenMissing
   
   
@@ -180,21 +173,21 @@ public class AccumuloMrsImageDataProviderFactoryTest
   @Category(UnitTest.class)
   public void testCanOpenBadUri() throws Exception {
     String bad = "abcd:bad-name";
-    Assert.assertFalse("", factory.canOpen(bad, conf));
+    Assert.assertFalse("", factory.canOpen(bad, providerProperties));
   } // end testCanOpenBadUri
   
   
   @Test(expected = NullPointerException.class)
   @Category(UnitTest.class)
   public void testCanOpenNull() throws Exception {
-    factory.canOpen(null, conf);
+    factory.canOpen(null, providerProperties);
   } // end testCanOpenNull
   
   
   @Test
   @Category(UnitTest.class)
   public void testExists() throws Exception {
-    Assert.assertTrue("Can not open file!", factory.exists(junk, conf));
+    Assert.assertTrue("Can not open file!", factory.exists(junk, providerProperties));
   } // end testExists
   
   

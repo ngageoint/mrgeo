@@ -1754,7 +1754,8 @@
       <id>emr</id>
       <properties>
         <hadoop.version>2.4.0</hadoop.version>
-        <mahout.version>0.7</mahout.version>
+        <accumulo.version>1.6.1</accumulo.version>
+         <mahout.version>0.7</mahout.version>
         <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>

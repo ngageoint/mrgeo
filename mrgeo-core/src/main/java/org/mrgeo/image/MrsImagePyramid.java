@@ -21,6 +21,7 @@ import com.google.common.cache.*;
 import org.apache.hadoop.conf.Configuration;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.pyramid.MrsPyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.data.DataProviderFactory;
@@ -39,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
 import java.io.IOException;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -94,7 +94,7 @@ public static void calculateMetadataWithProvider(final String pyramidname, final
     final double[] defaultValues,
     final Bounds bounds, final Configuration conf,
     final String protectionLevel,
-    final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
 {
   // update the pyramid level stats
   if (statsProvider != null)
@@ -113,7 +113,7 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
     final double[] defaultValues,
     final Bounds bounds, final Configuration conf,
     final String protectionLevel,
-    final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
 {
 
   MrsImagePyramidMetadata metadata;
@@ -170,6 +170,7 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
           tilesize);
       metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
 
+        metadata.setProtectionLevel(protectionLevel);
       metadata.setBands(raster.getNumBands());
       metadata.setTilesize(tilesize);
       metadata.setTileType(raster.getTransferType());
@@ -208,7 +209,7 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
 //    return false;
 //  }
 
-public static boolean isValid(final String name, final Properties providerProperties)
+  public static boolean isValid(final String name, final ProviderProperties providerProperties)
 {
   try
   {
@@ -230,13 +231,13 @@ public static boolean isValid(final String name, final Properties providerProper
 
 @Deprecated
 public static MrsImagePyramid loadPyramid(final String name,
-    final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
 {
   return MrsImagePyramid.open(name, providerProperties);
 }
 
 public static MrsImagePyramid open(final String name,
-    final Properties providerProperties) throws IOException
+      final ProviderProperties providerProperties) throws IOException
 {
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(name,
       AccessMode.READ, providerProperties);

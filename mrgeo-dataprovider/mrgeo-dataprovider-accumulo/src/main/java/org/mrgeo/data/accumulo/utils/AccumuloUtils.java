@@ -49,6 +49,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.security.Credentials;
 import org.apache.accumulo.core.security.thrift.TCredentials;
 import org.apache.accumulo.core.util.BadArgumentException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -57,6 +58,7 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.data.DataProviderException;
@@ -65,20 +67,23 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccumuloUtils {
-
+	static Logger log = LoggerFactory.getLogger(AccumuloUtils.class);
   /*
    * Start tileId (long) transformation utilities
    */
-  
-  /**
-   * Convert a tile id (long) to a Text object.
-   * 
-   * @param tileId is a long to be put into a text object
-   * @return Text object with the bytes being the value of the tileId (long)
-   */
-  public static Text toText(long tileId) {
+
+	/**
+	 * Convert a tile id (long) to a Text object.
+	 *
+	 * @param tileId is a long to be put into a text object
+	 * @return Text object with the bytes being the value of the tileId (long)
+	 */
+
+	public static Text toText(long tileId) {
 		byte[] bytes = ByteBuffer.allocate(8).putLong(tileId).array();
 		return new Text(bytes);
 	} // end toText
@@ -237,10 +242,10 @@ public class AccumuloUtils {
 		
 		// get the connector to Accumulo
 		Connector connector = AccumuloConnector.getConnector(
-		    MrGeoProperties.getInstance().getProperty("accumulo.instance")
-				,MrGeoProperties.getInstance().getProperty("zooservers")
-				,MrGeoProperties.getInstance().getProperty("accumulo.user")
-				,MrGeoProperties.getInstance().getProperty("accumulo.password"));
+						MrGeoProperties.getInstance().getProperty("accumulo.instance")
+						, MrGeoProperties.getInstance().getProperty("zooservers")
+						, MrGeoProperties.getInstance().getProperty("accumulo.user")
+						, MrGeoProperties.getInstance().getProperty("accumulo.password"));
 		if(! connector.tableOperations().exists(tableName)){
 			try{
 				connector.tableOperations().create(tableName, true);
@@ -267,12 +272,7 @@ public class AccumuloUtils {
 	 */
 	public static MrsImagePyramidMetadata getMetadataFromTable(String table, Connector conn, String auths){
 	  MrsImagePyramidMetadata retMeta = null;
-	  Authorizations authorizations = null;
-	  if(auths == null){
-	    authorizations = new Authorizations();
-	  } else {
-	    authorizations = new Authorizations(auths);
-	  }
+	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
 
 	  Scanner scanner = null;
 	  try{
@@ -317,12 +317,7 @@ public class AccumuloUtils {
 	@Deprecated
 	public static MrsImagePyramidMetadata buildMetadataFromTable(String table, Connector conn, String auths){
 	  MrsImagePyramidMetadata retMeta = new MrsImagePyramidMetadata();
-	  Authorizations authorizations = null;
-    if(auths == null){
-      authorizations = new Authorizations();
-    } else {
-      authorizations = new Authorizations(auths);
-    }
+	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
 
     Scanner scanner = null;
     try{
@@ -564,13 +559,8 @@ public class AccumuloUtils {
 	@Deprecated
 	public static RasterWritable getRaster(String table, long tid, int zl, Connector conn, String auths){
 	  RasterWritable retRaster = null;
-	  Authorizations authorizations = null;
-    if(auths == null){
-      authorizations = new Authorizations();
-    } else {
-      authorizations = new Authorizations(auths);
-    }
-	  
+	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
+
     Scanner scanner = null;
     try{
       scanner = conn.createScanner(table, authorizations);
@@ -597,19 +587,17 @@ public class AccumuloUtils {
 	} // getRaster
 	
 	
-	public static Set<String> getListOfTables(Properties properties) {
+	public static Set<String> getListOfTables(Properties properties) throws DataProviderException{
 
 		Properties props = AccumuloConnector.getAccumuloProperties();
 		if(properties != null){
 			props.putAll(properties);
-			if(properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES) != null){
-				props.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, 
-						properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
+			String userRoles = properties.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES);
+			if(userRoles != null){
+				props.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS,  userRoles);
 			}
 		}
 
-		Authorizations auths = new Authorizations(props.getProperty(
-				MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
 		Connector conn;
 		try {
 			//conn = AccumuloConnector.getConnector();
@@ -621,7 +609,6 @@ public class AccumuloUtils {
 			conn = inst.getConnector(
 					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
 					token);
-			
 		} catch(AccumuloSecurityException ase){
 			ase.printStackTrace();
 			return null;
@@ -667,7 +654,7 @@ public class AccumuloUtils {
 
 	} // end getListOfTables
 	
-	public static ArrayList<String> getIgnoreTables(){
+	public static ArrayList<String> getIgnoreTables() throws DataProviderException {
 		Properties props = AccumuloConnector.getAccumuloProperties();
 		ArrayList<String> ignoreTables = new ArrayList<String>();
 		ignoreTables.add("!METADATA");
@@ -681,7 +668,8 @@ public class AccumuloUtils {
 	} // end 
 	
 	
-	public static Hashtable<String, String> getGeoTables(Properties providerProperties) {
+	public static Hashtable<String, String> getGeoTables(Properties providerProperties)
+					throws DataProviderException {
 
 		Properties props = AccumuloConnector.getAccumuloProperties();
 		if(providerProperties != null){
@@ -693,42 +681,37 @@ public class AccumuloUtils {
 			strAuths = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
 		}
 
-		if (strAuths != null && !strAuths.isEmpty()) {
-			Authorizations auths = new Authorizations(strAuths.split(","));
-			Connector conn;
-			try {
-				//conn = AccumuloConnector.getConnector();
-				Instance inst = new ZooKeeperInstance(
-						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
-						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
-				AuthenticationToken token = new PasswordToken(
-						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
-				conn = inst.getConnector(
-						props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
-						token);
-			} catch(AccumuloSecurityException ase){
-				ase.printStackTrace();
-				return null;
-			} catch(AccumuloException ae){
-				ae.printStackTrace();
-				return null;
-			} //catch (DataProviderException dpe) {
-				//dpe.printStackTrace();
-				//return null;
-			//}
-			
+		Authorizations auths = createAuthorizationsFromDelimitedString(strAuths);
+		Connector conn;
+		try {
+			//conn = AccumuloConnector.getConnector();
+			Instance inst = new ZooKeeperInstance(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+			AuthenticationToken token = new PasswordToken(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+			conn = inst.getConnector(
+					props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
+					token);
+		} catch(AccumuloSecurityException ase){
+			ase.printStackTrace();
+			return null;
+		} catch(AccumuloException ae){
+			ae.printStackTrace();
+			return null;
+		} //catch (DataProviderException dpe) {
+			//dpe.printStackTrace();
+			//return null;
+		//}
+
 //			TCredentials tcr = new TCredentials();
 //			tcr.setInstanceId(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
 //			tcr.setPrincipal(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
 //			tcr.setToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
 
-			AuthenticationToken at = new PasswordToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
-			
-			return getGeoTables(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES), at, auths, conn);
-		}
+		AuthenticationToken at = new PasswordToken(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
 
-		return new Hashtable<String, String>();
-
+		return getGeoTables(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_EXCLUDETABLES), at, auths, conn);
 	} // end getGeoTables
 	
 	
@@ -837,5 +820,41 @@ public class AccumuloUtils {
 		
 		return true;
   } // end validateProtectionLevel
-	
+
+	/**
+	 * This is a backward compatibility method. The data provider API used to pass
+	 * provider properties as a Properties object. It now uses a specialized class
+	 * called ProviderProperties. This method converts back to the Properties
+	 * object to prevent having to change a bunch of code in the Accumulo data provider.
+	 * TODO: it would be best to change the data provider at some point to
+	 * get rid of this inefficiency.
+	 *
+	 * @param providerProperties
+	 * @return
+	 */
+	public static Properties providerPropertiesToProperties(ProviderProperties providerProperties)
+	{
+		if (providerProperties == null)
+		{
+			return null;
+		}
+
+		Properties p = new Properties();
+		p.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_NAME,
+									providerProperties.getUserName());
+		p.setProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES,
+									StringUtils.join(providerProperties.getRoles(), ","));
+		return p;
+	}
+
+	public static Authorizations createAuthorizationsFromDelimitedString(String auths)
+	{
+		Authorizations authorizations = null;
+		if(auths == null || auths.isEmpty()){
+			authorizations = new Authorizations();
+		} else {
+			authorizations = new Authorizations(auths.split(","));
+		}
+		return authorizations;
+	}
 } // end AccumuloUtils

@@ -23,6 +23,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
@@ -156,7 +157,7 @@ public class RasterizeVectorDriver
       final RasterizeVectorPainter.AggregationType aggregationType,
       final int zoom, final Bounds bounds, final Progress progress,
       final JobListener jobListener, final String protectionLevel,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     // create a new unique job name
@@ -245,7 +246,7 @@ public class RasterizeVectorDriver
       final String input, final String output, final RasterizeVectorPainter.AggregationType aggregationType,
       final int zoom, final Bounds bounds, final Progress progress,
       final JobListener jobListener, final String protectionLevel,
-      final Properties providerProperties)
+      final ProviderProperties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
     final Job job = new Job(conf);

@@ -15,9 +15,8 @@
 
 package org.mrgeo.cmd;
 
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.data.ProviderProperties;
 
 /**
  * Command is the abstract base class for all mrgeo pluggable commands.  At run-time, all classes
@@ -41,5 +40,5 @@ public abstract class Command
    * @return int The return status of the command.  Follow typical main() return values: 0 - success,
    *             other values - failure (failure code)
    */
-  public abstract int run(String[] args, Configuration conf, Properties providerProperties);
+  public abstract int run(String[] args, Configuration conf, ProviderProperties providerProperties);
 }

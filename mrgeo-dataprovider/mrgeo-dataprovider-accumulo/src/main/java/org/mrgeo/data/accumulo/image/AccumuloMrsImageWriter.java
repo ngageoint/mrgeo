@@ -124,7 +124,7 @@ public class AccumuloMrsImageWriter extends MrsTileWriter<Raster>
   @Override
   public String getName() throws IOException
   {
-    throw new IOException("Not Implemented!  Need to figure out how to get the name back in accumulo");
+    return provider.getResourceName();
   }
 
 } // end AccumuloMrsImageWriter

@@ -15,11 +15,12 @@
 
 package org.mrgeo.mapalgebra;
 
+import org.mrgeo.data.ProviderProperties;
+
 import java.io.IOException;
-import java.util.Properties;
 
 public interface ResourceMapOpLoader
 {
   public MapOp loadMapOpFromResource(String resourceName,
-      Properties providerProperties) throws IOException;
+                                     ProviderProperties providerProperties) throws IOException;
 }

@@ -23,13 +23,16 @@ import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.util.Pair;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImagePyramidInputFormat;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
+import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -37,10 +40,10 @@ import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
 
@@ -66,8 +69,9 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     super(context);
     this.table = context.getFirstInput();
     this.props = new Properties();
-    this.props.putAll(props);
-  } // end constructor
+    Properties providerProps = AccumuloUtils.providerPropertiesToProperties(context.getProviderProperties());
+    this.props.putAll(providerProps);
+  }
   
   
   @Override
@@ -99,27 +103,52 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
 //    return null;
     
   } // end getInputFormat
-  
+
+  @Override
+  public Configuration setupSparkJob(final Configuration conf, final MrsImageDataProvider provider)
+    throws DataProviderException
+  {
+    try
+    {
+      Configuration conf1 = super.setupSparkJob(conf, provider);
+      Job job = new Job(conf1);
+      setupConfig(job, provider);
+      log.info("Accumulo IFP returning configuration " + job.getConfiguration());
+      return job.getConfiguration();
+    }
+    catch(IOException e)
+    {
+      throw new DataProviderException("Error while configuring Accumulo input format provider for " +
+                                      provider.getResourceName(), e);
+    }
+  }
+
   @Override
   public void setupJob(Job job,
-      final Properties providerProperties) throws DataProviderException
+      final MrsImageDataProvider provider) throws DataProviderException
   {
-    super.setupJob(job, providerProperties);
-
-    //zoomLevelsInPyramid = new ArrayList<Integer>();
+    super.setupJob(job, provider);
 
     log.info("Setting up job " + job.getJobName());
-    
+    setupConfig(job, provider);
+  }
+
+  private void setupConfig(final Job job,
+                           final MrsImageDataProvider provider) throws DataProviderException
+  {
+    Properties oldProviderProperties = AccumuloUtils.providerPropertiesToProperties(provider.getProviderProperties());
+    //zoomLevelsInPyramid = new ArrayList<Integer>();
+
     // lets look into the properties coming in
-    if(providerProperties != null){
-    	Set<Object> k1 = providerProperties.keySet();
+    if(oldProviderProperties != null){
+    	Set<Object> k1 = oldProviderProperties.keySet();
     	ArrayList<String> k2 = new ArrayList<String>();
     	for(Object o : k1){
     		k2.add(o.toString());
     	}
     	Collections.sort(k2);
     	for(int x = 0; x < k2.size(); x++){
-    		log.info("provider property " + x + ": k='" + k2.get(x) + "' v='" + providerProperties.getProperty(k2.get(x)) + "'");
+    		log.info("provider property " + x + ": k='" + k2.get(x) + "' v='" + oldProviderProperties.getProperty(k2.get(x)) + "'");
     	}
     }
     
@@ -132,8 +161,8 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     String connUser = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
     log.info("connecting to accumulo as user " + connUser);
     
-    if(providerProperties != null){
-    	props.putAll(providerProperties);
+    if(oldProviderProperties != null){
+    	props.putAll(oldProviderProperties);
     }
     if(props.size() == 0){
       throw new RuntimeException("No configuration for Accumulo!");
@@ -142,10 +171,18 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     // just in case this gets overwritten
     
     for(String k : MrGeoAccumuloConstants.MRGEO_ACC_KEYS_CONNECTION){
-      job.getConfiguration().set(k, props.getProperty(k));
+      String v = props.getProperty(k);
+      if (v != null)
+      {
+        job.getConfiguration().set(k, props.getProperty(k));
+      }
     }
     for(String k : MrGeoAccumuloConstants.MRGEO_ACC_KEYS_DATA){
-      job.getConfiguration().set(k, props.getProperty(k));
+      String v = props.getProperty(k);
+      if (v != null)
+      {
+        job.getConfiguration().set(k, v);
+      }
     }
     
     if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE) == null){
@@ -189,11 +226,8 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
 //          props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
 //    }
 
-    if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null){
-      auths = new Authorizations(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS).split(","));
-    } else {
-      auths = new Authorizations();
-    }
+    String strAuths = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    auths = AccumuloUtils.createAuthorizationsFromDelimitedString(strAuths);
 
     String enc = AccumuloConnector.encodeAccumuloProperties(context.getFirstInput());
     job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ENCODED, enc);
@@ -244,6 +278,7 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     	log.info("working with source " + input + " with auths = " + auths);
       
     	AccumuloMrsImagePyramidInputFormat.setInputTableName(job, input);
+      log.info("Set accumulo table name " + input + " into Configuration " + job.getConfiguration());
       
       
     } // end for loop
@@ -262,7 +297,7 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     String cp = job.getConfiguration().get("mapred.job.classpath.files");
     log.info("mapred.job.classpath.files = " + cp);
     
-  } // end setupJob
+  }
 
   @Override
   public void teardown(Job job) throws DataProviderException
