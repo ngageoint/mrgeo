@@ -376,7 +376,9 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
         {
           Path outputDir = workFilesPath.getFileSystem(conf).makeQualified(
                   workFilesPath);
-          conf.set(AccumuloMrsImagePyramidFileOutputFormat.OUTDIR, outputDir.toString());
+//          conf.set(AccumuloMrsImagePyramidFileOutputFormat.OUTDIR, outputDir.toString());
+          conf.set("mapred.output.dir", outputDir.toString());
+          conf.set("mapreduce.output.fileoutputformat.outputdir", outputDir.toString());
         }
 
       } else {
