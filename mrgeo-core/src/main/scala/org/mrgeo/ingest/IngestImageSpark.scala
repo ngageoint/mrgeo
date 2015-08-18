@@ -25,6 +25,7 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
+import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -107,7 +108,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
     var p: String = ""
     if (providerProperties != null) {
-      args += ProviderProperties -> providerProperties.toDelimitedString
+      args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
     }
     else
     {

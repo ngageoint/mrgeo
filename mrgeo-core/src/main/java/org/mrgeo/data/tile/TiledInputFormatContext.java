@@ -158,12 +158,9 @@ public class TiledInputFormatContext
     conf.setBoolean(INCLUDE_EMPTY_TILES, includeEmptyTiles);
     if (includeEmptyTiles)
     {
-      conf.setFloat(FILL_VALUE, (float)fillValue);
+      conf.setFloat(FILL_VALUE, (float) fillValue);
     }
-    if (inputProviderProperties != null)
-    {
-      conf.set(PROVIDER_PROPERTY_KEY, inputProviderProperties.toDelimitedString());
-    }
+      conf.set(PROVIDER_PROPERTY_KEY, ProviderProperties.toDelimitedString(inputProviderProperties));
   }
 
   public static TiledInputFormatContext load(final Configuration conf)

@@ -94,10 +94,7 @@ public class VectorInputFormatContext
     }
     conf.setLong(FEATURE_COUNT_KEY, featureCount);
     conf.setInt(MIN_FEATURES_PER_SPLIT_KEY, minFeaturesPerSplit);
-    if (inputProviderProperties != null)
-    {
-      conf.set(PROVIDER_PROPERTY_KEY, inputProviderProperties.toDelimitedString());
-    }
+    conf.set(PROVIDER_PROPERTY_KEY, ProviderProperties.toDelimitedString(inputProviderProperties));
   }
 
   public static VectorInputFormatContext load(final Configuration conf)
