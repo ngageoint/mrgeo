@@ -724,7 +724,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH544</id>
+      <id>CDH545</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.5</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.5</hadoop.yarn.version>
