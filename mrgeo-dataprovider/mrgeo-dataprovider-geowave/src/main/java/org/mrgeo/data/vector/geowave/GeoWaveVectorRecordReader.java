@@ -41,7 +41,9 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
     {
       try
       {
+        log.info("Creating the CQL filter");
         cqlFilter = ECQL.toFilter(strCqlFilter);
+        log.info("Done creating the CQL filter");
       }
       catch (CQLException e)
       {
