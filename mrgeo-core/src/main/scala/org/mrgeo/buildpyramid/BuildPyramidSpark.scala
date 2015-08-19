@@ -24,6 +24,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
+import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -80,7 +81,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 
     if (providerProperties != null)
     {
-      args += ProviderProperties -> providerProperties.toDelimitedString()
+      args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
         }
     else
     {

@@ -19,22 +19,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.mapreduce.OpChainDriver;
-import org.mrgeo.mapreduce.formats.TileClusterInfo;
-import org.mrgeo.mapreduce.job.JobCancelledException;
-import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.opimage.ConstantDescriptor;
-import org.mrgeo.opimage.TileCacheDescriptor;
-import org.mrgeo.progress.Progress;
-import org.mrgeo.utils.DependencyLoader;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.mapreduce.formats.TileClusterInfo;
+import org.mrgeo.mapreduce.job.JobCancelledException;
+import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.opchain.OpChainDriver;
+import org.mrgeo.opimage.ConstantDescriptor;
+import org.mrgeo.opimage.TileCacheDescriptor;
+import org.mrgeo.progress.Progress;
+import org.mrgeo.utils.DependencyLoader;
 
 import javax.media.jai.JAI;
 import javax.media.jai.RenderedOp;
-
 import java.awt.*;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
@@ -96,10 +95,12 @@ public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor,
     MapAlgebraExecutioner.calculateInputs(rootMapOp, inputs); 
 
     org.mrgeo.utils.HadoopUtils.setTileClusterInfo(getConf(), tileClusterInfo);
-    new OpChainDriver().run(this, inputs, getOutputName(),
+
+    OpChainDriver.opchain(getRasterOutput(), inputs, getOutputName(),
         MapAlgebraExecutioner.calculateMaximumZoomlevel(rootMapOp),
         MapAlgebraExecutioner.calculateBounds(rootMapOp),
         getConf(), p, getProtectionLevel(), getProviderProperties());
+
   }
 
   @Override

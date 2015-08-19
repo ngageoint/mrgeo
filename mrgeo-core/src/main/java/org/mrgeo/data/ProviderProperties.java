@@ -13,88 +13,99 @@ import java.util.List;
 
 public class ProviderProperties implements Externalizable
 {
-  private static Logger log = LoggerFactory.getLogger(ProviderProperties.class);
-  private String userName;
-  private List<String> roles;
+private static Logger log = LoggerFactory.getLogger(ProviderProperties.class);
+private String userName;
+private List<String> roles;
 
-  public ProviderProperties()
+public ProviderProperties()
+{
+  this("", new ArrayList<String>());
+}
+
+public ProviderProperties(String userName, List<String> roles)
+{
+  this.userName = userName;
+  this.roles = roles;
+}
+
+public ProviderProperties(String userName, String commaDelimitedRoles)
+{
+  this.userName = userName;
+  roles = new ArrayList<String>();
+  String[] separated = commaDelimitedRoles.split(",");
+  for (String r : separated)
   {
-    this("", new ArrayList<String>());
+    roles.add(r);
+  }
+}
+
+public String getUserName()
+{
+  return userName;
+}
+
+public List<String> getRoles()
+{
+  return roles;
+}
+
+public String toDelimitedString()
+{
+  return userName + "||" + StringUtils.join(roles, "||");
+}
+
+public static String toDelimitedString(ProviderProperties properties)
+{
+  if (properties == null)
+  {
+    return "";
   }
 
-  public ProviderProperties(String userName, List<String> roles)
-  {
-    this.userName = userName;
-    this.roles = roles;
-  }
+  return properties.toDelimitedString();
 
-  public ProviderProperties(String userName, String commaDelimitedRoles)
+}
+
+public static ProviderProperties fromDelimitedString(String value)
+{
+  String[] values = value.split("\\|\\|");
+  log.warn("fromDelimitedString:");
+  String userName = "";
+  List<String> roles = new ArrayList<String>();
+  for (String v : values)
   {
-    this.userName = userName;
-    roles = new ArrayList<String>();
-    String[] separated = commaDelimitedRoles.split(",");
-    for (String r : separated)
+    log.warn("property value: " + v);
+  }
+  if (values.length > 0)
+  {
+    userName = values[0];
+    for (int i = 1; i < values.length; i++)
     {
-      roles.add(r);
+      roles.add(values[i]);
     }
   }
+  return new ProviderProperties(userName, roles);
+}
 
-  public String getUserName()
+@Override
+public void writeExternal(ObjectOutput out) throws IOException
+{
+  out.writeUTF(userName);
+  out.writeInt(roles.size());
+  for (String role : roles)
   {
-    return userName;
+    out.writeUTF(role);
   }
+}
 
-  public List<String> getRoles()
+@Override
+public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+{
+  userName = in.readUTF();
+  int roleCount = in.readInt();
+  roles = new ArrayList<String>();
+  for (int i=0; i < roleCount; i++)
   {
-    return roles;
+    roles.add(in.readUTF());
   }
-
-  public String toDelimitedString()
-  {
-    return userName + "||" + StringUtils.join(roles, "||");
-  }
-
-  public static ProviderProperties fromDelimitedString(String value)
-  {
-    String[] values = value.split("\\|\\|");
-    log.warn("fromDelimitedString:");
-    String userName = "";
-    List<String> roles = new ArrayList<String>();
-    for (String v : values)
-    {
-      log.warn("property value: " + v);
-    }
-    if (values.length > 0)
-    {
-      userName = values[0];
-      for (int i = 1; i < values.length; i++)
-      {
-        roles.add(values[i]);
-      }
-    }
-    return new ProviderProperties(userName, roles);
-  }
-
-  @Override
-  public void writeExternal(ObjectOutput out) throws IOException
-  {
-    out.writeUTF(userName);
-    out.writeInt(roles.size());
-    for (String role : roles)
-    {
-      out.writeUTF(role);
-    }
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
-  {
-    userName = in.readUTF();
-    int roleCount = in.readInt();
-    roles = new ArrayList<String>();
-    for (int i=0; i < roleCount; i++)
-    {
-      roles.add(in.readUTF());
-    }
-  }
+}
 }
