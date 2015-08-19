@@ -330,13 +330,13 @@ object SparkUtils extends Logging {
 
     // Repartition the output if the output data provider requires it
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
-    var sorted: RDD[(TileIdWritable, RasterWritable)] = null
-    if (sparkPartitioner != null) {
-      sorted = wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-    }
-    else
-    {
-      sorted = wrappedTiles.sortByKey()
+    val sorted: RDD[(TileIdWritable, RasterWritable)] = {
+      if (sparkPartitioner != null) {
+        wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+      }
+      else {
+        wrappedTiles.sortByKey()
+      }
     }
 
     val wrappedForSave = new PairRDDFunctions(sorted)

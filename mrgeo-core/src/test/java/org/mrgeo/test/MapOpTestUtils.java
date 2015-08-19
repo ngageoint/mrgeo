@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
 
 public class MapOpTestUtils extends TestUtils
 {
@@ -135,24 +134,6 @@ runRasterExpression(final Configuration conf, final String testName,
   return mapOp;
 }
 
-public MapOp runRasterExpressionMultipleOutputs(final Configuration conf,
-    final String testName,
-      final String[] testOutputs, final String ex, final ProviderProperties providerProperties)
-    throws ParserException, IOException, JobFailedException, JobCancelledException
-{
-  final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
-  for (final String testOutput : testOutputs)
-  {
-    compareRasterOutput(testName + "/" + testOutput, providerProperties);
-  }
-  return mapOp;
-}
-
-
-  private void compareRasterOutput(final String testName, final ProviderProperties providerProperties) throws IOException
-{
-  compareRasterOutput(testName, null, null, providerProperties);
-}
 
 
 private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,

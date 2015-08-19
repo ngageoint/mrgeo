@@ -86,6 +86,9 @@ private static Path allhundredshalfPath;
 private static final String allhundredsup = "all-hundreds-shifted-up";
 private static Path allhundredsupPath;
 
+private static final String regularpoints = "regular-points";
+private static Path regularpointsPath;
+
 private static MapOpTestUtils testUtils;
 // Vector private static MapOpTestVectorUtils vectorTestUtils;
 
@@ -153,6 +156,9 @@ public static void init() throws IOException
   allhundredshalfPath = new Path(testUtils.getInputHdfs(), allhundredshalf);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
   allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
+
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
+  regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
 
   HadoopFileUtils
       .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
@@ -609,6 +615,42 @@ public void hillshade() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void kernelGaussian() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("kernel(\"gaussian\", [%s], 100.0)", regularpointsPath), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("kernel(\"gaussian\", [%s], 100.0)", regularpointsPath));
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void kernelLaplacian() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("kernel(\"laplacian\", [%s], 100.0)", regularpointsPath), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("kernel(\"laplacian\", [%s], 100.0)", regularpointsPath));
+
   }
 }
 
