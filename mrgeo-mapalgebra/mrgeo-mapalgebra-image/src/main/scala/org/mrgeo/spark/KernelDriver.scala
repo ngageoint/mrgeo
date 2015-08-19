@@ -231,9 +231,6 @@ class KernelDriver extends MrGeoJob with Externalizable {
         }
       }
 
-      val fn:String = "/data/export/kernel-test/" + t.ty + "-" + t.tx + ".tif"
-      GDALUtils.saveRaster(dst, fn, t.tx, t.ty, zoom, 512, nodatas(0).doubleValue())
-
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })
 

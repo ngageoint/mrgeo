@@ -27,7 +27,7 @@ class KryoRegistrar extends KryoRegistrator
   override def registerClasses(kryo: Kryo) {
 
 //    kryo.setReferences(false)
-    
+
     kryo.register(classOf[TileIdWritable])
     kryo.register(classOf[RasterWritable], new RasterWritableSerializer)
 
