@@ -16,11 +16,9 @@
 package org.mrgeo.mapalgebra;
 
 import junit.framework.Assert;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
@@ -38,6 +36,7 @@ import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.OpImageTestUtils;
+import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -588,6 +587,38 @@ public void fill1() throws Exception
         "fill([" + greece + "], 1, 24.9, 41.3, 26, 43, \"EXACT\")");
   }
 }
+
+@Ignore
+@Test
+@Category(IntegrationTest.class)
+public void hillshadeNonLocal() throws Exception
+{
+  Configuration config = HadoopUtils.createConfiguration();
+  double zen = 30.0 * 0.0174532925; // sun 30 deg above the horizon
+  double sunaz = 270.0 * 0.0174532925; // sun from 270 deg (west)
+
+  double coszen = Math.cos(zen);
+  double sinzen = Math.sin(zen);
+
+  // hillshading algorithm taken from:
+  // http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm
+  String exp = String.format("sl = slope([%s], \"rad\"); " +
+          "as = aspect([%s], \"rad\"); " +
+          "hill = 255.0 * ((%f * cos(sl)) + (%f * sin(sl) * cos(%f - as)))", smallElevation, smallElevation,
+      coszen, sinzen, sunaz);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(config, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(config, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        exp);
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)

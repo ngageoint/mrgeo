@@ -140,11 +140,44 @@ public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor,
     _output = createOutput();
   }
 
+private Set<String> getDependencies(RenderedImageMapOp rop)
+{
+  Set<String> deps = new HashSet<>();
+  try
+  {
+    deps.addAll(DependencyLoader.getDependencies(rop._factory.getClass()));
+
+    for (MapOp op : rop.getInputs())
+    {
+      if (op instanceof RenderedImageMapOp)
+      {
+        deps.addAll(getDependencies((RenderedImageMapOp) op));
+      }
+    }
+  }
+  catch (IOException e)
+  {
+    e.printStackTrace();
+  }
+
+  return deps;
+}
+
   private RenderedOp _createRenderedOp() throws IOException
   {
     if (_factory == null)
     {
       throw new IllegalArgumentException("The RenderedImageFactory must be specified.");
+    }
+
+    // Need to add dependencies for OpImage descriptors so that required JARs
+    // are pushed to the data node side during a map/reduce. Otherwise,
+    // a NullPointerException will be thrown when the OpChainDriver attempts
+    // to instantiate the operation chain on the mapper side.
+    //DependencyLoader.addDependencies(getConf(), _factory.getClass());
+    if (!(getParent() instanceof RenderedImageMapOp))
+    {
+      DependencyLoader.copyDependencies(getDependencies(this));
     }
 
     // Reuse the parameters that the caller has already set up. But at
@@ -179,11 +212,6 @@ public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor,
       jaiParams.add(tilesize);
     }
 
-    // Need to add dependencies for OpImage descriptors so that required JARs
-    // are pushed to the data node side during a map/reduce. Otherwise,
-    // a NullPointerException will be thrown when the OpChainDriver attempts
-    // to instantiate the operation chain on the mapper side.
-    DependencyLoader.addDependencies(getConf(), _factory.getClass());
     return JAI.create(_factory.getClass().getName(), jaiParams, _hints);
   }
 

@@ -24,57 +24,14 @@ public class Base64Utils
 
   public static String encodeObject(Object obj) throws IOException
   {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    ObjectOutputStream oos = null;
-    byte[] rawBytes;
-    try
-    {
-      oos = new ObjectOutputStream( baos );
-      oos.writeObject( obj );
-      rawBytes = baos.toByteArray();
-    }
-    catch (IOException e)
-    {
-      throw e;
-    }
-    finally
-    {
-      if (oos != null)
-      {
-        oos.close();
-      }
-      baos.close();
-    }
-
-    return new String(Base64.encodeBase64(rawBytes));
+    byte[] bytes = ObjectUtils.encodeObject(obj);
+    return new String(Base64.encodeBase64(bytes));
   }
 
   public static Object decodeToObject(String encoded) throws IOException, ClassNotFoundException
-  {  
-    byte[] objBytes = Base64.decodeBase64(encoded.getBytes());
-
-    ByteArrayInputStream bais = null;
-    ObjectInputStream ois = null;
-
-    try
-    {
-      bais = new ByteArrayInputStream(objBytes);
-      ois = new ObjectInputStream(bais);
-      Object obj = ois.readObject();
-
-      return obj;
-    }
-    finally
-    {
-      if (ois != null)
-      {
-        ois.close();
-      }
-      if (bais != null)
-      {
-        bais.close();
-      }
-    }
+  {
+    byte[] bytes = Base64.decodeBase64(encoded.getBytes());
+    return ObjectUtils.decodeObject(bytes);
   }
 
   public static String encodeDoubleArray(double[] noData) throws IOException
