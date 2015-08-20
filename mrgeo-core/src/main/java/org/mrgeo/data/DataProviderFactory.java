@@ -1011,8 +1011,13 @@ private static MrsImageDataProvider getMrsImageDataProvider(final String name,
     log.info("   accessMode: {}", accessMode.name());
     log.info("   conf: {}", conf);
     log.info("   provider properties: {}", providerProperties);
-    return mrsImageProviderCache.get(cacheKey,
-        new MrsImageLoader(name, accessMode, conf, providerProperties));
+
+    MrsImageLoader loader = new MrsImageLoader(name, accessMode, conf, providerProperties);
+
+    return mrsImageProviderCache.get(cacheKey, loader);
+
+//    return mrsImageProviderCache.get(cacheKey,
+//        new MrsImageLoader(name, accessMode, conf, providerProperties));
   }
   catch (ExecutionException e)
   {
@@ -1190,7 +1195,7 @@ protected static void initialize(final Configuration conf) throws DataProviderEx
         }
         if (dp.isValid())
         {
-          log.info("Found mrs image data provider factory " + dp.getClass().getName());
+          log.info("Found mrs image data provider factory {} {}", dp.getPrefix(),  dp.getClass().getName());
           mrsImageProviderFactories.put(dp.getPrefix(), dp);
           dp.initialize(conf);
         }
