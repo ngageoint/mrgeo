@@ -294,15 +294,18 @@ class OpChainDriver extends MrGeoJob with Externalizable {
   }
 
   override def readExternal(in: ObjectInput): Unit = {
+    OpImageRegistrar.registerMrGeoOps()
+
     inputs = in.readUTF().split(",")
     output = in.readUTF()
     zoom = in.readInt()
 
     val len = in.readInt()
     val bytes = Array.ofDim[Byte](len)
-    in.read(bytes)
+    in.readFully(bytes)
 
-    optree = Base64Utils.decodeToObjectBytes(bytes).asInstanceOf[RenderedOp]
+    // TODO:  This would make a great broadcast variable...
+    optree = ObjectUtils.decodeObject(bytes).asInstanceOf[RenderedOp]
 
     // force creation of the optree
     optree.getMaxX
@@ -315,7 +318,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
     out.writeUTF(output)
     out.writeInt(zoom)
 
-    val bytes = Base64Utils.encodeObjectBytes(optree)
+    val bytes = ObjectUtils.encodeObject(optree)
     out.writeInt(bytes.length)
     out.write(bytes)
   }
