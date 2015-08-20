@@ -16,6 +16,13 @@ gdal.path = /usr/lib:/usr/lib/jni
 # are: yarn, spark, and local
 cluster=yarn
 
+# The prefered provider to use if there are more than one, and the provider is missing
+# from the name.  Can use preferred.provider for all the types, or each one uniquely
+preferred.provider = hdfs
+#preferred.image.provider = hdfs
+#preferred.vector.provider = hdfs
+#preferred.adhoc.provider = hdfs
+
 # This flag is used to perform special processing when being run
 # on a developer's machine. For example, it changes the way we
 # search for JAR dependencies to prevent recursing through each

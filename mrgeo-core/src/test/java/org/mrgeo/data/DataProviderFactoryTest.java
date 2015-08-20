@@ -528,8 +528,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
       oldConfValues.put(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME,
           conf.get(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME, null));
-      oldConfValues.put(DataProviderFactory.PREFERRED_INGEST_PROVIDER_NAME,
-          conf.get(DataProviderFactory.PREFERRED_INGEST_PROVIDER_NAME, null));
       oldConfValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME,
           conf.get(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME, null));
       oldConfValues.put(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME,
@@ -538,14 +536,12 @@ public class DataProviderFactoryTest extends LocalRunnerTest
       if (confVal == null)
       {
         conf.unset(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME);
-        conf.unset(DataProviderFactory.PREFERRED_INGEST_PROVIDER_NAME);
         conf.unset(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME);
         conf.unset(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME);
       }
       else
       {
         conf.set(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME, confVal);
-        conf.set(DataProviderFactory.PREFERRED_INGEST_PROVIDER_NAME, confVal);
         conf.set(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME, confVal);
         conf.set(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME, confVal);
       }
@@ -557,8 +553,6 @@ public class DataProviderFactoryTest extends LocalRunnerTest
 
     oldMrGeoValues.put(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME,
         mp.getProperty(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME, null));
-    oldMrGeoValues.put(DataProviderFactory.PREFERRED_INGEST_PROPERTYNAME,
-        mp.getProperty(DataProviderFactory.PREFERRED_INGEST_PROPERTYNAME, null));
     oldMrGeoValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME,
         mp.getProperty(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME, null));
     oldMrGeoValues.put(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME,
@@ -569,14 +563,12 @@ public class DataProviderFactoryTest extends LocalRunnerTest
     if (mrgeoVal == null)
     {
       mp.remove(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME);
-      mp.remove(DataProviderFactory.PREFERRED_INGEST_PROPERTYNAME);
       mp.remove(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME);
       mp.remove(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME);
     }
     else
     {
       mp.setProperty(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME, mrgeoVal);
-      mp.setProperty(DataProviderFactory.PREFERRED_INGEST_PROPERTYNAME, mrgeoVal);
       mp.setProperty(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME, mrgeoVal);
       mp.setProperty(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME, mrgeoVal);
     }
