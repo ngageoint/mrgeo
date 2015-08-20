@@ -36,7 +36,7 @@ import org.mrgeo.ingest.IngestImageSpark
 import org.mrgeo.mapalgebra.{RasterMapOp, RenderedImageMapOp}
 import org.mrgeo.opimage.MrsPyramidOpImage
 import org.mrgeo.progress.Progress
-import org.mrgeo.rasterops.OpImageUtils
+import org.mrgeo.rasterops.{OpImageRegistrar, OpImageUtils}
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 
@@ -121,6 +121,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
   }
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+    OpImageRegistrar.registerMrGeoOps()
 
     conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
     conf.set("spark.shuffle.memoryFraction", "0.3") // set the shuffle higher
@@ -296,7 +297,13 @@ class OpChainDriver extends MrGeoJob with Externalizable {
     inputs = in.readUTF().split(",")
     output = in.readUTF()
     zoom = in.readInt()
-    optree = Base64Utils.decodeToObject(in.readUTF()).asInstanceOf[RenderedOp]
+
+    val len = in.readInt()
+    val bytes = Array.ofDim[Byte](len)
+    in.read(bytes)
+
+    optree = Base64Utils.decodeToObjectBytes(bytes).asInstanceOf[RenderedOp]
+
     // force creation of the optree
     optree.getMaxX
 
@@ -307,6 +314,9 @@ class OpChainDriver extends MrGeoJob with Externalizable {
     out.writeUTF(inputs.mkString(","))
     out.writeUTF(output)
     out.writeInt(zoom)
-    out.writeUTF(Base64Utils.encodeObject(optree))
+
+    val bytes = Base64Utils.encodeObjectBytes(optree)
+    out.writeInt(bytes.length)
+    out.write(bytes)
   }
 }
