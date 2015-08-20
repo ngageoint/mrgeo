@@ -199,7 +199,7 @@ private static ImageLayout calculateLayout(final MrsImageDataProvider dp,
 @Override
 public Raster computeTile(final int tx, final int ty)
 {
-  log.debug("tx: {} ty: {}", tx, ty);
+  log.debug("computing tile qtx: {} ty: {}", tx, ty);
 
   if (cachedRaster != null && cachedRaster.rasterCluster != null)
   {

@@ -119,40 +119,23 @@ private static final Logger log = LoggerFactory.getLogger(MrsPyramidDescriptor.c
       Long level = (Long)params.getObjectParameter(1);
       TileClusterInfo tileClusterInfo = (TileClusterInfo)params.getObjectParameter(2);
       ProviderProperties providerProperties = (ProviderProperties)params.getObjectParameter(3);
-
-      log.info("Creating MrsPyramidOpImage");
-      log.info("  name: {}", params.getObjectParameter(0));
-      log.info("  zoom: {}", level);
-      log.info("  tileClusterInfo: ");
-      log.info("    width: {}", tileClusterInfo.getWidth());
-      log.info("    height: {}", tileClusterInfo.getHeight());
-      log.info("    offset x: {}", tileClusterInfo.getOffsetX());
-      log.info("    offset y: {}", tileClusterInfo.getOffsetY());
-      log.info("    stride: {}", tileClusterInfo.getStride());
-      log.info("  provider properties: {}", providerProperties.toDelimitedString());
-
-      log.info("  ParameterBlock");
-      Class[] classes = params.getParamClasses();
-
-      for(int i = 0; i < params.getNumParameters(); i++)
-      {
-        log.info("    {} {} {}", i, classes[i], params.getObjectParameter(i));
-      }
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
           (String) params.getObjectParameter(0),
           AccessMode.READ, providerProperties);
 
-
-      log.info("Creating MrsPyramidOpImage");
-      log.info("  name: {}", dp.getResourceName());
-      log.info("  zoom: {}", level);
-      log.info("  tileClusterInfo: ");
-      log.info("    width: {}", tileClusterInfo.getWidth());
-      log.info("    height: {}", tileClusterInfo.getHeight());
-      log.info("    offset x: {}", tileClusterInfo.getOffsetX());
-      log.info("    offset y: {}", tileClusterInfo.getOffsetY());
-      log.info("    stride: {}", tileClusterInfo.getStride());
-      log.info("  provider properties: {}", providerProperties.toDelimitedString());
+      if (log.isDebugEnabled())
+      {
+        log.debug("Creating MrsPyramidOpImage");
+        log.debug("  name: {}", dp.getResourceName());
+        log.debug("  zoom: {}", level);
+        log.debug("  tileClusterInfo: ");
+        log.debug("    width: {}", tileClusterInfo.getWidth());
+        log.debug("    height: {}", tileClusterInfo.getHeight());
+        log.debug("    offset x: {}", tileClusterInfo.getOffsetX());
+        log.debug("    offset y: {}", tileClusterInfo.getOffsetY());
+        log.debug("    stride: {}", tileClusterInfo.getStride());
+        log.debug("  provider properties: {}", providerProperties.toDelimitedString());
+      }
 
       return MrsPyramidOpImage.create(dp, level, tileClusterInfo);
     }

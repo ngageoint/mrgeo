@@ -1005,12 +1005,15 @@ private static MrsImageDataProvider getMrsImageDataProvider(final String name,
     {
       mrsImageProviderCache.invalidate(cacheKey);
     }
-    log.info("Loading from mrsImageProviderCache");
-    log.info("   cacheKey: {}", cacheKey);
-    log.info("   name: {}", name);
-    log.info("   accessMode: {}", accessMode.name());
-    log.info("   conf: {}", conf);
-    log.info("   provider properties: {}", providerProperties);
+    if (log.isDebugEnabled())
+    {
+      log.debug("Loading from mrsImageProviderCache");
+      log.debug("   cacheKey: {}", cacheKey);
+      log.debug("   name: {}", name);
+      log.debug("   accessMode: {}", accessMode.name());
+      log.debug("   conf: {}", conf);
+      log.debug("   provider properties: {}", providerProperties);
+    }
 
     MrsImageLoader loader = new MrsImageLoader(name, accessMode, conf, providerProperties);
 
