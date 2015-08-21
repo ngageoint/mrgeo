@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.ClassUtil;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -37,7 +38,10 @@ import java.io.*;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -60,15 +64,16 @@ public class DependencyLoader
     return deps;
   }
 
-  public static Set<String> copyDependencies(final Set<String> localDependencies) throws IOException
+  public static Set<String> copyDependencies(final Set<String> localDependencies, Configuration conf) throws IOException
   {
-    Configuration conf = HadoopUtils.createConfiguration();
     FileSystem fs = HadoopFileUtils.getFileSystem(conf);
     Path hdfsBase =
         new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
 
-
     Set<String> deps = new HashSet<>();
+
+    // prime the set with any dependencies already added
+    deps.addAll(conf.getStringCollection(MRJobConfig.CLASSPATH_FILES));
 
     // copy the dependencies to hdfs, if needed
     for (String local: localDependencies)
@@ -90,12 +95,12 @@ public class DependencyLoader
 
   }
 
-  public static Set<String> getAndCopyDependencies(final Class<?> clazz) throws IOException
+  public static Set<String> getAndCopyDependencies(final Class<?> clazz, Configuration conf) throws IOException
   {
     // get the list of dependencies
     Set<String> rawDeps = getDependencies(clazz);
 
-    return copyDependencies(rawDeps);
+    return copyDependencies(rawDeps, conf);
   }
 
   public static String getMasterJar(final Class<?> clazz) throws IOException

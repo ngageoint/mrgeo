@@ -31,6 +31,8 @@ import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.opimage.TileCacheDescriptor;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.utils.DependencyLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.media.jai.JAI;
 import javax.media.jai.RenderedOp;
@@ -44,6 +46,8 @@ import java.util.Set;
 
 public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor, TileClusterInfoConsumer
 {
+private static final Logger log = LoggerFactory.getLogger(RenderedImageMapOp.class);
+
   private RenderingHints _hints = JAI.getDefaultInstance().getRenderingHints();
   private ParameterBlock _param = new ParameterBlock();
   RenderedImageFactory _factory = null;
@@ -177,7 +181,7 @@ private Set<String> getDependencies(RenderedImageMapOp rop)
     //DependencyLoader.addDependencies(getConf(), _factory.getClass());
     if (!(getParent() instanceof RenderedImageMapOp))
     {
-      DependencyLoader.copyDependencies(getDependencies(this));
+      DependencyLoader.copyDependencies(getDependencies(this), getConf());
     }
 
     // Reuse the parameters that the caller has already set up. But at

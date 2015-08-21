@@ -291,9 +291,9 @@ then
   YARN_ARGS+=("-y","yarn.scheduler.minimum-allocation-mb=1024")   # 2048
   YARN_ARGS+=("-m","yarn.app.mapreduce.am.resource.mb=1024")      # 2048
   YARN_ARGS+=("-y","yarn.app.mapreduce.am.command-opts=-Xmx820m") # 1638
-  YARN_ARGS+=("-c","fs.s3a.connection.maximum=15") # 15
-  YARN_ARGS+=("-c","fs.s3a.threads.max=256") # 256
-  YARN_ARGS+=("-c","fs.s3a.threads.core=15") # 15
+  #YARN_ARGS+=("-c","fs.s3a.connection.maximum=15") # 15
+  #YARN_ARGS+=("-c","fs.s3a.threads.max=256") # 256
+  #YARN_ARGS+=("-c","fs.s3a.threads.core=15") # 15
 
   SPARK_ARGS=()
   SPARK_ARGS+=("spark.yarn.jar=/home/hadoop/spark/lib/spark-assembly-1.4.0-hadoop2.4.0.jar")

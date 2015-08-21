@@ -588,12 +588,12 @@ public void fill1() throws Exception
   }
 }
 
-@Ignore
 @Test
 @Category(IntegrationTest.class)
 public void hillshadeNonLocal() throws Exception
 {
   Configuration config = HadoopUtils.createConfiguration();
+
   double zen = 30.0 * 0.0174532925; // sun 30 deg above the horizon
   double sunaz = 270.0 * 0.0174532925; // sun from 270 deg (west)
 
