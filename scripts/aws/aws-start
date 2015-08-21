@@ -2,7 +2,8 @@
 
 set -e
 
-ZONE="us-east-1a"
+ZONES="us-east-1a us-east-1b us-east-1c"
+ZONE=
 
 MASTER_TYPE="m3.xlarge"
 
@@ -169,9 +170,27 @@ spotbid ()
     NOW="$(date +'%FT%T.%z')"
     MINUTE_AGO="$(date --date='1 minute ago' +'%FT%T.%z')"
 
-    RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW)
+    if [ -z $ZONE ]
+    then
+      PRICE=9999
+      for Z in $ZONES; do
+        RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $Z --start-time $MINUTE_AGO --end-time $NOW)
 
-    PRICE=`echo ${RESULT} | awk '{print $5;}'`
+        P=`echo ${RESULT} | awk '{print $5;}'`
+        COMP=`echo $PRICE">"$P | bc`
+
+        if [ $COMP -eq 1 ]
+        then
+          PRICE=$P
+          ZONE=$Z
+        fi
+      done
+    else
+      RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW)
+
+      PRICE=`echo ${RESULT} | awk '{print $5;}'`
+    fi
+
     eval "$r1='$PRICE'"
 
     if [ -z $BIDPRICE ]
@@ -186,7 +205,7 @@ spotbid ()
     COMP=`echo $BIDPRICE">="$FULLPRICE | bc`
     if [ $COMP -eq 1 ]
     then
-      echo "Bid price $BIDPRICE is greater than the reserved price $FULLPRICE, quitting"
+      echo "Bid price $BIDPRICE is greater than the reserved price $FULLPRICE, (spot price $PRICE) quitting"
       exit 1
     fi
 
@@ -238,7 +257,7 @@ then
     then
       spotbid SPOT_PRICE BID_PRICE $WORKER_TYPE $SPOT_WORKER_PRICE
       WORKER_BID=",BidPrice="$BID_PRICE
-      echo "Core nodes - spot price: $SPOT_PRICE bid price $BID_PRICE"
+      echo "Core nodes - spot price: $SPOT_PRICE bid price $BID_PRICE zone: $ZONE"
     else
       WORKER_BID=
     fi
@@ -253,7 +272,7 @@ then
     then
       spotbid SPOT_PRICE BID_PRICE $TASK_TYPE $SPOT_TASK_PRICE
       TASK_BID=",BidPrice="$BID_PRICE
-      echo "Task nodes - spot price: $SPOT_PRICE bid price $BID_PRICE"
+      echo "Task nodes - spot price: $SPOT_PRICE bid price $BID_PRICE zone: $ZONE"
     else
       TASK_BID=
     fi
@@ -265,12 +284,16 @@ then
 
   echo "starting cluster " $NAME
 
+
   YARN_ARGS=()
   YARN_ARGS+=("-y" "yarn.nodemanager.pmem-check-enabled=false")
   YARN_ARGS+=("-y","yarn.nodemanager.vmem-check-enabled=false")
   YARN_ARGS+=("-y","yarn.scheduler.minimum-allocation-mb=1024")   # 2048
   YARN_ARGS+=("-m","yarn.app.mapreduce.am.resource.mb=1024")      # 2048
   YARN_ARGS+=("-y","yarn.app.mapreduce.am.command-opts=-Xmx820m") # 1638
+  YARN_ARGS+=("-c","fs.s3a.connection.maximum=15") # 15
+  YARN_ARGS+=("-c","fs.s3a.threads.max=256") # 256
+  YARN_ARGS+=("-c","fs.s3a.threads.core=15") # 15
 
   SPARK_ARGS=()
   SPARK_ARGS+=("spark.yarn.jar=/home/hadoop/spark/lib/spark-assembly-1.4.0-hadoop2.4.0.jar")
