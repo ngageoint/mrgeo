@@ -588,6 +588,7 @@ public void fill1() throws Exception
   }
 }
 
+@Ignore
 @Test
 @Category(IntegrationTest.class)
 public void hillshadeNonLocal() throws Exception
