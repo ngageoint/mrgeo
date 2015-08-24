@@ -20,6 +20,8 @@ import java.net.URL
 import java.util
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.mapreduce.MRJobConfig
+import org.apache.hadoop.mapreduce.filecache.DistributedCache
 import org.apache.hadoop.util.ClassUtil
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
@@ -53,7 +55,7 @@ abstract class MrGeoDriver extends Logging {
     logInfo("Configuring application")
 
     // setup dependencies, but save the local deps to use in the classloader
-    val local = setupDependencies(job)
+    val local = setupDependencies(job, hadoopConf)
 
     var parentLoader:ClassLoader = Thread.currentThread().getContextClassLoader
     if (parentLoader == null) {
@@ -302,10 +304,10 @@ abstract class MrGeoDriver extends Logging {
     (ex, exmem)
   }
 
-  protected def setupDependencies(job:JobArguments): mutable.Set[String] = {
+  protected def setupDependencies(job:JobArguments, hadoopConf:Configuration): mutable.Set[String] = {
 
     val dependencies = DependencyLoader.getDependencies(getClass)
-    val qualified = DependencyLoader.copyDependencies(dependencies)
+    val qualified = DependencyLoader.copyDependencies(dependencies, hadoopConf)
     val jars:StringBuilder = new StringBuilder
 
     for (jar <- qualified) {
@@ -317,9 +319,9 @@ abstract class MrGeoDriver extends Logging {
       jars ++= jar
       //}
     }
-    log.warn("Getting data provider dependencies")
+
     val dpfDependencies = DataProviderFactory.getDependencies()
-    val dpfQualified = DependencyLoader.copyDependencies(dpfDependencies)
+    val dpfQualified = DependencyLoader.copyDependencies(dpfDependencies, hadoopConf)
     for (jar <- dpfQualified) {
       // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...
       //if (!jar.contains("spark-yarn")) {

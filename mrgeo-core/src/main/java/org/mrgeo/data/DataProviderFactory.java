@@ -1358,6 +1358,8 @@ private static void findPreferredProvider(Configuration conf)
     for (final AdHocDataProviderFactory factory : adHocProviderFactories.values())
     {
       preferredAdHocProviderName = factory.getPrefix();
+
+      setValue(preferredAdHocProviderName, conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
       log.info("Found preferred ad hoc provider name " + preferredAdHocProviderName);
       break;
     }
@@ -1374,6 +1376,8 @@ private static void findPreferredProvider(Configuration conf)
     for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
     {
       preferredImageProviderName = factory.getPrefix();
+      setValue(preferredImageProviderName, conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
+
       log.info("Found preferred image provider name " + preferredImageProviderName);
       break;
     }
@@ -1391,6 +1395,8 @@ private static void findPreferredProvider(Configuration conf)
     for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
     {
       preferredVectorProviderName = factory.getPrefix();
+      setValue(preferredVectorProviderName, conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
+
       log.info("Found preferred vector provider name " + preferredVectorProviderName);
       break;
     }
@@ -1432,6 +1438,21 @@ private static String findValue(final Configuration conf, final String confName,
 
   return name;
 }
+
+private static void setValue(String value, final Configuration conf, final String confName, final String propName)
+{
+  if (conf != null)
+  {
+    conf.set(confName, value);
+  }
+
+  Properties mp = MrGeoProperties.getInstance();
+  if (mp != null)
+  {
+    MrGeoProperties.getInstance().setProperty(propName, value);
+  }
+}
+
 
 protected static String getPrefix(String name)
 {
