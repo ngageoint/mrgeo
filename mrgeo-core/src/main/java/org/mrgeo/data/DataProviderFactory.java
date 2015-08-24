@@ -147,10 +147,13 @@ public static ProviderProperties loadProviderPropertiesFromConfig(Configuration 
   String userName = conf.get(PROVIDER_PROPERTY_USER_NAME, "");
   List<String> roles = new ArrayList<String>();
   String strRoles = conf.get(PROVIDER_PROPERTY_USER_ROLES, "");
-  String[] separated = strRoles.split(",");
-  for (String r : separated)
+  if (strRoles != null && !strRoles.isEmpty())
   {
-    roles.add(r);
+    String[] separated = strRoles.split(",");
+    for (String r : separated)
+    {
+      roles.add(r);
+    }
   }
   return new ProviderProperties(userName, roles);
 }
