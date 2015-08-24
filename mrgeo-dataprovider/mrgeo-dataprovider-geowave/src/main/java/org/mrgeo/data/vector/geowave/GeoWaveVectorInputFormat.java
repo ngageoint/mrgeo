@@ -24,7 +24,17 @@ public class GeoWaveVectorInputFormat extends InputFormat<LongWritable, Geometry
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
   {
-    return delegate.getSplits(context);
+    try
+    {
+      return delegate.getSplits(context);
+    }
+    catch(OutOfMemoryError e)
+    {
+      // This can happen for example if the date range used in the temporal query
+      // spans too much time. I'm not sure what else might trigger this.
+      throw new IOException("Unable to query GeoWave data due to memory constraints." +
+                            " If you queried by a time range, the range may be too large.", e);
+    }
   }
 
   @Override

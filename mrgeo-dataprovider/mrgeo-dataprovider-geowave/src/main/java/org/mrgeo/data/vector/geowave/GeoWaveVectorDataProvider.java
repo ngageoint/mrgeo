@@ -1,10 +1,11 @@
 package org.mrgeo.data.vector.geowave;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 import mil.nga.giat.geowave.accumulo.AccumuloOperations;
 import mil.nga.giat.geowave.accumulo.BasicAccumuloOperations;
 import mil.nga.giat.geowave.accumulo.metadata.AccumuloAdapterStore;
@@ -15,6 +16,8 @@ import mil.nga.giat.geowave.store.adapter.AdapterStore;
 import mil.nga.giat.geowave.store.adapter.DataAdapter;
 import mil.nga.giat.geowave.store.adapter.statistics.CountDataStatistics;
 import mil.nga.giat.geowave.store.adapter.statistics.DataStatisticsStore;
+import mil.nga.giat.geowave.store.dimension.DimensionField;
+import mil.nga.giat.geowave.store.index.CommonIndexValue;
 import mil.nga.giat.geowave.store.index.Index;
 import mil.nga.giat.geowave.store.query.BasicQuery;
 import mil.nga.giat.geowave.store.query.Query;
@@ -30,7 +33,9 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
-import org.mrgeo.data.DataProviderFactory;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorInputFormatContext;
@@ -45,9 +50,13 @@ import org.mrgeo.data.vector.VectorWriter;
 import org.mrgeo.data.vector.VectorWriterContext;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.filter.Filter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GeoWaveVectorDataProvider extends VectorDataProvider
 {
+  static Logger log = LoggerFactory.getLogger(GeoWaveVectorDataProvider.class);
+
   private static final String PROVIDER_PROPERTIES_SIZE = GeoWaveVectorDataProvider.class.getName() + "providerProperties.size";
   private static final String PROVIDER_PROPERTIES_KEY_PREFIX = GeoWaveVectorDataProvider.class.getName() + "providerProperties.key";
   private static final String PROVIDER_PROPERTIES_VALUE_PREFIX = GeoWaveVectorDataProvider.class.getName() + "providerProperties.value";
@@ -59,11 +68,23 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   private static VectorDataStore dataStore;
   private static Index index;
 
+  // Package private for unit testing
+  static boolean initialized = false;
+
   private DataAdapter<?> dataAdapter;
   private Filter filter;
   private String cqlFilter;
+  private com.vividsolutions.jts.geom.Geometry spatialConstraint;
+  private Date startTimeConstraint;
+  private Date endTimeConstraint;
   private GeoWaveVectorMetadataReader metaReader;
   private ProviderProperties providerProperties;
+
+  private static class ParseResults
+  {
+    public String name;
+    public Map<String, String> settings = new HashMap<String, String>();
+  }
 
   public GeoWaveVectorDataProvider(String inputPrefix, String input, ProviderProperties providerProperties)
   {
@@ -71,16 +92,22 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     // This constructor is only called from driver-side (i.e. not in
     // map/reduce tasks), so the connection settings are obtained from
     // the mrgeo.conf file.
-    if (connectionInfo == null)
-    {
-      connectionInfo = GeoWaveConnectionInfo.load();
-    }
+    getConnectionInfo(); // initializes connectionInfo if needed
     this.providerProperties = providerProperties;
   }
 
   public static GeoWaveConnectionInfo getConnectionInfo()
   {
+    if (connectionInfo == null)
+    {
+      connectionInfo = GeoWaveConnectionInfo.load();
+    }
     return connectionInfo;
+  }
+
+  static void setConnectionInfo(GeoWaveConnectionInfo connInfo)
+  {
+    connectionInfo = connInfo;
   }
 
   public static DataStatisticsStore getStatisticsStore() throws AccumuloSecurityException, AccumuloException, IOException
@@ -97,8 +124,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   public String getGeoWaveResourceName() throws IOException
   {
-    String[] specs = parseResourceName(getResourceName());
-    return specs[0];
+    ParseResults results = parseResourceName(getResourceName());
+    return results.name;
   }
 
   public DataAdapter<?> getDataAdapter() throws AccumuloSecurityException, AccumuloException, IOException
@@ -122,6 +149,24 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return cqlFilter;
   }
 
+  public com.vividsolutions.jts.geom.Geometry getSpatialConstraint() throws AccumuloSecurityException, AccumuloException, IOException
+  {
+    init();
+    return spatialConstraint;
+  }
+
+  public Date getStartTimeConstraint() throws AccumuloSecurityException, AccumuloException, IOException
+  {
+    init();
+    return startTimeConstraint;
+  }
+
+  public Date getEndTimeConstraint() throws AccumuloSecurityException, AccumuloException, IOException
+  {
+    init();
+    return endTimeConstraint;
+  }
+
   /**
    * Parses the input string into the name of the input and the optional query string
    * that accompanies it. The two strings are separated by a semi-colon, and the query
@@ -131,40 +176,123 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
    * @param input
    * @return
    */
-  private static String[] parseResourceName(String input) throws IOException
+  private static ParseResults parseResourceName(String input) throws IOException
   {
     int semiColonIndex = input.indexOf(';');
     if (semiColonIndex == 0)
     {
       throw new IOException("Missing name from GeoWave data source: " + input);
     }
-    String[] result = new String[2];
+    ParseResults results = new ParseResults();
     if (semiColonIndex > 0)
     {
-      result[0] = input.substring(0, semiColonIndex);
-      String query = input.substring(semiColonIndex + 1).trim();
-      if (query.startsWith("\""))
+      results.name = input.substring(0, semiColonIndex);
+      // Start parsing the data source settings
+      String strSettings = input.substring(semiColonIndex + 1);
+      // Now parse each property of the geowave source.
+      parseDataSourceSettings(strSettings, results.settings);
+    }
+    else
+    {
+      results.name = input;
+    }
+    return results;
+  }
+
+  // Package private for unit testing
+  static void parseDataSourceSettings(String strSettings,
+                                              Map<String, String> settings) throws IOException
+  {
+    boolean foundSemiColon = true;
+    String remaining = strSettings.trim();
+    if (remaining.isEmpty())
+    {
+      return;
+    }
+
+    int settingIndex = 0;
+    while (foundSemiColon)
+    {
+      int equalsIndex = remaining.indexOf("=", settingIndex);
+      if (equalsIndex >= 0)
       {
-        if (query.endsWith("\""))
+        String keyName = remaining.substring(settingIndex, equalsIndex).trim();
+        // Everything after the = char
+        remaining = remaining.substring(equalsIndex + 1).trim();
+        if (remaining.length() > 0)
         {
-          result[1] = query.substring(1, query.length() - 1);
+          // Handle double-quoted settings specially, skipping escaped double
+          // quotes inside the value.
+          if (remaining.startsWith("\""))
+          {
+            // Find the index of the corresponding closing quote. Note that double
+            // quotes can be escaped with a backslash (\) within the quoted string.
+            int closingQuoteIndex = remaining.indexOf('"', 1);
+            while (closingQuoteIndex > 0)
+            {
+              // If the double quote is not preceeded by an escape backslash,
+              // then we've found the closing quote.
+              if (remaining.charAt(closingQuoteIndex - 1) != '\\')
+              {
+                break;
+              }
+              closingQuoteIndex = remaining.indexOf('"', closingQuoteIndex + 1);
+            }
+            if (closingQuoteIndex >= 0)
+            {
+              String value = remaining.substring(1, closingQuoteIndex);
+              log.debug("Adding GeoWave source key setting " + keyName + " = " + value);
+              settings.put(keyName, value);
+              settingIndex = 0;
+              int nextSemiColonIndex = remaining.indexOf(';', closingQuoteIndex + 1);
+              if (nextSemiColonIndex >= 0)
+              {
+                foundSemiColon = true;
+                remaining = remaining.substring(nextSemiColonIndex + 1).trim();
+              }
+              else
+              {
+                // No more settings
+                foundSemiColon = false;
+              }
+            }
+            else
+            {
+              throw new IOException("Invalid GeoWave settings string, expected ending double quote for key " +
+                                    keyName + " in " + strSettings);
+            }
+          }
+          else
+          {
+            // The value is not quoted
+            int semiColonIndex = remaining.indexOf(";");
+            if (semiColonIndex >= 0)
+            {
+              String value = remaining.substring(0, semiColonIndex);
+              log.debug("Adding GeoWave source key setting " + keyName + " = " + value);
+              settings.put(keyName, value);
+              settingIndex = 0;
+              remaining = remaining.substring(semiColonIndex + 1);
+            }
+            else
+            {
+              log.debug("Adding GeoWave source key setting " + keyName + " = " + remaining);
+              settings.put(keyName, remaining);
+              // There are no more settings since there are no more semi-colons
+              foundSemiColon = false;
+            }
+          }
         }
         else
         {
-          throw new IOException("Invalid query string, expected ending double quote: " + input);
+          throw new IOException("Missing value for " + keyName);
         }
       }
       else
       {
-        result[1] = query;
+        throw new IOException("Invalid syntax. No value assignment in \"" + remaining + "\"");
       }
     }
-    else
-    {
-      result[0] = input;
-      result[1] = null;
-    }
-    return result;
   }
 
   @Override
@@ -312,8 +440,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   {
     initConnectionInfo();
     initDataSource();
-    String[] specs = parseResourceName(input);
-    ByteArrayId adapterId = new ByteArrayId(specs[0]);
+    ParseResults results = parseResourceName(input);
+    ByteArrayId adapterId = new ByteArrayId(results.name);
     DataAdapter<?> adapter = adapterStore.getAdapter(adapterId);
     if (adapter == null)
     {
@@ -359,27 +487,19 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   private void init() throws AccumuloSecurityException, AccumuloException, IOException
   {
+    // Don't initialize more than once.
+    if (initialized)
+    {
+      return;
+    }
+    initialized = true;
     // Extract the GeoWave adapter name and optional CQL string
-    String[] specs = parseResourceName(getResourceName());
+    ParseResults results = parseResourceName(getResourceName());
     // Now perform initialization for this specific data provider (i.e. for
     // this resource).
-    dataAdapter = adapterStore.getAdapter(new ByteArrayId(specs[0]));
-    if (specs.length > 1 && specs[1] != null && !specs[1].isEmpty())
-    {
-      cqlFilter = specs[1];
-      try
-      {
-        filter = ECQL.toFilter(specs[1]);
-      }
-      catch (CQLException e)
-      {
-        throw new IOException("Bad CQL filter: " + specs[1], e);
-      }
-    }
-    else
-    {
-      filter = null;
-    }
+    dataAdapter = adapterStore.getAdapter(new ByteArrayId(results.name));
+    assignSettings(results.name, results.settings);
+
 // Testing code
 //    SimpleFeatureType sft = ((FeatureDataAdapter)dataAdapter).getType();
 //    int attributeCount = sft.getAttributeCount();
@@ -398,6 +518,88 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 //    {
 //      iter.close();
 //    }
+  }
+
+  // Package private for unit testing
+  void assignSettings(String name, Map<String, String> settings) throws IOException
+  {
+    filter = null;
+    spatialConstraint = null;
+    startTimeConstraint = null;
+    endTimeConstraint = null;
+    for (String keyName : settings.keySet())
+    {
+      if (keyName != null && !keyName.isEmpty())
+      {
+        String value = settings.get(keyName);
+        switch(keyName)
+        {
+          case "spatial":
+          {
+            WKTReader wktReader = new WKTReader();
+            try
+            {
+              spatialConstraint = wktReader.read(value);
+            }
+            catch (ParseException e)
+            {
+              throw new IOException("Invalid WKT specified for spatial property of GeoWave data source " +
+                                    name);
+            }
+            break;
+          }
+
+          case "startTime":
+          {
+            startTimeConstraint = parseDate(value);
+            break;
+          }
+
+          case "endTime":
+          {
+            endTimeConstraint = parseDate(value);
+            break;
+          }
+
+          case "cql":
+          {
+            if (value != null && !value.isEmpty())
+            {
+              cqlFilter = value;
+              try
+              {
+                filter = ECQL.toFilter(value);
+              }
+              catch (CQLException e)
+              {
+                throw new IOException("Bad CQL filter: " + value, e);
+              }
+            }
+            break;
+          }
+          default:
+            throw new IOException("Unrecognized setting for GeoWave data source " +
+                                  name + ": " + keyName);
+        }
+      }
+    }
+
+    if ((startTimeConstraint == null) != (endTimeConstraint == null))
+    {
+      throw new IOException("When querying a GeoWave data source by time," +
+                            " both the start and the end are required.");
+    }
+    if (startTimeConstraint != null && endTimeConstraint != null && startTimeConstraint.after(endTimeConstraint))
+    {
+      throw new IOException("For GeoWave data source " + name + ", startDate must be after endDate");
+    }
+  }
+
+  private Date parseDate(String value)
+  {
+    DateTimeFormatter formatter = ISODateTimeFormat.dateOptionalTimeParser();
+    DateTime dateTime = formatter.parseDateTime(value);
+    return dateTime.toDate();
   }
 
   private static void initConnectionInfo(Configuration conf)
@@ -452,6 +654,16 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
         if (indices.hasNext())
         {
           index = indices.next();
+          if (log.isDebugEnabled())
+          {
+            log.debug("Found GeoWave index " + index.getId().getString());
+            log.debug("  index type = " + index.getDimensionalityType().toString());
+            DimensionField<? extends CommonIndexValue>[] dimFields = index.getIndexModel().getDimensions();
+            for (DimensionField<? extends CommonIndexValue> dimField : dimFields)
+            {
+              log.debug("  Dimension field: " + dimField.getFieldId().getString());
+            }
+          }
         }
       }
       finally
