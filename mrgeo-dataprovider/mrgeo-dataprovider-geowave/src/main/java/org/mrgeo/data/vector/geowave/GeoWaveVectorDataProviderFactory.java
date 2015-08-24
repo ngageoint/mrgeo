@@ -2,7 +2,6 @@ package org.mrgeo.data.vector.geowave;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -40,12 +39,19 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   @Override
   public Map<String, String> getConfiguration()
   {
+    GeoWaveConnectionInfo connInfo = GeoWaveVectorDataProvider.getConnectionInfo();
+    if (connInfo != null)
+    {
+      return connInfo.toMap();
+    }
     return null;
   }
 
   @Override
-  public void setConfiguration(Map<String, String> properties)
+  public void setConfiguration(Map<String, String> settings)
   {
+    GeoWaveConnectionInfo connInfo = GeoWaveConnectionInfo.fromMap(settings);
+    GeoWaveVectorDataProvider.setConnectionInfo(connInfo);
   }
 
   @Override

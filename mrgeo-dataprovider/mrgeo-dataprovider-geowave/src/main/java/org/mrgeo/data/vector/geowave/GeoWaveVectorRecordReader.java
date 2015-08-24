@@ -27,6 +27,7 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
   private Geometry currValue;
   private Filter cqlFilter;
   private String strCqlFilter;
+  private static long featureCount = 0L;
 
   @Override
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
@@ -63,9 +64,9 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
     // Get records from the delegate record reader. If there is a CQL filter
     // being applied, loop until the returned value satisfies that filter or
     // there are no more records.
-    log.info("Calling GeoWave delegate reader nextKeyValue()");
+//    log.info("Calling GeoWave delegate reader nextKeyValue()");
     boolean result = delegateReader.nextKeyValue();
-    log.info("Done calling GeoWave delegate reader nextKeyValue()");
+//    log.info("Done calling GeoWave delegate reader nextKeyValue()");
     while (result)
     {
       Object value = delegateReader.getCurrentValue();
@@ -75,6 +76,7 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
         if (value instanceof SimpleFeature)
         {
           SimpleFeature feature = (SimpleFeature) value;
+          featureCount++;
           GeoWaveVectorIterator.setKeyFromFeature(currKey, feature);
           currValue = GeoWaveVectorIterator.convertToGeometry(feature);
         }
@@ -84,9 +86,9 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
         }
         return true;
       }
-      log.info("Calling GeoWave delegate reader nextKeyValue() in while loop");
+//      log.info("Calling GeoWave delegate reader nextKeyValue() in while loop");
       result = delegateReader.nextKeyValue();
-      log.info("Done calling GeoWave delegate reader nextKeyValue() in while loop");
+//      log.info("Done calling GeoWave delegate reader nextKeyValue() in while loop");
     }
     if (!result)
     {
@@ -118,5 +120,6 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
   public void close() throws IOException
   {
     delegateReader.close();
+    log.info("GeoWave feature count from reader = " + featureCount);
   }
 }
