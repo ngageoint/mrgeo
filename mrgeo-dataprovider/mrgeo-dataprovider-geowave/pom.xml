@@ -51,6 +51,24 @@
       </resource>
     </resources>
     <plugins>
+      <!-- Unit Test plugin -->
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skipTests>${skip.mrgeo.dataprovider.tests}</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <skipTests>${skip.mrgeo.dataprovider.integration.tests}</skipTests>
+        </configuration>
+      </plugin>
+      <!-- Make some soft links for the generated products, for convenience -->
+      <plugin>
+        <groupId>com.pyx4j</groupId>
+        <artifactId>maven-junction-plugin</artifactId>
+      </plugin>
       <plugin>
         <groupId>org.mrgeo.plugins</groupId>
         <artifactId>pomtools-maven-plugin</artifactId>
@@ -92,6 +110,10 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-cql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
     </dependency>
   </dependencies>
 </project>

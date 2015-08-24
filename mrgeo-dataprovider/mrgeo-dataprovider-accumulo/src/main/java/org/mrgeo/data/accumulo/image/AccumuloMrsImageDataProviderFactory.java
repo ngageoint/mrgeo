@@ -115,7 +115,7 @@ public boolean isValid()
   catch (DataProviderException e)
   {
     // Got an error - Accumulo provider is not valid
-    log.info("Unable to load accumulo connection properties, accumulo data provider is not valid", e);
+    log.info(e.getMessage());
   }
   log.info("Unable to load accumulo connection properties, accumulo data provider is not valid");
   return false;
