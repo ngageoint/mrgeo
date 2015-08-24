@@ -182,9 +182,7 @@ class KernelDriver extends MrGeoJob with Externalizable {
       val ul = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize)
       val src = RasterWritable.toRaster(tile._2)
       val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT)
-
-      println("src w: " + src.getWidth + " h: " + src.getHeight)
-
+      
       for (y <- 0 until tilesize) {
         val ll = TMSUtils.pixelToLatLonUL(ul.px, ul.py + y + kernelH, zoom, tilesize)
 
@@ -230,9 +228,6 @@ class KernelDriver extends MrGeoJob with Externalizable {
           }
         }
       }
-
-      val fn:String = "/data/export/kernel-test/" + t.ty + "-" + t.tx + ".tif"
-      GDALUtils.saveRaster(dst, fn, t.tx, t.ty, zoom, 512, nodatas(0).doubleValue())
 
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })

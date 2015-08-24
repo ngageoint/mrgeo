@@ -109,6 +109,7 @@ public class OpImageRegistrar
 
     //ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     List<URL> urls = ClassLoaderUtil.getChildResources(parent);
+    log.info("Registering JAI Operations:");
     for (URL u : urls)
     {
       try
@@ -126,6 +127,7 @@ public class OpImageRegistrar
           // problems with a single jar in the path multiple times.
           if (registry.getOperationDescriptor(className) == null)
           {
+            log.info("   {}", className);
             registry.registerDescriptor((OperationDescriptorImpl) c.newInstance());
           }
         }
