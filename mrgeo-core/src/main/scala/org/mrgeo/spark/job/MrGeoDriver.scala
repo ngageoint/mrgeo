@@ -20,8 +20,6 @@ import java.net.URL
 import java.util
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.MRJobConfig
-import org.apache.hadoop.mapreduce.filecache.DistributedCache
 import org.apache.hadoop.util.ClassUtil
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
