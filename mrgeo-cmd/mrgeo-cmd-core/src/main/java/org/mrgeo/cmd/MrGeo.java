@@ -188,6 +188,7 @@ public int run(String[] args) throws IOException
     else
     {
       LoggingUtils.setDefaultLogLevel(LoggingUtils.WARN);
+      HadoopUtils.adjustLogging();
     }
   }
 

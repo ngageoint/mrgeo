@@ -15,7 +15,6 @@
 
 package org.mrgeo.rasterops;
 
-import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.utils.ClassLoaderUtil;
 import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
@@ -44,7 +43,7 @@ public class OpImageRegistrar
   static
   {
     // lower some log levels.
-    LoggingUtils.setLogLevel(Configuration.class, LoggingUtils.WARN);
+//    LoggingUtils.setLogLevel(Configuration.class, LoggingUtils.WARN);
     LoggingUtils.setLogLevel("org.apache.hadoop.io.compress.CodecPool", LoggingUtils.WARN);
     LoggingUtils.setLogLevel("org.apache.hadoop.hdfs.DFSClient", LoggingUtils.ERROR);
   }
