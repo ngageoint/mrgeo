@@ -108,7 +108,7 @@ public static final String PROVIDER_PROPERTY_USER_ROLES = "mrgeo.security.user.r
 public static void saveProviderPropertiesToConfig(final ProviderProperties providerProperties,
     final Configuration conf)
 {
-  log.info("Saving provider properties to config");
+  log.debug("Saving provider properties to config");
   if (providerProperties != null)
   {
     conf.set(PROVIDER_PROPERTY_USER_NAME, providerProperties.getUserName());
@@ -118,7 +118,7 @@ public static void saveProviderPropertiesToConfig(final ProviderProperties provi
   // in the Configuration as well so they can be re-instantiated on the remote
   // side of a map/reduce 1 job.
   Map<String, String> configSettings = getConfigurationFromProviders();
-  log.info("Saving " + configSettings.size() + " configuration settings from data providers to config");
+  log.debug("Saving " + configSettings.size() + " configuration settings from data providers to config");
   Set<String> keys = configSettings.keySet();
   for (String key : keys)
   {
@@ -178,12 +178,12 @@ public static Map<String, String> getConfigurationFromProviders()
       Map<String, String> p = dpf.getConfiguration();
       if (p != null)
       {
-        log.info("Got " + p.size() + " config settings from " + dpf.getClass().getName());
+        log.debug("Got " + p.size() + " config settings from " + dpf.getClass().getName());
         result.putAll(p);
       }
       else
       {
-        log.info("Got no config settings from " + dpf.getClass().getName());
+        log.debug("Got no config settings from " + dpf.getClass().getName());
       }
     }
   }
@@ -195,12 +195,12 @@ public static Map<String, String> getConfigurationFromProviders()
       Map<String, String> p = dpf.getConfiguration();
       if (p != null)
       {
-        log.info("Got " + p.size() + " config settings from " + dpf.getClass().getName());
+        log.debug("Got " + p.size() + " config settings from " + dpf.getClass().getName());
         result.putAll(p);
       }
       else
       {
-        log.info("Got no config settings from " + dpf.getClass().getName());
+        log.debug("Got no config settings from " + dpf.getClass().getName());
       }
     }
   }
@@ -211,12 +211,12 @@ public static Map<String, String> getConfigurationFromProviders()
       Map<String, String> p = dpf.getConfiguration();
       if (p != null)
       {
-        log.info("Got " + p.size() + " config settings from " + dpf.getClass().getName());
+        log.debug("Got " + p.size() + " config settings from " + dpf.getClass().getName());
         result.putAll(p);
       }
       else
       {
-        log.info("Got no config settings from " + dpf.getClass().getName());
+        log.debug("Got no config settings from " + dpf.getClass().getName());
       }
     }
   }
@@ -229,11 +229,11 @@ public static void setConfigurationForProviders(Map<String, String> properties)
   {
     if (properties != null)
     {
-      log.info("Config settings passed to all data providers has size " + properties.size());
+      log.debug("Config settings passed to all data providers has size " + properties.size());
     }
     else
     {
-      log.info("Config settings passed to all data providers is empty");
+      log.debug("Config settings passed to all data providers is empty");
     }
   }
   configSettings = properties;
@@ -1310,14 +1310,14 @@ public static void addDependencies(final Configuration conf) throws IOException
 
 public static Set<String> getDependencies() throws IOException
 {
-  log.info("Getting dependencies for all providers");
+  log.debug("Getting dependencies for all providers");
   initialize(getBasicConfig());
   Set<String> dependencies = new HashSet<String>();
   if (adHocProviderFactories != null)
   {
     for (final AdHocDataProviderFactory dp : adHocProviderFactories.values())
     {
-      log.info("Getting dependencies for " + dp.getClass().getName());
+      log.debug("Getting dependencies for " + dp.getClass().getName());
       Set<String> d = DependencyLoader.getDependencies(dp.getClass());
       if (d != null)
       {
@@ -1330,7 +1330,7 @@ public static Set<String> getDependencies() throws IOException
   {
     for (final MrsImageDataProviderFactory dp : mrsImageProviderFactories.values())
     {
-      log.info("Getting dependencies for " + dp.getClass().getName());
+      log.debug("Getting dependencies for " + dp.getClass().getName());
       Set<String> d = DependencyLoader.getDependencies(dp.getClass());
       if (d != null)
       {
@@ -1342,7 +1342,7 @@ public static Set<String> getDependencies() throws IOException
   {
     for (final VectorDataProviderFactory dp : vectorProviderFactories.values())
     {
-      log.info("Getting dependencies for " + dp.getClass().getName());
+      log.debug("Getting dependencies for " + dp.getClass().getName());
       Set<String> d = DependencyLoader.getDependencies(dp.getClass());
       if (d != null)
       {
