@@ -94,6 +94,12 @@ public static final String MRGEO_PROTECTION_LEVEL_REQUIRED = "protection.level.r
 public static final String MRGEO_PROTECTION_LEVEL_DEFAULT = "protection.level.default";
 public static final String MRGEO_PROTECTION_LEVEL = "protectionLevel";
 
+/*
+ * WMS/WCS Keys
+ */
+public static final String MRGEO_WCS_CAPABILITIES_CACHE = "wcs.capabilities.cache";
+public static final String MRGEO_WCS_CAPABILITIES_REFRESH = "wcs.capabilities.refresh";
+
 /**
  * The default constructor for the class is private.  Additionally,
  * nothing can instantiate this class.
