@@ -282,6 +282,14 @@ then
     TASKS=
   fi
 
+  if [ -z $ZONE ]
+  then
+    for Z in $ZONES; do
+      ZONE=$Z
+      echo "No zone specified, using" $ZONE
+      break;
+    done
+  fi
   echo "starting cluster " $NAME
 
 
@@ -294,6 +302,7 @@ then
   #YARN_ARGS+=("-c","fs.s3a.connection.maximum=15") # 15
   #YARN_ARGS+=("-c","fs.s3a.threads.max=256") # 256
   #YARN_ARGS+=("-c","fs.s3a.threads.core=15") # 15
+  #YARN_ARGS+=("-c","fs.s3a.max.total.tasks=1000") # 1000
 
   SPARK_ARGS=()
   SPARK_ARGS+=("spark.yarn.jar=/home/hadoop/spark/lib/spark-assembly-1.4.0-hadoop2.4.0.jar")
@@ -305,8 +314,8 @@ then
   SPARK_ARGS+=("spark.akka.framesize=50")
   SPARK_ARGS+=("spark.tasks.schedule.aggression=RACK_LOCAL")
   SPARK_ARGS+=("spark.tasks.revive_periodic.interval=200")
-  #SPARK_ARGS+=("spark.speculation=true")
-  #SPARK_ARGS+=("spark.shuffle.consolidateFiles=true")
+  SPARK_ARGS+=("spark.speculation=true")
+  SPARK_ARGS+=("spark.shuffle.consolidateFiles=true")
   #SPARK_ARGS+=("spark.rdd.compress=true")
 
   IFS=',';
