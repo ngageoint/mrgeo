@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-import org.apache.hadoop.util.ToolRunner;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -17,17 +16,21 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.rasterops.CostDistanceDriver;
+import org.mrgeo.spark.CostDistanceDriver;
 import org.mrgeo.utils.Bounds;
 
 public class CostDistanceMapOp extends RasterMapOp
   implements InputsCalculator, BoundsCalculator, TileSizeCalculator, MaximumZoomLevelCalculator
 {
   double maxCost = -1;
-
   int zoomLevel = -1;
   private int tileSize = -1;
-  
+
+  public static String[] register()
+  {
+    return new String[] { "CostDistance" };
+  }
+
   @Override
   public void addInput(MapOp n) throws IllegalArgumentException
   {
@@ -75,21 +78,8 @@ public class CostDistanceMapOp extends RasterMapOp
     }
 
     try {
-  	  String driverArgs[] = new String[] {
-  			  					"-inputpyramid", friction.getOutputName(),
-  			  					"-inputzoomlevel", "" + zoomLevel,
-  			  					"-outputpyramid", _outputName,
-  			  					"-sourcepoints", sourcePoints,
-  			  					"-maxcost", String.valueOf(maxCost)};
-  	  
-//      int statusJob = ToolRunner.run(getConf(), 
-//        new CostDistanceDriver(), 
-//        driverArgs);
-      if (ToolRunner.run(createConfiguration(), new CostDistanceDriver(), driverArgs) < 0)
-      {
-        throw new JobFailedException("CostDistance job failed, see Hadoop logs for more information");
-      }
-  	
+      CostDistanceDriver.costDistance(friction.getOutputName(), _outputName, zoomLevel,
+                                      sourcePoints, maxCost, createConfiguration());
     } catch (Exception e) {
       e.printStackTrace();
     	throw new JobFailedException(e.getMessage());

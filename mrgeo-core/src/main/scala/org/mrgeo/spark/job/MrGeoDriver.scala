@@ -271,6 +271,9 @@ abstract class MrGeoDriver extends Logging {
       maxmemory:Long, unitmemory:Long, overhead:Long) = {
 
     var ex = job.executors
+    if (ex == 0) {
+      throw new IllegalArgumentException("Invalid memory ")
+    }
     var perex = memory / ex
 
     if (perex < minmemory)  {

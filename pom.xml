@@ -2239,11 +2239,6 @@
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-mapalgebra-integrationtests-costdistance</artifactId>
-        <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-rasterizevector</artifactId>
         <version>${mrgeo.version}</version>
       </dependency>

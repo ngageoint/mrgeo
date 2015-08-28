@@ -27,9 +27,6 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <giraph.version>1.0.0</giraph.version>
-    <giraph.classifier>for-hadoop-2.0.0-cdh4.1.2</giraph.classifier>
-    <giraph.classifier.test>${giraph.classifier}-tests</giraph.classifier.test>
     <generatedResources>${project.build.directory}/generated-resources</generatedResources>
   </properties>
   <name>mrgeo-mapalgebra-costdistance</name>
@@ -47,6 +44,10 @@
       </resource>
     </resources>
     <plugins>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+      </plugin>
       <!-- Unit Test plugin -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -86,20 +87,6 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.giraph</groupId>
-      <artifactId>giraph-core</artifactId>
-      <version>${giraph.version}</version>
-      <classifier>${giraph.classifier}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.giraph</groupId>
-      <artifactId>giraph-core</artifactId>
-      <version>${giraph.version}</version>
-      <classifier>${giraph.classifier.test}</classifier>
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>
