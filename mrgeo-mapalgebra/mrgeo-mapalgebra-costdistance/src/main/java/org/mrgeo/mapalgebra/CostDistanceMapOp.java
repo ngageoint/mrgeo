@@ -29,7 +29,7 @@ public class CostDistanceMapOp extends RasterMapOp
   private int tileSize = -1;
   
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (_inputs.size() == 1)
     {
@@ -55,7 +55,7 @@ public class CostDistanceMapOp extends RasterMapOp
       p.starting();
     }
     
-    MapOp inlineCsvMapOp = _inputs.get(0);
+    MapOpHadoop inlineCsvMapOp = _inputs.get(0);
     
     // Extract source point from vector input
     assert(inlineCsvMapOp instanceof InlineCsvMapOp);

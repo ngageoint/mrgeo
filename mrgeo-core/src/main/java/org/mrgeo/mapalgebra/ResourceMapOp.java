@@ -26,13 +26,13 @@ import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
 
-public class ResourceMapOp extends MapOp implements OutputProducer
+public class ResourceMapOp extends MapOpHadoop implements OutputProducer
 {
   protected String _output;
   protected String _outputName = null;
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     throw new IllegalArgumentException("This ExecuteNode takes no arguments.");
   }

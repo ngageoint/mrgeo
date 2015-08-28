@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 import org.mrgeo.mapalgebra.RenderedImageMapOp;
 import org.mrgeo.opimage.ConstantDescriptor;
 
@@ -42,7 +42,7 @@ public abstract class AlgebraicRule extends BasicRule
    * @return The string short name of the node or empty string if it is not
    *         applicable.
    */
-  protected String _getOperation(MapOp mo)
+  protected String _getOperation(MapOpHadoop mo)
   {
     String result = mo.getFunctionName();
     if (result == null)
@@ -58,7 +58,7 @@ public abstract class AlgebraicRule extends BasicRule
    *          MapOp to retrieve constant on
    * @return Returns the constant or null if it is not a constant.
    */
-  protected Double _getConstant(MapOp mo)
+  protected Double _getConstant(MapOpHadoop mo)
   {
     Double result = null;
     if (mo instanceof RenderedImageMapOp)

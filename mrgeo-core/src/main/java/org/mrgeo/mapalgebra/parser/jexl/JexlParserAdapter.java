@@ -15,7 +15,6 @@
 
 package org.mrgeo.mapalgebra.parser.jexl;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +48,7 @@ import org.apache.commons.jexl2.parser.ASTReferenceExpression;
 import org.apache.commons.jexl2.parser.ASTStringLiteral;
 import org.apache.commons.jexl2.parser.ASTUnaryMinusNode;
 import org.apache.commons.jexl2.parser.JexlNode;
-import org.mrgeo.mapalgebra.MapOpFactory;
+import org.mrgeo.mapalgebra.MapOpFactoryHadoop;
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
 import org.mrgeo.mapalgebra.parser.ParserException;
@@ -117,7 +116,7 @@ public class JexlParserAdapter implements ParserAdapter
   }
 
   @Override
-  public ParserNode parse(String expression, MapOpFactory factory) throws ParserException
+  public ParserNode parse(String expression, MapOpFactoryHadoop factory) throws ParserException
   {
     if (engine == null)
     {

@@ -41,7 +41,7 @@ public class VectorFileMapOpLoader implements ResourceMapOpLoader
   }
 
   @Override
-  public MapOp loadMapOpFromResource(String resourceName,
+  public MapOpHadoop loadMapOpFromResource(String resourceName,
       final ProviderProperties providerProperties) throws IOException
   {
     try

@@ -37,7 +37,7 @@ public class RandomizeVectorMapOp extends VectorMapOp
   }
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (_inputs.size() == 0)
     {
@@ -61,7 +61,7 @@ public class RandomizeVectorMapOp extends VectorMapOp
     ph.createChild(1.0f);
 
     RandomizeVectorDriver rvd = new RandomizeVectorDriver();
-    MapOp inputMapOp = _inputs.get(0);
+    MapOpHadoop inputMapOp = _inputs.get(0);
     String input = null;
     if (inputMapOp instanceof VectorMapOp)
     {

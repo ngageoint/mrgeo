@@ -18,7 +18,7 @@ package org.mrgeo.pig;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.mapalgebra.BasicInputFormatDescriptor;
 import org.mrgeo.mapalgebra.InputFormatDescriptor;
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 import org.mrgeo.mapalgebra.VectorMapOp;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -42,7 +42,7 @@ public class PigMapOp extends VectorMapOp
   private ArrayList<Path> _inputPaths;
   
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (!(n instanceof VectorMapOp))
     {
@@ -88,7 +88,7 @@ public class PigMapOp extends VectorMapOp
   protected void _writeInputs(Progress p) throws IOException, JobFailedException, JobCancelledException
   {
     ProgressHierarchy ph = new ProgressHierarchy(p);
-    for (MapOp input : _inputs)
+    for (MapOpHadoop input : _inputs)
     {
       if (input != null && (input instanceof VectorMapOp))
       {
@@ -103,7 +103,7 @@ public class PigMapOp extends VectorMapOp
 
     int pi = 0;
     // go through all the inputs
-    for (MapOp input : _inputs)
+    for (MapOpHadoop input : _inputs)
     {
       if (input != null && (input instanceof VectorMapOp))
       {

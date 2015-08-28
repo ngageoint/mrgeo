@@ -43,7 +43,7 @@ public class ChangeClassificationMapOp extends RasterMapOp
   Aggregator aggregator = new MeanAggregator();
 
   @Override
-  public void addInput(final MapOp n) throws IllegalArgumentException
+  public void addInput(final MapOpHadoop n) throws IllegalArgumentException
   {
     if (source == null)
     {

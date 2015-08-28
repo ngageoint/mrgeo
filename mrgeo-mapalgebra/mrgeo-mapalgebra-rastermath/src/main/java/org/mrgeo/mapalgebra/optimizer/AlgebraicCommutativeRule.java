@@ -15,8 +15,8 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOp;
-import org.mrgeo.mapalgebra.RawBinaryMathMapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
+import org.mrgeo.mapalgebra.RawBinaryMathMapOpHadoop;
 import org.mrgeo.mapalgebra.RenderedImageMapOp;
 
 import java.util.ArrayList;
@@ -33,9 +33,9 @@ import java.util.List;
 public class AlgebraicCommutativeRule extends AlgebraicRule
 {
   @Override
-  public ArrayList<MapOp> apply(MapOp root, MapOp subject)
+  public ArrayList<MapOpHadoop> apply(MapOpHadoop root, MapOpHadoop subject)
   {
-    ArrayList<MapOp> result = new ArrayList<MapOp>();
+    ArrayList<MapOpHadoop> result = new ArrayList<MapOpHadoop>();
 
     RenderedImageMapOp ri = (RenderedImageMapOp) subject;
     String s = _getOperation(ri);
@@ -58,10 +58,10 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
     return result;
   }
 
-  private ArrayList<MapOp> _applySimpleRule(MapOp root, RenderedImageMapOp subject, String op)
+  private ArrayList<MapOpHadoop> _applySimpleRule(MapOpHadoop root, RenderedImageMapOp subject, String op)
   {
-    ArrayList<MapOp> result = new ArrayList<MapOp>();
-    List<MapOp> inputs = subject.getInputs();
+    ArrayList<MapOpHadoop> result = new ArrayList<MapOpHadoop>();
+    List<MapOpHadoop> inputs = subject.getInputs();
 
     // Find this structure:
     // a + (b + c)
@@ -69,28 +69,28 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
     // b + (a + c)
     // c + (b + a)
     
-    MapOp left = inputs.get(0);
-    MapOp plus = inputs.get(1);
+    MapOpHadoop left = inputs.get(0);
+    MapOpHadoop plus = inputs.get(1);
     
     // if there is a + operation child, then manipulate it.
     if (_getOperation(left) != null && _getOperation(left).equals(op))
     {
-      MapOp swap = left;
+      MapOpHadoop swap = left;
       left = plus;
       plus = swap;
     }
     
     if (_getOperation(plus) != null && _getOperation(plus).equals(op))
     {
-      MapOp a = left;
-      MapOp b = plus.getInputs().get(0);
-      MapOp c = plus.getInputs().get(1);
+      MapOpHadoop a = left;
+      MapOpHadoop b = plus.getInputs().get(0);
+      MapOpHadoop c = plus.getInputs().get(1);
 
       // create the "b + (a + c)" version
       {
-        MapOp newRoot = root.clone();
-        MapOp newA = _findNewSubject(root, newRoot, a);
-        MapOp newB = _findNewSubject(root, newRoot, b);
+        MapOpHadoop newRoot = root.clone();
+        MapOpHadoop newA = _findNewSubject(root, newRoot, a);
+        MapOpHadoop newB = _findNewSubject(root, newRoot, b);
         _replaceNode(newRoot, newA, newB.clone());
         _replaceNode(newRoot, newB, newA.clone());
 
@@ -99,9 +99,9 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
 
       // create the "c + (b + a)" version
       {
-        MapOp newRoot = root.clone();
-        MapOp newA = _findNewSubject(root, newRoot, a);
-        MapOp newC = _findNewSubject(root, newRoot, c);
+        MapOpHadoop newRoot = root.clone();
+        MapOpHadoop newA = _findNewSubject(root, newRoot, a);
+        MapOpHadoop newC = _findNewSubject(root, newRoot, c);
         _replaceNode(newRoot, newA, newC.clone());
         _replaceNode(newRoot, newC, newA.clone());
         
@@ -112,21 +112,21 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
     return result;
   }
 
-  private ArrayList<MapOp> _applySubtractionRule(MapOp root, RenderedImageMapOp subject)
+  private ArrayList<MapOpHadoop> _applySubtractionRule(MapOpHadoop root, RenderedImageMapOp subject)
   {
-    MapOp newRoot = root.clone();
-    MapOp newSubject = _findNewSubject(root, newRoot, subject);
-    ArrayList<MapOp> result = new ArrayList<MapOp>();
-    List<MapOp> newInputs = newSubject.getInputs();
+    MapOpHadoop newRoot = root.clone();
+    MapOpHadoop newSubject = _findNewSubject(root, newRoot, subject);
+    ArrayList<MapOpHadoop> result = new ArrayList<MapOpHadoop>();
+    List<MapOpHadoop> newInputs = newSubject.getInputs();
     
     // Convert
     // a - b
     // to:
     // a + -b
 
-    MapOp a = newInputs.get(0);
-    MapOp b = newInputs.get(1);
-    MapOp newB = null;
+    MapOpHadoop a = newInputs.get(0);
+    MapOpHadoop b = newInputs.get(1);
+    MapOpHadoop newB = null;
 
     // check to see if we can just swap the sign on a constant
     if (b instanceof RenderedImageMapOp)
@@ -141,14 +141,14 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
     // if we couldn't do the constant trick.
     if (newB == null)
     {
-      RawBinaryMathMapOp minus = new RawBinaryMathMapOp();
+      RawBinaryMathMapOpHadoop minus = new RawBinaryMathMapOpHadoop();
       minus.setFunctionName("UMinus");
       minus.addInput(b);
       newB = minus;
     }
 
     // create a new addition op
-    RawBinaryMathMapOp add = new RawBinaryMathMapOp();
+    RawBinaryMathMapOpHadoop add = new RawBinaryMathMapOpHadoop();
     add.setFunctionName("+");
     // put the original a side into the add
     add.addInput(a);
@@ -161,21 +161,21 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
     return result;
   }
 
-  private ArrayList<MapOp> _applyDivisionRule(MapOp root, RenderedImageMapOp subject)
+  private ArrayList<MapOpHadoop> _applyDivisionRule(MapOpHadoop root, RenderedImageMapOp subject)
   {
-    MapOp newRoot = root.clone();
-    MapOp newSubject = _findNewSubject(root, newRoot, subject);
-    ArrayList<MapOp> result = new ArrayList<MapOp>();
-    List<MapOp> newInputs = newSubject.getInputs();
+    MapOpHadoop newRoot = root.clone();
+    MapOpHadoop newSubject = _findNewSubject(root, newRoot, subject);
+    ArrayList<MapOpHadoop> result = new ArrayList<MapOpHadoop>();
+    List<MapOpHadoop> newInputs = newSubject.getInputs();
     
     // Convert
     // a / b
     // to:
     // a * (1 / b)
 
-    MapOp a = newInputs.get(0);
-    MapOp b = newInputs.get(1);
-    MapOp newB = null;
+    MapOpHadoop a = newInputs.get(0);
+    MapOpHadoop b = newInputs.get(1);
+    MapOpHadoop newB = null;
 
     // check to see if we can just manipulate the constant
     if (b instanceof RenderedImageMapOp)
@@ -190,7 +190,7 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
     // if we couldn't do the constant trick.
     if (newB == null)
     {
-      RawBinaryMathMapOp divide = new RawBinaryMathMapOp();
+      RawBinaryMathMapOpHadoop divide = new RawBinaryMathMapOpHadoop();
       divide.setFunctionName("/");
       divide.addInput(_createConstantMapOp(1.0));
       divide.addInput(b);
@@ -198,7 +198,7 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
     }
 
     // create a new multiplication op
-    RawBinaryMathMapOp divide = new RawBinaryMathMapOp();
+    RawBinaryMathMapOpHadoop divide = new RawBinaryMathMapOpHadoop();
     divide.setFunctionName("*");
     // put the original a side into the add
     divide.addInput(a);
@@ -212,16 +212,16 @@ public class AlgebraicCommutativeRule extends AlgebraicRule
   }
 
   @Override
-  public ArrayList<Class<? extends MapOp>> getCandidates()
+  public ArrayList<Class<? extends MapOpHadoop>> getCandidates()
   {
-    ArrayList<Class<? extends MapOp>> result = new ArrayList<Class<? extends MapOp>>();
+    ArrayList<Class<? extends MapOpHadoop>> result = new ArrayList<Class<? extends MapOpHadoop>>();
 //    result.add(RenderedImageMapOp.class);
-    result.add(RawBinaryMathMapOp.class);
+    result.add(RawBinaryMathMapOpHadoop.class);
     return result;
   }
 
   @Override
-  public boolean isApplicable(MapOp root, MapOp subject)
+  public boolean isApplicable(MapOpHadoop root, MapOpHadoop subject)
   {
     boolean result = false;
 

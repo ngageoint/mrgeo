@@ -77,7 +77,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
-    MapOp mo = uut.parse(ex);
+    MapOpHadoop mo = uut.parse(ex);
 
     mae.setRoot(mo);
     mae.setOutputName(new Path(testUtils.getOutputHdfs(), testName).toString());
@@ -147,7 +147,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
-    MapOp mo = uut.parse(ex);
+    MapOpHadoop mo = uut.parse(ex);
 
     mae.setRoot(mo);
     mae.setOutputName(new Path(testUtils.getOutputHdfs(), testName).toString());
@@ -218,7 +218,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
-    MapOp mo = uut.parse(ex);
+    MapOpHadoop mo = uut.parse(ex);
 
     mae.setRoot(mo);
     mae.setOutputName(new Path(testUtils.getOutputHdfs(), testName).toString());
@@ -294,7 +294,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
-    MapOp mo = uut.parse(ex);
+    MapOpHadoop mo = uut.parse(ex);
 
     mae.setRoot(mo);
     mae.setOutputName(new Path(testUtils.getOutputHdfs(), testName).toString());
@@ -325,7 +325,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     //MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     try {
       @SuppressWarnings("unused")
-      MapOp mo = uut.parse(ex);
+      MapOpHadoop mo = uut.parse(ex);
       Assert.fail("Expected an IllegalArgumentException");
     } catch(IllegalArgumentException e) {
       Assert.assertTrue("Incorrect error message received: " + e.getMessage(),
@@ -350,7 +350,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     //MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
     try {
       @SuppressWarnings("unused")
-      MapOp mo = uut.parse(ex);
+      MapOpHadoop mo = uut.parse(ex);
       Assert.fail("Expected an IllegalArgumentException");
     } catch(IllegalArgumentException e) {
       Assert.assertTrue("Incorrect error message received: " + e.getMessage(),
@@ -381,7 +381,7 @@ public class RandomSampleMapOpTest extends LocalRunnerTest
     MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", getProviderProperties());
     HadoopFileUtils.delete(new Path(testUtils.getOutputHdfs(), testName));
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
-    MapOp mo = uut.parse(ex);
+    MapOpHadoop mo = uut.parse(ex);
 
     mae.setRoot(mo);
     mae.setOutputName(new Path(testUtils.getOutputHdfs(), testName).toString());

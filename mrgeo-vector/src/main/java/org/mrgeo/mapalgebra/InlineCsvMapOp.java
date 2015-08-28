@@ -26,7 +26,7 @@ public class InlineCsvMapOp extends VectorMapOp
   private String _columns, _values;
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     throw new IllegalArgumentException("This ExecuteNode takes no arguments.");
   }

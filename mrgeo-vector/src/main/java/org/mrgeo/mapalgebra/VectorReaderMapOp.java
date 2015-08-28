@@ -52,7 +52,7 @@ public class VectorReaderMapOp extends VectorMapOp
   }
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     throw new IllegalArgumentException("This ExecuteNode takes no arguments.");
   }

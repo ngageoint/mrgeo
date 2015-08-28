@@ -17,8 +17,8 @@ package org.mrgeo.pig;
 
 import java.util.ArrayList;
 
-import org.mrgeo.mapalgebra.MapOp;
-import org.mrgeo.mapalgebra.MapOpFactory;
+import org.mrgeo.mapalgebra.MapOpHadoop;
+import org.mrgeo.mapalgebra.MapOpFactoryHadoop;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapalgebra.parser.ParserFunctionNode;
@@ -27,10 +27,10 @@ import org.mrgeo.mapalgebra.parser.ParserNode;
 /**
  * 
  */
-public class PigMapOpFactory implements MapOpFactory
+public class PigMapOpFactory implements MapOpFactoryHadoop
 {
   private ArrayList<String> _mapOpNames;
-  private MapOpFactory _rootFactory;
+  private MapOpFactoryHadoop _rootFactory;
   
   public PigMapOpFactory()
   {
@@ -40,7 +40,7 @@ public class PigMapOpFactory implements MapOpFactory
   }
 
   @Override
-  public MapOp convertToMapOp(ParserFunctionNode node) throws ParserException
+  public MapOpHadoop convertToMapOp(ParserFunctionNode node) throws ParserException
   {
     PigMapOp result = new PigMapOp();
     
@@ -85,7 +85,7 @@ public class PigMapOpFactory implements MapOpFactory
   }
 
   @Override
-  public MapOp convertToMapOp(ParserNode node) throws ParserException
+  public MapOpHadoop convertToMapOp(ParserNode node) throws ParserException
   {
     throw new IllegalArgumentException("Unsupported by this factory.");
   }
@@ -97,7 +97,7 @@ public class PigMapOpFactory implements MapOpFactory
   }
 
   @Override
-  public void setRootFactory(MapOpFactory root)
+  public void setRootFactory(MapOpFactoryHadoop root)
   {
     _rootFactory = root;
   }

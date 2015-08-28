@@ -50,7 +50,7 @@ public class LogarithmMapOp extends RenderedImageMapOp
 
     if (children.size() == 2)
     {
-      base = MapOp.parseChildDouble(children.get(1), "base", parser);
+      base = MapOpHadoop.parseChildDouble(children.get(1), "base", parser);
       if ((int) base == 1)
       {
         throw new IllegalArgumentException("The number of base can not be 1.");
