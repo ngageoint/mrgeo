@@ -1,8 +1,8 @@
 #!/bin/bash
 
-set -e
+#set -e
 
-ZONES="us-east-1a us-east-1b us-east-1c"
+ZONES="us-east-1a us-east-1b us-east-1c us-east-1d us-east-1e"
 ZONE=
 
 MASTER_TYPE="m3.xlarge"
@@ -40,6 +40,7 @@ usage() {
     echo "  -t   --task-nodes          - number of task (non-HDFS) nodes ($TASK_NODES)"
     echo "  -tt  --task_type           - task node instance type ($TASK_TYPE)"
     echo "  -a   --attach              - attach to existing cluster ID"
+    echo "  -z   --zone                - availability zone ($ZONE)"
 }
 
 # add any predefined options (for developer convenience)
@@ -174,21 +175,28 @@ spotbid ()
     then
       PRICE=9999
       for Z in $ZONES; do
-        RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $Z --start-time $MINUTE_AGO --end-time $NOW)
+        RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $Z --start-time $MINUTE_AGO --end-time $NOW 2> /dev/null)
 
         P=`echo ${RESULT} | awk '{print $5;}'`
+        P=${P:="9999"}
         COMP=`echo $PRICE">"$P | bc`
 
-        if [ $COMP -eq 1 ]
+        if [ $COMP -eq 1 ] 2> /dev/null
         then
           PRICE=$P
           ZONE=$Z
         fi
       done
     else
-      RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW)
+      RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW 2> /dev/null)
 
       PRICE=`echo ${RESULT} | awk '{print $5;}'`
+      PRICE=${PRICE:="-1"}
+      if [ "$PRICE" -le 0 ] 2> /dev/null
+      then
+        echo "No Spot instances ($TYPE/($MACHINE)) are available in $ZONE"
+        exit 1
+      fi
     fi
 
     eval "$r1='$PRICE'"
@@ -198,7 +206,7 @@ spotbid ()
       BIDPRICE=$(expr $PRICE*2 | bc)
     fi
 
-    RESULT=$(aws --output text ec2 describe-reserved-instances-offerings --instance-tenancy "default" --instance-type $TYPE --availability-zone $ZONE --product-description $MACHINE --offering-type "No Upfront")
+    RESULT=$(aws --output text ec2 describe-reserved-instances-offerings --instance-tenancy "default" --instance-type $TYPE --availability-zone $ZONE --product-description $MACHINE --offering-type "No Upfront" 2> /dev/null)
 
     FULLPRICE=`echo ${RESULT} | awk '{print $15;}'`
 
@@ -322,7 +330,6 @@ then
   YARN_CONF="${YARN_ARGS[*]// /|}"
   SPARK_CONF="${SPARK_ARGS[*]// /|}"
   IFS=$' \t\n'
-
 
   CLUSTER_ID=$(aws --output text emr create-cluster --name "$NAME $NOW" --ami-version 3.7 --ec2-attributes KeyName=$PEMFILE,AvailabilityZone=$ZONE \
   --log-uri "s3://mrgeo-deploy/logs" \

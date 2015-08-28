@@ -1,21 +1,78 @@
 #!/bin/bash
 
 MACHINE="Linux/UNIX"
-ZONE="us-east-1a"
+
+ZONES="us-east-1a us-east-1b us-east-1c us-east-1d us-east-1e"
+ZONE=
+
+
+usage() {
+    echo "Usage: $0 <args>"
+    echo "-----------------------------"
+    echo "args:"
+    echo "  -m   --machine-type       - AMI machine type ($MACHINE)"
+    echo "  -t   --type               -  instance type ($MASTER_TYPE)"
+    echo "  -z   --zone               - availability zone ($ZONE)"
+}
+
+if [ $# -lt 1 ]; then
+  usage
+  exit 1
+fi
+
+
+
+while [ "$#" -gt 0 ] ; do
+  case $1 in
+  "-h" | "--help" | "-?" | "help")
+    usage
+    exit 0
+    ;;
+  "-m" | "--machine-type")
+    MACHINE=$2
+    shift 1
+    ;;
+  "-z" | "--zone")
+    ZONE=$2
+    shift 1
+    ;;
+  "-t" | "--type")
+    TYPE=$2
+    shift 1
+    ;;
+  esac
+
+  shift 1
+done
 
 NOW="$(date +'%FT%T.%z')"
 MINUTE_AGO="$(date --date='1 minute ago' +'%FT%T.%z')"
 
-TYPE=$1
 
-RESULT="$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW)"
-
-echo aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW
-PRICE=`echo ${RESULT} | awk '{print $5;}'`
-
-if [ -z $PRICE ]
+if [ -z $ZONE ]
 then
-  echo "Can't find spot price for "$TYPE" ("$MACHINE") in "$ZONE
+  PRICE=9999
+  for Z in $ZONES; do
+    RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE   --availability-zone $Z --start-time $MINUTE_AGO --end-time $NOW 2> /dev/null)
+
+    PRICE=`echo ${RESULT} | awk '{print $5;}'`
+
+    if [ -z $PRICE ]
+    then
+      echo "Can't find spot price for "$TYPE" ("$MACHINE") in "$Z
+    else
+      echo "Current spot price for "$TYPE" ("$MACHINE") in "$Z" is "$PRICE
+    fi
+  done
 else
-  echo "Current spot price for "$TYPE" ("$MACHINE") in "$ZONE" is "$PRICE
+  RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE --availability-zone $ZONE --start-time $MINUTE_AGO --end-time $NOW 2> /dev/null)
+
+  PRICE=`echo ${RESULT} | awk '{print $5;}'`
+
+  if [ -z $PRICE ]
+  then
+    echo "Can't find spot price for "$TYPE" ("$MACHINE") in "$ZONE
+  else
+    echo "Current spot price for "$TYPE" ("$MACHINE") in "$ZONE" is "$PRICE
+  fi
 fi
