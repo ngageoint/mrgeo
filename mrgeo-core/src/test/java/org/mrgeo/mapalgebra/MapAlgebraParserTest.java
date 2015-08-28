@@ -37,7 +37,7 @@ public class MapAlgebraParserTest extends LocalRunnerTest
     String expr = "CostDistance([abc], [def]);";
     try
     {
-      MapOp root = parser.parse(expr);
+      MapOpHadoop root = parser.parse(expr);
       Assert.assertNotNull(root);
       Assert.assertEquals(protectionLevel, root.getProtectionLevel());
     }

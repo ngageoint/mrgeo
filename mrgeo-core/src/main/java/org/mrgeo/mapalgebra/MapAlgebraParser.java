@@ -44,22 +44,22 @@ import java.util.regex.Pattern;
  * (RenderedOp) or vector (FeatureInputFormat) as output. Look at the
  * MapAlgebraExecutor for details on how the nodes are evaluated.
  */
-public class MapAlgebraParser implements MapOpFactory
+public class MapAlgebraParser implements MapOpFactoryHadoop
 {
   private static final Logger log = LoggerFactory.getLogger(MapAlgebraParser.class);
 
   // maps from function name to factory
-  private HashMap<String, MapOpFactory> _factoryMap;
+  private HashMap<String, MapOpFactoryHadoop> _factoryMap;
   //private HashSet<String> cachedOps = new HashSet<String>();
-  private HashMap<String, MapOp> fileMap = new HashMap<>();
+  private HashMap<String, MapOpHadoop> fileMap = new HashMap<>();
   private Pattern filePattern = Pattern.compile("\\s*\\[([^\\]]+)\\]\\s*");
   //this pattern returns file names in the expression without full paths only
 //  private Pattern inputFileNamesPattern = Pattern.compile("(\\[\\w+\\.*\\w*\\])");
 
   private List<ResourceMapOpLoader> resourceLoaders = null;
-  private HashMap<String, Class<? extends MapOp>> mapOps = new HashMap<>();
+  private HashMap<String, Class<? extends MapOpHadoop>> mapOps = new HashMap<>();
 
-  private HashMap<String, MapOp> _variables = new HashMap<>();
+  private HashMap<String, MapOpHadoop> _variables = new HashMap<>();
 
   private TreeMap<Integer, MapAlgebraPreprocessor> _preprocessors = null;
   private Configuration conf;
@@ -88,10 +88,10 @@ public class MapAlgebraParser implements MapOpFactory
 
     Reflections reflections = new Reflections("org.mrgeo");
 
-    Set<Class<? extends MapOpFactory>> subTypes = 
-        reflections.getSubTypesOf(MapOpFactory.class);
+    Set<Class<? extends MapOpFactoryHadoop>> subTypes =
+        reflections.getSubTypesOf(MapOpFactoryHadoop.class);
 
-    for (Class<? extends MapOpFactory> clazz : subTypes)
+    for (Class<? extends MapOpFactoryHadoop> clazz : subTypes)
     {
       if (clazz != this.getClass())
       {
@@ -114,8 +114,8 @@ public class MapAlgebraParser implements MapOpFactory
             {
               log.debug("    " + name);
               parser.addFunction(name);
-              ((MapOpFactory)cl).setRootFactory(this);
-              _factoryMap.put(name, (MapOpFactory) cl);
+              ((MapOpFactoryHadoop)cl).setRootFactory(this);
+              _factoryMap.put(name, (MapOpFactoryHadoop) cl);
             }
           }
         }
@@ -173,14 +173,14 @@ public class MapAlgebraParser implements MapOpFactory
     return resourceLoaders;
   }
 
-  private MapOp _loadResource(String file) throws ParserException
+  private MapOpHadoop _loadResource(String file) throws ParserException
   {
     List<ResourceMapOpLoader> loaders = getResourceLoaders();
     for (ResourceMapOpLoader loader : loaders)
     {
       try
       {
-        MapOp mapOp = loader.loadMapOpFromResource(file, providerProperties);
+        MapOpHadoop mapOp = loader.loadMapOpFromResource(file, providerProperties);
         if (mapOp != null)
         {
           return mapOp;
@@ -253,7 +253,7 @@ public class MapAlgebraParser implements MapOpFactory
 //    return null;
 //  }
 
-  private static MapOp convertToMapOp(ParserConstantNode node)
+  private static MapOpHadoop convertToMapOp(ParserConstantNode node)
   {
     RenderedImageMapOp result = new RenderedImageMapOp();
     result.setRenderedImageFactory(new ConstantDescriptor());
@@ -267,12 +267,12 @@ public class MapAlgebraParser implements MapOpFactory
   }
 
   @Override
-  public MapOp convertToMapOp(ParserFunctionNode node) throws ParserException
+  public MapOpHadoop convertToMapOp(ParserFunctionNode node) throws ParserException
   {
-    MapOp result;
+    MapOpHadoop result;
 
-    Class<? extends MapOp> c = mapOps.get(node.getName());
-    MapOpFactory f = _factoryMap.get(node.getName());
+    Class<? extends MapOpHadoop> c = mapOps.get(node.getName());
+    MapOpFactoryHadoop f = _factoryMap.get(node.getName());
 
     if (c != null)
     {
@@ -308,9 +308,9 @@ public class MapAlgebraParser implements MapOpFactory
     return result;
   }
 
-  private MapOp convertToMapOp(ParserVariableNode node) throws ParserException
+  private MapOpHadoop convertToMapOp(ParserVariableNode node) throws ParserException
   {
-    MapOp result;
+    MapOpHadoop result;
 
     if (fileMap.containsKey(node.getName()))
     {
@@ -328,9 +328,9 @@ public class MapAlgebraParser implements MapOpFactory
     return result;
   }
 
-  private MapOp convertToMapOp(Class<? extends MapOp> c, ParserFunctionNode node) throws ParserException
+  private MapOpHadoop convertToMapOp(Class<? extends MapOpHadoop> c, ParserFunctionNode node) throws ParserException
   {
-    MapOp mo;
+    MapOpHadoop mo;
     try
     {
       mo = c.newInstance();
@@ -352,7 +352,7 @@ public class MapAlgebraParser implements MapOpFactory
 
     for (ParserNode n : children)
     {
-      MapOp child = convertToMapOp(n);
+      MapOpHadoop child = convertToMapOp(n);
       child.setParent(mo);
 
       mo.addInput(child);
@@ -371,11 +371,11 @@ public class MapAlgebraParser implements MapOpFactory
   }
 
   @Override
-  public MapOp convertToMapOp(ParserNode node) throws ParserException
+  public MapOpHadoop convertToMapOp(ParserNode node) throws ParserException
   {
     // pad(level * 2);
 
-    MapOp mapOp = null;
+    MapOpHadoop mapOp = null;
     if (node instanceof ParserFunctionNode)
     {
       mapOp = convertToMapOp((ParserFunctionNode) node);
@@ -468,11 +468,11 @@ public class MapAlgebraParser implements MapOpFactory
     // register mapops
     Reflections reflections = new Reflections("org.mrgeo");
 
-    Set<Class<? extends MapOp>> subTypes = 
-        reflections.getSubTypesOf(MapOp.class);
+    Set<Class<? extends MapOpHadoop>> subTypes =
+        reflections.getSubTypesOf(MapOpHadoop.class);
 
     log.debug("Registering MapOps:");
-    for (Class<? extends MapOp> clazz : subTypes)
+    for (Class<? extends MapOpHadoop> clazz : subTypes)
     {
       try
       {
@@ -497,7 +497,7 @@ public class MapAlgebraParser implements MapOpFactory
     parser.afterFunctionsLoaded();
   }
 
-  private void registerFunctions(Class<? extends MapOp> clazz) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+  private void registerFunctions(Class<? extends MapOpHadoop> clazz) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
   {
     Method m = clazz.getMethod("register");
     Object o = m.invoke(null);
@@ -543,7 +543,7 @@ public class MapAlgebraParser implements MapOpFactory
       {
         String varName = String.format("__file_%d__", i);
 
-        MapOp image = _loadResource(file);
+        MapOpHadoop image = _loadResource(file);
 
         fileMap.put(varName, image);
         filesFound.put(varName, file);
@@ -590,7 +590,7 @@ public class MapAlgebraParser implements MapOpFactory
   }
 
 
-  public MapOp parse(String expression) throws ParserException, IOException
+  public MapOpHadoop parse(String expression) throws ParserException, IOException
   {
     log.debug("Raw expression: " + expression);
 
@@ -639,7 +639,7 @@ public class MapAlgebraParser implements MapOpFactory
 //    {
 //      System.out.println(o.toString() + ": " + ft.get(o).toString());
 //    }
-    MapOp root = null;
+    MapOpHadoop root = null;
     try
     {
       ParserNode rootNode = parser.parse(exp, this);
@@ -658,7 +658,7 @@ public class MapAlgebraParser implements MapOpFactory
     if (log.isDebugEnabled())
     {
       log.debug("Variables");
-      for (Map.Entry<String, MapOp> e: _variables.entrySet())
+      for (Map.Entry<String, MapOpHadoop> e: _variables.entrySet())
       {
         log.debug("  " + e.getKey() + " = " + e.getValue().toString());
       }
@@ -669,19 +669,19 @@ public class MapAlgebraParser implements MapOpFactory
     return root;
   }
 
-private void logTree(MapOp op)
+private void logTree(MapOpHadoop op)
 {
   log.debug("MapOp tree");
   logTree(op, 1);
 
 }
 
-private void logTree(MapOp op, int depth)
+private void logTree(MapOpHadoop op, int depth)
 {
   String result = pad(depth);
   result += op.toString();
 
-  for (Map.Entry<String, MapOp> e: _variables.entrySet())
+  for (Map.Entry<String, MapOpHadoop> e: _variables.entrySet())
   {
     if (e.getValue() == op)
     {
@@ -692,23 +692,23 @@ private void logTree(MapOp op, int depth)
 
   log.debug(result);
 
-  for (MapOp child : op.getInputs())
+  for (MapOpHadoop child : op.getInputs())
   {
     logTree(child, depth + 1);
   }
 
 }
 
-  public static String toString(MapOp op)
+  public static String toString(MapOpHadoop op)
   {
     return toString(op, 0);
   }
 
-  public static String toString(MapOp op, int depth)
+  public static String toString(MapOpHadoop op, int depth)
   {
     String result = pad(depth);
     result += op.toString() + "\n";
-    for (MapOp child : op.getInputs())
+    for (MapOpHadoop child : op.getInputs())
     {
       result += toString(child, depth + 1);
     }
@@ -716,7 +716,7 @@ private void logTree(MapOp op, int depth)
   }
 
   @Override
-  public void setRootFactory(MapOpFactory rootFactory)
+  public void setRootFactory(MapOpFactoryHadoop rootFactory)
   {
     // We are the root factory. No-op.
   }

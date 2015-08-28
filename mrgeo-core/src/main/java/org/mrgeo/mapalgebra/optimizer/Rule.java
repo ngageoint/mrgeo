@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 
 import java.util.ArrayList;
 
@@ -43,14 +43,14 @@ public interface Rule
    *          The subject of the rule manipulation.
    * @return Returns the root of zero or more completely new copies of the tree.
    */
-  public ArrayList<MapOp> apply(MapOp root, MapOp subject);
+  public ArrayList<MapOpHadoop> apply(MapOpHadoop root, MapOpHadoop subject);
 
   /**
    * @return Returns a list of MapOp classes that this rule can operate on as
    *         subjects. If this rule can operate on all classes it returns a
    *         null.
    */
-  public ArrayList<Class<? extends MapOp>> getCandidates();
+  public ArrayList<Class<? extends MapOpHadoop>> getCandidates();
 
   /**
    * Determine if this rule is applicable in the given situation.
@@ -62,5 +62,5 @@ public interface Rule
    *          The node that will be operated on.
    * @return True if the rule can be applied, false otherwise.
    */
-  public boolean isApplicable(MapOp root, MapOp subject);
+  public boolean isApplicable(MapOpHadoop root, MapOpHadoop subject);
 }

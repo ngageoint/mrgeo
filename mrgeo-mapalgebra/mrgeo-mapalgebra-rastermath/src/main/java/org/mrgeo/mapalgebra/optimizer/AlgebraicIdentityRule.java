@@ -15,8 +15,8 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOp;
-import org.mrgeo.mapalgebra.RawBinaryMathMapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
+import org.mrgeo.mapalgebra.RawBinaryMathMapOpHadoop;
 import org.mrgeo.mapalgebra.RenderedImageMapOp;
 
 import java.util.ArrayList;
@@ -32,15 +32,15 @@ import java.util.List;
 public class AlgebraicIdentityRule extends AlgebraicRule
 {
   @Override
-  public ArrayList<MapOp> apply(MapOp root, MapOp subject)
+  public ArrayList<MapOpHadoop> apply(MapOpHadoop root, MapOpHadoop subject)
   {
-    ArrayList<MapOp> result = new ArrayList<MapOp>();
+    ArrayList<MapOpHadoop> result = new ArrayList<MapOpHadoop>();
 
     RenderedImageMapOp ri = (RenderedImageMapOp) subject;
     String s = _getOperation(ri);
     if (s.equals("+"))
     {
-      MapOp newRoot = _applyAdditionRule(root, ri);
+      MapOpHadoop newRoot = _applyAdditionRule(root, ri);
       if (newRoot != null)
       {
         result.add(newRoot);
@@ -48,7 +48,7 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     }
     else if (s.equals("*"))
     {
-      MapOp newRoot = _applyMultiplicationRule(root, ri);
+      MapOpHadoop newRoot = _applyMultiplicationRule(root, ri);
       if (newRoot != null)
       {
         result.add(newRoot);
@@ -56,7 +56,7 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     }
     else if (s.equals("-"))
     {
-      MapOp newRoot = _applySubtractionRule(root, ri);
+      MapOpHadoop newRoot = _applySubtractionRule(root, ri);
       if (newRoot != null)
       {
         result.add(newRoot);
@@ -64,7 +64,7 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     }
     else if (s.equals("/"))
     {
-      MapOp newRoot = _applyDivisionRule(root, ri);
+      MapOpHadoop newRoot = _applyDivisionRule(root, ri);
       if (newRoot != null)
       {
         result.add(newRoot);
@@ -74,17 +74,17 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     return result;
   }
 
-  private MapOp _applyAdditionRule(MapOp root, RenderedImageMapOp subject)
+  private MapOpHadoop _applyAdditionRule(MapOpHadoop root, RenderedImageMapOp subject)
   {
-    MapOp newRoot = root.clone();
-    MapOp newSubject = _findNewSubject(root, newRoot, subject);
-    MapOp result = null;
-    ArrayList<MapOp> newInputs = new ArrayList<MapOp>();
+    MapOpHadoop newRoot = root.clone();
+    MapOpHadoop newSubject = _findNewSubject(root, newRoot, subject);
+    MapOpHadoop result = null;
+    ArrayList<MapOpHadoop> newInputs = new ArrayList<MapOpHadoop>();
 
     boolean allConst = true;
 
     // Create a new list if inputs that excludes all zeros.
-    for (MapOp mo : newSubject.getInputs())
+    for (MapOpHadoop mo : newSubject.getInputs())
     {
       if (mo instanceof RenderedImageMapOp)
       {
@@ -107,7 +107,7 @@ public class AlgebraicIdentityRule extends AlgebraicRule
       }
     }
 
-    MapOp changedSubject = null;
+    MapOpHadoop changedSubject = null;
 
     // if we don't have any inputs left, replace the subject w/ a zero constant.
     if (newInputs.size() == 0)
@@ -122,7 +122,7 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     {
       double v = 0.0;
 
-      for (MapOp mo : newInputs)
+      for (MapOpHadoop mo : newInputs)
       {
         RenderedImageMapOp child = (RenderedImageMapOp) mo;
         v += _getConstant(child);
@@ -138,18 +138,18 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     return result;
   }
 
-  private MapOp _applyMultiplicationRule(MapOp root, RenderedImageMapOp subject)
+  private MapOpHadoop _applyMultiplicationRule(MapOpHadoop root, RenderedImageMapOp subject)
   {
-    MapOp newRoot = root.clone();
-    MapOp newSubject = _findNewSubject(root, newRoot, subject);
-    MapOp result = null;
-    ArrayList<MapOp> newInputs = new ArrayList<MapOp>();
+    MapOpHadoop newRoot = root.clone();
+    MapOpHadoop newSubject = _findNewSubject(root, newRoot, subject);
+    MapOpHadoop result = null;
+    ArrayList<MapOpHadoop> newInputs = new ArrayList<MapOpHadoop>();
 
     boolean allConst = true;
     boolean zeroConst = false;
 
     // Create a new list if inputs that excludes all zeros.
-    for (MapOp mo : newSubject.getInputs())
+    for (MapOpHadoop mo : newSubject.getInputs())
     {
       if (mo instanceof RenderedImageMapOp)
       {
@@ -176,7 +176,7 @@ public class AlgebraicIdentityRule extends AlgebraicRule
       }
     }
 
-    MapOp changedSubject = null;
+    MapOpHadoop changedSubject = null;
 
     if (zeroConst)
     {
@@ -195,7 +195,7 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     {
       double v = 1.0;
 
-      for (MapOp mo : newInputs)
+      for (MapOpHadoop mo : newInputs)
       {
         RenderedImageMapOp child = (RenderedImageMapOp) mo;
         v *= _getConstant(child);
@@ -211,20 +211,20 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     return result;
   }
 
-  private MapOp _applySubtractionRule(MapOp root, RenderedImageMapOp subject)
+  private MapOpHadoop _applySubtractionRule(MapOpHadoop root, RenderedImageMapOp subject)
   {
-    MapOp newRoot = root.clone();
-    MapOp newSubject = _findNewSubject(root, newRoot, subject);
-    MapOp result = null;
-    List<MapOp> newInputs = newSubject.getInputs();
+    MapOpHadoop newRoot = root.clone();
+    MapOpHadoop newSubject = _findNewSubject(root, newRoot, subject);
+    MapOpHadoop result = null;
+    List<MapOpHadoop> newInputs = newSubject.getInputs();
 
-    MapOp a = newInputs.get(0);
-    MapOp b = newInputs.get(1);
+    MapOpHadoop a = newInputs.get(0);
+    MapOpHadoop b = newInputs.get(1);
     
     Double av = _getConstant(a);
     Double bv = _getConstant(b);
 
-    MapOp changedSubject = null;
+    MapOpHadoop changedSubject = null;
     
     if (av != null && bv != null)
     {
@@ -244,20 +244,20 @@ public class AlgebraicIdentityRule extends AlgebraicRule
     return result;
   }
 
-  private MapOp _applyDivisionRule(MapOp root, RenderedImageMapOp subject)
+  private MapOpHadoop _applyDivisionRule(MapOpHadoop root, RenderedImageMapOp subject)
   {
-    MapOp newRoot = root.clone();
-    MapOp newSubject = _findNewSubject(root, newRoot, subject);
-    MapOp result = null;
-    List<MapOp> newInputs = newSubject.getInputs();
+    MapOpHadoop newRoot = root.clone();
+    MapOpHadoop newSubject = _findNewSubject(root, newRoot, subject);
+    MapOpHadoop result = null;
+    List<MapOpHadoop> newInputs = newSubject.getInputs();
 
-    MapOp a = newInputs.get(0);
-    MapOp b = newInputs.get(1);
+    MapOpHadoop a = newInputs.get(0);
+    MapOpHadoop b = newInputs.get(1);
     
     Double av = _getConstant(a);
     Double bv = _getConstant(b);
 
-    MapOp changedSubject = null;
+    MapOpHadoop changedSubject = null;
     
     if (bv != null && bv == 0.0)
     {
@@ -282,16 +282,16 @@ public class AlgebraicIdentityRule extends AlgebraicRule
   }
 
   @Override
-  public ArrayList<Class<? extends MapOp>> getCandidates()
+  public ArrayList<Class<? extends MapOpHadoop>> getCandidates()
   {
-    ArrayList<Class<? extends MapOp>> result = new ArrayList<Class<? extends MapOp>>();
+    ArrayList<Class<? extends MapOpHadoop>> result = new ArrayList<Class<? extends MapOpHadoop>>();
 //    result.add(RenderedImageMapOp.class);
-    result.add(RawBinaryMathMapOp.class);
+    result.add(RawBinaryMathMapOpHadoop.class);
     return result;
   }
 
   @Override
-  public boolean isApplicable(MapOp root, MapOp subject)
+  public boolean isApplicable(MapOpHadoop root, MapOpHadoop subject)
   {
     boolean result = false;
 

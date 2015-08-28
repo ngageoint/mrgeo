@@ -32,7 +32,7 @@ public class VectorizeRasterMapOp extends VectorMapOp
 //  private double _threshold = 0.0;
  
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
 //    if (_inputs.size() == 0)
 //    {

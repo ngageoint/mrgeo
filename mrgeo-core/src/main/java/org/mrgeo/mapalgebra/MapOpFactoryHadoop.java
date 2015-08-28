@@ -33,7 +33,7 @@ import java.util.ArrayList;
  *  3. Put a line in the new file with your fully qualified class name. 
  *     E.g. org.mrgeo.legion.mapalgebra.LegionMapOpFactory
  */
-public interface MapOpFactory
+public interface MapOpFactoryHadoop
 {
   public ArrayList<String> getMapOpNames();
   
@@ -42,13 +42,13 @@ public interface MapOpFactory
    * @param node
    * @return
    */
-  public MapOp convertToMapOp(ParserFunctionNode node) throws ParserException;
+  public MapOpHadoop convertToMapOp(ParserFunctionNode node) throws ParserException;
   
-  public MapOp convertToMapOp(ParserNode node) throws ParserException;
+  public MapOpHadoop convertToMapOp(ParserNode node) throws ParserException;
   
   /**
    * The root factory is used when converting child nodes in convertToMapOp.
    * @param rootFactory
    */
-  public void setRootFactory(MapOpFactory rootFactory); 
+  public void setRootFactory(MapOpFactoryHadoop rootFactory);
 }

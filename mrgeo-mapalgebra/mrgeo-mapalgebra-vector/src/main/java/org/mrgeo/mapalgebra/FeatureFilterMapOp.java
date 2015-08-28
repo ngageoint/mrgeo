@@ -23,7 +23,7 @@ import java.io.IOException;
 public abstract class FeatureFilterMapOp extends VectorMapOp
 {
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (!(n instanceof VectorMapOp))
     {
@@ -44,7 +44,7 @@ public abstract class FeatureFilterMapOp extends VectorMapOp
       p.starting();
     }
 
-    MapOp mo = _inputs.get(0);
+    MapOpHadoop mo = _inputs.get(0);
 
     InputFormatDescriptor result = 
       new FilteredInputFormatDescriptor(((VectorMapOp)mo).getVectorOutput(), getFilter());

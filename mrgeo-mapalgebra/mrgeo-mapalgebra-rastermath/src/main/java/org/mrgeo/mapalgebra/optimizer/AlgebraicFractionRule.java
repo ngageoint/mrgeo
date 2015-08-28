@@ -15,8 +15,8 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOp;
-import org.mrgeo.mapalgebra.RawBinaryMathMapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
+import org.mrgeo.mapalgebra.RawBinaryMathMapOpHadoop;
 import org.mrgeo.mapalgebra.RenderedImageMapOp;
 
 import java.util.ArrayList;
@@ -30,9 +30,9 @@ import java.util.List;
 public class AlgebraicFractionRule extends AlgebraicRule
 {
   @Override
-  public ArrayList<MapOp> apply(MapOp root, MapOp subject)
+  public ArrayList<MapOpHadoop> apply(MapOpHadoop root, MapOpHadoop subject)
   {
-    ArrayList<MapOp> result = new ArrayList<MapOp>();
+    ArrayList<MapOpHadoop> result = new ArrayList<MapOpHadoop>();
 
     RenderedImageMapOp ri = (RenderedImageMapOp) subject;
     String s = _getOperation(ri);
@@ -44,41 +44,41 @@ public class AlgebraicFractionRule extends AlgebraicRule
     return result;
   }
 
-  private ArrayList<MapOp> _applyMultiplicationRule(MapOp root, RenderedImageMapOp subject)
+  private ArrayList<MapOpHadoop> _applyMultiplicationRule(MapOpHadoop root, RenderedImageMapOp subject)
   {
-    MapOp newRoot = root.clone();
-    MapOp newSubject = _findNewSubject(root, newRoot, subject);
-    ArrayList<MapOp> result = new ArrayList<MapOp>();
-    List<MapOp> newInputs = newSubject.getInputs();
+    MapOpHadoop newRoot = root.clone();
+    MapOpHadoop newSubject = _findNewSubject(root, newRoot, subject);
+    ArrayList<MapOpHadoop> result = new ArrayList<MapOpHadoop>();
+    List<MapOpHadoop> newInputs = newSubject.getInputs();
     
     // Convert
     // (a / b) * c
     // to:
     // (a * c) / b
     
-    MapOp ab = newInputs.get(0);
-    MapOp c = newInputs.get(1);
+    MapOpHadoop ab = newInputs.get(0);
+    MapOpHadoop c = newInputs.get(1);
     
     if (!_getOperation(ab).equals("/"))
     {
-      MapOp swap = ab;
+      MapOpHadoop swap = ab;
       ab = c;
       c = swap;
     }
 
     if (_getOperation(ab).equals("/"))
     {
-      MapOp a = ab.getInputs().get(0);
-      MapOp b = ab.getInputs().get(1);
+      MapOpHadoop a = ab.getInputs().get(0);
+      MapOpHadoop b = ab.getInputs().get(1);
 
       // create a new multiply op
-      RawBinaryMathMapOp multiply = new RawBinaryMathMapOp();
+      RawBinaryMathMapOpHadoop multiply = new RawBinaryMathMapOpHadoop();
       multiply.setFunctionName("*");
       multiply.addInput(a);
       multiply.addInput(c);
 
       // create a new addition op
-      RawBinaryMathMapOp divide = new RawBinaryMathMapOp();
+      RawBinaryMathMapOpHadoop divide = new RawBinaryMathMapOpHadoop();
       divide.setFunctionName("/");
       // put the original a side into the add
       divide.addInput(multiply);
@@ -93,16 +93,16 @@ public class AlgebraicFractionRule extends AlgebraicRule
   }
 
   @Override
-  public ArrayList<Class<? extends MapOp>> getCandidates()
+  public ArrayList<Class<? extends MapOpHadoop>> getCandidates()
   {
-    ArrayList<Class<? extends MapOp>> result = new ArrayList<Class<? extends MapOp>>();
+    ArrayList<Class<? extends MapOpHadoop>> result = new ArrayList<Class<? extends MapOpHadoop>>();
 //    result.add(RenderedImageMapOp.class);
-    result.add(RawBinaryMathMapOp.class);
+    result.add(RawBinaryMathMapOpHadoop.class);
     return result;
   }
 
   @Override
-  public boolean isApplicable(MapOp root, MapOp subject)
+  public boolean isApplicable(MapOpHadoop root, MapOpHadoop subject)
   {
     boolean result = false;
 

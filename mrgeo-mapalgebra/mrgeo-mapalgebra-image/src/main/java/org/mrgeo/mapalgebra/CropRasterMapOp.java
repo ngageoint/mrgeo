@@ -63,7 +63,7 @@ public class CropRasterMapOp extends RenderedImageMapOp implements BoundsCalcula
   }
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (!(n instanceof RasterMapOp))
     {
@@ -93,7 +93,7 @@ public class CropRasterMapOp extends RenderedImageMapOp implements BoundsCalcula
     int tilesize = MapAlgebraExecutioner.calculateTileSize(this);
 
     // if we don't have a zoomlevel, see if we can walk
-    MapOp mop = getParent();
+    MapOpHadoop mop = getParent();
     while (mop != null && zoomlevel <= 0)
     {
       zoomlevel =  MapAlgebraExecutioner.calculateMaximumZoomlevel(mop);

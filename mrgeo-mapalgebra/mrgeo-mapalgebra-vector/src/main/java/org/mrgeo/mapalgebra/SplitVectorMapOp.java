@@ -55,7 +55,7 @@ public class SplitVectorMapOp extends VectorMapOp
   }
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (_inputs.size() == 0)
     {
@@ -161,7 +161,7 @@ public class SplitVectorMapOp extends VectorMapOp
   {
     if (_outputName == null)
     {
-      MapOp inputMapOp = _inputs.get(0);
+      MapOpHadoop inputMapOp = _inputs.get(0);
       String outputBase = HadoopUtils.createRandomString(40);
       Path outputParent = HadoopFileUtils.getTempDir();
       if (inputMapOp instanceof InlineCsvMapOp)
@@ -199,7 +199,7 @@ public class SplitVectorMapOp extends VectorMapOp
     ph.createChild(1.0f);
     ph.createChild(1.0f);
 
-    MapOp inputMapOp = _inputs.get(0);
+    MapOpHadoop inputMapOp = _inputs.get(0);
     Path inputPath = null;
     // TODO:
     // The following code is an ugly hack until we have time to re-factor the direct

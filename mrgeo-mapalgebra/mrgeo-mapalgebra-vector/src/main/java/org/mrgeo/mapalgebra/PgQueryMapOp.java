@@ -44,7 +44,7 @@ public class PgQueryMapOp extends VectorMapOp
   }
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (!(n instanceof VectorMapOp))
     {
@@ -65,7 +65,7 @@ public class PgQueryMapOp extends VectorMapOp
       p.starting();
     }
 
-    MapOp mo = _inputs.get(0);
+    MapOpHadoop mo = _inputs.get(0);
     String inputPath = null;
     if (mo instanceof VectorReaderMapOp)
     {

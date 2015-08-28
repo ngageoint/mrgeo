@@ -883,7 +883,7 @@ public void parse1() throws Exception
   final String ex = String.format("[%s] + [%s]", smallElevation, smallElevation);
 
   // expected
-  final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
+  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
   expRoot.setFunctionName("+");
 
   MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
@@ -897,7 +897,7 @@ public void parse1() throws Exception
   expRoot.addInput(pyramidOp1);
   expRoot.addInput(pyramidOp2);
 
-  final MapOp mo = uut.parse(ex);
+  final MapOpHadoop mo = uut.parse(ex);
   assertMapOp(expRoot, mo);
 }
 
@@ -909,7 +909,7 @@ public void parse2() throws Exception
   final String ex = String.format("[%s] * 15", smallElevation);
 
   // expected
-  final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
+  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
   expRoot.setFunctionName("*");
 
   MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
@@ -924,7 +924,7 @@ public void parse2() throws Exception
   expRoot.addInput(mapOp1);
   expRoot.addInput(mapOp2);
 
-  final MapOp mo = uut.parse(ex);
+  final MapOpHadoop mo = uut.parse(ex);
   assertMapOp(expRoot, mo);
 }
 
@@ -947,7 +947,7 @@ public void parse3() throws Exception
 
   expRoot.addInput(pyramidOp);
 
-  final MapOp mo = uut.parse(ex);
+  final MapOpHadoop mo = uut.parse(ex);
   assertMapOp(expRoot, mo);
 
   // now add a search path and see if you get the same results
@@ -957,7 +957,7 @@ public void parse3() throws Exception
 //    p = p.getParent();
 //    uut.addPath(p.toString());
 
-  final MapOp mo1 = uut.parse(ex1);
+  final MapOpHadoop mo1 = uut.parse(ex1);
   assertMapOp(expRoot, mo1);
 }
 
@@ -1062,7 +1062,7 @@ public void rasterExistsDefaultSearchPath() throws Exception
   final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
 
   // expected
-  final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
+  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
   expRoot.setFunctionName("+");
 
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(smallElevationName,
@@ -1076,7 +1076,7 @@ public void rasterExistsDefaultSearchPath() throws Exception
   expRoot.addInput(mapOp1);
   expRoot.addInput(mapOp2);
 
-  final MapOp mo = uut.parse(expr);
+  final MapOpHadoop mo = uut.parse(expr);
   assertMapOp(expRoot, mo);
 }
 
@@ -1104,7 +1104,7 @@ public void rasterExistsFullyQualifiedPath() throws Exception
 //    final Path p = smallElevationPath.getParent();
 //    uut.addPath(p.toString());
 
-  final MapOp mo1 = uut.parse(ex);
+  final MapOpHadoop mo1 = uut.parse(ex);
   assertMapOp(expRoot, mo1);
 }
 
@@ -1366,7 +1366,7 @@ public void rasterizeVector3() throws Exception
 // as more unit tests are added this method will need additional code to deal
 // with the
 // specific map ops being tested
-private void assertMapOp(final MapOp expMo, final MapOp mo)
+private void assertMapOp(final MapOpHadoop expMo, final MapOpHadoop mo)
 {
   Assert.assertEquals(expMo.getClass().getName(), mo.getClass().getName());
   if (expMo instanceof RenderedImageMapOp)

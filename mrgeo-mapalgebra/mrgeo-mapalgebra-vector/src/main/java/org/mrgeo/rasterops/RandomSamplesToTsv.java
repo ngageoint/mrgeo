@@ -19,11 +19,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.format.CsvOutputFormat;
 import org.mrgeo.geometry.GeometryFactory;
-import org.mrgeo.geometry.Point;
 import org.mrgeo.geometry.WritablePoint;
-import org.mrgeo.geometryfilter.JtsConverter;
 import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils.LatLon;
@@ -99,7 +97,7 @@ public class RandomSamplesToTsv implements RandomSampler.RandomSamplerListener
    * @param outputColumns The path to the .tsv.columns file for the results
    * @throws IOException
    */
-  public static void writeRandomPointsToTsv(Progress p, MapOp mapOp, int sampleCount,
+  public static void writeRandomPointsToTsv(Progress p, MapOpHadoop mapOp, int sampleCount,
       String newColumnName, String newColumnValue,
       Path outputPath, Path outputColumns) throws IOException, IllegalArgumentException
   {

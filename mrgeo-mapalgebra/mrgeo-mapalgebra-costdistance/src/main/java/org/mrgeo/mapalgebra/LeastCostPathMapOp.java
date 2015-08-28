@@ -50,7 +50,7 @@ public class LeastCostPathMapOp extends VectorMapOp
     }
 
     // Extract destination points from inputs
-    MapOp inlineCsvMapOp = _inputs.get(1);
+    MapOpHadoop inlineCsvMapOp = _inputs.get(1);
     assert(inlineCsvMapOp instanceof InlineCsvMapOp);
     InlineCsvInputFormatDescriptor ifd =
             (InlineCsvInputFormatDescriptor) ((VectorMapOp)inlineCsvMapOp).getVectorOutput();
@@ -73,7 +73,7 @@ public class LeastCostPathMapOp extends VectorMapOp
   }
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (_inputs.size() == 0)
     {

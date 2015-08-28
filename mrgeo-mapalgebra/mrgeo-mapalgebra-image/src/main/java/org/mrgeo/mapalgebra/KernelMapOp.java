@@ -32,7 +32,7 @@ public static String[] register()
 }
 
 @Override
-public void addInput(MapOp n) throws IllegalArgumentException
+public void addInput(MapOpHadoop n) throws IllegalArgumentException
 {
   if (!(n instanceof RasterMapOp))
   {
@@ -56,7 +56,7 @@ public void build(Progress p) throws IOException, JobFailedException, JobCancell
   if (_output == null)
   {
     String input = null;
-    for (MapOp in : _inputs)
+    for (MapOpHadoop in : _inputs)
     {
       input = ((RasterMapOp) (in)).getOutputName();
     }

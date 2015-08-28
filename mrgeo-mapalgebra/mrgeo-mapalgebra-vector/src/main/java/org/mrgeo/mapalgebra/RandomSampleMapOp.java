@@ -43,7 +43,7 @@ public class RandomSampleMapOp extends VectorMapOp implements BoundsCalculator
   private int zoomLevel;
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (_inputs.size() == 0)
     {

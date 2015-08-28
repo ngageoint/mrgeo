@@ -46,10 +46,10 @@ private final Vector<Future<RunnableMapOp>> futures = new Vector<>();
 private class RunnableMapOp implements Runnable
 {
   Throwable exception = null;
-  MapOp _op;
+  MapOpHadoop _op;
   ProgressHierarchy _progress;
 
-  RunnableMapOp(Configuration conf, MapOp op, ProgressHierarchy progress)
+  RunnableMapOp(Configuration conf, MapOpHadoop op, ProgressHierarchy progress)
   {
     _op = op;
     _progress = progress;
@@ -62,7 +62,7 @@ private class RunnableMapOp implements Runnable
     {
       // Set up progress for execute listeners if there are any
       Progress opProgress = _progress;
-      List<MapOp> executeListeners = _op.getExecuteListeners();
+      List<MapOpHadoop> executeListeners = _op.getExecuteListeners();
       if (_progress != null)
       {
         _progress.starting();
@@ -87,7 +87,7 @@ private class RunnableMapOp implements Runnable
       // Build execute listeners if there are any
       if (executeListeners != null)
       {
-        for (MapOp listener : executeListeners)
+        for (MapOpHadoop listener : executeListeners)
         {
           if (listener != null)
           {
@@ -113,7 +113,7 @@ private class RunnableMapOp implements Runnable
   }
 }
 
-MapOp _root;
+MapOpHadoop _root;
 String output = null;
 
 public void setOutputName(String p)
@@ -121,7 +121,7 @@ public void setOutputName(String p)
   output = p;
 }
 
-public void setRoot(MapOp root)
+public void setRoot(MapOpHadoop root)
 {
   _root = root;
 }
@@ -214,7 +214,7 @@ public void execute(Configuration conf, Progress progress, boolean buildPyramid)
   }
 }
 
-void executeChildren(final Configuration conf, final MapOp mapOp,
+void executeChildren(final Configuration conf, final MapOpHadoop mapOp,
     final ProgressHierarchy ph) throws JobFailedException,
     InterruptedException, ExecutionException
 {
@@ -238,7 +238,7 @@ void executeChildren(final Configuration conf, final MapOp mapOp,
   // all the children, they are built in parallel.
   Vector<RunnableMapOp> v = new Vector<>();
   int i = 0;
-  for (MapOp child : mapOp.getInputs())
+  for (MapOpHadoop child : mapOp.getInputs())
   {
     ProgressHierarchy pc1 = null;
     ProgressHierarchy pc2 = null;
@@ -302,10 +302,10 @@ void executeChildren(final Configuration conf, final MapOp mapOp,
   }
 }
 
-private static void cleanupMapOp(final MapOp mapOp) throws IOException
+private static void cleanupMapOp(final MapOpHadoop mapOp) throws IOException
 {
   // Cleanup the entire tree of map ops
-  for (MapOp child : mapOp.getInputs())
+  for (MapOpHadoop child : mapOp.getInputs())
   {
     cleanupMapOp(child);
   }
@@ -391,7 +391,7 @@ private synchronized Future<RunnableMapOp> submit(Configuration conf, RunnableMa
  * getOutput() on its input MapOps.
  *
  */
-public static void calculateInputs(MapOp mapOp, Set<String> inputPyramids)
+public static void calculateInputs(MapOpHadoop mapOp, Set<String> inputPyramids)
 {
   if (mapOp instanceof InputsCalculator)
   {
@@ -399,7 +399,7 @@ public static void calculateInputs(MapOp mapOp, Set<String> inputPyramids)
   }
   else
   {
-    for (final MapOp input : mapOp.getInputs())
+    for (final MapOpHadoop input : mapOp.getInputs())
     {
       calculateInputs(input, inputPyramids);
     }
@@ -411,7 +411,7 @@ public static void calculateInputs(MapOp mapOp, Set<String> inputPyramids)
  * This should _not_ call getOutput() on its input MapOps.
  *
  */
-public static Bounds calculateBounds(MapOp mapOp) throws IOException
+public static Bounds calculateBounds(MapOpHadoop mapOp) throws IOException
 {
   if (mapOp instanceof BoundsCalculator)
   {
@@ -420,7 +420,7 @@ public static Bounds calculateBounds(MapOp mapOp) throws IOException
   else
   {
     final Bounds b = new Bounds();
-    for (final MapOp input : mapOp.getInputs())
+    for (final MapOpHadoop input : mapOp.getInputs())
     {
       if (input != null)
       {
@@ -436,7 +436,7 @@ public static Bounds calculateBounds(MapOp mapOp) throws IOException
  * mapOp passed in. This should _not_ call getOutput() on its input MapOps.
  *
  */
-public static int calculateMaximumZoomlevel(MapOp mapOp) throws IOException
+public static int calculateMaximumZoomlevel(MapOpHadoop mapOp) throws IOException
 {
   if (mapOp instanceof MaximumZoomLevelCalculator)
   {
@@ -445,7 +445,7 @@ public static int calculateMaximumZoomlevel(MapOp mapOp) throws IOException
   else
   {
     int zoom = 0;
-    for (final MapOp input : mapOp.getInputs())
+    for (final MapOpHadoop input : mapOp.getInputs())
     {
       final int z = calculateMaximumZoomlevel(input);
       if (z > zoom)
@@ -461,7 +461,7 @@ public static int calculateMaximumZoomlevel(MapOp mapOp) throws IOException
  * Calculates the combined neighborhood of raster tiles to input.
  * @throws IOException
  */
-public static TileClusterInfo calculateTileClusterInfo(MapOp mapOp) throws IOException
+public static TileClusterInfo calculateTileClusterInfo(MapOpHadoop mapOp) throws IOException
 {
   if (mapOp instanceof TileClusterInfoCalculator)
   {
@@ -472,7 +472,7 @@ public static TileClusterInfo calculateTileClusterInfo(MapOp mapOp) throws IOExc
     final TileClusterInfo tileClusterInfo = new TileClusterInfo();
     if (mapOp.getInputs() != null)
     {
-      for (final MapOp input : mapOp.getInputs())
+      for (final MapOpHadoop input : mapOp.getInputs())
       {
         if (input != null)
         {
@@ -489,7 +489,7 @@ public static TileClusterInfo calculateTileClusterInfo(MapOp mapOp) throws IOExc
  * inputs. This should _not_ call getOutput() on its input MapOps.
  *
  */
-public static int calculateTileSize(MapOp mapOp) throws IOException
+public static int calculateTileSize(MapOpHadoop mapOp) throws IOException
 {
   // Return the first tile size greater than 0. It is assumed at this point
   // that tile sizes of all rasters will be the same.
@@ -499,7 +499,7 @@ public static int calculateTileSize(MapOp mapOp) throws IOException
   }
   else
   {
-    for (final MapOp input : mapOp.getInputs())
+    for (final MapOpHadoop input : mapOp.getInputs())
     {
       int tileSize = calculateTileSize(input);
       if (tileSize > 0)
@@ -518,7 +518,7 @@ public static int calculateTileSize(MapOp mapOp) throws IOException
  * function does not store the tile cluster info, it only passes it along to its children.
  *
  */
-public static void setOverallTileClusterInfo(final MapOp mapOp,
+public static void setOverallTileClusterInfo(final MapOpHadoop mapOp,
     final TileClusterInfo tileClusterInfo)
 {
   if (mapOp instanceof TileClusterInfoConsumer)
@@ -528,7 +528,7 @@ public static void setOverallTileClusterInfo(final MapOp mapOp,
   // Recurse through the children
   if (mapOp.getInputs() != null)
   {
-    for (final MapOp input : mapOp.getInputs())
+    for (final MapOpHadoop input : mapOp.getInputs())
     {
       setOverallTileClusterInfo(input, tileClusterInfo);
     }

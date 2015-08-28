@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 
 /**
  * Given a MapOp tree the Heuristic will estimate how long it will take to
@@ -33,7 +33,7 @@ public class Heuristic
    * @return An estimate of how long it will take to execute (ideally in
    *         seconds).
    */
-  public double estimate(MapOp root)
+  public double estimate(MapOpHadoop root)
   {
     double result = 1.0;
     
@@ -42,7 +42,7 @@ public class Heuristic
       result += 1;
     }
 
-    for (MapOp child : root.getInputs())
+    for (MapOpHadoop child : root.getInputs())
     {
       result += 2.0;
       result += estimate(child);

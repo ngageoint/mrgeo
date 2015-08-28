@@ -30,10 +30,10 @@ import org.mrgeo.mapalgebra.parser.ParserNode;
  * their duties. Note that method will be called by the executioner
  * once immediately after each of its children build.
  */
-public abstract class ProcedureMapOp extends MapOp
+public abstract class ProcedureMapOp extends MapOpHadoop
 {
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     _inputs.add(n);
   }

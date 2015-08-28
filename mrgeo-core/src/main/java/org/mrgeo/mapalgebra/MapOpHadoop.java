@@ -15,13 +15,6 @@
 
 package org.mrgeo.mapalgebra;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Vector;
-
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
@@ -35,6 +28,9 @@ import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.progress.Progress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Abstract base class for map algebra functions. When new map algebra
@@ -56,11 +52,11 @@ import org.slf4j.LoggerFactory;
  * JAI functionality, and those operations are strung together into a
  * single chain of JAI operations and processed together.
  */
-public abstract class MapOp implements Cloneable
+public abstract class MapOpHadoop implements Cloneable
 {
-  private static final Logger log = LoggerFactory.getLogger(MapOp.class);
-  protected ArrayList<MapOp> _inputs = new ArrayList<MapOp>();
-  protected ArrayList<MapOp> executeListeners = new ArrayList<MapOp>();
+  private static final Logger log = LoggerFactory.getLogger(MapOpHadoop.class);
+  protected ArrayList<MapOpHadoop> _inputs = new ArrayList<MapOpHadoop>();
+  protected ArrayList<MapOpHadoop> executeListeners = new ArrayList<MapOpHadoop>();
   // TODO: The following remains to support vector data which has not yet been
   // transitioned to use data providers. It's still HDFS-specific. It should
   // eventually be migrated into tmpResources.
@@ -71,7 +67,7 @@ public abstract class MapOp implements Cloneable
   private String protectionLevel;
   protected JobListener jobListener = null;
 
-  private MapOp parent = null;
+  private MapOpHadoop parent = null;
   private String functionName;
 
   public static String[] register()
@@ -274,7 +270,7 @@ public abstract class MapOp implements Cloneable
    * @param n
    * @throws IllegalArgumentException
    */
-  public abstract void addInput(MapOp n) throws IllegalArgumentException;
+  public abstract void addInput(MapOpHadoop n) throws IllegalArgumentException;
 
   /**
    * Sub-classes that create temporary files or directories in HDFS should
@@ -362,16 +358,16 @@ public abstract class MapOp implements Cloneable
    * results or temporary variables involved in computation.
    */
   @Override
-  public MapOp clone()
+  public MapOpHadoop clone()
   {
     try
     {
-      final MapOp result = (MapOp) super.clone();
+      final MapOpHadoop result = (MapOpHadoop) super.clone();
 
       if (_inputs != null)
       {
-        result._inputs = new ArrayList<MapOp>();
-        for (final MapOp mo : _inputs)
+        result._inputs = new ArrayList<MapOpHadoop>();
+        for (final MapOpHadoop mo : _inputs)
         {
           result._inputs.add(mo.clone());
         }
@@ -440,7 +436,7 @@ public abstract class MapOp implements Cloneable
    * 
    * @return
    */
-  public MapOp findRoot()
+  public MapOpHadoop findRoot()
   {
     if (parent == null)
     {
@@ -475,7 +471,7 @@ public abstract class MapOp implements Cloneable
   public Configuration createConfiguration()
   {
     Configuration conf = this.defaultConf;
-    MapOp parent = getParent();
+    MapOpHadoop parent = getParent();
     while (conf == null && parent != null)
     {
       conf = parent.defaultConf;
@@ -509,7 +505,7 @@ public abstract class MapOp implements Cloneable
    * 
    * @return
    */
-  public List<MapOp> getInputs()
+  public List<MapOpHadoop> getInputs()
   {
     return Collections.unmodifiableList(_inputs);
   }
@@ -518,7 +514,7 @@ public abstract class MapOp implements Cloneable
    * Returns this map op's parent map op or null if this is the root map op.
    * @return
    */
-  public MapOp getParent()
+  public MapOpHadoop getParent()
   {
     return parent;
   }
@@ -585,7 +581,7 @@ public abstract class MapOp implements Cloneable
    * @param i
    * @param replacer
    */
-  public void setInput(final int i, final MapOp replacer)
+  public void setInput(final int i, final MapOpHadoop replacer)
   {
     _inputs.set(i, replacer);
   }
@@ -601,7 +597,7 @@ public abstract class MapOp implements Cloneable
     jobListener = jl;
   }
 
-  public void setParent(final MapOp mapop)
+  public void setParent(final MapOpHadoop mapop)
   {
     parent = mapop;
   }
@@ -626,7 +622,7 @@ public abstract class MapOp implements Cloneable
     return builder.toString();
   }
 
-  private void walkAndPrintTree(MapOp op, int level, StringBuilder builder)
+  private void walkAndPrintTree(MapOpHadoop op, int level, StringBuilder builder)
   {
     for (int i = 0; i < level; i++)
     {
@@ -635,7 +631,7 @@ public abstract class MapOp implements Cloneable
     builder.append(op.toString());
     builder.append('\n');
 
-    for (MapOp input : op._inputs)
+    for (MapOpHadoop input : op._inputs)
     {
       walkAndPrintTree(input, level + 1, builder);
     }
@@ -647,7 +643,7 @@ public abstract class MapOp implements Cloneable
    * 
    * @param listener
    */
-  public void addExecuteListener(final MapOp listener)
+  public void addExecuteListener(final MapOpHadoop listener)
   {
     executeListeners.add(listener);
   }
@@ -659,7 +655,7 @@ public abstract class MapOp implements Cloneable
    * 
    * @return
    */
-  public List<MapOp> getExecuteListeners()
+  public List<MapOpHadoop> getExecuteListeners()
   {
     return Collections.unmodifiableList(executeListeners);
   }

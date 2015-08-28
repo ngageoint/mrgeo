@@ -19,7 +19,7 @@ import org.apache.hadoop.fs.Path;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
-import org.mrgeo.mapalgebra.MapOpFactory;
+import org.mrgeo.mapalgebra.MapOpFactoryHadoop;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.LocalRunnerTest;
@@ -93,10 +93,10 @@ public class PigMapOpFactoryTest extends LocalRunnerTest
   {
     try
     {
-      ServiceLoader<MapOpFactory> loader = ServiceLoader.load(MapOpFactory.class);
+      ServiceLoader<MapOpFactoryHadoop> loader = ServiceLoader.load(MapOpFactoryHadoop.class);
 
       int count = 0;
-      for (MapOpFactory s : loader)
+      for (MapOpFactoryHadoop s : loader)
       {
         System.out.println(s.getClass().getName());
         if (s.getClass().getName().equals("org.mrgeo.pig.PigMapOpFactory"))

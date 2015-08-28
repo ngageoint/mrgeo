@@ -25,7 +25,7 @@ import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
 import org.mrgeo.mapalgebra.MapAlgebraParser;
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -105,30 +105,30 @@ public void generateBaselineTif(final Configuration conf, final String testName,
   }
 }
 
-public MapOp
+public MapOpHadoop
 runRasterExpression(final Configuration conf, final String testName, final String ex)
     throws ParserException, IOException, JobFailedException, JobCancelledException
 {
   return runRasterExpression(conf, testName, null, ex);
 }
 
-public MapOp
+public MapOpHadoop
 runRasterExpression(final Configuration conf, final String testName,
     final TestUtils.ValueTranslator testTranslator, final String ex)
     throws ParserException, IOException, JobFailedException, JobCancelledException
 {
-  final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
+  final MapOpHadoop mapOp = runMapAlgebraExpression(conf, testName, ex);
 
   compareRasterOutput(testName, testTranslator, (ProviderProperties)null);
   return mapOp;
 }
 
-public MapOp
+public MapOpHadoop
 runRasterExpression(final Configuration conf, final String testName,
     final TestUtils.ValueTranslator baselineTranslator, final TestUtils.ValueTranslator testTranslator, final String ex)
     throws ParserException, IOException, JobFailedException, JobCancelledException
 {
-  final MapOp mapOp = runMapAlgebraExpression(conf, testName, ex);
+  final MapOpHadoop mapOp = runMapAlgebraExpression(conf, testName, ex);
 
   compareRasterOutput(testName, baselineTranslator, testTranslator, (ProviderProperties)null);
   return mapOp;
@@ -203,7 +203,7 @@ private void compareRasterOutput(final String testName, final TestUtils.ValueTra
  * @throws JobCancelledException
  * @throws ParserException
  */
-public MapOp runMapAlgebraExpression(final Configuration conf, final String testName, final String ex)
+public MapOpHadoop runMapAlgebraExpression(final Configuration conf, final String testName, final String ex)
     throws IOException, JobFailedException, JobCancelledException, ParserException
 {
   HadoopFileUtils.delete(new Path(outputHdfs, testName));
@@ -213,7 +213,7 @@ public MapOp runMapAlgebraExpression(final Configuration conf, final String test
 //    parser.addPath(inputHdfs.toString());
   final MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
 
-  final MapOp mapOp = parser.parse(ex);
+  final MapOpHadoop mapOp = parser.parse(ex);
   log.info("\nMap Algebra Expression:\n" + MapAlgebraParser.toString(mapOp));
 
   mae.setRoot(mapOp);

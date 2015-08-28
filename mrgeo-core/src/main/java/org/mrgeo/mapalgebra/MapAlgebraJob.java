@@ -72,7 +72,7 @@ public class MapAlgebraJob implements RunnableJob
       String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
       MapAlgebraParser parser = new MapAlgebraParser(conf, useProtectionLevel,
           providerProperties);
-      MapOp op = null;
+      MapOpHadoop op = null;
       try
       {
         op = parser.parse(_expression);
@@ -135,7 +135,7 @@ public class MapAlgebraJob implements RunnableJob
     }
   }
   
-  private void buildPyramid(MapOp op, Configuration conf,
+  private void buildPyramid(MapOpHadoop op, Configuration conf,
                             ProviderProperties providerProperties) throws Exception
   {
     TaskProgress taskProg = new TaskProgress(_progress);

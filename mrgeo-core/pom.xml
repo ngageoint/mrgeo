@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2009-2015 DigitalGlobe, Inc.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~ http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and limitations under the License.
-  -->
+     ~ Copyright 2009-2015 DigitalGlobe, Inc.
+     ~
+     ~ Licensed under the Apache License, Version 2.0 (the "License");
+     ~ you may not use this file except in compliance with the License.
+     ~ You may obtain a copy of the License at
+     ~
+     ~ http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -51,11 +51,6 @@
       </resource>
     </resources>
     <plugins>
-      <!-- Include Scala in this project -->
-      <plugin>
-        <groupId>org.scala-tools</groupId>
-        <artifactId>maven-scala-plugin</artifactId>
-      </plugin>
       <!-- Unit Test plugin -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -70,28 +65,28 @@
         </configuration>
       </plugin>
       <!--
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.3</version>
-        <configuration>
-          <finalName>${project.artifactId}-${project.parent.version}</finalName>
-        </configuration>
-        <executions>
-          <execution>
-            <id>side-by-side</id>
-            <phase>deploy</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>src/main/assembly/dist.xml</descriptor>
-              </descriptors>
-              <appendAssemblyId>false</appendAssemblyId>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+           <plugin>
+           <artifactId>maven-assembly-plugin</artifactId>
+           <version>2.3</version>
+           <configuration>
+           <finalName>${project.artifactId}-${project.parent.version}</finalName>
+           </configuration>
+           <executions>
+           <execution>
+           <id>side-by-side</id>
+           <phase>deploy</phase>
+           <goals>
+           <goal>single</goal>
+           </goals>
+           <configuration>
+           <descriptors>
+           <descriptor>src/main/assembly/dist.xml</descriptor>
+           </descriptors>
+           <appendAssemblyId>false</appendAssemblyId>
+           </configuration>
+           </execution>
+           </executions>
+           </plugin>
       -->
       <plugin>
         <groupId>com.pyx4j</groupId>
@@ -216,19 +211,19 @@
       <artifactId>gdal</artifactId>
     </dependency>
     <!--
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-jdbc</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-opengis</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-coverage</artifactId>
-    </dependency>
+         <dependency>
+         <groupId>org.geotools</groupId>
+         <artifactId>gt-jdbc</artifactId>
+         <scope>runtime</scope>
+         </dependency>
+         <dependency>
+         <groupId>org.geotools</groupId>
+         <artifactId>gt-opengis</artifactId>
+         </dependency>
+         <dependency>
+         <groupId>org.geotools</groupId>
+         <artifactId>gt-coverage</artifactId>
+         </dependency>
     -->
     <dependency>
       <groupId>org.jaitools</groupId>
@@ -309,6 +304,10 @@
     <dependency>
       <groupId>com.esotericsoftware.kryo</groupId>
       <artifactId>kryo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.clapper</groupId>
+      <artifactId>classutil_${spark.scala.version}</artifactId>
     </dependency>
     <dependency>
       <groupId>xerces</groupId>

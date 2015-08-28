@@ -51,11 +51,6 @@
       </resource>
     </resources>
     <plugins>
-      <!-- Include Scala in this project -->
-      <plugin>
-        <groupId>org.scala-tools</groupId>
-        <artifactId>maven-scala-plugin</artifactId>
-      </plugin>
       <!-- Unit Test plugin -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
