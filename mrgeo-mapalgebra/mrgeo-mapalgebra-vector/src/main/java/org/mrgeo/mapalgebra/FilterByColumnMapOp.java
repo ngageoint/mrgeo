@@ -45,7 +45,7 @@ public class FilterByColumnMapOp extends FeatureFilterMapOp
   public FeatureFilter getFilter() { return filter; }
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     //determine if the input actually contains the column name
     if (n instanceof VectorReaderMapOp)

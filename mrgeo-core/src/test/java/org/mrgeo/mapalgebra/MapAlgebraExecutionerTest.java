@@ -58,7 +58,7 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
   private static String copy;
 
   MapAlgebraExecutioner executioner;
-  MapOp mapop;
+  MapOpHadoop mapop;
 
   @BeforeClass
   public static void init() throws IOException
@@ -130,11 +130,11 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     }
   }
 
-  public class DeferredMapOp1 extends MapOp implements DeferredExecutor, OutputProducer
+  public class DeferredMapOp1 extends MapOpHadoop implements DeferredExecutor, OutputProducer
   {
     private MapOpActionListener listener;
     private String id;
-    private List<MapOp> inputs = new ArrayList<MapOp>();
+    private List<MapOpHadoop> inputs = new ArrayList<MapOpHadoop>();
 
     public DeferredMapOp1(String id, MapOpActionListener listener)
     {
@@ -155,13 +155,13 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     }
 
     @Override
-    public void addInput(MapOp n) throws IllegalArgumentException
+    public void addInput(MapOpHadoop n) throws IllegalArgumentException
     {
       inputs.add(n);
     }
 
     @Override
-    public List<MapOp> getInputs()
+    public List<MapOpHadoop> getInputs()
     {
       return inputs;
     }
@@ -202,11 +202,11 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     }
   }
 
-  public class DeferredMapOp2 extends MapOp implements DeferredExecutor, OutputProducer
+  public class DeferredMapOp2 extends MapOpHadoop implements DeferredExecutor, OutputProducer
   {
     private MapOpActionListener listener;
     private String id;
-    private List<MapOp> inputs = new ArrayList<MapOp>();
+    private List<MapOpHadoop> inputs = new ArrayList<MapOpHadoop>();
 
     public DeferredMapOp2(String id, MapOpActionListener listener)
     {
@@ -227,13 +227,13 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     }
 
     @Override
-    public void addInput(MapOp n) throws IllegalArgumentException
+    public void addInput(MapOpHadoop n) throws IllegalArgumentException
     {
       inputs.add(n);
     }
 
     @Override
-    public List<MapOp> getInputs()
+    public List<MapOpHadoop> getInputs()
     {
       return inputs;
     }
@@ -274,11 +274,11 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     }
   }
 
-  public class NormalMapOp extends MapOp implements OutputProducer
+  public class NormalMapOp extends MapOpHadoop implements OutputProducer
   {
     private MapOpActionListener listener;
     private String id;
-    private List<MapOp> inputs = new ArrayList<MapOp>();
+    private List<MapOpHadoop> inputs = new ArrayList<MapOpHadoop>();
 
     public NormalMapOp(String id, MapOpActionListener listener)
     {
@@ -287,13 +287,13 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     }
 
     @Override
-    public void addInput(MapOp n) throws IllegalArgumentException
+    public void addInput(MapOpHadoop n) throws IllegalArgumentException
     {
       inputs.add(n);
     }
 
     @Override
-    public List<MapOp> getInputs()
+    public List<MapOpHadoop> getInputs()
     {
       return inputs;
     }
@@ -334,11 +334,11 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     }
   }
 
-  public class NormalMapOpNoOutput extends MapOp
+  public class NormalMapOpNoOutput extends MapOpHadoop
   {
     private MapOpActionListener listener;
     private String id;
-    private List<MapOp> inputs = new ArrayList<MapOp>();
+    private List<MapOpHadoop> inputs = new ArrayList<MapOpHadoop>();
 
     public NormalMapOpNoOutput(String id, MapOpActionListener listener)
     {
@@ -347,13 +347,13 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     }
 
     @Override
-    public void addInput(MapOp n) throws IllegalArgumentException
+    public void addInput(MapOpHadoop n) throws IllegalArgumentException
     {
       inputs.add(n);
     }
 
     @Override
-    public List<MapOp> getInputs()
+    public List<MapOpHadoop> getInputs()
     {
       return inputs;
     }
@@ -379,7 +379,7 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     int mapOpId = 1;
     MapOpActionListener listener = new MapOpActionListener();
     String rootId = "" + mapOpId;
-    MapOp root = new NormalMapOpNoOutput(rootId, listener);
+    MapOpHadoop root = new NormalMapOpNoOutput(rootId, listener);
     executioner.setRoot(root);
     try
     {
@@ -399,7 +399,7 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     int mapOpId = 1;
     MapOpActionListener listener = new MapOpActionListener();
     String rootId = "" + mapOpId;
-    MapOp root = new DeferredMapOp1(rootId, listener);
+    MapOpHadoop root = new DeferredMapOp1(rootId, listener);
     executioner.setRoot(root);
     executioner.execute(conf, new ProgressHierarchy());
     Assert.assertEquals(3, listener.size());
@@ -418,7 +418,7 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     int mapOpId = 1;
     MapOpActionListener listener = new MapOpActionListener();
     String rootId = "" + mapOpId;
-    MapOp root = new NormalMapOp(rootId, listener);
+    MapOpHadoop root = new NormalMapOp(rootId, listener);
     executioner.setRoot(root);
     executioner.execute(conf, new ProgressHierarchy());
     Assert.assertEquals(2, listener.size());
@@ -437,8 +437,8 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     MapOpActionListener listener = new MapOpActionListener();
     String rootId = "" + mapOpId++;
     String childId = "" + mapOpId;
-    MapOp root = new NormalMapOp(rootId, listener);
-    MapOp child = new DeferredMapOp1(childId, listener);
+    MapOpHadoop root = new NormalMapOp(rootId, listener);
+    MapOpHadoop child = new DeferredMapOp1(childId, listener);
     root.addInput(child);
     executioner.setRoot(root);
     executioner.execute(conf, new ProgressHierarchy());
@@ -463,8 +463,8 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     MapOpActionListener listener = new MapOpActionListener();
     String rootId = "" + mapOpId++;
     String childId = "" + mapOpId;
-    MapOp root = new DeferredMapOp1(rootId, listener);
-    MapOp child = new NormalMapOp(childId, listener);
+    MapOpHadoop root = new DeferredMapOp1(rootId, listener);
+    MapOpHadoop child = new NormalMapOp(childId, listener);
     root.addInput(child);
     executioner.setRoot(root);
     executioner.execute(conf, new ProgressHierarchy());
@@ -489,8 +489,8 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     MapOpActionListener listener = new MapOpActionListener();
     String rootId = "" + mapOpId++;
     String childId = "" + mapOpId;
-    MapOp root = new NormalMapOp(rootId, listener);
-    MapOp child = new NormalMapOp(childId, listener);
+    MapOpHadoop root = new NormalMapOp(rootId, listener);
+    MapOpHadoop child = new NormalMapOp(childId, listener);
     root.addInput(child);
     executioner.setRoot(root);
     executioner.execute(conf, new ProgressHierarchy());
@@ -514,9 +514,9 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     String rootId = "" + mapOpId++;
     String childId = "" + mapOpId++;
     String grandchildId = "" + mapOpId;
-    MapOp root = new NormalMapOp(rootId, listener);
-    MapOp child = new DeferredMapOp1(childId, listener);
-    MapOp grandchild = new DeferredMapOp2(grandchildId, listener);
+    MapOpHadoop root = new NormalMapOp(rootId, listener);
+    MapOpHadoop child = new DeferredMapOp1(childId, listener);
+    MapOpHadoop grandchild = new DeferredMapOp2(grandchildId, listener);
     root.addInput(child);
     child.addInput(grandchild);
     executioner.setRoot(root);
@@ -552,8 +552,8 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     MapOpActionListener listener = new MapOpActionListener();
     String rootId = "" + mapOpId++;
     String childId = "" + mapOpId++;
-    MapOp root = new DeferredMapOp1(rootId, listener);
-    MapOp child = new DeferredMapOp2(childId, listener);
+    MapOpHadoop root = new DeferredMapOp1(rootId, listener);
+    MapOpHadoop child = new DeferredMapOp2(childId, listener);
     root.addInput(child);
     executioner.setRoot(root);
     executioner.execute(conf, new ProgressHierarchy());
@@ -585,8 +585,8 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     MapOpActionListener listener = new MapOpActionListener();
     String rootId = "" + mapOpId++;
     String childId = "" + mapOpId++;
-    MapOp root = new DeferredMapOp1(rootId, listener);
-    MapOp child = new DeferredMapOp1(childId, listener);
+    MapOpHadoop root = new DeferredMapOp1(rootId, listener);
+    MapOpHadoop child = new DeferredMapOp1(childId, listener);
     root.addInput(child);
     executioner.setRoot(root);
     executioner.execute(conf, new ProgressHierarchy());
@@ -616,9 +616,9 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     String rootId = "" + mapOpId++;
     String childId = "" + mapOpId++;
     String grandchildId = "" + mapOpId;
-    MapOp root = new NormalMapOp(rootId, listener);
-    MapOp child = new DeferredMapOp1(childId, listener);
-    MapOp grandchild = new DeferredMapOp1(grandchildId, listener);
+    MapOpHadoop root = new NormalMapOp(rootId, listener);
+    MapOpHadoop child = new DeferredMapOp1(childId, listener);
+    MapOpHadoop grandchild = new DeferredMapOp1(grandchildId, listener);
     root.addInput(child);
     child.addInput(grandchild);
     executioner.setRoot(root);
@@ -657,9 +657,9 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     String rootId = "" + mapOpId++;
     String childId = "" + mapOpId++;
     String listenerId = "" + mapOpId++;
-    MapOp root = new DeferredMapOp1(rootId, listener);
-    MapOp child = new DeferredMapOp1(childId, listener);
-    MapOp executeListener = new NormalMapOp(listenerId, listener);
+    MapOpHadoop root = new DeferredMapOp1(rootId, listener);
+    MapOpHadoop child = new DeferredMapOp1(childId, listener);
+    MapOpHadoop executeListener = new NormalMapOp(listenerId, listener);
     child.addExecuteListener(executeListener);
     root.addInput(child);
     executioner.setRoot(root);
@@ -702,10 +702,10 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     String childId = "" + mapOpId++;
     String grandChildId = "" + mapOpId++;
     String listenerId = "" + mapOpId++;
-    MapOp root = new DeferredMapOp1(rootId, listener);
-    MapOp child = new DeferredMapOp1(childId, listener);
-    MapOp grandChild = new DeferredMapOp1(grandChildId, listener);
-    MapOp executeListener = new NormalMapOp(listenerId, listener);
+    MapOpHadoop root = new DeferredMapOp1(rootId, listener);
+    MapOpHadoop child = new DeferredMapOp1(childId, listener);
+    MapOpHadoop grandChild = new DeferredMapOp1(grandChildId, listener);
+    MapOpHadoop executeListener = new NormalMapOp(listenerId, listener);
     root.addInput(child);
     child.addInput(grandChild);
     child.addExecuteListener(executeListener);
@@ -748,9 +748,9 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     String rootId = "" + mapOpId++;
     String childId1 = "" + mapOpId++;
     String childId2 = "" + mapOpId;
-    MapOp root = new DeferredMapOp1(rootId, listener);
-    MapOp child1 = new DeferredMapOp2(childId1, listener);
-    MapOp child2 = new DeferredMapOp1(childId2, listener);
+    MapOpHadoop root = new DeferredMapOp1(rootId, listener);
+    MapOpHadoop child1 = new DeferredMapOp2(childId1, listener);
+    MapOpHadoop child2 = new DeferredMapOp1(childId2, listener);
     root.addInput(child1);
     root.addInput(child2);
     executioner.setRoot(root);
@@ -796,12 +796,12 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
     String grandchildId11 = "" + mapOpId++;
     String grandchildId21 = "" + mapOpId++;
     String greatgrandchildId211 = "" + mapOpId++;
-    MapOp root = new DeferredMapOp1(rootId, listener);
-    MapOp child1 = new DeferredMapOp2(childId1, listener);
-    MapOp child2 = new DeferredMapOp1(childId2, listener);
-    MapOp grandchild11 = new DeferredMapOp2(grandchildId11, listener);
-    MapOp grandchild21 = new DeferredMapOp1(grandchildId21, listener);
-    MapOp greatgrandchild211 = new NormalMapOp(greatgrandchildId211, listener);
+    MapOpHadoop root = new DeferredMapOp1(rootId, listener);
+    MapOpHadoop child1 = new DeferredMapOp2(childId1, listener);
+    MapOpHadoop child2 = new DeferredMapOp1(childId2, listener);
+    MapOpHadoop grandchild11 = new DeferredMapOp2(grandchildId11, listener);
+    MapOpHadoop grandchild21 = new DeferredMapOp1(grandchildId21, listener);
+    MapOpHadoop greatgrandchild211 = new NormalMapOp(greatgrandchildId211, listener);
     root.addInput(child1);
     root.addInput(child2);
     child1.addInput(grandchild11);
@@ -995,10 +995,10 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testSetRoot()
   {
-    final MapOp root = new RasterMapOp()
+    final MapOpHadoop root = new RasterMapOp()
     {
       @Override
-      public void addInput(MapOp n) throws IllegalArgumentException
+      public void addInput(MapOpHadoop n) throws IllegalArgumentException
       {
 
       }

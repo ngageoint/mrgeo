@@ -16,15 +16,15 @@
 package org.mrgeo.mapalgebra.optimizer;
 
 import org.mrgeo.mapalgebra.MapAlgebraParser;
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 
 import java.util.*;
 
 public class Optimizer
 {
-  private MapOp _startingRoot;
+  private MapOpHadoop _startingRoot;
   ArrayList<Rule> _rules = new ArrayList<Rule>();
-  HashMap<Class<? extends MapOp>, ArrayList<Rule>> _ruleMap;
+  HashMap<Class<? extends MapOpHadoop>, ArrayList<Rule>> _ruleMap;
   HashSet<String> _visited;
   int _maxIterations = 100;
   PriorityQueue<Entry> _queue;
@@ -32,10 +32,10 @@ public class Optimizer
 
   private class Entry implements Comparable<Entry>
   {
-    public MapOp op;
+    public MapOpHadoop op;
     public double score;
 
-    public Entry(MapOp op, double score)
+    public Entry(MapOpHadoop op, double score)
     {
       this.op = op;
       this.score = score;
@@ -48,18 +48,18 @@ public class Optimizer
     }
   }
 
-  public Optimizer(MapOp root)
+  public Optimizer(MapOpHadoop root)
   {
     _startingRoot = root;
     _registerRules();
   }
 
-  private double _calculateHeuristic(MapOp op)
+  private double _calculateHeuristic(MapOpHadoop op)
   {
     return _heuristic.estimate(op);
   }
 
-  public MapOp optimize()
+  public MapOpHadoop optimize()
   {
     _visited = new HashSet<String>();
     // use the starting root as the starting position
@@ -93,7 +93,7 @@ public class Optimizer
     return best.op;
   }
 
-  private void _applyRules(MapOp root, MapOp subject)
+  private void _applyRules(MapOpHadoop root, MapOpHadoop subject)
   {
     if (_ruleMap.containsKey(subject.getClass()))
     {
@@ -112,19 +112,19 @@ public class Optimizer
       _applyRule(root, subject, r);
     }
     
-    for (MapOp child : subject.getInputs())
+    for (MapOpHadoop child : subject.getInputs())
     {
       _applyRules(root, child);
     }
   }
 
-  private void _applyRule(MapOp root, MapOp subject, Rule r)
+  private void _applyRule(MapOpHadoop root, MapOpHadoop subject, Rule r)
   {
     if (r.isApplicable(root, subject))
     {
-      ArrayList<MapOp> ops = r.apply(root, subject);
+      ArrayList<MapOpHadoop> ops = r.apply(root, subject);
 
-      for (MapOp mo : ops)
+      for (MapOpHadoop mo : ops)
       {
         String s = MapAlgebraParser.toString(mo);
         if (_visited.contains(s) == false)
@@ -140,13 +140,13 @@ public class Optimizer
       }
     }
 
-    for (MapOp op : subject.getInputs())
+    for (MapOpHadoop op : subject.getInputs())
     {
       _applyRule(root, op, r);
     }
   }
 
-  private void _generatePermutations(MapOp root)
+  private void _generatePermutations(MapOpHadoop root)
   {
     _applyRules(root, root);
   }
@@ -160,15 +160,15 @@ public class Optimizer
       _rules.add(r);
     }
 
-    _ruleMap = new HashMap<Class<? extends MapOp>, ArrayList<Rule>>();
+    _ruleMap = new HashMap<Class<? extends MapOpHadoop>, ArrayList<Rule>>();
     
     // this represents classes that can be applied to all MapOps
     _ruleMap.put(null, new ArrayList<Rule>());
 
     for (Rule r : _rules)
     {
-      ArrayList<Class<? extends MapOp>> candidates = r.getCandidates();
-      for (Class<? extends MapOp> c : r.getCandidates())
+      ArrayList<Class<? extends MapOpHadoop>> candidates = r.getCandidates();
+      for (Class<? extends MapOpHadoop> c : r.getCandidates())
       {
         if (_ruleMap.containsKey(c) == false)
         {

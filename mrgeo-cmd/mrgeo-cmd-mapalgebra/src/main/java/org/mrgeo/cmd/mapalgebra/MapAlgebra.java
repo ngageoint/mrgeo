@@ -31,7 +31,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
 import org.mrgeo.mapalgebra.MapAlgebraParser;
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 import org.mrgeo.mapalgebra.RasterMapOp;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -154,7 +154,7 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
         DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties);
     String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
     MapAlgebraParser parser = new MapAlgebraParser(conf, useProtectionLevel, providerProperties);
-    MapOp root = parser.parse(expression);
+    MapOpHadoop root = parser.parse(expression);
 
     log.debug("inputs: " + root.getInputs().toString());
 

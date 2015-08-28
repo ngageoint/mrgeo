@@ -15,20 +15,20 @@
 
 package org.mrgeo.mapalgebra;
 
-import java.util.Vector;
-
 import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.opimage.RawBinaryMathDescriptor;
 
-public class RawBinaryMathMapOp extends RenderedImageMapOp
+import java.util.Vector;
+
+public class RawBinaryMathMapOpHadoop extends RenderedImageMapOp
 {
   public static String[] register()
   {
     return new String[] { "+", "-", "/", "*", "pow" };
   }
 
-  public RawBinaryMathMapOp()
+  public RawBinaryMathMapOpHadoop()
   {
     _factory = new RawBinaryMathDescriptor();
   }

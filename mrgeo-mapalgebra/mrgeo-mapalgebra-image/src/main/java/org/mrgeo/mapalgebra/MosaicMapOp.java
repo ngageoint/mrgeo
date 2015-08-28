@@ -38,7 +38,7 @@ public class MosaicMapOp extends RasterMapOp implements InputsCalculator
   }
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (!(n instanceof RasterMapOp))
     {
@@ -58,7 +58,7 @@ public class MosaicMapOp extends RasterMapOp implements InputsCalculator
     {
       String[] names = new String[_inputs.size()];
       int i = 0;
-      for (MapOp input : _inputs)
+      for (MapOpHadoop input : _inputs)
       {
         names[i++] = ((RasterMapOp) (input)).getOutputName();
       }

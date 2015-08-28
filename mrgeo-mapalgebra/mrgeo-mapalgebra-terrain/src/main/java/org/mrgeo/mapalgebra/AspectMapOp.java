@@ -41,7 +41,7 @@ public static String[] register()
 }
 
 @Override
-public void addInput(MapOp n) throws IllegalArgumentException
+public void addInput(MapOpHadoop n) throws IllegalArgumentException
 {
   if (!(n instanceof RasterMapOp))
   {
@@ -89,7 +89,7 @@ public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAda
 
   if (children.size() == 2)
   {
-    String units = MapOp.parseChildString(children.get(1), "units", parser);
+    String units = MapOpHadoop.parseChildString(children.get(1), "units", parser);
     if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad")))
     {
       throw new IllegalArgumentException("Units must be \"deg\", or \"rad\".");

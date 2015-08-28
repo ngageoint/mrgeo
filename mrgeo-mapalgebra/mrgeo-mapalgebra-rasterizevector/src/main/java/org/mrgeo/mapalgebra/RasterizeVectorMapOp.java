@@ -77,7 +77,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
   RasterizeVectorPainter.AggregationType _aggregationType;
 
   @Override
-  public void addInput(final MapOp n) throws IllegalArgumentException
+  public void addInput(final MapOpHadoop n) throws IllegalArgumentException
   {
     if (!(n instanceof VectorMapOp))
     {
@@ -284,7 +284,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
 
     result.add(children.get(0));
 
-    final String str = MapOp.parseChildString(children.get(1), "aggregation type", parser);
+    final String str = MapOpHadoop.parseChildString(children.get(1), "aggregation type", parser);
     try
     {
       _aggregationType = RasterizeVectorPainter.AggregationType.valueOf(str.toUpperCase());
@@ -298,7 +298,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
     tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(
         MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
-    String cs = MapOp.parseChildString(children.get(2), "cell size", parser);
+    String cs = MapOpHadoop.parseChildString(children.get(2), "cell size", parser);
     if (cs.endsWith("m"))
     {
       cs = cs.replace("m", "");
@@ -337,21 +337,21 @@ public class RasterizeVectorMapOp extends RasterMapOp
     {
       if (children.size() == 4 || children.size() == 8)
       {
-        column = MapOp.parseChildString(children.get(3), "column", parser);
+        column = MapOpHadoop.parseChildString(children.get(3), "column", parser);
       }
     }
     if (_aggregationType == RasterizeVectorPainter.AggregationType.MIN)
     {
       if (children.size() == 4 || children.size() == 8)
       {
-        column = MapOp.parseChildString(children.get(3), "column", parser);
+        column = MapOpHadoop.parseChildString(children.get(3), "column", parser);
       }
     }
     if (_aggregationType == RasterizeVectorPainter.AggregationType.AVERAGE)
     {
       if (children.size() == 4 || children.size() == 8)
       {
-        column = MapOp.parseChildString(children.get(3), "column", parser);
+        column = MapOpHadoop.parseChildString(children.get(3), "column", parser);
       }
     }
     if (_aggregationType == RasterizeVectorPainter.AggregationType.LAST)
@@ -361,7 +361,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
         throw new IllegalArgumentException(
             "A column must be specified with LAST. (try putting the value in double quotes)");
       }
-      column = MapOp.parseChildString(children.get(3), "column", parser);
+      column = MapOpHadoop.parseChildString(children.get(3), "column", parser);
     }
 
     if (children.size() > 4)
@@ -383,7 +383,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
       final double[] b = new double[4];
       for (int i = 0; i < 4; i++)
       {
-        b[i] = MapOp.parseChildDouble(children.get(i + position), "bounds", parser);
+        b[i] = MapOpHadoop.parseChildDouble(children.get(i + position), "bounds", parser);
       }
       bounds = new Bounds(b[0], b[1], b[2], b[3]);
     }

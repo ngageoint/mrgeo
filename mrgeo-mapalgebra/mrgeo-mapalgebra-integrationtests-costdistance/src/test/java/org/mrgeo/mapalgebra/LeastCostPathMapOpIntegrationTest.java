@@ -151,7 +151,7 @@ public class LeastCostPathMapOpIntegrationTest
 
     MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
 
-    MapOp mo = uut.parse(expression);
+    MapOpHadoop mo = uut.parse(expression);
 
     mae.setRoot(mo);
     mae.setOutputName(testOutputPath.toString());

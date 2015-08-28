@@ -28,7 +28,6 @@ import org.mrgeo.progress.Progress;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.utils.HadoopUtils;
 
 import java.awt.image.RenderedImage;
 import java.io.IOException;
@@ -41,9 +40,9 @@ import java.io.IOException;
  * Please refer to javadocs for those interfaces to determine if a subclassed MapOp
  * should implement them.
  */
-public abstract class RasterMapOp extends MapOp implements OutputProducer
+public abstract class RasterMapOp extends MapOpHadoop implements OutputProducer
 {
-  public static MrsImagePyramid flushRasterMapOpOutput(MapOp op, int argumentNumber)
+  public static MrsImagePyramid flushRasterMapOpOutput(MapOpHadoop op, int argumentNumber)
       throws IOException, JobFailedException, JobCancelledException
   {
     if (!(op instanceof RasterMapOp))

@@ -58,7 +58,7 @@ public class FillMapOp extends RasterMapOp implements InputsCalculator, BoundsCa
   }
 
   @Override
-  public void addInput(final MapOp n) throws IllegalArgumentException
+  public void addInput(final MapOpHadoop n) throws IllegalArgumentException
   {
     if (source == null)
     {

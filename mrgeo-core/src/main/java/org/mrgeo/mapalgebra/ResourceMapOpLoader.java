@@ -21,6 +21,6 @@ import java.io.IOException;
 
 public interface ResourceMapOpLoader
 {
-  public MapOp loadMapOpFromResource(String resourceName,
+  public MapOpHadoop loadMapOpFromResource(String resourceName,
                                      ProviderProperties providerProperties) throws IOException;
 }

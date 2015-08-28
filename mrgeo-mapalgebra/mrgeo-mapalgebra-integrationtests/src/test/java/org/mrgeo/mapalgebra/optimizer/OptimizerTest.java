@@ -30,7 +30,7 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.MapAlgebraParser;
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.slf4j.Logger;
@@ -54,10 +54,10 @@ public class OptimizerTest extends LocalRunnerTest
   public void testExpression(String exp, String expected) throws ParserException,
       FileNotFoundException, IOException, URISyntaxException
   {
-    MapOp mo = parser.parse(exp);
+    MapOpHadoop mo = parser.parse(exp);
 
     Optimizer uut = new Optimizer(mo);
-    MapOp result = uut.optimize();
+    MapOpHadoop result = uut.optimize();
 
     String r = MapAlgebraParser.toString(result).replace(smallElevationPath.toString(), smallElevationName);
 

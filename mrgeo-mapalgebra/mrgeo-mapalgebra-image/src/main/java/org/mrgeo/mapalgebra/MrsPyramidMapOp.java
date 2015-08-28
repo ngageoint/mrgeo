@@ -39,7 +39,7 @@ public class MrsPyramidMapOp extends RasterMapOp
   private TileClusterInfo overallTileClusterInfo;
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     throw new IllegalArgumentException("MrsPyramidMapOp doesn't take any inputs.");
   }

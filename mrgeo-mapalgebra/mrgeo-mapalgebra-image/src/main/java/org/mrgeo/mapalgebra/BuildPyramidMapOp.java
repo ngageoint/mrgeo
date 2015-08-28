@@ -41,7 +41,7 @@ public class BuildPyramidMapOp extends RasterMapOp
   private RasterMapOp sourceRaster;
   
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (!(n instanceof RasterMapOp))
     {
@@ -137,7 +137,7 @@ public class BuildPyramidMapOp extends RasterMapOp
     results.add(children.get(0));
     if (children.size() == 2)
     {
-      aggregatorName = MapOp.parseChildString(children.get(1), "aggregator", parser);
+      aggregatorName = MapOpHadoop.parseChildString(children.get(1), "aggregator", parser);
     }
     return results;
   }

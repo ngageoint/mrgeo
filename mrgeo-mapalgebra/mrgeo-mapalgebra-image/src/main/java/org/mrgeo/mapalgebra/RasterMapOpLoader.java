@@ -26,7 +26,7 @@ public class RasterMapOpLoader implements ResourceMapOpLoader
 {
 
   @Override
-  public MapOp loadMapOpFromResource(String resourceName,
+  public MapOpHadoop loadMapOpFromResource(String resourceName,
       final ProviderProperties providerProperties)
   {
     MrsImageDataProvider dp = null;

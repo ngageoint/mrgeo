@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 
 import java.util.List;
 
@@ -33,9 +33,9 @@ public abstract class BasicRule implements Rule
    * @param oldSubject
    * @return
    */
-  protected MapOp _findNewSubject(MapOp oldAncestor, MapOp newAncestor, MapOp oldSubject)
+  protected MapOpHadoop _findNewSubject(MapOpHadoop oldAncestor, MapOpHadoop newAncestor, MapOpHadoop oldSubject)
   {
-    MapOp result = null;
+    MapOpHadoop result = null;
 
     if (oldAncestor == oldSubject)
     {
@@ -43,8 +43,8 @@ public abstract class BasicRule implements Rule
     }
     else
     {
-      List<MapOp> oldChildren = oldAncestor.getInputs();
-      List<MapOp> newChildren = newAncestor.getInputs();
+      List<MapOpHadoop> oldChildren = oldAncestor.getInputs();
+      List<MapOpHadoop> newChildren = newAncestor.getInputs();
       for (int i = 0; i < oldAncestor.getInputs().size(); i++)
       {
         result = _findNewSubject(oldChildren.get(i), newChildren.get(i), oldSubject);
@@ -67,13 +67,13 @@ public abstract class BasicRule implements Rule
    *          The child we're looking for.
    * @return Return the child's parent if it is found, otherwise return null.
    */
-  protected MapOp _findParent(MapOp ancestor, MapOp child)
+  protected MapOpHadoop _findParent(MapOpHadoop ancestor, MapOpHadoop child)
   {
-    MapOp result = null;
+    MapOpHadoop result = null;
 
     if (ancestor != child)
     {
-      for (MapOp mo : ancestor.getInputs())
+      for (MapOpHadoop mo : ancestor.getInputs())
       {
         if (mo == child)
         {
@@ -106,10 +106,10 @@ public abstract class BasicRule implements Rule
    * @return The newly modified tree. This may be the same as the old one unless
    *         the root has changed.
    */
-  protected MapOp _replaceNode(MapOp root, MapOp replacee, MapOp replacer)
+  protected MapOpHadoop _replaceNode(MapOpHadoop root, MapOpHadoop replacee, MapOpHadoop replacer)
   {
-    MapOp result = null;
-    MapOp parent = _findParent(root, replacee);
+    MapOpHadoop result = null;
+    MapOpHadoop parent = _findParent(root, replacee);
 
     // if we're replacing the root node.
     if (parent == null)
@@ -119,7 +119,7 @@ public abstract class BasicRule implements Rule
     else
     {
       int i = 0;
-      for (MapOp child : parent.getInputs())
+      for (MapOpHadoop child : parent.getInputs())
       {
         if (child == replacee)
         {

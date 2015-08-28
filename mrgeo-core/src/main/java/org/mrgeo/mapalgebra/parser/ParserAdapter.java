@@ -18,7 +18,7 @@ package org.mrgeo.mapalgebra.parser;
 import java.util.List;
 
 //import org.mrgeo.mapalgebra.MapOp;
-import org.mrgeo.mapalgebra.MapOpFactory;
+import org.mrgeo.mapalgebra.MapOpFactoryHadoop;
 
 /**
  * This interface defines the parsing capabilities required by MrGeo
@@ -38,7 +38,7 @@ public interface ParserAdapter
    */
   public List<String> getFunctionNames();
   public void addFunction(String functionName);
-  public ParserNode parse(String expression, MapOpFactory factory) throws ParserException;
+  public ParserNode parse(String expression, MapOpFactoryHadoop factory) throws ParserException;
 //  public ParserNode parse(String expression) throws ParserException;
   public Object evaluate(ParserNode node) throws ParserException;
 }

@@ -26,7 +26,7 @@ import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
 
-public abstract class VectorMapOp extends MapOp implements OutputProducer
+public abstract class VectorMapOp extends MapOpHadoop implements OutputProducer
 {
   protected InputFormatDescriptor _output;
   protected String _outputName = null;

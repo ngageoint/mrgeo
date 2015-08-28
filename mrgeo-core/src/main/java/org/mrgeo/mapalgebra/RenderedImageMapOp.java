@@ -57,7 +57,7 @@ private static final Logger log = LoggerFactory.getLogger(RenderedImageMapOp.cla
   private Configuration conf;
 
   @Override
-  public void addInput(MapOp n) throws IllegalArgumentException
+  public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
     if (!(n instanceof RasterMapOp))
     {
@@ -95,7 +95,7 @@ private static final Logger log = LoggerFactory.getLogger(RenderedImageMapOp.cla
 
     // setup the list of inputs for the map/reduce 
     Set<String> inputs = new HashSet<String>();
-    MapOp rootMapOp = findRoot();
+    MapOpHadoop rootMapOp = findRoot();
     MapAlgebraExecutioner.calculateInputs(rootMapOp, inputs); 
 
     org.mrgeo.utils.HadoopUtils.setTileClusterInfo(getConf(), tileClusterInfo);
@@ -155,7 +155,7 @@ private Set<String> getDependencies(RenderedImageMapOp rop)
   {
     deps.addAll(DependencyLoader.getDependencies(rop._factory.getClass()));
 
-    for (MapOp op : rop.getInputs())
+    for (MapOpHadoop op : rop.getInputs())
     {
       if (op instanceof RenderedImageMapOp)
       {
@@ -197,7 +197,7 @@ private Set<String> getDependencies(RenderedImageMapOp rop)
     ParameterBlock jaiParams = (ParameterBlock)_param.clone();
     if (jaiParams.getSources().size() == 0)
     {
-      for (MapOp op : _inputs)
+      for (MapOpHadoop op : _inputs)
       {
         jaiParams.addSource(((RasterMapOp)op).getRasterOutput());
       }
@@ -323,7 +323,7 @@ private Set<String> getDependencies(RenderedImageMapOp rop)
     }
 
     RenderedImageMapOp currRenderedImageMapOp = this;
-    MapOp parent = getParent();
+    MapOpHadoop parent = getParent();
     while (parent != null && (parent instanceof RenderedImageMapOp))
     {
       currRenderedImageMapOp = (RenderedImageMapOp)parent;

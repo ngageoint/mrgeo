@@ -24,7 +24,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
 import org.mrgeo.mapalgebra.MapAlgebraParser;
-import org.mrgeo.mapalgebra.MapOp;
+import org.mrgeo.mapalgebra.MapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -202,7 +202,7 @@ public class MapOpTestVectorUtils extends TestUtils
    * @throws org.mrgeo.mapreduce.job.JobCancelledException
    * @throws ParserException
    */
-  public MapOp runMapAlgebraExpression(final Configuration conf, final String testName,
+  public MapOpHadoop runMapAlgebraExpression(final Configuration conf, final String testName,
       final String ex)
           throws IOException, JobFailedException, JobCancelledException, ParserException
           {
@@ -213,7 +213,7 @@ public class MapOpTestVectorUtils extends TestUtils
 //    parser.addPath(inputHdfs.toString());
     final MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
 
-    final MapOp mapOp = parser.parse(ex);
+    final MapOpHadoop mapOp = parser.parse(ex);
     log.info("\nMap Algebra Expression:\n" + MapAlgebraParser.toString(mapOp));
 
     mae.setRoot(mapOp);
