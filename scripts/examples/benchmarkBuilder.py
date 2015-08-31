@@ -67,7 +67,7 @@ else:
 	  if args.landcover:
 	  	landcover = 'Name="Landcover",Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://mrgeo-deploy/landcover.sh '
 	  if args.frictionsurface:
-	  	frictionsurface = 'Name="Landcover",Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://mrgeo-deploy/landcover.sh '
+	  	frictionsurface = 'Name="FrictionSurface",Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://mrgeo-deploy/frictionsurface.sh '
 	  cmd = 'aws emr create-cluster \
 		--name "MrGeo Benchmark Cluster - ' + args.userkey + ' - ' + nowf + '"' + ' \
 		--ami-version 3.7 \
