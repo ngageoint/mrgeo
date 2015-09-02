@@ -155,7 +155,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 //      pyramidAndMetadata._1.foreach(U => {
 //        println("Initial vertex: " + TMSUtils.tileid(U._1.get(), zoomLevel) + " -> " + U._2.hashCode())
 //      })
-      @transient val vertices = pyramidAndMetadata._1
+      @transient val vertices = pyramidAndMetadata._1 // .repartition(40000)
       @transient val metadata = pyramidAndMetadata._2
       //      val pxStart: Short = (metadata.getTilesize - 1).toShort // for small-humvee
       //      val pyStart: Short = (metadata.getTilesize - 1).toShort // for small-humvee
@@ -182,7 +182,8 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         val vt: VertexType = new VertexType(raster, null)
         (U._1.get(), vt)
       })
-      realVertices.persist(StorageLevel.MEMORY_AND_DISK_SER)
+//      realVertices.persist(StorageLevel.MEMORY_AND_DISK_SER)
+      realVertices.cache()
     //      @transient val edges: RDD[Edge[Byte]] = buildEdges(tileBounds, zoom, context)
       @transient val edges: RDD[Edge[Byte]] =
         realVertices.flatMap{ case (tileId, value) =>
@@ -241,7 +242,6 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         //          val singleBandRaster: Raster = U._2.raster.createChild(0, 0, width, height, 0, 0, Array[Int]{ 8 })
         (new TileIdWritable(U._1), RasterWritable.toWritable(singleBandRaster))
       })
-      verticesWritable.persist(StorageLevel.MEMORY_AND_DISK_SER)
 //      verticesWritable.foreach(U => {
 //        val loc = "/tmp/cdout/" + U._1 + ".tif"
 //        val t = TMSUtils.tileid(U._1.get(), zoomLevel)
@@ -252,9 +252,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 ////          GeotoolsRasterUtils.saveLocalGeotiff(loc, r, t.tx, t.ty, zoom, metadata.getTilesize, Double.NaN)
 //      })
       val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, providerProperties)
-      val firstTile = verticesWritable.first()
-      val raster = RasterWritable.toRaster(firstTile._2)
-      SparkUtils.saveMrsPyramid(verticesWritable, dp, output, zoomLevel, raster.getWidth,
+//      val firstTile = verticesWritable.first()
+//      val raster = RasterWritable.toRaster(firstTile._2)
+//      SparkUtils.saveMrsPyramid(verticesWritable, dp, output, zoomLevel, raster.getWidth,
+      SparkUtils.saveMrsPyramid(verticesWritable, dp, output, zoomLevel, width,
         Array[Double](Double.NaN), context.hadoopConfiguration, DataBuffer.TYPE_FLOAT,
         bounds, 1, protectionLevel, providerProperties)
       true
@@ -292,35 +293,20 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
           if (neighborTx >= tileBounds.getMinX && neighborTx <= tileBounds.getMaxX &&
             neighborTy >= tileBounds.getMinY && neighborTy <= tileBounds.getMaxY) {
 
-            var direction: Byte = CostDistanceEdgeType.TO_BOTTOM
-            if (dx == -1 && dy == 1) {
-              direction = CostDistanceEdgeType.TO_TOP_LEFT
+            val direction = (dx, dy) match
+            {
+              case (-1,  1) => CostDistanceEdgeType.TO_TOP_LEFT
+              case ( 0,  1) => CostDistanceEdgeType.TO_TOP
+              case ( 1,  1) => CostDistanceEdgeType.TO_TOP_RIGHT
+              case ( 1,  0) => CostDistanceEdgeType.TO_RIGHT
+              case ( 1, -1) => CostDistanceEdgeType.TO_BOTTOM_RIGHT
+              case ( 0, -1) => CostDistanceEdgeType.TO_BOTTOM
+              case (-1, -1) => CostDistanceEdgeType.TO_BOTTOM_LEFT
+              case (-1,  0) => CostDistanceEdgeType.TO_LEFT
+//              case (badX, badY) =>  {
+//                throw new IllegalStateException(String.format("Unexpected dx/dy in EdgeBuilder %d/%d", dx, dy))
+//              }
             }
-            else if (dx == 0 && dy == 1) {
-              direction = CostDistanceEdgeType.TO_TOP
-            }
-            else if (dx == 1 && dy == 1) {
-              direction = CostDistanceEdgeType.TO_TOP_RIGHT
-            }
-            else if (dx == 1 && dy == 0) {
-              direction = CostDistanceEdgeType.TO_RIGHT
-            }
-            else if (dx == 1 && dy == -1) {
-              direction = CostDistanceEdgeType.TO_BOTTOM_RIGHT
-            }
-            else if (dx == 0 && dy == -1) {
-              direction = CostDistanceEdgeType.TO_BOTTOM
-            }
-            else if (dx == -1 && dy == -1) {
-              direction = CostDistanceEdgeType.TO_BOTTOM_LEFT
-            }
-            else if (dx == -1 && dy == 0) {
-              direction = CostDistanceEdgeType.TO_LEFT
-            }
-//            else
-//              throw new IllegalStateException(
-//                String.format("Unexpected dx/dy in EdgeBuilder %d/%d", dx, dy))
-//
 //            neighbors.add(new PositionEdge(position, neighborId))
             // TODO: The following condition allows only vertical and horizontal
             // directions. This is to see how much faster we run that way.
@@ -351,7 +337,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     // each of the eight directions within a pixel. See DirectionBand for
     // which band maps to which direction. This allows for fine-grained
     // friction surfaces to be provided by the user.
-    println("Running makeCostDistance on tile " + TMSUtils.tileid(tileId, zoom))
+//    println("Running makeCostDistance on tile " + TMSUtils.tileid(tileId, zoom))
     @transient val sourceBands = source.getNumBands
     @transient val numBands = 9
     @transient val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, numBands)
@@ -512,278 +498,244 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 //    val neighborsBelow = Array((0, DirectionBand.DOWN_BAND))
 //    val neighborsToLeft = Array((0, DirectionBand.LEFT_BAND))
 //    val neighborsToRight = Array((0, DirectionBand.RIGHT_BAND))
-    val messageCounts = mutable.Map[Long, Int]()
-    val emptyCounts = mutable.Map[Long, Int]()
-    val srcEmptyCounts = mutable.Map[Long, Int]()
 
-    try {
-      graph.pregel[ChangedPoints](null, Int.MaxValue, EdgeDirection.Out)(
-        // Vertex Program
-        (id, vertexData, msg) => {
-          @transient val t0 = System.nanoTime()
-          println("IN VPROG, vertex id is " + TMSUtils.tileid(id, zoomLevel) + " and start id is " + TMSUtils.tileid(startTileId, zoomLevel) + " and msg is " + msg)
+    graph.pregel[ChangedPoints](null, Int.MaxValue, EdgeDirection.Out)(
+      // Vertex Program
+      (id, vertexData, msg) => {
+        @transient val t0 = System.nanoTime()
+//          println("IN VPROG, vertex id is " + TMSUtils.tileid(id, zoomLevel) + " and start id is " + TMSUtils.tileid(startTileId, zoomLevel) + " and msg is " + msg)
 //        if (msg != null) {
 //          for (p <- msg.getAllPoints()) {
 //            println("  Changed point: " + p.px + ", " + p.py + " = " + p.cost)
 //          }
 //        }
-          if (vertexData.changedPoints == null) {
-            vertexData.changedPoints = new ChangedPoints
+        if (vertexData.changedPoints == null) {
+          vertexData.changedPoints = new ChangedPoints
+        }
+        else {
+          vertexData.changedPoints.clear()
+        }
+        //        vertexData.changedPoints = null
+        if (msg != null) {
+          if (msg.size > 0) {
+//              println("  there are " + msg.size + " changed points in the message")
+            processVertices(id, zoom, vertexData, msg)
           }
-          else {
-            vertexData.changedPoints.clear()
-          }
-          //        vertexData.changedPoints = null
-          if (msg != null) {
-            if (msg.size > 0) {
-              println("  there are " + msg.size + " changed points in the message")
-              processVertices(id, zoom, vertexData, msg)
-            }
-          }
-          else if (id == startTileId) {
-            println("  processing start tile with initial message")
-            @transient val initialMsg: ChangedPoints = new ChangedPoints()
-            initialMsg.addPoint(new CostPoint(pxStart, pyStart, 0.0f))
-            processVertices(id, zoom, vertexData, initialMsg)
-          }
-          if (vertexData.changedPoints == null || vertexData.changedPoints.size == 0) {
-            println("  changes for " + TMSUtils.tileid(id, zoom) + " is null ")
-          } else {
-            println("  has " + vertexData.changedPoints.size + " changes")
-//            println("VPROG for " + TMSUtils.tileid(id, zoom) + " took " + ((System.nanoTime() - t0).toDouble / 1000000) + " ms")
-          }
-          new VertexType(vertexData.raster, vertexData.changedPoints)
-        },
-        // sendMsg
-        triplet => {
-          println("SENDMSG src " + TMSUtils.tileid(triplet.srcId, zoomLevel) + " and dest " +
-            TMSUtils.tileid(triplet.dstId, zoomLevel) + " contains " + triplet.srcAttr.changedPoints.size + " changed points")
-          @transient val t0 = System.nanoTime()
-          // The changed points are from the source vertex. Now we need to compute the
-          // cost changes in the destination vertex pixels that neighbor each of those
-          // changed points. The edge direction indicates the position of the source
-          // vertex/tile relative to the destination vertex/tile, so we use that relationship
-          // to determine the neighboring pixels in the destination to check.
-          var newChanges: ChangedPoints = null
-          if (triplet.srcAttr.changedPoints != null) {
-            //          println("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
-            if (!triplet.srcAttr.changedPoints.isEmpty) {
-              newChanges = new ChangedPoints
-              @transient val changedPoints = triplet.srcAttr.changedPoints.getAllPoints
+        }
+        else if (id == startTileId) {
+//            println("  processing start tile with initial message")
+          @transient val initialMsg: ChangedPoints = new ChangedPoints()
+          initialMsg.addPoint(new CostPoint(pxStart, pyStart, 0.0f))
+          processVertices(id, zoom, vertexData, initialMsg)
+        }
+//          if (vertexData.changedPoints == null || vertexData.changedPoints.size == 0) {
+//            println("  changes for " + TMSUtils.tileid(id, zoom) + " is null ")
+//          } else {
+//            println("  has " + vertexData.changedPoints.size + " changes")
+////            println("VPROG for " + TMSUtils.tileid(id, zoom) + " took " + ((System.nanoTime() - t0).toDouble / 1000000) + " ms")
+//          }
+        new VertexType(vertexData.raster, vertexData.changedPoints)
+      },
+      // sendMsg
+      triplet => {
+//          println("SENDMSG src " + TMSUtils.tileid(triplet.srcId, zoomLevel) + " and dest " +
+//            TMSUtils.tileid(triplet.dstId, zoomLevel) + " contains " + triplet.srcAttr.changedPoints.size + " changed points")
+        @transient val t0 = System.nanoTime()
+        // The changed points are from the source vertex. Now we need to compute the
+        // cost changes in the destination vertex pixels that neighbor each of those
+        // changed points. The edge direction indicates the position of the source
+        // vertex/tile relative to the destination vertex/tile, so we use that relationship
+        // to determine the neighboring pixels in the destination to check.
+        var newChanges: ChangedPoints = null
+        if (triplet.srcAttr.changedPoints != null) {
+//          println("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
+          if (!triplet.srcAttr.changedPoints.isEmpty) {
+            newChanges = new ChangedPoints
+            @transient val changedPoints = triplet.srcAttr.changedPoints.getAllPoints
 //              val srcDataBuf: DataBufferFloat = triplet.srcAttr.raster.getDataBuffer.asInstanceOf[DataBufferFloat]
 //              val srcBuf: Array[Float] = srcDataBuf.getData
 //              val destDataBuf: DataBufferFloat = triplet.dstAttr.raster.getDataBuffer.asInstanceOf[DataBufferFloat]
 //              val destBuf: Array[Float] = destDataBuf.getData
-              @transient val costBand: Short = 8
-              @transient val numBands: Short = triplet.dstAttr.raster.getNumBands.toShort
-              for (srcPoint <- changedPoints) {
-                //              println("  Source changed point: " + srcPoint.px + ", " + srcPoint.py + " = " + srcPoint.cost)
-                if (triplet.attr == CostDistanceEdgeType.TO_TOP) {
-                  // The destination tile is above the source tile. If any changed pixels in
-                  // the source tile are in the top row of the tile, then compute the changes
-                  // that would propagate to that pixel's neighbors in the bottom row of the
-                  // destination tile and send messages whenever the total cost lowers for any
-                  // of those pixels.
-                  if (srcPoint.py == 0) {
-                    for (n <- neighborsAbove) {
-                      @transient val pxNeighbor: Short = (srcPoint.px + n._1).toShort
-                      if (pxNeighbor >= 0 && pxNeighbor < width) {
-                        addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, pxNeighbor, (height - 1).toShort,
-                          n._2, costBand, numBands, newChanges)
-                      }
+            @transient val costBand: Short = 8
+            @transient val numBands: Short = triplet.dstAttr.raster.getNumBands.toShort
+            for (srcPoint <- changedPoints) {
+//              println("  Source changed point: " + srcPoint.px + ", " + srcPoint.py + " = " + srcPoint.cost)
+              if (triplet.attr == CostDistanceEdgeType.TO_TOP) {
+                // The destination tile is above the source tile. If any changed pixels in
+                // the source tile are in the top row of the tile, then compute the changes
+                // that would propagate to that pixel's neighbors in the bottom row of the
+                // destination tile and send messages whenever the total cost lowers for any
+                // of those pixels.
+                if (srcPoint.py == 0) {
+                  for (n <- neighborsAbove) {
+                    @transient val pxNeighbor: Short = (srcPoint.px + n._1).toShort
+                    if (pxNeighbor >= 0 && pxNeighbor < width) {
+                      addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, pxNeighbor, (height - 1).toShort,
+                        n._2, costBand, numBands, newChanges)
                     }
+                  }
 //                  for (px <- math.max(srcPoint.px - 1, width - 1) to math.min(srcPoint.px + 1, width - 1)) {
 //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, px.toShort, (height - 1).toShort,
 //                      DirectionBand.UP_BAND, costBand, numBands, newChanges)
 //                  }
-                  }
                 }
-                else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM) {
-                  // The destination tile is below the source tile. For any pixels that changed
-                  // in the source tile, propagate those changes to the neighboring pixels in the
-                  // top row of the destination tile.
-                  if (srcPoint.py == height - 1) {
-                    for (n <- neighborsBelow) {
-                      @transient val pxNeighbor: Short = (srcPoint.px + n._1).toShort
-                      if (pxNeighbor >= 0 && pxNeighbor < width) {
-                        addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, pxNeighbor, 0,
-                          n._2, costBand, numBands, newChanges)
-                      }
-                    }
-                    //                  for (px <- math.max(srcPoint.px - 1, 0) to math.min(srcPoint.px + 1, width - 1)) {
-                    //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, px.toShort, 0,
-                    //                      DirectionBand.DOWN_BAND, costBand, numBands, newChanges)
-                    //                  }
-                  }
-                }
-                else if (triplet.attr == CostDistanceEdgeType.TO_LEFT) {
-                  // The destination tile is to the left of the source tile. For any pixels that changed
-                  // in the source tile, propagate those changes to the neighboring pixels in the
-                  // right-most column of the destination tile.
-                  if (srcPoint.px == 0) {
-                    for (n <- neighborsToLeft) {
-                      @transient val pyNeighbor: Short = (srcPoint.py + n._1).toShort
-                      if (pyNeighbor >= 0 && pyNeighbor < height) {
-                        addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, pyNeighbor,
-                          n._2, costBand, numBands, newChanges)
-                      }
-                    }
-                    //                  for (py <- math.max(srcPoint.py - 1, 0) to math.min(srcPoint.py + 1, height - 1)) {
-                    //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, py.toShort,
-                    //                      DirectionBand.LEFT_BAND, costBand, numBands, newChanges)
-                    //                  }
-                  }
-                }
-                else if (triplet.attr == CostDistanceEdgeType.TO_RIGHT) {
-                  // The destination tile is to the right of the source tile. For any pixels that changed
-                  // in the source tile, propagate those changes to the neighboring pixels in the
-                  // left-most column of the destination tile.
-                  if (srcPoint.px == width - 1) {
-                    for (n <- neighborsToRight) {
-                      @transient val pyNeighbor: Short = (srcPoint.py + n._1).toShort
-                      if (pyNeighbor >= 0 && pyNeighbor < height) {
-                        addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0.toShort, pyNeighbor,
-                          n._2, costBand, numBands, newChanges)
-                      }
-                    }
-                    //                  for (py <- math.max(srcPoint.py - 1, 0) to math.min(srcPoint.py + 1, height - 1)) {
-                    //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, py.toShort,
-                    //                      DirectionBand.RIGHT_BAND, costBand, numBands, newChanges)
-                    //                  }
-                  }
-                }
-                else if (triplet.attr == CostDistanceEdgeType.TO_TOP_LEFT) {
-                  // The destination tile is to the top-left of the source tile. If the top-left
-                  // pixel of the source tile changed, propagate that change to the bottom-right
-                  // pixel of the destination tile.
-                  if (srcPoint.px == 0 && srcPoint.py == 0) {
-                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, (height - 1).toShort,
-                      DirectionBand.UP_LEFT_BAND, costBand, numBands, newChanges)
-                  }
-                }
-                else if (triplet.attr == CostDistanceEdgeType.TO_TOP_RIGHT) {
-                  // The destination tile is to the top-right of the source tile. If the top-right
-                  // pixel of the source tile changed, propagate that change to the bottom-left
-                  // pixel of the destination tile.
-                  if (srcPoint.px == width - 1 && srcPoint.py == 0) {
-                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, (height - 1).toShort,
-                      DirectionBand.UP_RIGHT_BAND, costBand, numBands, newChanges)
-                  }
-                }
-                else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM_LEFT) {
-                  // The destination tile is to the bottom-left of the source tile. If the bottom-left
-                  // pixel of the source tile changed, propagate that change to the top-right
-                  // pixel of the destination tile.
-                  if (srcPoint.px == 0 && srcPoint.py == height - 1) {
-                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, 0,
-                      DirectionBand.DOWN_LEFT_BAND, costBand, numBands, newChanges)
-                  }
-                }
-                else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM_RIGHT) {
-                  // The destination tile is to the bottom-right of the source tile. If the bottom-right
-                  // pixel of the source tile changed, propagate that change to the top-left
-                  // pixel of the destination tile.
-                  if (srcPoint.px == width - 1 && srcPoint.py == height - 1) {
-                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, 0,
-                      DirectionBand.DOWN_RIGHT_BAND, costBand, numBands, newChanges)
-                  }
-                }
-                //              println("  New changed points after processing srcPoint")
-                //              for (p <- newChanges.getAllPoints()) {
-                //                println("    Source changed point: " + p.px + ", " + p.py + " = " + p.cost)
-                //              }
               }
+              else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM) {
+                // The destination tile is below the source tile. For any pixels that changed
+                // in the source tile, propagate those changes to the neighboring pixels in the
+                // top row of the destination tile.
+                if (srcPoint.py == height - 1) {
+                  for (n <- neighborsBelow) {
+                    @transient val pxNeighbor: Short = (srcPoint.px + n._1).toShort
+                    if (pxNeighbor >= 0 && pxNeighbor < width) {
+                      addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, pxNeighbor, 0,
+                        n._2, costBand, numBands, newChanges)
+                    }
+                  }
+                  //                  for (px <- math.max(srcPoint.px - 1, 0) to math.min(srcPoint.px + 1, width - 1)) {
+                  //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, px.toShort, 0,
+                  //                      DirectionBand.DOWN_BAND, costBand, numBands, newChanges)
+                  //                  }
+                }
+              }
+              else if (triplet.attr == CostDistanceEdgeType.TO_LEFT) {
+                // The destination tile is to the left of the source tile. For any pixels that changed
+                // in the source tile, propagate those changes to the neighboring pixels in the
+                // right-most column of the destination tile.
+                if (srcPoint.px == 0) {
+                  for (n <- neighborsToLeft) {
+                    @transient val pyNeighbor: Short = (srcPoint.py + n._1).toShort
+                    if (pyNeighbor >= 0 && pyNeighbor < height) {
+                      addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, pyNeighbor,
+                        n._2, costBand, numBands, newChanges)
+                    }
+                  }
+                  //                  for (py <- math.max(srcPoint.py - 1, 0) to math.min(srcPoint.py + 1, height - 1)) {
+                  //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, py.toShort,
+                  //                      DirectionBand.LEFT_BAND, costBand, numBands, newChanges)
+                  //                  }
+                }
+              }
+              else if (triplet.attr == CostDistanceEdgeType.TO_RIGHT) {
+                // The destination tile is to the right of the source tile. For any pixels that changed
+                // in the source tile, propagate those changes to the neighboring pixels in the
+                // left-most column of the destination tile.
+                if (srcPoint.px == width - 1) {
+                  for (n <- neighborsToRight) {
+                    @transient val pyNeighbor: Short = (srcPoint.py + n._1).toShort
+                    if (pyNeighbor >= 0 && pyNeighbor < height) {
+                      addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0.toShort, pyNeighbor,
+                        n._2, costBand, numBands, newChanges)
+                    }
+                  }
+                  //                  for (py <- math.max(srcPoint.py - 1, 0) to math.min(srcPoint.py + 1, height - 1)) {
+                  //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, py.toShort,
+                  //                      DirectionBand.RIGHT_BAND, costBand, numBands, newChanges)
+                  //                  }
+                }
+              }
+              else if (triplet.attr == CostDistanceEdgeType.TO_TOP_LEFT) {
+                // The destination tile is to the top-left of the source tile. If the top-left
+                // pixel of the source tile changed, propagate that change to the bottom-right
+                // pixel of the destination tile.
+                if (srcPoint.px == 0 && srcPoint.py == 0) {
+                  addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, (height - 1).toShort,
+                    DirectionBand.UP_LEFT_BAND, costBand, numBands, newChanges)
+                }
+              }
+              else if (triplet.attr == CostDistanceEdgeType.TO_TOP_RIGHT) {
+                // The destination tile is to the top-right of the source tile. If the top-right
+                // pixel of the source tile changed, propagate that change to the bottom-left
+                // pixel of the destination tile.
+                if (srcPoint.px == width - 1 && srcPoint.py == 0) {
+                  addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, (height - 1).toShort,
+                    DirectionBand.UP_RIGHT_BAND, costBand, numBands, newChanges)
+                }
+              }
+              else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM_LEFT) {
+                // The destination tile is to the bottom-left of the source tile. If the bottom-left
+                // pixel of the source tile changed, propagate that change to the top-right
+                // pixel of the destination tile.
+                if (srcPoint.px == 0 && srcPoint.py == height - 1) {
+                  addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, 0,
+                    DirectionBand.DOWN_LEFT_BAND, costBand, numBands, newChanges)
+                }
+              }
+              else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM_RIGHT) {
+                // The destination tile is to the bottom-right of the source tile. If the bottom-right
+                // pixel of the source tile changed, propagate that change to the top-left
+                // pixel of the destination tile.
+                if (srcPoint.px == width - 1 && srcPoint.py == height - 1) {
+                  addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, 0,
+                    DirectionBand.DOWN_RIGHT_BAND, costBand, numBands, newChanges)
+                }
+              }
+//              println("  New changed points after processing srcPoint")
+//              for (p <- newChanges.getAllPoints()) {
+//                println("    Source changed point: " + p.px + ", " + p.py + " = " + p.cost)
+//              }
             }
+          }
+        }
+//          else {
+//          println("IN SENDMSG for src id " + triplet.srcId + " there are no changes ")
+//          }
+        //        println("SENDMSG from " + triplet.srcId + " to " + triplet.dstId + " took " + ((System.nanoTime() - t0).toDouble / 1000000) + " ms")
+        //        if (newChanges == null) {
+        //          println("  no messages are sent to destination")
+        //          Iterator.empty
+        //        } else {
+        //          if (newChanges.size > 0) {
+        ////            println("After SENDMSG for tile " + triplet.srcId + "messages sent: " + newChanges.size)
+        //          }
+        //          if (triplet.srcAttr.changedPoints.size > 0) {
+        //            println("  message count " + newChanges.size)
+        //            val emptyChanges: ChangedPoints = new ChangedPoints
+        //            Iterator((triplet.srcId, emptyChanges), (triplet.dstId, newChanges))
+        ////          Iterator((triplet.dstId, newChanges))
+        //          }
+        //          else {
+        //            println("  message count " + newChanges.size)
+        //            Iterator((triplet.dstId, newChanges))
+        //          }
+        //        }
+        if (newChanges == null) {
+          if (triplet.srcAttr.changedPoints.size > 0) {
+            val emptyChanges: ChangedPoints = new ChangedPoints
+//              println("  returning empty changes for source and no changes for destination")
+            Iterator((triplet.srcId, emptyChanges))
           }
           else {
-            //          println("IN SENDMSG for src id " + triplet.srcId + " there are no changes ")
-          }
-          //        println("SENDMSG from " + triplet.srcId + " to " + triplet.dstId + " took " + ((System.nanoTime() - t0).toDouble / 1000000) + " ms")
-          //        if (newChanges == null) {
-          //          println("  no messages are sent to destination")
-          //          Iterator.empty
-          //        } else {
-          //          if (newChanges.size > 0) {
-          ////            println("After SENDMSG for tile " + triplet.srcId + "messages sent: " + newChanges.size)
-          //          }
-          //          if (triplet.srcAttr.changedPoints.size > 0) {
-          //            println("  message count " + newChanges.size)
-          //            val emptyChanges: ChangedPoints = new ChangedPoints
-          //            Iterator((triplet.srcId, emptyChanges), (triplet.dstId, newChanges))
-          ////          Iterator((triplet.dstId, newChanges))
-          //          }
-          //          else {
-          //            println("  message count " + newChanges.size)
-          //            Iterator((triplet.dstId, newChanges))
-          //          }
-          //        }
-          if (newChanges == null) {
-            if (triplet.srcAttr.changedPoints.size > 0) {
-              val emptyChanges: ChangedPoints = new ChangedPoints
-//              println("  returning empty changes for source and no changes for destination")
-              if (!srcEmptyCounts.contains(triplet.srcId)) {
-                srcEmptyCounts(triplet.srcId) = 1
-              }
-              else {
-                val v = srcEmptyCounts(triplet.srcId)
-                srcEmptyCounts(triplet.srcId) = v + 1
-              }
-              Iterator((triplet.srcId, emptyChanges))
-            }
-            else {
 //              println("  returning no changes for destination")
-              if (!emptyCounts.contains(triplet.dstId)) {
-                emptyCounts(triplet.dstId) = 1
-              }
-              else {
-                val v = emptyCounts(triplet.dstId)
-                emptyCounts(triplet.dstId) = v + 1
-              }
-              Iterator.empty
-            }
-          } else {
-            if (newChanges.size > 0) {
-              println("  returning " + newChanges.size + " changes for destination")
-              if (!messageCounts.contains(triplet.dstId)) {
-                messageCounts(triplet.dstId) = 1
-              }
-              else {
-                val v = messageCounts(triplet.dstId)
-                messageCounts(triplet.dstId) = v + 1
-              }
-              Iterator((triplet.dstId, newChanges))
-            }
-            else {
-              Iterator.empty
-            }
+            Iterator.empty
           }
-        },
-        // mergeMsg
-        // TODO: Merge a and b into a single ChangedPoints object
-        (a, b) => {
-          @transient val t0 = System.nanoTime()
-          @transient var merged = new ChangedPoints
-          @transient val aPoints: List[CostPoint] = a.getAllPoints
-          for (p <- aPoints) {
-            merged.addPoint(p)
+        } else {
+          if (newChanges.size > 0) {
+//              println("  returning " + newChanges.size + " changes for destination")
+            Iterator((triplet.dstId, newChanges))
           }
-          @transient val bPoints: List[CostPoint] = b.getAllPoints
-          for (p <- bPoints) {
-            merged.addPoint(p)
+          else {
+            Iterator.empty
           }
-          println("MERGEMSG took " + ((System.nanoTime() - t0).toDouble / 1000000) + " ms")
-          merged
         }
-      )
-    }
-    finally {
-      println("messageCounts:")
-      dumpMap(messageCounts, zoomLevel, "  ")
-      println("emptyCounts:")
-      dumpMap(emptyCounts, zoomLevel, "  ")
-      println("srcEmptyCounts:")
-      dumpMap(srcEmptyCounts, zoomLevel, "  ")
-    }
+      },
+      // mergeMsg
+      // TODO: Merge a and b into a single ChangedPoints object
+      (a, b) => {
+        @transient val t0 = System.nanoTime()
+        @transient var merged = new ChangedPoints
+        @transient val aPoints: List[CostPoint] = a.getAllPoints
+        for (p <- aPoints) {
+          merged.addPoint(p)
+        }
+        @transient val bPoints: List[CostPoint] = b.getAllPoints
+        for (p <- bPoints) {
+          merged.addPoint(p)
+        }
+//          println("MERGEMSG took " + ((System.nanoTime() - t0).toDouble / 1000000) + " ms")
+        merged
+      }
+    )
   }
 
   def dumpMap(m: mutable.Map[Long,Int], zoom: Int, prefix: String): Unit = {
@@ -1047,6 +999,9 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       val name: String = CostDistanceDriver.MAX_COST_ARG
       throw new Exception(s"Missing required argument '$name'")
     }
+
+    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
+    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
 
     if (job.hasSetting(CostDistanceDriver.SOURCE_POINTS_ARG)) {
       val pointsArg = job.getSetting(CostDistanceDriver.SOURCE_POINTS_ARG)
