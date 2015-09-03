@@ -28,12 +28,12 @@ if args.cost == 'spot':
   while True:
     rprice = raw_input('Please enter your bid price: ')
     try:
-      assert(float(rprice) <= 1)
+      assert(float(rprice) <= 5)
       break
     except ValueError:
       print "Bid price '{}' is invalid, must be a float value.".format(rprice)
     except AssertionError:
-      print "Bid price '{}' is invalid, not less than 1.0.".format(rprice)
+      print "Bid price '{}' is too high, must be less than 5.0.".format(rprice)
 
   #if rprice >= 1:
    # raise Exception('Your spot price is too high, please try again')
