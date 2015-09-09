@@ -143,6 +143,17 @@ object SparkUtils extends Logging {
     (loadMrsPyramid(dp, metadata.getMaxZoomLevel, context), metadata)
   }
 
+  def loadMrsPyramidAndMetadata(imageName: String, zoom: Int, context: SparkContext):
+  (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
+
+    val providerProps: ProviderProperties = null
+    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
+      DataProviderFactory.AccessMode.READ, providerProps)
+    val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
+
+    (loadMrsPyramid(dp, zoom, context), metadata)
+  }
+
   def loadMrsPyramid(imageName: String, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
     val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,

@@ -23,7 +23,7 @@ import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
 import com.vividsolutions.jts.geom.Point
 import com.vividsolutions.jts.io.WKTReader
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.graphx.{EdgeDirection, Graph, Edge}
+import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
@@ -31,13 +31,13 @@ import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.rasterops.GeoTiffExporter
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import scala.util.control.Breaks._
 
 // Cost distance is computed using graph processing by constructing
 // a graph in which each vertex is a 9-band tile of imagery. The first
@@ -100,6 +100,116 @@ object CostDistanceDriver extends MrGeoDriver with Externalizable {
   }
 }
 
+// This code was copied from the Spark source code and modified to work
+// for a very large graph like a cost distance graph. THe only change
+// was replacing calls to cache() with calls to persist() to make use
+// of memory and disk (rather than expecting that the entire graph can
+// be cached in memory). And it includes some new persist() calls.
+object CostDistancePregel {
+
+  /**
+   * Execute a Pregel-like iterative vertex-parallel abstraction.  The
+   * user-defined vertex-program `vprog` is executed in parallel on
+   * each vertex receiving any inbound messages and computing a new
+   * value for the vertex.  The `sendMsg` function is then invoked on
+   * all out-edges and is used to compute an optional message to the
+   * destination vertex. The `mergeMsg` function is a commutative
+   * associative function used to combine messages destined to the
+   * same vertex.
+   *
+   * On the first iteration all vertices receive the `initialMsg` and
+   * on subsequent iterations if a vertex does not receive a message
+   * then the vertex-program is not invoked.
+   *
+   * This function iterates until there are no remaining messages, or
+   * for `maxIterations` iterations.
+   *
+   * @tparam VD the vertex data type
+   * @tparam ED the edge data type
+   * @tparam A the Pregel message type
+   *
+   * @param graph the input graph.
+   *
+   * @param initialMsg the message each vertex will receive at the on
+   * the first iteration
+   *
+   * @param maxIterations the maximum number of iterations to run for
+   *
+   * @param activeDirection the direction of edges incident to a vertex that received a message in
+   * the previous round on which to run `sendMsg`. For example, if this is `EdgeDirection.Out`, only
+   * out-edges of vertices that received a message in the previous round will run. The default is
+   * `EdgeDirection.Either`, which will run `sendMsg` on edges where either side received a message
+   * in the previous round. If this is `EdgeDirection.Both`, `sendMsg` will only run on edges where
+   * *both* vertices received a message.
+   *
+   * @param vprog the user-defined vertex program which runs on each
+   * vertex and receives the inbound message and computes a new vertex
+   * value.  On the first iteration the vertex program is invoked on
+   * all vertices and is passed the default message.  On subsequent
+   * iterations the vertex program is only invoked on those vertices
+   * that receive messages.
+   *
+   * @param sendMsg a user supplied function that is applied to out
+   * edges of vertices that received messages in the current
+   * iteration
+   *
+   * @param mergeMsg a user supplied function that takes two incoming
+   * messages of type A and merges them into a single message of type
+   * A.  ''This function must be commutative and associative and
+   * ideally the size of A should not increase.''
+   *
+   * @return the resulting graph at the end of the computation
+   *
+   */
+  def run[VD: ClassTag, ED: ClassTag, A: ClassTag]
+  (graph: Graph[VD, ED],
+   initialMsg: A,
+   maxIterations: Int = Int.MaxValue,
+   activeDirection: EdgeDirection = EdgeDirection.Either)
+  (vprog: (VertexId, VD, A) => VD,
+   sendMsg: EdgeTriplet[VD, ED] => Iterator[(VertexId, A)],
+   mergeMsg: (A, A) => A)
+  : Graph[VD, ED] =
+  {
+    val storageLevel = graph.vertices.getStorageLevel
+    var g = graph.mapVertices((vid, vdata) => vprog(vid, vdata, initialMsg)).persist(storageLevel) //.cache()
+    // compute the messages
+    var messages = g.mapReduceTriplets(sendMsg, mergeMsg).persist(storageLevel)
+    var activeMessages = messages.count()
+    // Loop
+    var prevG: Graph[VD, ED] = null
+    var i = 0
+    while (activeMessages > 0 && i < maxIterations) {
+      // Receive the messages. Vertices that didn't get any messages do not appear in newVerts.
+      val newVerts = g.vertices.innerJoin(messages)(vprog).persist(storageLevel) //.cache()
+      // Update the graph with the new vertices.
+      prevG = g
+      g = g.outerJoinVertices(newVerts) { (vid, old, newOpt) => newOpt.getOrElse(old) }
+      g.persist(storageLevel) //.cache()
+
+      val oldMessages = messages
+      // Send new messages. Vertices that didn't get any messages don't appear in newVerts, so don't
+      // get to send messages. We must cache messages so it can be materialized on the next line,
+      // allowing us to uncache the previous iteration.
+      messages = g.mapReduceTriplets(sendMsg, mergeMsg, Some((newVerts, activeDirection))).persist(storageLevel) //.cache()
+      // The call to count() materializes `messages`, `newVerts`, and the vertices of `g`. This
+      // hides oldMessages (depended on by newVerts), newVerts (depended on by messages), and the
+      // vertices of prevG (depended on by newVerts, oldMessages, and the vertices of g).
+      activeMessages = messages.count()
+      // Unpersist the RDDs hidden by newly-materialized RDDs
+      oldMessages.unpersist(blocking=false)
+      newVerts.unpersist(blocking=false)
+      prevG.edges.unpersist(blocking=false)
+      prevG.unpersistVertices(blocking=false)
+      // count the iteration
+      i += 1
+    }
+
+    g
+  } // end of apply
+
+} // end of class Pregel
+
 object CostDistanceEdgeType {
   val TO_TOP_LEFT: Byte = 1
   val TO_TOP: Byte = 2
@@ -151,11 +261,11 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       @transient val providerProperties: ProviderProperties = null
       // TODO: protectionLevel needs to be configured into the job
       @transient val protectionLevel: String = null
-      @transient val pyramidAndMetadata = SparkUtils.loadMrsPyramidAndMetadata(frictionSurface, context)
+      @transient val pyramidAndMetadata = SparkUtils.loadMrsPyramidAndMetadata(frictionSurface, zoomLevel, context)
 //      pyramidAndMetadata._1.foreach(U => {
 //        println("Initial vertex: " + TMSUtils.tileid(U._1.get(), zoomLevel) + " -> " + U._2.hashCode())
 //      })
-      @transient val vertices = pyramidAndMetadata._1 // .repartition(40000)
+      @transient val vertices = pyramidAndMetadata._1 // .repartition(35)
       @transient val metadata = pyramidAndMetadata._2
       //      val pxStart: Short = (metadata.getTilesize - 1).toShort // for small-humvee
       //      val pyStart: Short = (metadata.getTilesize - 1).toShort // for small-humvee
@@ -163,6 +273,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       //    val pyStart: Short = 7
       val bounds = metadata.getBounds
       @transient val tileBounds: org.mrgeo.utils.LongRectangle = metadata.getTileBounds(zoomLevel)
+      if (tileBounds == null)
+      {
+        throw new IllegalArgumentException("No tile bounds for " + frictionSurface + " at zoom level " + zoomLevel)
+      }
 
       val width: Short = metadata.getTilesize.toShort
       val height: Short = metadata.getTilesize.toShort
@@ -176,18 +290,19 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 
       @transient val realVertices = vertices.map(U => {
         val sourceRaster: Raster = RasterWritable.toRaster(U._2)
-        val raster: WritableRaster = makeCostDistanceRaster(U._1.get(), sourceRaster,
-          zoomLevel, res, width, height, nodata)
+        val raster: WritableRaster = makeCostDistanceRaster1(U._1.get, sourceRaster,
+            zoomLevel, res, width, height, nodata)
         // are no changed points.
-        val vt: VertexType = new VertexType(raster, null)
+        val vt: VertexType = new VertexType(raster, new ChangedPoints(false), U._1.get, zoomLevel)
         (U._1.get(), vt)
       })
 //      realVertices.persist(StorageLevel.MEMORY_AND_DISK_SER)
-      realVertices.cache()
+//      realVertices.cache()
+//      realVertices.count()
     //      @transient val edges: RDD[Edge[Byte]] = buildEdges(tileBounds, zoom, context)
       @transient val edges: RDD[Edge[Byte]] =
-        realVertices.flatMap{ case (tileId, value) =>
-          val tile = TMSUtils.tileid(tileId, zoomLevel)
+        vertices.flatMap{ case (tileId, value) =>
+          val tile = TMSUtils.tileid(tileId.get, zoomLevel)
           getEdges(tileBounds, tile.tx, tile.ty, zoomLevel)
         }.map{ case (edge) =>  Edge(edge.fromTileId, edge.toTileId, edge.direction)
         }
@@ -204,10 +319,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 
       @transient val graph: Graph[VertexType, Byte] = Graph(realVertices/*.repartition(3)*/, edges/*.repartition(3)*/,
         defaultVertexAttr = null.asInstanceOf[VertexType],
-        edgeStorageLevel = StorageLevel.MEMORY_AND_DISK,
-        vertexStorageLevel = StorageLevel.MEMORY_AND_DISK)
+        edgeStorageLevel = StorageLevel.MEMORY_AND_DISK_SER,
+        vertexStorageLevel = StorageLevel.MEMORY_AND_DISK_SER)
 
-      @transient val sssp = runGraph(graph, startTileId, zoomLevel,
+      @transient val sssp = runGraph(graph, startTileId, zoomLevel, res,
         startPixel.px.toShort, startPixel.py.toShort, width, height)
       @transient val vw3: RDD[(Long, VertexType)] = sssp.vertices.sortByKey(ascending = true)
       @transient val verticesWritable = vw3.map(U => {
@@ -218,9 +333,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         var nanCount = 0
         var min: Float = Float.PositiveInfinity
         var max: Float = Float.NegativeInfinity
+        val totalCostBand = U._2.raster.getNumBands - 1
         for (x <- 0 until width) {
           for (y <- 0 until height) {
-            @transient val s: Float = U._2.raster.getSampleFloat(x, y, 8)
+            @transient val s: Float = U._2.raster.getSampleFloat(x, y, totalCostBand)
             if (s == Float.PositiveInfinity) {
               infinityCount += 1
             }
@@ -322,157 +438,192 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     edges.toList
   }
 
-  // Create a cost raster for one tile. The output of this function will be a
-  // 9-band raster in which the first 8 bands represent the cost to traverse
-  // each pixel in 8 different directions. The DirectionBand constants define
-  // which band corresponds to which direction. The 9th band stores the total
-  // cost to arrive at the pixel from the nearest source point.
-  def makeCostDistanceRaster(tileId: Long, source: Raster,
+  def makeCostDistanceRaster1(tileId: Long, source: Raster,
                              zoom: Int,
                              res: Double,
                              width: Short,
                              height: Short,
                              nodata: Array[Float]): WritableRaster = {
-    // The raster we use for processing contains one band for cost data in
-    // each of the eight directions within a pixel. See DirectionBand for
-    // which band maps to which direction. This allows for fine-grained
-    // friction surfaces to be provided by the user.
-//    println("Running makeCostDistance on tile " + TMSUtils.tileid(tileId, zoom))
     @transient val sourceBands = source.getNumBands
-    @transient val numBands = 9
+    @transient val numBands = sourceBands + 1
     @transient val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, numBands)
     @transient var bandedRaster = Raster.createWritableRaster(model, null)
-//          val bandedRaster: WritableRaster = Raster.createBandedRaster(DataBuffer.TYPE_FLOAT,
-//            width, height, numBands, new Point(0, 0))
 
-    @transient val tile: TMSUtils.Tile = TMSUtils.tileid(tileId, zoom)
-
-    @transient val o: LatLng = new LatLng(0, 0)
-    @transient val n: LatLng = new LatLng(res, 0)
-    @transient val pixelHeightM: Double = LatLng.calculateGreatCircleDistance(o, n)
-
-    @transient val startPx: Double = tile.tx * width
-    // since Rasters have their UL as 0,0, just tile.ty * tileSize does not work
-    @transient val startPy: Double = (tile.ty * height) + height - 1
-
-    @transient val lonStart: Double = startPx * res - 180.0
-    @transient val latStart: Double = startPy * res - 90.0
-
-    @transient val lonNext: Double = lonStart + res
-    @transient val latNext: Double = latStart + res
-    o.setLat(latStart)
-    o.setLng(lonStart)
-    n.setLat(latNext)
-    n.setLng(lonNext)
-    @transient val v: Array[Float] = new Array[Float](numBands)
-    @transient val p: Array[Float] = new Array[Float](sourceBands)
-    @transient val horizontalBands: Set[Byte] = Set(DirectionBand.LEFT_BAND, DirectionBand.RIGHT_BAND)
-    @transient val verticalBands = Set(DirectionBand.UP_BAND, DirectionBand.DOWN_BAND)
-    @transient val diagonalBands = Set(DirectionBand.DOWN_LEFT_BAND, DirectionBand.DOWN_RIGHT_BAND,
-      DirectionBand.UP_LEFT_BAND, DirectionBand.UP_RIGHT_BAND)
-
+    val sourceValue: Array[Float] = new Array[Float](sourceBands)
+    val newValue: Array[Float] = new Array[Float](numBands)
     for (py <- 0 until source.getHeight) {
-      // since Rasters have their UL as 0,0, but since startPy is based on 0,0 being LL,
-      // we have to do startPy - py instead of startPy + py
-      @transient val lat: Double = (startPy - py) * res - 90.0
-
-      o.setLat(lat)
-      n.setLat(lat)
-      @transient val pixelWidthM: Double = LatLng.calculateGreatCircleDistance(o, n)
-      @transient val pixelDiagonalM: Float = math.sqrt((pixelHeightM * pixelHeightM) +
-        (pixelWidthM * pixelWidthM)).toFloat
       for (px <- 0 until source.getWidth) {
         // When the source friction surface contains a single band, we compute
         // the friction values for each of the eight directions from that single
         // band value. As a result, all the diagonal directions will have the
         // same cost, all the vertical directions will have the same cost, and
         // all the horizontal directions will have the same cost.
-        if (sourceBands == 1) {
-          @transient val s: Float = source.getSampleFloat(px, py, 0)
-          if (s.isNaN) {
-            // If the friction surface contains a NaN value, then the cost surface
-            // should also be NaN since we can't calculate the cost at that point.
-            for (b <- 0 until numBands - 1) {
-              v(b) = Float.NaN
-            }
-          }
-          else {
-            if (!nodata(0).isNaN && s == nodata(0)) {
-              // The friction surface contains a nodata value, then the cost surface
-              // should also be NaN since we can't calculate the cost at that point.
-              for (b <- 0 until numBands - 1) {
-                v(b) = Float.NaN
-              }
-            } else {
-              if (s < 0.0) {
-                throw new RuntimeException("Invalid friction surface. Negative values not allowed.")
-              }
-              // The friction surface has a legitimate value for this pixel. The cost
-              // surface should be initialized to a value of 0 if this pixel is one
-              // of the starting pixels. Otherwise, it should be infinity initially
-              // since the graph processing will always choose the smallest cost for
-              // each pixel.
-              v(DirectionBand.LEFT_BAND) = (s * pixelWidthM).toFloat
-              v(DirectionBand.RIGHT_BAND) = (s * pixelWidthM).toFloat
-              v(DirectionBand.DOWN_BAND) = (s * pixelHeightM).toFloat
-              v(DirectionBand.UP_BAND) = (s * pixelHeightM).toFloat
-              v(DirectionBand.UP_LEFT_BAND) = s * pixelDiagonalM
-              v(DirectionBand.UP_RIGHT_BAND) = s * pixelDiagonalM
-              v(DirectionBand.DOWN_LEFT_BAND) = s * pixelDiagonalM
-              v(DirectionBand.DOWN_RIGHT_BAND) = s * pixelDiagonalM
-            }
-          }
-        } else {
-          // The user supplied an 8-band friction surface, so we compute the cost per
-          // pixel in each of the eight directions.
-          source.getPixel(px, py, p)
-          for (b <- 0 until sourceBands) {
-            if (p(b).isNaN) {
-              // If the friction surface contains a NaN value, then the cost surface
-              // should also be NaN since we can't calculate the cost at that point.
-              v(b) = Float.NaN
-            }
-            else {
-              if (!nodata(b).isNaN && p(b) == nodata(b)) {
-                // The friction surface contains a nodata value, then the cost surface
-                // should also be NaN since we can't calculate the cost at that point.
-                v(b) = Float.NaN
-              } else {
-                if (v(b) < 0.0) {
-                  throw new RuntimeException("Invalid friction surface. Negative values not allowed.")
-                }
-                if (diagonalBands.contains(b.toByte)) {
-                  v(b) = p(b) * pixelDiagonalM
-                } else if (horizontalBands.contains(b.toByte)) {
-                  v(b) = (p(b) * pixelWidthM).toFloat
-                } else {
-                  v(b) = (p(b) * pixelHeightM).toFloat
-                }
-              }
-            }
-          }
+        source.getPixel(px, py, sourceValue)
+        for (b <- 0 until sourceBands) {
+          newValue(b) = sourceValue(b)
         }
-        v(numBands - 1) = Float.NaN
-        bandedRaster.setPixel(px, py, v)
+        newValue(numBands - 1) = Float.NaN
+        bandedRaster.setPixel(px, py, newValue)
       }
     }
     bandedRaster
   }
 
+  // Create a cost raster for one tile. The output of this function will be a
+  // 9-band raster in which the first 8 bands represent the cost to traverse
+  // each pixel in 8 different directions. The DirectionBand constants define
+  // which band corresponds to which direction. The 9th band stores the total
+  // cost to arrive at the pixel from the nearest source point.
+//  def makeCostDistanceRaster(tileId: Long, source: Raster,
+//                             zoom: Int,
+//                             res: Double,
+//                             width: Short,
+//                             height: Short,
+//                             nodata: Array[Float]): WritableRaster = {
+//    // The raster we use for processing contains one band for cost data in
+//    // each of the eight directions within a pixel. See DirectionBand for
+//    // which band maps to which direction. This allows for fine-grained
+//    // friction surfaces to be provided by the user.
+////    println("Running makeCostDistance on tile " + TMSUtils.tileid(tileId, zoom))
+//    @transient val sourceBands = source.getNumBands
+//    @transient val numBands = 9
+//    @transient val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, numBands)
+//    @transient var bandedRaster = Raster.createWritableRaster(model, null)
+////          val bandedRaster: WritableRaster = Raster.createBandedRaster(DataBuffer.TYPE_FLOAT,
+////            width, height, numBands, new Point(0, 0))
+//
+//    @transient val tile: TMSUtils.Tile = TMSUtils.tileid(tileId, zoom)
+//
+//    @transient val o: LatLng = new LatLng(0, 0)
+//    @transient val n: LatLng = new LatLng(res, 0)
+//    @transient val pixelHeightM: Double = LatLng.calculateGreatCircleDistance(o, n)
+//
+//    @transient val startPx: Double = tile.tx * width
+//    // since Rasters have their UL as 0,0, just tile.ty * tileSize does not work
+//    @transient val startPy: Double = (tile.ty * height) + height - 1
+//
+//    @transient val lonStart: Double = startPx * res - 180.0
+//    @transient val latStart: Double = startPy * res - 90.0
+//
+//    @transient val lonNext: Double = lonStart + res
+//    @transient val latNext: Double = latStart + res
+//    o.setLat(latStart)
+//    o.setLng(lonStart)
+//    n.setLat(latNext)
+//    n.setLng(lonNext)
+//    @transient val v: Array[Float] = new Array[Float](numBands)
+//    @transient val p: Array[Float] = new Array[Float](sourceBands)
+//    @transient val horizontalBands: Set[Byte] = Set(DirectionBand.LEFT_BAND, DirectionBand.RIGHT_BAND)
+//    @transient val verticalBands = Set(DirectionBand.UP_BAND, DirectionBand.DOWN_BAND)
+//    @transient val diagonalBands = Set(DirectionBand.DOWN_LEFT_BAND, DirectionBand.DOWN_RIGHT_BAND,
+//      DirectionBand.UP_LEFT_BAND, DirectionBand.UP_RIGHT_BAND)
+//
+//    for (py <- 0 until source.getHeight) {
+//      // since Rasters have their UL as 0,0, but since startPy is based on 0,0 being LL,
+//      // we have to do startPy - py instead of startPy + py
+//      @transient val lat: Double = (startPy - py) * res - 90.0
+//
+//      o.setLat(lat)
+//      n.setLat(lat)
+//      @transient val pixelWidthM: Double = LatLng.calculateGreatCircleDistance(o, n)
+//      @transient val pixelDiagonalM: Float = math.sqrt((pixelHeightM * pixelHeightM) +
+//        (pixelWidthM * pixelWidthM)).toFloat
+//      for (px <- 0 until source.getWidth) {
+//        // When the source friction surface contains a single band, we compute
+//        // the friction values for each of the eight directions from that single
+//        // band value. As a result, all the diagonal directions will have the
+//        // same cost, all the vertical directions will have the same cost, and
+//        // all the horizontal directions will have the same cost.
+//        if (sourceBands == 1) {
+//          @transient val s: Float = source.getSampleFloat(px, py, 0)
+//          if (s.isNaN) {
+//            // If the friction surface contains a NaN value, then the cost surface
+//            // should also be NaN since we can't calculate the cost at that point.
+//            for (b <- 0 until numBands - 1) {
+//              v(b) = Float.NaN
+//            }
+//          }
+//          else {
+//            if (!nodata(0).isNaN && s == nodata(0)) {
+//              // The friction surface contains a nodata value, then the cost surface
+//              // should also be NaN since we can't calculate the cost at that point.
+//              for (b <- 0 until numBands - 1) {
+//                v(b) = Float.NaN
+//              }
+//            } else {
+//              if (s < 0.0) {
+//                throw new RuntimeException("Invalid friction surface. Negative values not allowed.")
+//              }
+//              // The friction surface has a legitimate value for this pixel. The cost
+//              // surface should be initialized to a value of 0 if this pixel is one
+//              // of the starting pixels. Otherwise, it should be infinity initially
+//              // since the graph processing will always choose the smallest cost for
+//              // each pixel.
+//              v(DirectionBand.LEFT_BAND) = (s * pixelWidthM).toFloat
+//              v(DirectionBand.RIGHT_BAND) = (s * pixelWidthM).toFloat
+//              v(DirectionBand.DOWN_BAND) = (s * pixelHeightM).toFloat
+//              v(DirectionBand.UP_BAND) = (s * pixelHeightM).toFloat
+//              v(DirectionBand.UP_LEFT_BAND) = s * pixelDiagonalM
+//              v(DirectionBand.UP_RIGHT_BAND) = s * pixelDiagonalM
+//              v(DirectionBand.DOWN_LEFT_BAND) = s * pixelDiagonalM
+//              v(DirectionBand.DOWN_RIGHT_BAND) = s * pixelDiagonalM
+//            }
+//          }
+//        } else {
+//          // The user supplied an 8-band friction surface, so we compute the cost per
+//          // pixel in each of the eight directions.
+//          source.getPixel(px, py, p)
+//          for (b <- 0 until sourceBands) {
+//            if (p(b).isNaN) {
+//              // If the friction surface contains a NaN value, then the cost surface
+//              // should also be NaN since we can't calculate the cost at that point.
+//              v(b) = Float.NaN
+//            }
+//            else {
+//              if (!nodata(b).isNaN && p(b) == nodata(b)) {
+//                // The friction surface contains a nodata value, then the cost surface
+//                // should also be NaN since we can't calculate the cost at that point.
+//                v(b) = Float.NaN
+//              } else {
+//                if (v(b) < 0.0) {
+//                  throw new RuntimeException("Invalid friction surface. Negative values not allowed.")
+//                }
+//                if (diagonalBands.contains(b.toByte)) {
+//                  v(b) = p(b) * pixelDiagonalM
+//                } else if (horizontalBands.contains(b.toByte)) {
+//                  v(b) = (p(b) * pixelWidthM).toFloat
+//                } else {
+//                  v(b) = (p(b) * pixelHeightM).toFloat
+//                }
+//              }
+//            }
+//          }
+//        }
+//        v(numBands - 1) = Float.NaN
+//        bandedRaster.setPixel(px, py, v)
+//      }
+//    }
+//    bandedRaster
+//  }
+
   // Check to see if the destination pixel is valid. If so, then compute the
   // cost to that pixel from the source point (using the cost stored in the specified
   // bandIndex). If the cost is smaller than the current total cost for that pixel,
-  def addChanges(srcPoint: CostPoint, srcRaster: Raster, destRaster: Raster,
-                 pxDest: Short, pyDest: Short, costBandIndex: Short,
-                 totalCostBandIndex: Short, numBands: Short,
+  def addChanges(srcTileId: Long, destTileId: Long, zoom: Int, res: Double, pixelHeightM: Double,
+                 srcPoint: CostPoint, srcRaster: Raster, destRaster: Raster, pxDest: Short,
+                 pyDest: Short, direction: Byte, totalCostBandIndex: Short,
                  changedPoints: ChangedPoints): Unit = {
     @transient val currDestTotalCost = destRaster.getSampleFloat(pxDest, pyDest, totalCostBandIndex) // destBuf(numBands * (py * width + px) + totalCostBandIndex)
-    @transient val srcCost = srcRaster.getSampleFloat(srcPoint.px, srcPoint.py, costBandIndex) // srcBuf(numBands * (srcPoint.py * width + srcPoint.px) + costBandIndex)
-    @transient val destCost = destRaster.getSampleFloat(pxDest, pyDest, costBandIndex) // destBuf(numBands * (py * width + px) + costBandIndex)
+    val srcCost = getPixelCost(srcTileId, zoom, srcPoint.px, srcPoint.py, direction,
+        res, pixelHeightM, srcRaster)
+    val destCost = getPixelCost(destTileId, zoom, pxDest, pyDest, direction,
+      res, pixelHeightM, destRaster)
+//    @transient val srcCost = srcRaster.getSampleFloat(srcPoint.px, srcPoint.py, costBandIndex) // srcBuf(numBands * (srcPoint.py * width + srcPoint.px) + costBandIndex)
+//    @transient val destCost = destRaster.getSampleFloat(pxDest, pyDest, costBandIndex) // destBuf(numBands * (py * width + px) + costBandIndex)
     // Compute the cost to travel from the center of the source pixel to
     // the center of the destination pixel (the sum of half the cost of
     // each pixel).
-    @transient var newTotalCost = srcPoint.cost + srcCost * 0.5f + destCost * 0.5f
+    @transient val newTotalCost = srcPoint.cost + srcCost * 0.5f + destCost * 0.5f
 //    if ((newTotalCost < currDestTotalCost) || (currDestTotalCost.isNaN && !newTotalCost.isNaN)) {
     if (isValueSmaller(newTotalCost, currDestTotalCost)) {
 //      if (!currDestTotalCost.isNaN && !newTotalCost.isNaN) {
@@ -483,7 +634,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     }
   }
 
-  def runGraph(graph: Graph[VertexType, Byte], startTileId: Long, zoom: Int,
+  def runGraph(graph: Graph[VertexType, Byte], startTileId: Long, zoom: Int, res: Double,
                pxStart: Short, pyStart: Short, width: Short, height: Short): Graph[VertexType, Byte] = {
     //    testPregel[ChangedPoints](graph, null, Int.MaxValue, EdgeDirection.Either)(
     val neighborsAbove = Array((-1, DirectionBand.UP_LEFT_BAND),
@@ -499,47 +650,93 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 //    val neighborsToLeft = Array((0, DirectionBand.LEFT_BAND))
 //    val neighborsToRight = Array((0, DirectionBand.RIGHT_BAND))
 
-    graph.pregel[ChangedPoints](null, Int.MaxValue, EdgeDirection.Out)(
+    @transient val o: LatLng = new LatLng(0, 0)
+    @transient val n: LatLng = new LatLng(res, 0)
+    @transient val pixelHeightM: Double = LatLng.calculateGreatCircleDistance(o, n)
+
+    @transient val initialMsg = new ChangedPoints(true)
+    initialMsg.addPoint(new CostPoint(pxStart, pyStart, 0.0f))
+    CostDistancePregel.run[VertexType, Byte, ChangedPoints](graph, initialMsg,
+      Int.MaxValue, EdgeDirection.Out)(
+//    graph.pregel[ChangedPoints](initialMsg, Int.MaxValue, EdgeDirection.Out)(
       // Vertex Program
       (id, vertexData, msg) => {
         @transient val t0 = System.nanoTime()
-//          println("IN VPROG, vertex id is " + TMSUtils.tileid(id, zoomLevel) + " and start id is " + TMSUtils.tileid(startTileId, zoomLevel) + " and msg is " + msg)
+          log.warn("IN VPROG, vertex id is " + TMSUtils.tileid(id, zoomLevel) + " and start id is " + TMSUtils.tileid(startTileId, zoomLevel) + " and msg is " + msg)
 //        if (msg != null) {
 //          for (p <- msg.getAllPoints()) {
 //            println("  Changed point: " + p.px + ", " + p.py + " = " + p.cost)
 //          }
 //        }
-        if (vertexData.changedPoints == null) {
-          vertexData.changedPoints = new ChangedPoints
-        }
-        else {
-          vertexData.changedPoints.clear()
-        }
-        //        vertexData.changedPoints = null
-        if (msg != null) {
+//        if (vertexData.changedPoints == null) {
+//          vertexData.changedPoints = new ChangedPoints
+//        }
+//        else {
+//          vertexData.changedPoints.clear()
+//        }
+//        val origChangedPoints = vertexData.changedPoints
+        var returnNewVertex = true
+        var changedPoints: ChangedPoints = null
+//        vertexData.changedPoints = null
+        log.warn("  initialMsg = " + msg.isInitial)
+        if (!msg.isInitial) {
           if (msg.size > 0) {
 //              println("  there are " + msg.size + " changed points in the message")
-            processVertices(id, zoom, vertexData, msg)
+            changedPoints = processVertices(id, zoom, res, pixelHeightM, vertexData.raster, msg)
+            log.warn("  processVertices on non-initial message returned " + changedPoints.size)
+          }
+          else {
+            log.warn("  no changes to process for non-inital message")
+            changedPoints = new ChangedPoints(false)
           }
         }
         else if (id == startTileId) {
+          log.warn("  for start tile")
 //            println("  processing start tile with initial message")
-          @transient val initialMsg: ChangedPoints = new ChangedPoints()
-          initialMsg.addPoint(new CostPoint(pxStart, pyStart, 0.0f))
-          processVertices(id, zoom, vertexData, initialMsg)
-        }
-//          if (vertexData.changedPoints == null || vertexData.changedPoints.size == 0) {
-//            println("  changes for " + TMSUtils.tileid(id, zoom) + " is null ")
-//          } else {
-//            println("  has " + vertexData.changedPoints.size + " changes")
-////            println("VPROG for " + TMSUtils.tileid(id, zoom) + " took " + ((System.nanoTime() - t0).toDouble / 1000000) + " ms")
+//          changedPoints = new ChangedPoints(false)
+//          changedPoints.addPoint(new CostPoint(pxStart, pyStart, 0.0f))
+//          changedPoints = new ChangedPoints(false)
+//          for (cp <- msg.getAllPoints) {
+//            changedPoints.addPoint(cp)
 //          }
-        new VertexType(vertexData.raster, vertexData.changedPoints)
+          changedPoints = processVertices(id, zoom, res, pixelHeightM, vertexData.raster, msg)
+//          System.err.println("  returns " + changedPoints.size + " changed points")
+        }
+        else {
+          log.warn("  ignoring tile because it is the initial msg, and this is not the start tile")
+          changedPoints = new ChangedPoints(false)
+          returnNewVertex = false
+        }
+//        if (changedPoints != null && changedPoints.size > 0) {
+////          println("VPROG returning new vertex with " + changedPoints.size + " changes for " + TMSUtils.tileid(id, zoomLevel))
+//          new VertexType(vertexData.raster, changedPoints, id, zoomLevel)
+//        }
+//        else {
+//          if (origChangedPoints == null || origChangedPoints.size == 0) {
+//            // No changes, so return the same vertex to prevent serialization
+////            println("VPROG returning same vertex for " + TMSUtils.tileid(id, zoomLevel))
+//            vertexData
+//          }
+//          else {
+//            // There are no changed points this time around, but we have to return
+//            // a new vertex because its list of changed points is now empty where
+//            // before it was not.
+////            println("VPROG returning new vertex without changes for " + TMSUtils.tileid(id, zoomLevel))
+//            new VertexType(vertexData.raster, changedPoints, id, zoomLevel)
+//          }
+//        }
+        log.warn("  returning " + changedPoints.size + " changed points")
+        if (returnNewVertex) {
+          new VertexType(vertexData.raster, changedPoints, id, zoomLevel)
+        }
+        else {
+          vertexData
+        }
       },
       // sendMsg
       triplet => {
-//          println("SENDMSG src " + TMSUtils.tileid(triplet.srcId, zoomLevel) + " and dest " +
-//            TMSUtils.tileid(triplet.dstId, zoomLevel) + " contains " + triplet.srcAttr.changedPoints.size + " changed points")
+          log.warn("SENDMSG src " + TMSUtils.tileid(triplet.srcId, zoomLevel) + " and dest " +
+            TMSUtils.tileid(triplet.dstId, zoomLevel) + " contains " + triplet.srcAttr.changedPoints.size + " changed points")
         @transient val t0 = System.nanoTime()
         // The changed points are from the source vertex. Now we need to compute the
         // cost changes in the destination vertex pixels that neighbor each of those
@@ -548,16 +745,16 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         // to determine the neighboring pixels in the destination to check.
         var newChanges: ChangedPoints = null
         if (triplet.srcAttr.changedPoints != null) {
-//          println("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
+          log.warn("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
           if (!triplet.srcAttr.changedPoints.isEmpty) {
-            newChanges = new ChangedPoints
+            newChanges = new ChangedPoints(false)
             @transient val changedPoints = triplet.srcAttr.changedPoints.getAllPoints
 //              val srcDataBuf: DataBufferFloat = triplet.srcAttr.raster.getDataBuffer.asInstanceOf[DataBufferFloat]
 //              val srcBuf: Array[Float] = srcDataBuf.getData
 //              val destDataBuf: DataBufferFloat = triplet.dstAttr.raster.getDataBuffer.asInstanceOf[DataBufferFloat]
 //              val destBuf: Array[Float] = destDataBuf.getData
-            @transient val costBand: Short = 8
             @transient val numBands: Short = triplet.dstAttr.raster.getNumBands.toShort
+            @transient val costBand: Short = (numBands - 1).toShort // 0-based index of the last band is the cost band
             for (srcPoint <- changedPoints) {
 //              println("  Source changed point: " + srcPoint.px + ", " + srcPoint.py + " = " + srcPoint.cost)
               if (triplet.attr == CostDistanceEdgeType.TO_TOP) {
@@ -570,8 +767,9 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
                   for (n <- neighborsAbove) {
                     @transient val pxNeighbor: Short = (srcPoint.px + n._1).toShort
                     if (pxNeighbor >= 0 && pxNeighbor < width) {
-                      addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, pxNeighbor, (height - 1).toShort,
-                        n._2, costBand, numBands, newChanges)
+                      addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
+                        srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
+                        pxNeighbor, (height - 1).toShort, n._2, costBand, newChanges)
                     }
                   }
 //                  for (px <- math.max(srcPoint.px - 1, width - 1) to math.min(srcPoint.px + 1, width - 1)) {
@@ -588,14 +786,15 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
                   for (n <- neighborsBelow) {
                     @transient val pxNeighbor: Short = (srcPoint.px + n._1).toShort
                     if (pxNeighbor >= 0 && pxNeighbor < width) {
-                      addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, pxNeighbor, 0,
-                        n._2, costBand, numBands, newChanges)
+                      addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
+                        srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
+                        pxNeighbor, 0, n._2, costBand, newChanges)
                     }
                   }
-                  //                  for (px <- math.max(srcPoint.px - 1, 0) to math.min(srcPoint.px + 1, width - 1)) {
-                  //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, px.toShort, 0,
-                  //                      DirectionBand.DOWN_BAND, costBand, numBands, newChanges)
-                  //                  }
+//                  for (px <- math.max(srcPoint.px - 1, 0) to math.min(srcPoint.px + 1, width - 1)) {
+//                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, px.toShort, 0,
+//                      DirectionBand.DOWN_BAND, costBand, numBands, newChanges)
+//                  }
                 }
               }
               else if (triplet.attr == CostDistanceEdgeType.TO_LEFT) {
@@ -606,14 +805,15 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
                   for (n <- neighborsToLeft) {
                     @transient val pyNeighbor: Short = (srcPoint.py + n._1).toShort
                     if (pyNeighbor >= 0 && pyNeighbor < height) {
-                      addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, pyNeighbor,
-                        n._2, costBand, numBands, newChanges)
+                      addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
+                        srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
+                        (width - 1).toShort, pyNeighbor, n._2, costBand, newChanges)
                     }
                   }
-                  //                  for (py <- math.max(srcPoint.py - 1, 0) to math.min(srcPoint.py + 1, height - 1)) {
-                  //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, py.toShort,
-                  //                      DirectionBand.LEFT_BAND, costBand, numBands, newChanges)
-                  //                  }
+//                  for (py <- math.max(srcPoint.py - 1, 0) to math.min(srcPoint.py + 1, height - 1)) {
+//                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, py.toShort,
+//                      DirectionBand.LEFT_BAND, costBand, numBands, newChanges)
+//                  }
                 }
               }
               else if (triplet.attr == CostDistanceEdgeType.TO_RIGHT) {
@@ -624,14 +824,15 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
                   for (n <- neighborsToRight) {
                     @transient val pyNeighbor: Short = (srcPoint.py + n._1).toShort
                     if (pyNeighbor >= 0 && pyNeighbor < height) {
-                      addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0.toShort, pyNeighbor,
-                        n._2, costBand, numBands, newChanges)
+                      addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
+                        srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
+                        0.toShort, pyNeighbor, n._2, costBand, newChanges)
                     }
                   }
-                  //                  for (py <- math.max(srcPoint.py - 1, 0) to math.min(srcPoint.py + 1, height - 1)) {
-                  //                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, py.toShort,
-                  //                      DirectionBand.RIGHT_BAND, costBand, numBands, newChanges)
-                  //                  }
+//                  for (py <- math.max(srcPoint.py - 1, 0) to math.min(srcPoint.py + 1, height - 1)) {
+//                    addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, py.toShort,
+//                      DirectionBand.RIGHT_BAND, costBand, numBands, newChanges)
+//                  }
                 }
               }
               else if (triplet.attr == CostDistanceEdgeType.TO_TOP_LEFT) {
@@ -639,8 +840,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
                 // pixel of the source tile changed, propagate that change to the bottom-right
                 // pixel of the destination tile.
                 if (srcPoint.px == 0 && srcPoint.py == 0) {
-                  addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, (height - 1).toShort,
-                    DirectionBand.UP_LEFT_BAND, costBand, numBands, newChanges)
+                  addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
+                    srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
+                    (width - 1).toShort, (height - 1).toShort,
+                    DirectionBand.UP_LEFT_BAND, costBand, newChanges)
                 }
               }
               else if (triplet.attr == CostDistanceEdgeType.TO_TOP_RIGHT) {
@@ -648,8 +851,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
                 // pixel of the source tile changed, propagate that change to the bottom-left
                 // pixel of the destination tile.
                 if (srcPoint.px == width - 1 && srcPoint.py == 0) {
-                  addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, (height - 1).toShort,
-                    DirectionBand.UP_RIGHT_BAND, costBand, numBands, newChanges)
+                  addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
+                    srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
+                    0, (height - 1).toShort,
+                    DirectionBand.UP_RIGHT_BAND, costBand, newChanges)
                 }
               }
               else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM_LEFT) {
@@ -657,8 +862,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
                 // pixel of the source tile changed, propagate that change to the top-right
                 // pixel of the destination tile.
                 if (srcPoint.px == 0 && srcPoint.py == height - 1) {
-                  addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, (width - 1).toShort, 0,
-                    DirectionBand.DOWN_LEFT_BAND, costBand, numBands, newChanges)
+                  addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
+                    srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
+                    (width - 1).toShort, 0,
+                    DirectionBand.DOWN_LEFT_BAND, costBand, newChanges)
                 }
               }
               else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM_RIGHT) {
@@ -666,8 +873,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
                 // pixel of the source tile changed, propagate that change to the top-left
                 // pixel of the destination tile.
                 if (srcPoint.px == width - 1 && srcPoint.py == height - 1) {
-                  addChanges(srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster, 0, 0,
-                    DirectionBand.DOWN_RIGHT_BAND, costBand, numBands, newChanges)
+                  addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
+                    srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
+                    0, 0,
+                    DirectionBand.DOWN_RIGHT_BAND, costBand, newChanges)
                 }
               }
 //              println("  New changed points after processing srcPoint")
@@ -700,21 +909,24 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         //          }
         //        }
         if (newChanges == null) {
-          if (triplet.srcAttr.changedPoints.size > 0) {
-            val emptyChanges: ChangedPoints = new ChangedPoints
+          log.warn("  SENDMSG returning empty from no changes")
+          Iterator.empty
+//          if (triplet.srcAttr.changedPoints.size > 0) {
+//            val emptyChanges: ChangedPoints = new ChangedPoints
 //              println("  returning empty changes for source and no changes for destination")
-            Iterator((triplet.srcId, emptyChanges))
-          }
-          else {
+//            Iterator((triplet.srcId, emptyChanges))
+//          }
+//          else {
 //              println("  returning no changes for destination")
-            Iterator.empty
-          }
+//            Iterator.empty
+//          }
         } else {
           if (newChanges.size > 0) {
-//              println("  returning " + newChanges.size + " changes for destination")
+              log.warn("  SENDMSG returning " + newChanges.size + " changes for destination")
             Iterator((triplet.dstId, newChanges))
           }
           else {
+            log.warn("  SENDMSG returning empty after 0 changes")
             Iterator.empty
           }
         }
@@ -723,7 +935,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       // TODO: Merge a and b into a single ChangedPoints object
       (a, b) => {
         @transient val t0 = System.nanoTime()
-        @transient var merged = new ChangedPoints
+        @transient var merged = new ChangedPoints(false)
         @transient val aPoints: List[CostPoint] = a.getAllPoints
         for (p <- aPoints) {
           merged.addPoint(p)
@@ -738,13 +950,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     )
   }
 
-  def dumpMap(m: mutable.Map[Long,Int], zoom: Int, prefix: String): Unit = {
-    m.foreach(U => {
-      println(prefix + TMSUtils.tileid(U._1, zoom) + " => " + U._2)
-    })
-  }
-
-  def processVertices = (tileId: Long, zoom: Int, vertex: VertexType, changes: ChangedPoints) => {
+  def processVertices(tileId: Long, zoom: Int, res: Double, pixelHeightM: Double,
+                      raster: WritableRaster, changes: ChangedPoints): ChangedPoints =
+  {
+    log.warn("PROCESS VERTICES received " + changes.size + " changes")
     @transient val neighborMetadata8Band = Array(
       (-1, -1, DirectionBand.UP_LEFT_BAND)
       , (-1, 0, DirectionBand.LEFT_BAND)
@@ -773,10 +982,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 //      , (0, 1, 5) // bottom
 //    )
 //    println("Started processing tile " + TMSUtils.tileid(tileId, zoom))
-    @transient val numBands = vertex.raster.getNumBands
-    @transient val totalCostBand = 8
+    @transient val numBands = raster.getNumBands
+    @transient val totalCostBand = numBands - 1 // cost band is the last band in the raster
     @transient val startTime = System.nanoTime()
-    @transient val newChanges: ChangedPoints = new ChangedPoints()
+    @transient val newChanges: ChangedPoints = new ChangedPoints(false)
 //    var queue = new java.util.PriorityQueue(1000, new Comparator[CostPoint] {
 //      override def equals(a: Any) = a.equals(this)
 //      override def compare(o1: CostPoint, o2: CostPoint): Int = o1.cost.compareTo(o2.cost)
@@ -804,8 +1013,8 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     // Get FloatBuffer from vertex so we can manipulate it directly
 //    val dataBuffer: DataBufferFloat = vertex.raster.getDataBuffer.asInstanceOf[DataBufferFloat]
 //    val buf: Array[Float] = dataBuffer.getData
-    @transient val width = vertex.raster.getWidth
-    @transient val height = vertex.raster.getHeight
+    @transient val width = raster.getWidth
+    @transient val height = raster.getHeight
     // Store the edge values in the raster before processing it so we can compare
     // after processing to see which edge pixels changed
     @transient val origTopEdgeValues: Array[Float] = new Array[Float](width)
@@ -814,12 +1023,12 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     @transient val origRightEdgeValues: Array[Float] = new Array[Float](height)
     @transient val preStart: Double = System.nanoTime()
     for (px <- 0 until width) {
-      origTopEdgeValues(px) = vertex.raster.getSampleFloat(px, 0, totalCostBand)
-      origBottomEdgeValues(px) = vertex.raster.getSampleFloat(px, height-1, totalCostBand)
+      origTopEdgeValues(px) = raster.getSampleFloat(px, 0, totalCostBand)
+      origBottomEdgeValues(px) = raster.getSampleFloat(px, height-1, totalCostBand)
     }
     for (py <- 0 until height) {
-      origLeftEdgeValues(py) = vertex.raster.getSampleFloat(0, py, totalCostBand)
-      origRightEdgeValues(py) = vertex.raster.getSampleFloat(width-1, py, totalCostBand)
+      origLeftEdgeValues(py) = raster.getSampleFloat(0, py, totalCostBand)
+      origRightEdgeValues(py) = raster.getSampleFloat(width-1, py, totalCostBand)
     }
     for (cp <- changes.getAllPoints) {
       if (cp.px == 0) {
@@ -836,64 +1045,92 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       }
     }
     @transient val preProcessingTime: Double = System.nanoTime() - preStart
-    @transient var lastQueueLen = queue.size
+//    @transient var lastQueueLen = queue.size
     @transient var totalEnqueue: Double = 0.0
     @transient var totalDequeue: Double = 0.0
     @transient var maxHeapSize: Int = 0
     @transient var counter: Long = 0L
-    while (!queue.isEmpty) {
-      //    while (queue.nonEmpty) {
-      if (queue.size > maxHeapSize) {
-        maxHeapSize = queue.size
-      }
-      counter += 1
-      @transient var t0 = System.nanoTime()
-//      val currPoint: CostPoint = queue.remove().asInstanceOf[CostPoint]
-      @transient val currPoint = queue.poll()
-//      val currPoint = queue.dequeue
-//      val currPoint = queue.head
-//      queue = queue.tail
-      totalDequeue = totalDequeue + (System.nanoTime() - t0)
-      @transient val currTotalCost = vertex.raster.getSampleFloat(currPoint.px, currPoint.py, totalCostBand)
-//      if (currPoint.cost <= currTotalCost || currTotalCost.isNaN) {
-      if (isValueSmaller(currPoint.cost, currTotalCost)) {
-        vertex.raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.cost)
-        // In the vertex data, set the point's cost to the new smaller value
-        //        vertex.raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.cost)
-        // Since this point has a new cost, check to see if the cost to each
-        // of its neighbors is smaller than the current cost assigned to those
-        // neighbors. If so, add those neighbor points to the queue.
-        for (metadata <- neighborMetadata8Band) {
-//        for (bandIndex <- 0 until neighborMetadata8Band.length) {
-          @transient val pxNeighbor: Short = (currPoint.px + metadata._1).toShort
-          @transient val pyNeighbor: Short = (currPoint.py + metadata._2).toShort
-          if (pxNeighbor >= 0 && pxNeighbor < width && pyNeighbor >= 0 && pyNeighbor < height) {
-            @transient val currNeighborTotalCost = vertex.raster.getSampleFloat(pxNeighbor, pyNeighbor, totalCostBand)
-            @transient val directionBand: Short = metadata._3.toShort
-            // Compute the cost increase which is the sum of the distance from the
-            // source pixel center point to the neighbor pixel center point.
-            @transient val sourcePixelCost = vertex.raster.getSampleFloat(currPoint.px, currPoint.py, directionBand)
-            @transient val neighborPixelCost = vertex.raster.getSampleFloat(pxNeighbor, pyNeighbor, directionBand)
-            if (neighborPixelCost.isNaN) {
-              // If the cost to traverse the neighbor is NaN (unreachable), and no
-              // total cost has yet been assigned to the neighbor (PositiveInfinity),
-              // then set the neighbor's total cost to NaN since it will never be
-              // reachable.
+
+    // Set up variables used for calculating great circle distances of pixels
+    @transient val tile: TMSUtils.Tile = TMSUtils.tileid(tileId, zoom)
+
+    @transient val o: LatLng = new LatLng(0, 0)
+    @transient val n: LatLng = new LatLng(res, 0)
+    @transient val pixelHeightM: Double = LatLng.calculateGreatCircleDistance(o, n)
+
+//    @transient val startPx: Double = tile.tx * width
+//    // since Rasters have their UL as 0,0, just tile.ty * tileSize does not work
+//    @transient val startPy: Double = (tile.ty * height) + height - 1
+
+//    @transient val lonStart: Double = startPx * res - 180.0
+//    @transient val latStart: Double = startPy * res - 90.0
+//
+//    @transient val lonNext: Double = lonStart + res
+//    @transient val latNext: Double = latStart + res
+//    o.setLat(latStart)
+//    o.setLng(lonStart)
+//    n.setLat(latNext)
+//    n.setLng(lonNext)
+
+    // Process the queue of changed points until it is empty
+    breakable {
+      while (!queue.isEmpty) {
+        //    while (queue.nonEmpty) {
+        if (queue.size > maxHeapSize) {
+          maxHeapSize = queue.size
+        }
+        counter += 1
+        @transient var t0 = System.nanoTime()
+        @transient val currPoint = queue.poll()
+
+        // Stop processing points as soon as the cost goes beyond the max cost
+//        if (currPoint.cost > maxCost) {
+//          break
+//        }
+        totalDequeue = totalDequeue + (System.nanoTime() - t0)
+        @transient val currTotalCost = raster.getSampleFloat(currPoint.px, currPoint.py, totalCostBand)
+        //      if (currPoint.cost <= currTotalCost || currTotalCost.isNaN) {
+        if (isValueSmaller(currPoint.cost, currTotalCost)) {
+          raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.cost)
+          // In the vertex data, set the point's cost to the new smaller value
+          //        vertex.raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.cost)
+          // Since this point has a new cost, check to see if the cost to each
+          // of its neighbors is smaller than the current cost assigned to those
+          // neighbors. If so, add those neighbor points to the queue.
+          for (metadata <- neighborMetadata8Band) {
+            @transient val pxNeighbor: Short = (currPoint.px + metadata._1).toShort
+            @transient val pyNeighbor: Short = (currPoint.py + metadata._2).toShort
+            if (pxNeighbor >= 0 && pxNeighbor < width && pyNeighbor >= 0 && pyNeighbor < height) {
+              @transient val currNeighborTotalCost = raster.getSampleFloat(pxNeighbor, pyNeighbor, totalCostBand)
+              @transient val directionBand: Short = metadata._3.toShort
+              // Compute the cost increase which is the sum of the distance from the
+              // source pixel center point to the neighbor pixel center point.
+              @transient val sourcePixelCost = getPixelCost(tileId, zoomLevel, currPoint.px, currPoint.py,
+                metadata._3, res, pixelHeightM, raster)
+              @transient val neighborPixelCost = getPixelCost(tileId, zoomLevel, pxNeighbor, pyNeighbor,
+                metadata._3, res, pixelHeightM, raster)
+//              @transient val sourcePixelCost = vertex.raster.getSampleFloat(currPoint.px, currPoint.py, directionBand)
+//              @transient val neighborPixelCost = vertex.raster.getSampleFloat(pxNeighbor, pyNeighbor, directionBand)
+              if (neighborPixelCost.isNaN) {
+                // If the cost to traverse the neighbor is NaN (unreachable), and no
+                // total cost has yet been assigned to the neighbor (PositiveInfinity),
+                // then set the neighbor's total cost to NaN since it will never be
+                // reachable.
 //              if (currNeighborTotalCost == Float.PositiveInfinity) {
-              vertex.raster.setSample(pxNeighbor, pyNeighbor, totalCostBand, neighborPixelCost)
+                raster.setSample(pxNeighbor, pyNeighbor, totalCostBand, neighborPixelCost)
 //              }
-            }
-            else {
-              @transient val costIncrease = sourcePixelCost * 0.5f + neighborPixelCost * 0.5f
-              @transient val newNeighborCost = currPoint.cost + costIncrease
-              if (isValueSmaller(newNeighborCost, currNeighborTotalCost)) {
+              }
+              else {
+                @transient val costIncrease = sourcePixelCost * 0.5f + neighborPixelCost * 0.5f
+                @transient val newNeighborCost = currPoint.cost + costIncrease
+                if (isValueSmaller(newNeighborCost, currNeighborTotalCost)) {
 //              if (newNeighborCost < currNeighborTotalCost || currNeighborTotalCost.isNaN) {
-                @transient val neighborPoint = new CostPoint(pxNeighbor, pyNeighbor, newNeighborCost)
-                t0 = System.nanoTime()
-                queue.add(neighborPoint)
-//                queue.enqueue(neighborPoint)
-                totalEnqueue = totalEnqueue + (System.nanoTime() - t0)
+                  @transient val neighborPoint = new CostPoint(pxNeighbor, pyNeighbor, newNeighborCost)
+                  t0 = System.nanoTime()
+                  queue.add(neighborPoint)
+                  totalEnqueue = totalEnqueue + (System.nanoTime() - t0)
 //                vertex.raster.setSample(pxNeighbor, pyNeighbor, totalCostBand, newNeighborCost)
+                }
               }
             }
           }
@@ -905,14 +1142,14 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     @transient val t0 = System.nanoTime()
     // Find edge pixels that have changed so we know how to send messages
     for (px <- 0 until width) {
-      @transient val currTopCost: Float = vertex.raster.getSampleFloat(px, 0, totalCostBand)
+      @transient val currTopCost: Float = raster.getSampleFloat(px, 0, totalCostBand)
       @transient val origTopValue = origTopEdgeValues(px)
       if (isValueSmaller(currTopCost, origTopValue)) {
 //      if (currTopCost < origTopValue || origTopValue.isNaN) {
 //        println(px + ", 0 orig = " + origTopEdgeValues(px) + ", new = " + currCost)
         newChanges.addPoint(new CostPoint(px.toShort, 0, currTopCost))
       }
-      @transient val currBottomCost = vertex.raster.getSampleFloat(px, height-1, totalCostBand)
+      @transient val currBottomCost = raster.getSampleFloat(px, height-1, totalCostBand)
       @transient val origBottomValue = origBottomEdgeValues(px)
       if (isValueSmaller(currBottomCost, origBottomValue)) {
 //      if (currBottomCost < origBottomValue || origBottomValue.isNaN) {
@@ -922,14 +1159,14 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     }
     // Don't process corner pixels again (already handled as part of top/bottom
     for (py <- 1 until height-1) {
-      @transient val currLeftCost: Float = vertex.raster.getSampleFloat(0, py, totalCostBand)
+      @transient val currLeftCost: Float = raster.getSampleFloat(0, py, totalCostBand)
       @transient val origLeftValue = origLeftEdgeValues(py)
       if (isValueSmaller(currLeftCost, origLeftValue)) {
 //      if (currLeftCost < origLeftValue || origLeftValue.isNaN) {
 //        println("0, " + py + " orig = " + origLeftEdgeValues(py) + ", new = " + currCost)
         newChanges.addPoint(new CostPoint(0, py.toShort, currLeftCost))
       }
-      @transient val currRightCost = vertex.raster.getSampleFloat(width-1, py, totalCostBand)
+      @transient val currRightCost = raster.getSampleFloat(width-1, py, totalCostBand)
       @transient val origRightValue = origRightEdgeValues(py)
       if (isValueSmaller(currRightCost, origRightValue)) {
 //      if (currRightCost < origRightValue || origRightValue.isNaN) {
@@ -948,7 +1185,55 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     // After all the points have been processed, assign the local changedPoints
     // list to the vertex change points so it is available in the sendMsg
     // method later.
-    vertex.changedPoints = newChanges
+    if (newChanges.isEmpty)
+    {
+      log.warn("PROCESS VERTICES for " + TMSUtils.tileid(tileId, zoom) + " newChanges is empty")
+    }
+    else {
+      log.warn("PROCESS VERTICES for " + TMSUtils.tileid(tileId, zoom) + " newChanges contains " + newChanges.size)
+    }
+    newChanges
+  }
+
+  // This method should only be called if the raster has one cost band. This method
+  // computes the horizontal, vertical or diagonal cost to traverse this pixel based
+  // of the direction passed in and the lat/lon anchor of the tile. It uses
+  // great circle distance for the computation.
+  private def getPixelCost(tileId: Long, zoom: Int, px: Int, py: Int, direction: Byte,
+                           res: Double, pixelHeightM: Double, raster: Raster): Float =
+  {
+    @transient val tile: TMSUtils.Tile = TMSUtils.tileid(tileId, zoom)
+    @transient val startPx: Double = tile.tx * raster.getWidth
+    // since Rasters have their UL as 0,0, just tile.ty * tileSize does not work
+    @transient val startPy: Double = (tile.ty * raster.getHeight) + raster.getHeight - 1
+
+    @transient val lonStart: Double = startPx * res - 180.0
+    @transient val latStart: Double = startPy * res - 90.0
+
+    @transient val lonNext: Double = lonStart + res
+    @transient val latNext: Double = latStart + res
+    val distanceMeters =
+      if (direction == DirectionBand.DOWN_BAND || direction == DirectionBand.UP_BAND) {
+        // Vertical direction
+        @transient val o: LatLng = new LatLng(latStart, lonStart)
+        @transient val n: LatLng = new LatLng(latNext, lonStart)
+        LatLng.calculateGreatCircleDistance(o, n)
+      }
+      else if (direction == DirectionBand.LEFT_BAND || direction == DirectionBand.RIGHT_BAND)
+      {
+        // Horizontal direction
+        @transient val o: LatLng = new LatLng(latStart, lonStart)
+        @transient val n: LatLng = new LatLng(latStart, lonNext)
+        LatLng.calculateGreatCircleDistance(o, n)
+      }
+      else {
+        // Diagonal direction
+        @transient val o: LatLng = new LatLng(latStart, lonStart)
+        @transient val n: LatLng = new LatLng(latNext, lonNext)
+        LatLng.calculateGreatCircleDistance(o, n)
+      }
+    val pixelValue = raster.getSampleFloat(px, py, 0)
+    (pixelValue * distanceMeters).toFloat
   }
 
   // Returns true if newValue < origValue. If origValue is NaN, return true
@@ -1000,8 +1285,8 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       throw new Exception(s"Missing required argument '$name'")
     }
 
-    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
+    conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
+    conf.set("spark.shuffle.memoryFraction", "0.30") // set the shuffle higher
 
     if (job.hasSetting(CostDistanceDriver.SOURCE_POINTS_ARG)) {
       val pointsArg = job.getSetting(CostDistanceDriver.SOURCE_POINTS_ARG)
@@ -1066,14 +1351,12 @@ class CostPoint(@transient var px: Short, @transient var py: Short, @transient v
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
-//    println("writing CostPoint")
     out.writeShort(px)
     out.writeShort(py)
     out.writeFloat(cost)
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-//    println("reading CostPoint")
     px = in.readShort()
     py = in.readShort()
     cost = in.readFloat()
@@ -1101,8 +1384,15 @@ class CostPoint(@transient var px: Short, @transient var py: Short, @transient v
 
 // Stores a list of points around the edges of a tile that changed while costs
 // are computed for a tile.
-class ChangedPoints extends Externalizable with KryoSerializable {
+class ChangedPoints(var initial: Boolean) extends Externalizable with KryoSerializable {
   private val changes = scala.collection.mutable.HashMap.empty[(Short, Short), CostPoint]
+
+  // This constructor is only used for deserialization, and the correct
+  // value for the data members overwrites the default used here as
+  // the deserializer executes
+  def this() = {
+    this(true)
+  }
 
   // Adds a changed pixel. If the pixel already exists, it only adds the passed
   // in point if its cost is less than the point already stored.
@@ -1125,6 +1415,10 @@ class ChangedPoints extends Externalizable with KryoSerializable {
     changes.values.toList
   }
 
+  def isInitial: Boolean = {
+    return initial
+  }
+
   def isEmpty: Boolean = {
     changes.isEmpty
   }
@@ -1143,7 +1437,7 @@ class ChangedPoints extends Externalizable with KryoSerializable {
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
-//    println("writing ChangedPoints")
+    out.writeBoolean(initial)
     out.writeInt(changes.size)
     val iter = changes.iterator
     while (iter.hasNext) {
@@ -1155,7 +1449,7 @@ class ChangedPoints extends Externalizable with KryoSerializable {
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-//    println("reading ChangedPoints")
+    initial = in.readBoolean()
     val length = in.readInt
     for (i <- 0 until length) {
 //      val px = in.readShort()
@@ -1190,28 +1484,34 @@ class ChangedPoints extends Externalizable with KryoSerializable {
 }
 
 //@SerialVersionUID(-7588980448693010399L)
+// TODO: Remove tileid and zoom from VertexType after debugging!!!
 class VertexType(@transient var raster: WritableRaster,
-                 @transient var changedPoints: ChangedPoints)
+                 @transient var changedPoints: ChangedPoints,
+                  @transient var tileid: Long,
+                  @transient var zoom: Int)
   extends Externalizable with KryoSerializable {
 
   def this() {
-    this(null, null)
+    this(null, null, -1, -1)
   }
 
   @throws(classOf[IOException])
   override def writeExternal(out: ObjectOutput): Unit = {
-//    println("writing VertexType")
-    if (changedPoints == null) {
-      out.writeInt(0)
-    }
-    else {
-      out.writeInt(changedPoints.size)
-      for (cp <- changedPoints.getAllPoints) {
-        out.writeShort(cp.px)
-        out.writeShort(cp.py)
-        out.writeFloat(cp.cost)
-      }
-    }
+    out.writeLong(tileid)
+    out.writeInt(zoom)
+//    if (changedPoints == null) {
+//      out.writeInt(-1)
+//    }
+//    else {
+    out.writeBoolean(changedPoints.isInitial)
+    changedPoints.writeExternal(out)
+//      out.writeInt(changedPoints.size)
+//      for (cp <- changedPoints.getAllPoints) {
+//        out.writeShort(cp.px)
+//        out.writeShort(cp.py)
+//        out.writeFloat(cp.cost)
+//      }
+//    }
     val rasterBytes: Array[Byte] = RasterWritable.toBytes(raster, null)
     out.writeInt(rasterBytes.length)
     out.write(rasterBytes)
@@ -1219,15 +1519,20 @@ class VertexType(@transient var raster: WritableRaster,
 
   @throws(classOf[IOException])
   override def readExternal(in: ObjectInput): Unit = {
-//    println("reading VertexType")
-    changedPoints = new ChangedPoints
-    val changedPointCount = in.readInt()
-    for (i <- 0 until changedPointCount) {
-      val px = in.readShort()
-      val py = in.readShort()
-      val cost = in.readFloat()
-      changedPoints.addPoint(new CostPoint(px, py, cost))
-    }
+    tileid = in.readLong()
+    zoom = in.readInt()
+    val initial = in.readBoolean()
+    changedPoints = new ChangedPoints()
+    changedPoints.readExternal(in)
+//    changedPoints = new ChangedPoints(initial)
+//    val changedPointCount = in.readInt()
+//    println("num changed points is " + changedPointCount)
+//    for (i <- 0 until changedPointCount) {
+//      val px = in.readShort()
+//      val py = in.readShort()
+//      val cost = in.readFloat()
+//      changedPoints.addPoint(new CostPoint(px, py, cost))
+//    }
     val byteCount: Int = in.readInt()
     val rasterBytes: Array[Byte] = new Array[Byte](byteCount)
     var offset: Int = 0
@@ -1236,24 +1541,26 @@ class VertexType(@transient var raster: WritableRaster,
   }
 
   override def write(kryo: Kryo, output: Output): Unit = {
-    if (changedPoints == null) {
-      output.writeInt(0)
-    }
-    else {
+//    if (changedPoints == null) {
+//      output.writeInt(0)
+//    }
+//    else {
+      output.writeBoolean(changedPoints.isInitial)
       output.writeInt(changedPoints.size)
       for (cp <- changedPoints.getAllPoints) {
         output.writeShort(cp.px)
         output.writeShort(cp.py)
         output.writeFloat(cp.cost)
       }
-    }
+//    }
     val rasterBytes: Array[Byte] = RasterWritable.toBytes(raster, null)
     output.writeInt(rasterBytes.length)
     output.write(rasterBytes)
   }
 
   override def read(kryo: Kryo, input: Input): Unit = {
-    changedPoints = new ChangedPoints
+    val initial = input.readBoolean()
+    changedPoints = new ChangedPoints(initial)
     val changedPointCount = input.readInt()
     for (i <- 0 until changedPointCount) {
       val px = input.readShort()
