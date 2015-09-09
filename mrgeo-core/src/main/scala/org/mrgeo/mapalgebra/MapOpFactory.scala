@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier
 import org.apache.spark.Logging
 import org.clapper.classutil.ClassInfo
 import org.mrgeo.core.MrGeoProperties
+import org.mrgeo.mapalgebra.parser.ParserNode
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
@@ -16,34 +17,47 @@ import scala.reflect.runtime.universe._
 
 
 object MapOpFactory extends Logging {
-  val functions = Map.empty[String, MapOp]
+  val functions = mutable.HashMap.empty[String, MapOpRegistrar]
 
-  def registerFunctions() = {
+  private def registerFunctions() = {
     val start = System.currentTimeMillis()
 
-    val mapops = decendants(classOf[MapOpHadoop]) getOrElse Set.empty
+    val mapops = decendants(classOf[MapOpRegistrar]) getOrElse Set.empty
 
     val time = System.currentTimeMillis() - start
 
     logInfo("Registering MapOps:")
-    for (mapop <- mapops) {
-      val i = 0
-      logInfo("  " + mapop)
-    }
 
-    logInfo("Registration toolk " + time + "ms")
+    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader)  // obtain runtime mirror
+
+    mapops.foreach(symbol => {
+      mirror.reflectModule(symbol.asModule).instance match {
+      case mapop:MapOpRegistrar =>
+        logInfo("  " + mapop)
+        mapop.register.foreach(op => {
+          functions.put(op, mapop)
+        })
+      case _ =>
+      }
+
+    })
+
+    logInfo("Registration took " + time + "ms")
   }
 
-  // create a mapop from a function name, called by MapOp("<name>")
-  def apply(name:String): MapOp = {
+  // create a mapop from a function name, called by MapOpFactory("<name>")
+  def apply(name:String, node:ParserNode): Option[MapOp] = {
     if (functions.isEmpty) {
       registerFunctions()
     }
-    null
+
+    functions.get(name) match {
+    case Some(mapop) => Option(mapop.apply(name, node))
+    case None => None
+    }
   }
 
-  def decendants(clazz: Class[_]) = {
-
+  private def decendants(clazz: Class[_]) = {
     val urls = {
       // get all the URLs from the classloader, and remove and .so files
       if (!MrGeoProperties.isDevelopmentMode) {
@@ -69,10 +83,6 @@ object MapOpFactory extends Logging {
     val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader)  // obtain runtime mirror
 
     Some(classes.map(clazz => {
-
-      if (clazz.getName == "org.mrgeo.mapalgebra.RasterizeVectorMapOp") {
-        println("foo")
-      }
       val sym = mirror.classSymbol(clazz)
 
       if (sym.companionSymbol != null) {
@@ -108,9 +118,5 @@ object MapOpFactory extends Logging {
 
     subs.filter(_.isConcrete)
   }
-}
-
-object TestMapOpFactory extends App {
-  val op = MapOpFactory("foo")
 }
 
