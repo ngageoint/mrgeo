@@ -64,30 +64,6 @@
           <skipTests>${skip.mrgeo.core.integration.tests}</skipTests>
         </configuration>
       </plugin>
-      <!--
-           <plugin>
-           <artifactId>maven-assembly-plugin</artifactId>
-           <version>2.3</version>
-           <configuration>
-           <finalName>${project.artifactId}-${project.parent.version}</finalName>
-           </configuration>
-           <executions>
-           <execution>
-           <id>side-by-side</id>
-           <phase>deploy</phase>
-           <goals>
-           <goal>single</goal>
-           </goals>
-           <configuration>
-           <descriptors>
-           <descriptor>src/main/assembly/dist.xml</descriptor>
-           </descriptors>
-           <appendAssemblyId>false</appendAssemblyId>
-           </configuration>
-           </execution>
-           </executions>
-           </plugin>
-      -->
       <plugin>
         <groupId>com.pyx4j</groupId>
         <artifactId>maven-junction-plugin</artifactId>

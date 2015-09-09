@@ -153,7 +153,7 @@
           <artifactId>maven-scala-plugin</artifactId>
           <version>${maven-scala.version}</version>
           <executions>
-              <!--
+            <!--
                  <execution>
                  <id>scala-compile</id>
                  <phase>process-resources</phase>
@@ -163,7 +163,7 @@
                  <goal>testCompile</goal>
                  </goals>
                  </execution>
-                 -->
+            -->
             <execution>
               <id>compile</id>
               <goals>
@@ -409,11 +409,10 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>{maven-source.version}</version>
+          <version>${maven-source.version}</version>
           <executions>
             <execution>
               <id>generate-sources</id>
-              <phase>deploy</phase>
               <goals>
                 <goal>jar</goal>
               </goals>
@@ -424,7 +423,6 @@
             </execution>
             <execution>
               <id>generate-test-sources</id>
-              <phase>deploy</phase>
               <goals>
                 <goal>test-jar</goal>
               </goals>
@@ -442,7 +440,6 @@
           <executions>
             <execution>
               <id>attach-javadocs</id>
-              <phase>deploy</phase>
               <goals>
                 <goal>jar</goal>
               </goals>
@@ -1817,6 +1814,28 @@
             <directory>${hadoop.config}</directory>
           </resource>
         </resources>
+      </build>
+    </profile>
+    <profile>
+      <id>generate-sources</id>
+      <build>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+        </plugin>
+      </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>generate-javadocs</id>
+      <build>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+        </plugin>
+      </plugins>
       </build>
     </profile>
     <profile>
