@@ -26,7 +26,8 @@ import org.mrgeo.featurefilter.FeatureFilter;
 import org.mrgeo.featurefilter.NumericColumnFeatureFilter;
 import org.mrgeo.featurefilter.TextColumnFeatureFilter;
 import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +74,7 @@ public class FilterByColumnMapOp extends FeatureFilterMapOp
   }
   
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
     if (children.size() != 4 && children.size() != 5 && children.size() != 6)

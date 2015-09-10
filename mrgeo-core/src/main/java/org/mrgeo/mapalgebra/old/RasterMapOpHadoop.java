@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.aggregators.MeanAggregator;
@@ -22,6 +22,7 @@ import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
+import org.mrgeo.mapalgebra.OutputProducer;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
@@ -40,18 +41,18 @@ import java.io.IOException;
  * Please refer to javadocs for those interfaces to determine if a subclassed MapOp
  * should implement them.
  */
-public abstract class RasterMapOp extends MapOpHadoop implements OutputProducer
+public abstract class RasterMapOpHadoop extends MapOpHadoop implements OutputProducer
 {
   public static MrsImagePyramid flushRasterMapOpOutput(MapOpHadoop op, int argumentNumber)
       throws IOException, JobFailedException, JobCancelledException
   {
-    if (!(op instanceof RasterMapOp))
+    if (!(op instanceof RasterMapOpHadoop))
     {
       throw new IllegalArgumentException("Expected raster input data for argument " +
           argumentNumber);
     }
 
-    RasterMapOp rasterOp = (RasterMapOp)op;
+    RasterMapOpHadoop rasterOp = (RasterMapOpHadoop)op;
     // if our source is a file, then use it directly.
     if (rasterOp.getOutputName() == null)
     {
@@ -159,9 +160,9 @@ public abstract class RasterMapOp extends MapOpHadoop implements OutputProducer
    * results or temporary variables involved in computation.
    */
   @Override
-  public RasterMapOp clone()
+  public RasterMapOpHadoop clone()
   {
-    final RasterMapOp result = (RasterMapOp) super.clone();
+    final RasterMapOpHadoop result = (RasterMapOpHadoop) super.clone();
     result._output = null;
     return result;
   }

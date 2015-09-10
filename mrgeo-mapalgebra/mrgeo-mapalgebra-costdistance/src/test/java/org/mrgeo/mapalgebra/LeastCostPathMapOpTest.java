@@ -8,8 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
-import org.mrgeo.mapalgebra.parser.ParserAdapterFactory;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterFactoryHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.test.LocalRunnerTest;
@@ -24,7 +24,7 @@ public class LeastCostPathMapOpTest extends LocalRunnerTest
   private static final String usage =
       "LeastCostPath takes the following arguments ([cost zoom level], cost raster, destination points";
 
-  private ParserAdapter parser;
+  private ParserAdapterHadoop parser;
 
 //  public class TestMapOpFactory implements MapOpFactory
 //  {
@@ -56,7 +56,7 @@ public class LeastCostPathMapOpTest extends LocalRunnerTest
   @Before
   public void setup()
   {
-    parser = ParserAdapterFactory.createParserAdapter();
+    parser = ParserAdapterFactoryHadoop.createParserAdapter();
     parser.initialize();
     parser.addFunction("LeastCostPath");
     parser.initializeForTesting();

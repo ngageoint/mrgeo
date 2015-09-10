@@ -1050,9 +1050,8 @@ public static VectorDataProvider getVectorDataProvider(final String name,
   return getVectorDataProvider(name, accessMode, getBasicConfig(), providerProperties);
 }
 
-public static VectorDataProvider getVectorDataProvider(final Configuration conf,
-    final String name,
-    AccessMode accessMode) throws DataProviderNotFound
+public static VectorDataProvider getVectorDataProvider( final String name,
+    AccessMode accessMode, final Configuration conf) throws DataProviderNotFound
 {
   return getVectorDataProvider(name, accessMode, conf,
       loadProviderPropertiesFromConfig(conf));

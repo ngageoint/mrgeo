@@ -19,7 +19,7 @@ import org.apache.hadoop.fs.Path;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
-import org.mrgeo.mapalgebra.MapOpFactoryHadoop;
+import org.mrgeo.mapalgebra.old.MapOpFactoryHadoop;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.LocalRunnerTest;

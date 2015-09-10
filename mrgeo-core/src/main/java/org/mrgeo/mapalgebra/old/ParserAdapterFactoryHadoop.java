@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-
-import java.io.IOException;
-
-public interface ResourceMapOpLoader
+public class ParserAdapterFactoryHadoop
 {
-  public MapOpHadoop loadMapOpFromResource(String resourceName,
-                                     ProviderProperties providerProperties) throws IOException;
+  public static ParserAdapterHadoop createParserAdapter()
+  {
+    return new JexlParserAdapterHadoop();
+  }
 }

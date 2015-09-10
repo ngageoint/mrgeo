@@ -8,7 +8,9 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -28,7 +30,7 @@ public class LeastCostPathMapOp extends VectorMapOp
   public void build(Progress p) throws IOException, JobFailedException, JobCancelledException
   {
     String destPoints = null;
-    RasterMapOp inputOp = (RasterMapOp)_inputs.get(0);
+    RasterMapOpHadoop inputOp = (RasterMapOpHadoop)_inputs.get(0);
     if (inputOp.getOutputName() == null)
     {
       throw new IllegalArgumentException("Invalid raster input to LeastCostPath. The cost raster has no output name.");
@@ -77,7 +79,7 @@ public class LeastCostPathMapOp extends VectorMapOp
   {
     if (_inputs.size() == 0)
     {
-      if (!(n instanceof RasterMapOp))
+      if (!(n instanceof RasterMapOpHadoop))
       {
         throw new IllegalArgumentException("The cost argument must be a raster.");
       }
@@ -91,7 +93,7 @@ public class LeastCostPathMapOp extends VectorMapOp
   }
    
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
     

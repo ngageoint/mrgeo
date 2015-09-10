@@ -17,7 +17,9 @@ package org.mrgeo.mapalgebra;
 
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -65,7 +67,7 @@ public class CropRasterMapOp extends RenderedImageMapOp implements BoundsCalcula
   @Override
   public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
-    if (!(n instanceof RasterMapOp))
+    if (!(n instanceof RasterMapOpHadoop))
     {
       throw new IllegalArgumentException("Only raster inputs are supported.");
     }
@@ -128,7 +130,7 @@ public class CropRasterMapOp extends RenderedImageMapOp implements BoundsCalcula
 
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
 

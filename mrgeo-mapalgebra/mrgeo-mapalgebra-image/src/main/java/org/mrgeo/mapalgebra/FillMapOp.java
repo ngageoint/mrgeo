@@ -25,7 +25,9 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.FillRasterDriver;
 import org.mrgeo.mapreduce.job.JobCancelledException;
@@ -38,14 +40,14 @@ import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FillMapOp extends RasterMapOp implements InputsCalculator, BoundsCalculator
+public class FillMapOp extends RasterMapOpHadoop implements InputsCalculator, BoundsCalculator
 {
   private static final Logger log = LoggerFactory.getLogger(FillMapOp.class);
 
   private Bounds bounds = null;
   private String filltype = CropRasterOpImage.FAST;
 
-  private RasterMapOp source = null;
+  private RasterMapOpHadoop source = null;
   private double fill = Double.NaN;
 
   public FillMapOp()
@@ -62,11 +64,11 @@ public class FillMapOp extends RasterMapOp implements InputsCalculator, BoundsCa
   {
     if (source == null)
     {
-      if (!(n instanceof RasterMapOp))
+      if (!(n instanceof RasterMapOpHadoop))
       {
         throw new IllegalArgumentException("Only raster inputs are supported for the source input.");
       }
-      source = (RasterMapOp)n;
+      source = (RasterMapOpHadoop)n;
       _inputs.add(source);
     }
   }
@@ -118,7 +120,7 @@ public class FillMapOp extends RasterMapOp implements InputsCalculator, BoundsCa
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     final Vector<ParserNode> result = new Vector<ParserNode>();
 
@@ -182,7 +184,7 @@ public class FillMapOp extends RasterMapOp implements InputsCalculator, BoundsCa
       p.starting();
     }
 
-    final MrsImagePyramid sourcepyramid = RasterMapOp.flushRasterMapOpOutput(source, 0);
+    final MrsImagePyramid sourcepyramid = RasterMapOpHadoop.flushRasterMapOpOutput(source, 0);
 
     log.info("FillMapOp output path: " + _outputName.toString());
 
@@ -206,7 +208,7 @@ public class FillMapOp extends RasterMapOp implements InputsCalculator, BoundsCa
 
   }
 
-  private void getFillType(final Vector<ParserNode> children, final int offset, final ParserAdapter parser)
+  private void getFillType(final Vector<ParserNode> children, final int offset, final ParserAdapterHadoop parser)
   {
     filltype = parseChildString(children.get(offset), "fill type", parser);
 

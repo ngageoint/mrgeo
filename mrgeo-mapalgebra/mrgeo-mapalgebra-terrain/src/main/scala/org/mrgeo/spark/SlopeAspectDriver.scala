@@ -191,7 +191,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
     val metadata: MrsImagePyramidMetadata = ip.getMetadataReader.read
     val zoom = metadata.getMaxZoomLevel
     val tilesize = metadata.getTilesize
-    val pyramid = SparkUtils.loadMrsPyramid(ip, zoom, context)
+    val pyramid = SparkUtils.loadMrsPyramidRDD(ip, zoom, context)
 
     val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(metadata.getBounds), zoom, tilesize)
 

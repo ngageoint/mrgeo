@@ -23,6 +23,8 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapreduce.OpChainDriverOld;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.job.JobCancelledException;
@@ -44,7 +46,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class RenderedImageMapOp extends RasterMapOp implements DeferredExecutor, TileClusterInfoConsumer
+public class RenderedImageMapOp extends RasterMapOpHadoop implements DeferredExecutor, TileClusterInfoConsumer
 {
 private static final Logger log = LoggerFactory.getLogger(RenderedImageMapOp.class);
 
@@ -59,7 +61,7 @@ private static final Logger log = LoggerFactory.getLogger(RenderedImageMapOp.cla
   @Override
   public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
-    if (!(n instanceof RasterMapOp))
+    if (!(n instanceof RasterMapOpHadoop))
     {
       throw new IllegalArgumentException("Only raster inputs are supported, got a " + n.getClass().getName());
     }
@@ -199,7 +201,7 @@ private Set<String> getDependencies(RenderedImageMapOp rop)
     {
       for (MapOpHadoop op : _inputs)
       {
-        jaiParams.addSource(((RasterMapOp)op).getRasterOutput());
+        jaiParams.addSource(((RasterMapOpHadoop)op).getRasterOutput());
       }
     }
     if (includeFunctionNameInParameters())

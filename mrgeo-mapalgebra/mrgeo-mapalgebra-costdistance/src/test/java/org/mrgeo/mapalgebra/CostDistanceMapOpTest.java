@@ -8,8 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
-import org.mrgeo.mapalgebra.parser.ParserAdapterFactory;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterFactoryHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.test.LocalRunnerTest;
@@ -25,12 +25,12 @@ public class CostDistanceMapOpTest extends LocalRunnerTest
   private static final String usage = "CostDistance takes the following arguments " + 
       "(source point, [friction zoom level], friction raster, [maxCost])";
 
-  private ParserAdapter parser;
+  private ParserAdapterHadoop parser;
 
   @Before
   public void setup()
   {
-    parser = ParserAdapterFactory.createParserAdapter();
+    parser = ParserAdapterFactoryHadoop.createParserAdapter();
     parser.initialize();
     parser.addFunction("CostDistance");
     parser.initializeForTesting();

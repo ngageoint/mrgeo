@@ -15,6 +15,7 @@
 
 package org.mrgeo.mapalgebra;
 
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;

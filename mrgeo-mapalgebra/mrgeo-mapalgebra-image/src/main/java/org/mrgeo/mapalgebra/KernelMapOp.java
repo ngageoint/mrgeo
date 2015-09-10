@@ -3,7 +3,9 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -16,7 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-public class KernelMapOp extends RasterMapOp implements InputsCalculator
+public class KernelMapOp extends RasterMapOpHadoop implements InputsCalculator
 {
 final public static String Gaussian = "gaussian";
 final public static String Laplacian = "laplacian";
@@ -34,7 +36,7 @@ public static String[] register()
 @Override
 public void addInput(MapOpHadoop n) throws IllegalArgumentException
 {
-  if (!(n instanceof RasterMapOp))
+  if (!(n instanceof RasterMapOpHadoop))
   {
     throw new IllegalArgumentException("Can only apply kernel to raster inputs");
   }
@@ -58,7 +60,7 @@ public void build(Progress p) throws IOException, JobFailedException, JobCancell
     String input = null;
     for (MapOpHadoop in : _inputs)
     {
-      input = ((RasterMapOp) (in)).getOutputName();
+      input = ((RasterMapOpHadoop) (in)).getOutputName();
     }
 
     String output = getOutputName();
@@ -82,7 +84,7 @@ public void build(Progress p) throws IOException, JobFailedException, JobCancell
 }
 
 @Override
-public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapter parser)
+public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapterHadoop parser)
 {
   if (children.size() < 3)
   {

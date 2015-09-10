@@ -16,6 +16,7 @@
 package org.mrgeo.mapalgebra;
 
 import org.mrgeo.featurefilter.FeatureFilter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.progress.Progress;
 
 import java.io.IOException;

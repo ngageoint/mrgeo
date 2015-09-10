@@ -17,7 +17,7 @@ package org.mrgeo.mapalgebra;
 
 import java.util.Vector;
 
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.opimage.RawComparatorDescriptor;
 
@@ -56,7 +56,7 @@ public class RawComparatorMapOp extends RenderedImageMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
     if (children.size() != 2)

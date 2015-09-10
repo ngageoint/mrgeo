@@ -23,6 +23,9 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.mapalgebra.old.MapAlgebraParser;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -995,7 +998,7 @@ public class MapAlgebraExecutionerTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testSetRoot()
   {
-    final MapOpHadoop root = new RasterMapOp()
+    final MapOpHadoop root = new RasterMapOpHadoop()
     {
       @Override
       public void addInput(MapOpHadoop n) throws IllegalArgumentException

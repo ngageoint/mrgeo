@@ -17,7 +17,9 @@ package org.mrgeo.mapalgebra;
 
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -30,7 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-public class MosaicMapOp extends RasterMapOp implements InputsCalculator
+public class MosaicMapOp extends RasterMapOpHadoop implements InputsCalculator
 {
   public static String[] register()
   {
@@ -40,7 +42,7 @@ public class MosaicMapOp extends RasterMapOp implements InputsCalculator
   @Override
   public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
-    if (!(n instanceof RasterMapOp))
+    if (!(n instanceof RasterMapOpHadoop))
     {
       throw new IllegalArgumentException("Can only mosaic raster inputs");
     }
@@ -60,7 +62,7 @@ public class MosaicMapOp extends RasterMapOp implements InputsCalculator
       int i = 0;
       for (MapOpHadoop input : _inputs)
       {
-        names[i++] = ((RasterMapOp) (input)).getOutputName();
+        names[i++] = ((RasterMapOpHadoop) (input)).getOutputName();
       }
       MosaicDriver.mosaic(names, getOutputName(), createConfiguration());
 
@@ -73,7 +75,7 @@ public class MosaicMapOp extends RasterMapOp implements InputsCalculator
   }
 
   @Override
-  public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapter parser)
+  public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapterHadoop parser)
   {
     if (children.size() < 2)
     {

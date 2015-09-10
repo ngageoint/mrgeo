@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 
 /**
  * Given a MapOp tree the Heuristic will estimate how long it will take to

@@ -25,7 +25,9 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -35,9 +37,9 @@ import org.mrgeo.progress.Progress;
 import java.io.IOException;
 import java.util.Vector;
 
-public class ChangeClassificationMapOp extends RasterMapOp
+public class ChangeClassificationMapOp extends RasterMapOpHadoop
 {
-  private RasterMapOp source = null;
+  private RasterMapOpHadoop source = null;
 
   private Classification classification;
   Aggregator aggregator = new MeanAggregator();
@@ -47,11 +49,11 @@ public class ChangeClassificationMapOp extends RasterMapOp
   {
     if (source == null)
     {
-      if (!(n instanceof RasterMapOp))
+      if (!(n instanceof RasterMapOpHadoop))
       {
         throw new IllegalArgumentException("Only raster inputs are supported for the source input.");
       }
-      source = (RasterMapOp)n;
+      source = (RasterMapOpHadoop)n;
       _inputs.add(n);
     }
   }
@@ -72,7 +74,7 @@ public class ChangeClassificationMapOp extends RasterMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     final Vector<ParserNode> result = new Vector<ParserNode>();
 
@@ -140,7 +142,7 @@ public class ChangeClassificationMapOp extends RasterMapOp
       p.starting();
     }
 
-    final MrsImagePyramid sourcepyramid = RasterMapOp.flushRasterMapOpOutput(source, 0);
+    final MrsImagePyramid sourcepyramid = RasterMapOpHadoop.flushRasterMapOpOutput(source, 0);
     
     MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(sourcepyramid.getName(),
         AccessMode.READ, getProviderProperties());

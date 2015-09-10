@@ -30,9 +30,9 @@ import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
-import org.mrgeo.mapalgebra.MapAlgebraParser;
-import org.mrgeo.mapalgebra.MapOpHadoop;
-import org.mrgeo.mapalgebra.RasterMapOp;
+import org.mrgeo.mapalgebra.old.MapAlgebraParser;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.ProgressHierarchy;
@@ -170,7 +170,7 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
       throw new JobFailedException(progress.getResult());
     }
 
-    if (line.hasOption("b") && (root instanceof RasterMapOp))
+    if (line.hasOption("b") && (root instanceof RasterMapOpHadoop))
     {
       System.out.println("Building pyramids...");
       BuildPyramidSpark.build(output, new MeanAggregator(), conf, providerProperties);

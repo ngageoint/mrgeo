@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +22,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
+import org.mrgeo.mapalgebra.*;
 import org.mrgeo.mapalgebra.parser.*;
 import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.rasterops.OpImageRegistrar;
@@ -66,7 +67,7 @@ public class MapAlgebraParser implements MapOpFactoryHadoop
   private ProviderProperties providerProperties;
   private String protectionLevel;
 
-  private ParserAdapter parser;
+  private ParserAdapterHadoop parser;
 
   public MapAlgebraParser()
   {
@@ -462,7 +463,7 @@ public class MapAlgebraParser implements MapOpFactoryHadoop
     // operations that read from multiple sources to the cached list.
     //cachedOps.add("slope");
 
-    parser = ParserAdapterFactory.createParserAdapter();
+    parser = ParserAdapterFactoryHadoop.createParserAdapter();
     parser.initialize();
 
     // register mapops

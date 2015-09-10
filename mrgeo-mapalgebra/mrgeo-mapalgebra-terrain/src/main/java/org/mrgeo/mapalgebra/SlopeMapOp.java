@@ -17,7 +17,9 @@ package org.mrgeo.mapalgebra;
 
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -30,7 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-public class SlopeMapOp extends RasterMapOp implements InputsCalculator
+public class SlopeMapOp extends RasterMapOpHadoop implements InputsCalculator
 {
 String units = "rad";
 
@@ -42,7 +44,7 @@ public static String[] register()
 @Override
 public void addInput(MapOpHadoop n) throws IllegalArgumentException
 {
-  if (!(n instanceof RasterMapOp))
+  if (!(n instanceof RasterMapOpHadoop))
   {
     throw new IllegalArgumentException("Can only run slope() on raster inputs");
   }
@@ -62,7 +64,7 @@ public void build(Progress p) throws IOException, JobFailedException, JobCancell
   // check that we haven't already calculated ourselves
   if (_output == null)
   {
-    String input = ((RasterMapOp) _inputs.get(0)).getOutputName();
+    String input = ((RasterMapOpHadoop) _inputs.get(0)).getOutputName();
 
     //final MrsImagePyramid sourcepyramid = RasterMapOp.flushRasterMapOpOutput(_inputs.get(0), 0);
     //String input = sourcepyramid.getName();
@@ -77,7 +79,7 @@ public void build(Progress p) throws IOException, JobFailedException, JobCancell
 }
 
 @Override
-public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapter parser)
+public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapterHadoop parser)
 {
   Vector<ParserNode> result = new Vector<ParserNode>();
 

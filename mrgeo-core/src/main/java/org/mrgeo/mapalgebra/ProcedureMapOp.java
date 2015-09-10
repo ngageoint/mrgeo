@@ -17,7 +17,8 @@ package org.mrgeo.mapalgebra;
 
 import java.util.Vector;
 
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 
 /**
@@ -39,7 +40,7 @@ public abstract class ProcedureMapOp extends MapOpHadoop
   }
 
   @Override
-  public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapter parser)
+  public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapterHadoop parser)
   {
     return children;
   }
