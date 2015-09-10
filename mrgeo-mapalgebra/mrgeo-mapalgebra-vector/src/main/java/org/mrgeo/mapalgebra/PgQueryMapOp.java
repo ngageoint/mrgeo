@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.Vector;
 
 import org.apache.hadoop.fs.Path;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.PgQueryDriver;
 import org.mrgeo.mapreduce.job.JobCancelledException;
@@ -88,7 +89,7 @@ public class PgQueryMapOp extends VectorMapOp
 
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
 

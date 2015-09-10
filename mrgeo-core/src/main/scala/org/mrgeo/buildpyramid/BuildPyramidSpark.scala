@@ -166,7 +166,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
       // if we have less than 1000 tiles total, we'll use the local buildpyramid
       if (tb.getWidth * tb.getHeight > 1000) {
-        val pyramid = SparkUtils.loadMrsPyramid(provider, fromlevel, context)
+        val pyramid = SparkUtils.loadMrsPyramidRDD(provider, fromlevel, context)
 
         val decimated: RDD[(TileIdWritable, RasterWritable)] = pyramid.map(tile => {
           val fromkey = tile._1

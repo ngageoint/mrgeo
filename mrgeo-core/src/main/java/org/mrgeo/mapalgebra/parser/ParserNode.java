@@ -54,6 +54,7 @@ public class ParserNode
     return children.get(index);
   }
 
+  public List<ParserNode> getChildren() { return children; }
   public void addChild(ParserNode child)
   {
     children.add(child);

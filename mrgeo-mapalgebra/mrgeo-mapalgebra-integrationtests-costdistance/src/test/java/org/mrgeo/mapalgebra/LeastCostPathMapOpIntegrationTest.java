@@ -16,6 +16,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.mapalgebra.old.MapAlgebraParser;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;

@@ -30,7 +30,7 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.mapalgebra.RasterMapOp;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.RenderedImageMapOp;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -244,7 +244,7 @@ public class OpChainDriverOld
       final ProviderProperties providerProperties)
       throws IOException, JobFailedException, JobCancelledException
   {
-    final RenderedImage rop = ((RasterMapOp)rimop).getRasterOutput();
+    final RenderedImage rop = ((RasterMapOpHadoop)rimop).getRasterOutput();
 
     run(rop, inputs, output, zoom, bounds, userConf, progress, protectionLevel,
         providerProperties);

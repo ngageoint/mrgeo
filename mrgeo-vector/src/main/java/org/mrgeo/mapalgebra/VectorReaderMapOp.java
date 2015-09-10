@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;

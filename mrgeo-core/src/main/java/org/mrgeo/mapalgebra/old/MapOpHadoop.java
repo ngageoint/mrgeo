@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
@@ -97,7 +96,7 @@ public abstract class MapOpHadoop implements Cloneable
    * @param parser
    * @return
    */
-  protected static double parseChildDouble(final ParserNode n, final String paramName, final ParserAdapter parser)
+  protected static double parseChildDouble(final ParserNode n, final String paramName, final ParserAdapterHadoop parser)
   {
     try
     {
@@ -129,7 +128,7 @@ public abstract class MapOpHadoop implements Cloneable
         + ". (try putting the value in double quotes)");
   }
 
-  protected static boolean isChildDouble(final ParserNode n, final ParserAdapter parser)
+  protected static boolean isChildDouble(final ParserNode n, final ParserAdapterHadoop parser)
   {
     try
     {
@@ -165,7 +164,7 @@ public abstract class MapOpHadoop implements Cloneable
    * @param parser
    * @return
    */
-  protected static int parseChildInt(final ParserNode n, final String paramName, final ParserAdapter parser)
+  protected static int parseChildInt(final ParserNode n, final String paramName, final ParserAdapterHadoop parser)
   {
     try
     {
@@ -197,7 +196,7 @@ public abstract class MapOpHadoop implements Cloneable
         + ". (try putting the value in double quotes)");
   }
 
-  protected static boolean isChildInt(final ParserNode n, final ParserAdapter parser)
+  protected static boolean isChildInt(final ParserNode n, final ParserAdapterHadoop parser)
   {
     try
     {
@@ -224,7 +223,7 @@ public abstract class MapOpHadoop implements Cloneable
     return false;
   }
 
-  protected static String parseChildString(final ParserNode n, final String paramName, final ParserAdapter parser)
+  protected static String parseChildString(final ParserNode n, final String paramName, final ParserAdapterHadoop parser)
   {
     
     try
@@ -238,7 +237,7 @@ public abstract class MapOpHadoop implements Cloneable
     }
   }
 
-  protected static String parseChildStringRaw(final ParserNode n, final String paramName, final ParserAdapter parser) throws ParserException
+  protected static String parseChildStringRaw(final ParserNode n, final String paramName, final ParserAdapterHadoop parser) throws ParserException
   {
     
     Object o = parser.evaluate(n);
@@ -564,7 +563,7 @@ public abstract class MapOpHadoop implements Cloneable
    * @return
    */
   public Vector<ParserNode> processChildren(final Vector<ParserNode> children,
-      final ParserAdapter parser)
+      final ParserAdapterHadoop parser)
   {
     return children;
   }

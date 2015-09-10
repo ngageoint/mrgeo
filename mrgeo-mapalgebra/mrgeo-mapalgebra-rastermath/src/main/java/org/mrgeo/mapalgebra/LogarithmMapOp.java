@@ -17,7 +17,8 @@ package org.mrgeo.mapalgebra;
 
 import java.util.Vector;
 
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.opimage.LogarithmRasterDescriptor;
 
@@ -36,7 +37,7 @@ public class LogarithmMapOp extends RenderedImageMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
 

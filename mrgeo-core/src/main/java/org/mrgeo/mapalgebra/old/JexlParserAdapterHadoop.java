@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra.parser.jexl;
+package org.mrgeo.mapalgebra.old;
 
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlException;
 import org.apache.commons.jexl2.MapContext;
 import org.apache.commons.jexl2.Script;
 import org.apache.commons.jexl2.parser.*;
-import org.mrgeo.mapalgebra.MapOpFactoryHadoop;
 import org.mrgeo.mapalgebra.parser.*;
+import org.mrgeo.mapalgebra.parser.jexl.MrGeoJexlEngine;
 
 import java.util.ArrayList;
 import java.util.HashMap;

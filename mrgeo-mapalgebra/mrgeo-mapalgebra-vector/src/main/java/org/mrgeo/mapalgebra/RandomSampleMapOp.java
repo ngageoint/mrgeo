@@ -18,7 +18,9 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -47,7 +49,7 @@ public class RandomSampleMapOp extends VectorMapOp implements BoundsCalculator
   {
     if (_inputs.size() == 0)
     {
-      if (!(n instanceof RasterMapOp))
+      if (!(n instanceof RasterMapOpHadoop))
       {
         throw new IllegalArgumentException("The first parameter must be a raster input.");
       }
@@ -119,7 +121,7 @@ public class RandomSampleMapOp extends VectorMapOp implements BoundsCalculator
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
 
@@ -164,7 +166,7 @@ public class RandomSampleMapOp extends VectorMapOp implements BoundsCalculator
   }
 
 
-  private void parseNewColumnParams(Vector<ParserNode> children, int startParamIndex, ParserAdapter parser)
+  private void parseNewColumnParams(Vector<ParserNode> children, int startParamIndex, ParserAdapterHadoop parser)
   {
     // Make sure the column value gets evaluated
     newColumnName = parseChildString(children.get(startParamIndex), "column " + startParamIndex, parser);

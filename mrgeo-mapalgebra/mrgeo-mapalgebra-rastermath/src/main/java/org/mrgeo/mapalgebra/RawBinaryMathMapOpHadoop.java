@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapalgebra;
 
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.opimage.RawBinaryMathDescriptor;
 
@@ -34,7 +34,7 @@ public class RawBinaryMathMapOpHadoop extends RenderedImageMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter  parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     parser.addFunction("pow");
 

@@ -16,6 +16,7 @@
 package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.conf.Configuration;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;

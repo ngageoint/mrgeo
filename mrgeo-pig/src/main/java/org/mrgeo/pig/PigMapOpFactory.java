@@ -17,8 +17,8 @@ package org.mrgeo.pig;
 
 import java.util.ArrayList;
 
-import org.mrgeo.mapalgebra.MapOpHadoop;
-import org.mrgeo.mapalgebra.MapOpFactoryHadoop;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.MapOpFactoryHadoop;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapalgebra.parser.ParserFunctionNode;

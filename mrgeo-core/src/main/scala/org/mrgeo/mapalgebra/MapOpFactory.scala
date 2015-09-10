@@ -24,15 +24,13 @@ object MapOpFactory extends Logging {
 
     val mapops = decendants(classOf[MapOpRegistrar]) getOrElse Set.empty
 
-    val time = System.currentTimeMillis() - start
-
     logInfo("Registering MapOps:")
 
-    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader)  // obtain runtime mirror
+    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader) // obtain runtime mirror
 
     mapops.foreach(symbol => {
       mirror.reflectModule(symbol.asModule).instance match {
-      case mapop:MapOpRegistrar =>
+      case mapop: MapOpRegistrar =>
         logInfo("  " + mapop)
         mapop.register.foreach(op => {
           functions.put(op, mapop)
@@ -42,19 +40,29 @@ object MapOpFactory extends Logging {
 
     })
 
+    val time = System.currentTimeMillis() - start
+
     logInfo("Registration took " + time + "ms")
   }
 
   // create a mapop from a function name, called by MapOpFactory("<name>")
-  def apply(name:String, node:ParserNode): Option[MapOp] = {
+  def apply(name: String, node: ParserNode, variables: String => Option[MapOp]): Option[MapOp] = {
     if (functions.isEmpty) {
       registerFunctions()
     }
 
     functions.get(name) match {
-    case Some(mapop) => Option(mapop.apply(name, node))
+    case Some(mapop) => Option(mapop.apply(name, node, variables))
     case None => None
     }
+  }
+
+  def exists(name: String): Boolean = {
+    if (functions.isEmpty) {
+      registerFunctions()
+    }
+
+    functions.contains(name)
   }
 
   private def decendants(clazz: Class[_]) = {
@@ -80,7 +88,7 @@ object MapOpFactory extends Logging {
 
     val classes = reflections.getSubTypesOf(clazz).filter(p => !Modifier.isAbstract(p.getModifiers))
 
-    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader)  // obtain runtime mirror
+    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader) // obtain runtime mirror
 
     Some(classes.map(clazz => {
       val sym = mirror.classSymbol(clazz)
@@ -92,31 +100,6 @@ object MapOpFactory extends Logging {
         sym
       }
     }))
-  }
-
-  private def subclasses(name:String, classes:Stream[ClassInfo], depth:Int): mutable.Set[ClassInfo] = {
-    val subs = mutable.HashSet[ClassInfo]()
-
-    val sc = classes.filter(_.superClassName == name)
-
-    for (c <- sc) {
-      for (i <- Range(0, depth * 2)) {
-        print(" ")
-      }
-      println("found " + c)
-      subs ++= subclasses(c.name, classes, depth + 1)
-    }
-
-    subs ++= sc
-    for (c <- subs) {
-      for (i <- Range(0, depth * 2)) {
-        print(" ")
-      }
-      println("** in list " + c)
-
-    }
-
-    subs.filter(_.isConcrete)
   }
 }
 

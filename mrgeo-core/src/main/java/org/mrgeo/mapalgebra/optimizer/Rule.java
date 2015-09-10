@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 
 import java.util.ArrayList;
 

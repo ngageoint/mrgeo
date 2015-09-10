@@ -21,7 +21,9 @@ import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -33,29 +35,29 @@ import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.Vector;
 
-public class BuildPyramidMapOp extends RasterMapOp
+public class BuildPyramidMapOp extends RasterMapOpHadoop
 {
   private static Logger log = LoggerFactory.getLogger(BuildPyramidMapOp.class);
 
   private String aggregatorName;
-  private RasterMapOp sourceRaster;
+  private RasterMapOpHadoop sourceRaster;
   
   @Override
   public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
-    if (!(n instanceof RasterMapOp))
+    if (!(n instanceof RasterMapOpHadoop))
     {
       throw new IllegalArgumentException("Can only build pyramid for a raster input");
     }
     _inputs.add(n);
-    sourceRaster = (RasterMapOp)n;
+    sourceRaster = (RasterMapOpHadoop)n;
   }
 
   @Override
   public void build(Progress p) throws IOException, JobFailedException,
       JobCancelledException
   {
-    MrsImagePyramid inputPyramid = RasterMapOp.flushRasterMapOpOutput(sourceRaster, 0);
+    MrsImagePyramid inputPyramid = RasterMapOpHadoop.flushRasterMapOpOutput(sourceRaster, 0);
     if (aggregatorName == null)
     {
       MrsImagePyramidMetadata.Classification classification = inputPyramid.getMetadata().getClassification();
@@ -127,7 +129,7 @@ public class BuildPyramidMapOp extends RasterMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapter parser)
+  public Vector<ParserNode> processChildren(Vector<ParserNode> children, ParserAdapterHadoop parser)
   {
     if (children.size() < 1 || children.size() > 2)
     {

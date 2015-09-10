@@ -19,7 +19,7 @@ import java.util.Vector;
 
 import org.mrgeo.featurefilter.BufferFeatureFilter;
 import org.mrgeo.featurefilter.FeatureFilter;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 
 public class VectorBufferMapOp extends FeatureFilterMapOp
@@ -33,7 +33,7 @@ public class VectorBufferMapOp extends FeatureFilterMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
 

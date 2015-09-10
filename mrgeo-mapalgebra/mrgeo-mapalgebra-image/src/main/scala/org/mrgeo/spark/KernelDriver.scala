@@ -135,7 +135,7 @@ class KernelDriver extends MrGeoJob with Externalizable {
       nodatas(i) = metadata.getDefaultValue(i)
     }
 
-    val pyramid = SparkUtils.loadMrsPyramid(ip, zoom, context)
+    val pyramid = SparkUtils.loadMrsPyramidRDD(ip, zoom, context)
 
     val kernel = method match {
     case KernelMapOp.Gaussian =>

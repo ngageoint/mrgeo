@@ -24,7 +24,8 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.hdfs.vector.Column;
 import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
 import org.mrgeo.hdfs.vector.Column.FactorType;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.mapreduce.job.JobCancelledException;
@@ -330,7 +331,7 @@ public class SplitVectorMapOp extends VectorMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     Vector<ParserNode> result = new Vector<ParserNode>();
     if (children.size() != 4)

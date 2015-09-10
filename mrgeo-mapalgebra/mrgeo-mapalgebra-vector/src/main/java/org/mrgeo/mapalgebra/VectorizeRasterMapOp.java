@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.Vector;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -115,7 +116,7 @@ public class VectorizeRasterMapOp extends VectorMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     throw new NotImplementedException("VectorizeRasterMapOp not implemented for MrsImagePyramid v2");
 

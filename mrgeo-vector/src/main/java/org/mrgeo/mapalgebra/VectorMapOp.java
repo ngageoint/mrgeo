@@ -18,6 +18,7 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;

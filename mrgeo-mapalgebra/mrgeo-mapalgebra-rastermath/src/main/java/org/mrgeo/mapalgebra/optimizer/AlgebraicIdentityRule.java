@@ -15,7 +15,7 @@
 
 package org.mrgeo.mapalgebra.optimizer;
 
-import org.mrgeo.mapalgebra.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.RawBinaryMathMapOpHadoop;
 import org.mrgeo.mapalgebra.RenderedImageMapOp;
 

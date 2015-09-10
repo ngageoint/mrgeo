@@ -15,46 +15,17 @@
 
 package org.mrgeo.mapalgebra.parser.jexl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlException;
 import org.apache.commons.jexl2.MapContext;
 import org.apache.commons.jexl2.Script;
-import org.apache.commons.jexl2.parser.ASTAdditiveNode;
-import org.apache.commons.jexl2.parser.ASTAdditiveOperator;
-import org.apache.commons.jexl2.parser.ASTAndNode;
-import org.apache.commons.jexl2.parser.ASTArrayLiteral;
-import org.apache.commons.jexl2.parser.ASTAssignment;
-import org.apache.commons.jexl2.parser.ASTDivNode;
-import org.apache.commons.jexl2.parser.ASTEQNode;
-import org.apache.commons.jexl2.parser.ASTGENode;
-import org.apache.commons.jexl2.parser.ASTGTNode;
-import org.apache.commons.jexl2.parser.ASTIdentifier;
-import org.apache.commons.jexl2.parser.ASTJexlScript;
-import org.apache.commons.jexl2.parser.ASTLENode;
-import org.apache.commons.jexl2.parser.ASTLTNode;
-import org.apache.commons.jexl2.parser.ASTMethodNode;
-import org.apache.commons.jexl2.parser.ASTMulNode;
-import org.apache.commons.jexl2.parser.ASTNENode;
-import org.apache.commons.jexl2.parser.ASTNotNode;
-import org.apache.commons.jexl2.parser.ASTNumberLiteral;
-import org.apache.commons.jexl2.parser.ASTOrNode;
-import org.apache.commons.jexl2.parser.ASTReference;
-import org.apache.commons.jexl2.parser.ASTReferenceExpression;
-import org.apache.commons.jexl2.parser.ASTStringLiteral;
-import org.apache.commons.jexl2.parser.ASTUnaryMinusNode;
-import org.apache.commons.jexl2.parser.JexlNode;
-import org.mrgeo.mapalgebra.MapOpFactoryHadoop;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
-import org.mrgeo.mapalgebra.parser.ParserConstantNode;
-import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapalgebra.parser.ParserFunctionNode;
-import org.mrgeo.mapalgebra.parser.ParserNode;
-import org.mrgeo.mapalgebra.parser.ParserVariableNode;
+import org.apache.commons.jexl2.parser.*;
+import org.mrgeo.mapalgebra.parser.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JexlParserAdapter implements ParserAdapter
 {
@@ -84,8 +55,8 @@ public class JexlParserAdapter implements ParserAdapter
   public void initialize()
   {
     engine = new MrGeoJexlEngine();
-    engine.setSilent(false);
-    engine.setStrict(true);
+    //engine.setSilent(false);
+    //engine.setStrict(true);
     context = new MapContext();
   }
 
@@ -116,7 +87,7 @@ public class JexlParserAdapter implements ParserAdapter
   }
 
   @Override
-  public ParserNode parse(String expression, MapOpFactoryHadoop factory) throws ParserException
+  public ParserNode parse(String expression) throws ParserException
   {
     if (engine == null)
     {
@@ -124,17 +95,18 @@ public class JexlParserAdapter implements ParserAdapter
     }
     try
     {
-      @SuppressWarnings("unused")
+      //@SuppressWarnings("unused")
       Script script = engine.createScript(expression);
       jexlRootNode = engine.getScript();
+      //jexlRootNode = (ASTJexlScript)engine.createScript(expression);
       ParserNode last = null;
       for (int i = 0; i < jexlRootNode.jjtGetNumChildren(); i++)
       {
         last = convertToMrGeoNode(jexlRootNode.jjtGetChild(i));
-        if (factory != null)
-        {
-          factory.convertToMapOp(last);
-        }
+//        if (factory != null)
+//        {
+//          factory.convertToMapOp(last);
+//        }
       }
       return last;
     }
@@ -167,27 +139,27 @@ public class JexlParserAdapter implements ParserAdapter
       Number oldNum = ((ASTNumberLiteral)nativeNode.jjtGetChild(0)).getLiteral();
       if (oldNum instanceof Integer)
       {
-        return new Integer(0 - oldNum.intValue());
+        return -oldNum.intValue();
       }
-      if (oldNum instanceof Double)
+      else if (oldNum instanceof Double)
       {
-        return new Double(0.0 - oldNum.doubleValue());
+        return -oldNum.doubleValue();
       }
-      if (oldNum instanceof Float)
+      else if (oldNum instanceof Float)
       {
         return new Float(0.0 - oldNum.floatValue());
       }
-      if (oldNum instanceof Short)
+      else if (oldNum instanceof Short)
       {
-        return new Short((short)(0 - oldNum.shortValue()));
+        return -oldNum.shortValue();
       }
-      if (oldNum instanceof Long)
+      else if (oldNum instanceof Long)
       {
-        return new Long(0 - oldNum.longValue());
+        return -oldNum.longValue();
       }
-      if (oldNum instanceof Byte)
+      else if (oldNum instanceof Byte)
       {
-        return new Byte((byte)(0 - oldNum.byteValue()));
+        return -oldNum.byteValue();
       }
     }
     return ((JexlNode)node.getNativeNode()).jjtGetValue();

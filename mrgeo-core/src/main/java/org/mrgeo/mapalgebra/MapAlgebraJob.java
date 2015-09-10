@@ -23,6 +23,9 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.mapalgebra.old.MapAlgebraParser;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.*;
 import org.mrgeo.progress.Progress;
@@ -140,7 +143,7 @@ public class MapAlgebraJob implements RunnableJob
   {
     TaskProgress taskProg = new TaskProgress(_progress);
     try {
-      if (op instanceof RasterMapOp)
+      if (op instanceof RasterMapOpHadoop)
       {        
         taskProg.starting();
         BuildPyramidSpark.build(_output, new MeanAggregator(),

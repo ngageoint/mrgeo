@@ -39,7 +39,9 @@ import org.mrgeo.format.ShpInputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.RasterizeVectorDriver;
@@ -61,7 +63,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-public class RasterizeVectorMapOp extends RasterMapOp
+public class RasterizeVectorMapOp extends RasterMapOpHadoop
     implements InputsCalculator, BoundsCalculator, TileSizeCalculator, MaximumZoomLevelCalculator
 {
   private static final Logger log = LoggerFactory.getLogger(RasterizeVectorMapOp.class);
@@ -272,7 +274,7 @@ public class RasterizeVectorMapOp extends RasterMapOp
   }
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     final Vector<ParserNode> result = new Vector<ParserNode>();
 

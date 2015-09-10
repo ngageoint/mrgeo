@@ -33,7 +33,8 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{ProviderProperties, DataProviderFactory, ProtectionLevelUtils}
 import org.mrgeo.ingest.IngestImageSpark
-import org.mrgeo.mapalgebra.{RasterMapOp, RenderedImageMapOp}
+import org.mrgeo.mapalgebra.RenderedImageMapOp
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop
 import org.mrgeo.opimage.MrsPyramidOpImage
 import org.mrgeo.progress.Progress
 import org.mrgeo.rasterops.{OpImageRegistrar, OpImageUtils}
@@ -61,7 +62,7 @@ object OpChainDriver extends MrGeoDriver with Externalizable {
   final def opchain(rimop: RenderedImageMapOp, inputs: java.util.Set[String], output: String, zoom: Int, bounds: Bounds,
       userConf: Configuration, progress: Progress, protectionLevel: String, providerProperties: ProviderProperties):Unit = {
 
-    val rop: RenderedImage = rimop.asInstanceOf[RasterMapOp].getRasterOutput
+    val rop: RenderedImage = rimop.asInstanceOf[RasterMapOpHadoop].getRasterOutput
     opchain(rop, inputs, output, zoom, bounds, userConf, progress, protectionLevel, providerProperties)
   }
 
@@ -173,7 +174,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
 
       logInfo("Loading pyramid: " + inputs(i))
       try {
-        val pyramid = SparkUtils.loadMrsPyramidAndMetadata(inputs(i), context)
+        val pyramid = SparkUtils.loadMrsPyramidAndMetadataRDD(inputs(i), context)
         pyramids(i) = pyramid._1
       }
     }

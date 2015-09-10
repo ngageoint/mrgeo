@@ -11,7 +11,9 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -20,7 +22,7 @@ import org.mrgeo.progress.Progress;
 import org.mrgeo.rasterops.CostDistanceDriver;
 import org.mrgeo.utils.Bounds;
 
-public class CostDistanceMapOp extends RasterMapOp
+public class CostDistanceMapOp extends RasterMapOpHadoop
   implements InputsCalculator, BoundsCalculator, TileSizeCalculator, MaximumZoomLevelCalculator
 {
   double maxCost = -1;
@@ -34,11 +36,11 @@ public class CostDistanceMapOp extends RasterMapOp
     if (_inputs.size() == 1)
     {
       // The friction surface is now being added - make sure it is a raster
-      if (!(n instanceof RasterMapOp))
+      if (!(n instanceof RasterMapOpHadoop))
       {
         throw new IllegalArgumentException("The second argument to CostDistance is the friction surface which must be an ingested image");
       }
-      if (((RasterMapOp)n).getOutputName() == null)
+      if (((RasterMapOpHadoop)n).getOutputName() == null)
       {
         throw new IllegalArgumentException("Invalid raster input to CostDistance. The friction raster has no output name.");
       }
@@ -64,7 +66,7 @@ public class CostDistanceMapOp extends RasterMapOp
      String sourcePoints = ifd.getValues();
 
     // Get friction input
-    RasterMapOp friction = (RasterMapOp) _inputs.get(1);
+    RasterMapOpHadoop friction = (RasterMapOpHadoop) _inputs.get(1);
 
     if (zoomLevel < 0)
     {
@@ -110,7 +112,7 @@ public class CostDistanceMapOp extends RasterMapOp
   {
     if (tileSize < 0)
     {
-      RasterMapOp friction = (RasterMapOp) _inputs.get(1);
+      RasterMapOpHadoop friction = (RasterMapOpHadoop) _inputs.get(1);
       
       assert(friction.getOutputName() != null);
       
@@ -134,7 +136,7 @@ public class CostDistanceMapOp extends RasterMapOp
 
 
   @Override
-  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
+  public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapterHadoop parser)
   {
     String usage = "CostDistance takes the following arguments " + 
         "(source point, [friction zoom level], friction raster, [maxCost])";
