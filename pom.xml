@@ -120,6 +120,7 @@
     <maven-source.version>2.4</maven-source.version>
     <maven-surefire.version>2.18.1</maven-surefire.version>
     <maven-war.version>2.6</maven-war.version>
+    <scalatest.plugin.version>1.0</scalatest.plugin.version>
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -342,6 +343,24 @@
               <id>verify</id>
               <goals>
                 <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.scalatest</groupId>
+          <artifactId>scalatest-maven-plugin</artifactId>
+          <version>${scalatest.plugin.version}</version>
+          <configuration>
+            <reportsDirectory>${project.build.directory}/scalatest-reports</reportsDirectory>
+            <junitxml>.</junitxml>
+            <filereports>WDF TestSuite.txt</filereports>
+          </configuration>
+          <executions>
+            <execution>
+              <id>test</id>
+              <goals>
+                <goal>test</goal>
               </goals>
             </execution>
           </executions>

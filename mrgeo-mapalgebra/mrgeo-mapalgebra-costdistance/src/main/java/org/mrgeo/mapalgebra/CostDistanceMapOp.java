@@ -78,7 +78,7 @@ public class CostDistanceMapOp extends RasterMapOp
     }
 
     try {
-      CostDistanceDriver.costDistance(friction.getOutputName(), _outputName, zoomLevel,
+      CostDistanceDriver.costDistance(friction.getOutputName(), _outputName, zoomLevel, null,
                                       sourcePoints, maxCost, createConfiguration());
     } catch (Exception e) {
       e.printStackTrace();

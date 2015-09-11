@@ -15,8 +15,8 @@
 
 package org.mrgeo.spark
 
-import java.awt.image.{BandedSampleModel, Raster, DataBuffer, WritableRaster}
-import java.io.{IOException, Externalizable, ObjectInput, ObjectOutput}
+import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
@@ -27,10 +27,10 @@ import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 
@@ -73,11 +73,12 @@ object CostDistanceDriver extends MrGeoDriver with Externalizable {
   val FRICTION_SURFACE_ARG = "frictionSurface"
   val OUTPUT_ARG = "output"
   val ZOOM_LEVEL_ARG = "zoomLevel"
+  val REQUESTED_BOUNDS_ARG = "requestedBounds"
   val SOURCE_POINTS_ARG = "sourcePoints"
   val MAX_COST_ARG = "maxCost"
 
-  def costDistance(frictionSurface: String, output:String, zoomLevel: Int, sourcePoints: String,
-                   maxCost: Double, conf:Configuration): Unit = {
+  def costDistance(frictionSurface: String, output:String, zoomLevel: Int, bounds: Bounds,
+                   sourcePoints: String, maxCost: Double, conf:Configuration): Unit = {
 
     val args =  mutable.Map[String, String]()
 
@@ -86,6 +87,9 @@ object CostDistanceDriver extends MrGeoDriver with Externalizable {
     args += FRICTION_SURFACE_ARG -> frictionSurface
     args += OUTPUT_ARG -> output
     args += ZOOM_LEVEL_ARG -> ("" + zoomLevel)
+    if (bounds != null) {
+      args += REQUESTED_BOUNDS_ARG -> bounds.toDelimitedString
+    }
     args += SOURCE_POINTS_ARG -> sourcePoints
     args += MAX_COST_ARG -> ("" + maxCost)
 
@@ -97,6 +101,64 @@ object CostDistanceDriver extends MrGeoDriver with Externalizable {
 
   override def setup(job: JobArguments): Boolean = {
     true
+  }
+
+  /**
+   * Given one or more source points, compute a Bounds surrounding those points that
+   * extends out to maxCost above, below, and the left and right of the MBR of those
+   * points. This will encompass the region in which the cost distance algorithm
+   * will run.
+   *
+   * The maxCost is in seconds, and the minPixelValue is in meters/second. This method
+   * first computes the distance in meters, and then determines how many pixels are
+   * required to cover that distance, both vertically and horizontally. It then adds
+   * that number of pixels to the top, bottom, left and right of the MBR of the source
+   * points to find the pixel bounds. Finally, it converts those pixels to
+   * lat/lng in order to construct bounds from those coordinates.
+   *
+   * The returned Bounds will not extend beyond world bounds.
+   *
+   * @param maxCost How far the cost distance algorithm should go in computing distances.
+   *                Measured in seconds.
+   * @param sourcePoints One or more points from which the cost distance algorithm will
+   *                     compute minimum distances to all other pixels.
+   * @param minPixelValue The smallest value assigned to a pixel in the friction surface
+   *                      being used for the cost distance. Measure in seconds/meter.
+   * @return
+   */
+  def calculateBoundsFromCost(maxCost: Double, sourcePoints: mutable.ListBuffer[(Float,Float)],
+                              minPixelValue: Double): Bounds =
+  {
+    var minX = Float.MaxValue
+    var maxX = Float.MinValue
+    var minY = Float.MaxValue
+    var maxY = Float.MinValue
+
+    // Locate the MBR of all the source points
+    for (pt <- sourcePoints) {
+      minX = math.min(pt._1, minX)
+      maxX = math.max(pt._1, maxX)
+      minY = math.min(pt._2, minY)
+      maxY = math.max(pt._2, maxY)
+    }
+    val distanceInMeters = maxCost / minPixelValue
+
+    // Since we want the distance along the 45 deg diagonal (equal distance above and
+    // to the right) of the top right corner of the source points MBR, we can compute
+    // the point at a 45 degree bearing from that corner, and use pythagorean for the
+    // diagonal distance to use.
+    val diagonalDistanceInMeters = Math.sqrt(2) * distanceInMeters
+    // Find the coordinates of the point that is distance meters to right and distance
+    // meters above the top right corner of the sources points MBR.
+    val tr = new LatLng(maxY, maxX)
+    val trExpanded = LatLng.calculateCartesianDestinationPoint(tr, diagonalDistanceInMeters, 45.0)
+
+    // Find the coordinates of the point that is distance meters to left and distance
+    // meters below the bottom left corner of the sources points MBR.
+    val bl = new LatLng(minY, minX)
+    val blExpanded = LatLng.calculateCartesianDestinationPoint(tr, diagonalDistanceInMeters, 225.0)
+
+    new Bounds(blExpanded.getLng, blExpanded.getLat, trExpanded.getLng, trExpanded.getLat)
   }
 }
 
@@ -236,6 +298,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
   var frictionSurface: String = null
   var output:String = null
   var zoomLevel: Int = -1
+  var requestedBounds: Option[Bounds] = None
   val sourcePoints = new mutable.ListBuffer[(Float,Float)]
   var maxCost: Double = 0.0
 
@@ -258,21 +321,55 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 
     try {
       // TODO: providerProperties needs to be configured into the job
-      @transient val providerProperties: ProviderProperties = null
+      val providerProperties: ProviderProperties = null
       // TODO: protectionLevel needs to be configured into the job
-      @transient val protectionLevel: String = null
-      @transient val pyramidAndMetadata = SparkUtils.loadMrsPyramidAndMetadata(frictionSurface, zoomLevel, context)
+      val protectionLevel: String = null
+      val dp = DataProviderFactory.getMrsImageDataProvider(frictionSurface, AccessMode.READ, providerProperties)
+      val metadata = dp.getMetadataReader.read()
 //      pyramidAndMetadata._1.foreach(U => {
 //        println("Initial vertex: " + TMSUtils.tileid(U._1.get(), zoomLevel) + " -> " + U._2.hashCode())
 //      })
-      @transient val vertices = pyramidAndMetadata._1 // .repartition(35)
-      @transient val metadata = pyramidAndMetadata._2
+      if (metadata.getMaxZoomLevel < zoomLevel)
+      {
+        throw new IllegalArgumentException("The image has a maximum zoom level of " + metadata.getMaxZoomLevel)
+      }
       //      val pxStart: Short = (metadata.getTilesize - 1).toShort // for small-humvee
       //      val pyStart: Short = (metadata.getTilesize - 1).toShort // for small-humvee
       //    val pxStart: Short = 3
       //    val pyStart: Short = 7
-      val bounds = metadata.getBounds
-      @transient val tileBounds: org.mrgeo.utils.LongRectangle = metadata.getTileBounds(zoomLevel)
+      val outputBounds = {
+        requestedBounds match {
+          case None => {
+            if (maxCost < 0) {
+              metadata.getBounds
+            }
+            else {
+              // Find the number of tiles beyond the MBR that need to be included to
+              // cover the maxCost. Pixel values are in meters/sec and the maxCost is
+              // in seconds. We use a worst-case scenario here to ensure that we include
+              // at least as many tiles, and we accomplish that by using the minimum
+              // pixel value.
+              //
+              // NOTE: Currently, we only work with a single band - in other words cost
+              // distance is computed using a single friction value regardless of the
+              // direction of travel. If we ever modify the algorithm to support different
+              // friction values per direction, then this computation must change as well.
+              val stats = metadata.getImageStats(zoomLevel, 0)
+              if (stats == null) {
+                throw new IllegalArgumentException(s"No stats for $frictionSurface." +
+                  " You must either build the pyramid for it or specify the bounds for the cost distance.")
+              }
+              val tileSize = metadata.getTilesize
+              CostDistanceDriver.calculateBoundsFromCost(maxCost, sourcePoints, stats.min)
+            }
+          }
+          case Some(rb) => rb
+        }
+      }
+      val tileBounds: org.mrgeo.utils.LongRectangle = {
+        val requestedTMSBounds = TMSUtils.Bounds.convertOldToNewBounds(outputBounds)
+        TMSUtils.boundsToTile(requestedTMSBounds, zoomLevel, metadata.getTilesize).toLongRectangle
+      }
       if (tileBounds == null)
       {
         throw new IllegalArgumentException("No tile bounds for " + frictionSurface + " at zoom level " + zoomLevel)
@@ -288,6 +385,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       val startPixel = TMSUtils.latLonToTilePixelUL(sourcePoints(0)._2, sourcePoints(0)._1, tile.tx, tile.ty,
         zoomLevel, metadata.getTilesize)
 
+      val vertices = SparkUtils.loadMrsPyramid(dp, zoomLevel, outputBounds, context)
       @transient val realVertices = vertices.map(U => {
         val sourceRaster: Raster = RasterWritable.toRaster(U._2)
         val raster: WritableRaster = makeCostDistanceRaster1(U._1.get, sourceRaster,
@@ -367,13 +465,13 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 //          new java.io.File(loc))
 ////          GeotoolsRasterUtils.saveLocalGeotiff(loc, r, t.tx, t.ty, zoom, metadata.getTilesize, Double.NaN)
 //      })
-      val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, providerProperties)
+      val odp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, providerProperties)
 //      val firstTile = verticesWritable.first()
 //      val raster = RasterWritable.toRaster(firstTile._2)
 //      SparkUtils.saveMrsPyramid(verticesWritable, dp, output, zoomLevel, raster.getWidth,
-      SparkUtils.saveMrsPyramid(verticesWritable, dp, output, zoomLevel, width,
+      SparkUtils.saveMrsPyramid(verticesWritable, odp, output, zoomLevel, width,
         Array[Double](Double.NaN), context.hadoopConfiguration, DataBuffer.TYPE_FLOAT,
-        bounds, 1, protectionLevel, providerProperties)
+        outputBounds, 1, protectionLevel, providerProperties)
       true
     }
     finally {
@@ -1277,6 +1375,14 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       throw new Exception(s"Missing required argument '$name'")
     }
 
+    if (job.hasSetting(CostDistanceDriver.REQUESTED_BOUNDS_ARG)) {
+      val strBounds = job.getSetting(CostDistanceDriver.REQUESTED_BOUNDS_ARG)
+      requestedBounds = Option(Bounds.fromDelimitedString(strBounds))
+    }
+    else {
+      requestedBounds = None
+    }
+
     if (job.hasSetting(CostDistanceDriver.MAX_COST_ARG)) {
       maxCost = job.getSetting(CostDistanceDriver.MAX_COST_ARG).toDouble
     }
@@ -1302,6 +1408,9 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         }
         val point = wktReader.read(strPoint)
         val jtsPoint = point.asInstanceOf[Point]
+        if (jtsPoint.getX < -180 || jtsPoint.getX > 180 || jtsPoint.getY > 90 || jtsPoint.getY < -90) {
+          throw new Exception(s"Invalid source point $strPoint")
+        }
         sourcePoints.append((jtsPoint.getX.toFloat, jtsPoint.getY.toFloat))
 //        val coords = U.split(",")
 //        if (coords.size != 2) {
