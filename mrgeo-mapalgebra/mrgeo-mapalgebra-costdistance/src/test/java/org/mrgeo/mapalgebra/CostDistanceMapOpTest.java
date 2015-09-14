@@ -23,7 +23,7 @@ public class CostDistanceMapOpTest extends LocalRunnerTest
 {
   private static final double EPSILON = 1e-8;
   private static final String usage = "CostDistance takes the following arguments " + 
-      "(source point, [friction zoom level], friction raster, [maxCost])";
+      "(source point, [friction zoom level], friction raster, [maxCost], [minX, minY, maxX, maxY])";
 
   private ParserAdapter parser;
 
@@ -218,5 +218,130 @@ public class CostDistanceMapOpTest extends LocalRunnerTest
     Assert.assertEquals(2, result.size());
     Assert.assertEquals(10, mapOp.zoomLevel);
     Assert.assertEquals(50000.0, mapOp.maxCost, EPSILON);
+  }
+
+  @Test
+  @Category(UnitTest.class)
+  public void testWithBounds() throws ParserException
+  {
+    Vector<ParserNode> children = new Vector<ParserNode>();
+    CostDistanceMapOp mapOp = new CostDistanceMapOp();
+
+    String exp = "CostDistance([source], [friction], 10, 20, 15, 25)";
+//    MapAlgebraParser map = new MapAlgebraParser();
+    ParserNode node = parser.parse(exp, null);
+    for (int i=0; i < node.getNumChildren(); i++)
+    {
+      children.add(node.getChild(i));
+    }
+    Vector<ParserNode> result = mapOp.processChildren(children, parser);
+    Assert.assertEquals(2, result.size());
+    Assert.assertEquals(-1, mapOp.zoomLevel);
+    Assert.assertEquals(-1.0, mapOp.maxCost, EPSILON);
+    Assert.assertNotNull(mapOp.bounds);
+    Assert.assertEquals(10, mapOp.bounds.getMinX(), EPSILON);
+    Assert.assertEquals(20, mapOp.bounds.getMinY(), EPSILON);
+    Assert.assertEquals(15, mapOp.bounds.getMaxX(), EPSILON);
+    Assert.assertEquals(25, mapOp.bounds.getMaxY(), EPSILON);
+  }
+
+  @Test
+  @Category(UnitTest.class)
+  public void testWithZoomAndBounds() throws ParserException
+  {
+    Vector<ParserNode> children = new Vector<ParserNode>();
+    CostDistanceMapOp mapOp = new CostDistanceMapOp();
+
+    String exp = "CostDistance([source], 10, [friction], 10, 20, 15, 25)";
+//    MapAlgebraParser map = new MapAlgebraParser();
+    ParserNode node = parser.parse(exp, null);
+    for (int i=0; i < node.getNumChildren(); i++)
+    {
+      children.add(node.getChild(i));
+    }
+    Vector<ParserNode> result = mapOp.processChildren(children, parser);
+    Assert.assertEquals(2, result.size());
+    Assert.assertEquals(10, mapOp.zoomLevel);
+    Assert.assertEquals(-1.0, mapOp.maxCost, EPSILON);
+    Assert.assertNotNull(mapOp.bounds);
+    Assert.assertEquals(10, mapOp.bounds.getMinX(), EPSILON);
+    Assert.assertEquals(20, mapOp.bounds.getMinY(), EPSILON);
+    Assert.assertEquals(15, mapOp.bounds.getMaxX(), EPSILON);
+    Assert.assertEquals(25, mapOp.bounds.getMaxY(), EPSILON);
+  }
+
+  @Test
+  @Category(UnitTest.class)
+  public void testWithZoomAndMaxCostAndBounds() throws ParserException
+  {
+    Vector<ParserNode> children = new Vector<ParserNode>();
+    CostDistanceMapOp mapOp = new CostDistanceMapOp();
+
+    String exp = "CostDistance([source], 10, [friction], 50000.0, 10, 20, 15, 25)";
+//    MapAlgebraParser map = new MapAlgebraParser();
+    ParserNode node = parser.parse(exp, null);
+    for (int i=0; i < node.getNumChildren(); i++)
+    {
+      children.add(node.getChild(i));
+    }
+    Vector<ParserNode> result = mapOp.processChildren(children, parser);
+    Assert.assertEquals(2, result.size());
+    Assert.assertEquals(10, mapOp.zoomLevel);
+    Assert.assertEquals(50000.0, mapOp.maxCost, EPSILON);
+    Assert.assertNotNull(mapOp.bounds);
+    Assert.assertEquals(10, mapOp.bounds.getMinX(), EPSILON);
+    Assert.assertEquals(20, mapOp.bounds.getMinY(), EPSILON);
+    Assert.assertEquals(15, mapOp.bounds.getMaxX(), EPSILON);
+    Assert.assertEquals(25, mapOp.bounds.getMaxY(), EPSILON);
+  }
+
+  @Test
+  @Category(UnitTest.class)
+  public void testWithIncompleteBounds() throws ParserException
+  {
+    Vector<ParserNode> children = new Vector<ParserNode>();
+    CostDistanceMapOp mapOp = new CostDistanceMapOp();
+
+    String exp = "CostDistance([source], 10, [friction], 10, 20)";
+//    MapAlgebraParser map = new MapAlgebraParser();
+    ParserNode node = parser.parse(exp, null);
+    for (int i=0; i < node.getNumChildren(); i++)
+    {
+      children.add(node.getChild(i));
+    }
+    try
+    {
+      Vector<ParserNode> result = mapOp.processChildren(children, parser);
+      Assert.fail("Expected IllegalArgumentException due to too many arguments");
+    }
+    catch(IllegalArgumentException e)
+    {
+      Assert.assertEquals("The bounds argument must include minX, minY, maxX and maxY", e.getMessage());
+    }
+  }
+
+  @Test
+  @Category(UnitTest.class)
+  public void testWithZoomAndMaxCostAndBoundsAndMore() throws ParserException
+  {
+    Vector<ParserNode> children = new Vector<ParserNode>();
+    CostDistanceMapOp mapOp = new CostDistanceMapOp();
+
+    String exp = "CostDistance([source], 10, [friction], 50000.0, 10, 20, 15, 25, \"extra\")";
+//    MapAlgebraParser map = new MapAlgebraParser();
+    ParserNode node = parser.parse(exp, null);
+    for (int i=0; i < node.getNumChildren(); i++)
+    {
+      children.add(node.getChild(i));
+    }
+    try
+    {
+      Vector<ParserNode> result = mapOp.processChildren(children, parser);
+      Assert.fail("Expected IllegalArgumentException due to too many arguments");
+    }
+    catch(IllegalArgumentException e)
+    {
+      Assert.assertEquals(usage, e.getMessage());
+    }
   }
 }

@@ -24,7 +24,8 @@ public class CostDistanceMapOp extends RasterMapOp
 {
   double maxCost = -1;
   int zoomLevel = -1;
-  private int tileSize = -1;
+  int tileSize = -1;
+  Bounds bounds;
 
   public static String[] register()
   {
@@ -78,7 +79,7 @@ public class CostDistanceMapOp extends RasterMapOp
     }
 
     try {
-      CostDistanceDriver.costDistance(friction.getOutputName(), _outputName, zoomLevel, null,
+      CostDistanceDriver.costDistance(friction.getOutputName(), _outputName, zoomLevel, bounds,
                                       sourcePoints, maxCost, createConfiguration());
     } catch (Exception e) {
       e.printStackTrace();
@@ -127,10 +128,10 @@ public class CostDistanceMapOp extends RasterMapOp
   public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
   {
     String usage = "CostDistance takes the following arguments " + 
-        "(source point, [friction zoom level], friction raster, [maxCost])";
+        "(source point, [friction zoom level], friction raster, [maxCost], [minX, minY, maxX, maxY])";
     Vector<ParserNode> result = new Vector<ParserNode>();
     
-    if (children.size() < 2 || children.size() > 4)
+    if (children.size() < 2 || children.size() > 8)
     {
       throw new IllegalArgumentException(usage);
     }
@@ -157,17 +158,38 @@ public class CostDistanceMapOp extends RasterMapOp
     result.add(children.get(nodeIndex));
     nodeIndex++;
 
-    // Check for optional max cost
-    if (children.size() > nodeIndex)
+    // Check for optional max cost. Both max cost and bounds are optional, so there
+    // must be either 1 argument left or 5 arguments left in order for max cost to
+    // be included.
+    if ((children.size() == (nodeIndex + 1)) || (children.size() == (nodeIndex + 5)))
     {
       maxCost = parseChildDouble(children.get(nodeIndex), "maxCost", parser);
+      nodeIndex++;
 
       if (maxCost < 0)
       {
         maxCost = -1;
       }
-    }    
+    }
 
+    // Check for optional bounds
+    if (children.size() > nodeIndex)
+    {
+      if (children.size() == nodeIndex + 4)
+      {
+        final double[] b = new double[4];
+        for (int i = 0; i < 4; i++)
+        {
+          b[i] = parseChildDouble(children.get(nodeIndex), "bounds", parser);
+          nodeIndex++;
+        }
+        bounds = new Bounds(b[0], b[1], b[2], b[3]);
+      }
+      else
+      {
+        throw new IllegalArgumentException("The bounds argument must include minX, minY, maxX and maxY");
+      }
+    }
     return result;
   }
 
