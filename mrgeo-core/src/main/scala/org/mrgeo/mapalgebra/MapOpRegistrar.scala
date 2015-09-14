@@ -6,5 +6,7 @@ trait MapOpRegistrar {
   def register:Array[String]
 
   // apply should call the mapop constructor, which needs to throw ParserExceptions on errors
-  def apply(name:String, node: ParserNode, variables: String => Option[MapOp]):MapOp
+  def apply(node: ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null):MapOp
+
+  override def toString: String = getClass.getSimpleName.replace("$", "")
 }

@@ -485,7 +485,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
     context.hadoopConfiguration.set("fs.s3n.impl", "org.apache.hadoop.fs.s3native.NativeS3FileSystem")
 
-    val idp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
+    val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
 
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
     // won't eat up too much memory
@@ -510,7 +510,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
 
     val raster = RasterWritable.toRaster(mergedTiles.first()._2)
-    SparkUtils.saveMrsPyramid(mergedTiles, idp, output, zoom, tilesize, nodata, context.hadoopConfiguration,
+    SparkUtils.saveMrsPyramid(mergedTiles, dp, zoom, tilesize, nodata, context.hadoopConfiguration,
       bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
       protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
     true

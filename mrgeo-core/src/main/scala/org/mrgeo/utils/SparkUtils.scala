@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, SequenceFileInput
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
 import org.apache.spark.storage.StorageLevel
+import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.image.{MrsImagePyramidSimpleInputFormat, MrsImageDataProvider}
@@ -217,6 +218,16 @@ object SparkUtils extends Logging {
     (loadMrsPyramid(dp, metadata.getMaxZoomLevel, context), metadata)
   }
 
+  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, context: SparkContext): (RasterRDD, MrsImagePyramidMetadata) = {
+    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+    (loadMrsPyramid(provider, metadata.getMaxZoomLevel, context), metadata)
+  }
+
+  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, zoom:Int, context: SparkContext): (RasterRDD, MrsImagePyramidMetadata) = {
+    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+    (loadMrsPyramid(provider, zoom, context), metadata)
+  }
+
   def loadMrsPyramid(imageName: String, context: SparkContext): RasterRDD = {
     val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
@@ -275,20 +286,21 @@ object SparkUtils extends Logging {
   }
 
 
-  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider,
+  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], inputProvider: MrsImageDataProvider,
       zoom:Int, conf:Configuration, providerproperties:ProviderProperties): Unit = {
 
-    val metadata = provider.getMetadataReader.read()
+    val metadata = inputProvider.getMetadataReader.read()
 
     val bounds = metadata.getBounds
     val bands = metadata.getBands
     val tiletype = metadata.getTileType
     val tilesize = metadata.getTilesize
     val nodatas = metadata.getDefaultValues
-    val output = provider.getResourceName
     val protectionlevel = metadata.getProtectionLevel
 
-    saveMrsPyramid(tiles, provider, output, zoom, tilesize, nodatas, conf,
+    // NOTE:  This is a very special case where we are adding levels to a pyramid (i.e. BuildPyramid).
+    // The input data provider provides most of the parameters.
+    saveMrsPyramid(tiles, inputProvider, zoom, tilesize, nodatas, conf,
       tiletype, bounds, bands, protectionlevel, providerproperties)
   }
 
@@ -305,13 +317,11 @@ object SparkUtils extends Logging {
     val nodatas = metadata.getDefaultValues
     val protectionlevel = metadata.getProtectionLevel
 
-    val output = outputProvider.getResourceName
-
-    saveMrsPyramid(tiles, outputProvider, output, zoom, tilesize, nodatas, conf,
+    saveMrsPyramid(tiles, outputProvider, zoom, tilesize, nodatas, conf,
       tiletype, bounds, bands, protectionlevel, providerproperties)
   }
 
-  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], provider: MrsImageDataProvider, output: String,
+  def saveMrsPyramid(tiles: RDD[(TileIdWritable, RasterWritable)], outputProvider: MrsImageDataProvider,
       zoom: Int, tilesize: Int, nodatas: Array[Double], conf: Configuration, tiletype: Int = -1,
       bounds: Bounds = new Bounds(), bands: Int = -1,
       protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
@@ -325,7 +335,7 @@ object SparkUtils extends Logging {
     var localbounds = bounds
     var localbands = bands
     var localtiletype = tiletype
-    val output = provider.getResourceName
+    val output = outputProvider.getResourceName
 
     if (!localbounds.isValid) {
       localbounds = SparkUtils.calculateBounds(tiles, zoom, tilesize)
@@ -343,7 +353,7 @@ object SparkUtils extends Logging {
     val stats = SparkUtils.calculateStats(tiles, localbands, nodatas)
     val tileBounds = TMSUtils.boundsToTile(localbounds.getTMSBounds, zoom, tilesize)
     val tofc = new TiledOutputFormatContext(output, localbounds, zoom, tilesize, protectionlevel)
-    val tofp = provider.getTiledOutputFormatProvider(tofc)
+    val tofp = outputProvider.getTiledOutputFormatProvider(tofc)
     val sparkPartitioner = tofp.getPartitionerForSpark(tileBounds, zoom)
     val conf1 = tofp.setupSparkJob(conf)
 
@@ -425,7 +435,7 @@ object SparkUtils extends Logging {
     tofp.teardownForSpark(conf1)
 
     // calculate and save metadata
-    MrsImagePyramid.calculateMetadata(output, zoom, provider, stats,
+    MrsImagePyramid.calculateMetadata(output, zoom, outputProvider, stats,
       nodatas, localbounds, conf1,  protectionlevel, providerproperties)
   }
 

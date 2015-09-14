@@ -20,12 +20,11 @@ import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import javax.vecmath.Vector3d
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.spark.job.{JobArguments, MrGeoJob}
 import org.mrgeo.utils.{LatLng, SparkUtils, TMSUtils}
@@ -210,7 +209,7 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
 
     val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[ProviderProperties])
 
-    SparkUtils.saveMrsPyramid(answer, op, output, zoom, tilesize, Array[Double](Float.NaN),
+    SparkUtils.saveMrsPyramid(answer, op, zoom, tilesize, Array[Double](Float.NaN),
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, bands = 1,
       protectionlevel = metadata.getProtectionLevel)
 
