@@ -1,48 +1,62 @@
 package org.mrgeo.mapalgebra.raster
 
-import java.io.IOException
-
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import org.mrgeo.data.DataProviderFactory.AccessMode
+import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
-import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.{Bounds, SparkUtils}
 
 object RasterMapOp {
-  def apply(dataprovider: MrsImageDataProvider) = {
-    new RasterMapOp(dataprovider)
-  }
-
-  def apply(mapop:MapOp):Option[RasterMapOp] = {
-    mapop match {
-    case rmo:RasterMapOp => Option(rmo)
-    case _ => None
+  def isNodata(value:Double, nodata:Double):Boolean = {
+    if (nodata.isNaN) {
+      value.isNaN
+    }
+    else {
+      nodata == value
     }
   }
+  def isNotNodata(value:Double, nodata:Double):Boolean = {
+    if (nodata.isNaN) {
+      !value.isNaN
+    }
+    else {
+      nodata != value
+    }
+  }
+
 }
+abstract class RasterMapOp extends MapOp {
 
-class RasterMapOp private[raster] (dataprovider: MrsImageDataProvider, val context:SparkContext = null) extends MapOp {
-  private var rasterrdd:RasterRDD = null
+  private var meta:MrsImagePyramidMetadata = null
 
-  def rdd(zoom:Int):RasterRDD  = {
-    if (context != null) {
-      throw new IOException("Error creating RasterRDD, can not create an RDD without a SparkContext")
+  def rdd():Option[RasterRDD]
+
+  def metadata():Option[MrsImagePyramidMetadata] =  Option(meta)
+  def metadata(meta:MrsImagePyramidMetadata) = { this.meta = meta}
+
+  def save(output: String, providerProperties:ProviderProperties, context:SparkContext) = {
+    rdd() match {
+    case Some(rdd) =>
+      val provider: MrsImageDataProvider =
+        DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
+      metadata() match {
+      case Some(metadata) =>
+        val meta = metadata
+
+        SparkUtils.saveMrsPyramid(rdd, provider,
+          meta.getMaxZoomLevel, meta.getTilesize, meta.getDefaultValues,
+          context.hadoopConfiguration, providerproperties =  providerProperties)
+      case _ =>
+      }
+    case _ =>
     }
-    if (rasterrdd == null) {
-      rasterrdd = SparkUtils.loadMrsPyramid(dataprovider, zoom, context)
-    }
-
-    rasterrdd
   }
 
-  def rdd():RasterRDD = {
-    val metadata = dataprovider.getMetadataReader.read()
-
-    rdd(metadata.getMaxZoomLevel)
-  }
-
-  // nothing to do.  Really shouldn't be here...
-  override def execute(context: SparkContext): Boolean = {
-    true
-  }
 }

@@ -37,7 +37,6 @@ object MapOpFactory extends Logging {
         })
       case _ =>
       }
-
     })
 
     val time = System.currentTimeMillis() - start
@@ -46,13 +45,15 @@ object MapOpFactory extends Logging {
   }
 
   // create a mapop from a function name, called by MapOpFactory("<name>")
-  def apply(name: String, node: ParserNode, variables: String => Option[MapOp]): Option[MapOp] = {
+  def apply(node: ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): Option[MapOp] = {
     if (functions.isEmpty) {
       registerFunctions()
     }
 
-    functions.get(name) match {
-    case Some(mapop) => Option(mapop.apply(name, node, variables))
+    functions.get(node.getName) match {
+    case Some(mapop) =>
+      val op = mapop.apply(node, variables, protectionLevel)
+      Some(op)
     case None => None
     }
   }

@@ -174,6 +174,7 @@ public class JexlParserAdapter implements ParserAdapter
       ParserConstantNode cn = new ParserConstantNode();
       cn.setNativeNode(node);
       cn.setValue(((ASTNumberLiteral) node).getLiteral());
+      cn.setName(cn.getValue().toString());
       n = cn;
     }
     else if (node instanceof ASTStringLiteral)
@@ -181,6 +182,7 @@ public class JexlParserAdapter implements ParserAdapter
       ParserConstantNode cn = new ParserConstantNode();
       cn.setNativeNode(node);
       cn.setValue(((ASTStringLiteral) node).getLiteral());
+      cn.setName(cn.getValue().toString());
       n = cn;
     }
 //    else if (node instanceof ASTAssignment)
