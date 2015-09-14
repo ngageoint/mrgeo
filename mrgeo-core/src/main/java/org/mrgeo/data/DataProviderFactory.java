@@ -108,7 +108,7 @@ public static final String PROVIDER_PROPERTY_USER_ROLES = "mrgeo.security.user.r
 public static void saveProviderPropertiesToConfig(final ProviderProperties providerProperties,
     final Configuration conf)
 {
-  log.info("Saving provider properties to config");
+  log.debug("Saving provider properties to config");
   if (providerProperties != null)
   {
     conf.set(PROVIDER_PROPERTY_USER_NAME, providerProperties.getUserName());
@@ -118,7 +118,7 @@ public static void saveProviderPropertiesToConfig(final ProviderProperties provi
   // in the Configuration as well so they can be re-instantiated on the remote
   // side of a map/reduce 1 job.
   Map<String, String> configSettings = getConfigurationFromProviders();
-  log.info("Saving " + configSettings.size() + " configuration settings from data providers to config");
+  log.debug("Saving " + configSettings.size() + " configuration settings from data providers to config");
   Set<String> keys = configSettings.keySet();
   for (String key : keys)
   {
@@ -178,12 +178,12 @@ public static Map<String, String> getConfigurationFromProviders()
       Map<String, String> p = dpf.getConfiguration();
       if (p != null)
       {
-        log.info("Got " + p.size() + " config settings from " + dpf.getClass().getName());
+        log.debug("Got " + p.size() + " config settings from " + dpf.getClass().getName());
         result.putAll(p);
       }
       else
       {
-        log.info("Got no config settings from " + dpf.getClass().getName());
+        log.debug("Got no config settings from " + dpf.getClass().getName());
       }
     }
   }
@@ -195,12 +195,12 @@ public static Map<String, String> getConfigurationFromProviders()
       Map<String, String> p = dpf.getConfiguration();
       if (p != null)
       {
-        log.info("Got " + p.size() + " config settings from " + dpf.getClass().getName());
+        log.debug("Got " + p.size() + " config settings from " + dpf.getClass().getName());
         result.putAll(p);
       }
       else
       {
-        log.info("Got no config settings from " + dpf.getClass().getName());
+        log.debug("Got no config settings from " + dpf.getClass().getName());
       }
     }
   }
@@ -211,12 +211,12 @@ public static Map<String, String> getConfigurationFromProviders()
       Map<String, String> p = dpf.getConfiguration();
       if (p != null)
       {
-        log.info("Got " + p.size() + " config settings from " + dpf.getClass().getName());
+        log.debug("Got " + p.size() + " config settings from " + dpf.getClass().getName());
         result.putAll(p);
       }
       else
       {
-        log.info("Got no config settings from " + dpf.getClass().getName());
+        log.debug("Got no config settings from " + dpf.getClass().getName());
       }
     }
   }
@@ -229,11 +229,11 @@ public static void setConfigurationForProviders(Map<String, String> properties)
   {
     if (properties != null)
     {
-      log.info("Config settings passed to all data providers has size " + properties.size());
+      log.debug("Config settings passed to all data providers has size " + properties.size());
     }
     else
     {
-      log.info("Config settings passed to all data providers is empty");
+      log.debug("Config settings passed to all data providers is empty");
     }
   }
   configSettings = properties;
@@ -1157,9 +1157,9 @@ public static void delete(final String resource,
 
 protected static void initialize(final Configuration conf) throws DataProviderException
 {
-  log.info("Initializing data provider factories");
   if (adHocProviderFactories == null)
   {
+    log.info("Initializing ad hoc provider factories");
     adHocProviderFactories = new HashMap<String, AdHocDataProviderFactory>();
     // Find the mrsImageProviders
     final ServiceLoader<AdHocDataProviderFactory> dataProviderLoader = ServiceLoader
@@ -1186,6 +1186,8 @@ protected static void initialize(final Configuration conf) throws DataProviderEx
 
   if (mrsImageProviderFactories == null)
   {
+    log.info("Initializing image provider factories");
+
     mrsImageProviderFactories = new HashMap<String, MrsImageDataProviderFactory>();
 
     // Find the mrsImageProviders
@@ -1220,6 +1222,8 @@ protected static void initialize(final Configuration conf) throws DataProviderEx
   }
   if (vectorProviderFactories == null)
   {
+    log.info("Initializing vector provider factories");
+
     boolean debugEnabled = log.isDebugEnabled();
     vectorProviderFactories = new HashMap<String, VectorDataProviderFactory>();
 
@@ -1306,14 +1310,14 @@ public static void addDependencies(final Configuration conf) throws IOException
 
 public static Set<String> getDependencies() throws IOException
 {
-  log.info("Getting dependencies for all providers");
+  log.debug("Getting dependencies for all providers");
   initialize(getBasicConfig());
   Set<String> dependencies = new HashSet<String>();
   if (adHocProviderFactories != null)
   {
     for (final AdHocDataProviderFactory dp : adHocProviderFactories.values())
     {
-      log.info("Getting dependencies for " + dp.getClass().getName());
+      log.debug("Getting dependencies for " + dp.getClass().getName());
       Set<String> d = DependencyLoader.getDependencies(dp.getClass());
       if (d != null)
       {
@@ -1326,7 +1330,7 @@ public static Set<String> getDependencies() throws IOException
   {
     for (final MrsImageDataProviderFactory dp : mrsImageProviderFactories.values())
     {
-      log.info("Getting dependencies for " + dp.getClass().getName());
+      log.debug("Getting dependencies for " + dp.getClass().getName());
       Set<String> d = DependencyLoader.getDependencies(dp.getClass());
       if (d != null)
       {
@@ -1338,7 +1342,7 @@ public static Set<String> getDependencies() throws IOException
   {
     for (final VectorDataProviderFactory dp : vectorProviderFactories.values())
     {
-      log.info("Getting dependencies for " + dp.getClass().getName());
+      log.debug("Getting dependencies for " + dp.getClass().getName());
       Set<String> d = DependencyLoader.getDependencies(dp.getClass());
       if (d != null)
       {
@@ -1360,13 +1364,13 @@ private static void findPreferredProvider(Configuration conf)
       preferredAdHocProviderName = factory.getPrefix();
 
       setValue(preferredAdHocProviderName, conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
-      log.info("Found preferred ad hoc provider name " + preferredAdHocProviderName);
+      log.info("Making {} preferred ad hoc provider ", preferredAdHocProviderName);
       break;
     }
   }
   else
   {
-    log.info("Using preferred ad hoc provider " + preferredAdHocProviderName);
+    log.debug("Using preferred ad hoc provider {}", preferredAdHocProviderName);
   }
 
   preferredImageProviderName = findValue(conf, PREFERRED_MRSIMAGE_PROVIDER_NAME, PREFERRED_MRSIMAGE_PROPERTYNAME);
@@ -1376,15 +1380,16 @@ private static void findPreferredProvider(Configuration conf)
     for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
     {
       preferredImageProviderName = factory.getPrefix();
-      setValue(preferredImageProviderName, conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
+      setValue(preferredImageProviderName, conf, PREFERRED_MRSIMAGE_PROVIDER_NAME, PREFERRED_MRSIMAGE_PROPERTYNAME);
 
-      log.info("Found preferred image provider name " + preferredImageProviderName);
+      log.info("Making {} preferred image provider ", preferredImageProviderName);
+
       break;
     }
   }
   else
   {
-    log.info("Using preferred image provider " + preferredImageProviderName);
+    log.debug("Using preferred image provider " + preferredImageProviderName);
   }
 
 
@@ -1395,17 +1400,18 @@ private static void findPreferredProvider(Configuration conf)
     for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
     {
       preferredVectorProviderName = factory.getPrefix();
-      setValue(preferredVectorProviderName, conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
+      setValue(preferredVectorProviderName, conf, PREFERRED_VECTOR_PROVIDER_NAME, PREFERRED_VECTOR_PROPERTYNAME);
 
-      log.info("Found preferred vector provider name " + preferredVectorProviderName);
+      log.info("Making {} preferred vector provider ", preferredVectorProviderName);
+
       break;
     }
   }
-  else
-  {
-    log.info("Using preferred vector provider " + preferredVectorProviderName);
+    else
+    {
+      log.debug("Using preferred vector provider " + preferredVectorProviderName);
+    }
   }
-}
 
 private static String findValue(final Configuration conf, final String confName, final String propName)
 {

@@ -63,17 +63,27 @@ public class HadoopUtils
     Configuration.addDefaultResource("core-site.xml");
     Configuration.addDefaultResource("mapred-site.xml");
     Configuration.addDefaultResource("hdfs-site.xml");
-
-    LoggingUtils.setLogLevel("org.apache.hadoop.mapred.LocalDistributedCacheManager", LoggingUtils.WARN);
-
-    // S3 is very chatty
-    LoggingUtils.setLogLevel("org.apache.hadoop.fs.s3native", LoggingUtils.WARN);
-
-    // Amazon EMR has a custom S3 implementation
-    LoggingUtils.setLogLevel("com.amazon.ws.emr.hadoop.fs.s3n", LoggingUtils.WARN);
+    adjustLogging();
   }
 
-  /**
+// lower some log levels.
+public static void adjustLogging()
+{
+  LoggingUtils.setLogLevel("org.apache.hadoop.io.compress.CodecPool", LoggingUtils.WARN);
+  LoggingUtils.setLogLevel("org.apache.hadoop.hdfs.DFSClient", LoggingUtils.ERROR);
+
+  // httpclient is _WAY_  to chatty.  It prints each byte received!
+  LoggingUtils.setLogLevel("org.apache.commons.httpclient.Wire", LoggingUtils.WARN);
+  LoggingUtils.setLogLevel("org.apache.http.wire", LoggingUtils.WARN);
+
+  // S3 is very chatty
+  //LoggingUtils.setLogLevel("org.apache.hadoop.fs.s3native", LoggingUtils.WARN);
+
+  // Amazon EMR has a custom S3 implementation
+  //LoggingUtils.setLogLevel("com.amazon.ws.emr.hadoop.fs.s3n", LoggingUtils.WARN);
+}
+
+/**
    * Add a {@link Path} to the list of inputs for the map-reduce job.
    *
    * NOTE: This was copied directly from the 1.0.3 source because there is a bug in the 20.2 version

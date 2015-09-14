@@ -761,38 +761,36 @@ private static void copyToDataset(Dataset ds, Raster raster)
   int linestride = pixelstride * width;
   int bandstride = pixelsize;
 
+  int imagesize = pixelsize * linestride * height;
+  ByteBuffer bytes = ByteBuffer.allocateDirect(imagesize);
+  bytes.order(ByteOrder.nativeOrder());
+
   if (type == gdalconstConstants.GDT_Byte)
   {
-//    byte[] bytedata;
-//    if (interleaved)
-//    {
-//      // need to "deinterleave" the data
-//      bytedata = RasterUtils.deinterleave((byte[]) elements, bands);
-//    }
-//    else
-//    {
-//      bytedata = (byte[])elements;
-//    }
-//
-//    ds.WriteRaster(0, 0, width, height, width, height, type, bytedata, bandlist, pixelstride, linestride, bandstride);
-    ds.WriteRaster(0, 0, width, height, width, height, type, (byte[])elements, bandlist, pixelstride, linestride, bandstride);
+    bytes.put((byte[])elements);
   }
   else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
   {
-    ds.WriteRaster(0, 0, width, height, width, height, type, (short[])elements, bandlist, pixelstride, linestride, bandstride);
+    ShortBuffer sb = bytes.asShortBuffer();
+    sb.put((short[])elements);
   }
   else if (type == gdalconstConstants.GDT_Int32)
   {
-    ds.WriteRaster(0, 0, width, height, width, height, type, (int[])elements, bandlist, pixelstride, linestride, bandstride);
+    IntBuffer ib = bytes.asIntBuffer();
+    ib.put((int[])elements);
   }
   else if (type == gdalconstConstants.GDT_Float32)
   {
-    ds.WriteRaster(0, 0, width, height, width, height, type, (float[])elements, bandlist, pixelstride, linestride, bandstride);
+    FloatBuffer fb = bytes.asFloatBuffer();
+    fb.put((float[])elements);
   }
   else if (type == gdalconstConstants.GDT_Float64)
   {
-    ds.WriteRaster(0, 0, width, height, width, height, type, (double[])elements, bandlist, pixelstride, linestride, bandstride);
+    DoubleBuffer db = bytes.asDoubleBuffer();
+    db.put((double[])elements);
   }
+  ds.WriteRaster_Direct(0, 0, width, height, width, height, type, bytes, bandlist, pixelstride, linestride,
+      bandstride);
 }
 
 public static void main(final String[] args) throws Exception
