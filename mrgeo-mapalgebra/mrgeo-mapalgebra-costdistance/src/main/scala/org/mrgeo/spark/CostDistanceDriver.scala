@@ -1188,7 +1188,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         totalDequeue = totalDequeue + (System.nanoTime() - t0)
         @transient val currTotalCost = raster.getSampleFloat(currPoint.px, currPoint.py, totalCostBand)
         //      if (currPoint.cost <= currTotalCost || currTotalCost.isNaN) {
-        if (isValueSmaller(currPoint.cost, currTotalCost)) {
+        if ((maxCost <= 0.0 || currPoint.cost <= maxCost) && isValueSmaller(currPoint.cost, currTotalCost)) {
           raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.cost)
           // In the vertex data, set the point's cost to the new smaller value
           //        vertex.raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.cost)
@@ -1436,10 +1436,12 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 
   override def writeExternal(out: ObjectOutput): Unit = {
     out.writeInt(zoomLevel)
+    out.writeDouble(maxCost)
   }
 
   override def readExternal(in: ObjectInput): Unit = {
     zoomLevel = in.readInt()
+    maxCost = in.readDouble()
   }
 }
 
