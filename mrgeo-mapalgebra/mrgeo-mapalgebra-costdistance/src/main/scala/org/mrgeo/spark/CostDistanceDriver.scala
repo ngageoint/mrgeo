@@ -427,7 +427,6 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       true
     }
     finally {
-      println("execute took " + ((System.nanoTime() - t0).toDouble / 1000000) + " ms")
       if (context != null) {
         context.stop()
       }
@@ -551,30 +550,30 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       // Vertex Program
       (id, vertexData, msg) => {
         val t0 = System.nanoTime()
-          log.warn("IN VPROG, vertex id is " + TMSUtils.tileid(id, zoomLevel) + " and start id is " + TMSUtils.tileid(startTileId, zoomLevel) + " and msg is " + msg)
+          log.debug("IN VPROG, vertex id is " + TMSUtils.tileid(id, zoomLevel) + " and start id is " + TMSUtils.tileid(startTileId, zoomLevel) + " and msg is " + msg)
         var returnNewVertex = true
         var changedPoints: ChangedPoints = null
-        log.warn("  initialMsg = " + msg.isInitial)
+        log.debug("  initialMsg = " + msg.isInitial)
         if (!msg.isInitial) {
           if (msg.size > 0) {
             changedPoints = processVertices(id, zoom, res, pixelHeightM, vertexData.raster, msg)
-            log.warn("  processVertices on non-initial message returned " + changedPoints.size)
+            log.debug("  processVertices on non-initial message returned " + changedPoints.size)
           }
           else {
-            log.warn("  no changes to process for non-inital message")
+            log.debug("  no changes to process for non-inital message")
             changedPoints = new ChangedPoints(false)
           }
         }
         else if (id == startTileId) {
-          log.warn("  for start tile")
+          log.debug("  for start tile")
           changedPoints = processVertices(id, zoom, res, pixelHeightM, vertexData.raster, msg)
         }
         else {
-          log.warn("  ignoring tile because it is the initial msg, and this is not the start tile")
+          log.debug("  ignoring tile because it is the initial msg, and this is not the start tile")
           changedPoints = new ChangedPoints(false)
           returnNewVertex = false
         }
-        log.warn("  returning " + changedPoints.size + " changed points")
+        log.debug("  returning " + changedPoints.size + " changed points")
         if (returnNewVertex) {
           new VertexType(vertexData.raster, changedPoints, id, zoomLevel)
         }
@@ -584,7 +583,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
       },
       // sendMsg
       triplet => {
-          log.warn("SENDMSG src " + TMSUtils.tileid(triplet.srcId, zoomLevel) + " and dest " +
+          log.debug("SENDMSG src " + TMSUtils.tileid(triplet.srcId, zoomLevel) + " and dest " +
             TMSUtils.tileid(triplet.dstId, zoomLevel) + " contains " + triplet.srcAttr.changedPoints.size + " changed points")
         val t0 = System.nanoTime()
         // The changed points are from the source vertex. Now we need to compute the
@@ -594,7 +593,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         // to determine the neighboring pixels in the destination to check.
         var newChanges: ChangedPoints = null
         if (triplet.srcAttr.changedPoints != null) {
-          log.warn("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
+          log.debug("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
           if (!triplet.srcAttr.changedPoints.isEmpty) {
             newChanges = new ChangedPoints(false)
             val changedPoints = triplet.srcAttr.changedPoints.getAllPoints
@@ -711,15 +710,15 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
           }
         }
         if (newChanges == null) {
-          log.warn("  SENDMSG returning empty from no changes")
+          log.debug("  SENDMSG returning empty from no changes")
           Iterator.empty
         } else {
           if (newChanges.size > 0) {
-              log.warn("  SENDMSG returning " + newChanges.size + " changes for destination")
+              log.debug("  SENDMSG returning " + newChanges.size + " changes for destination")
             Iterator((triplet.dstId, newChanges))
           }
           else {
-            log.warn("  SENDMSG returning empty after 0 changes")
+            log.debug("  SENDMSG returning empty after 0 changes")
             Iterator.empty
           }
         }
@@ -745,7 +744,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
   def processVertices(tileId: Long, zoom: Int, res: Double, pixelHeightM: Double,
                       raster: WritableRaster, changes: ChangedPoints): ChangedPoints =
   {
-    log.warn("PROCESS VERTICES received " + changes.size + " changes")
+    log.debug("PROCESS VERTICES received " + changes.size + " changes")
     val neighborMetadata8Band = Array(
       (-1, -1, DirectionBand.UP_LEFT_BAND)
       , (-1, 0, DirectionBand.LEFT_BAND)
@@ -905,10 +904,10 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
     // method later.
     if (newChanges.isEmpty)
     {
-      log.warn("PROCESS VERTICES for " + TMSUtils.tileid(tileId, zoom) + " newChanges is empty")
+      log.debug("PROCESS VERTICES for " + TMSUtils.tileid(tileId, zoom) + " newChanges is empty")
     }
     else {
-      log.warn("PROCESS VERTICES for " + TMSUtils.tileid(tileId, zoom) + " newChanges contains " + newChanges.size)
+      log.debug("PROCESS VERTICES for " + TMSUtils.tileid(tileId, zoom) + " newChanges contains " + newChanges.size)
     }
     newChanges
   }
