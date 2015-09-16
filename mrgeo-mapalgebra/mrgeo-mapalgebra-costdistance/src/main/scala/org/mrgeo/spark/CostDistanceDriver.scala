@@ -461,13 +461,9 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
               case (-1, -1) => CostDistanceEdgeType.TO_BOTTOM_LEFT
               case (-1,  0) => CostDistanceEdgeType.TO_LEFT
             }
-            // TODO: The following condition allows only vertical and horizontal
-            // directions. This is to see how much faster we run that way.
-            if (dx == 0 || dy == 0) {
-              edges.append(new CostDistanceEdge(TMSUtils.tileid(tx, ty, zoom),
-                TMSUtils.tileid(neighborTx, neighborTy, zoom),
-                direction))
-            }
+            edges.append(new CostDistanceEdge(TMSUtils.tileid(tx, ty, zoom),
+              TMSUtils.tileid(neighborTx, neighborTy, zoom),
+              direction))
           }
         }
       }
