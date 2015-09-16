@@ -121,8 +121,8 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
       double epsilon = 0.5;
       Assert.assertEquals(0, bandStats.min, epsilon);
       Assert.assertEquals(50000, bandStats.max, epsilon);
-      Assert.assertEquals(33113.35, bandStats.mean, epsilon);
-      Assert.assertEquals(1852001, bandStats.count);
+      Assert.assertEquals(33112.808371797866, bandStats.mean, epsilon);
+      Assert.assertEquals(1852051, bandStats.count);
     }
   }
 
