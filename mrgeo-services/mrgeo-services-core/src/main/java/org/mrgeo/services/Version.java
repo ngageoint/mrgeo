@@ -16,64 +16,91 @@
 package org.mrgeo.services;
 
 
+import org.mrgeo.utils.HashCodeUtil;
+
 public class Version
 {
-  private int major, minor, micro;
+private int major, minor, micro;
 
-  public Version(String str)
-  {
-    String[] l = str.split("\\.");
-    major = Integer.valueOf(l[0]).intValue();
-    minor = Integer.valueOf(l[1]).intValue();
-    micro = Integer.valueOf(l[2]).intValue();
-  }
+public Version(String str)
+{
+  String[] l = str.split("\\.");
+  major = Integer.valueOf(l[0]).intValue();
+  minor = Integer.valueOf(l[1]).intValue();
+  micro = Integer.valueOf(l[2]).intValue();
+}
 
-  public int compareTo(String str)
-  {
-    Version other = new Version(str);
-    if (other.major < major)
-      return 1;
-    if (other.major > major)
-      return -1;
-    if (other.minor < minor)
-      return 1;
-    if (other.minor > minor)
-      return -1;
-    if (other.micro < micro)
-      return 1;
-    if (other.micro > micro)
-      return -1;
-    return 0;
-  }
+public int compareTo(Version other)
+{
+  if (other.major < major)
+    return 1;
+  if (other.major > major)
+    return -1;
+  if (other.minor < minor)
+    return 1;
+  if (other.minor > minor)
+    return -1;
+  if (other.micro < micro)
+    return 1;
+  if (other.micro > micro)
+    return -1;
+  return 0;
+}
 
-  public int getMajor()
-  {
-    return major;
-  }
+public int compareTo(String str)
+{
+  return compareTo(new Version(str));
+}
 
-  public int getMicro()
-  {
-    return micro;
-  }
+public int getMajor()
+{
+  return major;
+}
 
-  public int getMinor()
-  {
-    return minor;
-  }
+public int getMicro()
+{
+  return micro;
+}
 
-  public boolean isEqual(String str)
-  {
-    return compareTo(str) == 0;
-  }
+public int getMinor()
+{
+  return minor;
+}
 
-  public boolean isLess(String str)
+public boolean isEqual(String str)
+{
+  return compareTo(str) == 0;
+}
+
+public boolean isLess(String str)
+{
+  return compareTo(str) == -1;
+}
+
+@Override
+public int hashCode()
+{
+  int result = HashCodeUtil.SEED;
+  //collect the contributions of various fields
+  result = HashCodeUtil.hash(result, major);
+  result = HashCodeUtil.hash(result, minor);
+  result = HashCodeUtil.hash(result, micro);
+  return result;
+}
+
+@Override
+public boolean equals(Object obj)
+{
+  if (!(obj instanceof Version))
   {
-    return compareTo(str) == -1;
+    return false;
   }
-  
-  @Override
-  public String toString()
-  {
-    return major + "." + minor + "." + micro;
-  }
+  return compareTo((Version)obj) == 0;
+}
+
+@Override
+public String toString()
+{
+  return major + "." + minor + "." + micro;
+}
 }

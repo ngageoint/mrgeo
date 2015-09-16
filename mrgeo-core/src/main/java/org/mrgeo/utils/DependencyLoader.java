@@ -73,7 +73,8 @@ public class DependencyLoader
     Set<String> deps = new HashSet<>();
 
     // prime the set with any dependencies already added
-    deps.addAll(conf.getStringCollection(MRJobConfig.CLASSPATH_FILES));
+    deps.addAll(conf.getStringCollection("mapreduce.job.classpath.files"));
+//    deps.addAll(conf.getStringCollection(MRJobConfig.CLASSPATH_FILES));
 
     // copy the dependencies to hdfs, if needed
     for (String local: localDependencies)
