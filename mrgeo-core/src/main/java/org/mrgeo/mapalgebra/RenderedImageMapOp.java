@@ -52,7 +52,7 @@ private static final Logger log = LoggerFactory.getLogger(RenderedImageMapOp.cla
 
   private RenderingHints _hints = JAI.getDefaultInstance().getRenderingHints();
   private ParameterBlock _param = new ParameterBlock();
-  RenderedImageFactory _factory = null;
+  protected RenderedImageFactory _factory = null;
   String _opName = null;
   private boolean _useCache = false;
   private TileClusterInfo tileClusterInfo;

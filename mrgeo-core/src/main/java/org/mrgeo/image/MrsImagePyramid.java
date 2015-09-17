@@ -113,7 +113,7 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
     final double[] defaultValues,
     final Bounds bounds, final Configuration conf,
     final String protectionLevel,
-      final ProviderProperties providerProperties) throws IOException
+    final ProviderProperties providerProperties) throws IOException
 {
 
   MrsImagePyramidMetadata metadata;

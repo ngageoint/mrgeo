@@ -357,9 +357,10 @@ object TestMapAlgebra extends App {
       "a = [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation]; " +
       "[/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation]"
 
+
   val output = "test-mapalgebra"
   if (MapAlgebra.validate(expression, pp)) {
-    MapAlgebra.mapalgebra(expression, output, conf, pp)
+    //MapAlgebra.mapalgebra(expression, output, conf, pp)
   }
 
   System.exit(0)

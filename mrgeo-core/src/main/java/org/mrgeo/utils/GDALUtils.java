@@ -752,7 +752,7 @@ private static void copyToDataset(Dataset ds, Raster raster)
   }
 
   // data coming from getDataElements is always interleaved (pixel1, pixel2, pixel3...), so we need to make the
-  // GDAL dataset also interleaved (using pixelstride, linestride, and badstride)
+  // GDAL dataset also interleaved (using pixelstride, linestride, and bandstride)
   Object elements =
       raster.getDataElements(raster.getMinX(), raster.getMinY(), raster.getWidth(), raster.getHeight(), null);
 

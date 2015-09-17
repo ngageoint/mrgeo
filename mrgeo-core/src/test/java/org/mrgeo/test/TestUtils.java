@@ -581,8 +581,11 @@ public class TestUtils
             v2 = r2Translator.translate(v2);
           }
 
-          Assert.assertEquals("Pixel NaN mismatch: px: " + dx + " py: " +  dy
-              + " b: " + band + " v1: " + v1 + " v2: " + v2,  Float.isNaN(v1), Float.isNaN(v2));
+          if (Float.isNaN(v1) != Float.isNaN(v2))
+          {
+            Assert.assertEquals("Pixel NaN mismatch: px: " + dx + " py: " +  dy
+                + " b: " + band + " v1: " + v1 + " v2: " + v2,  v1, v2, 0);
+          }
 
           // make delta something reasonable relative to the data
 

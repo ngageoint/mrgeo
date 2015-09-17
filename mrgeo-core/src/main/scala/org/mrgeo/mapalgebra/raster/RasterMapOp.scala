@@ -14,6 +14,9 @@ import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.utils.{Bounds, SparkUtils}
 
 object RasterMapOp {
+
+  val EPSILON: Double = 1e-8
+
   def isNodata(value:Double, nodata:Double):Boolean = {
     if (nodata.isNaN) {
       value.isNaN
@@ -31,10 +34,20 @@ object RasterMapOp {
     }
   }
 
+  def nearZero(v:Double):Boolean = {
+    if (v >= -EPSILON && v <= EPSILON) {
+      true
+    }
+    else {
+      false
+    }
+  }
+
 }
 abstract class RasterMapOp extends MapOp {
 
   private var meta:MrsImagePyramidMetadata = null
+
 
   def rdd():Option[RasterRDD]
 
@@ -58,5 +71,6 @@ abstract class RasterMapOp extends MapOp {
     case _ =>
     }
   }
+
 
 }

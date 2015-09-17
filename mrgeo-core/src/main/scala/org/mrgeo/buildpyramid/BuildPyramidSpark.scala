@@ -222,7 +222,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
         // make sure the level is deleted
         deletelevel(tolevel, metadata, provider)
 
-        SparkUtils.saveMrsPyramid(mergedTiles, provider, tolevel,
+        SparkUtils.saveMrsPyramidRDD(mergedTiles, provider, tolevel,
           context.hadoopConfiguration, providerproperties = this.providerproperties)
 
         //TODO: Fix this in S3

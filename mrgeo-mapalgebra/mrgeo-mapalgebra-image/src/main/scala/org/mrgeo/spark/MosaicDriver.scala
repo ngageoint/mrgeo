@@ -239,7 +239,7 @@ class MosaicDriver extends MrGeoJob with Externalizable {
 
     val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[ProviderProperties])
 
-    SparkUtils.saveMrsPyramid(mosaiced, op, zoom, tilesize, Array[Double](Float.NaN),
+    SparkUtils.saveMrsPyramidRDD(mosaiced, op, zoom, tilesize, Array[Double](Float.NaN),
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, bounds, bands = 1,
       protectionlevel = null) // metadata.getProtectionLevel)
 

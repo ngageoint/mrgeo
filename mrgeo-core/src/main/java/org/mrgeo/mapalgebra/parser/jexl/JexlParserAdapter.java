@@ -220,57 +220,73 @@ public class JexlParserAdapter implements ParserAdapter
         return n;
       }
     }
-    else if (node instanceof ASTUnaryMinusNode)
+    else
     {
-      // Handle negative numbers
-      ParserFunctionNode fn = new ParserFunctionNode();
-      fn.setName("UMinus");
-      fn.setNativeNode(node);
-      n = fn;
-//      parentNode = node;
-    }
-    else if (node instanceof ASTIdentifier)
-    {
-      ParserVariableNode vn = new ParserVariableNode();
-      vn.setNativeNode(node);
-      vn.setName(node.image);
-      n = vn;
-//      parentNode = node;
-    }
-    else if (node instanceof ASTNotNode)
-    {
-      ParserFunctionNode fn = new ParserFunctionNode();
-      fn.setNativeNode(node);
-      fn.setName("!");
-      n = fn;
-    }
-    else if (node instanceof ASTArrayLiteral)
-    {
-      // This is invoked in the case where an image is specified in
-      // map algebra (e.g. [myImage]). We translate this to the same
-      // node structure that JEP used to generate.
-      ParserFunctionNode fn = new ParserFunctionNode();
-      fn.setName("LIST");
-      fn.setNativeNode(node);
-      n = fn;
-      parentNode = node;
-    }
-    else if (node instanceof ASTAdditiveNode)
-    {
-      // This is used for two or more expressions being added/subtracted
-      ParserNode newParent = null;
-      int index = 1;
-      ParserNode previousOperand = convertToMrGeoNode(node.jjtGetChild(0));
-      while (index < node.jjtGetNumChildren())
+      if (node instanceof ASTUnaryMinusNode)
       {
-        newParent = new ParserFunctionNode();
-        newParent.setName(((ASTAdditiveOperator)node.jjtGetChild(index)).image);
-        newParent.addChild(previousOperand);
-        newParent.addChild(convertToMrGeoNode(node.jjtGetChild(index+1)));
-        previousOperand = newParent;
-        index += 2;
+        // Handle negative numbers
+        if (node.jjtGetNumChildren() == 1 && node.jjtGetChild(0) instanceof ASTNumberLiteral)
+        {
+          ParserConstantNode cn = new ParserConstantNode();
+          cn.setNativeNode(node);
+
+          cn.setValue(-(((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().doubleValue()));
+          cn.setName(cn.getValue().toString());
+          n = cn;
+
+      parentNode = node;
+
+        }
+        else
+        {
+          ParserFunctionNode fn = new ParserFunctionNode();
+          fn.setName("UMinus");
+          fn.setNativeNode(node);
+          n = fn;
+        }
       }
-      return newParent;
+      else if (node instanceof ASTIdentifier)
+      {
+        ParserVariableNode vn = new ParserVariableNode();
+        vn.setNativeNode(node);
+        vn.setName(node.image);
+        n = vn;
+//      parentNode = node;
+      }
+      else if (node instanceof ASTNotNode)
+      {
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setNativeNode(node);
+        fn.setName("!");
+        n = fn;
+      }
+      else if (node instanceof ASTArrayLiteral)
+      {
+        // This is invoked in the case where an image is specified in
+        // map algebra (e.g. [myImage]). We translate this to the same
+        // node structure that JEP used to generate.
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName("LIST");
+        fn.setNativeNode(node);
+        n = fn;
+        parentNode = node;
+      }
+      else if (node instanceof ASTAdditiveNode)
+      {
+        // This is used for two or more expressions being added/subtracted
+        ParserNode newParent = null;
+        int index = 1;
+        ParserNode previousOperand = convertToMrGeoNode(node.jjtGetChild(0));
+        while (index < node.jjtGetNumChildren())
+        {
+          newParent = new ParserFunctionNode();
+          newParent.setName(((ASTAdditiveOperator) node.jjtGetChild(index)).image);
+          newParent.addChild(previousOperand);
+          newParent.addChild(convertToMrGeoNode(node.jjtGetChild(index + 1)));
+          previousOperand = newParent;
+          index += 2;
+        }
+        return newParent;
 
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(0)));
 //      ParserFunctionNode fn = new ParserFunctionNode();
@@ -283,7 +299,7 @@ public class JexlParserAdapter implements ParserAdapter
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(0)));
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(2)));
 //      return n;
-    }
+      }
 //    else if (node instanceof ASTDivNode)
 //    {
 //      ParserFunctionNode fn = new ParserFunctionNode();
@@ -300,23 +316,24 @@ public class JexlParserAdapter implements ParserAdapter
 //      n = fn;
 //      parentNode = node;
 //    }
-    else if (twoArgFunctions.containsKey(node.getClass()))
-    {
-      ParserFunctionNode fn = new ParserFunctionNode();
-      fn.setName(twoArgFunctions.get(node.getClass()));
-      fn.setNativeNode(node);
-      n = fn;
-      parentNode = node;
-    }
-    else if ((node instanceof ASTReference) || (node instanceof ASTReferenceExpression))
-    {
-      if (node.jjtGetNumChildren() > 0)
+      else if (twoArgFunctions.containsKey(node.getClass()))
       {
-        JexlNode child = node.jjtGetChild(0);
-        return convertToMrGeoNode(child);
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName(twoArgFunctions.get(node.getClass()));
+        fn.setNativeNode(node);
+        n = fn;
+        parentNode = node;
+      }
+      else if ((node instanceof ASTReference) || (node instanceof ASTReferenceExpression))
+      {
+        if (node.jjtGetNumChildren() > 0)
+        {
+          JexlNode child = node.jjtGetChild(0);
+          return convertToMrGeoNode(child);
+        }
       }
     }
-    if (n != null && parentNode != null)
+    if (n != null)
     {
       for (int i=0; i < parentNode.jjtGetNumChildren(); i++)
       {

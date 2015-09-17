@@ -10,6 +10,7 @@ import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.utils.{SparkUtils, TMSUtils, GDALUtils}
 
 //object RawBinaryMathMapOpRegistrar extends MapOpRegistrar {
 //  override def register: Array[String] = {
@@ -26,8 +27,8 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   var constA:Option[Double] = None
   var constB:Option[Double] = None
 
-  var varA:Option[MapOp] = None
-  var varB:Option[MapOp] = None
+  var varA:Option[RasterMapOp] = None
+  var varB:Option[RasterMapOp] = None
 
   var rasterRDD:Option[RasterRDD] = None
 
@@ -36,7 +37,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     if (node.getNumChildren < 2) {
       throw new ParserException(node.getName + " requires two arguments")
     }
-    else if (node.getNumChildren < 2) {
+    else if (node.getNumChildren > 2) {
       throw new ParserException(node.getName + " requires only two arguments")
     }
 
@@ -45,21 +46,33 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
     childA match {
     case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
-    case func:ParserFunctionNode => varA = Some(func.getMapOp)
+    case func:ParserFunctionNode => varA = func.getMapOp match {
+      case raster:RasterMapOp => Some(raster)
+      case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+    }
     case variable:ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
       case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
-      case func:ParserFunctionNode => varA = Some(func.getMapOp)
+      case func:ParserFunctionNode => varA = func.getMapOp match {
+        case raster:RasterMapOp => Some(raster)
+        case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+      }
       }
     }
 
     childB match {
     case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
-    case func:ParserFunctionNode => varB = Some(func.getMapOp)
+    case func:ParserFunctionNode => varB = func.getMapOp match {
+      case raster:RasterMapOp => Some(raster)
+      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
+    }
     case variable:ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const:ParserConstantNode => constB= MapOp.decodeDouble(const)
-      case func:ParserFunctionNode => varB = Some(func.getMapOp)
+      case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
+      case func:ParserFunctionNode => varB = func.getMapOp match {
+      case raster:RasterMapOp => Some(raster)
+      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
+      }
       }
     }
 
@@ -74,14 +87,6 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       throw new ParserException("\"" + node.getName + "\" must have at least 1 raster input")
     }
 
-    if (varA.isDefined && !varA.get.isInstanceOf[RasterMapOp]) {
-      throw new ParserException("First term \"" + childA + "\" is not a raster input")
-    }
-
-    if (varB.isDefined && !varB.get.isInstanceOf[RasterMapOp]) {
-      throw new ParserException("First term \"" + childA + "\" is not a raster input")
-    }
-
     this.protectionLevel(protectionLevel)
   }
   override def setup(job: JobArguments, conf: SparkConf): Boolean = true
@@ -91,20 +96,53 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   override def execute(context: SparkContext): Boolean = {
     rasterRDD =
         if (constA.isDefined) {
-          computeWithConstant(varB.get.asInstanceOf[RasterMapOp], constA.get)
+          computeWithConstantA(varB.get, constA.get)
         }
         else if (constB.isDefined) {
-          computeWithConstant(varA.get.asInstanceOf[RasterMapOp], constB.get)
+          computeWithConstantB(varA.get, constB.get)
         }
         else {
-          compute(varA.get.asInstanceOf[RasterMapOp], varB.get.asInstanceOf[RasterMapOp])
+          compute(varA.get, varB.get)
         }
     true
   }
 
-  private[binarymath] def computeWithConstant(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
+  private[binarymath] def computeWithConstantA(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
     // our metadata is the same as the raster
-    metadata(raster.metadata().get)
+    val meta = raster.metadata().get
+
+    val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
+
+    // copy this here to avoid serializing the whole mapop
+    val nodata = metadata() match {
+    case Some(metadata) => metadata.getDefaultValue(0)
+    case _ => Double.NaN
+    }
+
+    val answer = RasterRDD(rdd.map(tile => {
+      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+
+      for (y <- 0 until raster.getHeight) {
+        for (x <- 0 until raster.getWidth) {
+          for (b <- 0 until raster.getNumBands) {
+            val v = raster.getSampleDouble(x, y, b)
+            if (RasterMapOp.isNotNodata(v, nodata)) {
+              raster.setSample(x, y, b, function(const, v))
+            }
+          }
+        }
+      }
+      (tile._1, RasterWritable.toWritable(raster))
+    }))
+
+    metadata(SparkUtils.calculateMetadata(answer, meta.getMaxZoomLevel, nodata))
+
+    Some(answer)
+  }
+
+  private[binarymath] def computeWithConstantB(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
+    // our metadata is the same as the raster
+    metadata(raster.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)))
 
     val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
@@ -117,8 +155,8 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     Some(RasterRDD(rdd.map(tile => {
       val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
 
-      for (y <- 0 until raster.getWidth) {
-        for (x <- 0 until raster.getHeight) {
+      for (y <- 0 until raster.getHeight) {
+        for (x <- 0 until raster.getWidth) {
           for (b <- 0 until raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodata)) {
@@ -139,11 +177,11 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     val rdd2 = raster2.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster2.getClass.getName))
 
     // copy this here to avoid serializing the whole mapop
-    val nodata1 = metadata() match {
+    val nodata1 = raster1.metadata() match {
     case Some(metadata) => metadata.getDefaultValue(0)
     case _ => Double.NaN
     }
-    val nodata2 = metadata() match {
+    val nodata2 = raster2.metadata() match {
     case Some(metadata) => metadata.getDefaultValue(0)
     case _ => Double.NaN
     }
@@ -163,26 +201,30 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       else if (iter2.isEmpty) {
         // raster 2 is missing, non-overlapping tile, use raster 1
         (tile._1, iter1.head)
-
       }
       else {
         // we know there are only 1 item in each group's iterator, so we can use head()
         val raster1 = RasterWritable.toRaster(iter1.head).asInstanceOf[WritableRaster]
         val raster2 = RasterWritable.toRaster(iter2.head).asInstanceOf[WritableRaster]
 
-        for (y <- 0 until raster1.getWidth) {
-          for (x <- 0 until raster1.getHeight) {
+        for (y <- 0 until raster1.getHeight) {
+          for (x <- 0 until raster1.getWidth) {
             for (b <- 0 until raster1.getNumBands) {
               val v1 = raster1.getSampleDouble(x, y, b)
               if (RasterMapOp.isNotNodata(v1, nodata1)) {
                 val v2 = raster2.getSampleDouble(x, y, b)
-                if (RasterMapOp.isNotNodata(v2, nodata1)) {
+                if (RasterMapOp.isNotNodata(v2, nodata2)) {
                   raster1.setSample(x, y, b, function(v1, v2))
+                }
+                else {
+                  // if raster2 is nodata, we need to set raster1's pixel to nodata as well
+                  raster1.setSample(x, y, b, nodata1)
                 }
               }
             }
           }
         }
+
         (tile._1, RasterWritable.toWritable(raster1))
       }
     })))

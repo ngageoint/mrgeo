@@ -234,7 +234,7 @@ class KernelDriver extends MrGeoJob with Externalizable {
 
     val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, providerproperties)
 
-    SparkUtils.saveMrsPyramid(answer, op, zoom, tilesize, Array[Double](Float.NaN),
+    SparkUtils.saveMrsPyramidRDD(answer, op, zoom, tilesize, Array[Double](Float.NaN),
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, bands = 1,
       protectionlevel = metadata.getProtectionLevel)
 

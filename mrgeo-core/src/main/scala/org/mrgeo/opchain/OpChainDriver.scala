@@ -231,7 +231,7 @@ class OpChainDriver extends MrGeoJob with Externalizable {
     val tile = answer.first()
     val raster = RasterWritable.toRaster(tile._2)
 
-    SparkUtils.saveMrsPyramid(answer, dp, zoom, raster.getWidth, Array[Double](Double.NaN),
+    SparkUtils.saveMrsPyramidRDD(answer, dp, zoom, raster.getWidth, Array[Double](Double.NaN),
       context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, bounds, 1, protectionlevel, providerproperties)
 
     true
