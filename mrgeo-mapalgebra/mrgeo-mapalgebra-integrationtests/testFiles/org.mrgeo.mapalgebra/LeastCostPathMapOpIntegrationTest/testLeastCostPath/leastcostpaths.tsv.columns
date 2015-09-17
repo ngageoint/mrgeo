@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AllColumns firstLineHeader="false">
+<Column name="GEOMETRY" type="Nominal"/>
+<Column name="VALUE" type="Numeric"/>
+<Column name="DISTANCE" type="Numeric"/>
+<Column name="MINSPEED" type="Numeric"/>
+<Column name="MAXSPEED" type="Numeric"/>
+<Column name="AVGSPEED" type="Numeric"/>
+</AllColumns>
