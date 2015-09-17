@@ -1,0 +1,94 @@
+{
+  "bounds" : {
+    "minX" : 64.6875,
+    "minY" : 29.8828125,
+    "maxX" : 69.2578125,
+    "maxY" : 34.1015625
+  },
+  "tilesize" : 512,
+  "bands" : 1,
+  "defaultValues" : [ -9999.0 ],
+  "tileType" : 0,
+  "maxZoomLevel" : 10,
+  "stats" : [ {
+    "min" : 0.0,
+    "max" : 49999.984,
+    "mean" : 33113.19824670041,
+    "sum" : 6.11992500751815E10,
+    "count" : 1848183
+  } ],
+  "classification" : "Continuous",
+  "resamplingMethod" : null,
+  "imageMetadata" : [ {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : null,
+    "tileBounds" : null,
+    "image" : null,
+    "stats" : null
+  }, {
+    "pixelBounds" : {
+      "minX" : 0,
+      "minY" : 0,
+      "maxX" : 6656,
+      "maxY" : 6144
+    },
+    "tileBounds" : {
+      "minX" : 696,
+      "minY" : 341,
+      "maxX" : 708,
+      "maxY" : 352
+    },
+    "image" : "10",
+    "stats" : [ {
+      "min" : 0.0,
+      "max" : 49999.984,
+      "mean" : 33113.19824670041,
+      "sum" : 6.11992500751815E10,
+      "count" : 1848183
+    } ]
+  } ]
+}

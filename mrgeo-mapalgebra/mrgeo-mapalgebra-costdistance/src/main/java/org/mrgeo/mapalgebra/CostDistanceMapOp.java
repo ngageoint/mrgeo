@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-import org.apache.hadoop.util.ToolRunner;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -17,17 +16,22 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.rasterops.CostDistanceDriver;
+import org.mrgeo.spark.CostDistanceDriver;
 import org.mrgeo.utils.Bounds;
 
 public class CostDistanceMapOp extends RasterMapOp
   implements InputsCalculator, BoundsCalculator, TileSizeCalculator, MaximumZoomLevelCalculator
 {
   double maxCost = -1;
-
   int zoomLevel = -1;
-  private int tileSize = -1;
-  
+  int tileSize = -1;
+  Bounds bounds;
+
+  public static String[] register()
+  {
+    return new String[] { "CostDistance" };
+  }
+
   @Override
   public void addInput(MapOp n) throws IllegalArgumentException
   {
@@ -75,21 +79,8 @@ public class CostDistanceMapOp extends RasterMapOp
     }
 
     try {
-  	  String driverArgs[] = new String[] {
-  			  					"-inputpyramid", friction.getOutputName(),
-  			  					"-inputzoomlevel", "" + zoomLevel,
-  			  					"-outputpyramid", _outputName,
-  			  					"-sourcepoints", sourcePoints,
-  			  					"-maxcost", String.valueOf(maxCost)};
-  	  
-//      int statusJob = ToolRunner.run(getConf(), 
-//        new CostDistanceDriver(), 
-//        driverArgs);
-      if (ToolRunner.run(createConfiguration(), new CostDistanceDriver(), driverArgs) < 0)
-      {
-        throw new JobFailedException("CostDistance job failed, see Hadoop logs for more information");
-      }
-  	
+      CostDistanceDriver.costDistance(friction.getOutputName(), _outputName, zoomLevel, bounds,
+                                      sourcePoints, maxCost, createConfiguration());
     } catch (Exception e) {
       e.printStackTrace();
     	throw new JobFailedException(e.getMessage());
@@ -137,10 +128,10 @@ public class CostDistanceMapOp extends RasterMapOp
   public Vector<ParserNode> processChildren(final Vector<ParserNode> children, final ParserAdapter parser)
   {
     String usage = "CostDistance takes the following arguments " + 
-        "(source point, [friction zoom level], friction raster, [maxCost])";
+        "(source point, [friction zoom level], friction raster, [maxCost], [minX, minY, maxX, maxY])";
     Vector<ParserNode> result = new Vector<ParserNode>();
     
-    if (children.size() < 2 || children.size() > 4)
+    if (children.size() < 2 || children.size() > 8)
     {
       throw new IllegalArgumentException(usage);
     }
@@ -167,17 +158,38 @@ public class CostDistanceMapOp extends RasterMapOp
     result.add(children.get(nodeIndex));
     nodeIndex++;
 
-    // Check for optional max cost
-    if (children.size() > nodeIndex)
+    // Check for optional max cost. Both max cost and bounds are optional, so there
+    // must be either 1 argument left or 5 arguments left in order for max cost to
+    // be included.
+    if ((children.size() == (nodeIndex + 1)) || (children.size() == (nodeIndex + 5)))
     {
       maxCost = parseChildDouble(children.get(nodeIndex), "maxCost", parser);
+      nodeIndex++;
 
       if (maxCost < 0)
       {
         maxCost = -1;
       }
-    }    
+    }
 
+    // Check for optional bounds
+    if (children.size() > nodeIndex)
+    {
+      if (children.size() == nodeIndex + 4)
+      {
+        final double[] b = new double[4];
+        for (int i = 0; i < 4; i++)
+        {
+          b[i] = parseChildDouble(children.get(nodeIndex), "bounds", parser);
+          nodeIndex++;
+        }
+        bounds = new Bounds(b[0], b[1], b[2], b[3]);
+      }
+      else
+      {
+        throw new IllegalArgumentException("The bounds argument must include minX, minY, maxX and maxY");
+      }
+    }
     return result;
   }
 

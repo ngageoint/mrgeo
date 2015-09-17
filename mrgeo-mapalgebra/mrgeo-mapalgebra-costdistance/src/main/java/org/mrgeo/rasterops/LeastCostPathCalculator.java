@@ -3,6 +3,7 @@ package org.mrgeo.rasterops;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.TMSUtils;
@@ -55,13 +56,13 @@ public class LeastCostPathCalculator
   final short[] dy = { -1, -1, -1, 0, 1, 1, 1, 0 };
 
   public LeastCostPathCalculator(String inputImagePath, int zoomLevel,
-      final Properties providerProperties) throws IOException {
+      final ProviderProperties providerProperties) throws IOException {
     tileCache = new TileCache();
     openImage(inputImagePath, zoomLevel, providerProperties);
   }
 
   public static void run(String destPoints, String inputImagePath, int zoomLevel,
-      String outputName, final Properties providerProperties) throws IOException {
+      String outputName, final ProviderProperties providerProperties) throws IOException {
     // TODO - do some validation on inputs
     LeastCostPathCalculator lcp = null;
     try {
@@ -325,7 +326,7 @@ public class LeastCostPathCalculator
   }
 
   private void openImage(String pyramidName, int zoomLevel,
-      final Properties providerProperties) throws IOException {
+      final ProviderProperties providerProperties) throws IOException {
     this.image = MrsImage.open(pyramidName, zoomLevel, providerProperties);
     if (this.image == null)
     {

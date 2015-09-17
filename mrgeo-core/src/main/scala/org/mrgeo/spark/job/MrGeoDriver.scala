@@ -277,6 +277,9 @@ abstract class MrGeoDriver extends Logging {
       ex = (memory / minmemory).toInt
     }
 
+    if (ex == 0) {
+      throw new IllegalArgumentException("Invalid YARN memory configuration, min memory = " + minmemory + " and memory = " + memory)
+    }
     perex = memory / ex
 
     if (perex > maxmemory) {

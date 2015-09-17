@@ -13,6 +13,7 @@ import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
+//import org.mrgeo.rasterops.LeastCostPathCalculator;
 import org.mrgeo.rasterops.LeastCostPathCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,7 @@ public class LeastCostPathMapOp extends VectorMapOp
     destPoints = ifd.getValues();
     
     LeastCostPathCalculator.run(destPoints, costPyramidName, zoom, _outputName,
-        getProviderProperties());
+                                getProviderProperties());
     
     BasicInputFormatDescriptor result = new BasicInputFormatDescriptor(_outputName);
         
