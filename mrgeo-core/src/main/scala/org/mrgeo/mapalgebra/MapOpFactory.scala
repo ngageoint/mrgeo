@@ -1,8 +1,10 @@
 package org.mrgeo.mapalgebra
 
 
+import java.io.File
 import java.lang.reflect.Modifier
 
+import grizzled.net.url
 import org.apache.spark.Logging
 import org.clapper.classutil.ClassInfo
 import org.mrgeo.core.MrGeoProperties
@@ -67,17 +69,15 @@ object MapOpFactory extends Logging {
   }
 
   private def decendants(clazz: Class[_]) = {
-    val urls = {
-      // get all the URLs from the classloader, and remove and .so files
-      if (!MrGeoProperties.isDevelopmentMode) {
-        ClasspathHelper.forClassLoader().filter(!_.getFile.endsWith(".so"))
-      }
-      else {
-        // this is a development shortcut.  We know all our mapops are in mrgeo... jars
-        logWarning("Development mode, only looking in jars with \"mrgeo\" in the name for MapOps")
-        ClasspathHelper.forClassLoader().filter(_.getFile.contains("mrgeo"))
-      }
+
+    // get all the URLs for this classpath, filter files by "mrgeo" in development mode, then strip .so files
+    val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
+      val file = new File(url.getPath)
+
+      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") else true)
     }
+    ).filter(!_.getFile.endsWith(".so"))
+
 
     // register mapops
     val cfg = new ConfigurationBuilder()
@@ -86,6 +86,7 @@ object MapOpFactory extends Logging {
         .useParallelExecutor()
 
     val reflections: Reflections = new Reflections(cfg)
+    //val reflections: Reflections = new Reflections("org.mrgeo")
 
     val classes = reflections.getSubTypesOf(clazz).filter(p => !Modifier.isAbstract(p.getModifiers))
 
