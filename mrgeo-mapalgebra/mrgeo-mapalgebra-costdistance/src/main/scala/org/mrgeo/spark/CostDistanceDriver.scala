@@ -390,8 +390,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 
       val sssp = runGraph(graph, startTileId, zoomLevel, res,
         startPixel.px.toShort, startPixel.py.toShort, width, height)
-      val vw3: RDD[(Long, VertexType)] = sssp.vertices.sortByKey(ascending = true)
-      val verticesWritable = vw3.map(U => {
+      val verticesWritable = sssp.vertices.map(U => {
         // Need to convert our raster to a single band raster for output.
         val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, 1)
         val singleBandRaster = Raster.createWritableRaster(model, null)
