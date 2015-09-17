@@ -21,6 +21,7 @@ import java.util.Vector;
 import org.apache.commons.lang3.NotImplementedException;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;

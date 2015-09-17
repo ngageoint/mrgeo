@@ -26,6 +26,7 @@ import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
 import org.mrgeo.hdfs.vector.Column.FactorType;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.mapreduce.job.JobCancelledException;

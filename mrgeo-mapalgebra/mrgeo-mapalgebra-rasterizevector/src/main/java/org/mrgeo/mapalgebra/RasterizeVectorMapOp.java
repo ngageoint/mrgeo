@@ -42,6 +42,7 @@ import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
+import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.RasterizeVectorDriver;
