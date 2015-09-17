@@ -18,8 +18,6 @@ package org.mrgeo.spark
 import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
-import com.esotericsoftware.kryo.io.{Input, Output}
-import com.esotericsoftware.kryo.{Kryo, KryoSerializable}
 import com.vividsolutions.jts.geom.Point
 import com.vividsolutions.jts.io.WKTReader
 import org.apache.hadoop.conf.Configuration
@@ -1060,7 +1058,7 @@ class CostDistanceEdge(val fromTileId: Long, val toTileId: Long, val direction: 
 //ordering should be in increasing order by cost so that the PriorityQueue processes
 //minimum cost elements first.
 class CostPoint(var px: Short, var py: Short, var cost: Float
-                 ) extends Ordered[CostPoint] with Externalizable with KryoSerializable {
+                 ) extends Ordered[CostPoint] with Externalizable {
   def this() = {
     this(-1, -1, 0.0f)
   }
@@ -1080,23 +1078,11 @@ class CostPoint(var px: Short, var py: Short, var cost: Float
     py = in.readShort()
     cost = in.readFloat()
   }
-
-  override def write(kryo: Kryo, output: Output): Unit = {
-    output.writeShort(px)
-    output.writeShort(py)
-    output.writeFloat(cost)
-  }
-
-  override def read(kryo: Kryo, input: Input): Unit = {
-    px = input.readShort()
-    py = input.readShort()
-    cost = input.readFloat()
-  }
 }
 
 // Stores a list of points around the edges of a tile that changed while costs
 // are computed for a tile.
-class ChangedPoints(var initial: Boolean) extends Externalizable with KryoSerializable {
+class ChangedPoints(var initial: Boolean) extends Externalizable {
   private val changes = scala.collection.mutable.HashMap.empty[(Short, Short), CostPoint]
 
   // This constructor is only used for deserialization, and the correct
@@ -1167,24 +1153,6 @@ class ChangedPoints(var initial: Boolean) extends Externalizable with KryoSerial
       changes.put((cp.px, cp.py), cp)
     }
   }
-
-  override def write(kryo: Kryo, output: Output): Unit = {
-    output.writeInt(changes.size)
-    val iter = changes.iterator
-    while (iter.hasNext) {
-      val cp = iter.next
-      cp._2.write(kryo, output)
-    }
-  }
-
-  override def read(kryo: Kryo, input: Input): Unit = {
-    val length = input.readInt
-    for (i <- 0 until length) {
-      var cp = new CostPoint(-1, -1, 0.0f)
-      cp.read(kryo, input)
-      changes.put((cp.px, cp.py), cp)
-    }
-  }
 }
 
 //@SerialVersionUID(-7588980448693010399L)
@@ -1193,7 +1161,7 @@ class VertexType(var raster: WritableRaster,
                  var changedPoints: ChangedPoints,
                  var tileid: Long,
                  var zoom: Int)
-  extends Externalizable with KryoSerializable {
+  extends Externalizable {
 
   def this() {
     this(null, null, -1, -1)
@@ -1222,35 +1190,5 @@ class VertexType(var raster: WritableRaster,
     var offset: Int = 0
     in.readFully(rasterBytes, offset, byteCount)
     raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(rasterBytes, null))
-  }
-
-  override def write(kryo: Kryo, output: Output): Unit = {
-    output.writeBoolean(changedPoints.isInitial)
-    output.writeInt(changedPoints.size)
-    for (cp <- changedPoints.getAllPoints) {
-      output.writeShort(cp.px)
-      output.writeShort(cp.py)
-      output.writeFloat(cp.cost)
-    }
-    val rasterBytes: Array[Byte] = RasterWritable.toBytes(raster, null)
-    output.writeInt(rasterBytes.length)
-    output.write(rasterBytes)
-  }
-
-  override def read(kryo: Kryo, input: Input): Unit = {
-    val initial = input.readBoolean()
-    changedPoints = new ChangedPoints(initial)
-    val changedPointCount = input.readInt()
-    for (i <- 0 until changedPointCount) {
-      val px = input.readShort()
-      val py = input.readShort()
-      val cost = input.readFloat()
-      changedPoints.addPoint(new CostPoint(px, py, cost))
-    }
-    val byteCount: Int = input.readInt()
-    val rasterBytes: Array[Byte] = new Array[Byte](byteCount)
-    var offset: Int = 0
-    input.readBytes(rasterBytes, offset, byteCount)
-    raster = RasterWritable.toRaster(rasterBytes, null).asInstanceOf[WritableRaster]
   }
 }
