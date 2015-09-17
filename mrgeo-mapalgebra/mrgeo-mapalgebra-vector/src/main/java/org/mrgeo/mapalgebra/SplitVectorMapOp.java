@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-public class SplitVectorMapOp extends VectorMapOp
+public class SplitVectorMapOp extends VectorMapOpHadoop
 {
   public static final String SPLIT_TYPE_TEST = "test";
   public static final String SPLIT_TYPE_TRAINING = "training";
@@ -60,7 +60,7 @@ public class SplitVectorMapOp extends VectorMapOp
   {
     if (_inputs.size() == 0)
     {
-      if (!(n instanceof VectorMapOp))
+      if (!(n instanceof VectorMapOpHadoop))
       {
         throw new IllegalArgumentException("The first parameter must be a vector input.");
       }
@@ -173,8 +173,8 @@ public class SplitVectorMapOp extends VectorMapOp
       }
       else
       {
-        // Must be a VectorMapOp
-        Path inputPath = new Path(((VectorMapOp)inputMapOp).getOutputName());
+        // Must be a VectorMapOpHadoop
+        Path inputPath = new Path(((VectorMapOpHadoop)inputMapOp).getOutputName());
         if (inputPath.toString().endsWith(".tsv"))
         {
           _outputName = new Path(outputParent, outputBase + ".tsv").toString();
@@ -213,17 +213,17 @@ public class SplitVectorMapOp extends VectorMapOp
     // and there is no generic interface in place for reading any vector data.
     if (inputMapOp instanceof InlineCsvMapOp)
     {
-      InlineCsvInputFormatDescriptor ifd = (InlineCsvInputFormatDescriptor)((VectorMapOp)inputMapOp).getVectorOutput();
+      InlineCsvInputFormatDescriptor ifd = (InlineCsvInputFormatDescriptor)((VectorMapOpHadoop)inputMapOp).getVectorOutput();
       determineOutputForInlineCsvInput(ifd, ',');
       return;
     }
-    else if (inputMapOp instanceof VectorMapOp)
+    else if (inputMapOp instanceof VectorMapOpHadoop)
     {
-      inputPath = new Path(((VectorMapOp)inputMapOp).getOutputName());
+      inputPath = new Path(((VectorMapOpHadoop)inputMapOp).getOutputName());
     }
     else
     {
-      // defensive code since input should be VectorMapOp - see addInput()
+      // defensive code since input should be VectorMapOpHadoop - see addInput()
       throw new IllegalArgumentException("Invalid value for vector argument to SplitVector");
     }
     //    SplitVectorDriver svd = new SplitVectorDriver();

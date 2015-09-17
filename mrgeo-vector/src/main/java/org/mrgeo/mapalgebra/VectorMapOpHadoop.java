@@ -27,7 +27,7 @@ import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
 
-public abstract class VectorMapOp extends MapOpHadoop implements OutputProducer
+public abstract class VectorMapOpHadoop extends MapOpHadoop implements OutputProducer
 {
   protected InputFormatDescriptor _output;
   protected String _outputName = null;
@@ -131,9 +131,9 @@ public abstract class VectorMapOp extends MapOpHadoop implements OutputProducer
    * results or temporary variables involved in computation.
    */
   @Override
-  public VectorMapOp clone()
+  public VectorMapOpHadoop clone()
   {
-    final VectorMapOp result = (VectorMapOp) super.clone();
+    final VectorMapOpHadoop result = (VectorMapOpHadoop) super.clone();
     result._output = null;
     return result;
   }

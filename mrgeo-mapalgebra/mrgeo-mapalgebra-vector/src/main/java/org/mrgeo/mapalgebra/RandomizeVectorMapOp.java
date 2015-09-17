@@ -28,7 +28,7 @@ import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.progress.ProgressHierarchy;
 
-public class RandomizeVectorMapOp extends VectorMapOp
+public class RandomizeVectorMapOp extends VectorMapOpHadoop
 {
 //  private static final Logger _log = LoggerFactory.getLogger(RandomizeVectorMapOp.class);
 
@@ -42,7 +42,7 @@ public class RandomizeVectorMapOp extends VectorMapOp
   {
     if (_inputs.size() == 0)
     {
-      if (!(n instanceof VectorMapOp))
+      if (!(n instanceof VectorMapOpHadoop))
       {
         throw new IllegalArgumentException("The first parameter must be a vector input.");
       }
@@ -64,13 +64,13 @@ public class RandomizeVectorMapOp extends VectorMapOp
     RandomizeVectorDriver rvd = new RandomizeVectorDriver();
     MapOpHadoop inputMapOp = _inputs.get(0);
     String input = null;
-    if (inputMapOp instanceof VectorMapOp)
+    if (inputMapOp instanceof VectorMapOpHadoop)
     {
-      input = ((VectorMapOp)inputMapOp).getOutputName();
+      input = ((VectorMapOpHadoop)inputMapOp).getOutputName();
     }
     else
     {
-      // defensive code since all inputs should be VectorMapOp's - see addInput()
+      // defensive code since all inputs should be VectorMapOpHadoop's - see addInput()
       throw new IllegalArgumentException("Invalid value for vector argument to RandomizeVector");
     }
     rvd.run(createConfiguration(), input, new Path(_outputName), p, jobListener,

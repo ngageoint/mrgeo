@@ -32,7 +32,7 @@ import org.mrgeo.utils.Bounds;
 import java.io.IOException;
 import java.util.Vector;
 
-public class RandomSampleMapOp extends VectorMapOp implements BoundsCalculator
+public class RandomSampleMapOp extends VectorMapOpHadoop implements BoundsCalculator
 {
   private boolean usingRasterInput;
   private int sampleCount = 0;

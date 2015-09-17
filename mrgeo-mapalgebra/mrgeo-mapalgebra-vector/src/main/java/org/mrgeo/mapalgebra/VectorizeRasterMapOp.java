@@ -26,7 +26,7 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
 
-public class VectorizeRasterMapOp extends VectorMapOp
+public class VectorizeRasterMapOp extends VectorMapOpHadoop
 {
 //  private static final Logger _log = LoggerFactory.getLogger(VectorizeRasterMapOp.class);
 //  private String _outputType = "shp";

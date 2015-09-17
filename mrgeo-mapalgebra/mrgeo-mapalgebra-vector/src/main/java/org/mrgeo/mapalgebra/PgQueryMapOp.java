@@ -27,7 +27,7 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
 
-public class PgQueryMapOp extends VectorMapOp
+public class PgQueryMapOp extends VectorMapOpHadoop
 {
   public static String USERNAME = "username";
   public static String PASSWORD = "password";
@@ -47,7 +47,7 @@ public class PgQueryMapOp extends VectorMapOp
   @Override
   public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
-    if (!(n instanceof VectorMapOp))
+    if (!(n instanceof VectorMapOpHadoop))
     {
       throw new IllegalArgumentException("Only vector inputs are supported.");
     }
