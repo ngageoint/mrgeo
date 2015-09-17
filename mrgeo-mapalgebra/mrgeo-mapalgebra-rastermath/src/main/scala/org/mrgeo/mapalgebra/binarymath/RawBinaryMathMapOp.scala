@@ -3,6 +3,7 @@ package org.mrgeo.mapalgebra.binarymath
 import java.awt.image.WritableRaster
 import java.io.{IOException, Externalizable, ObjectInput, ObjectOutput}
 
+import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
@@ -187,7 +188,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     }
 
     // group the RDDs
-    val group = rdd1.cogroup(rdd2)
+    val group = new PairRDDFunctions(rdd().get).cogroup(rdd2)
 
     Some(RasterRDD(group.map(tile => {
 
