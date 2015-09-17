@@ -64,14 +64,13 @@ class ConMapOp extends RasterMapOp with Externalizable {
       case const: java.lang.Double =>
         isBuilder += false
         constMap.put(i, const.doubleValue())
-      case _ => println("foo")
+      case _ =>
       }
     }
 
     inputs = inputBuilder.result()
     isRdd = isBuilder.result()
 
-    println("foo")
   }
 
   private def decodeChild(child:ParserNode, variables: String => Option[ParserNode]) = {
@@ -175,7 +174,6 @@ class ConMapOp extends RasterMapOp with Externalizable {
           Some(constMap(i))
         }
       }
-
       val done = new Breaks
 
       for (y <- 0 until raster.getHeight) {
@@ -223,44 +221,6 @@ class ConMapOp extends RasterMapOp with Externalizable {
 
       (tile._1, RasterWritable.toWritable(raster))
     })))
-
-    //    val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
-    //
-    //    metadata(input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName)))
-    //
-    //    val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
-    //
-    //    // copy this here to avoid serializing the whole mapop
-    //    val nodata = metadata() match {
-    //    case Some(metadata) => metadata.getDefaultValue(0)
-    //    case _ => Double.NaN
-    //    }
-    //
-    //    // precompute the denominator for the calculation
-    //    val baseVal =
-    //      if (base.isDefined) {
-    //        Math.log(base.get)
-    //      }
-    //      else {
-    //        1
-    //      }
-    //
-    //    rasterRDD = Some(RasterRDD(rdd.map(tile => {
-    //      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
-    //
-    //      for (y <- 0 until raster.getHeight) {
-    //        for (x <- 0 until raster.getWidth) {
-    //          for (b <- 0 until raster.getNumBands) {
-    //            val v = raster.getSampleDouble(x, y, b)
-    //            if (RasterMapOp.isNotNodata(v, nodata)) {
-    //              raster.setSample(x, y, b, Math.log(v) / baseVal)
-    //            }
-    //          }
-    //        }
-    //      }
-    //
-    //      (tile._1, RasterWritable.toWritable(raster))
-    //    })))
 
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodata))
 

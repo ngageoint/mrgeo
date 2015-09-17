@@ -204,9 +204,13 @@ public void runMapAlgebraExpression(final Configuration conf, final String testN
 
   log.info(ex);
 
+  long start = System.currentTimeMillis();
+
   ProviderProperties pp = ProviderProperties.fromDelimitedString("");
   if (MapAlgebra.validate(ex, pp)) {
     MapAlgebra.mapalgebra(ex, (new Path(outputHdfs, testName)).toString(), conf, pp, null);
   }
+
+  log.info("Test Execution time: " + (System.currentTimeMillis() - start));
 }
 }

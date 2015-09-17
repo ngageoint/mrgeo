@@ -32,15 +32,12 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
   override def execute(context: SparkContext): Boolean = {
 
     // our metadata is the same as the raster
-    val meta = input.get.metadata().get
+    val meta = input.get.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
 
     val rdd = input.get.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + input.getClass.getName))
 
     // copy this here to avoid serializing the whole mapop
-    val nodata = metadata() match {
-    case Some(metadata) => metadata.getDefaultValue(0)
-    case _ => Double.NaN
-    }
+    val nodata = meta.getDefaultValue(0)
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
       val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]

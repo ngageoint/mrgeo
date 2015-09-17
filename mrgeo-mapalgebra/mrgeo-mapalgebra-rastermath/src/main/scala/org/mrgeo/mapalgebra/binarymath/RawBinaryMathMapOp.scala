@@ -109,16 +109,10 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   }
 
   private[binarymath] def computeWithConstantA(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
-    // our metadata is the same as the raster
-    val meta = raster.metadata().get
-
     val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
     // copy this here to avoid serializing the whole mapop
-    val nodata = metadata() match {
-    case Some(metadata) => metadata.getDefaultValue(0)
-    case _ => Double.NaN
-    }
+    val nodata = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)).getDefaultValue(0)
 
     val answer = RasterRDD(rdd.map(tile => {
       val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
@@ -136,24 +130,20 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, meta.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodata))
 
     Some(answer)
+
   }
 
   private[binarymath] def computeWithConstantB(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
-    // our metadata is the same as the raster
-    metadata(raster.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)))
 
     val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
     // copy this here to avoid serializing the whole mapop
-    val nodata = metadata() match {
-    case Some(metadata) => metadata.getDefaultValue(0)
-    case _ => Double.NaN
-    }
+    val nodata = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)).getDefaultValue(0)
 
-    Some(RasterRDD(rdd.map(tile => {
+    val answer = RasterRDD(rdd.map(tile => {
       val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
 
       for (y <- 0 until raster.getHeight) {
@@ -167,13 +157,15 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
         }
       }
       (tile._1, RasterWritable.toWritable(raster))
-    })))
+    }))
+
+    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodata))
+
+    Some(answer)
+
   }
 
   private[binarymath] def compute(raster1: RasterMapOp, raster2: RasterMapOp): Option[RasterRDD] = {
-    // our metadata is the same as the 1st raster
-    metadata(raster1.metadata().get)
-
     val rdd1 = raster1.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster1.getClass.getName))
     val rdd2 = raster2.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster2.getClass.getName))
 
@@ -190,8 +182,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     // group the RDDs
     val group = new PairRDDFunctions(rdd1).cogroup(rdd2)
 
-    Some(RasterRDD(group.map(tile => {
-
+    val answer = RasterRDD(group.map(tile => {
       val iter1 = tile._2._1
       val iter2 = tile._2._2
 
@@ -228,7 +219,11 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
         (tile._1, RasterWritable.toWritable(raster1))
       }
-    })))
+    }))
+
+    metadata(SparkUtils.calculateMetadata(answer, raster1.metadata().get.getMaxZoomLevel, nodata1))
+
+    Some(answer)
   }
 
 
