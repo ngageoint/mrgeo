@@ -143,22 +143,32 @@ class ConMapOp extends RasterMapOp with Externalizable {
       val termCount = isRdd.length
 
       val rawInputs = tile._2
-      val rasterInputs = Array.ofDim[Option[Raster]](rawInputs.length)
+      val rasterInputs = Array.fill[Option[Raster]](rawInputs.length)(None)
 
       val raster = RasterUtils.createEmptyRaster(tilesize, tilesize, bands, datatype, nodata)
 
       def getValue(i: Int, x: Int, y: Int, b: Int): Option[Double] = {
         if (isRdd(i)) {
-          if (rasterInputs(i) == null) {
-            rasterInputs(i) = rawInputs(i).head match {
-            case Some(rw: RasterWritable) => Some(RasterWritable.toRaster(rw))
-            case _ => None
+          val mapped = rddMap(i)
+
+          val ri = rasterInputs(mapped) match {
+          case Some(r) => r
+          case None =>
+            val a = rawInputs(mapped)
+            rasterInputs(mapped) = rawInputs(mapped).head match {
+            case rw: RasterWritable =>
+              Some(RasterWritable.toRaster(rw))
+            case _ =>
+              None
             }
+            rasterInputs(mapped).get
           }
 
-          rasterInputs(i) match {
-          case Some(r) => Some(r.getSampleDouble(x, y, b))
-          case _ => None
+          ri match {
+          case r:Raster =>
+            Some(r.getSampleDouble(x, y, b))
+          case a =>
+            None
           }
         }
         else {
@@ -172,14 +182,14 @@ class ConMapOp extends RasterMapOp with Externalizable {
         for (x <- 0 until raster.getWidth) {
           for (b <- 0 until raster.getNumBands) {
             done.breakable {
-              for (i <- 0 until termCount by 2) {
+              for (i <- 0 until termCount - 1 by 2) {
                 // get the conditional value, either from the rdd or constant
                 val v = getValue(i, x, y, b) match {
                 case Some(d) => d
                 case _ => nodata
                 }
 
-                println(getValue(i, x, y, b))
+                //println(getValue(i, x, y, b))
 
                 // check for nodata
                 if (RasterMapOp.isNodata(v, nodatas(i))) {
