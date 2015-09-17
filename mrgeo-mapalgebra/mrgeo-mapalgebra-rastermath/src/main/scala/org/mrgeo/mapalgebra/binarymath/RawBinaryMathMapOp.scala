@@ -188,7 +188,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     }
 
     // group the RDDs
-    val group = new PairRDDFunctions(rdd().get).cogroup(rdd2)
+    val group = new PairRDDFunctions(rdd1).cogroup(rdd2)
 
     Some(RasterRDD(group.map(tile => {
 
