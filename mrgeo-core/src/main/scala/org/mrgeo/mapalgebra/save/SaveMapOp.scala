@@ -7,20 +7,25 @@ import org.mrgeo.mapalgebra.raster.{SaveRasterMapOp, RasterMapOp}
 
 object SaveMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("mosaic")
+    Array[String]("save")
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp = {
+
+    if (node.getNumChildren != 2) {
+      throw new ParserException(node.getName + " takes 2 arguments")
+    }
+
     // are we a raster, if so, create a SaveRasterMapOp
     try {
-      val raster = RasterMapOp.decodeToRaster(node, variables)
+      val raster = RasterMapOp.decodeToRaster(node.getChild(0), variables)
       new SaveRasterMapOp(node, variables)
     }
     catch {
       case pe: ParserException =>
         throw pe
       // TODO:  Uncomment this!
-      //        val vector = VectorMapOp.decodeToRaster(node, variables)
+      //        val vector = VectorMapOp.decodeToRaster(node.getChild(0), variables)
       //        new SaveVectorMapOp(node, true, variables, protectionLevel)
       //      }
 
