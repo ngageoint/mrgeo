@@ -9,6 +9,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
+import org.mrgeo.mapalgebra.old.{MapAlgebraParser, MapOpFactoryHadoop}
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{RasterMapOp, MrsPyramidMapOp}
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
@@ -66,7 +67,9 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
       case p:ParserException =>
         logError("Parser error!  " + p.getMessage)
         return false
-      case e:Exception => return false
+      case e:Exception =>
+        e.printStackTrace()
+        return false
     }
 
     true
@@ -350,6 +353,8 @@ object TestMapAlgebra extends App {
   val pp = ProviderProperties.fromDelimitedString("")
 
   HadoopUtils.setupLocalRunner(conf)
+
+  val p = new MapAlgebraParser
 
   val expression = "x = 100; " +
       "y = [/mrgeo/images/small-elevation]; " +

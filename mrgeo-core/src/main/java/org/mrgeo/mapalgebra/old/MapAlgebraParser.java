@@ -472,7 +472,7 @@ public class MapAlgebraParser implements MapOpFactoryHadoop
     Set<Class<? extends MapOpHadoop>> subTypes =
         reflections.getSubTypesOf(MapOpHadoop.class);
 
-    log.debug("Registering MapOps:");
+    log.error("Registering MapOps:");
     for (Class<? extends MapOpHadoop> clazz : subTypes)
     {
       try
@@ -512,7 +512,7 @@ public class MapAlgebraParser implements MapOpFactoryHadoop
         {
           if (f != null && f.length() > 0)
           {
-            log.debug("  " + clazz.getCanonicalName() + " (" + f + ")");
+            log.error("  " + clazz.getCanonicalName() + " (" + f + ")");
             mapOps.put(f, clazz);
           }
         }

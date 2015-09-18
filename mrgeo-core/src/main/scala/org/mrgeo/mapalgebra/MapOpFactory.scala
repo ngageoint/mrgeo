@@ -4,9 +4,8 @@ package org.mrgeo.mapalgebra
 import java.io.File
 import java.lang.reflect.Modifier
 
-import grizzled.net.url
+import com.sun.org.apache.xalan.internal.xsltc.compiler.sym
 import org.apache.spark.Logging
-import org.clapper.classutil.ClassInfo
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.reflections.Reflections
@@ -21,14 +20,13 @@ import scala.reflect.runtime.universe._
 object MapOpFactory extends Logging {
   val functions = mutable.HashMap.empty[String, MapOpRegistrar]
 
+  val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader) // obtain runtime mirror
   private def registerFunctions() = {
     val start = System.currentTimeMillis()
 
     val mapops = decendants(classOf[MapOpRegistrar]) getOrElse Set.empty
 
     logInfo("Registering MapOps:")
-
-    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader) // obtain runtime mirror
 
     mapops.foreach(symbol => {
       mirror.reflectModule(symbol.asModule).instance match {
@@ -90,17 +88,8 @@ object MapOpFactory extends Logging {
 
     val classes = reflections.getSubTypesOf(clazz).filter(p => !Modifier.isAbstract(p.getModifiers))
 
-    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader) // obtain runtime mirror
-
     Some(classes.map(clazz => {
-      val sym = mirror.classSymbol(clazz)
-
-      if (sym.companionSymbol != null) {
-        sym.companionSymbol
-      }
-      else {
-        sym
-      }
+      mirror.staticModule(clazz.getCanonicalName).asModule
     }))
   }
 }

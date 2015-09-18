@@ -1,6 +1,6 @@
 package org.mrgeo.mapalgebra
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{Logging, SparkConf, SparkContext}
 import org.mrgeo.mapalgebra.parser.{ParserConstantNode, ParserNode, ParserVariableNode}
 import org.mrgeo.spark.job.JobArguments
 
@@ -83,7 +83,7 @@ object MapOp {
   }
 }
 
-abstract class MapOp {
+abstract class MapOp extends Logging {
   private var protectionlevel: String = null
 
   private var sparkContext: SparkContext = null
