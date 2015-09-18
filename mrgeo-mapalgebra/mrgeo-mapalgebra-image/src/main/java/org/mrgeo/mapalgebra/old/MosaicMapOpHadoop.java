@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
-import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
+import org.mrgeo.mapalgebra.InputsCalculator;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -32,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-public class MosaicMapOp extends RasterMapOpHadoop implements InputsCalculator
+public class MosaicMapOpHadoop extends RasterMapOpHadoop implements InputsCalculator
 {
   public static String[] register()
   {

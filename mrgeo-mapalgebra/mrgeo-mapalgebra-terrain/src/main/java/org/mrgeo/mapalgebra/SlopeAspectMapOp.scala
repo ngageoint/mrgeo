@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.spark
+package org.mrgeo.mapalgebra
 
 import java.awt.image.DataBuffer
-import java.io.{Externalizable, ObjectInput, ObjectOutput}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import javax.vecmath.Vector3d
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
-import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.spark.job.{JobArguments, MrGeoJob}
-import org.mrgeo.utils.{LatLng, SparkUtils, TMSUtils}
+import org.mrgeo.mapalgebra.parser._
+import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.spark.FocalBuilder
+import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.utils.{SparkUtils, LatLng, TMSUtils}
 
-object SlopeAspectDriver {
+object SlopeAspectMapOp {
   final val Input = "input"
   final val Output = "output"
   final val Units = "units"
@@ -40,34 +41,54 @@ object SlopeAspectDriver {
 
 }
 
-class SlopeAspectDriver extends MrGeoJob with Externalizable {
+class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
   final val DEG_2_RAD: Double = 0.0174532925
   final val RAD_2_DEG: Double = 57.2957795
   final val TWO_PI:Double = 6.28318530718
   final val THREE_PI_OVER_2:Double = 4.71238898038
 
-  var input:String = null
-  var output:String = null
-  var units:String = null
-  var slope:Boolean = true
+  private var inputMapOp:Option[RasterMapOp] = None
+  private var units:String = "rad"
+  private var slope:Boolean = true
 
-  override def registerClasses(): Array[Class[_]] = {
-    val classes = Array.newBuilder[Class[_]]
+  private var rasterRDD:Option[RasterRDD] = None
 
-    classes.result()
+  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+    this()
+
+    if (node.getNumChildren < 1) {
+      throw new ParserException(node.getName + " requires at least one argument")
+    }
+    else if (node.getNumChildren > 2) {
+      throw new ParserException(node.getName + " requires only one or two arguments")
+    }
+
+    slope = isSlope
+
+    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+
+    if (node.getNumChildren == 2) {
+      val units = MapOp.decodeString(node.getChild(1)) match {
+      case Some(s) => s
+      case _ => throw new ParserException("Error decoding string")
+
+      }
+
+      if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
+          units.equalsIgnoreCase("percent"))) {
+        throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
+      }
+      this.units = units
+
+    }
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def rdd(): Option[RasterRDD] = rasterRDD
 
+  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
     conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
     conf.set("spark.shuffle.memoryFraction", "0.3") // set the shuffle higher
-
-    input = job.getSetting(SlopeAspectDriver.Input)
-    output = job.getSetting(SlopeAspectDriver.Output)
-    units = job.getSetting(SlopeAspectDriver.Units)
-
-    slope = job.getSetting(SlopeAspectDriver.Type).equals(SlopeAspectDriver.Slope)
 
     true
   }
@@ -183,57 +204,47 @@ class SlopeAspectDriver extends MrGeoJob with Externalizable {
   }
 
 
-  override def execute(context: SparkContext): Boolean =
-  {
-    val ip = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, null.asInstanceOf[ProviderProperties])
+  override def execute(context: SparkContext): Boolean = {
+    val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
 
-    val metadata: MrsImagePyramidMetadata = ip.getMetadataReader.read
-    val zoom = metadata.getMaxZoomLevel
-    val tilesize = metadata.getTilesize
-    val pyramid = SparkUtils.loadMrsPyramidRDD(ip, zoom, context)
+    val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(metadata.getBounds), zoom, tilesize)
+    val zoom = meta.getMaxZoomLevel
+    val tilesize = meta.getTilesize
 
-    val nodatas = Array.ofDim[Number](metadata.getBands)
+    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(meta.getBounds), zoom, tilesize)
+
+    val nodatas = Array.ofDim[Number](meta.getBands)
     for (i <- nodatas.indices) {
-      nodatas(i) = metadata.getDefaultValue(i)
+      nodatas(i) = meta.getDefaultValue(i)
     }
 
     val bufferX = 1
     val bufferY = 1
 
-    val tiles = FocalBuilder.create(pyramid, bufferX, bufferY, metadata.getBounds, zoom, nodatas, context)
+    val tiles = FocalBuilder.create(rdd, bufferX, bufferY, meta.getBounds, zoom, nodatas, context)
 
-    val answer =
-      calculate(tiles, bufferX, bufferY, metadata.getDefaultValue(0), zoom, tilesize)
+    rasterRDD =
+        Some(RasterRDD(calculate(tiles, bufferX, bufferY, nodatas(0).doubleValue(), zoom, tilesize)))
 
-    val op = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.WRITE, null.asInstanceOf[ProviderProperties])
-
-    SparkUtils.saveMrsPyramidRDD(answer, op, zoom, tilesize, Array[Double](Float.NaN),
-      context.hadoopConfiguration, DataBuffer.TYPE_FLOAT, metadata.getBounds, bands = 1,
-      protectionlevel = metadata.getProtectionLevel)
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodatas(0).doubleValue()))
 
     true
   }
-
-
-
 
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
     true
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-    input = in.readUTF()
-    output = in.readUTF()
     units = in.readUTF()
     slope = in.readBoolean()
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeUTF(input)
-    out.writeUTF(output)
     out.writeUTF(units)
     out.writeBoolean(slope)
   }
+
 }

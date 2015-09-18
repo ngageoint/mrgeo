@@ -25,23 +25,10 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
       throw new ParserException(node.getName + " requires only two arguments")
     }
 
+    input = RasterMapOp.decodeToRaster(node.getChild(0), variables)
     val childA = node.getChild(0)
 
-    childA match {
-    case const:ParserConstantNode => None
-    case func:ParserFunctionNode => input = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("\"" + childA + "\" is not a raster input")
-    }
-    case variable:ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
-      case const:ParserConstantNode => None
-      case func:ParserFunctionNode => input = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("\"" + childA + "\" is not a raster input")
-      }
-      }
-    }
+
     if (input.isEmpty) {
       throw new ParserException("\"" + node.getName + "\" must have at least 1 raster input")
     }
