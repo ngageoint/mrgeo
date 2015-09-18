@@ -3,6 +3,7 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.mapalgebra.old.InputsCalculator;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;

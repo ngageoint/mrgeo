@@ -17,7 +17,6 @@ package org.mrgeo.mapalgebra.old;
 
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.InputsCalculator;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;

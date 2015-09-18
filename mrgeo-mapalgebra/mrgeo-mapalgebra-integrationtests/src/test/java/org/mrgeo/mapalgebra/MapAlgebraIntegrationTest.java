@@ -33,6 +33,7 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.old.MapAlgebraParser;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.old.LogarithmMapOp;
 import org.mrgeo.old.RawBinaryMathMapOpHadoop;

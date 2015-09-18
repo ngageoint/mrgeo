@@ -22,7 +22,6 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
-import org.mrgeo.mapalgebra.*;
 import org.mrgeo.mapalgebra.parser.*;
 import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.rasterops.OpImageRegistrar;

@@ -33,8 +33,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{ProviderProperties, DataProviderFactory, ProtectionLevelUtils}
 import org.mrgeo.ingest.IngestImageSpark
-import org.mrgeo.mapalgebra.RenderedImageMapOp
-import org.mrgeo.mapalgebra.old.RasterMapOpHadoop
+import org.mrgeo.mapalgebra.old.{RenderedImageMapOp, RasterMapOpHadoop}
 import org.mrgeo.opimage.MrsPyramidOpImage
 import org.mrgeo.progress.Progress
 import org.mrgeo.rasterops.{OpImageRegistrar, OpImageUtils}
