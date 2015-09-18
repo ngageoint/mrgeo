@@ -7,6 +7,7 @@ import java.lang.reflect.Modifier
 import com.sun.org.apache.xalan.internal.xsltc.compiler.sym
 import org.apache.spark.Logging
 import org.mrgeo.core.MrGeoProperties
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
@@ -45,14 +46,14 @@ object MapOpFactory extends Logging {
   }
 
   // create a mapop from a function name, called by MapOpFactory("<name>")
-  def apply(node: ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): Option[MapOp] = {
+  def apply(node: ParserNode, variables: String => Option[ParserNode]): Option[MapOp] = {
     if (functions.isEmpty) {
       registerFunctions()
     }
 
     functions.get(node.getName) match {
     case Some(mapop) =>
-      val op = mapop.apply(node, variables, protectionLevel)
+      val op = mapop.apply(node, variables)
       Some(op)
     case None => None
     }

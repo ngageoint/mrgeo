@@ -8,6 +8,7 @@ import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
@@ -21,17 +22,16 @@ object MosaicMapOp extends MapOpRegistrar {
     Array[String]("mosaic")
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): MapOp =
-    new MosaicMapOp(node, true, variables, protectionLevel)
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new MosaicMapOp(node, true, variables)
 }
 
 class MosaicMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD:Option[RasterRDD] = None
-
   private var inputs:Array[Option[RasterMapOp]] = null
 
-  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren > 2) {

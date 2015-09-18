@@ -7,6 +7,7 @@ import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
@@ -21,8 +22,8 @@ object ConMapOp extends MapOpRegistrar {
     Array[String]("con")
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): MapOp =
-    new ConMapOp(node, variables, protectionLevel)
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new ConMapOp(node, variables)
 }
 
 class ConMapOp extends RasterMapOp with Externalizable {
@@ -36,7 +37,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
   private val rddMap = mutable.Map.empty[Int, Int]  // maps input order (key) to cogrouped position (value)
   private val constMap = mutable.Map.empty[Int, Double] // maps input order (key) to constant value
 
-  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 3) {

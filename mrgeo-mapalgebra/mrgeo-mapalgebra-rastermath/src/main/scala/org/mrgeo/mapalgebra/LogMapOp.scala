@@ -6,6 +6,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
@@ -16,8 +17,8 @@ object LogMapOp extends MapOpRegistrar {
     Array[String]("log")
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): MapOp =
-    new LogMapOp(node, variables, protectionLevel)
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new LogMapOp(node, variables)
 }
 
 class LogMapOp extends RasterMapOp with Externalizable {
@@ -26,7 +27,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
   private var base:Option[Double] = None
   private var rasterRDD:Option[RasterRDD] = None
 
-  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 1) {

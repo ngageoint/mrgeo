@@ -15,6 +15,7 @@
 
 package org.mrgeo.mapalgebra
 
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 
 object SlopeMapOp extends MapOpRegistrar {
@@ -22,7 +23,7 @@ object SlopeMapOp extends MapOpRegistrar {
     Array[String]("slope")
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): MapOp =
-    new SlopeAspectMapOp(node, true, variables, protectionLevel)
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new SlopeAspectMapOp(node, true, variables)
 }
 

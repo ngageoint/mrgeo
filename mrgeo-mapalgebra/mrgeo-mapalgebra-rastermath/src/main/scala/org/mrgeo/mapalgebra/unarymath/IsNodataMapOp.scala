@@ -6,26 +6,27 @@ import java.io.IOException
 import org.apache.spark.SparkContext
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
+import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.utils.SparkUtils
 
 object IsNodataMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("isNodata", "isNull")
   }
-  override def apply(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): MapOp =
-    new IsNodataMapOp(node, variables, protectionLevel)
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new IsNodataMapOp(node, variables)
 }
 
 class IsNodataMapOp extends RawUnaryMathMapOp {
 
   var nodata:Double = Double.NegativeInfinity
-  private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
-    initialize(node, variables, protectionLevel)
+    initialize(node, variables)
   }
 
   // Unfortunately

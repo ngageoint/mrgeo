@@ -15,8 +15,7 @@
 
 package org.mrgeo.mapalgebra;
 
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
+import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -35,7 +34,7 @@ import java.util.Set;
 
 public class MrsPyramidMapOp extends RasterMapOpHadoop
   implements InputsCalculator, BoundsCalculator, TileSizeCalculator,
-  MaximumZoomLevelCalculator, TileClusterInfoConsumer
+    MaximumZoomLevelCalculator, TileClusterInfoConsumer
 {
   MrsImageDataProvider dp;
   private TileClusterInfo overallTileClusterInfo;

@@ -33,7 +33,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
   var rasterRDD:Option[RasterRDD] = None
 
-  private[binarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[binarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode]) = {
 
     if (node.getNumChildren < 2) {
       throw new ParserException(node.getName + " requires two arguments")
@@ -87,9 +87,8 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     if (varA.isEmpty && varB.isEmpty) {
       throw new ParserException("\"" + node.getName + "\" must have at least 1 raster input")
     }
-
-    this.protectionLevel(protectionLevel)
   }
+
   override def setup(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true

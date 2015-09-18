@@ -22,8 +22,9 @@ object MapAlgebra extends MrGeoDriver {
 
   final private val MapAlgebra = "mapalgebra"
   final private val Output = "output"
-  final private val ProtectionLevel = "protection.level"
-  final private val ProviderProperties = "provider.properties"
+  // these two parameters may need to be accessed by mapops, they just can get it from the job
+  final val ProtectionLevel = "protection.level"
+  final val ProviderProperties = "provider.properties"
 
   def mapalgebra(expression:String, output:String,
       conf:Configuration, providerProperties: ProviderProperties, protectionLevel:String = null):Boolean = {
@@ -86,7 +87,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
 
     lines.foreach(line => {
       val node = parser.parse(line)
-      buildMapOps(node, protectionLevel)
+      buildMapOps(node)
       nodes += node
     })
 
@@ -155,7 +156,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     }
   }
 
-  private def buildMapOps(node: ParserNode, protectionLevel:String = null):Unit = {
+  private def buildMapOps(node: ParserNode):Unit = {
     // special case for "="
     node match {
     case function: ParserFunctionNode =>
@@ -176,7 +177,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
           }
           val value = function.getChild(1)
 
-          buildMapOps(value, protectionLevel)
+          buildMapOps(value)
           variables.put(v, Some(value))
 
         case _ => throw new ParserException("Left side of \"=\" must be a valid variable name")
@@ -209,7 +210,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
       }
 
       // NOTE:  mapop constructor should throw ParserExceptions on error
-      MapOpFactory(function, findVariable, protectionLevel) match {
+      MapOpFactory(function, findVariable) match {
       case Some(op) => function.setMapOp(op)
       case _ =>
       }

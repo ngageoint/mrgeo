@@ -54,7 +54,7 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD:Option[RasterRDD] = None
 
-  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 1) {

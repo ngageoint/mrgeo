@@ -84,8 +84,6 @@ object MapOp {
 }
 
 abstract class MapOp extends Logging {
-  private var protectionlevel: String = null
-
   private var sparkContext: SparkContext = null
 
   def context(cont: SparkContext) = sparkContext = cont
@@ -94,8 +92,5 @@ abstract class MapOp extends Logging {
   def setup(job: JobArguments, conf: SparkConf): Boolean
   def execute(context: SparkContext): Boolean
   def teardown(job: JobArguments, conf: SparkConf): Boolean
-
-  def protectionLevel():String = { protectionlevel }
-  def protectionLevel(level:String) = { protectionlevel = level }
 }
 

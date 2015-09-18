@@ -16,7 +16,7 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
   var input:Option[RasterMapOp] = None
   var rasterRDD:Option[RasterRDD] = None
 
-  private[unarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[unarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode]) = {
 
     if (node.getNumChildren < 1) {
       throw new ParserException(node.getName + " requires one arguments")
@@ -36,11 +36,9 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
     if (input.isDefined && !input.get.isInstanceOf[RasterMapOp]) {
       throw new ParserException("\"" + childA + "\" is not a raster input")
     }
-
-    this.protectionLevel(protectionLevel)
   }
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
 
+  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def execute(context: SparkContext): Boolean = {
