@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import java.io.IOException;
+import java.util.Set;
 
-public interface TileSizeCalculator
+public interface InputsCalculator
 {
   /**
-   * Calculate and return the tile size of the image produced. If that
-   * value is determined by its input(s), then return 0 because another function will
-   * recurse the MapOp tree to compute the overall tile size.
+   * Calculate the input pyramid paths from the entire tree for this image. This should _not_ call
+   * getOutput() on its input MapOps.
    * 
-   * @return Tile size in pixels
+   * @return
    * @throws IOException
    */
-  public int calculateTileSize() throws IOException;
+  public Set<String> calculateInputs();
 }

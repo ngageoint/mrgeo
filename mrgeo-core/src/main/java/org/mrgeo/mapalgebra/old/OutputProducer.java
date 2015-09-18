@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
-
-import org.mrgeo.progress.Progress;
+package org.mrgeo.mapalgebra.old;
 
 import java.io.IOException;
 
-public interface DeferredExecutor
+public interface OutputProducer
 {
-  public void prepare(Progress p) throws IOException;
-  public String getOperationId();
+  public void setOutputName(String output);
+  public String getOutputName();
+  public String resolveOutputName() throws IOException;
+  public void moveOutput(final String toName) throws IOException;
 }

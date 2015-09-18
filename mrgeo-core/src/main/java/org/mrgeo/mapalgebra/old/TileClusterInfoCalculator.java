@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.mapreduce.formats.TileClusterInfo;
 
 import java.io.IOException;
 
-/**
- * Only map ops that compute the bounds of their output directly
- * should implement this interface. If the bounds of a map op
- * can be gotten from its input(s), then do not implement this
- * interface.
- */
-public interface BoundsCalculator
+public interface TileClusterInfoCalculator
 {
   /**
-   * Calculate the bounds of the output produced by this map op.
+   * Calculate the neighborhood of raster tiles expected in order to perform the
+   * operation provided by this MapOp.
+   * @throws IOException 
    */
-  public Bounds calculateBounds() throws IOException;
+  public TileClusterInfo calculateTileClusterInfo() throws IOException;
 }

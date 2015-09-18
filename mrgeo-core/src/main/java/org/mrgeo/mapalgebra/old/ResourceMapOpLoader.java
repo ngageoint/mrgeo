@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import org.mrgeo.mapreduce.formats.TileClusterInfo;
+import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
 
 import java.io.IOException;
 
-public interface TileClusterInfoCalculator
+public interface ResourceMapOpLoader
 {
-  /**
-   * Calculate the neighborhood of raster tiles expected in order to perform the
-   * operation provided by this MapOp.
-   * @throws IOException 
-   */
-  public TileClusterInfo calculateTileClusterInfo() throws IOException;
+  public MapOpHadoop loadMapOpFromResource(String resourceName,
+                                     ProviderProperties providerProperties) throws IOException;
 }

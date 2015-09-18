@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import java.util.Set;
+import org.mrgeo.progress.Progress;
 
-public interface InputsCalculator
+import java.io.IOException;
+
+public interface DeferredExecutor
 {
-  /**
-   * Calculate the input pyramid paths from the entire tree for this image. This should _not_ call
-   * getOutput() on its input MapOps.
-   * 
-   * @return
-   * @throws IOException
-   */
-  public Set<String> calculateInputs();
+  public void prepare(Progress p) throws IOException;
+  public String getOperationId();
 }

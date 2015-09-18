@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
-
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
+package org.mrgeo.mapalgebra.old;
 
 import java.io.IOException;
 
-public interface ResourceMapOpLoader
+public interface TileSizeCalculator
 {
-  public MapOpHadoop loadMapOpFromResource(String resourceName,
-                                     ProviderProperties providerProperties) throws IOException;
+  /**
+   * Calculate and return the tile size of the image produced. If that
+   * value is determined by its input(s), then return 0 because another function will
+   * recurse the MapOp tree to compute the overall tile size.
+   * 
+   * @return Tile size in pixels
+   * @throws IOException
+   */
+  public int calculateTileSize() throws IOException;
 }

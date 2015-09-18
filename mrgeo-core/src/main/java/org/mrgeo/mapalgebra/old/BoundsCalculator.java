@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
+
+import org.mrgeo.utils.Bounds;
 
 import java.io.IOException;
 
-public interface OutputProducer
+/**
+ * Only map ops that compute the bounds of their output directly
+ * should implement this interface. If the bounds of a map op
+ * can be gotten from its input(s), then do not implement this
+ * interface.
+ */
+public interface BoundsCalculator
 {
-  public void setOutputName(String output);
-  public String getOutputName();
-  public String resolveOutputName() throws IOException;
-  public void moveOutput(final String toName) throws IOException;
+  /**
+   * Calculate the bounds of the output produced by this map op.
+   */
+  public Bounds calculateBounds() throws IOException;
 }

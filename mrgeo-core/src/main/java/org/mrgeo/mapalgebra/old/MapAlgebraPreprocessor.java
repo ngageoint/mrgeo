@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import java.io.IOException;
-
-public interface MaximumZoomLevelCalculator
+public interface MapAlgebraPreprocessor
 {
-  /**
-   * Calculate the maximum (most detailed) zoom level provided. This should
-   * _not_ call getOutput() on its input MapOps.
-   * 
-   * @return
-   * @throws IOException
-   */
-  public int calculateMaximumZoomlevel() throws IOException;
+  public int getOrder();
+  
+  public String preprocess(String expression);
 }
