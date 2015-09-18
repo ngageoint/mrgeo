@@ -1183,6 +1183,27 @@ public void rasterNotExistsUserDefinedSearchPath() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void save() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("save([%s], \"%s\")", allones, testUtils.getOutputHdfsFor("save-test")), -9999);
+
+    testUtils.saveBaselineTif("save-test", -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("save([%s], \"%s\")", allones, testUtils.getOutputHdfsFor("save-test")));
+
+    // now check the file that was saved...
+    testUtils.compareRasterOutput("save-test", opImageTestUtils.nanTranslatorToMinus9999);
+  }
+}
+@Test
+@Category(IntegrationTest.class)
 public void sin() throws Exception
 {
   if (GEN_BASELINE_DATA_ONLY)

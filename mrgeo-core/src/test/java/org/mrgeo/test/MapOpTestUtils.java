@@ -78,6 +78,11 @@ public void generateBaselineTif(final Configuration conf, final String testName,
 {
   runMapAlgebraExpression(conf, testName, ex);
 
+  saveBaselineTif(testName, nodata);
+}
+
+public void saveBaselineTif(String testName, double nodata) throws IOException
+{
   final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
         (ProviderProperties)null);
   final MrsImage image = pyramid.getHighestResImage();
@@ -115,7 +120,7 @@ runRasterExpression(final Configuration conf, final String testName,
     throws ParserException, IOException, JobFailedException, JobCancelledException
 {
   runMapAlgebraExpression(conf, testName, ex);
-  compareRasterOutput(testName, testTranslator, (ProviderProperties)null);
+  compareRasterOutput(testName, testTranslator, (ProviderProperties) null);
 }
 
 public void
@@ -130,13 +135,17 @@ runRasterExpression(final Configuration conf, final String testName,
 
 
 
-private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
+public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator) throws IOException
+{
+  compareRasterOutput(testName, null, testTranslator, (ProviderProperties)null);
+}
+public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
     final ProviderProperties providerProperties) throws IOException
 {
   compareRasterOutput(testName, null, testTranslator, providerProperties);
 }
 
-private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
+public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
     final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
 {
   final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
