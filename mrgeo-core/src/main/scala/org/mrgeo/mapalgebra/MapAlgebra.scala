@@ -1,17 +1,16 @@
 package org.mrgeo.mapalgebra
 
-import java.io.{Externalizable, ObjectInput, ObjectOutput}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util.regex.Pattern
 
-import akka.actor.FSM.->
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
-import org.mrgeo.mapalgebra.old.{MapAlgebraParser, MapOpFactoryHadoop}
+import org.mrgeo.mapalgebra.old.MapAlgebraParser
 import org.mrgeo.mapalgebra.parser._
-import org.mrgeo.mapalgebra.raster.{RasterMapOp, MrsPyramidMapOp}
+import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.{HadoopUtils, StringUtils}
 
@@ -287,6 +286,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     }
   }
 
+
   override def execute(context: SparkContext): Boolean = {
 
     // we need to run through each variable and make sure the context is set.  Input files are
@@ -294,7 +294,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     variables.values.foreach {
       case Some(variable) =>
         variable match {
-        case function:ParserFunctionNode => function.getMapOp.context(context)
+        case function: ParserFunctionNode => function.getMapOp.context(context)
         case _ =>
         }
       case _ =>
@@ -306,18 +306,51 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     })
 
     // now take the last RDD created and save it
-    nodes.reverseIterator.foreach {
-      case function: ParserFunctionNode =>
-        function.getMapOp match {
-        case rmo: RasterMapOp =>
-          rmo.save(output, providerproperties, context)
-          return true
-        case _ =>
-        }
+    nodes.reverseIterator.foreach { node =>
+      if (save(node, output, providerproperties, context)) {
+        return true
+      }
+    }
+
+    false
+  }
+
+
+  private def save(node: ParserNode, output: String, providerproperties: ProviderProperties, context: SparkContext): Boolean = {
+
+    node match {
+    case function: ParserFunctionNode =>
+      function.getMapOp match {
+      case rmo: RasterMapOp =>
+        rmo.save(output, providerproperties, context)
+        return true
       case _ =>
+          function.getChildren.foreach(child => {
+            if (save(child, output, providerproperties, context)) {
+              return true
+            }
+          })
+      }
+    case variable: ParserVariableNode =>
+      MapOp.decodeVariable(variable, findVariable) match {
+      case Some(pn) => pn match {
+      case function: ParserFunctionNode => function.getMapOp match {
+      case rmo: RasterMapOp =>
+        rmo.save(output, providerproperties, context)
+        return true
+      case _ =>
+      }
+
+      }
+      case _ => throw new IOException("Error finding a node to save")
+      }
+
+    case _ =>
     }
     false
   }
+
+
 
   private def execute(node:ParserNode, context:SparkContext): Unit = {
     // depth first run

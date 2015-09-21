@@ -44,7 +44,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       throw new ParserException("Usage: kernel(<method>, <raster>, <params ...>)")
     }
 
-    method = MapOp.decodeString(node.getChild(0)) match  {
+    method = MapOp.decodeString(node.getChild(0), variables) match  {
     case Some(s) => s.toLowerCase
     case _ => throw new ParserException("Error decoding string")
     }
