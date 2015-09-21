@@ -16,7 +16,7 @@
 package org.mrgeo.mapalgebra.optimizer;
 
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.RenderedImageMapOp;
+import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
 import org.mrgeo.opimage.ConstantDescriptor;
 
 import java.awt.image.renderable.RenderedImageFactory;

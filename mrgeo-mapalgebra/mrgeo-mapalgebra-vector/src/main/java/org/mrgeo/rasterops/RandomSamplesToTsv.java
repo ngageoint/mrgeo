@@ -20,7 +20,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.format.CsvOutputFormat;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritablePoint;
-import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
+import org.mrgeo.mapalgebra.old.MapAlgebraExecutioner;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.utils.Bounds;

@@ -1,23 +1,24 @@
 package org.mrgeo.mapalgebra.binarymath
 
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
+import org.mrgeo.mapalgebra.MapOp
 
 object OrMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("||", "|", "or")
   }
-  override def apply(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): MapOp =
-    new OrMapOp(node, variables, protectionLevel)
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new OrMapOp(node, variables)
 }
 
 class OrMapOp extends RawBinaryMathMapOp {
 
-  private[binarymath] def this(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[binarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
-    initialize(node, variables, protectionLevel)
+    initialize(node, variables)
   }
 
   override private[binarymath] def function(a: Double, b: Double): Double = {

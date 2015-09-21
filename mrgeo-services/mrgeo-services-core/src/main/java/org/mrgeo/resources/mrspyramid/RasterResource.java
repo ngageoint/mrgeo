@@ -42,7 +42,7 @@ import org.codehaus.jettison.json.JSONStringer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapalgebra.MapAlgebraJob;
+import org.mrgeo.mapalgebra.old.MapAlgebraJob;
 import org.mrgeo.rasterops.ColorScale;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.resources.job.JobInfoResponse;

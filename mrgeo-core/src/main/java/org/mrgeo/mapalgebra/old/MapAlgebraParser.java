@@ -22,7 +22,6 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
-import org.mrgeo.mapalgebra.*;
 import org.mrgeo.mapalgebra.parser.*;
 import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.rasterops.OpImageRegistrar;
@@ -472,7 +471,7 @@ public class MapAlgebraParser implements MapOpFactoryHadoop
     Set<Class<? extends MapOpHadoop>> subTypes =
         reflections.getSubTypesOf(MapOpHadoop.class);
 
-    log.debug("Registering MapOps:");
+    log.error("Registering MapOps:");
     for (Class<? extends MapOpHadoop> clazz : subTypes)
     {
       try
@@ -512,7 +511,7 @@ public class MapAlgebraParser implements MapOpFactoryHadoop
         {
           if (f != null && f.length() > 0)
           {
-            log.debug("  " + clazz.getCanonicalName() + " (" + f + ")");
+            log.error("  " + clazz.getCanonicalName() + " (" + f + ")");
             mapOps.put(f, clazz);
           }
         }

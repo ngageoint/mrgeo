@@ -15,7 +15,7 @@
 
 package org.mrgeo.old;
 
-import org.mrgeo.mapalgebra.RenderedImageMapOp;
+import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
 import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.opimage.RawBinaryMathDescriptor;

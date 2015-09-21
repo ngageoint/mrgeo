@@ -1,11 +1,13 @@
 package org.mrgeo.mapalgebra
 
 
+import java.io.File
 import java.lang.reflect.Modifier
 
+import com.sun.org.apache.xalan.internal.xsltc.compiler.sym
 import org.apache.spark.Logging
-import org.clapper.classutil.ClassInfo
 import org.mrgeo.core.MrGeoProperties
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
@@ -19,14 +21,13 @@ import scala.reflect.runtime.universe._
 object MapOpFactory extends Logging {
   val functions = mutable.HashMap.empty[String, MapOpRegistrar]
 
+  val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader) // obtain runtime mirror
   private def registerFunctions() = {
     val start = System.currentTimeMillis()
 
     val mapops = decendants(classOf[MapOpRegistrar]) getOrElse Set.empty
 
     logInfo("Registering MapOps:")
-
-    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader) // obtain runtime mirror
 
     mapops.foreach(symbol => {
       mirror.reflectModule(symbol.asModule).instance match {
@@ -45,14 +46,14 @@ object MapOpFactory extends Logging {
   }
 
   // create a mapop from a function name, called by MapOpFactory("<name>")
-  def apply(node: ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): Option[MapOp] = {
+  def apply(node: ParserNode, variables: String => Option[ParserNode]): Option[MapOp] = {
     if (functions.isEmpty) {
       registerFunctions()
     }
 
     functions.get(node.getName) match {
     case Some(mapop) =>
-      val op = mapop.apply(node, variables, protectionLevel)
+      val op = mapop.apply(node, variables)
       Some(op)
     case None => None
     }
@@ -67,17 +68,15 @@ object MapOpFactory extends Logging {
   }
 
   private def decendants(clazz: Class[_]) = {
-    val urls = {
-      // get all the URLs from the classloader, and remove and .so files
-      if (!MrGeoProperties.isDevelopmentMode) {
-        ClasspathHelper.forClassLoader().filter(!_.getFile.endsWith(".so"))
-      }
-      else {
-        // this is a development shortcut.  We know all our mapops are in mrgeo... jars
-        logWarning("Development mode, only looking in jars with \"mrgeo\" in the name for MapOps")
-        ClasspathHelper.forClassLoader().filter(_.getFile.contains("mrgeo"))
-      }
+
+    // get all the URLs for this classpath, filter files by "mrgeo" in development mode, then strip .so files
+    val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
+      val file = new File(url.getPath)
+
+      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") else true)
     }
+    ).filter(!_.getFile.endsWith(".so"))
+
 
     // register mapops
     val cfg = new ConfigurationBuilder()
@@ -86,20 +85,12 @@ object MapOpFactory extends Logging {
         .useParallelExecutor()
 
     val reflections: Reflections = new Reflections(cfg)
+    //val reflections: Reflections = new Reflections("org.mrgeo")
 
     val classes = reflections.getSubTypesOf(clazz).filter(p => !Modifier.isAbstract(p.getModifiers))
 
-    val mirror = runtimeMirror(Thread.currentThread().getContextClassLoader) // obtain runtime mirror
-
     Some(classes.map(clazz => {
-      val sym = mirror.classSymbol(clazz)
-
-      if (sym.companionSymbol != null) {
-        sym.companionSymbol
-      }
-      else {
-        sym
-      }
+      mirror.staticModule(clazz.getCanonicalName).asModule
     }))
   }
 }
