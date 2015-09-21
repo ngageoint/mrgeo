@@ -1,25 +1,20 @@
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.old.InputsCalculator;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
-import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.spark.KernelDriver;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-public class KernelMapOp extends RasterMapOpHadoop implements InputsCalculator
+public class KernelMapOpHadoop extends RasterMapOpHadoop implements InputsCalculator
 {
 final public static String Gaussian = "gaussian";
 final public static String Laplacian = "laplacian";

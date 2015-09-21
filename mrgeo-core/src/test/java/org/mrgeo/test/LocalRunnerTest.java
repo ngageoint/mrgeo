@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
 
 import java.io.IOException;
 
@@ -32,7 +31,7 @@ public class LocalRunnerTest {
   public static void initJobJar() throws IOException
   {
     // by default, turn logging to ERROR
-    LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
+    //LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
     TestUtils.setJarLocation();
   }
 

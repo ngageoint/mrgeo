@@ -22,7 +22,7 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.spark.MosaicDriver;
+import org.mrgeo.mapalgebra.old.MosaicDriver;
 
 import java.io.IOException;
 import java.util.HashSet;

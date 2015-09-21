@@ -69,17 +69,15 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
     if (node.getNumChildren == 2) {
-      val units = MapOp.decodeString(node.getChild(1)) match {
+      units = MapOp.decodeString(node.getChild(1)) match {
       case Some(s) => s
       case _ => throw new ParserException("Error decoding string")
-
       }
 
       if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
           units.equalsIgnoreCase("percent"))) {
         throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
       }
-      this.units = units
 
     }
   }

@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.ResourceMapOpLoader;
 
 import java.io.IOException;
 
-public class RasterMapOpLoader implements ResourceMapOpLoader
+public class RasterMapOpLoaderHadoop implements ResourceMapOpLoader
 {
 
   @Override
@@ -43,7 +41,7 @@ public class RasterMapOpLoader implements ResourceMapOpLoader
     }
     if (dp != null)
     {
-      MrsPyramidMapOp mapop = new MrsPyramidMapOp();
+      MrsPyramidMapOpHadoop mapop = new MrsPyramidMapOpHadoop();
       mapop.setDataProvider(dp);
 
       return mapop;

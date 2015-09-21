@@ -46,22 +46,24 @@ object RasterMapOp {
 
   def decodeToRaster(node:ParserNode, variables: String => Option[ParserNode]): Option[RasterMapOp] = {
     node match {
-    case func:ParserFunctionNode => func.getMapOp match {
-    case raster:RasterMapOp => Some(raster)
-    case _ =>  throw new ParserException("Term \"" + node + "\" is not a raster input")
+    case func: ParserFunctionNode => func.getMapOp match {
+      case raster: RasterMapOp => Some(raster)
+      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
     }
-    case variable:ParserVariableNode =>
+    case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case func:ParserFunctionNode => func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("Term \"" + node + "\" is not a raster input")
+      case func: ParserFunctionNode => func.getMapOp match {
+        case raster: RasterMapOp => Some(raster)
+        case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+        }
+      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
       }
-      }
+    case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
     }
-
   }
-
 }
+
+
 abstract class RasterMapOp extends MapOp {
 
   private var meta:MrsImagePyramidMetadata = null

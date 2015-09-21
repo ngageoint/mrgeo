@@ -1,28 +1,23 @@
-package org.mrgeo.spark
+package org.mrgeo.mapalgebra.old
 
 import java.awt.image.DataBuffer
-import java.io.{ObjectInput, ObjectOutput, Externalizable}
-import java.util.Properties
-import javax.media.jai.KernelJAI
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
-import akka.actor.FSM.->
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
-import org.mrgeo.data.image.MrsImageDataProvider
-import org.mrgeo.data.{ProtectionLevelUtils, ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
+import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
 import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.mapalgebra.KernelMapOp
-import org.mrgeo.opchain.OpChainDriver
-import org.mrgeo.opimage.geographickernel.{GeographicKernel, LaplacianGeographicKernel, GaussianGeographicKernel}
-import org.mrgeo.spark.job.{MrGeoJob, JobArguments, MrGeoDriver}
-import org.mrgeo.utils.{GDALUtils, TMSUtils, SparkUtils}
-import sun.management.counter.Units
+import org.mrgeo.opimage.geographickernel.{GaussianGeographicKernel, GeographicKernel, LaplacianGeographicKernel}
+import org.mrgeo.spark.FocalBuilder
+import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
-import scala.collection.{mutable, parallel}
+import scala.collection.mutable
 
 object KernelDriver extends MrGeoDriver with Externalizable {
   private val MaxLatitude: Double = 60.0
@@ -38,9 +33,9 @@ object KernelDriver extends MrGeoDriver with Externalizable {
 
     val args =  mutable.Map[String, String]()
 
-    val name = "Kernel (" + KernelMapOp.Gaussian + ", " + input + ")"
+    val name = "Kernel (" + KernelMapOpHadoop.Gaussian + ", " + input + ")"
 
-    args += Method -> KernelMapOp.Gaussian
+    args += Method -> KernelMapOpHadoop.Gaussian
     args += Input -> input
     args += Output -> output
     args += Sigma -> sigma.toString
@@ -57,9 +52,9 @@ object KernelDriver extends MrGeoDriver with Externalizable {
   def laplacian(input:String, output:String, sigma:Double, protectionLevel: String, providerProperties: ProviderProperties, conf:Configuration) = {
     val args =  mutable.Map[String, String]()
 
-    val name = "Kernel (" + KernelMapOp.Laplacian + ", " + input + ")"
+    val name = "Kernel (" + KernelMapOpHadoop.Laplacian + ", " + input + ")"
 
-    args += Method -> KernelMapOp.Laplacian
+    args += Method -> KernelMapOpHadoop.Laplacian
     args += Input -> input
     args += Output -> output
     args += Sigma -> sigma.toString
@@ -107,7 +102,7 @@ class KernelDriver extends MrGeoJob with Externalizable {
     method = job.getSetting(KernelDriver.Method)
 
     method match {
-    case KernelMapOp.Gaussian | KernelMapOp.Laplacian =>
+    case KernelMapOpHadoop.Gaussian | KernelMapOpHadoop.Laplacian =>
       sigma = job.getSetting(KernelDriver.Sigma).toDouble
     }
 
@@ -138,9 +133,9 @@ class KernelDriver extends MrGeoJob with Externalizable {
     val pyramid = SparkUtils.loadMrsPyramidRDD(ip, zoom, context)
 
     val kernel = method match {
-    case KernelMapOp.Gaussian =>
+    case KernelMapOpHadoop.Gaussian =>
       new GaussianGeographicKernel(sigma)
-    case KernelMapOp.Laplacian =>
+    case KernelMapOpHadoop.Laplacian =>
       new LaplacianGeographicKernel(sigma)
     }
 
@@ -170,9 +165,9 @@ class KernelDriver extends MrGeoJob with Externalizable {
 
       // kernel is not serializable, so we need to create a new one each time.
       val kernel = method match {
-      case KernelMapOp.Gaussian =>
+      case KernelMapOpHadoop.Gaussian =>
         new GaussianGeographicKernel(sigma)
-      case KernelMapOp.Laplacian =>
+      case KernelMapOpHadoop.Laplacian =>
         new LaplacianGeographicKernel(sigma)
       }
 

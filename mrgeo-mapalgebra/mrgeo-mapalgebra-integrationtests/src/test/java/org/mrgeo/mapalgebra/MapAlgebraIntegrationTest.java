@@ -33,6 +33,7 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.old.MapAlgebraParser;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.MrsPyramidMapOpHadoop;
 import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.old.LogarithmMapOp;
@@ -61,7 +62,7 @@ private static OpImageTestUtils opImageTestUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = false;
+public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
 private static final String smallElevationName = "small-elevation";
 private static String smallElevation = Defs.INPUT + smallElevationName;
@@ -939,10 +940,10 @@ public void parse1() throws Exception
 
   MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
       AccessMode.READ, props);
-  final MrsPyramidMapOp pyramidOp1 = new MrsPyramidMapOp();
+  final MrsPyramidMapOpHadoop pyramidOp1 = new MrsPyramidMapOpHadoop();
   pyramidOp1.setDataProvider(elevationDataProvider);
 
-  final MrsPyramidMapOp pyramidOp2 = new MrsPyramidMapOp();
+  final MrsPyramidMapOpHadoop pyramidOp2 = new MrsPyramidMapOpHadoop();
   pyramidOp2.setDataProvider(elevationDataProvider);
 
   expRoot.addInput(pyramidOp1);
@@ -965,7 +966,7 @@ public void parse2() throws Exception
 
   MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
       AccessMode.READ, props);
-  final MrsPyramidMapOp mapOp1 = new MrsPyramidMapOp();
+  final MrsPyramidMapOpHadoop mapOp1 = new MrsPyramidMapOpHadoop();
   mapOp1.setDataProvider(elevationDataProvider);
 
   final RenderedImageMapOp mapOp2 = new RenderedImageMapOp();
@@ -993,7 +994,7 @@ public void parse3() throws Exception
 
   MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
       AccessMode.READ, props);
-  final MrsPyramidMapOp pyramidOp = new MrsPyramidMapOp();
+  final MrsPyramidMapOpHadoop pyramidOp = new MrsPyramidMapOpHadoop();
   pyramidOp.setDataProvider(elevationDataProvider);
 
   expRoot.addInput(pyramidOp);
@@ -1118,10 +1119,10 @@ public void rasterExistsDefaultSearchPath() throws Exception
 
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(smallElevationName,
       AccessMode.READ, props);
-  final MrsPyramidMapOp mapOp1 = new MrsPyramidMapOp();
+  final MrsPyramidMapOpHadoop mapOp1 = new MrsPyramidMapOpHadoop();
   mapOp1.setDataProvider(provider);
 
-  final MrsPyramidMapOp mapOp2 = new MrsPyramidMapOp();
+  final MrsPyramidMapOpHadoop mapOp2 = new MrsPyramidMapOpHadoop();
   mapOp2.setDataProvider(provider);
 
   expRoot.addInput(mapOp1);
@@ -1145,7 +1146,7 @@ public void rasterExistsFullyQualifiedPath() throws Exception
 
   MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
       AccessMode.READ, props);
-  final MrsPyramidMapOp pyramidOp = new MrsPyramidMapOp();
+  final MrsPyramidMapOpHadoop pyramidOp = new MrsPyramidMapOpHadoop();
   pyramidOp.setDataProvider(elevationDataProvider);
 
   expRoot.addInput(pyramidOp);
@@ -1202,6 +1203,7 @@ public void save() throws Exception
     testUtils.compareRasterOutput("save-test", opImageTestUtils.nanTranslatorToMinus9999);
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void sin() throws Exception
@@ -1463,10 +1465,10 @@ private void assertMapOp(final MapOpHadoop expMo, final MapOpHadoop mo)
       }
     }
   }
-  else if (expMo instanceof MrsPyramidMapOp)
+  else if (expMo instanceof MrsPyramidMapOpHadoop)
   {
-    final MrsPyramidMapOp pyrExpMo = (MrsPyramidMapOp) expMo;
-    final MrsPyramidMapOp pyrMo = (MrsPyramidMapOp) mo;
+    final MrsPyramidMapOpHadoop pyrExpMo = (MrsPyramidMapOpHadoop) expMo;
+    final MrsPyramidMapOpHadoop pyrMo = (MrsPyramidMapOpHadoop) mo;
     Assert.assertEquals(pyrExpMo.getOutputName(), pyrMo.getOutputName());
   }
   Assert.assertEquals(expMo.getInputs().size(), mo.getInputs().size());

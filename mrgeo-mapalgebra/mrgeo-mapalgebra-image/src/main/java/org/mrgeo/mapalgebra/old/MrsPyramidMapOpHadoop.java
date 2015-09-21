@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -32,7 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-public class MrsPyramidMapOp extends RasterMapOpHadoop
+public class MrsPyramidMapOpHadoop extends RasterMapOpHadoop
   implements InputsCalculator, BoundsCalculator, TileSizeCalculator,
     MaximumZoomLevelCalculator, TileClusterInfoConsumer
 {
@@ -180,9 +179,9 @@ public class MrsPyramidMapOp extends RasterMapOpHadoop
   }
 
   @Override
-  public MrsPyramidMapOp clone()
+  public MrsPyramidMapOpHadoop clone()
   {
-    MrsPyramidMapOp result = (MrsPyramidMapOp) super.clone();
+    MrsPyramidMapOpHadoop result = (MrsPyramidMapOpHadoop) super.clone();
     result.setDataProvider(dp);
     return result;
   }

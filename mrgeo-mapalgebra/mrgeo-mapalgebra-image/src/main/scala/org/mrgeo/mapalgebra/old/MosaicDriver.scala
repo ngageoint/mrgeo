@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.spark
+package org.mrgeo.mapalgebra.old
 
 import java.awt.image.{DataBuffer, WritableRaster}
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
@@ -21,10 +21,10 @@ import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{CoGroupedRDD, RDD}
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
-import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.TMSUtils.TileBounds
 import org.mrgeo.utils._
