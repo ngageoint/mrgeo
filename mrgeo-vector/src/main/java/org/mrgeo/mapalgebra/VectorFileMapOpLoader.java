@@ -25,6 +25,7 @@ import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.format.FeatureInputFormatFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.ResourceMapOpLoader;
 import org.mrgeo.utils.HadoopUtils;
 
 import java.io.File;

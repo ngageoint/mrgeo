@@ -18,8 +18,13 @@ package org.mrgeo.mapalgebra.old;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+<<<<<<< HEAD:mrgeo-vector/src/main/java/org/mrgeo/mapalgebra/old/VectorMapOpHadoop.java
 import org.mrgeo.mapalgebra.InputFormatDescriptor;
 import org.mrgeo.mapalgebra.OutputProducer;
+=======
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.OutputProducer;
+>>>>>>> spark-mapop:mrgeo-vector/src/main/java/org/mrgeo/mapalgebra/VectorMapOp.java
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;

@@ -11,6 +11,7 @@ import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
+import org.mrgeo.mapalgebra.parser.{ParserVariableNode, ParserException, ParserFunctionNode, ParserNode}
 import org.mrgeo.utils.{Bounds, SparkUtils}
 
 object RasterMapOp {
@@ -43,7 +44,26 @@ object RasterMapOp {
     }
   }
 
+  def decodeToRaster(node:ParserNode, variables: String => Option[ParserNode]): Option[RasterMapOp] = {
+    node match {
+    case func: ParserFunctionNode => func.getMapOp match {
+      case raster: RasterMapOp => Some(raster)
+      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+    }
+    case variable: ParserVariableNode =>
+      MapOp.decodeVariable(variable, variables).get match {
+      case func: ParserFunctionNode => func.getMapOp match {
+        case raster: RasterMapOp => Some(raster)
+        case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+        }
+      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+      }
+    case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+    }
+  }
 }
+
+
 abstract class RasterMapOp extends MapOp {
 
   private var meta:MrsImagePyramidMetadata = null

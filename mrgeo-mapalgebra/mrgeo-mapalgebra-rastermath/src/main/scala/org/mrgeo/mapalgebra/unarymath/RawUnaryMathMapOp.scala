@@ -16,7 +16,7 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
   var input:Option[RasterMapOp] = None
   var rasterRDD:Option[RasterRDD] = None
 
-  private[unarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[unarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode]) = {
 
     if (node.getNumChildren < 1) {
       throw new ParserException(node.getName + " requires one arguments")
@@ -25,23 +25,10 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
       throw new ParserException(node.getName + " requires only two arguments")
     }
 
+    input = RasterMapOp.decodeToRaster(node.getChild(0), variables)
     val childA = node.getChild(0)
 
-    childA match {
-    case const:ParserConstantNode => None
-    case func:ParserFunctionNode => input = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("\"" + childA + "\" is not a raster input")
-    }
-    case variable:ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
-      case const:ParserConstantNode => None
-      case func:ParserFunctionNode => input = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("\"" + childA + "\" is not a raster input")
-      }
-      }
-    }
+
     if (input.isEmpty) {
       throw new ParserException("\"" + node.getName + "\" must have at least 1 raster input")
     }
@@ -49,11 +36,9 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
     if (input.isDefined && !input.get.isInstanceOf[RasterMapOp]) {
       throw new ParserException("\"" + childA + "\" is not a raster input")
     }
-
-    this.protectionLevel(protectionLevel)
   }
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
 
+  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def execute(context: SparkContext): Boolean = {

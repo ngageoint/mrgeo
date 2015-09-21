@@ -6,6 +6,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
@@ -16,8 +17,8 @@ object LogMapOp extends MapOpRegistrar {
     Array[String]("log")
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null): MapOp =
-    new LogMapOp(node, variables, protectionLevel)
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new LogMapOp(node, variables)
 }
 
 class LogMapOp extends RasterMapOp with Externalizable {
@@ -26,7 +27,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
   private var base:Option[Double] = None
   private var rasterRDD:Option[RasterRDD] = None
 
-  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode], protectionLevel:String = null) = {
+  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 1) {
@@ -36,20 +37,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
       throw new ParserException(node.getName + " requires only one or two arguments")
     }
 
-    val childA = node.getChild(0)
-    childA match {
-    case func:ParserFunctionNode => inputMapOp = func.getMapOp match {
-    case raster:RasterMapOp => Some(raster)
-    case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
-    }
-    case variable:ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
-      case func:ParserFunctionNode => inputMapOp = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
-      }
-      }
-    }
+    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
     if (node.getNumChildren == 2) {
       base = MapOp.decodeDouble(node.getChild(1))
@@ -60,7 +48,6 @@ class LogMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def execute(context: SparkContext): Boolean = {
-    // our metadata is the same as the raster
     val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
 
     val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))

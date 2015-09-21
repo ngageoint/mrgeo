@@ -18,10 +18,14 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+<<<<<<< HEAD
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
+=======
+import org.mrgeo.mapalgebra.old.*;
+>>>>>>> spark-mapop
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;

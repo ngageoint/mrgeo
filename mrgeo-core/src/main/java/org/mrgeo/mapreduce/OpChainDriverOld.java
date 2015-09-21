@@ -31,7 +31,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
-import org.mrgeo.mapalgebra.RenderedImageMapOp;
+import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
