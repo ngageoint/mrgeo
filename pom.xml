@@ -277,6 +277,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${maven-surefire.version}</version>
           <configuration>
+            <runOrder>random</runOrder>
             <groups>org.mrgeo.junit.UnitTest</groups>
             <additionalClasspathElements>
               <additionalClasspathElement>${hadoop.config}</additionalClasspathElement>
@@ -311,6 +312,7 @@
             </dependency>
           </dependencies>
           <configuration>
+            <runOrder>random</runOrder>
             <groups>org.mrgeo.junit.IntegrationTest</groups>
             <additionalClasspathElements>
               <additionalClasspathElement>${hadoop.config}</additionalClasspathElement>
