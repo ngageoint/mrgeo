@@ -146,6 +146,18 @@ object SparkUtils extends Logging {
   }
 
   @deprecated("Use RasterRDD method instead", "")
+  def loadMrsPyramidAndMetadata(imageName: String, zoom: Int, bounds: Bounds, context: SparkContext):
+  (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
+
+    val providerProps: ProviderProperties = null
+    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
+      DataProviderFactory.AccessMode.READ, providerProps)
+    val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
+
+    (loadMrsPyramidRDD(dp, zoom, bounds, context), metadata)
+  }
+
+  @deprecated("Use RasterRDD method instead", "")
   def loadMrsPyramidRDD(imageName: String, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
     val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,

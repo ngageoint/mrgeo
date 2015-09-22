@@ -65,16 +65,8 @@
     <module>mrgeo-mapalgebra-terrain</module>
     <module>mrgeo-mapalgebra-vector</module>
     <module>mrgeo-mapalgebra-integrationtests</module>
+    <module>mrgeo-mapalgebra-costdistance</module>
   </modules>
-  <profiles>
-    <profile>
-      <id>include-costdistance</id>
-      <modules>
-        <module>mrgeo-mapalgebra-costdistance</module>
-        <module>mrgeo-mapalgebra-integrationtests-costdistance</module>
-      </modules>
-    </profile>
-  </profiles>
   <dependencies>
     <dependency>
       <groupId>org.mrgeo</groupId>

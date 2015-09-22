@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>                    
-<AllColumns>                                              
-  <Column name="y" type="Numeric"/>       
-  <Column name="x" type="Numeric"/>       
-  <Column name="major" type="Numeric"/>       
-  <Column name="minor" type="Numeric"/>       
-  <Column name="orientation" type="Numeric"/>       
-  <Column name="weight" type="Numeric"/>       
-</AllColumns>

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>                    
-<AllColumns>                                              
-  <Column name="number" type="Unknown"/>       
-  <Column name="letter" type="Unknown"/>       
-  <Column name="both" type="Unknown"/>       
-</AllColumns>
