@@ -723,6 +723,57 @@
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
+      <id>CDH547-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.4.7</hadoop.version>
+        <mahout.version>0.9-cdh5.4.7</mahout.version>
+        <pig.version>0.12.0-cdh5.4.7</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.3.0-cdh5.4.7</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.4.7</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH547</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.4.7</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.4.7</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.4.7</mahout.version>
+        <pig.version>0.12.0-cdh5.4.7</pig.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.3.0-cdh5.4.7</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.4.7-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from pig -->
+        <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr-runtime</artifactId>
+          <version>3.1.3</version>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>CDH545-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.5</hadoop.version>
