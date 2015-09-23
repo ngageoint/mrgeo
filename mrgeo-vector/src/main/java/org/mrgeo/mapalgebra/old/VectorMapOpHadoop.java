@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.OutputProducer;
+import org.mrgeo.mapalgebra.InputFormatDescriptor;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
@@ -28,7 +27,7 @@ import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
 
-public abstract class VectorMapOp extends MapOpHadoop implements OutputProducer
+public abstract class VectorMapOpHadoop extends MapOpHadoop implements OutputProducer
 {
   protected InputFormatDescriptor _output;
   protected String _outputName = null;
@@ -132,9 +131,9 @@ public abstract class VectorMapOp extends MapOpHadoop implements OutputProducer
    * results or temporary variables involved in computation.
    */
   @Override
-  public VectorMapOp clone()
+  public VectorMapOpHadoop clone()
   {
-    final VectorMapOp result = (VectorMapOp) super.clone();
+    final VectorMapOpHadoop result = (VectorMapOpHadoop) super.clone();
     result._output = null;
     return result;
   }

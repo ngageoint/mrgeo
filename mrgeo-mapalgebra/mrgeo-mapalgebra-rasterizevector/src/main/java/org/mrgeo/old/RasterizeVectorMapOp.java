@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.old;
 
 import com.vividsolutions.jts.geom.Envelope;
 import org.apache.hadoop.fs.Path;
@@ -39,6 +39,7 @@ import org.mrgeo.format.ShpInputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.mapalgebra.*;
 import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
 import org.mrgeo.mapalgebra.parser.ParserNode;
@@ -79,7 +80,7 @@ public class RasterizeVectorMapOp extends RasterMapOpHadoop
   @Override
   public void addInput(final MapOpHadoop n) throws IllegalArgumentException
   {
-    if (!(n instanceof VectorMapOp))
+    if (!(n instanceof VectorMapOpHadoop))
     {
       throw new IllegalArgumentException("Only vector inputs are supported.");
     }
@@ -88,7 +89,7 @@ public class RasterizeVectorMapOp extends RasterMapOpHadoop
       throw new IllegalArgumentException("Only one input is supported.");
     }
     _inputs.add(n);
-    InputFormatDescriptor ifd = ((VectorMapOp)n).getVectorOutput();
+    InputFormatDescriptor ifd = ((VectorMapOpHadoop)n).getVectorOutput();
     // Until MrsVector buld pyramids is complete, we only support using the data at
     // the zoom level to which it was ingested.
     if (ifd instanceof HdfsMrsVectorPyramidInputFormatDescriptor)
@@ -97,7 +98,7 @@ public class RasterizeVectorMapOp extends RasterMapOpHadoop
       if (vfd.getZoomLevel() != zoomlevel)
       {
         throw new IllegalArgumentException("Only zoom level " + vfd.getZoomLevel() +
-            " is supported for MrsVector " + ((VectorMapOp)n).getOutputName());
+            " is supported for MrsVector " + ((VectorMapOpHadoop)n).getOutputName());
       }
     }
   }
@@ -118,7 +119,7 @@ public class RasterizeVectorMapOp extends RasterMapOpHadoop
     }
     else
     {
-      InputFormatDescriptor ifd = ((VectorMapOp)_inputs.get(0)).getVectorOutput();
+      InputFormatDescriptor ifd = ((VectorMapOpHadoop)_inputs.get(0)).getVectorOutput();
       if (ifd instanceof BasicInputFormatDescriptor)
       {
         final BasicInputFormatDescriptor bfd = (BasicInputFormatDescriptor) ifd;
@@ -211,7 +212,7 @@ public class RasterizeVectorMapOp extends RasterMapOpHadoop
         InlineCsvInputFormatDescriptor cfd = (InlineCsvInputFormatDescriptor) ifd;
         // Set up a reader to be able to stream features from the input source
         InlineCsvInputFormat.InlineCsvReader csvReader = new InlineCsvInputFormat.InlineCsvReader();
-        csvReader.initialize(cfd._columns, cfd._values);
+        csvReader.initialize(cfd.getColumns(), cfd.getValues());
         bounds = new Bounds();
         while (csvReader.nextFeature())
         {
@@ -409,7 +410,7 @@ public class RasterizeVectorMapOp extends RasterMapOpHadoop
       p.starting();
     }
 
-    final InputFormatDescriptor ifd = ((VectorMapOp)_inputs.get(0)).getVectorOutput();
+    final InputFormatDescriptor ifd = ((VectorMapOpHadoop)_inputs.get(0)).getVectorOutput();
 
     if (bounds == null)
     {
@@ -421,7 +422,7 @@ public class RasterizeVectorMapOp extends RasterMapOpHadoop
 //    {
 //      final RasterizeMrsVectorDriver rvd = new RasterizeMrsVectorDriver();
 //      rvd.setValueColumn(column);
-//      rvd.run(getConf(), ((VectorMapOp)_inputs.get(0)).getOutputName(), _outputName,
+//      rvd.run(getConf(), ((VectorMapOpHadoop)_inputs.get(0)).getOutputName(), _outputName,
 //          _aggregationType, zoomlevel, bounds, p, jobListener);
 //    }
 //    else

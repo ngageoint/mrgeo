@@ -76,7 +76,7 @@ public class ShapeRecordInputFormat extends ShpInputFormat implements RecordInpu
       }
       while (end <= size)
       {
-        splits.add(new GeometryInputSplit(geometryCollection, begin, end));
+        splits.add(new GeometryInputSplit(begin, end));
         begin = end;
         if ((size - end) < recordsPerSplit && (size - end) > 0)
         {

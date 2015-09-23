@@ -25,11 +25,12 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
 
-public class VectorReaderMapOp extends VectorMapOp
+public class VectorReaderMapOp extends VectorMapOpHadoop
 {
   private VectorDataProvider dp;
   private ProviderProperties providerProperties;

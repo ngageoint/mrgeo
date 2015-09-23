@@ -51,7 +51,7 @@ object RasterMapOp {
       case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
     }
     case variable: ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
+      MapOp.decodeVariable(variable, variables).getOrElse(throw new ParserException("Variable \"" + node + " has not been assigned")) match {
       case func: ParserFunctionNode => func.getMapOp match {
         case raster: RasterMapOp => Some(raster)
         case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")

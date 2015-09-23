@@ -17,16 +17,17 @@ package org.mrgeo.mapalgebra;
 
 import org.mrgeo.featurefilter.FeatureFilter;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.progress.Progress;
 
 import java.io.IOException;
 
-public abstract class FeatureFilterMapOp extends VectorMapOp
+public abstract class FeatureFilterMapOp extends VectorMapOpHadoop
 {
   @Override
   public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
-    if (!(n instanceof VectorMapOp))
+    if (!(n instanceof VectorMapOpHadoop))
     {
       throw new IllegalArgumentException("Only vector inputs are supported.");
     }
@@ -48,7 +49,7 @@ public abstract class FeatureFilterMapOp extends VectorMapOp
     MapOpHadoop mo = _inputs.get(0);
 
     InputFormatDescriptor result = 
-      new FilteredInputFormatDescriptor(((VectorMapOp)mo).getVectorOutput(), getFilter());
+      new FilteredInputFormatDescriptor(((VectorMapOpHadoop)mo).getVectorOutput(), getFilter());
 
     _output = result;
     

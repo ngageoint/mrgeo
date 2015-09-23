@@ -7,11 +7,12 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
+import org.mrgeo.data.{DataProviderNotFound, DataProviderFactory, ProviderProperties}
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
+import org.mrgeo.mapalgebra.vector.VectorDataMapOp
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
-import org.mrgeo.utils.{HadoopUtils, StringUtils}
+import org.mrgeo.utils.{DependencyLoader, HadoopUtils, StringUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -36,7 +37,7 @@ object MapAlgebra extends MrGeoDriver {
     args += ProtectionLevel -> { if (protectionLevel == null) "" else protectionLevel }
     args += ProviderProperties -> { if (providerProperties == null) "" else data.ProviderProperties.toDelimitedString(providerProperties) }
 
-    run(name, classOf[MapAlgebra].getName, args.toMap, conf)
+    run(name, classOf[MapAlgebra].getName, args.toMap, conf, Some(MapOpFactory.getMapOpClasses))
 
     true
   }
@@ -216,16 +217,20 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
   }
 
   private def loadResource(name:String):Option[MapOp] = {
-    val imdp = DataProviderFactory.getMrsImageDataProvider(name, AccessMode.READ, providerproperties)
-    if (imdp != null) {
+    try {
+      val imdp = DataProviderFactory.getMrsImageDataProvider(name, AccessMode.READ, providerproperties)
       return Some(MrsPyramidMapOp(imdp))
     }
-    //TODO:  Implement Vector
-    //    val vdp = DataProviderFactory.getVectorDataProvider(name, AccessMode.READ, conf)
-    //    if (vdp != null) {
-    //      return new VectorRDD(vdp)
-    //    }
-
+    catch {
+      case e: DataProviderNotFound => {}
+    }
+    try {
+      val vdp = DataProviderFactory.getVectorDataProvider(name, AccessMode.READ, providerproperties)
+      return Some(VectorDataMapOp(vdp))
+    }
+    catch {
+      case e: DataProviderNotFound => {}
+    }
     None
   }
 

@@ -388,6 +388,7 @@ private static class MrsImageLoader implements Callable<MrsImageDataProvider>
         else
         {
           log.warn("Could not open " + name + " using factory " + factory.getClass().getName());
+          Thread.dumpStack();
         }
       }
       throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);

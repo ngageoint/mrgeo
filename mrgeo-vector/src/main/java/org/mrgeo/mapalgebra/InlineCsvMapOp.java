@@ -19,10 +19,11 @@ import java.util.Vector;
 
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
+import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.progress.Progress;
 
-public class InlineCsvMapOp extends VectorMapOp
+public class InlineCsvMapOp extends VectorMapOpHadoop
 {
   private String _columns, _values;
 

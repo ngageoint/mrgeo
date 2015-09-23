@@ -1,18 +1,3 @@
-/*
- * Copyright 2009-2015 DigitalGlobe, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and limitations under the License.
- */
-
 package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.conf.Configuration;
@@ -35,16 +20,17 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class HdfsVectorDataProvider extends VectorDataProvider
+public class ShapefileDataProvider extends VectorDataProvider
 {
-  private static Logger log = LoggerFactory.getLogger(HdfsVectorDataProvider.class);
+  private static Logger log = LoggerFactory.getLogger(ShapefileDataProvider.class);
 
   private Configuration conf;
   private Path resourcePath;
   private ProviderProperties providerProperties;
 
-  public HdfsVectorDataProvider(final Configuration conf,
-      final String prefix, final String resourceName, final ProviderProperties providerProperties)
+  public ShapefileDataProvider(final Configuration conf,
+                               final String prefix, final String resourceName,
+                               final ProviderProperties providerProperties)
   {
     super(prefix, resourceName);
     this.conf = conf;
@@ -62,7 +48,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     if (resourcePath == null)
     {
       resourcePath = resolveName(getConfiguration(), getResourceName(),
-          providerProperties, mustExist);
+                                 providerProperties, mustExist);
     }
     return resourcePath;
   }
@@ -84,13 +70,15 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   @Override
   public VectorReader getVectorReader() throws IOException
   {
-    return new HdfsVectorReader(this, new VectorReaderContext(), conf);
+//    return new ShapefileVectorReader(this, new VectorReaderContext(), conf);
+    return null;
   }
 
   @Override
   public VectorReader getVectorReader(VectorReaderContext context) throws IOException
   {
-    return new HdfsVectorReader(this, context, conf);
+//    return new ShapefileVectorReader(this, context, conf);
+    return null;
   }
 
   @Override
@@ -110,7 +98,8 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   @Override
   public RecordReader<LongWritable, Geometry> getRecordReader()
   {
-    return new HdfsVectorRecordReader();
+//    return new ShpInputFormat.ShapefileRecordReader();
+    return null;
   }
 
   @Override
@@ -123,7 +112,8 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   @Override
   public VectorInputFormatProvider getVectorInputFormatProvider(VectorInputFormatContext context)
   {
-    return new HdfsVectorInputFormatProvider(context);
+//    return new ShapefileInputFormatProvider(context);
+    return null;
   }
 
   @Override
@@ -148,7 +138,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   public static boolean canOpen(final Configuration conf, String input,
-      final ProviderProperties providerProperties) throws IOException
+                                final ProviderProperties providerProperties) throws IOException
   {
     Path p;
     try
@@ -165,15 +155,15 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     }
     return false;
   }
-  
+
   public static boolean exists(final Configuration conf, String input,
-      final ProviderProperties providerProperties) throws IOException
+                               final ProviderProperties providerProperties) throws IOException
   {
     return resolveNameToPath(conf, input, providerProperties, true) != null;
   }
-  
+
   public static void delete(final Configuration conf, String input,
-      final ProviderProperties providerProperties) throws IOException
+                            final ProviderProperties providerProperties) throws IOException
   {
     Path p = resolveNameToPath(conf, input, providerProperties, false);
     Path columns = new Path(p.toString() + ".columns");
@@ -189,7 +179,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   public static boolean canWrite(final Configuration conf, String input,
-      final ProviderProperties providerProperties) throws IOException
+                                 final ProviderProperties providerProperties) throws IOException
   {
     // The return value of resolveNameToPath will be null if the input
     // path does not exist. It wil throw an exception if there is a problem
@@ -199,7 +189,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   private static Path resolveName(final Configuration conf, final String input,
-      final ProviderProperties providerProperties, final boolean mustExist) throws IOException
+                                  final ProviderProperties providerProperties, final boolean mustExist) throws IOException
   {
     Path result = resolveNameToPath(conf, input, providerProperties, mustExist);
     if (result != null && hasMetadata(conf, result))
@@ -211,7 +201,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   private static Path resolveNameToPath(final Configuration conf, final String input,
-      final ProviderProperties providerProperties, final boolean mustExist) throws IOException
+                                        final ProviderProperties providerProperties, final boolean mustExist) throws IOException
   {
     if (input.indexOf('/') >= 0)
     {

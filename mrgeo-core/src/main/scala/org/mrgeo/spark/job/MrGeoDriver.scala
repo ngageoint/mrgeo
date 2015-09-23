@@ -38,7 +38,7 @@ abstract class MrGeoDriver extends Logging {
   def setup(job: JobArguments): Boolean
 
   def run(name:String, driver:String = this.getClass.getName, args:Map[String, String] = Map[String, String](),
-      hadoopConf:Configuration) = {
+      hadoopConf:Configuration, additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None) = {
     val job = new JobArguments()
 
     job.driverClass = driver
@@ -53,7 +53,7 @@ abstract class MrGeoDriver extends Logging {
     logInfo("Configuring application")
 
     // setup dependencies, but save the local deps to use in the classloader
-    val local = setupDependencies(job, hadoopConf)
+    val local = setupDependencies(job, hadoopConf, additionalClasses)
 
     var parentLoader:ClassLoader = Thread.currentThread().getContextClassLoader
     if (parentLoader == null) {
@@ -305,7 +305,8 @@ abstract class MrGeoDriver extends Logging {
     (ex, exmem)
   }
 
-  protected def setupDependencies(job:JobArguments, hadoopConf:Configuration): mutable.Set[String] = {
+  protected def setupDependencies(job:JobArguments, hadoopConf:Configuration,
+                                   additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None): mutable.Set[String] = {
 
     val dependencies = DependencyLoader.getDependencies(getClass)
     val qualified = DependencyLoader.copyDependencies(dependencies, hadoopConf)
@@ -331,6 +332,20 @@ abstract class MrGeoDriver extends Logging {
       }
       jars ++= jar
       //}
+    }
+
+    if (additionalClasses.isDefined) {
+      var additionalDependencies = Set.newBuilder[String]
+      additionalClasses.get.foreach(additionalClass => {
+        additionalDependencies ++= DependencyLoader.getDependencies(additionalClass)
+      })
+      val additionalQualified = DependencyLoader.copyDependencies(additionalDependencies.result(), hadoopConf)
+      additionalQualified.foreach(jar => {
+        if (jars.nonEmpty) {
+          jars ++= ","
+        }
+        jars ++= jar
+      })
     }
     job.setJars(jars.toString())
 

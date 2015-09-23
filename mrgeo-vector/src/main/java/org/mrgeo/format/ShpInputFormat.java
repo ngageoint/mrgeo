@@ -40,14 +40,12 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     // End index is exclusive. I.e. if start = 0 and end = 5 only 0, 1, 2, 3 and 4 will be
     // processed.
     int endIndex;
-    GeometryCollection gc = null;
     int startIndex;
 
-    GeometryInputSplit(GeometryCollection gc, int start, int end)
+    GeometryInputSplit(int start, int end)
     {
       startIndex = start;
       endIndex = end;
-      this.gc = gc;
     }
 
     public int getEnd()
@@ -82,12 +80,8 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     private LongWritable key = new LongWritable();
     private Geometry value = null;
 
-    ShpRecordReader(GeometryCollection gc, int start, int end)
+    ShpRecordReader()
     {
-      this.gc = gc;
-      this.start = start;
-      this.end = end;
-      currentIndex = start - 1;
     }
 
     @Override
@@ -119,12 +113,13 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     }
 
     @Override
-    public void initialize(InputSplit split, TaskAttemptContext arg1) throws IOException,
+    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
         InterruptedException
     {
+      gc = loadGeometryCollection(context.getConfiguration());
+
       GeometryInputSplit gis = (GeometryInputSplit) split;
 
-      this.gc = gis.gc;
       this.start = gis.startIndex;
       this.end = gis.endIndex;
       currentIndex = start - 1;
@@ -179,11 +174,9 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
   public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
-    GeometryCollection gc = loadGeometryCollection(context.getConfiguration());
-
     GeometryInputSplit giSplit = (GeometryInputSplit) split;
 
-    ShpRecordReader reader = new ShpRecordReader(gc, giSplit.getStart(), giSplit.getEnd());
+    ShpRecordReader reader = new ShpRecordReader();
 
     return reader;
   }
@@ -208,7 +201,7 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     {
       int start = (int) Math.round((double) i * (double) gc.size() / numSplits);
       int end = (int) Math.round((double) (i + 1) * (double) gc.size() / numSplits);
-      result.add(new GeometryInputSplit(gc, start, end));
+      result.add(new GeometryInputSplit(start, end));
     }
 
     return result;
