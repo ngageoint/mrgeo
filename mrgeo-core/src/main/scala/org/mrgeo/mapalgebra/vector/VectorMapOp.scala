@@ -6,6 +6,7 @@ import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector.{VectorDataProvider, VectorMetadata}
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.mapalgebra.MapOp
+import org.mrgeo.mapalgebra.parser.{ParserVariableNode, ParserException, ParserFunctionNode, ParserNode}
 
 object VectorMapOp {
 
@@ -37,34 +38,50 @@ object VectorMapOp {
     }
   }
 
+  def decodeToVector(node:ParserNode, variables: String => Option[ParserNode]): Option[VectorMapOp] = {
+    node match {
+      case func: ParserFunctionNode => func.getMapOp match {
+        case vector: VectorMapOp => Some(vector)
+        case _ => throw new ParserException("Term \"" + node + "\" is not a vector input")
+      }
+      case variable: ParserVariableNode =>
+        MapOp.decodeVariable(variable, variables).getOrElse(throw new ParserException("Variable \"" + node + " has not been assigned")) match {
+          case func: ParserFunctionNode => func.getMapOp match {
+            case raster: VectorMapOp => Some(raster)
+            case _ => throw new ParserException("Term \"" + node + "\" is not a vector input")
+          }
+          case _ => throw new ParserException("Term \"" + node + "\" is not a vector input")
+        }
+      case _ => throw new ParserException("Term \"" + node + "\" is not a vector input")
+    }
+  }
+
 }
 abstract class VectorMapOp extends MapOp {
 
-  private var meta:VectorMetadata = null
+//  private var meta:VectorMetadata = null
 
 
   def rdd():Option[VectorRDD]
 
-  def metadata():Option[VectorMetadata] =  Option(meta)
-  def metadata(meta:VectorMetadata) = { this.meta = meta}
+//  def metadata():Option[VectorMetadata] =  Option(meta)
+//  def metadata(meta:VectorMetadata) = { this.meta = meta}
 
-  def save(output: String, providerProperties:ProviderProperties, context:SparkContext) = {
-    rdd() match {
-      case Some(rdd) =>
-        val provider: VectorDataProvider =
-          DataProviderFactory.getVectorDataProvider(output, AccessMode.OVERWRITE, providerProperties)
-        metadata() match {
-          case Some(metadata) =>
-            val meta = metadata
-
-            // TODO: Need new SparkVectorUtils.save method
+//  def save(output: String, providerProperties:ProviderProperties, context:SparkContext) = {
+//    rdd() match {
+//      case Some(rdd) =>
+//        val provider: VectorDataProvider =
+//          DataProviderFactory.getVectorDataProvider(output, AccessMode.OVERWRITE, providerProperties)
+//        metadata() match {
+//          case Some(metadata) =>
+//            val meta = metadata
+//
 //            SparkVectorUtils.save(rdd, provider, metadata,
 //              context.hadoopConfiguration, providerproperties =  providerProperties)
-          case _ =>
-        }
-      case _ =>
-    }
-  }
-
+//          case _ =>
+//        }
+//      case _ =>
+//    }
+//  }
 
 }

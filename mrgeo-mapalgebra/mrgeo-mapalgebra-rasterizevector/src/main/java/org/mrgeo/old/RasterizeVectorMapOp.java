@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.old;
 
 import com.vividsolutions.jts.geom.Envelope;
 import org.apache.hadoop.fs.Path;
@@ -39,10 +39,8 @@ import org.mrgeo.format.ShpInputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
-import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
-import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
+import org.mrgeo.mapalgebra.*;
+import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.RasterizeVectorDriver;
@@ -214,7 +212,7 @@ public class RasterizeVectorMapOp extends RasterMapOpHadoop
         InlineCsvInputFormatDescriptor cfd = (InlineCsvInputFormatDescriptor) ifd;
         // Set up a reader to be able to stream features from the input source
         InlineCsvInputFormat.InlineCsvReader csvReader = new InlineCsvInputFormat.InlineCsvReader();
-        csvReader.initialize(cfd._columns, cfd._values);
+        csvReader.initialize(cfd.getColumns(), cfd.getValues());
         bounds = new Bounds();
         while (csvReader.nextFeature())
         {
