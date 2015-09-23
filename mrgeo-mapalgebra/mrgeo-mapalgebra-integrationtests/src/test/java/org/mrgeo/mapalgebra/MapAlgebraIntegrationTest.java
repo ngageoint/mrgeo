@@ -61,7 +61,7 @@ private static OpImageTestUtils opImageTestUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = true;
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
 private static final String smallElevationName = "small-elevation";
 private static String smallElevation = Defs.INPUT + smallElevationName;
@@ -451,7 +451,7 @@ public void cropExact() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format(
-            "crop([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
+            "cropExact([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
             smallElevationPath), -9999);
   }
   else
@@ -459,7 +459,7 @@ public void cropExact() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         String.format(
-            "crop([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
+            "cropExact([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
             smallElevationPath));
   }
 }

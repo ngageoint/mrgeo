@@ -549,6 +549,17 @@ public static class TileBounds implements Serializable
     return w + "," + s + "," + e + "," + n;
   }
 
+  public static TileBounds fromCommaString(String str) {
+    String[] split = str.split(",");
+
+    long w = Long.parseLong(split[0]);
+    long s = Long.parseLong(split[1]);
+    long e = Long.parseLong(split[2]);
+    long n = Long.parseLong(split[3]);
+
+    return new TileBounds(w, s, e, n);
+  }
+
   public boolean contains(final long tx, final long ty) {
     return contains(new Tile(tx, ty), true);
   }
