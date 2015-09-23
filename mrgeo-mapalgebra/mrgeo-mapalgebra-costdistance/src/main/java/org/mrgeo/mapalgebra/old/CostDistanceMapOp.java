@@ -1,23 +1,20 @@
-package org.mrgeo.mapalgebra;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
+package org.mrgeo.mapalgebra.old;
 
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.opimage.MrsPyramidDescriptor;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.spark.CostDistanceDriver;
 import org.mrgeo.utils.Bounds;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Vector;
 
 public class CostDistanceMapOp extends RasterMapOpHadoop
   implements InputsCalculator, BoundsCalculator, TileSizeCalculator, MaximumZoomLevelCalculator
@@ -59,36 +56,36 @@ public class CostDistanceMapOp extends RasterMapOpHadoop
       p.starting();
     }
     
-    MapOpHadoop inlineCsvMapOp = _inputs.get(0);
-    
-    // Extract source point from vector input
-    assert(inlineCsvMapOp instanceof InlineCsvMapOp);
-     InlineCsvInputFormatDescriptor ifd =  
-             (InlineCsvInputFormatDescriptor) ((InlineCsvMapOp)inlineCsvMapOp).getVectorOutput();
-     String sourcePoints = ifd.getValues();
-
-    // Get friction input
-    RasterMapOpHadoop friction = (RasterMapOpHadoop) _inputs.get(1);
-
-    if (zoomLevel < 0)
-    {
-      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(friction.getOutputName(), AccessMode.READ,
-          getProviderProperties());
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
-      zoomLevel = metadata.getMaxZoomLevel();
-    }
-
-    try {
-      CostDistanceDriver.costDistance(friction.getOutputName(), _outputName, zoomLevel, bounds,
-                                      sourcePoints, maxCost, createConfiguration());
-    } catch (Exception e) {
-      e.printStackTrace();
-    	throw new JobFailedException(e.getMessage());
-    }
-    
-    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(_outputName,
-        AccessMode.READ, getProviderProperties());
-    _output = MrsPyramidDescriptor.create(dp);
+//    MapOpHadoop inlineCsvMapOp = _inputs.get(0);
+//
+//    // Extract source point from vector input
+//    assert(inlineCsvMapOp instanceof InlineCsvMapOp);
+//     InlineCsvInputFormatDescriptor ifd =
+//             (InlineCsvInputFormatDescriptor) ((InlineCsvMapOp)inlineCsvMapOp).getVectorOutput();
+//     String sourcePoints = ifd.getValues();
+//
+//    // Get friction input
+//    RasterMapOpHadoop friction = (RasterMapOpHadoop) _inputs.get(1);
+//
+//    if (zoomLevel < 0)
+//    {
+//      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(friction.getOutputName(), AccessMode.READ,
+//          getProviderProperties());
+//      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+//      zoomLevel = metadata.getMaxZoomLevel();
+//    }
+//
+//    try {
+//      CostDistanceDriver.costDistance(friction.getOutputName(), _outputName, zoomLevel, bounds,
+//                                      sourcePoints, maxCost, createConfiguration());
+//    } catch (Exception e) {
+//      e.printStackTrace();
+//    	throw new JobFailedException(e.getMessage());
+//    }
+//
+//    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(_outputName,
+//        AccessMode.READ, getProviderProperties());
+//    _output = MrsPyramidDescriptor.create(dp);
     
     if (p != null)
     {

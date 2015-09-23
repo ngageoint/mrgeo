@@ -1,18 +1,15 @@
-package org.mrgeo.mapalgebra;
-
-import java.util.Vector;
+package org.mrgeo.mapalgebra.old;
 
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
-import org.mrgeo.mapalgebra.old.ParserAdapterFactoryHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.test.LocalRunnerTest;
+
+import java.util.Vector;
 
 /**
  * Contains fast-running tests for CostDistance map algebra function.

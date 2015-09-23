@@ -1215,7 +1215,7 @@ public void save() throws Exception
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format("save([%s], \"%s\")", allones, testUtils.getOutputHdfsFor("save-test")), -9999);
 
-    testUtils.saveBaselineTif("save-test", -9999);
+    testUtils.saveBaselineTif("save-test", -9999.0);
   }
   else
   {
