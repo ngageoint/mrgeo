@@ -18,6 +18,7 @@ package org.mrgeo.test;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.junit.Assert;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
@@ -218,6 +219,10 @@ public void runMapAlgebraExpression(final Configuration conf, final String testN
   ProviderProperties pp = ProviderProperties.fromDelimitedString("");
   if (MapAlgebra.validate(ex, pp)) {
     MapAlgebra.mapalgebra(ex, (new Path(outputHdfs, testName)).toString(), conf, pp, null);
+  }
+  else
+  {
+    Assert.fail("Invalid MapAlgebra syntax: " + ex);
   }
 
   log.info("Test Execution time: " + (System.currentTimeMillis() - start));

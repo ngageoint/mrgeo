@@ -62,7 +62,7 @@ private static OpImageTestUtils opImageTestUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = false;
+public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
 private static final String smallElevationName = "small-elevation";
 private static String smallElevation = Defs.INPUT + smallElevationName;
@@ -90,6 +90,10 @@ private static final String allhundredshalf = "all-hundreds-shifted-half";
 private static Path allhundredshalfPath;
 private static final String allhundredsup = "all-hundreds-shifted-up";
 private static Path allhundredsupPath;
+private static final String allonesholes = "all-ones-with-holes";
+private static Path allonesholesPath;
+private static final String allhundredsholes = "all-hundreds-with-holes";
+private static Path allhundredsholesPath;
 
 private static final String regularpoints = "regular-points";
 private static Path regularpointsPath;
@@ -161,6 +165,10 @@ public static void init() throws IOException
   allhundredshalfPath = new Path(testUtils.getInputHdfs(), allhundredshalf);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
   allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
+  allonesholesPath = new Path(testUtils.getInputHdfs(), allonesholes);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
+  allhundredsholesPath = new Path(testUtils.getInputHdfs(), allhundredsholes);
 
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
   regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
@@ -536,7 +544,7 @@ public void expressionIncompletePathInput3() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         "a = [" + fname + "] + "
-            + "[" + allonesPath.toString() + "];");
+            + "[" + allonesPath.toString() + "];", -9999);
   }
   else
   {
@@ -549,19 +557,35 @@ public void expressionIncompletePathInput3() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
-public void fill() throws Exception
+public void fillConst() throws Exception
 {
-  // paths with file extensions
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        "fill([" + greece + "], 1, 22.6, 39.4, 26, 42.15, \"EXACT\")");
+        "fill([" + allhundredsholes + "], 1)", -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        "fill([" + greece + "], 1, 22.6, 39.4, 26, 42.15, \"EXACT\")");
+        "fill([" + allhundredsholes + "], 1)");
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void fillImage() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        "fill([" + allhundredsholes + "], [" + allonesholes + "])", -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        "fill([" + allhundredsholes + "], [" + allonesholes + "])");
   }
 }
 
@@ -570,19 +594,19 @@ public void fill() throws Exception
 // outside of the crop bounds.
 @Test
 @Category(IntegrationTest.class)
-public void fill1() throws Exception
+public void fillBounds() throws Exception
 {
-  // paths with file extensions
+
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        "fill([" + greece + "], 1, 24.9, 41.3, 26, 43, \"EXACT\")");
+        "fillBounds([" + allhundredsholes + "], 1, 141.6, -18.6, 143.0, -17.0)", -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        "fill([" + greece + "], 1, 24.9, 41.3, 26, 43, \"EXACT\")");
+        "fillBounds([" + allhundredsholes + "], 1, 141.6, -18.6, 143.0, -17.0)");
   }
 }
 
