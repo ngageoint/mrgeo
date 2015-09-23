@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
+package org.mrgeo.mapalgebra.old;
 
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.FillRasterDriver;
 import org.mrgeo.mapreduce.job.JobCancelledException;
@@ -38,9 +32,14 @@ import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FillMapOp extends RasterMapOpHadoop implements InputsCalculator, BoundsCalculator
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Vector;
+
+public class FillMapOpHadoop extends RasterMapOpHadoop implements InputsCalculator, BoundsCalculator
 {
-  private static final Logger log = LoggerFactory.getLogger(FillMapOp.class);
+  private static final Logger log = LoggerFactory.getLogger(FillMapOpHadoop.class);
 
   private Bounds bounds = null;
   private String filltype = CropRasterOpImage.FAST;
@@ -48,7 +47,7 @@ public class FillMapOp extends RasterMapOpHadoop implements InputsCalculator, Bo
   private RasterMapOpHadoop source = null;
   private double fill = Double.NaN;
 
-  public FillMapOp()
+  public FillMapOpHadoop()
   {
   }
 
