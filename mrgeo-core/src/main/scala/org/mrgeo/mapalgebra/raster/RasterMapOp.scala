@@ -83,8 +83,7 @@ abstract class RasterMapOp extends MapOp {
       case Some(metadata) =>
         val meta = metadata
 
-        SparkUtils.saveMrsPyramid(rdd, provider,
-          meta.getMaxZoomLevel, meta.getTilesize, meta.getDefaultValues,
+        SparkUtils.saveMrsPyramid(rdd, provider, meta, meta.getMaxZoomLevel,
           context.hadoopConfiguration, providerproperties =  providerProperties)
       case _ =>
       }

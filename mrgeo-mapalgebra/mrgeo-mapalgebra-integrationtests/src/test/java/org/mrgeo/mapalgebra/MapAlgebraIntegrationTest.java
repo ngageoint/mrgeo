@@ -29,6 +29,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
@@ -291,6 +292,49 @@ public void aspectRad() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void changeClassification() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        "changeClassification([" + smallElevationPath + "], \"categorical\")", -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        "changeClassification([" + smallElevationPath + "], \"categorical\")");
+
+    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    Assert.assertEquals("mean", metadata.getResamplingMethod().toLowerCase());
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void changeClassificationAggregator() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        "changeClassification([" + smallElevationPath + "], \"categorical\", \"max\")", -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        "changeClassification([" + smallElevationPath + "], \"categorical\", \"max\")");
+
+    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    Assert.assertEquals("max", metadata.getResamplingMethod().toLowerCase());
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void complicated() throws Exception
 {
   if (GEN_BASELINE_DATA_ONLY)
@@ -309,6 +353,8 @@ public void complicated() throws Exception
             smallElevationPath, smallElevationPath));
   }
 }
+
+
 
 
 @Test

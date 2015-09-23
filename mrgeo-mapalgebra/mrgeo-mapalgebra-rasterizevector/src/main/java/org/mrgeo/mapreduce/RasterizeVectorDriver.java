@@ -236,7 +236,7 @@ public class RasterizeVectorDriver
       final Bounds outputBounds = MapReduceUtils.aggregateBounds(boundsProvider);
       MrsImagePyramid.calculateMetadataWithProvider(output, zoom, provider.getImageProvider(),
           statsProvider, defaultValues,
-          outputBounds, conf, protectionLevel, providerProperties);
+          outputBounds, protectionLevel);
       statsProvider.delete();
       boundsProvider.delete();
     }
