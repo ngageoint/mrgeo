@@ -18,12 +18,14 @@ package org.mrgeo.data.vector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.geometry.Geometry;
 
 import java.io.IOException;
 
 public abstract class VectorDataProvider
 {
+  protected ProviderProperties providerProperties;
   private String resourcePrefix;
   private String resourceName;
 
@@ -41,6 +43,11 @@ public abstract class VectorDataProvider
   public String getResourcePrefix()
   {
     return resourcePrefix;
+  }
+
+  public ProviderProperties getProviderProperties()
+  {
+    return providerProperties;
   }
 
   public String getPrefixedResourceName()

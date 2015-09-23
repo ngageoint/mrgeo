@@ -175,13 +175,16 @@ public class HdfsVectorRecordReader extends RecordReader<LongWritable, Geometry>
   @Override
   public LongWritable getCurrentKey() throws IOException, InterruptedException
   {
-    return recordReader.getCurrentKey();
+    LongWritable key = recordReader.getCurrentKey();
+    System.out.println("currentKey = " + key);
+    return key;
   }
 
   @Override
   public Geometry getCurrentValue() throws IOException, InterruptedException
   {
     Text rawValue = recordReader.getCurrentValue();
+    System.out.println("getCurrentValue reutrned " + rawValue);
     if (rawValue == null)
     {
       return null;

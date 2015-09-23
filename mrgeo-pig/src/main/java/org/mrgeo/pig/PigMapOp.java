@@ -18,8 +18,8 @@ package org.mrgeo.pig;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.mapalgebra.BasicInputFormatDescriptor;
 import org.mrgeo.mapalgebra.InputFormatDescriptor;
+import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.VectorMapOp;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
@@ -35,7 +35,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class PigMapOp extends VectorMapOp
+public class PigMapOp extends VectorMapOpHadoop
 {
   private static final Logger log = LoggerFactory.getLogger(PigMapOp.class);
   private static String _script;
@@ -44,7 +44,7 @@ public class PigMapOp extends VectorMapOp
   @Override
   public void addInput(MapOpHadoop n) throws IllegalArgumentException
   {
-    if (!(n instanceof VectorMapOp))
+    if (!(n instanceof VectorMapOpHadoop))
     {
       throw new IllegalArgumentException("Only vector inputs are supported.");
     }
@@ -90,9 +90,9 @@ public class PigMapOp extends VectorMapOp
     ProgressHierarchy ph = new ProgressHierarchy(p);
     for (MapOpHadoop input : _inputs)
     {
-      if (input != null && (input instanceof VectorMapOp))
+      if (input != null && (input instanceof VectorMapOpHadoop))
       {
-        if (((VectorMapOp)input).getOutputName() == null)
+        if (((VectorMapOpHadoop)input).getOutputName() == null)
         {
           ph.createChild(1.0f);
         }
@@ -105,9 +105,9 @@ public class PigMapOp extends VectorMapOp
     // go through all the inputs
     for (MapOpHadoop input : _inputs)
     {
-      if (input != null && (input instanceof VectorMapOp))
+      if (input != null && (input instanceof VectorMapOpHadoop))
       {
-        Path inputPath = new Path(((VectorMapOp)input).getOutputName());
+        Path inputPath = new Path(((VectorMapOpHadoop)input).getOutputName());
   
         // if the inputPath doesn't exist then we need to calculate it.
         if (inputPath == null)
@@ -118,8 +118,8 @@ public class PigMapOp extends VectorMapOp
   
   //        MapAlgebraExecutionerv1.writeVectorOutput((InputFormatDescriptor) input.getOutput(),
   //          inputPath, getConf(), ph.getChild(pi++), jobListener);
-          VectorMapOp.writeVectorOutput((InputFormatDescriptor) ((VectorMapOp)input).getVectorOutput(),
-            inputPath, createConfiguration(), ph.getChild(pi++));
+          VectorMapOpHadoop.writeVectorOutput((InputFormatDescriptor) ((VectorMapOpHadoop) input).getVectorOutput(),
+                                              inputPath, createConfiguration(), ph.getChild(pi++));
         }
 
         _inputPaths.add(inputPath);

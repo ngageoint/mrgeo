@@ -45,6 +45,14 @@ object MapOpFactory extends Logging {
     logInfo("Registration took " + time + "ms")
   }
 
+  def getMapOpClasses: scala.collection.immutable.Set[Class[_]] = {
+    var result = Set.newBuilder[Class[_]]
+    functions.values.foreach(c => {
+      result += c.getClass
+    })
+    result.result()
+  }
+
   // create a mapop from a function name, called by MapOpFactory("<name>")
   def apply(node: ParserNode, variables: String => Option[ParserNode]): Option[MapOp] = {
     if (functions.isEmpty) {
@@ -72,10 +80,9 @@ object MapOpFactory extends Logging {
     // get all the URLs for this classpath, filter files by "mrgeo" in development mode, then strip .so files
     val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
       val file = new File(url.getPath)
-
-      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") else true)
+      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") else file.isFile)
     }
-    ).filter(!_.getFile.endsWith(".so"))
+    ).filter(p => !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
 
 
     // register mapops
@@ -87,7 +94,9 @@ object MapOpFactory extends Logging {
     val reflections: Reflections = new Reflections(cfg)
     //val reflections: Reflections = new Reflections("org.mrgeo")
 
-    val classes = reflections.getSubTypesOf(clazz).filter(p => !Modifier.isAbstract(p.getModifiers))
+    val classes = reflections.getSubTypesOf(clazz).filter(p => {
+      !Modifier.isAbstract(p.getModifiers)
+    })
 
     Some(classes.map(clazz => {
       mirror.staticModule(clazz.getCanonicalName).asModule

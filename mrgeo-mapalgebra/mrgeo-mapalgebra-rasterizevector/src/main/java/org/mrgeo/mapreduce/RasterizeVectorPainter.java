@@ -65,6 +65,28 @@ public class RasterizeVectorPainter
   private WritableRaster totalRaster;
   private WritableRaster raster;
 
+  public RasterizeVectorPainter()
+  {
+  }
+
+  /**
+   * Use this constructor if you need to use this class outside of the context of
+   * a map/reduce 1 job.
+   *
+   * @param zoom
+   * @param aggregationType
+   * @param valueColumn
+   * @param tileSize
+   */
+  public RasterizeVectorPainter(int zoom, AggregationType aggregationType, String valueColumn,
+                                int tileSize)
+  {
+    this.zoom = zoom;
+    this.aggregationType = aggregationType;
+    this.valueColumn = valueColumn;
+    this.tileSize = tileSize;
+  }
+
   public void setup(final Configuration conf)
   {
     OpImageRegistrar.registerMrGeoOps();

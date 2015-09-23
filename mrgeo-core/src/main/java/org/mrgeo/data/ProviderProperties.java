@@ -68,13 +68,8 @@ public static String toDelimitedString(ProviderProperties properties)
 public static ProviderProperties fromDelimitedString(String value)
 {
   String[] values = value.split("\\|\\|");
-  log.warn("fromDelimitedString:");
   String userName = "";
   List<String> roles = new ArrayList<String>();
-  for (String v : values)
-  {
-    log.warn("property value: " + v);
-  }
   if (values.length > 0)
   {
     userName = values[0];
