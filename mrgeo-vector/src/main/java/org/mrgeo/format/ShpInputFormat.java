@@ -21,8 +21,8 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WellKnownProjections;
-import org.mrgeo.geometryfilter.ReprojectedGeometryCollection;
-import org.mrgeo.data.GeometryCollection;
+import org.mrgeo.hdfs.vector.ReprojectedGeometryCollection;
+import org.mrgeo.hdfs.vector.GeometryCollection;
 import org.mrgeo.data.shp.ShapefileReader;
 import org.mrgeo.utils.Base64Utils;
 

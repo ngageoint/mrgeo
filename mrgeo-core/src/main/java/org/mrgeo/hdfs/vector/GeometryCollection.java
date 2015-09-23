@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.data;
+package org.mrgeo.hdfs.vector;
 
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;

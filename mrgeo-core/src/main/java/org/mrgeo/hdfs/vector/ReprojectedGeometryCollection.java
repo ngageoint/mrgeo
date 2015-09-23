@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.geometryfilter;
+package org.mrgeo.hdfs.vector;
 
-import org.geotools.referencing.CRS;
-import org.mrgeo.data.GeometryCollection;
 import org.mrgeo.geometry.WritableGeometry;
-import org.opengis.referencing.FactoryException;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.Iterator;
 
 public class ReprojectedGeometryCollection implements GeometryCollection
