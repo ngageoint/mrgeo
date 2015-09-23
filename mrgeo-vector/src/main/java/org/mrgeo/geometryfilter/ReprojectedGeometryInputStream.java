@@ -17,6 +17,7 @@ package org.mrgeo.geometryfilter;
 
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.data.GeometryInputStream;
+import org.mrgeo.hdfs.vector.Reprojector;
 
 import java.io.IOException;
 
