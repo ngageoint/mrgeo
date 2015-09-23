@@ -21,10 +21,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RawLocalFileSystem;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -74,7 +71,11 @@ public class ShpInputFormatTest
       c.set("mapred.input.dir", testFile.toString());
       ShpInputFormat format = new ShpInputFormat();
       InputSplit split = format.getSplits(j).get(0);
-      return format.createRecordReader(split, HadoopUtils.createTaskAttemptContext(c, new TaskAttemptID()));
+      TaskAttemptContext context = HadoopUtils.createTaskAttemptContext(c, new TaskAttemptID());
+      RecordReader<LongWritable,Geometry> reader =
+              format.createRecordReader(split, context);
+      reader.initialize(split, context);
+      return reader;
     }
     finally
     {
