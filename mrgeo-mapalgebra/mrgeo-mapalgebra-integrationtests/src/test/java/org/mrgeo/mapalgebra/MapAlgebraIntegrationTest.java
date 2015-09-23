@@ -90,9 +90,7 @@ private static Path allhundredshalfPath;
 private static final String allhundredsup = "all-hundreds-shifted-up";
 private static Path allhundredsupPath;
 private static final String allonesholes = "all-ones-with-holes";
-private static Path allonesholesPath;
 private static final String allhundredsholes = "all-hundreds-with-holes";
-private static Path allhundredsholesPath;
 
 private static final String regularpoints = "regular-points";
 private static Path regularpointsPath;
@@ -165,9 +163,7 @@ public static void init() throws IOException
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
   allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
-  allonesholesPath = new Path(testUtils.getInputHdfs(), allonesholes);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
-  allhundredsholesPath = new Path(testUtils.getInputHdfs(), allhundredsholes);
 
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
   regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
@@ -451,7 +447,7 @@ public void cropExact() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format(
-            "cropExact([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
+            "cropExact([%s],  142.05, -17.75, 142.2, -17.65)",
             smallElevationPath), -9999);
   }
   else
@@ -459,7 +455,7 @@ public void cropExact() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         String.format(
-            "cropExact([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
+            "cropExact([%s],  142.05, -17.75, 142.2, -17.65)",
             smallElevationPath));
   }
 }

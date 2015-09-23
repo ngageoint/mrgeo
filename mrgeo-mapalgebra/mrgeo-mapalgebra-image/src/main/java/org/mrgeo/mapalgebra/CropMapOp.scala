@@ -41,6 +41,8 @@ class CropMapOp extends RasterMapOp with Externalizable {
       throw new ParserException("Usage: crop(raster, w, s, e, n)")
     }
 
+    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+
     // get values unique for each function
     node.getName match {
     case CropMapOp.CropExact =>
