@@ -33,7 +33,6 @@ import org.mrgeo.featurefilter.TextColumnFeatureFilter;
 import org.mrgeo.featurefilter.TextColumnFeatureFilter.ParsingMethod;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.old.MapAlgebraParser;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;

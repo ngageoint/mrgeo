@@ -29,7 +29,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.old.MapAlgebraParser;
+import org.mrgeo.mapalgebra.MapAlgebraParser;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;

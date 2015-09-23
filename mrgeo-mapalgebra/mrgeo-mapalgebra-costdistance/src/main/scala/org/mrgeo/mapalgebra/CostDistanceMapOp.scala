@@ -62,7 +62,7 @@ import scala.util.control.Breaks._
 
 object CostDistanceMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("costDistance, cd")
+    Array[String]("costDistance", "cd")
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =

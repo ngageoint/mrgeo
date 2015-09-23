@@ -31,7 +31,6 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.old.MapAlgebraParser;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.MrsPyramidMapOpHadoop;
 import org.mrgeo.mapalgebra.old.RenderedImageMapOp;

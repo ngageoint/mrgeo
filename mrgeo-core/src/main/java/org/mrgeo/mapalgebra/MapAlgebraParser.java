@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra.old;
+package org.mrgeo.mapalgebra;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +22,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
+import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapalgebra.parser.*;
 import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.rasterops.OpImageRegistrar;

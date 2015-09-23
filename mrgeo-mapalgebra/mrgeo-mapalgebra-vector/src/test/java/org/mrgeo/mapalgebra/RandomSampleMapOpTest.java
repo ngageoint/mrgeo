@@ -29,7 +29,6 @@ import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapalgebra.old.MapAlgebraExecutioner;
-import org.mrgeo.mapalgebra.old.MapAlgebraParser;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.ProgressHierarchy;
