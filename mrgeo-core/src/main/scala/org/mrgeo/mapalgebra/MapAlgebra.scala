@@ -8,7 +8,6 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderNotFound, DataProviderFactory, ProviderProperties}
-import org.mrgeo.mapalgebra.old.MapAlgebraParser
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.mapalgebra.vector.VectorDataMapOp

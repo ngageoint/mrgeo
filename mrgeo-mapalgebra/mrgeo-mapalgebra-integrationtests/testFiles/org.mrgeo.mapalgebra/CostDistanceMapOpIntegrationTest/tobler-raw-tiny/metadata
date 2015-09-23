@@ -1,0 +1,115 @@
+{
+  "bounds" : {
+    "minX" : 64.93599700927734,
+    "minY" : 29.98699951171875,
+    "maxX" : 65.16200256347656,
+    "maxY" : 30.117000579833984
+  },
+  "tilesize" : 512,
+  "maxZoomLevel" : 10,
+  "tags" : {
+  },
+  "protectionLevel" : "",
+  "bands" : 1,
+  "defaultValues" : [
+    -9999.0
+  ],
+  "tileType" : 4,
+  "stats" : [
+    {
+      "min" : 0.7147477269172668,
+      "max" : 4.190144062042236,
+      "mean" : 0.8273760278752889,
+      "sum" : 433783.32290267944,
+      "count" : 524288
+    }
+  ],
+  "classification" : "Continuous",
+  "resamplingMethod" : null,
+  "imageMetadata" : [
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : {
+        "minX" : 696,
+        "minY" : 341,
+        "maxX" : 697,
+        "maxY" : 341
+      },
+      "name" : "10",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 330,
+        "maxY" : 190
+      },
+      "stats" : [
+        {
+          "min" : 0.7147477269172668,
+          "max" : 4.190144062042236,
+          "mean" : 0.8273760278752889,
+          "sum" : 433783.32290267944,
+          "count" : 524288
+        }
+      ]
+    }
+  ]
+}

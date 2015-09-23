@@ -13,9 +13,11 @@ import org.mrgeo.spark.job.JobArguments
 import org.mrgeo.utils.{SparkUtils, Bounds, TMSUtils}
 
 object FillMapOp extends MapOpRegistrar {
+  private[mapalgebra] val Fill = "fill"
+  private[mapalgebra] val FillBounds = "fillBounds"
 
   override def register: Array[String] = {
-    Array[String]("fill", "fillBounds")
+    Array[String](Fill, FillBounds)
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
@@ -35,11 +37,11 @@ class FillMapOp extends RasterMapOp with Externalizable {
 
     // get values unique for each function
     node.getName match {
-    case "fill" =>
+    case FillMapOp.Fill =>
       if (node.getNumChildren != 2) {
         throw new ParserException("Usage: fill(raster, fill value)")
       }
-    case "fillBounds" =>
+    case FillMapOp.FillBounds =>
       if (node.getNumChildren != 6) {
         throw new ParserException("Usage: fill(raster, fill value, w, s, n, e)")
       }
@@ -74,8 +76,6 @@ class FillMapOp extends RasterMapOp with Externalizable {
   }
 
   override def rdd(): Option[RasterRDD] = rasterRDD
-
-
   override def setup(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def execute(context: SparkContext): Boolean = {

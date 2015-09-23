@@ -16,7 +16,7 @@
 package org.mrgeo.resources.about;
 
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.mapalgebra.old.MapAlgebraParser;
+import org.mrgeo.mapalgebra.MapAlgebraParser;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.utils.ClassLoaderUtil;

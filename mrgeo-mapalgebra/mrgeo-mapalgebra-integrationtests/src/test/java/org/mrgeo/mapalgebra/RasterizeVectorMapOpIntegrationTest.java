@@ -25,7 +25,6 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
-import org.mrgeo.mapalgebra.old.MapAlgebraParser;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;

@@ -23,6 +23,7 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.mapalgebra.MapAlgebraParser;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;

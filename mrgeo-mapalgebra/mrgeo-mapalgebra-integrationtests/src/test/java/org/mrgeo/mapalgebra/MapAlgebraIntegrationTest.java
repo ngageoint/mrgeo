@@ -31,7 +31,6 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.old.MapAlgebraParser;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.MrsPyramidMapOpHadoop;
 import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
@@ -62,7 +61,7 @@ private static OpImageTestUtils opImageTestUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = true;
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
 private static final String smallElevationName = "small-elevation";
 private static String smallElevation = Defs.INPUT + smallElevationName;
@@ -91,9 +90,7 @@ private static Path allhundredshalfPath;
 private static final String allhundredsup = "all-hundreds-shifted-up";
 private static Path allhundredsupPath;
 private static final String allonesholes = "all-ones-with-holes";
-private static Path allonesholesPath;
 private static final String allhundredsholes = "all-hundreds-with-holes";
-private static Path allhundredsholesPath;
 
 private static final String regularpoints = "regular-points";
 private static Path regularpointsPath;
@@ -166,9 +163,7 @@ public static void init() throws IOException
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
   allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
-  allonesholesPath = new Path(testUtils.getInputHdfs(), allonesholes);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
-  allhundredsholesPath = new Path(testUtils.getInputHdfs(), allhundredsholes);
 
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
   regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
@@ -452,7 +447,7 @@ public void cropExact() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format(
-            "crop([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
+            "cropExact([%s],  142.05, -17.75, 142.2, -17.65)",
             smallElevationPath), -9999);
   }
   else
@@ -460,7 +455,7 @@ public void cropExact() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         String.format(
-            "crop([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
+            "cropExact([%s],  142.05, -17.75, 142.2, -17.65)",
             smallElevationPath));
   }
 }
@@ -1215,7 +1210,7 @@ public void save() throws Exception
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format("save([%s], \"%s\")", allones, testUtils.getOutputHdfsFor("save-test")), -9999);
 
-    testUtils.saveBaselineTif("save-test", -9999);
+    testUtils.saveBaselineTif("save-test", -9999.0);
   }
   else
   {

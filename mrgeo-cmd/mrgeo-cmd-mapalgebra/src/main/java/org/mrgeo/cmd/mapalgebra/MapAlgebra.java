@@ -89,7 +89,7 @@ public static Options createOptions()
 @Override
 public int run(String[] args, Configuration conf, final ProviderProperties providerProperties)
 {
-
+  long t0 = System.currentTimeMillis();
   System.out.println(log.getClass().getName());
 
   Options options = MapAlgebra.createOptions();
@@ -177,7 +177,7 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
 //      BuildPyramidSpark.build(output, new MeanAggregator(), conf, providerProperties);
 //    }
 
-    System.out.println("Output written to: " + output);
+    System.out.println("Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) /1000.0) + " seconds");
   }
   catch (IOException e)
   {

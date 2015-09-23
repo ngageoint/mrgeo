@@ -153,6 +153,10 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-dataprovider-accumulo</artifactId>
     </dependency>
     <dependency>
@@ -185,15 +189,6 @@
     </dependency>
   </dependencies>
   <profiles>
-    <profile>
-      <id>include-costdistance</id>
-      <dependencies>
-        <dependency>
-          <groupId>org.mrgeo</groupId>
-          <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
     <profile>
       <id>include-geowave</id>
       <dependencies>
