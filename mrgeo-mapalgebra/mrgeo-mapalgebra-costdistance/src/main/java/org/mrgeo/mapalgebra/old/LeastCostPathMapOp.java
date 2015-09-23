@@ -8,7 +8,6 @@ import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapalgebra.BasicInputFormatDescriptor;
 import org.mrgeo.mapalgebra.InlineCsvInputFormatDescriptor;
 import org.mrgeo.mapalgebra.InlineCsvMapOp;
-import org.mrgeo.mapalgebra.VectorMapOp;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -22,7 +21,7 @@ import java.util.Vector;
 
 //import org.mrgeo.rasterops.LeastCostPathCalculator;
 
-public class LeastCostPathMapOp extends VectorMapOp
+public class LeastCostPathMapOp extends VectorMapOpHadoop
 {
   @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory.getLogger(LeastCostPathMapOp.class);
@@ -58,7 +57,7 @@ public class LeastCostPathMapOp extends VectorMapOp
     MapOpHadoop inlineCsvMapOp = _inputs.get(1);
     assert(inlineCsvMapOp instanceof InlineCsvMapOp);
     InlineCsvInputFormatDescriptor ifd =
-            (InlineCsvInputFormatDescriptor) ((VectorMapOp)inlineCsvMapOp).getVectorOutput();
+            (InlineCsvInputFormatDescriptor) ((VectorMapOpHadoop)inlineCsvMapOp).getVectorOutput();
     destPoints = ifd.getValues();
     
     LeastCostPathCalculator.run(destPoints, costPyramidName, zoom, _outputName,
@@ -87,7 +86,7 @@ public class LeastCostPathMapOp extends VectorMapOp
         throw new IllegalArgumentException("The cost argument must be a raster.");
       }
     }
-    else if (_inputs.size() == 1 && !(n instanceof VectorMapOp))
+    else if (_inputs.size() == 1 && !(n instanceof VectorMapOpHadoop))
     {
       throw new IllegalArgumentException("The destination points argument must be a vector input");
     }
