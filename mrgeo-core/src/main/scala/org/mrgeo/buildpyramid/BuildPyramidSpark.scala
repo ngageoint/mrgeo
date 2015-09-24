@@ -140,7 +140,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    log.warn("Building pyramid for " + pyramidName);
+    log.warn("Building pyramid for " + pyramidName)
     val provider: MrsImageDataProvider =
       DataProviderFactory.getMrsImageDataProvider(pyramidName, AccessMode.READ, null.asInstanceOf[ProviderProperties])
 

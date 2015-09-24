@@ -18,7 +18,15 @@ package org.mrgeo.mapreduce;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.adhoc.AdHocDataProvider;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.image.MrsImageOutputFormatProvider;
+import org.mrgeo.data.raster.RasterUtils;
+import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -28,14 +36,6 @@ import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.opimage.CropRasterOpImage;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
-import org.mrgeo.data.adhoc.AdHocDataProvider;
-import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImageOutputFormatProvider;
-import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.TMSUtils;
@@ -46,7 +46,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Properties;
 import java.util.UUID;
 
 public class FillRasterDriver
@@ -388,8 +387,7 @@ public class FillRasterDriver
       
       // save the metadata
       MrsImagePyramid.calculateMetadataWithProvider(output, zoomlevel, ofProvider.getImageProvider(),
-          statsProvider, metadata.getDefaultValues(), bounds, conf, protectionLevel,
-          providerProperties);
+          statsProvider, metadata.getDefaultValues(), bounds, protectionLevel);
     }
     statsProvider.delete();
   }

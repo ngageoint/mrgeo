@@ -92,9 +92,7 @@ public static void calculateMetadataWithProvider(final String pyramidname, final
     final MrsImageDataProvider provider,
     final AdHocDataProvider statsProvider,
     final double[] defaultValues,
-    final Bounds bounds, final Configuration conf,
-    final String protectionLevel,
-      final ProviderProperties providerProperties) throws IOException
+    final Bounds bounds, final String protectionLevel) throws IOException
 {
   // update the pyramid level stats
   if (statsProvider != null)
@@ -103,7 +101,7 @@ public static void calculateMetadataWithProvider(final String pyramidname, final
     levelStats = ImageStats.readStats(statsProvider);
 
     calculateMetadata(pyramidname, zoom, provider, levelStats, defaultValues,
-        bounds, conf, protectionLevel, providerProperties);
+        bounds, protectionLevel);
   }
 }
 
@@ -111,11 +109,8 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
     final MrsImageDataProvider provider,
     final ImageStats[] levelStats,
     final double[] defaultValues,
-    final Bounds bounds, final Configuration conf,
-    final String protectionLevel,
-    final ProviderProperties providerProperties) throws IOException
+    final Bounds bounds, final String protectionLevel) throws IOException
 {
-
   MrsImagePyramidMetadata metadata;
   try
   {
@@ -135,11 +130,20 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
   metadata.setBounds(bounds);
   metadata.setName(zoom);
   metadata.setDefaultValues(defaultValues);
-
   if(protectionLevel != null && !protectionLevel.equals("null"))
   {
     metadata.setProtectionLevel(protectionLevel);
   }
+
+  calculateMetadata(zoom, provider, levelStats, metadata);
+}
+
+public static void calculateMetadata(final int zoom,
+    final MrsImageDataProvider provider,
+    final ImageStats[] levelStats,
+    final MrsImagePyramidMetadata metadata) throws IOException
+{
+
 
   // HACK!!! (kinda...) Need to make metadata is there so the provider can get the
   //          MrsTileReader (it does a canOpen(), which makes sure metadata is present)
@@ -158,6 +162,8 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
 
       final int tilesize = raster.getWidth();
 
+      final Bounds bounds = metadata.getBounds();
+
       final TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
           bounds.getMaxX(), bounds.getMaxY());
 
@@ -170,7 +176,6 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
           tilesize);
       metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
 
-        metadata.setProtectionLevel(protectionLevel);
       metadata.setBands(raster.getNumBands());
       metadata.setTilesize(tilesize);
       metadata.setTileType(raster.getTransferType());

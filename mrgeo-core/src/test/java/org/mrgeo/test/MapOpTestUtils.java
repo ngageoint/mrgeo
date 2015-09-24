@@ -19,10 +19,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Assert;
+import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
@@ -49,6 +52,15 @@ public MapOpTestUtils(final Class<?> testClass) throws IOException
   OpImageRegistrar.registerMrGeoOps();
 }
 
+public MrsImagePyramidMetadata getImageMetadata(final String testName)
+    throws IOException
+{
+  MrsImageDataProvider dp =
+      DataProviderFactory.getMrsImageDataProvider(new Path(outputHdfs, testName).toString(),
+          DataProviderFactory.AccessMode.READ, (ProviderProperties)null);
+
+  return dp.getMetadataReader().read();
+}
 
 public void generateBaselinePyramid(final Configuration conf, final String testName,
     final String ex) throws IOException, JobFailedException, JobCancelledException,

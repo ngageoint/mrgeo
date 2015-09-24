@@ -219,8 +219,7 @@ public class OpChainDriverOld
       context._ofProvider.teardown(job);
       MrsImagePyramid.calculateMetadataWithProvider(context._output, context._zoom,
           context._ofProvider.getImageProvider(), context._statsProvider,
-          context._defaults, context._bounds, context._userConf,
-          context.protectionLevel, context.providerProperties);
+          context._defaults, context._bounds, context.protectionLevel);
       context._statsProvider.delete();
     }
     return result;
@@ -280,8 +279,7 @@ public class OpChainDriverOld
     context._ofProvider.teardown(job);
     MrsImagePyramid.calculateMetadataWithProvider(output, zoom,
         context._ofProvider.getImageProvider(), context._statsProvider,
-        context._defaults, bounds, context._userConf, context.protectionLevel,
-        context.providerProperties);
+        context._defaults, bounds, context.protectionLevel);
     context._statsProvider.delete();
   }
 
