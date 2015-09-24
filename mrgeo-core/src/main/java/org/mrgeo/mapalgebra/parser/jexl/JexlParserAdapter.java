@@ -206,7 +206,7 @@ public class JexlParserAdapter implements ParserAdapter
       {
         ParserFunctionNode fn = new ParserFunctionNode();
         fn.setNativeNode(node);
-        fn.setName(methodNameNode.image);
+        fn.setName(methodNameNode.image.toLowerCase());
         n = fn;
         parentNode = null;
         // We have to process the children of a function call node
@@ -240,7 +240,7 @@ public class JexlParserAdapter implements ParserAdapter
         else
         {
           ParserFunctionNode fn = new ParserFunctionNode();
-          fn.setName("UMinus");
+          fn.setName("uminus");
           fn.setNativeNode(node);
           n = fn;
         }

@@ -24,33 +24,33 @@ object MrsPyramidMapOp {
 }
 
 class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider) extends RasterMapOp {
-  private var rasterrdd:RasterRDD = null
+  private var rasterRDD:RasterRDD = null
 
   def rdd(zoom:Int):Option[RasterRDD]  = {
     load(zoom)
-    Some(rasterrdd)
+    Some(rasterRDD)
   }
 
   def rdd():Option[RasterRDD] = {
     load()
-    Some(rasterrdd)
+    Some(rasterRDD)
   }
 
   private def load(zoom:Int = -1)  = {
 
-    if (rasterrdd == null) {
+    if (rasterRDD == null) {
       if (context == null) {
         throw new IOException("Error creating RasterRDD, can not create an RDD without a SparkContext")
       }
 
       if (zoom <= 0) {
         metadata(dataprovider.getMetadataReader.read())
-        rasterrdd = SparkUtils.loadMrsPyramid(dataprovider, super.metadata().get.getMaxZoomLevel, context())
+        rasterRDD = SparkUtils.loadMrsPyramid(dataprovider, super.metadata().get.getMaxZoomLevel, context())
       }
       else {
         val data = SparkUtils.loadMrsPyramidAndMetadata(dataprovider, zoom, context())
 
-        rasterrdd = data._1
+        rasterRDD = data._1
         metadata(data._2)
       }
     }

@@ -1,13 +1,14 @@
 package org.mrgeo.mapalgebra
 
-import java.io.{IOException, ObjectOutput, ObjectInput, Externalizable}
+import java.io._
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.aggregators.AggregatorRegistry
+import org.mrgeo.aggregators.{MeanAggregator, AggregatorRegistry}
 import org.mrgeo.buildpyramid.BuildPyramidSpark
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderNotFound, DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.image.MrsImagePyramidMetadata.Classification
 import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -15,7 +16,7 @@ import org.mrgeo.spark.job.JobArguments
 
 object BuildPyramidMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("buildPyramid", "bp")
+    Array[String]("buildpyramid", "bp")
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
@@ -42,7 +43,6 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
 
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
-
     if (node.getNumChildren == 3) {
       aggregator = Some(MapOp.decodeString(node.getChild(1)) match {
       case Some(s) =>
@@ -63,17 +63,16 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
   override def execute(context: SparkContext): Boolean = {
     val input: RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
-    val meta = input.metadata() getOrElse
-        (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    rasterRDD = input.rdd()
+    val meta = input.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
 
     // Need to see if this is a saved pyramid.  If it is, we can buildpyramids, otherwise it is
     // a temporary RDD and we need to error out
+    if (meta.getPyramid == null || meta.getPyramid.length == 0) {
+      throw new DataProviderNotFound("Pyramid must exist (saved) before buildPyramid)! (unnamed layer)")
+    }
     try {
       val dp = DataProviderFactory.getMrsImageDataProvider(meta.getPyramid, AccessMode.READ, providerProperties)
-
-
-      rasterRDD = Some(
-        input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName)))
 
       if (aggregator.isDefined) {
         meta.setResamplingMethod(aggregator.get)
@@ -88,15 +87,20 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
           clazz.newInstance()
         }
         else {
-          throw new IOException("Invalid aggregator " + meta.getResamplingMethod)
+          // if there is no aggregator and we are continuous, use the mean aggregator
+          meta.getClassification match {
+          case Classification.Continuous => new MeanAggregator
+          case _ =>
+            throw new IOException("Invalid aggregator " + meta.getResamplingMethod)
+          }
         }
       }
 
-      BuildPyramidSpark.build(meta.getPyramid, agg, context.hadoopConfiguration, providerProperties)
+      BuildPyramidSpark.build(meta.getPyramid, agg, context, providerProperties)
       true
     }
     catch {
-      case dpnf:DataProviderNotFound => { false }
+      case dpnf:DataProviderNotFound => throw new DataProviderNotFound("Pyramid must exist (saved) before buildPyramid)! (" + meta.getPyramid + ")", dpnf)
     }
   }
 

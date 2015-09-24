@@ -38,8 +38,11 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
     case Some(pyramid) =>
 
       rasterRDD = pyramid.rdd()
-      metadata(
-        pyramid.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName)))
+      val meta = pyramid.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName))
+
+      // set the pyramid name to the output
+      meta.setPyramid(output)
+      metadata(meta)
 
       pyramid.save(output, providerProperties, context)
 

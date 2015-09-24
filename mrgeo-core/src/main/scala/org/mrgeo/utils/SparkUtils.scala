@@ -669,6 +669,8 @@ object SparkUtils extends Logging {
     val bounds = calculateBounds(rdd, zoom, tilesize)
     meta.setBounds(bounds)
 
+    meta.setName(zoom, zoom.toString)
+
     val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), zoom, tilesize)
     meta.setTileBounds(zoom, tb.toLongRectangle)
 

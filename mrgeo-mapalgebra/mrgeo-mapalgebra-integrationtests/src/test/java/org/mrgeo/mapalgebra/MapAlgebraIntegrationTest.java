@@ -26,6 +26,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -90,6 +91,7 @@ private static final String allhundredshalf = "all-hundreds-shifted-half";
 private static Path allhundredshalfPath;
 private static final String allhundredsup = "all-hundreds-shifted-up";
 private static Path allhundredsupPath;
+private static final String allonesnopyramids = "all-ones-no-pyramids";
 private static final String allonesholes = "all-ones-with-holes";
 private static final String allhundredsholes = "all-hundreds-with-holes";
 
@@ -104,7 +106,7 @@ private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationT
 //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
-  private ProviderProperties props = null;
+private ProviderProperties props = null;
 
 @Before
 public void setup()
@@ -288,6 +290,221 @@ public void aspectRad() throws Exception
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         String.format("aspect([%s], \"rad\")", smallElevation));
   }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramid() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("buildPyramid([%s])", path), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("buildPyramid([%s])", path));
+
+    // levels should exist
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramidAfterSave() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("buildpyramid(save([%s] + 1, \"%s\"))", path, testUtils.getOutputHdfsFor("save-test")), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("buildpyramid(save([%s] + 1, \"%s\"))", path, testUtils.getOutputHdfsFor("save-test")));
+
+    // levels should exist for save-test
+    metadata = testUtils.getImageMetadata("save-test");
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+    // but not for allones
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      if (i != md.length - 1)
+      {
+        Assert.assertNull("Level name should be missing", d.name);
+        Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+        Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+        Assert.assertNull("Stats should be missing", d.stats);
+      }
+      else
+      {
+        Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+        Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+        Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+        Assert.assertNotNull("Stats missing", d.stats);
+      }
+    }
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramidAlternate() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("bp([%s])", path), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("bp([%s])", path));
+
+    // levels should exist
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+  }
+}
+
+@Test(expected = DataProviderNotFound.class)
+@Category(IntegrationTest.class)
+public void buildpyramidDoesNotExist() throws Exception
+{
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("buildpyramid([%s] + 1)", allones));
 }
 
 @Test

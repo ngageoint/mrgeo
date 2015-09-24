@@ -57,20 +57,28 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
     true
   }
 
-  def build (pyramidName: String, aggregator: Aggregator,
+  def build(pyramidName: String, aggregator: Aggregator,
       conf: Configuration, progress: Progress, jobListener: JobListener, providerProperties: ProviderProperties): Boolean = {
     build(pyramidName, aggregator, conf, providerProperties)
   }
 
-  def buildlevel (pyramidName: String, level: Int, aggregator: Aggregator,
+  def buildlevel(pyramidName: String, level: Int, aggregator: Aggregator,
       conf: Configuration, providerProperties: Properties):Boolean = {
     throw new NotImplementedError("Not yet implemented")
   }
 
-  def buildlevel (pyramidName: String, level: Int, aggregator: Aggregator,
+  def buildlevel(pyramidName: String, level: Int, aggregator: Aggregator,
       conf: Configuration, progress: Progress, jobListener: JobListener,
       providerProperties: ProviderProperties): Boolean = {
     throw new NotImplementedError("Not yet implemented")
+  }
+
+  // this build method allows buildpyramid to be called from within an existing spark job...
+  def build(pyramidName: String, aggregator: Aggregator, context:SparkContext,
+      providerProperties: ProviderProperties):Boolean = {
+    val bp = new BuildPyramidSpark(pyramidName, aggregator, providerProperties)
+
+    bp.execute(context)
   }
 
   private def setupArguments(pyramid: String, aggregator: Aggregator, providerProperties: ProviderProperties):mutable.Map[String, String] = {
@@ -108,6 +116,15 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
   var pyramidName:String = null
   var aggregator:Aggregator = null
   var providerproperties:ProviderProperties = null
+
+  private[buildpyramid] def this(pyramidName: String, aggregator: Aggregator,
+    providerProperties: ProviderProperties) = {
+    this()
+
+    this.pyramidName = pyramidName
+    this.aggregator = aggregator
+    this.providerproperties = providerproperties
+  }
 
   override def registerClasses(): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
