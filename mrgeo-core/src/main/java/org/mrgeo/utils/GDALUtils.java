@@ -23,6 +23,7 @@ import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
+import org.gdal.osr.osr;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.raster.RasterUtils;
@@ -149,12 +150,21 @@ static
     log.error("GDAL libraries were not loaded!  This probibly an error.");
   }
 
+  if (log.isDebugEnabled())
+  {
+    log.debug("GDAL Drivers supported:");
+    for (int i = 0; i < drivers; i++)
+    {
+      Driver driver = gdal.GetDriver(i);
+      log.debug("  " + driver.getLongName() + "(" + driver.getShortName() + ")");
+    }
 
-//    final SpatialReference sr = new SpatialReference();
-//    sr.ImportFromEPSG(4326);
-//    EPSG4326 = sr.ExportToWkt();
-//
-//    System.out.println(EPSG4326);
+    log.debug("GDAL Projections supported:");
+    for (Object o : osr.GetProjectionMethods())
+    {
+      log.debug("  " + o);
+    }
+  }
 }
 
 
