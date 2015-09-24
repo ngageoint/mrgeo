@@ -19,7 +19,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.geometry.*;
-import org.mrgeo.hdfs.vector.GeometryCollection;
+import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
 import org.mrgeo.data.GeometryInputStream;
 import org.mrgeo.data.shp.dbase.DbaseException;
 import org.mrgeo.data.shp.esri.ESRILayer;
@@ -43,7 +43,7 @@ import java.util.List;
  * @author jason.surratt
  * 
  */
-public class ShapefileReader implements GeometryInputStream, GeometryCollection
+public class ShapefileReader implements GeometryInputStream, ShapefileGeometryCollection
 {
   static class LocalIterator implements Iterator<WritableGeometry>
   {

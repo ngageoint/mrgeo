@@ -31,7 +31,7 @@ import java.io.Serializable;
  * 
  */
 @Deprecated
-public interface GeometryCollection extends Iterable<WritableGeometry>, Serializable
+public interface ShapefileGeometryCollection extends Iterable<WritableGeometry>, Serializable
 {
 
   /**

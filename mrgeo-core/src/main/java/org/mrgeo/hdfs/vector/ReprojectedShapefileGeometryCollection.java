@@ -21,14 +21,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Iterator;
 
-public class ReprojectedGeometryCollection implements GeometryCollection
+public class ReprojectedShapefileGeometryCollection implements ShapefileGeometryCollection
 {
   static class LocalIterator implements Iterator<WritableGeometry>
   {
     private int currentIndex = 0;
-    private final ReprojectedGeometryCollection parent;
+    private final ReprojectedShapefileGeometryCollection parent;
 
-    public LocalIterator(final ReprojectedGeometryCollection parent)
+    public LocalIterator(final ReprojectedShapefileGeometryCollection parent)
     {
       this.parent = parent;
     }
@@ -56,13 +56,14 @@ public class ReprojectedGeometryCollection implements GeometryCollection
 
   private final String newProjection;
   private transient Reprojector reprojector;
-  private GeometryCollection src;
+  private ShapefileGeometryCollection src;
 
-  public ReprojectedGeometryCollection(final GeometryCollection src, final String newProjection)
+  public ReprojectedShapefileGeometryCollection(final ShapefileGeometryCollection src, final String newProjection)
   {
     this.src = src;
     this.newProjection = newProjection;
 
+//    reprojector = Reprojector.createFromCode("EPSG:26985", "EPSG:4326");
     reprojector = Reprojector.createFromWkt(src.getProjection(), newProjection);
   }
 

@@ -20,11 +20,11 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.data.GeometryInputStream;
 import org.mrgeo.data.shp.ShapefileReader;
-import org.mrgeo.geometry.WellKnownProjections;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.geometry.WritablePoint;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
+import org.mrgeo.utils.GDALUtils;
 
 import java.io.File;
 
@@ -64,8 +64,7 @@ public class ReprojectorTest
 
     ShapefileReader sis =
         new ShapefileReader(new File(TestUtils.composeInputDir(ReprojectorTest.class), "AmbulatoryPt.shp").getCanonicalPath());
-    ReprojectedGeometryInputStream uut = new ReprojectedGeometryInputStream(sis,
-        WellKnownProjections.WGS84);
+    ReprojectedGeometryInputStream uut = new ReprojectedGeometryInputStream(sis, GDALUtils.EPSG4326);
 
     validatePoints(uut);
     

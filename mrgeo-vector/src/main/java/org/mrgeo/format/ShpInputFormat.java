@@ -20,11 +20,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.geometry.Geometry;
-import org.mrgeo.geometry.WellKnownProjections;
-import org.mrgeo.hdfs.vector.ReprojectedGeometryCollection;
-import org.mrgeo.hdfs.vector.GeometryCollection;
+import org.mrgeo.hdfs.vector.ReprojectedShapefileGeometryCollection;
+import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
 import org.mrgeo.data.shp.ShapefileReader;
-import org.mrgeo.utils.Base64Utils;
+import org.mrgeo.utils.GDALUtils;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -75,7 +74,7 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
   {
     private int currentIndex;
     private int end;
-    private GeometryCollection gc;
+    private ShapefileGeometryCollection gc;
     private int start;
     private LongWritable key = new LongWritable();
     private Geometry value = null;
@@ -140,18 +139,11 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     }
   }
 
-  public final static String GEOMETRY_COLLECTION = "GeometryInputFormat.GeometryCollection";
-
-  public static void setInput(Configuration conf, GeometryCollection gc) throws IOException
-  {
-    conf.set(GEOMETRY_COLLECTION, Base64Utils.encodeObject(gc));
-  }
-
   public ShpInputFormat()
   {
   }
 
-  public static GeometryCollection loadGeometryCollection(Configuration conf) throws IOException
+  public static ShapefileGeometryCollection loadGeometryCollection(Configuration conf) throws IOException
   {
     if (conf.get("mapred.input.dir") != null)
     {
@@ -161,8 +153,8 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
         ShapefileReader sr = new ShapefileReader(path);
 
         // reproject into WGS84
-        ReprojectedGeometryCollection rgc = new ReprojectedGeometryCollection(sr,
-            WellKnownProjections.WGS84);
+        ReprojectedShapefileGeometryCollection rgc =
+                new ReprojectedShapefileGeometryCollection(sr, GDALUtils.EPSG4326);
 
         return rgc;
       }
@@ -185,7 +177,7 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
   {
     Configuration conf = context.getConfiguration();
-    GeometryCollection gc = loadGeometryCollection(context.getConfiguration());
+    ShapefileGeometryCollection gc = loadGeometryCollection(context.getConfiguration());
     int numSplits = conf.getInt("mapred.map.tasks", 2);
 
     // make sure there are at least 10k features per node.

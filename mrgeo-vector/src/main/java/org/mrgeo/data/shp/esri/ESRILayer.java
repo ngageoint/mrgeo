@@ -15,13 +15,13 @@
 
 package org.mrgeo.data.shp.esri;
 
-import org.mrgeo.geometry.WellKnownProjections;
 import org.mrgeo.data.shp.SeekableDataInput;
 import org.mrgeo.data.shp.SeekableRaf;
 import org.mrgeo.data.shp.dbase.DbaseException;
 import org.mrgeo.data.shp.dbase.DbaseFile;
 import org.mrgeo.data.shp.esri.geom.JExtent;
 import org.mrgeo.data.shp.esri.geom.JShape;
+import org.mrgeo.utils.GDALUtils;
 
 import java.io.*;
 
@@ -280,7 +280,7 @@ public class ESRILayer extends java.lang.Object
     // given no other information default to WGS84
     if (projection == null)
     {
-      projection = WellKnownProjections.WGS84;
+      projection = GDALUtils.EPSG4326;
     }
     }
 
