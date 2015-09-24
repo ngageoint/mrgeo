@@ -1,16 +1,15 @@
 package org.mrgeo.mapalgebra
 
-import java.io.{IOException, ObjectOutput, ObjectInput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
-import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.mrgeo.aggregators.AggregatorRegistry
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification
 import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
-import org.mrgeo.utils.TMSUtils
 
 object ChangeClassificationMapOp extends MapOpRegistrar {
 
@@ -35,7 +34,7 @@ class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
 
     if ((node.getNumChildren < 2) || (node.getNumChildren > 3)) {
       throw new ParserException(
-        "ChangeClassificationMapOp usage: changeClassification(source raster, type, [aggregation type])");
+        "ChangeClassificationMapOp usage: changeClassification(source raster, classification, [aggregation type])")
     }
 
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
@@ -54,7 +53,7 @@ class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
       case Some(s) =>
         val clazz = AggregatorRegistry.aggregatorRegistry.get(s.toUpperCase)
         if (clazz != null) {
-          s
+          s.toUpperCase
         }
         else {
           throw new ParserException("Invalid aggregator " + s)

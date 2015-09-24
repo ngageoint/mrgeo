@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.aggregators.AggregatorRegistry;
@@ -21,9 +21,6 @@ import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
-import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
