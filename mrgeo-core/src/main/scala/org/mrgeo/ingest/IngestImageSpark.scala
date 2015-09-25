@@ -21,7 +21,6 @@ import java.util
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile
 import org.apache.spark.rdd.PairRDDFunctions
-import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
@@ -29,6 +28,7 @@ import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{ProviderProperties, DataProviderFactory, ProtectionLevelUtils}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
@@ -71,6 +71,31 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
     true
   }
+
+  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata:Double) = {
+    // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
+    // won't eat up too much memory
+    val in = context.makeRDD(inputs, inputs.length)
+
+    val rawtiles = new PairRDDFunctions(in.flatMap(input => {
+      IngestImageSpark.makeTiles(input, zoom, tilesize, categorical)
+    }))
+
+    val rdd = RasterRDD(rawtiles.reduceByKey((r1, r2) => {
+      val src = RasterWritable.toRaster(r1)
+      val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
+
+      val nodatas = Array.fill[Double](1)(nodata)
+
+      RasterUtils.mosaicTile(src, dst, nodatas)
+      RasterWritable.toWritable(dst)
+    }))
+
+    val meta = SparkUtils.calculateMetadata(rdd, zoom, nodata)
+
+    (rdd, meta)
+  }
+
 
   private def setupParams(input: String, output: String, categorical: Boolean, bounds: Bounds, zoomlevel: Int,
       tilesize: Int, nodata: Array[Number],
@@ -124,8 +149,8 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: ProviderProperties): Boolean = {
 
-//    val provider: ImageIngestDataProvider = DataProviderFactory
-//        .getImageIngestDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri.toString, AccessMode.OVERWRITE)
+    //    val provider: ImageIngestDataProvider = DataProviderFactory
+    //        .getImageIngestDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri.toString, AccessMode.OVERWRITE)
 
 
     var conf: Configuration = config
@@ -289,9 +314,11 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     result.iterator
   }
 
-  @throws(classOf[Exception])
-  def quickIngest(input: InputStream, output: String, categorical: Boolean, config: Configuration,
-      overridenodata: Boolean, protectionLevel: String, nodata: Number): Boolean = {
+
+
+@throws(classOf[Exception])
+def quickIngest(input: InputStream, output: String, categorical: Boolean, config: Configuration,
+overridenodata: Boolean, protectionLevel: String, nodata: Number): Boolean = {
 //    var conf: Configuration = config
 //    if (conf == null) {
 //      conf = HadoopUtils.createConfiguration
@@ -341,13 +368,13 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 //      writer.close()
 //      dp.getMetadataWriter.write(metadata)
 //    }
-    true
-  }
+true
+}
 
-  @throws(classOf[Exception])
-  def quickIngest(input: String, output: String, categorical: Boolean, config: Configuration, overridenodata: Boolean,
-      nodata: Number, tags: java.util.Map[String, String], protectionLevel: String,
-                  providerProperties: ProviderProperties): Boolean = {
+@throws(classOf[Exception])
+def quickIngest(input: String, output: String, categorical: Boolean, config: Configuration, overridenodata: Boolean,
+nodata: Number, tags: java.util.Map[String, String], protectionLevel: String,
+providerProperties: ProviderProperties): Boolean = {
 //    val provider: MrsImageDataProvider = DataProviderFactory
 //        .getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
 //    var conf: Configuration = config
@@ -399,18 +426,18 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 //      writer.close()
 //      provider.getMetadataWriter.write(metadata)
 //    }
-    true
-  }
+true
+}
 
 
-  override def readExternal(in: ObjectInput) {}
-  override def writeExternal(out: ObjectOutput) {}
+override def readExternal(in: ObjectInput) {}
+override def writeExternal(out: ObjectOutput) {}
 
-  override def setup(job: JobArguments): Boolean = {
-    job.isMemoryIntensive = true
+override def setup(job: JobArguments): Boolean = {
+job.isMemoryIntensive = true
 
-    true
-  }
+true
+}
 }
 
 class IngestImageSpark extends MrGeoJob with Externalizable {
@@ -483,36 +510,11 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    context.hadoopConfiguration.set("fs.s3n.impl", "org.apache.hadoop.fs.s3native.NativeS3FileSystem")
+    val ingested = IngestImageSpark.ingest(context, inputs, zoom, tilesize, categorical, nodata(0))
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
+    SparkUtils.saveMrsPyramid(ingested._1, dp, ingested._2, zoom, context.hadoopConfiguration, providerproperties)
 
-    // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
-    // won't eat up too much memory
-    val in = context.makeRDD(inputs, inputs.length)
-
-    // This variable can get large, so we'll clear it out here to free up some memory
-    inputs = null
-
-
-    val rawtiles = new PairRDDFunctions(in.flatMap(input => {
-      IngestImageSpark.makeTiles(input, zoom, tilesize, categorical)
-    }))
-
-    val mergedTiles=rawtiles.reduceByKey((r1, r2) => {
-      val src = RasterWritable.toRaster(r1)
-      val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
-
-      RasterUtils.mosaicTile(src, dst, nodata)
-      RasterWritable.toWritable(dst)
-
-    })
-
-
-    val raster = RasterWritable.toRaster(mergedTiles.first()._2)
-    SparkUtils.saveMrsPyramidRDD(mergedTiles, dp, zoom, tilesize, nodata, context.hadoopConfiguration,
-      bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
-      protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
     true
   }
 
@@ -522,47 +524,47 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
   }
 
   override def readExternal(in: ObjectInput) {
-    //    val count = in.readInt()
-    //    val ab = mutable.ArrayBuilder.make[String]()
-    //    for (i <- 0 until count) {
-    //      ab += in.readUTF()
+    //    //    val count = in.readInt()
+    //    //    val ab = mutable.ArrayBuilder.make[String]()
+    //    //    for (i <- 0 until count) {
+    //    //      ab += in.readUTF()
+    //    //    }
+    //    //    inputs = ab.result()
+    //    //
+    //    output = in.readUTF()
+    //    //    bounds = Bounds.fromDelimitedString(in.readUTF())
+    //    zoom = in.readInt()
+    //    tilesize = in.readInt()
+    //    //    tiletype = in.readInt()
+    //    //    bands = in.readInt()
+    //    val nodataLen = in.readInt()
+    //    nodata = new Array[Double](nodataLen)
+    //    for (i <- 0 until nodataLen) {
+    //      nodata(i) = in.readDouble()
     //    }
-    //    inputs = ab.result()
+    //    categorical = in.readBoolean()
     //
-    output = in.readUTF()
-    //    bounds = Bounds.fromDelimitedString(in.readUTF())
-    zoom = in.readInt()
-    tilesize = in.readInt()
-    //    tiletype = in.readInt()
-    //    bands = in.readInt()
-    val nodataLen = in.readInt()
-    nodata = new Array[Double](nodataLen)
-    for (i <- 0 until nodataLen) {
-      nodata(i) = in.readDouble()
-    }
-    categorical = in.readBoolean()
-
-    //    providerproperties = in.readObject().asInstanceOf[Properties]
-    //    protectionlevel = in.readUTF()
+    //    //    providerproperties = in.readObject().asInstanceOf[Properties]
+    //    //    protectionlevel = in.readUTF()
   }
 
   override def writeExternal(out: ObjectOutput) {
-    //      out.writeInt(inputs.length)
-    //      inputs.foreach(input => { out.writeUTF(input)})
-    out.writeUTF(output)
-    //      out.writeUTF(bounds.toDelimitedString)
-    out.writeInt(zoom)
-    out.writeInt(tilesize)
-    //      out.writeInt(tiletype)
-    //      out.writeInt(bands)
-    out.writeInt(nodata.length);
-    for(i <- 0 until nodata.length) {
-      out.writeDouble(nodata(i).doubleValue())
-    }
-    out.writeBoolean(categorical)
-    //
-    //      out.writeObject(providerproperties)
-    //
-    //      out.writeUTF(protectionlevel)
+    //    //      out.writeInt(inputs.length)
+    //    //      inputs.foreach(input => { out.writeUTF(input)})
+    //    out.writeUTF(output)
+    //    //      out.writeUTF(bounds.toDelimitedString)
+    //    out.writeInt(zoom)
+    //    out.writeInt(tilesize)
+    //    //      out.writeInt(tiletype)
+    //    //      out.writeInt(bands)
+    //    out.writeInt(nodata.length);
+    //    for(i <- 0 until nodata.length) {
+    //      out.writeDouble(nodata(i).doubleValue())
+    //    }
+    //    out.writeBoolean(categorical)
+    //    //
+    //    //      out.writeObject(providerproperties)
+    //    //
+    //    //      out.writeUTF(protectionlevel)
   }
 }

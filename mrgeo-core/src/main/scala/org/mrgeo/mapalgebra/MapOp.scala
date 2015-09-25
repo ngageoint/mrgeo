@@ -149,12 +149,36 @@ object MapOp {
     case const: ParserConstantNode => decodeString(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-        case const: ParserConstantNode => decodeString(node)
-        case _ => throw new ParserException("Term \"" + node + "\" is not a string")
-        }
+      case const: ParserConstantNode => decodeString(node)
+      case _ => throw new ParserException("Term \"" + node + "\" is not a string")
+      }
     case _ => throw new ParserException("Term \"" + node + "\" is not a string")
     }
   }
+
+  def decodeBoolean(node: ParserNode): Option[Boolean] = {
+    decodeString(node) match {
+    case Some(value) => value.toLowerCase match {
+      case "true" | "1" | "yes" => Some(true)
+      case "false" | "0" | "no" => Some(false)
+      case _ => None
+    }
+    case _ => None
+    }
+  }
+
+  def decodeBoolean(node:ParserNode, variables: String => Option[ParserNode]): Option[Boolean] = {
+    node match {
+    case const: ParserConstantNode => decodeBoolean(node)
+    case variable: ParserVariableNode =>
+      MapOp.decodeVariable(variable, variables).get match {
+      case const: ParserConstantNode => decodeBoolean(node)
+      case _ => throw new ParserException("Term \"" + node + "\" is not a boolean")
+      }
+    case _ => throw new ParserException("Term \"" + node + "\" is not a boolean")
+    }
+  }
+
 
 
   def decodeVariable(node: ParserVariableNode, variables: String => Option[ParserNode]): Option[ParserNode] = {

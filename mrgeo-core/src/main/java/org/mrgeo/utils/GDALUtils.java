@@ -709,6 +709,20 @@ public static double getnodata(Dataset src)
   return val[0];
 }
 
+public static double getnodata(String imagename) throws IOException
+{
+    Dataset image = GDALUtils.open(imagename);
+
+    if (image != null)
+    {
+      final Double[] val = new Double[1];
+      image.GetRasterBand(1).GetNoDataValue(val);
+      return val[0];
+    }
+
+  throw new IOException("Can't open image: " + imagename);
+}
+
 public static double[] getnodatas(Dataset src)
 {
   final int bands = src.GetRasterCount();
@@ -728,6 +742,37 @@ public static double[] getnodatas(Dataset src)
 
   }
   return nodatas;
+}
+
+public static int calculateZoom(String imagename, int tilesize)
+{
+  try
+  {
+    Dataset image = GDALUtils.open(imagename);
+
+    if (image != null)
+    {
+      double xform[] = image.GetGeoTransform();
+
+      int zx = TMSUtils.zoomForPixelSize(xform[1], tilesize);
+      int zy = TMSUtils.zoomForPixelSize(xform[5], tilesize);
+
+      GDALUtils.close(image);
+
+      if (zx > zy)
+      {
+        return zx;
+      }
+
+      return zy;
+    }
+  }
+  catch (final IOException ignored)
+  {
+  }
+
+  return -1;
+
 }
 
 
@@ -804,92 +849,6 @@ private static void copyToDataset(Dataset ds, Raster raster)
       bandstride);
 }
 
-public static void main(final String[] args) throws Exception
-{
-  interleaved();
-  banded();
-}
-
-private static void interleaved()
-{
-  final int[] offsets = new int[]{0, 1, 2};
-  final SampleModel model = new PixelInterleavedSampleModel(DataBuffer.TYPE_BYTE, 10, 10, 3, 3 * 10, offsets);
-
-  WritableRaster raw = Raster.createWritableRaster(model, null);
-  for (int y = 0, pixel = 0; y < raw.getHeight(); y++)
-  {
-    for (int x = 0; x < raw.getWidth(); x++, pixel++)
-    {
-      for (int b = 0; b < raw.getNumBands(); b++)
-      {
-        raw.setSample(x, y, b, pixel);
-      }
-    }
-  }
-
-  String path = System.getProperty("user.home") + "/tmp/raster/";
-
-  GDALUtils.saveRaster(raw, path + "interleaved_raw.tif");
-  iowrite(raw, path + "io_interleaved_raw.png", "png");
-
-  Dataset ds = GDALUtils.toDataset(raw);
-
-  GDALUtils.saveRaster(ds, path + "interleaved_dataset.tif");
-
-  Raster raster = GDALUtils.toRaster(ds);
-
-  GDALUtils.saveRaster(raster, path + "interleaved_raster.tif");
-  iowrite(raster, path + "io_interleaved_raster.png", "png");
-
-  Dataset ds2 = GDALUtils.toDataset(raster);
-
-  GDALUtils.saveRaster(ds2, path + "interleaved_dataset2.tif");
-
-  Raster raster2 = GDALUtils.toRaster(ds2);
-
-  iowrite(raster2, path + "io_interleaved_raster2.png", "png");
-  GDALUtils.saveRaster(raster2, path + "interleaved_raster2.tif");
-}
-
-private static void banded()
-{
-  final SampleModel model = new BandedSampleModel(DataBuffer.TYPE_BYTE, 10, 10, 3);
-
-  WritableRaster raw = Raster.createWritableRaster(model, null);
-  for (int y = 0, pixel = 0; y < raw.getHeight(); y++)
-  {
-    for (int x = 0; x < raw.getWidth(); x++, pixel++)
-    {
-      for (int b = 0; b < raw.getNumBands(); b++)
-      {
-        raw.setSample(x, y, b, pixel);
-      }
-    }
-  }
-
-  String path = System.getProperty("user.home") + "/tmp/raster/";
-
-  GDALUtils.saveRaster(raw, path + "banded_raw.tif");
-  iowrite(raw, path + "io_banded_raw.png", "png");
-
-  Dataset ds = GDALUtils.toDataset(raw);
-
-  GDALUtils.saveRaster(ds, path + "banded_dataset.tif");
-
-  Raster raster = GDALUtils.toRaster(ds);
-
-  iowrite(raster, path + "io_banded_raster.png", "png");
-  GDALUtils.saveRaster(raster, path + "banded_raster.tif");
-
-  Dataset ds2 = GDALUtils.toDataset(raster);
-
-  GDALUtils.saveRaster(ds2, path + "banded_dataset.2tif");
-
-  Raster raster2 = GDALUtils.toRaster(ds2);
-
-  iowrite(raster2, path + "io_banded_raster2.png", "png");
-  GDALUtils.saveRaster(raster2, path + "banded_raster2.tif");
-}
 
 @SuppressWarnings("unused")
 public static class GDALException extends RuntimeException
