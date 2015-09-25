@@ -8,6 +8,7 @@ import org.mrgeo.buildpyramid.BuildPyramidSpark
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderNotFound, DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification
 import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
@@ -64,7 +65,7 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
     val input: RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
     rasterRDD = input.rdd()
-    val meta = input.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val meta = new MrsImagePyramidMetadata(input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName)))
 
     // Need to see if this is a saved pyramid.  If it is, we can buildpyramids, otherwise it is
     // a temporary RDD and we need to error out
