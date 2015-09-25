@@ -119,7 +119,7 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo</artifactId>
+      <artifactId>mrgeo-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
