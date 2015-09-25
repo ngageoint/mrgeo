@@ -34,7 +34,7 @@ import org.mrgeo.data.vector.VectorInputSplit;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
-public class HdfsVectorRecordReader extends RecordReader<LongWritable, Geometry>
+public class DelimitedVectorRecordReader extends RecordReader<LongWritable, Geometry>
 {
   private DelimitedParser delimitedParser;
   private LineRecordReader recordReader;
@@ -63,7 +63,7 @@ public class HdfsVectorRecordReader extends RecordReader<LongWritable, Geometry>
     }
   }
 
-  public HdfsVectorRecordReader()
+  public DelimitedVectorRecordReader()
   {
   }
 

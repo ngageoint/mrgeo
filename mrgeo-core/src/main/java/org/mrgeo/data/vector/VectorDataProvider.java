@@ -100,7 +100,7 @@ public abstract class VectorDataProvider
    * 
    * @return
    */
-  public abstract RecordReader<LongWritable, Geometry> getRecordReader();
+  public abstract RecordReader<LongWritable, Geometry> getRecordReader() throws IOException;
 
   /**
    * Return an instance of a RecordWriter class to be used in map/reduce jobs for writing
@@ -117,7 +117,7 @@ public abstract class VectorDataProvider
    * @return
    */
   public abstract VectorInputFormatProvider getVectorInputFormatProvider(
-    final VectorInputFormatContext context);
+    final VectorInputFormatContext context) throws IOException;
 
   /**
    * Return an instance of an OutputFormat class to be used in map/reduce jobs for producing

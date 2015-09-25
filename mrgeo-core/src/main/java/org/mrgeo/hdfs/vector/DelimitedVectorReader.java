@@ -33,7 +33,7 @@ import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.Bounds;
 
-public class HdfsVectorReader implements VectorReader
+public class DelimitedVectorReader implements VectorReader
 {
   private HdfsVectorDataProvider provider;
   private VectorReaderContext context;
@@ -149,9 +149,9 @@ public class HdfsVectorReader implements VectorReader
     }
   }
 
-  public HdfsVectorReader(HdfsVectorDataProvider dp,
-      VectorReaderContext context,
-      Configuration conf)
+  public DelimitedVectorReader(HdfsVectorDataProvider dp,
+                               VectorReaderContext context,
+                               Configuration conf)
   {
     this.provider = dp;
     this.context = context;

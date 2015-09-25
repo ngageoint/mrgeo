@@ -31,9 +31,9 @@ import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.geometry.Geometry;
 
-public class HdfsVectorInputFormatProvider extends VectorInputFormatProvider
+public class DelimitedVectorInputFormatProvider extends VectorInputFormatProvider
 {
-  public HdfsVectorInputFormatProvider(VectorInputFormatContext context)
+  public DelimitedVectorInputFormatProvider(VectorInputFormatContext context)
   {
     super(context);
   }
@@ -41,7 +41,7 @@ public class HdfsVectorInputFormatProvider extends VectorInputFormatProvider
   @Override
   public InputFormat<LongWritable, Geometry> getInputFormat(String input)
   {
-    return new HdfsVectorInputFormat();
+    return new DelimitedVectorInputFormat();
   }
 
   @Override
@@ -79,7 +79,7 @@ public class HdfsVectorInputFormatProvider extends VectorInputFormatProvider
         throw new DataProviderException(e);
       }
     }
-    HdfsVectorInputFormat.setupJob(job, getContext().getMinFeaturesPerSplit(),
-        featureCount);
+    DelimitedVectorInputFormat.setupJob(job, getContext().getMinFeaturesPerSplit(),
+                                        featureCount);
   }
 }

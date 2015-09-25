@@ -33,11 +33,11 @@ import org.mrgeo.geometry.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HdfsVectorInputFormat extends InputFormat<LongWritable, Geometry> implements Serializable
+public class DelimitedVectorInputFormat extends InputFormat<LongWritable, Geometry> implements Serializable
 {
   private static final long serialVersionUID = 1L;
-  private static final Logger log = LoggerFactory.getLogger(HdfsVectorInputFormat.class);
-  private static final String className = HdfsVectorInputFormat.class.getSimpleName();
+  private static final Logger log = LoggerFactory.getLogger(DelimitedVectorInputFormat.class);
+  private static final String className = DelimitedVectorInputFormat.class.getSimpleName();
   private static final String USE_NLINE_FORMAT = className + ".useNLineFormat";
   public static void setupJob(Job job, int minFeaturesPerSplit, long featureCount)
   {
@@ -65,7 +65,7 @@ public class HdfsVectorInputFormat extends InputFormat<LongWritable, Geometry> i
   public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
-    HdfsVectorRecordReader recordReader = new HdfsVectorRecordReader();
+    DelimitedVectorRecordReader recordReader = new DelimitedVectorRecordReader();
     recordReader.initialize(split, context);
     return recordReader;
   }

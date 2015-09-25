@@ -84,13 +84,33 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   @Override
   public VectorReader getVectorReader() throws IOException
   {
-    return new HdfsVectorReader(this, new VectorReaderContext(), conf);
+    String resourceName = getResolvedResourceName(true);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, getConfiguration()))
+    {
+      return new DelimitedVectorReader(this, new VectorReaderContext(), conf);
+    }
+    else if (isSourceShapefile(resourcePath))
+    {
+      return new ShapefileVectorReader(this, new VectorReaderContext(), conf);
+    }
+    throw new IOException("Unable to create vector reader for " + resourceName);
   }
 
   @Override
   public VectorReader getVectorReader(VectorReaderContext context) throws IOException
   {
-    return new HdfsVectorReader(this, context, conf);
+    String resourceName = getResolvedResourceName(true);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, getConfiguration()))
+    {
+      return new DelimitedVectorReader(this, context, conf);
+    }
+    else if (isSourceShapefile(resourcePath))
+    {
+      return new ShapefileVectorReader(this, context, conf);
+    }
+    throw new IOException("Unable to create vector reader for " + resourceName);
   }
 
   @Override
@@ -108,9 +128,19 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   @Override
-  public RecordReader<LongWritable, Geometry> getRecordReader()
+  public RecordReader<LongWritable, Geometry> getRecordReader() throws IOException
   {
-    return new HdfsVectorRecordReader();
+    String resourceName = getResolvedResourceName(true);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, getConfiguration()))
+    {
+      return new DelimitedVectorRecordReader();
+    }
+    else if (isSourceShapefile(resourcePath))
+    {
+      // TODO: Add ShpRecordReader here.
+    }
+    throw new IOException("Unable to create vector reader for " + resourceName);
   }
 
   @Override
@@ -121,9 +151,19 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   @Override
-  public VectorInputFormatProvider getVectorInputFormatProvider(VectorInputFormatContext context)
+  public VectorInputFormatProvider getVectorInputFormatProvider(VectorInputFormatContext context) throws IOException
   {
-    return new HdfsVectorInputFormatProvider(context);
+    String resourceName = getResolvedResourceName(true);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, getConfiguration()))
+    {
+      return new DelimitedVectorInputFormatProvider(context);
+    }
+    else if (isSourceShapefile(resourcePath))
+    {
+      // TODO: Add ShapefileInputFormatProvider here.
+    }
+    throw new IOException("Unable to create vector reader for " + resourceName);
   }
 
   @Override
@@ -147,6 +187,29 @@ public class HdfsVectorDataProvider extends VectorDataProvider
 
   }
 
+  public static boolean isSourceDelimited(Path source, Configuration conf)
+  {
+    if (source != null)
+    {
+      String lowerPath = source.toString().toLowerCase();
+      if (lowerPath.endsWith(".tsv") || lowerPath.endsWith(".csv"))
+      {
+        return hasMetadata(conf, source);
+      }
+    }
+    return false;
+  }
+
+  public static boolean isSourceShapefile(Path source)
+  {
+    if (source != null)
+    {
+      String lowerPath = source.toString().toLowerCase();
+      return lowerPath.endsWith(".shp");
+    }
+    return false;
+  }
+
   public static boolean canOpen(final Configuration conf, String input,
       final ProviderProperties providerProperties) throws IOException
   {
@@ -154,10 +217,16 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     try
     {
       p = resolveName(conf, input, providerProperties, false);
-      String lowerPath = p.toString().toLowerCase();
-      if (p != null && lowerPath.endsWith(".tsv") || lowerPath.endsWith(".csv"))
+      if (p != null)
       {
-        return hasMetadata(conf, p);
+        if (isSourceDelimited(p, conf))
+        {
+          return true;
+        }
+        if (isSourceShapefile(p))
+        {
+          return true;
+        }
       }
     }
     catch (IOException e)
@@ -176,15 +245,33 @@ public class HdfsVectorDataProvider extends VectorDataProvider
       final ProviderProperties providerProperties) throws IOException
   {
     Path p = resolveNameToPath(conf, input, providerProperties, false);
-    Path columns = new Path(p.toString() + ".columns");
-    // In case the resource was moved since it was created
     if (p != null)
     {
-      HadoopFileUtils.delete(conf, p);
-    }
-    if (columns != null)
-    {
-      HadoopFileUtils.delete(conf, columns);
+      if (isSourceDelimited(p, conf))
+      {
+        HadoopFileUtils.delete(conf, p);
+        Path columns = new Path(p.toString() + ".columns");
+        if (columns != null)
+        {
+          HadoopFileUtils.delete(conf, columns);
+        }
+      }
+      else if (isSourceShapefile(p))
+      {
+        HadoopFileUtils.delete(conf, p);
+        String fileName = p.toString();
+        // We know the file ends in ".shp"
+        String fileWithoutExt = fileName.substring(0, fileName.length() - 3);
+        String[] subExts = { "shx", "idx", "dbf", "prj", "shp.xml", "sbn", "sbx", "avl" };
+        for (String ext : subExts)
+        {
+          Path subFile = new Path(fileWithoutExt + ext);
+          if (HadoopFileUtils.exists(conf, subFile))
+          {
+            HadoopFileUtils.delete(conf, subFile);
+          }
+        }
+      }
     }
   }
 
@@ -202,7 +289,8 @@ public class HdfsVectorDataProvider extends VectorDataProvider
       final ProviderProperties providerProperties, final boolean mustExist) throws IOException
   {
     Path result = resolveNameToPath(conf, input, providerProperties, mustExist);
-    if (result != null && hasMetadata(conf, result))
+    // Check to see if the source is one of the supported formats
+    if (result != null && (isSourceDelimited(result, conf) || isSourceShapefile(result)))
     {
       return result;
     }
