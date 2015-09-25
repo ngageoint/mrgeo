@@ -7,12 +7,12 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.{DataProviderNotFound, DataProviderFactory, ProviderProperties}
+import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.mapalgebra.vector.VectorDataMapOp
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
-import org.mrgeo.utils.{DependencyLoader, HadoopUtils, StringUtils}
+import org.mrgeo.utils.{HadoopUtils, StringUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -96,7 +96,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
   private def cleanExpression(expression: String): String = {
     logInfo("Raw expression: " + expression)
 
-    val lines = expression.split("\n")
+    val lines = expression.split("\r?\n|\r|;")
 
     val cleanlines = lines.map(raw => {
       val line = raw.trim
@@ -111,7 +111,9 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
       }
     })
 
-    val cleanexp = StringUtils.join(cleanlines, ";")
+    val cleaner = cleanlines.filter(!_.isEmpty)
+
+    val cleanexp = StringUtils.join(cleaner, ";")
     logInfo("Cleaned expression: " + cleanexp)
     cleanexp
   }
