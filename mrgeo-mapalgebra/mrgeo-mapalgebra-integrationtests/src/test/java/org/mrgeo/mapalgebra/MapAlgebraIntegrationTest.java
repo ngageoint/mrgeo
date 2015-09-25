@@ -502,9 +502,37 @@ public void buildpyramidAlternate() throws Exception
 @Category(IntegrationTest.class)
 public void buildpyramidDoesNotExist() throws Exception
 {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+  testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        String.format("buildpyramid([%s] + 1)", allonesnopyramids));
+        String.format("buildpyramid([%s] + 1)", path));
 }
 
 @Test
@@ -1638,13 +1666,13 @@ public void variables2() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("\n\na = [%s];\n\nb = 3;\na \t\n+ [%s] \n- b\n\n", allones, allones), -9999);
+        String.format("\n\na = [%s];\n\nb = 3;\na \t + [%s] - b\n\n", allones, allones), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        String.format("\n\na = [%s];\n\nb = 3;\na \t\n+ [%s] \n- b\n\n", allones, allones));
+        String.format("\n\na = [%s];\n\nb = 3;\na \t+ [%s] - b\n\n", allones, allones));
   }
 }
 
