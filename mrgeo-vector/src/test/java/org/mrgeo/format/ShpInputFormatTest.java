@@ -164,6 +164,7 @@ public class ShpInputFormatTest
   {
     try
     {
+//      Assert.assertEquals("blah", System.getProperty("java.library.path"));
       RecordReader<LongWritable, Geometry> reader = openReader(new Path(input, "AmbulatoryPt.shp"));
 
       int count = 0;

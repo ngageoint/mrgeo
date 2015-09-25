@@ -19,10 +19,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.mrgeo.geometry.WellKnownProjections;
-import org.mrgeo.hdfs.vector.ReprojectedGeometryCollection;
-import org.mrgeo.hdfs.vector.GeometryCollection;
-import org.mrgeo.data.shp.ShapefileReader;
+import org.mrgeo.hdfs.vector.ReprojectedShapefileGeometryCollection;
+import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
+import org.mrgeo.hdfs.vector.shp.ShapefileReader;
+import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,14 +54,14 @@ public class ShapeRecordInputFormat extends ShpInputFormat implements RecordInpu
     
     for (Path path : paths)
     {
-      GeometryCollection geometryCollection = new ShapefileReader(path);
+      ShapefileGeometryCollection geometryCollection = new ShapefileReader(path);
       //System.out.println(WellKnownProjections.WGS84);
       //System.out.println(geometryCollection.getProjection());
       if (!geometryCollection.getProjection().contains("WGS 84") && 
           !geometryCollection.getProjection().contains("GCS_WGS_1984"))
       {
         geometryCollection = 
-          new ReprojectedGeometryCollection(geometryCollection, WellKnownProjections.WGS84);
+          new ReprojectedShapefileGeometryCollection(geometryCollection, GDALUtils.EPSG4326);
       }
       int size = geometryCollection.size();
       int begin = 0;

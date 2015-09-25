@@ -652,6 +652,7 @@ object SparkUtils extends Logging {
     val meta = new MrsImagePyramidMetadata
 
     meta.setPyramid(rdd.name)
+    meta.setName(zoom)
     meta.setMaxZoomLevel(zoom)
 
     val first = rdd.first()

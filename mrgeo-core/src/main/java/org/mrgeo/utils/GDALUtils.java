@@ -50,7 +50,7 @@ public class GDALUtils
 private static final Logger log = LoggerFactory.getLogger(GDALUtils.class);
 
 // it's quicker (the EPSG doesn't change) to just hardcode this instead of trying to get it from GDAL/
-public static final String EPSG4326 = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]\n";
+public static final String EPSG4326 = osr.SRS_WKT_WGS84;
 public static final String GDAL_LIBS;
 private static final String VSI_PREFIX = "/vsimem/";
 
@@ -65,6 +65,7 @@ static
 //    System.load("/usr/lib/libgdal.so");
   String[] libs = {"libgdaljni.so", "libgdalconstjni.so", "libosrjni.so", "libgdal.so"};
 
+  osr.UseExceptions();
   String rawPath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, null);
 
   if (rawPath != null)
