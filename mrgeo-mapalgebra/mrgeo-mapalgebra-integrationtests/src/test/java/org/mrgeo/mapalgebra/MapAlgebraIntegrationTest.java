@@ -292,12 +292,13 @@ public void aspectRad() throws Exception
   }
 }
 
+@Ignore
 @Test
 @Category(IntegrationTest.class)
 public void buildpyramid() throws Exception
 {
   // copy the pyramid here, in case it has been used in another buildpyramid test
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
@@ -353,12 +354,13 @@ public void buildpyramid() throws Exception
   }
 }
 
+@Ignore
 @Test
 @Category(IntegrationTest.class)
 public void buildpyramidAfterSave() throws Exception
 {
   // copy the pyramid here, in case it has been used in another buildpyramid test
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
@@ -437,12 +439,13 @@ public void buildpyramidAfterSave() throws Exception
   }
 }
 
+@Ignore
 @Test
 @Category(IntegrationTest.class)
 public void buildpyramidAlternate() throws Exception
 {
   // copy the pyramid here, in case it has been used in another buildpyramid test
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
@@ -498,13 +501,14 @@ public void buildpyramidAlternate() throws Exception
   }
 }
 
+@Ignore
 @Test(expected = DataProviderNotFound.class)
 @Category(IntegrationTest.class)
 public void buildpyramidDoesNotExist() throws Exception
 {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        String.format("buildpyramid([%s] + 1)", allones));
+        String.format("buildpyramid([%s] + 1)", allonesnopyramids));
 }
 
 @Test
