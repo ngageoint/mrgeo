@@ -21,7 +21,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.mrgeo.hdfs.vector.ReprojectedShapefileGeometryCollection;
 import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
-import org.mrgeo.data.shp.ShapefileReader;
+import org.mrgeo.hdfs.vector.shp.ShapefileReader;
 import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

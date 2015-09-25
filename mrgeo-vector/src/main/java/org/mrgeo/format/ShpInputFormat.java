@@ -22,7 +22,7 @@ import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.vector.ReprojectedShapefileGeometryCollection;
 import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
-import org.mrgeo.data.shp.ShapefileReader;
+import org.mrgeo.hdfs.vector.shp.ShapefileReader;
 import org.mrgeo.utils.GDALUtils;
 
 import java.io.IOException;
