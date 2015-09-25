@@ -434,6 +434,9 @@ object SparkUtils extends Logging {
       metadata.setTileType(tile.getTransferType)
     }
 
+    metadata.setName(zoom, zoom.toString)
+
+
     val bands = metadata.getBands
     // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
     // on.  This can be a problem for fast calculating/small partitions

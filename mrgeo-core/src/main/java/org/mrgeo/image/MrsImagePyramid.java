@@ -179,6 +179,8 @@ public static void calculateMetadata(final int zoom,
       metadata.setBands(raster.getNumBands());
       metadata.setTilesize(tilesize);
       metadata.setTileType(raster.getTransferType());
+
+      metadata.setName(zoom, Integer.toString(zoom));
       // update the pyramid level stats
       metadata.setImageStats(zoom, levelStats);
 
