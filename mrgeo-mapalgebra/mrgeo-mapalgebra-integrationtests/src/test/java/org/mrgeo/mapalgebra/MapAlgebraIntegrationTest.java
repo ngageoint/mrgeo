@@ -292,7 +292,6 @@ public void aspectRad() throws Exception
   }
 }
 
-@Ignore
 @Test
 @Category(IntegrationTest.class)
 public void buildpyramid() throws Exception
@@ -354,7 +353,6 @@ public void buildpyramid() throws Exception
   }
 }
 
-@Ignore
 @Test
 @Category(IntegrationTest.class)
 public void buildpyramidAfterSave() throws Exception
@@ -439,7 +437,6 @@ public void buildpyramidAfterSave() throws Exception
   }
 }
 
-@Ignore
 @Test
 @Category(IntegrationTest.class)
 public void buildpyramidAlternate() throws Exception
@@ -501,7 +498,6 @@ public void buildpyramidAlternate() throws Exception
   }
 }
 
-@Ignore
 @Test(expected = DataProviderNotFound.class)
 @Category(IntegrationTest.class)
 public void buildpyramidDoesNotExist() throws Exception
