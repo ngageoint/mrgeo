@@ -14,7 +14,7 @@ import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 object CropMapOp extends MapOpRegistrar {
   private[mapalgebra] val Crop = "crop"
-  private[mapalgebra] val CropExact = "cropExact"
+  private[mapalgebra] val CropExact = "cropexact"
 
   override def register: Array[String] = {
     Array[String](Crop, CropExact)

@@ -14,7 +14,7 @@ import org.mrgeo.utils.{SparkUtils, Bounds, TMSUtils}
 
 object FillMapOp extends MapOpRegistrar {
   private[mapalgebra] val Fill = "fill"
-  private[mapalgebra] val FillBounds = "fillBounds"
+  private[mapalgebra] val FillBounds = "fillbounds"
 
   override def register: Array[String] = {
     Array[String](Fill, FillBounds)
