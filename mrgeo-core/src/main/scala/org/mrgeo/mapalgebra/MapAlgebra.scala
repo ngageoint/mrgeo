@@ -113,7 +113,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
 
     val cleaner = cleanlines.filter(!_.isEmpty)
 
-    val cleanexp = StringUtils.join(cleaner, ";")
+    val cleanexp = StringUtils.join(cleaner, ";").replaceAll("\\s+", " ")
     logInfo("Cleaned expression: " + cleanexp)
     cleanexp
   }
