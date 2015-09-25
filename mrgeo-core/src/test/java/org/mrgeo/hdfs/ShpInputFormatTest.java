@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.format;
+package org.mrgeo.hdfs;
 
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
@@ -28,13 +28,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
+import org.mrgeo.hdfs.vector.ShpInputFormat;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @author jason.surratt

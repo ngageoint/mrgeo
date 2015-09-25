@@ -19,6 +19,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.mrgeo.geometry.Geometry;
+import org.mrgeo.hdfs.vector.ShpInputFormat;
 import org.mrgeo.vector.mrsvector.MrsVectorPyramid;
 
 import java.io.IOException;

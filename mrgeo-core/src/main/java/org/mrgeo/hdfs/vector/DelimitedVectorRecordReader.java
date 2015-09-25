@@ -30,7 +30,6 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
-import org.mrgeo.data.vector.VectorInputSplit;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
@@ -71,8 +70,7 @@ public class DelimitedVectorRecordReader extends RecordReader<LongWritable, Geom
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
-    VectorInputSplit vis = (VectorInputSplit)split;
-    FileSplit fsplit = (FileSplit)vis.getWrappedInputSplit();
+    FileSplit fsplit = (FileSplit)split;
     delimitedParser = getDelimitedParser(fsplit.getPath().toString(),
         context.getConfiguration());
     recordReader = new LineRecordReader();
@@ -176,7 +174,6 @@ public class DelimitedVectorRecordReader extends RecordReader<LongWritable, Geom
   public LongWritable getCurrentKey() throws IOException, InterruptedException
   {
     LongWritable key = recordReader.getCurrentKey();
-    System.out.println("currentKey = " + key);
     return key;
   }
 
@@ -184,7 +181,6 @@ public class DelimitedVectorRecordReader extends RecordReader<LongWritable, Geom
   public Geometry getCurrentValue() throws IOException, InterruptedException
   {
     Text rawValue = recordReader.getCurrentValue();
-    System.out.println("getCurrentValue reutrned " + rawValue);
     if (rawValue == null)
     {
       return null;

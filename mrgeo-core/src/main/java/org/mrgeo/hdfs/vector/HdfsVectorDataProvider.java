@@ -138,7 +138,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     }
     else if (isSourceShapefile(resourcePath))
     {
-      // TODO: Add ShpRecordReader here.
+      return new ShpInputFormat.ShpRecordReader();
     }
     throw new IOException("Unable to create vector reader for " + resourceName);
   }
@@ -161,7 +161,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     }
     else if (isSourceShapefile(resourcePath))
     {
-      // TODO: Add ShapefileInputFormatProvider here.
+      return new ShapefileVectorInputFormatProvider(context);
     }
     throw new IOException("Unable to create vector reader for " + resourceName);
   }
