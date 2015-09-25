@@ -68,17 +68,17 @@ public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
   public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
-//    return new VectorRecordReader();
-    if (!(split instanceof VectorInputSplit))
-    {
-      throw new IOException("Expected a VectorInputSplit but got " + split.getClass().getName());
-    }
-    VectorInputSplit inputSplit = (VectorInputSplit)split;
-    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(inputSplit.getVectorName(),
-        AccessMode.READ, context.getConfiguration());
-    RecordReader<LongWritable, Geometry> recordReader = dp.getRecordReader();
-    recordReader.initialize(inputSplit, context);
-    return recordReader;
+    return new VectorRecordReader();
+//    if (!(split instanceof VectorInputSplit))
+//    {
+//      throw new IOException("Expected a VectorInputSplit but got " + split.getClass().getName());
+//    }
+//    VectorInputSplit inputSplit = (VectorInputSplit)split;
+//    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(inputSplit.getVectorName(),
+//        AccessMode.READ, context.getConfiguration());
+//    RecordReader<LongWritable, Geometry> recordReader = dp.getRecordReader();
+//    recordReader.initialize(inputSplit, context);
+//    return recordReader;
   }
   
   private List<InputSplit> getNativeSplits(JobContext context,

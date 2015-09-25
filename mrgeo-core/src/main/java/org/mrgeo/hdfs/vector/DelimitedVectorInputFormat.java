@@ -65,9 +65,7 @@ public class DelimitedVectorInputFormat extends InputFormat<LongWritable, Geomet
   public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
-    DelimitedVectorRecordReader recordReader = new DelimitedVectorRecordReader();
-    recordReader.initialize(split, context);
-    return recordReader;
+    return new DelimitedVectorRecordReader();
   }
 
   @Override

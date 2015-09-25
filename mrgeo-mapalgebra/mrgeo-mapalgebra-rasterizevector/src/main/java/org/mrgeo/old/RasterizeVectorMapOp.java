@@ -35,7 +35,7 @@ import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.format.FeatureInputFormatFactory;
 import org.mrgeo.format.InlineCsvInputFormat;
 import org.mrgeo.format.PgQueryInputFormat;
-import org.mrgeo.format.ShpInputFormat;
+import org.mrgeo.hdfs.vector.ShpInputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.image.MrsImagePyramid;

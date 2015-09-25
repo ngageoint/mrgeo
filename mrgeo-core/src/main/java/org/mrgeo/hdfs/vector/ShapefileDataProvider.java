@@ -112,7 +112,7 @@ public class ShapefileDataProvider extends VectorDataProvider
   @Override
   public VectorInputFormatProvider getVectorInputFormatProvider(VectorInputFormatContext context)
   {
-//    return new ShapefileInputFormatProvider(context);
+//    return new ShapefileVectorInputFormatProvider(context);
     return null;
   }
 

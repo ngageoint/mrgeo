@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.format;
+package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.vector.ReprojectedShapefileGeometryCollection;
@@ -25,6 +26,8 @@ import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
 import org.mrgeo.hdfs.vector.shp.ShapefileReader;
 import org.mrgeo.utils.GDALUtils;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -32,7 +35,7 @@ import java.util.List;
 
 public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
 {
-  static public class GeometryInputSplit extends InputSplit implements Serializable
+  static public class GeometryInputSplit extends InputSplit implements Writable
   {
     private static final long serialVersionUID = 1L;
 
@@ -41,7 +44,16 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     int endIndex;
     int startIndex;
 
-    GeometryInputSplit(int start, int end)
+    /**
+     * This is here so that we can re-create the input split on the
+     * remote side. It uses reflection to construct the instance and
+     * the Writable.readFields method to populate it.
+     */
+    public GeometryInputSplit()
+    {
+    }
+
+    public GeometryInputSplit(int start, int end)
     {
       startIndex = start;
       endIndex = end;
@@ -67,6 +79,20 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     public int getStart()
     {
       return startIndex;
+    }
+
+    @Override
+    public void write(DataOutput dataOutput) throws IOException
+    {
+      dataOutput.writeInt(startIndex);
+      dataOutput.writeInt(endIndex);
+    }
+
+    @Override
+    public void readFields(DataInput dataInput) throws IOException
+    {
+      startIndex = dataInput.readInt();
+      endIndex = dataInput.readInt();
     }
   }
 
@@ -166,11 +192,7 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
   public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
-    GeometryInputSplit giSplit = (GeometryInputSplit) split;
-
-    ShpRecordReader reader = new ShpRecordReader();
-
-    return reader;
+    return new ShpRecordReader();
   }
 
   @Override
