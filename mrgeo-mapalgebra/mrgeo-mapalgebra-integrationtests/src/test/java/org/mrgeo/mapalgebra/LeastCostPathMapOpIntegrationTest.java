@@ -1,29 +1,26 @@
 package org.mrgeo.mapalgebra;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
-
 import junit.framework.Assert;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
-import org.mrgeo.mapalgebra.old.MapAlgebraExecutioner;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.progress.ProgressHierarchy;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.utils.HadoopUtils;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
 
 @SuppressWarnings("static-method")
 public class LeastCostPathMapOpIntegrationTest
@@ -146,18 +143,12 @@ public class LeastCostPathMapOpIntegrationTest
       ) 
           throws IOException, ParserException, JobFailedException, 
           JobCancelledException {
-    MapAlgebraParser uut = new MapAlgebraParser(conf, "", null);
 
     Path testOutputPath = new Path(outputHdfs, testName);
     HadoopFileUtils.delete(testOutputPath);
 
-    MapAlgebraExecutioner mae = new MapAlgebraExecutioner();
-
-    MapOpHadoop mo = uut.parse(expression);
-
-    mae.setRoot(mo);
-    mae.setOutputName(testOutputPath.toString());
-    mae.execute(conf, new ProgressHierarchy());
+    MapAlgebra.mapalgebra(expression, testOutputPath.toString(),
+        conf, ProviderProperties.fromDelimitedString(""), null);
 
     // get the path and cost of the result
     PathCost gotPathCost = getPathCost(testOutputPath, conf);

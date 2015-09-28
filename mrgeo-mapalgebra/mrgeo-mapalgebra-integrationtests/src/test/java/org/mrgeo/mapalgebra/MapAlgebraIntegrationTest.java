@@ -39,7 +39,6 @@ import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.old.LogarithmMapOp;
 import org.mrgeo.old.RawBinaryMathMapOpHadoop;
-import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.OpImageTestUtils;
@@ -1267,53 +1266,16 @@ public void orderOfOperations() throws Exception
 @Category(UnitTest.class)
 public void parse1() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", null);
   final String ex = String.format("[%s] + [%s]", smallElevation, smallElevation);
-
-  // expected
-  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
-  expRoot.setFunctionName("+");
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop pyramidOp1 = new MrsPyramidMapOpHadoop();
-  pyramidOp1.setDataProvider(elevationDataProvider);
-
-  final MrsPyramidMapOpHadoop pyramidOp2 = new MrsPyramidMapOpHadoop();
-  pyramidOp2.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp1);
-  expRoot.addInput(pyramidOp2);
-
-  final MapOpHadoop mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
+  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
 @Test
 @Category(UnitTest.class)
 public void parse2() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", null);
   final String ex = String.format("[%s] * 15", smallElevation);
-
-  // expected
-  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
-  expRoot.setFunctionName("*");
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop mapOp1 = new MrsPyramidMapOpHadoop();
-  mapOp1.setDataProvider(elevationDataProvider);
-
-  final RenderedImageMapOp mapOp2 = new RenderedImageMapOp();
-  mapOp2.setRenderedImageFactory(new ConstantDescriptor());
-  mapOp2.getParameters().add(new Double(15));
-
-  expRoot.addInput(mapOp1);
-  expRoot.addInput(mapOp2);
-
-  final MapOpHadoop mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
+  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
 @Test
@@ -1321,104 +1283,68 @@ public void parse2() throws Exception
 public void parse3() throws Exception
 {
   final String ex = String.format("log([%s])", smallElevation);
-
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  // expected
-  final LogarithmMapOp expRoot = new LogarithmMapOp();
-  expRoot.getParameters().add(new Double(0));
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop pyramidOp = new MrsPyramidMapOpHadoop();
-  pyramidOp.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp);
-
-  final MapOpHadoop mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
-
-  // now add a search path and see if you get the same results
-  final String ex1 = String.format("log([%s])", smallElevation);
-
-//    Path p = new Path(smallElevation);
-//    p = p.getParent();
-//    uut.addPath(p.toString());
-
-  final MapOpHadoop mo1 = uut.parse(ex1);
-  assertMapOp(expRoot, mo1);
+  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parse4() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("log([%s/abc])", testUtils.getInputHdfs().toString());
 
-  uut.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = IllegalArgumentException.class)
+@Test
 @Category(UnitTest.class)
 public void parse5() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-  System.err.println(testUtils.getInputHdfs().toString());
   final String ex = String.format("[%s] * 15", testUtils.getInputHdfs().toString());
 
-  uut.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidArguments1() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("[%s] + ", smallElevation);
 
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidArguments2() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("abs [%s] [%s] ", smallElevation, smallElevation);
 
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidArguments3() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("con[%s] + ", smallElevation);
 
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidArguments4() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = "costDistance";
-
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidOperation() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
-  // String ex = String.format("[%s] & [%s]", allones, _blur2);
   final String ex = String.format("[%s] & [%s]", smallElevation, smallElevation);
-
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
 @Test
