@@ -717,7 +717,12 @@ public static double getnodata(String imagename) throws IOException
     {
       final Double[] val = new Double[1];
       image.GetRasterBand(1).GetNoDataValue(val);
-      return val[0];
+
+      if (val[0] != null)
+      {
+        return val[0];
+      }
+      return Double.NaN;
     }
 
   throw new IOException("Can't open image: " + imagename);

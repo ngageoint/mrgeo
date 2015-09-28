@@ -95,6 +95,8 @@ private static final String allonesnopyramids = "all-ones-no-pyramids";
 private static final String allonesholes = "all-ones-with-holes";
 private static final String allhundredsholes = "all-hundreds-with-holes";
 
+private static String smallslope = Defs.INPUT +"SmallSlopeBaseline.tif";
+
 private static final String regularpoints = "regular-points";
 private static Path regularpointsPath;
 
@@ -171,11 +173,16 @@ public static void init() throws IOException
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
   regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
 
+
   HadoopFileUtils
       .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
   smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
 
-  File file = new File(smallElevation);
+
+  File file = new File(smallslope);
+  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
+
+  file = new File(smallElevation);
   smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
 
   file = new File(greece);
@@ -955,6 +962,25 @@ public void hillshade() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void ingest() throws Exception
+{
+//    java.util.Properties prop = MrGeoProperties.getInstance();
+//    prop.setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("ingest(\"%s\")", smallslope), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("ingest(\"%s\")", smallslope));
   }
 }
 

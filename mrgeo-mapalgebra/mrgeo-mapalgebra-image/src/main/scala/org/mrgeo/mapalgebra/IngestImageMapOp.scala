@@ -1,9 +1,9 @@
 package org.mrgeo.mapalgebra
 
-import java.io.{IOException, ObjectOutput, ObjectInput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.hdfs.utils.HadoopFileUtils
@@ -13,7 +13,7 @@ import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
-import org.mrgeo.utils.{GDALUtils, HadoopUtils, Bounds}
+import org.mrgeo.utils.GDALUtils
 
 import scala.util.control.Breaks
 
@@ -68,9 +68,11 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   override def execute(context: SparkContext): Boolean = {
 
     val inputs = input.getOrElse(throw new IOException("Inputs not set"))
-    val fs = HadoopFileUtils.getFileSystem(context.hadoopConfiguration)
 
-    val rawfiles = fs.listFiles(new Path(inputs), true)
+    val path = new Path(inputs)
+    val fs = HadoopFileUtils.getFileSystem(context.hadoopConfiguration, path)
+
+    val rawfiles = fs.listFiles(path, true)
 
     val filebuilder = Array.newBuilder[String]
     while (rawfiles.hasNext) {
@@ -90,6 +92,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
           newZoom = z
         }
       })
+      zoom = Some(newZoom)
     }
 
     var nodata = Double.NaN
@@ -102,7 +105,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
           done.break()
         }
         catch {
-          case e:IOException => // ignore and go on
+          case e:Exception => // ignore and go on
         }
       })
     })
