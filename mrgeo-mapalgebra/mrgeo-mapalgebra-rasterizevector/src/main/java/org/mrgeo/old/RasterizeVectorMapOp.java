@@ -39,7 +39,6 @@ import org.mrgeo.hdfs.vector.ShpInputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapalgebra.*;
 import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapalgebra.parser.ParserConstantNode;
 import org.mrgeo.mapalgebra.parser.ParserNode;

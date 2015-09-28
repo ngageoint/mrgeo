@@ -16,8 +16,8 @@
 package org.mrgeo.pig;
 
 import org.apache.hadoop.fs.Path;
-import org.mrgeo.mapalgebra.BasicInputFormatDescriptor;
-import org.mrgeo.mapalgebra.InputFormatDescriptor;
+import org.mrgeo.mapalgebra.old.BasicInputFormatDescriptor;
+import org.mrgeo.mapalgebra.old.InputFormatDescriptor;
 import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapreduce.job.JobCancelledException;

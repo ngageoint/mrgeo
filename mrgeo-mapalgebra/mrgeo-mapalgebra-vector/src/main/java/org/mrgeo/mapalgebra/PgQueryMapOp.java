@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import org.apache.hadoop.fs.Path;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
-import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
+import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.PgQueryDriver;
 import org.mrgeo.mapreduce.job.JobCancelledException;
