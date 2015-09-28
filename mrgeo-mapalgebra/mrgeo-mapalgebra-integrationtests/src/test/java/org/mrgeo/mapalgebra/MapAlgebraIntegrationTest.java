@@ -30,7 +30,6 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.OpImageTestUtils;
@@ -1355,27 +1354,6 @@ public void pow() throws Exception
         String.format("pow([%s], 1.2)", allhundreds));
 
   }
-}
-
-
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void rasterNotExistsDefaultSearchPath() throws Exception
-{
-  final String expr = "a = ([something.tif])";
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  uut.parse(expr);
-}
-
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void rasterNotExistsUserDefinedSearchPath() throws Exception
-{
-  final String expr = "a = [thingone.tif] + " + "[thingtwo.tif];";
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-//    uut.addPath(testUtils.getInputHdfs().toString());
-  uut.parse(expr);
 }
 
 
