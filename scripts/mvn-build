@@ -11,8 +11,7 @@ usage() {
     echo "  mapalgebra   - mrgeo-core/mrgeo-vector/mrgeo-mapalgebra"
     echo "  cmd          - mrgeo-core/mrgeo-vector/mrgeo-cmd"
     echo "  dataprovider - mrgeo-core/mrgeo-dataprovider"
-    echo "  pig          - mrgeo-core/mrgeo-vector/mrgeo-pig"
-    echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-pig/mrgeo-legion/mrgeo-services"
+    echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-legion/mrgeo-services"
     echo "build type:"
     echo "  apache    - apache hadoop"
     echo "  apache220 - Apache hadoop, version 2.2.0"
@@ -153,10 +152,6 @@ SKIPCMDINTEGRATION="-Pskip-cmd-integration-tests"
 SKIPCMDUNIT="-Pskip-cmd-unit-tests"
 SKIPCMD="-Pskip-cmd-tests"
 
-SKIPPIGINTEGRATION="-Pskip-pig-integration-tests"
-SKIPPIGUNIT="-Pskip-pig-unit-tests"
-SKIPPIG="-Pskip-pig-tests"
-
 SKIPLEGIONINTEGRATION="-Pskip-legion-integration-tests"
 SKIPLEGIONUNIT="-Pskip-legion-unit-tests"
 SKIPLEGION="-Pskip-legion-tests"
@@ -180,56 +175,49 @@ while [ $# -gt 0 ] ; do
         ;;
     "core" | "core-only")
         MODULE="core"
-        ARGS="$SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "mapalgebra")
         MODULE="mapalgebra"
         ;;
     "mapalgebra-only")
         MODULE="mapalgebra"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "vector")
         MODULE="vector"
         ;;
     "vector-only")
         MODULE="vector"
-        ARGS="$SKIPCORE $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "dataprovider")
         MODULE="dataprovider"
         ;;
     "dataprovider-only")
         MODULE="dataprovider"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "cmd")
         MODULE="cmd"
         ;;
     "cmd-only")
         MODULE="cmd"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
-        ;;
-    "pig")
-        MODULE="pig"
-        ;;
-    "pig-only")
-        MODULE="pig"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "legion")
         MODULE="legion"
         ;;
     "legion-only")
         MODULE="legion"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "services")
         MODULE="services"
         ;;
     "services-only")
         MODULE="services"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $ARGS"
         ;;
     "apache220")
         BUILD="apache220"

@@ -180,10 +180,6 @@
       <artifactId>mrgeo-mapalgebra-vector</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-pig</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-yarn_${spark.scala.version}</artifactId>
     </dependency>
