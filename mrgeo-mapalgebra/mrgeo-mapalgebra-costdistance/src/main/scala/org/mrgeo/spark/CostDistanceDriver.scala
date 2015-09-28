@@ -585,7 +585,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         // vertex/tile relative to the destination vertex/tile, so we use that relationship
         // to determine the neighboring pixels in the destination to check.
         var newChanges: ChangedPoints = null
-        if (triplet.srcAttr.changedPoints != null) {
+        if (triplet.srcAttr.changedPoints != null && triplet.dstAttr != null) {
           log.debug("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
           if (!triplet.srcAttr.changedPoints.isEmpty) {
             newChanges = new ChangedPoints(false)
