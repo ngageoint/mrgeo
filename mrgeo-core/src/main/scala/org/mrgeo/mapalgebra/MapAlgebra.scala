@@ -394,8 +394,6 @@ object TestMapAlgebra extends App {
 
   HadoopUtils.setupLocalRunner(conf)
 
-  val p = new MapAlgebraParser
-
   val expression = "x = 100; " +
       "y = [/mrgeo/images/small-elevation]; " +
       "z = 10 / [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] - x + y; " +
