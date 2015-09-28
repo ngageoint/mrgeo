@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import org.mrgeo.featurefilter.ConvexHullFeatureFilter;
+import org.mrgeo.featurefilter.BoundaryFeatureFilter;
 import org.mrgeo.featurefilter.FeatureFilter;
 
-public class ConvexHullMapOp extends FeatureFilterMapOp
+public class BoundaryMapOp extends FeatureFilterMapOp
 {
-  ConvexHullFeatureFilter _filter = new ConvexHullFeatureFilter();
+  BoundaryFeatureFilter _filter = new BoundaryFeatureFilter();
   
   @Override
   public FeatureFilter getFilter()
@@ -30,14 +30,13 @@ public class ConvexHullMapOp extends FeatureFilterMapOp
   
   public static String[] register()
   {
-    return new String[] { "convexhull" };
+    return new String[] { "boundary" };
   }
 
   @Override
   public String toString()
   {
-    return String.format("ConvexHullMapOp %s",
+    return String.format("BoundaryMapOp %s",
        _outputName == null ? "null" : _outputName.toString() );
   }
-
 }
