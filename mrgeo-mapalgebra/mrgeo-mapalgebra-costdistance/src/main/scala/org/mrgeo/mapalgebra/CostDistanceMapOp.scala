@@ -336,7 +336,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     // Find the coordinates of the point that is distance meters to left and distance
     // meters below the bottom left corner of the sources points MBR.
     val bl = new LatLng(minY, minX)
-    val blExpanded = LatLng.calculateCartesianDestinationPoint(tr, diagonalDistanceInMeters, 225.0)
+    val blExpanded = LatLng.calculateCartesianDestinationPoint(bl, diagonalDistanceInMeters, 225.0)
 
     new Bounds(blExpanded.getLng, blExpanded.getLat, trExpanded.getLng, trExpanded.getLat)
   }
