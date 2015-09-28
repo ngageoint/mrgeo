@@ -104,35 +104,27 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
 
       bounds match {
         case Some(filterBounds) => {
-          logWarning("filtering bounds = " + filterBounds.toString)
           if (filterBounds.intersect(b)) {
             val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
             for (tileId <- tiles) {
-              logWarning("adding feature to result at 1")
               result += ((tileId, geom))
             }
           }
         }
         case None => {
           val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
-          logWarning("result of getOverlapping for tile " + U._1.get() + " in bounds " + b + " is " + tiles.size)
           for (tileId <- tiles) {
-            logWarning("adding feature to result at 2")
             result += ((tileId, geom))
           }
         }
       }
       result
     })
-    logWarning("tiled vectors count " + tiledVectors.count())
     val localRdd = new PairRDDFunctions(tiledVectors)
-    logWarning("local key count " + localRdd.keys.count())
     val groupedGeometries = localRdd.groupByKey()
-    logWarning("grouped count " + groupedGeometries.count())
     val noData = Float.NaN
     val result = groupedGeometries.map(U => {
       val tileId = U._1
-      logWarning("grouped tile id " + U._1.get())
       val rvp = new RasterizeVectorPainter(zoom,
         aggregationType,
         column match {
@@ -159,14 +151,12 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
   def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: TMSUtils.Bounds): List[TileIdWritable] = {
     var tiles = new ListBuffer[TileIdWritable]
     val tb: TMSUtils.TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
-    logWarning("getOverlapping zoom = " + zoom + ", tileSize = " + tileSize + ", bounds = " + bounds + ", tileBounds = " + tb.toString)
     for (tx <- tb.w to tb.e) {
       for (ty <- tb.s to tb.n) {
         val tile: TileIdWritable = new TileIdWritable(TMSUtils.tileid(tx, ty, zoom))
         tiles += tile
       }
     }
-    logWarning("returning tile list of size " + tiles.size)
     tiles.toList
   }
 
