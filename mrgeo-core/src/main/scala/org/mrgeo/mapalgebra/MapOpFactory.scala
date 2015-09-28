@@ -6,7 +6,6 @@ import java.lang.reflect.Modifier
 
 import org.apache.spark.Logging
 import org.mrgeo.core.MrGeoProperties
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner

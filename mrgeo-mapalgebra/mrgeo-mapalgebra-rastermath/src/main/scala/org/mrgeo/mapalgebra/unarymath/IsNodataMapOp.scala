@@ -6,10 +6,9 @@ import java.io.IOException
 import org.apache.spark.SparkContext
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.MapOp
+import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
 import org.mrgeo.utils.SparkUtils
 
 object IsNodataMapOp extends MapOpRegistrar {

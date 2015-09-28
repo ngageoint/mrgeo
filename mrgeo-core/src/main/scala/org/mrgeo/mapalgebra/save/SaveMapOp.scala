@@ -1,7 +1,6 @@
 package org.mrgeo.mapalgebra.save
 
-import org.mrgeo.mapalgebra.MapOp
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
+import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.{SaveRasterMapOp, RasterMapOp}
 

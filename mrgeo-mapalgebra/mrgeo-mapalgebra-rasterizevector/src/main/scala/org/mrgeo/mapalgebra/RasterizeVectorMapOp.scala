@@ -10,7 +10,6 @@ import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.rdd.{VectorRDD, RasterRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Geometry
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
