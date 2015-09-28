@@ -24,21 +24,13 @@ import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.MrsPyramidMapOpHadoop;
-import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.old.LogarithmMapOp;
-import org.mrgeo.old.RawBinaryMathMapOpHadoop;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.OpImageTestUtils;
@@ -1365,63 +1357,6 @@ public void pow() throws Exception
   }
 }
 
-@Test
-@Category(UnitTest.class)
-public void rasterExistsDefaultSearchPath() throws Exception
-{
-  final Path p = new Path(smallElevation).getParent();
-  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, p.toString());
-
-  final String expr = String.format("a = [%s] + [%s]", smallElevationName, smallElevationName);
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  // expected
-  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
-  expRoot.setFunctionName("+");
-
-  MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(smallElevationName,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop mapOp1 = new MrsPyramidMapOpHadoop();
-  mapOp1.setDataProvider(provider);
-
-  final MrsPyramidMapOpHadoop mapOp2 = new MrsPyramidMapOpHadoop();
-  mapOp2.setDataProvider(provider);
-
-  expRoot.addInput(mapOp1);
-  expRoot.addInput(mapOp2);
-
-  final MapOpHadoop mo = uut.parse(expr);
-  assertMapOp(expRoot, mo);
-}
-
-@Test
-@Category(UnitTest.class)
-public void rasterExistsFullyQualifiedPath() throws Exception
-{
-  final String ex = String.format("log([%s])", smallElevation);
-
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  // expected
-  final LogarithmMapOp expRoot = new LogarithmMapOp();
-  expRoot.getParameters().add(new Double(0));
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop pyramidOp = new MrsPyramidMapOpHadoop();
-  pyramidOp.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp);
-
-  // add the parent path of the HDFS version to the search path, we shouldn't
-  // find it...
-//    final Path p = smallElevationPath.getParent();
-//    uut.addPath(p.toString());
-
-  final MapOpHadoop mo1 = uut.parse(ex);
-  assertMapOp(expRoot, mo1);
-}
-
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
@@ -1642,7 +1577,6 @@ public void variables3() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
-
   }
 }
 
@@ -1697,46 +1631,4 @@ public void rasterizeVector3() throws Exception
   }
 }
 
-// asserts the expected Mapop against the actual Mapop generated when parse is
-// called
-// as more unit tests are added this method will need additional code to deal
-// with the
-// specific map ops being tested
-private void assertMapOp(final MapOpHadoop expMo, final MapOpHadoop mo)
-{
-  Assert.assertEquals(expMo.getClass().getName(), mo.getClass().getName());
-  if (expMo instanceof RenderedImageMapOp)
-  {
-    final RenderedImageMapOp rendExpMapOp = (RenderedImageMapOp) expMo;
-    final RenderedImageMapOp rendMo = (RenderedImageMapOp) mo;
-    Assert.assertEquals(rendExpMapOp.getRenderedImageFactory().getClass().getName(), rendMo
-        .getRenderedImageFactory().getClass().getName());
-    Assert.assertEquals(rendExpMapOp.getParameters().getNumParameters(), rendMo.getParameters()
-        .getNumParameters());
-    for (int i = 0; i < rendExpMapOp.getParameters().getNumParameters(); i++)
-    {
-      if (rendExpMapOp.getParameters().getObjectParameter(i) instanceof Double)
-      {
-        Assert.assertTrue(Double.compare(rendExpMapOp.getParameters().getDoubleParameter(i),
-            rendMo.getParameters().getDoubleParameter(i)) == 0);
-      }
-      else
-      {
-        Assert.assertEquals(rendExpMapOp.getParameters().getObjectParameter(i), rendMo
-            .getParameters().getObjectParameter(i));
-      }
-    }
-  }
-  else if (expMo instanceof MrsPyramidMapOpHadoop)
-  {
-    final MrsPyramidMapOpHadoop pyrExpMo = (MrsPyramidMapOpHadoop) expMo;
-    final MrsPyramidMapOpHadoop pyrMo = (MrsPyramidMapOpHadoop) mo;
-    Assert.assertEquals(pyrExpMo.getOutputName(), pyrMo.getOutputName());
-  }
-  Assert.assertEquals(expMo.getInputs().size(), mo.getInputs().size());
-  for (int u = 0; u < expMo.getInputs().size(); u++)
-  {
-    assertMapOp(expMo.getInputs().get(u), mo.getInputs().get(u));
-  }
-}
 }

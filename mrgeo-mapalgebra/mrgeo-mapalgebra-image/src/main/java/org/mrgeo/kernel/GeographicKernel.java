@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2010 by SPADAC Inc.  All rights reserved.
  */
 
-package org.mrgeo.opimage.geographickernel;
+package org.mrgeo.kernel;
 
 /**
  * Interface for a kernel in geographic space. Obviously the concept of a kernel

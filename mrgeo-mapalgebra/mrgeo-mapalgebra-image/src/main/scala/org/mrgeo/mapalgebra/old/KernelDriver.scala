@@ -12,7 +12,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
 import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.opimage.geographickernel.{GaussianGeographicKernel, GeographicKernel, LaplacianGeographicKernel}
+import org.mrgeo.kernel.{LaplacianGeographicKernel, GeographicKernel, GaussianGeographicKernel}
 import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.{SparkUtils, TMSUtils}

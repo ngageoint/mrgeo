@@ -2,28 +2,36 @@
  * Copyright (c) 2009-2010 by SPADAC Inc.  All rights reserved.
  */
 
-package org.mrgeo.opimage.geographickernel;
+package org.mrgeo.kernel;
 
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.TMSUtils;
 
 /**
- * @author jason.surratt
- *
+ * A Kernel for running a Laplacian filter. See
+ * http://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm for a technical run down.
  */
-public class GaussianGeographicKernel implements GeographicKernel
+public class LaplacianGeographicKernel implements GeographicKernel
 {
-private static final double GAUSSIAN_COEFFICIENT = Math.sqrt(2 * Math.PI);
 private static final double MAX_LATITUDE = 60.0;
 
-public static double phi(double x, double mean, double sigma)
+/**
+ * Taken from the LoG defined here:
+ * http://homepages.inf.ed.ac.uk/rbf/HIPR2/log.htm
+ *
+ */
+public final double LoG(double d, double sigma)
 {
-  double t = (x - mean) / sigma;
-  return Math.pow(Math.E, (-0.5 * t * t)) / (GAUSSIAN_COEFFICIENT * sigma);
+  double s = (d * d) / (2 * sigma * sigma);
+  double f2 = 1 - s;
+  double f3 = Math.exp(-s);
+  return f1 * f2 * f3;
 }
 
 private double kernelSize;
+
 private double sigma;
+private double f1;
 
 private int kernelWidth = -1;
 private int kernelHeight = -1;
@@ -34,10 +42,11 @@ private int kernelHeight = -1;
  * @param sigma
  *          Standard deviation of the Gaussian kernel in meters
  */
-public GaussianGeographicKernel(double sigma)
+public LaplacianGeographicKernel(double sigma)
 {
   this.sigma = sigma;
-  kernelSize = sigma * 3;
+  kernelSize = sigma * 4;
+  f1 = -1.0 / (Math.PI * Math.pow(this.sigma, 4.0));
 }
 
 @Override
@@ -88,7 +97,8 @@ public float[] createKernel(double latitude, double pixelWidth, double pixelHeig
       ll.setX(px * pixelWidth);
       double distance = LatLng.calculateGreatCircleDistance(origin, ll);
       float v;
-      // doing this avoids a squared off kernel effect. (makes it prettier when using
+      // doing this avoids a squared off kernel effect. (makes it prettier
+      // when using
       // transparency.
       if (distance > kernelSize)
       {
@@ -96,7 +106,7 @@ public float[] createKernel(double latitude, double pixelWidth, double pixelHeig
       }
       else
       {
-        v = (float) phi(distance, 0, sigma);
+        v = (float) LoG(distance, sigma);
       }
       data[i++] = v;
       sum += v;
@@ -114,9 +124,9 @@ public float[] createKernel(double latitude, double pixelWidth, double pixelHeig
 
 /**
  * Sets the minimum distance out from the center the kernel will consider when
- * creating the kernel in meters. Defaults to 3 * sigma. Anything larger than
- * 3 is probably overkill and less than 2 will show artifacts. Compute time
- * will increase roughly at O(size ^ 2).
+ * creating the kernel in meters. Defaults to 4 * sigma. Anything larger is
+ * probably overkill and anything less will probably show artifacts. Compute
+ * time will increase roughly at O(size ^ 2).
  *
  */
 void setKernelSize(double size)
@@ -129,4 +139,5 @@ public int getWidth() { return kernelWidth; }
 
 @Override
 public int getHeight() { return kernelHeight; }
+
 }
