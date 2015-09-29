@@ -252,7 +252,13 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
 
     val sssp = runGraph(graph, startTileId, zoomLevel, res,
       startPixel.px.toShort, startPixel.py.toShort, width, height)
-    val verticesWritable = sssp.vertices.map(U => {
+
+    // Be sure to filter out any graph vertices that are null. This occurs when
+    // the friction surface has missing tiles. The graph still contains a vertex
+    // but its value is null.
+    val verticesWritable = sssp.vertices.filter(U => {
+        (U._2 != null)
+    }).map(U => {
       // Need to convert our raster to a single band raster for output.
       val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, 1)
       val singleBandRaster = Raster.createWritableRaster(model, null)
