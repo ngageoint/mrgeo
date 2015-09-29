@@ -20,7 +20,7 @@ import org.mrgeo.featurefilter.FeatureFilter;
 import org.mrgeo.featurefilter.FeatureFilterChain;
 import org.mrgeo.format.AutoFeatureInputFormat;
 import org.mrgeo.format.FilteredFeatureInputFormat;
-import org.mrgeo.mapalgebra.InputFormatDescriptor;
+import org.mrgeo.mapalgebra.old.InputFormatDescriptor;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.vector.mrsvector.MrsVectorPyramid;
 import org.mrgeo.utils.Bounds;

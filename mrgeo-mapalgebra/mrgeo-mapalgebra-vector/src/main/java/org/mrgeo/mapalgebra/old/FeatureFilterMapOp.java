@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import org.mrgeo.featurefilter.FeatureFilter;
+import org.mrgeo.mapalgebra.old.FilteredInputFormatDescriptor;
+import org.mrgeo.mapalgebra.old.InputFormatDescriptor;
 import org.mrgeo.mapalgebra.old.MapOpHadoop;
 import org.mrgeo.mapalgebra.old.VectorMapOpHadoop;
 import org.mrgeo.progress.Progress;
@@ -48,7 +50,7 @@ public abstract class FeatureFilterMapOp extends VectorMapOpHadoop
 
     MapOpHadoop mo = _inputs.get(0);
 
-    InputFormatDescriptor result = 
+    InputFormatDescriptor result =
       new FilteredInputFormatDescriptor(((VectorMapOpHadoop)mo).getVectorOutput(), getFilter());
 
     _output = result;

@@ -336,7 +336,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     // Find the coordinates of the point that is distance meters to left and distance
     // meters below the bottom left corner of the sources points MBR.
     val bl = new LatLng(minY, minX)
-    val blExpanded = LatLng.calculateCartesianDestinationPoint(tr, diagonalDistanceInMeters, 225.0)
+    val blExpanded = LatLng.calculateCartesianDestinationPoint(bl, diagonalDistanceInMeters, 225.0)
 
     new Bounds(blExpanded.getLng, blExpanded.getLat, trExpanded.getLng, trExpanded.getLat)
   }
@@ -496,7 +496,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
             // vertex/tile relative to the destination vertex/tile, so we use that relationship
             // to determine the neighboring pixels in the destination to check.
             var newChanges: ChangedPoints = null
-            if (triplet.srcAttr.changedPoints != null) {
+            if (triplet.srcAttr.changedPoints != null && triplet.dstAttr != null) {
               log.debug("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
               if (!triplet.srcAttr.changedPoints.isEmpty) {
                 newChanges = new ChangedPoints(false)

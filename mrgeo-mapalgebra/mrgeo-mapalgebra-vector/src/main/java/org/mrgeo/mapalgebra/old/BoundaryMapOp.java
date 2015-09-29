@@ -13,16 +13,30 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import org.apache.hadoop.mapreduce.Job;
+import org.mrgeo.featurefilter.BoundaryFeatureFilter;
 import org.mrgeo.featurefilter.FeatureFilter;
 
-import java.io.IOException;
-
-public interface InputFormatDescriptor
+public class BoundaryMapOp extends FeatureFilterMapOp
 {
-  public FeatureFilter getFilter();
+  BoundaryFeatureFilter _filter = new BoundaryFeatureFilter();
   
-  public void populateJobParameters(Job job) throws IOException;
+  @Override
+  public FeatureFilter getFilter()
+  {
+    return _filter;
+  }
+  
+  public static String[] register()
+  {
+    return new String[] { "boundary" };
+  }
+
+  @Override
+  public String toString()
+  {
+    return String.format("BoundaryMapOp %s",
+       _outputName == null ? "null" : _outputName.toString() );
+  }
 }

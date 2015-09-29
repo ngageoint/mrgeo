@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
 import java.util.Vector;
 
 import org.mrgeo.featurefilter.BufferFeatureFilter;
 import org.mrgeo.featurefilter.FeatureFilter;
-import org.mrgeo.mapalgebra.old.ParserAdapterHadoop;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 
 public class VectorBufferMapOp extends FeatureFilterMapOp

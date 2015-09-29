@@ -13,31 +13,16 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra;
+package org.mrgeo.mapalgebra.old;
 
-import org.mrgeo.featurefilter.ConvexHullFeatureFilter;
+import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.featurefilter.FeatureFilter;
 
-public class ConvexHullMapOp extends FeatureFilterMapOp
+import java.io.IOException;
+
+public interface InputFormatDescriptor
 {
-  ConvexHullFeatureFilter _filter = new ConvexHullFeatureFilter();
+  public FeatureFilter getFilter();
   
-  @Override
-  public FeatureFilter getFilter()
-  {
-    return _filter;
-  }
-  
-  public static String[] register()
-  {
-    return new String[] { "convexhull" };
-  }
-
-  @Override
-  public String toString()
-  {
-    return String.format("ConvexHullMapOp %s",
-       _outputName == null ? "null" : _outputName.toString() );
-  }
-
+  public void populateJobParameters(Job job) throws IOException;
 }
