@@ -5,6 +5,7 @@ import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.ProviderProperties
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.spark.job.JobArguments
@@ -38,8 +39,11 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
     case Some(pyramid) =>
 
       rasterRDD = pyramid.rdd()
-      metadata(
-        pyramid.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName)))
+      val meta = new MrsImagePyramidMetadata(pyramid.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName)))
+
+      // set the pyramid name to the output
+      meta.setPyramid(output)
+      metadata(meta)
 
       pyramid.save(output, providerProperties, context)
 

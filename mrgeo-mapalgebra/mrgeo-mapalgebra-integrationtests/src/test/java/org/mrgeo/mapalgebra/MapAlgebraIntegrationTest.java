@@ -24,21 +24,12 @@ import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.MrsPyramidMapOpHadoop;
-import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
-import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.old.LogarithmMapOp;
-import org.mrgeo.old.RawBinaryMathMapOpHadoop;
-import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.OpImageTestUtils;
@@ -90,8 +81,11 @@ private static final String allhundredshalf = "all-hundreds-shifted-half";
 private static Path allhundredshalfPath;
 private static final String allhundredsup = "all-hundreds-shifted-up";
 private static Path allhundredsupPath;
+private static final String allonesnopyramids = "all-ones-no-pyramids";
 private static final String allonesholes = "all-ones-with-holes";
 private static final String allhundredsholes = "all-hundreds-with-holes";
+
+private static String smallslope = Defs.INPUT +"SmallSlopeBaseline.tif";
 
 private static final String regularpoints = "regular-points";
 private static Path regularpointsPath;
@@ -104,7 +98,7 @@ private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationT
 //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
-  private ProviderProperties props = null;
+private ProviderProperties props = null;
 
 @Before
 public void setup()
@@ -169,11 +163,16 @@ public static void init() throws IOException
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
   regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
 
+
   HadoopFileUtils
       .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
   smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
 
-  File file = new File(smallElevation);
+
+  File file = new File(smallslope);
+  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
+
+  file = new File(smallElevation);
   smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
 
   file = new File(greece);
@@ -288,6 +287,249 @@ public void aspectRad() throws Exception
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         String.format("aspect([%s], \"rad\")", smallElevation));
   }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramid() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("buildPyramid([%s])", path), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("buildPyramid([%s])", path));
+
+    // levels should exist
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramidAfterSave() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("buildpyramid(save([%s] + 1, \"%s\"))", path, testUtils.getOutputHdfsFor("save-test")), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("buildpyramid(save([%s] + 1, \"%s\"))", path, testUtils.getOutputHdfsFor("save-test")));
+
+    // levels should exist for save-test
+    metadata = testUtils.getImageMetadata("save-test");
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+    // but not for allones
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      if (i != md.length - 1)
+      {
+        Assert.assertNull("Level name should be missing", d.name);
+        Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+        Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+        Assert.assertNull("Stats should be missing", d.stats);
+      }
+      else
+      {
+        Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+        Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+        Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+        Assert.assertNotNull("Stats missing", d.stats);
+      }
+    }
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramidAlternate() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("bp([%s])", path), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("bp([%s])", path));
+
+    // levels should exist
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+  }
+}
+
+@Test(expected = DataProviderNotFound.class)
+@Category(IntegrationTest.class)
+public void buildpyramidDoesNotExist() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+  testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("buildpyramid([%s] + 1)", path));
 }
 
 @Test
@@ -715,6 +957,25 @@ public void hillshade() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void ingest() throws Exception
+{
+//    java.util.Properties prop = MrGeoProperties.getInstance();
+//    prop.setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("ingest(\"%s\")", smallslope), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        String.format("ingest(\"%s\")", smallslope));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void isNodata() throws Exception
 {
 //    java.util.Properties prop = MrGeoProperties.getInstance();
@@ -996,53 +1257,16 @@ public void orderOfOperations() throws Exception
 @Category(UnitTest.class)
 public void parse1() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", null);
   final String ex = String.format("[%s] + [%s]", smallElevation, smallElevation);
-
-  // expected
-  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
-  expRoot.setFunctionName("+");
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop pyramidOp1 = new MrsPyramidMapOpHadoop();
-  pyramidOp1.setDataProvider(elevationDataProvider);
-
-  final MrsPyramidMapOpHadoop pyramidOp2 = new MrsPyramidMapOpHadoop();
-  pyramidOp2.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp1);
-  expRoot.addInput(pyramidOp2);
-
-  final MapOpHadoop mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
+  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
 @Test
 @Category(UnitTest.class)
 public void parse2() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", null);
   final String ex = String.format("[%s] * 15", smallElevation);
-
-  // expected
-  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
-  expRoot.setFunctionName("*");
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop mapOp1 = new MrsPyramidMapOpHadoop();
-  mapOp1.setDataProvider(elevationDataProvider);
-
-  final RenderedImageMapOp mapOp2 = new RenderedImageMapOp();
-  mapOp2.setRenderedImageFactory(new ConstantDescriptor());
-  mapOp2.getParameters().add(new Double(15));
-
-  expRoot.addInput(mapOp1);
-  expRoot.addInput(mapOp2);
-
-  final MapOpHadoop mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
+  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
 @Test
@@ -1050,104 +1274,68 @@ public void parse2() throws Exception
 public void parse3() throws Exception
 {
   final String ex = String.format("log([%s])", smallElevation);
-
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  // expected
-  final LogarithmMapOp expRoot = new LogarithmMapOp();
-  expRoot.getParameters().add(new Double(0));
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop pyramidOp = new MrsPyramidMapOpHadoop();
-  pyramidOp.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp);
-
-  final MapOpHadoop mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
-
-  // now add a search path and see if you get the same results
-  final String ex1 = String.format("log([%s])", smallElevation);
-
-//    Path p = new Path(smallElevation);
-//    p = p.getParent();
-//    uut.addPath(p.toString());
-
-  final MapOpHadoop mo1 = uut.parse(ex1);
-  assertMapOp(expRoot, mo1);
+  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parse4() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("log([%s/abc])", testUtils.getInputHdfs().toString());
 
-  uut.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = IllegalArgumentException.class)
+@Test
 @Category(UnitTest.class)
 public void parse5() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-  System.err.println(testUtils.getInputHdfs().toString());
   final String ex = String.format("[%s] * 15", testUtils.getInputHdfs().toString());
 
-  uut.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidArguments1() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("[%s] + ", smallElevation);
 
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidArguments2() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("abs [%s] [%s] ", smallElevation, smallElevation);
 
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidArguments3() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("con[%s] + ", smallElevation);
 
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidArguments4() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = "costDistance";
-
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidOperation() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
-  // String ex = String.format("[%s] & [%s]", allones, _blur2);
   final String ex = String.format("[%s] & [%s]", smallElevation, smallElevation);
-
-  parser.parse(ex);
+  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
 }
 
 @Test
@@ -1166,84 +1354,6 @@ public void pow() throws Exception
         String.format("pow([%s], 1.2)", allhundreds));
 
   }
-}
-
-@Test
-@Category(UnitTest.class)
-public void rasterExistsDefaultSearchPath() throws Exception
-{
-  final Path p = new Path(smallElevation).getParent();
-  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, p.toString());
-
-  final String expr = String.format("a = [%s] + [%s]", smallElevationName, smallElevationName);
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  // expected
-  final RawBinaryMathMapOpHadoop expRoot = new RawBinaryMathMapOpHadoop();
-  expRoot.setFunctionName("+");
-
-  MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(smallElevationName,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop mapOp1 = new MrsPyramidMapOpHadoop();
-  mapOp1.setDataProvider(provider);
-
-  final MrsPyramidMapOpHadoop mapOp2 = new MrsPyramidMapOpHadoop();
-  mapOp2.setDataProvider(provider);
-
-  expRoot.addInput(mapOp1);
-  expRoot.addInput(mapOp2);
-
-  final MapOpHadoop mo = uut.parse(expr);
-  assertMapOp(expRoot, mo);
-}
-
-@Test
-@Category(UnitTest.class)
-public void rasterExistsFullyQualifiedPath() throws Exception
-{
-  final String ex = String.format("log([%s])", smallElevation);
-
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  // expected
-  final LogarithmMapOp expRoot = new LogarithmMapOp();
-  expRoot.getParameters().add(new Double(0));
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOpHadoop pyramidOp = new MrsPyramidMapOpHadoop();
-  pyramidOp.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp);
-
-  // add the parent path of the HDFS version to the search path, we shouldn't
-  // find it...
-//    final Path p = smallElevationPath.getParent();
-//    uut.addPath(p.toString());
-
-  final MapOpHadoop mo1 = uut.parse(ex);
-  assertMapOp(expRoot, mo1);
-}
-
-
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void rasterNotExistsDefaultSearchPath() throws Exception
-{
-  final String expr = "a = ([something.tif])";
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  uut.parse(expr);
-}
-
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void rasterNotExistsUserDefinedSearchPath() throws Exception
-{
-  final String expr = "a = [thingone.tif] + " + "[thingtwo.tif];";
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-//    uut.addPath(testUtils.getInputHdfs().toString());
-  uut.parse(expr);
 }
 
 
@@ -1421,13 +1531,13 @@ public void variables2() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("\n\na = [%s];\n\nb = 3;\na \t\n+ [%s] \n- b\n\n", allones, allones), -9999);
+        String.format("\n\na = [%s];\n\nb = 3;\na \t + [%s] - b\n\n", allones, allones), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        String.format("\n\na = [%s];\n\nb = 3;\na \t\n+ [%s] \n- b\n\n", allones, allones));
+        String.format("\n\na = [%s];\n\nb = 3;\na \t+ [%s] - b\n\n", allones, allones));
   }
 }
 
@@ -1445,7 +1555,6 @@ public void variables3() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
-
   }
 }
 
@@ -1500,46 +1609,4 @@ public void rasterizeVector3() throws Exception
   }
 }
 
-// asserts the expected Mapop against the actual Mapop generated when parse is
-// called
-// as more unit tests are added this method will need additional code to deal
-// with the
-// specific map ops being tested
-private void assertMapOp(final MapOpHadoop expMo, final MapOpHadoop mo)
-{
-  Assert.assertEquals(expMo.getClass().getName(), mo.getClass().getName());
-  if (expMo instanceof RenderedImageMapOp)
-  {
-    final RenderedImageMapOp rendExpMapOp = (RenderedImageMapOp) expMo;
-    final RenderedImageMapOp rendMo = (RenderedImageMapOp) mo;
-    Assert.assertEquals(rendExpMapOp.getRenderedImageFactory().getClass().getName(), rendMo
-        .getRenderedImageFactory().getClass().getName());
-    Assert.assertEquals(rendExpMapOp.getParameters().getNumParameters(), rendMo.getParameters()
-        .getNumParameters());
-    for (int i = 0; i < rendExpMapOp.getParameters().getNumParameters(); i++)
-    {
-      if (rendExpMapOp.getParameters().getObjectParameter(i) instanceof Double)
-      {
-        Assert.assertTrue(Double.compare(rendExpMapOp.getParameters().getDoubleParameter(i),
-            rendMo.getParameters().getDoubleParameter(i)) == 0);
-      }
-      else
-      {
-        Assert.assertEquals(rendExpMapOp.getParameters().getObjectParameter(i), rendMo
-            .getParameters().getObjectParameter(i));
-      }
-    }
-  }
-  else if (expMo instanceof MrsPyramidMapOpHadoop)
-  {
-    final MrsPyramidMapOpHadoop pyrExpMo = (MrsPyramidMapOpHadoop) expMo;
-    final MrsPyramidMapOpHadoop pyrMo = (MrsPyramidMapOpHadoop) mo;
-    Assert.assertEquals(pyrExpMo.getOutputName(), pyrMo.getOutputName());
-  }
-  Assert.assertEquals(expMo.getInputs().size(), mo.getInputs().size());
-  for (int u = 0; u < expMo.getInputs().size(); u++)
-  {
-    assertMapOp(expMo.getInputs().get(u), mo.getInputs().get(u));
-  }
-}
 }

@@ -15,7 +15,6 @@
 
 package org.mrgeo.mapalgebra
 
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 
 object AspectMapOp extends MapOpRegistrar {

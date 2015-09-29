@@ -15,6 +15,7 @@
 
 package org.mrgeo.spark.job
 
+import org.apache.spark.Logging
 import org.mrgeo.data.DataProviderFactory
 
 import collection.JavaConversions.asScalaSet
@@ -25,7 +26,7 @@ import org.mrgeo.utils.{FileUtils, Memory}
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConversions._
 
-class JobArguments() {
+class JobArguments() extends Logging {
 
   final private val NAME:String =  "name"
   final private val CLUSTER:String =  "cluster"
@@ -285,13 +286,13 @@ class JobArguments() {
 
   def useYarn(): Unit = {
     cluster = YARN
-    println("Setting cluster to: " + cluster)
+    logInfo("Setting cluster to: " + cluster)
 
   }
 
   def useDebug(): Unit = {
     cluster = LOCAL + "[1]"
-    println("Setting cluster to: " + cluster)
+    logInfo("Setting cluster to: " + cluster)
 
     setupMemory()
   }
@@ -305,7 +306,7 @@ class JobArguments() {
       cluster = LOCAL+"[" + (cores.toDouble * 0.75).round + "]"
     }
 
-    println("Setting cluster to: " + cluster)
+    logInfo("Setting cluster to: " + cluster)
 
     setupMemory()
   }
@@ -318,7 +319,7 @@ class JobArguments() {
       cluster = SPARK + master
     }
 
-    println("Setting cluster to: " + cluster)
+    logInfo("Setting cluster to: " + cluster)
   }
 
 
@@ -348,7 +349,7 @@ class JobArguments() {
     if (maxMem != Long.MaxValue) {
       val mem = (maxMem * 0.95).round
       memoryKb = mem
-      println("Setting max memory to: " + Memory.format(mem))
+      logInfo("Setting max memory to: " + Memory.format(mem))
     }
   }
 

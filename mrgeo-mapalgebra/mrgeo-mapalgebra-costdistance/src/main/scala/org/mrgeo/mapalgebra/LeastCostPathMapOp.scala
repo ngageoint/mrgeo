@@ -3,7 +3,6 @@ package org.mrgeo.mapalgebra
 import java.io.{ObjectInput, ObjectOutput, Externalizable}
 
 import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.spark.job.JobArguments
 

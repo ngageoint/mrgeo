@@ -322,7 +322,7 @@ abstract class MrGeoDriver extends Logging {
       //}
     }
 
-    val dpfDependencies = DataProviderFactory.getDependencies()
+    val dpfDependencies = DataProviderFactory.getDependencies
     val dpfQualified = DependencyLoader.copyDependencies(dpfDependencies, hadoopConf)
     for (jar <- dpfQualified) {
       // spark-yarn is automatically included in yarn jobs, and adding it here conflicts...

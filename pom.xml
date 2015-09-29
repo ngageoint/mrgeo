@@ -68,7 +68,6 @@
     <jts.version>1.13</jts.version>
     <kryo.version>2.21</kryo.version>
     <mahout.version>0.9-cdh5.3.0</mahout.version>
-    <pig.version>0.12.0-cdh5.3.0</pig.version>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
     <reflections.version>0.9.9-RC1</reflections.version>
@@ -738,7 +737,6 @@
          |   <properties>
          |     <hadoop.version></hadoop.version>
          |     <mahout.version></mahout.version>
-         |     <pig.version></pig.version>
          |     <hadoop.config></hadoop.config>
          |     <slf4j.version></slf4j.version>
          |     <final.classifier></final.classifier>
@@ -748,7 +746,6 @@
          |
          | hadoop-version - the dependency version number
          | mahout.version - the apache mahout version corresponding to the hadoop version
-         | pig.version - the apache pig version corresponding to the hadoop version
          | hadoop.config - the path to the hadoop config files (used for tests), usually /etc/hadoop/conf
          | slf4j.version - the slf4j version to use, this version must not conflict with the hadoop slf4j version
          | final.classifier - the classifier for the final (distribution) artifacts, usually the hadoop version without
@@ -760,7 +757,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.7</hadoop.version>
         <mahout.version>0.9-cdh5.4.7</mahout.version>
-        <pig.version>0.12.0-cdh5.4.7</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
         <spark.scope>compile</spark.scope>
@@ -768,14 +764,6 @@
         <final.classifier>cdh5.4.7</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH547</id>
@@ -783,7 +771,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.7</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.7</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.7</mahout.version>
-        <pig.version>0.12.0-cdh5.4.7</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -791,12 +778,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -811,7 +792,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.5</hadoop.version>
         <mahout.version>0.9-cdh5.4.5</mahout.version>
-        <pig.version>0.12.0-cdh5.4.5</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
         <spark.scope>compile</spark.scope>
@@ -820,12 +800,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -834,7 +808,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.5</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.5</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.5</mahout.version>
-        <pig.version>0.12.0-cdh5.4.5</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -842,12 +815,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -862,7 +829,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.4</hadoop.version>
         <mahout.version>0.9-cdh5.4.4</mahout.version>
-        <pig.version>0.12.0-cdh5.4.4</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
         <spark.scope>compile</spark.scope>
@@ -870,14 +836,6 @@
         <final.classifier>cdh5.4.4</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH544</id>
@@ -885,7 +843,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.4</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.4</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.4</mahout.version>
-        <pig.version>0.12.0-cdh5.4.4</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -893,12 +850,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -913,7 +864,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.3</hadoop.version>
         <mahout.version>0.9-cdh5.4.3</mahout.version>
-        <pig.version>0.12.0-cdh5.4.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
         <spark.scope>compile</spark.scope>
@@ -921,14 +871,6 @@
         <final.classifier>cdh5.4.3</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH543</id>
@@ -936,7 +878,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.3</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.3</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.3</mahout.version>
-        <pig.version>0.12.0-cdh5.4.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -944,12 +885,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -964,7 +899,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.2</hadoop.version>
         <mahout.version>0.9-cdh5.4.2</mahout.version>
-        <pig.version>0.12.0-cdh5.4.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
         <spark.scope>compile</spark.scope>
@@ -972,14 +906,6 @@
         <final.classifier>cdh5.4.2</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH542</id>
@@ -987,7 +913,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.2</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.2</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.2</mahout.version>
-        <pig.version>0.12.0-cdh5.4.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -995,12 +920,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1015,7 +934,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.1</hadoop.version>
         <mahout.version>0.9-cdh5.4.1</mahout.version>
-        <pig.version>0.12.0-cdh5.4.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1023,14 +941,6 @@
         <final.classifier>cdh5.4.1</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH541</id>
@@ -1038,7 +948,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.1</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.1</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.1</mahout.version>
-        <pig.version>0.12.0-cdh5.4.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -1046,12 +955,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1066,7 +969,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.0</hadoop.version>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
-        <pig.version>0.12.0-cdh5.4.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1074,14 +976,6 @@
         <final.classifier>cdh5.4.0</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH540</id>
@@ -1089,7 +983,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.0</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.0</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
-        <pig.version>0.12.0-cdh5.4.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -1097,12 +990,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1117,7 +1004,6 @@
       <properties>
         <hadoop.version>2.5.0-cdh5.3.3</hadoop.version>
         <mahout.version>0.9-cdh5.3.3</mahout.version>
-        <pig.version>0.12.0-cdh5.3.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1125,14 +1011,6 @@
         <final.classifier>cdh5.3.3</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH533</id>
@@ -1140,7 +1018,6 @@
         <hadoop.version>2.5.0-mr1-cdh5.3.3</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.3</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.3</mahout.version>
-        <pig.version>0.12.0-cdh5.3.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
@@ -1148,12 +1025,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1168,7 +1039,6 @@
       <properties>
         <hadoop.version>2.5.0-cdh5.3.2</hadoop.version>
         <mahout.version>0.9-cdh5.3.2</mahout.version>
-        <pig.version>0.12.0-cdh5.3.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1176,14 +1046,6 @@
         <final.classifier>cdh5.3.2</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH532</id>
@@ -1191,7 +1053,6 @@
         <hadoop.version>2.5.0-mr1-cdh5.3.2</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.2</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.2</mahout.version>
-        <pig.version>0.12.0-cdh5.3.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
@@ -1199,12 +1060,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1219,7 +1074,6 @@
       <properties>
         <hadoop.version>2.5.0-cdh5.3.1</hadoop.version>
         <mahout.version>0.9-cdh5.3.1</mahout.version>
-        <pig.version>0.12.0-cdh5.3.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1227,14 +1081,6 @@
         <final.classifier>cdh5.3.1</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH531</id>
@@ -1242,7 +1088,6 @@
         <hadoop.version>2.5.0-mr1-cdh5.3.1</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.1</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.1</mahout.version>
-        <pig.version>0.12.0-cdh5.3.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
@@ -1250,12 +1095,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1270,7 +1109,6 @@
       <properties>
         <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
-        <pig.version>0.12.0-cdh5.3.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1278,14 +1116,6 @@
         <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH530</id>
@@ -1293,7 +1123,6 @@
         <hadoop.version>2.5.0-mr1-cdh5.3.0</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.0</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
-        <pig.version>0.12.0-cdh5.3.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
@@ -1301,12 +1130,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1321,7 +1144,6 @@
       <properties>
         <hadoop.version>2.2.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1330,12 +1152,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1350,7 +1166,6 @@
       <properties>
         <hadoop.version>2.3.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1359,12 +1174,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1379,7 +1188,6 @@
       <properties>
         <hadoop.version>2.4.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1388,12 +1196,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1408,7 +1210,6 @@
       <properties>
         <hadoop.version>2.4.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1417,12 +1218,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1437,7 +1232,6 @@
       <properties>
         <hadoop.version>2.5.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1446,12 +1240,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1466,7 +1254,6 @@
       <properties>
         <hadoop.version>2.5.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1475,12 +1262,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1495,7 +1276,6 @@
       <properties>
         <hadoop.version>2.5.2</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1504,12 +1284,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1524,7 +1298,6 @@
       <properties>
         <hadoop.version>2.6.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1533,12 +1306,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1565,7 +1332,6 @@
         <hadoop.version>2.4.0</hadoop.version>
         <accumulo.version>1.6.1</accumulo.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.scope>compile</spark.scope>
@@ -1717,25 +1483,6 @@
       </properties>
     </profile>
     <profile>
-      <id>skip-pig-unit-tests</id>
-      <properties>
-        <skip.mrgeo.pig.tests>true</skip.mrgeo.pig.tests>
-      </properties>
-    </profile>
-    <profile>
-      <id>skip-pig-integration-tests</id>
-      <properties>
-        <skip.mrgeo.pig.integration.tests>true</skip.mrgeo.pig.integration.tests>
-      </properties>
-    </profile>
-    <profile>
-      <id>skip-pig-tests</id>
-      <properties>
-        <skip.mrgeo.pig.tests>true</skip.mrgeo.pig.tests>
-        <skip.mrgeo.pig.integration.tests>true</skip.mrgeo.pig.integration.tests>
-      </properties>
-    </profile>
-    <profile>
       <id>skip-services-unit-tests</id>
       <properties>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
@@ -1781,7 +1528,6 @@
         <skip.mrgeo.mapalgebra.tests>true</skip.mrgeo.mapalgebra.tests>
         <skip.mrgeo.dataprovider.tests>true</skip.mrgeo.dataprovider.tests>
         <skip.mrgeo.cmd.tests>true</skip.mrgeo.cmd.tests>
-        <skip.mrgeo.pig.tests>true</skip.mrgeo.pig.tests>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
       </properties>
     </profile>
@@ -1794,7 +1540,6 @@
         <skip.mrgeo.mapalgebra.integration.tests>true</skip.mrgeo.mapalgebra.integration.tests>
         <skip.mrgeo.dataprovider.integration.tests>true</skip.mrgeo.dataprovider.integration.tests>
         <skip.mrgeo.cmd.integration.tests>true</skip.mrgeo.cmd.integration.tests>
-        <skip.mrgeo.pig.integration.tests>true</skip.mrgeo.pig.integration.tests>
       </properties>
     </profile>
     <profile>
@@ -1810,8 +1555,6 @@
         <skip.mrgeo.dataprovider.integration.tests>true</skip.mrgeo.dataprovider.integration.tests>
         <skip.mrgeo.cmd.tests>true</skip.mrgeo.cmd.tests>
         <skip.mrgeo.cmd.integration.tests>true</skip.mrgeo.cmd.integration.tests>
-        <skip.mrgeo.pig.tests>true</skip.mrgeo.pig.tests>
-        <skip.mrgeo.pig.integration.tests>true</skip.mrgeo.pig.integration.tests>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
         <skip.mrgeo.services.integration.tests>true</skip.mrgeo.services.integration.tests>
       </properties>
@@ -1831,7 +1574,6 @@
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
-        <module>mrgeo-pig</module>
         <module>mrgeo-services</module>
         <module>distribution</module>
       </modules>
@@ -1903,20 +1645,6 @@
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>build-pig</id>
-      <activation>
-        <property>
-          <name>modules</name>
-          <value>pig</value>
-        </property>
-      </activation>
-      <modules>
-        <module>mrgeo-vector</module>
-        <module>mrgeo-mapalgebra</module>
-        <module>mrgeo-pig</module>
       </modules>
     </profile>
     <profile>
@@ -2086,11 +1814,6 @@
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-vector</artifactId>
-        <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-pig</artifactId>
         <version>${mrgeo.version}</version>
       </dependency>
       <dependency>
@@ -2350,65 +2073,6 @@
         <artifactId>spark-yarn_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
         <scope>${spark.scope}</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.pig</groupId>
-        <artifactId>pig</artifactId>
-        <version>${pig.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <!-- hbase was including jruby-complete, which causes problems, we'll
-               exclude it here.  If hbase support is needed, we'll have to find a
-               workaround -->
-          <exclusion>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase</artifactId>
-          </exclusion>
-          <!-- pig includes an old version of hsqldb that is not compatible
-               with geotools 12.1. Geotools uses hsqldb for looking up
-               EPSG coordinate systems -->
-          <exclusion>
-            <groupId>hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-          </exclusion>
-          <!-- a later version of these Jackson dependencies are being used by Jersey in
-               mrgeo-services, and these cause problems -->
-          <exclusion>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-core-asl</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-mapper-asl</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api-2.5</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.thoughtworks.paranamer</groupId>
-            <artifactId>paranamer</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-net</groupId>
-            <artifactId>commons-net</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.accumulo</groupId>

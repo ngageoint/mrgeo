@@ -4,10 +4,8 @@ package org.mrgeo.mapalgebra
 import java.io.File
 import java.lang.reflect.Modifier
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.sym
 import org.apache.spark.Logging
 import org.mrgeo.core.MrGeoProperties
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
@@ -34,7 +32,7 @@ object MapOpFactory extends Logging {
       case mapop: MapOpRegistrar =>
         logInfo("  " + mapop)
         mapop.register.foreach(op => {
-          functions.put(op, mapop)
+          functions.put(op.toLowerCase, mapop)
         })
       case _ =>
       }
@@ -59,7 +57,7 @@ object MapOpFactory extends Logging {
       registerFunctions()
     }
 
-    functions.get(node.getName) match {
+    functions.get(node.getName.toLowerCase) match {
     case Some(mapop) =>
       val op = mapop.apply(node, variables)
       Some(op)

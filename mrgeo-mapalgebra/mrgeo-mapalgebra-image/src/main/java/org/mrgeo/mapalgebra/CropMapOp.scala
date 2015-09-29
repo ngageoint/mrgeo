@@ -6,7 +6,6 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
@@ -14,7 +13,7 @@ import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 object CropMapOp extends MapOpRegistrar {
   private[mapalgebra] val Crop = "crop"
-  private[mapalgebra] val CropExact = "cropExact"
+  private[mapalgebra] val CropExact = "cropexact"
 
   override def register: Array[String] = {
     Array[String](Crop, CropExact)

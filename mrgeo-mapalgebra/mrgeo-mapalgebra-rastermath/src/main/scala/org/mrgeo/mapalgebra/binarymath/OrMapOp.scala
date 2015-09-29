@@ -1,9 +1,8 @@
 package org.mrgeo.mapalgebra.binarymath
 
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.MapOp
+import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
 
 object OrMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

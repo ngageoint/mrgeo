@@ -24,7 +24,6 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.mapalgebra.old.MapOpRegistrar
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.job.JobArguments
@@ -123,6 +122,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       case Some(d) =>
         maxCost = if (d < 0) -1 else d
         nodeIndex += 1
+      case _ =>
       }
     }
 

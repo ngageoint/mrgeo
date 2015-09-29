@@ -434,6 +434,9 @@ object SparkUtils extends Logging {
       metadata.setTileType(tile.getTransferType)
     }
 
+    metadata.setName(zoom, zoom.toString)
+
+
     val bands = metadata.getBands
     // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
     // on.  This can be a problem for fast calculating/small partitions
@@ -669,6 +672,8 @@ object SparkUtils extends Logging {
 
     val bounds = calculateBounds(rdd, zoom, tilesize)
     meta.setBounds(bounds)
+
+    meta.setName(zoom, zoom.toString)
 
     val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), zoom, tilesize)
     meta.setTileBounds(zoom, tb.toLongRectangle)
