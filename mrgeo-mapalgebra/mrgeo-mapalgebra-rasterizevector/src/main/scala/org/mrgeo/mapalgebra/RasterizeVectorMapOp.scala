@@ -174,7 +174,13 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
 
     aggregationType = MapOp.decodeString(node.getChild(1)) match {
     case Some(aggType) =>
-      RasterizeVectorPainter.AggregationType.valueOf(aggType.toUpperCase)
+      try {
+        RasterizeVectorPainter.AggregationType.valueOf(aggType.toUpperCase)
+      }
+      catch {
+        case e: java.lang.IllegalArgumentException => throw new ParserException("Aggregation type must be one of: " +
+            StringUtils.join(RasterizeVectorPainter.AggregationType.values, ", "))
+      }
     case None =>
       throw new ParserException("Aggregation type must be one of: " + StringUtils.join(RasterizeVectorPainter.AggregationType.values, ", "))
     }

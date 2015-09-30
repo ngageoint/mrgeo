@@ -48,7 +48,9 @@ public class JexlParserAdapter implements ParserAdapter
     twoArgFunctions.put(ASTDivNode.class, "/");
     twoArgFunctions.put(ASTMulNode.class, "*");
     twoArgFunctions.put(ASTAndNode.class, "&&");
+    twoArgFunctions.put(ASTBitwiseAndNode.class, "&");
     twoArgFunctions.put(ASTOrNode.class, "||");
+    twoArgFunctions.put(ASTBitwiseOrNode.class, "|");
   }
 
   @Override

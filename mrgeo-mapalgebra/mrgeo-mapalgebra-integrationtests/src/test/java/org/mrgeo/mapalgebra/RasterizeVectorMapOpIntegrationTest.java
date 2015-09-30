@@ -16,12 +16,17 @@
 package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.junit.UnitTest;
+import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.OpImageTestUtils;
@@ -206,73 +211,73 @@ public void rasterizeLast() throws Exception
 
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void testProcessChildrenLastWithoutColumn() throws Exception
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void lastWithoutColumn() throws Exception
 {
   String exp = "RasterizeVector([" + hdfsShapefile + "], \"LAST\", 0.0001716614)";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void testProcessChildrenMaskWithColumn() throws Exception
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void maskWithColumn() throws Exception
 {
   String exp = "RasterizeVector([" + hdfsShapefile + "], \"MASK\", 0.0001716614, \"column\")";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
-@Category(IntegrationTest.class)
-public void testProcessChildrenSumWithoutColumnWithBounds() throws Exception
+@Category(UnitTest.class)
+public void sumWithoutColumnWithBounds() throws Exception
 {
   String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, 68.85, 34.25, 69.35, 34.75)";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void testProcessChildrenSumWithBadBounds3() throws Exception
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void sumWithBadBounds3() throws Exception
 {
   String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 68.85, 34.25, 69.35)";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void testProcessChildrenSumWithBadBounds2() throws Exception
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void sumWithBadBounds2() throws Exception
 {
   String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 34.25, 69.35)";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void testProcessChildrenSumWithBadBounds1() throws Exception
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void sumWithBadBounds1() throws Exception
 {
   String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 68.85)";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void testProcessChildrenBadAggregationType() throws Exception
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void badAggregationType() throws Exception
 {
   String exp = "RasterizeVector([" + hdfsShapefile + "], \"BAD\", 0.0001716614, \"column\", 68.85, -34.25, 69.35, -34.75)";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void testProcessChildrenMissingQuotesAggregationType() throws Exception
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void missingQuotesAggregationType() throws Exception
 {
   String exp = "RasterizeVector([" + hdfsShapefile + "], SUM, 0.0001716614, \"column\", 68.85, -34.25, 69.35, -34.75)";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
 @Category(IntegrationTest.class)
-public void testProcessChildrenVariable() throws Exception
+public void variable() throws Exception
 {
   String exp = String.format("a = [%s]; RasterizeVector(a, \"LAST\", 1, \"c\") ", hdfsShapefile);
   if (GEN_BASELINE_DATA_ONLY)
