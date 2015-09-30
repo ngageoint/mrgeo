@@ -390,7 +390,13 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
 
       val sssp = runGraph(graph, startTileId, zoomLevel, res,
         startPixel.px.toShort, startPixel.py.toShort, width, height)
-      val verticesWritable = sssp.vertices.map(U => {
+
+      // Be sure to filter out any graph vertices that are null. This occurs when
+      // the friction surface has missing tiles. The graph still contains a vertex
+      // but its value is null.
+      val verticesWritable = sssp.vertices.filter(U => {
+        (U._2 != null)
+      }).map(U => {
         // Need to convert our raster to a single band raster for output.
         val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, 1)
         val singleBandRaster = Raster.createWritableRaster(model, null)
@@ -585,7 +591,7 @@ class CostDistanceDriver extends MrGeoJob with Externalizable {
         // vertex/tile relative to the destination vertex/tile, so we use that relationship
         // to determine the neighboring pixels in the destination to check.
         var newChanges: ChangedPoints = null
-        if (triplet.srcAttr.changedPoints != null) {
+        if (triplet.srcAttr.changedPoints != null && triplet.dstAttr != null) {
           log.debug("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
           if (!triplet.srcAttr.changedPoints.isEmpty) {
             newChanges = new ChangedPoints(false)
