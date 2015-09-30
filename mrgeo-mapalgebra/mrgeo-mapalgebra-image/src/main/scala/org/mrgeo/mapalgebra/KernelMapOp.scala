@@ -8,7 +8,6 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.kernel.{LaplacianGeographicKernel, GaussianGeographicKernel}
-import org.mrgeo.mapalgebra.old.KernelMapOpHadoop
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
@@ -93,9 +92,9 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     }
 
     val kernel = method match {
-    case KernelMapOpHadoop.Gaussian =>
+    case KernelMapOp.Gaussian =>
       new GaussianGeographicKernel(sigma)
-    case KernelMapOpHadoop.Laplacian =>
+    case KernelMapOp.Laplacian =>
       new LaplacianGeographicKernel(sigma)
     }
 
@@ -125,9 +124,9 @@ class KernelMapOp extends RasterMapOp with Externalizable {
 
       // kernel is not serializable, so we need to create a new one each time.
       val kernel = method match {
-      case KernelMapOpHadoop.Gaussian =>
+      case KernelMapOp.Gaussian =>
         new GaussianGeographicKernel(sigma)
-      case KernelMapOpHadoop.Laplacian =>
+      case KernelMapOp.Laplacian =>
         new LaplacianGeographicKernel(sigma)
       }
 

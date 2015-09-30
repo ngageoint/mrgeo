@@ -1,4 +1,4 @@
-package org.mrgeo.rasterops;
+package org.mrgeo.leastcostpath;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -20,7 +20,6 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 public class LeastCostPathCalculator

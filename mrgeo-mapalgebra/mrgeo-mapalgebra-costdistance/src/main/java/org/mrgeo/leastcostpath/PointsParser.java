@@ -1,4 +1,4 @@
-package org.mrgeo.rasterops;
+package org.mrgeo.leastcostpath;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
