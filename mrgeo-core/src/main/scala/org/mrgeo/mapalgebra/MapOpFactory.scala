@@ -43,6 +43,25 @@ object MapOpFactory extends Logging {
     logInfo("Registration took " + time + "ms")
   }
 
+  def describe():Array[(String, String, String)] = {
+    val mapops = Array.newBuilder[(String, String, String)]
+
+    if (functions.isEmpty) {
+      registerFunctions()
+    }
+
+    functions.foreach(name => {
+      name._2 match {
+      case mapop =>
+        mapops += ((name._1, "TODO:  call mapop.description" /* mapop.description */ ,
+            "TODO: call mapop.usage" /* mapop.usage */ ))
+      case _ =>
+      }
+    })
+
+    mapops.result()
+  }
+
   def getMapOpClasses: scala.collection.immutable.Set[Class[_]] = {
     var result = Set.newBuilder[Class[_]]
     functions.values.foreach(c => {
