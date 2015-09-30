@@ -1,14 +1,14 @@
-package org.mrgeo.org.mrgeo.hdfs
+package org.mrgeo.hdfs.partitioners
 
-import java.io.{Externalizable, ObjectOutput, ObjectInput}
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.spark.rdd.RDD
 import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
-import org.mrgeo.hdfs.partitioners.{SparkTileIdPartitioner, SplitGenerator}
 import org.mrgeo.hdfs.tile.{FileSplit, PartitionerSplit}
 import org.mrgeo.utils.SparkUtils
 
@@ -40,7 +40,7 @@ class HdfsSparkTileIdPartitioner(splitGenerator: SplitGenerator)
     }
   }
 
-  def generateFileSplits(rdd:RDD[(TileIdWritable, RasterWritable)], pyramid:String, zoom:Int, conf:Configuration) = {
+  def generateFileSplits(rdd:RasterRDD, pyramid:String, zoom:Int, conf:Configuration) = {
     val fileSplits = new FileSplit
 
     val splitinfo = SparkUtils.calculateSplitData(rdd)

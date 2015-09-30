@@ -19,11 +19,9 @@ import java.io._
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.Partitioner
-import org.apache.spark.rdd.RDD
-import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.rdd.RasterRDD
 
 trait SparkTileIdPartitioner extends Partitioner with Externalizable
 {
-  def generateFileSplits(rdd:RDD[(TileIdWritable, RasterWritable)], pyramid:String, zoom:Int, conf:Configuration);
+  def generateFileSplits(rdd:RasterRDD, pyramid:String, zoom:Int, conf:Configuration)
 }

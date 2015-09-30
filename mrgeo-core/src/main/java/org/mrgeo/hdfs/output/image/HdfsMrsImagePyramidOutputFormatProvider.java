@@ -35,7 +35,7 @@ import org.mrgeo.hdfs.partitioners.ImageSplitGenerator;
 import org.mrgeo.hdfs.partitioners.TileIdPartitioner;
 import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.org.mrgeo.hdfs.HdfsSparkTileIdPartitioner;
+import org.mrgeo.hdfs.partitioners.HdfsSparkTileIdPartitioner;
 import org.mrgeo.hdfs.partitioners.SparkTileIdPartitioner;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
