@@ -1,10 +1,8 @@
 package org.mrgeo.mapalgebra
 
-import org.apache.spark.SparkContext
 import org.junit.experimental.categories.Category
 import org.junit.{Assert, Test}
 import org.mrgeo.data.ProviderProperties
-import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.junit.UnitTest
 import org.scalatest.junit.AssertionsForJUnit
 
