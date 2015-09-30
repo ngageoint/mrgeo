@@ -664,7 +664,6 @@ object SparkUtils extends Logging {
 
     meta.setBands(raster.getNumBands)
     meta.setTileType(raster.getTransferType)
-
     meta.setTilesize(tilesize)
 
     val nodatas = Array.fill[Double](meta.getBands)(nodata)
@@ -687,6 +686,7 @@ object SparkUtils extends Logging {
 
       meta.setImageStats(zoom, stats)
     }
+
     meta
   }
 

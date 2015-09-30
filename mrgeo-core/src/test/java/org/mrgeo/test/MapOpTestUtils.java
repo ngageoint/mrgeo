@@ -31,13 +31,12 @@ import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.rasterops.GeoTiffExporter;
 import org.mrgeo.rasterops.OpImageRegistrar;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
@@ -100,16 +99,14 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
         (ProviderProperties)null);
   final MrsImage image = pyramid.getHighestResImage();
 
-  Bounds bounds = pyramid.getBounds();
-  TMSUtils.Bounds tb = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
-      bounds.getMaxY());
-  tb = TMSUtils.tileBounds(tb, pyramid.getMaximumLevel(), pyramid.getMetadata().getTilesize());
-  bounds = new Bounds(tb.w, tb.s, tb.e, tb.n);
   try
   {
+    Raster raster = RasterTileMerger.mergeTiles(image);
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-    GeoTiffExporter
-        .export(image.getRenderedImage(bounds), bounds, baselineTif, false, nodata);
+
+    GDALUtils.saveRaster(raster, baselineTif.getCanonicalPath(),
+        image.getBounds(), image.getMaxZoomlevel(), image.getTilesize(), nodata);
+
   }
   finally
   {
