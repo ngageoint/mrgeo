@@ -4,7 +4,7 @@ import java.io._
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{MeanAggregator, AggregatorRegistry}
-import org.mrgeo.buildpyramid.BuildPyramidSpark
+import org.mrgeo.buildpyramid.BuildPyramid
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderNotFound, DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.rdd.RasterRDD
@@ -96,7 +96,7 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      BuildPyramidSpark.build(meta.getPyramid, agg, context, providerProperties)
+      BuildPyramid.build(meta.getPyramid, agg, context, providerProperties)
       true
     }
     catch {

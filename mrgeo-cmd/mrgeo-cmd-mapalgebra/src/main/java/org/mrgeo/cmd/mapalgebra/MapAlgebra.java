@@ -174,7 +174,7 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
 //    if (line.hasOption("b") && (root instanceof RasterMapOpHadoop))
 //    {
 //      System.out.println("Building pyramids...");
-//      BuildPyramidSpark.build(output, new MeanAggregator(), conf, providerProperties);
+//      BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties);
 //    }
 
     System.out.println("Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) /1000.0) + " seconds");

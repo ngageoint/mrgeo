@@ -26,7 +26,7 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.aggregators.*;
-import org.mrgeo.buildpyramid.BuildPyramidSpark;
+import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoConstants;
@@ -660,7 +660,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
             aggregator = new MinAvgPairAggregator();
           }
 
-          BuildPyramidSpark.build(output, aggregator, conf, providerProperties);
+          BuildPyramid.build(output, aggregator, conf, providerProperties);
         }
       }
       catch (Exception e)

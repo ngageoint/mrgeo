@@ -28,6 +28,7 @@ import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.{MrsTileReader, MrsTileWriter, TileIdWritable}
 import org.mrgeo.data.{ProviderProperties, CloseableKVIterator, DataProviderFactory, KVIterator}
 import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
@@ -39,7 +40,7 @@ import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
-object BuildPyramidSpark extends MrGeoDriver with Externalizable {
+object BuildPyramid extends MrGeoDriver with Externalizable {
 
   final private val Pyramid = "pyramid"
   final private val Aggregator = "aggregator"
@@ -52,7 +53,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 
     val args = setupArguments(pyramidName, aggregator, providerProperties)
 
-    run(name, classOf[BuildPyramidSpark].getName, args.toMap, conf)
+    run(name, classOf[BuildPyramid].getName, args.toMap, conf)
 
     true
   }
@@ -76,7 +77,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
   // this build method allows buildpyramid to be called from within an existing spark job...
   def build(pyramidName: String, aggregator: Aggregator, context:SparkContext,
       providerProperties: ProviderProperties):Boolean = {
-    val bp = new BuildPyramidSpark(pyramidName, aggregator, providerProperties)
+    val bp = new BuildPyramid(pyramidName, aggregator, providerProperties)
 
     bp.execute(context)
   }
@@ -111,7 +112,7 @@ object BuildPyramidSpark extends MrGeoDriver with Externalizable {
 }
 
 
-class BuildPyramidSpark extends MrGeoJob with Externalizable {
+class BuildPyramid extends MrGeoJob with Externalizable {
 
   var pyramidName:String = null
   var aggregator:Aggregator = null
@@ -140,13 +141,13 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
   }
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    pyramidName = job.getSetting(BuildPyramidSpark.Pyramid)
-    val aggclass = job.getSetting(BuildPyramidSpark.Aggregator, classOf[MeanAggregator].getName)
+    pyramidName = job.getSetting(BuildPyramid.Pyramid)
+    val aggclass = job.getSetting(BuildPyramid.Aggregator, classOf[MeanAggregator].getName)
 
     makeAggregator(aggclass)
 
     providerproperties = ProviderProperties.fromDelimitedString(
-      job.getSetting(BuildPyramidSpark.ProviderProperties))
+      job.getSetting(BuildPyramid.ProviderProperties))
 
     true
   }
@@ -183,7 +184,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
 
       // if we have less than 1000 tiles total, we'll use the local buildpyramid
       if (tb.getWidth * tb.getHeight > 1000) {
-        val pyramid = SparkUtils.loadMrsPyramidRDD(provider, fromlevel, context)
+        val pyramid = SparkUtils.loadMrsPyramid(provider, fromlevel, context)
 
         val decimated: RDD[(TileIdWritable, RasterWritable)] = pyramid.map(tile => {
           val fromkey = tile._1
@@ -239,7 +240,7 @@ class BuildPyramidSpark extends MrGeoJob with Externalizable {
         // make sure the level is deleted
         deletelevel(tolevel, metadata, provider)
 
-        SparkUtils.saveMrsPyramidRDD(mergedTiles, provider, tolevel,
+        SparkUtils.saveMrsPyramid(RasterRDD(mergedTiles), provider, tolevel,
           context.hadoopConfiguration, providerproperties = this.providerproperties)
 
         //TODO: Fix this in S3

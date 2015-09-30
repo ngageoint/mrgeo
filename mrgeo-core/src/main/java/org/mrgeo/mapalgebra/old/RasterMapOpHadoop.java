@@ -18,7 +18,7 @@ package org.mrgeo.mapalgebra.old;
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.aggregators.ModeAggregator;
-import org.mrgeo.buildpyramid.BuildPyramidSpark;
+import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
@@ -94,7 +94,7 @@ public abstract class RasterMapOpHadoop extends MapOpHadoop implements OutputPro
       {
         aggregator = new ModeAggregator();
       }
-      BuildPyramidSpark.build(_outputName, aggregator, createConfiguration(), getProviderProperties());
+      BuildPyramid.build(_outputName, aggregator, createConfiguration(), getProviderProperties());
     }
     p.complete();
   }

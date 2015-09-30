@@ -17,7 +17,7 @@ package org.mrgeo.mapalgebra.old;
 
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.aggregators.MeanAggregator;
-import org.mrgeo.buildpyramid.BuildPyramidSpark;
+import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
@@ -144,7 +144,7 @@ public class MapAlgebraJob implements RunnableJob
       if (op instanceof RasterMapOpHadoop)
       {        
         taskProg.starting();
-        BuildPyramidSpark.build(_output, new MeanAggregator(),
+        BuildPyramid.build(_output, new MeanAggregator(),
             conf, taskProg, null, providerProperties);
         taskProg.complete();
       }
