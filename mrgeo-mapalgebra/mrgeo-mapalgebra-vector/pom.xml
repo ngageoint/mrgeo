@@ -44,7 +44,18 @@
       </resource>
     </resources>
     <plugins>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+      </plugin>
       <!-- Unit Test plugin -->
+      <plugin>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-maven-plugin</artifactId>
+        <configuration>
+          <skipTests>${skip.mrgeo.mapalgebra.tests}</skipTests>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
@@ -83,6 +94,11 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-image</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${spark.scala.version}</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
