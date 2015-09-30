@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 @SuppressWarnings("static-method")
-public class RasterizeVectorMapOpIntegrationTest extends LocalRunnerTest
+public class RasterizeVectorMapOpTest extends LocalRunnerTest
 {
 @Rule
 public TestName testname = new TestName();
@@ -48,7 +48,7 @@ private static MapOpTestUtils testUtils;
 // tests won't be run when is set to true
 public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
-private static final Logger log = LoggerFactory.getLogger(RasterizeVectorMapOpIntegrationTest.class);
+private static final Logger log = LoggerFactory.getLogger(RasterizeVectorMapOpTest.class);
 private static String shapefile = "major_road_intersections_exploded";
 private static String hdfsShapefile;
 
@@ -60,8 +60,8 @@ public static void init() throws IOException
     log.warn("***MapAlgebraParserTest TESTS SET TO GENERATE BASELINE IMAGES ONLY***");
   }
 
-  testUtils = new MapOpTestUtils(MapAlgebraIntegrationTest.class);
-  opImageTestUtils = new OpImageTestUtils(MapAlgebraIntegrationTest.class);
+  testUtils = new MapOpTestUtils(RasterizeVectorMapOpTest.class);
+  opImageTestUtils = new OpImageTestUtils(RasterizeVectorMapOpTest.class);
 
   HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
       testUtils.getInputHdfs(), shapefile + ".shp");
