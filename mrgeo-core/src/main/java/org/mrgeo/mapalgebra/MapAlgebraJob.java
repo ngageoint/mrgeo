@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.mapalgebra.old;
+package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.aggregators.MeanAggregator;
@@ -23,7 +23,9 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.MapAlgebraParser;
+import org.mrgeo.mapalgebra.old.MapAlgebraExecutioner;
+import org.mrgeo.mapalgebra.old.MapOpHadoop;
+import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.*;
 import org.mrgeo.progress.Progress;

@@ -49,7 +49,7 @@ import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.old.MapAlgebraJob;
+import org.mrgeo.mapalgebra.MapAlgebraJob;
 import org.mrgeo.mapreduce.job.JobDetails;
 import org.mrgeo.mapreduce.job.JobManager;
 import org.mrgeo.rasterops.ColorScale;

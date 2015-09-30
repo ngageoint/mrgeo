@@ -57,7 +57,7 @@ public static void init() throws IOException
 {
   if (GEN_BASELINE_DATA_ONLY)
   {
-    log.warn("***MapAlgebraParserTest TESTS SET TO GENERATE BASELINE IMAGES ONLY***");
+    log.warn("***RasterizeVectorMapOpTest TESTS SET TO GENERATE BASELINE IMAGES ONLY***");
   }
 
   testUtils = new MapOpTestUtils(RasterizeVectorMapOpTest.class);

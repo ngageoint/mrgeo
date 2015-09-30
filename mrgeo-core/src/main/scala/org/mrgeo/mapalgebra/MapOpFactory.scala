@@ -52,7 +52,7 @@ object MapOpFactory extends Logging {
 
     functions.foreach(name => {
       name._2 match {
-      case mapop =>
+      case mapop:MapOp =>
         mapops += ((name._1, "TODO:  call mapop.description" /* mapop.description */ ,
             "TODO: call mapop.usage" /* mapop.usage */ ))
       case _ =>
