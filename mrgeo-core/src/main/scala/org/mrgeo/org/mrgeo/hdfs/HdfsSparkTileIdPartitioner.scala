@@ -8,9 +8,8 @@ import org.apache.spark.rdd.RDD
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
-import org.mrgeo.hdfs.partitioners.SplitGenerator
+import org.mrgeo.hdfs.partitioners.{SparkTileIdPartitioner, SplitGenerator}
 import org.mrgeo.hdfs.tile.{FileSplit, PartitionerSplit}
-import org.mrgeo.spark.SparkTileIdPartitioner
 import org.mrgeo.utils.SparkUtils
 
 @SerialVersionUID(-1)

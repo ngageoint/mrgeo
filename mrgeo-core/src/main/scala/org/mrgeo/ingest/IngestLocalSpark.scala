@@ -16,19 +16,15 @@
 package org.mrgeo.ingest
 
 import java.io.Externalizable
-import java.util.Properties
 
+import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
-import org.apache.hadoop.mapreduce.{InputFormat, Job}
 import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
-import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.ingest.ImageIngestDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.utils.{SparkUtils, HadoopUtils}
+import org.mrgeo.utils.{HadoopUtils, SparkUtils}
 
 class IngestLocalSpark extends IngestImageSpark with Externalizable {
 

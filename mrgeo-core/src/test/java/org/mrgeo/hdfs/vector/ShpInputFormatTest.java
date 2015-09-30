@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.hdfs;
+package org.mrgeo.hdfs.vector;
 
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
@@ -28,7 +28,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
-import org.mrgeo.hdfs.vector.ShpInputFormat;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
@@ -61,8 +60,7 @@ public class ShpInputFormatTest
   {
     Job j = new Job(new Configuration());
     Configuration c = j.getConfiguration();
-    FileSystem fs = new RawLocalFileSystem();
-    try
+    try (FileSystem fs = new RawLocalFileSystem())
     {
       fs.setConf(c);
       Path testFile = fs.makeQualified(p);
@@ -71,14 +69,10 @@ public class ShpInputFormatTest
       ShpInputFormat format = new ShpInputFormat();
       InputSplit split = format.getSplits(j).get(0);
       TaskAttemptContext context = HadoopUtils.createTaskAttemptContext(c, new TaskAttemptID());
-      RecordReader<LongWritable,Geometry> reader =
-              format.createRecordReader(split, context);
+      RecordReader<LongWritable, Geometry> reader =
+          format.createRecordReader(split, context);
       reader.initialize(split, context);
       return reader;
-    }
-    finally
-    {
-      fs.close();
     }
   }
 
