@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.spark.job
+package org.mrgeo.job
 
 import java.io.File
 import java.net.URL
@@ -26,7 +26,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.apache.spark.Logging
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.spark.job.yarn.MrGeoYarnDriver
+import org.mrgeo.job.yarn.MrGeoYarnDriver
 import org.mrgeo.utils._
 
 import scala.collection.JavaConversions._

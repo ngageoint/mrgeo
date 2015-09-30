@@ -34,7 +34,7 @@ import org.mrgeo.data.{ProviderProperties, CloseableKVIterator, DataProviderFact
 import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
-import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
 
 import scala.collection.JavaConversions._

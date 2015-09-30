@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.spark.job.yarn
+package org.mrgeo.job.yarn
 
 import java.io.{PrintWriter, File}
 import org.apache.spark.deploy.yarn.ApplicationMaster
 import org.apache.spark.SparkConf
 import org.mrgeo.core.{MrGeoProperties, MrGeoConstants}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.{HadoopUtils, GDALUtils, DependencyLoader, SparkUtils}
 
 import scala.collection.JavaConversions._

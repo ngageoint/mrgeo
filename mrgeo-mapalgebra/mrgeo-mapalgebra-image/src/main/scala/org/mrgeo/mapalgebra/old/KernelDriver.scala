@@ -14,7 +14,7 @@ import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProper
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.kernel.{LaplacianGeographicKernel, GeographicKernel, GaussianGeographicKernel}
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 import scala.collection.mutable

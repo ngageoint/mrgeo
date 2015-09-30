@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.spark.job
+package org.mrgeo.job
 
 import org.apache.spark._
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}

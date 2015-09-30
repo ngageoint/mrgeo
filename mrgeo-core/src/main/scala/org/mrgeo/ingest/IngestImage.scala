@@ -32,7 +32,7 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{ProviderProperties, DataProviderFactory, ProtectionLevelUtils}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 
 import scala.collection.JavaConversions._

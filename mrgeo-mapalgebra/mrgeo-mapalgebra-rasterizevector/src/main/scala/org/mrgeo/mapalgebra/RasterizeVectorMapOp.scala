@@ -13,7 +13,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapreduce.RasterizeVectorPainter
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 import org.mrgeo.utils._
 
 import scala.collection.mutable.ListBuffer

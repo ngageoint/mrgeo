@@ -12,7 +12,7 @@ import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 
 object BuildPyramidMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

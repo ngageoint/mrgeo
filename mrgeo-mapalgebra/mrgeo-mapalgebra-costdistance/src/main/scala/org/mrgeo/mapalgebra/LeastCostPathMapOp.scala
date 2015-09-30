@@ -4,7 +4,7 @@ import java.io.{ObjectInput, ObjectOutput, Externalizable}
 
 import org.apache.spark.{SparkContext, SparkConf}
 import org.mrgeo.mapalgebra.parser.ParserNode
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 
 object LeastCostPathMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

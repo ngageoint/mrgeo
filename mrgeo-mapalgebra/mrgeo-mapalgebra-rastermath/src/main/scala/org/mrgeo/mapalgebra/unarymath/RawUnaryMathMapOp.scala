@@ -9,7 +9,7 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.SparkUtils
 
 abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.spark.job
+package org.mrgeo.job
 
 import java.io.{IOException, FileInputStream, InputStreamReader, File}
 import java.util.Properties
@@ -26,7 +26,7 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.ImageStats
-import org.mrgeo.spark.job.yarn.MrGeoYarnJob
+import org.mrgeo.job.yarn.MrGeoYarnJob
 import org.mrgeo.utils.SparkUtils
 
 import scala.collection.Map

@@ -12,7 +12,7 @@ import org.mrgeo.mapalgebra.old.KernelMapOpHadoop
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 object KernelMapOp extends MapOpRegistrar {

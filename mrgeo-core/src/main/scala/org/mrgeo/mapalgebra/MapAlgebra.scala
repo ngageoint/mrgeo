@@ -11,7 +11,7 @@ import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProper
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.mapalgebra.vector.VectorDataMapOp
-import org.mrgeo.spark.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.{HadoopUtils, StringUtils}
 
 import scala.collection.JavaConversions._

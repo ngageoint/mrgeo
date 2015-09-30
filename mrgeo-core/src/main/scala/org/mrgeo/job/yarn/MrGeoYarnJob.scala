@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.spark.job.yarn
+package org.mrgeo.job.yarn
 
 import java.io.{InputStreamReader, BufferedReader, FileReader}
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{Logging, SparkConf, SparkContext}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.spark.job.{JobArguments, MrGeoJob}
+import org.mrgeo.job.{JobArguments, MrGeoJob}
 import org.mrgeo.utils.SparkUtils
 import sun.tools.jar.resources.jar
 

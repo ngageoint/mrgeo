@@ -8,7 +8,7 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 
 
 class SaveRasterMapOp extends RasterMapOp with Externalizable {

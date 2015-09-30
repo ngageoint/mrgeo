@@ -7,7 +7,7 @@ import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.SparkUtils
 
 object MrsPyramidMapOp {

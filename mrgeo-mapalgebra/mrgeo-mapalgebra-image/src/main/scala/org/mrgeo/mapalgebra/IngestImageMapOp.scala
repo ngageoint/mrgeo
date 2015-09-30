@@ -11,7 +11,7 @@ import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.ingest.IngestImage
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.GDALUtils
 
 import scala.util.control.Breaks
