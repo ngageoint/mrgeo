@@ -256,7 +256,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     // Be sure to filter out any graph vertices that are null. This occurs when
     // the friction surface has missing tiles. The graph still contains a vertex
     // but its value is null.
-    val verticesWritable = sssp.vertices.filter(U => {
+    rasterRDD = Some(RasterRDD(sssp.vertices.filter(U => {
         (U._2 != null)
     }).map(U => {
       // Need to convert our raster to a single band raster for output.
@@ -284,7 +284,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
         }
       }
       (new TileIdWritable(U._1), RasterWritable.toWritable(singleBandRaster))
-    })
+    })))
+
+
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, frictionMeta.getDefaultValue(0)))
 
     true
   }

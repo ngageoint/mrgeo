@@ -1,13 +1,12 @@
 package org.mrgeo.mapalgebra
 
-import java.awt.image.DataBuffer
-import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import com.vividsolutions.jts.geom.Envelope
 import org.apache.spark.rdd.PairRDDFunctions
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
-import org.mrgeo.data.rdd.{VectorRDD, RasterRDD}
+import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Geometry
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
@@ -44,7 +43,7 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
   }
 
   override def rdd(): Option[RasterRDD] = {
-    rasterRDD;
+    rasterRDD
   }
 
   override def readExternal(in: ObjectInput): Unit = {
@@ -53,17 +52,15 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
     zoom = in.readInt()
     val hasColumn = in.readBoolean()
     column = hasColumn match {
-      case true => {
-        Some(in.readUTF())
-      }
-      case false => None
+    case true =>
+      Some(in.readUTF())
+    case false => None
     }
     val hasBounds = in.readBoolean()
     bounds = hasBounds match {
-      case true => {
-        Some(new TMSUtils.Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
-      }
-      case false => None
+    case true =>
+      Some(new TMSUtils.Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
+    case false => None
     }
   }
 
@@ -72,27 +69,25 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
     out.writeInt(tilesize)
     out.writeInt(zoom)
     column match {
-      case Some(c) => {
-        out.writeBoolean(true)
-        out.writeUTF(c)
-      }
-      case None => out.writeBoolean(false)
+    case Some(c) =>
+      out.writeBoolean(true)
+      out.writeUTF(c)
+    case None => out.writeBoolean(false)
     }
     bounds match {
-      case Some(b) => {
-        out.writeBoolean(true)
-        out.writeDouble(b.w)
-        out.writeDouble(b.s)
-        out.writeDouble(b.e)
-        out.writeDouble(b.n)
-      }
-      case None => out.writeBoolean(false)
+    case Some(b) =>
+      out.writeBoolean(true)
+      out.writeDouble(b.w)
+      out.writeDouble(b.s)
+      out.writeDouble(b.e)
+      out.writeDouble(b.n)
+    case None => out.writeBoolean(false)
     }
   }
 
   override def execute(context: SparkContext): Boolean = {
     val vectorRDD: VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
-      rdd().getOrElse(throw new IOException("Missing vector RDD"))
+        rdd().getOrElse(throw new IOException("Missing vector RDD"))
     val tiledVectors = vectorRDD.flatMap(U => {
       val geom = U._2
       var result = new ListBuffer[(TileIdWritable, Geometry)]
@@ -102,19 +97,17 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
       val b: TMSUtils.Bounds = new TMSUtils.Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
 
       bounds match {
-        case Some(filterBounds) => {
-          if (filterBounds.intersect(b)) {
-            val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
-            for (tileId <- tiles) {
-              result += ((tileId, geom))
-            }
-          }
-        }
-        case None => {
+      case Some(filterBounds) =>
+        if (filterBounds.intersect(b)) {
           val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
           for (tileId <- tiles) {
             result += ((tileId, geom))
           }
+      }
+      case None =>
+        val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
+        for (tileId <- tiles) {
+          result += ((tileId, geom))
         }
       }
       result
@@ -127,8 +120,8 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
       val rvp = new RasterizeVectorPainter(zoom,
         aggregationType,
         column match {
-          case Some(c) => c
-          case None => null
+        case Some(c) => c
+        case None => null
         },
         tilesize)
       rvp.beforePaintingTile(tileId.get)
@@ -144,7 +137,7 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
   }
 
   def calculateEnvelope(f: Geometry): Envelope = {
-    f.toJTS().getEnvelopeInternal()
+    f.toJTS.getEnvelopeInternal
   }
 
   def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: TMSUtils.Bounds): List[TileIdWritable] = {
@@ -168,8 +161,8 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
   }
 
   def initialize(node:ParserNode, variables: String => Option[ParserNode]): Unit = {
-    if (!(node.getNumChildren() == 3 || node.getNumChildren == 4 ||
-      node.getNumChildren == 7 || node.getNumChildren == 8))
+    if (!(node.getNumChildren == 3 || node.getNumChildren == 4 ||
+        node.getNumChildren == 7 || node.getNumChildren == 8))
     {
       throw new ParserException(
         "RasterizeVector takes these arguments. (source vector, aggregation type, cellsize, [column], [bounds])")
@@ -180,80 +173,71 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
     }
 
     aggregationType = MapOp.decodeString(node.getChild(1)) match {
-      case Some(aggType) => {
-        RasterizeVectorPainter.AggregationType.valueOf(aggType.toUpperCase)
-      }
-      case None => {
-        throw new ParserException("Aggregation type must be one of: " + StringUtils.join(RasterizeVectorPainter.AggregationType.values, ", "))
-      }
+    case Some(aggType) =>
+      RasterizeVectorPainter.AggregationType.valueOf(aggType.toUpperCase)
+    case None =>
+      throw new ParserException("Aggregation type must be one of: " + StringUtils.join(RasterizeVectorPainter.AggregationType.values, ", "))
     }
 
     tilesize = MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE,
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT).toInt
 
     val cellSize = MapOp.decodeString(node.getChild(2)) match {
-      case Some(cs) => {
-        if (cs.endsWith("m")) {
-          val meters = cs.replace("m", "").toDouble
-          meters / LatLng.METERS_PER_DEGREE
-        }
-        else if (cs.endsWith("z")) {
-          val zoom = cs.replace("z", "").toInt
-          TMSUtils.resolution(zoom, tilesize)
+    case Some(cs) =>
+      if (cs.endsWith("m")) {
+        val meters = cs.replace("m", "").toDouble
+        meters / LatLng.METERS_PER_DEGREE
+      }
+      else if (cs.endsWith("z")) {
+        val zoom = cs.replace("z", "").toInt
+        TMSUtils.resolution(zoom, tilesize)
+      }
+      else {
+        if (cs.endsWith("d")) {
+          cs.replace("d", "").toDouble
         }
         else {
-          if (cs.endsWith("d")) {
-            cs.replace("d", "").toDouble
-          }
-          else {
-            cs.toDouble
-          }
+          cs.toDouble
         }
       }
-      case None => {
-        throw new ParserException("Missing cellSize argument")
-      }
+    case None =>
+      throw new ParserException("Missing cellSize argument")
     }
     zoom = TMSUtils.zoomForPixelSize(cellSize, tilesize)
     // Check that the column name of the vector is provided when it is needed
     val nextPosition = aggregationType match {
-      case RasterizeVectorPainter.AggregationType.MASK => {
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
-          throw new ParserException("A column name must not be specified with MASK")
+    case RasterizeVectorPainter.AggregationType.MASK =>
+      if (node.getNumChildren == 4 || node.getNumChildren == 8) {
+        throw new ParserException("A column name must not be specified with MASK")
+      }
+      3
+    // SUM can be used with or without a column name being specified. If used
+    // with a column name, it sums the values of that column for all features
+    // that intersect that pixel. Without the column, it sums the number of
+    // features that intersect the pixel.
+    case RasterizeVectorPainter.AggregationType.SUM =>
+      if (node.getNumChildren == 4 || node.getNumChildren == 8) {
+        column = MapOp.decodeString(node.getChild(3))
+        column match {
+        case None =>
+          throw new ParserException("A column name must be specified")
+        case _ => 4
         }
+      }
+      else {
         3
       }
-      // SUM can be used with or without a column name being specified. If used
-      // with a column name, it sums the values of that column for all features
-      // that intersect that pixel. Without the column, it sums the number of
-      // features that intersect the pixel.
-      case RasterizeVectorPainter.AggregationType.SUM => {
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
-          column = MapOp.decodeString(node.getChild(3))
-          column match {
-            case None => {
-              throw new ParserException("A column name must be specified")
-            }
-            case _ => 4
-          }
-        }
-        else {
-          3
+    case _ =>
+      if (node.getNumChildren == 4 || node.getNumChildren == 8) {
+        column = MapOp.decodeString(node.getChild(3))
+        column match {
+        case None =>
+          throw new ParserException("A column name must be specified")
+        case _ => 4
         }
       }
-      case _ => {
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
-          column = MapOp.decodeString(node.getChild(3))
-          column match {
-            case None => {
-              throw new ParserException("A column name must be specified")
-            }
-            case _ => 4
-          }
-        }
-        else {
-          throw new ParserException("A column name must be specified")
-        }
+      else {
+        throw new ParserException("A column name must be specified")
       }
     }
 
@@ -261,11 +245,10 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
     if (node.getNumChildren > 4) {
       val b: Array[Double] = new Array[Double](4)
       for (i <- nextPosition until nextPosition + 4) {
-        b(i) = MapOp.decodeDouble(node.getChild(i), variables) match {
-          case Some(boundsVal) => boundsVal
-          case None => {
-            throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
-          }
+        b(i - nextPosition) = MapOp.decodeDouble(node.getChild(i), variables) match {
+        case Some(boundsVal) => boundsVal
+        case None =>
+          throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
         }
       }
       bounds = Some(new TMSUtils.Bounds(b(0), b(1), b(2), b(3)))

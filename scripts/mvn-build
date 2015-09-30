@@ -392,7 +392,6 @@ echo "  JAVA_HOME:           " $JAVA_HOME
 echo "  HADOOP_HOME:         " $HADOOP_HOME
 echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
 echo "  MRGEO_HOME:          " $MRGEO_HOME
-echo "  LEGION_HOME:         " $LEGION_HOME
 echo "  Build:               " $HOME
 echo " "
 echo "  Additional maven args: " $ARGS

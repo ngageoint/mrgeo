@@ -35,7 +35,6 @@ import org.mrgeo.mapalgebra.old.RenderedImageMapOp;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
-import org.mrgeo.opchain.OpChainDriver;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.rasterops.OpImageUtils;
 import org.mrgeo.utils.Bounds;
@@ -129,7 +128,7 @@ public class OpChainDriverOld
 
   public static String CALCULATE_STATS = "calculateStats";
 
-  static final Logger log = LoggerFactory.getLogger(OpChainDriver.class);
+  static final Logger log = LoggerFactory.getLogger(OpChainDriverOld.class);
 
   protected Job job;
 

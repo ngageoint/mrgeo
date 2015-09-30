@@ -336,6 +336,12 @@ public static void saveRaster(Raster raster, String filename)
   GDALUtils.saveRaster(src, filename, "GTiff");
 }
 
+public static void saveRaster(Raster raster, String filename, double nodata)
+{
+  final Dataset src = GDALUtils.toDataset(raster, nodata);
+  GDALUtils.saveRaster(src, filename, "GTiff");
+}
+
 public static void saveRaster(Dataset raster, String filename, String type)
 {
   final Driver driver = gdal.GetDriverByName(type);

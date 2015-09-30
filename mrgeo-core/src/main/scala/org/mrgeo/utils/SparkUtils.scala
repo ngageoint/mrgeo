@@ -19,7 +19,6 @@ import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util.Properties
 
-import grizzled.string.template
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark._
@@ -33,7 +32,6 @@ import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
 
-import scala.annotation.meta
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Map, mutable}
@@ -505,14 +503,14 @@ object SparkUtils extends Logging {
 
     // Repartition the output if the output data provider requires it
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
-    val sorted: RDD[(TileIdWritable, RasterWritable)] = {
+    val sorted: RasterRDD = RasterRDD(
       if (sparkPartitioner != null) {
         wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
       }
       else {
         wrappedTiles.sortByKey()
-      }
-    }
+      })
+
 
     val wrappedForSave = new PairRDDFunctions(sorted)
     wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
@@ -664,7 +662,6 @@ object SparkUtils extends Logging {
 
     meta.setBands(raster.getNumBands)
     meta.setTileType(raster.getTransferType)
-
     meta.setTilesize(tilesize)
 
     val nodatas = Array.fill[Double](meta.getBands)(nodata)
@@ -687,6 +684,7 @@ object SparkUtils extends Logging {
 
       meta.setImageStats(zoom, stats)
     }
+
     meta
   }
 

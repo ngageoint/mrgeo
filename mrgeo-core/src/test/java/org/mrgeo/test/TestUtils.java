@@ -18,8 +18,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
+import org.gdal.gdal.Dataset;
 import org.junit.Assert;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
@@ -32,10 +31,10 @@ import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.rasterops.GeoTiffExporter;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.FileUtils;
+import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.TMSUtils;
 
 import javax.imageio.ImageIO;
@@ -50,7 +49,7 @@ public class TestUtils
 {
   public interface ValueTranslator
   {
-    public float translate(float value);
+    float translate(float value);
   }
 
   public static final class DiffStats
@@ -122,7 +121,7 @@ public class TestUtils
       {
         nanMismatch++;
       }
-      else if (Double.isNaN(v1) == false)
+      else if (!Double.isNaN(v1))
       {
         count++;
         double delta = Math.abs(v1 - v2);
@@ -216,7 +215,6 @@ public class TestUtils
     File working = new File(Defs.CWD);
     String name = working.getName();
 
-    File target = new File("target");
     File jar = new File("target/" + name + "-full.jar");
 
     if (jar.exists())
@@ -325,25 +323,20 @@ public class TestUtils
     return calculateDiffStats(base, test, tolerance, tileSize);
   }
 
-  public static String readPath(Path p) throws FileNotFoundException, IOException
+  public static String readPath(Path p) throws IOException
   {
     FileSystem fs = HadoopFileUtils.getFileSystem(p);
-    FSDataInputStream fdis = fs.open(p);
-    try
+    try (FSDataInputStream fdis = fs.open(p))
     {
       FileStatus stat = fs.getFileStatus(p);
 
-      byte[] baselineBuffer = new byte[(int)stat.getLen()];
-      fdis.read(baselineBuffer);
+      byte[] baselineBuffer = new byte[(int) stat.getLen()];
+      fdis.readFully(baselineBuffer);
       return new String(baselineBuffer);
-    }
-    finally
-    {
-      fdis.close();
     }
   }
 
-  public static String readFile(File f) throws FileNotFoundException, IOException
+  public static String readFile(File f) throws IOException
   {
     byte[] baselineBuffer = new byte[(int)f.length()];
     FileInputStream s = new FileInputStream(f);
@@ -352,17 +345,12 @@ public class TestUtils
     return new String(baselineBuffer);
   }
 
-  public static MrsImagePyramidMetadata readImageMetadata(String filename) throws JsonGenerationException, JsonMappingException,
+  public static MrsImagePyramidMetadata readImageMetadata(String filename) throws
       IOException
   {
-    FileInputStream stream = new FileInputStream(filename);
-    try
+    try (FileInputStream stream = new FileInputStream(filename))
     {
       return MrsImagePyramidMetadata.load(stream);
-    }
-    finally
-    {
-      stream.close();
     }
   }
 
@@ -429,7 +417,7 @@ public class TestUtils
     {
       return f.getCanonicalPath() + "/";
     }
-    catch (IOException e)
+    catch (IOException ignored)
     {
     }
 
@@ -448,7 +436,7 @@ public class TestUtils
       FileUtils.deleteDir(dir);
     }
 
-    if (dir.mkdirs() == false)
+    if (!dir.mkdirs())
     {
       throw new IOException("Error creating test output (filesystem) directory (" + result + ")");
     }
@@ -468,7 +456,7 @@ public class TestUtils
       fs.delete(result, true);
     }
 
-    if (fs.mkdirs(result) == false)
+    if (!fs.mkdirs(result))
     {
       throw new IOException("Error creating test output HDFS directory (" + result + ")");
     }
@@ -490,7 +478,7 @@ public class TestUtils
 
     if (!fs.exists(result))
     {
-      if (fs.mkdirs(result) == false)
+      if (!fs.mkdirs(result))
       {
         throw new IOException("Error creating test input HDFS directory (" + result + ")");
       }
@@ -517,8 +505,9 @@ public class TestUtils
 
   public static void compareRasters(File r1, Raster r2) throws IOException
   {
-    BufferedImage bi = ImageIO.read(r1);
-    compareRasters(bi.getData(), null, r2, null);
+    Dataset d = GDALUtils.open(r1.getCanonicalPath());
+    Raster r = GDALUtils.toRaster(d);
+    compareRasters(r, null, r2, null);
   }
 
   public void compareRasters(String testName, ValueTranslator t1, Raster r2, ValueTranslator t2) throws IOException
@@ -529,14 +518,11 @@ public class TestUtils
 
   public static void compareRasters(File r1, ValueTranslator t1, Raster r2, ValueTranslator t2) throws IOException
   {
-    BufferedImage bi = ImageIO.read(r1);
-    compareRasters(bi.getData(), t1, r2, t2);
+    Dataset d = GDALUtils.open(r1.getCanonicalPath());
+    Raster r = GDALUtils.toRaster(d);
+    compareRasters(r, t1, r2, t2);
   }
 
-  /**
-   * @param r1
-   * @param r2
-   */
   public static void compareRasters(Raster r1, Raster r2)
   {
     compareRasters(r1, null, r2, null);
@@ -546,10 +532,6 @@ public class TestUtils
    * If no translation of values should occur for one or both rendered images,
    * pass null for that translator parameter.
    *
-   * @param r1
-   * @param r1Translator
-   * @param r2
-   * @param r2Translator
    */
   public static void compareRasters(Raster r1, ValueTranslator r1Translator,
       Raster r2, ValueTranslator r2Translator)
@@ -637,23 +619,19 @@ public class TestUtils
 
   public static void compareRenderedImages(File f1, RenderedImage r2) throws IOException
   {
-    BufferedImage bi = ImageIO.read(f1);
-    compareRenderedImages(bi, r2);
+
+    compareRasters(f1, r2.getData());
   }
 
   public static void compareRenderedImages(RenderedImage i1, RenderedImage i2)
   {
-    compareRenderedImages(i1, null, i2, null);
+    compareRasters(i1.getData(), null, i2.getData(), null);
   }
 
   /**
    * If no translation of values should occur for one or both rendered images,
    * pass null for that translator parameter.
    *
-   * @param i1
-   * @param i1Translator
-   * @param i2
-   * @param i2Translator
    */
   public static void compareRenderedImages(RenderedImage i1, ValueTranslator i1Translator,
       RenderedImage i2, ValueTranslator i2Translator)
@@ -791,48 +769,46 @@ public class TestUtils
   }
 
   public void generateBaselineTif(final String testName,
-      final Raster raster, Bounds bounds)
+      final RenderedImage image, Bounds bounds)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
-    BufferedImage image = RasterUtils.makeBufferedImage(raster);
-    generateBaselineTif(testName, image, bounds, Double.NaN);
+    generateBaselineTif(testName, image.getData(), bounds, Double.NaN);
   }
 
   public void generateBaselineTif(final String testName, final Raster raster)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
-    BufferedImage image = RasterUtils.makeBufferedImage(raster);
-    generateBaselineTif( testName, image, Bounds.world, Double.NaN);
+    generateBaselineTif( testName, raster, Bounds.world, Double.NaN);
   }
   public void generateBaselineTif(final String testName,
       final BufferedImage image, Bounds bounds)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
-    generateBaselineTif(testName, image, bounds, Double.NaN);
+    generateBaselineTif(testName, image.getData(), bounds, Double.NaN);
   }
 
   public void generateBaselineTif(final String testName, final RenderedImage image)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
-    generateBaselineTif(testName, image, Bounds.world, Double.NaN);
+    generateBaselineTif(testName, image.getData(), Bounds.world, Double.NaN);
   }
 
 
   public void generateBaselineTif(final String testName,
-      final RenderedImage image, Bounds bounds, double nodata)
+      final Raster raster, Bounds bounds, double nodata)
       throws IOException, JobFailedException, JobCancelledException, ParserException
   {
 
-    double pixelsize = bounds.getWidth() / image.getWidth();
-    int zoom = TMSUtils.zoomForPixelSize(pixelsize, image.getWidth());
+    double pixelsize = bounds.getWidth() / raster.getWidth();
+    int zoom = TMSUtils.zoomForPixelSize(pixelsize, raster.getWidth());
 
     TMSUtils.Bounds tb = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
         bounds.getMaxY());
-    tb = TMSUtils.tileBounds(tb, zoom, image.getWidth());
+    tb = TMSUtils.tileBounds(tb, zoom, raster.getWidth());
 
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+    GDALUtils.saveRaster(raster, baselineTif.getCanonicalPath(), nodata);
 
-    GeoTiffExporter.export(image, tb.asBounds(), baselineTif, false, nodata);
   }
 
 
