@@ -40,7 +40,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 
-object IngestImageSpark extends MrGeoDriver with Externalizable {
+object IngestImage extends MrGeoDriver with Externalizable {
 
   final private val Inputs = "inputs"
   final private val Output = "output"
@@ -67,7 +67,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
       tiletype, tags, protectionLevel,
       providerProperties)
 
-    run(name, classOf[IngestImageSpark].getName, args.toMap, conf)
+    run(name, classOf[IngestImage].getName, args.toMap, conf)
 
     true
   }
@@ -78,7 +78,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     val in = context.makeRDD(inputs, inputs.length)
 
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
-      IngestImageSpark.makeTiles(input, zoom, tilesize, categorical)
+      IngestImage.makeTiles(input, zoom, tilesize, categorical)
     }))
 
     val rdd = RasterRDD(rawtiles.reduceByKey((r1, r2) => {
@@ -167,7 +167,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
     )
 
     inputs.foreach(input => {
-      val tiles = IngestImageSpark.makeTiles(input, zoomlevel, tilesize, categorical)
+      val tiles = IngestImage.makeTiles(input, zoomlevel, tilesize, categorical)
 
       tiles.foreach(kv => {
         writer.append(new TileIdWritable(kv._1.get()), kv._2)
@@ -182,7 +182,7 @@ object IngestImageSpark extends MrGeoDriver with Externalizable {
 
     val name = "IngestImageLocal"
 
-    run(name, classOf[IngestLocalSpark].getName, args.toMap, conf)
+    run(name, classOf[IngestLocal].getName, args.toMap, conf)
 
 
     true
@@ -440,7 +440,7 @@ true
 }
 }
 
-class IngestImageSpark extends MrGeoJob with Externalizable {
+class IngestImage extends MrGeoJob with Externalizable {
   var inputs: Array[String] = null
   var output:String = null
   var bounds:Bounds = null
@@ -470,13 +470,13 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
     conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
     conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
 
-    inputs = job.getSetting(IngestImageSpark.Inputs).split(",")
+    inputs = job.getSetting(IngestImage.Inputs).split(",")
     // This setting can use lots of memory, so we we'll set it to null here to clean up memory.
     // WARNING!  This definately can have side-effects
-    job.setSetting(IngestImageSpark.Inputs, null)
-    output = job.getSetting(IngestImageSpark.Output)
+    job.setSetting(IngestImage.Inputs, null)
+    output = job.getSetting(IngestImage.Output)
 
-    val boundstr = job.getSetting(IngestImageSpark.Bounds, null)
+    val boundstr = job.getSetting(IngestImage.Bounds, null)
     if (boundstr == null) {
       bounds = new Bounds()
     }
@@ -484,25 +484,25 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
       bounds = Bounds.fromDelimitedString(boundstr)
     }
 
-    zoom = job.getSetting(IngestImageSpark.Zoom).toInt
-    bands = job.getSetting(IngestImageSpark.Bands).toInt
-    tiletype = job.getSetting(IngestImageSpark.Tiletype).toInt
-    tilesize = job.getSetting(IngestImageSpark.Tilesize).toInt
-    if (job.hasSetting(IngestImageSpark.NoData)) {
-      nodata = job.getSetting(IngestImageSpark.NoData).split(" ").map(_.toDouble)
+    zoom = job.getSetting(IngestImage.Zoom).toInt
+    bands = job.getSetting(IngestImage.Bands).toInt
+    tiletype = job.getSetting(IngestImage.Tiletype).toInt
+    tilesize = job.getSetting(IngestImage.Tilesize).toInt
+    if (job.hasSetting(IngestImage.NoData)) {
+      nodata = job.getSetting(IngestImage.NoData).split(" ").map(_.toDouble)
     }
     else {
       nodata = Array.fill[Double](bands)(Double.NaN)
     }
-    categorical = job.getSetting(IngestImageSpark.Categorical).toBoolean
+    categorical = job.getSetting(IngestImage.Categorical).toBoolean
 
-    protectionlevel = job.getSetting(IngestImageSpark.Protection)
+    protectionlevel = job.getSetting(IngestImage.Protection)
     if (protectionlevel == null)
     {
       protectionlevel = ""
     }
 
-    providerproperties = ProviderProperties.fromDelimitedString(job.getSetting(IngestImageSpark.ProviderProperties))
+    providerproperties = ProviderProperties.fromDelimitedString(job.getSetting(IngestImage.ProviderProperties))
 
     true
   }
@@ -510,7 +510,7 @@ class IngestImageSpark extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val ingested = IngestImageSpark.ingest(context, inputs, zoom, tilesize, categorical, nodata(0))
+    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize, categorical, nodata(0))
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
     SparkUtils.saveMrsPyramid(ingested._1, dp, ingested._2, zoom, context.hadoopConfiguration, providerproperties)

@@ -26,7 +26,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.utils.{HadoopUtils, SparkUtils}
 
-class IngestLocalSpark extends IngestImageSpark with Externalizable {
+class IngestLocal extends IngestImage with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
