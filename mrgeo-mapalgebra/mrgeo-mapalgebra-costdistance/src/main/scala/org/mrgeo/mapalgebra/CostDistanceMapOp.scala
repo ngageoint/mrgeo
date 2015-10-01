@@ -22,11 +22,13 @@ import org.apache.spark.graphx._
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
-import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.rdd.{VectorRDD, RasterRDD}
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.geometry.Point
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.job.JobArguments
+import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils._
 
 import scala.collection.mutable.ArrayBuffer
@@ -73,11 +75,11 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD: Option[RasterRDD] = None
 
-  // TODO:  Change to VectorMapOp when implemented
-  //var sourcePoints:Option[MapOp] = None
   var friction:Option[RasterMapOp] = None
+  var sourcePointsMapOp:Option[VectorMapOp] = None
   var frictionZoom:Option[Int] = None
   var requestedBounds:Option[Bounds] = None
+  var tileBounds: TMSUtils.TileBounds = null
 
   var maxCost:Double = -1
   var zoomLevel:Int = -1
@@ -94,8 +96,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     }
 
     var nodeIndex: Int = 0
-    // Add the source point
-    //sourcePoint = node.getChild(nodeIndex)
+    sourcePointsMapOp = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
     nodeIndex += 1
 
     // Check for optional friction zoom level
@@ -158,9 +159,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val t0 = System.nanoTime()
 
     val inputFriction:RasterMapOp = friction getOrElse(throw new IOException("Input MapOp not valid!"))
+    val sourcePointsRDD = sourcePointsMapOp.getOrElse(throw new IOException("Missing source points")).
+      rdd().getOrElse(throw new IOException("Missing source points"))
 
     val frictionMeta = inputFriction.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + inputFriction.getClass.getName))
-    val frictionRDD = inputFriction.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputFriction.getClass.getName))
 
     zoomLevel = frictionZoom match {
     case Some(zoom) =>
@@ -194,53 +196,56 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                 " You must either build the pyramid for it or specify the bounds for the cost distance.")
           }
 
-          // TODO:  Uncomment when VectorMapOp is implemented, remove bounds.world
-//          sourcePoints match {
-//          case Some(sp) => calculateBoundsFromCost(maxCost, sp.getPoints, stats.min)
-//          case _ => throw new IOException("Source points missing")
-//          }
-          Bounds.world
+          calculateBoundsFromCost(maxCost, sourcePointsRDD, stats.min)
         }
       case Some(rb) => rb
       }
     }
 
+    log.debug("outputBounds = " + outputBounds)
     val tilesize = frictionMeta.getTilesize
+    val frictionRDD = inputFriction.rdd(zoomLevel) getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputFriction.getClass.getName))
 
-    val tileBounds: org.mrgeo.utils.LongRectangle = {
+    tileBounds = {
       val requestedTMSBounds = TMSUtils.Bounds.convertOldToNewBounds(outputBounds)
-      TMSUtils.boundsToTile(requestedTMSBounds, zoomLevel, tilesize).toLongRectangle
+      TMSUtils.boundsToTile(requestedTMSBounds, zoomLevel, tilesize)
     }
     if (tileBounds == null)
     {
       throw new IllegalArgumentException("No tile bounds for " + frictionMeta.getPyramid + " at zoom level " + zoomLevel)
     }
 
-    // TODO: Uncomment when VectorMapOp is implemented, remove hardcoded startPt
-    //val startPt = sourcePoints(0)
-    val startPt = (0, 0)
+    log.debug("tileBounds = " + tileBounds)
+    val startGeom = sourcePointsRDD.first()
+    if (startGeom == null || startGeom._2 == null || !startGeom._2.isInstanceOf[Point]) {
+      throw new IOException("Invalid starting point, expected a point geometry: " + startGeom)
+    }
+    val startPt = startGeom._2.asInstanceOf[Point]
     val width: Short = tilesize.toShort
     val height: Short = tilesize.toShort
     val res = TMSUtils.resolution(zoomLevel, tilesize)
-    val nodata = frictionMeta.getDefaultValuesFloat
-    val tile: TMSUtils.Tile = TMSUtils.latLonToTile(startPt._2, startPt._1, zoomLevel,
+    val outputNodata = Float.NaN
+    val tile: TMSUtils.Tile = TMSUtils.latLonToTile(startPt.getY.toFloat, startPt.getX.toFloat, zoomLevel,
       tilesize)
     val startTileId = TMSUtils.tileid(tile.tx, tile.ty, zoomLevel)
-    val startPixel = TMSUtils.latLonToTilePixelUL(startPt._2, startPt._1, tile.tx, tile.ty,
+    val startPixel = TMSUtils.latLonToTilePixelUL(startPt.getY.toFloat, startPt.getX.toFloat, tile.tx, tile.ty,
       zoomLevel, tilesize)
 
-    val realVertices = frictionRDD.map(U => {
+    val realVertices = frictionRDD.filter(U => {
+      // Trim the friction surface to only the tiles in our bounds
+      tileBounds.contains(TMSUtils.tileid(U._1.get, zoomLevel))
+    }).map(U => {
       val sourceRaster: Raster = RasterWritable.toRaster(U._2)
       val raster: WritableRaster = makeCostDistanceRaster1(U._1.get, sourceRaster,
-        zoomLevel, res, width, height, nodata)
+        zoomLevel, res, width, height, outputNodata)
       // are no changed points.
       val vt: VertexType = new VertexType(raster, new ChangedPoints(false), U._1.get, zoomLevel)
       (U._1.get(), vt)
     })
 
     val edges =
-      frictionRDD.flatMap{ case (tileId, value) =>
-        val tile = TMSUtils.tileid(tileId.get, zoomLevel)
+      realVertices.flatMap{ case (tileId, value) =>
+        val tile = TMSUtils.tileid(tileId, zoomLevel)
         getEdges(tileBounds, tile.tx, tile.ty, zoomLevel)
       }.map{ case (edge) =>  Edge(edge.fromTileId, edge.toTileId, edge.direction)
       }
@@ -259,35 +264,24 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     rasterRDD = Some(RasterRDD(sssp.vertices.filter(U => {
         (U._2 != null)
     }).map(U => {
+      val sourceRaster = U._2.raster
       // Need to convert our raster to a single band raster for output.
-      val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, 1)
+      val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, sourceRaster.getWidth,
+        sourceRaster.getHeight, 1)
       val singleBandRaster = Raster.createWritableRaster(model, null)
-      var infinityCount = 0
-      var nanCount = 0
-      var min: Float = Float.PositiveInfinity
-      var max: Float = Float.NegativeInfinity
-      val totalCostBand = U._2.raster.getNumBands - 1
-      for (x <- 0 until width) {
-        for (y <- 0 until height) {
+      val totalCostBand = sourceRaster.getNumBands - 1
+      for (x <- 0 until sourceRaster.getWidth) {
+        for (y <- 0 until sourceRaster.getHeight) {
           val s: Float = U._2.raster.getSampleFloat(x, y, totalCostBand)
-          if (s == Float.PositiveInfinity) {
-            infinityCount += 1
-          }
-          if (s.isNaN) {
-            nanCount += 1
-          }
-          else {
-            min = Math.min(s, min)
-            max = Math.max(s, max)
-          }
           singleBandRaster.setSample(x, y, 0, s)
         }
       }
+      val t = TMSUtils.tileid(U._1.toLong, zoomLevel)
       (new TileIdWritable(U._1), RasterWritable.toWritable(singleBandRaster))
     })))
 
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, frictionMeta.getDefaultValue(0)))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata))
 
     true
   }
@@ -309,27 +303,17 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
    *
    * @param maxCost How far the cost distance algorithm should go in computing distances.
    *                Measured in seconds.
-   * @param sourcePoints One or more points from which the cost distance algorithm will
+   * @param sourcePointsRDD One or more points from which the cost distance algorithm will
    *                     compute minimum distances to all other pixels.
    * @param minPixelValue The smallest value assigned to a pixel in the friction surface
    *                      being used for the cost distance. Measure in seconds/meter.
    * @return
    */
-  def calculateBoundsFromCost(maxCost: Double, sourcePoints:Seq[(Float, Float)],
+  def calculateBoundsFromCost(maxCost: Double, sourcePointsRDD:VectorRDD,
       minPixelValue: Double): Bounds =
   {
-    var minX = Float.MaxValue
-    var maxX = Float.MinValue
-    var minY = Float.MaxValue
-    var maxY = Float.MinValue
-
     // Locate the MBR of all the source points
-    for (pt <- sourcePoints) {
-      minX = math.min(pt._1, minX)
-      maxX = math.max(pt._1, maxX)
-      minY = math.min(pt._2, minY)
-      maxY = math.max(pt._2, maxY)
-    }
+    val bounds = SparkVectorUtils.calculateBounds(sourcePointsRDD)
     val distanceInMeters = maxCost / minPixelValue
 
     // Since we want the distance along the 45 deg diagonal (equal distance above and
@@ -339,18 +323,18 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val diagonalDistanceInMeters = Math.sqrt(2) * distanceInMeters
     // Find the coordinates of the point that is distance meters to right and distance
     // meters above the top right corner of the sources points MBR.
-    val tr = new LatLng(maxY, maxX)
+    val tr = new LatLng(bounds.getMaxY, bounds.getMaxX)
     val trExpanded = LatLng.calculateCartesianDestinationPoint(tr, diagonalDistanceInMeters, 45.0)
 
     // Find the coordinates of the point that is distance meters to left and distance
     // meters below the bottom left corner of the sources points MBR.
-    val bl = new LatLng(minY, minX)
+    val bl = new LatLng(bounds.getMinY, bounds.getMinX)
     val blExpanded = LatLng.calculateCartesianDestinationPoint(bl, diagonalDistanceInMeters, 225.0)
 
     new Bounds(blExpanded.getLng, blExpanded.getLat, trExpanded.getLng, trExpanded.getLat)
   }
 
-  def getEdges(tileBounds: LongRectangle, tx: Long, ty: Long, zoom: Int): List[CostDistanceEdge] = {
+  def getEdges(tileBounds: TMSUtils.TileBounds, tx: Long, ty: Long, zoom: Int): List[CostDistanceEdge] = {
 
     val edges = new ArrayBuffer[CostDistanceEdge]()
     val dmin: Long = -1
@@ -364,8 +348,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
           val neighborTx: Long = tx + dx
           val neighborTy: Long = ty + dy
 
-          if (neighborTx >= tileBounds.getMinX && neighborTx <= tileBounds.getMaxX &&
-              neighborTy >= tileBounds.getMinY && neighborTy <= tileBounds.getMaxY) {
+          if (neighborTx >= tileBounds.w && neighborTx <= tileBounds.e &&
+              neighborTy >= tileBounds.s && neighborTy <= tileBounds.n) {
 
             val direction = (dx, dy) match
             {
@@ -393,7 +377,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       res: Double,
       width: Short,
       height: Short,
-      nodata: Array[Float]): WritableRaster = {
+      nodata: Float): WritableRaster = {
     val sourceBands = source.getNumBands
     val numBands = sourceBands + 1
     val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, numBands)
@@ -412,7 +396,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
         for (b <- 0 until sourceBands) {
           newValue(b) = sourceValue(b)
         }
-        newValue(numBands - 1) = Float.NaN
+        newValue(numBands - 1) = nodata
         bandedRaster.setPixel(px, py, newValue)
       }
     }
@@ -637,7 +621,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
             }
           },
           // mergeMsg
-          // TODO: Merge a and b into a single ChangedPoints object
           (a, b) => {
             val t0 = System.nanoTime()
             var merged = new ChangedPoints(false)
@@ -886,11 +869,13 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   override def writeExternal(out: ObjectOutput): Unit = {
     out.writeInt(zoomLevel)
     out.writeDouble(maxCost)
+    out.writeUTF(tileBounds.toCommaString)
   }
 
   override def readExternal(in: ObjectInput): Unit = {
     zoomLevel = in.readInt()
     maxCost = in.readDouble()
+    tileBounds = TMSUtils.TileBounds.fromCommaString(in.readUTF())
   }
 }
 
