@@ -13,8 +13,8 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
-import org.mrgeo.utils.HadoopUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @SuppressWarnings("static-method")
-public class LeastCostPathMapOpIntegrationTest
+public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
 {
   private static MapOpTestUtils testUtils;
  
@@ -60,7 +60,7 @@ public class LeastCostPathMapOpIntegrationTest
         + "cost = [" + costSurface + "];\n"
         + "result = LeastCostPath(cost, destPts);";    
 
-    LeastCostPathMapOpIntegrationTest.runLeastCostPath(HadoopUtils.createConfiguration(),
+    LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
         testUtils.getOutputHdfs(),
         "testLeastCostPath",
         exp,
@@ -83,7 +83,7 @@ public class LeastCostPathMapOpIntegrationTest
 
     try
     {
-      LeastCostPathMapOpIntegrationTest.runLeastCostPath(HadoopUtils.createConfiguration(),
+      LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
           testUtils.getOutputHdfs(),
           "testLeastCostPathWithZoom",
           exp,
@@ -110,7 +110,7 @@ public class LeastCostPathMapOpIntegrationTest
         + "result = LeastCostPath(cost, destPts);";    
 
     try {
-      LeastCostPathMapOpIntegrationTest.runLeastCostPath(HadoopUtils.createConfiguration(),
+      LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
           testUtils.getOutputHdfs(),
           "testDestPtOutsideCostSurface",
           exp,
