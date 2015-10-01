@@ -1,5 +1,7 @@
 package org.mrgeo.mapalgebra.raster
 
+import java.io.IOException
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -70,6 +72,10 @@ abstract class RasterMapOp extends MapOp {
 
 
   def rdd():Option[RasterRDD]
+
+  def rdd(zoom: Int):Option[RasterRDD] = {
+    throw new IOException("Unsupported zoom level for raster RDD")
+  }
 
   def metadata():Option[MrsImagePyramidMetadata] =  Option(meta)
   def metadata(meta:MrsImagePyramidMetadata) = { this.meta = meta}

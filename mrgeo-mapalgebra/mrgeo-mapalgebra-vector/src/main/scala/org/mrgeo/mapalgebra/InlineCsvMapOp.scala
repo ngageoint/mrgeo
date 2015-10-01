@@ -8,9 +8,9 @@ import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.geometry.Geometry
 import org.mrgeo.hdfs.vector.Column.FactorType
 import org.mrgeo.hdfs.vector.{DelimitedParser, Column, ColumnDefinitionFile}
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.vector.VectorMapOp
-import org.mrgeo.spark.job.JobArguments
 import collection.JavaConversions._
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}

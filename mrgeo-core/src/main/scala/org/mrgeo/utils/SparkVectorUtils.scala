@@ -31,4 +31,20 @@ object SparkVectorUtils
       classOf[LongWritable],
       classOf[Geometry]))
   }
+
+  def calculateBounds(rdd: VectorRDD): Bounds = {
+
+    val bounds = rdd.aggregate(new Bounds())((bounds, geom) => {
+      bounds.expand(geom._2.getBounds)
+      bounds
+    }
+      ,
+      (b1, b2) => {
+        b1.expand(b2)
+
+        b1
+      })
+
+    bounds
+  }
 }
