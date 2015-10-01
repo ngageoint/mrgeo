@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.painter;
+package org.mrgeo.paint;
 
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.image.ImageStats;
-import org.mrgeo.paint.*;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Tile;
@@ -34,9 +33,9 @@ import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class RasterizeVectorPainter
+public class VectorPainter
 {
-  static final Logger log = LoggerFactory.getLogger(RasterizeVectorPainter.class);
+  static final Logger log = LoggerFactory.getLogger(VectorPainter.class);
 
   public enum AggregationType {
     SUM, MASK, LAST, MIN, MAX, AVERAGE
@@ -59,8 +58,8 @@ private Composite composite;
    * a map/reduce 1 job.
    *
    */
-  public RasterizeVectorPainter(int zoom, AggregationType aggregationType, String valueColumn,
-                                int tileSize)
+  public VectorPainter(int zoom, AggregationType aggregationType, String valueColumn,
+      int tileSize)
   {
     this.zoom = zoom;
     this.aggregationType = aggregationType;

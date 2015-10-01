@@ -13,7 +13,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.job.JobArguments
-import org.mrgeo.painter.RasterizeVectorPainter
+import org.mrgeo.paint.VectorPainter
 import org.mrgeo.utils._
 
 import scala.collection.mutable.ListBuffer
@@ -30,7 +30,7 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
 {
   var rasterRDD: Option[RasterRDD] = None
   var vectorMapOp: Option[VectorMapOp] = None
-  var aggregationType: RasterizeVectorPainter.AggregationType = RasterizeVectorPainter.AggregationType.MASK
+  var aggregationType: VectorPainter.AggregationType = VectorPainter.AggregationType.MASK
   var tilesize: Int = -1
   var zoom: Int = -1
   var column: Option[String] = None
@@ -47,7 +47,7 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-    aggregationType = RasterizeVectorPainter.AggregationType.valueOf(in.readUTF())
+    aggregationType = VectorPainter.AggregationType.valueOf(in.readUTF())
     tilesize = in.readInt()
     zoom = in.readInt()
     val hasColumn = in.readBoolean()
@@ -117,7 +117,7 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
     val noData = Float.NaN
     val result = groupedGeometries.map(U => {
       val tileId = U._1
-      val rvp = new RasterizeVectorPainter(zoom,
+      val rvp = new VectorPainter(zoom,
         aggregationType,
         column match {
         case Some(c) => c
@@ -175,14 +175,14 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
     aggregationType = MapOp.decodeString(node.getChild(1)) match {
     case Some(aggType) =>
       try {
-        RasterizeVectorPainter.AggregationType.valueOf(aggType.toUpperCase)
+        VectorPainter.AggregationType.valueOf(aggType.toUpperCase)
       }
       catch {
         case e: java.lang.IllegalArgumentException => throw new ParserException("Aggregation type must be one of: " +
-            StringUtils.join(RasterizeVectorPainter.AggregationType.values, ", "))
+            StringUtils.join(VectorPainter.AggregationType.values, ", "))
       }
     case None =>
-      throw new ParserException("Aggregation type must be one of: " + StringUtils.join(RasterizeVectorPainter.AggregationType.values, ", "))
+      throw new ParserException("Aggregation type must be one of: " + StringUtils.join(VectorPainter.AggregationType.values, ", "))
     }
 
     tilesize = MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE,
@@ -212,7 +212,7 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
     zoom = TMSUtils.zoomForPixelSize(cellSize, tilesize)
     // Check that the column name of the vector is provided when it is needed
     val nextPosition = aggregationType match {
-    case RasterizeVectorPainter.AggregationType.MASK =>
+    case VectorPainter.AggregationType.MASK =>
       if (node.getNumChildren == 4 || node.getNumChildren == 8) {
         throw new ParserException("A column name must not be specified with MASK")
       }
@@ -221,7 +221,7 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
     // with a column name, it sums the values of that column for all features
     // that intersect that pixel. Without the column, it sums the number of
     // features that intersect the pixel.
-    case RasterizeVectorPainter.AggregationType.SUM =>
+    case VectorPainter.AggregationType.SUM =>
       if (node.getNumChildren == 4 || node.getNumChildren == 8) {
         column = MapOp.decodeString(node.getChild(3))
         column match {
