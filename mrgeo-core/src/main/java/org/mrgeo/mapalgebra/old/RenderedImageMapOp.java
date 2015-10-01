@@ -23,7 +23,6 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapreduce.OpChainDriverOld;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
@@ -104,10 +103,11 @@ private static final Logger log = LoggerFactory.getLogger(RenderedImageMapOp.cla
 //        MapAlgebraExecutioner.calculateMaximumZoomlevel(rootMapOp),
 //        MapAlgebraExecutioner.calculateBounds(rootMapOp),
 //        getConf(), p, getProtectionLevel(), getProviderProperties());
-    new OpChainDriverOld().run(getRasterOutput(), inputs, getOutputName(),
-        MapAlgebraExecutioner.calculateMaximumZoomlevel(rootMapOp),
-        MapAlgebraExecutioner.calculateBounds(rootMapOp),
-        getConf(), p, getProtectionLevel(), getProviderProperties());
+
+//    new OpChainDriverOld().run(getRasterOutput(), inputs, getOutputName(),
+//        MapAlgebraExecutioner.calculateMaximumZoomlevel(rootMapOp),
+//        MapAlgebraExecutioner.calculateBounds(rootMapOp),
+//        getConf(), p, getProtectionLevel(), getProviderProperties());
 
   }
 

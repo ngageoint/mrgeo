@@ -441,7 +441,6 @@ public static Dataset toDataset(Raster raster, final double nodata)
   if (ds != null)
   {
     copyToDataset(ds, raster);
-
   }
 
   return ds;

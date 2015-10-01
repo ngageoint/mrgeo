@@ -6,7 +6,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector.{VectorMetadata, VectorDataProvider}
 import org.mrgeo.mapalgebra.MapOp
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.SparkVectorUtils
 
 object VectorDataMapOp {

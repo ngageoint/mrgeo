@@ -8,10 +8,10 @@ import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.ingest.IngestImageSpark
+import org.mrgeo.ingest.IngestImage
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.GDALUtils
 
 import scala.util.control.Breaks
@@ -113,7 +113,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
       categorical = Some(false)
     }
 
-    val result = IngestImageSpark.ingest(context, filebuilder.result(), zoom.get, tilesize, categorical.get, nodata)
+    val result = IngestImage.ingest(context, filebuilder.result(), zoom.get, tilesize, categorical.get, nodata)
     rasterRDD = result._1 match {
     case rrdd:RasterRDD => Some(rrdd)
     case _ => None

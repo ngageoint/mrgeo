@@ -20,10 +20,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.mrgeo.aggregators.MeanAggregator;
-import org.mrgeo.buildpyramid.BuildPyramidSpark;
+import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.ingest.IngestImageSpark;
+import org.mrgeo.ingest.IngestImage;
 import org.mrgeo.mapreduce.job.JobManager;
 import org.mrgeo.rasterops.ColorScale;
 import org.mrgeo.services.SecurityUtils;
@@ -287,9 +287,9 @@ public class MrsPyramidService {
             String pyramidOutput = HadoopUtils.getDefaultImageBaseDirectory() + output;
             byte[] bytes = IOUtils.toByteArray(input);
             ByteArraySeekableStream seekableInput = new ByteArraySeekableStream(bytes);
-            IngestImageSpark.quickIngest(seekableInput, pyramidOutput, false, null,
+            IngestImage.quickIngest(seekableInput, pyramidOutput, false, null,
                 false, protectionLevel, 0d);
-          BuildPyramidSpark.build(pyramidOutput, new MeanAggregator(),
+          BuildPyramid.build(pyramidOutput, new MeanAggregator(),
                 HadoopUtils.createConfiguration(), providerProperties);
             return pyramidOutput;
         } catch (Exception e) {

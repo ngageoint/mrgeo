@@ -24,7 +24,6 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.mapalgebra.old.*;
 import org.mrgeo.mapalgebra.parser.*;
-import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.rasterops.OpImageRegistrar;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -257,7 +256,7 @@ public class MapAlgebraParser implements MapOpFactoryHadoop
   private static MapOpHadoop convertToMapOp(ParserConstantNode node)
   {
     RenderedImageMapOp result = new RenderedImageMapOp();
-    result.setRenderedImageFactory(new ConstantDescriptor());
+    //result.setRenderedImageFactory(new ConstantDescriptor());
     // The ConstantDescriptor also takes a tilesize parameter, but we
     // don't know the value for tilesize, so RenderedImageMapOp will
     // append that value when it uses the factory to create the
@@ -532,7 +531,7 @@ public class MapAlgebraParser implements MapOpFactoryHadoop
 
     fileMap.clear();
     RenderedImageMapOp constMapOp = new RenderedImageMapOp();
-    constMapOp.setRenderedImageFactory(new ConstantDescriptor());
+    //constMapOp.setRenderedImageFactory(new ConstantDescriptor());
     constMapOp.getParameters().add(Double.NaN);
     fileMap.put("NaN", constMapOp);
 

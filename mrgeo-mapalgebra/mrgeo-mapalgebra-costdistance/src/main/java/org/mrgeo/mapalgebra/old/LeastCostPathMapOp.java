@@ -5,19 +5,18 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.mapalgebra.old.InlineCsvInputFormatDescriptor;
 import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.rasterops.LeastCostPathCalculator;
+import org.mrgeo.leastcostpath.LeastCostPathCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Vector;
 
-//import org.mrgeo.rasterops.LeastCostPathCalculator;
+//import LeastCostPathCalculator;
 
 public class LeastCostPathMapOp extends VectorMapOpHadoop
 {

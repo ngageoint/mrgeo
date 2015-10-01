@@ -2,7 +2,7 @@ package org.mrgeo.mapalgebra
 
 import org.apache.spark.{Logging, SparkConf, SparkContext}
 import org.mrgeo.mapalgebra.parser._
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
 
 object MapOp {
   def decodeDouble(node: ParserNode): Option[Double] = {

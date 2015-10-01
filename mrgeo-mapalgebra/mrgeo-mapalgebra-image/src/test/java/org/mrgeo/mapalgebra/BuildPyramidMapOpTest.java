@@ -20,6 +20,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,28 +46,28 @@ public void setup() throws IOException
 {
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void testTooFewArgs() throws Exception
 {
   String exp = "BuildPyramid()";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void testTooManyArgs() throws Exception
 {
   String exp = String.format("BuildPyramid([%s], \"mean\", \"bogus\")", "foo");
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void testBadInput() throws Exception
 {
   String exp =
       "BuildPyramid(InlineCsv(\"NAME,GEOMETRY\",\"'Place1','POINT(69.1 34.5)';'Place2','POINT(69.25 34.55)'\"), \"mean\")";
-  Assert.assertFalse(MapAlgebra.validate(exp, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 }

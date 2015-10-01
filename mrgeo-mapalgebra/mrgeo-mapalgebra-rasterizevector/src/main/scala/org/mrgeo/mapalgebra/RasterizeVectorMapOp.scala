@@ -12,8 +12,8 @@ import org.mrgeo.geometry.Geometry
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
-import org.mrgeo.mapreduce.RasterizeVectorPainter
-import org.mrgeo.spark.job.JobArguments
+import org.mrgeo.job.JobArguments
+import org.mrgeo.painter.RasterizeVectorPainter
 import org.mrgeo.utils._
 
 import scala.collection.mutable.ListBuffer
@@ -174,7 +174,13 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
 
     aggregationType = MapOp.decodeString(node.getChild(1)) match {
     case Some(aggType) =>
-      RasterizeVectorPainter.AggregationType.valueOf(aggType.toUpperCase)
+      try {
+        RasterizeVectorPainter.AggregationType.valueOf(aggType.toUpperCase)
+      }
+      catch {
+        case e: java.lang.IllegalArgumentException => throw new ParserException("Aggregation type must be one of: " +
+            StringUtils.join(RasterizeVectorPainter.AggregationType.values, ", "))
+      }
     case None =>
       throw new ParserException("Aggregation type must be one of: " + StringUtils.join(RasterizeVectorPainter.AggregationType.values, ", "))
     }

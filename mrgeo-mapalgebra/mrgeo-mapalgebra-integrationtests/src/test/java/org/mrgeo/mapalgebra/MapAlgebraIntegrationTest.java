@@ -30,6 +30,7 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.OpImageTestUtils;
@@ -1257,7 +1258,7 @@ public void orderOfOperations() throws Exception
 public void parse1() throws Exception
 {
   final String ex = String.format("[%s] + [%s]", smallElevation, smallElevation);
-  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
@@ -1265,7 +1266,7 @@ public void parse1() throws Exception
 public void parse2() throws Exception
 {
   final String ex = String.format("[%s] * 15", smallElevation);
-  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
@@ -1273,60 +1274,60 @@ public void parse2() throws Exception
 public void parse3() throws Exception
 {
   final String ex = String.format("log([%s])", smallElevation);
-  Assert.assertTrue(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parse4() throws Exception
 {
   final String ex = String.format("log([%s/abc])", testUtils.getInputHdfs().toString());
 
-  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parse5() throws Exception
 {
   final String ex = String.format("[%s] * 15", testUtils.getInputHdfs().toString());
 
-  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parseInvalidArguments1() throws Exception
 {
   final String ex = String.format("[%s] + ", smallElevation);
 
-  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parseInvalidArguments2() throws Exception
 {
   final String ex = String.format("abs [%s] [%s] ", smallElevation, smallElevation);
 
-  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parseInvalidArguments3() throws Exception
 {
   final String ex = String.format("con[%s] + ", smallElevation);
 
-  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parseInvalidArguments4() throws Exception
 {
   final String ex = "costDistance";
-  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
@@ -1334,7 +1335,7 @@ public void parseInvalidArguments4() throws Exception
 public void parseInvalidOperation() throws Exception
 {
   final String ex = String.format("[%s] & [%s]", smallElevation, smallElevation);
-  Assert.assertFalse(MapAlgebra.validate(ex, ProviderProperties.fromDelimitedString("")));
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
