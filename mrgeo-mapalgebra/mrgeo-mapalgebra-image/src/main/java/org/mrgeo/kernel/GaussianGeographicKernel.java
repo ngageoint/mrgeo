@@ -4,6 +4,7 @@
 
 package org.mrgeo.kernel;
 
+import org.mrgeo.utils.Gaussian;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.TMSUtils;
 
@@ -13,14 +14,8 @@ import org.mrgeo.utils.TMSUtils;
  */
 public class GaussianGeographicKernel implements GeographicKernel
 {
-private static final double GAUSSIAN_COEFFICIENT = Math.sqrt(2 * Math.PI);
 private static final double MAX_LATITUDE = 60.0;
 
-public static double phi(double x, double mean, double sigma)
-{
-  double t = (x - mean) / sigma;
-  return Math.pow(Math.E, (-0.5 * t * t)) / (GAUSSIAN_COEFFICIENT * sigma);
-}
 
 private double kernelSize;
 private double sigma;
@@ -96,7 +91,7 @@ public float[] createKernel(double latitude, double pixelWidth, double pixelHeig
       }
       else
       {
-        v = (float) phi(distance, 0, sigma);
+        v = (float) Gaussian.phi(distance, sigma);
       }
       data[i++] = v;
       sum += v;
