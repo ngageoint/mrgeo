@@ -1,4 +1,4 @@
-package org.mrgeo.leastcostpath;
+package org.mrgeo.leastcostpath.old;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;

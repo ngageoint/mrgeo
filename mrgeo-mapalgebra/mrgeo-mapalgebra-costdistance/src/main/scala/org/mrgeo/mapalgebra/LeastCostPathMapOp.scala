@@ -1,10 +1,15 @@
 package org.mrgeo.mapalgebra
 
-import java.io.{ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
-import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.mapalgebra.parser.ParserNode
+import org.apache.spark.{SparkConf, SparkContext}
+import org.mrgeo.data.ProviderProperties
+import org.mrgeo.data.rdd.VectorRDD
+import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.job.JobArguments
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
+import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.mapalgebra.vector.VectorMapOp
 
 object LeastCostPathMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -15,16 +20,68 @@ object LeastCostPathMapOp extends MapOpRegistrar {
     new LeastCostPathMapOp(node, variables)
 }
 
-// TODO:  Complete this when VectorMapOp is complete
-class LeastCostPathMapOp extends MapOp with Externalizable {
+class LeastCostPathMapOp extends VectorMapOp with Externalizable
+{
+  var costDistanceMapOp: Option[RasterMapOp] = None
+  var costDistanceMetadata: MrsImagePyramidMetadata = null;
+  var pointsMapOp: Option[VectorMapOp] = None
+  var zoom: Int = -1
+  var vectorrdd: Option[VectorRDD] = None
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
+    if (node.getNumChildren != 2 && node.getNumChildren != 3)
+    {
+      throw new ParserException(
+        "LeastCostPath takes the following arguments ([cost zoom level], cost raster, destination points")
+    }
+
+    var nodeIndex: Int = 0
+    if (node.getNumChildren == 3)
+    {
+      zoom = MapOp.decodeInt(node.getChild(nodeIndex), variables).getOrElse(
+        throw new ParserException("Invalid zoom specified for least cost path: " +
+          MapOp.decodeString(node.getChild(nodeIndex), variables))
+      )
+      nodeIndex += 1
+    }
+    costDistanceMapOp = RasterMapOp.decodeToRaster(node.getChild(nodeIndex), variables)
+    nodeIndex += 1
+    pointsMapOp = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
   }
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = true
-  override def execute(context: SparkContext): Boolean = true
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
-  override def readExternal(in: ObjectInput): Unit = {}
-  override def writeExternal(out: ObjectOutput): Unit = {}
+
+  override def execute(context: SparkContext): Boolean = {
+    var destPoints: String = null
+    if (zoom < 0)
+    {
+      costDistanceMetadata =
+        costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input")).
+        metadata().getOrElse(throw new IOException("Missing metadata for cost distance input"))
+      zoom = costDistanceMetadata.getMaxZoomLevel()
+    }
+    //TODO: Need to instantiate and run LeastCostPathCalculator here
+    // It currently writes the output tsv file directly. That should ideally
+    // be done by the VectorDataProvider, and the LCP calculator (and this map op)
+    // should only create a VectorRDD
+    val cdrdd = costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input"))
+      .rdd().getOrElse(throw new IOException("Invalid RDD for cost distance input"))
+    val destrdd = pointsMapOp.getOrElse(throw new IOException("Invalid points input"))
+      .rdd().getOrElse(throw new IOException("Invalid RDD for points input"))
+    LeastCostPathCalculator.run(cdrdd, costDistanceMetadata, zoom, destrdd, "/mrgeo/lcp.tsv", context)
+//    vectorrdd = Some(run())
+    true
+  }
+
+  override def readExternal(in: ObjectInput): Unit = {
+    zoom = in.readInt()
+  }
+
+  override def writeExternal(out: ObjectOutput): Unit = {
+    out.writeInt(zoom)
+  }
+
+  override def rdd(): Option[VectorRDD] = vectorrdd
 }

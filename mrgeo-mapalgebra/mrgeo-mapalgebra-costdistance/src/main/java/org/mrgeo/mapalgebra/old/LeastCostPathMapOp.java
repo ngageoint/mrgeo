@@ -9,7 +9,7 @@ import org.mrgeo.mapalgebra.parser.ParserNode;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.leastcostpath.LeastCostPathCalculator;
+import org.mrgeo.leastcostpath.old.LeastCostPathCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

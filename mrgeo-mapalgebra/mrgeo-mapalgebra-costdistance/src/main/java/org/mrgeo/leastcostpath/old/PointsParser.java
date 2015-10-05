@@ -1,4 +1,4 @@
-package org.mrgeo.leastcostpath;
+package org.mrgeo.leastcostpath.old;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;

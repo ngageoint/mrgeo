@@ -56,21 +56,28 @@ public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
   @Category(IntegrationTest.class)
   public void testLeastCostPath() throws IOException, ParserException, JobFailedException, JobCancelledException {    
 
-    String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(66.65408 32.13850)'\");\n"
-        + "cost = [" + costSurface + "];\n"
-        + "result = LeastCostPath(cost, destPts);";    
+    long start = System.currentTimeMillis();
+    try
+    {
+      String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(66.65408 32.13850)'\");\n"
+                   + "cost = [" + costSurface + "];\n"
+                   + "result = LeastCostPath(cost, destPts);";
 
-    LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
-        testUtils.getOutputHdfs(),
-        "testLeastCostPath",
-        exp,
-        true,
-        48064f,
-        62920.9f,
-        0.9d,
-        2.0d,
-        1.3d
+      LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
+                                                         testUtils.getOutputHdfs(),
+                                                         "testLeastCostPath",
+                                                         exp,
+                                                         true,
+                                                         48064f,
+                                                         62961.5f,
+                                                         0.9d,
+                                                         2.0d,
+                                                         1.3d
       );
+    } finally
+    {
+      System.out.println("test took " + (System.currentTimeMillis() - start));
+    }
   }
 
   @Test
@@ -89,7 +96,7 @@ public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
           exp,
           true,
           48064f,
-          62920.9f,
+          62961.5f,
           0.9d,
           2.0d,
           1.3d
