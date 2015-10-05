@@ -230,7 +230,7 @@ public void paintEllipse(Point center, double major, double minor, double orient
 
   if (orientation != 0.0)
   {
-    gr.rotate(orientation, dst.getX(), dst.getY());
+    gr.rotate(-orientation, dst.getX(), dst.getY());
   }
 
   Ellipse2D.Double ellipse = new Ellipse2D.Double(dst.getX() - (width / 2), dst.getY() - (height / 2), width, height);
@@ -239,7 +239,7 @@ public void paintEllipse(Point center, double major, double minor, double orient
   // rotate back
   if (orientation != 0.0)
   {
-    gr.rotate(-orientation, dst.getX(), dst.getY());
+    gr.rotate(orientation, dst.getX(), dst.getY());
   }
 }
 

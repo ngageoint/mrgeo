@@ -17,7 +17,7 @@ package org.mrgeo.paint;
 
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.geometry.*;
+import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
@@ -169,10 +168,7 @@ public void paintEllipse(Point center, double majorWidth, double minorWidth, dou
   }
   if (composite instanceof GaussianComposite)
   {
-    AffineTransform xform = rasterPainter.getTransform();
-
-    ((GaussianComposite) composite).setEllipse(center, majorWidth, minorWidth, orientation,
-        1/xform.getScaleX(), 1/-xform.getScaleY());
+    ((GaussianComposite) composite).setEllipse(center, majorWidth, minorWidth, orientation, rasterPainter.getTransform());
   }
 
 
@@ -185,7 +181,6 @@ public RasterWritable afterPaintingTile() throws IOException
   {
     averageRaster(raster, totalRaster);
   }
-
 
   return RasterWritable.toWritable(raster);
 }
