@@ -39,7 +39,6 @@ import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.servlet.ServletException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -758,7 +757,7 @@ public class WmsGenerator
         cs = ColorScaleManager.fromName(style);
         if (cs == null)
         {
-          throw new ServletException("Can not load style: " + style);
+          throw new IOException("Can not load style: " + style);
         }
       }
       else

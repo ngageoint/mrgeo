@@ -2046,13 +2046,11 @@
         <artifactId>spark-graphx_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
       </dependency>
-      <!-- Ends up this file is missing in Cloudera's Maven repo, so I needed to download it and add it manually to our repo -->
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-yarn_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
-        <!--<scope>${spark.scope}</scope>-->
-        <scope>provided</scope>
+        <scope>${spark.scope}</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.accumulo</groupId>
@@ -2755,6 +2753,11 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <!-- and spark-yarn, now we've converted everything to that -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-yarn_${spark.scala.version}</artifactId>
     </dependency>
     <!-- and junit, mrunit, cpsuite in test... -->
     <dependency>

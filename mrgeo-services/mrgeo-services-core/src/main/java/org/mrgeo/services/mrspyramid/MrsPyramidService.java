@@ -15,21 +15,16 @@
 
 package org.mrgeo.services.mrspyramid;
 
-import com.sun.media.jai.codec.ByteArraySeekableStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.mrgeo.aggregators.MeanAggregator;
-import org.mrgeo.buildpyramid.BuildPyramid;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.ingest.IngestImage;
 import org.mrgeo.mapreduce.job.JobManager;
-import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.ImageUtils;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
@@ -283,18 +278,18 @@ public class MrsPyramidService {
     public String ingestImage(InputStream input, String output,
                               String protectionLevel,
                               ProviderProperties providerProperties) throws Exception {
-        try {
-            String pyramidOutput = HadoopUtils.getDefaultImageBaseDirectory() + output;
-            byte[] bytes = IOUtils.toByteArray(input);
-            ByteArraySeekableStream seekableInput = new ByteArraySeekableStream(bytes);
-            IngestImage.quickIngest(seekableInput, pyramidOutput, false, null,
-                false, protectionLevel, 0d);
-          BuildPyramid.build(pyramidOutput, new MeanAggregator(),
-                HadoopUtils.createConfiguration(), providerProperties);
-            return pyramidOutput;
-        } catch (Exception e) {
-            log.error("Ingest image to " + output + " failed.", e);
+//        try {
+//            String pyramidOutput = HadoopUtils.getDefaultImageBaseDirectory() + output;
+//            byte[] bytes = IOUtils.toByteArray(input);
+//            ByteArraySeekableStream seekableInput = new ByteArraySeekableStream(bytes);
+//            IngestImage.quickIngest(seekableInput, pyramidOutput, false, null,
+//                false, protectionLevel, 0d);
+//          BuildPyramid.build(pyramidOutput, new MeanAggregator(),
+//                HadoopUtils.createConfiguration(), providerProperties);
+//            return pyramidOutput;
+//        } catch (Exception e) {
+            log.error("Ingest image to " + output + " failed.");//e);
             return null;
-        }
+//        }
     }
 }
