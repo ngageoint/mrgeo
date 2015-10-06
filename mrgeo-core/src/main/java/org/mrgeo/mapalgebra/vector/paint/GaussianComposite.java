@@ -1,4 +1,4 @@
-package org.mrgeo.paint;
+package org.mrgeo.mapalgebra.vector.paint;
 
 import org.mrgeo.geometry.Point;
 import org.mrgeo.utils.Gaussian;

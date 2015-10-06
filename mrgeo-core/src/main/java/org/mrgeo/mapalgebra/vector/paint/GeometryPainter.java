@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.paint;
+package org.mrgeo.mapalgebra.vector.paint;
 
 import org.mrgeo.geometry.*;
 import org.mrgeo.geometry.Point;

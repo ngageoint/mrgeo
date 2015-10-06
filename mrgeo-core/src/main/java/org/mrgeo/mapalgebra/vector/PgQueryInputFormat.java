@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.format;
+package org.mrgeo.mapalgebra.vector;
 
 import com.vividsolutions.jts.io.WKTReader;
 

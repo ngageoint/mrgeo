@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.paint;
+package org.mrgeo.mapalgebra.vector.paint;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.image.ColorModel;
@@ -21,14 +24,35 @@ import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 
 /**
- * @author jason.surratt
- * 
+ * Composite (merge) operation for two rasters.  Treats each raster value as a double.
  */
-public class AdditiveComposite implements Composite
+public class AdditiveCompositeDouble extends WeightedComposite
 {
-  private class AdditiveCompositeContext implements CompositeContext
-  {
+  @SuppressWarnings("unused")
+  private static final Logger log = LoggerFactory.getLogger(AdditiveCompositeDouble.class);
 
+  public AdditiveCompositeDouble()
+  {
+    super();
+  }
+  
+  public AdditiveCompositeDouble(final double weight)
+  {
+    super(weight);
+  }
+  
+  public AdditiveCompositeDouble(double weight, double nodata)
+  {
+    super(weight, nodata);
+  }
+
+  
+  private class AdditiveCompositeDoubleContext implements CompositeContext
+  {
+    public AdditiveCompositeDoubleContext()
+    {
+    }
+    
     /*
      * (non-Javadoc)
      * 
@@ -43,11 +67,29 @@ public class AdditiveComposite implements Composite
       int maxX = minX + dstOut.getWidth();
       int maxY = minY + dstOut.getHeight();
 
+      //log.debug("minX,minY,maxX,maxY: " + minX + "," + minY + "," + maxX + "," + maxY);
       for (int y = minY; y < maxY; y++)
       {
         for (int x = minX; x < maxX; x++)
         {
-          dstOut.setSample(x, y, 0, src.getSample(x, y, 0) + dstIn.getSample(x, y, 0));
+          double d = dstIn.getSampleDouble(x, y, 0);
+          if (isNodataNaN)
+          {
+            if (Double.isNaN(d))
+            {
+              d = 0;
+            }
+          }
+          else
+          {
+            if (d == nodata)
+            {
+              d = 0;
+            }
+          }
+          double sample = (src.getSampleDouble(x, y, 0) * weight) + d;
+
+          dstOut.setSample(x, y, 0, sample);
         }
       }
     }
@@ -60,7 +102,7 @@ public class AdditiveComposite implements Composite
     @Override
     public void dispose()
     {
-      
+
     }
   }
 
@@ -72,8 +114,8 @@ public class AdditiveComposite implements Composite
    */
   @Override
   public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel,
-    RenderingHints hints)
+      RenderingHints hints)
   {
-    return new AdditiveCompositeContext();
+    return new AdditiveCompositeDoubleContext();
   }
 }
