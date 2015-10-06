@@ -25,8 +25,6 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.FileImageOutputStream;
 import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
-import javax.media.jai.BorderExtender;
-import javax.media.jai.PlanarImage;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.*;
@@ -242,36 +240,6 @@ public class ImageUtils
     return Toolkit.getDefaultToolkit().createImage(ip);  
   }
 
-  public static Raster cutTile(PlanarImage image, long tx, long ty, long minTx, long maxTy, int tilesize, BorderExtender extender)
-  {
-    int dtx = (int) (tx - minTx);
-    int dty = (int) (maxTy - ty);
-
-    int x = dtx * tilesize;
-    int y = dty * tilesize;
-
-    Rectangle cropRect = new Rectangle(x, y, tilesize, tilesize);
-
-    // crop, and fill the extra data with nodatas
-    Raster cropped;
-    if (extender != null)
-    {
-      cropped = image.getExtendedData(cropRect, extender).createTranslatedChild(0, 0);
-    }
-    else
-    {
-      cropped = image.getData(cropRect).createTranslatedChild(0, 0);
-    }
-
-    // The crop has the potential to make sample models sizes that aren't identical, to this will force them to all be the
-    // same
-    final SampleModel model = cropped.getSampleModel().createCompatibleSampleModel(tilesize, tilesize);
-
-    WritableRaster tile = Raster.createWritableRaster(model, null);
-    tile.setDataElements(0, 0, cropped);
-
-    return tile;
-  }
 
   /**
    * Returns a Java image IO reader for the the given MIME type

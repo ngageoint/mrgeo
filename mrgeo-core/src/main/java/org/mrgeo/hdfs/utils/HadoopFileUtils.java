@@ -15,15 +15,12 @@
 
 package org.mrgeo.hdfs.utils;
 
-import com.sun.media.jai.codec.SeekableStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.IOUtils;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -506,18 +503,7 @@ public class HadoopFileUtils
 
     if (fs.exists(path))
     {
-      final InputStream stream = fs.open(path, 131072); // give open a 128K buffer
-
-      // see if were compressed
-      final CompressionCodecFactory factory = new CompressionCodecFactory(conf);
-      final CompressionCodec codec = factory.getCodec(path);
-
-      if (codec != null)
-      {
-        return new CompressedSeekableStream(codec.createInputStream(stream));
-      }
-
-      return stream;
+      return fs.open(path, 131072);
     }
 
     throw new FileNotFoundException("File not found: " + path.toUri().toString());
@@ -537,7 +523,7 @@ public class HadoopFileUtils
    */
   public static Path unqualifyPath(final Path path)
   {
-    return new Path(path.toUri().getPath().toString());
+    return new Path(path.toUri().getPath());
   }
 
   public static String unqualifyPath(final String path)
@@ -593,103 +579,4 @@ public class HadoopFileUtils
     }
     throw new IOException("Cannot find: " + input);
   }
-
-  public static class CompressedSeekableStream extends SeekableStream
-  {
-    final private InputStream input;
-    final private SeekableStream seekable;
-
-    public CompressedSeekableStream(final InputStream input)
-    {
-      this.input = input;
-      this.seekable = SeekableStream.wrapInputStream(this.input, true);
-    }
-
-    @Override
-    public int available() throws IOException
-    {
-      return seekable.available();
-    }
-
-    @Override
-    public boolean canSeekBackwards()
-    {
-      return seekable.canSeekBackwards();
-    }
-
-    @Override
-    public void close() throws IOException
-    {
-      super.close();
-      seekable.close();
-      input.close();
-    }
-
-    @Override
-    public long getFilePointer() throws IOException
-    {
-      return seekable.getFilePointer();
-    }
-
-    @Override
-    public synchronized void mark(final int readLimit)
-    {
-      seekable.mark(readLimit);
-    }
-
-    @Override
-    public boolean markSupported()
-    {
-      return seekable.markSupported();
-    }
-
-    @Override
-    public int read() throws IOException
-    {
-      return seekable.read();
-    }
-
-    @Override
-    public int read(final byte[] b) throws IOException
-    {
-      return seekable.read(b);
-    }
-
-    @Override
-    public int read(final byte[] b, final int off, final int len) throws IOException
-    {
-      return seekable.read(b, off, len);
-    }
-
-    @Override
-    public synchronized void reset() throws IOException
-    {
-      seekable.reset();
-    }
-
-    @Override
-    public void seek(final long pos) throws IOException
-    {
-      seekable.seek(pos);
-    }
-
-    @Override
-    public long skip(final long n) throws IOException
-    {
-      return seekable.skip(n);
-    }
-
-    @Override
-    public int skipBytes(final int n) throws IOException
-    {
-      return seekable.skipBytes(n);
-    }
-
-    @Override
-    protected void finalize() throws Throwable
-    {
-      super.finalize();
-    }
-  }
-
 }

@@ -338,6 +338,7 @@
               <groupId>org.apache.maven.surefire</groupId>
               <artifactId>surefire-junit47</artifactId>
               <version>${maven-failsafe.version}</version>
+
             </dependency>
           </dependencies>
           <configuration>
@@ -473,11 +474,6 @@
           <configuration>
             <shadedArtifactAttached>false</shadedArtifactAttached>
             <createDependencyReducedPom>true</createDependencyReducedPom>
-            <artifactSet>
-              <includes>
-                <include>org.spark-project:unused</include>
-              </includes>
-            </artifactSet>
           </configuration>
           <executions>
             <execution>
@@ -799,8 +795,7 @@
         <final.classifier>cdh5.4.5</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-      </dependencies>
+      <dependencies />
     </profile>
     <profile>
       <id>CDH545</id>
@@ -1361,23 +1356,23 @@
     <profile>
       <id>generate-sources</id>
       <build>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-        </plugin>
-      </plugins>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+          </plugin>
+        </plugins>
       </build>
     </profile>
     <profile>
       <id>generate-javadocs</id>
       <build>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-        </plugin>
-      </plugins>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+          </plugin>
+        </plugins>
       </build>
     </profile>
     <profile>
@@ -1570,7 +1565,6 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
-        <module>mrgeo-vector</module>
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
@@ -1600,7 +1594,6 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
-        <module>mrgeo-vector</module>
       </modules>
     </profile>
     <profile>
@@ -1613,7 +1606,6 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
-        <module>mrgeo-vector</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-mapalgebra</module>
       </modules>
@@ -1641,7 +1633,6 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
-        <module>mrgeo-vector</module>
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
@@ -1848,18 +1839,6 @@
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-wcs</artifactId>
         <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-vector</artifactId>
-        <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-vector</artifactId>
-        <version>${mrgeo.version}</version>
-        <type>test-jar</type>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -2072,7 +2051,8 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-yarn_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
-        <scope>${spark.scope}</scope>
+        <!--<scope>${spark.scope}</scope>-->
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.accumulo</groupId>
@@ -2227,6 +2207,12 @@
         <groupId>org.reflections</groupId>
         <artifactId>reflections</artifactId>
         <version>${reflections.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>xml-apis</groupId>
+            <artifactId>xml-apis</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.gdal</groupId>
@@ -2406,51 +2392,54 @@
         <version>${geotools.version}</version>
         <scope>runtime</scope>
       </dependency>
-      <dependency>
-        <groupId>geotiff</groupId>
-        <artifactId>geotiff-jai</artifactId>
-        <version>${geotiff-jai.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>xtiff-jai</groupId>
-        <artifactId>xtiff-jai</artifactId>
-        <version>${xtiff-jai.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>jai</groupId>
-            <artifactId>jai-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>jai</groupId>
-            <artifactId>jai-codec</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>javax.media</groupId>
-        <artifactId>jai_codec</artifactId>
-        <version>${jai.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.media</groupId>
-        <artifactId>jai_core</artifactId>
-        <version>${jai.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.media</groupId>
-        <artifactId>jai_imageio</artifactId>
-        <version>${jai-imageio.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jaitools</groupId>
-        <artifactId>jt-utils</artifactId>
-        <version>${jaitools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jaitools</groupId>
-        <artifactId>jt-zonalstats</artifactId>
-        <version>${jaitools.version}</version>
-      </dependency>
+      <!--
+           <dependency>
+           <groupId>geotiff</groupId>
+           <artifactId>geotiff-jai</artifactId>
+           <version>${geotiff-jai.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>xtiff-jai</groupId>
+           <artifactId>xtiff-jai</artifactId>
+           <version>${xtiff-jai.version}</version>
+           <exclusions>
+           <exclusion>
+           <groupId>jai</groupId>
+           <artifactId>jai-core</artifactId>
+           </exclusion>
+           <exclusion>
+           <groupId>jai</groupId>
+           <artifactId>jai-codec</artifactId>
+           </exclusion>
+           </exclusions>
+           </dependency>
+
+           <dependency>
+           <groupId>javax.media</groupId>
+           <artifactId>jai_codec</artifactId>
+           <version>${jai.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>javax.media</groupId>
+           <artifactId>jai_core</artifactId>
+           <version>${jai.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>javax.media</groupId>
+           <artifactId>jai_imageio</artifactId>
+           <version>${jai-imageio.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.jaitools</groupId>
+           <artifactId>jt-utils</artifactId>
+           <version>${jaitools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.jaitools</groupId>
+           <artifactId>jt-zonalstats</artifactId>
+           <version>${jaitools.version}</version>
+           </dependency>
+      -->
       <dependency>
         <groupId>com.carrotsearch</groupId>
         <artifactId>hppc</artifactId>
@@ -2762,15 +2751,6 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
-    <!--
-         This is a dummy dependency that is used along with the shading plug-in
-         to create effective poms on publishing (see SPARK-3812).
-    -->
-    <dependency>
-      <groupId>org.spark-project.spark</groupId>
-      <artifactId>unused</artifactId>
-      <version>1.0.0</version>
-    </dependency>
     <!-- everyone gets hadoop, whether they want it or not! -->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -2811,14 +2791,16 @@
       <artifactId>jul-to-slf4j</artifactId>
     </dependency>
     <!-- make sure we include geotools plugins in the final jars -->
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-epsg-hsql</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-epsg-wkt</artifactId>
-    </dependency>
+    <!--
+         <dependency>
+         <groupId>org.geotools</groupId>
+         <artifactId>gt-epsg-hsql</artifactId>
+         </dependency>
+         <dependency>
+         <groupId>org.geotools</groupId>
+         <artifactId>gt-epsg-wkt</artifactId>
+         </dependency>
+    -->
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->
   <licenses>
