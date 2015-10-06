@@ -23,7 +23,7 @@ import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.*;
 import org.mrgeo.pyramid.MrsPyramid;
-import org.mrgeo.tile.TileNotFoundException;
+import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

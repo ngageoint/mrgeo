@@ -187,6 +187,30 @@ public static boolean isValidDataset(String imagename)
   return false;
 }
 
+public static Dataset open(InputStream stream) throws IOException
+{
+  Dataset image = null;
+
+  String imagename = "stream" + HadoopUtils.createRandomString(5);
+
+  byte[] bytes = IOUtils.toByteArray(stream);
+  gdal.FileFromMemBuffer(GDALUtils.VSI_PREFIX + imagename, bytes);
+
+  image = gdal.Open(GDALUtils.VSI_PREFIX + imagename);
+
+  if (image != null)
+  {
+    GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
+    return image;
+  }
+
+  GDALUtils.log.info(
+      "Image not loaded, but unfortunately no exceptions were thrown, look for a logged explanation somewhere above");
+
+  return null;
+
+}
+
 public static Dataset open(String imagename) throws IOException
 {
   try
@@ -472,46 +496,8 @@ public static void saveRaster(Raster raster, String filename, String type, TMSUt
   src.delete();
 }
 
-public static void saveRaster(Raster raster, OutputStream stream, String type, TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
-    throws IOException
-{
-  final Driver driver = gdal.GetDriverByName(type);
-  final Dataset src = GDALUtils.toDataset(raster, nodata);
-
-  final double res = TMSUtils.resolution(zoom, tilesize);
-
-  final double[] xform = new double[6];
-
-  xform[0] = bounds.w; /* top left x */
-  xform[1] = res; /* w-e pixel resolution */
-  xform[2] = 0; /* 0 */
-  xform[3] = bounds.n; /* top left y */
-  xform[4] = 0; /* 0 */
-  xform[5] = -res; /* n-s pixel resolution (negative value) */
-
-  src.SetGeoTransform(xform);
-  src.SetProjection(GDALUtils.EPSG4326);
-
-  File temp = File.createTempFile("tmp-file", "");
-  final Dataset copy;
-  if (options == null)
-  {
-    copy  = driver.CreateCopy(temp.getCanonicalPath(), src);
-  }
-  else {
-    copy = driver.CreateCopy(temp.getCanonicalPath(), src, options);
-  }
-
-  Files.copy(temp.toPath(), stream);
-
-  temp.delete();
-  copy.delete();
-  src.delete();
-}
-
-public static void saveRaster(Raster raster, OutputStream stream, String type,
+public static void saveRaster(Raster raster, String filename, String type,
     TMSUtils.Bounds bounds, final double nodata, String[] options)
-    throws IOException
 {
   final Driver driver = gdal.GetDriverByName(type);
   final Dataset src = GDALUtils.toDataset(raster, nodata);
@@ -528,21 +514,43 @@ public static void saveRaster(Raster raster, OutputStream stream, String type,
   src.SetGeoTransform(xform);
   src.SetProjection(GDALUtils.EPSG4326);
 
-  File temp = File.createTempFile("tmp-file", "");
   final Dataset copy;
   if (options == null)
   {
-    copy  = driver.CreateCopy(temp.getCanonicalPath(), src);
+    copy  = driver.CreateCopy(filename, src);
   }
   else {
-    copy = driver.CreateCopy(temp.getCanonicalPath(), src, options);
+    copy = driver.CreateCopy(filename, src, options);
   }
 
-  Files.copy(temp.toPath(), stream);
-
-  temp.delete();
   copy.delete();
   src.delete();
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, String type,
+    TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
+    throws IOException
+{
+  File temp = File.createTempFile("tmp-file", "");
+  saveRaster(raster, temp.getCanonicalPath(), type, bounds, zoom, tilesize, nodata, options);
+
+  Files.copy(temp.toPath(), stream);
+  stream.flush();
+
+  temp.delete();
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, String type,
+    TMSUtils.Bounds bounds, final double nodata, String[] options)
+    throws IOException
+{
+  File temp = File.createTempFile("tmp-file", "");
+  saveRaster(raster, temp.getCanonicalPath(), type, bounds, nodata, options);
+
+  Files.copy(temp.toPath(), stream);
+  stream.flush();
+
+  temp.delete();
 }
 
 public static Dataset toDataset(Raster raster, final double nodata)

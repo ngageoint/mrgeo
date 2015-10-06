@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.tile;
+package org.mrgeo.data.tile;
 
 public class TileNotFoundException extends RuntimeException
 {

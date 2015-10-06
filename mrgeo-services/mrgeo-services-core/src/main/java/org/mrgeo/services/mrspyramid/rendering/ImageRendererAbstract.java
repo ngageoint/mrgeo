@@ -34,7 +34,7 @@ import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.resources.KmlGenerator;
-import org.mrgeo.tile.TileNotFoundException;
+import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.TMSUtils;

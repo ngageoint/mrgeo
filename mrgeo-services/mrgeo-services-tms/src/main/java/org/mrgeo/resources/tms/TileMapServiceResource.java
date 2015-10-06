@@ -28,7 +28,7 @@ import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.ColorScaleManager;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.tms.TmsService;
-import org.mrgeo.tile.TileNotFoundException;
+import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
