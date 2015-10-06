@@ -16,8 +16,8 @@
 package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.rasterops.ColorScale;
-import org.mrgeo.rasterops.ColorScale.Scaling;
+import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScale.Scaling;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ private static final Logger log = LoggerFactory.getLogger(PngColorScaleApplier.c
  * (non-Javadoc)
  *
  * @see org.mrgeo.services.wms.ColorScaleApplier#renderImage(java.awt.image.RenderedImage,
- * org.mrgeo.rasterops.ColorScale, double[], double)
+ * ColorScale, double[], double)
  */
 @Override
 public Raster applyColorScale(final Raster raster, ColorScale colorScale, final double[] extrema,

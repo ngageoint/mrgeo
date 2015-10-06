@@ -15,16 +15,10 @@
 
 package org.mrgeo.mapalgebra;
 
-import org.apache.hadoop.conf.Configuration;
-import org.mrgeo.aggregators.MeanAggregator;
-import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.mapalgebra.old.MapOpHadoop;
-import org.mrgeo.mapalgebra.old.RasterMapOpHadoop;
 import org.mrgeo.mapreduce.job.JobCancelFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.mapreduce.job.RunnableJob;
-import org.mrgeo.mapreduce.job.TaskProgress;
 import org.mrgeo.progress.Progress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,30 +121,30 @@ public class MapAlgebraJob implements RunnableJob
 //    }
   }
   
-  private void buildPyramid(MapOpHadoop op, Configuration conf,
-                            ProviderProperties providerProperties) throws Exception
-  {
-    TaskProgress taskProg = new TaskProgress(_progress);
-    try {
-      if (op instanceof RasterMapOpHadoop)
-      {        
-        taskProg.starting();
-        BuildPyramid.build(_output, new MeanAggregator(),
-            conf, taskProg, null, providerProperties);
-        taskProg.complete();
-      }
-      else
-      {
-        taskProg.notExecuted();
-      }
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      _log.error("Exception occurred while processing mapalgebra job " + e.getMessage());      
-      taskProg.cancelled();     
-    }
-  }
+//  private void buildPyramid(MapOpHadoop op, Configuration conf,
+//                            ProviderProperties providerProperties) throws Exception
+//  {
+//    TaskProgress taskProg = new TaskProgress(_progress);
+//    try {
+//      if (op instanceof RasterMapOpHadoop)
+//      {
+//        taskProg.starting();
+//        BuildPyramid.build(_output, new MeanAggregator(),
+//            conf, taskProg, null, providerProperties);
+//        taskProg.complete();
+//      }
+//      else
+//      {
+//        taskProg.notExecuted();
+//      }
+//    }
+//    catch (Exception e)
+//    {
+//      e.printStackTrace();
+//      _log.error("Exception occurred while processing mapalgebra job " + e.getMessage());
+//      taskProg.cancelled();
+//    }
+//  }
 
   private void cancel()
   {

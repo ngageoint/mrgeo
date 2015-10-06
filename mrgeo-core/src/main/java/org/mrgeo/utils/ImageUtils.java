@@ -15,8 +15,6 @@
 
 package org.mrgeo.utils;
 
-import org.mrgeo.rasterops.ColorScale;
-import org.mrgeo.rasterops.ColorScaleOpImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +27,6 @@ import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.media.jai.BorderExtender;
 import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.BandSelectDescriptor;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.*;
@@ -189,42 +186,7 @@ public class ImageUtils
     imageStream.close();
       }
 
-  /**
-   * Converts a rendered image to have RGB bands only
-   * @param source image to convert
-   * @return RGB image
-   * @throws IOException
-   */
-  public static RenderedImage convertToRgb(RenderedImage image) throws IOException
-  {
-    log.debug("Converting to RGB...");
-
-    ColorModel cm = image.getColorModel();
-
-    ColorScale cs;
-    if (cm.getNumComponents() == 1)
-    {
-      cs = ColorScale.createDefaultGrayScale();
-    }
-    else 
-    {
-      cs = ColorScale.createDefault();
-    }
-
-    RenderedImage result =  ColorScaleOpImage.create(image, cs);
-    if (result.getColorModel().getNumComponents() >= 4)
-    {
-      log.debug("Removing alpha band...");
-      int[] rgb = { 0, 1, 2 };
-      result = BandSelectDescriptor.create(result, rgb, null);
-      log.debug("Alpha band removed.");
-    }
-    log.debug("Converted to RGB.");
-
-    return result;
-  }
-
-  /**
+/**
    * Computes the output of the <RenderedImage>
    * (generally an <OpImage> instance)
    * into a <BufferedImage> to improve performance

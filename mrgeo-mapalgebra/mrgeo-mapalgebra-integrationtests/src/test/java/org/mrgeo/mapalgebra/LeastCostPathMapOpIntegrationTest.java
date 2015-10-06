@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.data.ProviderProperties;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @SuppressWarnings("static-method")
+@Ignore
 public class LeastCostPathMapOpIntegrationTest
 {
   private static MapOpTestUtils testUtils;

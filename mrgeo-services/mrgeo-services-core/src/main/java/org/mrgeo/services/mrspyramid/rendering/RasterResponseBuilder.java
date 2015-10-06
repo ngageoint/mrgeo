@@ -16,7 +16,7 @@
 package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.utils.Bounds;
 
 import javax.ws.rs.core.Response;

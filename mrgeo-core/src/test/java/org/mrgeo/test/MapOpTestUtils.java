@@ -31,7 +31,6 @@ import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +46,6 @@ private static final Logger log = LoggerFactory.getLogger(MapOpTestUtils.class);
 public MapOpTestUtils(final Class<?> testClass) throws IOException
 {
   super(testClass);
-
-  OpImageRegistrar.registerMrGeoOps();
 }
 
 public MrsImagePyramidMetadata getImageMetadata(final String testName)

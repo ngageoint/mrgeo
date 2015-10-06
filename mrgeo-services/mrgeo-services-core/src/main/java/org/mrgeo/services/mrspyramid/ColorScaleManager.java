@@ -22,7 +22,7 @@ import com.google.common.cache.LoadingCache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;

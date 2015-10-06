@@ -30,7 +30,6 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.mapreduce.formats.EmptyTileInputFormat;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -620,48 +619,6 @@ public static void adjustLogging()
     setTileClusterInfo(job.getConfiguration(), tileClusterInfo);
   }
 
-  public static void setupEmptyTileInputFormat(final Job job, final LongRectangle tileBounds,
-      final int zoomlevel, final int tilesize, final int bands, final int datatype,
-      final double nodata) throws IOException
-  {
-    EmptyTileInputFormat.setInputInfo(job, tileBounds, zoomlevel);
-    EmptyTileInputFormat.setRasterInfo(job, tilesize, bands, datatype, nodata);
-
-    // need to create and add metadata for this empty image
-    final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
-    metadata.setBands(bands);
-
-    final TMSUtils.TileBounds tb = new TMSUtils.TileBounds(tileBounds.getMinX(), tileBounds
-        .getMinY(), tileBounds.getMaxX(), tileBounds.getMaxY());
-    final TMSUtils.Bounds b = TMSUtils.tileToBounds(tb, zoomlevel, tilesize);
-
-    metadata.setBounds(new Bounds(b.w, b.s, b.e, b.n));
-
-    final double defaults[] = new double[bands];
-    Arrays.fill(defaults, nodata);
-    metadata.setDefaultValues(defaults);
-
-    metadata.setName(zoomlevel);
-    metadata.setMaxZoomLevel(zoomlevel);
-
-    final TMSUtils.Pixel ll = TMSUtils.latLonToPixels(b.s, b.w, zoomlevel, tilesize);
-    final TMSUtils.Pixel ur = TMSUtils.latLonToPixels(b.n, b.e, zoomlevel, tilesize);
-
-    final LongRectangle pb = new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
-    metadata.setPixelBounds(zoomlevel, pb);
-    metadata.setPyramid(EmptyTileInputFormat.EMPTY_IMAGE);
-    metadata.setTileBounds(zoomlevel, tileBounds);
-    metadata.setTilesize(tilesize);
-    metadata.setTileType(datatype);
-
-    setMetadata(job, metadata);
-  }
-
-  //  public static void setupEmptyTileTileInfo(final Job job, final LongRectangle tileBounds,
-  //    final int zoomlevel)
-  //  {
-  //    EmptyTileInputFormat.setInputInfo(job, tileBounds, zoomlevel);
-  //  }
 
   public static void setupLocalRunner(final Configuration config) throws IOException
   {

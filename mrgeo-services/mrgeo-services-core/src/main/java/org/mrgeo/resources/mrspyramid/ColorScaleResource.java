@@ -31,7 +31,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

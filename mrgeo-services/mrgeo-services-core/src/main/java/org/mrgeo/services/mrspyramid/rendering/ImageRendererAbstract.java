@@ -32,7 +32,7 @@ import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.tile.TileNotFoundException;
 import org.mrgeo.utils.Bounds;

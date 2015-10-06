@@ -27,7 +27,6 @@ import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.tile.SplitInfo;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.rasterops.OpImageRegistrar;
 
 import java.io.IOException;
 
@@ -56,7 +55,6 @@ public class PrintSplitFile extends Command
       final ProviderProperties providerProperties)
   {
 
-    OpImageRegistrar.registerMrGeoOps();
     try
     {
       final Options options = PrintSplitFile.createOptions();

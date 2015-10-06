@@ -25,7 +25,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.ingest.IngestImage;
 import org.mrgeo.mapreduce.job.JobManager;
-import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.utils.Bounds;

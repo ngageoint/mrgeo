@@ -15,7 +15,6 @@
 
 package org.mrgeo.utils;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -29,12 +28,6 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.format.PgQueryInputFormat;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.mapreduce.formats.EmptyTileInputFormat;
-import org.mrgeo.mapreduce.formats.MrsPyramidInputFormatUtils;
-import org.mrgeo.vector.mrsvector.MrsVectorPyramid;
-import org.mrgeo.vector.mrsvector.MrsVectorPyramidMetadata;
-import org.mrgeo.rasterops.OpImageRegistrar;
-import org.mrgeo.vector.formats.HdfsMrsVectorPyramidInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +35,10 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.Date;
+import java.util.Properties;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * 
@@ -92,8 +87,6 @@ public class HadoopVectorUtils
   @SuppressWarnings("unused")
   public synchronized static Configuration createConfiguration()
   {
-    OpImageRegistrar.registerMrGeoOps();
-
     final Configuration config = new Configuration();
 
     // enables serialization of Serializable objects in Hadoop.
@@ -394,51 +387,6 @@ public class HadoopVectorUtils
     return strValues;
   }
 
-  public static Map<String, MrsVectorPyramidMetadata> getVectorMetadata(final Configuration config)
-    throws IOException, ClassNotFoundException
-  {
-    final Map<String, MrsVectorPyramidMetadata> metadata = new HashMap<String, MrsVectorPyramidMetadata>();
-
-    final Iterator<Entry<String, String>> props = config.iterator();
-    final String metadataPrefix = "mrsvectorpyramid.metadata.";
-    final int metadataPrefixLen = metadataPrefix.length();
-    while (props.hasNext())
-    {
-      final Entry<String, String> entry = props.next();
-      if (entry.getKey().startsWith(metadataPrefix))
-      {
-        final MrsVectorPyramidMetadata m = (MrsVectorPyramidMetadata) Base64Utils
-          .decodeToObject(entry.getValue());
-        final String name = entry.getKey().substring(metadataPrefixLen); // strip the
-                                                                         // "mrspyramid.metadata."
-        metadata.put(name, m);
-      }
-    }
-    // Map<String, String> raw = config.getValByRegex("mrspyramid.metadata.*");
-    // for (String basename:raw.keySet())
-    // {
-    // MrsImagePyramidMetadata m = (MrsImagePyramidMetadata)
-    // Base64Utils.decodeToObject(config.get(basename,
-    // null));
-    // String name = basename.substring(20); // strip the "mrspyramid.metadata."
-    // metadata.put(name, m);
-    // }
-
-    return metadata;
-    // return (MrsImagePyramidMetadata) Base64Utils.decodeToObject(config.get("mrspyramid.metadata",
-    // null));
-  }
-
-  public static MrsVectorPyramidMetadata getVectorMetadata(final Configuration config,
-    final String pyramid) throws IOException, ClassNotFoundException
-  {
-    final MrsVectorPyramidMetadata metadata = (MrsVectorPyramidMetadata) Base64Utils
-      .decodeToObject(config.get("mrsvectorpyramid.metadata." + pyramid, null));
-
-    return metadata;
-    // return (MrsImagePyramidMetadata) Base64Utils.decodeToObject(config.get("mrspyramid.metadata",
-    // null));
-  }
 
   // public static boolean hasHadoop()
   // {
@@ -486,48 +434,7 @@ public class HadoopVectorUtils
     setMetadata(job.getConfiguration(), metadata);
   }
 
-  public static void setupEmptyTileInputFormat(final Job job, final LongRectangle tileBounds,
-    final int zoomlevel, final int tilesize, final int bands, final int datatype,
-    final double nodata) throws IOException
-  {
-    EmptyTileInputFormat.setInputInfo(job, tileBounds, zoomlevel);
-    EmptyTileInputFormat.setRasterInfo(job, tilesize, bands, datatype, nodata);
 
-    // need to create and add metadata for this empty image
-    final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
-    metadata.setBands(bands);
-
-    final TMSUtils.TileBounds tb = new TMSUtils.TileBounds(tileBounds.getMinX(), tileBounds
-      .getMinY(), tileBounds.getMaxX(), tileBounds.getMaxY());
-    final TMSUtils.Bounds b = TMSUtils.tileToBounds(tb, zoomlevel, tilesize);
-
-    metadata.setBounds(new Bounds(b.w, b.s, b.e, b.n));
-
-    final double defaults[] = new double[bands];
-    Arrays.fill(defaults, nodata);
-    metadata.setDefaultValues(defaults);
-
-    metadata.setName(zoomlevel);
-    metadata.setMaxZoomLevel(zoomlevel);
-
-    final TMSUtils.Pixel ll = TMSUtils.latLonToPixels(b.s, b.w, zoomlevel, tilesize);
-    final TMSUtils.Pixel ur = TMSUtils.latLonToPixels(b.n, b.e, zoomlevel, tilesize);
-
-    final LongRectangle pb = new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
-    metadata.setPixelBounds(zoomlevel, pb);
-    metadata.setPyramid(EmptyTileInputFormat.EMPTY_IMAGE);
-    metadata.setTileBounds(zoomlevel, tileBounds);
-    metadata.setTilesize(tilesize);
-    metadata.setTileType(datatype);
-
-    setMetadata(job, metadata);
-  }
-
-  public static void setupEmptyTileTileInfo(final Job job, final LongRectangle tileBounds,
-    final int zoomlevel)
-  {
-    EmptyTileInputFormat.setInputInfo(job, tileBounds, zoomlevel);
-  }
 
   public static void setupLocalRunner(final Configuration config) throws IOException
   {
@@ -542,71 +449,6 @@ public class HadoopVectorUtils
     config.setInt("mapreduce.local.reduce.tasks.maximum", 1);
   }
 
-  public static void setupMrsVectorPyramidInputFormat(final Job job, final Set<String> inputs)
-    throws IOException
-  {
-
-    int zoom = 0;
-    for (final String input : inputs)
-    {
-      final MrsVectorPyramid pyramid = MrsVectorPyramid.open(input);
-      final MrsVectorPyramidMetadata metadata = pyramid.getMetadata();
-
-      if (metadata.getMaxZoomLevel() > zoom)
-      {
-        zoom = metadata.getMaxZoomLevel();
-      }
-    }
-    setupMrsVectorPyramidInputFormat(job, inputs, zoom);
-  }
-
-  public static void setupMrsVectorPyramidInputFormat(final Job job, final Set<String> inputs,
-    final int zoomlevel) throws IOException
-  {
-
-    // This is list of actual filenames of the input files (not just the
-    // pyramids)
-    final HashSet<String> zoomInputs = new HashSet<String>(inputs.size());
-
-    // first calculate the actual filenames for the inputs.
-    for (final String input : inputs)
-    {
-      final MrsVectorPyramid pyramid = MrsVectorPyramid.open(input);
-      final MrsVectorPyramidMetadata metadata = pyramid.getMetadata();
-      log.debug("In HadoopUtils.setupMrsPyramidInputFormat, loading pyramid for " + input +
-        " pyramid instance is " + pyramid + " metadata instance is " + metadata);
-
-      String image = metadata.getZoomName(zoomlevel);
-      // if we don't have this zoomlevel, use the max, then we'll decimate/subsample that one
-      if (image == null)
-      {
-        log.error("Could not get image in setupMrsPyramidInputFormat at zoom level " + zoomlevel +
-          " for " + pyramid);
-        image = metadata.getZoomName(metadata.getMaxZoomLevel());
-      }
-      zoomInputs.add(image);
-
-      HadoopVectorUtils.setVectorMetadata(job, metadata);
-    }
-
-    final Properties p = MrGeoProperties.getInstance();
-    final String dataSource = p.getProperty("datasource");
-
-    // setup common to all input formats
-    MrsPyramidInputFormatUtils.setInputs(job, zoomInputs);
-
-    if (dataSource.equals("accumulo"))
-    {
-      throw new NotImplementedException("No MrsVector support on Accumulo is implemented yet");
-      // AccumuloMrsVectorPyramidInputFormat.setInputInfo(job, p.getProperty("accumulo.instance"),
-      // p.getProperty("zooservers"), p.getProperty("accumulo.user"),
-      // p.getProperty("accumulo.password"), zoomInputs);
-    }
-    else if (dataSource.equals("hdfs"))
-    {
-      HdfsMrsVectorPyramidInputFormat.setInputInfo(job, zoomlevel, zoomInputs);
-    }
-  }
 
   public static void setupPgQueryInputFormat(final Job job, final String username,
     final String password, final String dbconnection)
@@ -615,20 +457,6 @@ public class HadoopVectorUtils
     conf.set(PgQueryInputFormat.USERNAME, username);
     conf.set(PgQueryInputFormat.PASSWORD, password);
     conf.set(PgQueryInputFormat.DBCONNECTION, dbconnection);
-  }
-
-  public static void setVectorMetadata(final Configuration conf,
-    final MrsVectorPyramidMetadata metadata) throws IOException
-  {
-    log.debug("Setting hadoop configuration metadata using metadata instance " + metadata);
-    conf.set("mrsvectorpyramid.metadata." + metadata.getPyramid(), Base64Utils
-      .encodeObject(metadata));
-  }
-
-  public static void setVectorMetadata(final Job job, final MrsVectorPyramidMetadata metadata)
-    throws IOException
-  {
-    setVectorMetadata(job.getConfiguration(), metadata);
   }
 
   private static void loadJobContextClass()

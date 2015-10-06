@@ -22,7 +22,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.ColorScaleManager;
