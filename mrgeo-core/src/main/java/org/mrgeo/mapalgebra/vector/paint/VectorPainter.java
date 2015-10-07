@@ -37,7 +37,7 @@ public class VectorPainter
 static final Logger log = LoggerFactory.getLogger(VectorPainter.class);
 
 public enum AggregationType {
-  SUM, MASK, LAST, MIN, MAX, AVERAGE, GAUSSIAN
+  SUM, MASK, MIN, MAX, AVERAGE, GAUSSIAN
 }
 
 private AggregationType aggregationType;

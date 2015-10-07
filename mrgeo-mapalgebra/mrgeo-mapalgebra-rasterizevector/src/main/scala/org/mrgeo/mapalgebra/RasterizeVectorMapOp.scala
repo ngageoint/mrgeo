@@ -185,6 +185,9 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
       throw new ParserException("Aggregation type must be one of: " + StringUtils.join(VectorPainter.AggregationType.values, ", "))
     }
 
+    if (aggregationType == VectorPainter.AggregationType.GAUSSIAN) {
+      throw new ParserException("Invalid aggregation type for rasterize vector")
+    }
     tilesize = MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE,
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT).toInt
 
