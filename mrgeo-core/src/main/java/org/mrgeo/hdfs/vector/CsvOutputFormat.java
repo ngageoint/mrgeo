@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.format;
+package org.mrgeo.hdfs.vector;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.hdfs.vector.ColumnDefinitionFile;
 import org.mrgeo.utils.LeakChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -329,5 +329,10 @@ public class CsvOutputFormat extends FileOutputFormat<LongWritable, Geometry> im
 
     CsvRecordWriter result = new CsvRecordWriter(new Path(baseOut + ".columns"), output);
     return result;
+  }
+
+  public static void setup(Path outputPath, Job job)
+  {
+    FileOutputFormat.setOutputPath(job, outputPath);
   }
 }

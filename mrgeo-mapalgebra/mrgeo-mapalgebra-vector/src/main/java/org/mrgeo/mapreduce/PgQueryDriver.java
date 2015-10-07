@@ -22,7 +22,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.mrgeo.format.CsvOutputFormat;
+import org.mrgeo.hdfs.vector.CsvOutputFormat;
 import org.mrgeo.format.PgQueryInputFormat;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;

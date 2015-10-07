@@ -55,11 +55,11 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
 
   override def execute(context: SparkContext): Boolean = {
     var destPoints: String = null
+    costDistanceMetadata =
+      costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input")).
+        metadata().getOrElse(throw new IOException("Missing metadata for cost distance input"))
     if (zoom < 0)
     {
-      costDistanceMetadata =
-        costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input")).
-        metadata().getOrElse(throw new IOException("Missing metadata for cost distance input"))
       zoom = costDistanceMetadata.getMaxZoomLevel()
     }
     //TODO: Need to instantiate and run LeastCostPathCalculator here
@@ -67,11 +67,10 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
     // be done by the VectorDataProvider, and the LCP calculator (and this map op)
     // should only create a VectorRDD
     val cdrdd = costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input"))
-      .rdd().getOrElse(throw new IOException("Invalid RDD for cost distance input"))
+      .rdd(zoom).getOrElse(throw new IOException("Invalid RDD for cost distance input"))
     val destrdd = pointsMapOp.getOrElse(throw new IOException("Invalid points input"))
       .rdd().getOrElse(throw new IOException("Invalid RDD for points input"))
-    LeastCostPathCalculator.run(cdrdd, costDistanceMetadata, zoom, destrdd, "/mrgeo/lcp.tsv", context)
-//    vectorrdd = Some(run())
+    vectorrdd = Some(LeastCostPathCalculator.run(cdrdd, costDistanceMetadata, zoom, destrdd, context))
     true
   }
 

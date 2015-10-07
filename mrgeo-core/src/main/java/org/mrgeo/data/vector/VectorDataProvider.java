@@ -90,9 +90,7 @@ public abstract class VectorDataProvider
    */
   public abstract VectorReader getVectorReader(VectorReaderContext context) throws IOException;
 
-  public abstract VectorWriter getVectorWriter();
-
-  public abstract VectorWriter getVectorWriter(VectorWriterContext context);
+  public abstract VectorWriter getVectorWriter() throws IOException;
 
   /**
    * Return an instance of a RecordReader class to be used in map/reduce jobs for reading
@@ -126,7 +124,7 @@ public abstract class VectorDataProvider
    * @return
    */
   public abstract VectorOutputFormatProvider getVectorOutputFormatProvider(
-    final VectorOutputFormatContext context);
+    final VectorOutputFormatContext context) throws IOException;
 
   public abstract void delete() throws IOException;
   public abstract void move(String toResource) throws IOException;

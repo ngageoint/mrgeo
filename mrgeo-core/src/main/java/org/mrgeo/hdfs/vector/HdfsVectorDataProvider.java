@@ -86,7 +86,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   {
     String resourceName = getResolvedResourceName(true);
     Path resourcePath = new Path(resourceName);
-    if (isSourceDelimited(resourcePath, getConfiguration()))
+    if (isSourceDelimited(resourcePath, true, getConfiguration()))
     {
       return new DelimitedVectorReader(this, new VectorReaderContext(), conf);
     }
@@ -102,7 +102,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   {
     String resourceName = getResolvedResourceName(true);
     Path resourcePath = new Path(resourceName);
-    if (isSourceDelimited(resourcePath, getConfiguration()))
+    if (isSourceDelimited(resourcePath, true, getConfiguration()))
     {
       return new DelimitedVectorReader(this, context, conf);
     }
@@ -114,17 +114,20 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   @Override
-  public VectorWriter getVectorWriter()
+  public VectorWriter getVectorWriter() throws IOException
   {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public VectorWriter getVectorWriter(VectorWriterContext context)
-  {
-    // TODO Auto-generated method stub
-    return null;
+    String resourceName = getResolvedResourceName(false);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, false, getConfiguration()))
+    {
+      return new DelimitedVectorWriter(this, conf);
+    }
+    // TODO:
+//    else if (isSourceShapefile(resourcePath))
+//    {
+//      return new ShapefileVectorWriter(context);
+//    }
+    throw new IOException("Unable to create vector output format provider for " + resourceName);
   }
 
   @Override
@@ -132,7 +135,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   {
     String resourceName = getResolvedResourceName(true);
     Path resourcePath = new Path(resourceName);
-    if (isSourceDelimited(resourcePath, getConfiguration()))
+    if (isSourceDelimited(resourcePath, true, getConfiguration()))
     {
       return new DelimitedVectorRecordReader();
     }
@@ -155,7 +158,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   {
     String resourceName = getResolvedResourceName(true);
     Path resourcePath = new Path(resourceName);
-    if (isSourceDelimited(resourcePath, getConfiguration()))
+    if (isSourceDelimited(resourcePath, true, getConfiguration()))
     {
       return new DelimitedVectorInputFormatProvider(context);
     }
@@ -163,14 +166,23 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     {
       return new ShapefileVectorInputFormatProvider(context);
     }
-    throw new IOException("Unable to create vector reader for " + resourceName);
+    throw new IOException("Unable to create vector input format provider for " + resourceName);
   }
 
   @Override
-  public VectorOutputFormatProvider getVectorOutputFormatProvider(VectorOutputFormatContext context)
+  public VectorOutputFormatProvider getVectorOutputFormatProvider(VectorOutputFormatContext context) throws IOException
   {
-    // TODO Auto-generated method stub
-    return null;
+    String resourceName = getResolvedResourceName(false);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, false, getConfiguration()))
+    {
+      return new DelimitedVectorOutputFormatProvider(this, context);
+    }
+//    else if (isSourceShapefile(resourcePath))
+//    {
+//      return new ShapefileVectorInputFormatProvider(context);
+//    }
+    throw new IOException("Unable to create vector output format provider for " + resourceName);
   }
 
   @Override
@@ -187,14 +199,20 @@ public class HdfsVectorDataProvider extends VectorDataProvider
 
   }
 
-  public static boolean isSourceDelimited(Path source, Configuration conf)
+  public static boolean isSourceDelimited(Path source, boolean mustExist,
+                                          Configuration conf) throws IOException
   {
     if (source != null)
     {
       String lowerPath = source.toString().toLowerCase();
       if (lowerPath.endsWith(".tsv") || lowerPath.endsWith(".csv"))
       {
-        return hasMetadata(conf, source);
+        if (mustExist)
+        {
+          FileSystem fs = HadoopFileUtils.getFileSystem(conf, source);
+          return fs.exists(source);
+        }
+        return true;
       }
     }
     return false;
@@ -219,7 +237,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
       p = resolveName(conf, input, providerProperties, false);
       if (p != null)
       {
-        if (isSourceDelimited(p, conf))
+        if (isSourceDelimited(p, true, conf))
         {
           return true;
         }
@@ -247,7 +265,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
     Path p = resolveNameToPath(conf, input, providerProperties, false);
     if (p != null)
     {
-      if (isSourceDelimited(p, conf))
+      if (isSourceDelimited(p, false, conf))
       {
         HadoopFileUtils.delete(conf, p);
         Path columns = new Path(p.toString() + ".columns");
@@ -290,7 +308,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   {
     Path result = resolveNameToPath(conf, input, providerProperties, mustExist);
     // Check to see if the source is one of the supported formats
-    if (result != null && (isSourceDelimited(result, conf) || isSourceShapefile(result)))
+    if (result != null && (isSourceDelimited(result, mustExist, conf) || isSourceShapefile(result)))
     {
       return result;
     }
@@ -373,24 +391,6 @@ public class HdfsVectorDataProvider extends VectorDataProvider
       }
       return null;
     }
-  }
-
-  private static boolean hasMetadata(final Configuration conf, final Path p)
-  {
-    FileSystem fs;
-    try
-    {
-      fs = HadoopFileUtils.getFileSystem(conf, p);
-      if (fs.exists(p))
-      {
-        String columnsPath = p.toString() + ".columns";
-        return (fs.exists(new Path(columnsPath)));
-      }
-    }
-    catch (IOException e)
-    {
-    }
-    return false;
   }
 
   static Path getBasePath(final Configuration conf)

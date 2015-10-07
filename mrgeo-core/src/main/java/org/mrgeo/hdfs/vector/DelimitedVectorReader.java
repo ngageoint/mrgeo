@@ -170,7 +170,8 @@ public class DelimitedVectorReader implements VectorReader
     {
       delimiter = '\t';
     }
-    Path columnsPath = new Path(provider.getResolvedResourceName(true) + ".columns");
+    String fileName = provider.getResolvedResourceName(true);
+    Path columnsPath = new Path(fileName + ".columns");
     List<String> attributeNames = new ArrayList<String>();
     int xCol = -1;
     int yCol = -1;
@@ -201,18 +202,18 @@ public class DelimitedVectorReader implements VectorReader
 
           if (col.getType() == Column.FactorType.Numeric)
           {
-            if (c.equals("x"))
+            if (c.equalsIgnoreCase("x"))
             {
               xCol = i;
             }
-            else if (c.equals("y"))
+            else if (c.equalsIgnoreCase("y"))
             {
               yCol = i;
             }
           }
           else
           {
-            if (c.toLowerCase().equals("geometry"))
+            if (c.equalsIgnoreCase("geometry"))
             {
               geometryCol = i;
             }
@@ -232,7 +233,41 @@ public class DelimitedVectorReader implements VectorReader
     }
     else
     {
-      throw new IOException("Column file was not found: " + columnsPath.toString());
+      skipFirstLine = true;
+      // Read the column names from the first line of the file
+      InputStream in = null;
+      try
+      {
+        in = HadoopFileUtils.open(conf, new Path(fileName)); // fs.open(columnPath);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        String line = reader.readLine();
+        String[] columnNames = line.split(Character.toString(delimiter));
+        int i = 0;
+        for (String colName: columnNames)
+        {
+          if (colName.equalsIgnoreCase("x"))
+          {
+            xCol = i;
+          }
+          else if (colName.equalsIgnoreCase("y"))
+          {
+            yCol = i;
+          }
+          else if (colName.equalsIgnoreCase("geometry"))
+          {
+            geometryCol = i;
+          }
+          attributeNames.add(colName);
+          i++;
+        }
+      }
+      finally
+      {
+        if (in != null)
+        {
+          in.close();
+        }
+      }
     }
     DelimitedParser delimitedParser = new DelimitedParser(attributeNames,
         xCol, yCol, geometryCol, delimiter, '\"', skipFirstLine);

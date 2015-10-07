@@ -7,25 +7,28 @@ import java.text.DecimalFormat
 import com.google.common.cache.{LoadingCache, CacheLoader, Cache, CacheBuilder}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
-import org.mrgeo.geometry.Point
+import org.mrgeo.geometry.{WritableLineString, GeometryFactory, Geometry, Point}
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.utils.{LatLng, HadoopUtils, TMSUtils}
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.collection.mutable.ListBuffer
 
 object LeastCostPathCalculator {
   private val LOG: Logger = LoggerFactory.getLogger(classOf[LeastCostPathCalculator])
 
   @throws(classOf[IOException])
   def run(cdrdd: RasterRDD, cdMetadata: MrsImagePyramidMetadata, zoomLevel: Int,
-          destrdd: VectorRDD, outputName: String, sparkContext: SparkContext) {
+          destrdd: VectorRDD, sparkContext: SparkContext): VectorRDD = {
     var lcp: LeastCostPathCalculator = null
     lcp = new LeastCostPathCalculator(cdrdd, cdMetadata.getTilesize, zoomLevel,
       destrdd, sparkContext)
-    lcp.run(outputName)
+    lcp.run()
   }
 }
 
@@ -41,14 +44,12 @@ class LeastCostPathCalculator extends Externalizable
   private var resolution: Double = .0
   private var curPixel: TMSUtils.Pixel = null
   private var curValue: Double = 0.0
-  private var outputStr: String = ""
   private var pathCost: Double = 0f
   private var pathDistance: Double = 0f
   private var df: DecimalFormat = new DecimalFormat("###.#")
   private var pathMinSpeed: Double = 1000000f
   private var pathMaxSpeed: Double = 0f
-  private var pathAvgSpeed: Double = 0f
-  private var numPixels: Int = 0
+  private var numPoints: Long = 0
   private var numTiles: Int = 0
   private val dx: Array[Short] = Array[Short](-1, 0, 1, 1, 1, 0, -1, -1)
   private val dy: Array[Short] = Array[Short](-1, -1, -1, 0, 1, 1, 1, 0)
@@ -67,7 +68,7 @@ class LeastCostPathCalculator extends Externalizable
   }
 
   @throws(classOf[IOException])
-  private def run(outputName: String): Unit =
+  private def run(): VectorRDD =
   {
     try {
       cdrdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
@@ -89,17 +90,23 @@ class LeastCostPathCalculator extends Externalizable
         throw new IllegalStateException(String.format("Destination point \"%s\" falls outside cost surface", destPoint))
       }
       pathCost = curValue
-      addPixelToOutput
-      numPixels += 1
+      val lcp = GeometryFactory.createLineString()
+      addPixelToOutput(lcp)
+      numPoints += 1
       while (next) {
-        addPixelToOutput
+        addPixelToOutput(lcp)
       }
-      pathAvgSpeed = pathDistance / pathCost
-      val outFilePath: Path = new Path(outputName, "leastcostpaths.tsv")
-      writeToFile(outFilePath)
       if (LeastCostPathCalculator.LOG.isDebugEnabled) {
-        LeastCostPathCalculator.LOG.debug("Total pixels = " + numPixels + " and total tiles = " + numTiles)
+        LeastCostPathCalculator.LOG.debug("Total points = " + numPoints + " and total tiles = " + numTiles)
       }
+      lcp.setAttribute("VALUE", df.format(pathCost))
+      lcp.setAttribute("DISTANCE", df.format(pathDistance))
+      lcp.setAttribute("MINSPEED", df.format(pathMinSpeed))
+      lcp.setAttribute("MAXSPEED", df.format(pathMaxSpeed))
+      lcp.setAttribute("AVGSPEED", df.format(pathDistance / pathCost))
+      val lcpData = new ListBuffer[(LongWritable, Geometry)]()
+      lcpData += ((new LongWritable(1), lcp))
+      VectorRDD(sparkContext.parallelize(lcpData))
     } finally {
       cdrdd.unpersist()
     }
@@ -188,7 +195,7 @@ class LeastCostPathCalculator extends Externalizable
     }
 
     if (leastValue == curValue) return false
-    numPixels += 1
+    numPoints += 1
     val p1 = {
       val lat: Double = curTileBounds.n - (curPixel.py * resolution)
       val lon: Double = curTileBounds.w + (curPixel.px * resolution)
@@ -239,59 +246,11 @@ class LeastCostPathCalculator extends Externalizable
     }
   }
 
-  @throws(classOf[IOException])
-  private def writeToFile(outFilePath: Path) {
-    val conf: Configuration = sparkContext.hadoopConfiguration
-    val fs: FileSystem = outFilePath.getFileSystem(conf)
-    if (fs.exists(outFilePath)) {
-      fs.delete(outFilePath, true)
-    }
-    var br: BufferedWriter = new BufferedWriter(new OutputStreamWriter(fs.create(outFilePath)))
-    val finalOutputStr: String = packageFinalOutput
-    br.write(finalOutputStr)
-    br.close
-    val columnsPath: Path = new Path(outFilePath.toUri.toString + ".columns")
-    if (fs.exists(columnsPath)) {
-      fs.delete(columnsPath, true)
-    }
-    br = new BufferedWriter(new OutputStreamWriter(fs.create(columnsPath)))
-    var columns: String = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-    columns += "<AllColumns firstLineHeader=\"false\">\n"
-    columns += "<Column name=\"GEOMETRY\" type=\"Nominal\"/>\n"
-    columns += "<Column name=\"VALUE\" type=\"Numeric\"/>\n"
-    columns += "<Column name=\"DISTANCE\" type=\"Numeric\"/>\n"
-    columns += "<Column name=\"MINSPEED\" type=\"Numeric\"/>\n"
-    columns += "<Column name=\"MAXSPEED\" type=\"Numeric\"/>\n"
-    columns += "<Column name=\"AVGSPEED\" type=\"Numeric\"/>\n"
-    columns += "</AllColumns>\n"
-    br.write(columns)
-    br.close
-  }
-
-  private def packageFinalOutput: String = {
-    val outStr: StringBuffer = new StringBuffer
-    outStr.append("LINESTRING(")
-    val indexOfLastComma: Int = outputStr.lastIndexOf(',')
-    assert((indexOfLastComma > -1 && indexOfLastComma == outputStr.length - 1))
-    outStr.append(outputStr.substring(0, indexOfLastComma))
-    outStr.append(")\t")
-    outStr.append(df.format(pathCost))
-    outStr.append("\t")
-    outStr.append(df.format(pathDistance))
-    outStr.append("\t")
-    outStr.append(df.format(pathMinSpeed))
-    outStr.append("\t")
-    outStr.append(df.format(pathMaxSpeed))
-    outStr.append("\t")
-    outStr.append(df.format(pathAvgSpeed))
-    outStr.append("\n")
-    return outStr.toString
-  }
-
-  private def addPixelToOutput {
+  private def addPixelToOutput(lineString: WritableLineString): Unit = {
     val lat: Double = curTileBounds.n - (curPixel.py * resolution)
     val lon: Double = curTileBounds.w + (curPixel.px * resolution)
-    outputStr += (lon.toString + " " + lat.toString + ",")
+    val point = GeometryFactory.createPoint(lon, lat)
+    lineString.addPoint(point)
   }
 
   override def readExternal(in: ObjectInput): Unit = {

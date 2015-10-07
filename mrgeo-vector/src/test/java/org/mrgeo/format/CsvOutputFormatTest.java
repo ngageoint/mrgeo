@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
+import org.mrgeo.hdfs.vector.CsvOutputFormat;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 
