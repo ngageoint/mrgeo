@@ -338,7 +338,6 @@
               <groupId>org.apache.maven.surefire</groupId>
               <artifactId>surefire-junit47</artifactId>
               <version>${maven-failsafe.version}</version>
-
             </dependency>
           </dependencies>
           <configuration>
@@ -2793,17 +2792,15 @@
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
     </dependency>
-    <!-- make sure we include geotools plugins in the final jars -->
-    <!--
-         <dependency>
-         <groupId>org.geotools</groupId>
-         <artifactId>gt-epsg-hsql</artifactId>
-         </dependency>
-         <dependency>
-         <groupId>org.geotools</groupId>
-         <artifactId>gt-epsg-wkt</artifactId>
-         </dependency>
-    -->
+    <!-- make sure we include geotools epsg plugins in the final jars -->
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-wkt</artifactId>
+    </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->
   <licenses>
