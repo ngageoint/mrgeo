@@ -55,16 +55,26 @@ public class ShapeRecordInputFormat extends ShpInputFormat implements RecordInpu
     
     for (Path path : paths)
     {
-      ShapefileGeometryCollection geometryCollection = new ShapefileReader(path);
-      //System.out.println(WellKnownProjections.WGS84);
-      //System.out.println(geometryCollection.getProjection());
-      if (!geometryCollection.getProjection().contains("WGS 84") && 
-          !geometryCollection.getProjection().contains("GCS_WGS_1984"))
+      int size = 0;
       {
-        geometryCollection = 
-          new ReprojectedShapefileGeometryCollection(geometryCollection, GDALUtils.EPSG4326);
+        ShapefileGeometryCollection geometryCollection = new ShapefileReader(path);
+        try
+        {
+          //System.out.println(WellKnownProjections.WGS84);
+          //System.out.println(geometryCollection.getProjection());
+          if (!geometryCollection.getProjection().contains("WGS 84") &&
+              !geometryCollection.getProjection().contains("GCS_WGS_1984"))
+          {
+            geometryCollection =
+                    new ReprojectedShapefileGeometryCollection(geometryCollection, GDALUtils.EPSG4326);
+          }
+          size = geometryCollection.size();
+        }
+        finally
+        {
+          geometryCollection.close();
+        }
       }
-      int size = geometryCollection.size();
       int begin = 0;
       int end = -1;
       if (size < recordsPerSplit)

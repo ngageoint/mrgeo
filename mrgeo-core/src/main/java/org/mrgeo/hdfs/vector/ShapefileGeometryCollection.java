@@ -30,7 +30,6 @@ import java.io.Serializable;
  * @author jason.surratt
  * 
  */
-@Deprecated
 public interface ShapefileGeometryCollection extends Iterable<WritableGeometry>, Serializable
 {
 
