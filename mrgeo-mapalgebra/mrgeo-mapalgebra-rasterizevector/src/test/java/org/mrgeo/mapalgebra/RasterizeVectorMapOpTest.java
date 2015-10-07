@@ -29,7 +29,7 @@ import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
-import org.mrgeo.test.OpImageTestUtils;
+import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,6 @@ public class RasterizeVectorMapOpTest extends LocalRunnerTest
 @Rule
 public TestName testname = new TestName();
 
-private static OpImageTestUtils opImageTestUtils;
 private static MapOpTestUtils testUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
@@ -61,7 +60,6 @@ public static void init() throws IOException
   }
 
   testUtils = new MapOpTestUtils(RasterizeVectorMapOpTest.class);
-  opImageTestUtils = new OpImageTestUtils(RasterizeVectorMapOpTest.class);
 
   HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
       testUtils.getInputHdfs(), shapefile + ".shp");
@@ -93,7 +91,7 @@ public void rasterizeMaskBounds() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
 
@@ -106,7 +104,7 @@ public void rasterizeOutOfBounds() throws Exception
   String exp = "RasterizeVector([" + hdfsShapefile + "], \"MASK\", 0.0001716614, \"-68.85\", 34.25, \"-69.35\", 34.75)";
 
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
 
 }
 
@@ -122,7 +120,7 @@ public void rasterizeMask() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 }
 
@@ -138,7 +136,7 @@ public void rasterizeSum() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
 }
@@ -155,7 +153,7 @@ public void rasterizeSumColumnNoBounds() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
 }
@@ -172,7 +170,7 @@ public void rasterizeLastBounds() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
 }
@@ -189,7 +187,7 @@ public void rasterizeSumBounds() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
 }
@@ -206,7 +204,7 @@ public void rasterizeLast() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
 }
@@ -287,7 +285,7 @@ public void variable() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999, exp);
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 }
 

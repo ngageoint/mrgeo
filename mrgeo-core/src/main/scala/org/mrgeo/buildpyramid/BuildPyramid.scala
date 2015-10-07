@@ -20,6 +20,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 import java.util.Properties
 
+import org.apache.commons.lang3.NotImplementedException
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.{SparkConf, SparkContext}
@@ -65,13 +66,13 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
 
   def buildlevel(pyramidName: String, level: Int, aggregator: Aggregator,
       conf: Configuration, providerProperties: Properties):Boolean = {
-    throw new NotImplementedError("Not yet implemented")
+    throw new NotImplementedException("Not yet implemented")
   }
 
   def buildlevel(pyramidName: String, level: Int, aggregator: Aggregator,
       conf: Configuration, progress: Progress, jobListener: JobListener,
       providerProperties: ProviderProperties): Boolean = {
-    throw new NotImplementedError("Not yet implemented")
+    throw new NotImplementedException("Not yet implemented")
   }
 
   // this build method allows buildpyramid to be called from within an existing spark job...

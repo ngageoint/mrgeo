@@ -4,9 +4,10 @@ import org.junit.experimental.categories.Category
 import org.junit.{Assert, Test}
 import org.mrgeo.data.ProviderProperties
 import org.mrgeo.junit.UnitTest
+import org.mrgeo.test.LocalRunnerTest
 import org.scalatest.junit.AssertionsForJUnit
 
-class InlineCsvMapOpTest extends /*SparkLocalRunnerTest with*/ AssertionsForJUnit
+class InlineCsvMapOpTest extends LocalRunnerTest with AssertionsForJUnit
 {
   val providerProperties = new ProviderProperties()
 

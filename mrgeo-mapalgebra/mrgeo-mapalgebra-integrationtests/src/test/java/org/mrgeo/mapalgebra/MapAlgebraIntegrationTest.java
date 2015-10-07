@@ -33,7 +33,7 @@ import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
-import org.mrgeo.test.OpImageTestUtils;
+import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +49,6 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
 @Rule
 public TestName testname = new TestName();
-
-private static OpImageTestUtils opImageTestUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
@@ -116,7 +114,6 @@ public static void init() throws IOException
   }
 
   testUtils = new MapOpTestUtils(MapAlgebraIntegrationTest.class);
-  opImageTestUtils = new OpImageTestUtils(MapAlgebraIntegrationTest.class);
   //MapOpTestVectorUtils vectorTestUtils = new MapOpTestVectorUtils(MapAlgebraIntegrationTest.class);
 
   HadoopFileUtils.delete(testUtils.getInputHdfs());
@@ -195,7 +192,7 @@ public void add() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s]", allones, allones));
   }
 }
@@ -213,7 +210,7 @@ public void addSubtractConstant() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s] - 3", allhundreds, allones));
 
   }
@@ -232,7 +229,7 @@ public void addSubtractConstantAlternateSyntax() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s] + -3", allhundreds, allones));
 
   }
@@ -250,7 +247,7 @@ public void aspect() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("aspect([%s])", smallElevation));
   }
 }
@@ -267,7 +264,7 @@ public void aspectDeg() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("aspect([%s], \"deg\")", smallElevation));
   }
 }
@@ -284,7 +281,7 @@ public void aspectRad() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("aspect([%s], \"rad\")", smallElevation));
   }
 }
@@ -330,7 +327,7 @@ public void buildpyramid() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("buildPyramid([%s])", path));
 
     // levels should exist
@@ -391,7 +388,7 @@ public void buildpyramidAfterSave() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("buildpyramid(save([%s] + 1, \"%s\"))", path, testUtils.getOutputHdfsFor("save-test")));
 
     // levels should exist for save-test
@@ -475,7 +472,7 @@ public void buildpyramidAlternate() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("bp([%s])", path));
 
     // levels should exist
@@ -528,7 +525,7 @@ public void buildpyramidDoesNotExist() throws Exception
   }
 
   testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("buildpyramid([%s] + 1)", path));
 }
 
@@ -544,7 +541,7 @@ public void changeClassification() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "changeClassification([" + smallElevationPath + "], \"categorical\")");
 
     MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
@@ -565,7 +562,7 @@ public void changeClassificationAggregator() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "changeClassification([" + smallElevationPath + "], \"categorical\", \"max\")");
 
     MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
@@ -589,7 +586,7 @@ public void complicated() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "con([%s] > 0.008, 1.0, 0.3) * pow(6, -3.5 * abs(([%s] * 5) + 0.05))",
             smallElevationPath, smallElevationPath));
@@ -613,7 +610,7 @@ public void conAlternateFormat() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "con([%s] <= 100, [%s], [%s] > 200, [%s], [%s])", smallElevationPath, allones,
             smallElevationPath, allhundreds, alltwos));
@@ -632,7 +629,7 @@ public void conLTE() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("con([%s] <= 100, 0, 1)", smallElevationPath));
 
   }
@@ -650,7 +647,7 @@ public void conNE() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("con([%s] != 200, 2, 0)", smallElevationPath));
 
   }
@@ -668,7 +665,7 @@ public void conLteGte() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("([%s] <= 100) || ([%s] >= 200)", smallElevationPath, smallElevationPath));
   }
 
@@ -686,7 +683,7 @@ public void conLtGt() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("([%s] < 100) || ([%s] > 200)", smallElevationPath, smallElevationPath));
   }
 }
@@ -703,7 +700,7 @@ public void cos() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("cos([%s])", allones));
   }
 }
@@ -721,7 +718,7 @@ public void crop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "crop([%s],  142.05, -17.75, 142.2, -17.65)", smallElevationPath));
   }
@@ -741,7 +738,7 @@ public void cropExact() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "cropExact([%s],  142.05, -17.75, 142.2, -17.65)",
             smallElevationPath));
@@ -760,7 +757,7 @@ public void divide() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] / [%s]", allones, allones));
   }
 }
@@ -777,7 +774,7 @@ public void divideAddConstant() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] / [%s] + 3", allones, allones));
   }
 }
@@ -795,7 +792,7 @@ public void expressionIncompletePathInput1() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allonesPath));
   }
 }
@@ -812,7 +809,7 @@ public void expressionIncompletePathInput2() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s];\nb = 3;\na / [%s] + b", allones, allonesPath));
   }
 }
@@ -832,7 +829,7 @@ public void expressionIncompletePathInput3() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "a = [" + fname + "] + "
             + "[" + allonesPath.toString() + "];");
   }
@@ -850,7 +847,7 @@ public void fillConst() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "fill([" + allhundredsholes + "], 1)");
   }
 }
@@ -867,7 +864,7 @@ public void fillImage() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "fill([" + allhundredsholes + "], [" + allonesholes + "])");
   }
 }
@@ -888,7 +885,7 @@ public void fillBounds() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "fillBounds([" + allhundredsholes + "], 1, 141.6, -18.6, 143.0, -17.0)");
   }
 }
@@ -920,7 +917,7 @@ public void hillshadeNonLocal() throws Exception
   else
   {
     testUtils.runRasterExpression(config, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         exp);
   }
 }
@@ -950,7 +947,7 @@ public void hillshade() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         exp);
   }
 }
@@ -969,7 +966,7 @@ public void ingest() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("ingest(\"%s\")", smallslope));
   }
 }
@@ -988,7 +985,7 @@ public void isNodata() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("isNodata([%s])", allones));
   }
 }
@@ -1006,7 +1003,7 @@ public void isNull() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("isNull([%s])", allones));
   }
 }
@@ -1024,7 +1021,7 @@ public void kernelGaussian() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("kernel(\"gaussian\", [%s], 100.0)", regularpointsPath));
   }
 }
@@ -1041,7 +1038,7 @@ public void kernelLaplacian() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("kernel(\"laplacian\", [%s], 100.0)", regularpointsPath));
   }
 }
@@ -1058,7 +1055,7 @@ public void log() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("log([%s])", alltwos));
 
   }
@@ -1076,7 +1073,7 @@ public void logWithBase() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("log([%s], 10)", alltwos));
 
   }
@@ -1094,7 +1091,7 @@ public void mosaicOverlapHundredsTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", allhundredsPath, alltwosPath));
   }
 }
@@ -1111,7 +1108,7 @@ public void mosaicOverlapTwosTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsPath));
   }
 }
@@ -1127,7 +1124,7 @@ public void mosaicButtedLeft() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsleftPath));
   }
 }
@@ -1143,7 +1140,7 @@ public void mosaicButtedTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsupPath));
   }
 }
@@ -1159,7 +1156,7 @@ public void mosaicPartialOverlapTwosTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredshalfPath));
   }
 }
@@ -1175,7 +1172,7 @@ public void mosaicPartialOverlapHundredsTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", allhundredshalfPath, alltwosPath));
   }
 }
@@ -1192,7 +1189,7 @@ public void mult() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] * 5", allones));
 
   }
@@ -1210,7 +1207,7 @@ public void nestedExpression() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("pow(6, -3.5 * abs(([%s] * 5) + 0.05))", allones));
 
   }
@@ -1228,7 +1225,7 @@ public void not() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("!([%s] < 0.012)", allones));
 
   }
@@ -1248,7 +1245,7 @@ public void orderOfOperations() throws Exception
   {
 
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s] * [%s] - [%s]", allones, allones, allones, allones));
   }
 }
@@ -1350,7 +1347,7 @@ public void pow() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("pow([%s], 1.2)", allhundreds));
 
   }
@@ -1371,11 +1368,11 @@ public void save() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("save([%s], \"%s\")", allones, testUtils.getOutputHdfsFor("save-test")));
 
     // now check the file that was saved...
-    testUtils.compareRasterOutput("save-test", opImageTestUtils.nanTranslatorToMinus9999);
+    testUtils.compareRasterOutput("save-test", TestUtils.nanTranslatorToMinus9999);
   }
 }
 
@@ -1391,7 +1388,7 @@ public void sin() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("sin([%s] / 0.01)", allones));
   }
 }
@@ -1409,7 +1406,7 @@ public void slope() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s])", smallElevation));
 
   }
@@ -1428,7 +1425,7 @@ public void slopeGradient() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s], \"gradient\")", smallElevation));
 
   }
@@ -1446,7 +1443,7 @@ public void slopeRad() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s], \"rad\")", smallElevation));
 
   }
@@ -1464,7 +1461,7 @@ public void slopeDeg() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s], \"deg\")", smallElevation));
 
   }
@@ -1482,7 +1479,7 @@ public void slopePercent() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s], \"percent\")", smallElevation));
 
   }
@@ -1500,7 +1497,7 @@ public void tan() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("tan([%s] / 0.01)", allones));
 
   }
@@ -1519,7 +1516,7 @@ public void variables1() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = a; a + b * a - b", allones));
   }
 }
@@ -1536,7 +1533,7 @@ public void variables2() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("\n\na = [%s];\n\nb = 3;\na \t+ [%s] - b\n\n", allones, allones));
   }
 }
@@ -1553,7 +1550,7 @@ public void variables3() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
   }
 }
@@ -1570,7 +1567,7 @@ public void rasterizeVector1() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; RasterizeVector(a, \"MASK\", \"0.000092593\")", majorRoadShapePath.toString()));
   }
 }
@@ -1587,7 +1584,7 @@ public void rasterizeVector2() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ", pointsPath));
   }
 }
@@ -1604,7 +1601,7 @@ public void rasterizeVector3() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath));
   }
 }

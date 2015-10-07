@@ -187,83 +187,24 @@
       <artifactId>gdal</artifactId>
     </dependency>
     <!--
-         <dependency>
-         <groupId>org.geotools</groupId>
-         <artifactId>gt-jdbc</artifactId>
-         <scope>runtime</scope>
-         </dependency>
-         <dependency>
-         <groupId>org.geotools</groupId>
-         <artifactId>gt-opengis</artifactId>
-         </dependency>
-         <dependency>
-         <groupId>org.geotools</groupId>
-         <artifactId>gt-coverage</artifactId>
-         </dependency>
-    -->
-    <dependency>
-      <groupId>org.jaitools</groupId>
-      <artifactId>jt-utils</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jaitools</groupId>
-      <artifactId>jt-zonalstats</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>java3d</groupId>
-      <artifactId>vecmath</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai_codec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai_core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai_imageio</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>xml-apis</groupId>
       <artifactId>xml-apis</artifactId>
     </dependency>
-    <dependency>
-      <groupId>geotiff</groupId>
-      <artifactId>geotiff-jai</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>xtiff-jai</groupId>
-      <artifactId>xtiff-jai</artifactId>
-    </dependency>
+    -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-jexl</artifactId>
     </dependency>
-    <!-- annoys me that we have to add specific jboss dependencies -->
     <dependency>
       <groupId>org.jboss</groupId>
       <artifactId>jboss-vfs</artifactId>
     </dependency>
-    <!-- end annoyance -->
     <!-- Scala/spark dependencies -->
+    <!--
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-yarn-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-streaming_${spark.scala.version}</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-graphx_${spark.scala.version}</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -273,6 +214,7 @@
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
     </dependency>
+    -->
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${spark.scala.version}</artifactId>
@@ -280,14 +222,6 @@
     <dependency>
       <groupId>com.esotericsoftware.kryo</groupId>
       <artifactId>kryo</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.clapper</groupId>
-      <artifactId>classutil_${spark.scala.version}</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
     </dependency>
   </dependencies>
 </project>

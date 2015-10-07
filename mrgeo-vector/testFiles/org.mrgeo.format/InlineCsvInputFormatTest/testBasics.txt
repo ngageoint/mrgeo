@@ -1,8 +1,0 @@
-Feature 0
-  GEOMETRY : POINT(3.0 4)
-  a : 1
-  b : 2
-Feature 1
-  GEOMETRY : POINT(7 8)
-  a : 5
-  b : 6

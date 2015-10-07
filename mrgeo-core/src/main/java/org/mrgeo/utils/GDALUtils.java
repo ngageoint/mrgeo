@@ -33,10 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.*;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.*;
@@ -47,11 +44,10 @@ import java.util.Vector;
 
 public class GDALUtils
 {
-private static final Logger log = LoggerFactory.getLogger(GDALUtils.class);
-
 // it's quicker (the EPSG doesn't change) to just hardcode this instead of trying to get it from GDAL/
 public static final String EPSG4326 = osr.SRS_WKT_WGS84;
 public static final String GDAL_LIBS;
+private static final Logger log = LoggerFactory.getLogger(GDALUtils.class);
 private static final String VSI_PREFIX = "/vsimem/";
 
 static
@@ -189,6 +185,30 @@ public static boolean isValidDataset(String imagename)
   }
 
   return false;
+}
+
+public static Dataset open(InputStream stream) throws IOException
+{
+  Dataset image = null;
+
+  String imagename = "stream" + HadoopUtils.createRandomString(5);
+
+  byte[] bytes = IOUtils.toByteArray(stream);
+  gdal.FileFromMemBuffer(GDALUtils.VSI_PREFIX + imagename, bytes);
+
+  image = gdal.Open(GDALUtils.VSI_PREFIX + imagename);
+
+  if (image != null)
+  {
+    GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
+    return image;
+  }
+
+  GDALUtils.log.info(
+      "Image not loaded, but unfortunately no exceptions were thrown, look for a logged explanation somewhere above");
+
+  return null;
+
 }
 
 public static Dataset open(String imagename) throws IOException
@@ -360,6 +380,13 @@ public static void saveRaster(Raster raster, String filename, long tx, long ty, 
   GDALUtils.saveRaster(raster, filename, "GTiff", tx, ty, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
 }
 
+public static void saveRaster(Raster raster, OutputStream stream, long tx, long ty, int zoom, int tilesize, double nodata)
+    throws IOException
+{
+
+  GDALUtils.saveRaster(raster, stream, "GTiff", tx, ty, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+}
+
 public static void saveRaster(Raster raster, String filename, Bounds bounds, int zoom, int tilesize, double nodata)
 {
   if (!filename.endsWith(".tif") && !filename.endsWith(".tiff"))
@@ -368,6 +395,20 @@ public static void saveRaster(Raster raster, String filename, Bounds bounds, int
   }
 
   GDALUtils.saveRaster(raster, filename, "GTiff", bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, Bounds bounds, int zoom, int tilesize, double nodata)
+    throws IOException
+{
+
+  GDALUtils.saveRaster(raster, stream, "GTiff", bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, Bounds bounds, double nodata)
+    throws IOException
+{
+  GDALUtils.saveRaster(raster, stream, "GTiff",
+      bounds.getTMSBounds(), nodata, new String[]{"COMPRESS=LZW"});
 }
 
 public static void saveRaster(Raster raster, String filename, TMSUtils.Bounds bounds, int zoom, int tilesize, double nodata)
@@ -380,9 +421,21 @@ public static void saveRaster(Raster raster, String filename, TMSUtils.Bounds bo
   GDALUtils.saveRaster(raster, filename, "GTiff", bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
 }
 
+public static void saveRaster(Raster raster, OutputStream stream, TMSUtils.Bounds bounds, int zoom, int tilesize, double nodata)
+    throws IOException
+{
+
+  GDALUtils.saveRaster(raster, stream, "GTiff", bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+}
+
 public static void saveRaster(Raster raster, String filename, String type, long tx, long ty, int zoom, int tilesize, final double nodata)
 {
   saveRaster(raster, filename, type, tx, ty, zoom, tilesize, nodata, null);
+}
+public static void saveRaster(Raster raster, OutputStream stream, String type, long tx, long ty, int zoom, int tilesize, final double nodata)
+    throws IOException
+{
+  saveRaster(raster, stream, type, tx, ty, zoom, tilesize, nodata, null);
 }
 
 public static void saveRaster(Raster raster, String filename, String type, long tx, long ty, int zoom, int tilesize, final double nodata, String[] options)
@@ -391,9 +444,24 @@ public static void saveRaster(Raster raster, String filename, String type, long 
 
   saveRaster(raster, filename, type, tileBounds, zoom, tilesize, nodata, options);
 }
+
+public static void saveRaster(Raster raster, OutputStream stream, String type, long tx, long ty, int zoom, int tilesize, final double nodata, String[] options)
+    throws IOException
+{
+  final TMSUtils.Bounds tileBounds = TMSUtils.tileBounds(tx, ty, zoom, tilesize);
+
+  saveRaster(raster, stream, type, tileBounds, zoom, tilesize, nodata, options);
+}
+
 public static void saveRaster(Raster raster, String filename, String type, Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
 {
   saveRaster(raster, filename, type, bounds.getTMSBounds(), zoom, tilesize, nodata, options);
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, String type, Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
+    throws IOException
+{
+  saveRaster(raster, stream, type, bounds.getTMSBounds(), zoom, tilesize, nodata, options);
 }
 
 public static void saveRaster(Raster raster, String filename, String type, TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
@@ -426,6 +494,63 @@ public static void saveRaster(Raster raster, String filename, String type, TMSUt
 
   copy.delete();
   src.delete();
+}
+
+public static void saveRaster(Raster raster, String filename, String type,
+    TMSUtils.Bounds bounds, final double nodata, String[] options)
+{
+  final Driver driver = gdal.GetDriverByName(type);
+  final Dataset src = GDALUtils.toDataset(raster, nodata);
+
+  final double[] xform = new double[6];
+
+  xform[0] = bounds.w; /* top left x */
+  xform[1] = bounds.width() / raster.getWidth(); /* w-e pixel resolution */
+  xform[2] = 0; /* 0 */
+  xform[3] = bounds.n; /* top left y */
+  xform[4] = 0; /* 0 */
+  xform[5] = -bounds.height() / raster.getHeight(); /* n-s pixel resolution (negative value) */
+
+  src.SetGeoTransform(xform);
+  src.SetProjection(GDALUtils.EPSG4326);
+
+  final Dataset copy;
+  if (options == null)
+  {
+    copy  = driver.CreateCopy(filename, src);
+  }
+  else {
+    copy = driver.CreateCopy(filename, src, options);
+  }
+
+  copy.delete();
+  src.delete();
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, String type,
+    TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
+    throws IOException
+{
+  File temp = File.createTempFile("tmp-file", "");
+  saveRaster(raster, temp.getCanonicalPath(), type, bounds, zoom, tilesize, nodata, options);
+
+  Files.copy(temp.toPath(), stream);
+  stream.flush();
+
+  temp.delete();
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, String type,
+    TMSUtils.Bounds bounds, final double nodata, String[] options)
+    throws IOException
+{
+  File temp = File.createTempFile("tmp-file", "");
+  saveRaster(raster, temp.getCanonicalPath(), type, bounds, nodata, options);
+
+  Files.copy(temp.toPath(), stream);
+  stream.flush();
+
+  temp.delete();
 }
 
 public static Dataset toDataset(Raster raster, final double nodata)

@@ -29,7 +29,7 @@ import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 
-import javax.media.jai.operator.ConstantDescriptor;
+import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.io.IOException;
 
@@ -50,7 +50,7 @@ import java.io.IOException;
  */
 public class RasterWritableTest {
 	Raster srcRaster;
-	float RASTER_SIZE = 10f;
+	int RASTER_SIZE = 10;
 	double PIXEL_VALUE = 1.0;
 	int NUM_ENTRIES = 5;
 
@@ -72,18 +72,7 @@ public class RasterWritableTest {
 	public void setUp() throws IOException {
 		conf = HadoopUtils.createConfiguration();
     HadoopUtils.setupLocalRunner(conf);
-		srcRaster = ConstantDescriptor.create(RASTER_SIZE, RASTER_SIZE, new Double[]{PIXEL_VALUE}, null).getData();
-
-//		codec = AccumuloUtils.getCodec(conf);		  
-//		compressor = CodecPool.getCompressor(codec);
-//		
-//		if(compressor == null) {
-//			System.out.println("WARN: using DefaultCodec instead of the actual GzipCodec.\n"  + 
-//					"Please see instructions in RasterWritableTest to set java.library.path\n");
-//			codec = AccumuloUtils.getCodec(conf, "org.apache.hadoop.io.compress.DefaultCodec");
-//			compressor = CodecPool.getCompressor(codec);
-//		}
-//		decompressor = CodecPool.getDecompressor(codec);
+		srcRaster = RasterUtils.createEmptyRaster(RASTER_SIZE, RASTER_SIZE, 1, DataBuffer.TYPE_FLOAT, PIXEL_VALUE);
 	}
 
 

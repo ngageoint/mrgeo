@@ -83,16 +83,6 @@
   <dependencies>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-vector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-vector</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-image</artifactId>
       <scope>test</scope>
     </dependency>

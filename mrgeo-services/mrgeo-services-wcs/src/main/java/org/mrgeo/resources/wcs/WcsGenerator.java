@@ -20,7 +20,6 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
@@ -51,7 +50,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Path("/wcs")
 public class WcsGenerator
@@ -345,8 +347,6 @@ private static MrsImageDataProvider[] getPyramidFilesList(
 private Response getCoverage(MultivaluedMap<String, String> allParams,
     ProviderProperties providerProperties)
 {
-  OpImageRegistrar.registerMrGeoOps();
-
   // Get all of the query parameter values needed and validate them
   String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
   version = new Version(versionStr);
