@@ -82,18 +82,9 @@
   </build>
   <dependencies>
     <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-mapalgebra-image</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${spark.scala.version}</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.vividsolutions</groupId>
-      <artifactId>jts</artifactId>
     </dependency>
   </dependencies>
 </project>
