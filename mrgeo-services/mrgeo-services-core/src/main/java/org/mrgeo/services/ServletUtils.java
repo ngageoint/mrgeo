@@ -17,18 +17,14 @@ package org.mrgeo.services;
 
 import org.apache.commons.collections.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.StringUtils;
-import org.mrgeo.data.raster.RasterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.IIOException;
-import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.awt.image.Raster;
-import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.Enumeration;
 
@@ -114,55 +110,7 @@ public class ServletUtils
       }
     }
     
-  /**
-   * Writes an image to a servlet response
-   * @param response servlet response
-   * @param writer image writer
-   * @param image image
-   * @throws IOException
-   */
-  public static void writeImageToResponse(HttpServletResponse response, ImageWriter writer,
-    RenderedImage image) throws IOException
-  {
-    try
-    {
-      ImageOutputStream imageStream = new MemoryCacheImageOutputStream(response.getOutputStream());
-      writer.setOutput(imageStream);
-      writer.write(image);
-      response.setContentLength((int)imageStream.length());
-      imageStream.close();
-    }
-    // TODO: remove these catches - This is to prevent seeing the broken pipes exception
-    // over and over again in the trace...leave catch in until issue is fixed (#1122)
-    catch (IIOException e)
-    {
-    }
-    catch (IndexOutOfBoundsException e)
-    {
-    }
-  }
-  
-  public static void writeRasterToResponse(HttpServletResponse response, ImageWriter writer,
-    Raster raster) throws IOException
-  {
-    try
-    {
-      ImageOutputStream imageStream = new MemoryCacheImageOutputStream(response.getOutputStream());
-      writer.setOutput(imageStream);
-      writer.write(RasterUtils.makeBufferedImage(raster));
-      response.setContentLength((int)imageStream.length());
-      imageStream.close();
-    }
-    // TODO: remove these catches - This is to prevent seeing the broken pipes exception
-    // over and over again in the trace...leave catch in until issue is fixed (#1122)
-    catch (IIOException e)
-    {
-    }
-    catch (IndexOutOfBoundsException e)
-    {
-    }
-  }
-  
+
   /**
    * Validates the existence and type of an HTTP parameter and returns it
    * @param request servlet request
