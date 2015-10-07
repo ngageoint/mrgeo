@@ -24,9 +24,7 @@ import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
 import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
-
 import junit.framework.Assert;
-
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -41,16 +39,14 @@ import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.mrspyramid.rendering.PngImageResponseWriter;
 import org.mrgeo.test.TestUtils;
+import org.mrgeo.utils.GDALUtils;
 import org.w3c.dom.Document;
 
-import javax.imageio.ImageIO;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-
-import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -284,8 +280,7 @@ public class ColorScaleResourceTest extends JerseyTest
   }
 
   private Raster getRaster(String dir, String file) throws IOException {
-
-      return ImageIO.read(new File(dir, file)).getData();
+    return GDALUtils.toRaster(GDALUtils.open(new File(dir, file).getCanonicalPath()));
   }
 
   String input = TestUtils.composeInputDir(ColorScaleResourceTest.class);
@@ -309,11 +304,12 @@ public class ColorScaleResourceTest extends JerseyTest
     MultivaluedMap<String, String> headers = resp.getHeaders();
     Assert.assertEquals("[image/png]", headers.get("Content-Type").toString());
     InputStream is = resp.getEntityInputStream();
-    BufferedImage outputImg = ImageIO.read(is);
 
-    TestUtils.compareRasters(new File(input + "colorswatch.png"), outputImg.getData());
-    Assert.assertEquals(100, outputImg.getWidth());
-    Assert.assertEquals(10, outputImg.getHeight());
+    Raster raster = GDALUtils.toRaster(GDALUtils.open(is));
+
+    TestUtils.compareRasters(new File(input + "colorswatch.png"), raster);
+    Assert.assertEquals(100, raster.getWidth());
+    Assert.assertEquals(10, raster.getHeight());
     is.close();
   }
 
