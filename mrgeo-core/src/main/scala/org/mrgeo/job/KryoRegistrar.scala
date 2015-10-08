@@ -19,7 +19,7 @@ import com.esotericsoftware.kryo.Kryo
 import org.apache.spark.serializer.KryoRegistrator
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.spark.{BoundsSerializer, RasterWritableSerializer}
+import org.mrgeo.job.serializers.{BoundsSerializer, RasterWritableSerializer}
 import org.mrgeo.utils.Bounds
 
 class KryoRegistrar extends KryoRegistrator

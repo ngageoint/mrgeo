@@ -15,21 +15,17 @@
 
 package org.mrgeo.data.vector;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.geometry.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
 {
@@ -72,25 +68,25 @@ public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
   public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
-//    return new VectorRecordReader();
-    if (!(split instanceof VectorInputSplit))
-    {
-      throw new IOException("Expected a VectorInputSplit but got " + split.getClass().getName());
-    }
-    VectorInputSplit inputSplit = (VectorInputSplit)split;
-    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(context.getConfiguration(),
-        inputSplit.getVectorName(), AccessMode.READ);
-    RecordReader<LongWritable, Geometry> recordReader = dp.getRecordReader();
-    recordReader.initialize(inputSplit, context);
-    return recordReader;
+    return new VectorRecordReader();
+//    if (!(split instanceof VectorInputSplit))
+//    {
+//      throw new IOException("Expected a VectorInputSplit but got " + split.getClass().getName());
+//    }
+//    VectorInputSplit inputSplit = (VectorInputSplit)split;
+//    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(inputSplit.getVectorName(),
+//        AccessMode.READ, context.getConfiguration());
+//    RecordReader<LongWritable, Geometry> recordReader = dp.getRecordReader();
+//    recordReader.initialize(inputSplit, context);
+//    return recordReader;
   }
   
   private List<InputSplit> getNativeSplits(JobContext context,
       VectorInputFormatContext ifContext,
       String input) throws IOException, InterruptedException
   {
-    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(context.getConfiguration(),
-        input, AccessMode.READ);
+    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ,
+        context.getConfiguration());
     VectorInputFormatProvider ifProvider = dp.getVectorInputFormatProvider(ifContext);
     List<InputSplit> results = ifProvider.getInputFormat(input).getSplits(context);
     if (log.isDebugEnabled())

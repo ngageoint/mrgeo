@@ -21,23 +21,24 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.rasterops.ColorScale;
-import org.mrgeo.rasterops.ColorScale.ColorScaleException;
-import org.mrgeo.rasterops.OpImageRegistrar;
+import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.ColorScaleManager;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
-import org.mrgeo.utils.*;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.LatLng;
+import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.servlet.ServletException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -51,7 +52,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 //import javax.servlet.http.HttpServlet;
 //import javax.servlet.http.HttpServletRequest;
@@ -325,8 +329,6 @@ public class WmsGenerator
 
   private Response getMap(MultivaluedMap<String, String> allParams, ProviderProperties providerProperties)
   {
-    OpImageRegistrar.registerMrGeoOps();
-
     // Get all of the query parameter values needed and validate them
     String layers = getQueryParam(allParams, "layers");
     String[] layerNames = null;
@@ -503,8 +505,6 @@ public class WmsGenerator
    */
   private Response getMosaic(MultivaluedMap<String, String> allParams, ProviderProperties providerProperties)
   {
-    OpImageRegistrar.registerMrGeoOps();
-
     String layers = getQueryParam(allParams, "layers");
     String[] layerNames = null;
     if (layers != null && !layers.isEmpty())
@@ -672,8 +672,6 @@ public class WmsGenerator
       return writeError(Response.Status.BAD_REQUEST, "Get tile is only supported with version >= 1.4.0");
     }
 
-    OpImageRegistrar.registerMrGeoOps();
-
     String layer = getQueryParam(allParams, "layer");
     if (layer == null || layer.isEmpty())
     {
@@ -759,7 +757,7 @@ public class WmsGenerator
         cs = ColorScaleManager.fromName(style);
         if (cs == null)
         {
-          throw new ServletException("Can not load style: " + style);
+          throw new IOException("Can not load style: " + style);
         }
       }
       else

@@ -15,6 +15,17 @@
 
 package org.mrgeo.mapalgebra.parser;
 
+import org.mrgeo.mapalgebra.MapOp;
+
 public class ParserFunctionNode extends ParserNode
 {
+MapOp mapop = null;
+
+public final void setMapOp(MapOp op) {
+  mapop = op;
+}
+
+public final MapOp getMapOp() {
+  return mapop;
+}
 }

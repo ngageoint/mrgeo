@@ -34,116 +34,129 @@ import java.util.Map;
  */
 public abstract class MrsPyramidMetadata implements Serializable
 {
-  // version
+// version
+private static final long serialVersionUID = 1L;
+
+
+/**
+ * TileMetadata is a container of the multiple types of
+ * bounds for tiled data.
+ */
+public static class TileMetadata implements Serializable
+{
   private static final long serialVersionUID = 1L;
 
-  
-  /**
-   * TileMetadata is a container of the multiple types of
-   * bounds for tiled data. 
-   */
-  public static class TileMetadata implements Serializable
+  // tile bounds (min tx, min ty, max tx, max ty)
+  public LongRectangle tileBounds = null;
+
+  // hdfs path or accumulo table for the image min, max, mean pixel values
+  public String name = null;
+
+  // basic constructor
+  public TileMetadata()
   {
-    private static final long serialVersionUID = 1L;
+  }
 
-    // tile bounds (min tx, min ty, max tx, max ty)
-    public LongRectangle tileBounds = null;
-
-    // hdfs path or accumulo table for the image min, max, mean pixel values
-    public String name = null;
-
-    // basic constructor
-    public TileMetadata()
-    {
-    }
-    
-  } // end TileMetadata
+} // end TileMetadata
   
   
   /*
    * start globals section
    */
 
-  protected String pyramid; // base hdfs path or accumulo table for the pyramid
+protected String pyramid; // base hdfs path or accumulo table for the pyramid
 
-  // NOTE: bounds, and pixel bounds are for the exact image data, they do
-  // not include the extra "slop" around the edges of the tile.
-  protected Bounds bounds; // The bounds of the image in decimal degrees.
+// NOTE: bounds, and pixel bounds are for the exact image data, they do
+// not include the extra "slop" around the edges of the tile.
+protected Bounds bounds; // The bounds of the image in decimal degrees.
 
-  protected int tilesize; // tile width/height, in pixels
+protected int tilesize; // tile width/height, in pixels
 
-  protected int maxZoomLevel; // maximum zoom level (minimum pixel size)
+protected int maxZoomLevel; // maximum zoom level (minimum pixel size)
 
-  protected Map<String, String> tags = new HashMap<String, String>(); // freeform k,v pairs of tags
-  
-  protected String protectionLevel = "";
+protected Map<String, String> tags = new HashMap<String, String>(); // freeform k,v pairs of tags
+
+protected String protectionLevel = "";
 
   /*
    * end globals section
    */
 
+public MrsPyramidMetadata()
+{
+}
+
+public MrsPyramidMetadata(MrsPyramidMetadata copy) {
+  this.pyramid = copy.pyramid;
+  this.bounds = new Bounds(copy.bounds.getMinX(), copy.bounds.getMinY(), copy.bounds.getMaxX(), copy.bounds.getMaxY());
+  this.tilesize = copy.tilesize;
+  this.maxZoomLevel = copy.maxZoomLevel;
+  this.tags.putAll(copy.tags);
+  this.protectionLevel = copy.protectionLevel;
+}
+
   /*
    * start get section
    */
 
-  
-  public Bounds getBounds()
+
+public Bounds getBounds()
+{
+  return bounds;
+}
+
+public abstract String getName(final int zoomlevel);
+
+public int getMaxZoomLevel()
+{
+  return maxZoomLevel;
+}
+
+
+@JsonIgnore
+public String getPyramid()
+{
+  return pyramid;
+}
+
+
+public abstract LongRectangle getTileBounds(final int zoomlevel);
+
+
+public abstract LongRectangle getOrCreateTileBounds(final int zoomlevel);
+
+
+public int getTilesize()
+{
+  return tilesize;
+}
+
+public Map<String, String> getTags()
+{
+  return tags;
+}
+
+@JsonIgnore
+public String getTag(final String tag)
+{
+  return getTag(tag, null);
+}
+
+@JsonIgnore
+public String getTag(final String tag, final String defaultValue)
+{
+  if (tags.containsKey(tag))
   {
-    return bounds;
+    return tags.get(tag);
   }
 
-  public abstract String getName(final int zoomlevel);
+  return defaultValue;
+}
 
-  public int getMaxZoomLevel()
-  {
-    return maxZoomLevel;
-  }
-
-  
-  @JsonIgnore
-  public String getPyramid()
-  {
-    return pyramid;
-  }
-
-  
-  public abstract LongRectangle getTileBounds(final int zoomlevel);
-
-  
-  public abstract LongRectangle getOrCreateTileBounds(final int zoomlevel);
-
-  
-  public int getTilesize()
-  {
-    return tilesize;
-  }
-
-  public Map<String, String> getTags()
-  {
-    return tags;
-  }
-
-  @JsonIgnore
-  public String getTag(final String tag)
-  {
-    return getTag(tag, null);
-  }
-
-  @JsonIgnore
-  public String getTag(final String tag, final String defaultValue)
-  {
-    if (tags.containsKey(tag))
-    {
-      return tags.get(tag);
-    }
-
-    return defaultValue;
-  }
-
-  public String getProtectionLevel()
-  {
-    return protectionLevel;
-  }
+public String getProtectionLevel()
+{
+  return protectionLevel;
+}
 
   /*
    * end get section
@@ -154,76 +167,76 @@ public abstract class MrsPyramidMetadata implements Serializable
    * start set section
    */
 
-  public void setBounds(final Bounds bounds)
-  {
-    this.bounds = bounds;
-  }
+public void setBounds(final Bounds bounds)
+{
+  this.bounds = bounds;
+}
 
-  
-  public void setName(final int zoomlevel)
-  {
-    setName(zoomlevel, Integer.toString(zoomlevel));
-  }
 
-  
-  public abstract void setName(final int zoomlevel, final String name);
+public void setName(final int zoomlevel)
+{
+  setName(zoomlevel, Integer.toString(zoomlevel));
+}
 
-  
-  public abstract void setMaxZoomLevel(final int zoomlevel);
 
-  
-  public void setPyramid(final String pyramid)
-  {
-    this.pyramid = pyramid;
-  }
+public abstract void setName(final int zoomlevel, final String name);
 
-  
-  public abstract void setTileBounds(final int zoomlevel, final LongRectangle tileBounds);
 
-  
-  public void setTilesize(final int size)
-  {
-    tilesize = size;
-  }
+public abstract void setMaxZoomLevel(final int zoomlevel);
 
-  public void setTags(final Map<String, String> tags)
-  {
-    // make a copy of the tags...
-    this.tags = new HashMap<String, String>(tags);
-  }
 
-  @JsonIgnore
-  public void setTag(final String tag, final String value)
-  {
-    tags.put(tag, value);
-  }
+public void setPyramid(final String pyramid)
+{
+  this.pyramid = pyramid;
+}
 
-  public void setProtectionLevel(final String protectionLevel)
-  {
-    this.protectionLevel = protectionLevel;
-  }
+
+public abstract void setTileBounds(final int zoomlevel, final LongRectangle tileBounds);
+
+
+public void setTilesize(final int size)
+{
+  tilesize = size;
+}
+
+public void setTags(final Map<String, String> tags)
+{
+  // make a copy of the tags...
+  this.tags = new HashMap<String, String>(tags);
+}
+
+@JsonIgnore
+public void setTag(final String tag, final String value)
+{
+  tags.put(tag, value);
+}
+
+public void setProtectionLevel(final String protectionLevel)
+{
+  this.protectionLevel = protectionLevel;
+}
 
   /*
    * end set section
    */
-  
-  /**
-   * Return true if there is data at each of the pyramid levels.
-   */
-  public boolean hasPyramids()
+
+/**
+ * Return true if there is data at each of the pyramid levels.
+ */
+public boolean hasPyramids()
+{
+  int levels = 0;
+  if (getMaxZoomLevel() > 0)
   {
-    int levels = 0;
-    if (getMaxZoomLevel() > 0)
+    for (int i = 1; i <= getMaxZoomLevel(); i++)
     {
-      for (int i = 1; i <= getMaxZoomLevel(); i++)
+      if (getName(i) != null)
       {
-        if (getName(i) != null)
-        {
-          levels++;
-        }
+        levels++;
       }
     }
-    return (levels == getMaxZoomLevel());
   }
+  return (levels == getMaxZoomLevel());
+}
 } // end MrsPyramidMetadata
 

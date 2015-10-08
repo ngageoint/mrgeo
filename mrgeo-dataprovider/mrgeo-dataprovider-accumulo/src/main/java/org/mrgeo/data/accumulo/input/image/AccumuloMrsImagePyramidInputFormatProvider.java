@@ -22,7 +22,6 @@ import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.util.Pair;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -37,15 +36,12 @@ import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
+import org.mrgeo.utils.Base64Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFormatProvider
 {
@@ -200,19 +196,34 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     if(isEnc.equalsIgnoreCase("true")){
       job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
           props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
-      
-      pwDec = new String(Base64.decodeBase64(pw.getBytes()));
+
+      try
+      {
+        pwDec = Base64Utils.decodeToString(pw);
+      }
+      catch (IOException | ClassNotFoundException e)
+      {
+        throw new DataProviderException("Error Decoding Base64", e);
+      }
+
       job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
           pwDec);
 
 
     } else {
-      byte[] p = Base64.encodeBase64(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
-      
-      job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
-          new String(p));
-      job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64,
-          new String("true"));
+
+      try
+      {
+        String s = Base64Utils.encodeObject(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
+
+        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD, s);
+        job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "true");
+      }
+      catch (IOException e)
+      {
+        throw new DataProviderException("Error Base64 encoding", e);
+      }
+
     }
 
     // get the visualizations

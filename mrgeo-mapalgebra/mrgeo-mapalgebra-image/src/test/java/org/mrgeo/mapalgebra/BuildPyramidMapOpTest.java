@@ -15,16 +15,13 @@
 
 package org.mrgeo.mapalgebra;
 
-import org.apache.hadoop.fs.Path;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
-import org.mrgeo.core.Defs;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
-import org.mrgeo.test.MapOpTestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,74 +30,44 @@ import java.io.IOException;
 @Ignore
 public class BuildPyramidMapOpTest extends LocalRunnerTest
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(BuildPyramidMapOpTest.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(BuildPyramidMapOpTest.class);
 
-  @Rule
-  public TestName testname = new TestName();
+@Rule
+public TestName testname = new TestName();
 
+@BeforeClass
+public static void init() throws IOException
+{
+}
 
-  private static MapOpTestUtils testUtils;
+@Before
+public void setup() throws IOException
+{
+}
 
-  private static String smallElevationNoPyramids = "small-elevation-nopyramids";
-  private static Path smallElevationNoPyramidsPath;
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void testTooFewArgs() throws Exception
+{
+  String exp = "BuildPyramid()";
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
+}
 
-  @BeforeClass
-  public static void init() throws IOException
-  {
-    testUtils = new MapOpTestUtils(BuildPyramidMapOpTest.class);
-  }
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void testTooManyArgs() throws Exception
+{
+  String exp = String.format("BuildPyramid([%s], \"mean\", \"bogus\")", "foo");
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
+}
 
-  @Before
-  public void setup() throws IOException
-  {
-    Path parent = new Path(testUtils.getInputHdfs(), testname.getMethodName());
-    HadoopFileUtils.copyToHdfs(Defs.INPUT, parent, smallElevationNoPyramids, true);
-    smallElevationNoPyramidsPath = 
-        HadoopFileUtils.unqualifyPath(new Path(parent, smallElevationNoPyramids));
-
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testTooFewArgs() throws Exception
-  {
-    String exp = String.format("BuildPyramid()");
-    try
-    {
-      testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
-      Assert.fail("Expected IllegalArgumentException");
-    }
-    catch(IllegalArgumentException e)
-    {
-      Assert.assertTrue(e.getMessage().startsWith("Usage:"));
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testTooManyArgs() throws Exception
-  {
-    String exp = String.format("BuildPyramid([%s], \"mean\", \"bogus\")", smallElevationNoPyramidsPath);
-    try
-    {
-      testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
-      Assert.fail("Expected IllegalArgumentException");
-    }
-    catch(IllegalArgumentException e)
-    {
-      Assert.assertTrue(e.getMessage().startsWith("Usage:"));
-    }
-  }
-
-  @Test(expected = ParserException.class)
-  @Category(UnitTest.class)
-  public void testBadInput() throws Exception
-  {
-    String exp = "BuildPyramid(InlineCsv(\"NAME,GEOMETRY\",\"'Place1','POINT(69.1 34.5)';'Place2','POINT(69.25 34.55)'\"), \"mean\")";
-
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
-      Assert.fail("Expected IllegalArgumentException");
-  }
-
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void testBadInput() throws Exception
+{
+  String exp =
+      "BuildPyramid(InlineCsv(\"NAME,GEOMETRY\",\"'Place1','POINT(69.1 34.5)';'Place2','POINT(69.25 34.55)'\"), \"mean\")";
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
+}
 }

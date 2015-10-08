@@ -37,6 +37,7 @@
     <accumulo.version>1.6.0</accumulo.version>
     <antlr.version>3.1.3</antlr.version>
     <axiom.version>1.2.9</axiom.version>
+    <classutil.version>1.0.5</classutil.version>
     <commons-beanutils.version>1.7.0</commons-beanutils.version>
     <commons-codec.version>1.4</commons-codec.version>
     <commons-collections.version>3.2.1</commons-collections.version>
@@ -67,7 +68,6 @@
     <jts.version>1.13</jts.version>
     <kryo.version>2.21</kryo.version>
     <mahout.version>0.9-cdh5.3.0</mahout.version>
-    <pig.version>0.12.0-cdh5.3.0</pig.version>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
     <reflections.version>0.9.9-RC1</reflections.version>
@@ -147,6 +147,65 @@
     </testResources>
     <pluginManagement>
       <plugins>
+        <!-- make sure scala is before java... -->
+        <plugin>
+          <groupId>org.scala-tools</groupId>
+          <artifactId>maven-scala-plugin</artifactId>
+          <version>${maven-scala.version}</version>
+          <executions>
+            <!--
+                 <execution>
+                 <id>scala-compile</id>
+                 <phase>process-resources</phase>
+                 <goals>
+                 <goal>add-source</goal>
+                 <goal>compile</goal>
+                 <goal>testCompile</goal>
+                 </goals>
+                 </execution>
+            -->
+            <execution>
+              <id>compile</id>
+              <goals>
+                <goal>compile</goal>
+              </goals>
+              <phase>compile</phase>
+            </execution>
+            <execution>
+              <id>test-compile</id>
+              <goals>
+                <goal>testCompile</goal>
+              </goals>
+              <phase>test-compile</phase>
+            </execution>
+            <execution>
+              <phase>process-resources</phase>
+              <goals>
+                <goal>compile</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <!--<displayCmd>true</displayCmd>-->
+            <scalaVersion>${scala.version}</scalaVersion>
+            <recompileMode>incremental</recompileMode>
+            <args>
+              <arg>-deprecation</arg>
+              <arg>-target:jvm-${java.version}</arg>
+              <arg>-Xmax-classfile-name</arg>
+              <arg>143</arg>
+            </args>
+            <javacArgs>
+              <javacArg>-source ${java.version}</javacArg>
+              <javacArg>-target ${java.version}</javacArg>
+              <javacArg>-XDignore.symbol.file=true</javacArg>
+            </javacArgs>
+            <sourceDir>${project.basedir}/src/main/scala</sourceDir>
+            <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
+            <outputDir>${project.build.directory}/classes</outputDir>
+            <testOutputDir>${project.build.directory}/test-classes</testOutputDir>
+          </configuration>
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -154,7 +213,6 @@
           <configuration>
             <source>${java.version}</source>
             <target>${java.version}</target>
-            <!-- this argument allows classes within rt.jar to be referenced... -->
             <compilerArgument>-XDignore.symbol.file=true</compilerArgument>
           </configuration>
         </plugin>
@@ -242,35 +300,6 @@
               <format>html</format>
               <format>xml</format>
             </formats>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.scala-tools</groupId>
-          <artifactId>maven-scala-plugin</artifactId>
-          <version>${maven-scala.version}</version>
-          <executions>
-            <execution>
-              <id>scala-compile-first</id>
-              <phase>process-resources</phase>
-              <goals>
-                <goal>add-source</goal>
-                <goal>compile</goal>
-                <goal>testCompile</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <!--<displayCmd>true</displayCmd>-->
-            <scalaVersion>${scala.version}</scalaVersion>
-            <args>
-              <arg>-target:jvm-${java.version}</arg>
-              <arg>-Xmax-classfile-name</arg>
-              <arg>143</arg>
-            </args>
-            <sourceDir>${project.basedir}/src/main/scala</sourceDir>
-            <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
-            <outputDir>${project.build.directory}/classes</outputDir>
-            <testOutputDir>${project.build.directory}/test-classes</testOutputDir>
           </configuration>
         </plugin>
         <plugin>
@@ -391,18 +420,19 @@
               <goals>
                 <goal>test-jar</goal>
               </goals>
-              <configuration />
+              <configuration>
+                <testClassesDir>${project.build.directory}/test-classes</testClassesDir>
+              </configuration>
             </execution>
           </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>{maven-source.version}</version>
+          <version>${maven-source.version}</version>
           <executions>
             <execution>
               <id>generate-sources</id>
-              <phase>deploy</phase>
               <goals>
                 <goal>jar</goal>
               </goals>
@@ -413,7 +443,6 @@
             </execution>
             <execution>
               <id>generate-test-sources</id>
-              <phase>deploy</phase>
               <goals>
                 <goal>test-jar</goal>
               </goals>
@@ -431,7 +460,6 @@
           <executions>
             <execution>
               <id>attach-javadocs</id>
-              <phase>deploy</phase>
               <goals>
                 <goal>jar</goal>
               </goals>
@@ -445,11 +473,6 @@
           <configuration>
             <shadedArtifactAttached>false</shadedArtifactAttached>
             <createDependencyReducedPom>true</createDependencyReducedPom>
-            <artifactSet>
-              <includes>
-                <include>org.spark-project:unused</include>
-              </includes>
-            </artifactSet>
           </configuration>
           <executions>
             <execution>
@@ -686,6 +709,10 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
   <reporting>
@@ -705,7 +732,6 @@
          |   <properties>
          |     <hadoop.version></hadoop.version>
          |     <mahout.version></mahout.version>
-         |     <pig.version></pig.version>
          |     <hadoop.config></hadoop.config>
          |     <slf4j.version></slf4j.version>
          |     <final.classifier></final.classifier>
@@ -715,7 +741,6 @@
          |
          | hadoop-version - the dependency version number
          | mahout.version - the apache mahout version corresponding to the hadoop version
-         | pig.version - the apache pig version corresponding to the hadoop version
          | hadoop.config - the path to the hadoop config files (used for tests), usually /etc/hadoop/conf
          | slf4j.version - the slf4j version to use, this version must not conflict with the hadoop slf4j version
          | final.classifier - the classifier for the final (distribution) artifacts, usually the hadoop version without
@@ -727,7 +752,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.7</hadoop.version>
         <mahout.version>0.9-cdh5.4.7</mahout.version>
-        <pig.version>0.12.0-cdh5.4.7</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
         <spark.scope>compile</spark.scope>
@@ -735,14 +759,6 @@
         <final.classifier>cdh5.4.7</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH547</id>
@@ -750,7 +766,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.7</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.7</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.7</mahout.version>
-        <pig.version>0.12.0-cdh5.4.7</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -758,12 +773,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -778,7 +787,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.5</hadoop.version>
         <mahout.version>0.9-cdh5.4.5</mahout.version>
-        <pig.version>0.12.0-cdh5.4.5</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
         <spark.scope>compile</spark.scope>
@@ -786,14 +794,7 @@
         <final.classifier>cdh5.4.5</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
+      <dependencies />
     </profile>
     <profile>
       <id>CDH545</id>
@@ -801,7 +802,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.5</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.5</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.5</mahout.version>
-        <pig.version>0.12.0-cdh5.4.5</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -809,12 +809,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -829,7 +823,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.4</hadoop.version>
         <mahout.version>0.9-cdh5.4.4</mahout.version>
-        <pig.version>0.12.0-cdh5.4.4</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
         <spark.scope>compile</spark.scope>
@@ -837,14 +830,6 @@
         <final.classifier>cdh5.4.4</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH544</id>
@@ -852,7 +837,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.4</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.4</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.4</mahout.version>
-        <pig.version>0.12.0-cdh5.4.4</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -860,12 +844,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -880,7 +858,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.3</hadoop.version>
         <mahout.version>0.9-cdh5.4.3</mahout.version>
-        <pig.version>0.12.0-cdh5.4.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
         <spark.scope>compile</spark.scope>
@@ -888,14 +865,6 @@
         <final.classifier>cdh5.4.3</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH543</id>
@@ -903,7 +872,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.3</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.3</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.3</mahout.version>
-        <pig.version>0.12.0-cdh5.4.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -911,12 +879,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -931,7 +893,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.2</hadoop.version>
         <mahout.version>0.9-cdh5.4.2</mahout.version>
-        <pig.version>0.12.0-cdh5.4.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
         <spark.scope>compile</spark.scope>
@@ -939,14 +900,6 @@
         <final.classifier>cdh5.4.2</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH542</id>
@@ -954,7 +907,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.2</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.2</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.2</mahout.version>
-        <pig.version>0.12.0-cdh5.4.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -962,12 +914,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -982,7 +928,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.1</hadoop.version>
         <mahout.version>0.9-cdh5.4.1</mahout.version>
-        <pig.version>0.12.0-cdh5.4.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
         <spark.scope>compile</spark.scope>
@@ -990,14 +935,6 @@
         <final.classifier>cdh5.4.1</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH541</id>
@@ -1005,7 +942,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.1</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.1</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.1</mahout.version>
-        <pig.version>0.12.0-cdh5.4.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -1013,12 +949,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1033,7 +963,6 @@
       <properties>
         <hadoop.version>2.6.0-cdh5.4.0</hadoop.version>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
-        <pig.version>0.12.0-cdh5.4.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1041,14 +970,6 @@
         <final.classifier>cdh5.4.0</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH540</id>
@@ -1056,7 +977,6 @@
         <hadoop.version>2.6.0-mr1-cdh5.4.0</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.0</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
-        <pig.version>0.12.0-cdh5.4.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -1064,12 +984,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1084,7 +998,6 @@
       <properties>
         <hadoop.version>2.5.0-cdh5.3.3</hadoop.version>
         <mahout.version>0.9-cdh5.3.3</mahout.version>
-        <pig.version>0.12.0-cdh5.3.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1092,14 +1005,6 @@
         <final.classifier>cdh5.3.3</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH533</id>
@@ -1107,7 +1012,6 @@
         <hadoop.version>2.5.0-mr1-cdh5.3.3</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.3</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.3</mahout.version>
-        <pig.version>0.12.0-cdh5.3.3</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
@@ -1115,12 +1019,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1135,7 +1033,6 @@
       <properties>
         <hadoop.version>2.5.0-cdh5.3.2</hadoop.version>
         <mahout.version>0.9-cdh5.3.2</mahout.version>
-        <pig.version>0.12.0-cdh5.3.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1143,14 +1040,6 @@
         <final.classifier>cdh5.3.2</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH532</id>
@@ -1158,7 +1047,6 @@
         <hadoop.version>2.5.0-mr1-cdh5.3.2</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.2</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.2</mahout.version>
-        <pig.version>0.12.0-cdh5.3.2</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
@@ -1166,12 +1054,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1186,7 +1068,6 @@
       <properties>
         <hadoop.version>2.5.0-cdh5.3.1</hadoop.version>
         <mahout.version>0.9-cdh5.3.1</mahout.version>
-        <pig.version>0.12.0-cdh5.3.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1194,14 +1075,6 @@
         <final.classifier>cdh5.3.1</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH531</id>
@@ -1209,7 +1082,6 @@
         <hadoop.version>2.5.0-mr1-cdh5.3.1</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.1</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.1</mahout.version>
-        <pig.version>0.12.0-cdh5.3.1</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
@@ -1217,12 +1089,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1237,7 +1103,6 @@
       <properties>
         <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
-        <pig.version>0.12.0-cdh5.3.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
         <spark.scope>compile</spark.scope>
@@ -1245,14 +1110,6 @@
         <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
       </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>CDH530</id>
@@ -1260,7 +1117,6 @@
         <hadoop.version>2.5.0-mr1-cdh5.3.0</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.0</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
-        <pig.version>0.12.0-cdh5.3.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
@@ -1268,12 +1124,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1288,7 +1138,6 @@
       <properties>
         <hadoop.version>2.2.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1297,12 +1146,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1317,7 +1160,6 @@
       <properties>
         <hadoop.version>2.3.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1326,12 +1168,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1346,7 +1182,6 @@
       <properties>
         <hadoop.version>2.4.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1355,12 +1190,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1375,7 +1204,6 @@
       <properties>
         <hadoop.version>2.4.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1384,12 +1212,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1404,7 +1226,6 @@
       <properties>
         <hadoop.version>2.5.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1413,12 +1234,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1433,7 +1248,6 @@
       <properties>
         <hadoop.version>2.5.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1442,12 +1256,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1462,7 +1270,6 @@
       <properties>
         <hadoop.version>2.5.2</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1471,12 +1278,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1491,7 +1292,6 @@
       <properties>
         <hadoop.version>2.6.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.1</spark.version>
@@ -1500,12 +1300,6 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from pig -->
-        <dependency>
-          <groupId>org.antlr</groupId>
-          <artifactId>antlr-runtime</artifactId>
-          <version>3.1.3</version>
-        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1531,8 +1325,7 @@
       <properties>
         <hadoop.version>2.4.0</hadoop.version>
         <accumulo.version>1.6.1</accumulo.version>
-         <mahout.version>0.7</mahout.version>
-        <pig.version>0.11.0</pig.version>
+        <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.scope>compile</spark.scope>
@@ -1557,6 +1350,28 @@
             <directory>${hadoop.config}</directory>
           </resource>
         </resources>
+      </build>
+    </profile>
+    <profile>
+      <id>generate-sources</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>generate-javadocs</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+          </plugin>
+        </plugins>
       </build>
     </profile>
     <profile>
@@ -1662,25 +1477,6 @@
       </properties>
     </profile>
     <profile>
-      <id>skip-pig-unit-tests</id>
-      <properties>
-        <skip.mrgeo.pig.tests>true</skip.mrgeo.pig.tests>
-      </properties>
-    </profile>
-    <profile>
-      <id>skip-pig-integration-tests</id>
-      <properties>
-        <skip.mrgeo.pig.integration.tests>true</skip.mrgeo.pig.integration.tests>
-      </properties>
-    </profile>
-    <profile>
-      <id>skip-pig-tests</id>
-      <properties>
-        <skip.mrgeo.pig.tests>true</skip.mrgeo.pig.tests>
-        <skip.mrgeo.pig.integration.tests>true</skip.mrgeo.pig.integration.tests>
-      </properties>
-    </profile>
-    <profile>
       <id>skip-services-unit-tests</id>
       <properties>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
@@ -1726,7 +1522,6 @@
         <skip.mrgeo.mapalgebra.tests>true</skip.mrgeo.mapalgebra.tests>
         <skip.mrgeo.dataprovider.tests>true</skip.mrgeo.dataprovider.tests>
         <skip.mrgeo.cmd.tests>true</skip.mrgeo.cmd.tests>
-        <skip.mrgeo.pig.tests>true</skip.mrgeo.pig.tests>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
       </properties>
     </profile>
@@ -1739,7 +1534,6 @@
         <skip.mrgeo.mapalgebra.integration.tests>true</skip.mrgeo.mapalgebra.integration.tests>
         <skip.mrgeo.dataprovider.integration.tests>true</skip.mrgeo.dataprovider.integration.tests>
         <skip.mrgeo.cmd.integration.tests>true</skip.mrgeo.cmd.integration.tests>
-        <skip.mrgeo.pig.integration.tests>true</skip.mrgeo.pig.integration.tests>
       </properties>
     </profile>
     <profile>
@@ -1755,8 +1549,6 @@
         <skip.mrgeo.dataprovider.integration.tests>true</skip.mrgeo.dataprovider.integration.tests>
         <skip.mrgeo.cmd.tests>true</skip.mrgeo.cmd.tests>
         <skip.mrgeo.cmd.integration.tests>true</skip.mrgeo.cmd.integration.tests>
-        <skip.mrgeo.pig.tests>true</skip.mrgeo.pig.tests>
-        <skip.mrgeo.pig.integration.tests>true</skip.mrgeo.pig.integration.tests>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
         <skip.mrgeo.services.integration.tests>true</skip.mrgeo.services.integration.tests>
       </properties>
@@ -1772,11 +1564,9 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
-        <module>mrgeo-vector</module>
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
-        <module>mrgeo-pig</module>
         <module>mrgeo-services</module>
         <module>distribution</module>
       </modules>
@@ -1803,7 +1593,6 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
-        <module>mrgeo-vector</module>
       </modules>
     </profile>
     <profile>
@@ -1816,7 +1605,6 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
-        <module>mrgeo-vector</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-mapalgebra</module>
       </modules>
@@ -1844,24 +1632,8 @@
       </activation>
       <modules>
         <module>mrgeo-core</module>
-        <module>mrgeo-vector</module>
-        <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>build-pig</id>
-      <activation>
-        <property>
-          <name>modules</name>
-          <value>pig</value>
-        </property>
-      </activation>
-      <modules>
-        <module>mrgeo-vector</module>
-        <module>mrgeo-mapalgebra</module>
-        <module>mrgeo-pig</module>
       </modules>
     </profile>
     <profile>
@@ -2035,11 +1807,6 @@
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-pig</artifactId>
-        <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services</artifactId>
         <version>${mrgeo.version}</version>
         <type>pom</type>
@@ -2070,18 +1837,6 @@
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-wcs</artifactId>
         <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-vector</artifactId>
-        <version>${mrgeo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mrgeo</groupId>
-        <artifactId>mrgeo-vector</artifactId>
-        <version>${mrgeo.version}</version>
-        <type>test-jar</type>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -2194,10 +1949,10 @@
             <artifactId>hsqldb</artifactId>
           </exclusion>
           <!--
-          <exclusion>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-aws</artifactId>
-          </exclusion>
+               <exclusion>
+               <groupId>org.apache.hadoop</groupId>
+               <artifactId>hadoop-aws</artifactId>
+               </exclusion>
           -->
           <exclusion>
             <groupId>org.ow2.asm</groupId>
@@ -2248,6 +2003,10 @@
             <groupId>jdk.tools</groupId>
             <artifactId>jdk.tools</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -2255,6 +2014,12 @@
         <artifactId>hadoop-yarn-common</artifactId>
         <version>${hadoop.yarn.version}</version>
         <scope>${hadoop.scope}</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -2289,71 +2054,11 @@
         <artifactId>spark-graphx_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
       </dependency>
-      <!-- Ends up this file is missing in Cloudera's Maven repo, so I needed to download it and add it manually to our repo -->
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-yarn_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
         <scope>${spark.scope}</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.pig</groupId>
-        <artifactId>pig</artifactId>
-        <version>${pig.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <!-- hbase was including jruby-complete, which causes problems, we'll
-               exclude it here.  If hbase support is needed, we'll have to find a
-               workaround -->
-          <exclusion>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase</artifactId>
-          </exclusion>
-          <!-- pig includes an old version of hsqldb that is not compatible
-               with geotools 12.1. Geotools uses hsqldb for looking up
-               EPSG coordinate systems -->
-          <exclusion>
-            <groupId>hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-          </exclusion>
-          <!-- a later version of these Jackson dependencies are being used by Jersey in
-               mrgeo-services, and these cause problems -->
-          <exclusion>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-core-asl</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-mapper-asl</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api-2.5</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.thoughtworks.paranamer</groupId>
-            <artifactId>paranamer</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-net</groupId>
-            <artifactId>commons-net</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.accumulo</groupId>
@@ -2508,6 +2213,12 @@
         <groupId>org.reflections</groupId>
         <artifactId>reflections</artifactId>
         <version>${reflections.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>xml-apis</groupId>
+            <artifactId>xml-apis</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.gdal</groupId>
@@ -2687,51 +2398,54 @@
         <version>${geotools.version}</version>
         <scope>runtime</scope>
       </dependency>
-      <dependency>
-        <groupId>geotiff</groupId>
-        <artifactId>geotiff-jai</artifactId>
-        <version>${geotiff-jai.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>xtiff-jai</groupId>
-        <artifactId>xtiff-jai</artifactId>
-        <version>${xtiff-jai.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>jai</groupId>
-            <artifactId>jai-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>jai</groupId>
-            <artifactId>jai-codec</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>javax.media</groupId>
-        <artifactId>jai_codec</artifactId>
-        <version>${jai.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.media</groupId>
-        <artifactId>jai_core</artifactId>
-        <version>${jai.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.media</groupId>
-        <artifactId>jai_imageio</artifactId>
-        <version>${jai-imageio.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jaitools</groupId>
-        <artifactId>jt-utils</artifactId>
-        <version>${jaitools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jaitools</groupId>
-        <artifactId>jt-zonalstats</artifactId>
-        <version>${jaitools.version}</version>
-      </dependency>
+      <!--
+           <dependency>
+           <groupId>geotiff</groupId>
+           <artifactId>geotiff-jai</artifactId>
+           <version>${geotiff-jai.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>xtiff-jai</groupId>
+           <artifactId>xtiff-jai</artifactId>
+           <version>${xtiff-jai.version}</version>
+           <exclusions>
+           <exclusion>
+           <groupId>jai</groupId>
+           <artifactId>jai-core</artifactId>
+           </exclusion>
+           <exclusion>
+           <groupId>jai</groupId>
+           <artifactId>jai-codec</artifactId>
+           </exclusion>
+           </exclusions>
+           </dependency>
+
+           <dependency>
+           <groupId>javax.media</groupId>
+           <artifactId>jai_codec</artifactId>
+           <version>${jai.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>javax.media</groupId>
+           <artifactId>jai_core</artifactId>
+           <version>${jai.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>javax.media</groupId>
+           <artifactId>jai_imageio</artifactId>
+           <version>${jai-imageio.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.jaitools</groupId>
+           <artifactId>jt-utils</artifactId>
+           <version>${jaitools.version}</version>
+           </dependency>
+           <dependency>
+           <groupId>org.jaitools</groupId>
+           <artifactId>jt-zonalstats</artifactId>
+           <version>${jaitools.version}</version>
+           </dependency>
+      -->
       <dependency>
         <groupId>com.carrotsearch</groupId>
         <artifactId>hppc</artifactId>
@@ -3010,6 +2724,11 @@
       </dependency>
       <!-- end spark -->
       <dependency>
+        <groupId>org.clapper</groupId>
+        <artifactId>classutil_${spark.scala.version}</artifactId>
+        <version>${classutil.version}</version>
+      </dependency>
+      <dependency>
         <groupId>mil.nga.giat</groupId>
         <artifactId>geowave-accumulo</artifactId>
         <version>${geowave.version}</version>
@@ -3038,19 +2757,15 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
-    <!--
-         This is a dummy dependency that is used along with the shading plug-in
-         to create effective poms on publishing (see SPARK-3812).
-    -->
-    <dependency>
-      <groupId>org.spark-project.spark</groupId>
-      <artifactId>unused</artifactId>
-      <version>1.0.0</version>
-    </dependency>
     <!-- everyone gets hadoop, whether they want it or not! -->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <!-- and spark-yarn, now we've converted everything to that -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-yarn_${spark.scala.version}</artifactId>
     </dependency>
     <!-- and junit, mrunit, cpsuite in test... -->
     <dependency>
@@ -3086,7 +2801,7 @@
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
     </dependency>
-    <!-- make sure we include geotools plugins in the final jars -->
+    <!-- make sure we include geotools epsg plugins in the final jars -->
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-hsql</artifactId>

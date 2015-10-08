@@ -20,13 +20,15 @@ import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.commons.codec.binary.Base64;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.utils.Base64Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 
 public class AccumuloConnector {
@@ -64,14 +66,21 @@ public static String encodeAccumuloProperties(String r) throws DataProviderExcep
     }
     sb.append(k + "=" + v);
   }
-  byte[] enc = Base64.encodeBase64(sb.toString().getBytes());
-  String retStr = new String(enc);
-  retStr = MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX + retStr;
+  try
+  {
+    String retStr = Base64Utils.encodeObject(sb.toString());
+    retStr = MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX + retStr;
 
-  return retStr;
+    return retStr;
+  }
+  catch (IOException ex)
+  {
+    throw new DataProviderException("Error endoding ???", ex);
+  }
 } // end encodeAccumuloProperties
 
-public static Properties decodeAccumuloProperties(String s) {
+public static Properties decodeAccumuloProperties(String s) throws IOException, ClassNotFoundException
+{
   Properties retProps = new Properties();
 
   if (!s.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX)) {
@@ -79,8 +88,7 @@ public static Properties decodeAccumuloProperties(String s) {
   }
   String enc = s.replaceFirst(
       MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX, "");
-  byte[] decBytes = Base64.decodeBase64(enc.getBytes());
-  String dec = new String(decBytes);
+  String dec = Base64Utils.decodeToString(enc);
   String[] pairs = dec
       .split(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_DELIM);
   for (String p : pairs) {
@@ -125,16 +133,16 @@ public static String getAccumuloPropertiesLocation() {
 
 public static void setAccumuloProperties(Map<String, String> props)
 {
-    accumuloProperties = new Properties();
+  accumuloProperties = new Properties();
 
-    if (!copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE) ||
-        !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER) ||
-        !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD) ||
-        !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS))
-    {
-      // one of the properties doesn't exist, so accumulo is invalid!
-      accumuloProperties = null;
-    }
+  if (!copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE) ||
+      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER) ||
+      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD) ||
+      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS))
+  {
+    // one of the properties doesn't exist, so accumulo is invalid!
+    accumuloProperties = null;
+  }
 }
 
 private static boolean copyProp(Map<String, String> src, Properties dst, String key)
@@ -241,7 +249,14 @@ public static Connector getConnector(Properties p)
       .getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64);
   if (pwenc != null) {
     if (pwenc.toLowerCase().equals("true")) {
-      pw = new String(Base64.decodeBase64(pw.getBytes()));
+      try
+      {
+        pw = Base64Utils.decodeToString(pw);
+      }
+      catch (IOException | ClassNotFoundException e)
+      {
+        throw new DataProviderException("Error decoding values", e);
+      }
     }
   }
 
