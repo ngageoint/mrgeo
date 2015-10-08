@@ -139,14 +139,6 @@
   </profiles>
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.takari.junit</groupId>
-      <artifactId>takari-cpsuite</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
     </dependency>
@@ -162,10 +154,12 @@
       <groupId>com.vividsolutions</groupId>
       <artifactId>jts</artifactId>
     </dependency>
+    <!--
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
     </dependency>
+    -->
     <dependency>
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
@@ -186,12 +180,6 @@
       <groupId>org.gdal</groupId>
       <artifactId>gdal</artifactId>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>xml-apis</groupId>
-      <artifactId>xml-apis</artifactId>
-    </dependency>
-    -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-jexl</artifactId>
@@ -201,20 +189,6 @@
       <artifactId>jboss-vfs</artifactId>
     </dependency>
     <!-- Scala/spark dependencies -->
-    <!--
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-yarn-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-yarn_${spark.scala.version}</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-    </dependency>
-    -->
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${spark.scala.version}</artifactId>

@@ -2003,6 +2003,10 @@
             <groupId>jdk.tools</groupId>
             <artifactId>jdk.tools</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -2010,6 +2014,12 @@
         <artifactId>hadoop-yarn-common</artifactId>
         <version>${hadoop.yarn.version}</version>
         <scope>${hadoop.scope}</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
