@@ -15,11 +15,10 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.mrgeo.data.raster.RasterUtils;
+import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -59,7 +58,8 @@ public class TiffImageResponseWriter extends ImageResponseWriterAbstract
   @Override
   public void writeToStream(Raster raster, double[] defaults, ByteArrayOutputStream byteStream) throws IOException
   {
-    ImageIO.write(RasterUtils.makeBufferedImage(raster), "TIFF", byteStream);
+    GDALUtils.saveRaster(raster, byteStream, "Tiff");
+    //ImageIO.write(RasterUtils.makeBufferedImage(raster), "TIFF", byteStream);
     byteStream.close();
   }
 }

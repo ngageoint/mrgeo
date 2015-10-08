@@ -108,7 +108,7 @@ public class LongRectangle implements Serializable
 
   public void add(final LongRectangle r)
   {
-    add(r.minY, r.minY);
+    add(r.minX, r.minY);
     add(r.maxX, r.maxY);
   }
 

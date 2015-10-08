@@ -17,7 +17,7 @@ package org.mrgeo.resources.wms;
 
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.ColorScaleManager;

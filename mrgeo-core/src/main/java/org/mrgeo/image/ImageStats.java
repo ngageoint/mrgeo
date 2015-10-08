@@ -24,11 +24,8 @@ import org.mrgeo.data.raster.RasterWritable.RasterWritableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.media.jai.RasterFactory;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -275,33 +272,6 @@ public class ImageStats implements Cloneable, Serializable
     return stats;
   }
 
-  /**
-   * Serialize an array of ImageStats objects to a Raster. Used to emit tile stats to a reducer for
-   * aggregation.
-   * 
-   * @param stats
-   *          the array of ImageStats objects
-   * @return a Raster containing stats measures as pixel values
-   */
-  static public Raster statsToRaster(final ImageStats[] stats)
-  {
-    final int size = STATS_COUNT;
-    final int bands = stats.length;
-    final double[] pixels = new double[size * bands];
-    for (int i = 0; i < bands; i++)
-    {
-      pixels[(size * i)] = stats[i].min;
-      pixels[(size * i) + 1] = stats[i].max;
-      pixels[(size * i) + 2] = stats[i].sum;
-      pixels[(size * i) + 3] = stats[i].count;
-    }
-
-    final SampleModel sm = RasterFactory.createPixelInterleavedSampleModel(DataBuffer.TYPE_DOUBLE,
-      size, bands, 1);
-    final WritableRaster raster = RasterFactory.createWritableRaster(sm, null);
-    raster.setPixels(0, 0, size, bands, pixels);
-    return raster;
-  }
 
   /**
    * Updates statistics to include the supplied sample value.

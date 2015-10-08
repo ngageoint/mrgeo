@@ -115,11 +115,7 @@
   <dependencies>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-vector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-vector</artifactId>
+      <artifactId>mrgeo-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -146,10 +142,6 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-vector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.mahout</groupId>
-      <artifactId>mahout-core</artifactId>
     </dependency>
   </dependencies>
 </project>

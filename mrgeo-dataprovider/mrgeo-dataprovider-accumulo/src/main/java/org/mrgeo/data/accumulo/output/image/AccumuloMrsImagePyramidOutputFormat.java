@@ -20,25 +20,24 @@ import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.ClientConfiguration.ClientProperty;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase;
-import org.apache.accumulo.core.client.mapreduce.lib.impl.ConfiguratorBase.ConnectorInfo;
 import org.apache.accumulo.core.client.mapreduce.lib.impl.OutputConfigurator;
 import org.apache.accumulo.core.client.security.tokens.AuthenticationToken;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.mrgeo.tile.TileIdZoomWritable;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.tile.TileIdZoomWritable;
+import org.mrgeo.utils.Base64Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,7 +147,7 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
       password = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
       String isEnc = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
       if(isEnc.equalsIgnoreCase("true")){
-        password = new String(Base64.decodeBase64(password.getBytes()));
+        password = Base64Utils.decodeToString(password);
       }
 
       if(_innerFormat != null){
@@ -193,6 +192,14 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
     catch(AccumuloSecurityException ase)
     {
     	ase.printStackTrace();
+    }
+    catch (ClassNotFoundException e)
+    {
+      e.printStackTrace();
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
     }
 
   } // end initialize

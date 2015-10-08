@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.SharedTestFiles;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.rasterops.ColorScale;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 

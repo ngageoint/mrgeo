@@ -18,6 +18,7 @@ package org.mrgeo.test;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
@@ -31,7 +32,7 @@ public class LocalRunnerTest {
   @BeforeClass
   public static void initJobJar() throws IOException
   {
-    // be default, turn logging to ERROR
+    // by default, turn logging to ERROR
     LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
     TestUtils.setJarLocation();
   }
@@ -41,6 +42,8 @@ public class LocalRunnerTest {
   {
     conf = HadoopUtils.createConfiguration();
     HadoopUtils.setupLocalRunner(conf);
+
+    DataProviderFactory.invalidateCache();
   }
 
   protected Configuration getConfiguration()

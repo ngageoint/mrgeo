@@ -40,11 +40,9 @@ import org.mrgeo.junit.UnitTest;
 import org.mrgeo.services.tms.TmsService;
 import org.mrgeo.services.utils.ImageTestUtils;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageReader;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
@@ -307,8 +305,6 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
   @Category(UnitTest.class)
   public void testGetTileRgbPng() throws Exception
   {
-    ImageReader reader = ImageUtils.createImageReader("image/png");
-
     String version = "1.0.0";
     String raster = rgbsmall_nopyramids_abs;
     int x = 11346;
@@ -345,8 +341,6 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
   @Category(UnitTest.class)
   public void testGetTileRgbJpg() throws Exception
   {
-    ImageReader reader = ImageUtils.createImageReader("image/jpeg");
-
     String version = "1.0.0";
     String raster = rgbsmall_nopyramids_abs;
     int x = 11346;

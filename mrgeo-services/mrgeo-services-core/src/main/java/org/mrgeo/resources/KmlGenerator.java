@@ -16,11 +16,10 @@
 package org.mrgeo.resources;
 
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.rasterops.OpImageRegistrar;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.utils.Bounds;
 import org.slf4j.Logger;
@@ -561,8 +560,6 @@ public class KmlGenerator
   @SuppressWarnings("unused")
   private void getKmz(HttpServletRequest request, HttpServletResponse response) throws IOException
   {
-    OpImageRegistrar.registerMrGeoOps();
-
     String url = request.getRequestURL().toString();
     String serviceParam = request.getParameter("SERVICE");
 
@@ -608,8 +605,6 @@ public class KmlGenerator
   private void getNetworkKmlNode(HttpServletRequest request, HttpServletResponse response)
       throws IOException
   {
-    OpImageRegistrar.registerMrGeoOps();
-
     String url = request.getRequestURL().toString();
     String serviceParam = request.getParameter("SERVICE");
     String bboxParam = request.getParameter("BBOX");
@@ -771,8 +766,6 @@ public class KmlGenerator
       HttpServletResponse response, final ProviderProperties providerProperties)
       throws IOException
   {
-    OpImageRegistrar.registerMrGeoOps();
-
     String url = request.getRequestURL().toString();
     String serviceParam = request.getParameter("SERVICE");
     String bboxParam = request.getParameter("BBOX");
@@ -1012,7 +1005,6 @@ public class KmlGenerator
 
   private void init() throws ServletException
   {
-    OpImageRegistrar.registerMrGeoOps();
     try
     {
       baseUrl = Configuration.getInstance().getProperties().getProperty("base.url");

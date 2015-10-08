@@ -17,11 +17,10 @@ package org.mrgeo.aggregators;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.junit.UnitTest;
 
-import javax.media.jai.RasterFactory;
 import java.awt.image.DataBuffer;
-import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 
 import static org.junit.Assert.assertEquals;
@@ -132,11 +131,11 @@ public class NearestAggregatorTest
   public void testGetSamples()
   {
     int[] samples = new int[4];
-    SampleModel sm = RasterFactory.createPixelInterleavedSampleModel(DataBuffer.TYPE_DOUBLE, 4, 4, 1);
-    WritableRaster raster = RasterFactory.createWritableRaster(sm, null);
-    WritableRaster parent = raster.createCompatibleWritableRaster();
-    parent.setPixels(0, 0, 4, 4, new double[] {1, 1, 2, 2, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 4, 4});
-    parent.getSamples(1, 1, 2, 2, 0, samples);
+
+    WritableRaster raster = RasterUtils.createEmptyRaster(4, 4, 1, DataBuffer.TYPE_DOUBLE);
+
+    raster.setPixels(0, 0, 4, 4, new double[] {1, 1, 2, 2, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 4, 4});
+    raster.getSamples(1, 1, 2, 2, 0, samples);
     
     //verify the order of sample pixels is
     //---------

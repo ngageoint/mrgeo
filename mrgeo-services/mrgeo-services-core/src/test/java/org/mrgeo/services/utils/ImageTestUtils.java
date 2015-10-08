@@ -20,11 +20,11 @@ import com.meterware.httpunit.WebResponse;
 import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Assert;
 import org.mrgeo.test.TestUtils;
+import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.io.*;
 
 import static org.junit.Assert.assertTrue;
@@ -44,10 +44,10 @@ public class ImageTestUtils
 
     log.debug("Response content length: " + response.getContentLength());
 
-    final BufferedImage image = ImageIO.read(response.getInputStream());
-    Assert.assertNotNull("Test Image: not loaded, could not read stream", image);
+    Raster raster = GDALUtils.toRaster(GDALUtils.open(response.getInputStream()));
+    Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
 
-    TestUtils.compareRasters(baseline, image.getData());
+    TestUtils.compareRasters(baseline, raster);
   }
   
   public static void outputImageMatchesBaseline(final ClientResponse response,
@@ -58,11 +58,10 @@ public class ImageTestUtils
     assertTrue(baseline.exists());
 
     log.debug("Response content length: " + response.getLength());
+    Raster raster = GDALUtils.toRaster(GDALUtils.open(response.getEntityInputStream()));
+    Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
 
-    final BufferedImage image = ImageIO.read(response.getEntityInputStream());
-    Assert.assertNotNull("Test Image: " + image + " not loaded", image);
-
-    TestUtils.compareRasters(baseline, image.getData());
+    TestUtils.compareRasters(baseline, raster);
   }
 
   public static void writeBaselineImage(final ClientResponse response, final String path)

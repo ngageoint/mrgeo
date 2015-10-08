@@ -103,31 +103,61 @@ public class ChangeClassificationMapOpIntegrationTest extends LocalRunnerTest
     }
   }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToContinuous() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void changeToContinuous() throws Exception
+{
+  String exp = String.format("changeClassification([%s], \"continuous\")", smallElevationCategoricalPath);
+
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+
+  // check the in-place pyramid
+  MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationCategoricalPath.toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
+
+  MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
+
+  Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
+
+  //NOTE:  We didn't change the aggregation type, so it should still be MODE
+  Assert.assertEquals("Bad resampling method", "MODE", metadata.getResamplingMethod());
+  for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
   {
-    String exp = String.format("changeClassification([%s], \"continuous\")", smallElevationCategoricalPath);
-
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
-
-    // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationCategoricalPath.toString(),
-        getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
-
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
-
-    Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
-    for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
-    {
-      MrsImage image = pyramid.getImage(level);
-      Assert.assertNotNull("MrsImage image missing for level " + level, image);
-      image.close();
-    }
+    MrsImage image = pyramid.getImage(level);
+    Assert.assertNotNull("MrsImage image missing for level " + level, image);
+    image.close();
   }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void changeToContinuousMean() throws Exception
+{
+  String exp = String.format("changeClassification([%s], \"continuous\", \"mean\")", smallElevationCategoricalPath);
+
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+
+  // check the in-place pyramid
+  MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationCategoricalPath.toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
+
+  MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
+
+  Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
+
+  //NOTE:  We didn't change the aggregation type, so it should still be MODE
+  Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
+  for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
+  {
+    MrsImage image = pyramid.getImage(level);
+    Assert.assertNotNull("MrsImage image missing for level " + level, image);
+    image.close();
+  }
+}
 
   @Test
   @Category(IntegrationTest.class)

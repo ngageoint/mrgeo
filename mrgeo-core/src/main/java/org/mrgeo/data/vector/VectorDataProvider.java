@@ -18,12 +18,14 @@ package org.mrgeo.data.vector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.geometry.Geometry;
 
 import java.io.IOException;
 
 public abstract class VectorDataProvider
 {
+  protected ProviderProperties providerProperties;
   private String resourcePrefix;
   private String resourceName;
 
@@ -41,6 +43,11 @@ public abstract class VectorDataProvider
   public String getResourcePrefix()
   {
     return resourcePrefix;
+  }
+
+  public ProviderProperties getProviderProperties()
+  {
+    return providerProperties;
   }
 
   public String getPrefixedResourceName()
@@ -83,9 +90,7 @@ public abstract class VectorDataProvider
    */
   public abstract VectorReader getVectorReader(VectorReaderContext context) throws IOException;
 
-  public abstract VectorWriter getVectorWriter();
-
-  public abstract VectorWriter getVectorWriter(VectorWriterContext context);
+  public abstract VectorWriter getVectorWriter() throws IOException;
 
   /**
    * Return an instance of a RecordReader class to be used in map/reduce jobs for reading
@@ -93,7 +98,7 @@ public abstract class VectorDataProvider
    * 
    * @return
    */
-  public abstract RecordReader<LongWritable, Geometry> getRecordReader();
+  public abstract RecordReader<LongWritable, Geometry> getRecordReader() throws IOException;
 
   /**
    * Return an instance of a RecordWriter class to be used in map/reduce jobs for writing
@@ -110,7 +115,7 @@ public abstract class VectorDataProvider
    * @return
    */
   public abstract VectorInputFormatProvider getVectorInputFormatProvider(
-    final VectorInputFormatContext context);
+    final VectorInputFormatContext context) throws IOException;
 
   /**
    * Return an instance of an OutputFormat class to be used in map/reduce jobs for producing
@@ -119,7 +124,7 @@ public abstract class VectorDataProvider
    * @return
    */
   public abstract VectorOutputFormatProvider getVectorOutputFormatProvider(
-    final VectorOutputFormatContext context);
+    final VectorOutputFormatContext context) throws IOException;
 
   public abstract void delete() throws IOException;
   public abstract void move(String toResource) throws IOException;

@@ -16,14 +16,12 @@
 package org.mrgeo.data.accumulo.image;
 
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.mrgeo.data.DataProviderException;
-import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.accumulo.input.image.AccumuloMrsImagePyramidInputFormatProvider;
 import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataReader;
@@ -35,6 +33,7 @@ import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.*;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.*;
+import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -229,12 +228,17 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
       }
       else
       {
-        byte[] p = Base64.encodeBase64(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD).getBytes());
+        try
+        {
+          String s = Base64Utils.encodeObject(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
 
-        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
-                 new String(p));
-        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64,
-                 new String("true"));
+          conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD, s);
+          conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "true");
+        }
+        catch (IOException e)
+        {
+          throw new DataProviderException("Error Base64 encoding", e);
+        }
       }
     }
   }
@@ -248,19 +252,29 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
   @Override
   public String getResourceName()
   {
-    String result = super.getResourceName();
-    if (result == null){
+    try
+    {
+      String result = super.getResourceName();
+      if (result == null)
+      {
 
-      // decode the properties
-      Properties props = AccumuloConnector.decodeAccumuloProperties(resolvedResourceName);
+        // decode the properties
+        Properties props = AccumuloConnector.decodeAccumuloProperties(resolvedResourceName);
 
-      // get the resource
-      result = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
-      
-      setResourceName(result);
+        // get the resource
+        result = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
+
+        setResourceName(result);
+      }
+
+      return result;
+    }
+    catch (ClassNotFoundException | IOException e)
+    {
+      e.printStackTrace();
     }
 
-    return result;
+    return null;
   } // end getResourceName
   
 

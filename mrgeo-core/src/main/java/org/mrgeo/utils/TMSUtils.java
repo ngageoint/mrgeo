@@ -153,25 +153,25 @@ public static class Bounds implements Serializable
     }
   }
 
-  public void expand(final double lat, final double lon)
+  public void expand(final double x, final double y)
   {
-    if (n < lat)
+    if (n < y)
     {
-      n = lat;
+      n = y;
     }
-    if (s > lat)
+    if (s > y)
     {
-      s = lat;
-    }
-
-    if (w > lon)
-    {
-      w = lon;
+      s = y;
     }
 
-    if (e < lon)
+    if (w > x)
     {
-      e = lon;
+      w = x;
+    }
+
+    if (e < x)
+    {
+      e = x;
     }
 
   }
@@ -249,6 +249,16 @@ public static class Bounds implements Serializable
   public String toCommaString()
   {
     return w + "," + s + "," + e + "," + n;
+  }
+  public static Bounds fromCommaString(String str) {
+    String[] split = str.split(",");
+
+    double w = Double.parseDouble(split[0]);
+    double s = Double.parseDouble(split[1]);
+    double e = Double.parseDouble(split[2]);
+    double n = Double.parseDouble(split[3]);
+
+    return new Bounds(w, s, e, n);
   }
 
   public Bounds union(final Bounds b)
@@ -547,6 +557,17 @@ public static class TileBounds implements Serializable
   public String toCommaString()
   {
     return w + "," + s + "," + e + "," + n;
+  }
+
+  public static TileBounds fromCommaString(String str) {
+    String[] split = str.split(",");
+
+    long w = Long.parseLong(split[0]);
+    long s = Long.parseLong(split[1]);
+    long e = Long.parseLong(split[2]);
+    long n = Long.parseLong(split[3]);
+
+    return new TileBounds(w, s, e, n);
   }
 
   public boolean contains(final long tx, final long ty) {

@@ -15,41 +15,17 @@
 
 package org.mrgeo.resources.mrspyramid;
 
-import java.awt.image.Raster;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URISyntaxException;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriInfo;
-
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONStringer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapalgebra.MapAlgebraJob;
-import org.mrgeo.rasterops.ColorScale;
-import org.mrgeo.rasterops.OpImageRegistrar;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.resources.job.JobInfoResponse;
 import org.mrgeo.resources.job.JobResponseFormatter;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
-//import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
 import org.mrgeo.services.utils.HttpUtil;
@@ -57,6 +33,20 @@ import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
+import java.awt.image.Raster;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+//import org.mrgeo.services.mrspyramid.MrsPyramidService;
 
 @Path("/raster")
 public class RasterResource
@@ -179,7 +169,6 @@ public class RasterResource
       @QueryParam("srs") String srs,
       @QueryParam("zoom-level") @DefaultValue("-1") int zoomLevel)
   {
-    OpImageRegistrar.registerMrGeoOps();
     String error = "";
     try
     {

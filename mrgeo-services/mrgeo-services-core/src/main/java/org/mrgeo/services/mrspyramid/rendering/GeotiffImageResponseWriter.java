@@ -20,10 +20,9 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.rasterops.GeoTiffExporter;
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -220,89 +219,9 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
   private void writeStream(final Raster raster, final Bounds bounds, final double nodata,
     final ByteArrayOutputStream byteStream) throws IOException
   {
-    GeoTiffExporter.export(RasterUtils.makeBufferedImage(raster), bounds, byteStream, true, nodata);
-
-    // ImageWorker worker = new ImageWorker(image);
-    // worker.writeTIFF(byteStream, "LZW", 0.8F, -1, -1);
+    GDALUtils.saveRaster(raster, byteStream, bounds, nodata);
 
     byteStream.close();
   }
-  // /*
-  // * (non-Javadoc)
-  // *
-  // * @see org.mrgeo.resources.mrspyramid.ImageResponseWriter#write(java.awt.image.RenderedImage,
-  // * java.lang.String)
-  // */
-  // @Override
-  // public Response write(final Raster raster, final String imageName, final Bounds bounds)
-  // {
-  // try
-  // {
-  // log.debug("Generating image {} ", imageName);
-  // final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-  //
-  // final MrsImagePyramid pyramid = MrsImagePyramid.open(imageName);
-  //
-  // GeoTiffExporter.export(RasterUtils.makeBufferedImage(raster), bounds, byteStream, true,
-  // pyramid.getMetadata().getDefaultValue(0));
-  //
-  // // ImageWorker worker = new ImageWorker(image);
-  // // worker.writeTIFF(byteStream, "LZW", 0.8F, -1, -1);
-  //
-  // byteStream.close();
-  //
-  // // TODO: the type passed to Response.ok may not be correct here
-  // return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
-  // getResponseMimeType()).header("Content-Disposition",
-  // "attachment; filename=" + imageName + ".tif").build();
-  // }
-  // catch (final IOException e)
-  // {
-  // if (e.getMessage() != null)
-  // {
-  // return Response.serverError().entity(e.getMessage()).build();
-  // }
-  // return Response.serverError().entity("Internal Error").build();
-  // }
-  // catch (final Exception e)
-  // {
-  // if (e.getMessage() != null)
-  // {
-  // return Response.serverError().entity(e.getMessage()).build();
-  // }
-  // return Response.serverError().entity("Internal Error").build();
-  // }
-  // }
-  //
-  // /*
-  // * (non-Javadoc)
-  // *
-  // * @see org.mrgeo.services.wms.ImageResponseWriter#write(java.awt.image.RenderedImage ,
-  // * org.mrgeo.utils.Bounds, org.mrgeo.rasterops.MrsPyramid,
-  // * javax.servlet.http.HttpServletResponse)
-  // */
-  // @Override
-  // public void write(final Raster raster, final String imageName, final Bounds bounds,
-  // final HttpServletResponse response) throws ServletException
-  // {
-  // response.setContentType(getResponseMimeType());
-  // log.debug("Generating image {} ", imageName);
-  // final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-  //
-  // final MrsImagePyramid pyramid = MrsImagePyramid.open(imageName);
-  //
-  // GeoTiffExporter.export(RasterUtils.makeBufferedImage(raster), bounds, byteStream, true, pyramid
-  // .getMetadata().getDefaultValue(0));
-  //
-  // // ImageWorker worker = new ImageWorker(image);
-  // // worker.writeTIFF(byteStream, "LZW", 0.8F, -1, -1);
-  //
-  // byteStream.close();
-  //
-  // response.setHeader("Content-Disposition", "attachment; filename=" + imageName + ".tif");
-  // ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
-  //
-  // log.debug("Image {} written to response.", imageName);
-  // }
 
 }
