@@ -71,6 +71,7 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
     MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, (new File(Defs.INPUT)).toURI().toString());
     factory = new HdfsMrsImageDataProviderFactory();
     conf = HadoopUtils.createConfiguration();
+    factory.initialize(conf);
     providerProperties = new ProviderProperties();
   }
 

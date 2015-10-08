@@ -15,6 +15,7 @@
 
 package org.mrgeo.data.vector;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
@@ -50,9 +51,21 @@ public abstract class VectorInputFormatProvider
   public void setupJob(final Job job,
       final ProviderProperties providerProperties) throws DataProviderException
   {
+    setup(job.getConfiguration(), providerProperties);
+  }
+
+  public Configuration setupSparkJob(final Configuration conf,
+                                     final ProviderProperties providerProperties) throws DataProviderException
+  {
+    setup(conf, providerProperties);
+    return conf;
+  }
+
+  private void setup(final Configuration conf, final ProviderProperties providerProperties)
+  {
     DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
-        job.getConfiguration());
-    context.save(job.getConfiguration());
+                                                       conf);
+    context.save(conf);
   }
 
   /**

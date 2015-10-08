@@ -18,8 +18,6 @@ package org.mrgeo.data.accumulo.output.image;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.Pair;
-import org.apache.accumulo.core.util.TextUtil;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -40,7 +38,8 @@ import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledOutputFormatContext;
-import org.mrgeo.spark.SparkTileIdPartitioner;
+import org.mrgeo.hdfs.partitioners.SparkTileIdPartitioner;
+import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
@@ -346,7 +345,7 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
               long split = TMSUtils.tileid(p.getFirst(), p.getSecond(), zoomLevel);
               //TileIdWritable t = new TileIdWritable(split);
               Text t = new Text(longToBytes(split));
-              out.println(new String(Base64.encodeBase64(TextUtil.getBytes(t))));
+              out.println(Base64Utils.encodeObject(t.toString()));
               log.debug("Point: " + p.getFirst() + "\t" + p.getSecond() + "\t" + split + "\t" + t.getLength());
             }
 

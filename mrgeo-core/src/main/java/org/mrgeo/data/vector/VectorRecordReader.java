@@ -15,7 +15,57 @@
 
 package org.mrgeo.data.vector;
 
-public class VectorRecordReader
-{
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.geometry.Geometry;
 
+import java.io.IOException;
+
+public class VectorRecordReader extends RecordReader<LongWritable, Geometry>
+{
+  private RecordReader<LongWritable, Geometry> delegate;
+
+  @Override
+  public void initialize(InputSplit inputSplit, TaskAttemptContext context) throws IOException, InterruptedException
+  {
+    VectorInputSplit vis = (VectorInputSplit)inputSplit;
+    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(vis.getVectorName(),
+                                                                      DataProviderFactory.AccessMode.READ,
+                                                                      context.getConfiguration());
+    delegate = dp.getRecordReader();
+    delegate.initialize(vis.getWrappedInputSplit(), context);
+  }
+
+  @Override
+  public boolean nextKeyValue() throws IOException, InterruptedException
+  {
+    return delegate.nextKeyValue();
+  }
+
+  @Override
+  public LongWritable getCurrentKey() throws IOException, InterruptedException
+  {
+    return delegate.getCurrentKey();
+  }
+
+  @Override
+  public Geometry getCurrentValue() throws IOException, InterruptedException
+  {
+    return delegate.getCurrentValue();
+  }
+
+  @Override
+  public float getProgress() throws IOException, InterruptedException
+  {
+    return delegate.getProgress();
+  }
+
+  @Override
+  public void close() throws IOException
+  {
+    delegate.close();
+  }
 }

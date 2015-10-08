@@ -24,18 +24,16 @@ import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.opimage.ConstantDescriptor;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
-import org.mrgeo.test.OpImageTestUtils;
+import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +49,6 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
 @Rule
 public TestName testname = new TestName();
-
-private static OpImageTestUtils opImageTestUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
@@ -84,6 +80,11 @@ private static final String allhundredshalf = "all-hundreds-shifted-half";
 private static Path allhundredshalfPath;
 private static final String allhundredsup = "all-hundreds-shifted-up";
 private static Path allhundredsupPath;
+private static final String allonesnopyramids = "all-ones-no-pyramids";
+private static final String allonesholes = "all-ones-with-holes";
+private static final String allhundredsholes = "all-hundreds-with-holes";
+
+private static String smallslope = Defs.INPUT +"SmallSlopeBaseline.tif";
 
 private static final String regularpoints = "regular-points";
 private static Path regularpointsPath;
@@ -96,7 +97,6 @@ private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationT
 //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
-  private ProviderProperties props = null;
 
 @Before
 public void setup()
@@ -114,7 +114,6 @@ public static void init() throws IOException
   }
 
   testUtils = new MapOpTestUtils(MapAlgebraIntegrationTest.class);
-  opImageTestUtils = new OpImageTestUtils(MapAlgebraIntegrationTest.class);
   //MapOpTestVectorUtils vectorTestUtils = new MapOpTestVectorUtils(MapAlgebraIntegrationTest.class);
 
   HadoopFileUtils.delete(testUtils.getInputHdfs());
@@ -155,15 +154,22 @@ public static void init() throws IOException
   allhundredshalfPath = new Path(testUtils.getInputHdfs(), allhundredshalf);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
   allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
 
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
   regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
+
 
   HadoopFileUtils
       .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
   smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
 
-  File file = new File(smallElevation);
+
+  File file = new File(smallslope);
+  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
+
+  file = new File(smallElevation);
   smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
 
   file = new File(greece);
@@ -186,7 +192,7 @@ public void add() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s]", allones, allones));
   }
 }
@@ -204,7 +210,7 @@ public void addSubtractConstant() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s] - 3", allhundreds, allones));
 
   }
@@ -223,7 +229,7 @@ public void addSubtractConstantAlternateSyntax() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s] + -3", allhundreds, allones));
 
   }
@@ -241,7 +247,7 @@ public void aspect() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("aspect([%s])", smallElevation));
   }
 }
@@ -258,7 +264,7 @@ public void aspectDeg() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("aspect([%s], \"deg\")", smallElevation));
   }
 }
@@ -275,8 +281,294 @@ public void aspectRad() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("aspect([%s], \"rad\")", smallElevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramid() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("buildPyramid([%s])", path), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("buildPyramid([%s])", path));
+
+    // levels should exist
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramidAfterSave() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("buildpyramid(save([%s] + 1, \"%s\"))", path, testUtils.getOutputHdfsFor("save-test")), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("buildpyramid(save([%s] + 1, \"%s\"))", path, testUtils.getOutputHdfsFor("save-test")));
+
+    // levels should exist for save-test
+    metadata = testUtils.getImageMetadata("save-test");
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+    // but not for allones
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      if (i != md.length - 1)
+      {
+        Assert.assertNull("Level name should be missing", d.name);
+        Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+        Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+        Assert.assertNull("Stats should be missing", d.stats);
+      }
+      else
+      {
+        Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+        Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+        Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+        Assert.assertNotNull("Stats missing", d.stats);
+      }
+    }
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void buildpyramidAlternate() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("bp([%s])", path), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("bp([%s])", path));
+
+    // levels should exist
+    metadata = testUtils.getImageMetadata(allonesnopyramids);
+    md =  metadata.getImageMetadata();
+
+    for (int i = 1; i < md.length; i++)
+    {
+      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+
+  }
+}
+
+@Test(expected = DataProviderNotFound.class)
+@Category(IntegrationTest.class)
+public void buildpyramidDoesNotExist() throws Exception
+{
+  // copy the pyramid here, in case it has been used in another buildpyramid test
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getOutputHdfs(), allonesnopyramids, true);
+  Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
+
+  // make sure the levels don't exist
+  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+
+  for (int i = 1; i < md.length; i++)
+  {
+    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+
+    if (i != md.length - 1)
+    {
+      Assert.assertNull("Level name should be missing", d.name);
+      Assert.assertNull("Tile Bounds should be missing", d.tileBounds);
+      Assert.assertNull("Pixel Bounds should be missing", d.pixelBounds);
+      Assert.assertNull("Stats should be missing", d.stats);
+    }
+    else
+    {
+      Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
+      Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
+      Assert.assertNotNull("Pixel Bounds missing", d.pixelBounds);
+      Assert.assertNotNull("Stats missing", d.stats);
+    }
+  }
+
+  testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("buildpyramid([%s] + 1)", path));
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void changeClassification() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        "changeClassification([" + smallElevationPath + "], \"categorical\")", -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        "changeClassification([" + smallElevationPath + "], \"categorical\")");
+
+    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    Assert.assertEquals("mean", metadata.getResamplingMethod().toLowerCase());
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void changeClassificationAggregator() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        "changeClassification([" + smallElevationPath + "], \"categorical\", \"max\")", -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        "changeClassification([" + smallElevationPath + "], \"categorical\", \"max\")");
+
+    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    Assert.assertEquals("max", metadata.getResamplingMethod().toLowerCase());
+
   }
 }
 
@@ -294,12 +586,14 @@ public void complicated() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "con([%s] > 0.008, 1.0, 0.3) * pow(6, -3.5 * abs(([%s] * 5) + 0.05))",
             smallElevationPath, smallElevationPath));
   }
 }
+
+
 
 
 @Test
@@ -316,7 +610,7 @@ public void conAlternateFormat() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "con([%s] <= 100, [%s], [%s] > 200, [%s], [%s])", smallElevationPath, allones,
             smallElevationPath, allhundreds, alltwos));
@@ -335,7 +629,7 @@ public void conLTE() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("con([%s] <= 100, 0, 1)", smallElevationPath));
 
   }
@@ -353,7 +647,7 @@ public void conNE() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("con([%s] != 200, 2, 0)", smallElevationPath));
 
   }
@@ -371,9 +665,8 @@ public void conLteGte() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("([%s] <= 100) || ([%s] >= 200)", smallElevationPath, smallElevationPath));
-
   }
 
 }
@@ -390,9 +683,8 @@ public void conLtGt() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("([%s] < 100) || ([%s] > 200)", smallElevationPath, smallElevationPath));
-
   }
 }
 
@@ -408,9 +700,8 @@ public void cos() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("cos([%s])", allones));
-
   }
 }
 
@@ -427,10 +718,9 @@ public void crop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "crop([%s],  142.05, -17.75, 142.2, -17.65)", smallElevationPath));
-
   }
 }
 
@@ -442,15 +732,15 @@ public void cropExact() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format(
-            "crop([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
+            "cropExact([%s],  142.05, -17.75, 142.2, -17.65)",
             smallElevationPath), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
-            "crop([%s],  142.05, -17.75, 142.2, -17.65,\"EXACT\")",
+            "cropExact([%s],  142.05, -17.75, 142.2, -17.65)",
             smallElevationPath));
   }
 }
@@ -467,9 +757,8 @@ public void divide() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] / [%s]", allones, allones));
-
   }
 }
 
@@ -485,9 +774,8 @@ public void divideAddConstant() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] / [%s] + 3", allones, allones));
-
   }
 }
 
@@ -504,9 +792,8 @@ public void expressionIncompletePathInput1() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allonesPath));
-
   }
 }
 
@@ -522,9 +809,8 @@ public void expressionIncompletePathInput2() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s];\nb = 3;\na / [%s] + b", allones, allonesPath));
-
   }
 }
 
@@ -538,12 +824,12 @@ public void expressionIncompletePathInput3() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         "a = [" + fname + "] + "
-            + "[" + allonesPath.toString() + "];");
+            + "[" + allonesPath.toString() + "];", -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "a = [" + fname + "] + "
             + "[" + allonesPath.toString() + "];");
   }
@@ -551,19 +837,35 @@ public void expressionIncompletePathInput3() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
-public void fill() throws Exception
+public void fillConst() throws Exception
 {
-  // paths with file extensions
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        "fill([" + greece + "], 1, 22.6, 39.4, 26, 42.15, \"EXACT\")");
+        "fill([" + allhundredsholes + "], 1)", -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        "fill([" + greece + "], 1, 22.6, 39.4, 26, 42.15, \"EXACT\")");
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        "fill([" + allhundredsholes + "], 1)");
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void fillImage() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        "fill([" + allhundredsholes + "], [" + allonesholes + "])", -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        "fill([" + allhundredsholes + "], [" + allonesholes + "])");
   }
 }
 
@@ -572,19 +874,19 @@ public void fill() throws Exception
 // outside of the crop bounds.
 @Test
 @Category(IntegrationTest.class)
-public void fill1() throws Exception
+public void fillBounds() throws Exception
 {
-  // paths with file extensions
+
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        "fill([" + greece + "], 1, 24.9, 41.3, 26, 43, \"EXACT\")");
+        "fillBounds([" + allhundredsholes + "], 1, 141.6, -18.6, 143.0, -17.0)", -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        "fill([" + greece + "], 1, 24.9, 41.3, 26, 43, \"EXACT\")");
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        "fillBounds([" + allhundredsholes + "], 1, 141.6, -18.6, 143.0, -17.0)");
   }
 }
 
@@ -615,7 +917,7 @@ public void hillshadeNonLocal() throws Exception
   else
   {
     testUtils.runRasterExpression(config, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         exp);
   }
 }
@@ -645,10 +947,67 @@ public void hillshade() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         exp);
   }
 }
+
+@Test
+@Category(IntegrationTest.class)
+public void ingest() throws Exception
+{
+//    java.util.Properties prop = MrGeoProperties.getInstance();
+//    prop.setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("ingest(\"%s\")", smallslope), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("ingest(\"%s\")", smallslope));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void isNodata() throws Exception
+{
+//    java.util.Properties prop = MrGeoProperties.getInstance();
+//    prop.setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("isNodata([%s])", allones), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("isNodata([%s])", allones));
+  }
+}
+@Test
+@Category(IntegrationTest.class)
+public void isNull() throws Exception
+{
+//    java.util.Properties prop = MrGeoProperties.getInstance();
+//    prop.setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("isNull([%s])", allones), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("isNull([%s])", allones));
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
@@ -662,9 +1021,8 @@ public void kernelGaussian() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("kernel(\"gaussian\", [%s], 100.0)", regularpointsPath));
-
   }
 }
 
@@ -680,9 +1038,8 @@ public void kernelLaplacian() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("kernel(\"laplacian\", [%s], 100.0)", regularpointsPath));
-
   }
 }
 
@@ -698,8 +1055,26 @@ public void log() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("log([%s])", alltwos));
+
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void logWithBase() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("log([%s], 10)", alltwos), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("log([%s], 10)", alltwos));
 
   }
 }
@@ -716,7 +1091,7 @@ public void mosaicOverlapHundredsTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", allhundredsPath, alltwosPath));
   }
 }
@@ -733,7 +1108,7 @@ public void mosaicOverlapTwosTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsPath));
   }
 }
@@ -749,7 +1124,7 @@ public void mosaicButtedLeft() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsleftPath));
   }
 }
@@ -765,7 +1140,7 @@ public void mosaicButtedTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsupPath));
   }
 }
@@ -781,7 +1156,7 @@ public void mosaicPartialOverlapTwosTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredshalfPath));
   }
 }
@@ -797,7 +1172,7 @@ public void mosaicPartialOverlapHundredsTop() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("mosaic([%s], [%s])", allhundredshalfPath, alltwosPath));
   }
 }
@@ -814,7 +1189,7 @@ public void mult() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] * 5", allones));
 
   }
@@ -832,7 +1207,7 @@ public void nestedExpression() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("pow(6, -3.5 * abs(([%s] * 5) + 0.05))", allones));
 
   }
@@ -850,7 +1225,7 @@ public void not() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("!([%s] < 0.012)", allones));
 
   }
@@ -870,7 +1245,7 @@ public void orderOfOperations() throws Exception
   {
 
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s] * [%s] - [%s]", allones, allones, allones, allones));
   }
 }
@@ -879,53 +1254,16 @@ public void orderOfOperations() throws Exception
 @Category(UnitTest.class)
 public void parse1() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", null);
   final String ex = String.format("[%s] + [%s]", smallElevation, smallElevation);
-
-  // expected
-  final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
-  expRoot.setFunctionName("+");
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOp pyramidOp1 = new MrsPyramidMapOp();
-  pyramidOp1.setDataProvider(elevationDataProvider);
-
-  final MrsPyramidMapOp pyramidOp2 = new MrsPyramidMapOp();
-  pyramidOp2.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp1);
-  expRoot.addInput(pyramidOp2);
-
-  final MapOp mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
 @Category(UnitTest.class)
 public void parse2() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", null);
   final String ex = String.format("[%s] * 15", smallElevation);
-
-  // expected
-  final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
-  expRoot.setFunctionName("*");
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOp mapOp1 = new MrsPyramidMapOp();
-  mapOp1.setDataProvider(elevationDataProvider);
-
-  final RenderedImageMapOp mapOp2 = new RenderedImageMapOp();
-  mapOp2.setRenderedImageFactory(new ConstantDescriptor());
-  mapOp2.getParameters().add(new Double(15));
-
-  expRoot.addInput(mapOp1);
-  expRoot.addInput(mapOp2);
-
-  final MapOp mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
@@ -933,104 +1271,68 @@ public void parse2() throws Exception
 public void parse3() throws Exception
 {
   final String ex = String.format("log([%s])", smallElevation);
-
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  // expected
-  final LogarithmMapOp expRoot = new LogarithmMapOp();
-  expRoot.getParameters().add(new Double(0));
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOp pyramidOp = new MrsPyramidMapOp();
-  pyramidOp.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp);
-
-  final MapOp mo = uut.parse(ex);
-  assertMapOp(expRoot, mo);
-
-  // now add a search path and see if you get the same results
-  final String ex1 = String.format("log([%s])", smallElevation);
-
-//    Path p = new Path(smallElevation);
-//    p = p.getParent();
-//    uut.addPath(p.toString());
-
-  final MapOp mo1 = uut.parse(ex1);
-  assertMapOp(expRoot, mo1);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parse4() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("log([%s/abc])", testUtils.getInputHdfs().toString());
 
-  uut.parse(ex);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test(expected = IllegalArgumentException.class)
+@Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parse5() throws Exception
 {
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-  System.err.println(testUtils.getInputHdfs().toString());
   final String ex = String.format("[%s] * 15", testUtils.getInputHdfs().toString());
 
-  uut.parse(ex);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parseInvalidArguments1() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("[%s] + ", smallElevation);
 
-  parser.parse(ex);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parseInvalidArguments2() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("abs [%s] [%s] ", smallElevation, smallElevation);
 
-  parser.parse(ex);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parseInvalidArguments3() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = String.format("con[%s] + ", smallElevation);
 
-  parser.parse(ex);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void parseInvalidArguments4() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
   final String ex = "costDistance";
-
-  parser.parse(ex);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test(expected = ParserException.class)
+@Test
 @Category(UnitTest.class)
 public void parseInvalidOperation() throws Exception
 {
-  final MapAlgebraParser parser = new MapAlgebraParser(this.conf, "", props);
-  // String ex = String.format("[%s] & [%s]", allones, _blur2);
   final String ex = String.format("[%s] & [%s]", smallElevation, smallElevation);
-
-  parser.parse(ex);
+  MapAlgebra.validateWithExceptions(ex, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test
@@ -1040,95 +1342,39 @@ public void pow() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("pow([%s], 1.2)", allones), -9999);
+        String.format("pow([%s], 1.2)", allhundreds), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        String.format("pow([%s], 1.2)", allones));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("pow([%s], 1.2)", allhundreds));
 
   }
 }
 
-@Test
-@Category(UnitTest.class)
-public void rasterExistsDefaultSearchPath() throws Exception
-{
-  final Path p = new Path(smallElevation).getParent();
-  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, p.toString());
-
-  final String expr = String.format("a = [%s] + [%s]", smallElevationName, smallElevationName);
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  // expected
-  final RawBinaryMathMapOp expRoot = new RawBinaryMathMapOp();
-  expRoot.setFunctionName("+");
-
-  MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(smallElevationName,
-      AccessMode.READ, props);
-  final MrsPyramidMapOp mapOp1 = new MrsPyramidMapOp();
-  mapOp1.setDataProvider(provider);
-
-  final MrsPyramidMapOp mapOp2 = new MrsPyramidMapOp();
-  mapOp2.setDataProvider(provider);
-
-  expRoot.addInput(mapOp1);
-  expRoot.addInput(mapOp2);
-
-  final MapOp mo = uut.parse(expr);
-  assertMapOp(expRoot, mo);
-}
 
 @Test
-@Category(UnitTest.class)
-public void rasterExistsFullyQualifiedPath() throws Exception
+@Category(IntegrationTest.class)
+public void save() throws Exception
 {
-  final String ex = String.format("log([%s])", smallElevation);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("save([%s], \"%s\")", allones, testUtils.getOutputHdfsFor("save-test")), -9999);
 
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
+    testUtils.saveBaselineTif("save-test", -9999.0);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("save([%s], \"%s\")", allones, testUtils.getOutputHdfsFor("save-test")));
 
-  // expected
-  final LogarithmMapOp expRoot = new LogarithmMapOp();
-  expRoot.getParameters().add(new Double(0));
-
-  MrsImageDataProvider elevationDataProvider = DataProviderFactory.getMrsImageDataProvider(smallElevation,
-      AccessMode.READ, props);
-  final MrsPyramidMapOp pyramidOp = new MrsPyramidMapOp();
-  pyramidOp.setDataProvider(elevationDataProvider);
-
-  expRoot.addInput(pyramidOp);
-
-  // add the parent path of the HDFS version to the search path, we shouldn't
-  // find it...
-//    final Path p = smallElevationPath.getParent();
-//    uut.addPath(p.toString());
-
-  final MapOp mo1 = uut.parse(ex);
-  assertMapOp(expRoot, mo1);
+    // now check the file that was saved...
+    testUtils.compareRasterOutput("save-test", TestUtils.nanTranslatorToMinus9999);
+  }
 }
-
-
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void rasterNotExistsDefaultSearchPath() throws Exception
-{
-  final String expr = "a = ([something.tif])";
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-
-  uut.parse(expr);
-}
-
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void rasterNotExistsUserDefinedSearchPath() throws Exception
-{
-  final String expr = "a = [thingone.tif] + " + "[thingtwo.tif];";
-  final MapAlgebraParser uut = new MapAlgebraParser(this.conf, "", props);
-//    uut.addPath(testUtils.getInputHdfs().toString());
-  uut.parse(expr);
-}
-
 
 @Test
 @Category(IntegrationTest.class)
@@ -1142,7 +1388,7 @@ public void sin() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("sin([%s] / 0.01)", allones));
   }
 }
@@ -1160,7 +1406,7 @@ public void slope() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s])", smallElevation));
 
   }
@@ -1179,7 +1425,7 @@ public void slopeGradient() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s], \"gradient\")", smallElevation));
 
   }
@@ -1197,7 +1443,7 @@ public void slopeRad() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s], \"rad\")", smallElevation));
 
   }
@@ -1215,7 +1461,7 @@ public void slopeDeg() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s], \"deg\")", smallElevation));
 
   }
@@ -1233,7 +1479,7 @@ public void slopePercent() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("slope([%s], \"percent\")", smallElevation));
 
   }
@@ -1251,7 +1497,7 @@ public void tan() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("tan([%s] / 0.01)", allones));
 
   }
@@ -1270,7 +1516,7 @@ public void variables1() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = a; a + b * a - b", allones));
   }
 }
@@ -1282,13 +1528,13 @@ public void variables2() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("\n\na = [%s];\n\nb = 3;\na \t\n+ [%s] \n- b\n\n", allones, allones), -9999);
+        String.format("\n\na = [%s];\n\nb = 3;\na \t + [%s] - b\n\n", allones, allones), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
-        String.format("\n\na = [%s];\n\nb = 3;\na \t\n+ [%s] \n- b\n\n", allones, allones));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("\n\na = [%s];\n\nb = 3;\na \t+ [%s] - b\n\n", allones, allones));
   }
 }
 
@@ -1304,9 +1550,8 @@ public void variables3() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
-
   }
 }
 
@@ -1322,7 +1567,7 @@ public void rasterizeVector1() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; RasterizeVector(a, \"MASK\", \"0.000092593\")", majorRoadShapePath.toString()));
   }
 }
@@ -1339,7 +1584,7 @@ public void rasterizeVector2() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ", pointsPath));
   }
 }
@@ -1356,51 +1601,9 @@ public void rasterizeVector3() throws Exception
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        opImageTestUtils.nanTranslatorToMinus9999, opImageTestUtils.nanTranslatorToMinus9999,
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath));
   }
 }
 
-// asserts the expected Mapop against the actual Mapop generated when parse is
-// called
-// as more unit tests are added this method will need additional code to deal
-// with the
-// specific map ops being tested
-private void assertMapOp(final MapOp expMo, final MapOp mo)
-{
-  Assert.assertEquals(expMo.getClass().getName(), mo.getClass().getName());
-  if (expMo instanceof RenderedImageMapOp)
-  {
-    final RenderedImageMapOp rendExpMapOp = (RenderedImageMapOp) expMo;
-    final RenderedImageMapOp rendMo = (RenderedImageMapOp) mo;
-    Assert.assertEquals(rendExpMapOp.getRenderedImageFactory().getClass().getName(), rendMo
-        .getRenderedImageFactory().getClass().getName());
-    Assert.assertEquals(rendExpMapOp.getParameters().getNumParameters(), rendMo.getParameters()
-        .getNumParameters());
-    for (int i = 0; i < rendExpMapOp.getParameters().getNumParameters(); i++)
-    {
-      if (rendExpMapOp.getParameters().getObjectParameter(i) instanceof Double)
-      {
-        Assert.assertTrue(Double.compare(rendExpMapOp.getParameters().getDoubleParameter(i),
-            rendMo.getParameters().getDoubleParameter(i)) == 0);
-      }
-      else
-      {
-        Assert.assertEquals(rendExpMapOp.getParameters().getObjectParameter(i), rendMo
-            .getParameters().getObjectParameter(i));
-      }
-    }
-  }
-  else if (expMo instanceof MrsPyramidMapOp)
-  {
-    final MrsPyramidMapOp pyrExpMo = (MrsPyramidMapOp) expMo;
-    final MrsPyramidMapOp pyrMo = (MrsPyramidMapOp) mo;
-    Assert.assertEquals(pyrExpMo.getOutputName(), pyrMo.getOutputName());
-  }
-  Assert.assertEquals(expMo.getInputs().size(), mo.getInputs().size());
-  for (int u = 0; u < expMo.getInputs().size(); u++)
-  {
-    assertMapOp(expMo.getInputs().get(u), mo.getInputs().get(u));
-  }
-}
 }

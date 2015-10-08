@@ -23,8 +23,7 @@ import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.*;
 import org.mrgeo.pyramid.MrsPyramid;
-import org.mrgeo.rasterops.OpImageRegistrar;
-import org.mrgeo.tile.TileNotFoundException;
+import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -222,7 +221,6 @@ public class Export extends Command
   {
     log.info("Export");
 
-    OpImageRegistrar.registerMrGeoOps();
     try
     {
       final Options options = Export.createOptions();
@@ -307,7 +305,8 @@ public class Export extends Command
 
         if (!singleImage)
         {
-          org.apache.commons.io.FileUtils.forceMkdir(new File(outputbase));
+
+          FileUtils.createDir(new File(outputbase));
         }
 
         for (final String arg : line.getArgs())

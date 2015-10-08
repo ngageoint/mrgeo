@@ -84,33 +84,66 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   @Override
   public VectorReader getVectorReader() throws IOException
   {
-    return new HdfsVectorReader(this, new VectorReaderContext(), conf);
+    String resourceName = getResolvedResourceName(true);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, true, getConfiguration()))
+    {
+      return new DelimitedVectorReader(this, new VectorReaderContext(), conf);
+    }
+    else if (isSourceShapefile(resourcePath))
+    {
+      return new ShapefileVectorReader(this, new VectorReaderContext(), conf);
+    }
+    throw new IOException("Unable to create vector reader for " + resourceName);
   }
 
   @Override
   public VectorReader getVectorReader(VectorReaderContext context) throws IOException
   {
-    return new HdfsVectorReader(this, context, conf);
+    String resourceName = getResolvedResourceName(true);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, true, getConfiguration()))
+    {
+      return new DelimitedVectorReader(this, context, conf);
+    }
+    else if (isSourceShapefile(resourcePath))
+    {
+      return new ShapefileVectorReader(this, context, conf);
+    }
+    throw new IOException("Unable to create vector reader for " + resourceName);
   }
 
   @Override
-  public VectorWriter getVectorWriter()
+  public VectorWriter getVectorWriter() throws IOException
   {
-    // TODO Auto-generated method stub
-    return null;
+    String resourceName = getResolvedResourceName(false);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, false, getConfiguration()))
+    {
+      return new DelimitedVectorWriter(this, conf);
+    }
+    // TODO:
+//    else if (isSourceShapefile(resourcePath))
+//    {
+//      return new ShapefileVectorWriter(context);
+//    }
+    throw new IOException("Unable to create vector output format provider for " + resourceName);
   }
 
   @Override
-  public VectorWriter getVectorWriter(VectorWriterContext context)
+  public RecordReader<LongWritable, Geometry> getRecordReader() throws IOException
   {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public RecordReader<LongWritable, Geometry> getRecordReader()
-  {
-    return new HdfsVectorRecordReader();
+    String resourceName = getResolvedResourceName(true);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, true, getConfiguration()))
+    {
+      return new DelimitedVectorRecordReader();
+    }
+    else if (isSourceShapefile(resourcePath))
+    {
+      return new ShpInputFormat.ShpRecordReader();
+    }
+    throw new IOException("Unable to create vector reader for " + resourceName);
   }
 
   @Override
@@ -121,16 +154,35 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   @Override
-  public VectorInputFormatProvider getVectorInputFormatProvider(VectorInputFormatContext context)
+  public VectorInputFormatProvider getVectorInputFormatProvider(VectorInputFormatContext context) throws IOException
   {
-    return new HdfsVectorInputFormatProvider(context);
+    String resourceName = getResolvedResourceName(true);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, true, getConfiguration()))
+    {
+      return new DelimitedVectorInputFormatProvider(context);
+    }
+    else if (isSourceShapefile(resourcePath))
+    {
+      return new ShapefileVectorInputFormatProvider(context);
+    }
+    throw new IOException("Unable to create vector input format provider for " + resourceName);
   }
 
   @Override
-  public VectorOutputFormatProvider getVectorOutputFormatProvider(VectorOutputFormatContext context)
+  public VectorOutputFormatProvider getVectorOutputFormatProvider(VectorOutputFormatContext context) throws IOException
   {
-    // TODO Auto-generated method stub
-    return null;
+    String resourceName = getResolvedResourceName(false);
+    Path resourcePath = new Path(resourceName);
+    if (isSourceDelimited(resourcePath, false, getConfiguration()))
+    {
+      return new DelimitedVectorOutputFormatProvider(this, context);
+    }
+//    else if (isSourceShapefile(resourcePath))
+//    {
+//      return new ShapefileVectorInputFormatProvider(context);
+//    }
+    throw new IOException("Unable to create vector output format provider for " + resourceName);
   }
 
   @Override
@@ -147,6 +199,35 @@ public class HdfsVectorDataProvider extends VectorDataProvider
 
   }
 
+  public static boolean isSourceDelimited(Path source, boolean mustExist,
+                                          Configuration conf) throws IOException
+  {
+    if (source != null)
+    {
+      String lowerPath = source.toString().toLowerCase();
+      if (lowerPath.endsWith(".tsv") || lowerPath.endsWith(".csv"))
+      {
+        if (mustExist)
+        {
+          FileSystem fs = HadoopFileUtils.getFileSystem(conf, source);
+          return fs.exists(source);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isSourceShapefile(Path source)
+  {
+    if (source != null)
+    {
+      String lowerPath = source.toString().toLowerCase();
+      return lowerPath.endsWith(".shp");
+    }
+    return false;
+  }
+
   public static boolean canOpen(final Configuration conf, String input,
       final ProviderProperties providerProperties) throws IOException
   {
@@ -156,7 +237,14 @@ public class HdfsVectorDataProvider extends VectorDataProvider
       p = resolveName(conf, input, providerProperties, false);
       if (p != null)
       {
-        return hasMetadata(conf, p);
+        if (isSourceDelimited(p, true, conf))
+        {
+          return true;
+        }
+        if (isSourceShapefile(p))
+        {
+          return true;
+        }
       }
     }
     catch (IOException e)
@@ -175,15 +263,33 @@ public class HdfsVectorDataProvider extends VectorDataProvider
       final ProviderProperties providerProperties) throws IOException
   {
     Path p = resolveNameToPath(conf, input, providerProperties, false);
-    Path columns = new Path(p.toString() + ".columns");
-    // In case the resource was moved since it was created
     if (p != null)
     {
-      HadoopFileUtils.delete(conf, p);
-    }
-    if (columns != null)
-    {
-      HadoopFileUtils.delete(conf, columns);
+      if (isSourceDelimited(p, false, conf))
+      {
+        HadoopFileUtils.delete(conf, p);
+        Path columns = new Path(p.toString() + ".columns");
+        if (columns != null)
+        {
+          HadoopFileUtils.delete(conf, columns);
+        }
+      }
+      else if (isSourceShapefile(p))
+      {
+        HadoopFileUtils.delete(conf, p);
+        String fileName = p.toString();
+        // We know the file ends in ".shp"
+        String fileWithoutExt = fileName.substring(0, fileName.length() - 3);
+        String[] subExts = { "shx", "idx", "dbf", "prj", "shp.xml", "sbn", "sbx", "avl" };
+        for (String ext : subExts)
+        {
+          Path subFile = new Path(fileWithoutExt + ext);
+          if (HadoopFileUtils.exists(conf, subFile))
+          {
+            HadoopFileUtils.delete(conf, subFile);
+          }
+        }
+      }
     }
   }
 
@@ -201,7 +307,8 @@ public class HdfsVectorDataProvider extends VectorDataProvider
       final ProviderProperties providerProperties, final boolean mustExist) throws IOException
   {
     Path result = resolveNameToPath(conf, input, providerProperties, mustExist);
-    if (result != null && hasMetadata(conf, result))
+    // Check to see if the source is one of the supported formats
+    if (result != null && (isSourceDelimited(result, mustExist, conf) || isSourceShapefile(result)))
     {
       return result;
     }
@@ -284,24 +391,6 @@ public class HdfsVectorDataProvider extends VectorDataProvider
       }
       return null;
     }
-  }
-
-  private static boolean hasMetadata(final Configuration conf, final Path p)
-  {
-    FileSystem fs;
-    try
-    {
-      fs = HadoopFileUtils.getFileSystem(conf, p);
-      if (fs.exists(p))
-      {
-        String columnsPath = p.toString() + ".columns";
-        return (fs.exists(new Path(columnsPath)));
-      }
-    }
-    catch (IOException e)
-    {
-    }
-    return false;
   }
 
   static Path getBasePath(final Configuration conf)

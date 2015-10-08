@@ -1,0 +1,115 @@
+{
+  "bounds" : {
+    "minX" : 141.7071533203125,
+    "minY" : -18.371200561523438,
+    "maxX" : 142.56065368652344,
+    "maxY" : -17.519760131835938
+  },
+  "tilesize" : 512,
+  "maxZoomLevel" : 10,
+  "tags" : {
+  },
+  "protectionLevel" : null,
+  "bands" : 1,
+  "defaultValues" : [
+    -9999.0
+  ],
+  "tileType" : 4,
+  "stats" : [
+    {
+      "min" : 1.0,
+      "max" : 1.0,
+      "mean" : 1.0,
+      "sum" : 908633.0,
+      "count" : 908633
+    }
+  ],
+  "classification" : "Continuous",
+  "resamplingMethod" : null,
+  "imageMetadata" : [
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : {
+        "minX" : 915,
+        "minY" : 203,
+        "maxX" : 917,
+        "maxY" : 206
+      },
+      "name" : "10",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 1536,
+        "maxY" : 2048
+      },
+      "stats" : [
+        {
+          "min" : 1.0,
+          "max" : 1.0,
+          "mean" : 1.0,
+          "sum" : 908633.0,
+          "count" : 908633
+        }
+      ]
+    }
+  ]
+}

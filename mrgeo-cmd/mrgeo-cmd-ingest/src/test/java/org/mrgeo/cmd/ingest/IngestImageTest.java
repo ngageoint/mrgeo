@@ -16,7 +16,6 @@
 package org.mrgeo.cmd.ingest;
 
 import junit.framework.Assert;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.junit.*;
@@ -26,11 +25,10 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.rasterops.OpImageRegistrar;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
@@ -133,8 +131,7 @@ public class IngestImageTest
   public void setUp()
   {
     providerProperties = null;
-    OpImageRegistrar.registerMrGeoOps();
-    
+
     // tack on the test name to the output
     all_ones_output = new Path(outputHdfs, testname.getMethodName()).toString();
   }

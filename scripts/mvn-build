@@ -11,8 +11,7 @@ usage() {
     echo "  mapalgebra   - mrgeo-core/mrgeo-vector/mrgeo-mapalgebra"
     echo "  cmd          - mrgeo-core/mrgeo-vector/mrgeo-cmd"
     echo "  dataprovider - mrgeo-core/mrgeo-dataprovider"
-    echo "  pig          - mrgeo-core/mrgeo-vector/mrgeo-pig"
-    echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-pig/mrgeo-legion/mrgeo-services"
+    echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-legion/mrgeo-services"
     echo "build type:"
     echo "  apache    - apache hadoop"
     echo "  apache220 - Apache hadoop, version 2.2.0"
@@ -45,16 +44,18 @@ usage() {
     echo "  version   - change the version within all poms"
     echo "  eclipse   - build eclipse files for the project"
     echo "args:"
-    echo "  -c  --conf <path>         - location of hadoop conf files (/usr/local/hadoop/conf)"
-    echo "  -f  --failfast            - fail fast tests (immediately stop on test failure)"
-    echo "  -j  --javadocs            - include javadocs of dependencies (if available)"
+    echo "  -c  --conf <path>              - location of hadoop conf files (/usr/local/hadoop/conf)"
+    echo "  -f  --failfast                 - fail fast tests (immediately stop on test failure)"
+    echo "  -g  --geowave                  - build the GeoWave data provider"
+    echo "  -gj --generate-javadocs        - generate javadoc jars"
+    echo "  -gs --generate-sources         - generate source jars"
+    echo "  -j  --javadocs                 - include javadocs of dependencies (if available)"
     echo "  -jv  --javaversion <version>   - java version to use (1.7)"
-    echo "  -p  --profile             - turn on leak detection profiling"
-    echo "  -s  --source              - include source jars of dependencies (if available)"
-    echo "  -v  --version <version>   - hadoop version to use (0.20.2)"
-    echo "  -y  --yarn                - use hadoop YARN (for hadoop 2+, instead of mr1)"
-    echo "  -sh --shade               - generate the shaded (jar with dependencies) jars"
-    echo "  -g  --geowave             - build the GeoWave data provider"
+    echo "  -p  --profile                  - turn on leak detection profiling"
+    echo "  -s  --source                   - include source jars of dependencies (if available)"
+    echo "  -sh --shade                    - generate the shaded (jar with dependencies) jars"
+    echo "  -v  --version <version>        - hadoop version to use (0.20.2)"
+    echo "  -y  --yarn                     - use hadoop YARN (for hadoop 2+, instead of mr1)"
     echo " "
     echo "  all other args will be passed to maven directly"
     echo " "
@@ -151,10 +152,6 @@ SKIPCMDINTEGRATION="-Pskip-cmd-integration-tests"
 SKIPCMDUNIT="-Pskip-cmd-unit-tests"
 SKIPCMD="-Pskip-cmd-tests"
 
-SKIPPIGINTEGRATION="-Pskip-pig-integration-tests"
-SKIPPIGUNIT="-Pskip-pig-unit-tests"
-SKIPPIG="-Pskip-pig-tests"
-
 SKIPLEGIONINTEGRATION="-Pskip-legion-integration-tests"
 SKIPLEGIONUNIT="-Pskip-legion-unit-tests"
 SKIPLEGION="-Pskip-legion-tests"
@@ -178,56 +175,49 @@ while [ $# -gt 0 ] ; do
         ;;
     "core" | "core-only")
         MODULE="core"
-        ARGS="$SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "mapalgebra")
         MODULE="mapalgebra"
         ;;
     "mapalgebra-only")
         MODULE="mapalgebra"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "vector")
         MODULE="vector"
         ;;
     "vector-only")
         MODULE="vector"
-        ARGS="$SKIPCORE $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "dataprovider")
         MODULE="dataprovider"
         ;;
     "dataprovider-only")
         MODULE="dataprovider"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "cmd")
         MODULE="cmd"
         ;;
     "cmd-only")
         MODULE="cmd"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPPIG $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
-        ;;
-    "pig")
-        MODULE="pig"
-        ;;
-    "pig-only")
-        MODULE="pig"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "legion")
         MODULE="legion"
         ;;
     "legion-only")
         MODULE="legion"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "services")
         MODULE="services"
         ;;
     "services-only")
         MODULE="services"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPIG $SKIPLEGION $SKIPNET $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $ARGS"
         ;;
     "apache220")
         BUILD="apache220"
@@ -362,6 +352,12 @@ while [ $# -gt 0 ] ; do
     "-g" | "--geowave")
         ARGS=$ARGS" -Pinclude-geowave"
         ;;
+    "-gj" | "--generate-javadocs")
+        ARGS=$ARGS" -Pgenerate-javadocs"
+        ;;
+    "-gs" | "--generate-sources")
+        ARGS=$ARGS" -Pgenerate-sources"
+        ;;
     "-l" | "--license")
         LICENSE=
         ;;
@@ -396,7 +392,6 @@ echo "  JAVA_HOME:           " $JAVA_HOME
 echo "  HADOOP_HOME:         " $HADOOP_HOME
 echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
 echo "  MRGEO_HOME:          " $MRGEO_HOME
-echo "  LEGION_HOME:         " $LEGION_HOME
 echo "  Build:               " $HOME
 echo " "
 echo "  Additional maven args: " $ARGS

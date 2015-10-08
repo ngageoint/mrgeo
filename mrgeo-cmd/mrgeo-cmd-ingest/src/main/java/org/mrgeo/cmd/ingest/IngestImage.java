@@ -26,14 +26,13 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.aggregators.*;
-import org.mrgeo.buildpyramid.BuildPyramidSpark;
+import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.ingest.IngestImageSpark;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -609,20 +608,20 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         final boolean success;
         if (quick)
         {
-//            success = IngestImageSpark.quickIngest(inputs.get(0), output, categorical,
+//            success = IngestImage.quickIngest(inputs.get(0), output, categorical,
 //                conf, overrideNodata, nodata, tags, protectionLevel, providerProperties);
           log.error("Quick Ingest is not yet implemented");
           return -1;
         }
         else if (local)
         {
-          success = IngestImageSpark.localIngest(inputs.toArray(new String[inputs.size()]),
+          success = org.mrgeo.ingest.IngestImage.localIngest(inputs.toArray(new String[inputs.size()]),
               output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
               tags, protectionLevel, providerProperties);
         }
         else
         {
-          success = IngestImageSpark.ingest(inputs.toArray(new String[inputs.size()]),
+          success = org.mrgeo.ingest.IngestImage.ingest(inputs.toArray(new String[inputs.size()]),
               output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
               tags, protectionLevel, providerProperties);
         }
@@ -661,7 +660,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
             aggregator = new MinAvgPairAggregator();
           }
 
-          BuildPyramidSpark.build(output, aggregator, conf, providerProperties);
+          BuildPyramid.build(output, aggregator, conf, providerProperties);
         }
       }
       catch (Exception e)

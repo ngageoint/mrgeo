@@ -15,11 +15,10 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.mrgeo.data.raster.RasterUtils;
+import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -58,7 +57,7 @@ public class JpegImageResponseWriter extends ImageResponseWriterAbstract
   public void writeToStream(final Raster raster, double[] defaults, final ByteArrayOutputStream byteStream)
     throws IOException
   {
-    ImageIO.write(RasterUtils.makeBufferedImage(raster), "JPEG", byteStream);
+    GDALUtils.saveRaster(raster, byteStream, "jpeg");
     byteStream.close();
   }
 }
