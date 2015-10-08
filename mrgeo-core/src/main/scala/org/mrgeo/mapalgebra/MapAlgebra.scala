@@ -10,7 +10,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
-import org.mrgeo.mapalgebra.vector.VectorDataMapOp
+import org.mrgeo.mapalgebra.vector.{VectorMapOp, VectorDataMapOp}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils.{HadoopUtils, StringUtils}
 
@@ -334,6 +334,9 @@ object MapAlgebra extends MrGeoDriver {
         case rmo: RasterMapOp =>
           rmo.save(output, providerproperties, context)
           return true
+        case vmo: VectorMapOp =>
+          vmo.save(output, providerproperties, context)
+          return true
         case _ =>
           function.getChildren.foreach(child => {
             if (save(child, output, providerproperties, context)) {
@@ -347,6 +350,9 @@ object MapAlgebra extends MrGeoDriver {
         case function: ParserFunctionNode => function.getMapOp match {
         case rmo: RasterMapOp =>
           rmo.save(output, providerproperties, context)
+          return true
+        case vmo: VectorMapOp =>
+          vmo.save(output, providerproperties, context)
           return true
         case _ =>
         }

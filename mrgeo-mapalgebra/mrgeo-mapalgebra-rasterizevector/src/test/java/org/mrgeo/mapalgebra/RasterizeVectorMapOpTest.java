@@ -50,6 +50,7 @@ public final static boolean GEN_BASELINE_DATA_ONLY = false;
 private static final Logger log = LoggerFactory.getLogger(RasterizeVectorMapOpTest.class);
 private static String shapefile = "major_road_intersections_exploded";
 private static String hdfsShapefile;
+private static String column = "FID_kabul_";
 
 @BeforeClass
 public static void init() throws IOException
@@ -145,24 +146,7 @@ public void rasterizeSum() throws Exception
 @Category(IntegrationTest.class)
 public void rasterizeSumColumnNoBounds() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\")";
-  if (GEN_BASELINE_DATA_ONLY)
-  {
-    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
-  }
-  else
-  {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
-  }
-
-}
-
-@Test
-@Category(IntegrationTest.class)
-public void rasterizeLastBounds() throws Exception
-{
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"LAST\", 0.0001716614, \"column\", 68.85, 34.25, 69.35, 34.75)";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"" + column + "\")";
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
@@ -179,7 +163,7 @@ public void rasterizeLastBounds() throws Exception
 @Category(IntegrationTest.class)
 public void rasterizeSumBounds() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 68.85, 34.25, 69.35, 34.75)";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"" + column + "\", 68.85, 34.25, 69.35, 34.75)";
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
@@ -190,38 +174,21 @@ public void rasterizeSumBounds() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
-}
-
-@Test
-@Category(IntegrationTest.class)
-public void rasterizeLast() throws Exception
-{
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"LAST\", 0.0001716614, \"column\")";
-  if (GEN_BASELINE_DATA_ONLY)
-  {
-    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
-  }
-  else
-  {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
-  }
-
-}
-
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void lastWithoutColumn() throws Exception
-{
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"LAST\", 0.0001716614)";
-  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
 public void maskWithColumn() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"MASK\", 0.0001716614, \"column\")";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"MASK\", 0.0001716614, \"" + column + "\")";
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
+}
+
+@Test(expected = ParserException.class)
+@Category(UnitTest.class)
+public void gaussian() throws Exception
+{
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"GAUSSIAN\", 0.0001716614)";
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
@@ -237,7 +204,7 @@ public void sumWithoutColumnWithBounds() throws Exception
 @Category(UnitTest.class)
 public void sumWithBadBounds3() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 68.85, 34.25, 69.35)";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"" + column + "\", 68.85, 34.25, 69.35)";
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
@@ -245,7 +212,7 @@ public void sumWithBadBounds3() throws Exception
 @Category(UnitTest.class)
 public void sumWithBadBounds2() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 34.25, 69.35)";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"" + column + "\", 34.25, 69.35)";
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
@@ -253,7 +220,7 @@ public void sumWithBadBounds2() throws Exception
 @Category(UnitTest.class)
 public void sumWithBadBounds1() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"column\", 68.85)";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"" + column + "\", 68.85)";
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
@@ -261,7 +228,7 @@ public void sumWithBadBounds1() throws Exception
 @Category(UnitTest.class)
 public void badAggregationType() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"BAD\", 0.0001716614, \"column\", 68.85, -34.25, 69.35, -34.75)";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"BAD\", 0.0001716614, \"" + column + "\", 68.85, -34.25, 69.35, -34.75)";
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
@@ -269,7 +236,7 @@ public void badAggregationType() throws Exception
 @Category(UnitTest.class)
 public void missingQuotesAggregationType() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], SUM, 0.0001716614, \"column\", 68.85, -34.25, 69.35, -34.75)";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], SUM, 0.0001716614, \"" + column + "\", 68.85, -34.25, 69.35, -34.75)";
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
@@ -277,7 +244,7 @@ public void missingQuotesAggregationType() throws Exception
 @Category(IntegrationTest.class)
 public void variable() throws Exception
 {
-  String exp = String.format("a = [%s]; RasterizeVector(a, \"LAST\", 1, \"c\") ", hdfsShapefile);
+  String exp = String.format("a = [%s]; RasterizeVector(a, \"MAX\", 1, \"" + column + "\") ", hdfsShapefile);
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);

@@ -3,9 +3,10 @@ package org.mrgeo.utils
 import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
+import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.rdd.VectorRDD
-import org.mrgeo.data.vector.{VectorInputFormat, VectorInputFormatContext, VectorDataProvider}
+import org.mrgeo.data.vector._
 import org.mrgeo.geometry.Geometry
 import scala.collection.JavaConversions._
 
@@ -46,5 +47,33 @@ object SparkVectorUtils
       })
 
     bounds
+  }
+
+  def save(features: VectorRDD, outputProvider: VectorDataProvider, context: SparkContext,
+           providerproperties:ProviderProperties): Unit = {
+
+    features.persist(StorageLevel.MEMORY_AND_DISK_SER)
+
+//    val output = outputProvider.getResourceName
+//    val tofc = new VectorOutputFormatContext(output)
+//    val tofp = outputProvider.getVectorOutputFormatProvider(tofc)
+//    val job = Job.getInstance(context.hadoopConfiguration)
+//    tofp.setupJob(job)
+
+//    println("Num features: " + features.count())
+//    features.saveAsNewAPIHadoopDataset(job.getConfiguration)
+    val writer = outputProvider.getVectorWriter
+    try {
+      // TODO: The following call to collect introduces a limitation on how much
+      // vector data can be saved because all the data will have to be brought
+      // back to this node, and thus it must fit into memory. However, for current
+      // requirements regarding vector data output, this is acceptable.
+      features.collect.foreach(U => {
+        writer.append(U._1, U._2)
+      })
+    } finally {
+      writer.close()
+    }
+    features.unpersist()
   }
 }

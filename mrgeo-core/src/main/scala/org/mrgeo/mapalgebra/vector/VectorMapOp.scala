@@ -7,6 +7,7 @@ import org.mrgeo.data.vector.{VectorDataProvider, VectorMetadata}
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser.{ParserVariableNode, ParserException, ParserFunctionNode, ParserNode}
+import org.mrgeo.utils.SparkVectorUtils
 
 object VectorMapOp {
 
@@ -67,21 +68,21 @@ abstract class VectorMapOp extends MapOp {
 //  def metadata():Option[VectorMetadata] =  Option(meta)
 //  def metadata(meta:VectorMetadata) = { this.meta = meta}
 
-//  def save(output: String, providerProperties:ProviderProperties, context:SparkContext) = {
-//    rdd() match {
-//      case Some(rdd) =>
-//        val provider: VectorDataProvider =
-//          DataProviderFactory.getVectorDataProvider(output, AccessMode.OVERWRITE, providerProperties)
+  def save(output: String, providerProperties:ProviderProperties, context:SparkContext) = {
+    rdd() match {
+      case Some(rdd) =>
+        val provider: VectorDataProvider =
+          DataProviderFactory.getVectorDataProvider(output, AccessMode.OVERWRITE, providerProperties)
+        SparkVectorUtils.save(rdd, provider, context, providerProperties)
 //        metadata() match {
 //          case Some(metadata) =>
 //            val meta = metadata
-//
 //            SparkVectorUtils.save(rdd, provider, metadata,
 //              context.hadoopConfiguration, providerproperties =  providerProperties)
 //          case _ =>
 //        }
-//      case _ =>
-//    }
-//  }
+      case _ =>
+    }
+  }
 
 }

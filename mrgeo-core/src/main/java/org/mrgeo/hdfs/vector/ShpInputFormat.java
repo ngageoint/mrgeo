@@ -169,7 +169,7 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
   {
   }
 
-  public static ShapefileGeometryCollection loadGeometryCollection(Configuration conf) throws IOException
+  private static ShapefileGeometryCollection loadGeometryCollection(Configuration conf) throws IOException
   {
     if (conf.get("mapred.input.dir") != null)
     {
@@ -200,24 +200,32 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
   {
     Configuration conf = context.getConfiguration();
     ShapefileGeometryCollection gc = loadGeometryCollection(context.getConfiguration());
-    int numSplits = conf.getInt("mapred.map.tasks", 2);
-
-    // make sure there are at least 10k features per node.
-    final int MIN_FEATURES_PER_SPLIT = 10000;
-    if (gc.size() / MIN_FEATURES_PER_SPLIT < numSplits)
+    try
     {
-      numSplits = (int) Math.ceil((double) gc.size() / (double) MIN_FEATURES_PER_SPLIT);
+      int numSplits = conf.getInt("mapred.map.tasks", 2);
+
+      // make sure there are at least 10k features per node.
+      final int MIN_FEATURES_PER_SPLIT = 10000;
+      if (gc.size() / MIN_FEATURES_PER_SPLIT < numSplits)
+      {
+        numSplits = (int) Math.ceil((double) gc.size() / (double) MIN_FEATURES_PER_SPLIT);
+      }
+
+      List<InputSplit> result = new LinkedList<InputSplit>();
+
+      for (int i = 0; i < numSplits; i++)
+      {
+        int start = (int) Math.round((double) i * (double) gc.size() / numSplits);
+        int end = (int) Math.round((double) (i + 1) * (double) gc.size() / numSplits);
+        result.add(new GeometryInputSplit(start, end));
+      }
+
+      return result;
+    } finally {
+      if (gc != null)
+      {
+        gc.close();
+      }
     }
-
-    List<InputSplit> result = new LinkedList<InputSplit>();
-
-    for (int i = 0; i < numSplits; i++)
-    {
-      int start = (int) Math.round((double) i * (double) gc.size() / numSplits);
-      int end = (int) Math.round((double) (i + 1) * (double) gc.size() / numSplits);
-      result.add(new GeometryInputSplit(start, end));
-    }
-
-    return result;
   }
 }
