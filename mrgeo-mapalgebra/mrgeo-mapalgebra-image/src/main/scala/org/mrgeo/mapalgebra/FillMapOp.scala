@@ -2,6 +2,7 @@ package org.mrgeo.mapalgebra
 
 import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
 
+import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkContext, SparkConf}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
@@ -110,7 +111,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
       val src = RasterWritable.toRaster(rdd.first()._2)
       val constRaster = RasterWritable.toWritable(RasterUtils.createCompatibleEmptyRaster(src, const))
 
-      val joined = test.leftOuterJoin(rdd)
+      val joined = new PairRDDFunctions(test).leftOuterJoin(rdd)
       joined.map(tile => {
         // if we have a tile, use it, otherwise (None case), make a new tile with the constant value
         tile._2._2 match {
@@ -127,7 +128,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
       val src = RasterWritable.toRaster(rdd.first()._2)
       val nodataRaster = RasterWritable.toWritable(RasterUtils.createCompatibleEmptyRaster(src, nodata))
 
-      val joined = test.cogroup(rdd, fillrdd)
+      val joined = new PairRDDFunctions(test).cogroup(rdd, fillrdd)
       joined.map(tile => {
 
         // if the src tile is not empty, use it
