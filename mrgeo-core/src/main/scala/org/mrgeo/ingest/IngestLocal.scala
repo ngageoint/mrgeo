@@ -20,6 +20,7 @@ import java.io.Externalizable
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.PairRDDFunctions
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -45,7 +46,7 @@ class IngestLocal extends IngestImage with Externalizable {
       (new TileIdWritable(tile._1), RasterWritable.toWritable(RasterWritable.toRaster(tile._2)))
     })
 
-    val mergedTiles = mapped.reduceByKey((r1, r2) => {
+    val mergedTiles = new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
       val src = RasterWritable.toRaster(r1)
       val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
