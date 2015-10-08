@@ -71,6 +71,21 @@ public class LatLng
     return dsigma * EARTH_RADIUS;
   }
 
+  public static LatLng calculateCartesianDestinationPoint(LatLng startPoint,
+                                                          double distanceInMeters,
+                                                          double bearing)
+  {
+    double distanceInDegrees = distanceInMeters / METERS_PER_DEGREE;
+    double polarAngle = (450.0 - bearing) % 360.0;
+    double polarAngleInRad = Math.toRadians(polarAngle);
+    double lat = startPoint.getLat() + distanceInDegrees * Math.sin(polarAngleInRad);
+    double lon = startPoint.getLng() + distanceInDegrees * Math.cos(polarAngleInRad);
+    // Limit to world bounds
+    lat = Math.max(-90.0, Math.min(90.0, lat));
+    lon = Math.max(-180.0, Math.min(180.0, lon));
+    return new LatLng(lat, lon);
+  }
+
   public double getLat()
   {
     return lat;
