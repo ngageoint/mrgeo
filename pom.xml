@@ -1040,6 +1040,12 @@
         <final.classifier>cdh5.3.2</final.classifier>
         <release.arguments />
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>CDH532</id>
@@ -1054,6 +1060,10 @@
         <release.arguments />
       </properties>
       <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1075,6 +1085,12 @@
         <final.classifier>cdh5.3.1</final.classifier>
         <release.arguments />
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>CDH531</id>
@@ -1089,6 +1105,10 @@
         <release.arguments />
       </properties>
       <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1110,6 +1130,12 @@
         <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>CDH530</id>
@@ -1124,6 +1150,10 @@
         <release.arguments />
       </properties>
       <dependencies>
+        <dependencies>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependencies>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
