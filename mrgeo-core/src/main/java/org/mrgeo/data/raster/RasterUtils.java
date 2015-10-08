@@ -41,8 +41,25 @@ public final static int USHORT_BYTES = Character.SIZE / Byte.SIZE;
 
 public static ColorModel createColorModel(final Raster raster)
 {
-  return new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false,
-      false, Transparency.OPAQUE, raster.getTransferType());
+  SampleModel sm = raster.getSampleModel();
+
+  int bands = raster.getNumBands();
+  int type = raster.getTransferType();
+
+  ColorSpace cs = bands < 3 ?
+      ColorSpace.getInstance(ColorSpace.CS_GRAY) :
+      ColorSpace.getInstance(ColorSpace.CS_sRGB);
+
+  boolean alpha = bands == 2 || bands == 4;
+
+  if (sm instanceof ComponentSampleModel)
+  {
+    return new ComponentColorModel(cs, alpha, false,
+        alpha ? Transparency.TRANSLUCENT : Transparency.OPAQUE, type);
+  }
+
+  // TODO:  Any more types needed?
+  return null;
 }
 
 /**

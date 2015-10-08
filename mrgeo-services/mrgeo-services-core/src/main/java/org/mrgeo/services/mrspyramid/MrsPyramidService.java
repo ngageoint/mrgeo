@@ -16,28 +16,26 @@
 package org.mrgeo.services.mrspyramid;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapreduce.job.JobManager;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.ImageUtils;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.media.jai.FloatDoubleColorModel;
 import javax.ws.rs.core.Response;
 import java.awt.*;
 import java.awt.color.ColorSpace;
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -160,44 +158,43 @@ public class MrsPyramidService {
 
     public Properties getConfig() { return config; }
 
-    private ImageWriter getWriterFor(String format) throws IOException {
-        if ( StringUtils.isNotEmpty(format) ) {
-            if ( format.equalsIgnoreCase("JPG") || format.equalsIgnoreCase("JPEG") )
-                return ImageUtils.createImageWriter("image/jpeg");
-            else if ( format.equalsIgnoreCase("PNG") )
-                return ImageUtils.createImageWriter("image/png");
-            else if ( format.equalsIgnoreCase("TIFF"))
-                return ImageUtils.createImageWriter("image/tiff");
-        }
-        throw new IOException("No writer found for format [" + format + "]");
-    }
+//    private ImageWriter getWriterFor(String format) throws IOException {
+//        if ( StringUtils.isNotEmpty(format) ) {
+//            if ( format.equalsIgnoreCase("JPG") || format.equalsIgnoreCase("JPEG") )
+//                return ImageUtils.createImageWriter("image/jpeg");
+//            else if ( format.equalsIgnoreCase("PNG") )
+//                return ImageUtils.createImageWriter("image/png");
+//            else if ( format.equalsIgnoreCase("TIFF"))
+//                return ImageUtils.createImageWriter("image/tiff");
+//        }
+//        throw new IOException("No writer found for format [" + format + "]");
+//    }
 
-    public byte[] getEmptyTile(int width, int height, String format) throws IOException
+    public byte[] getEmptyTile(int width, int height, String format) throws Exception
     {
       //return an empty image
 
-      ImageWriter writer = getWriterFor(format);
-
+      ImageResponseWriter writer = getImageResponseWriter(format);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      int dataType;
-      if (format.equalsIgnoreCase("jpg") || format.equalsIgnoreCase("jpeg") ) {
-        dataType = BufferedImage.TYPE_INT_RGB;
-      } else {
-        dataType = BufferedImage.TYPE_INT_ARGB;
-      }
-      BufferedImage bufImg = new BufferedImage(width, height, dataType);
-      Graphics2D g = bufImg.createGraphics();
-      g.setColor( new Color ( 0, 0, 0, 0 ));
-      g.fillRect(0, 0, width, height);
-      g.dispose();
 
-      MemoryCacheImageOutputStream imageStream = new MemoryCacheImageOutputStream(baos);
-      writer.setOutput(imageStream);
-      writer.write(bufImg);
-      imageStream.close();
+      int bands;
+      Double[] nodatas;
+      if (format.equalsIgnoreCase("jpg") || format.equalsIgnoreCase("jpeg") )
+      {
+        bands = 3;
+        nodatas = new Double[]{0.0,0.0,0.0};
+      } else
+      {
+        bands = 4;
+        nodatas = new Double[]{0.0,0.0,0.0,0.0};
+      }
+
+      Raster raster = RasterUtils.createEmptyRaster(width, height, bands, DataBuffer.TYPE_BYTE, nodatas);
+      writer.writeToStream(raster, ArrayUtils.toPrimitive(nodatas), baos);
       byte[] imageData = baos.toByteArray();
       IOUtils.closeQuietly(baos);
       return imageData;
+
     }
 
     public String getContentType(String format) {

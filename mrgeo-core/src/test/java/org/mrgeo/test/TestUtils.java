@@ -23,7 +23,6 @@ import org.junit.Assert;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramidMetadata;
@@ -36,7 +35,6 @@ import org.mrgeo.utils.FileUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.TMSUtils;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
@@ -707,8 +705,7 @@ public static void compareRenderedImageToConstant(RenderedImage i, double consta
 
 public static void saveRaster(Raster raster, String type, String filename) throws IOException
 {
-  BufferedImage img = RasterUtils.makeBufferedImage(raster);
-  ImageIO.write(img, type.toUpperCase(), new File(filename));
+  GDALUtils.saveRaster(raster, filename, type);
 }
 
 private static int getPixelId(int x, int y, int width)

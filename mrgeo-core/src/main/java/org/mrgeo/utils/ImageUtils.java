@@ -18,8 +18,6 @@ package org.mrgeo.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.FileImageOutputStream;
@@ -31,7 +29,6 @@ import java.awt.image.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * Java imaging utilities
@@ -239,45 +236,5 @@ public class ImageUtils
     final ImageProducer ip = new FilteredImageSource(im.getSource(), filter);  
     return Toolkit.getDefaultToolkit().createImage(ip);  
   }
-
-
-  /**
-   * Returns a Java image IO reader for the the given MIME type
-   * 
-   * @param mimeType
-   *          MIME type
-   * @return an image reader
-   * @throws IOException
-   */
-  public static ImageReader createImageReader(final String mimeType) throws IOException
-  {
-    final Iterator<ImageReader> it = ImageIO.getImageReadersByMIMEType(mimeType);
-    if (it.hasNext())
-    {
-      final ImageReader reader = it.next();
-      return reader;
-    }
-    throw new IOException("Error creating ImageReader for MIME type: " + mimeType);
-  }
-
-  /**
-   * Returns a Java image IO writer for the the given MIME type
-   * 
-   * @param mimeType
-   *          MIME type
-   * @return an image writer
-   * @throws IOException
-   */
-  public static ImageWriter createImageWriter(final String mimeType) throws IOException
-  {
-    final Iterator<ImageWriter> it = ImageIO.getImageWritersByMIMEType(mimeType);
-    if (it.hasNext())
-    {
-      final ImageWriter writer = it.next();
-      return writer;
-    }
-    throw new IOException("Error creating ImageWriter for MIME type: " + mimeType);
-  }
-
 
 }

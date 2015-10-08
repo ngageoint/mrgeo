@@ -31,7 +31,6 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.awt.image.*;
 import java.io.*;
 import java.net.URI;
@@ -44,11 +43,14 @@ import java.util.Vector;
 
 public class GDALUtils
 {
+private static final Logger log = LoggerFactory.getLogger(GDALUtils.class);
+
 // it's quicker (the EPSG doesn't change) to just hardcode this instead of trying to get it from GDAL/
 public static final String EPSG4326 = osr.SRS_WKT_WGS84;
 public static final String GDAL_LIBS;
-private static final Logger log = LoggerFactory.getLogger(GDALUtils.class);
 private static final String VSI_PREFIX = "/vsimem/";
+
+private static final String GDAL_PAM_ENABLED = "GDAL_PAM_ENABLED";
 
 static
 {
@@ -356,6 +358,12 @@ public static void saveRaster(Raster raster, String filename)
   GDALUtils.saveRaster(src, filename, "GTiff");
 }
 
+public static void saveRaster(Raster raster, String filename, String type)
+{
+  final Dataset src = GDALUtils.toDataset(raster);
+  GDALUtils.saveRaster(src, filename, type);
+}
+
 public static void saveRaster(Raster raster, String filename, double nodata)
 {
   final Dataset src = GDALUtils.toDataset(raster, nodata);
@@ -364,8 +372,57 @@ public static void saveRaster(Raster raster, String filename, double nodata)
 
 public static void saveRaster(Dataset raster, String filename, String type)
 {
-  final Driver driver = gdal.GetDriverByName(type);
+  final Driver driver = gdal.GetDriverByName(mapType(type));
+  saveRaster(raster, driver, filename);
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, String type) throws IOException
+{
+  final Driver driver = gdal.GetDriverByName(mapType(type));
+  final Dataset src = GDALUtils.toDataset(raster);
+  saveRaster(src, driver, stream, type);
+}
+
+public static void saveRaster(Dataset raster, Driver driver, OutputStream stream, String type)
+    throws IOException
+{
+  File temp = File.createTempFile("tmp-file", "");
+
+  saveRaster(raster, temp.getCanonicalPath(), type);
+
+  Files.copy(temp.toPath(), stream);
+  stream.flush();
+
+  temp.delete();
+}
+
+
+private static void saveRaster(Dataset raster, Driver driver, String filename)
+{
+  String pamEnabled = gdal.GetConfigOption(GDAL_PAM_ENABLED);
+  gdal.SetConfigOption(GDAL_PAM_ENABLED, "NO");
+
   final Dataset copy = driver.CreateCopy(filename, raster);
+
+  if (pamEnabled != null)
+  {
+    gdal.SetConfigOption(GDAL_PAM_ENABLED, pamEnabled);
+  }
+
+  copy.delete();
+}
+
+private static void saveRaster(Dataset raster, Driver driver, String filename, String[] options)
+{
+  String pamEnabled = gdal.GetConfigOption(GDAL_PAM_ENABLED);
+  gdal.SetConfigOption(GDAL_PAM_ENABLED, "NO");
+
+  final Dataset copy = driver.CreateCopy(filename, raster, options);
+
+  if (pamEnabled != null)
+  {
+    gdal.SetConfigOption(GDAL_PAM_ENABLED, pamEnabled);
+  }
 
   copy.delete();
 }
@@ -466,7 +523,7 @@ public static void saveRaster(Raster raster, OutputStream stream, String type, B
 
 public static void saveRaster(Raster raster, String filename, String type, TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
 {
-  final Driver driver = gdal.GetDriverByName(type);
+  final Driver driver = gdal.GetDriverByName(mapType(type));
   final Dataset src = GDALUtils.toDataset(raster, nodata);
 
   final double res = TMSUtils.resolution(zoom, tilesize);
@@ -483,23 +540,21 @@ public static void saveRaster(Raster raster, String filename, String type, TMSUt
   src.SetGeoTransform(xform);
   src.SetProjection(GDALUtils.EPSG4326);
 
-  final Dataset copy;
   if (options == null)
   {
-    copy  = driver.CreateCopy(filename, src);
+    saveRaster(src, driver, filename);
   }
   else {
-    copy = driver.CreateCopy(filename, src, options);
+    saveRaster(src, driver, filename, options);
   }
 
-  copy.delete();
   src.delete();
 }
 
 public static void saveRaster(Raster raster, String filename, String type,
     TMSUtils.Bounds bounds, final double nodata, String[] options)
 {
-  final Driver driver = gdal.GetDriverByName(type);
+  final Driver driver = gdal.GetDriverByName(mapType(type));
   final Dataset src = GDALUtils.toDataset(raster, nodata);
 
   final double[] xform = new double[6];
@@ -514,16 +569,14 @@ public static void saveRaster(Raster raster, String filename, String type,
   src.SetGeoTransform(xform);
   src.SetProjection(GDALUtils.EPSG4326);
 
-  final Dataset copy;
   if (options == null)
   {
-    copy  = driver.CreateCopy(filename, src);
+    saveRaster(src, driver, filename);
   }
   else {
-    copy = driver.CreateCopy(filename, src, options);
+    saveRaster(src, driver, filename, options);
   }
 
-  copy.delete();
   src.delete();
 }
 
@@ -551,6 +604,23 @@ public static void saveRaster(Raster raster, OutputStream stream, String type,
   stream.flush();
 
   temp.delete();
+}
+
+private static String mapType(String type)
+{
+  switch (type.toLowerCase())
+  {
+  case "jpg":
+    return "jpeg";
+  case "tiff":
+  case "tif":
+  case "geotiff":
+  case "geotif":
+  case "gtif":
+    return "GTiff";
+  }
+
+  return type;
 }
 
 public static Dataset toDataset(Raster raster, final double nodata)
@@ -841,19 +911,19 @@ public static double getnodata(Dataset src)
 
 public static double getnodata(String imagename) throws IOException
 {
-    Dataset image = GDALUtils.open(imagename);
+  Dataset image = GDALUtils.open(imagename);
 
-    if (image != null)
+  if (image != null)
+  {
+    final Double[] val = new Double[1];
+    image.GetRasterBand(1).GetNoDataValue(val);
+
+    if (val[0] != null)
     {
-      final Double[] val = new Double[1];
-      image.GetRasterBand(1).GetNoDataValue(val);
-
-      if (val[0] != null)
-      {
-        return val[0];
-      }
-      return Double.NaN;
+      return val[0];
     }
+    return Double.NaN;
+  }
 
   throw new IOException("Can't open image: " + imagename);
 }
@@ -910,18 +980,6 @@ public static int calculateZoom(String imagename, int tilesize)
 
 }
 
-
-public static void iowrite(Raster raster, String filename, String type)
-{
-  try
-  {
-    ImageIO.write(RasterUtils.makeBufferedImage(raster), type, new File(filename));
-  }
-  catch (IOException e)
-  {
-    e.printStackTrace();
-  }
-}
 
 private static void copyToDataset(Dataset ds, Raster raster)
 {
