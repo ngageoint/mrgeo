@@ -1150,10 +1150,10 @@
         <release.arguments />
       </properties>
       <dependencies>
-        <dependencies>
+        <dependency>
           <groupId>org.apache.spark</groupId>
           <artifactId>spark-core_${spark.scala.version}</artifactId>
-        </dependencies>
+        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
