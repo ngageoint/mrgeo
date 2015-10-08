@@ -15,22 +15,32 @@
 
 package org.mrgeo.utils;
 
-import org.apache.commons.codec.binary.Base64;
-
+import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 
 public class Base64Utils
 {
+public static boolean isBase64(String encoded)
+{
+  // To be a candidate for base64 decoding, the string length _must_ be a multiple of 4,
+  // and only contain [A-Z,a-z,0-9,and + /], padded with "="
+  return (encoded.length() > 0) && (encoded.length() % 4 == 0) &&
+      encoded.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
 
+}
   public static String encodeObject(Object obj) throws IOException
   {
     byte[] bytes = ObjectUtils.encodeObject(obj);
-    return new String(Base64.encodeBase64(bytes));
+    return DatatypeConverter.printBase64Binary(bytes);
   }
+public static String decodeToString(String encoded) throws IOException, ClassNotFoundException
+{
+  return (String)decodeToObject(encoded);
+}
 
   public static Object decodeToObject(String encoded) throws IOException, ClassNotFoundException
   {
-    byte[] bytes = Base64.decodeBase64(encoded.getBytes());
+    byte[] bytes = DatatypeConverter.parseBase64Binary(encoded);
     return ObjectUtils.decodeObject(bytes);
   }
 
@@ -59,12 +69,12 @@ public class Base64Utils
       baos.close();
     }
   
-    return new String(Base64.encodeBase64(rawBytes));
+    return DatatypeConverter.printBase64Binary(rawBytes);
   }
 
   public static double[] decodeToDoubleArray(String encoded) throws IOException
-  {  
-    byte[] objBytes = Base64.decodeBase64(encoded.getBytes());
+  {
+    byte[] objBytes = DatatypeConverter.parseBase64Binary(encoded);
 
     ByteArrayInputStream bais = null;
     ObjectInputStream ois = null;

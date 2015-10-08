@@ -16,7 +16,6 @@
 package org.mrgeo.data.accumulo.partitioners;
 
 import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -26,6 +25,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.utils.Base64Utils;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -102,12 +102,14 @@ public class AccumuloMrGeoRangePartitioner extends Partitioner<TileIdWritable, W
         for (Path path : cf) {
           if (path.toUri().getPath().endsWith(cutFileName.substring(cutFileName.lastIndexOf('/')))) {
             TreeSet<Text> cutPoints = new TreeSet<Text>();
-            Scanner in = new Scanner(new BufferedReader(new FileReader(path.toString())));
-            try {
+            try (Scanner in = new Scanner(new BufferedReader(new FileReader(path.toString()))))
+            {
               while (in.hasNextLine())
-                cutPoints.add(new Text(Base64.decodeBase64(in.nextLine().getBytes())));
-            } finally {
-              in.close();
+                cutPoints.add(new Text(Base64Utils.decodeToString(in.nextLine())));
+            }
+            catch (ClassNotFoundException e)
+            {
+              throw new IOException("Error decoding cutpoints", e);
             }
             cutPointArray = cutPoints.toArray(new Text[cutPoints.size()]);
             break;

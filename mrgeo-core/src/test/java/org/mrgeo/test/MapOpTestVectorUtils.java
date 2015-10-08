@@ -16,7 +16,6 @@
 package org.mrgeo.test;
 
 import junit.framework.Assert;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -63,64 +62,64 @@ public void generateBaselineVector(final Configuration conf, final String testNa
 
 
 
-public void runVectorExpression(final Configuration conf, final String testName, final String ex)
-    throws IOException, ParserException, JobFailedException, JobCancelledException
-{
-  runMapAlgebraExpression(conf, testName, ex);
-
-
-  // read in the output file
-  Path srcVector = new Path(new Path(outputHdfs, testName), "part*");
-  final FileSystem fs = HadoopFileUtils.getFileSystem(conf, srcVector);
-
-  FileStatus files[] = fs.globStatus(srcVector);
-  if (files.length > 0)
-  {
-    srcVector = files[0].getPath();
-  }
-  else
-  {
-    Assert.fail("Output file missing: " + srcVector.toString());
-  }
-
-  //    if (fs.exists(p) == false)
-  //    {
-  //      p = new Path(new Path(outputHdfs, testName), "part*");
-  //    }
-  final long l = fs.getFileStatus(srcVector).getLen();
-  final byte[] testBuffer = new byte[(int) l];
-  final FSDataInputStream fdis = fs.open(srcVector);
-  fdis.read(testBuffer);
-  fdis.close();
-
-  File baselineVector = new File(inputLocal + testName);
-
-  if (!baselineVector.exists() || baselineVector.isDirectory())
-  {
-    FileFilter fileFilter = new WildcardFileFilter("part*");
-    File[] f = baselineVector.listFiles(fileFilter);
-    if (f.length > 0)
-    {
-      baselineVector = f[0].getCanonicalFile();
-    }
-    else
-    {
-      Assert.fail("Golden test file missing: " + baselineVector.toString());
-    }
-  }
-
-  // read in the baseline
-  final byte[] baselineBuffer = new byte[(int) baselineVector.length()];
-
-  final FileInputStream fis = new FileInputStream(baselineVector);
-  fis.read(baselineBuffer);
-  fis.close();
-
-  //String[] baseline = (new String(baselineBuffer)).split("\n");
-
-  Assert.assertEquals("Output is different!", new String(baselineBuffer), new String(testBuffer));
-  Assert.assertEquals(true, fs.exists(new Path(outputHdfs, testName + ".columns")));
-}
+//public void runVectorExpression(final Configuration conf, final String testName, final String ex)
+//    throws IOException, ParserException, JobFailedException, JobCancelledException
+//{
+//  runMapAlgebraExpression(conf, testName, ex);
+//
+//
+//  // read in the output file
+//  Path srcVector = new Path(new Path(outputHdfs, testName), "part*");
+//  final FileSystem fs = HadoopFileUtils.getFileSystem(conf, srcVector);
+//
+//  FileStatus files[] = fs.globStatus(srcVector);
+//  if (files.length > 0)
+//  {
+//    srcVector = files[0].getPath();
+//  }
+//  else
+//  {
+//    Assert.fail("Output file missing: " + srcVector.toString());
+//  }
+//
+//  //    if (fs.exists(p) == false)
+//  //    {
+//  //      p = new Path(new Path(outputHdfs, testName), "part*");
+//  //    }
+//  final long l = fs.getFileStatus(srcVector).getLen();
+//  final byte[] testBuffer = new byte[(int) l];
+//  final FSDataInputStream fdis = fs.open(srcVector);
+//  fdis.read(testBuffer);
+//  fdis.close();
+//
+//  File baselineVector = new File(inputLocal + testName);
+//
+//  if (!baselineVector.exists() || baselineVector.isDirectory())
+//  {
+//    FileFilter fileFilter = new WildcardFileFilter("part*");
+//    File[] f = baselineVector.listFiles(fileFilter);
+//    if (f.length > 0)
+//    {
+//      baselineVector = f[0].getCanonicalFile();
+//    }
+//    else
+//    {
+//      Assert.fail("Golden test file missing: " + baselineVector.toString());
+//    }
+//  }
+//
+//  // read in the baseline
+//  final byte[] baselineBuffer = new byte[(int) baselineVector.length()];
+//
+//  final FileInputStream fis = new FileInputStream(baselineVector);
+//  fis.read(baselineBuffer);
+//  fis.close();
+//
+//  //String[] baseline = (new String(baselineBuffer)).split("\n");
+//
+//  Assert.assertEquals("Output is different!", new String(baselineBuffer), new String(testBuffer));
+//  Assert.assertEquals(true, fs.exists(new Path(outputHdfs, testName + ".columns")));
+//}
 
 public List readVectorOutputAsText(final Configuration conf,
     final Path vectorPath) throws IOException

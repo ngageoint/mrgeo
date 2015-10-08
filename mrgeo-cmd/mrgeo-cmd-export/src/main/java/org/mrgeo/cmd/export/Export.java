@@ -305,7 +305,8 @@ public class Export extends Command
 
         if (!singleImage)
         {
-          org.apache.commons.io.FileUtils.forceMkdir(new File(outputbase));
+
+          FileUtils.createDir(new File(outputbase));
         }
 
         for (final String arg : line.getArgs())

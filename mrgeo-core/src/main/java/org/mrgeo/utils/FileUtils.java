@@ -26,13 +26,12 @@ public class FileUtils
 
   public static File createUniqueTmpDir() throws IOException
   {
-    final File baseDir = org.apache.commons.io.FileUtils.getTempDirectory();
+    final File baseDir = new File(System.getProperty("java.io.tmpdir"));
+
     final String username = "mrgeo-" + System.getProperty("user.name");
     final String baseName = "-" + System.currentTimeMillis();
 
     final File tempDir = new File(baseDir, username + "/" + baseName);
-    org.apache.commons.io.FileUtils.forceMkdir(tempDir);
-    org.apache.commons.io.FileUtils.forceDeleteOnExit(tempDir);
 
     return createDisposibleDirectory(tempDir);
   }
@@ -47,18 +46,43 @@ public class FileUtils
     
     return createDisposibleDirectory(tempDir);
   }
-  
-  public static File createDisposibleDirectory(File dir) throws IOException
-  {
-    org.apache.commons.io.FileUtils.forceMkdir(dir);
-    org.apache.commons.io.FileUtils.forceDeleteOnExit(dir);
 
-    return dir;
+public static File createDisposibleDirectory(File dir) throws IOException
+{
+  if (!dir.exists())
+  {
+    if (!dir.mkdir())
+    {
+      throw new IOException("Error creating directory");
+    }
+
+    dir.deleteOnExit();
   }
+
+  return dir;
+}
+public static File createDir(File dir) throws IOException
+{
+  if (!dir.exists())
+  {
+    if (!dir.mkdir())
+    {
+      throw new IOException("Error creating directory");
+    }
+  }
+
+  return dir;
+}
 
   public static void deleteDir(final File dir) throws IOException
   {
-    org.apache.commons.io.FileUtils.deleteDirectory(dir);
+    if (dir.exists() && dir.isDirectory())
+    {
+      if (!dir.delete())
+      {
+        throw new IOException("Error deleting directory");
+      }
+    }
   }
 
 
