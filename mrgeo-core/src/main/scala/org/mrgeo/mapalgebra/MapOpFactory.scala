@@ -101,7 +101,13 @@ object MapOpFactory extends Logging {
     }
     ).filter(p => !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
 
-
+    if (log.isDebugEnabled) {
+      logDebug("Classpath for finding MapOps:")
+      urls.foreach(url => {
+        val file = new File(url.getPath)
+        logDebug("  " + url.toString + "  (" + {if (file.isDirectory) "dir" else "file"} + ")" )
+      })
+    }
     // register mapops
     val cfg = new ConfigurationBuilder()
         .setUrls(urls)
