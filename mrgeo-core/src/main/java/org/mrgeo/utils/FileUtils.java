@@ -63,6 +63,9 @@ public static File createDisposibleDirectory(File dir) throws IOException
 }
 public static File createDir(File dir) throws IOException
 {
+  if (!dir.getParentFile().exists()) {
+    createDir(dir.getParentFile());
+  }
   if (!dir.exists())
   {
     if (!dir.mkdir())
