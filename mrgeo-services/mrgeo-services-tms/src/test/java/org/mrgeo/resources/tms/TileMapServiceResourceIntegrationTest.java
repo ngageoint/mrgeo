@@ -30,7 +30,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
-import org.mrgeo.SharedTestFiles;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
@@ -102,8 +101,8 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
       super.setUp();
       Mockito.reset(request, service);
       Properties props = MrGeoProperties.getInstance();
-      props.put(MrGeoConstants.MRGEO_HDFS_IMAGE, TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class) + "/");
-      props.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, TestUtils.composeInputDir(SharedTestFiles.class) + "color-scales");
+      props.put(MrGeoConstants.MRGEO_HDFS_IMAGE, input);
+      props.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, input + "color-scales");
       
       baselineInput = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);
 
