@@ -112,13 +112,10 @@ object MapOpFactory extends Logging {
   private def decendants(clazz: Class[_]) = {
 
     // get all the URLs for this classpath, filter files by "mrgeo" in development mode, then strip .so files
-    // val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
-
-    val urls = (ClasspathHelper.forPackage("") ++ ClasspathHelper.forJavaClassPath()).filter(url => {
+    val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
       val file = new File(url.getPath)
       file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") else file.isFile)
-    }).filter(p =>
-      !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
+    }).filter(p => !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
         .flatMap(url => {
           val us = url.getFile
           if (us.contains("*") || us.contains("?")) {
