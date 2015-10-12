@@ -16,6 +16,7 @@
 package org.mrgeo.resources.wms;
 
 import org.apache.commons.lang3.StringUtils;
+import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -25,7 +26,7 @@ import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
-import org.mrgeo.services.mrspyramid.ColorScaleManager;
+import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
