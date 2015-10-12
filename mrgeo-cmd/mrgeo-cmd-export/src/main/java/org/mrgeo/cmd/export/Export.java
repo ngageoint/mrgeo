@@ -20,6 +20,11 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
+import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScaleManager;
+import org.mrgeo.colorscale.applier.ColorScaleApplier;
+import org.mrgeo.colorscale.applier.JpegColorScaleApplier;
+import org.mrgeo.colorscale.applier.PngColorScaleApplier;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.image.*;
@@ -55,6 +60,7 @@ boolean useBounds = false;
 Set<Long> tileset = null;
 boolean useTileSet = false;
 boolean all = false;
+ColorScale colorscale = null;
 
 boolean useTMS = false;
 
@@ -93,6 +99,10 @@ public Options createOptions()
   final Option tms = new Option("tms", "tms", false, "Export in TMS tile naming scheme");
   tms.setRequired(false);
   result.addOption(tms);
+
+  final Option color = new Option("cs", "colorscale", true, "Color scale to apply");
+  color.setRequired(false);
+  result.addOption(color);
 
   final Option tileIds = new Option("t", "tileids", true,
       "A comma separated list of tile ID's to export");
@@ -143,13 +153,35 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
 
     final TMSUtils.Tile t = TMSUtils.tileid(tileid, zoom);
 
-    final Raster raster = image.getTile(t.tx, t.ty);
+    Raster raster = image.getTile(t.tx, t.ty);
 
     log.info("Saving tile tx: " + t.tx + " ty: " + t.ty);
 
     if (raster != null)
     {
       String out = makeOutputName(output, format, tileid, zoom, tilesize);
+
+      if (colorscale != null || !format.equals("tif"))
+      {
+        ColorScaleApplier applier = null;
+        switch (format)
+        {
+        case "tif":
+        case "png":
+          applier = new PngColorScaleApplier();
+          break;
+        case "jpg":
+        case "jpeg":
+          applier = new JpegColorScaleApplier();
+          break;
+        }
+
+        if (applier != null)
+        {
+          raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
+        }
+      }
+
       GDALUtils.saveRaster(raster, out, format, t.tx, t.ty, image.getZoomlevel(),
           image.getTilesize(), metadata.getDefaultValue(0));
 
@@ -177,7 +209,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
   {
     final MrsImagePyramidMetadata metadata = image.getMetadata();
 
-    final Raster raster = RasterTileMerger.mergeTiles(image, tiles);
+    Raster raster = RasterTileMerger.mergeTiles(image, tiles);
     Raster sampleRaster = null;
 
     TMSUtils.Bounds imageBounds = null;
@@ -226,6 +258,27 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
       throw new MrsImageException("Error, could not load any tiles");
     }
     String out = makeOutputName(output, format, minId, zoomlevel, tilesize);
+
+    if (colorscale != null || !format.equals("tif"))
+    {
+      ColorScaleApplier applier = null;
+      switch (format)
+      {
+      case "tif":
+      case "png":
+        applier = new PngColorScaleApplier();
+        break;
+      case "jpg":
+      case "jpeg":
+        applier = new JpegColorScaleApplier();
+        break;
+      }
+
+      if (applier != null)
+      {
+        raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
+      }
+    }
 
     GDALUtils.saveRaster(raster, out, format, imageBounds,
         zoomlevel, tilesize, metadata.getDefaultValue(0));
@@ -308,6 +361,11 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
       {
         final String boundsOption = line.getOptionValue("b");
         bounds = parseBounds(boundsOption);
+      }
+
+      if (line.hasOption("cs"))
+      {
+        colorscale = ColorScaleManager.fromName(line.getOptionValue("cs"));
       }
 
       useTileSet = line.hasOption("t");
@@ -478,6 +536,7 @@ private String makeTMSOutputName(String base, String format, long tileid, int zo
     output += ".png";
     break;
   case "jpg":
+  case "jpeg":
     output += ".jpg";
     break;
   }
