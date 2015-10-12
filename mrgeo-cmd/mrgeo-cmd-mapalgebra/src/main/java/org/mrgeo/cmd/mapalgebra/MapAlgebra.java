@@ -18,8 +18,6 @@ package org.mrgeo.cmd.mapalgebra;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
-import org.mrgeo.aggregators.MeanAggregator;
-import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoConstants;
@@ -29,10 +27,6 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapalgebra.MapAlgebraExecutioner;
-import org.mrgeo.mapalgebra.MapAlgebraParser;
-import org.mrgeo.mapalgebra.MapOp;
-import org.mrgeo.mapalgebra.RasterMapOp;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.progress.ProgressHierarchy;
@@ -153,28 +147,35 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
     MrsImageDataProvider dp =
         DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties);
     String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
-    MapAlgebraParser parser = new MapAlgebraParser(conf, useProtectionLevel, providerProperties);
-    MapOp root = parser.parse(expression);
 
-    log.debug("inputs: " + root.getInputs().toString());
 
-    MapAlgebraExecutioner executioner = new MapAlgebraExecutioner();
-
-    executioner.setOutputName(output);
-    executioner.setRoot(root);
+//    MapAlgebraParser parser = new MapAlgebraParser(conf, useProtectionLevel, providerProperties);
+//    MapOpHadoop root = parser.parse(expression);
+//
+//    log.debug("inputs: " + root.getInputs().toString());
+//
+//    MapAlgebraExecutioner executioner = new MapAlgebraExecutioner();
+//
+//    executioner.setOutputName(output);
+//    executioner.setRoot(root);
     ProgressHierarchy progress = new ProgressHierarchy();
-    executioner.execute(conf, progress);
+//    executioner.execute(conf, progress);
 
+    boolean valid = org.mrgeo.mapalgebra.MapAlgebra.validate(expression, providerProperties);
+    if (valid) {
+      org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
+          providerProperties, useProtectionLevel);
+    }
     if (progress.isFailed())
     {
       throw new JobFailedException(progress.getResult());
     }
 
-    if (line.hasOption("b") && (root instanceof RasterMapOp))
-    {
-      System.out.println("Building pyramids...");
-      BuildPyramidSpark.build(output, new MeanAggregator(), conf, providerProperties);
-    }
+//    if (line.hasOption("b") && (root instanceof RasterMapOpHadoop))
+//    {
+//      System.out.println("Building pyramids...");
+//      BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties);
+//    }
 
     System.out.println("Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) /1000.0) + " seconds");
   }

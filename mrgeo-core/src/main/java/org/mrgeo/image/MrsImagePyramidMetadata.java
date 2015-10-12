@@ -21,8 +21,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.util.DefaultPrettyPrinter;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.data.raster.RasterUtils;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
@@ -53,746 +53,784 @@ import java.io.OutputStream;
 public class MrsImagePyramidMetadata extends MrsPyramidMetadata
 {
 
-  // logger for the class
-  private static final Logger log = LoggerFactory.getLogger(MrsImagePyramidMetadata.class);
+// logger for the class
+private static final Logger log = LoggerFactory.getLogger(MrsImagePyramidMetadata.class);
 
-  // version
+// version
+private static final long serialVersionUID = 1L;
+
+
+/**
+ * ImageMetadata is a container of the multiple types of
+ * bounds for images.
+ */
+public static class ImageMetadata extends MrsPyramidMetadata.TileMetadata
+{
   private static final long serialVersionUID = 1L;
 
+  // pixel bounds of the image (0, 0, width, height)
+  public LongRectangle pixelBounds = null;
 
-  /**
-   * ImageMetadata is a container of the multiple types of
-   * bounds for images. 
-   */
-  public static class ImageMetadata extends MrsPyramidMetadata.TileMetadata
+  // statistics of the image
+  public ImageStats[] stats = null;
+
+  // basic constructor
+  public ImageMetadata()
   {
-    private static final long serialVersionUID = 1L;
+  }
 
-    // pixel bounds of the image (0, 0, width, height)
-    public LongRectangle pixelBounds = null;
-
-    // statistics of the image
-    public ImageStats[] stats = null;
-
-    // basic constructor
-    public ImageMetadata()
-    {
-    }
-
-    // For backward compatibility with older image pyramids that
-    // still have a reference to the "image" property. It was renamed
-    // to "name".
-    public void setImage(final String image)
-    {
-      name = image;
-    }
-  } // end ImageMetadata
+  // For backward compatibility with older image pyramids that
+  // still have a reference to the "image" property. It was renamed
+  // to "name".
+  public void setImage(final String image)
+  {
+    name = image;
+  }
+} // end ImageMetadata
   
   
   /*
    * start globals section
    */
 
-  private ImageMetadata[] imageData = null; // data specific to a single
-  // pyramid-level image
+private ImageMetadata[] imageData = null; // data specific to a single
+// pyramid-level image
 
-  private int bands = 0; // number of bands in the image
+private int bands = 0; // number of bands in the image
 
-  // default (pixel) value, by band. Geotools calls these defaults, but they are
-  // really
-  // the nodata value for each pixel
-  private double[] defaultValues;
-  private int tileType; // pixel type for the image
+// default (pixel) value, by band. Geotools calls these defaults, but they are
+// really
+// the nodata value for each pixel
+private double[] defaultValues;
+private int tileType; // pixel type for the image
 
-  private ImageStats[] stats; // min, max, mean, std dev of pixel values by band for the source resolution level image
+private ImageStats[] stats; // min, max, mean, std dev of pixel values by band for the source resolution level image
 
-  private Classification classification = Classification.Continuous;
+private Classification classification = Classification.Continuous;
 
-  private String resamplingMethod;
+private String resamplingMethod;
 
   
   /*
    * end globals section
    */
 
-  // types
-  public enum Classification {
-    Categorical, Continuous
-  }
+// types
+public enum Classification {
+  Categorical, Continuous
+}
 
   /*
    * start methods
    */
 
-  /**
-   * Loading a metadata file from the local file system.  The objects of
-   * the file are stored in a json format.  This enables the ObjectMapper
-   * to parse out the values correctly.
-   *
-   * @param file metadata file on the local file system to load
-   * @return a valid MrsImagePyramidMetadata object
-   * @throws JsonGenerationException
-   * @throws JsonMappingException
-   * @throws IOException
-   */
-  @Deprecated
-  public static MrsImagePyramidMetadata load(final File file) throws JsonGenerationException,
-      JsonMappingException, IOException
-  {
-    final ObjectMapper mapper = new ObjectMapper();
-    final MrsImagePyramidMetadata metadata = mapper.readValue(file, MrsImagePyramidMetadata.class);
+/**
+ * Loading a metadata file from the local file system.  The objects of
+ * the file are stored in a json format.  This enables the ObjectMapper
+ * to parse out the values correctly.
+ *
+ * @param file metadata file on the local file system to load
+ * @return a valid MrsImagePyramidMetadata object
+ * @throws JsonGenerationException
+ * @throws JsonMappingException
+ * @throws IOException
+ */
+@Deprecated
+public static MrsImagePyramidMetadata load(final File file) throws JsonGenerationException,
+    JsonMappingException, IOException
+{
+  final ObjectMapper mapper = new ObjectMapper();
+  final MrsImagePyramidMetadata metadata = mapper.readValue(file, MrsImagePyramidMetadata.class);
 
-    // make sure the name of the pyramid is set correctly for where the
-    // metadata file was pulled
-    metadata.setPyramid("file://" + file.getParentFile().getAbsolutePath());
+  // make sure the name of the pyramid is set correctly for where the
+  // metadata file was pulled
+  metadata.setPyramid("file://" + file.getParentFile().getAbsolutePath());
 
-    return metadata;
-  } // end load - File
+  return metadata;
+} // end load - File
 
 
-  /**
-   * Loading metadata from an InputStream.  The objects of
-   * the file are stored in a json format.  This enables the ObjectMapper
-   * to parse out the values correctly.
-   *
-   * @param stream - the stream attached to the metadata input
-   * @return a valid MrsImagePyramidMetadata object
-   * @throws JsonGenerationException
-   * @throws JsonMappingException
-   * @throws IOException
-   */
-  public static MrsImagePyramidMetadata load(final InputStream stream) throws JsonGenerationException,
-      JsonMappingException, IOException
-  {
-    final ObjectMapper mapper = new ObjectMapper();
-    final MrsImagePyramidMetadata metadata = mapper.readValue(stream, MrsImagePyramidMetadata.class);
-    return metadata;
-  } // end load - InputStream
+/**
+ * Loading metadata from an InputStream.  The objects of
+ * the file are stored in a json format.  This enables the ObjectMapper
+ * to parse out the values correctly.
+ *
+ * @param stream - the stream attached to the metadata input
+ * @return a valid MrsImagePyramidMetadata object
+ * @throws JsonGenerationException
+ * @throws JsonMappingException
+ * @throws IOException
+ */
+public static MrsImagePyramidMetadata load(final InputStream stream) throws JsonGenerationException,
+    JsonMappingException, IOException
+{
+  final ObjectMapper mapper = new ObjectMapper();
+  final MrsImagePyramidMetadata metadata = mapper.readValue(stream, MrsImagePyramidMetadata.class);
+  return metadata;
+} // end load - InputStream
   
 
   /*
    * Helper functions for types used in rasters and databuffers 
    */
 
-  public static int toBytes(final int tiletype)
+public static int toBytes(final int tiletype)
+{
+  switch (tiletype)
   {
-    switch (tiletype)
-    {
-    case DataBuffer.TYPE_BYTE:
-    {
-      return 1;
-    }
-    case DataBuffer.TYPE_FLOAT:
-    {
-      return RasterUtils.FLOAT_BYTES;
-    }
-    case DataBuffer.TYPE_DOUBLE:
-    {
-      return RasterUtils.DOUBLE_BYTES;
-    }
-    case DataBuffer.TYPE_INT:
-    {
-      return RasterUtils.INT_BYTES;
-    }
-    case DataBuffer.TYPE_SHORT:
-    {
-      return RasterUtils.SHORT_BYTES;
-    }
-    case DataBuffer.TYPE_USHORT:
-    {
-      return RasterUtils.USHORT_BYTES;
-    }
-    }
-
-    return 0;
-  } // end toBytes
-
-
-  public static int toTileType(final String tiletype)
+  case DataBuffer.TYPE_BYTE:
   {
-    if (tiletype == "Byte")
-    {
-      return DataBuffer.TYPE_BYTE;
-    }
-    if (tiletype == "Float")
-    {
-      return DataBuffer.TYPE_FLOAT;
-    }
-    if (tiletype == "Double")
-    {
-      return DataBuffer.TYPE_DOUBLE;
-    }
-    if (tiletype == "Int")
-    {
-      return DataBuffer.TYPE_INT;
-    }
-    if (tiletype == "Short")
-    {
-      return DataBuffer.TYPE_SHORT;
-    }
-    if (tiletype == "UShort")
-    {
-      return DataBuffer.TYPE_USHORT;
-    }
-
-    return DataBuffer.TYPE_UNDEFINED;
-  } // end toTileType
-
-
-  public static String toTileTypeText(final int tiletype)
+    return 1;
+  }
+  case DataBuffer.TYPE_FLOAT:
   {
-    switch (tiletype)
-    {
-    case DataBuffer.TYPE_BYTE:
-    {
-      return "Byte";
-    }
-    case DataBuffer.TYPE_FLOAT:
-    {
-      return "Float";
-    }
-    case DataBuffer.TYPE_DOUBLE:
-    {
-      return "Double";
-    }
-    case DataBuffer.TYPE_INT:
-    {
-      return "Int";
-    }
-    case DataBuffer.TYPE_SHORT:
-    {
-      return "Short";
-    }
-    case DataBuffer.TYPE_USHORT:
-    {
-      return "UShort";
-    }
-    }
+    return RasterUtils.FLOAT_BYTES;
+  }
+  case DataBuffer.TYPE_DOUBLE:
+  {
+    return RasterUtils.DOUBLE_BYTES;
+  }
+  case DataBuffer.TYPE_INT:
+  {
+    return RasterUtils.INT_BYTES;
+  }
+  case DataBuffer.TYPE_SHORT:
+  {
+    return RasterUtils.SHORT_BYTES;
+  }
+  case DataBuffer.TYPE_USHORT:
+  {
+    return RasterUtils.USHORT_BYTES;
+  }
+  }
 
-    return "Undefined";
-  } // end toTileTypeText
+  return 0;
+} // end toBytes
+
+
+public static int toTileType(final String tiletype)
+{
+  if (tiletype == "Byte")
+  {
+    return DataBuffer.TYPE_BYTE;
+  }
+  if (tiletype == "Float")
+  {
+    return DataBuffer.TYPE_FLOAT;
+  }
+  if (tiletype == "Double")
+  {
+    return DataBuffer.TYPE_DOUBLE;
+  }
+  if (tiletype == "Int")
+  {
+    return DataBuffer.TYPE_INT;
+  }
+  if (tiletype == "Short")
+  {
+    return DataBuffer.TYPE_SHORT;
+  }
+  if (tiletype == "UShort")
+  {
+    return DataBuffer.TYPE_USHORT;
+  }
+
+  return DataBuffer.TYPE_UNDEFINED;
+} // end toTileType
+
+
+public static String toTileTypeText(final int tiletype)
+{
+  switch (tiletype)
+  {
+  case DataBuffer.TYPE_BYTE:
+  {
+    return "Byte";
+  }
+  case DataBuffer.TYPE_FLOAT:
+  {
+    return "Float";
+  }
+  case DataBuffer.TYPE_DOUBLE:
+  {
+    return "Double";
+  }
+  case DataBuffer.TYPE_INT:
+  {
+    return "Int";
+  }
+  case DataBuffer.TYPE_SHORT:
+  {
+    return "Short";
+  }
+  case DataBuffer.TYPE_USHORT:
+  {
+    return "UShort";
+  }
+  }
+
+  return "Undefined";
+} // end toTileTypeText
 
   
   /*
    * end helper functions
    */
 
-  
-  /*
-   * start get section
-   */
+
+/*
+ * start get section
+ */
+public MrsImagePyramidMetadata() {
+  super();
+}
 
 
-  public int getBands()
+public MrsImagePyramidMetadata(MrsImagePyramidMetadata copy) {
+  super(copy);
+
+  this.bands = copy.bands;
+  this.defaultValues = ArrayUtils.clone(copy.defaultValues);
+  this.tileType = copy.tileType;
+
+  this.classification = copy.classification;
+  this.resamplingMethod = copy.resamplingMethod;
+
+  this.imageData = new ImageMetadata[copy.imageData.length];
+  for (int i = 0; i < copy.imageData.length; i++)
   {
-    return bands;
-  }
-
-
-  @JsonIgnore
-  public double getPixelHeight(int zoom) {
-    return TMSUtils.resolution(zoom, tilesize);
-  }
-
-
-  @JsonIgnore
-  public double getPixelWidth(int zoom) {
-    return TMSUtils.resolution(zoom, tilesize);
-  }
-
-
-  @JsonIgnore
-  public double getDefaultValue(final int band)
-  {
-    if (band < getBands())
+    this.imageData[i] = new ImageMetadata();
+    if (copy.imageData[i] != null)
     {
-      return defaultValues[band];
-    }
-
-    return Double.NaN;
-  }
-
-
-  @JsonIgnore
-  public byte getDefaultValueByte(final int band)
-  {
-    if (band < getBands())
-    {
-      return Double.valueOf(defaultValues[band]).byteValue();
-    }
-
-    return 0;
-  }
-
-
-  @JsonIgnore
-  public double getDefaultValueDouble(final int band)
-  {
-    return getDefaultValue(band);
-  }
-
-
-  @JsonIgnore
-  public float getDefaultValueFloat(final int band)
-  {
-    if (band < getBands())
-    {
-      return Double.valueOf(defaultValues[band]).floatValue();
-    }
-
-    return Float.NaN;
-  }
-
-
-  @JsonIgnore
-  public int getDefaultValueInt(final int band)
-  {
-    if (band < getBands())
-    {
-      return Double.valueOf(defaultValues[band]).intValue();
-    }
-
-    return 0;
-  }
-
-
-  @JsonIgnore
-  public long getDefaultValueLong(final int band)
-  {
-    if (band < getBands())
-    {
-      return Double.valueOf(defaultValues[band]).longValue();
-    }
-
-    return 0;
-  }
-
-
-  public double[] getDefaultValues()
-  {
-    return defaultValues;
-  }
-
-
-  @JsonIgnore
-  public byte[] getDefaultValuesByte()
-  {
-    final byte[] defaults = new byte[bands];
-    for (int i = 0; i < bands; i++)
-    {
-      defaults[i] = Double.valueOf(defaultValues[i]).byteValue();
-    }
-
-    return defaults;
-  }
-
-
-  @JsonIgnore
-  public double[] getDefaultValuesDouble()
-  {
-    return getDefaultValues();
-  }
-
-
-  @JsonIgnore
-  public float[] getDefaultValuesFloat()
-  {
-    final float[] defaults = new float[bands];
-    for (int i = 0; i < bands; i++)
-    {
-      defaults[i] = Double.valueOf(defaultValues[i]).floatValue();
-    }
-
-    return defaults;
-  }
-
-
-  @JsonIgnore
-  public short getDefaultValueShort(final int band)
-  {
-    if (band < getBands())
-    {
-      return Double.valueOf(defaultValues[band]).shortValue();
-    }
-
-    return 0;
-  }
-
-
-  @JsonIgnore
-  public int[] getDefaultValuesInt()
-  {
-    final int[] defaults = new int[bands];
-    for (int i = 0; i < bands; i++)
-    {
-      defaults[i] = Double.valueOf(defaultValues[i]).intValue();
-    }
-
-    return defaults;
-  }
-
-
-  @JsonIgnore
-  public long[] getDefaultValuesLong()
-  {
-    final long[] defaults = new long[bands];
-    for (int i = 0; i < bands; i++)
-    {
-      defaults[i] = Double.valueOf(defaultValues[i]).longValue();
-    }
-
-    return defaults;
-  }
-
-
-  @JsonIgnore
-  public short[] getDefaultValuesShort()
-  {
-    final short[] defaults = new short[bands];
-    for (int i = 0; i < bands; i++)
-    {
-      defaults[i] = Double.valueOf(defaultValues[i]).shortValue();
-    }
-
-    return defaults;
-  }
-
-  @Override
-  public String getName(final int zoomlevel)
-  {
-    if (imageData != null && zoomlevel < imageData.length && imageData[zoomlevel].name != null)
-    {
-      return imageData[zoomlevel].name;
-    }
-    return null;
-  }
-
-  public ImageMetadata[] getImageMetadata()
-  {
-    return imageData;
-  }
-
-
-  public LongRectangle getPixelBounds(final int zoomlevel)
-  {
-    if (imageData != null)
-    {
-      if (zoomlevel < imageData.length)
+      this.imageData[i].name = copy.imageData[i].name;
+      if (copy.imageData[i].stats != null)
       {
-        return imageData[zoomlevel].pixelBounds;
+        this.imageData[i].stats = ArrayUtils.clone(copy.imageData[i].stats);
       }
-      return getOrCreatePixelBounds(zoomlevel);
-    }
-    return null;
-  }
-
-
-  @Override
-  public LongRectangle getTileBounds(final int zoomlevel)
-  {
-    if (imageData != null)
-    {
-      if (zoomlevel < imageData.length)
+      if (copy.imageData[i].pixelBounds != null)
       {
-        return imageData[zoomlevel].tileBounds;
+        this.imageData[i].pixelBounds = new LongRectangle(copy.imageData[i].pixelBounds);
       }
-
-      // If we have _some_ tilebounds, calculate the bounds for the higher level
-      return getOrCreateTileBounds(zoomlevel);
-    }
-    return null;
-  }
-
-
-  public ImageStats[] getImageStats(final int zoomlevel)
-  {
-    if (imageData != null)
-    {
-      if (zoomlevel < imageData.length)
+      if (copy.imageData[i].tileBounds != null)
       {
-        return imageData[zoomlevel].stats;
-      }
-
-      // if we don't have this level, return the highest level available
-      return imageData[imageData.length - 1].stats;
-    }
-    return null;
-  }
-
-
-  public ImageStats getImageStats(final int zoomlevel, int band)
-  {
-
-    if (imageData != null)
-    {
-      if (zoomlevel < imageData.length)
-      {
-        if (imageData[zoomlevel].stats != null && band < imageData[zoomlevel].stats.length)
-        {
-          return imageData[zoomlevel].stats[band];
-        }
-      }
-      if (imageData[imageData.length - 1].stats != null && band < imageData[imageData.length - 1].stats.length)
-      {
-        return imageData[imageData.length - 1].stats[band];
+        this.imageData[i].tileBounds = new LongRectangle(copy.imageData[i].tileBounds);
       }
     }
-    return null;
   }
 
+  this.stats = ArrayUtils.clone(copy.stats);
+}
 
-  public ImageStats getStats(int band)
+public int getBands()
+{
+  return bands;
+}
+
+
+@JsonIgnore
+public double getPixelHeight(int zoom) {
+  return TMSUtils.resolution(zoom, tilesize);
+}
+
+
+@JsonIgnore
+public double getPixelWidth(int zoom) {
+  return TMSUtils.resolution(zoom, tilesize);
+}
+
+
+@JsonIgnore
+public double getDefaultValue(final int band)
+{
+  if (band < getBands())
   {
-    return (stats == null) ? null : stats[band];
+    return defaultValues[band];
   }
 
+  return Double.NaN;
+}
 
-  public ImageStats[] getStats()
+
+@JsonIgnore
+public byte getDefaultValueByte(final int band)
+{
+  if (band < getBands())
   {
-    return stats;
+    return Double.valueOf(defaultValues[band]).byteValue();
   }
 
+  return 0;
+}
 
-  @Override
-  public LongRectangle getOrCreateTileBounds(final int zoomlevel)
+
+@JsonIgnore
+public double getDefaultValueDouble(final int band)
+{
+  return getDefaultValue(band);
+}
+
+
+@JsonIgnore
+public float getDefaultValueFloat(final int band)
+{
+  if (band < getBands())
   {
-    if (imageData != null && zoomlevel < imageData.length)
+    return Double.valueOf(defaultValues[band]).floatValue();
+  }
+
+  return Float.NaN;
+}
+
+
+@JsonIgnore
+public int getDefaultValueInt(final int band)
+{
+  if (band < getBands())
+  {
+    return Double.valueOf(defaultValues[band]).intValue();
+  }
+
+  return 0;
+}
+
+
+@JsonIgnore
+public long getDefaultValueLong(final int band)
+{
+  if (band < getBands())
+  {
+    return Double.valueOf(defaultValues[band]).longValue();
+  }
+
+  return 0;
+}
+
+
+public double[] getDefaultValues()
+{
+  return defaultValues;
+}
+
+
+@JsonIgnore
+public byte[] getDefaultValuesByte()
+{
+  final byte[] defaults = new byte[bands];
+  for (int i = 0; i < bands; i++)
+  {
+    defaults[i] = Double.valueOf(defaultValues[i]).byteValue();
+  }
+
+  return defaults;
+}
+
+
+@JsonIgnore
+public double[] getDefaultValuesDouble()
+{
+  return getDefaultValues();
+}
+
+
+@JsonIgnore
+public float[] getDefaultValuesFloat()
+{
+  final float[] defaults = new float[bands];
+  for (int i = 0; i < bands; i++)
+  {
+    defaults[i] = Double.valueOf(defaultValues[i]).floatValue();
+  }
+
+  return defaults;
+}
+
+
+@JsonIgnore
+public short getDefaultValueShort(final int band)
+{
+  if (band < getBands())
+  {
+    return Double.valueOf(defaultValues[band]).shortValue();
+  }
+
+  return 0;
+}
+
+
+@JsonIgnore
+public int[] getDefaultValuesInt()
+{
+  final int[] defaults = new int[bands];
+  for (int i = 0; i < bands; i++)
+  {
+    defaults[i] = Double.valueOf(defaultValues[i]).intValue();
+  }
+
+  return defaults;
+}
+
+
+@JsonIgnore
+public long[] getDefaultValuesLong()
+{
+  final long[] defaults = new long[bands];
+  for (int i = 0; i < bands; i++)
+  {
+    defaults[i] = Double.valueOf(defaultValues[i]).longValue();
+  }
+
+  return defaults;
+}
+
+
+@JsonIgnore
+public short[] getDefaultValuesShort()
+{
+  final short[] defaults = new short[bands];
+  for (int i = 0; i < bands; i++)
+  {
+    defaults[i] = Double.valueOf(defaultValues[i]).shortValue();
+  }
+
+  return defaults;
+}
+
+@Override
+public String getName(final int zoomlevel)
+{
+  if (imageData != null && zoomlevel < imageData.length && imageData[zoomlevel].name != null)
+  {
+    return imageData[zoomlevel].name;
+  }
+  return null;
+}
+
+public ImageMetadata[] getImageMetadata()
+{
+  return imageData;
+}
+
+
+public LongRectangle getPixelBounds(final int zoomlevel)
+{
+  if (imageData != null)
+  {
+    if (zoomlevel < imageData.length)
+    {
+      return imageData[zoomlevel].pixelBounds;
+    }
+    return getOrCreatePixelBounds(zoomlevel);
+  }
+  return null;
+}
+
+
+@Override
+public LongRectangle getTileBounds(final int zoomlevel)
+{
+  if (imageData != null)
+  {
+    if (zoomlevel < imageData.length)
     {
       return imageData[zoomlevel].tileBounds;
     }
 
-    LongRectangle tilebounds = getTileBounds(zoomlevel);
-    if (tilebounds == null)
-    {
-      TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
-          bounds.getMaxX(), bounds.getMaxY());
+    // If we have _some_ tilebounds, calculate the bounds for the higher level
+    return getOrCreateTileBounds(zoomlevel);
+  }
+  return null;
+}
 
-      TMSUtils.TileBounds tb = TMSUtils.boundsToTile(b, zoomlevel, tilesize);
-      tilebounds = new LongRectangle(tb.w, tb.s, tb.e, tb.n);
+
+public ImageStats[] getImageStats(final int zoomlevel)
+{
+  if (imageData != null)
+  {
+    if (zoomlevel < imageData.length)
+    {
+      return imageData[zoomlevel].stats;
     }
-    return tilebounds;
+
+    // if we don't have this level, return the highest level available
+    return imageData[imageData.length - 1].stats;
+  }
+  return null;
+}
+
+
+public ImageStats getImageStats(final int zoomlevel, int band)
+{
+
+  if (imageData != null)
+  {
+    if (zoomlevel < imageData.length)
+    {
+      if (imageData[zoomlevel].stats != null && band < imageData[zoomlevel].stats.length)
+      {
+        return imageData[zoomlevel].stats[band];
+      }
+    }
+    if (imageData[imageData.length - 1].stats != null && band < imageData[imageData.length - 1].stats.length)
+    {
+      return imageData[imageData.length - 1].stats[band];
+    }
+  }
+  return null;
+}
+
+
+public ImageStats getStats(int band)
+{
+  return (stats == null) ? null : stats[band];
+}
+
+
+public ImageStats[] getStats()
+{
+  return stats;
+}
+
+
+@Override
+public LongRectangle getOrCreateTileBounds(final int zoomlevel)
+{
+  if (imageData != null && zoomlevel < imageData.length)
+  {
+    return imageData[zoomlevel].tileBounds;
   }
 
-
-  public LongRectangle getOrCreatePixelBounds(final int zoomlevel)
+  LongRectangle tilebounds = getTileBounds(zoomlevel);
+  if (tilebounds == null)
   {
-    if (imageData != null && zoomlevel < imageData.length)
-    {
-      return imageData[zoomlevel].pixelBounds;
-    }
+    TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
+        bounds.getMaxX(), bounds.getMaxY());
+
+    TMSUtils.TileBounds tb = TMSUtils.boundsToTile(b, zoomlevel, tilesize);
+    tilebounds = new LongRectangle(tb.w, tb.s, tb.e, tb.n);
+  }
+  return tilebounds;
+}
+
+
+public LongRectangle getOrCreatePixelBounds(final int zoomlevel)
+{
+  if (imageData != null && zoomlevel < imageData.length)
+  {
+    return imageData[zoomlevel].pixelBounds;
+  }
 
 //    TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
 //        bounds.getMaxX(), bounds.getMaxY());
 
-    TMSUtils.Pixel ll = TMSUtils.latLonToPixels(bounds.getMinX(), bounds.getMinY(), zoomlevel, tilesize);
-    TMSUtils.Pixel ur = TMSUtils.latLonToPixels(bounds.getMaxX(), bounds.getMaxY(), zoomlevel, tilesize);
+  TMSUtils.Pixel ll = TMSUtils.latLonToPixels(bounds.getMinX(), bounds.getMinY(), zoomlevel, tilesize);
+  TMSUtils.Pixel ur = TMSUtils.latLonToPixels(bounds.getMaxX(), bounds.getMaxY(), zoomlevel, tilesize);
 
-    return new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
-  }
+  return new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
+}
 
 
-  public int getTileType()
+public int getTileType()
+{
+  return tileType;
+}
+
+
+public Classification getClassification()
+{
+  return classification;
+}
+
+
+/**
+ * Return the minimum and maximum values from the statistics for the image at the requested zoom
+ * level
+ * @param zoomLevel requested zoom level
+ * @return array with position one containing the statistical minimum value and position two
+ * containing the maximum value
+ */
+public double[] getExtrema(final int zoomLevel)
+{
+  double[] extrema = new double[3];
+  ImageStats st = getImageStats(zoomLevel, 0);
+  if (st != null)
   {
-    return tileType;
+    extrema[0] = Math.max(0.0, st.min);
+    extrema[1] = st.max;
   }
-
-
-  public Classification getClassification()
+  else
   {
-    return classification;
+    log.warn("No statistics have been calculated on the requested image " +
+        pyramid + "/" + imageData[zoomLevel].name + ".  Using default range of 0.0 to 1.0...");
+    extrema[0] = 0.0;
+    extrema[1] = 1.0;
   }
+  return extrema;
+}
 
 
-  /**
-   * Return the minimum and maximum values from the statistics for the image at the requested zoom 
-   * level
-   * @param zoomLevel requested zoom level
-   * @return array with position one containing the statistical minimum value and position two
-   * containing the maximum value
-   */
-  public double[] getExtrema(final int zoomLevel)
+public String getResamplingMethod()
+{
+  return resamplingMethod;
+}
+
+
+public void setResamplingMethod(String resamplingMethod)
+{
+  this.resamplingMethod = resamplingMethod;
+}
+
+
+
+public void save(final OutputStream stream) throws JsonGenerationException, JsonMappingException,
+    IOException
+{
+  final ObjectMapper mapper = new ObjectMapper();
+  try
   {
-    double[] extrema = new double[3];
-    ImageStats st = getImageStats(zoomLevel, 0);
-    if (st != null)
-    {
-      extrema[0] = Math.max(0.0, st.min);
-      extrema[1] = st.max;
-    }
-    else
-    {
-      log.warn("No statistics have been calculated on the requested image " +
-          pyramid + "/" + imageData[zoomLevel].name + ".  Using default range of 0.0 to 1.0...");
-      extrema[0] = 0.0;
-      extrema[1] = 1.0;
-    }
-    return extrema;
+    DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
+    pp.indentArraysWith(new DefaultPrettyPrinter.Lf2SpacesIndenter());
+
+    mapper.prettyPrintingWriter(pp).writeValue(stream, this);
   }
-
-
-  public String getResamplingMethod()
+  catch (NoSuchMethodError e)
   {
-    return resamplingMethod;
+    // if we don't have the pretty printer, just write the json
+    mapper.writeValue(stream, this);
   }
-
-
-  public void setResamplingMethod(String resamplingMethod)
-  {
-    this.resamplingMethod = resamplingMethod;
-  }
-
-
-
-  public void save(final OutputStream stream) throws JsonGenerationException, JsonMappingException,
-      IOException
-  {
-    final ObjectMapper mapper = new ObjectMapper();
-    try
-    {
-      DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-      pp.indentArraysWith(new DefaultPrettyPrinter.Lf2SpacesIndenter());
-
-      mapper.prettyPrintingWriter(pp).writeValue(stream, this);
-    }
-    catch (NoSuchMethodError e)
-    {
-      // if we don't have the pretty printer, just write the json
-      mapper.writeValue(stream, this);
-    }
-  }
+}
   
   
   /*
    * start set section
    */
 
-  public void setBands(final int bands)
+public void setBands(final int bands)
+{
+  this.bands = bands;
+}
+
+
+public void setDefaultValues(final double[] defaultValues)
+{
+  this.defaultValues = defaultValues;
+}
+
+
+@Override
+public void setName(final int zoomlevel, final String name)
+{
+  if (imageData == null || zoomlevel > maxZoomLevel)
   {
-    this.bands = bands;
+    setMaxZoomLevel(zoomlevel);
   }
+  imageData[zoomlevel].name = name;
+}
 
 
-  public void setDefaultValues(final double[] defaultValues)
+public void setImageMetadata(final ImageMetadata[] metadata)
+{
+
+  // this will make sure the size of the image metadata matched the zoom, with empty levels as needed
+  if (metadata == null)
   {
-    this.defaultValues = defaultValues;
-  }
-
-
-  @Override
-  public void setName(final int zoomlevel, final String name)
-  {
-    if (imageData == null || zoomlevel > maxZoomLevel)
-    {
-      setMaxZoomLevel(zoomlevel);
-    }
-    imageData[zoomlevel].name = name;
-  }
-
-
-  public void setImageMetadata(final ImageMetadata[] metadata)
-  {
-
-    // this will make sure the size of the image metadata matched the zoom, with empty levels as needed
-    if (metadata == null)
-    {
-      imageData = metadata;
-      for (int i = 0; i <= maxZoomLevel; i++)
-      {
-        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
-      }
-
-      return;
-    }
-
-    // this could be the case when reading the data in, but the maxzoom comes after the imagedata
-    // in the JSON
-    if (maxZoomLevel <= 0)
-    {
-      setMaxZoomLevel(metadata.length - 1);
-    }
-
     imageData = metadata;
-    if ((maxZoomLevel + 1) < imageData.length)
+    for (int i = 0; i <= maxZoomLevel; i++)
     {
-      imageData = (ImageMetadata[]) ArrayUtils.subarray(metadata, 0, maxZoomLevel + 1);
-    }
-    else if (maxZoomLevel > imageData.length)
-    {
-      for (int i = imageData.length; i <= maxZoomLevel; i++)
-      {
-        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
-      }
+      imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
     }
 
+    return;
   }
 
-
-  @Override
-  public void setMaxZoomLevel(final int zoomlevel)
+  // this could be the case when reading the data in, but the maxzoom comes after the imagedata
+  // in the JSON
+  if (maxZoomLevel <= 0)
   {
-    if (imageData == null)
-    {
-      for (int i = 0; i <= zoomlevel; i++)
-      {
-        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
-      }
-    }
-    else if (zoomlevel < maxZoomLevel)
-    {
-      imageData = (ImageMetadata[]) ArrayUtils.subarray(imageData, 0, zoomlevel + 1);
-    }
-    else if (zoomlevel > maxZoomLevel)
-    {
-      for (int i = maxZoomLevel + 1; i <= zoomlevel; i++)
-      {
-        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
-      }
-    }
-    this.maxZoomLevel = zoomlevel;
+    setMaxZoomLevel(metadata.length - 1);
   }
 
-
-  public void setPixelBounds(final int zoomlevel, final LongRectangle pixelBounds)
+  imageData = metadata;
+  if ((maxZoomLevel + 1) < imageData.length)
   {
-    if (imageData == null || zoomlevel > maxZoomLevel)
+    imageData = (ImageMetadata[]) ArrayUtils.subarray(metadata, 0, maxZoomLevel + 1);
+  }
+  else if (maxZoomLevel > imageData.length)
+  {
+    for (int i = imageData.length; i <= maxZoomLevel; i++)
     {
-      setMaxZoomLevel(zoomlevel);
+      imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
     }
-    imageData[zoomlevel].pixelBounds = pixelBounds;
   }
 
+}
 
-  @Override
-  public void setTileBounds(final int zoomlevel, final LongRectangle tileBounds)
+
+@Override
+public void setMaxZoomLevel(final int zoomlevel)
+{
+  if (imageData == null)
   {
-    if (imageData == null || zoomlevel > maxZoomLevel)
+    for (int i = 0; i <= zoomlevel; i++)
     {
-      setMaxZoomLevel(zoomlevel);
+      imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
     }
-    imageData[zoomlevel].tileBounds = tileBounds;
   }
-
-
-  public void setImageStats(final int zoomlevel, final ImageStats[] stats)
+  else if (zoomlevel < maxZoomLevel)
   {
-    if (imageData == null || zoomlevel > maxZoomLevel)
+    imageData = (ImageMetadata[]) ArrayUtils.subarray(imageData, 0, zoomlevel + 1);
+  }
+  else if (zoomlevel > maxZoomLevel)
+  {
+    for (int i = maxZoomLevel + 1; i <= zoomlevel; i++)
     {
-      setMaxZoomLevel(zoomlevel);
+      imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
     }
-    imageData[zoomlevel].stats = stats;
   }
+  this.maxZoomLevel = zoomlevel;
+}
 
 
-  public void setStats(final ImageStats[] stats)
+public void setPixelBounds(final int zoomlevel, final LongRectangle pixelBounds)
+{
+  if (imageData == null || zoomlevel > maxZoomLevel)
   {
-    this.stats = stats;
+    setMaxZoomLevel(zoomlevel);
   }
+  imageData[zoomlevel].pixelBounds = pixelBounds;
+}
 
 
-  public void setTileType(final int tileType)
+@Override
+public void setTileBounds(final int zoomlevel, final LongRectangle tileBounds)
+{
+  if (imageData == null || zoomlevel > maxZoomLevel)
   {
-    this.tileType = tileType;
+    setMaxZoomLevel(zoomlevel);
   }
+  imageData[zoomlevel].tileBounds = tileBounds;
+}
+
+
+public void setImageStats(final int zoomlevel, final ImageStats[] stats)
+{
+  if (imageData == null || zoomlevel > maxZoomLevel)
+  {
+    setMaxZoomLevel(zoomlevel);
+  }
+  imageData[zoomlevel].stats = stats;
+}
+
+
+public void setStats(final ImageStats[] stats)
+{
+  this.stats = stats;
+}
+
+
+public void setTileType(final int tileType)
+{
+  this.tileType = tileType;
+}
 
   
   /* Note: Commented out because having two versions of the setter, one with @JsonIgnore 
@@ -801,15 +839,15 @@ public class MrsImagePyramidMetadata extends MrsPyramidMetadata
    *        JsonMappingException: Conflicting setter definitions for property tileType
    * Since there were no users of this method, commenting out made sense.
    */
-  //    public void setTileType(final String tileType)
-  //    {
-  //      this.tileType = toTileType(tileType);
-  //    }
+//    public void setTileType(final String tileType)
+//    {
+//      this.tileType = toTileType(tileType);
+//    }
 
-  public void setClassification(Classification classification)
-  {
-    this.classification = classification;
-  }
+public void setClassification(Classification classification)
+{
+  this.classification = classification;
+}
 
 
 

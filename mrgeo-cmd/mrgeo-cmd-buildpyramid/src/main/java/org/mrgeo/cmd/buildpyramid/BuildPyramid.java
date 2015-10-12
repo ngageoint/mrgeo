@@ -21,7 +21,6 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.aggregators.*;
-import org.mrgeo.buildpyramid.BuildPyramidSpark;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.ProviderProperties;
@@ -82,7 +81,7 @@ public int run(String[] args, final Configuration conf,
   long start = System.currentTimeMillis();
 
   Options options = BuildPyramid.createOptions();
-  CommandLine line = null;
+  CommandLine line;
 
   try
   {
@@ -143,7 +142,7 @@ public int run(String[] args, final Configuration conf,
     {
       // TODO: Need to obtain provider properties
       //if (!BuildPyramidDriver.build(input, aggregator, conf, providerProperties))
-      if (!BuildPyramidSpark.build(input, aggregator, conf, providerProperties))
+      if (!org.mrgeo.buildpyramid.BuildPyramid.build(input, aggregator, conf, providerProperties))
       {
         log.error("BuildPyramid exited with error");
         return -1;

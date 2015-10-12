@@ -18,7 +18,7 @@
  */
 package org.mrgeo.aggregators;
 
-import jj2000.j2k.NotImplementedError;
+import org.apache.commons.lang3.NotImplementedException;
 
 /**
  * Uses the minimum pixel value for the resampled pixel.
@@ -67,19 +67,19 @@ public class MinAggregator implements Aggregator
   @Override
   public double aggregate(double[][]values, double weightx, double weighty, double nodata)
   {
-    throw new NotImplementedError("Not yet implemented");
+    throw new NotImplementedException("Not yet implemented");
   }
   
   @Override
   public float aggregate(float[][]values, double weightx, double weighty, float nodata)
   {
-    throw new NotImplementedError("Not yet implemented");
+    throw new NotImplementedException("Not yet implemented");
   }
 
   @Override
   public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata)
   {
-    throw new NotImplementedError("Not yet implemented");
+    throw new NotImplementedException("Not yet implemented");
   }
 
 }

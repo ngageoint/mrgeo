@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<AllColumns firstLineHeader="false">
-  <Column name="string1" type="Nominal"/>
-  <Column name="int1" type="Numeric"/>
-  <Column name="double1" type="Numeric"/>
-</AllColumns>

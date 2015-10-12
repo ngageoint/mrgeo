@@ -15,47 +15,17 @@
 
 package org.mrgeo.mapalgebra.parser.jexl;
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlException;
 import org.apache.commons.jexl2.MapContext;
 import org.apache.commons.jexl2.Script;
-import org.apache.commons.jexl2.parser.ASTAdditiveNode;
-import org.apache.commons.jexl2.parser.ASTAdditiveOperator;
-import org.apache.commons.jexl2.parser.ASTAndNode;
-import org.apache.commons.jexl2.parser.ASTArrayLiteral;
-import org.apache.commons.jexl2.parser.ASTAssignment;
-import org.apache.commons.jexl2.parser.ASTDivNode;
-import org.apache.commons.jexl2.parser.ASTEQNode;
-import org.apache.commons.jexl2.parser.ASTGENode;
-import org.apache.commons.jexl2.parser.ASTGTNode;
-import org.apache.commons.jexl2.parser.ASTIdentifier;
-import org.apache.commons.jexl2.parser.ASTJexlScript;
-import org.apache.commons.jexl2.parser.ASTLENode;
-import org.apache.commons.jexl2.parser.ASTLTNode;
-import org.apache.commons.jexl2.parser.ASTMethodNode;
-import org.apache.commons.jexl2.parser.ASTMulNode;
-import org.apache.commons.jexl2.parser.ASTNENode;
-import org.apache.commons.jexl2.parser.ASTNotNode;
-import org.apache.commons.jexl2.parser.ASTNumberLiteral;
-import org.apache.commons.jexl2.parser.ASTOrNode;
-import org.apache.commons.jexl2.parser.ASTReference;
-import org.apache.commons.jexl2.parser.ASTReferenceExpression;
-import org.apache.commons.jexl2.parser.ASTStringLiteral;
-import org.apache.commons.jexl2.parser.ASTUnaryMinusNode;
-import org.apache.commons.jexl2.parser.JexlNode;
-import org.mrgeo.mapalgebra.MapOpFactory;
-import org.mrgeo.mapalgebra.parser.ParserAdapter;
-import org.mrgeo.mapalgebra.parser.ParserConstantNode;
-import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapalgebra.parser.ParserFunctionNode;
-import org.mrgeo.mapalgebra.parser.ParserNode;
-import org.mrgeo.mapalgebra.parser.ParserVariableNode;
+import org.apache.commons.jexl2.parser.*;
+import org.mrgeo.mapalgebra.parser.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JexlParserAdapter implements ParserAdapter
 {
@@ -78,15 +48,17 @@ public class JexlParserAdapter implements ParserAdapter
     twoArgFunctions.put(ASTDivNode.class, "/");
     twoArgFunctions.put(ASTMulNode.class, "*");
     twoArgFunctions.put(ASTAndNode.class, "&&");
+    twoArgFunctions.put(ASTBitwiseAndNode.class, "&");
     twoArgFunctions.put(ASTOrNode.class, "||");
+    twoArgFunctions.put(ASTBitwiseOrNode.class, "|");
   }
 
   @Override
   public void initialize()
   {
     engine = new MrGeoJexlEngine();
-    engine.setSilent(false);
-    engine.setStrict(true);
+    //engine.setSilent(false);
+    //engine.setStrict(true);
     context = new MapContext();
   }
 
@@ -117,7 +89,7 @@ public class JexlParserAdapter implements ParserAdapter
   }
 
   @Override
-  public ParserNode parse(String expression, MapOpFactory factory) throws ParserException
+  public ParserNode parse(String expression) throws ParserException
   {
     if (engine == null)
     {
@@ -125,17 +97,18 @@ public class JexlParserAdapter implements ParserAdapter
     }
     try
     {
-      @SuppressWarnings("unused")
+      //@SuppressWarnings("unused")
       Script script = engine.createScript(expression);
       jexlRootNode = engine.getScript();
+      //jexlRootNode = (ASTJexlScript)engine.createScript(expression);
       ParserNode last = null;
       for (int i = 0; i < jexlRootNode.jjtGetNumChildren(); i++)
       {
         last = convertToMrGeoNode(jexlRootNode.jjtGetChild(i));
-        if (factory != null)
-        {
-          factory.convertToMapOp(last);
-        }
+//        if (factory != null)
+//        {
+//          factory.convertToMapOp(last);
+//        }
       }
       return last;
     }
@@ -168,27 +141,27 @@ public class JexlParserAdapter implements ParserAdapter
       Number oldNum = ((ASTNumberLiteral)nativeNode.jjtGetChild(0)).getLiteral();
       if (oldNum instanceof Integer)
       {
-        return new Integer(0 - oldNum.intValue());
+        return -oldNum.intValue();
       }
-      if (oldNum instanceof Double)
+      else if (oldNum instanceof Double)
       {
-        return new Double(0.0 - oldNum.doubleValue());
+        return -oldNum.doubleValue();
       }
-      if (oldNum instanceof Float)
+      else if (oldNum instanceof Float)
       {
         return new Float(0.0 - oldNum.floatValue());
       }
-      if (oldNum instanceof Short)
+      else if (oldNum instanceof Short)
       {
-        return new Short((short)(0 - oldNum.shortValue()));
+        return -oldNum.shortValue();
       }
-      if (oldNum instanceof Long)
+      else if (oldNum instanceof Long)
       {
-        return new Long(0 - oldNum.longValue());
+        return -oldNum.longValue();
       }
-      if (oldNum instanceof Byte)
+      else if (oldNum instanceof Byte)
       {
-        return new Byte((byte)(0 - oldNum.byteValue()));
+        return -oldNum.byteValue();
       }
     }
     return ((JexlNode)node.getNativeNode()).jjtGetValue();
@@ -203,6 +176,7 @@ public class JexlParserAdapter implements ParserAdapter
       ParserConstantNode cn = new ParserConstantNode();
       cn.setNativeNode(node);
       cn.setValue(((ASTNumberLiteral) node).getLiteral());
+      cn.setName(cn.getValue().toString());
       n = cn;
     }
     else if (node instanceof ASTStringLiteral)
@@ -210,6 +184,7 @@ public class JexlParserAdapter implements ParserAdapter
       ParserConstantNode cn = new ParserConstantNode();
       cn.setNativeNode(node);
       cn.setValue(((ASTStringLiteral) node).getLiteral());
+      cn.setName(cn.getValue().toString());
       n = cn;
     }
 //    else if (node instanceof ASTAssignment)
@@ -233,7 +208,7 @@ public class JexlParserAdapter implements ParserAdapter
       {
         ParserFunctionNode fn = new ParserFunctionNode();
         fn.setNativeNode(node);
-        fn.setName(methodNameNode.image);
+        fn.setName(methodNameNode.image.toLowerCase());
         n = fn;
         parentNode = null;
         // We have to process the children of a function call node
@@ -247,57 +222,73 @@ public class JexlParserAdapter implements ParserAdapter
         return n;
       }
     }
-    else if (node instanceof ASTUnaryMinusNode)
+    else
     {
-      // Handle negative numbers
-      ParserFunctionNode fn = new ParserFunctionNode();
-      fn.setName("UMinus");
-      fn.setNativeNode(node);
-      n = fn;
-//      parentNode = node;
-    }
-    else if (node instanceof ASTIdentifier)
-    {
-      ParserVariableNode vn = new ParserVariableNode();
-      vn.setNativeNode(node);
-      vn.setName(node.image);
-      n = vn;
-//      parentNode = node;
-    }
-    else if (node instanceof ASTNotNode)
-    {
-      ParserFunctionNode fn = new ParserFunctionNode();
-      fn.setNativeNode(node);
-      fn.setName("!");
-      n = fn;
-    }
-    else if (node instanceof ASTArrayLiteral)
-    {
-      // This is invoked in the case where an image is specified in
-      // map algebra (e.g. [myImage]). We translate this to the same
-      // node structure that JEP used to generate.
-      ParserFunctionNode fn = new ParserFunctionNode();
-      fn.setName("LIST");
-      fn.setNativeNode(node);
-      n = fn;
-      parentNode = node;
-    }
-    else if (node instanceof ASTAdditiveNode)
-    {
-      // This is used for two or more expressions being added/subtracted
-      ParserNode newParent = null;
-      int index = 1;
-      ParserNode previousOperand = convertToMrGeoNode(node.jjtGetChild(0));
-      while (index < node.jjtGetNumChildren())
+      if (node instanceof ASTUnaryMinusNode)
       {
-        newParent = new ParserFunctionNode();
-        newParent.setName(((ASTAdditiveOperator)node.jjtGetChild(index)).image);
-        newParent.addChild(previousOperand);
-        newParent.addChild(convertToMrGeoNode(node.jjtGetChild(index+1)));
-        previousOperand = newParent;
-        index += 2;
+        // Handle negative numbers
+        if (node.jjtGetNumChildren() == 1 && node.jjtGetChild(0) instanceof ASTNumberLiteral)
+        {
+          ParserConstantNode cn = new ParserConstantNode();
+          cn.setNativeNode(node);
+
+          cn.setValue(-(((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().doubleValue()));
+          cn.setName(cn.getValue().toString());
+          n = cn;
+
+      parentNode = node;
+
+        }
+        else
+        {
+          ParserFunctionNode fn = new ParserFunctionNode();
+          fn.setName("uminus");
+          fn.setNativeNode(node);
+          n = fn;
+        }
       }
-      return newParent;
+      else if (node instanceof ASTIdentifier)
+      {
+        ParserVariableNode vn = new ParserVariableNode();
+        vn.setNativeNode(node);
+        vn.setName(node.image);
+        n = vn;
+//      parentNode = node;
+      }
+      else if (node instanceof ASTNotNode)
+      {
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setNativeNode(node);
+        fn.setName("!");
+        n = fn;
+      }
+      else if (node instanceof ASTArrayLiteral)
+      {
+        // This is invoked in the case where an image is specified in
+        // map algebra (e.g. [myImage]). We translate this to the same
+        // node structure that JEP used to generate.
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName("LIST");
+        fn.setNativeNode(node);
+        n = fn;
+        parentNode = node;
+      }
+      else if (node instanceof ASTAdditiveNode)
+      {
+        // This is used for two or more expressions being added/subtracted
+        ParserNode newParent = null;
+        int index = 1;
+        ParserNode previousOperand = convertToMrGeoNode(node.jjtGetChild(0));
+        while (index < node.jjtGetNumChildren())
+        {
+          newParent = new ParserFunctionNode();
+          newParent.setName(((ASTAdditiveOperator) node.jjtGetChild(index)).image);
+          newParent.addChild(previousOperand);
+          newParent.addChild(convertToMrGeoNode(node.jjtGetChild(index + 1)));
+          previousOperand = newParent;
+          index += 2;
+        }
+        return newParent;
 
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(0)));
 //      ParserFunctionNode fn = new ParserFunctionNode();
@@ -310,7 +301,7 @@ public class JexlParserAdapter implements ParserAdapter
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(0)));
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(2)));
 //      return n;
-    }
+      }
 //    else if (node instanceof ASTDivNode)
 //    {
 //      ParserFunctionNode fn = new ParserFunctionNode();
@@ -327,23 +318,24 @@ public class JexlParserAdapter implements ParserAdapter
 //      n = fn;
 //      parentNode = node;
 //    }
-    else if (twoArgFunctions.containsKey(node.getClass()))
-    {
-      ParserFunctionNode fn = new ParserFunctionNode();
-      fn.setName(twoArgFunctions.get(node.getClass()));
-      fn.setNativeNode(node);
-      n = fn;
-      parentNode = node;
-    }
-    else if ((node instanceof ASTReference) || (node instanceof ASTReferenceExpression))
-    {
-      if (node.jjtGetNumChildren() > 0)
+      else if (twoArgFunctions.containsKey(node.getClass()))
       {
-        JexlNode child = node.jjtGetChild(0);
-        return convertToMrGeoNode(child);
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName(twoArgFunctions.get(node.getClass()));
+        fn.setNativeNode(node);
+        n = fn;
+        parentNode = node;
+      }
+      else if ((node instanceof ASTReference) || (node instanceof ASTReferenceExpression))
+      {
+        if (node.jjtGetNumChildren() > 0)
+        {
+          JexlNode child = node.jjtGetChild(0);
+          return convertToMrGeoNode(child);
+        }
       }
     }
-    if (n != null && parentNode != null)
+    if (n != null)
     {
       for (int i=0; i < parentNode.jjtGetNumChildren(); i++)
       {

@@ -51,11 +51,6 @@
       </resource>
     </resources>
     <plugins>
-      <!-- Include Scala in this project -->
-      <plugin>
-        <groupId>org.scala-tools</groupId>
-        <artifactId>maven-scala-plugin</artifactId>
-      </plugin>
       <!-- Unit Test plugin -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -130,5 +125,10 @@
       </plugin>
     </plugins>
   </build>
-  <dependencies><!-- no dependencies? --></dependencies>
+  <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+  </dependencies>
 </project>

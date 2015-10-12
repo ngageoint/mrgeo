@@ -16,15 +16,17 @@
 package org.mrgeo.resources.about;
 
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.mapalgebra.MapAlgebraParser;
+import org.mrgeo.mapalgebra.MapOpFactory;
 import org.mrgeo.services.Configuration;
-import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.utils.ClassLoaderUtil;
-import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple3;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.*;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
@@ -32,7 +34,6 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.security.Principal;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -40,7 +41,6 @@ import java.util.Properties;
 @Path("/About")
 public class AboutResource
 {
-  private static final long serialVersionUID = 1L;
   private static final Logger log = LoggerFactory.getLogger(AboutResource.class);
 
   @Context
@@ -84,6 +84,7 @@ public class AboutResource
       URL buildInfoUrl = Thread.currentThread().getContextClassLoader().getResource(
           "org/mrgeo/services/build.info");
       Properties buildInfo = new Properties();
+      assert buildInfoUrl != null;
       buildInfo.load(buildInfoUrl.openStream());
 
       String imageBase = Configuration.getInstance().getProperties().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
@@ -100,13 +101,12 @@ public class AboutResource
       xmlWriter.writeAttribute("user", user != null ? user : "*unknown*");
 
       xmlWriter.writeStartElement("Properties");
-      Iterator it = getConfiguration().entrySet().iterator();
-      while (it.hasNext())
+      for (Object o : getConfiguration().entrySet())
       {
-        Map.Entry prop = (Map.Entry)it.next();
+        Map.Entry prop = (Map.Entry) o;
         xmlWriter.writeStartElement("Property");
-        xmlWriter.writeAttribute("name", (String)prop.getKey());
-        xmlWriter.writeAttribute("value", (String)prop.getValue());
+        xmlWriter.writeAttribute("name", (String) prop.getKey());
+        xmlWriter.writeAttribute("value", (String) prop.getValue());
         xmlWriter.writeEndElement();
       }
       xmlWriter.writeEndElement();
@@ -114,19 +114,18 @@ public class AboutResource
       xmlWriter.writeStartElement("MapAlgebra");
       //ServiceLoader<MapOpFactory> loader = ServiceLoader.load(MapOpFactory.class);
 
-      // TODO: The provider properties passed to the MapAlgebraParser need to be
-      // constructed from calling a security layer with the web context. The security
-      // layer should extract whatever it needs from the web request (like a PKI) and
-      // set it into the properties so it can be used as needed by the providers.
-      MapAlgebraParser p = new MapAlgebraParser(HadoopUtils.createConfiguration(), "",
-                                                SecurityUtils.getProviderProperties());
-      for (String n : p.getMapOpNames())
+      for (Tuple3<String, String, String> op: MapOpFactory.describe())
       {
         xmlWriter.writeStartElement("Operation");
-        xmlWriter.writeAttribute("name", n);
+        xmlWriter.writeAttribute("name", op._1());
+        xmlWriter.writeStartElement("Description");
+        xmlWriter.writeCharacters(op._2());
+        xmlWriter.writeEndElement();
+        xmlWriter.writeStartElement("Usage");
+        xmlWriter.writeCharacters(op._3());
+        xmlWriter.writeEndElement();
         xmlWriter.writeEndElement();
       }
-
 //      for (MapOpFactory s : loader)
 //      {
 //        for (String n : s.getMapOpNames())

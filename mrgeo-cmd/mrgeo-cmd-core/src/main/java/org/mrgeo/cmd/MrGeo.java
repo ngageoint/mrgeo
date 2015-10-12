@@ -100,6 +100,45 @@ public static void main(String[] args)
 {
   Configuration conf = HadoopUtils.createConfiguration();
 
+//  LoggingUtils.setDefaultLogLevel(LoggingUtils.WARN);
+//  try
+//  {
+//    Path base = new Path("s3://mrgeo/images/aster-30m/12");
+//
+//    FileSystem fs = base.getFileSystem(conf);
+//
+//    TileIdWritable first = new TileIdWritable();
+//    TileIdWritable last = new TileIdWritable();
+//    RasterWritable raster = new RasterWritable();
+//
+//    for (int i = 0; i < 1889; i++)
+//    {
+//      Path file = new Path(base, String.format("part-r-%05d", i));
+//
+//      System.out.println("Opening reader " + i + " (" + file + ")");
+//
+//      MapFile.Reader reader = new MapFile.Reader(file, conf);
+//      // read the 1st and last keys
+//      reader.finalKey(last);
+//      reader.reset();
+//      reader.next(first, raster);
+//
+//      if (last.get() < first.get())
+//      {
+//        System.out.println("Something wen't wrong!  Last (" +
+//            last.get() + ") is greater than first (" + first.get() + ")");
+//      }
+//
+//      // don't close the readers on purpose!
+//    }
+//  }
+//  catch (Exception e)
+//  {
+//    e.printStackTrace();
+//  }
+//
+//  System.exit(1);
+
   int res = 0;
   try
   {

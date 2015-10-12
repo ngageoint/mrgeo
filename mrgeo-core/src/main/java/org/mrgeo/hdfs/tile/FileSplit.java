@@ -15,7 +15,6 @@
 
 package org.mrgeo.hdfs.tile;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -28,6 +27,7 @@ import org.mrgeo.hdfs.partitioners.SplitGenerator;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.HadoopUtils;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -271,7 +271,7 @@ public void readSplits(InputStream stream) throws SplitException
 
     if (!first.equals(VERSION))
     {
-      final long split = ByteBuffer.wrap(Base64.decodeBase64(first.getBytes())).getLong();
+      final long split = ByteBuffer.wrap(DatatypeConverter.parseBase64Binary(first)).getLong();
       if (split == VERSION_2)
       {
         throw new SplitException("Old version 2 splits file, you need to convert it to version 3, " +
@@ -301,7 +301,7 @@ public boolean isVersion2(Path splitsfile) throws IOException
     Scanner reader = new Scanner(stream);
 
     String line = reader.nextLine();
-    final long split = ByteBuffer.wrap(Base64.decodeBase64(line)).getLong();
+    final long split = ByteBuffer.wrap(DatatypeConverter.parseBase64Binary(line)).getLong();
     return split == VERSION_2;
   }
   catch (BufferUnderflowException e)

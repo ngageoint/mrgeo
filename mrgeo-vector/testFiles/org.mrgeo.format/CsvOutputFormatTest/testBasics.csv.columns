@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<AllColumns firstLineHeader="false">
-  <Column name="GEOMETRY" type="Unknown"/>
-  <Column name="double1" type="Unknown"/>
-  <Column name="int1" type="Unknown"/>
-  <Column name="string1" type="Unknown"/>
-  <!--loaded = LOAD 'filename' USING PigStorage() AS (GEOMETRY, double1, int1, string1);-->
-</AllColumns>

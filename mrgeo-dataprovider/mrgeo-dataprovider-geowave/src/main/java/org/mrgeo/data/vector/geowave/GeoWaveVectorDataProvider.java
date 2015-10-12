@@ -348,13 +348,6 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   }
 
   @Override
-  public VectorWriter getVectorWriter(VectorWriterContext context)
-  {
-    // Not yet implemented
-    return null;
-  }
-
-  @Override
   public RecordReader<LongWritable, Geometry> getRecordReader()
   {
     return new GeoWaveVectorRecordReader();

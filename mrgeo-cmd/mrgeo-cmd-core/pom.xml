@@ -75,7 +75,7 @@
           </archive>
         </configuration>
       </plugin>
-   </plugins>
+    </plugins>
   </build>
   <dependencies>
     <dependency>
@@ -83,12 +83,8 @@
       <artifactId>commons-cli</artifactId>
     </dependency>
     <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.reflections</groupId>
-      <artifactId>reflections</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
     </dependency>
   </dependencies>
 </project>

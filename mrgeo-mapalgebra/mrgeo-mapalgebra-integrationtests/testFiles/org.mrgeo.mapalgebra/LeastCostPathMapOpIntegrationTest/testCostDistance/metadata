@@ -1,94 +1,277 @@
 {
+  "bands" : 1,
+  "tileType" : 0,
+  "defaultValues" : [
+    -9999.0
+  ],
+  "imageMetadata" : [
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : {
+        "minX" : 1,
+        "minY" : 0,
+        "maxX" : 1,
+        "maxY" : 0
+      },
+      "name" : "1",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 13,
+        "maxY" : 12
+      },
+      "stats" : [
+        {
+          "min" : 20111.95703125,
+          "max" : 27122.658203125,
+          "mean" : 24322.041015625,
+          "sum" : 72966.123046875,
+          "count" : 3
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 2,
+        "minY" : 1,
+        "maxX" : 2,
+        "maxY" : 1
+      },
+      "name" : "2",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 26,
+        "maxY" : 24
+      },
+      "stats" : [
+        {
+          "min" : 8362.3076171875,
+          "max" : 37503.56640625,
+          "mean" : 26735.06911892361,
+          "sum" : 481231.244140625,
+          "count" : 18
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 5,
+        "minY" : 2,
+        "maxX" : 5,
+        "maxY" : 2
+      },
+      "name" : "3",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 52,
+        "maxY" : 48
+      },
+      "stats" : [
+        {
+          "min" : 2939.28076171875,
+          "max" : 45142.2421875,
+          "mean" : 29472.038812810726,
+          "sum" : 2593539.4155273438,
+          "count" : 88
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 10,
+        "minY" : 5,
+        "maxX" : 11,
+        "maxY" : 5
+      },
+      "name" : "4",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 104,
+        "maxY" : 96
+      },
+      "stats" : [
+        {
+          "min" : 2152.71875,
+          "max" : 47377.7890625,
+          "mean" : 31073.172079067037,
+          "sum" : 1.2304976143310547E7,
+          "count" : 396
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 21,
+        "minY" : 10,
+        "maxX" : 22,
+        "maxY" : 11
+      },
+      "name" : "5",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 208,
+        "maxY" : 192
+      },
+      "stats" : [
+        {
+          "min" : 842.7263793945312,
+          "max" : 49169.55859375,
+          "mean" : 32025.90204559308,
+          "sum" : 5.402769675091553E7,
+          "count" : 1687
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 43,
+        "minY" : 21,
+        "maxX" : 44,
+        "maxY" : 22
+      },
+      "name" : "6",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 416,
+        "maxY" : 384
+      },
+      "stats" : [
+        {
+          "min" : 393.4213562011719,
+          "max" : 49569.015625,
+          "mean" : 32543.945877880364,
+          "sum" : 2.2696147855233765E8,
+          "count" : 6974
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 87,
+        "minY" : 42,
+        "maxX" : 88,
+        "maxY" : 44
+      },
+      "name" : "7",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 832,
+        "maxY" : 768
+      },
+      "stats" : [
+        {
+          "min" : 244.1195526123047,
+          "max" : 49777.7109375,
+          "mean" : 32835.76127822608,
+          "sum" : 9.325356203016205E8,
+          "count" : 28400
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 174,
+        "minY" : 85,
+        "maxX" : 177,
+        "maxY" : 88
+      },
+      "name" : "8",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 1664,
+        "maxY" : 1536
+      },
+      "stats" : [
+        {
+          "min" : 135.31512451171875,
+          "max" : 49900.546875,
+          "mean" : 32988.28688077477,
+          "sum" : 3.7822060557414703E9,
+          "count" : 114653
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 348,
+        "minY" : 170,
+        "maxX" : 354,
+        "maxY" : 176
+      },
+      "name" : "9",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 3328,
+        "maxY" : 3072
+      },
+      "stats" : [
+        {
+          "min" : 46.32405090332031,
+          "max" : 49974.453125,
+          "mean" : 33070.99928410539,
+          "sum" : 1.5242026718052765E10,
+          "count" : 460888
+        }
+      ]
+    },
+    {
+      "tileBounds" : {
+        "minX" : 696,
+        "minY" : 341,
+        "maxX" : 708,
+        "maxY" : 352
+      },
+      "name" : "10",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 6656,
+        "maxY" : 6144
+      },
+      "stats" : [
+        {
+          "min" : 0.0,
+          "max" : 49999.984,
+          "mean" : 33113.19824670041,
+          "sum" : 6.11992500751815E10,
+          "count" : 1848183
+        }
+      ]
+    }
+  ],
+  "classification" : "Continuous",
+  "resamplingMethod" : "MEAN",
+  "stats" : [
+    {
+      "min" : 0.0,
+      "max" : 49999.984,
+      "mean" : 33113.19824670041,
+      "sum" : 6.11992500751815E10,
+      "count" : 1848183
+    }
+  ],
   "bounds" : {
     "minX" : 64.6875,
     "minY" : 29.8828125,
     "maxX" : 69.2578125,
     "maxY" : 34.1015625
   },
-  "tilesize" : 512,
-  "bands" : 1,
-  "defaultValues" : [ -9999.0 ],
-  "tileType" : 0,
   "maxZoomLevel" : 10,
-  "stats" : [ {
-    "min" : 0.0,
-    "max" : 49999.984,
-    "mean" : 33113.19824670041,
-    "sum" : 6.11992500751815E10,
-    "count" : 1848183
-  } ],
-  "classification" : "Continuous",
-  "resamplingMethod" : null,
-  "imageMetadata" : [ {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : null,
-    "tileBounds" : null,
-    "image" : null,
-    "stats" : null
-  }, {
-    "pixelBounds" : {
-      "minX" : 0,
-      "minY" : 0,
-      "maxX" : 6656,
-      "maxY" : 6144
-    },
-    "tileBounds" : {
-      "minX" : 696,
-      "minY" : 341,
-      "maxX" : 708,
-      "maxY" : 352
-    },
-    "image" : "10",
-    "stats" : [ {
-      "min" : 0.0,
-      "max" : 49999.984,
-      "mean" : 33113.19824670041,
-      "sum" : 6.11992500751815E10,
-      "count" : 1848183
-    } ]
-  } ]
+  "tilesize" : 512,
+  "protectionLevel" : "",
+  "tags" : {
+  }
 }
