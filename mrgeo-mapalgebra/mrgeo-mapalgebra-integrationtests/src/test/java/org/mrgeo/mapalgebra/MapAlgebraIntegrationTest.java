@@ -38,6 +38,7 @@ import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -115,64 +116,64 @@ public static void init() throws IOException
   testUtils = new MapOpTestUtils(MapAlgebraIntegrationTest.class);
   //MapOpTestVectorUtils vectorTestUtils = new MapOpTestVectorUtils(MapAlgebraIntegrationTest.class);
 
-//  HadoopFileUtils.delete(testUtils.getInputHdfs());
-//
-//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
-//      testUtils.getInputHdfs(),
-//      pointsName + ".tsv");
-//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
-//      testUtils.getInputHdfs(),
-//      pointsName + ".tsv.columns");
-//  pointsPath = testUtils.getInputHdfsFor(pointsName + ".tsv").toString();
-//
-//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-//      testUtils.getInputHdfs(),
-//      majorRoadShapeName + ".shp");
-//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-//      testUtils.getInputHdfs(),
-//      majorRoadShapeName + ".prj");
-//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-//      testUtils.getInputHdfs(),
-//      majorRoadShapeName + ".shx");
-//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-//      testUtils.getInputHdfs(),
-//      majorRoadShapeName + ".dbf");
-//  majorRoadShapePath = testUtils.getInputHdfsFor(majorRoadShapeName + ".shp");
-//
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allones);
-//  allonesPath = new Path(testUtils.getInputHdfs(), allones);
-//
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), alltwos);
-//  alltwosPath = new Path(testUtils.getInputHdfs(), alltwos);
-//
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundreds);
-//  allhundredsPath = new Path(testUtils.getInputHdfs(), allhundreds);
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsleft);
-//  allhundredsleftPath = new Path(testUtils.getInputHdfs(), allhundredsleft);
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredshalf);
-//  allhundredshalfPath = new Path(testUtils.getInputHdfs(), allhundredshalf);
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
-//  allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
-//
-//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
-//  regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
-//
-//
-//  HadoopFileUtils
-//      .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
-//  smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
-//
-//
-//  File file = new File(smallslope);
-//  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
-//
-//  file = new File(smallElevation);
-//  smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
-//
-//  file = new File(greece);
-//  greece = new Path("file://" + file.getAbsolutePath()).toString();
+  HadoopFileUtils.delete(testUtils.getInputHdfs());
+
+  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
+      testUtils.getInputHdfs(),
+      pointsName + ".tsv");
+  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
+      testUtils.getInputHdfs(),
+      pointsName + ".tsv.columns");
+  pointsPath = testUtils.getInputHdfsFor(pointsName + ".tsv").toString();
+
+  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+      testUtils.getInputHdfs(),
+      majorRoadShapeName + ".shp");
+  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+      testUtils.getInputHdfs(),
+      majorRoadShapeName + ".prj");
+  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+      testUtils.getInputHdfs(),
+      majorRoadShapeName + ".shx");
+  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+      testUtils.getInputHdfs(),
+      majorRoadShapeName + ".dbf");
+  majorRoadShapePath = testUtils.getInputHdfsFor(majorRoadShapeName + ".shp");
+
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allones);
+  allonesPath = new Path(testUtils.getInputHdfs(), allones);
+
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), alltwos);
+  alltwosPath = new Path(testUtils.getInputHdfs(), alltwos);
+
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundreds);
+  allhundredsPath = new Path(testUtils.getInputHdfs(), allhundreds);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsleft);
+  allhundredsleftPath = new Path(testUtils.getInputHdfs(), allhundredsleft);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredshalf);
+  allhundredshalfPath = new Path(testUtils.getInputHdfs(), allhundredshalf);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
+  allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
+
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
+  regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
+
+
+  HadoopFileUtils
+      .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
+  smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
+
+
+  File file = new File(smallslope);
+  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
+
+  file = new File(smallElevation);
+  smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
+
+  file = new File(greece);
+  greece = new Path("file://" + file.getAbsolutePath()).toString();
 
 }
 
