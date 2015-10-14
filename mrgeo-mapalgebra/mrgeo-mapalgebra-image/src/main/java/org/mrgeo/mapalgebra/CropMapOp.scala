@@ -19,7 +19,7 @@ import java.awt.image.WritableRaster
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -125,7 +125,7 @@ class CropMapOp extends RasterMapOp with Externalizable {
             minCopyY = t
           }
 
-          val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+          val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
           for (y <- 0 until raster.getHeight) {
             for (x <- 0 until raster.getWidth) {

@@ -20,7 +20,7 @@ import java.io.{IOException, Externalizable, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
@@ -60,37 +60,62 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     val childA = node.getChild(0)
     val childB = node.getChild(1)
 
-    childA match {
-    case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
-    case func:ParserFunctionNode => varA = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+    try {
+      varA = RasterMapOp.decodeToRaster(childA, variables)
     }
-    case variable:ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
-      case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
-      case func:ParserFunctionNode => varA = func.getMapOp match {
-        case raster:RasterMapOp => Some(raster)
-        case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
-      }
-      }
+    catch {
+      case e:ParserException =>
+        try {
+          constA = MapOp.decodeDouble(childA, variables)
+        }
+        catch {
+          case e: ParserException => throw new ParserException("First term \"" + childA + "\" is not a raster or constant")
+        }
+    }
+    try {
+      varB = RasterMapOp.decodeToRaster(childB, variables)
+    }
+    catch {
+      case e:ParserException =>
+        try {
+          constB = MapOp.decodeDouble(childB, variables)
+        }
+        catch {
+          case e: ParserException => throw new ParserException("Second term \"" + childB + "\" is not a raster or constant")
+        }
     }
 
-    childB match {
-    case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
-    case func:ParserFunctionNode => varB = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
-    }
-    case variable:ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
-      case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
-      case func:ParserFunctionNode => varB = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
-      }
-      }
-    }
+//    childA match {
+//    case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
+//    case func:ParserFunctionNode => varA = func.getMapOp match {
+//      case raster:RasterMapOp => Some(raster)
+//      case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+//    }
+//    case variable:ParserVariableNode =>
+//      MapOp.decodeVariable(variable, variables).get match {
+//      case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
+//      case func:ParserFunctionNode => varA = func.getMapOp match {
+//        case raster:RasterMapOp => Some(raster)
+//        case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+//      }
+//      }
+//    }
+
+//    childB match {
+//    case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
+//    case func:ParserFunctionNode => varB = func.getMapOp match {
+//      case raster:RasterMapOp => Some(raster)
+//      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
+//    }
+//    case variable:ParserVariableNode =>
+//      MapOp.decodeVariable(variable, variables).get match {
+//      case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
+//      case func:ParserFunctionNode => varB = func.getMapOp match {
+//      case raster:RasterMapOp => Some(raster)
+//      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
+//      }
+//      }
+//    }
 
     if (constA.isEmpty && varA.isEmpty) {
       throw new ParserException("First term \"" + childA + "\" is invalid")
@@ -129,7 +154,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     val nodata = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)).getDefaultValue(0)
 
     val answer = RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
       for (y <- 0 until raster.getHeight) {
         for (x <- 0 until raster.getWidth) {
@@ -158,7 +183,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     val nodata = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)).getDefaultValue(0)
 
     val answer = RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
       for (y <- 0 until raster.getHeight) {
         for (x <- 0 until raster.getWidth) {
@@ -210,8 +235,8 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       }
       else {
         // we know there are only 1 item in each group's iterator, so we can use head()
-        val raster1 = RasterWritable.toRaster(iter1.head).asInstanceOf[WritableRaster]
-        val raster2 = RasterWritable.toRaster(iter2.head).asInstanceOf[WritableRaster]
+        val raster1 = RasterUtils.makeRasterWritable(RasterWritable.toRaster(iter1.head))
+        val raster2 = RasterUtils.makeRasterWritable(RasterWritable.toRaster(iter2.head))
 
         for (y <- 0 until raster1.getHeight) {
           for (x <- 0 until raster1.getWidth) {

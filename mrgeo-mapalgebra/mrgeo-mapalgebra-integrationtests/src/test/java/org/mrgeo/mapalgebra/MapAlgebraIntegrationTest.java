@@ -35,10 +35,10 @@ import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -116,64 +116,64 @@ public static void init() throws IOException
   testUtils = new MapOpTestUtils(MapAlgebraIntegrationTest.class);
   //MapOpTestVectorUtils vectorTestUtils = new MapOpTestVectorUtils(MapAlgebraIntegrationTest.class);
 
-  HadoopFileUtils.delete(testUtils.getInputHdfs());
-
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
-      testUtils.getInputHdfs(),
-      pointsName + ".tsv");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
-      testUtils.getInputHdfs(),
-      pointsName + ".tsv.columns");
-  pointsPath = testUtils.getInputHdfsFor(pointsName + ".tsv").toString();
-
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".shp");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".prj");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".shx");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".dbf");
-  majorRoadShapePath = testUtils.getInputHdfsFor(majorRoadShapeName + ".shp");
-
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allones);
-  allonesPath = new Path(testUtils.getInputHdfs(), allones);
-
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), alltwos);
-  alltwosPath = new Path(testUtils.getInputHdfs(), alltwos);
-
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundreds);
-  allhundredsPath = new Path(testUtils.getInputHdfs(), allhundreds);
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsleft);
-  allhundredsleftPath = new Path(testUtils.getInputHdfs(), allhundredsleft);
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredshalf);
-  allhundredshalfPath = new Path(testUtils.getInputHdfs(), allhundredshalf);
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
-  allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
-
-  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
-  regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
-
-
-  HadoopFileUtils
-      .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
-  smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
-
-
-  File file = new File(smallslope);
-  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
-
-  file = new File(smallElevation);
-  smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
-
-  file = new File(greece);
-  greece = new Path("file://" + file.getAbsolutePath()).toString();
+//  HadoopFileUtils.delete(testUtils.getInputHdfs());
+//
+//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
+//      testUtils.getInputHdfs(),
+//      pointsName + ".tsv");
+//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal() + "points"),
+//      testUtils.getInputHdfs(),
+//      pointsName + ".tsv.columns");
+//  pointsPath = testUtils.getInputHdfsFor(pointsName + ".tsv").toString();
+//
+//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+//      testUtils.getInputHdfs(),
+//      majorRoadShapeName + ".shp");
+//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+//      testUtils.getInputHdfs(),
+//      majorRoadShapeName + ".prj");
+//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+//      testUtils.getInputHdfs(),
+//      majorRoadShapeName + ".shx");
+//  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
+//      testUtils.getInputHdfs(),
+//      majorRoadShapeName + ".dbf");
+//  majorRoadShapePath = testUtils.getInputHdfsFor(majorRoadShapeName + ".shp");
+//
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allones);
+//  allonesPath = new Path(testUtils.getInputHdfs(), allones);
+//
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), alltwos);
+//  alltwosPath = new Path(testUtils.getInputHdfs(), alltwos);
+//
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundreds);
+//  allhundredsPath = new Path(testUtils.getInputHdfs(), allhundreds);
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsleft);
+//  allhundredsleftPath = new Path(testUtils.getInputHdfs(), allhundredsleft);
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredshalf);
+//  allhundredshalfPath = new Path(testUtils.getInputHdfs(), allhundredshalf);
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsup);
+//  allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
+//
+//  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
+//  regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
+//
+//
+//  HadoopFileUtils
+//      .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
+//  smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
+//
+//
+//  File file = new File(smallslope);
+//  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
+//
+//  file = new File(smallElevation);
+//  smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
+//
+//  file = new File(greece);
+//  greece = new Path("file://" + file.getAbsolutePath()).toString();
 
 }
 
@@ -285,6 +285,51 @@ public void aspectRad() throws Exception
         String.format("aspect([%s], \"rad\")", smallElevation));
   }
 }
+
+@Test
+@Category(IntegrationTest.class)
+public void bandcombine() throws Exception
+{
+  String exp = String.format("bandcombine([%s], [%s])", allones, allhundreds);
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
+  if (true) // (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void bandcombineAlternate() throws Exception
+{
+  LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+
+//  String blue = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B2-blue.TIF";
+//  String green = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B3-green.TIF";
+//  String red = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B4-red.TIF";
+//  String exp = String.format("bc(ingest('%s'), ingest('%s'), ingest('%s'))", red, green, blue);
+
+//  String exp = String.format("bc([%s], [%s], [%s])",
+//      "/mrgeo/images/landsat-red", "/mrgeo/images/landsat-green", "/mrgeo/images/landsat-blue");
+
+  String exp = String.format("bc([%s], [%s])", allones, allhundreds);
+  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
+  if (true) // (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
@@ -1043,6 +1088,7 @@ public void kernelLaplacian() throws Exception
   }
 }
 
+
 @Test
 @Category(IntegrationTest.class)
 public void log() throws Exception
@@ -1605,5 +1651,7 @@ public void rasterizeVector3() throws Exception
         String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath));
   }
 }
+
+
 
 }

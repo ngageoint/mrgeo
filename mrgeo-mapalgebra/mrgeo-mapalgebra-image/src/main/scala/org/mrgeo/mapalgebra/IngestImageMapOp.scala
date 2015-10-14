@@ -130,7 +130,9 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
     val result = IngestImage.ingest(context, filebuilder.result(), zoom.get, tilesize, categorical.get, nodata)
     rasterRDD = result._1 match {
-    case rrdd:RasterRDD => Some(rrdd)
+    case rrdd:RasterRDD =>
+      rrdd.checkpoint()
+      Some(rrdd)
     case _ => None
     }
 

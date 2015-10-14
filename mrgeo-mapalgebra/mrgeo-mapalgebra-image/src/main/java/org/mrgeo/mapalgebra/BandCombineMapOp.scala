@@ -15,32 +15,34 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.WritableRaster
-import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
+import java.awt.image.{Raster, WritableRaster}
+import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
+import java.util
 
 import org.apache.spark.rdd.CoGroupedRDD
-import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{HashPartitioner, SparkContext, SparkConf}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
+import org.mrgeo.utils.{GDALUtils, SparkUtils, TMSUtils, Bounds}
 import org.mrgeo.utils.TMSUtils.TileBounds
-import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
 
-import scala.util.control.Breaks
+import scala.collection.mutable
 
-object MosaicMapOp extends MapOpRegistrar {
+object BandCombineMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("mosaic")
+    Array[String]("bandcombine", "bc")
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new MosaicMapOp(node, true, variables)
+    new BandCombineMapOp(node, true, variables)
 }
 
-class MosaicMapOp extends RasterMapOp with Externalizable {
+class BandCombineMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD:Option[RasterRDD] = None
   private var inputs:Array[Option[RasterMapOp]] = null
@@ -62,14 +64,6 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
 
   override def rdd(): Option[RasterRDD] = rasterRDD
 
-//  override def registerClasses(): Array[Class[_]] = {
-//    val classes = Array.newBuilder[Class[_]]
-//
-//    // yuck!  need to register spark private classes
-//    classes += ClassTag(Class.forName("org.apache.spark.util.collection.CompactBuffer")).wrap.runtimeClass
-//
-//    classes.result()
-//  }
 
   override def execute(context: SparkContext): Boolean = {
 
@@ -78,13 +72,13 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
     }
 
     val pyramids = Array.ofDim[RasterRDD](inputs.length)
-    val nodata = Array.ofDim[Array[Double]](inputs.length)
+    val nodatabuilder = mutable.ArrayBuilder.make[Number]()
 
     var i: Int = 0
     var zoom: Int = -1
     var tilesize: Int = -1
     var tiletype: Int = -1
-    var numbands: Int = -1
+    var totalbands: Int = 0
     val bounds: Bounds = new Bounds()
 
     // loop through the inputs and load the pyramid RDDs and metadata
@@ -95,7 +89,6 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
         pyramids(i) = pyramid.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + pyramid.getClass.getName))
         val meta = pyramid.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName))
 
-        nodata(i) = meta.getDefaultValues
 
         // check for the same max zooms
         if (zoom < 0) {
@@ -122,13 +115,11 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
               "one is " + meta.getTileType + ", others are " + tiletype)
         }
 
-        if (numbands < 0) {
-          numbands = meta.getBands
+        for (b <- 0 until meta.getBands) {
+          nodatabuilder +=  meta getDefaultValue b
         }
-        else if (numbands != meta.getBands) {
-          throw new IllegalArgumentException("All images must have the same number of bands. " +
-              "one is " + meta.getBands + ", others are " + numbands)
-        }
+
+        totalbands += meta.getBands
 
         // expand the total bounds
         bounds.expand(meta.getBounds)
@@ -138,6 +129,8 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
       case _ =>
       }
     }
+
+    val nodata = nodatabuilder.result()
 
     val tileBounds: TileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
 
@@ -151,99 +144,46 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
         maxpartitions = p.partitions.length
       }
     })
+
     val groups = new CoGroupedRDD(pyramids, new HashPartitioner(maxpartitions))
 
-    rasterRDD = Some(RasterRDD(groups.map(U => {
+    rasterRDD = Some(RasterRDD(groups.map(group => {
 
-      def isnodata(sample: Double, nodata: Double): Boolean = {
-        if (nodata.isNaN) {
-          if (sample.isNaN) return true
-        }
-        else if (nodata == sample) return true
-        false
-      }
+      val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, totalbands, tiletype, nodata)
+      var startband = 0
+      for (wr <- group._2) {
+        if (wr != null && wr.nonEmpty) {
+          val raster = RasterWritable.toRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
 
-      var dst: WritableRaster = null
-      var dstnodata: Array[Double] = null
-
-      val done = new Breaks
-      var img: Int = 0
-      done.breakable {
-        for (wr <- U._2) {
-          if (wr != null && wr.nonEmpty) {
-            val writable = wr.asInstanceOf[Seq[RasterWritable]].head
-
-            if (dst == null) {
-              dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(writable))
-              dstnodata = nodata(img)
-
-              val looper = new Breaks
-
-              // check if there are any nodatas in the 1st tile
-              looper.breakable {
-                for (y <- 0 until dst.getHeight) {
-                  for (x <- 0 until dst.getWidth) {
-                    for (b <- 0 until dst.getNumBands) {
-                      if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
-                        looper.break()
-                      }
-                    }
-                  }
-                }
-                // we only get here if there aren't any nodatas, so we can just take the 1st tile verbatim
-                done.break()
-              }
-            }
-            else {
-              // do the mosaic
-              var hasnodata = false
-
-              // the tile conversion is a WritableRaster, we can just typecast here
-              val src = RasterUtils.makeRasterWritable(RasterWritable.toRaster(writable))
-              val srcnodata = nodata(img)
-
-              for (y <- 0 until dst.getHeight) {
-                for (x <- 0 until dst.getWidth) {
-                  for (b <- 0 until dst.getNumBands) {
-                    if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
-                      val sample = src.getSampleDouble(x, y, b)
-                      // if the src is also nodata, remember this, we still have to look in other tiles
-                      if (isnodata(sample, srcnodata(b))) {
-                        hasnodata = true
-                      }
-                      else {
-                        dst.setSample(x, y, b, sample)
-                      }
-                    }
-                  }
-                }
-              }
-              // we've filled up the tile, nothing left to do...
-              if (!hasnodata) {
-                done.break()
+          for (y <- 0 until raster.getHeight) {
+            for (x <- 0 until raster.getWidth) {
+              for (b <- 0 until raster.getNumBands) {
+                val v = raster.getSampleDouble(x, y, b)
+                dst.setSample(x, y, startband + b, v)
               }
             }
           }
-          img += 1
+          startband += raster.getNumBands
         }
       }
 
-      // write the tile...
-      (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
+//      val t = TMSUtils.tileid(group._1.get(), 11)
+//      GDALUtils.saveRaster(dst, "/data/export/landsat/tile" + t.ty + "-" + t.tx, t.tx, t.ty, 11, 512, 0.0)
+
+      (group._1, RasterWritable.toWritable(dst))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0)(0)))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0).doubleValue()))
 
     true
-
   }
 
-  override def setup(job: JobArguments, conf:SparkConf): Boolean = true
-
-
-  override def teardown(job: JobArguments, conf:SparkConf): Boolean = true
+  override def readExternal(in: ObjectInput): Unit = {}
 
   override def writeExternal(out: ObjectOutput): Unit = {}
 
-  override def readExternal(in: ObjectInput): Unit = {}
+  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
+  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
+
 }
+

@@ -42,6 +42,7 @@ abstract class MrGeoJob extends Logging {
 
     try {
       logInfo("Running job")
+      context.setCheckpointDir(checkpointDir)
       execute(context)
     }
     finally {
