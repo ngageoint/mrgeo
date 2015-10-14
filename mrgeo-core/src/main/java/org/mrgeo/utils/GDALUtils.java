@@ -930,10 +930,26 @@ public static Bounds getBounds(final Dataset image)
   double w = image.GetRasterXSize();
   double h = image.GetRasterYSize();
 
-  double[] c1 = tx.TransformPoint(xform[0], xform[3]);
-  double[] c2 = tx.TransformPoint(xform[0] + xform[1] * w, xform[3] + xform[5] * h);
-  double[] c3 = tx.TransformPoint(xform[0] + xform[1] * w, xform[3]);
-  double[] c4 = tx.TransformPoint(xform[0], xform[3] + xform[5] * h);
+  double[] c1;
+  double[] c2;
+  double[] c3;
+  double[] c4;
+
+  if (tx != null)
+  {
+    c1 = tx.TransformPoint(xform[0], xform[3]);
+    c2 = tx.TransformPoint(xform[0] + xform[1] * w, xform[3] + xform[5] * h);
+    c3 = tx.TransformPoint(xform[0] + xform[1] * w, xform[3]);
+    c4 = tx.TransformPoint(xform[0], xform[3] + xform[5] * h);
+  }
+  else
+  {
+    // no real projection, take the transform numbers as is and hope for the best
+    c1 = new double[]{xform[0], xform[3]};
+    c2 = new double[]{xform[0] + xform[1] * w, xform[3] + xform[5] * h};
+    c3 = new double[]{xform[0] + xform[1] * w, xform[3]};
+    c4 = new double[]{xform[0], xform[3] + xform[5] * h};
+  }
 
 
   return new Bounds(
@@ -1014,7 +1030,6 @@ public static int calculateZoom(String imagename, int tilesize)
     if (image != null)
     {
       Bounds b = getBounds(image);
-
 
       double px = b.getWidth() / image.GetRasterXSize();
       double py = b.getHeight() / image.GetRasterYSize();
