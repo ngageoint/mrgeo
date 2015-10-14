@@ -23,6 +23,8 @@ import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
+import org.gdal.osr.CoordinateTransformation;
+import org.gdal.osr.SpatialReference;
 import org.gdal.osr.osr;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -63,7 +65,6 @@ static
 //    System.load("/usr/lib/libgdal.so");
   String[] libs = {"libgdaljni.so", "libgdalconstjni.so", "libosrjni.so", "libgdal.so"};
 
-  osr.UseExceptions();
   String rawPath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, null);
 
   if (rawPath != null)
@@ -137,6 +138,8 @@ static
     System.loadLibrary("gdal");
     GDAL_LIBS = null;
   }
+
+  osr.UseExceptions();
 
   if (gdal.GetDriverCount() == 0)
   {
@@ -917,19 +920,41 @@ public static int toGDALDataType(int rasterType)
 
 public static Bounds getBounds(final Dataset image)
 {
-  // calculate zoom level for the image
   final double[] xform = image.GetGeoTransform();
 
-  double pixelsizeLon = xform[1];
-  double pixelsizeLat = -xform[5];
+  SpatialReference srs = new SpatialReference(image.GetProjection());
+  SpatialReference dst = new SpatialReference(EPSG4326);
 
-  final double w = xform[0];
-  final double n = xform[3];
+  CoordinateTransformation tx = osr.CreateCoordinateTransformation(srs, dst);
 
-  final int pixelWidth = image.GetRasterXSize();
-  final int pixelHeight = image.GetRasterYSize();
+  double w = image.GetRasterXSize();
+  double h = image.GetRasterYSize();
 
-  return new Bounds(w, n - pixelsizeLat * pixelHeight, w + pixelsizeLon * pixelWidth, n);
+  double[] c1 = tx.TransformPoint(xform[0], xform[3]);
+  double[] c2 = tx.TransformPoint(xform[0] + xform[1] * w, xform[3] + xform[5] * h);
+  double[] c3 = tx.TransformPoint(xform[0] + xform[1] * w, xform[3]);
+  double[] c4 = tx.TransformPoint(xform[0], xform[3] + xform[5] * h);
+
+
+  return new Bounds(
+      Math.min(Math.min(c1[0], c2[0]), Math.min(c3[0], c4[0])),  // w
+      Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),  // s
+      Math.max(Math.max(c1[0], c2[0]), Math.max(c3[0], c4[0])),  // e
+      Math.max(Math.max(c1[1], c2[1]), Math.max(c3[1], c4[1]))   // n
+  );
+
+
+//  final double mult = getToDegreesMultiplier(image);
+//  double pixelsizeLon = xform[1] * mult;
+//  double pixelsizeLat = -xform[5] * mult;
+//
+//  final double w = xform[0] * mult;
+//  final double n = xform[3] * mult;
+//
+//  final int pixelWidth = image.GetRasterXSize();
+//  final int pixelHeight = image.GetRasterYSize();
+//
+//  return new Bounds(w, n - pixelsizeLat * pixelHeight, w + pixelsizeLon * pixelWidth, n);
 }
 
 public static double getnodata(Dataset src)
@@ -985,12 +1010,17 @@ public static int calculateZoom(String imagename, int tilesize)
   {
     Dataset image = GDALUtils.open(imagename);
 
+
     if (image != null)
     {
-      double xform[] = image.GetGeoTransform();
+      Bounds b = getBounds(image);
 
-      int zx = TMSUtils.zoomForPixelSize(xform[1], tilesize);
-      int zy = TMSUtils.zoomForPixelSize(xform[5], tilesize);
+
+      double px = b.getWidth() / image.GetRasterXSize();
+      double py = b.getHeight() / image.GetRasterYSize();
+
+      int zx = TMSUtils.zoomForPixelSize(Math.abs(px), tilesize);
+      int zy = TMSUtils.zoomForPixelSize(Math.abs(py), tilesize);
 
       GDALUtils.close(image);
 
@@ -1008,6 +1038,26 @@ public static int calculateZoom(String imagename, int tilesize)
 
   return -1;
 
+}
+
+private static double getToDegreesMultiplier(Dataset image)
+{
+  SpatialReference srs = new SpatialReference(image.GetProjection());
+
+  double mult = 1.0;
+  switch (srs.GetLinearUnitsName().toLowerCase())
+  {
+  case "meter":
+  case "metre":
+    mult =  1.0 / LatLng.METERS_PER_DEGREE;
+    break;
+  case "degree":
+    break;
+  default:
+    throw new GDALException("Don't have a proper conversion from " +
+        srs.GetLinearUnitsName() + " to degrees");
+  }
+  return mult;
 }
 
 
@@ -1030,46 +1080,92 @@ private static void copyToDataset(Dataset ds, Raster raster)
     bandlist[i] = i + 1; // remember, GDAL bands are 1's based
   }
 
-  // data coming from getDataElements is always interleaved (pixel1, pixel2, pixel3...), so we need to make the
-  // GDAL dataset also interleaved (using pixelstride, linestride, and bandstride)
-  Object elements =
-      raster.getDataElements(raster.getMinX(), raster.getMinY(), raster.getWidth(), raster.getHeight(), null);
 
   int pixelsize = gdal.GetDataTypeSize(type) / 8;
   int pixelstride = pixelsize * bands;
   int linestride = pixelstride * width;
   int bandstride = pixelsize;
 
-  int imagesize = pixelsize * linestride * height;
-  ByteBuffer bytes = ByteBuffer.allocateDirect(imagesize);
-  bytes.order(ByteOrder.nativeOrder());
+  long imagesize = (long)pixelsize * linestride * height;
 
-  if (type == gdalconstConstants.GDT_Byte)
+  // if the image is less than 2GB, we can copy the entire image in one fell swoop.
+  if (imagesize <  2147483648L)
   {
-    bytes.put((byte[])elements);
+    // data coming from getDataElements is always interleaved (pixel1, pixel2, pixel3...), so we need to make the
+    // GDAL dataset also interleaved (using pixelstride, linestride, and bandstride)
+    Object elements =
+        raster.getDataElements(raster.getMinX(), raster.getMinY(), raster.getWidth(), raster.getHeight(), null);
+
+    ByteBuffer bytes = ByteBuffer.allocateDirect((int) imagesize);
+    bytes.order(ByteOrder.nativeOrder());
+
+    if (type == gdalconstConstants.GDT_Byte)
+    {
+      bytes.put((byte[]) elements);
+    }
+    else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
+    {
+      ShortBuffer sb = bytes.asShortBuffer();
+      sb.put((short[]) elements);
+    }
+    else if (type == gdalconstConstants.GDT_Int32)
+    {
+      IntBuffer ib = bytes.asIntBuffer();
+      ib.put((int[]) elements);
+    }
+    else if (type == gdalconstConstants.GDT_Float32)
+    {
+      FloatBuffer fb = bytes.asFloatBuffer();
+      fb.put((float[]) elements);
+    }
+    else if (type == gdalconstConstants.GDT_Float64)
+    {
+      DoubleBuffer db = bytes.asDoubleBuffer();
+      db.put((double[]) elements);
+    }
+    ds.WriteRaster_Direct(0, 0, width, height, width, height, type, bytes, bandlist, pixelstride, linestride,
+        bandstride);
   }
-  else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
+  else
   {
-    ShortBuffer sb = bytes.asShortBuffer();
-    sb.put((short[])elements);
+    // lets go line at a time...
+
+    ByteBuffer bytes = ByteBuffer.allocateDirect((int)linestride);
+    bytes.order(ByteOrder.nativeOrder());
+
+    for (int y = 0; y < height; y++)
+    {
+      Object elements =
+          raster.getDataElements(raster.getMinX(), raster.getMinY() + y, raster.getWidth(), 1, null);
+
+      if (type == gdalconstConstants.GDT_Byte)
+      {
+        bytes.put((byte[]) elements);
+      }
+      else if (type == gdalconstConstants.GDT_Int16 || type == gdalconstConstants.GDT_UInt16)
+      {
+        ShortBuffer sb = bytes.asShortBuffer();
+        sb.put((short[]) elements);
+      }
+      else if (type == gdalconstConstants.GDT_Int32)
+      {
+        IntBuffer ib = bytes.asIntBuffer();
+        ib.put((int[]) elements);
+      }
+      else if (type == gdalconstConstants.GDT_Float32)
+      {
+        FloatBuffer fb = bytes.asFloatBuffer();
+        fb.put((float[]) elements);
+      }
+      else if (type == gdalconstConstants.GDT_Float64)
+      {
+        DoubleBuffer db = bytes.asDoubleBuffer();
+        db.put((double[]) elements);
+      }
+      ds.WriteRaster_Direct(0, y, width, 1, width, 1, type, bytes, bandlist, pixelstride, linestride,
+          bandstride);
+    }
   }
-  else if (type == gdalconstConstants.GDT_Int32)
-  {
-    IntBuffer ib = bytes.asIntBuffer();
-    ib.put((int[])elements);
-  }
-  else if (type == gdalconstConstants.GDT_Float32)
-  {
-    FloatBuffer fb = bytes.asFloatBuffer();
-    fb.put((float[])elements);
-  }
-  else if (type == gdalconstConstants.GDT_Float64)
-  {
-    DoubleBuffer db = bytes.asDoubleBuffer();
-    db.put((double[])elements);
-  }
-  ds.WriteRaster_Direct(0, 0, width, height, width, height, type, bytes, bandlist, pixelstride, linestride,
-      bandstride);
 }
 
 
