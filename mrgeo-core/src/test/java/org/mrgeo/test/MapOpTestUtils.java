@@ -18,7 +18,6 @@ package org.mrgeo.test;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.junit.Assert;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -66,7 +65,7 @@ public void generateBaselinePyramid(final Configuration conf, final String testN
   runMapAlgebraExpression(conf, testName, ex);
 
   final Path src = new Path(outputHdfs, testName);
-    final MrsImagePyramid pyramid = MrsImagePyramid.open(src.toString(), (ProviderProperties)null);
+  final MrsImagePyramid pyramid = MrsImagePyramid.open(src.toString(), (ProviderProperties)null);
   if (pyramid != null)
   {
     final Path dst = new Path(inputLocal, testName);
@@ -93,7 +92,7 @@ public void generateBaselineTif(final Configuration conf, final String testName,
 public void saveBaselineTif(String testName, double nodata) throws IOException
 {
   final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
-        (ProviderProperties)null);
+      (ProviderProperties)null);
   final MrsImage image = pyramid.getHighestResImage();
 
   try
@@ -223,13 +222,8 @@ public void runMapAlgebraExpression(final Configuration conf, final String testN
   long start = System.currentTimeMillis();
 
   ProviderProperties pp = ProviderProperties.fromDelimitedString("");
-  if (MapAlgebra.validate(ex, pp)) {
-    MapAlgebra.mapalgebra(ex, (new Path(outputHdfs, testName)).toString(), conf, pp, null);
-  }
-  else
-  {
-    Assert.fail("Invalid MapAlgebra syntax: " + ex);
-  }
+  MapAlgebra.validateWithExceptions(ex, pp);
+  MapAlgebra.mapalgebra(ex, (new Path(outputHdfs, testName)).toString(), conf, pp, null);
 
   log.info("Test Execution time: " + (System.currentTimeMillis() - start));
 }
