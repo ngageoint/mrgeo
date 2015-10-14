@@ -35,7 +35,6 @@ import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -291,8 +290,7 @@ public void aspectRad() throws Exception
 public void bandcombine() throws Exception
 {
   String exp = String.format("bandcombine([%s], [%s])", allones, allhundreds);
-  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
-  if (true) // (GEN_BASELINE_DATA_ONLY)
+  if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
   }
@@ -307,7 +305,7 @@ public void bandcombine() throws Exception
 @Category(IntegrationTest.class)
 public void bandcombineAlternate() throws Exception
 {
-  LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+//  LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
 
 //  String blue = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B2-blue.TIF";
 //  String green = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B3-green.TIF";
@@ -318,8 +316,7 @@ public void bandcombineAlternate() throws Exception
 //      "/mrgeo/images/landsat-red", "/mrgeo/images/landsat-green", "/mrgeo/images/landsat-blue");
 
   String exp = String.format("bc([%s], [%s])", allones, allhundreds);
-  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
-  if (true) // (GEN_BASELINE_DATA_ONLY)
+  if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
   }
