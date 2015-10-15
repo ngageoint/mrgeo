@@ -15,8 +15,6 @@
 
 package org.mrgeo.data.vector;
 
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mrgeo.data.DataProviderException;
@@ -29,11 +27,11 @@ public interface VectorOutputFormatProvider
   /**
    * Returns an instance of an OutputFormat for the data provider that
    * is responsible for translating the keys and values from the native
-   * InputFormat to LongWritable keys and Geometry values.
+   * InputFormat to FeatureIdWritable keys and Geometry values.
    *
    * @return
    */
-  public OutputFormat<LongWritable, Geometry> getOutputFormat(String input);
+  public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input);
 
   /**
    * Providers must perform any required Hadoop job setup when outputting

@@ -14,10 +14,10 @@ import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.hadoop.io.LongWritable;
 import org.geotools.factory.CommonFactoryFinder;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
@@ -56,7 +56,7 @@ public class GeoWaveVectorReader implements VectorReader
   }
 
   @Override
-  public CloseableKVIterator<LongWritable, Geometry> get()
+  public CloseableKVIterator<FeatureIdWritable, Geometry> get()
   {
     Integer limit = null; // no limit
     CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
@@ -65,13 +65,13 @@ public class GeoWaveVectorReader implements VectorReader
   }
 
   @Override
-  public boolean exists(LongWritable featureId)
+  public boolean exists(FeatureIdWritable featureId)
   {
     return (get(featureId) != null);
   }
 
   @Override
-  public Geometry get(LongWritable featureId)
+  public Geometry get(FeatureIdWritable featureId)
   {
     FilterFactory ff = CommonFactoryFinder.getFilterFactory();
     Set<FeatureId> ids = new HashSet<FeatureId>();
@@ -95,7 +95,7 @@ public class GeoWaveVectorReader implements VectorReader
   }
 
   @Override
-  public CloseableKVIterator<LongWritable, Geometry> get(Bounds bounds)
+  public CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds)
   {
     com.vividsolutions.jts.geom.GeometryFactory gf = new com.vividsolutions.jts.geom.GeometryFactory();
     com.vividsolutions.jts.geom.Geometry queryGeometry = gf.toGeometry(bounds.toEnvelope());

@@ -18,7 +18,7 @@ package org.mrgeo.hdfs.vector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorWriter;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WktConverter;
@@ -48,7 +48,7 @@ public class DelimitedVectorWriter implements VectorWriter
   }
 
   @Override
-  public void append(LongWritable key, Geometry value) throws IOException
+  public void append(FeatureIdWritable key, Geometry value) throws IOException
   {
     boolean hasValidGeometry = value.isValid();
     if (out == null)

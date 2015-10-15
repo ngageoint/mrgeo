@@ -18,12 +18,12 @@ package org.mrgeo.hdfs.vector;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.LeakChecker;
@@ -43,14 +43,14 @@ import java.util.Vector;
  *
  * http://code.flickr.com/blog/2009/05/21/flickr-shapefiles-public-dataset-10/
  */
-public class CsvOutputFormat extends FileOutputFormat<LongWritable, Geometry> implements
+public class CsvOutputFormat extends FileOutputFormat<FeatureIdWritable, Geometry> implements
     Serializable
 {
   static final Logger log = LoggerFactory.getLogger(CsvOutputFormat.class);
 
   private static final long serialVersionUID = 1L;
 
-  static public class CsvRecordWriter extends RecordWriter<LongWritable, Geometry>
+  static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geometry>
   {
     // we initialize to avoid a bunch of if (reader != null) code. It will be
     // recreated in the initialize function.
@@ -159,7 +159,7 @@ public class CsvOutputFormat extends FileOutputFormat<LongWritable, Geometry> im
     }
 
     @Override
-    public void write(LongWritable key, Geometry value) throws IOException
+    public void write(FeatureIdWritable key, Geometry value) throws IOException
     {
       if (first)
       {
@@ -320,7 +320,7 @@ public class CsvOutputFormat extends FileOutputFormat<LongWritable, Geometry> im
   }
 
   @Override
-  public RecordWriter<LongWritable, Geometry> getRecordWriter(TaskAttemptContext context)
+  public RecordWriter<FeatureIdWritable, Geometry> getRecordWriter(TaskAttemptContext context)
       throws IOException, InterruptedException
   {
     String baseOut = getOutputPath(context).toString();

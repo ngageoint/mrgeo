@@ -4,12 +4,12 @@ import java.io.IOException;
 
 import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveRecordReader;
 
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorInputSplit;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
@@ -17,13 +17,13 @@ import org.opengis.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geometry>
+public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, Geometry>
 {
   static Logger log = LoggerFactory.getLogger(GeoWaveVectorRecordReader.class);
   public static final String CQL_FILTER = GeoWaveVectorRecordReader.class.getName() + ".cqlFilter";
 
   private GeoWaveRecordReader<Object> delegateReader;
-  private LongWritable currKey = new LongWritable();
+  private FeatureIdWritable currKey = new FeatureIdWritable();
   private Geometry currValue;
   private Filter cqlFilter;
   private String strCqlFilter;
@@ -99,7 +99,7 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
   }
 
   @Override
-  public LongWritable getCurrentKey() throws IOException, InterruptedException
+  public FeatureIdWritable getCurrentKey() throws IOException, InterruptedException
   {
     return currKey;
   }

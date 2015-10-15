@@ -16,10 +16,10 @@
 package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mrgeo.data.DataProviderException;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorOutputFormatContext;
 import org.mrgeo.data.vector.VectorOutputFormatProvider;
@@ -40,7 +40,7 @@ public class DelimitedVectorOutputFormatProvider implements VectorOutputFormatPr
   }
 
   @Override
-  public OutputFormat<LongWritable, Geometry> getOutputFormat(String input)
+  public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input)
   {
     return new CsvOutputFormat();
   }
@@ -48,7 +48,7 @@ public class DelimitedVectorOutputFormatProvider implements VectorOutputFormatPr
   @Override
   public void setupJob(Job job) throws DataProviderException, IOException
   {
-    job.setOutputKeyClass(LongWritable.class);
+    job.setOutputKeyClass(FeatureIdWritable.class);
     job.setOutputValueClass(Geometry.class);
     job.setOutputFormatClass(CsvOutputFormat.class);
     CsvOutputFormat.setup(new Path(provider.getResolvedResourceName(false)), job);

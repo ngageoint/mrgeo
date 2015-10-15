@@ -15,7 +15,6 @@
 
 package org.mrgeo.data.vector;
 
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -27,7 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
+public class VectorInputFormat extends InputFormat<FeatureIdWritable, Geometry>
 {
   static final Logger log = LoggerFactory.getLogger(VectorInputFormat.class);
 
@@ -65,7 +64,7 @@ public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
   }
 
   @Override
-  public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
+  public RecordReader<FeatureIdWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
     return new VectorRecordReader();
@@ -76,7 +75,7 @@ public class VectorInputFormat extends InputFormat<LongWritable, Geometry>
 //    VectorInputSplit inputSplit = (VectorInputSplit)split;
 //    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(inputSplit.getVectorName(),
 //        AccessMode.READ, context.getConfiguration());
-//    RecordReader<LongWritable, Geometry> recordReader = dp.getRecordReader();
+//    RecordReader<FeatureIdWritable, Geometry> recordReader = dp.getRecordReader();
 //    recordReader.initialize(inputSplit, context);
 //    return recordReader;
   }

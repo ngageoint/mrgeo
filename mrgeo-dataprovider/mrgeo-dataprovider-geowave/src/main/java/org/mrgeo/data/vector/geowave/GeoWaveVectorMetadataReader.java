@@ -7,8 +7,8 @@ import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
 import mil.nga.giat.geowave.vector.stats.FeatureBoundingBoxStatistics;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorMetadata;
 import org.mrgeo.data.vector.VectorMetadataReader;
 import org.mrgeo.data.vector.VectorReader;
@@ -116,7 +116,7 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
       {
         log.info("Computing BBOX by iterating features");
         VectorReader reader = dataProvider.getVectorReader();
-        CloseableKVIterator<LongWritable, Geometry> iter = reader.get();
+        CloseableKVIterator<FeatureIdWritable, Geometry> iter = reader.get();
         double minX = Double.MAX_VALUE;
         double minY = Double.MAX_VALUE;
         double maxX = Double.MIN_VALUE;

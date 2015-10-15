@@ -16,7 +16,6 @@
 package org.mrgeo.data.vector;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
@@ -35,11 +34,11 @@ public abstract class VectorInputFormatProvider
   /**
    * Returns an instance of an InputFormat for the data provider that
    * is responsible for translating the keys and values from the native
-   * InputFormat to LongWritable keys and Geometry values.
+   * InputFormat to FeatureIdWritable keys and Geometry values.
    * 
    * @return
    */
-  public abstract InputFormat<LongWritable, Geometry> getInputFormat(String input);
+  public abstract InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input);
 
   /**
    * For performing all Hadoop job setup required to use this data source

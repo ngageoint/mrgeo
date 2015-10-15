@@ -20,12 +20,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RawLocalFileSystem;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.junit.UnitTest;
@@ -55,7 +55,7 @@ public class ShpInputFormatTest
     Assert.assertEquals(v1, v2, Math.max(Math.abs(v1 * 1e-5), 1e-5));
   }
 
-  public RecordReader<LongWritable, Geometry> openReader(Path p) throws IOException,
+  public RecordReader<FeatureIdWritable, Geometry> openReader(Path p) throws IOException,
       InterruptedException
   {
     Job j = new Job(new Configuration());
@@ -69,7 +69,7 @@ public class ShpInputFormatTest
       ShpInputFormat format = new ShpInputFormat();
       InputSplit split = format.getSplits(j).get(0);
       TaskAttemptContext context = HadoopUtils.createTaskAttemptContext(c, new TaskAttemptID());
-      RecordReader<LongWritable, Geometry> reader =
+      RecordReader<FeatureIdWritable, Geometry> reader =
           format.createRecordReader(split, context);
       reader.initialize(split, context);
       return reader;
@@ -85,7 +85,7 @@ public class ShpInputFormatTest
   public void testComplexPolygonRead() throws Exception
   {
 
-    RecordReader<LongWritable, Geometry> r = openReader(new Path(input, "complex-polygons.shp"));
+    RecordReader<FeatureIdWritable, Geometry> r = openReader(new Path(input, "complex-polygons.shp"));
 
     String[] base = {
         "POLYGON((-78.554144107 47.916717981,-63.736568097 61.186189034,-58.649937526 37.743456839,-42.505414411 57.205347718,-43.611203665 7.444831267,-78.332986256 16.512303153,-78.554144107 47.916717981)) {null:\"\"}",
@@ -108,7 +108,7 @@ public class ShpInputFormatTest
   public void testCountryPolygonRead() throws Exception
   {
 
-    RecordReader<LongWritable, Geometry> r = openReader(new Path(input, "country.shp"));
+    RecordReader<FeatureIdWritable, Geometry> r = openReader(new Path(input, "country.shp"));
 
     // these need to get sorted by attribute name...
     //    String[] base = {
@@ -158,7 +158,7 @@ public class ShpInputFormatTest
     try
     {
 //      Assert.assertEquals("blah", System.getProperty("java.library.path"));
-      RecordReader<LongWritable, Geometry> reader = openReader(new Path(input, "AmbulatoryPt.shp"));
+      RecordReader<FeatureIdWritable, Geometry> reader = openReader(new Path(input, "AmbulatoryPt.shp"));
 
       int count = 0;
 
@@ -192,7 +192,7 @@ public class ShpInputFormatTest
   @Category(UnitTest.class)
   public void testSimplePolygonRead() throws Exception
   {
-    RecordReader<LongWritable, Geometry> r = openReader(new Path(input, "simple-triangles.shp"));
+    RecordReader<FeatureIdWritable, Geometry> r = openReader(new Path(input, "simple-triangles.shp"));
 
     String[] base = {
         "POLYGON((-139.040816327 12.230649676,-97.897959184 83.495955798,-73.653061224 -7.973431957,-139.040816327 12.230649676)) {none:\"\"}",

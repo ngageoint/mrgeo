@@ -25,8 +25,8 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.data.vector.VectorReaderContext;
 import org.mrgeo.geometry.Geometry;
@@ -275,7 +275,7 @@ public class DelimitedVectorReader implements VectorReader
   }
 
   @Override
-  public CloseableKVIterator<LongWritable, Geometry> get() throws IOException
+  public CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException
   {
     HdfsFileReader fileReader = new HdfsFileReader();
     fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
@@ -285,14 +285,14 @@ public class DelimitedVectorReader implements VectorReader
   }
 
   @Override
-  public boolean exists(LongWritable featureId) throws IOException
+  public boolean exists(FeatureIdWritable featureId) throws IOException
   {
     Geometry geometry = get(featureId);
     return (geometry != null);
   }
 
   @Override
-  public Geometry get(LongWritable featureId) throws IOException
+  public Geometry get(FeatureIdWritable featureId) throws IOException
   {
     HdfsFileReader fileReader = new HdfsFileReader();
     fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
@@ -308,7 +308,7 @@ public class DelimitedVectorReader implements VectorReader
   }
 
   @Override
-  public CloseableKVIterator<LongWritable, Geometry> get(Bounds bounds) throws IOException
+  public CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds) throws IOException
   {
     HdfsFileReader fileReader = new HdfsFileReader();
     fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
@@ -322,7 +322,7 @@ public class DelimitedVectorReader implements VectorReader
   public long count() throws IOException
   {
     long featureCount = 0L;
-    CloseableKVIterator<LongWritable, Geometry> iter = get();
+    CloseableKVIterator<FeatureIdWritable, Geometry> iter = get();
     try
     {
       while (iter.hasNext())

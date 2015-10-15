@@ -22,11 +22,11 @@ import java.text.DecimalFormat
 import com.google.common.cache.{LoadingCache, CacheLoader, Cache, CacheBuilder}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
+import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.{WritableLineString, GeometryFactory, Geometry, Point}
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.utils.{LatLng, HadoopUtils, TMSUtils}
@@ -119,8 +119,8 @@ class LeastCostPathCalculator extends Externalizable
       lcp.setAttribute("MINSPEED", df.format(pathMinSpeed))
       lcp.setAttribute("MAXSPEED", df.format(pathMaxSpeed))
       lcp.setAttribute("AVGSPEED", df.format(pathDistance / pathCost))
-      val lcpData = new ListBuffer[(LongWritable, Geometry)]()
-      lcpData += ((new LongWritable(1), lcp))
+      val lcpData = new ListBuffer[(FeatureIdWritable, Geometry)]()
+      lcpData += ((new FeatureIdWritable(1), lcp))
       VectorRDD(sparkContext.parallelize(lcpData))
     } finally {
       cdrdd.unpersist()
