@@ -20,7 +20,7 @@ import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.services.Version;
-import org.mrgeo.services.mrspyramid.ColorScaleManager;
+import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.utils.LatLng;

@@ -37,7 +37,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.services.mrspyramid.ColorScaleManager;
+import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.services.utils.ImageTestUtils;
 import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;

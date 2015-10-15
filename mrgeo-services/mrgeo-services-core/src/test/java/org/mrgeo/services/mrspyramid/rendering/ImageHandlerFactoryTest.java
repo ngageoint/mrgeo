@@ -18,6 +18,9 @@ package org.mrgeo.services.mrspyramid.rendering;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.colorscale.applier.ColorScaleApplier;
+import org.mrgeo.colorscale.applier.JpegColorScaleApplier;
+import org.mrgeo.colorscale.applier.PngColorScaleApplier;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 
@@ -51,7 +54,7 @@ public class ImageHandlerFactoryTest extends LocalRunnerTest
     assertTrue(renderer instanceof TiffImageRenderer);
     assertTrue(renderer.getMimeTypes()[0].equals("image/tiff"));
     
-    ColorScaleApplier applier = 
+    ColorScaleApplier applier =
       (ColorScaleApplier)ImageHandlerFactory.getHandler("image/png", ColorScaleApplier.class);
     assertTrue(applier instanceof PngColorScaleApplier);
     assertTrue(applier.getMimeTypes()[0].equals("image/png"));

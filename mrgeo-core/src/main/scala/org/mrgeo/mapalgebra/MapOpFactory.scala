@@ -16,9 +16,11 @@
 package org.mrgeo.mapalgebra
 
 
-import java.io.File
+import java.io.{FileFilter, File}
 import java.lang.reflect.Modifier
+import java.net.URL
 
+import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.spark.Logging
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.mapalgebra.parser.ParserNode
@@ -113,8 +115,20 @@ object MapOpFactory extends Logging {
     val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
       val file = new File(url.getPath)
       file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") else file.isFile)
-    }
-    ).filter(p => !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
+    }).filter(p => !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
+        .flatMap(url => {
+          val us = url.getFile
+          if (us.contains("*") || us.contains("?")) {
+            val f = new File(us)
+            val base = f.getParentFile
+
+            val filter = new WildcardFileFilter(f.getName).asInstanceOf[FileFilter]
+            val files = base.listFiles(filter)
+
+            files.map(f => f.toURI.toURL)
+          }
+          else Array[URL](url)
+        })
 
     if (log.isDebugEnabled) {
       logDebug("Classpath for finding MapOps:")
@@ -123,9 +137,10 @@ object MapOpFactory extends Logging {
         logDebug("  " + url.toString + "  (" + {if (file.isDirectory) "dir" else "file"} + ")" )
       })
     }
+
     // register mapops
     val cfg = new ConfigurationBuilder()
-        .setUrls(urls)
+        .setUrls(urls.toSeq)
         .setScanners(new SubTypesScanner())
         .useParallelExecutor()
 
