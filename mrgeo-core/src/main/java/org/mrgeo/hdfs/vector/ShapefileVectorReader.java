@@ -16,8 +16,8 @@
 package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.data.vector.VectorReaderContext;
@@ -38,25 +38,25 @@ public class ShapefileVectorReader implements VectorReader
   }
 
   @Override
-  public CloseableKVIterator<LongWritable, Geometry> get() throws IOException
+  public CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException
   {
     return null;
   }
 
   @Override
-  public boolean exists(LongWritable featureId) throws IOException
+  public boolean exists(FeatureIdWritable featureId) throws IOException
   {
     return false;
   }
 
   @Override
-  public Geometry get(LongWritable featureId) throws IOException
+  public Geometry get(FeatureIdWritable featureId) throws IOException
   {
     return null;
   }
 
   @Override
-  public CloseableKVIterator<LongWritable, Geometry> get(Bounds bounds) throws IOException
+  public CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds) throws IOException
   {
     return null;
   }

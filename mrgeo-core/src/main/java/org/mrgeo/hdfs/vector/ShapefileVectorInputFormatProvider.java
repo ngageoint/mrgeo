@@ -16,13 +16,12 @@
 package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.geometry.Geometry;
@@ -37,7 +36,7 @@ public class ShapefileVectorInputFormatProvider extends VectorInputFormatProvide
   }
 
   @Override
-  public InputFormat<LongWritable, Geometry> getInputFormat(String input)
+  public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
   {
     return new ShpInputFormat();
   }

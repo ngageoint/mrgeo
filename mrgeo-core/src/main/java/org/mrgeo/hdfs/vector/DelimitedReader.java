@@ -18,15 +18,15 @@ package org.mrgeo.hdfs.vector;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * This class implements the CloseableKVIterator for a delimited text file
- * data source. The iterator's key is a LongWritable,
+ * data source. The iterator's key is a FeatureIdWritable,
  * which maps to a feature id, and it's value is Geometry, which contains
  * the geometry and attributes.
  * 
@@ -35,12 +35,12 @@ import org.slf4j.LoggerFactory;
  * class uses a LineProducer to obtain input lines to be converted into
  * Geometry objects.
  */
-public class DelimitedReader implements CloseableKVIterator<LongWritable, Geometry>
+public class DelimitedReader implements CloseableKVIterator<FeatureIdWritable, Geometry>
 {
   static final Logger log = LoggerFactory.getLogger(DelimitedReader.class);
 
   private LineProducer lineProducer;
-  private LongWritable key = new LongWritable(-1);
+  private FeatureIdWritable key = new FeatureIdWritable(-1);
   private Geometry feature;
   private String currLine;
   private boolean currLineAvailable;
@@ -212,7 +212,7 @@ public class DelimitedReader implements CloseableKVIterator<LongWritable, Geomet
   }
 
   @Override
-  public LongWritable currentKey()
+  public FeatureIdWritable currentKey()
   {
     return key;
   }

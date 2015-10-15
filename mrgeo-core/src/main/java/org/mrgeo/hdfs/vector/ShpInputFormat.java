@@ -17,9 +17,9 @@ package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.*;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.vector.ReprojectedShapefileGeometryCollection;
 import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
@@ -33,7 +33,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
+public class ShpInputFormat extends InputFormat<FeatureIdWritable, Geometry>
 {
   static public class GeometryInputSplit extends InputSplit implements Writable
   {
@@ -96,13 +96,13 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     }
   }
 
-  static public class ShpRecordReader extends RecordReader<LongWritable, Geometry>
+  static public class ShpRecordReader extends RecordReader<FeatureIdWritable, Geometry>
   {
     private int currentIndex;
     private int end;
     private ShapefileGeometryCollection gc;
     private int start;
-    private LongWritable key = new LongWritable();
+    private FeatureIdWritable key = new FeatureIdWritable();
     private Geometry value = null;
 
     ShpRecordReader()
@@ -126,7 +126,7 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
     }
 
     @Override
-    public LongWritable getCurrentKey() throws IOException, InterruptedException
+    public FeatureIdWritable getCurrentKey() throws IOException, InterruptedException
     {
       return key;
     }
@@ -189,7 +189,7 @@ public class ShpInputFormat extends InputFormat<LongWritable, Geometry>
   }
 
   @Override
-  public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
+  public RecordReader<FeatureIdWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
     return new ShpRecordReader();

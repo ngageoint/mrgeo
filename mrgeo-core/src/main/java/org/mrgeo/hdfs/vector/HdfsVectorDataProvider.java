@@ -18,7 +18,6 @@ package org.mrgeo.hdfs.vector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.mrgeo.core.MrGeoConstants;
@@ -131,7 +130,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   @Override
-  public RecordReader<LongWritable, Geometry> getRecordReader() throws IOException
+  public RecordReader<FeatureIdWritable, Geometry> getRecordReader() throws IOException
   {
     String resourceName = getResolvedResourceName(true);
     Path resourcePath = new Path(resourceName);
@@ -147,7 +146,7 @@ public class HdfsVectorDataProvider extends VectorDataProvider
   }
 
   @Override
-  public RecordWriter<LongWritable, Geometry> getRecordWriter()
+  public RecordWriter<FeatureIdWritable, Geometry> getRecordWriter()
   {
     // TODO Auto-generated method stub
     return null;

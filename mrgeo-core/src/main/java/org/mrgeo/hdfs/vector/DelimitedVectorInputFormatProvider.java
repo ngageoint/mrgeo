@@ -18,7 +18,6 @@ package org.mrgeo.hdfs.vector;
 import java.io.IOException;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -26,6 +25,7 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
@@ -39,7 +39,7 @@ public class DelimitedVectorInputFormatProvider extends VectorInputFormatProvide
   }
 
   @Override
-  public InputFormat<LongWritable, Geometry> getInputFormat(String input)
+  public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
   {
     return new DelimitedVectorInputFormat();
   }

@@ -15,7 +15,6 @@
 
 package org.mrgeo.data.vector;
 
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.mrgeo.data.ProviderProperties;
@@ -98,7 +97,7 @@ public abstract class VectorDataProvider
    * 
    * @return
    */
-  public abstract RecordReader<LongWritable, Geometry> getRecordReader() throws IOException;
+  public abstract RecordReader<FeatureIdWritable, Geometry> getRecordReader() throws IOException;
 
   /**
    * Return an instance of a RecordWriter class to be used in map/reduce jobs for writing
@@ -106,7 +105,7 @@ public abstract class VectorDataProvider
    * 
    * @return
    */
-  public abstract RecordWriter<LongWritable, Geometry> getRecordWriter();
+  public abstract RecordWriter<FeatureIdWritable, Geometry> getRecordWriter();
 
   /**
    * Return an instance of an InputFormat class to be used in map/reduce jobs for processing

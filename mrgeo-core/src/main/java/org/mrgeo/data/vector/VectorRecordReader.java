@@ -15,7 +15,6 @@
 
 package org.mrgeo.data.vector;
 
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -24,9 +23,9 @@ import org.mrgeo.geometry.Geometry;
 
 import java.io.IOException;
 
-public class VectorRecordReader extends RecordReader<LongWritable, Geometry>
+public class VectorRecordReader extends RecordReader<FeatureIdWritable, Geometry>
 {
-  private RecordReader<LongWritable, Geometry> delegate;
+  private RecordReader<FeatureIdWritable, Geometry> delegate;
 
   @Override
   public void initialize(InputSplit inputSplit, TaskAttemptContext context) throws IOException, InterruptedException
@@ -46,7 +45,7 @@ public class VectorRecordReader extends RecordReader<LongWritable, Geometry>
   }
 
   @Override
-  public LongWritable getCurrentKey() throws IOException, InterruptedException
+  public FeatureIdWritable getCurrentKey() throws IOException, InterruptedException
   {
     return delegate.getCurrentKey();
   }
