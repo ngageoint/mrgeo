@@ -17,9 +17,9 @@ package org.mrgeo.mapalgebra
 
 import java.io.{ObjectInput, ObjectOutput, Externalizable}
 
-import org.apache.hadoop.io.LongWritable
 import org.apache.spark.{SparkContext, SparkConf}
 import org.mrgeo.data.rdd.VectorRDD
+import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.Geometry
 import org.mrgeo.hdfs.vector.Column.FactorType
 import org.mrgeo.hdfs.vector.{DelimitedParser, Column, ColumnDefinitionFile}
@@ -75,10 +75,10 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
   }
 
   override def execute(context: SparkContext): Boolean = {
-    var recordData = new ListBuffer[(LongWritable, Geometry)]()
+    var recordData = new ListBuffer[(FeatureIdWritable, Geometry)]()
     for ((record, i) <- records.view.zipWithIndex) {
       val geom = delimitedParser.parse(record)
-      recordData .+= ((new LongWritable(i), geom))
+      recordData .+= ((new FeatureIdWritable(i), geom))
     }
     vectorrdd = Some(VectorRDD(context.parallelize(recordData)))
     true
@@ -152,8 +152,11 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
   }
 
   override def readExternal(in: ObjectInput): Unit = {
+    delimitedParser = new DelimitedParser();
+    delimitedParser.readExternal(in)
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
+    delimitedParser.writeExternal(out)
   }
 }
