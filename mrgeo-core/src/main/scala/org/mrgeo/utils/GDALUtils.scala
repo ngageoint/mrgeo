@@ -145,13 +145,10 @@ object GDALUtils extends Logging {
   }
 
   def toDataset(raster: Raster, nodata: Double = Double.NegativeInfinity): Dataset = {
-
-
     val nodatas = if (nodata == Double.NegativeInfinity) null else Array.fill[Double](raster.getNumBands)(nodata)
     val datatype = toGDALDataType(raster.getTransferType)
 
-    val ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth, raster.getHeight,
-      raster.getNumBands, datatype, nodatas)
+    val ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth, raster.getHeight, raster.getNumBands, datatype, nodatas)
 
     if (ds != null) {
       copyToDataset(ds, raster)
@@ -186,7 +183,7 @@ object GDALUtils extends Logging {
   }
 
   def toRaster(image: Dataset):Raster = {
-    val bands: Int = image.GetRasterCount
+    val bands: Int = image.getRasterCount
 
     val bandlist = Array.range(1, image.getRasterCount)
 
@@ -698,16 +695,14 @@ object GDALUtils extends Logging {
 
   private def mapType(format: String): String = {
     format.toLowerCase match {
-    case "jpg" =>
-      return "jpeg"
-    case "tiff" =>
-    case "tif" =>
-    case "geotiff" =>
-    case "geotif" =>
-    case "gtif" =>
-      return "GTiff"
+    case "jpg" => "jpeg"
+    case "tiff" |
+         "tif" |
+         "geotiff" |
+         "geotif" |
+         "gtif" => "GTiff"
+    case _ => format
     }
-    format
   }
 }
 
