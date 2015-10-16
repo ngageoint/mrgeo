@@ -190,6 +190,7 @@
             <scalaVersion>${scala.version}</scalaVersion>
             <recompileMode>incremental</recompileMode>
             <args>
+              <arg>-feature</arg>
               <arg>-deprecation</arg>
               <arg>-target:jvm-${java.version}</arg>
               <arg>-Xmax-classfile-name</arg>
