@@ -173,7 +173,7 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
       (group._1, RasterWritable.toWritable(dst))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0).doubleValue()))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata, calcStats = false))
 
     true
   }

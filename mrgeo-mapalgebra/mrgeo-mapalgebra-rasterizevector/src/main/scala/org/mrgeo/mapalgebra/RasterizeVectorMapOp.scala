@@ -147,7 +147,7 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
       (tileId, raster)
     })
     rasterRDD = Some(RasterRDD(result))
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData, calcStats = false))
     true
   }
 

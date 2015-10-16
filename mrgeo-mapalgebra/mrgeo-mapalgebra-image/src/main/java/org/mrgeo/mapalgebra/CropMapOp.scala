@@ -149,7 +149,7 @@ class CropMapOp extends RasterMapOp with Externalizable {
       filtered
     }))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValue(0)))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues, calcStats = false))
 
     true
   }

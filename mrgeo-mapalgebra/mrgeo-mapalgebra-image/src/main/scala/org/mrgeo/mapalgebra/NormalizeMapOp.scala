@@ -15,7 +15,6 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.WritableRaster
 import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
 
 import org.apache.spark.{SparkContext, SparkConf}
@@ -115,7 +114,7 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues, calcStats = false))
 
     true
   }

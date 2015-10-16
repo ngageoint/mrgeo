@@ -15,18 +15,17 @@
 
 package org.mrgeo.mapalgebra.binarymath
 
-import java.awt.image.WritableRaster
-import java.io.{IOException, Externalizable, ObjectInput, ObjectOutput}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.{SparkUtils, TMSUtils, GDALUtils}
+import org.mrgeo.utils.SparkUtils
 
 //object RawBinaryMathMapOpRegistrar extends MapOpRegistrar {
 //  override def register: Array[String] = {
@@ -150,8 +149,10 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   private[binarymath] def computeWithConstantA(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
     val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
+    val meta = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+
     // copy this here to avoid serializing the whole mapop
-    val nodata = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)).getDefaultValue(0)
+    val nodatas = meta.getDefaultValues
 
     val answer = RasterRDD(rdd.map(tile => {
       val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
@@ -160,7 +161,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
         for (x <- 0 until raster.getWidth) {
           for (b <- 0 until raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
-            if (RasterMapOp.isNotNodata(v, nodata)) {
+            if (RasterMapOp.isNotNodata(v, nodatas(b))) {
               raster.setSample(x, y, b, function(const, v))
             }
           }
@@ -169,7 +170,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodatas, calcStats = false))
 
     Some(answer)
 
@@ -179,8 +180,10 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
     val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
+    val meta = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+
     // copy this here to avoid serializing the whole mapop
-    val nodata = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)).getDefaultValue(0)
+    val nodatas = meta.getDefaultValues
 
     val answer = RasterRDD(rdd.map(tile => {
       val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
@@ -189,7 +192,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
         for (x <- 0 until raster.getWidth) {
           for (b <- 0 until raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
-            if (RasterMapOp.isNotNodata(v, nodata)) {
+            if (RasterMapOp.isNotNodata(v, nodatas(b))) {
               raster.setSample(x, y, b, function(v, const))
             }
           }
@@ -198,7 +201,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodatas, calcStats = false))
 
     Some(answer)
 
@@ -210,12 +213,16 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
     // copy this here to avoid serializing the whole mapop
     val nodata1 = raster1.metadata() match {
-    case Some(metadata) => metadata.getDefaultValue(0)
-    case _ => Double.NaN
+    case Some(metadata) => metadata.getDefaultValues
+    case _ =>
+      val raster = RasterWritable.toRaster(rdd1.first()._2)
+      Array.fill[Double](raster.getNumBands)(Double.NaN)
     }
     val nodata2 = raster2.metadata() match {
-    case Some(metadata) => metadata.getDefaultValue(0)
-    case _ => Double.NaN
+    case Some(metadata) => metadata.getDefaultValues
+    case _ =>
+      val raster = RasterWritable.toRaster(rdd2.first()._2)
+      Array.fill[Double](raster.getNumBands)(Double.NaN)
     }
 
     // group the RDDs
@@ -242,14 +249,14 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
           for (x <- 0 until raster1.getWidth) {
             for (b <- 0 until raster1.getNumBands) {
               val v1 = raster1.getSampleDouble(x, y, b)
-              if (RasterMapOp.isNotNodata(v1, nodata1)) {
+              if (RasterMapOp.isNotNodata(v1, nodata1(b))) {
                 val v2 = raster2.getSampleDouble(x, y, b)
-                if (RasterMapOp.isNotNodata(v2, nodata2)) {
+                if (RasterMapOp.isNotNodata(v2, nodata2(b))) {
                   raster1.setSample(x, y, b, function(v1, v2))
                 }
                 else {
                   // if raster2 is nodata, we need to set raster1's pixel to nodata as well
-                  raster1.setSample(x, y, b, nodata1)
+                  raster1.setSample(x, y, b, nodata1(b))
                 }
               }
             }
@@ -260,7 +267,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       }
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster1.metadata().get.getMaxZoomLevel, nodata1))
+    metadata(SparkUtils.calculateMetadata(answer, raster1.metadata().get.getMaxZoomLevel, nodata1, calcStats = false))
 
     Some(answer)
   }

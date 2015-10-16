@@ -237,7 +237,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues, calcStats = false))
 
     true
   }
