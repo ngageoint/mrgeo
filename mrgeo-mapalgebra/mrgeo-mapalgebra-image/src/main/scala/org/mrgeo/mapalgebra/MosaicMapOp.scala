@@ -29,6 +29,8 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.TMSUtils.TileBounds
 import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
 
+import org.mrgeo.utils.MrGeoImplicits._
+
 import scala.util.control.Breaks
 
 object MosaicMapOp extends MapOpRegistrar {

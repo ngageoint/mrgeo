@@ -27,16 +27,7 @@ import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.SparkUtils
 
-//object RawBinaryMathMapOpRegistrar extends MapOpRegistrar {
-//  override def register: Array[String] = {
-//    Array[String]("+", "-", "*", "/")
-//  }
-//  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-//    new RawBinaryMathMapOp(node, variables)
-//
-//  override def toString: String = "RawBinaryMathMapOp (object)"
-//
-//}
+import org.mrgeo.utils.MrGeoImplicits._
 
 abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   var constA:Option[Double] = None

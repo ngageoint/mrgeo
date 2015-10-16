@@ -27,6 +27,8 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.SparkUtils
 
+import org.mrgeo.utils.MrGeoImplicits._
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.util.control.Breaks

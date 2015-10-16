@@ -26,6 +26,8 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
 import org.mrgeo.utils.SparkUtils
 
+import org.mrgeo.utils.MrGeoImplicits._
+
 object IsNodataMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("isNodata", "isNull")

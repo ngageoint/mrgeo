@@ -183,7 +183,7 @@ public void add() throws Exception
 {
 //    java.util.Properties prop = MrGeoProperties.getInstance();
 //    prop.setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
-  if (GEN_BASELINE_DATA_ONLY)
+  if (true) // (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format("[%s] + [%s]", allones, allones), -9999);
@@ -291,6 +291,7 @@ public void aspectRad() throws Exception
 public void bandcombine() throws Exception
 {
   String exp = String.format("bandcombine([%s], [%s])", allones, allhundreds);
+
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);

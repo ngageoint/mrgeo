@@ -16,6 +16,7 @@
 package org.mrgeo.utils;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.gdal.gdal.Band;
@@ -43,9 +44,9 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Vector;
 
-public class GDALUtils
+public class GDALUtilsOld
 {
-private static final Logger log = LoggerFactory.getLogger(GDALUtils.class);
+private static final Logger log = LoggerFactory.getLogger(GDALUtilsOld.class);
 
 // it's quicker (the EPSG doesn't change) to just hardcode this instead of trying to get it from GDAL/
 public static final String EPSG4326 = osr.SRS_WKT_WGS84;
@@ -70,7 +71,6 @@ static
   if (rawPath != null)
   {
     // gdal jars to load.  In the order they should be loaded...
-
     final String[] paths = rawPath.split(":");
 
     final String[] found = new String[libs.length];
@@ -94,7 +94,7 @@ static
 
           log.debug(msg + " not found");
         }
-        catch (IOException e)
+        catch (IOException ignored)
         {
         }
       }
@@ -180,8 +180,8 @@ public static boolean isValidDataset(String imagename)
 {
   try
   {
-    Dataset image = GDALUtils.open(imagename);
-    GDALUtils.close(image);
+    Dataset image = GDALUtilsOld.open(imagename);
+    GDALUtilsOld.close(image);
 
     return true;
   }
@@ -199,17 +199,17 @@ public static Dataset open(InputStream stream) throws IOException
   String imagename = "stream" + HadoopUtils.createRandomString(5);
 
   byte[] bytes = IOUtils.toByteArray(stream);
-  gdal.FileFromMemBuffer(GDALUtils.VSI_PREFIX + imagename, bytes);
+  gdal.FileFromMemBuffer(GDALUtilsOld.VSI_PREFIX + imagename, bytes);
 
-  image = gdal.Open(GDALUtils.VSI_PREFIX + imagename);
+  image = gdal.Open(GDALUtilsOld.VSI_PREFIX + imagename);
 
   if (image != null)
   {
-    GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
+    GDALUtilsOld.log.debug("  Image loaded successfully: {}", imagename);
     return image;
   }
 
-  GDALUtils.log.info(
+  GDALUtilsOld.log.info(
       "Image not loaded, but unfortunately no exceptions were thrown, look for a logged explanation somewhere above");
 
   return null;
@@ -223,50 +223,43 @@ public static Dataset open(String imagename) throws IOException
     final URI uri = new URI(imagename);
     Dataset image;
 
-    GDALUtils.log.debug("Loading image with GDAL: {}", imagename);
+    GDALUtilsOld.log.debug("Loading image with GDAL: {}", imagename);
 
     File file = new File(uri.getPath());
     if (file.exists())
     {
       java.nio.file.Path p = Paths.get(file.toURI());
       byte[] bytes = Files.readAllBytes(p);
-      gdal.FileFromMemBuffer(GDALUtils.VSI_PREFIX + imagename, bytes);
-      image = gdal.Open(GDALUtils.VSI_PREFIX + imagename);
+      gdal.FileFromMemBuffer(GDALUtilsOld.VSI_PREFIX + imagename, bytes);
+      image = gdal.Open(GDALUtilsOld.VSI_PREFIX + imagename);
 
       //image = gdal.Open(uri.getPath());
 
       if (image != null)
       {
-        GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
+        GDALUtilsOld.log.debug("  Image loaded successfully: {}", imagename);
         return image;
       }
     }
-    GDALUtils.log.debug("  Image not on the local filesystem, trying HDFS: {}", imagename);
+    GDALUtilsOld.log.debug("  Image not on the local filesystem, trying HDFS: {}", imagename);
 
     final Path p = new Path(uri);
     final FileSystem fs = HadoopFileUtils.getFileSystem(p);
-    final InputStream is = fs.open(p);
-    final DataInputStream dis = new DataInputStream(is);
-    try
+    try (InputStream is = fs.open(p))
     {
       byte[] bytes = IOUtils.toByteArray(is);
-      gdal.FileFromMemBuffer(GDALUtils.VSI_PREFIX + imagename, bytes);
+      gdal.FileFromMemBuffer(GDALUtilsOld.VSI_PREFIX + imagename, bytes);
 
-      image = gdal.Open(GDALUtils.VSI_PREFIX + imagename);
+      image = gdal.Open(GDALUtilsOld.VSI_PREFIX + imagename);
 
       if (image != null)
       {
-        GDALUtils.log.debug("  Image loaded successfully: {}", imagename);
+        GDALUtilsOld.log.debug("  Image loaded successfully: {}", imagename);
         return image;
       }
 
-      GDALUtils.log.info(
+      GDALUtilsOld.log.info(
           "Image not loaded, but unfortunately no exceptions were thrown, look for a logged explanation somewhere above");
-    }
-    finally
-    {
-      dis.close();
-      is.close();
     }
   }
   catch (final URISyntaxException e)
@@ -320,7 +313,7 @@ public static Dataset createEmptyMemoryRaster(final Dataset src, final int width
     }
 
   }
-  return GDALUtils.createEmptyMemoryRaster(width, height, src.getRasterCount(), datatype, nodatas);
+  return GDALUtilsOld.createEmptyMemoryRaster(width, height, src.getRasterCount(), datatype, nodatas);
 }
 
 public static Dataset createEmptyMemoryRaster(final int width, final int height, final int bands,
@@ -352,38 +345,44 @@ public static Dataset createEmptyMemoryRaster(final int width, final int height,
   return driver.Create("InMem", width, height, bands, datatype);
 }
 
+
 public static void saveRaster(Dataset raster, String filename) throws IOException
 {
-  GDALUtils.saveRaster(raster, filename, "GTiff");
+  GDALUtilsOld.saveRaster(raster, filename, "GTiff");
 }
 
 public static void saveRaster(Raster raster, String filename) throws IOException
 {
-  final Dataset src = GDALUtils.toDataset(raster);
-  GDALUtils.saveRaster(src, filename, "GTiff");
+  final Dataset src = GDALUtilsOld.toDataset(raster);
+  GDALUtilsOld.saveRaster(src, filename, "GTiff");
+}
+
+public static void saveRaster(Raster raster, OutputStream stream) throws IOException
+{
+  final Dataset src = GDALUtilsOld.toDataset(raster);
+  GDALUtilsOld.saveRaster(src, stream, "GTiff");
+}
+
+public static void saveRaster(Dataset raster, OutputStream stream) throws IOException
+{
+  GDALUtilsOld.saveRaster(raster, stream, "GTiff");
 }
 
 public static void saveRaster(Raster raster, String filename, String type) throws IOException
 {
-  final Dataset src = GDALUtils.toDataset(raster);
-  GDALUtils.saveRaster(src, filename, type);
-}
-
-public static void saveRaster(Raster raster, String filename, double nodata) throws IOException
-{
-  final Dataset src = GDALUtils.toDataset(raster, nodata);
-  GDALUtils.saveRaster(src, filename, "GTiff");
+  final Dataset src = GDALUtilsOld.toDataset(raster);
+  GDALUtilsOld.saveRaster(src, filename, type);
 }
 
 public static void saveRaster(Dataset raster, String filename, String type) throws IOException
 {
   final Driver driver = gdal.GetDriverByName(mapType(type));
-  saveRaster(raster, driver, filename);
+  saveRaster(raster, driver, filename, new String[]{});
 }
 
 public static void saveRaster(Raster raster, OutputStream stream, String type) throws IOException
 {
-  final Dataset src = GDALUtils.toDataset(raster);
+  final Dataset src = GDALUtilsOld.toDataset(raster);
   saveRaster(src, stream, type);
 }
 
@@ -397,55 +396,25 @@ public static void saveRaster(Dataset raster, OutputStream stream, String type)
   Files.copy(temp.toPath(), stream);
   stream.flush();
 
-  temp.delete();
-}
-
-
-private static void saveRaster(Dataset raster, Driver driver, String filename) throws IOException
-{
-  String pamEnabled = gdal.GetConfigOption(GDAL_PAM_ENABLED);
-  gdal.SetConfigOption(GDAL_PAM_ENABLED, "NO");
-
-  final Dataset copy = driver.CreateCopy(filename, raster);
-
-  if (pamEnabled != null)
+  if (!temp.delete())
   {
-    gdal.SetConfigOption(GDAL_PAM_ENABLED, pamEnabled);
+    throw new IOException("Error removing temp file");
   }
-
-  if (copy == null) {
-    int errno = gdal.GetLastErrorNo();
-    int type = gdal.GetLastErrorType();
-    String msg = gdal.GetLastErrorMsg();
-
-    throw new IOException("Error saving raster: " + filename + String.format(" (%d: %d: %s)", errno, type, msg));
-  }
-
-  copy.delete();
 }
 
-private static void saveRaster(Dataset raster, Driver driver, String filename, String[] options) throws IOException
+
+public static void saveRaster(Raster raster, String filename, double nodata) throws IOException
 {
-  String pamEnabled = gdal.GetConfigOption(GDAL_PAM_ENABLED);
-  gdal.SetConfigOption(GDAL_PAM_ENABLED, "NO");
-
-  final Dataset copy = driver.CreateCopy(filename, raster, options);
-
-  if (pamEnabled != null)
-  {
-    gdal.SetConfigOption(GDAL_PAM_ENABLED, pamEnabled);
-  }
-
-  if (copy == null) {
-    int errno = gdal.GetLastErrorNo();
-    int type = gdal.GetLastErrorType();
-    String msg = gdal.GetLastErrorMsg();
-
-    throw new IOException("Error saving raster: " + filename + String.format(" (%d: %d: %s)", errno, type, msg));
-  }
-
-  copy.delete();
+  final Dataset src = GDALUtilsOld.toDataset(raster, nodata);
+  GDALUtilsOld.saveRaster(src, filename, "GTiff");
 }
+
+public static void saveRaster(Raster raster, OutputStream stream, double nodata) throws IOException
+{
+  final Dataset src = GDALUtilsOld.toDataset(raster, nodata);
+  GDALUtilsOld.saveRaster(src, stream, "GTiff");
+}
+
 
 public static void saveRaster(Raster raster, String filename, long tx, long ty, int zoom, int tilesize, double nodata)
     throws IOException
@@ -455,14 +424,14 @@ public static void saveRaster(Raster raster, String filename, long tx, long ty, 
     filename += ".tif";
   }
 
-  GDALUtils.saveRaster(raster, filename, "GTiff", tx, ty, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+  GDALUtilsOld.saveRaster(raster, filename, "GTiff", tx, ty, zoom, tilesize, nodata);
 }
 
 public static void saveRaster(Raster raster, OutputStream stream, long tx, long ty, int zoom, int tilesize, double nodata)
     throws IOException
 {
 
-  GDALUtils.saveRaster(raster, stream, "GTiff", tx, ty, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+  GDALUtilsOld.saveRaster(raster, stream, "GTiff", tx, ty, zoom, tilesize, nodata);
 }
 
 public static void saveRaster(Raster raster, String filename, Bounds bounds, int zoom, int tilesize, double nodata)
@@ -473,21 +442,20 @@ public static void saveRaster(Raster raster, String filename, Bounds bounds, int
     filename += ".tif";
   }
 
-  GDALUtils.saveRaster(raster, filename, "GTiff", bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+  GDALUtilsOld.saveRaster(raster, filename, "GTiff", bounds, zoom, tilesize, nodata);
 }
 
 public static void saveRaster(Raster raster, OutputStream stream, Bounds bounds, int zoom, int tilesize, double nodata)
     throws IOException
 {
 
-  GDALUtils.saveRaster(raster, stream, "GTiff", bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+  GDALUtilsOld.saveRaster(raster, stream, "GTiff", bounds, zoom, tilesize, nodata);
 }
 
 public static void saveRaster(Raster raster, OutputStream stream, Bounds bounds, double nodata)
     throws IOException
 {
-  GDALUtils.saveRaster(raster, stream, "GTiff",
-      bounds.getTMSBounds(), nodata, new String[]{"COMPRESS=LZW"});
+  GDALUtilsOld.saveRaster(raster, stream, "GTiff", bounds.getTMSBounds(), nodata);
 }
 
 public static void saveRaster(Raster raster, String filename, TMSUtils.Bounds bounds, int zoom, int tilesize, double nodata)
@@ -498,20 +466,21 @@ public static void saveRaster(Raster raster, String filename, TMSUtils.Bounds bo
     filename += ".tif";
   }
 
-  GDALUtils.saveRaster(raster, filename, "GTiff", bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+  GDALUtilsOld.saveRaster(raster, filename, "GTiff", bounds, zoom, tilesize, nodata);
 }
 
 public static void saveRaster(Raster raster, String filename, String format, TMSUtils.Bounds bounds, int zoom, int tilesize, double nodata)
     throws IOException
 {
-  GDALUtils.saveRaster(raster, filename, format, bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+  final Dataset src = GDALUtilsOld.toDataset(raster, nodata);
+  //GDALUtilsOld.saveRaster(src, filename, format, bounds, zoom, tilesize, nodata);
 }
 
 public static void saveRaster(Raster raster, OutputStream stream, TMSUtils.Bounds bounds, int zoom, int tilesize, double nodata)
     throws IOException
 {
 
-  GDALUtils.saveRaster(raster, stream, "GTiff", bounds, zoom, tilesize, nodata, new String[]{"COMPRESS=LZW"});
+  GDALUtilsOld.saveRaster(raster, stream, "GTiff", bounds, zoom, tilesize, nodata);
 }
 
 public static void saveRaster(Raster raster, String filename, String type, long tx, long ty, int zoom, int tilesize, final double nodata)
@@ -547,17 +516,29 @@ public static void saveRaster(Raster raster, String filename, String type, Bound
   saveRaster(raster, filename, type, bounds.getTMSBounds(), zoom, tilesize, nodata, options);
 }
 
+public static void saveRaster(Raster raster, String filename, String type, Bounds bounds, int zoom, int tilesize, final double nodata)
+    throws IOException
+{
+  saveRaster(raster, filename, type, bounds.getTMSBounds(), zoom, tilesize, nodata);
+}
+
 public static void saveRaster(Raster raster, OutputStream stream, String type, Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
     throws IOException
 {
   saveRaster(raster, stream, type, bounds.getTMSBounds(), zoom, tilesize, nodata, options);
 }
 
+public static void saveRaster(Raster raster, OutputStream stream, String type, Bounds bounds, int zoom, int tilesize, final double nodata)
+    throws IOException
+{
+  saveRaster(raster, stream, type, bounds.getTMSBounds(), zoom, tilesize, nodata);
+}
+
 public static void saveRaster(Raster raster, String filename, String type, TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
     throws IOException
 {
   final Driver driver = gdal.GetDriverByName(mapType(type));
-  final Dataset src = GDALUtils.toDataset(raster, nodata);
+  final Dataset src = GDALUtilsOld.toDataset(raster, nodata);
 
   final double res = TMSUtils.resolution(zoom, tilesize);
 
@@ -571,11 +552,11 @@ public static void saveRaster(Raster raster, String filename, String type, TMSUt
   xform[5] = -res; /* n-s pixel resolution (negative value) */
 
   src.SetGeoTransform(xform);
-  src.SetProjection(GDALUtils.EPSG4326);
+  src.SetProjection(GDALUtilsOld.EPSG4326);
 
   if (options == null)
   {
-    saveRaster(src, driver, filename);
+    saveRaster(src, driver, filename, new String[]{});
   }
   else {
     saveRaster(src, driver, filename, options);
@@ -585,10 +566,60 @@ public static void saveRaster(Raster raster, String filename, String type, TMSUt
 }
 
 public static void saveRaster(Raster raster, String filename, String type,
+    TMSUtils.Bounds bounds, final double nodata) throws IOException
+{
+  saveRaster(raster, filename, type, bounds, nodata, null);
+}
+
+
+public static void saveRaster(Raster raster, OutputStream stream, String type,
+    TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata)
+    throws IOException
+{
+  File temp = File.createTempFile("tmp-file", "");
+  saveRaster(raster, temp.getCanonicalPath(), type, bounds, zoom, tilesize, nodata);
+
+  Files.copy(temp.toPath(), stream);
+  stream.flush();
+
+  if (!temp.delete())
+  {
+    throw new IOException("Error deleting temp file");
+  }
+}
+public static void saveRaster(Raster raster, OutputStream stream, String type,
+    TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
+    throws IOException
+{
+  File temp = File.createTempFile("tmp-file", "");
+  saveRaster(raster, temp.getCanonicalPath(), type, bounds, zoom, tilesize, nodata, options);
+
+  Files.copy(temp.toPath(), stream);
+  stream.flush();
+
+  if (!temp.delete())
+  {
+    throw new IOException("Error deleting temp file");
+  }
+}
+
+public static void saveRaster(Raster raster, OutputStream stream, String type, TMSUtils.Bounds bounds, final double nodata) throws IOException
+{
+  File temp = File.createTempFile("tmp-file", "");
+  saveRaster(raster, temp.getCanonicalPath(), type, bounds, nodata, new String[]{});
+
+  Files.copy(temp.toPath(), stream);
+  stream.flush();
+
+  temp.delete();
+}
+
+
+public static void saveRaster(Raster raster, String filename, String type,
     TMSUtils.Bounds bounds, final double nodata, String[] options) throws IOException
 {
   final Driver driver = gdal.GetDriverByName(mapType(type));
-  final Dataset src = GDALUtils.toDataset(raster, nodata);
+  final Dataset src = GDALUtilsOld.toDataset(raster, nodata);
 
   final double[] xform = new double[6];
 
@@ -600,11 +631,11 @@ public static void saveRaster(Raster raster, String filename, String type,
   xform[5] = -bounds.height() / raster.getHeight(); /* n-s pixel resolution (negative value) */
 
   src.SetGeoTransform(xform);
-  src.SetProjection(GDALUtils.EPSG4326);
+  src.SetProjection(GDALUtilsOld.EPSG4326);
 
   if (options == null)
   {
-    saveRaster(src, driver, filename);
+    saveRaster(src, driver, filename, new String[]{});
   }
   else {
     saveRaster(src, driver, filename, options);
@@ -613,31 +644,38 @@ public static void saveRaster(Raster raster, String filename, String type,
   src.delete();
 }
 
-public static void saveRaster(Raster raster, OutputStream stream, String type,
-    TMSUtils.Bounds bounds, int zoom, int tilesize, final double nodata, String[] options)
-    throws IOException
+private static void saveRaster(Dataset raster, Driver driver, String filename, String[] options) throws IOException
 {
-  File temp = File.createTempFile("tmp-file", "");
-  saveRaster(raster, temp.getCanonicalPath(), type, bounds, zoom, tilesize, nodata, options);
+  String pamEnabled = gdal.GetConfigOption(GDAL_PAM_ENABLED);
+  gdal.SetConfigOption(GDAL_PAM_ENABLED, "NO");
 
-  Files.copy(temp.toPath(), stream);
-  stream.flush();
+  String[] moreoptions = ArrayUtils.add(options, "INTERLEAVE=BAND");
 
-  temp.delete();
+  moreoptions = ArrayUtils.add(moreoptions, "COMPRESS=DEFLATE");
+  moreoptions = ArrayUtils.add(moreoptions, "PREDICTOR=1");
+  moreoptions = ArrayUtils.add(moreoptions, "ZLEVEL=6");
+  moreoptions = ArrayUtils.add(moreoptions, "TILES=YES");
+  moreoptions = ArrayUtils.add(moreoptions, "BLOCKXSIZE=" + (raster.getRasterXSize() < 2048 ? raster.getRasterXSize() : 2048));
+  moreoptions = ArrayUtils.add(moreoptions, "BLOCKYSIZE=" + (raster.getRasterYSize() < 2048 ? raster.getRasterYSize() : 2048));
+
+  final Dataset copy = driver.CreateCopy(filename, raster, 1, moreoptions);
+
+  if (pamEnabled != null)
+  {
+    gdal.SetConfigOption(GDAL_PAM_ENABLED, pamEnabled);
+  }
+
+  if (copy == null) {
+    int errno = gdal.GetLastErrorNo();
+    int type = gdal.GetLastErrorType();
+    String msg = gdal.GetLastErrorMsg();
+
+    throw new IOException("Error saving raster: " + filename + String.format(" (%d: %d: %s)", errno, type, msg));
+  }
+
+  copy.delete();
 }
 
-public static void saveRaster(Raster raster, OutputStream stream, String type,
-    TMSUtils.Bounds bounds, final double nodata, String[] options)
-    throws IOException
-{
-  File temp = File.createTempFile("tmp-file", "");
-  saveRaster(raster, temp.getCanonicalPath(), type, bounds, nodata, options);
-
-  Files.copy(temp.toPath(), stream);
-  stream.flush();
-
-  temp.delete();
-}
 
 private static String mapType(String type)
 {
@@ -661,9 +699,9 @@ public static Dataset toDataset(Raster raster, final double nodata)
   final double[] nodatas = new double[raster.getNumBands()];
   Arrays.fill(nodatas, nodata);
 
-  final int type = GDALUtils.toGDALDataType(raster.getTransferType());
+  final int type = GDALUtilsOld.toGDALDataType(raster.getTransferType());
 
-  final Dataset ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth(), raster.getHeight(),
+  final Dataset ds = GDALUtilsOld.createEmptyMemoryRaster(raster.getWidth(), raster.getHeight(),
       raster.getNumBands(), type, nodatas);
 
   if (ds != null)
@@ -676,8 +714,8 @@ public static Dataset toDataset(Raster raster, final double nodata)
 
 public static Dataset toDataset(Raster raster)
 {
-  final int type = GDALUtils.toGDALDataType(raster.getTransferType());
-  final Dataset ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth(), raster.getHeight(),
+  final int type = GDALUtilsOld.toGDALDataType(raster.getTransferType());
+  final Dataset ds = GDALUtilsOld.createEmptyMemoryRaster(raster.getWidth(), raster.getHeight(),
       raster.getNumBands(), type);
 
   if (ds != null)
@@ -696,7 +734,6 @@ public static Raster toRaster(Dataset image)
   {
     bandlist[x] = x + 1;
   }
-
   final int datatype = image.GetRasterBand(1).getDataType();
   final int pixelsize = gdal.GetDataTypeSize(datatype) / 8;
 
@@ -715,7 +752,7 @@ public static Raster toRaster(Dataset image)
   image.ReadRaster_Direct(0, 0, width, height, width, height, datatype, data, bandlist, pixelstride, linestride, 1);
 
   data.rewind();
-  return GDALUtils.toRaster(height, width, bands, datatype, data);
+  return GDALUtilsOld.toRaster(height, width, bands, datatype, data);
 }
 
 public static Raster toRaster(int height, int width, int bands,
@@ -727,7 +764,7 @@ public static Raster toRaster(int height, int width, int bands,
 public static Raster toRaster(int height, int width, int bands,
     int gdaldatatype, ByteBuffer data)
 {
-  final int datatype = GDALUtils.toRasterDataBufferType(gdaldatatype);
+  final int datatype = GDALUtilsOld.toRasterDataBufferType(gdaldatatype);
 
   final int bandbytes = height * width * (gdal.GetDataTypeSize(gdaldatatype) / 8);
   final int databytes = bandbytes * bands;
@@ -791,7 +828,7 @@ public static Raster toRaster(int height, int width, int bands,
     db = new DataBufferUShort(ushortdata, ushortdata.length);
     break;
   default:
-    throw new GDALUtils.GDALException("Error trying to read raster.  Bad raster data type");
+    throw new GDALUtilsOld.GDALException("Error trying to read raster.  Bad raster data type");
   }
 
   raster = Raster.createWritableRaster(sm, db, null);
@@ -982,7 +1019,7 @@ public static double getnodata(Dataset src)
 
 public static double getnodata(String imagename) throws IOException
 {
-  Dataset image = GDALUtils.open(imagename);
+  Dataset image = GDALUtilsOld.open(imagename);
 
   if (image != null)
   {
@@ -1024,7 +1061,7 @@ public static int calculateZoom(String imagename, int tilesize)
 {
   try
   {
-    Dataset image = GDALUtils.open(imagename);
+    Dataset image = GDALUtilsOld.open(imagename);
 
 
     if (image != null)
@@ -1037,7 +1074,7 @@ public static int calculateZoom(String imagename, int tilesize)
       int zx = TMSUtils.zoomForPixelSize(Math.abs(px), tilesize);
       int zy = TMSUtils.zoomForPixelSize(Math.abs(py), tilesize);
 
-      GDALUtils.close(image);
+      GDALUtilsOld.close(image);
 
       if (zx > zy)
       {
@@ -1078,9 +1115,9 @@ private static double getToDegreesMultiplier(Dataset image)
 
 private static void copyToDataset(Dataset ds, Raster raster)
 {
-  final int type = GDALUtils.toGDALDataType(raster.getTransferType());
+  final int type = GDALUtilsOld.toGDALDataType(raster.getTransferType());
 
-  ds.SetProjection(GDALUtils.EPSG4326);
+  ds.SetProjection(GDALUtilsOld.EPSG4326);
 
   final int bands = raster.getNumBands();
   final int[] bandlist = new int[bands];

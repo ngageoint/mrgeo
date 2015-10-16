@@ -73,7 +73,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     true
   }
 
-  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata:Double) = {
+  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata: Array[Number]) = {
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
     // won't eat up too much memory
     val in = context.makeRDD(inputs, inputs.length)
@@ -86,9 +86,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
       val src = RasterWritable.toRaster(r1)
       val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
-      val nodatas = Array.fill[Double](1)(nodata)
-
-      RasterUtils.mosaicTile(src, dst, nodatas)
+      RasterUtils.mosaicTile(src, dst, nodata)
       RasterWritable.toWritable(dst)
     })
 
@@ -478,7 +476,7 @@ class IngestImage extends MrGeoJob with Externalizable {
   var bands:Int = -1
   var tiletype:Int = -1
   var tilesize:Int = -1
-  var nodata:Array[Double] = null
+  var nodata:Array[Number] = null
   var categorical:Boolean = false
   var providerproperties:ProviderProperties = null
   var protectionlevel:String = null
@@ -519,10 +517,10 @@ class IngestImage extends MrGeoJob with Externalizable {
     tiletype = job.getSetting(IngestImage.Tiletype).toInt
     tilesize = job.getSetting(IngestImage.Tilesize).toInt
     if (job.hasSetting(IngestImage.NoData)) {
-      nodata = job.getSetting(IngestImage.NoData).split(" ").map(_.toDouble)
+      nodata = job.getSetting(IngestImage.NoData).split(" ").map(_.toDouble.asInstanceOf[Number])
     }
     else {
-      nodata = Array.fill[Double](bands)(Double.NaN)
+      nodata = Array.fill[Number](bands)(Double.NaN)
     }
     categorical = job.getSetting(IngestImage.Categorical).toBoolean
 
@@ -540,7 +538,7 @@ class IngestImage extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize, categorical, nodata(0))
+    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize, categorical, nodata)
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
     SparkUtils.saveMrsPyramid(ingested._1, dp, ingested._2, zoom, context.hadoopConfiguration, providerproperties)
@@ -554,47 +552,8 @@ class IngestImage extends MrGeoJob with Externalizable {
   }
 
   override def readExternal(in: ObjectInput) {
-    //    //    val count = in.readInt()
-    //    //    val ab = mutable.ArrayBuilder.make[String]()
-    //    //    for (i <- 0 until count) {
-    //    //      ab += in.readUTF()
-    //    //    }
-    //    //    inputs = ab.result()
-    //    //
-    //    output = in.readUTF()
-    //    //    bounds = Bounds.fromDelimitedString(in.readUTF())
-    //    zoom = in.readInt()
-    //    tilesize = in.readInt()
-    //    //    tiletype = in.readInt()
-    //    //    bands = in.readInt()
-    //    val nodataLen = in.readInt()
-    //    nodata = new Array[Double](nodataLen)
-    //    for (i <- 0 until nodataLen) {
-    //      nodata(i) = in.readDouble()
-    //    }
-    //    categorical = in.readBoolean()
-    //
-    //    //    providerproperties = in.readObject().asInstanceOf[Properties]
-    //    //    protectionlevel = in.readUTF()
   }
 
   override def writeExternal(out: ObjectOutput) {
-    //    //      out.writeInt(inputs.length)
-    //    //      inputs.foreach(input => { out.writeUTF(input)})
-    //    out.writeUTF(output)
-    //    //      out.writeUTF(bounds.toDelimitedString)
-    //    out.writeInt(zoom)
-    //    out.writeInt(tilesize)
-    //    //      out.writeInt(tiletype)
-    //    //      out.writeInt(bands)
-    //    out.writeInt(nodata.length);
-    //    for(i <- 0 until nodata.length) {
-    //      out.writeDouble(nodata(i).doubleValue())
-    //    }
-    //    out.writeBoolean(categorical)
-    //    //
-    //    //      out.writeObject(providerproperties)
-    //    //
-    //    //      out.writeUTF(protectionlevel)
   }
 }

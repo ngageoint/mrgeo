@@ -715,6 +715,15 @@ public void setDefaultValues(final double[] defaultValues)
   this.defaultValues = defaultValues;
 }
 
+public void setDefaultValues(final Number[] defaultValues)
+{
+  this.defaultValues = new double[defaultValues.length];
+  for (int i = 0; i < defaultValues.length; i++)
+  {
+    this.defaultValues[i] = defaultValues[i].doubleValue();
+  }
+}
+
 
 @Override
 public void setName(final int zoomlevel, final String name)

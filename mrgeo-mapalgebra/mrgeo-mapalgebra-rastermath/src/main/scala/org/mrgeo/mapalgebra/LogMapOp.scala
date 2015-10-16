@@ -26,6 +26,8 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.SparkUtils
 
+import org.mrgeo.utils.MrGeoImplicits._
+
 object LogMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("log")

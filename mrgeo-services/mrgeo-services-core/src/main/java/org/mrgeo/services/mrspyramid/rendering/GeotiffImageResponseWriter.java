@@ -22,7 +22,7 @@ import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -219,7 +219,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
   private void writeStream(final Raster raster, final Bounds bounds, final double nodata,
     final ByteArrayOutputStream byteStream) throws IOException
   {
-    GDALUtils.saveRaster(raster, byteStream, bounds, nodata);
+    GDALJavaUtils.saveRaster(raster, byteStream, bounds, nodata);
 
     byteStream.close();
   }

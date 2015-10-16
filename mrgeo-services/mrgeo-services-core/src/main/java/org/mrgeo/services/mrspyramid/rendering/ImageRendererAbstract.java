@@ -69,7 +69,7 @@ private String imageName = null;
 
 public ImageRendererAbstract()
 {
-  this.srs = GDALUtils.EPSG4326;
+  this.srs = GDALUtils.EPSG4326();
 }
 
 public ImageRendererAbstract(final SpatialReference srs)
@@ -442,7 +442,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       }
 
       // default is WGS84
-      String dstcrs = GDALUtils.EPSG4326;
+      String dstcrs = GDALUtils.EPSG4326();
       if (epsg != null && !epsg.equalsIgnoreCase("epsg:4326"))
       {
         SpatialReference crs = new SpatialReference();
@@ -452,7 +452,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       }
 
       log.debug("Scaling image...");
-      gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326, dstcrs, resample);
+      gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326(), dstcrs, resample);
       log.debug("Image scaled.");
 
       return GDALUtils.toRaster(dst);

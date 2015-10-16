@@ -29,6 +29,8 @@ import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
 
+import scala.language.existentials
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.reflect.runtime.universe._

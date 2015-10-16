@@ -30,7 +30,7 @@ import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.GDALJavaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,8 +100,7 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
     Raster raster = RasterTileMerger.mergeTiles(image);
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
 
-    GDALUtils.saveRaster(raster, baselineTif.getCanonicalPath(),
-        image.getBounds(), image.getMaxZoomlevel(), image.getTilesize(), nodata);
+    GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), image.getBounds(), nodata);
 
   }
   finally

@@ -25,6 +25,8 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.SparkUtils
 
+import org.mrgeo.utils.MrGeoImplicits._
+
 object NormalizeMapOp extends MapOpRegistrar {
 
   override def register: Array[String] = {
