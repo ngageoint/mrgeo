@@ -962,7 +962,7 @@ public static Bounds getBounds(final Dataset image)
   SpatialReference srs = new SpatialReference(image.GetProjection());
   SpatialReference dst = new SpatialReference(EPSG4326);
 
-  CoordinateTransformation tx = osr.CreateCoordinateTransformation(srs, dst);
+  CoordinateTransformation tx = new CoordinateTransformation(srs, dst);
 
   double w = image.GetRasterXSize();
   double h = image.GetRasterYSize();
