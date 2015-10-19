@@ -159,7 +159,7 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
 
     if (raster != null)
     {
-      String out = makeOutputName(output, format, tileid, zoom, tilesize);
+      String out = makeOutputName(output, format, tileid, zoom, tilesize, false);
 
       if (colorscale != null || !format.equals("tif"))
       {
@@ -256,7 +256,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
     {
       throw new MrsImageException("Error, could not load any tiles");
     }
-    String out = makeOutputName(output, format, minId, zoomlevel, tilesize);
+    String out = makeOutputName(output, format, minId, zoomlevel, tilesize, true);
 
     if (colorscale != null || !format.equals("tif"))
     {
@@ -545,7 +545,7 @@ private String makeTMSOutputName(String base, String format, long tileid, int zo
   return output;
 }
 
-private String makeOutputName(String template, String format, long tileid, int zoom, int tilesize) throws IOException
+private String makeOutputName(String template, String format, long tileid, int zoom, int tilesize, boolean reformat) throws IOException
 {
   if (useTMS)
   {
@@ -555,28 +555,50 @@ private String makeOutputName(String template, String format, long tileid, int z
   final TMSUtils.Tile t = TMSUtils.tileid(tileid, zoom);
   TMSUtils.Bounds bounds = TMSUtils.tileBounds(t.tx, t.ty, zoom, tilesize);
 
-  String output = template.replace(X, String.format("%03d", t.tx));
-  output        =   output.replace(Y, String.format("%03d", t.ty));
-  output        =   output.replace(ZOOM, String.format("%d", zoom));
-  output        =   output.replace(ID, String.format("%d", tileid));
-  if (output.contains(LAT)) {
-    double lat = bounds.s;
+  String output;
 
-    String dir = "N";
-    if (lat < 0) {
-      dir = "S";
+  if (template.contains(X) || template.contains(Y) || template.contains(ZOOM) || template.contains(ID) ||
+      template.contains(LAT) || template.contains(LON))
+  {
+    output = template.replace(X, String.format("%03d", t.tx));
+    output = output.replace(Y, String.format("%03d", t.ty));
+    output = output.replace(ZOOM, String.format("%d", zoom));
+    output = output.replace(ID, String.format("%d", tileid));
+    if (output.contains(LAT))
+    {
+      double lat = bounds.s;
+
+      String dir = "N";
+      if (lat < 0)
+      {
+        dir = "S";
+      }
+      output = output.replace(LAT, String.format("%s%3d", dir, Math.abs((int) lat)));
     }
-    output = output.replace(LAT, String.format("%s%3d", dir, Math.abs((int) lat)));
+
+    if (output.contains(LON))
+    {
+      double lon = bounds.w;
+
+      String dir = "E";
+      if (lon < 0)
+      {
+        dir = "W";
+      }
+      output = output.replace(LON, String.format("%s%3d", dir, Math.abs((int) lon)));
+    }
   }
-
-  if (output.contains(LON)) {
-    double lon = bounds.w;
-
-    String dir = "E";
-    if (lon < 0) {
-      dir = "W";
+  else
+  {
+    output = template;
+    if (reformat)
+    {
+      if (template.endsWith("/"))
+      {
+        output += "tile-";
+      }
+      output += String.format("%d", tileid) + "-" + String.format("%03d", t.ty) + "-" + String.format("%03d", t.tx);
     }
-    output = output.replace(LON, String.format("%s%3d", dir, Math.abs((int)lon)));
   }
 
   if (format.equals("tif") && (!output.endsWith(".tif") || !output.endsWith(".tiff")))
