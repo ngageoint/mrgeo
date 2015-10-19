@@ -19,6 +19,7 @@ import java.awt.image._
 import java.io.{OutputStream, File, IOException, InputStream}
 import java.net.URI
 import java.nio._
+import java.nio.file.Files
 
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.ArrayUtils
@@ -511,6 +512,7 @@ object GDALUtils extends Logging {
 
     output match {
     case Right(stream) =>
+      Files.copy(new File(filename).toPath, stream)
       stream.flush()
       if (! new File(filename).delete()) {
         throw new IOException("Error deleting temporary file: " + filename)
@@ -570,6 +572,7 @@ object GDALUtils extends Logging {
       case db: Array[Double] => bytes.asDoubleBuffer().put(db)
       }
 
+      bytes.rewind()
       ds.WriteRaster_Direct(0, 0, width, height, width, height, datatype, bytes, bandlist,
         pixelstride, linestride, bandstride)
     }
@@ -577,6 +580,7 @@ object GDALUtils extends Logging {
       val bytes: ByteBuffer = ByteBuffer.allocateDirect(linestride.toInt)
       bytes.order(ByteOrder.nativeOrder)
       for (y <- 0 until height) {
+        bytes.rewind()
         val elements: AnyRef = raster.getDataElements(raster.getMinX, raster.getMinY + y, raster.getWidth, 1, null)
         elements match {
         case bb: Array[Byte] => bytes.put(bb)
