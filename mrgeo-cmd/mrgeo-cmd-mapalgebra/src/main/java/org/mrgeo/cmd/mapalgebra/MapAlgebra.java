@@ -18,6 +18,8 @@ package org.mrgeo.cmd.mapalgebra;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+import org.mrgeo.aggregators.MeanAggregator;
+import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoConstants;
@@ -171,11 +173,12 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
       throw new JobFailedException(progress.getResult());
     }
 
-//    if (line.hasOption("b") && (root instanceof RasterMapOpHadoop))
-//    {
-//      System.out.println("Building pyramids...");
-//      BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties);
-//    }
+
+    if (line.hasOption("b"))
+    {
+      System.out.println("Building pyramids...");
+      BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties);
+    }
 
     System.out.println("Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) /1000.0) + " seconds");
   }

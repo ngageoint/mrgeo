@@ -168,10 +168,19 @@ public class HadoopFileUtils
     copyToHdfs(fromDir, toDir);
   }
 
-  public static Path createJobTmp() throws IOException
-  {
-    return createUniqueTmp();
-  }
+public static Path createJobTmp() throws IOException
+{
+  return createJobTmp(HadoopUtils.createConfiguration());
+}
+public static Path createJobTmp(Configuration conf) throws IOException
+{
+  return createUniqueTmp(conf);
+}
+
+public static Path createUniqueTmp() throws IOException
+{
+  return createUniqueTmp(HadoopUtils.createConfiguration());
+}
 
   /**
    * Creates a unique temp directory and returns the path.
@@ -179,12 +188,10 @@ public class HadoopFileUtils
    * @return
    * @throws IOException
    */
-  public static Path createUniqueTmp() throws IOException
+  public static Path createUniqueTmp(Configuration conf) throws IOException
   {
-    // final String base = baseName.replace(" ", "_");
-
     // create a corresponding tmp directory for the job
-    final Path tmp = createUniqueTmpPath(); // new Path(createUniqueTmpPath(), base);
+    final Path tmp = createUniqueTmpPath(conf);
 
     final FileSystem fs = HadoopFileUtils.getFileSystem(tmp);
     if (!fs.exists(tmp))
@@ -203,8 +210,13 @@ public class HadoopFileUtils
    */
   public static Path createUniqueTmpPath() throws IOException
   {
-    return new Path(getTempDir(), HadoopUtils.createRandomString(40));
+    return createUniqueTmpPath(HadoopUtils.createConfiguration());
   }
+
+public static Path createUniqueTmpPath(Configuration conf) throws IOException
+{
+  return new Path(getTempDir(conf), HadoopUtils.createRandomString(40));
+}
 
   public static void create(final Path path) throws IOException
   {

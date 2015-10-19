@@ -17,6 +17,7 @@ package org.mrgeo.geometry;
 
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GeometryUtils;
+import org.mrgeo.utils.StringUtils;
 
 import java.io.*;
 import java.util.HashMap;
@@ -117,7 +118,8 @@ public abstract class GeometryImpl implements WritableGeometry
     for (Map.Entry<String, String> attr: attributes.entrySet())
     {
       stream.writeUTF(attr.getKey());
-      stream.writeUTF(attr.getValue());
+      // attr can be larger than 64K, so we have to use the alternate write method
+      StringUtils.write(attr.getValue(), stream);
     }
   }
 
@@ -129,7 +131,7 @@ public abstract class GeometryImpl implements WritableGeometry
     for (int i = 0; i < attrs; i++)
     {
       String key = stream.readUTF();
-      String value = stream.readUTF();
+      String value = StringUtils.read(stream);
 
       attributes.put(key, value);
     }
