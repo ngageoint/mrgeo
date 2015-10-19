@@ -185,7 +185,7 @@ object GDALUtils extends Logging {
   def toRaster(image: Dataset):Raster = {
     val bands: Int = image.getRasterCount
 
-    val bandlist = Array.range(1, image.getRasterCount)
+    val bandlist = Array.range(1, image.getRasterCount + 1)
 
     val datatype = image.GetRasterBand(1).getDataType
     val pixelsize = gdal.GetDataTypeSize(datatype) / 8
@@ -202,7 +202,8 @@ object GDALUtils extends Logging {
     data.order(ByteOrder.nativeOrder)
 
     // read the data interleaved (it _should_ be much more efficient reading)
-    image.ReadRaster_Direct(0, 0, width, height, width, height, datatype, data, bandlist, pixelstride, linestride, 1)
+    image.ReadRaster_Direct(0, 0, width, height, width, height, datatype, data,
+      bandlist, pixelstride, linestride, pixelsize)
 
     data.rewind
 
@@ -218,7 +219,7 @@ object GDALUtils extends Logging {
     val bandbytes = height * width * (gdal.GetDataTypeSize(gdaldatatype) / 8)
 
     val databytes = bandbytes * bands
-    val bandoffsets = Array.range(0, bands - 1)
+    val bandoffsets = Array.range(0, bands)
 
     // keep the raster interleaved
     val sm = new PixelInterleavedSampleModel(datatype, width, height, bands, bands * width, bandoffsets)
@@ -315,7 +316,7 @@ object GDALUtils extends Logging {
     val ds = open(imagename)
     if (ds != null) {
       try {
-        getnodatas(ds)
+        return getnodatas(ds)
       }
       finally {
         close(ds)
@@ -323,6 +324,24 @@ object GDALUtils extends Logging {
     }
     throw new GDALException("Error opening image: " + imagename)
   }
+
+  def getnodatas(image: Dataset): Array[Number] = {
+    val bands = image.GetRasterCount
+
+    val nodatas = Array.fill[Double](bands)(Double.NaN)
+
+    val v = new Array[java.lang.Double](1)
+    for (i <- 1 to bands) {
+      val band: Band = image.GetRasterBand(i)
+      band.GetNoDataValue(v)
+      if (v(0) != null) {
+        nodatas(i - 1) = v(0)
+      }
+    }
+
+    nodatas
+  }
+
 
   def open(imagename: String): Dataset = {
     try {
@@ -378,22 +397,6 @@ object GDALUtils extends Logging {
     }
   }
 
-  def getnodatas(image: Dataset): Array[Number] = {
-    val bands = image.GetRasterCount
-
-    val nodatas = Array.fill[Double](bands)(Double.NaN)
-
-    val v = new Array[java.lang.Double](1)
-    for (i <- 1 to bands) {
-      val band: Band = image.GetRasterBand(i)
-      band.GetNoDataValue(v)
-      if (v(0) != null) {
-        nodatas(i - 1) = v(0)
-      }
-    }
-
-    nodatas
-  }
 
   def calculateZoom(imagename: String, tilesize: Int): Int = {
     try {
@@ -453,6 +456,89 @@ object GDALUtils extends Logging {
       Math.max(Math.max(c1(1), c2(1)), Math.max(c3(1), c4(1))))
   }
 
+  def saveRaster(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
+      bounds:Either[Bounds, TMSUtils.Bounds] = null, nodata:Double = Double.NegativeInfinity,
+      format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit =  {
+
+    val filename = output match {
+    case Left(f) => f
+    case Right(stream) => File.createTempFile("tmp-file", "").getCanonicalPath
+    }
+
+    val bnds = if (bounds == null) {
+      null
+    }
+    else {
+      bounds match {
+      case Left(b) => TMSUtils.Bounds.asTMSBounds(b)
+      case Right(t) => t
+      }
+    }
+
+    val dataset = raster match {
+    case Left(r) =>
+      val ds = toDataset(r, nodata)
+
+      val xform = new Array[Double](6)
+
+      if (bnds != null) {
+
+        xform(0) = bnds.w
+        xform(1) = bnds.width / ds.getRasterXSize
+        xform(2) = 0
+        xform(3) = bnds.n
+        xform(4) = 0
+        xform(5) = -bnds.height / ds.getRasterYSize
+
+        ds.SetGeoTransform(xform)
+        ds.SetProjection(GDALUtils.EPSG4326)
+      }
+      else
+      {
+        xform(0) = 0
+        xform(1) = ds.getRasterXSize
+        xform(2) = 0
+        xform(3) = 0
+        xform(4) = 0
+        xform(5) = -ds.getRasterYSize
+      }
+
+      ds
+    case Right(d) => d
+    }
+
+    saveRaster(dataset, filename, bnds, format, options)
+
+    output match {
+    case Right(stream) =>
+      stream.flush()
+      if (! new File(filename).delete()) {
+        throw new IOException("Error deleting temporary file: " + filename)
+      }
+    case _ =>
+    }
+
+    raster match {
+    case Left(r) => dataset.delete()
+    case Right(d) =>
+    }
+
+  }
+
+  def saveRasterTile(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
+      tx:Long, ty:Long, zoom:Int, nodata:Double = Double.NegativeInfinity,
+      format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit = {
+
+    val tilesize = raster match {
+    case Left(r) => r.getWidth
+    case Right(d) => d.getRasterXSize
+    }
+
+    val bounds = TMSUtils.tileBounds(tx, ty, zoom, tilesize)
+
+    saveRaster(raster, output, bounds, nodata, format, options)
+  }
+
   private def copyToDataset(ds: Dataset, raster: Raster) {
     val datatype = GDALUtils.toGDALDataType(raster.getTransferType)
     val bands = raster.getNumBands
@@ -460,7 +546,7 @@ object GDALUtils extends Logging {
     val width = raster.getWidth
     val height = raster.getHeight
 
-    val bandlist = Array.range(1, raster.getNumBands)
+    val bandlist = Array.range(1, raster.getNumBands + 1)
 
     val pixelsize = gdal.GetDataTypeSize(datatype) / 8
     val pixelstride = pixelsize * bands
@@ -568,89 +654,6 @@ object GDALUtils extends Logging {
         log.debug("  " + o)
       }
     }
-  }
-
-  def saveRaster(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
-      bounds:Either[Bounds, TMSUtils.Bounds] = null, nodata:Double = Double.NegativeInfinity,
-      format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit =  {
-
-    val filename = output match {
-    case Left(f) => f
-    case Right(stream) => File.createTempFile("tmp-file", "").getCanonicalPath
-    }
-
-    val bnds = if (bounds == null) {
-      null
-    }
-    else {
-      bounds match {
-      case Left(b) => TMSUtils.Bounds.asTMSBounds(b)
-      case Right(t) => t
-      }
-    }
-
-    val dataset = raster match {
-    case Left(r) =>
-      val ds = toDataset(r, nodata)
-
-      val xform = new Array[Double](6)
-
-      if (bnds != null) {
-
-        xform(0) = bnds.w
-        xform(1) = bnds.width / ds.getRasterXSize
-        xform(2) = 0
-        xform(3) = bnds.n
-        xform(4) = 0
-        xform(5) = -bnds.height / ds.getRasterYSize
-
-        ds.SetGeoTransform(xform)
-        ds.SetProjection(GDALUtils.EPSG4326)
-      }
-      else
-      {
-        xform(0) = 0
-        xform(1) = ds.getRasterXSize
-        xform(2) = 0
-        xform(3) = 0
-        xform(4) = 0
-        xform(5) = -ds.getRasterYSize
-      }
-
-      ds
-    case Right(d) => d
-    }
-
-    saveRaster(dataset, filename, bnds, format, options)
-
-    output match {
-    case Right(stream) =>
-      stream.flush()
-      if (! new File(filename).delete()) {
-        throw new IOException("Error deleting temporary file: " + filename)
-      }
-    case _ =>
-    }
-
-    raster match {
-    case Left(r) => dataset.delete()
-    case Right(d) =>
-    }
-
-  }
-
-  def saveRasterTile(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
-      tx:Long, ty:Long, zoom:Int, nodata:Double = Double.NegativeInfinity,
-      format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit = {
-
-    val tilesize = raster match {
-    case Left(r) => r.getWidth
-    case Right(d) => d.getRasterXSize
-    }
-
-    val bounds = TMSUtils.tileBounds(tx, ty, zoom, tilesize)
-
-    saveRaster(raster, output, bounds, nodata, format, options)
   }
 
   private def saveRaster(ds:Dataset, file:String, bounds:TMSUtils.Bounds,
