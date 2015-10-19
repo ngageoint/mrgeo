@@ -119,7 +119,7 @@ object MapOpFactory extends Logging {
     // in spark, the main jar is renamed "__app__.jar" (Client.APP_JAR), so we need to include that as well
     val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
       val file = new File(url.getPath)
-      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") || file.getName.equals(Client.APP_JAR) else file.isFile)
+      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") || file.getName.equals("__app__.jar") else file.isFile)
     }).filter(p => !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
         .flatMap(url => {
           val us = url.getFile

@@ -27,7 +27,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.Logging
 import org.gdal.gdal.{Band, Dataset, Driver, gdal}
 import org.gdal.gdalconst.gdalconstConstants
-import org.gdal.osr.{SpatialReference, osr, osrConstants}
+import org.gdal.osr.{CoordinateTransformation, SpatialReference, osr, osrConstants}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.hdfs.utils.HadoopFileUtils
@@ -428,7 +428,7 @@ object GDALUtils extends Logging {
     val srs = new SpatialReference(image.GetProjection)
     val dst = new SpatialReference(EPSG4326)
 
-    val tx = osr.CreateCoordinateTransformation(srs, dst)
+    val tx = new CoordinateTransformation(srs, dst)
 
     val w = image.GetRasterXSize
     val h = image.GetRasterYSize
