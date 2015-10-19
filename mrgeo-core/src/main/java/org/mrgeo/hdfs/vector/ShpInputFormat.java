@@ -21,15 +21,12 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
-import org.mrgeo.hdfs.vector.ReprojectedShapefileGeometryCollection;
-import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
 import org.mrgeo.hdfs.vector.shp.ShapefileReader;
 import org.mrgeo.utils.GDALUtils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -180,7 +177,7 @@ public class ShpInputFormat extends InputFormat<FeatureIdWritable, Geometry>
 
         // reproject into WGS84
         ReprojectedShapefileGeometryCollection rgc =
-                new ReprojectedShapefileGeometryCollection(sr, GDALUtils.EPSG4326);
+                new ReprojectedShapefileGeometryCollection(sr, GDALUtils.EPSG4326());
 
         return rgc;
       }

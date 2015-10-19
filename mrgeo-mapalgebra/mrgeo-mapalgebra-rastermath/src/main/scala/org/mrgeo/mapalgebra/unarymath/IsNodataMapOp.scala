@@ -19,12 +19,14 @@ import java.awt.image.WritableRaster
 import java.io.IOException
 
 import org.apache.spark.SparkContext
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
 import org.mrgeo.utils.SparkUtils
+
+import org.mrgeo.utils.MrGeoImplicits._
 
 object IsNodataMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -55,7 +57,7 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     val nodata = meta.getDefaultValue(0)
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
       for (y <- 0 until raster.getHeight) {
         for (x <- 0 until raster.getWidth) {
@@ -73,7 +75,7 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues, calcStats = false))
 
     true
   }

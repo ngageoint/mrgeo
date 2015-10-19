@@ -17,6 +17,7 @@ package org.mrgeo.job
 
 import org.apache.spark._
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.mrgeo.hdfs.utils.HadoopFileUtils
 
 import scala.collection.JavaConversions._
 
@@ -37,13 +38,18 @@ abstract class MrGeoJob extends Logging {
     setup(job, conf)
 
     val context = new SparkContext(conf)
+    val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
+
     try {
       logInfo("Running job")
+      context.setCheckpointDir(checkpointDir)
       execute(context)
     }
     finally {
       logInfo("Stopping spark context")
       context.stop()
+
+      HadoopFileUtils.delete(context.hadoopConfiguration, checkpointDir)
     }
 
     teardown(job, conf)

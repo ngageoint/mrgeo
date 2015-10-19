@@ -27,6 +27,8 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.{SparkUtils, Bounds, TMSUtils}
 
+import org.mrgeo.utils.MrGeoImplicits._
+
 object FillMapOp extends MapOpRegistrar {
   private[mapalgebra] val Fill = "fill"
   private[mapalgebra] val FillBounds = "fillbounds"
@@ -161,7 +163,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
       })
     }))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValue(0)))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues, calcStats = false))
 
     true
   }

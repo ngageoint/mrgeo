@@ -280,7 +280,7 @@ public class ESRILayer extends java.lang.Object
     // given no other information default to WGS84
     if (projection == null)
     {
-      projection = GDALUtils.EPSG4326;
+      projection = GDALUtils.EPSG4326();
     }
     }
 

@@ -201,7 +201,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodatas(0).doubleValue()))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodatas, calcStats = false))
 
     true
   }

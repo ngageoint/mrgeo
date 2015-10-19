@@ -86,6 +86,17 @@ object MapAlgebra extends MrGeoDriver {
     private val parser = ParserAdapterFactory.createParserAdapter
     private val variables = mutable.Map.empty[ParserVariableNode, Option[ParserNode]]
 
+    {
+      val cn: ParserConstantNode = new ParserConstantNode
+      cn.setValue(Double.NaN)
+      cn.setName("NaN")
+
+      val vn = new ParserVariableNode
+      vn.setNativeNode(null)
+      vn.setName("NaN")
+
+      variables.put(vn, Some(cn))
+    }
 
     parser.initialize()
 
@@ -243,14 +254,14 @@ object MapAlgebra extends MrGeoDriver {
         return Some(MrsPyramidMapOp(imdp))
       }
       catch {
-        case e: DataProviderNotFound => {}
+        case e: DataProviderNotFound =>
       }
       try {
         val vdp = DataProviderFactory.getVectorDataProvider(name, AccessMode.READ, providerproperties)
         return Some(VectorDataMapOp(vdp))
       }
       catch {
-        case e: DataProviderNotFound => {}
+        case e: DataProviderNotFound =>
       }
       None
     }
