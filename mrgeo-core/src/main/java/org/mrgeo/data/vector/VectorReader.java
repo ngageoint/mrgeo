@@ -17,7 +17,6 @@ package org.mrgeo.data.vector;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
@@ -34,7 +33,7 @@ public interface VectorReader
    * @return
    * @throws IOException 
    */
-  public abstract CloseableKVIterator<LongWritable, Geometry> get() throws IOException;
+  public abstract CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException;
   
   /**
    * Returns true if there is a feature with the specified featureId.
@@ -46,7 +45,7 @@ public interface VectorReader
    * @return
    * @throws IOException
    */
-  public abstract boolean exists(LongWritable featureId) throws IOException;
+  public abstract boolean exists(FeatureIdWritable featureId) throws IOException;
   
   /**
    * Returns the Geometry object corresponding to the featureId passed in.
@@ -59,7 +58,7 @@ public interface VectorReader
    * @return
    * @throws IOException
    */
-  public abstract Geometry get(LongWritable featureId) throws IOException;
+  public abstract Geometry get(FeatureIdWritable featureId) throws IOException;
 
   /**
    * Return an iterator that allows the caller to visit all geometries
@@ -72,7 +71,7 @@ public interface VectorReader
    * 
    * @return
    */
-  public abstract CloseableKVIterator<LongWritable, Geometry> get(final Bounds bounds) throws IOException;
+  public abstract CloseableKVIterator<FeatureIdWritable, Geometry> get(final Bounds bounds) throws IOException;
 
   /**
    * Returns the number of features.

@@ -19,10 +19,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RawLocalFileSystem;
-import org.apache.hadoop.io.LongWritable;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.junit.UnitTest;
@@ -58,12 +58,12 @@ public class CsvOutputFormatTest
       f.setAttribute("string1", "foo");
       f.setAttribute("int1", "1");
       f.setAttribute("double1", "2.0");
-      writer.write(new LongWritable(0), f);
+      writer.write(new FeatureIdWritable(0), f);
 
       f.setAttribute("string1", "bar");
       f.setAttribute("int1", "3");
       f.setAttribute("double1", "4.0");
-      writer.write(new LongWritable(1), f);
+      writer.write(new FeatureIdWritable(1), f);
 
       writer.close(null);
 

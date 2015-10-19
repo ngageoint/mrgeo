@@ -15,7 +15,6 @@
 
 package org.mrgeo.utils
 
-import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
@@ -44,7 +43,7 @@ object SparkVectorUtils
     val conf2 = vfp.setupJob(job, provider.getProviderProperties)
     VectorRDD(context.newAPIHadoopRDD(job.getConfiguration,
       classOf[VectorInputFormat],
-      classOf[LongWritable],
+      classOf[FeatureIdWritable],
       classOf[Geometry]))
   }
 

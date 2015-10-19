@@ -28,7 +28,6 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.geotools.filter.text.cql2.CQLException;
@@ -37,17 +36,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.vector.VectorDataProvider;
-import org.mrgeo.data.vector.VectorInputFormatContext;
-import org.mrgeo.data.vector.VectorInputFormatProvider;
-import org.mrgeo.data.vector.VectorMetadataReader;
-import org.mrgeo.data.vector.VectorMetadataWriter;
-import org.mrgeo.data.vector.VectorOutputFormatContext;
-import org.mrgeo.data.vector.VectorOutputFormatProvider;
-import org.mrgeo.data.vector.VectorReader;
-import org.mrgeo.data.vector.VectorReaderContext;
-import org.mrgeo.data.vector.VectorWriter;
-import org.mrgeo.data.vector.VectorWriterContext;
+import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.filter.Filter;
 import org.slf4j.Logger;
@@ -348,13 +337,13 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   }
 
   @Override
-  public RecordReader<LongWritable, Geometry> getRecordReader()
+  public RecordReader<FeatureIdWritable, Geometry> getRecordReader()
   {
     return new GeoWaveVectorRecordReader();
   }
 
   @Override
-  public RecordWriter<LongWritable, Geometry> getRecordWriter()
+  public RecordWriter<FeatureIdWritable, Geometry> getRecordWriter()
   {
     // Not yet implemented
     return null;
