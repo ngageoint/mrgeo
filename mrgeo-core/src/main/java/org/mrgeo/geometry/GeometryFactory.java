@@ -16,8 +16,6 @@
 package org.mrgeo.geometry;
 
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.util.Collection;
 import java.util.Map;
 

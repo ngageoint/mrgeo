@@ -15,21 +15,18 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{Raster, WritableRaster}
-import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
-import java.util
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.CoGroupedRDD
-import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{HashPartitioner, SparkContext, SparkConf}
+import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.{GDALUtils, SparkUtils, TMSUtils, Bounds}
 import org.mrgeo.utils.TMSUtils.TileBounds
+import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
 
 import scala.collection.mutable
 

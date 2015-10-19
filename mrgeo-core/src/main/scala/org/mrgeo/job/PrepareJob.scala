@@ -15,23 +15,13 @@
 
 package org.mrgeo.job
 
-import java.io.{IOException, FileInputStream, InputStreamReader, File}
-import java.util.Properties
-
-import org.apache.spark.deploy.SparkHadoopUtil
-import org.apache.spark.{Logging, SparkException, SparkConf, SparkContext}
+import org.apache.spark.{Logging, SparkConf}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
-import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.ImageStats
-import org.mrgeo.job.yarn.MrGeoYarnJob
 import org.mrgeo.utils.SparkUtils
-
-import scala.collection.Map
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.JavaConversions._
 
 object PrepareJob extends Logging {
 

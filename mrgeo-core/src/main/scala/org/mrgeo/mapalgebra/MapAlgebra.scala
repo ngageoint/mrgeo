@@ -23,10 +23,10 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
+import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
-import org.mrgeo.mapalgebra.vector.{VectorMapOp, VectorDataMapOp}
-import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.mapalgebra.vector.{VectorDataMapOp, VectorMapOp}
 import org.mrgeo.utils.{HadoopUtils, StringUtils}
 
 import scala.collection.JavaConversions._

@@ -1,6 +1,6 @@
 package org.mrgeo.data.vector
 
-import java.io.{ObjectOutput, ObjectInput, Externalizable}
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
 import org.apache.hadoop.io.LongWritable
 

@@ -17,16 +17,16 @@ package org.mrgeo.image;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.KVIterator;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidReaderContext;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.MrsTileReader;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

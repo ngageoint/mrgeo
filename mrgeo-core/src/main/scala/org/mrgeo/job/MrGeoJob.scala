@@ -16,10 +16,7 @@
 package org.mrgeo.job
 
 import org.apache.spark._
-import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-
-import scala.collection.JavaConversions._
 
 abstract class MrGeoJob extends Logging {
   def registerClasses(): Array[Class[_]]

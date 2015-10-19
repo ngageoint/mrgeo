@@ -18,10 +18,10 @@ package org.mrgeo.mapalgebra.vector
 import org.apache.spark.SparkContext
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.rdd.VectorRDD
-import org.mrgeo.data.vector.{VectorDataProvider, VectorMetadata}
+import org.mrgeo.data.vector.VectorDataProvider
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.mapalgebra.MapOp
-import org.mrgeo.mapalgebra.parser.{ParserVariableNode, ParserException, ParserFunctionNode, ParserNode}
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
 import org.mrgeo.utils.SparkVectorUtils
 
 object VectorMapOp {

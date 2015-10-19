@@ -1,11 +1,5 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -16,19 +10,21 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.filter.text.cql2.CQLException;
-import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
-import org.mrgeo.data.vector.VectorDataProviderFactory;
 import org.mrgeo.data.vector.VectorInputFormat;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
-import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.HadoopUtils;
 import org.opengis.filter.Filter;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class GeoWaveTester
 {

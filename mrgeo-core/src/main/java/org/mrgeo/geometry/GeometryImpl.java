@@ -19,7 +19,9 @@ import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GeometryUtils;
 import org.mrgeo.utils.StringUtils;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;

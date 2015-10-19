@@ -15,14 +15,8 @@
 
 package org.mrgeo.data.accumulo.utils;
 
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map.Entry;
-
 import junit.framework.Assert;
-
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -34,10 +28,13 @@ import org.apache.hadoop.io.Text;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
+
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 
 public class AccumuloGeoTableTest

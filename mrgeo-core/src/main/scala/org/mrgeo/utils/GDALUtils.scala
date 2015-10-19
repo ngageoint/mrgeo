@@ -16,7 +16,7 @@
 package org.mrgeo.utils
 
 import java.awt.image._
-import java.io.{OutputStream, File, IOException, InputStream}
+import java.io.{File, IOException, InputStream, OutputStream}
 import java.net.URI
 import java.nio._
 import java.nio.file.Files
@@ -31,11 +31,10 @@ import org.gdal.osr.{CoordinateTransformation, SpatialReference, osr, osrConstan
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.hdfs.utils.HadoopFileUtils
+import org.mrgeo.utils.MrGeoImplicits._
 
 import scala.collection.JavaConversions._
 import scala.util.control.Breaks
-
-import org.mrgeo.utils.MrGeoImplicits._
 
 
 

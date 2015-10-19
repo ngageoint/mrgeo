@@ -15,11 +15,11 @@
 
 package org.mrgeo.data.vector;
 
-import java.io.IOException;
-
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.utils.Bounds;
+
+import java.io.IOException;
 
 public interface VectorReader
 {

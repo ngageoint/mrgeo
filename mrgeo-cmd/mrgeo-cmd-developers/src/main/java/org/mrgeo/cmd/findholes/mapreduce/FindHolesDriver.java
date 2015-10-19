@@ -15,15 +15,6 @@
 
 package org.mrgeo.cmd.findholes.mapreduce;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -36,9 +27,12 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.utils.DependencyLoader;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
+
+import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FindHolesDriver {
 

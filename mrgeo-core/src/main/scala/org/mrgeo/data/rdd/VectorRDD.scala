@@ -15,9 +15,9 @@
 
 package org.mrgeo.data.rdd
 
-import org.apache.spark.{TaskContext, Partition}
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.rdd.RDD
+import org.apache.spark.{Partition, TaskContext}
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.Geometry
 

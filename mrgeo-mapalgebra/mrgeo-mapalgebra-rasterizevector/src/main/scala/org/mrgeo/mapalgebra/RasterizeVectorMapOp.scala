@@ -24,10 +24,10 @@ import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Geometry
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
-import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
 import org.mrgeo.utils._
 

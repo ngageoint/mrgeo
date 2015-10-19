@@ -15,15 +15,13 @@
 
 package org.mrgeo.job.yarn
 
-import java.io.{PrintWriter, File}
-import org.apache.spark.deploy.yarn.ApplicationMaster
+import java.io.{File, PrintWriter}
+
 import org.apache.spark.SparkConf
-import org.mrgeo.core.{MrGeoProperties, MrGeoConstants}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.{HadoopUtils, GDALUtils, DependencyLoader, SparkUtils}
+import org.mrgeo.utils.SparkUtils
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
 object MrGeoYarnDriver {

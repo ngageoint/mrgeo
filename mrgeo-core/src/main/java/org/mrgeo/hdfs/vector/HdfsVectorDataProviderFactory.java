@@ -15,11 +15,6 @@
 
 package org.mrgeo.hdfs.vector;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -28,7 +23,11 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorDataProviderFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.HadoopUtils;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class HdfsVectorDataProviderFactory implements VectorDataProviderFactory
 {

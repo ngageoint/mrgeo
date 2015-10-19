@@ -24,7 +24,6 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageDataProviderFactory;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
