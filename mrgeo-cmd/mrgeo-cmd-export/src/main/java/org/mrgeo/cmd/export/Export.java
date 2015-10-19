@@ -159,7 +159,7 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
 
     if (raster != null)
     {
-      String out = makeOutputName(output, format, tileid, zoom, tilesize, false);
+      String out = makeOutputName(output, format, tileid, zoom, tilesize, true);
 
       if (colorscale != null || !format.equals("tif"))
       {
@@ -256,7 +256,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
     {
       throw new MrsImageException("Error, could not load any tiles");
     }
-    String out = makeOutputName(output, format, minId, zoomlevel, tilesize, true);
+    String out = makeOutputName(output, format, minId, zoomlevel, tilesize, false);
 
     if (colorscale != null || !format.equals("tif"))
     {
