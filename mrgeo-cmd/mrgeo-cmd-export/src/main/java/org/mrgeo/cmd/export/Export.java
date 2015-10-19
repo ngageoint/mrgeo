@@ -182,8 +182,7 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
         }
       }
 
-      GDALUtils.saveRaster(raster, out, format, t.tx, t.ty, image.getZoomlevel(),
-          image.getTilesize(), metadata.getDefaultValue(0));
+      GDALJavaUtils.saveRasterTile(raster, out, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
 
       System.out.println("Wrote output to " + out);
       return true;
@@ -280,8 +279,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
       }
     }
 
-    GDALUtils.saveRaster(raster, out, format, imageBounds,
-        zoomlevel, tilesize, metadata.getDefaultValue(0));
+    GDALJavaUtils.saveRaster(raster, out, imageBounds, metadata.getDefaultValue(0), format);
 
     System.out.println("Wrote output to " + out);
     return true;

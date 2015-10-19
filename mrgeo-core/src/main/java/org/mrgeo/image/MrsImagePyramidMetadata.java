@@ -165,8 +165,7 @@ public static MrsImagePyramidMetadata load(final InputStream stream) throws Json
     JsonMappingException, IOException
 {
   final ObjectMapper mapper = new ObjectMapper();
-  final MrsImagePyramidMetadata metadata = mapper.readValue(stream, MrsImagePyramidMetadata.class);
-  return metadata;
+  return mapper.readValue(stream, MrsImagePyramidMetadata.class);
 } // end load - InputStream
   
 
@@ -715,6 +714,15 @@ public void setDefaultValues(final double[] defaultValues)
   this.defaultValues = defaultValues;
 }
 
+//public void setDefaultValues(final Number[] defaultValues)
+//{
+//  this.defaultValues = new double[defaultValues.length];
+//  for (int i = 0; i < defaultValues.length; i++)
+//  {
+//    this.defaultValues[i] = defaultValues[i].doubleValue();
+//  }
+//}
+
 
 @Override
 public void setName(final int zoomlevel, final String name)
@@ -730,7 +738,7 @@ public void setName(final int zoomlevel, final String name)
 public void setImageMetadata(final ImageMetadata[] metadata)
 {
 
-  // this will make sure the size of the image metadata matched the zoom, with empty levels as needed
+  // this will make sure the size of the image metadata matches the zoom, with empty levels as needed
   if (metadata == null)
   {
     imageData = metadata;

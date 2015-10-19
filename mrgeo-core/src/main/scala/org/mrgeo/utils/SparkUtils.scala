@@ -32,6 +32,8 @@ import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
 
+import org.mrgeo.utils.MrGeoImplicits._
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Map, mutable}
@@ -391,7 +393,7 @@ object SparkUtils extends Logging {
   }
 
   def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider,
-      zoom: Int, tilesize: Int, nodatas: Array[Double], conf: Configuration, tiletype: Int = -1,
+      zoom: Int, tilesize: Int, nodatas: Array[Number], conf: Configuration, tiletype: Int = -1,
       bounds: Bounds = new Bounds(), bands: Int = -1,
       protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
@@ -421,7 +423,7 @@ object SparkUtils extends Logging {
     val tilesize = metadata.getTilesize
 
     if (!metadata.getBounds.isValid) {
-      metadata.setBounds(SparkUtils.calculateBounds(tiles, zoom, tilesize));
+      metadata.setBounds(SparkUtils.calculateBounds(tiles, zoom, tilesize))
     }
     val bounds = metadata.getBounds
 
@@ -528,8 +530,15 @@ object SparkUtils extends Logging {
       metadata)
   }
 
+  @deprecated("Use RasterRDD method instead", "")
+  def calculateStats(rdd: RDD[(TileIdWritable, RasterWritable)], bands: Int,
+      nodata: Array[Number]): Array[ImageStats] = {
+
+    calculateStats(RasterRDD(rdd), bands, nodata)
+  }
+
   def calculateStats(rdd: RasterRDD, bands: Int,
-      nodata: Array[Double]): Array[ImageStats] = {
+      nodata: Array[Number]): Array[ImageStats] = {
 
     val zero = Array.ofDim[ImageStats](bands)
 
@@ -544,7 +553,7 @@ object SparkUtils extends Logging {
         for (x <- 0 until tile.getWidth) {
           for (b <- 0 until tile.getNumBands) {
             val p = tile.getSampleDouble(x, y, b)
-            if (nodata(b).isNaN) {
+            if (nodata(b).doubleValue().isNaN) {
               if (!p.isNaN) {
                 stats(b).count += 1
                 stats(b).sum += p
@@ -552,7 +561,7 @@ object SparkUtils extends Logging {
                 stats(b).min = Math.min(stats(b).min, p)
               }
             }
-            else if (p != nodata(b)) {
+            else if (p != nodata(b).doubleValue()) {
               stats(b).count += 1
               stats(b).sum += p
               stats(b).max = Math.max(stats(b).max, p)
@@ -630,26 +639,28 @@ object SparkUtils extends Logging {
 
   @deprecated("Use RasterRDD method instead", "")
   def saveMrsPyramidRDD(tiles: RDD[(TileIdWritable, RasterWritable)], outputProvider: MrsImageDataProvider,
-      zoom: Int, tilesize: Int, nodatas: Array[Double], conf: Configuration, tiletype: Int = -1,
+      zoom: Int, tilesize: Int, nodatas: Array[Number], conf: Configuration, tiletype: Int = -1,
       bounds: Bounds = new Bounds(), bands: Int = -1,
       protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
     saveMrsPyramid(RasterRDD(tiles), outputProvider, zoom, tilesize, nodatas, conf, tiletype, bounds, bands, protectionlevel, providerproperties)
   }
 
-  @deprecated("Use RasterRDD method instead", "")
-  def calculateStats(rdd: RDD[(TileIdWritable, RasterWritable)], bands: Int,
-      nodata: Array[Double]): Array[ImageStats] = {
-
-    calculateStats(RasterRDD(rdd), bands, nodata)
-  }
 
   @deprecated("Use RasterRDD method instead", "")
   def calculateBounds(rdd: RDD[(TileIdWritable, RasterWritable)], zoom: Int, tilesize: Int): Bounds = {
     calculateBounds(RasterRDD(rdd), zoom, tilesize)
   }
 
-  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodata:Double, calcStats:Boolean = false):MrsImagePyramidMetadata = {
+  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodata:Double, calcStats:Boolean):MrsImagePyramidMetadata = {
+    val first = rdd.first()
+    val raster = RasterWritable.toRaster(first._2)
+
+    val nodatas = Array.fill[Double](raster.getNumBands)(nodata)
+    calculateMetadata(rdd, zoom, nodatas, calcStats)
+  }
+
+  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodatas:Array[Number], calcStats:Boolean):MrsImagePyramidMetadata = {
     val meta = new MrsImagePyramidMetadata
 
     meta.setPyramid(rdd.name)
@@ -658,13 +669,13 @@ object SparkUtils extends Logging {
 
     val first = rdd.first()
     val raster = RasterWritable.toRaster(first._2)
-    val tilesize = raster.getWidth
 
     meta.setBands(raster.getNumBands)
     meta.setTileType(raster.getTransferType)
+
+    val tilesize = raster.getWidth
     meta.setTilesize(tilesize)
 
-    val nodatas = Array.fill[Double](meta.getBands)(nodata)
     meta.setDefaultValues(nodatas)
 
     val bounds = calculateBounds(rdd, zoom, tilesize)

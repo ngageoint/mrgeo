@@ -15,14 +15,13 @@
 
 package org.mrgeo.job.yarn
 
-import java.io.{InputStreamReader, BufferedReader, FileReader}
+import java.io.{BufferedReader, InputStreamReader}
 
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{Logging, SparkConf, SparkContext}
+import org.apache.spark.{Logging, SparkContext}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoJob}
 import org.mrgeo.utils.SparkUtils
-import sun.tools.jar.resources.jar
 
 object MrGeoYarnJob extends Logging {
 
@@ -107,13 +106,17 @@ object MrGeoYarnJob extends Logging {
 
         val context = new SparkContext(conf)
 
+        val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
         try {
           logInfo("Running job: " + job.name)
+          context.setCheckpointDir(checkpointDir)
           mrgeo.execute(context)
         }
         finally {
           logInfo("Stopping spark context")
           context.stop()
+
+          HadoopFileUtils.delete(context.hadoopConfiguration, checkpointDir)
         }
 
         logInfo("Teardown job: " + job.name)

@@ -84,7 +84,7 @@ private static final String allonesnopyramids = "all-ones-no-pyramids";
 private static final String allonesholes = "all-ones-with-holes";
 private static final String allhundredsholes = "all-hundreds-with-holes";
 
-private static String smallslope = Defs.INPUT +"SmallSlopeBaseline.tif";
+private static String smallelevationtif = Defs.INPUT + "small-elevation.tif";
 
 private static final String regularpoints = "regular-points";
 private static Path regularpointsPath;
@@ -166,8 +166,8 @@ public static void init() throws IOException
   smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
 
 
-  File file = new File(smallslope);
-  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
+  File file = new File(smallelevationtif);
+  smallelevationtif = new Path("file://" + file.getAbsolutePath()).toString();
 
   file = new File(smallElevation);
   smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
@@ -187,7 +187,6 @@ public void add() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format("[%s] + [%s]", allones, allones), -9999);
-
   }
   else
   {
@@ -285,6 +284,50 @@ public void aspectRad() throws Exception
         String.format("aspect([%s], \"rad\")", smallElevation));
   }
 }
+
+@Test
+@Category(IntegrationTest.class)
+public void bandcombine() throws Exception
+{
+  String exp = String.format("bandcombine([%s], [%s])", allones, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void bandcombineAlternate() throws Exception
+{
+//  LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+
+//  String blue = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B2-blue.TIF";
+//  String green = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B3-green.TIF";
+//  String red = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B4-red.TIF";
+//  String exp = String.format("bc(ingest('%s'), ingest('%s'), ingest('%s'))", red, green, blue);
+
+//  String exp = String.format("bc([%s], [%s], [%s])",
+//      "/mrgeo/images/landsat-red", "/mrgeo/images/landsat-green", "/mrgeo/images/landsat-blue");
+
+  String exp = String.format("bc([%s], [%s])", allones, allhundreds);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
@@ -956,18 +999,16 @@ public void hillshade() throws Exception
 @Category(IntegrationTest.class)
 public void ingest() throws Exception
 {
-//    java.util.Properties prop = MrGeoProperties.getInstance();
-//    prop.setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("ingest(\"%s\")", smallslope), -9999);
+        String.format("ingest(\"%s\")", smallelevationtif), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("ingest(\"%s\")", smallslope));
+        String.format("ingest(\"%s\")", smallelevationtif));
   }
 }
 
@@ -1042,6 +1083,7 @@ public void kernelLaplacian() throws Exception
         String.format("kernel(\"laplacian\", [%s], 100.0)", regularpointsPath));
   }
 }
+
 
 @Test
 @Category(IntegrationTest.class)
@@ -1605,5 +1647,7 @@ public void rasterizeVector3() throws Exception
         String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath));
   }
 }
+
+
 
 }

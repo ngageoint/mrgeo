@@ -30,10 +30,7 @@ import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.FileUtils;
-import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.*;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -705,7 +702,7 @@ public static void compareRenderedImageToConstant(RenderedImage i, double consta
 
 public static void saveRaster(Raster raster, String type, String filename) throws IOException
 {
-  GDALUtils.saveRaster(raster, filename, type);
+  GDALJavaUtils.saveRaster(raster, filename, type);
 }
 
 private static int getPixelId(int x, int y, int width)
@@ -824,7 +821,7 @@ public void generateBaselineTif(final String testName,
   tb = TMSUtils.tileBounds(tb, zoom, raster.getWidth());
 
   final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-  GDALUtils.saveRaster(raster, baselineTif.getCanonicalPath(), nodata);
+  GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), nodata);
 
 }
 

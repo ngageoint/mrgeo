@@ -22,11 +22,14 @@ import java.net.URL
 
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.spark.Logging
+import org.apache.spark.deploy.yarn.Client
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
+
+import scala.language.existentials
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -111,10 +114,12 @@ object MapOpFactory extends Logging {
 
   private def decendants(clazz: Class[_]) = {
 
+
     // get all the URLs for this classpath, filter files by "mrgeo" in development mode, then strip .so files
+    // in spark, the main jar is renamed "__app__.jar" (Client.APP_JAR), so we need to include that as well
     val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
       val file = new File(url.getPath)
-      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") else file.isFile)
+      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") || file.getName.equals(Client.APP_JAR) else file.isFile)
     }).filter(p => !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
         .flatMap(url => {
           val us = url.getFile

@@ -281,7 +281,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     })))
 
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata, calcStats = false))
 
     true
   }

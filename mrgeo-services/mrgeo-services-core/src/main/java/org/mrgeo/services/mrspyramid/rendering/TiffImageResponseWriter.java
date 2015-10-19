@@ -15,7 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.GDALJavaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,7 @@ public class TiffImageResponseWriter extends ImageResponseWriterAbstract
   @Override
   public void writeToStream(Raster raster, double[] defaults, ByteArrayOutputStream byteStream) throws IOException
   {
-    GDALUtils.saveRaster(raster, byteStream, "Tiff");
+    GDALJavaUtils.saveRaster(raster, byteStream, "Tiff");
     //ImageIO.write(RasterUtils.makeBufferedImage(raster), "TIFF", byteStream);
     byteStream.close();
   }

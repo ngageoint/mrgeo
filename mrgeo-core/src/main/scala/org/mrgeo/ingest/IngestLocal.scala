@@ -24,6 +24,7 @@ import org.apache.spark.rdd.PairRDDFunctions
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.utils.{HadoopUtils, SparkUtils}
 
@@ -46,20 +47,21 @@ class IngestLocal extends IngestImage with Externalizable {
       (new TileIdWritable(tile._1), RasterWritable.toWritable(RasterWritable.toRaster(tile._2)))
     })
 
-    val mergedTiles = new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
+    val mergedTiles = RasterRDD(new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
       val src = RasterWritable.toRaster(r1)
       val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
       RasterUtils.mosaicTile(src, dst, nodata)
       RasterWritable.toWritable(dst)
 
-    })
+    }))
 
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
 
     val raster = RasterWritable.toRaster(mergedTiles.first()._2)
-    SparkUtils.saveMrsPyramidRDD(mergedTiles, dp, zoom, tilesize, nodata, context.hadoopConfiguration,
+
+    SparkUtils.saveMrsPyramid(mergedTiles, dp, zoom, tilesize, nodata, context.hadoopConfiguration,
       bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
       protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
 
