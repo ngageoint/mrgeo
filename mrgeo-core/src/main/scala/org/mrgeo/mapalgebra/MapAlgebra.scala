@@ -23,7 +23,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
-import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.job.{PrepareJob, JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.mapalgebra.vector.{VectorDataMapOp, VectorMapOp}
@@ -293,11 +293,43 @@ object MapAlgebra extends MrGeoDriver {
 
       nodes = parse(expression)
 
+      val classes = Array.newBuilder[Class[_]]
+
       nodes.foreach(node => {
         setup(node, job, conf)
+        classes ++= register(node, job, conf)
       })
 
+      PrepareJob.registerClasses(classes.result(), conf)
+
       true
+    }
+
+
+    private def register(node:ParserNode, job: JobArguments, conf: SparkConf): Array[Class[_]] = {
+      val classes = Array.newBuilder[Class[_]]
+
+      // depth first run
+      node.getChildren.foreach(child => {
+        classes ++= register(child, job, conf)
+      })
+
+      node match {
+      case function:ParserFunctionNode =>
+        function.getName match {
+        case "=" =>  // ignore assignments...
+        case _ =>
+          val mapop = function.getMapOp
+
+          if (mapop != null) {
+            classes ++= mapop.registerClasses()
+          }
+        }
+
+      case _ => // no op, nothing to do if we're not a function (MapOp)
+      }
+
+      classes.result()
     }
 
     private def setup(node:ParserNode, job: JobArguments, conf: SparkConf): Unit = {

@@ -76,7 +76,6 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
     var tilesize: Int = -1
     var tiletype: Int = -1
     var totalbands: Int = 0
-    val bounds: Bounds = new Bounds()
 
     // loop through the inputs and load the pyramid RDDs and metadata
     for (input <- inputs) {
@@ -118,9 +117,6 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
 
         totalbands += meta.getBands
 
-        // expand the total bounds
-        bounds.expand(meta.getBounds)
-
         i += 1
 
       case _ =>
@@ -128,11 +124,6 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
     }
 
     val nodata = nodatabuilder.result()
-
-    val tileBounds: TileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
-
-    logDebug("Bounds: " + bounds.toString)
-    logDebug("TileBounds: " + tileBounds.toString)
 
     // cogroup needs a partitioner, so we'll give one here...
     var maxpartitions = 0

@@ -15,13 +15,18 @@
 
 package org.mrgeo.job
 
+import org.apache
+import org.apache.spark
+import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.{Logging, SparkConf}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.ImageStats
-import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.{Bounds, SparkUtils}
+
+import scala.collection.mutable
 
 object PrepareJob extends Logging {
 
@@ -74,57 +79,63 @@ object PrepareJob extends Logging {
         "128m"
       })
           .set("spark.driver.cores", if (job.cores > 0) {
-        job.cores.toString
-      }
-      else {
-        "1"
-      })
+            job.cores.toString
+          }
+          else {
+            "1"
+          })
     }
 
 
     conf
   }
 
-  def setupSerializer(mrgeoJob: MrGeoJob, job:JobArguments, conf:SparkConf) = {
-    // we need to check the serializer property, there is a bug in the registerKryoClasses in Spark < 1.3.0 that
-    // causes a ClassNotFoundException.  So we need to add a config property to use/ignore kryo
+  def setupSerializer(mrgeoJob: MrGeoJob, conf:SparkConf) = {
+    val classes = Array.newBuilder[Class[_]]
+
+    // automatically include common classes
+    classes += classOf[TileIdWritable]
+    classes += classOf[RasterWritable]
+
+    classes += classOf[Array[(TileIdWritable, RasterWritable)]]
+
+    classes += classOf[Bounds]
+
+    classes += classOf[ImageStats]
+    classes += classOf[Array[ImageStats]]
+
+    // include the old TileIdWritable & RasterWritable
+    classes += classOf[org.mrgeo.core.mapreduce.formats.TileIdWritable]
+    classes += classOf[org.mrgeo.core.mapreduce.formats.RasterWritable]
+
+
+    // TODO:  Need to call DataProviders to register classes
+    classes += classOf[FileSplitInfo]
+
+    classes ++= mrgeoJob.registerClasses()
+
+    registerClasses(classes.result(), conf)
+  }
+
+  def registerClasses(classes:Array[Class[_]], conf:SparkConf) = {
     if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_USE_KRYO, "false").equals("true")) {
-      // Check and invoke for registerKryoClasses() with reflection, because isn't in pre Spark 1.2.0
       try {
-        val method = conf.getClass.getMethod("registerKryoClasses", classOf[Array[Class[_]]])
-        val classes = Array.newBuilder[Class[_]]
+        val all = mutable.HashSet.empty[String]
+        all ++= conf.get("spark.kryo.classesToRegister", "").split(",").filter(!_.isEmpty)
 
-        // automatically include common classes
-        classes += classOf[TileIdWritable]
-        classes += classOf[RasterWritable]
+        all ++= classes.filter(!_.getName.isEmpty).map(_.getName)
 
-        classes += classOf[Array[(TileIdWritable, RasterWritable)]]
-
-        classes += classOf[ImageStats]
-        classes += classOf[Array[ImageStats]]
-
-        // include the old TileIdWritable & RasterWritable
-        classes += classOf[org.mrgeo.core.mapreduce.formats.TileIdWritable]
-        classes += classOf[org.mrgeo.core.mapreduce.formats.RasterWritable]
-
-
-        // TODO:  Need to call DataProviders to register classes
-        classes += classOf[FileSplitInfo]
-
-        classes ++= mrgeoJob.registerClasses()
-
-        method.invoke(conf, classes.result())
+        conf.set("spark.kryo.classesToRegister", all.mkString(","))
+        conf.set("spark.serializer", classOf[KryoSerializer].getName)
       }
       catch {
         case nsme: NoSuchMethodException => conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
         case e: Exception => e.printStackTrace()
       }
-
     }
     else {
       conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
     }
-
   }
 
 }

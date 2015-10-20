@@ -215,6 +215,8 @@ abstract class MapOp extends Logging {
   def context(cont: SparkContext) = sparkContext = cont
   def context(): SparkContext = sparkContext
 
+  def registerClasses(): Array[Class[_]] = {Array.empty[Class[_]] }
+
   def setup(job: JobArguments, conf: SparkConf): Boolean
   def execute(context: SparkContext): Boolean
   def teardown(job: JobArguments, conf: SparkConf): Boolean
