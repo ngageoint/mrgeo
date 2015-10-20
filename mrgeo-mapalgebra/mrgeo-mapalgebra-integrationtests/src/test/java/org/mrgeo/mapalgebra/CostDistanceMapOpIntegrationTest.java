@@ -67,7 +67,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
   // tests won't be run when is set to true
-  public final static boolean GEN_BASELINE_DATA_ONLY = false;
+  public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
   private static final String ALL_ONES = "all-ones";
   private static final int ALL_ONES_ZOOM = 10;
@@ -108,6 +108,10 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
                  + "friction = [" + frictionSurface + "];\n"
                  + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
+    // Start point in tile tx=702 ty = 348, pixel px = 510 py = 0
+//    String exp = "srcPoint = InlineCsv(\"GEOMETRY\", \"'POINT(9.029234 45.223345)'\");\n"
+//                 + "friction = [/mrgeo/images/dave-tobler-raw-spm_nowater];\n"
+//                 + "result = CostDistance(srcPoint, 9, friction, 2000000, -3.5, 36.8, 9.9, 45.6)";
     // For tobler-raw-4tiles
 //    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(65.1 30.1)'\");\n"
 //                 + "friction = [" + frictionSurface + "];\n"
@@ -115,11 +119,19 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
     if (GEN_BASELINE_DATA_ONLY)
     {
+      long start = System.currentTimeMillis();
       testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+      long timeDelta = System.currentTimeMillis() - start;
+      System.out.println("testCostDistance took " + timeDelta);
+      log.error("testCostDistance took " + timeDelta);
     }
     else
     {
+      long start = System.currentTimeMillis();
       testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+      long timeDelta = System.currentTimeMillis() - start;
+      log.error("testCostDistance took " + timeDelta);
+      System.out.println("testCostDistance took " + timeDelta);
 
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
           new Path(testUtils.getOutputHdfs(), testname.getMethodName()).toUri().toString(),
