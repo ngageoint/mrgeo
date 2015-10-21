@@ -28,6 +28,8 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
 
+import scala.collection.mutable
+
 object FillMapOp extends MapOpRegistrar {
   private[mapalgebra] val Fill = "fill"
   private[mapalgebra] val FillBounds = "fillbounds"
@@ -90,6 +92,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
     }
 
   }
+
 
   override def rdd(): Option[RasterRDD] = rasterRDD
   override def setup(job: JobArguments, conf: SparkConf): Boolean = true

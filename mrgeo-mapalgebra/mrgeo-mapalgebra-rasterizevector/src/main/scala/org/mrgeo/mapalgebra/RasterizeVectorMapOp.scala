@@ -23,7 +23,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.geometry.Geometry
+import org.mrgeo.geometry.{GeometryFactory, PointImpl, Point, Geometry}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -60,6 +60,12 @@ class RasterizeVectorMapOp extends RasterMapOp with Externalizable
   override def rdd(): Option[RasterRDD] = {
     rasterRDD
   }
+
+    override def registerClasses(): Array[Class[_]] = {
+      // get all the Geometry classes from the GeometryFactory
+      GeometryFactory.getClasses
+    }
+
 
   override def readExternal(in: ObjectInput): Unit = {
     aggregationType = VectorPainter.AggregationType.valueOf(in.readUTF())

@@ -98,7 +98,6 @@ object PrepareJob extends Logging {
     classes += classOf[RasterWritable]
 
     classes += classOf[Array[(TileIdWritable, RasterWritable)]]
-
     classes += classOf[Bounds]
 
     classes += classOf[ImageStats]
@@ -108,6 +107,8 @@ object PrepareJob extends Logging {
     classes += classOf[org.mrgeo.core.mapreduce.formats.TileIdWritable]
     classes += classOf[org.mrgeo.core.mapreduce.formats.RasterWritable]
 
+    // context.parallelize() calls create a WrappedArray.ofRef()
+    classes += classOf[mutable.WrappedArray.ofRef[_]]
 
     // TODO:  Need to call DataProviders to register classes
     classes += classOf[FileSplitInfo]

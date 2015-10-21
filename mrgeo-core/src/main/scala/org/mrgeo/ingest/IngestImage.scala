@@ -75,7 +75,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
   def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata: Array[Number]) = {
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
     // won't eat up too much memory
-    val in = context.makeRDD(inputs, inputs.length)
+    val in = context.parallelize(inputs, inputs.length)
 
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
       IngestImage.makeTiles(input, zoom, tilesize, categorical)

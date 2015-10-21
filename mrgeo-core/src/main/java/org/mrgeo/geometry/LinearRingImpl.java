@@ -27,163 +27,168 @@ import java.util.Map;
 
 /**
  * @author jason.surratt
- * 
+ *
  */
 public class LinearRingImpl extends LineStringImpl implements WritableLinearRing
 {
-  LinearRingImpl()
+LinearRingImpl()
+{
+}
+
+LinearRingImpl(Map<String, String> attributes)
+{
+  this.attributes.putAll(attributes);
+}
+
+LinearRingImpl(Point... points)
+{
+  super(points);
+  closeRing();
+}
+
+public static Class[] getClasses()
+{
+  return new Class[]{LinearRingImpl.class};
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.WritableLinearRing#closeRing()
+ */
+@Override
+public void closeRing()
+{
+  Point start = points.get(0);
+  Point end = points.get(points.size() - 1);
+  if (start.getX() != end.getX() || start.getY() != end.getY() || start.getZ() != end.getZ())
   {
+    addPoint(start);
   }
-  
-  LinearRingImpl(Map<String, String> attributes)
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.Geometry#createWritableClone()
+ */
+@Override
+public WritableGeometry createWritableClone()
+{
+  LinearRingImpl result = new LinearRingImpl();
+  for (Point p : points)
   {
-    this.attributes.putAll(attributes);
+    result.points.add((WritablePoint) p.createWritableClone());
+  }
+  return result;
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.WritableLinearRing#setPoints(java.util.Collection)
+ */
+@Override
+public void setPoints(Collection<Point> points)
+{
+  super.setPoints(points);
+  closeRing();
+}
+
+@Override
+public void read(DataInputStream stream) throws IOException
+{
+  super.read(stream);
+  closeRing();
+}
+
+private synchronized void readObject(ObjectInputStream stream) throws IOException
+{
+  DataInputStream dis = new DataInputStream(stream);
+  read(dis);
+  readAttributes(dis);
+}
+
+@Override
+public void fromJTS(LineString jtsRing)
+{
+  super.fromJTS(jtsRing);
+  closeRing();
+}
+
+@Override
+public com.vividsolutions.jts.geom.LinearRing toJTS()
+{
+  if (getNumPoints() < 3)
+  {
+    System.out.println("too few points");
   }
 
-  LinearRingImpl(Point... points)
+  Coordinate[] coordinates = new Coordinate[getNumPoints()];
+  for (int i = 0; i < getNumPoints(); i++)
   {
-    super(points);
-    closeRing();
+    Point pt = getPoint(i);
+    coordinates[i] = new Coordinate(pt.getX(), pt.getY());
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.WritableLinearRing#closeRing()
-   */
-  @Override
-  public void closeRing()
+  com.vividsolutions.jts.geom.GeometryFactory factory = new com.vividsolutions.jts.geom.GeometryFactory();
+
+  return factory.createLinearRing(coordinates);
+}
+
+@Override
+public boolean isCW()
+{
+  return !isCCW();
+}
+
+@Override
+public boolean isCCW()
+{
+  Coordinate[] coordinates = new Coordinate[getNumPoints()];
+  for (int i = 0; i < getNumPoints(); i++)
   {
-    Point start = points.get(0);
-    Point end = points.get(points.size() - 1);
-    if (start.getX() != end.getX() || start.getY() != end.getY() || start.getZ() != end.getZ())
-    {
-      addPoint(start);
-    }
+    Point pt = getPoint(i);
+    coordinates[i] = new Coordinate(pt.getX(), pt.getY());
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.Geometry#createWritableClone()
-   */
-  @Override
-  public WritableGeometry createWritableClone()
+  return CGAlgorithms.isCCW(coordinates);
+}
+
+@Override
+public LinearRing ccw()
+{
+  if (isCCW())
   {
-    LinearRingImpl result = new LinearRingImpl();
-    for (Point p : points)
-    {
-      result.points.add((WritablePoint) p.createWritableClone());
-    }
-    return result;
+    return this;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.WritableLinearRing#setPoints(java.util.Collection)
-   */
-  @Override
-  public void setPoints(Collection<Point> points)
+  return reverse();
+}
+
+@Override
+public LinearRing reverse()
+{
+  WritableLinearRing rev = GeometryFactory.createLinearRing(getAllAttributes());
+  for (int i = getNumPoints() - 1; i > 0; i--)
   {
-    super.setPoints(points);
-    closeRing();
-  }
-  
-  @Override
-  public void read(DataInputStream stream) throws IOException
-  {
-    super.read(stream);
-    closeRing();
+    rev.addPoint(getPoint(i));
   }
 
-  private synchronized void readObject(ObjectInputStream stream) throws IOException
+  return rev;
+
+}
+
+@Override
+public LinearRing cw()
+{
+  if (isCW())
   {
-    DataInputStream dis = new DataInputStream(stream);
-    read(dis);
-    readAttributes(dis);
+    return this;
   }
 
-  @Override
-  public void fromJTS(LineString jtsRing)
-  {
-    super.fromJTS(jtsRing);
-    closeRing();
-  }
-  
-  @Override
-  public com.vividsolutions.jts.geom.LinearRing toJTS()
-  {
-    if (getNumPoints() < 3)
-    {
-      System.out.println("too few points");
-    }
-
-    Coordinate[] coordinates = new Coordinate[getNumPoints()];
-    for (int i = 0; i < getNumPoints(); i++)
-    {
-      Point pt = getPoint(i);
-      coordinates[i] = new Coordinate(pt.getX(), pt.getY());
-    }
-    
-    com.vividsolutions.jts.geom.GeometryFactory factory = new com.vividsolutions.jts.geom.GeometryFactory();
-    
-    return factory.createLinearRing(coordinates);
-  }
-
-  @Override
-  public boolean isCW()
-  {
-    return !isCCW();
-  }
-  
-  @Override
-  public boolean isCCW()
-  {
-    Coordinate[] coordinates = new Coordinate[getNumPoints()];
-    for (int i = 0; i < getNumPoints(); i++)
-    {
-      Point pt = getPoint(i);
-      coordinates[i] = new Coordinate(pt.getX(), pt.getY());
-    }
-
-    return CGAlgorithms.isCCW(coordinates);
-  }
-
-  @Override
-  public LinearRing ccw()
-  {
-    if (isCCW())
-    {
-      return this;
-    }
-    
-    return reverse();
-  }
-
-  @Override
-  public LinearRing reverse()
-  {
-    WritableLinearRing rev = GeometryFactory.createLinearRing(getAllAttributes());
-    for (int i = getNumPoints() - 1; i > 0; i--)
-    {
-      rev.addPoint(getPoint(i));
-    }
-    
-    return rev;
-
-  }
-  
-  @Override
-  public LinearRing cw()
-  {
-    if (isCW())
-    {
-      return this;
-    }
-    
-    return reverse();
-  }
+  return reverse();
+}
 
 
 }
