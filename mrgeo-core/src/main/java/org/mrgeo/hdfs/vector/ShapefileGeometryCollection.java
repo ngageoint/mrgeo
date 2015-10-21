@@ -15,7 +15,6 @@
 
 package org.mrgeo.hdfs.vector;
 
-import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.WritableGeometry;
 
 import java.io.Serializable;

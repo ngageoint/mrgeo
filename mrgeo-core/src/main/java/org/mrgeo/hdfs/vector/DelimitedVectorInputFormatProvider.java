@@ -15,8 +15,6 @@
 
 package org.mrgeo.hdfs.vector;
 
-import java.io.IOException;
-
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
@@ -30,6 +28,8 @@ import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.geometry.Geometry;
+
+import java.io.IOException;
 
 public class DelimitedVectorInputFormatProvider extends VectorInputFormatProvider
 {

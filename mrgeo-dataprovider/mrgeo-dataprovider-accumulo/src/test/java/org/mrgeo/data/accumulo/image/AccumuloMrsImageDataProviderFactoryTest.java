@@ -15,15 +15,14 @@
 
 package org.mrgeo.data.accumulo.image;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-
 import junit.framework.Assert;
-
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableExistsException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.accumulo.AccumuloDefs;
 import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataWriter;
@@ -33,11 +32,11 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 
 public class AccumuloMrsImageDataProviderFactoryTest
 {

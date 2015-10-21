@@ -1,17 +1,12 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-import java.util.List;
-
 import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveInputFormat;
-
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
+
+import java.io.IOException;
+import java.util.List;
 
 public class GeoWaveVectorInputFormat extends InputFormat<FeatureIdWritable, Geometry>
 {

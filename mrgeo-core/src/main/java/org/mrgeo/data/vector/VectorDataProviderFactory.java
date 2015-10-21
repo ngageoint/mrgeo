@@ -15,12 +15,12 @@
 
 package org.mrgeo.data.vector;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
+
+import java.io.IOException;
+import java.util.Map;
 
 public interface VectorDataProviderFactory
 {

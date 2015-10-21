@@ -18,7 +18,6 @@ package org.mrgeo.mapalgebra
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.ProviderProperties
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.job.JobArguments

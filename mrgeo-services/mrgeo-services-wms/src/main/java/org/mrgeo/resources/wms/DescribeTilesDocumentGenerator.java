@@ -15,12 +15,12 @@
 
 package org.mrgeo.resources.wms;
 
+import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScaleManager;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.colorscale.ColorScale;
-import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.services.Version;
-import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;

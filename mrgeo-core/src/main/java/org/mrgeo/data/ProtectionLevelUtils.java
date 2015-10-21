@@ -15,10 +15,10 @@
 
 package org.mrgeo.data;
 
-import java.util.Properties;
-
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+
+import java.util.Properties;
 
 public class ProtectionLevelUtils
 {

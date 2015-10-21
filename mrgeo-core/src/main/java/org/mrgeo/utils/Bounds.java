@@ -20,7 +20,10 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.awt.geom.Rectangle2D;
-import java.io.Serializable;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * @author jason.surratt
@@ -34,7 +37,7 @@ import java.io.Serializable;
 //        initialization.  That means we need to keep track of what setters have 
 //        been called, and update the <set> value when all 4 are called.  That's
 //        what the <individualParamSet> is for.
-public class Bounds implements Comparable<Bounds>, Serializable
+public class Bounds  implements Comparable<Bounds>, Externalizable
 {
   private static final long serialVersionUID = 1L;
 
@@ -376,4 +379,22 @@ public class Bounds implements Comparable<Bounds>, Serializable
     // Don't use String.format - it's slow and loses precision apparently
     return "" + Double.valueOf(minX) + "," + Double.valueOf(minY) + "," + Double.valueOf(maxX) + "," + Double.valueOf(maxY);
   }
+
+@Override
+public void writeExternal(ObjectOutput out) throws IOException
+{
+  out.writeDouble(minX);
+  out.writeDouble(minY);
+  out.writeDouble(maxX);
+  out.writeDouble(maxY);
+}
+
+@Override
+public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+{
+  minX = in.readDouble();
+  minY = in.readDouble();
+  maxX = in.readDouble();
+  maxY = in.readDouble();
+}
 }

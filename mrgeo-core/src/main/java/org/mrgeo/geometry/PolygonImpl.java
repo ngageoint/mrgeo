@@ -23,287 +23,292 @@ import java.util.*;
 
 /**
  * @author jason.surratt
- * 
+ *
  */
 public class PolygonImpl extends GeometryImpl implements WritablePolygon
 {
 
-  WritableLinearRing exteriorRing = null;
-  List<WritableLinearRing> interiorRings = new ArrayList<>();
+WritableLinearRing exteriorRing = null;
+List<WritableLinearRing> interiorRings = new ArrayList<>();
 
-  PolygonImpl()
+PolygonImpl()
+{
+
+}
+
+PolygonImpl(Map<String, String>attributes)
+{
+  this.attributes.putAll(attributes);
+}
+
+PolygonImpl(Point... points)
+{
+  exteriorRing = new LinearRingImpl(points);
+}
+
+PolygonImpl(Collection<Point> points)
+{
+  exteriorRing = new LinearRingImpl();
+  exteriorRing.setPoints(points);
+}
+
+public static Class[] getClasses()
+{
+  return new Class[]{PolygonImpl.class};
+}
+
+@Override
+public void addInteriorRing(LinearRing lr)
+{
+  interiorRings.add((WritableLinearRing) lr.createWritableClone());
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.Geometry#createWritableClone()
+ */
+@Override
+public WritableGeometry createWritableClone()
+{
+  PolygonImpl result = new PolygonImpl();
+  result.setExteriorRing(getExteriorRing());
+  result.interiorRings = new Vector<>();
+  for (LinearRing r : interiorRings)
   {
-
+    result.interiorRings.add((WritableLinearRing) r.createWritableClone());
   }
+  result.attributes.putAll(attributes);
+  return result;
+}
 
-  PolygonImpl(Map<String, String>attributes)
+@Override
+public void filter(PointFilter pf)
+{
+  if (exteriorRing != null)
   {
-    this.attributes.putAll(attributes);
+    exteriorRing.filter(pf);
   }
-
-  PolygonImpl(Point... points)
+  for (WritableLinearRing r : interiorRings)
   {
-    exteriorRing = new LinearRingImpl(points);
+    r.filter(pf);
   }
+}
 
-  PolygonImpl(Collection<Point> points)
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.Polygon#getExteriorRing()
+ */
+@Override
+public LinearRing getExteriorRing()
+{
+  return exteriorRing;
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.Polygon#getInteriorRing(int)
+ */
+@Override
+public LinearRing getInteriorRing(int i)
+{
+  return interiorRings.get(i);
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.Polygon#getNumInteriorRings()
+ */
+@Override
+public int getNumInteriorRings()
+{
+  return interiorRings.size();
+}
+
+@Override
+public boolean isValid()
+{
+  boolean result = true;
+  if (exteriorRing == null || exteriorRing.getNumPoints() == 0)
   {
-    exteriorRing = new LinearRingImpl();
-    exteriorRing.setPoints(points);
+    result = false;
   }
-
-  @Override
-  public void addInteriorRing(LinearRing lr)
+  else if (!exteriorRing.isValid())
   {
-    interiorRings.add((WritableLinearRing) lr.createWritableClone());
+    result = false;
   }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.Geometry#createWritableClone()
-   */
-  @Override
-  public WritableGeometry createWritableClone()
+  else
   {
-    PolygonImpl result = new PolygonImpl();
-    result.setExteriorRing(getExteriorRing());
-    result.interiorRings = new Vector<>();
-    for (LinearRing r : interiorRings)
+    for (LinearRing lr : interiorRings)
     {
-      result.interiorRings.add((WritableLinearRing) r.createWritableClone());
+      if (!lr.isValid())
+      {
+        result = false;
+      }
     }
-    result.attributes.putAll(attributes);
-    return result;
+  }
+  return result;
+}
+
+@Override
+public void setExteriorRing(LinearRing ring)
+{
+  exteriorRing = (WritableLinearRing) ring.createWritableClone();
+}
+
+@Override
+public void read(DataInputStream stream) throws IOException
+{
+  exteriorRing = GeometryFactory.createLinearRing();
+  exteriorRing.read(stream);
+
+  int rings = stream.readInt();
+  interiorRings = new ArrayList<>(rings);
+  for (int i = 0; i < rings; i++)
+  {
+    WritableLinearRing ring = GeometryFactory.createLinearRing();
+    ring.read(stream);
+    addInteriorRing(ring);
+  }
+}
+
+@Override
+public void write(DataOutputStream stream) throws IOException
+{
+  exteriorRing.write(stream);
+
+  stream.writeInt(interiorRings.size());
+  for (LinearRing ring : interiorRings)
+  {
+    ring.write(stream);
+  }
+}
+
+private synchronized void writeObject(ObjectOutputStream stream) throws IOException
+{
+  DataOutputStream dos = new DataOutputStream(stream);
+  write(dos);
+  writeAttributes(dos);
+}
+
+private synchronized void readObject(ObjectInputStream stream) throws IOException
+{
+  DataInputStream dis = new DataInputStream(stream);
+  read(dis);
+  readAttributes(dis);
+}
+
+@Override
+public Type type()
+{
+  return Geometry.Type.POLYGON;
+}
+
+@Override
+public void fromJTS(com.vividsolutions.jts.geom.Polygon jtsPolygon)
+{
+  interiorRings.clear();
+
+  WritableLinearRing ring = new LinearRingImpl();
+
+  if (jtsPolygon.isEmpty())
+  {
+    setExteriorRing(ring);
+    return;
   }
 
-  @Override
-  public void filter(PointFilter pf)
+  ring.fromJTS(jtsPolygon.getExteriorRing());
+
+  setExteriorRing(ring);
+
+  for (int i = 0; i < jtsPolygon.getNumInteriorRing(); i++)
+  {
+    ring = new LinearRingImpl();
+    ring.fromJTS(jtsPolygon.getInteriorRingN(i));
+
+    addInteriorRing(ring);
+  }
+}
+
+@Override
+public com.vividsolutions.jts.geom.Polygon toJTS()
+{
+  com.vividsolutions.jts.geom.GeometryFactory factory = new com.vividsolutions.jts.geom.GeometryFactory();
+
+  com.vividsolutions.jts.geom.LinearRing exterior = exteriorRing.toJTS();
+  com.vividsolutions.jts.geom.LinearRing[] interior = null;
+
+  if( getNumInteriorRings() > 0)
+  {
+    interior = new com.vividsolutions.jts.geom.LinearRing[getNumInteriorRings()];
+    for (int i = 0; i < getNumInteriorRings(); i++)
+    {
+      interior[i] = getInteriorRing(i).toJTS();
+    }
+  }
+
+  return factory.createPolygon(exterior, interior);
+
+}
+
+@Override
+public Bounds getBounds()
+{
+  if (bounds == null)
   {
     if (exteriorRing != null)
     {
-      exteriorRing.filter(pf);
-    }
-    for (WritableLinearRing r : interiorRings)
-    {
-      r.filter(pf);
+      bounds = exteriorRing.getBounds();
     }
   }
+  return bounds;
+}
 
+@Override
+public boolean isEmpty()
+{
+  return exteriorRing == null || exteriorRing.isEmpty();
+}
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.Polygon#getExteriorRing()
-   */
-  @Override
-  public LinearRing getExteriorRing()
+@Override
+public Geometry clip(Polygon geom)
+{
+  Geometry clipped = super.clip(geom);
+
+  // got a polygon back...  just return it
+  if (clipped instanceof Polygon && !clipped.isEmpty())
   {
-    return exteriorRing;
+    return clipped;
   }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.Polygon#getInteriorRing(int)
-   */
-  @Override
-  public LinearRing getInteriorRing(int i)
+  else if (clipped instanceof GeometryCollection)
   {
-    return interiorRings.get(i);
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.Polygon#getNumInteriorRings()
-   */
-  @Override
-  public int getNumInteriorRings()
-  {
-    return interiorRings.size();
-  }
-
-  @Override
-  public boolean isValid()
-  {
-    boolean result = true;
-    if (exteriorRing == null || exteriorRing.getNumPoints() == 0)
+    WritableGeometryCollection collection = (WritableGeometryCollection) clipped;
+    // got a collection.  Need to make sure they are only polygons.
+    Iterator<? extends Geometry> iter = collection.iterator();
+    while (iter.hasNext())
     {
-      result = false;
-    }
-    else if (!exteriorRing.isValid())
-    {
-      result = false;
-    }
-    else
-    {
-      for (LinearRing lr : interiorRings)
+      Geometry g = iter.next();
+      if (!(g instanceof Polygon) || g.isEmpty())
       {
-        if (!lr.isValid())
-        {
-          result = false;
-        }
+        iter.remove();
       }
     }
-    return result;
-  }
-
-  @Override
-  public void setExteriorRing(LinearRing ring)
-  {
-    exteriorRing = (WritableLinearRing) ring.createWritableClone();
-  }
-
-  @Override
-  public void read(DataInputStream stream) throws IOException
-  {
-    exteriorRing = GeometryFactory.createLinearRing();
-    exteriorRing.read(stream);
-
-    int rings = stream.readInt();
-    interiorRings = new ArrayList<>(rings);
-    for (int i = 0; i < rings; i++)
+    if (collection.getNumGeometries() == 0)
     {
-      WritableLinearRing ring = GeometryFactory.createLinearRing();
-      ring.read(stream);
-      addInteriorRing(ring);
+      return null;
     }
-  }
-
-  @Override
-  public void write(DataOutputStream stream) throws IOException
-  {
-    exteriorRing.write(stream);
-
-    stream.writeInt(interiorRings.size());
-    for (LinearRing ring : interiorRings)
+    else if (collection.getNumGeometries() == 1)
     {
-      ring.write(stream);
+      return collection.getGeometry(0);
     }
+    return collection;
   }
+  return null;
+}
 
-  private synchronized void writeObject(ObjectOutputStream stream) throws IOException
-  {
-    DataOutputStream dos = new DataOutputStream(stream);
-    write(dos);
-    writeAttributes(dos);
-  }
-
-  private synchronized void readObject(ObjectInputStream stream) throws IOException
-  {
-    DataInputStream dis = new DataInputStream(stream);
-    read(dis);
-    readAttributes(dis);
-  }
-
-  @Override
-  public Type type()
-  {
-    return Geometry.Type.POLYGON;
-  }
-
-  @Override
-  public void fromJTS(com.vividsolutions.jts.geom.Polygon jtsPolygon)
-  {
-    interiorRings.clear();
-    
-    WritableLinearRing ring = new LinearRingImpl();
-    
-    if (jtsPolygon.isEmpty())
-    {
-      setExteriorRing(ring);
-      return;
-    }
-
-    ring.fromJTS(jtsPolygon.getExteriorRing());
-
-    setExteriorRing(ring);
-
-    for (int i = 0; i < jtsPolygon.getNumInteriorRing(); i++)
-    {
-      ring = new LinearRingImpl();
-      ring.fromJTS(jtsPolygon.getInteriorRingN(i));
-
-      addInteriorRing(ring);
-    }
-  }
-
-  @Override
-  public com.vividsolutions.jts.geom.Polygon toJTS()
-  {
-    com.vividsolutions.jts.geom.GeometryFactory factory = new com.vividsolutions.jts.geom.GeometryFactory();
-
-    com.vividsolutions.jts.geom.LinearRing exterior = exteriorRing.toJTS();
-    com.vividsolutions.jts.geom.LinearRing[] interior = null;
-
-    if( getNumInteriorRings() > 0)
-    {
-      interior = new com.vividsolutions.jts.geom.LinearRing[getNumInteriorRings()];
-      for (int i = 0; i < getNumInteriorRings(); i++)
-      {
-        interior[i] = getInteriorRing(i).toJTS();
-      }
-    }
-
-    return factory.createPolygon(exterior, interior);
-
-  }
-
-  @Override
-  public Bounds getBounds()
-  {
-    if (bounds == null)
-    {
-      if (exteriorRing != null)
-      {
-        bounds = exteriorRing.getBounds();
-      }
-    }
-    return bounds;
-  }
-
-  @Override
-  public boolean isEmpty()
-  {
-    return exteriorRing == null || exteriorRing.isEmpty();
-  }
-
-  @Override
-  public Geometry clip(Polygon geom)
-  {
-    Geometry clipped = super.clip(geom);
-    
-    // got a polygon back...  just return it
-    if (clipped instanceof Polygon && !clipped.isEmpty())
-    {
-      return clipped;
-    }
-    else if (clipped instanceof GeometryCollection)
-    {
-      WritableGeometryCollection collection = (WritableGeometryCollection) clipped;
-      // got a collection.  Need to make sure they are only polygons.
-      Iterator<? extends Geometry> iter = collection.iterator();
-      while (iter.hasNext())
-      {
-        Geometry g = iter.next();
-        if (!(g instanceof Polygon) || g.isEmpty())
-        {
-          iter.remove();
-        }
-      }
-      if (collection.getNumGeometries() == 0)
-      {
-        return null;
-      }
-      else if (collection.getNumGeometries() == 1)
-      {
-        return collection.getGeometry(0);
-      }
-      return collection;
-    }
-    return null;
-  }
-  
 
 }

@@ -1,14 +1,13 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public class GeoWaveConnectionInfo
 {

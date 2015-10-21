@@ -1,9 +1,5 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import mil.nga.giat.geowave.accumulo.AccumuloOperations;
@@ -23,7 +19,6 @@ import mil.nga.giat.geowave.store.query.BasicQuery;
 import mil.nga.giat.geowave.store.query.Query;
 import mil.nga.giat.geowave.vector.AccumuloDataStatisticsStoreExt;
 import mil.nga.giat.geowave.vector.VectorDataStore;
-
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.commons.lang3.StringUtils;
@@ -36,11 +31,13 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.*;
 
 public class GeoWaveVectorDataProvider extends VectorDataProvider
 {

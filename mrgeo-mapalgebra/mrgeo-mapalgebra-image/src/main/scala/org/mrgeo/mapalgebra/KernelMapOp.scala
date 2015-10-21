@@ -22,11 +22,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.kernel.{LaplacianGeographicKernel, GaussianGeographicKernel}
+import org.mrgeo.job.JobArguments
+import org.mrgeo.kernel.{GaussianGeographicKernel, LaplacianGeographicKernel}
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 object KernelMapOp extends MapOpRegistrar {

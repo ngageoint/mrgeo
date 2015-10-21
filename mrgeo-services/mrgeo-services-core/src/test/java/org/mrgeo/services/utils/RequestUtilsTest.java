@@ -15,16 +15,14 @@
 
 package org.mrgeo.services.utils;
 
+import com.vividsolutions.jts.util.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.Bounds;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.operation.TransformException;
-
-import com.vividsolutions.jts.util.Assert;
 
 public class RequestUtilsTest {
 

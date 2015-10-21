@@ -18,12 +18,12 @@ package org.mrgeo.data;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.pyramid.MrsPyramid;
-import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
 

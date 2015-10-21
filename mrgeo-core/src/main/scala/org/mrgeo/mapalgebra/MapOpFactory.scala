@@ -16,23 +16,21 @@
 package org.mrgeo.mapalgebra
 
 
-import java.io.{FileFilter, File}
+import java.io.{File, FileFilter}
 import java.lang.reflect.Modifier
 import java.net.URL
 
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.spark.Logging
-import org.apache.spark.deploy.yarn.Client
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
 
-import scala.language.existentials
-
 import scala.collection.JavaConversions._
 import scala.collection.mutable
+import scala.language.existentials
 import scala.reflect.runtime.universe._
 
 

@@ -16,17 +16,17 @@
 package org.mrgeo.services.version;
 
 //import org.apache.commons.lang3.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Properties;
 
 //import org.springframework.security.core.Authentication;
 //import org.springframework.security.core.GrantedAuthority;
 //import org.springframework.security.core.context.SecurityContext;
 //import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.io.IOException;
-import java.util.Properties;
 
 /**
  * @author Steve Ingram

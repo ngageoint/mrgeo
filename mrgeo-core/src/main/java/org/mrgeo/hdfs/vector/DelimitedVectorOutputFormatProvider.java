@@ -20,7 +20,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.vector.FeatureIdWritable;
-import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorOutputFormatContext;
 import org.mrgeo.data.vector.VectorOutputFormatProvider;
 import org.mrgeo.geometry.Geometry;
