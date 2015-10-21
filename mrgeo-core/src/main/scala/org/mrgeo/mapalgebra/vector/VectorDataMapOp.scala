@@ -17,11 +17,11 @@ package org.mrgeo.mapalgebra.vector
 
 import java.io.IOException
 
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.rdd.VectorRDD
-import org.mrgeo.data.vector.{VectorMetadata, VectorDataProvider}
-import org.mrgeo.mapalgebra.MapOp
+import org.mrgeo.data.vector.VectorDataProvider
 import org.mrgeo.job.JobArguments
+import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.utils.SparkVectorUtils
 
 object VectorDataMapOp {

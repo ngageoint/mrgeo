@@ -17,21 +17,20 @@ package org.mrgeo.image;
 
 import com.google.common.base.Optional;
 import com.google.common.cache.*;
-
 import org.apache.hadoop.conf.Configuration;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.pyramid.MrsPyramid;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.KVIterator;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.tile.MrsTileReader;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.pyramid.MrsPyramid;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;

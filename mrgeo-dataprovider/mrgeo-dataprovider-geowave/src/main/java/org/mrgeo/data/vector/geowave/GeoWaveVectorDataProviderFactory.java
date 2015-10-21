@@ -1,8 +1,5 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.hadoop.conf.Configuration;
@@ -10,6 +7,9 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorDataProviderFactory;
+
+import java.io.IOException;
+import java.util.Map;
 
 public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFactory
 {

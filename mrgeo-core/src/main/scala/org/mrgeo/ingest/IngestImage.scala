@@ -20,7 +20,7 @@ import java.util
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile
-import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions}
+import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
 import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
@@ -30,8 +30,7 @@ import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.data.{ProviderProperties, DataProviderFactory, ProtectionLevelUtils}
-import org.mrgeo.hdfs.partitioners.TileIdPartitioner
+import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
@@ -76,7 +75,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
   def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata: Array[Number]) = {
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
     // won't eat up too much memory
-    val in = context.makeRDD(inputs, inputs.length)
+    val in = context.parallelize(inputs, inputs.length)
 
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
       IngestImage.makeTiles(input, zoom, tilesize, categorical)

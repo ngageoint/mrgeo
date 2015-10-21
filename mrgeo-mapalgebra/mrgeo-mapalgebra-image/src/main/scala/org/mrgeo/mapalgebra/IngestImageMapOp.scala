@@ -20,7 +20,9 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.ingest.IngestImage
@@ -29,6 +31,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.GDALUtils
 
+import scala.collection.mutable
 import scala.util.control.Breaks
 
 object IngestImageMapOp extends MapOpRegistrar {
@@ -65,6 +68,12 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     if (node.getNumChildren >= 3) {
       categorical = MapOp.decodeBoolean(node.getChild(2), variables)
     }
+  }
+
+  override def registerClasses(): Array[Class[_]] = {
+    // IngestImage ultimately creates a WrappedArray of Array[String], WrappedArray is already
+    // registered, so we need the Array[String]
+    Array[Class[_]](classOf[Array[String]])
   }
 
 

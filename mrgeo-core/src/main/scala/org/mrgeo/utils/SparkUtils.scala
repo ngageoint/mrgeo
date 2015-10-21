@@ -31,7 +31,6 @@ import org.mrgeo.data.tile.{TileIdWritable, TiledInputFormatContext, TiledOutput
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
-
 import org.mrgeo.utils.MrGeoImplicits._
 
 import scala.collection.JavaConversions._

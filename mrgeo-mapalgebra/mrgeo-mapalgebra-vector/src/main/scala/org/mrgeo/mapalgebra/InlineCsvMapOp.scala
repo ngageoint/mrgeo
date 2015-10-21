@@ -15,20 +15,20 @@
 
 package org.mrgeo.mapalgebra
 
-import java.io.{ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.Geometry
 import org.mrgeo.hdfs.vector.Column.FactorType
-import org.mrgeo.hdfs.vector.{DelimitedParser, Column, ColumnDefinitionFile}
+import org.mrgeo.hdfs.vector.{Column, ColumnDefinitionFile, DelimitedParser}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.vector.VectorMapOp
-import collection.JavaConversions._
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
 
 object InlineCsvMapOp extends MapOpRegistrar
 {

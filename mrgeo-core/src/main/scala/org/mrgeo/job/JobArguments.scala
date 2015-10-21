@@ -15,16 +15,14 @@
 
 package org.mrgeo.job
 
-import org.apache.spark.Logging
-import org.mrgeo.data.DataProviderFactory
-
-import collection.JavaConversions.asScalaSet
 import org.apache.commons.lang3.SystemUtils
+import org.apache.spark.Logging
 import org.mrgeo.core.MrGeoProperties
+import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.utils.{FileUtils, Memory}
 
+import scala.collection.JavaConversions.{asScalaSet, _}
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.JavaConversions._
 
 class JobArguments() extends Logging {
 

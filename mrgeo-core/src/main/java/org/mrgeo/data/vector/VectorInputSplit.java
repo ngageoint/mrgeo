@@ -15,14 +15,14 @@
 
 package org.mrgeo.data.vector;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.utils.HadoopUtils;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class VectorInputSplit extends InputSplit implements Writable
 {

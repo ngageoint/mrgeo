@@ -15,9 +15,9 @@
 
 package org.mrgeo.data.tile;
 
-import java.io.IOException;
-
 import org.mrgeo.data.ProtectionLevelValidator;
+
+import java.io.IOException;
 
 
 /**

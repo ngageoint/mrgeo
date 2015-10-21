@@ -15,7 +15,6 @@
 
 package org.mrgeo.mapalgebra.unarymath
 
-import java.awt.image.WritableRaster
 import java.io.IOException
 
 import org.apache.spark.SparkContext
@@ -23,10 +22,9 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
-import org.mrgeo.utils.SparkUtils
-
+import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.SparkUtils
 
 object IsNodataMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

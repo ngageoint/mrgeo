@@ -22,12 +22,11 @@ import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.SparkUtils
-
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.SparkUtils
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable

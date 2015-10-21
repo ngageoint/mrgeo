@@ -19,11 +19,11 @@ import org.apache.accumulo.core.client.Connector;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.data.accumulo.AccumuloDefs;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
+import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
 
 import java.io.*;

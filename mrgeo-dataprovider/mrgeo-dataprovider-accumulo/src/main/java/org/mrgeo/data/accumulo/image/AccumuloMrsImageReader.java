@@ -17,11 +17,11 @@ package org.mrgeo.data.accumulo.image;
 
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.Decompressor;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.accumulo.tile.AccumuloMrsTileReader;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImagePyramidReaderContext;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.utils.LongRectangle;
 
 import java.awt.image.Raster;

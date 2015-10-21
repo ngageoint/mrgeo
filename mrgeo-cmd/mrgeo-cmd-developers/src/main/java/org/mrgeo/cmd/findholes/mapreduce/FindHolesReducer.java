@@ -15,21 +15,18 @@
 
 package org.mrgeo.cmd.findholes.mapreduce;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
-import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.image.ImageStats;
 import org.mrgeo.utils.LongRectangle;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 
 
 public class FindHolesReducer extends Reducer<LongWritable, LongWritable, Text, Text>{

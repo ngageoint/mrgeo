@@ -15,12 +15,12 @@
 
 package org.mrgeo.data.adhoc;
 
+import org.apache.hadoop.mapreduce.Job;
+import org.mrgeo.data.DataProviderException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import org.apache.hadoop.mapreduce.Job;
-import org.mrgeo.data.DataProviderException;
 
 /**
  * Abstract base class which a MrGeo data plugin will extend in order to

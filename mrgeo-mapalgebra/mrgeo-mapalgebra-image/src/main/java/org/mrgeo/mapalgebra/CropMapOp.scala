@@ -20,12 +20,11 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.{SparkUtils, TMSUtils}
-
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 object CropMapOp extends MapOpRegistrar {
   private[mapalgebra] val Crop = "crop"

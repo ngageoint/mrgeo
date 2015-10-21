@@ -19,8 +19,6 @@ import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.spark.rdd.RDD
-import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider

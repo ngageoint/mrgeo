@@ -15,27 +15,21 @@
 
 package org.mrgeo.resources.mrspyramid;
 
-import java.awt.image.Raster;
-import java.io.IOException;
-import java.util.List;
-
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.xml.parsers.ParserConfigurationException;
+import java.awt.image.Raster;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * This is a first crack at a resource to represent color scales.  *IT IS BY NO MEANS A FINAL

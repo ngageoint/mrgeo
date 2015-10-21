@@ -19,12 +19,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
