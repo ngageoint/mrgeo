@@ -31,6 +31,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.filter.Filter;
 import org.slf4j.Logger;
