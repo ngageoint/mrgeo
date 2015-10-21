@@ -379,45 +379,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  def updateAccumulator(accum: Accumulator[NeighborChangedPoints],
-                        changedPoints: ChangedPointsNew,
-                        tileBounds: TMSUtils.TileBounds,
-                        tileId: Long,
-                        zoomLevel: Int,
-                        tileSize: Int): Unit =
-  {
-    val tile = TMSUtils.tileid(tileId, zoomLevel)
-    changedPoints.getAllPoints.foreach(cp => {
-      // Record pixel changes for the neighbors to the left
-      if (cp.px == 0 && tile.tx > tileBounds.w) {
-        if (cp.py == 0) {
-        }
-        else if (cp.py == tileSize - 1) {
-        }
-        else {
-        }
-      }
-      else if (cp.px == tileSize - 1 && tile.tx < tileBounds.e) {
-        // Record pixel changes for the neighbors to the right
-        if (cp.py == 0) {
-        }
-        else if (cp.py == tileSize - 1) {
-        }
-        else {
-        }
-      }
-      else {
-        if (cp.py == 0) {
-        }
-        else if (cp.py == tileSize - 1) {
-        }
-        else {
-          // Not an edge pixel, so ignore it
-        }
-      }
-    })
-  }
-
   /**
    * Given one or more source points, compute a Bounds surrounding those points that
    * extends out to maxCost above, below, and the left and right of the MBR of those
@@ -1026,17 +987,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   }
 }
 
-object CostDistanceEdgeType {
-  val TO_TOP_LEFT: Byte = 1
-  val TO_TOP: Byte = 2
-  val TO_TOP_RIGHT: Byte = 3
-  val TO_RIGHT: Byte = 4
-  val TO_BOTTOM_RIGHT: Byte = 5
-  val TO_BOTTOM: Byte = 6
-  val TO_BOTTOM_LEFT: Byte = 7
-  val TO_LEFT: Byte = 8
-}
-
 object DirectionBand {
   val UP_BAND: Byte = 0
   val DOWN_BAND: Byte = 1
@@ -1074,71 +1024,6 @@ class CostPointNew(var px: Short, var py: Short, var totalCost: Float, var pixel
     py = in.readShort()
     totalCost = in.readFloat()
     pixelFriction = in.readFloat()
-  }
-}
-
-// Stores a list of points around the edges of a tile that changed while costs
-// are computed for a tile.
-class ChangedPointsNew() extends Externalizable {
-  private val changes = scala.collection.mutable.HashMap.empty[(Short, Short), CostPointNew]
-
-  // Adds a changed pixel. If the pixel already exists, it only adds the passed
-  // in point if its cost is less than the point already stored.
-  def addPoint(point: CostPointNew): Unit = {
-    val pixel = (point.px, point.py)
-    if (changes contains pixel) {
-      val existingPoint = changes(pixel)
-      if (existingPoint.totalCost > point.totalCost) {
-        changes(pixel) = point
-      }
-    }
-    else {
-      changes(pixel) = point
-    }
-  }
-
-  // Returns the list of changed points for the specfied edge or null if there
-  // are no changed points for that edge.
-  def getAllPoints: List[CostPointNew] = {
-    changes.values.toList
-  }
-
-  def isEmpty: Boolean = {
-    changes.isEmpty
-  }
-
-  def size: Int = {
-    changes.size
-  }
-
-  def clear(): Unit = {
-    changes.clear()
-  }
-
-  def get(px: Short, py: Short): Option[CostPointNew] = {
-    val pixel = (px, py)
-    changes.get(pixel)
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
-    val numChanges = changes.size
-    out.writeInt(numChanges)
-    if (numChanges > 0) {
-      val iter = changes.iterator
-      while (iter.hasNext) {
-        val cp = iter.next()
-        cp._2.writeExternal(out)
-      }
-    }
-  }
-
-  override def readExternal(in: ObjectInput): Unit = {
-    val length = in.readInt
-    for (i <- 0 until length) {
-      var cp = new CostPointNew
-      cp.readExternal(in)
-      changes.put((cp.px, cp.py), cp)
-    }
   }
 }
 
