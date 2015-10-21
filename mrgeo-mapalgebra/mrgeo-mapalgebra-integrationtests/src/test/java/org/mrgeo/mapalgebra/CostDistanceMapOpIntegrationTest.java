@@ -67,7 +67,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
   // tests won't be run when is set to true
-  public final static boolean GEN_BASELINE_DATA_ONLY = true;
+  public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
   private static final String ALL_ONES = "all-ones";
   private static final int ALL_ONES_ZOOM = 10;
@@ -149,8 +149,8 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
       double epsilon = 0.5;
       Assert.assertEquals(0, bandStats.min, epsilon);
       Assert.assertEquals(50000, bandStats.max, epsilon);
-      Assert.assertEquals(33112.808371797866, bandStats.mean, epsilon);
-      Assert.assertEquals(1852051, bandStats.count);
+      Assert.assertEquals(33142.46070624142, bandStats.mean, epsilon);
+      Assert.assertEquals(1562052, bandStats.count);
     }
   }
 

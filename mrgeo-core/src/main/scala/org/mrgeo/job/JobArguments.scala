@@ -244,15 +244,15 @@ class JobArguments() extends Logging {
     verbose = true
     parse(tail)
 
-  case ("--cores") :: value :: tail =>
+  case ("--cores" | "--executor-cores") :: value :: tail =>
     cores = value.toInt
     parse(tail)
 
-  case ("--executors") :: value :: tail =>
+  case ("--executors" | "--num-executors") :: value :: tail =>
     executors = value.toInt
     parse(tail)
 
-  case ("--memory") :: value :: tail =>
+  case ("--memory | --executor-memory") :: value :: tail =>
     memoryKb = value.toInt
     parse(tail)
 
