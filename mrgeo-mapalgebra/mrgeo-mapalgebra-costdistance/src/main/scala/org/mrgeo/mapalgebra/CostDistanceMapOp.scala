@@ -19,12 +19,14 @@ import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 
+import org.apache.commons.lang3.ArrayUtils
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{Accumulator, AccumulatorParam, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.geometry.Point
+import org.mrgeo.data.vector.FeatureIdWritable
+import org.mrgeo.geometry.{GeometryFactory, Point}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -186,7 +188,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     conf.set("spark.shuffle.memoryFraction", "0.30") // set the shuffle higher
     numExecutors = conf.getInt("spark.executor.instances", -1)
     CostDistanceMapOp.LOG.info("num executors = " + numExecutors)
-//    conf.set("spark.kryo.registrationRequired", "true")
+    conf.set("spark.kryo.registrationRequired", "true")
 //    conf.set("spark.driver.extraJavaOptions", "-Dsun.io.serialization.extendedDebugInfo=true")
 //    conf.set("spark.executor.extraJavaOptions", "-Dsun.io.serialization.extendedDebugInfo=true")
     true
@@ -984,6 +986,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     zoomLevel = in.readInt()
     maxCost = in.readDouble()
     tileBounds = TMSUtils.TileBounds.fromCommaString(in.readUTF())
+  }
+
+  override def registerClasses(): Array[Class[_]] = {
+    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
   }
 }
 
