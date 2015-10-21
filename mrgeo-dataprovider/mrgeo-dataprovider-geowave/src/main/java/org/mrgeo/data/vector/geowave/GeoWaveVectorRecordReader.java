@@ -1,9 +1,6 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-
 import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveRecordReader;
-
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -16,6 +13,8 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, Geometry>
 {

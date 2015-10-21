@@ -18,13 +18,12 @@ package org.mrgeo.mapreduce;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

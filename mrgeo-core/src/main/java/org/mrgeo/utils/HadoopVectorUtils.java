@@ -26,8 +26,8 @@ import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.mapalgebra.vector.PgQueryInputFormat;
 import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.mapalgebra.vector.PgQueryInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

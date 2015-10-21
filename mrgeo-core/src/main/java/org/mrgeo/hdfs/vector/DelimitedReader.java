@@ -15,14 +15,14 @@
 
 package org.mrgeo.hdfs.vector;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * This class implements the CloseableKVIterator for a delimited text file

@@ -15,9 +15,9 @@
 
 package org.mrgeo.data.vector;
 
-import java.io.IOException;
-
 import org.mrgeo.geometry.Geometry;
+
+import java.io.IOException;
 
 
 public interface VectorWriter

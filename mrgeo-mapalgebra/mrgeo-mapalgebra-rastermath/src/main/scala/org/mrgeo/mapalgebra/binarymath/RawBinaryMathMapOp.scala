@@ -25,9 +25,8 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.SparkUtils
-
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.SparkUtils
 
 abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   var constA:Option[Double] = None

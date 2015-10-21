@@ -16,7 +16,7 @@
 package org.mrgeo.mapalgebra.unarymath
 
 import org.mrgeo.mapalgebra.parser.ParserNode
-import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
+import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object TanMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

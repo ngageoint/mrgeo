@@ -26,7 +26,10 @@ import org.mrgeo.hdfs.partitioners.SplitGenerator;
 import org.mrgeo.junit.UnitTest;
 
 import java.io.*;
-import java.util.*;
+import java.util.Random;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class PartitionerSplitTest
 {

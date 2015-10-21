@@ -15,22 +15,22 @@
 
 package org.mrgeo.data.image;
 
-import java.awt.image.Raster;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.mrgeo.mapreduce.formats.TileCollection;
-import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.MrsPyramidInputFormat;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
+import org.mrgeo.mapreduce.formats.TileCollection;
+import org.mrgeo.mapreduce.splitters.TiledInputSplit;
+
+import java.awt.image.Raster;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The InputFormat class used by MrGeo for map/reduce jobs that operate on

@@ -15,6 +15,12 @@
 
 package org.mrgeo.hdfs.vector;
 
+import com.vividsolutions.jts.io.WKTReader;
+import org.mrgeo.geometry.Geometry;
+import org.mrgeo.geometry.GeometryFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -23,13 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.mrgeo.geometry.Geometry;
-import org.mrgeo.geometry.GeometryFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.vividsolutions.jts.io.WKTReader;
 
 /**
  * This class is responsible for converting a line of text into a Geometry

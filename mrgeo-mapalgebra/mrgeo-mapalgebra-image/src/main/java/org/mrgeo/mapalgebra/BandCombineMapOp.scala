@@ -15,21 +15,18 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{Raster, WritableRaster}
-import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
-import java.util
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.CoGroupedRDD
-import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{HashPartitioner, SparkContext, SparkConf}
+import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.{GDALUtils, SparkUtils, TMSUtils, Bounds}
 import org.mrgeo.utils.TMSUtils.TileBounds
+import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
 
 import scala.collection.mutable
 
@@ -79,7 +76,6 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
     var tilesize: Int = -1
     var tiletype: Int = -1
     var totalbands: Int = 0
-    val bounds: Bounds = new Bounds()
 
     // loop through the inputs and load the pyramid RDDs and metadata
     for (input <- inputs) {
@@ -121,9 +117,6 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
 
         totalbands += meta.getBands
 
-        // expand the total bounds
-        bounds.expand(meta.getBounds)
-
         i += 1
 
       case _ =>
@@ -131,11 +124,6 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
     }
 
     val nodata = nodatabuilder.result()
-
-    val tileBounds: TileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
-
-    logDebug("Bounds: " + bounds.toString)
-    logDebug("TileBounds: " + tileBounds.toString)
 
     // cogroup needs a partitioner, so we'll give one here...
     var maxpartitions = 0

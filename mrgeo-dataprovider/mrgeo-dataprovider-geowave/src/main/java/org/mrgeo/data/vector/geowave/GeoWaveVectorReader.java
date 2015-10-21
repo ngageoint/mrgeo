@@ -1,9 +1,5 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import mil.nga.giat.geowave.store.CloseableIterator;
 import mil.nga.giat.geowave.store.adapter.DataAdapter;
 import mil.nga.giat.geowave.store.index.Index;
@@ -11,7 +7,6 @@ import mil.nga.giat.geowave.store.query.Query;
 import mil.nga.giat.geowave.store.query.SpatialQuery;
 import mil.nga.giat.geowave.vector.VectorDataStore;
 import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
-
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.geotools.factory.CommonFactoryFinder;
@@ -27,6 +22,10 @@ import org.opengis.filter.FilterFactory;
 import org.opengis.filter.identity.FeatureId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class GeoWaveVectorReader implements VectorReader
 {

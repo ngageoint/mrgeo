@@ -19,10 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
-import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-
-import java.io.IOException;
 
 public interface TiledInputFormatProvider<V>
 {

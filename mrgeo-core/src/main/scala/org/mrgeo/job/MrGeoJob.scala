@@ -16,10 +16,7 @@
 package org.mrgeo.job
 
 import org.apache.spark._
-import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-
-import scala.collection.JavaConversions._
 
 abstract class MrGeoJob extends Logging {
   def registerClasses(): Array[Class[_]]
@@ -32,7 +29,7 @@ abstract class MrGeoJob extends Logging {
 
   private[job] def run(job:JobArguments, conf:SparkConf) = {
     // need to do this here, so we can call registerClasses() on the job.
-    PrepareJob.setupSerializer(this, job, conf)
+    PrepareJob.setupSerializer(this, conf)
 
     logInfo("Setting up job")
     setup(job, conf)

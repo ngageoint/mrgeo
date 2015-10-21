@@ -15,13 +15,7 @@
 
 package org.mrgeo.utils
 
-import java.awt.image.Raster
-
-import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec.{B, A}
-import org.gdal.gdal.Dataset
-
 import scala.language.implicitConversions
-import scala.util.parsing.combinator.testing.Number
 
 object MrGeoImplicits {
   // value to Either<>

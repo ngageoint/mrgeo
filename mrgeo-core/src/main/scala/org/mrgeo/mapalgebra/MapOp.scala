@@ -16,8 +16,8 @@
 package org.mrgeo.mapalgebra
 
 import org.apache.spark.{Logging, SparkConf, SparkContext}
-import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.job.JobArguments
+import org.mrgeo.mapalgebra.parser._
 
 object MapOp {
   def decodeDouble(node: ParserNode): Option[Double] = {
@@ -214,6 +214,8 @@ abstract class MapOp extends Logging {
 
   def context(cont: SparkContext) = sparkContext = cont
   def context(): SparkContext = sparkContext
+
+  def registerClasses(): Array[Class[_]] = {Array.empty[Class[_]] }
 
   def setup(job: JobArguments, conf: SparkConf): Boolean
   def execute(context: SparkContext): Boolean

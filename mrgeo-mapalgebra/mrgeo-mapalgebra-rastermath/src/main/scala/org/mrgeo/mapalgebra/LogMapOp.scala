@@ -15,18 +15,16 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.WritableRaster
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.SparkUtils
-
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.SparkUtils
 
 object LogMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

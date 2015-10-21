@@ -15,13 +15,7 @@
 
 package org.mrgeo.data.accumulo.image;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-
-import javax.management.RuntimeErrorException;
-
+import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -31,8 +25,6 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
-//import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.raster.RasterWritable;
@@ -42,6 +34,14 @@ import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.management.RuntimeErrorException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+
+//import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 
 
 /**

@@ -15,8 +15,6 @@
 
 package org.mrgeo.services;
 
-import org.apache.commons.lang3.StringUtils;
-import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;

@@ -16,7 +16,6 @@
 package org.mrgeo.hdfs.adhoc;
 
 import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;

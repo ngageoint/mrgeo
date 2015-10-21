@@ -16,23 +16,24 @@
 package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.ImageStats;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.ImageStats;
+import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.MapOpTestVectorUtils;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

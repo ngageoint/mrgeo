@@ -18,7 +18,6 @@ package org.mrgeo.colorscale;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.mrgeo.core.MrGeoProperties;

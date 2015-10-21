@@ -1,10 +1,6 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-import java.util.List;
-
 import mil.nga.giat.geowave.store.CloseableIterator;
-
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
@@ -12,6 +8,9 @@ import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.type.AttributeDescriptor;
+
+import java.io.IOException;
+import java.util.List;
 
 public class GeoWaveVectorIterator implements CloseableKVIterator<FeatureIdWritable, Geometry>
 {
