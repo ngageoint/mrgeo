@@ -17,51 +17,77 @@ package org.mrgeo.mapalgebra
 
 import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
+import java.util
 
-import org.apache.spark.graphx._
+import org.apache.commons.lang3.ArrayUtils
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{Accumulator, AccumulatorParam, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.geometry.Point
+import org.mrgeo.data.vector.FeatureIdWritable
+import org.mrgeo.geometry.{GeometryFactory, Point}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils._
+import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
+import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks._
 
-// Cost distance is computed using graph processing by constructing
-// a graph in which each vertex is a copy of one tile of imagery from
-// current cost for each pixel. Each of the 8 neighboring tiles are connected
-// to any given tile, so there are a maximum of 8 neighbors to each tile.
-// the source friction surface with one additional band that holds the
-//
-// The overview of the graph processing is:
-// for each tile in which a source point resides {
-//   compute new minimum costs from any of those source pixels to each
-//     pixel in that tile
-//   for each of the neighboring tiles {
-//     if any pixels on the edge next to the neighbor tile got a smaller cost {
-//       send a message to the neighbor tile with the pixels that changed
-//     }
-//   }
-// }
-// while tile messages remain {
-//   using the edge pixel changes from the source tile in the message, propagate those
-//     pixel cost changes throughout this tile to compute min cost for each pixel
-//   for each neighboring tile {
-//     if any pixels on the edge next to the neighbor tile got a smaller cost {
-//       send a message to the neighbor tile with the pixels that changed
-//     }
-//   }
-// }
-
+/**
+ * Given a friction surface input image, and a source point, compute the
+ * cost to travel to each pixel from the source point out to an optional
+ * maximum cost. The friction surface is single-band where pixel values
+ * are seconds/meter. The source point can be either a vector data source
+ * of the result of a map algebra function that returns vector data (like
+ * InlineCsv).
+ *
+ * The general algorithm starts at the specified start pixel and computes
+ * the cost to traverse from the center of the pixel to the center of each
+ * of its eight neighbor pixels. That cost is stored in the output image
+ * tile. Each time a neighbor pixel changes, it is added to the processing
+ * queue and is eventually processed itself. Pixel values are only changed
+ * if the cost from the "center" pixel being processed is smaller than the
+ * current cost to reach that pixel. Note that pixels can be revisited
+ * many times. The algorithm iterates until there are no more changed pixels
+ * in the processing queue.
+ *
+ * Executing this algorithm on a tiled image adds complexity. The distributed
+ * processing is implemented with Spark. Initially, a Spark RDD is constructed
+ * that copies the original friction tiles into new 2-band tiles where the first
+ * band contains those friction values, and the second band contains the current
+ * cost to reach that pixel from the source point. The source point and the tile
+ * it resides in are included in the set of changed pixels. The code loops until
+ * there are no more changed pixels. Each pass through the loop performs a Spark
+ * "map" operation over the 2-band tiles. If there are no pixel changes for that
+ * tile, the original tile is simply returned. If there are changes, the tile
+ * is re-computed based on the algorithm described above to update other pixels
+ * within that tile. If any edge pixels in that tile change, they are added to
+ * the accumulator. After the map operation completes, the content of the
+ * accumulator becomes the list of changed pixels to process during the next
+ * pass through the loop. This is continued until there are no more pixels
+ * to process. Note that the result of each pass through the loop can result in
+ * pixel changes across many tiles (which get processed in the next pass).
+ * Note that the same tile can get processed multiple times before the
+ * algorithm completes.
+ */
 object CostDistanceMapOp extends MapOpRegistrar {
+  val SELF: Byte = 0
+  val ABOVE: Byte = 1
+  val BELOW: Byte = 2
+  val LEFT: Byte = 3
+  val RIGHT: Byte = 4
+  val ABOVE_LEFT: Byte = 5
+  val ABOVE_RIGHT: Byte = 6
+  val BELOW_LEFT: Byte = 7
+  val BELOW_RIGHT: Byte = 8
+  val DIRECTION_COUNT: Byte = 9
+
+  val LOG: Logger = LoggerFactory.getLogger(classOf[CostDistanceMapOp])
+
   override def register: Array[String] = {
     Array[String]("costDistance", "cd")
   }
@@ -80,9 +106,19 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   var frictionZoom:Option[Int] = None
   var requestedBounds:Option[Bounds] = None
   var tileBounds: TMSUtils.TileBounds = null
+  var numExecutors: Int = -1
 
   var maxCost:Double = -1
   var zoomLevel:Int = -1
+
+  val neighborsAbove = Array((-1, TraversalDirection.UP_LEFT),
+    (0, TraversalDirection.UP), (1, TraversalDirection.UP_RIGHT))
+  val neighborsBelow = Array((-1, TraversalDirection.DOWN_LEFT),
+    (0, TraversalDirection.DOWN), (1, TraversalDirection.DOWN_RIGHT))
+  val neighborsToLeft = Array((-1, TraversalDirection.UP_LEFT),
+    (0, TraversalDirection.LEFT), (1, TraversalDirection.DOWN_LEFT))
+  val neighborsToRight = Array((-1, TraversalDirection.UP_RIGHT),
+    (0, TraversalDirection.RIGHT), (1, TraversalDirection.DOWN_RIGHT))
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -150,6 +186,11 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
     conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
     conf.set("spark.shuffle.memoryFraction", "0.30") // set the shuffle higher
+    numExecutors = conf.getInt("spark.executor.instances", -1)
+    CostDistanceMapOp.LOG.info("num executors = " + numExecutors)
+//    conf.set("spark.kryo.registrationRequired", "true")
+//    conf.set("spark.driver.extraJavaOptions", "-Dsun.io.serialization.extendedDebugInfo=true")
+//    conf.set("spark.executor.extraJavaOptions", "-Dsun.io.serialization.extendedDebugInfo=true")
     true
   }
 
@@ -161,7 +202,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val inputFriction:RasterMapOp = friction getOrElse(throw new IOException("Input MapOp not valid!"))
     val sourcePointsRDD = sourcePointsMapOp.getOrElse(throw new IOException("Missing source points")).
       rdd().getOrElse(throw new IOException("Missing source points"))
-
     val frictionMeta = inputFriction.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + inputFriction.getClass.getName))
 
     zoomLevel = frictionZoom match {
@@ -196,7 +236,11 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                 " You must either build the pyramid for it or specify the bounds for the cost distance.")
           }
 
-          calculateBoundsFromCost(maxCost, sourcePointsRDD, stats.min)
+          CostDistanceMapOp.LOG.info("Calculating tile bounds for maxCost " + maxCost + ", min = " + stats.min + " and bounds " + frictionMeta.getBounds)
+          if (stats.min == Double.MaxValue) {
+            throw new IllegalArgumentException("Invalid stats for the friction surface: " + frictionMeta.getPyramid + ". You will need to explicitly include the bounds in the CostDistance call")
+          }
+          calculateBoundsFromCost(maxCost, sourcePointsRDD, stats.min, frictionMeta.getBounds)
         }
       case Some(rb) => rb
       }
@@ -215,7 +259,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       throw new IllegalArgumentException("No tile bounds for " + frictionMeta.getPyramid + " at zoom level " + zoomLevel)
     }
 
-    log.debug("tileBounds = " + tileBounds)
+    log.info("tileBounds = " + tileBounds)
     val startGeom = sourcePointsRDD.first()
     if (startGeom == null || startGeom._2 == null || !startGeom._2.isInstanceOf[Point]) {
       throw new IOException("Invalid starting point, expected a point geometry: " + startGeom)
@@ -231,40 +275,93 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val startPixel = TMSUtils.latLonToTilePixelUL(startPt.getY.toFloat, startPt.getX.toFloat, tile.tx, tile.ty,
       zoomLevel, tilesize)
 
-    val realVertices = frictionRDD.filter(U => {
+    // Use an accumulator to capture the pixel value of the start pixel within the
+    // start tile during the construction of out input RDD.
+    val startPointAccumulator = context.accumulator[Float](0.0f)
+
+    var resultsrdd = frictionRDD.filter(U => {
       // Trim the friction surface to only the tiles in our bounds
+      val t = TMSUtils.tileid(U._1.get, zoomLevel)
       tileBounds.contains(TMSUtils.tileid(U._1.get, zoomLevel))
-    }).map(U => {
-      val sourceRaster: Raster = RasterWritable.toRaster(U._2)
-      val raster: WritableRaster = makeCostDistanceRaster1(U._1.get, sourceRaster,
-        zoomLevel, res, width, height, outputNodata)
-      // are no changed points.
-      val vt: VertexType = new VertexType(raster, new ChangedPoints(false), U._1.get, zoomLevel)
-      (U._1.get(), vt)
     })
-
-    val edges =
-      realVertices.flatMap{ case (tileId, value) =>
-        val tile = TMSUtils.tileid(tileId, zoomLevel)
-        getEdges(tileBounds, tile.tx, tile.ty, zoomLevel)
-      }.map{ case (edge) =>  Edge(edge.fromTileId, edge.toTileId, edge.direction)
+    // After some experimentation with different values for repartitioning, the
+    // best performance seems to come from using the number of executors for this
+    // job.
+    resultsrdd = if (numExecutors > 1) {
+      CostDistanceMapOp.LOG.info("Repartitioning to " + numExecutors + " partitions")
+      resultsrdd.repartition(numExecutors)
+    }
+    else {
+      CostDistanceMapOp.LOG.info("No need to repartition")
+      resultsrdd
+    }
+    resultsrdd = resultsrdd.map(U => {
+      val sourceRaster: Raster = RasterWritable.toRaster(U._2)
+      if (U._1.get == startTileId) {
+        startPointAccumulator.add(
+          sourceRaster.getSampleFloat(startPixel.px.toInt, startPixel.py.toInt, 0))
       }
+      (U._1,
+        RasterWritable.toWritable(makeCostDistanceRaster(U._1.get, sourceRaster, zoomLevel, res,
+          width, height, outputNodata)))
+    })
+    // Force the RDD to materialize
+    val rddCount = resultsrdd.count()
+    CostDistanceMapOp.LOG.info("RDD count " + rddCount)
 
-    val graph: Graph[VertexType, Byte] = Graph(realVertices/*.repartition(3)*/, edges/*.repartition(3)*/,
-      defaultVertexAttr = null.asInstanceOf[VertexType],
-      edgeStorageLevel = StorageLevel.MEMORY_AND_DISK_SER,
-      vertexStorageLevel = StorageLevel.MEMORY_AND_DISK_SER)
+    // Construct an initial "list" of key value pairs  that includes the source
+    // point for the source
+    var changesToProcess = new NeighborChangedPoints
+    val startPixelFriction = startPointAccumulator.value
+    CostDistanceMapOp.LOG.info("Initially putting tile " + startTileId + " " + TMSUtils.tileid(startTileId, zoomLevel) + " and point " + startPixel.px + ", " + startPixel.py + " in the list")
+    changesToProcess.put(startTileId,
+      CostDistanceMapOp.SELF, List(new CostPoint(startPixel.px.toShort, startPixel.py.toShort, 0.0f,
+        startPixelFriction)))
 
-    val sssp = runGraph(graph, startTileId, zoomLevel, res,
-      startPixel.px.toShort, startPixel.py.toShort, width, height)
+    val pixelSizeMeters: Double = res * LatLng.METERS_PER_DEGREE
 
-    // Be sure to filter out any graph vertices that are null. This occurs when
-    // the friction surface has missing tiles. The graph still contains a vertex
-    // but its value is null.
-    rasterRDD = Some(RasterRDD(sssp.vertices.filter(U => {
-        (U._2 != null)
-    }).map(U => {
-      val sourceRaster = U._2.raster
+    // Process changes until there aren't any more
+    var counter: Long = 0
+    do {
+      // Use an accumulator to capture changes for the neighbor tiles as we process.
+      var changesAccum = context.accumulator(new NeighborChangedPoints)(NeighborChangesAccumulator)
+      val previousrdd = resultsrdd
+      var mapAccum = context.accumulator(0, "MapCount")
+      var processedAccum = context.accumulator(0, "ProcessTileCount")
+      resultsrdd = previousrdd.map(U => {
+        mapAccum += 1
+        val tileid = U._1.get
+        val tileChanges = changesToProcess.get(tileid)
+        if (tileChanges != null) {
+          processedAccum += 1
+//          changesToProcess.dump(zoomLevel)
+          // This tile has changes to process. Update the pixel values within the
+          // tile accordingly while accumulating changes to this tile's neighbors.
+          val writableRaster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(U._2))
+          val changedPoints = processTile(U._1.get(), zoomLevel, res, pixelSizeMeters, writableRaster,
+            tileChanges, changesAccum)
+          (U._1, RasterWritable.toWritable(writableRaster))
+        }
+        else {
+          (U._1, U._2)
+        }
+      })
+      resultsrdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
+//      if (counter % 5 == 0) {
+//        resultsrdd.checkpoint()
+//      }
+      // Force the resultsrdd to materialize
+      resultsrdd.count()
+      previousrdd.unpersist()
+      changesToProcess = changesAccum.value
+//      CostDistanceMapOp.LOG.error("Changes after iteration " + counter)
+////      changesToProcess.dump(zoomLevel)
+//      changesToProcess.dumpTotalChanges()
+      counter += 1
+    } while(changesToProcess.size() > 0)
+
+    rasterRDD = Some(RasterRDD(resultsrdd.map(U => {
+      val sourceRaster = RasterWritable.toRaster(U._2)
       // Need to convert our raster to a single band raster for output.
       val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, sourceRaster.getWidth,
         sourceRaster.getHeight, 1)
@@ -272,17 +369,15 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       val totalCostBand = sourceRaster.getNumBands - 1
       for (x <- 0 until sourceRaster.getWidth) {
         for (y <- 0 until sourceRaster.getHeight) {
-          val s: Float = U._2.raster.getSampleFloat(x, y, totalCostBand)
+          val s: Float = sourceRaster.getSampleFloat(x, y, totalCostBand)
           singleBandRaster.setSample(x, y, 0, s)
         }
       }
-      val t = TMSUtils.tileid(U._1.toLong, zoomLevel)
+      val t = TMSUtils.tileid(U._1.get, zoomLevel)
       (new TileIdWritable(U._1), RasterWritable.toWritable(singleBandRaster))
     })))
 
-
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata, calcStats = false))
-
     true
   }
 
@@ -310,7 +405,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
    * @return
    */
   def calculateBoundsFromCost(maxCost: Double, sourcePointsRDD:VectorRDD,
-      minPixelValue: Double): Bounds =
+      minPixelValue: Double, imageBounds: Bounds): Bounds =
   {
     // Locate the MBR of all the source points
     val bounds = SparkVectorUtils.calculateBounds(sourcePointsRDD)
@@ -331,48 +426,14 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val bl = new LatLng(bounds.getMinY, bounds.getMinX)
     val blExpanded = LatLng.calculateCartesianDestinationPoint(bl, diagonalDistanceInMeters, 225.0)
 
-    new Bounds(blExpanded.getLng, blExpanded.getLat, trExpanded.getLng, trExpanded.getLat)
+    // Make sure the returned bounds does not extend beyond the image bounds itself.
+    new Bounds(Math.max(blExpanded.getLng, imageBounds.getMinX),
+      Math.max(blExpanded.getLat, imageBounds.getMinY),
+      Math.min(trExpanded.getLng, imageBounds.getMaxX),
+      Math.min(trExpanded.getLat, imageBounds.getMaxY))
   }
 
-  def getEdges(tileBounds: TMSUtils.TileBounds, tx: Long, ty: Long, zoom: Int): List[CostDistanceEdge] = {
-
-    val edges = new ArrayBuffer[CostDistanceEdge]()
-    val dmin: Long = -1
-    val dmax: Long = 1
-    for(dy <- dmin to dmax) {
-      for (dx <- dmin to dmax) {
-
-        if(dx != 0 || dy != 0) {
-          //				if(excludedOffsets(dx,dy))
-          //					continue;
-          val neighborTx: Long = tx + dx
-          val neighborTy: Long = ty + dy
-
-          if (neighborTx >= tileBounds.w && neighborTx <= tileBounds.e &&
-              neighborTy >= tileBounds.s && neighborTy <= tileBounds.n) {
-
-            val direction = (dx, dy) match
-            {
-            case (-1,  1) => CostDistanceEdgeType.TO_TOP_LEFT
-            case ( 0,  1) => CostDistanceEdgeType.TO_TOP
-            case ( 1,  1) => CostDistanceEdgeType.TO_TOP_RIGHT
-            case ( 1,  0) => CostDistanceEdgeType.TO_RIGHT
-            case ( 1, -1) => CostDistanceEdgeType.TO_BOTTOM_RIGHT
-            case ( 0, -1) => CostDistanceEdgeType.TO_BOTTOM
-            case (-1, -1) => CostDistanceEdgeType.TO_BOTTOM_LEFT
-            case (-1,  0) => CostDistanceEdgeType.TO_LEFT
-            }
-            edges.append(new CostDistanceEdge(TMSUtils.tileid(tx, ty, zoom),
-              TMSUtils.tileid(neighborTx, neighborTy, zoom),
-              direction))
-          }
-        }
-      }
-    }
-    edges.toList
-  }
-
-  def makeCostDistanceRaster1(tileId: Long, source: Raster,
+  def makeCostDistanceRaster(tileId: Long, source: Raster,
       zoom: Int,
       res: Double,
       width: Short,
@@ -400,274 +461,298 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
         bandedRaster.setPixel(px, py, newValue)
       }
     }
+//    RasterWritable.toWritable(bandedRaster)
     bandedRaster
+  }
+
+  def calculateSourceTile(destTileId: Long, zoom:Int, direction: Byte): Long = {
+    val tile = TMSUtils.tileid(destTileId, zoom)
+    val srcTile = direction match {
+//      case CostDistanceMapOp.SELF => tile
+      case TraversalDirection.UP => new TMSUtils.Tile(tile.tx, tile.ty - 1)
+      case TraversalDirection.UP_LEFT => new TMSUtils.Tile(tile.tx + 1, tile.ty - 1)
+      case TraversalDirection.UP_RIGHT => new TMSUtils.Tile(tile.tx - 1, tile.ty - 1)
+      case TraversalDirection.DOWN => new TMSUtils.Tile(tile.tx, tile.ty + 1)
+      case TraversalDirection.DOWN_LEFT => new TMSUtils.Tile(tile.tx + 1, tile.ty + 1)
+      case TraversalDirection.DOWN_RIGHT => new TMSUtils.Tile(tile.tx - 1, tile.ty + 1)
+      case TraversalDirection.LEFT => new TMSUtils.Tile(tile.tx + 1, tile.ty)
+      case TraversalDirection.RIGHT => new TMSUtils.Tile(tile.tx - 1, tile.ty)
+    }
+    TMSUtils.tileid(srcTile.tx, srcTile.ty, zoom)
   }
 
   // Check to see if the destination pixel is valid. If so, then compute the
   // cost to that pixel from the source point (using the cost stored in the specified
   // bandIndex). If the cost is smaller than the current total cost for that pixel,
-  def addChanges(srcTileId: Long, destTileId: Long, zoom: Int, res: Double, pixelHeightM: Double,
-      srcPoint: CostPoint, srcRaster: Raster, destRaster: Raster, pxDest: Short,
-      pyDest: Short, direction: Byte, totalCostBandIndex: Short,
-      changedPoints: ChangedPoints): Unit = {
+  def changeDestPixel(destTileId: Long, zoom: Int, res: Double,
+                      pixelSizeMeters: Double, srcPoint: CostPoint,
+                      destRaster: WritableRaster, pxDest: Short, pyDest: Short,
+                      direction: Byte, totalCostBandIndex: Short,
+                      width: Int,
+                      height: Int,
+                      topValues: Array[Float],
+                      bottomValues: Array[Float],
+                      leftValues: Array[Float],
+                      rightValues: Array[Float],
+                      queue: java.util.concurrent.PriorityBlockingQueue[CostPoint]): Unit =
+  {
     val currDestTotalCost = destRaster.getSampleFloat(pxDest, pyDest, totalCostBandIndex) // destBuf(numBands * (py * width + px) + totalCostBandIndex)
-    val srcCost = getPixelCost(srcTileId, zoom, srcPoint.px, srcPoint.py, direction,
-        res, pixelHeightM, srcRaster)
-    val destCost = getPixelCost(destTileId, zoom, pxDest, pyDest, direction,
-      res, pixelHeightM, destRaster)
+    val srcTileId = calculateSourceTile(destTileId, zoom, direction)
+    val srcCost = getPixelCost(direction, pixelSizeMeters, srcPoint.pixelFriction)
+    val destCost = getPixelCost(direction, pixelSizeMeters,
+      destRaster.getSampleFloat(pxDest, pyDest, 0))
     // Compute the cost to travel from the center of the source pixel to
     // the center of the destination pixel (the sum of half the cost of
     // each pixel).
-    val newTotalCost = srcPoint.cost + srcCost * 0.5f + destCost * 0.5f
+    val newTotalCost = srcPoint.totalCost + srcCost * 0.5f + destCost * 0.5f
     if (isValueSmaller(newTotalCost, currDestTotalCost)) {
-      changedPoints.addPoint(new CostPoint(pxDest, pyDest, newTotalCost))
+//      destRaster.setSample(pxDest, pyDest, totalCostBandIndex, newTotalCost)
+      if (pxDest == 0) {
+        leftValues(pyDest) = newTotalCost
+      }
+      else if (pxDest == width - 1) {
+        rightValues(pyDest) = newTotalCost
+      }
+      if (pyDest == 0) {
+        topValues(pxDest) = newTotalCost
+      }
+      if (pyDest == height - 1) {
+        bottomValues(pyDest) = newTotalCost
+      }
+      queue.add(new CostPoint(pxDest, pyDest, newTotalCost,
+        destRaster.getSampleFloat(pxDest, pyDest, 0)))
     }
   }
 
-  def runGraph(graph: Graph[VertexType, Byte], startTileId: Long, zoom: Int, res: Double,
-      pxStart: Short, pyStart: Short, width: Short, height: Short): Graph[VertexType, Byte] = {
-    //    testPregel[ChangedPoints](graph, null, Int.MaxValue, EdgeDirection.Either)(
-    val neighborsAbove = Array((-1, DirectionBand.UP_LEFT_BAND),
-      (0, DirectionBand.UP_BAND), (1, DirectionBand.UP_RIGHT_BAND))
-    val neighborsBelow = Array((-1, DirectionBand.DOWN_LEFT_BAND),
-      (0, DirectionBand.DOWN_BAND), (1, DirectionBand.DOWN_RIGHT_BAND))
-    val neighborsToLeft = Array((-1, DirectionBand.UP_LEFT_BAND),
-      (0, DirectionBand.LEFT_BAND), (1, DirectionBand.DOWN_LEFT_BAND))
-    val neighborsToRight = Array((-1, DirectionBand.UP_RIGHT_BAND),
-      (0, DirectionBand.RIGHT_BAND), (1, DirectionBand.DOWN_RIGHT_BAND))
+  /**
+   * Apply the neighbor changes to the outer ring of pixels in the destination raster.
+   * This method updates the pixels in the destination raster and adds the modified
+   * pixels to the queue which is used for processing the tile later.
+   *
+   * @param queue
+   * @param tileId
+   * @param raster
+   * @param width
+   * @param height
+   * @param res
+   * @param pixelSizeMeters
+   * @param neighborChanges
+   */
+  def propagateNeighborChangesToOuterPixels(queue: java.util.concurrent.PriorityBlockingQueue[CostPoint],
+                                            tileId: Long,
+                                            raster: WritableRaster,
+                                            width: Int,
+                                            height: Int,
+                                            res: Double,
+                                            pixelSizeMeters: Double,
+                                            topValues: Array[Float],
+                                            bottomValues: Array[Float],
+                                            leftValues: Array[Float],
+                                            rightValues: Array[Float],
+                                            neighborChanges: Array[List[CostPoint]]): Unit =
+  {
+    val numBands: Short = raster.getNumBands.toShort
+    val costBand: Short = (numBands - 1).toShort // 0-based index of the last band is the cost band
 
-    val o: LatLng = new LatLng(0, 0)
-    val n: LatLng = new LatLng(res, 0)
-    val pixelHeightM: Double = LatLng.calculateGreatCircleDistance(o, n)
-
-    val initialMsg = new ChangedPoints(true)
-    initialMsg.addPoint(new CostPoint(pxStart, pyStart, 0.0f))
-    CostDistancePregel.run[VertexType, Byte, ChangedPoints](graph, initialMsg,
-      Int.MaxValue, EdgeDirection.Out)(
-          // Vertex Program
-          (id, vertexData, msg) => {
-            val t0 = System.nanoTime()
-            log.debug("IN VPROG, vertex id is " + TMSUtils.tileid(id, zoomLevel) + " and start id is " + TMSUtils.tileid(startTileId, zoomLevel) + " and msg is " + msg)
-            var returnNewVertex = true
-            var changedPoints: ChangedPoints = null
-            log.debug("  initialMsg = " + msg.isInitial)
-            if (!msg.isInitial) {
-              if (msg.size > 0) {
-                changedPoints = processVertices(id, zoom, res, pixelHeightM, vertexData.raster, msg)
-                log.debug("  processVertices on non-initial message returned " + changedPoints.size)
-              }
-              else {
-                log.debug("  no changes to process for non-inital message")
-                changedPoints = new ChangedPoints(false)
-              }
+    neighborChanges.view.zipWithIndex foreach { case (cpList, direction) => {
+      if (cpList != null) {
+        for (srcPoint <- cpList) {
+          direction match {
+            case CostDistanceMapOp.SELF => {
+              // This direction is only used at the start of the algorithm for source
+              // points inside of tiles. Just add these changed points to the queue.
+              queue.add(srcPoint)
             }
-            else if (id == startTileId) {
-              log.debug("  for start tile")
-              changedPoints = processVertices(id, zoom, res, pixelHeightM, vertexData.raster, msg)
-            }
-            else {
-              log.debug("  ignoring tile because it is the initial msg, and this is not the start tile")
-              changedPoints = new ChangedPoints(false)
-              returnNewVertex = false
-            }
-            log.debug("  returning " + changedPoints.size + " changed points")
-            if (returnNewVertex) {
-              new VertexType(vertexData.raster, changedPoints, id, zoomLevel)
-            }
-            else {
-              vertexData
-            }
-          },
-          // sendMsg
-          triplet => {
-            log.debug("SENDMSG src " + TMSUtils.tileid(triplet.srcId, zoomLevel) + " and dest " +
-                TMSUtils.tileid(triplet.dstId, zoomLevel) + " contains " + triplet.srcAttr.changedPoints.size + " changed points")
-            val t0 = System.nanoTime()
-            // The changed points are from the source vertex. Now we need to compute the
-            // cost changes in the destination vertex pixels that neighbor each of those
-            // changed points. The edge direction indicates the position of the source
-            // vertex/tile relative to the destination vertex/tile, so we use that relationship
-            // to determine the neighboring pixels in the destination to check.
-            var newChanges: ChangedPoints = null
-            if (triplet.srcAttr.changedPoints != null && triplet.dstAttr != null) {
-              log.debug("IN SENDMSG for src id " + triplet.srcId + " there are " + triplet.srcAttr.changedPoints.size + " changes ")
-              if (!triplet.srcAttr.changedPoints.isEmpty) {
-                newChanges = new ChangedPoints(false)
-                val changedPoints = triplet.srcAttr.changedPoints.getAllPoints
-                val numBands: Short = triplet.dstAttr.raster.getNumBands.toShort
-                val costBand: Short = (numBands - 1).toShort // 0-based index of the last band is the cost band
-                for (srcPoint <- changedPoints) {
-                  if (triplet.attr == CostDistanceEdgeType.TO_TOP) {
-                    // The destination tile is above the source tile. If any changed pixels in
-                    // the source tile are in the top row of the tile, then compute the changes
-                    // that would propagate to that pixel's neighbors in the bottom row of the
-                    // destination tile and send messages whenever the total cost lowers for any
-                    // of those pixels.
-                    if (srcPoint.py == 0) {
-                      for (n <- neighborsAbove) {
-                        val pxNeighbor: Short = (srcPoint.px + n._1).toShort
-                        if (pxNeighbor >= 0 && pxNeighbor < width) {
-                          addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
-                            srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
-                            pxNeighbor, (height - 1).toShort, n._2, costBand, newChanges)
-                        }
-                      }
-                    }
-                  }
-                  else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM) {
-                    // The destination tile is below the source tile. For any pixels that changed
-                    // in the source tile, propagate those changes to the neighboring pixels in the
-                    // top row of the destination tile.
-                    if (srcPoint.py == height - 1) {
-                      for (n <- neighborsBelow) {
-                        val pxNeighbor: Short = (srcPoint.px + n._1).toShort
-                        if (pxNeighbor >= 0 && pxNeighbor < width) {
-                          addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
-                            srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
-                            pxNeighbor, 0, n._2, costBand, newChanges)
-                        }
-                      }
-                    }
-                  }
-                  else if (triplet.attr == CostDistanceEdgeType.TO_LEFT) {
-                    // The destination tile is to the left of the source tile. For any pixels that changed
-                    // in the source tile, propagate those changes to the neighboring pixels in the
-                    // right-most column of the destination tile.
-                    if (srcPoint.px == 0) {
-                      for (n <- neighborsToLeft) {
-                        val pyNeighbor: Short = (srcPoint.py + n._1).toShort
-                        if (pyNeighbor >= 0 && pyNeighbor < height) {
-                          addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
-                            srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
-                            (width - 1).toShort, pyNeighbor, n._2, costBand, newChanges)
-                        }
-                      }
-                    }
-                  }
-                  else if (triplet.attr == CostDistanceEdgeType.TO_RIGHT) {
-                    // The destination tile is to the right of the source tile. For any pixels that changed
-                    // in the source tile, propagate those changes to the neighboring pixels in the
-                    // left-most column of the destination tile.
-                    if (srcPoint.px == width - 1) {
-                      for (n <- neighborsToRight) {
-                        val pyNeighbor: Short = (srcPoint.py + n._1).toShort
-                        if (pyNeighbor >= 0 && pyNeighbor < height) {
-                          addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
-                            srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
-                            0.toShort, pyNeighbor, n._2, costBand, newChanges)
-                        }
-                      }
-                    }
-                  }
-                  else if (triplet.attr == CostDistanceEdgeType.TO_TOP_LEFT) {
-                    // The destination tile is to the top-left of the source tile. If the top-left
-                    // pixel of the source tile changed, propagate that change to the bottom-right
-                    // pixel of the destination tile.
-                    if (srcPoint.px == 0 && srcPoint.py == 0) {
-                      addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
-                        srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
-                        (width - 1).toShort, (height - 1).toShort,
-                        DirectionBand.UP_LEFT_BAND, costBand, newChanges)
-                    }
-                  }
-                  else if (triplet.attr == CostDistanceEdgeType.TO_TOP_RIGHT) {
-                    // The destination tile is to the top-right of the source tile. If the top-right
-                    // pixel of the source tile changed, propagate that change to the bottom-left
-                    // pixel of the destination tile.
-                    if (srcPoint.px == width - 1 && srcPoint.py == 0) {
-                      addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
-                        srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
-                        0, (height - 1).toShort,
-                        DirectionBand.UP_RIGHT_BAND, costBand, newChanges)
-                    }
-                  }
-                  else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM_LEFT) {
-                    // The destination tile is to the bottom-left of the source tile. If the bottom-left
-                    // pixel of the source tile changed, propagate that change to the top-right
-                    // pixel of the destination tile.
-                    if (srcPoint.px == 0 && srcPoint.py == height - 1) {
-                      addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
-                        srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
-                        (width - 1).toShort, 0,
-                        DirectionBand.DOWN_LEFT_BAND, costBand, newChanges)
-                    }
-                  }
-                  else if (triplet.attr == CostDistanceEdgeType.TO_BOTTOM_RIGHT) {
-                    // The destination tile is to the bottom-right of the source tile. If the bottom-right
-                    // pixel of the source tile changed, propagate that change to the top-left
-                    // pixel of the destination tile.
-                    if (srcPoint.px == width - 1 && srcPoint.py == height - 1) {
-                      addChanges(triplet.srcId, triplet.dstId, zoomLevel, res, pixelHeightM,
-                        srcPoint, triplet.srcAttr.raster, triplet.dstAttr.raster,
-                        0, 0,
-                        DirectionBand.DOWN_RIGHT_BAND, costBand, newChanges)
-                    }
+            case CostDistanceMapOp.ABOVE => {
+              // The destination tile is above the source tile. If any changed pixels in
+              // the source tile are in the top row of the tile, then compute the changes
+              // that would propagate to that pixel's neighbors in the bottom row of the
+              // destination tile and send messages whenever the total cost lowers for any
+              // of those pixels.
+              if (srcPoint.py == 0) {
+                for (n <- neighborsAbove) {
+                  val pxNeighbor: Short = (srcPoint.px + n._1).toShort
+                  if (pxNeighbor >= 0 && pxNeighbor < width) {
+                    changeDestPixel(tileId, zoomLevel, res, pixelSizeMeters,
+                      srcPoint, raster,
+                      pxNeighbor, (height - 1).toShort, n._2, costBand,
+                      width,
+                      height,
+                      topValues,
+                      bottomValues,
+                      leftValues,
+                      rightValues,
+                      queue)
                   }
                 }
               }
             }
-            if (newChanges == null) {
-              log.debug("  SENDMSG returning empty from no changes")
-              Iterator.empty
-            } else {
-              if (newChanges.size > 0) {
-                log.debug("  SENDMSG returning " + newChanges.size + " changes for destination")
-                Iterator((triplet.dstId, newChanges))
+            case CostDistanceMapOp.BELOW => {
+              // The destination tile is below the source tile. For any pixels that changed
+              // in the source tile, propagate those changes to the neighboring pixels in the
+              // top row of the destination tile.
+              if (srcPoint.py == height - 1) {
+                for (n <- neighborsBelow) {
+                  val pxNeighbor: Short = (srcPoint.px + n._1).toShort
+                  if (pxNeighbor >= 0 && pxNeighbor < width) {
+                    changeDestPixel(tileId, zoomLevel, res, pixelSizeMeters,
+                      srcPoint, raster,
+                      pxNeighbor, 0, n._2, costBand,
+                      width,
+                      height,
+                      topValues,
+                      bottomValues,
+                      leftValues,
+                      rightValues,
+                      queue)
+                  }
+                }
               }
-              else {
-                log.debug("  SENDMSG returning empty after 0 changes")
-                Iterator.empty
+            }
+            case CostDistanceMapOp.LEFT => {
+              // The destination tile is to the left of the source tile. For any pixels that changed
+              // in the source tile, propagate those changes to the neighboring pixels in the
+              // right-most column of the destination tile.
+              if (srcPoint.px == 0) {
+                for (n <- neighborsToLeft) {
+                  val pyNeighbor: Short = (srcPoint.py + n._1).toShort
+                  if (pyNeighbor >= 0 && pyNeighbor < height) {
+                    changeDestPixel(tileId, zoomLevel, res, pixelSizeMeters,
+                      srcPoint, raster,
+                      (width - 1).toShort, pyNeighbor, n._2, costBand,
+                      width,
+                      height,
+                      topValues,
+                      bottomValues,
+                      leftValues,
+                      rightValues,
+                      queue)
+                  }
+                }
               }
             }
-          },
-          // mergeMsg
-          (a, b) => {
-            val t0 = System.nanoTime()
-            var merged = new ChangedPoints(false)
-            val aPoints: List[CostPoint] = a.getAllPoints
-            for (p <- aPoints) {
-              merged.addPoint(p)
+            case CostDistanceMapOp.RIGHT => {
+              // The destination tile is to the right of the source tile. For any pixels that changed
+              // in the source tile, propagate those changes to the neighboring pixels in the
+              // left-most column of the destination tile.
+              if (srcPoint.px == width - 1) {
+                for (n <- neighborsToRight) {
+                  val pyNeighbor: Short = (srcPoint.py + n._1).toShort
+                  if (pyNeighbor >= 0 && pyNeighbor < height) {
+                    changeDestPixel(tileId, zoomLevel, res, pixelSizeMeters,
+                      srcPoint, raster,
+                      0.toShort, pyNeighbor, n._2, costBand,
+                      width,
+                      height,
+                      topValues,
+                      bottomValues,
+                      leftValues,
+                      rightValues,
+                      queue)
+                  }
+                }
+              }
             }
-            val bPoints: List[CostPoint] = b.getAllPoints
-            for (p <- bPoints) {
-              merged.addPoint(p)
+            case CostDistanceMapOp.ABOVE_LEFT => {
+              // The destination tile is to the top-left of the source tile. If the top-left
+              // pixel of the source tile changed, propagate that change to the bottom-right
+              // pixel of the destination tile.
+              if (srcPoint.px == 0 && srcPoint.py == 0) {
+                changeDestPixel(tileId, zoomLevel, res, pixelSizeMeters,
+                  srcPoint, raster,
+                  (width - 1).toShort, (height - 1).toShort,
+                  TraversalDirection.UP_LEFT, costBand,
+                  width,
+                  height,
+                  topValues,
+                  bottomValues,
+                  leftValues,
+                  rightValues,
+                  queue)
+              }
             }
-            merged
+            case CostDistanceMapOp.ABOVE_RIGHT => {
+              // The destination tile is to the top-right of the source tile. If the top-right
+              // pixel of the source tile changed, propagate that change to the bottom-left
+              // pixel of the destination tile.
+              if (srcPoint.px == width - 1 && srcPoint.py == 0) {
+                changeDestPixel(tileId, zoomLevel, res, pixelSizeMeters,
+                  srcPoint, raster,
+                  0, (height - 1).toShort,
+                  TraversalDirection.UP_RIGHT, costBand,
+                  width,
+                  height,
+                  topValues,
+                  bottomValues,
+                  leftValues,
+                  rightValues,
+                  queue)
+              }
+            }
+            case CostDistanceMapOp.BELOW_LEFT => {
+              // The destination tile is to the bottom-left of the source tile. If the bottom-left
+              // pixel of the source tile changed, propagate that change to the top-right
+              // pixel of the destination tile.
+              if (srcPoint.px == 0 && srcPoint.py == height - 1) {
+                changeDestPixel(tileId, zoomLevel, res, pixelSizeMeters,
+                  srcPoint, raster,
+                  (width - 1).toShort, 0,
+                  TraversalDirection.DOWN_LEFT, costBand,
+                  width,
+                  height,
+                  topValues,
+                  bottomValues,
+                  leftValues,
+                  rightValues,
+                  queue)
+              }
+            }
+            case CostDistanceMapOp.BELOW_RIGHT => {
+              // The destination tile is to the bottom-right of the source tile. If the bottom-right
+              // pixel of the source tile changed, propagate that change to the top-left
+              // pixel of the destination tile.
+              if (srcPoint.px == width - 1 && srcPoint.py == height - 1) {
+                changeDestPixel(tileId, zoomLevel, res, pixelSizeMeters,
+                  srcPoint, raster,
+                  0, 0,
+                  TraversalDirection.DOWN_RIGHT, costBand,
+                  width,
+                  height,
+                  topValues,
+                  bottomValues,
+                  leftValues,
+                  rightValues,
+                  queue)
+              }
+            }
           }
-        )
+        }
+      }
+    }
+    }
   }
 
-  def processVertices(tileId: Long, zoom: Int, res: Double, pixelHeightM: Double,
-      raster: WritableRaster, changes: ChangedPoints): ChangedPoints =
+  def processTile(tileId: Long,
+                  zoom: Int,
+                  res: Double,
+                  pixelSizeMeters: Double,
+                  raster: WritableRaster,
+                  changes: Array[List[CostPoint]],
+                  changesAccum:Accumulator[NeighborChangedPoints]): Unit =
   {
-    log.debug("PROCESS VERTICES received " + changes.size + " changes")
     val neighborMetadata8Band = Array(
-      (-1, -1, DirectionBand.UP_LEFT_BAND)
-      , (-1, 0, DirectionBand.LEFT_BAND)
-      , (-1, 1, DirectionBand.DOWN_LEFT_BAND)
-      , (1, -1, DirectionBand.UP_RIGHT_BAND)
-      , (1, 0, DirectionBand.RIGHT_BAND)
-      , (1, 1, DirectionBand.DOWN_RIGHT_BAND)
-      , (0, -1, DirectionBand.UP_BAND)
-      , (0, 1, DirectionBand.DOWN_BAND)
+      (-1, -1, TraversalDirection.UP_LEFT)
+      , (-1, 0, TraversalDirection.LEFT)
+      , (-1, 1, TraversalDirection.DOWN_LEFT)
+      , (1, -1, TraversalDirection.UP_RIGHT)
+      , (1, 0, TraversalDirection.RIGHT)
+      , (1, 1, TraversalDirection.DOWN_RIGHT)
+      , (0, -1, TraversalDirection.UP)
+      , (0, 1, TraversalDirection.DOWN)
     )
     val numBands = raster.getNumBands
     val totalCostBand = numBands - 1 // cost band is the last band in the raster
-  val startTime = System.nanoTime()
-    val newChanges: ChangedPoints = new ChangedPoints(false)
-    var queue = new java.util.concurrent.PriorityBlockingQueue[CostPoint]()
-    for (cp <- changes.getAllPoints) {
-      queue.add(cp)
-    }
-    // Now process each element from the priority queue until empty
-    // For each element, check to see if the cost is smaller than the
-    // cost in the band3 of the vertex. If it is, then compute the cost
-    // to each of its neighbors, check the new cost to see if it's less
-    // than the neighbor's current cost, and add a new entry to the queue
-    // for the neighbor point. If a point around the perimeter of the tile
-    // changes, then add an entry to local changedPoints.
-
-    // Get FloatBuffer from vertex so we can manipulate it directly
+    val startTime = System.nanoTime()
     val width = raster.getWidth
     val height = raster.getHeight
     // Store the edge values in the raster before processing it so we can compare
@@ -685,20 +770,23 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       origLeftEdgeValues(py) = raster.getSampleFloat(0, py, totalCostBand)
       origRightEdgeValues(py) = raster.getSampleFloat(width-1, py, totalCostBand)
     }
-    for (cp <- changes.getAllPoints) {
-      if (cp.px == 0) {
-        origLeftEdgeValues(cp.py) = cp.cost
-      }
-      if (cp.px == width - 1) {
-        origRightEdgeValues(cp.py) = cp.cost
-      }
-      if (cp.py == 0) {
-        origTopEdgeValues(cp.px) = cp.cost
-      }
-      if (cp.py == height - 1) {
-        origBottomEdgeValues(cp.px) = cp.cost
-      }
-    }
+    // First determine the impact of the changed neighbor pixels on the
+    // outer ring of pixels for this tile. The changed pixels for this
+    // tile make up the queue of changed points that need to be processed
+    // for this tile.
+    val tile1 = TMSUtils.tileid(tileId, zoomLevel)
+    var queue = new java.util.concurrent.PriorityBlockingQueue[CostPoint]()
+    propagateNeighborChangesToOuterPixels(queue, tileId, raster, width, height, res, pixelSizeMeters,
+      origTopEdgeValues, origBottomEdgeValues, origLeftEdgeValues, origRightEdgeValues, changes)
+
+    // Now process each element from the priority queue until empty
+    // For each element, check to see if the cost is smaller than the
+    // cost in the band3 of the vertex. If it is, then compute the cost
+    // to each of its neighbors, check the new cost to see if it's less
+    // than the neighbor's current cost, and add a new entry to the queue
+    // for the neighbor point. If a point around the perimeter of the tile
+    // changes, then add an entry to local changedPoints.
+
     val preProcessingTime: Double = System.nanoTime() - preStart
     var totalEnqueue: Double = 0.0
     var totalDequeue: Double = 0.0
@@ -707,10 +795,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
 
     // Set up variables used for calculating great circle distances of pixels
     val tile: TMSUtils.Tile = TMSUtils.tileid(tileId, zoom)
-
-    val o: LatLng = new LatLng(0, 0)
-    val n: LatLng = new LatLng(res, 0)
-    val pixelHeightM: Double = LatLng.calculateGreatCircleDistance(o, n)
 
     // Process the queue of changed points until it is empty
     breakable {
@@ -725,8 +809,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
 
         totalDequeue = totalDequeue + (System.nanoTime() - t0)
         val currTotalCost = raster.getSampleFloat(currPoint.px, currPoint.py, totalCostBand)
-        if ((maxCost <= 0.0 || currPoint.cost <= (maxCost + 1e-8)) && isValueSmaller(currPoint.cost, currTotalCost)) {
-          raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.cost)
+        if ((maxCost <= 0.0 || currPoint.totalCost <= (maxCost + 1e-8)) && isValueSmaller(currPoint.totalCost, currTotalCost)) {
+          raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.totalCost)
           // In the vertex data, set the point's cost to the new smaller value
           //        vertex.raster.setSample(currPoint.px, currPoint.py, totalCostBand, currPoint.cost)
           // Since this point has a new cost, check to see if the cost to each
@@ -737,13 +821,13 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
             val pyNeighbor: Short = (currPoint.py + metadata._2).toShort
             if (pxNeighbor >= 0 && pxNeighbor < width && pyNeighbor >= 0 && pyNeighbor < height) {
               val currNeighborTotalCost = raster.getSampleFloat(pxNeighbor, pyNeighbor, totalCostBand)
-              val directionBand: Short = metadata._3.toShort
+              val direction = metadata._3
               // Compute the cost increase which is the sum of the distance from the
               // source pixel center point to the neighbor pixel center point.
-              val sourcePixelCost = getPixelCost(tileId, zoomLevel, currPoint.px, currPoint.py,
-                metadata._3, res, pixelHeightM, raster)
-              val neighborPixelCost = getPixelCost(tileId, zoomLevel, pxNeighbor, pyNeighbor,
-                metadata._3, res, pixelHeightM, raster)
+              val sourcePixelCost = getPixelCost(direction, pixelSizeMeters,
+                raster.getSampleFloat(currPoint.px, currPoint.py, 0))
+              val neighborPixelCost = getPixelCost(direction, pixelSizeMeters,
+                raster.getSampleFloat(pxNeighbor, pyNeighbor, 0))
               if (neighborPixelCost.isNaN) {
                 // If the cost to traverse the neighbor is NaN (unreachable), and no
                 // total cost has yet been assigned to the neighbor (PositiveInfinity),
@@ -753,9 +837,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
               }
               else {
                 val costIncrease = sourcePixelCost * 0.5f + neighborPixelCost * 0.5f
-                val newNeighborCost = currPoint.cost + costIncrease
+                val newNeighborCost = currPoint.totalCost + costIncrease
                 if (isValueSmaller(newNeighborCost, currNeighborTotalCost)) {
-                  val neighborPoint = new CostPoint(pxNeighbor, pyNeighbor, newNeighborCost)
+                  val neighborPoint = new CostPoint(pxNeighbor, pyNeighbor, newNeighborCost,
+                    raster.getSampleFloat(pxNeighbor, pyNeighbor, 0))
                   t0 = System.nanoTime()
                   queue.add(neighborPoint)
                   totalEnqueue = totalEnqueue + (System.nanoTime() - t0)
@@ -766,87 +851,112 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
         }
       }
     }
+
     val t0 = System.nanoTime()
+    val edgePixelChanges = new NeighborChangedPoints
     // Find edge pixels that have changed so we know how to send messages
+    val topChanges = new ListBuffer[CostPoint]()
+    val bottomChanges = new ListBuffer[CostPoint]()
     for (px <- 0 until width) {
-      val currTopCost: Float = raster.getSampleFloat(px, 0, totalCostBand)
-      val origTopValue = origTopEdgeValues(px)
-      if (isValueSmaller(currTopCost, origTopValue)) {
-        newChanges.addPoint(new CostPoint(px.toShort, 0, currTopCost))
+      if (tile.ty < tileBounds.n) {
+        val currTopCost = raster.getSampleFloat(px, 0, totalCostBand)
+        val currTopFriction = raster.getSampleFloat(px, 0, 0)
+        val origTopValue = origTopEdgeValues(px)
+        if (isValueSmaller(currTopCost, origTopValue)) {
+          if (px == 0 && tile.tx > tileBounds.w) {
+            val tlTileId = TMSUtils.tileid(tile.tx - 1, tile.ty + 1, zoomLevel)
+            edgePixelChanges.addPoints(tlTileId, CostDistanceMapOp.ABOVE_LEFT,
+              List[CostPoint](new CostPoint(px.toShort, 0, currTopCost, currTopFriction)))
+          }
+          if (px == width - 1 && tile.tx < tileBounds.e) {
+            val trTileId = TMSUtils.tileid(tile.tx + 1, tile.ty + 1, zoomLevel)
+            edgePixelChanges.addPoints(trTileId, CostDistanceMapOp.ABOVE_RIGHT,
+              List[CostPoint](new CostPoint(px.toShort, 0, currTopCost, currTopFriction)))
+          }
+          topChanges += new CostPoint(px.toShort, 0, currTopCost, currTopFriction)
+        }
       }
-      val currBottomCost = raster.getSampleFloat(px, height-1, totalCostBand)
-      val origBottomValue = origBottomEdgeValues(px)
-      if (isValueSmaller(currBottomCost, origBottomValue)) {
-        newChanges.addPoint(new CostPoint(px.toShort, (height-1).toShort, currBottomCost))
+      if (tile.ty > tileBounds.s) {
+        val currBottomCost = raster.getSampleFloat(px, height - 1, totalCostBand)
+        val currBottomFriction = raster.getSampleFloat(px, height - 1, 0)
+        val origBottomValue = origBottomEdgeValues(px)
+        if (isValueSmaller(currBottomCost, origBottomValue)) {
+          if (px == 0 && tile.tx > tileBounds.w) {
+            val blTileId = TMSUtils.tileid(tile.tx - 1, tile.ty - 1, zoomLevel)
+            edgePixelChanges.addPoints(blTileId, CostDistanceMapOp.BELOW_LEFT,
+              List[CostPoint](new CostPoint(px.toShort, (height - 1).toShort,
+                currBottomCost, currBottomFriction)))
+          }
+          if (px == width - 1 && tile.tx < tileBounds.e) {
+            val brTileId = TMSUtils.tileid(tile.tx + 1, tile.ty - 1, zoomLevel)
+            edgePixelChanges.addPoints(brTileId, CostDistanceMapOp.BELOW_RIGHT,
+              List[CostPoint](new CostPoint(px.toShort, (height - 1).toShort,
+                currBottomCost, currBottomFriction)))
+          }
+          bottomChanges += new CostPoint(px.toShort, (height - 1).toShort,
+            currBottomCost, currBottomFriction)
+        }
       }
     }
+    if (topChanges.nonEmpty) {
+      val aboveTile = TMSUtils.tileid(tile.tx, tile.ty + 1, zoomLevel)
+      edgePixelChanges.addPoints(aboveTile, CostDistanceMapOp.ABOVE, topChanges.toList)
+    }
+    if (bottomChanges.nonEmpty) {
+      val belowTile = TMSUtils.tileid(tile.tx, tile.ty - 1, zoomLevel)
+      edgePixelChanges.addPoints(belowTile, CostDistanceMapOp.BELOW, bottomChanges.toList)
+    }
+
     // Don't process corner pixels again (already handled as part of top/bottom
-    for (py <- 1 until height-1) {
-      val currLeftCost: Float = raster.getSampleFloat(0, py, totalCostBand)
-      val origLeftValue = origLeftEdgeValues(py)
-      if (isValueSmaller(currLeftCost, origLeftValue)) {
-        newChanges.addPoint(new CostPoint(0, py.toShort, currLeftCost))
+    val leftChanges = new ListBuffer[CostPoint]()
+    val rightChanges = new ListBuffer[CostPoint]()
+    for (py <- 0 until height) {
+      if (tile.tx > tileBounds.w) {
+        val currLeftCost = raster.getSampleFloat(0, py, totalCostBand)
+        val currLeftFriction = raster.getSampleFloat(0, py, 0)
+        val origLeftValue = origLeftEdgeValues(py)
+        if (isValueSmaller(currLeftCost, origLeftValue)) {
+          leftChanges += new CostPoint(0, py.toShort, currLeftCost, currLeftFriction)
+        }
       }
-      val currRightCost = raster.getSampleFloat(width-1, py, totalCostBand)
-      val origRightValue = origRightEdgeValues(py)
-      if (isValueSmaller(currRightCost, origRightValue)) {
-        newChanges.addPoint(new CostPoint((width-1).toShort, py.toShort, currRightCost))
+      if (tile.tx < tileBounds.e) {
+        val currRightCost = raster.getSampleFloat(width-1, py, totalCostBand)
+        val currRightFriction = raster.getSampleFloat(width-1, py, 0)
+        val origRightValue = origRightEdgeValues(py)
+        if (isValueSmaller(currRightCost, origRightValue)) {
+          rightChanges += new CostPoint((width - 1).toShort, py.toShort, currRightCost, currRightFriction)
+        }
       }
     }
+    if (leftChanges.nonEmpty) {
+      val leftTile = TMSUtils.tileid(tile.tx - 1, tile.ty, zoomLevel)
+      edgePixelChanges.addPoints(leftTile, CostDistanceMapOp.LEFT, leftChanges.toList)
+    }
+    if (rightChanges.nonEmpty) {
+      val rightTile = TMSUtils.tileid(tile.tx + 1, tile.ty, zoomLevel)
+      edgePixelChanges.addPoints(rightTile, CostDistanceMapOp.RIGHT, rightChanges.toList)
+    }
+//    CostDistanceMapOp.LOG.error("Changes being added to accumulator " + edgePixelChanges.size() + " for tile " + tile1)
+    changesAccum.add(edgePixelChanges)
+
     val totalTime: Double = System.nanoTime() - startTime
     val postProcessingTime: Double = System.nanoTime() - t0
-    // After all the points have been processed, assign the local changedPoints
-    // list to the vertex change points so it is available in the sendMsg
-    // method later.
-    if (newChanges.isEmpty)
-    {
-      log.debug("PROCESS VERTICES for " + TMSUtils.tileid(tileId, zoom) + " newChanges is empty")
-    }
-    else {
-      log.debug("PROCESS VERTICES for " + TMSUtils.tileid(tileId, zoom) + " newChanges contains " + newChanges.size)
-    }
-    newChanges
   }
 
-  // This method should only be called if the raster has one cost band. This method
-  // computes the horizontal, vertical or diagonal cost to traverse this pixel based
-  // of the direction passed in and the lat/lon anchor of the tile. It uses
-  // great circle distance for the computation.
-  private def getPixelCost(tileId: Long, zoom: Int, px: Int, py: Int, direction: Byte,
-      res: Double, pixelHeightM: Double, raster: Raster): Float =
+  private def getPixelCost(direction: Byte, pixelSizeMeters: Double, pixelFriction: Double): Float =
   {
-    val tile: TMSUtils.Tile = TMSUtils.tileid(tileId, zoom)
-    val startPx: Double = tile.tx * raster.getWidth
-    // since Rasters have their UL as 0,0, just tile.ty * tileSize does not work
-    val startPy: Double = (tile.ty * raster.getHeight) + raster.getHeight - 1
-
-    val lonStart: Double = startPx * res - 180.0
-    val latStart: Double = startPy * res - 90.0
-
-    val lonNext: Double = lonStart + res
-    val latNext: Double = latStart + res
-    val distanceMeters =
-      if (direction == DirectionBand.DOWN_BAND || direction == DirectionBand.UP_BAND) {
+    val distanceMeters = direction match {
+      case (TraversalDirection.DOWN | TraversalDirection.UP |
+            TraversalDirection.LEFT | TraversalDirection.RIGHT) => {
         // Vertical direction
-        val o: LatLng = new LatLng(latStart, lonStart)
-        val n: LatLng = new LatLng(latNext, lonStart)
-        LatLng.calculateGreatCircleDistance(o, n)
+        pixelSizeMeters
       }
-      else if (direction == DirectionBand.LEFT_BAND || direction == DirectionBand.RIGHT_BAND)
-      {
-        // Horizontal direction
-        val o: LatLng = new LatLng(latStart, lonStart)
-        val n: LatLng = new LatLng(latStart, lonNext)
-        LatLng.calculateGreatCircleDistance(o, n)
+      case (TraversalDirection.DOWN_LEFT | TraversalDirection.DOWN_RIGHT |
+            TraversalDirection.UP_LEFT | TraversalDirection.UP_RIGHT) => {
+        Math.sqrt(2.0 * pixelSizeMeters * pixelSizeMeters)
       }
-      else {
-        // Diagonal direction
-        val o: LatLng = new LatLng(latStart, lonStart)
-        val n: LatLng = new LatLng(latNext, lonNext)
-        LatLng.calculateGreatCircleDistance(o, n)
-      }
-    val pixelValue = raster.getSampleFloat(px, py, 0)
-    (pixelValue * distanceMeters).toFloat
+    }
+    (pixelFriction * distanceMeters).toFloat
   }
 
   // Returns true if newValue < origValue. If origValue is NaN, return true
@@ -877,281 +987,217 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     maxCost = in.readDouble()
     tileBounds = TMSUtils.TileBounds.fromCommaString(in.readUTF())
   }
+
+  override def registerClasses(): Array[Class[_]] = {
+    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
+  }
 }
 
-
-
-// This code was copied from the Spark source code and modified to work
-// for a very large graph like a cost distance graph. THe only change
-// was replacing calls to cache() with calls to persist() to make use
-// of memory and disk (rather than expecting that the entire graph can
-// be cached in memory). And it includes some new persist() calls.
-object CostDistancePregel {
-
-  /**
-   * Execute a Pregel-like iterative vertex-parallel abstraction.  The
-   * user-defined vertex-program `vprog` is executed in parallel on
-   * each vertex receiving any inbound messages and computing a new
-   * value for the vertex.  The `sendMsg` function is then invoked on
-   * all out-edges and is used to compute an optional message to the
-   * destination vertex. The `mergeMsg` function is a commutative
-   * associative function used to combine messages destined to the
-   * same vertex.
-   *
-   * On the first iteration all vertices receive the `initialMsg` and
-   * on subsequent iterations if a vertex does not receive a message
-   * then the vertex-program is not invoked.
-   *
-   * This function iterates until there are no remaining messages, or
-   * for `maxIterations` iterations.
-   *
-   * @tparam VD the vertex data type
-   * @tparam ED the edge data type
-   * @tparam A the Pregel message type
-   *
-   * @param graph the input graph.
-   *
-   * @param initialMsg the message each vertex will receive at the on
-   * the first iteration
-   *
-   * @param maxIterations the maximum number of iterations to run for
-   *
-   * @param activeDirection the direction of edges incident to a vertex that received a message in
-   * the previous round on which to run `sendMsg`. For example, if this is `EdgeDirection.Out`, only
-   * out-edges of vertices that received a message in the previous round will run. The default is
-   * `EdgeDirection.Either`, which will run `sendMsg` on edges where either side received a message
-   * in the previous round. If this is `EdgeDirection.Both`, `sendMsg` will only run on edges where
-   * *both* vertices received a message.
-   *
-   * @param vprog the user-defined vertex program which runs on each
-   * vertex and receives the inbound message and computes a new vertex
-   * value.  On the first iteration the vertex program is invoked on
-   * all vertices and is passed the default message.  On subsequent
-   * iterations the vertex program is only invoked on those vertices
-   * that receive messages.
-   *
-   * @param sendMsg a user supplied function that is applied to out
-   * edges of vertices that received messages in the current
-   * iteration
-   *
-   * @param mergeMsg a user supplied function that takes two incoming
-   * messages of type A and merges them into a single message of type
-   * A.  ''This function must be commutative and associative and
-   * ideally the size of A should not increase.''
-   *
-   * @return the resulting graph at the end of the computation
-   *
-   */
-  def run[VD: ClassTag, ED: ClassTag, A: ClassTag]
-  (graph: Graph[VD, ED],
-      initialMsg: A,
-      maxIterations: Int = Int.MaxValue,
-      activeDirection: EdgeDirection = EdgeDirection.Either)
-      (vprog: (VertexId, VD, A) => VD,
-          sendMsg: EdgeTriplet[VD, ED] => Iterator[(VertexId, A)],
-          mergeMsg: (A, A) => A)
-  : Graph[VD, ED] =
-  {
-    val storageLevel = graph.vertices.getStorageLevel
-    var g = graph.mapVertices((vid, vdata) => vprog(vid, vdata, initialMsg)).persist(storageLevel) //.cache()
-  // compute the messages
-  var messages = g.mapReduceTriplets(sendMsg, mergeMsg).persist(storageLevel)
-    var activeMessages = messages.count()
-    // Loop
-    var prevG: Graph[VD, ED] = null
-    var i = 0
-    while (activeMessages > 0 && i < maxIterations) {
-      // Receive the messages. Vertices that didn't get any messages do not appear in newVerts.
-      val newVerts = g.vertices.innerJoin(messages)(vprog).persist(storageLevel) //.cache()
-      // Update the graph with the new vertices.
-      prevG = g
-      g = g.outerJoinVertices(newVerts) { (vid, old, newOpt) => newOpt.getOrElse(old) }
-      g.persist(storageLevel) //.cache()
-
-      val oldMessages = messages
-      // Send new messages. Vertices that didn't get any messages don't appear in newVerts, so don't
-      // get to send messages. We must cache messages so it can be materialized on the next line,
-      // allowing us to uncache the previous iteration.
-      messages = g.mapReduceTriplets(sendMsg, mergeMsg, Some((newVerts, activeDirection))).persist(storageLevel) //.cache()
-      // The call to count() materializes `messages`, `newVerts`, and the vertices of `g`. This
-      // hides oldMessages (depended on by newVerts), newVerts (depended on by messages), and the
-      // vertices of prevG (depended on by newVerts, oldMessages, and the vertices of g).
-      activeMessages = messages.count()
-      // Unpersist the RDDs hidden by newly-materialized RDDs
-      oldMessages.unpersist(blocking=false)
-      newVerts.unpersist(blocking=false)
-      prevG.edges.unpersist(blocking=false)
-      prevG.unpersistVertices(blocking=false)
-      // count the iteration
-      i += 1
-    }
-
-    g
-  } // end of apply
-
-} // end of class Pregel
-
-object CostDistanceEdgeType {
-  val TO_TOP_LEFT: Byte = 1
-  val TO_TOP: Byte = 2
-  val TO_TOP_RIGHT: Byte = 3
-  val TO_RIGHT: Byte = 4
-  val TO_BOTTOM_RIGHT: Byte = 5
-  val TO_BOTTOM: Byte = 6
-  val TO_BOTTOM_LEFT: Byte = 7
-  val TO_LEFT: Byte = 8
+object TraversalDirection {
+  val UP: Byte = CostDistanceMapOp.ABOVE
+  val DOWN: Byte = CostDistanceMapOp.BELOW
+  val LEFT: Byte = CostDistanceMapOp.LEFT
+  val RIGHT: Byte = CostDistanceMapOp.RIGHT
+  val DOWN_RIGHT: Byte = CostDistanceMapOp.BELOW_RIGHT
+  val DOWN_LEFT: Byte = CostDistanceMapOp.BELOW_LEFT
+  val UP_RIGHT: Byte = CostDistanceMapOp.ABOVE_RIGHT
+  val UP_LEFT: Byte = CostDistanceMapOp.ABOVE_LEFT
 }
 
-object DirectionBand {
-  def UP_BAND: Byte = 0
-  def DOWN_BAND: Byte = 1
-  def LEFT_BAND: Byte = 2
-  def RIGHT_BAND: Byte = 3
-  def DOWN_RIGHT_BAND: Byte = 4
-  def DOWN_LEFT_BAND: Byte = 5
-  def UP_RIGHT_BAND: Byte = 6
-  def UP_LEFT_BAND: Byte = 7
-}
-
-
-class CostDistanceEdge(val fromTileId: Long, val toTileId: Long, val direction: Byte) {
-}
 
 //Stores information about points whose cost has changed during processing. CostPoint
 //ordering should be in increasing order by cost so that the PriorityQueue processes
 //minimum cost elements first.
-class CostPoint(var px: Short, var py: Short, var cost: Float
-    ) extends Ordered[CostPoint] with Externalizable {
+class CostPoint(var px: Short, var py: Short, var totalCost: Float, var pixelFriction: Float
+                 ) extends Ordered[CostPoint] with Externalizable {
   def this() = {
-    this(-1, -1, 0.0f)
+    this(-1, -1, 0.0f, 0.0f)
   }
 
   def compare(that: CostPoint): Int = {
-    cost.compare(that.cost)
+    totalCost.compare(that.totalCost)
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
     out.writeShort(px)
     out.writeShort(py)
-    out.writeFloat(cost)
+    out.writeFloat(totalCost)
+    out.writeFloat(pixelFriction)
   }
 
   override def readExternal(in: ObjectInput): Unit = {
     px = in.readShort()
     py = in.readShort()
-    cost = in.readFloat()
+    totalCost = in.readFloat()
+    pixelFriction = in.readFloat()
   }
 }
 
-// Stores a list of points around the edges of a tile that changed while costs
-// are computed for a tile.
-class ChangedPoints(var initial: Boolean) extends Externalizable {
-  private val changes = scala.collection.mutable.HashMap.empty[(Short, Short), CostPoint]
+// Stores points from a source tile that changed value and forced
+// the target tile to be recomputed. The key in the hash map is the
+// direction from the source tile to the target tile.
+class NeighborChangedPoints extends Externalizable {
+  // The collection of point changes is keyed on tile id. The value is a
+  // a pair containing the direction and the list of changed points. The
+  // direction is from the neighbor tile toward the tile in the key.
+  private val changes = new util.HashMap[Long, Array[List[CostPoint]]]()
 
-  // This constructor is only used for deserialization, and the correct
-  // value for the data members overwrites the default used here as
-  // the deserializer executes
-  def this() = {
-    this(true)
+  def size(): Int = {
+    return changes.size()
   }
 
-  // Adds a changed pixel. If the pixel already exists, it only adds the passed
-  // in point if its cost is less than the point already stored.
-  def addPoint(point: CostPoint): Unit = {
-    val pixel = (point.px, point.py)
-    if (changes contains pixel) {
-      val existingPoint = changes(pixel)
-      if (existingPoint.cost > point.cost) {
-        changes(pixel) = point
+  def dump(zoomLevel: Int): Unit = {
+    val iter = changes.keySet().iterator()
+    while (iter.hasNext) {
+      val tileId = iter.next()
+      println("  tile id: " + TMSUtils.tileid(tileId, zoomLevel))
+      val value = changes.get(tileId)
+      for (direction <- 0 until value.length) {
+        val dir = direction.toByte match {
+          case CostDistanceMapOp.ABOVE => "ABOVE"
+          case CostDistanceMapOp.ABOVE_LEFT => "ABOVE_LEFT"
+          case CostDistanceMapOp.ABOVE_RIGHT => "ABOVE_RIGHT"
+          case CostDistanceMapOp.BELOW => "BELOW"
+          case CostDistanceMapOp.BELOW_LEFT => "BELOW_LEFT"
+          case CostDistanceMapOp.BELOW_RIGHT => "BELOW_RIGHT"
+          case CostDistanceMapOp.LEFT => "LEFT"
+          case CostDistanceMapOp.RIGHT => "RIGHT"
+          case CostDistanceMapOp.SELF => "SELF"
+          case _ => "UNKNOWN " + direction
+        }
+        print("    " + dir)
+        if (value(direction) == null) {
+          println(" has no changes")
+        }
+        else {
+          println(" has " + value(direction).size + " changes")
+        }
       }
     }
-    else {
-      changes(pixel) = point
-    }
   }
 
-  // Returns the list of changed points for the specfied edge or null if there
-  // are no changed points for that edge.
-  def getAllPoints: List[CostPoint] = {
-    changes.values.toList
-  }
-
-  def isInitial: Boolean = {
-    initial
-  }
-
-  def isEmpty: Boolean = {
-    changes.isEmpty
-  }
-
-  def size: Int = {
-    changes.size
-  }
-
-  def clear(): Unit = {
-    changes.clear()
-  }
-
-  def get(px: Short, py: Short): Option[CostPoint] = {
-    val pixel = (px, py)
-    changes.get(pixel)
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeBoolean(initial)
-    out.writeInt(changes.size)
-    val iter = changes.iterator
+  def dumpTotalChanges(): Unit = {
+    var changeCount: Long = 0
+    val iter = changes.keySet().iterator()
     while (iter.hasNext) {
-      val cp = iter.next()
-      cp._2.writeExternal(out)
+      val tileId = iter.next()
+      val value = changes.get(tileId)
+      for (direction <- 0 until value.length) {
+        if (value(direction) != null) {
+          changeCount += value(direction).size
+        }
+      }
     }
+    CostDistanceMapOp.LOG.error("Total changes: " + changeCount)
+  }
+
+  def put(tileId: Long, toDirection: Byte, changedPoints: List[CostPoint]): Unit = {
+    var value = changes.get(tileId)
+    if (value == null) {
+      value = new Array[List[CostPoint]](CostDistanceMapOp.DIRECTION_COUNT)
+      changes.put(tileId, value)
+    }
+    value(toDirection) = changedPoints
+  }
+
+  def addPoints(tileId: Long, direction: Byte, points: List[CostPoint]): Unit = {
+    var value = get(tileId)
+    if (value == null) {
+      value = new Array[List[CostPoint]](CostDistanceMapOp.DIRECTION_COUNT)
+      changes.put(tileId, value)
+    }
+    value(direction) = points
+  }
+
+  def keySet(): util.Set[Long] = {
+    return changes.keySet()
+  }
+
+  def get(tileId: Long): Array[List[CostPoint]] = {
+    return changes.get(tileId)
+  }
+
+  def +=(other: NeighborChangedPoints): NeighborChangedPoints = {
+    val numOtherChanges = other.changes.size()
+    if (numOtherChanges > 0) {
+      val iter = other.changes.keySet().iterator()
+      while (iter.hasNext) {
+        val tileId = iter.next()
+        val value = other.get(tileId)
+        val myValue = get(tileId)
+        if (myValue == null) {
+          changes.put(tileId, value)
+        }
+        else {
+          // We will never have multiple cost point lists for this tile from
+          // the same direction (e.g. array index), so we can just perform
+          // an assignment.
+          value.view.zipWithIndex foreach { case (cpList, index) => {
+            if (cpList != null) {
+              myValue(index) = cpList
+            }
+          }
+          }
+        }
+      }
+    }
+    this
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-    initial = in.readBoolean()
-    val length = in.readInt
-    for (i <- 0 until length) {
-      var cp = new CostPoint(-1, -1, 0.0f)
-      cp.readExternal(in)
-      changes.put((cp.px, cp.py), cp)
+    val tileCount = in.readInt()
+    for (i <- 0 until tileCount) {
+      val tileId = in.readLong()
+      for(direction <- 0 until CostDistanceMapOp.DIRECTION_COUNT) {
+        val hasChanges = in.readBoolean()
+        if (hasChanges) {
+          val cpCount = in.readInt()
+          var cpList = ListBuffer[CostPoint]()
+          cpList.sizeHint(cpCount)
+          for (cpIndex <- 0 until cpCount) {
+            val cp = new CostPoint()
+            cp.readExternal(in)
+            cpList += cp
+          }
+          addPoints(tileId, direction.toByte, cpList.toList)
+        }
+      }
+    }
+  }
+
+  override def writeExternal(out: ObjectOutput): Unit = {
+    val numChanges = changes.size()
+    out.writeInt(numChanges)
+    if (numChanges > 0) {
+      val iter = changes.keySet().iterator()
+      while (iter.hasNext) {
+        val tileId = iter.next()
+        out.writeLong(tileId)
+        val value = changes.get(tileId)
+        for (entry <- value) {
+          out.writeBoolean(entry != null)
+          if (entry != null) {
+            out.writeInt(entry.length)
+            entry.foreach(cp => {
+              cp.writeExternal(out)
+            })
+          }
+        }
+      }
     }
   }
 }
 
-//@SerialVersionUID(-7588980448693010399L)
-// TODO: Remove tileid and zoom from VertexType after debugging!!!
-class VertexType(var raster: WritableRaster,
-    var changedPoints: ChangedPoints,
-    var tileid: Long,
-    var zoom: Int)
-    extends Externalizable {
-
-  def this() {
-    this(null, null, -1, -1)
+// An accumulator used within Spark to accumulate changes to all of the tiles
+// processed during a single map pass of the cost distance algorithm.
+object NeighborChangesAccumulator extends AccumulatorParam[NeighborChangedPoints]
+{
+  override def addInPlace(r1: NeighborChangedPoints,
+                          r2: NeighborChangedPoints): NeighborChangedPoints = {
+    r1 += r2
   }
 
-  @throws(classOf[IOException])
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeLong(tileid)
-    out.writeInt(zoom)
-    out.writeBoolean(changedPoints.isInitial)
-    changedPoints.writeExternal(out)
-    val rasterBytes: Array[Byte] = RasterWritable.toBytes(raster, null)
-    out.writeInt(rasterBytes.length)
-    out.write(rasterBytes)
-  }
-
-  @throws(classOf[IOException])
-  override def readExternal(in: ObjectInput): Unit = {
-    tileid = in.readLong()
-    zoom = in.readInt()
-    val initial = in.readBoolean()
-    changedPoints = new ChangedPoints()
-    changedPoints.readExternal(in)
-    val byteCount: Int = in.readInt()
-    val rasterBytes: Array[Byte] = new Array[Byte](byteCount)
-    var offset: Int = 0
-    in.readFully(rasterBytes, offset, byteCount)
-    raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(rasterBytes, null))
+  override def zero(initialValue: NeighborChangedPoints): NeighborChangedPoints = {
+    new NeighborChangedPoints
   }
 }

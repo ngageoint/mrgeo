@@ -109,6 +109,10 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
                  + "friction = [" + frictionSurface + "];\n"
                  + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
+    // Start point in tile tx=702 ty = 348, pixel px = 510 py = 0
+//    String exp = "srcPoint = InlineCsv(\"GEOMETRY\", \"'POINT(9.029234 45.223345)'\");\n"
+//                 + "friction = [/mrgeo/images/dave-tobler-raw-spm_nowater];\n"
+//                 + "result = CostDistance(srcPoint, 9, friction, 2000000, -3.5, 36.8, 9.9, 45.6)";
     // For tobler-raw-4tiles
 //    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(65.1 30.1)'\");\n"
 //                 + "friction = [" + frictionSurface + "];\n"
@@ -116,11 +120,19 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
     if (GEN_BASELINE_DATA_ONLY)
     {
+      long start = System.currentTimeMillis();
       testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+      long timeDelta = System.currentTimeMillis() - start;
+      System.out.println("testCostDistance took " + timeDelta);
+      log.error("testCostDistance took " + timeDelta);
     }
     else
     {
+      long start = System.currentTimeMillis();
       testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+      long timeDelta = System.currentTimeMillis() - start;
+      log.error("testCostDistance took " + timeDelta);
+      System.out.println("testCostDistance took " + timeDelta);
 
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
           new Path(testUtils.getOutputHdfs(), testname.getMethodName()).toUri().toString(),
@@ -138,8 +150,8 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
       double epsilon = 0.5;
       Assert.assertEquals(0, bandStats.min, epsilon);
       Assert.assertEquals(50000, bandStats.max, epsilon);
-      Assert.assertEquals(33112.808371797866, bandStats.mean, epsilon);
-      Assert.assertEquals(1852051, bandStats.count);
+      Assert.assertEquals(33142.46070624142, bandStats.mean, epsilon);
+      Assert.assertEquals(1562052, bandStats.count);
     }
   }
 
