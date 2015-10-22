@@ -49,7 +49,7 @@ LineStringImpl(Point... points)
 
 public static Class[] getClasses()
 {
-  return new Class[]{LineStringImpl.class};
+  return new Class[]{LineStringImpl.class, ArrayList.class};
 }
 
 /*
