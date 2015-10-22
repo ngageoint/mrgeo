@@ -19,6 +19,8 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.rdd.VectorRDD
+import org.mrgeo.data.vector.FeatureIdWritable
+import org.mrgeo.geometry.GeometryFactory
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
@@ -64,7 +66,15 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
     pointsMapOp = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
+  override def registerClasses(): Array[Class[_]] = {
+    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
+  }
+
+  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+//    conf.set("spark.kryo.registrationRequired", "true")
+    true
+  }
+
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def execute(context: SparkContext): Boolean = {
