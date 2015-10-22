@@ -188,7 +188,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     conf.set("spark.shuffle.memoryFraction", "0.30") // set the shuffle higher
     numExecutors = conf.getInt("spark.executor.instances", -1)
     CostDistanceMapOp.LOG.info("num executors = " + numExecutors)
-    conf.set("spark.kryo.registrationRequired", "true")
+//    conf.set("spark.kryo.registrationRequired", "true")
 //    conf.set("spark.driver.extraJavaOptions", "-Dsun.io.serialization.extendedDebugInfo=true")
 //    conf.set("spark.executor.extraJavaOptions", "-Dsun.io.serialization.extendedDebugInfo=true")
     true
