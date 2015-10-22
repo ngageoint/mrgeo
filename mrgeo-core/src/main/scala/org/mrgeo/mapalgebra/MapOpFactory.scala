@@ -16,7 +16,7 @@
 package org.mrgeo.mapalgebra
 
 
-import java.io.{FileFilter, File}
+import java.io.{File, FileFilter}
 import java.lang.reflect.Modifier
 import java.net.URL
 
@@ -30,6 +30,7 @@ import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
+import scala.language.existentials
 import scala.reflect.runtime.universe._
 
 
@@ -111,10 +112,12 @@ object MapOpFactory extends Logging {
 
   private def decendants(clazz: Class[_]) = {
 
+
     // get all the URLs for this classpath, filter files by "mrgeo" in development mode, then strip .so files
+    // in spark, the main jar is renamed "__app__.jar" (Client.APP_JAR), so we need to include that as well
     val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {
       val file = new File(url.getPath)
-      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") else file.isFile)
+      file.isDirectory || (if (MrGeoProperties.isDevelopmentMode) file.getName.contains("mrgeo") || file.getName.equals("__app__.jar") else file.isFile)
     }).filter(p => !p.getFile.endsWith(".so") && !p.getFile.contains(".so."))
         .flatMap(url => {
           val us = url.getFile

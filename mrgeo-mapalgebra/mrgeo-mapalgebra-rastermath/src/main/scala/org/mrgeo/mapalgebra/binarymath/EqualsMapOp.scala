@@ -17,7 +17,7 @@ package org.mrgeo.mapalgebra.binarymath
 
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
+import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object EqualsMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

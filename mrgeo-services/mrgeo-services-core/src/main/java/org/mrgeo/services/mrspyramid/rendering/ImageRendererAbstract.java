@@ -19,6 +19,7 @@ import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
 import org.gdal.osr.SpatialReference;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -27,14 +28,13 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
 import org.mrgeo.data.raster.RasterUtils;
+import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.resources.KmlGenerator;
-import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.TMSUtils;
@@ -69,7 +69,7 @@ private String imageName = null;
 
 public ImageRendererAbstract()
 {
-  this.srs = GDALUtils.EPSG4326;
+  this.srs = GDALUtils.EPSG4326();
 }
 
 public ImageRendererAbstract(final SpatialReference srs)
@@ -442,7 +442,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       }
 
       // default is WGS84
-      String dstcrs = GDALUtils.EPSG4326;
+      String dstcrs = GDALUtils.EPSG4326();
       if (epsg != null && !epsg.equalsIgnoreCase("epsg:4326"))
       {
         SpatialReference crs = new SpatialReference();
@@ -452,7 +452,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       }
 
       log.debug("Scaling image...");
-      gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326, dstcrs, resample);
+      gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326(), dstcrs, resample);
       log.debug("Image scaled.");
 
       return GDALUtils.toRaster(dst);

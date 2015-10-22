@@ -16,7 +16,6 @@
 package org.mrgeo.mapalgebra.vector;
 
 import com.vividsolutions.jts.io.WKTReader;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;

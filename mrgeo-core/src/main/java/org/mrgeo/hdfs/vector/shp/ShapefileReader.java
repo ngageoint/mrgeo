@@ -19,13 +19,13 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.geometry.*;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.hdfs.vector.GeometryInputStream;
 import org.mrgeo.hdfs.vector.ShapefileGeometryCollection;
 import org.mrgeo.hdfs.vector.shp.dbase.DbaseException;
 import org.mrgeo.hdfs.vector.shp.esri.ESRILayer;
 import org.mrgeo.hdfs.vector.shp.esri.FormatException;
 import org.mrgeo.hdfs.vector.shp.esri.geom.*;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

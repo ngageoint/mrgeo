@@ -15,11 +15,6 @@
 
 package org.mrgeo.hdfs.vector;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -32,6 +27,11 @@ import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DelimitedVectorRecordReader extends RecordReader<FeatureIdWritable, Geometry>
 {

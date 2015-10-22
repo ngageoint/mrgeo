@@ -17,19 +17,15 @@ package org.mrgeo.mapalgebra.raster
 
 import java.io.IOException
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
-import org.mrgeo.mapalgebra.parser.{ParserVariableNode, ParserException, ParserFunctionNode, ParserNode}
-import org.mrgeo.utils.{Bounds, SparkUtils}
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
+import org.mrgeo.utils.SparkUtils
 
 object RasterMapOp {
 

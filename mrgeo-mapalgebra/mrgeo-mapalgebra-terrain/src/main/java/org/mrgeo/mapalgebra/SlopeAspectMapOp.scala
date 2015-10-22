@@ -24,11 +24,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.{SparkUtils, LatLng, TMSUtils}
+import org.mrgeo.utils.{LatLng, SparkUtils, TMSUtils}
 
 object SlopeAspectMapOp {
   final val Input = "input"
@@ -226,7 +226,7 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
     rasterRDD =
         Some(RasterRDD(calculate(tiles, bufferX, bufferY, nodatas(0).doubleValue(), zoom, tilesize)))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodatas(0).doubleValue()))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodatas, calcStats = false))
 
     true
   }

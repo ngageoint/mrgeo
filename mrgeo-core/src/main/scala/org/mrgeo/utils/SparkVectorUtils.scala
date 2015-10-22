@@ -18,10 +18,11 @@ package org.mrgeo.utils
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector._
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.geometry.Geometry
+
 import scala.collection.JavaConversions._
 
 object SparkVectorUtils

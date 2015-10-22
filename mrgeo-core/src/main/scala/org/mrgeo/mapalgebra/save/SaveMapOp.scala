@@ -15,9 +15,9 @@
 
 package org.mrgeo.mapalgebra.save
 
-import org.mrgeo.mapalgebra.{MapOpRegistrar, MapOp}
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.mapalgebra.raster.{SaveRasterMapOp, RasterMapOp}
+import org.mrgeo.mapalgebra.raster.{RasterMapOp, SaveRasterMapOp}
+import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object SaveMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

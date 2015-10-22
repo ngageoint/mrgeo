@@ -15,10 +15,10 @@
 
 package org.mrgeo.data.vector;
 
+import org.mrgeo.utils.Bounds;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.mrgeo.utils.Bounds;
 
 public class VectorMetadata
 {

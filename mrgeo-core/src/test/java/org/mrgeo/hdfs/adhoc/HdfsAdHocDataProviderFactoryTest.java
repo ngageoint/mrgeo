@@ -16,7 +16,6 @@
 package org.mrgeo.hdfs.adhoc;
 
 import junit.framework.Assert;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.junit.After;

@@ -15,15 +15,15 @@
 
 package org.mrgeo.mapalgebra.raster
 
-import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.ProviderProperties
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
-import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.job.JobArguments
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
+import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
 
 
 class SaveRasterMapOp extends RasterMapOp with Externalizable {

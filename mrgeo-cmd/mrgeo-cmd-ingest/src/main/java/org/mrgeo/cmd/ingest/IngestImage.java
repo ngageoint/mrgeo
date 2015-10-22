@@ -33,7 +33,9 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.*;
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -406,56 +408,49 @@ List<String> getInputs(String arg, boolean recurse, final Configuration conf,
         else
         {
           // is this a geospatial image file?
-          try
+          System.out.print("*** checking  " + p.toString());
+          String name = p.toUri().toString();
+
+          if (skippreprocessing)
           {
-            System.out.print("*** checking  " + p.toString());
-            String name = p.toUri().toString();
-
-            if (skippreprocessing)
+            if (firstInput)
             {
-              if (firstInput)
-              {
-                firstInput = false;
-                Dataset dataset = GDALUtils.open(name);
-
-                if (dataset != null)
-                {
-                  try
-                  {
-                    calculateMinimalParams(dataset);
-                  }
-                  finally
-                  {
-                    GDALUtils.close(dataset);
-                  }
-                }
-              }
-              inputs.add(name);
-              System.out.println(" accepted ***");
-            }
-            else
-            {
-
+              firstInput = false;
               Dataset dataset = GDALUtils.open(name);
 
               if (dataset != null)
               {
-                calculateParams(dataset);
-
-                GDALUtils.close(dataset);
-                inputs.add(name);
-
-                System.out.println(" accepted ***");
-              }
-              else
-              {
-                System.out.println(" can't load ***");
+                try
+                {
+                  calculateMinimalParams(dataset);
+                }
+                finally
+                {
+                  GDALUtils.close(dataset);
+                }
               }
             }
+            inputs.add(name);
+            System.out.println(" accepted ***");
           }
-          catch (IOException ignored)
+          else
           {
-            System.out.println(" can't load ***");
+
+            Dataset dataset = GDALUtils.open(name);
+
+            if (dataset != null)
+            {
+              calculateParams(dataset);
+
+              GDALUtils.close(dataset);
+              inputs.add(name);
+
+              System.out.println(" accepted ***");
+            }
+            else
+            {
+              System.out.println(" can't load ***");
+            }
           }
         }
       }

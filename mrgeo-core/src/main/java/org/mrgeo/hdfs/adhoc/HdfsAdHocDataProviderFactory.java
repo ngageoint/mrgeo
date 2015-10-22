@@ -19,7 +19,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.adhoc.AdHocDataProviderFactory;
-import org.mrgeo.utils.HadoopUtils;
 
 import java.io.IOException;
 import java.util.Map;

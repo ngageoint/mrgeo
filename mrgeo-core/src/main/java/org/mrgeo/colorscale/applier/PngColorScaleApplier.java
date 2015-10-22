@@ -15,9 +15,9 @@
 
 package org.mrgeo.colorscale.applier;
 
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScale.Scaling;
+import org.mrgeo.data.raster.RasterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

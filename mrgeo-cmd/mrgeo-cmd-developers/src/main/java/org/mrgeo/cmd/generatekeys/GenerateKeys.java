@@ -15,17 +15,6 @@
 
 package org.mrgeo.cmd.generatekeys;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.TreeSet;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.cmd.Command;
@@ -33,6 +22,12 @@ import org.mrgeo.cmd.OptionsParser;
 import org.mrgeo.data.ProviderProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.TreeSet;
 
 public class GenerateKeys extends Command {	
   private static final Logger log = LoggerFactory.getLogger(GenerateKeys.class);

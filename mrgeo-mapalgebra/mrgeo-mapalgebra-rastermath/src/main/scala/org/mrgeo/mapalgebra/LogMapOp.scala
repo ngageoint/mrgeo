@@ -15,15 +15,15 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.WritableRaster
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
+import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 object LogMapOp extends MapOpRegistrar {
@@ -80,7 +80,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
     }
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
       for (y <- 0 until raster.getHeight) {
         for (x <- 0 until raster.getWidth) {
@@ -96,7 +96,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues, calcStats = false))
 
     true
   }

@@ -18,9 +18,9 @@ package org.mrgeo.hdfs.input.image;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileRecordReader;
-import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 
 import java.io.IOException;
 

@@ -16,15 +16,7 @@
 package org.mrgeo.image;
 
 
-import java.io.File;
-import java.io.IOException;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
@@ -34,6 +26,9 @@ import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
+
+import java.io.File;
+import java.io.IOException;
 
 @SuppressWarnings("static-method")
 public class MrsImageTest extends LocalRunnerTest

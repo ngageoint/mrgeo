@@ -22,13 +22,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.mrgeo.data.tile.MrsTileReader;
+import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.mrgeo.mapreduce.formats.TileCollection;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
-import org.mrgeo.data.tile.MrsTileReader;
-import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.TMSUtils;
@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 /**

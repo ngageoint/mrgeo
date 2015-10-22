@@ -19,17 +19,14 @@ import java.awt.image.Raster
 import java.io._
 import java.text.DecimalFormat
 
-import com.google.common.cache.{LoadingCache, CacheLoader, Cache, CacheBuilder}
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.vector.FeatureIdWritable
-import org.mrgeo.geometry.{WritableLineString, GeometryFactory, Geometry, Point}
+import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
 import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.utils.{LatLng, HadoopUtils, TMSUtils}
+import org.mrgeo.utils.{LatLng, TMSUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer

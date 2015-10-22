@@ -20,15 +20,18 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.ingest.IngestImage
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.GDALUtils
 
+import scala.collection.mutable
 import scala.util.control.Breaks
 
 object IngestImageMapOp extends MapOpRegistrar {
@@ -42,7 +45,6 @@ object IngestImageMapOp extends MapOpRegistrar {
 }
 
 class IngestImageMapOp extends RasterMapOp with Externalizable {
-  private val TileSize = "tilesize"
 
   private var rasterRDD: Option[RasterRDD] = None
 
@@ -66,6 +68,12 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     if (node.getNumChildren >= 3) {
       categorical = MapOp.decodeBoolean(node.getChild(2), variables)
     }
+  }
+
+  override def registerClasses(): Array[Class[_]] = {
+    // IngestImage ultimately creates a WrappedArray of Array[String], WrappedArray is already
+    // registered, so we need the Array[String]
+    Array[Class[_]](classOf[Array[String]])
   }
 
 
@@ -109,13 +117,13 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
       zoom = Some(newZoom)
     }
 
-    var nodata = Double.NaN
+    var nodatas:Array[Number] = null
 
     val done = new Breaks
     done.breakable({
       filebuilder.result().foreach(file => {
         try {
-          nodata = GDALUtils.getnodata(file)
+          nodatas = GDALUtils.getnodatas(file)
           done.break()
         }
         catch {
@@ -128,9 +136,11 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
       categorical = Some(false)
     }
 
-    val result = IngestImage.ingest(context, filebuilder.result(), zoom.get, tilesize, categorical.get, nodata)
+    val result = IngestImage.ingest(context, filebuilder.result(), zoom.get, tilesize, categorical.get, nodatas)
     rasterRDD = result._1 match {
-    case rrdd:RasterRDD => Some(rrdd)
+    case rrdd:RasterRDD =>
+      rrdd.checkpoint()
+      Some(rrdd)
     case _ => None
     }
 

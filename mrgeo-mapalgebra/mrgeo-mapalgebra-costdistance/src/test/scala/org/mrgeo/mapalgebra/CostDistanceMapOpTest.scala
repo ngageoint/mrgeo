@@ -15,11 +15,8 @@
 
 package org.mrgeo.mapalgebra
 
-import junit.framework.Assert
-import org.mrgeo.utils.{Bounds, LatLng}
+import org.mrgeo.utils.LatLng
 import org.scalatest.FlatSpec
-
-import scala.collection.mutable
 
 class CostDistanceMapOpTest extends FlatSpec {
   behavior of "bounds calculation (with maxCost of METERS_PER_DEGREE seconds/meter and min friction value of 0.5"

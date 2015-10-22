@@ -18,16 +18,16 @@ package org.mrgeo.mapalgebra
 import java.io._
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.aggregators.{MeanAggregator, AggregatorRegistry}
+import org.mrgeo.aggregators.{AggregatorRegistry, MeanAggregator}
 import org.mrgeo.buildpyramid.BuildPyramid
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.{DataProviderNotFound, DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.image.MrsImagePyramidMetadata.Classification
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
 
 object BuildPyramidMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

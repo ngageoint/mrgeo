@@ -22,12 +22,12 @@ import org.apache.spark.graphx._
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
-import org.mrgeo.data.rdd.{VectorRDD, RasterRDD}
+import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Point
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils._
 
@@ -281,7 +281,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     })))
 
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata, calcStats = false))
 
     true
   }

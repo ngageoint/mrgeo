@@ -16,8 +16,8 @@
 package org.mrgeo.mapalgebra
 
 import org.apache.spark.{Logging, SparkConf, SparkContext}
-import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.job.JobArguments
+import org.mrgeo.mapalgebra.parser._
 
 object MapOp {
   def decodeDouble(node: ParserNode): Option[Double] = {
@@ -46,7 +46,7 @@ object MapOp {
     case const: ParserConstantNode => decodeDouble(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const: ParserConstantNode => decodeDouble(node)
+      case const: ParserConstantNode => decodeDouble(const)
       case _ => throw new ParserException("Term \"" + node + "\" is not a double")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a double")
@@ -66,7 +66,7 @@ object MapOp {
     case const: ParserConstantNode => decodeFloat(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const: ParserConstantNode => decodeFloat(node)
+      case const: ParserConstantNode => decodeFloat(const)
       case _ => throw new ParserException("Term \"" + node + "\" is not a float")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a float")
@@ -86,7 +86,7 @@ object MapOp {
     case const: ParserConstantNode => decodeLong(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const: ParserConstantNode => decodeLong(node)
+      case const: ParserConstantNode => decodeLong(const)
       case _ => throw new ParserException("Term \"" + node + "\" is not a long")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a long")
@@ -105,7 +105,7 @@ object MapOp {
     case const: ParserConstantNode => decodeInt(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const: ParserConstantNode => decodeInt(node)
+      case const: ParserConstantNode => decodeInt(const)
       case _ => throw new ParserException("Term \"" + node + "\" is not a integer")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a integer")
@@ -125,7 +125,7 @@ object MapOp {
     case const: ParserConstantNode => decodeShort(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const: ParserConstantNode => decodeShort(node)
+      case const: ParserConstantNode => decodeShort(const)
       case _ => throw new ParserException("Term \"" + node + "\" is not a short")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a short")
@@ -144,7 +144,7 @@ object MapOp {
     case const: ParserConstantNode => decodeByte(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const: ParserConstantNode => decodeByte(node)
+      case const: ParserConstantNode => decodeByte(const)
       case _ => throw new ParserException("Term \"" + node + "\" is not a byte")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a byte")
@@ -164,7 +164,7 @@ object MapOp {
     case const: ParserConstantNode => decodeString(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const: ParserConstantNode => decodeString(node)
+      case const: ParserConstantNode => decodeString(const)
       case _ => throw new ParserException("Term \"" + node + "\" is not a string")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a string")
@@ -187,7 +187,7 @@ object MapOp {
     case const: ParserConstantNode => decodeBoolean(node)
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).get match {
-      case const: ParserConstantNode => decodeBoolean(node)
+      case const: ParserConstantNode => decodeBoolean(const)
       case _ => throw new ParserException("Term \"" + node + "\" is not a boolean")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a boolean")
@@ -214,6 +214,8 @@ abstract class MapOp extends Logging {
 
   def context(cont: SparkContext) = sparkContext = cont
   def context(): SparkContext = sparkContext
+
+  def registerClasses(): Array[Class[_]] = {Array.empty[Class[_]] }
 
   def setup(job: JobArguments, conf: SparkConf): Boolean
   def execute(context: SparkContext): Boolean
