@@ -666,7 +666,7 @@ object SparkUtils extends Logging {
     meta.setName(zoom)
     meta.setMaxZoomLevel(zoom)
 
-    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER);
+    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     val first = rdd.first()
     val raster = RasterWritable.toRaster(first._2)
@@ -697,8 +697,8 @@ object SparkUtils extends Logging {
       meta.setImageStats(zoom, stats)
     }
 
-    rdd.unpersist();
-    
+    rdd.unpersist()
+
     meta
   }
 
