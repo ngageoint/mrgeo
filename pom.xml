@@ -749,6 +749,41 @@
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
+      <id>CDH548-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.4.8</hadoop.version>
+        <mahout.version>0.9-cdh5.4.8</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.3.0-cdh5.4.8</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.4.8</final.classifier>
+        <release.arguments />
+      </properties>
+    </profile>
+    <profile>
+      <id>CDH548</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.4.8</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.4.8</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.4.8</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.3.0-cdh5.4.8</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.4.8-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>CDH547-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.7</hadoop.version>
