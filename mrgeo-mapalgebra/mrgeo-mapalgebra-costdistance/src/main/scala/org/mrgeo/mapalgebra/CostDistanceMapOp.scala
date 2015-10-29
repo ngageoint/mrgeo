@@ -19,8 +19,8 @@ import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 
-import org.apache.commons.lang3.ArrayUtils
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.SparkContext._
 import org.apache.spark.{Accumulator, AccumulatorParam, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
