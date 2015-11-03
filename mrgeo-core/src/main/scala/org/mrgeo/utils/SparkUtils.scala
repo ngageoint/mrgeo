@@ -177,10 +177,13 @@ object SparkUtils extends Logging {
 
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
-    context.newAPIHadoopRDD(job.getConfiguration,
+    val rdd = context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsImagePyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
+
+    rdd.name = provider.getResourceName
+    rdd
 
     //        FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
     //        FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
@@ -222,10 +225,13 @@ object SparkUtils extends Logging {
 
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
-    context.newAPIHadoopRDD(job.getConfiguration,
+    val rdd = context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsImagePyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
+
+    rdd.name = provider.getResourceName
+    rdd
 
     //        FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
     //        FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
@@ -666,8 +672,6 @@ object SparkUtils extends Logging {
     meta.setName(zoom)
     meta.setMaxZoomLevel(zoom)
 
-    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
-
     val first = rdd.first()
     val raster = RasterWritable.toRaster(first._2)
 
@@ -696,8 +700,6 @@ object SparkUtils extends Logging {
 
       meta.setImageStats(zoom, stats)
     }
-
-    rdd.unpersist()
 
     meta
   }
