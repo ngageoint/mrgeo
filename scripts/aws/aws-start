@@ -40,7 +40,8 @@ usage() {
     echo "  -t   --task-nodes          - number of task (non-HDFS) nodes ($TASK_NODES)"
     echo "  -tt  --task_type           - task node instance type ($TASK_TYPE)"
     echo "  -a   --attach              - attach to existing cluster ID"
-    echo "  -z   --zone                - availability zone ($ZONE)"
+    echo "  -z   --zone                - availability zone ($ZONES)"
+    echo "  -tg   --tags               - tags (key=value key=value ...) ($TAGS)"
 }
 
 # add any predefined options (for developer convenience)
@@ -132,6 +133,16 @@ while [ "$#" -gt 0 ] ; do
      ;;
   "-tt" | "--task_type")
      TASK_TYPE=$2
+     shift 1
+     ;;
+  "-tg" | "--tags")
+     T=`echo "$2" | sed "s/^['\"]\(.*\)['\"]$/\1/"`
+     if [ -z $TAGS ]
+     then
+       TAGS="$T"
+     else
+       TAGS="$T $TAGS"
+     fi
      shift 1
      ;;
   "-a" | "--attach")
@@ -301,16 +312,27 @@ then
   echo "starting cluster " $NAME
 
 
+  if [ -n "$TAGS" ];
+  then
+    TAGS="--tags $TAGS"
+  fi
+
   YARN_ARGS=()
   YARN_ARGS+=("-y" "yarn.nodemanager.pmem-check-enabled=false")
   YARN_ARGS+=("-y","yarn.nodemanager.vmem-check-enabled=false")
   YARN_ARGS+=("-y","yarn.scheduler.minimum-allocation-mb=1024")   # 2048
   YARN_ARGS+=("-m","yarn.app.mapreduce.am.resource.mb=1024")      # 2048
   YARN_ARGS+=("-y","yarn.app.mapreduce.am.command-opts=-Xmx820m") # 1638
+  YARN_ARGS+=("-y","yarn.app.mapreduce.am.command-opts=-Xmx820m") # 1638
+  YARN_ARGS+=("-y","yarn.app.mapreduce.am.command-opts=-Xmx820m") # 1638
   #YARN_ARGS+=("-c","fs.s3a.connection.maximum=15") # 15
   #YARN_ARGS+=("-c","fs.s3a.threads.max=256") # 256
   #YARN_ARGS+=("-c","fs.s3a.threads.core=15") # 15
   #YARN_ARGS+=("-c","fs.s3a.max.total.tasks=1000") # 1000
+  # Turn on the Spark external shuffler
+  YARN_ARGS+=("-y","yarn.nodemanager.aux-services=spark_shuffle")
+  YARN_ARGS+=("-y","yarn.nodemanager.aux-services.spark_shuffle.class=org.apache.spark.network.yarn.YarnShuffleService")
+
 
   SPARK_ARGS=()
   SPARK_ARGS+=("spark.yarn.jar=/home/hadoop/spark/lib/spark-assembly-1.4.0-hadoop2.4.0.jar")
@@ -325,16 +347,20 @@ then
   SPARK_ARGS+=("spark.speculation=true")
   SPARK_ARGS+=("spark.shuffle.consolidateFiles=true")
   #SPARK_ARGS+=("spark.rdd.compress=true")
+  SPARK_ARGS+=("spark.shuffle.service.enabled=true")
+  SPARK_ARGS+=("spark.dynamicAllocation.enabled=true")
+
 
   IFS=',';
   YARN_CONF="${YARN_ARGS[*]// /|}"
   SPARK_CONF="${SPARK_ARGS[*]// /|}"
   IFS=$' \t\n'
 
+
   CLUSTER_ID=$(aws --output text emr create-cluster --name "$NAME $NOW" --ami-version 3.7 --ec2-attributes KeyName=$PEMFILE,AvailabilityZone=$ZONE \
   --log-uri "s3://mrgeo-deploy/logs" \
-  --instance-groups InstanceCount=1,Name=Master,InstanceGroupType=MASTER,InstanceType=$MASTER_TYPE $WORKERS $TASKS\
-  --tags mrgeo= --no-auto-terminate --no-termination-protected  \
+  --instance-groups InstanceCount=1,Name=Master,InstanceGroupType=MASTER,InstanceType=$MASTER_TYPE $WORKERS $TASKS \
+  $TAGS --no-auto-terminate --no-termination-protected  \
   --bootstrap-actions \
   Path=s3://mrgeo-deploy/mrgeo-emr-bootstrap.sh,Name="Fix Up EMR for MrGeo" \
   Path=s3://mrgeo-deploy/install-gdal.sh,Name="Install GDAL" \
