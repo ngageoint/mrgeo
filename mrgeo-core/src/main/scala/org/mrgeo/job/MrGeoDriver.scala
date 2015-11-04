@@ -178,13 +178,14 @@ abstract class MrGeoDriver extends Logging {
 
     val mem = res._3
 
-    val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
 
     // this is not only a min memory, but a "unit of allocation", each allocation a multiple of this number
     val minmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
       YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB)
     val maxmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_MB,
       YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_MB)
+
+    val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
 
     logInfo("Initial values:  min memory: " + minmemory + "  (" + SparkUtils.kbtohuman(minmemory * 1024, "m") +
         ") max memory: " + maxmemory + "  (" + SparkUtils.kbtohuman(maxmemory * 1024, "m") +
@@ -197,39 +198,77 @@ abstract class MrGeoDriver extends Logging {
     if (job.isMemoryIntensive ||
         MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_FORCE_MEMORYINTENSIVE, "false").toBoolean) {
       mult = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MEMORYINTENSIVE_MULTIPLIER, "2.0").toDouble
-      // need to make sure we didn't blow out any memory parameters
 
       logInfo("Memory intensive job.  multiplier: " + mult + " min memory now: " + (minmemory * mult).toInt +
           "  (" + SparkUtils.kbtohuman((minmemory * mult).toInt * 1024, "m") + ")")
-
     }
 
-    val confmem = configureYarnMemory(job, mem, (minmemory * mult).toInt, maxmemory, minmemory, executorMemoryOverhead)
+    // memory is allocated in units on minmemory (YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB).
+    var confmem = configureYarnMemory(res._1, res._2, res._3, minmemory, (minmemory * mult).toInt, maxmemory)
+
+    var actualoverhead = if ((confmem._2 * 0.1) > executorMemoryOverhead) (confmem._2 * 0.1).toLong else executorMemoryOverhead
+
+    // if we are sucking up more than 1/2 memory in overhead, expand the memory
+    while (confmem._2 < actualoverhead * 2) {
+      mult += 1
+      confmem = configureYarnMemory(res._1, res._2, res._3, minmemory, (minmemory * mult).toInt, maxmemory)
+      actualoverhead = if ((confmem._2 * 0.1) > executorMemoryOverhead) (confmem._2 * 0.1).toLong else executorMemoryOverhead
+    }
 
     job.executors = confmem._1
-    job.executorMemKb = (confmem._2 - executorMemoryOverhead) * 1024 // mb to kb
+    job.executorMemKb = (confmem._2 - actualoverhead)  * 1024 // mb to kb
     job.memoryKb = mem * 1024 // mem is in mb, convert to kb
 
     logInfo("Configuring job (" + job.name + ") with " + job.executors + " tasks and " + SparkUtils.kbtohuman(job.memoryKb, "m") +
-        " total memory, " + SparkUtils.kbtohuman(job.executorMemKb + (executorMemoryOverhead * 1024), "m") + " per worker (" +
+        " total memory, " + SparkUtils.kbtohuman(job.executorMemKb + (actualoverhead * 1024), "m") + " per worker (" +
         SparkUtils.kbtohuman(job.executorMemKb, "m") + " + " +
-        SparkUtils.kbtohuman(executorMemoryOverhead * 1024, "m") + " overhead per task)" )
+        SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)" )
 
+  }
+
+
+  private def configureYarnMemory(cores:Int, nodes:Int, memory:Long, unitMemory:Long, minMemory:Long, maxMemory:Long) = {
+
+    val rawMemoryPerNode = memory / nodes
+    val rawExecutorsPerNode = cores / nodes
+    val rawMemPerExecutor = rawMemoryPerNode / rawExecutorsPerNode
+
+    val rawUnits = Math.floor(rawMemPerExecutor.toDouble / unitMemory)
+
+    val units = {
+      val r = rawUnits * unitMemory
+      if (r > maxMemory)
+        // Make this is a multiple of unitMemory
+        Math.floor(maxMemory.toDouble / unitMemory.toDouble).toInt
+      else if (r < minMemory)
+        // Make this is a multiple of unitMemory
+        Math.ceil(minMemory.toDouble / unitMemory.toDouble).toInt
+      else
+        rawUnits
+    }
+
+    val executorMemory = units * unitMemory
+
+    val executorsPerNode = (rawMemoryPerNode.toDouble / executorMemory).toInt
+    val executors = executorsPerNode * nodes
+
+    (executors.toInt, executorMemory.toLong)
   }
 
   private def calculateYarnResources():(Int, Int, Long) = {
 
     val cl = getClass.getClassLoader
 
-    var client:Class[_] = null
-    try {
-      client = cl.loadClass("org.apache.hadoop.yarn.client.api.YarnClient")
-    }
-    catch {
-      // YarnClient was here in older versions of YARN
-      case cnfe: ClassNotFoundException =>
-        client = cl.loadClass("org.apache.hadoop.yarn.client.YarnClient")
-    }
+    val client:Class[_] =
+      try {
+        cl.loadClass("org.apache.hadoop.yarn.client.api.YarnClient")
+      }
+      catch {
+        // YarnClient was here in older versions of YARN
+        case cnfe: ClassNotFoundException =>
+          cl.loadClass("org.apache.hadoop.yarn.client.YarnClient")
+        case _:Throwable => null
+      }
 
     val create = client.getMethod("createYarnClient")
     val init = client.getMethod("init", classOf[Configuration])
@@ -267,46 +306,8 @@ abstract class MrGeoDriver extends Logging {
     (cores, nodes, memory)
   }
 
-  private def configureYarnMemory(job:JobArguments, memory:Long, minmemory:Long,
-      maxmemory:Long, unitmemory:Long, overhead:Long) = {
-
-    var ex = job.executors
-    var perex = memory / ex
-
-    if (perex < minmemory)  {
-      ex = (memory / minmemory).toInt
-    }
-
-    if (ex == 0) {
-      throw new IllegalArgumentException("Invalid YARN memory configuration, min memory = " + minmemory + " and memory = " + memory)
-    }
-    perex = memory / ex
-
-    if (perex > maxmemory) {
-      ex = (memory / maxmemory).toInt
-    }
-
-    if (ex < 2)
-    {
-      ex = 2
-    }
-
-    // memory needs to allocated in "units" of the unitmemory
-    var units = Math.round((memory.toDouble / ex) / unitmemory)
-    var exmem = units * unitmemory
-
-    val ex2 = (memory / exmem).toInt
-    if (ex2 < ex) {
-      ex = ex2
-      units = Math.round((memory.toDouble / ex) / unitmemory)
-      exmem = units * unitmemory
-    }
-
-    (ex, exmem)
-  }
-
   protected def setupDependencies(job:JobArguments, hadoopConf:Configuration,
-                                   additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None): mutable.Set[String] = {
+      additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None): mutable.Set[String] = {
 
     val dependencies = DependencyLoader.getDependencies(getClass)
     val qualified = DependencyLoader.copyDependencies(dependencies, hadoopConf)
