@@ -152,7 +152,7 @@ class MrGeoYarnDriver {
     args += job.driverClass
 
     // this is silly, but arguments are passed simply as parameters to the java process that is spun
-    // off as the spark driver.  We need to make sure the command line isn't too long.  If it is, we'll
+    // off as the spark driver.  We need to make sure the command line isn't too long.  If it is,q we'll
     // put the params into a file that we'll send along to the driver...
     var length:Int = 0
     job.params.foreach(p => {

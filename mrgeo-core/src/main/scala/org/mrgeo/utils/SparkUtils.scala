@@ -177,10 +177,13 @@ object SparkUtils extends Logging {
 
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
-    context.newAPIHadoopRDD(job.getConfiguration,
+    val rdd = context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsImagePyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
+
+    rdd.name = provider.getResourceName
+    rdd
 
     //        FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
     //        FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
@@ -222,10 +225,13 @@ object SparkUtils extends Logging {
 
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
-    context.newAPIHadoopRDD(job.getConfiguration,
+    val rdd = context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsImagePyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
+
+    rdd.name = provider.getResourceName
+    rdd
 
     //        FileInputFormat.addInputPath(job, new Path(provider.getResourceName, zoom.toString))
     //        FileInputFormat.setInputPathFilter(job, classOf[MapFileFilter])
