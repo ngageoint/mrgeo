@@ -16,12 +16,33 @@
 package org.mrgeo.data.rdd
 
 import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.mapreduce.SparkHadoopMapReduceUtil
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{Partition, TaskContext}
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{Logging, Partition, TaskContext}
 
 import scala.reflect.ClassTag
 
 class MrGeoRDD[K:ClassTag, V:ClassTag](parent: RDD[(K, V)])  extends RDD[(K, V)](parent) {
+
+  //  printDependencies(this)
+//  private def printDependencies(rdd:RDD[_], level:Int = 0) {
+//    for (sp <- 0 until level) {
+//      print(" ")
+//    }
+//    print("*** " + rdd.name + ": " + rdd.id + " (" + rdd + ")")
+//
+//    rdd match {
+//    case mrgeo:MrGeoRDD[_,_] =>
+//      println(" --- MrGeoRDD ")
+//    case _ => println()
+//    }
+//
+//    rdd.dependencies.foreach(dep => {
+//      printDependencies(dep.rdd, level + 1)
+//    })
+//  }
+
   @DeveloperApi
   override def compute(split: Partition, context: TaskContext): Iterator[(K, V)] = {
     firstParent[(K, V)].iterator(split, context)
@@ -30,4 +51,6 @@ class MrGeoRDD[K:ClassTag, V:ClassTag](parent: RDD[(K, V)])  extends RDD[(K, V)]
   override protected def getPartitions: Array[Partition] = {
     firstParent[(K, V)].partitions
   }
+
+
 }

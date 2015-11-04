@@ -383,18 +383,26 @@ public class Bounds  implements Comparable<Bounds>, Externalizable
 @Override
 public void writeExternal(ObjectOutput out) throws IOException
 {
-  out.writeDouble(minX);
-  out.writeDouble(minY);
-  out.writeDouble(maxX);
-  out.writeDouble(maxY);
+  out.writeBoolean(set);
+  if (set)
+  {
+    out.writeDouble(minX);
+    out.writeDouble(minY);
+    out.writeDouble(maxX);
+    out.writeDouble(maxY);
+  }
 }
 
 @Override
 public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 {
-  minX = in.readDouble();
-  minY = in.readDouble();
-  maxX = in.readDouble();
-  maxY = in.readDouble();
+  set = in.readBoolean();
+  if (set)
+  {
+    minX = in.readDouble();
+    minY = in.readDouble();
+    maxX = in.readDouble();
+    maxY = in.readDouble();
+  }
 }
 }

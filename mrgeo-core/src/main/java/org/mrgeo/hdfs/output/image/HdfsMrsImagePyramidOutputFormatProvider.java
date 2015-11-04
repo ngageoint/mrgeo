@@ -129,7 +129,7 @@ public void teardown(final Job job) throws DataProviderException
 @Override
 public void teardownForSpark(final Configuration conf) throws DataProviderException
 {
-  performTeardown(conf);
+  // nothing to do
 }
 
 private void performTeardown(final Configuration conf) throws DataProviderException
