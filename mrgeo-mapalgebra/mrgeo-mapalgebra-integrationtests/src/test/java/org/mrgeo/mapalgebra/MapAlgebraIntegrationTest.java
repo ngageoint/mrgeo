@@ -52,7 +52,7 @@ public TestName testname = new TestName();
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = false;
+public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
 private static final String smallElevationName = "small-elevation";
 private static String smallElevation = Defs.INPUT + smallElevationName;
@@ -1508,6 +1508,7 @@ public void slopeDeg() throws Exception
 
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void slopePercent() throws Exception
@@ -1526,6 +1527,161 @@ public void slopePercent() throws Exception
 
   }
 }
+
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsCount() throws Exception
+{
+  String exp = String.format("statistics('count', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMax() throws Exception
+{
+  String exp = String.format("statistics('max', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMean() throws Exception
+{
+  String exp = String.format("statistics('mean', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMedian() throws Exception
+{
+  String exp = String.format("statistics('median', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMin() throws Exception
+{
+  String exp = String.format("statistics('min', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMode() throws Exception
+{
+  String exp = String.format("statistics('mode', [%s], [%s], [%s], [%s])", allones, alltwos, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsSum() throws Exception
+{
+  String exp = String.format("statistics('sum', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsStdDev() throws Exception
+{
+  String exp = String.format("statistics('stddev', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsWildcard() throws Exception
+{
+  String exp = String.format("statistics('mean', '%s')", "all*");
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
