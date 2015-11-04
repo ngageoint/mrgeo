@@ -125,13 +125,13 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
     super.onExecutorMetricsUpdate(executorMetricsUpdate)
   }
 
-  override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
-    println("Executor Added " + executorAdded)
-    super.onExecutorAdded(executorAdded)
-  }
-
-  override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
-    println("Executor Removed " + executorRemoved)
-    super.onExecutorRemoved(executorRemoved)
-  }
+//  override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
+//    println("Executor Added " + executorAdded)
+//    super.onExecutorAdded(executorAdded)
+//  }
+//
+//  override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
+//    println("Executor Removed " + executorRemoved)
+//    super.onExecutorRemoved(executorRemoved)
+//  }
 }
