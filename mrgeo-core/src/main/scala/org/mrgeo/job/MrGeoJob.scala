@@ -17,6 +17,7 @@ package org.mrgeo.job
 
 import org.apache.spark._
 import org.mrgeo.hdfs.utils.HadoopFileUtils
+import org.mrgeo.spark.MrGeoListener
 
 abstract class MrGeoJob extends Logging {
   def registerClasses(): Array[Class[_]]
@@ -35,6 +36,9 @@ abstract class MrGeoJob extends Logging {
     setup(job, conf)
 
     val context = new SparkContext(conf)
+
+    //context.addSparkListener(new MrGeoListener(context))
+
     val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
 
     try {
