@@ -15,7 +15,7 @@
 
 package org.mrgeo.spark
 
-import org.apache.spark.{Logging, SparkFirehoseListener, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.scheduler._
 
 //class MrGeoListener(val context:SparkContext) extends SparkFirehoseListener with Logging {
