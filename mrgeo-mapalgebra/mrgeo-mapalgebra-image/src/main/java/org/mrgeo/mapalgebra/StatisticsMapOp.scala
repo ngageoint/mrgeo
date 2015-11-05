@@ -51,7 +51,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
   private val StdDev = "stddev"
   private val Sum = "sum"
 
-  private val methods = Array[String](Min, Max, Mean, Mode, StdDev, Sum, Count)
+  private val methods = Array[String](Min, Max, Mean, Median, Mode, StdDev, Sum, Count)
 
   private var method: String = null
   private var inputs: Option[Array[Either[Option[RasterMapOp], Option[String]]]] = None
