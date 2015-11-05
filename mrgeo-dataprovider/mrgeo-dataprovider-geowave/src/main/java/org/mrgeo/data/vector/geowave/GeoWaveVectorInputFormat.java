@@ -1,6 +1,6 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveInputFormat;
+import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveInputFormat;
 import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;

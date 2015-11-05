@@ -1,13 +1,12 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveRecordReader;
+import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveRecordReader;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.mrgeo.data.vector.FeatureIdWritable;
-import org.mrgeo.data.vector.VectorInputSplit;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
@@ -32,10 +31,6 @@ public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, G
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
-    if (!(split instanceof VectorInputSplit))
-    {
-      throw new IOException("Expected split to be of type VectorInputSplit, but got: " + split.getClass().getName());
-    }
     strCqlFilter = context.getConfiguration().get(CQL_FILTER);
     if (strCqlFilter != null && !strCqlFilter.isEmpty())
     {
@@ -51,9 +46,8 @@ public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, G
       }
     }
     delegateReader = new GeoWaveRecordReader<Object>();
-    // Pass the native split wrapped by VectorInputSplit back into the native reader.
     log.info("Calling GeoWave delegate reader initialize()");
-    delegateReader.initialize(((VectorInputSplit) split).getWrappedInputSplit(), context);
+    delegateReader.initialize(split, context);
     log.info("Done calling GeoWave delegate reader initialize()");
   }
 

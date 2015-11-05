@@ -1,6 +1,6 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.store.CloseableIterator;
+import mil.nga.giat.geowave.core.store.CloseableIterator;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
