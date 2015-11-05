@@ -2,29 +2,30 @@ package org.mrgeo.data.vector.geowave;
 
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import mil.nga.giat.geowave.accumulo.AccumuloOperations;
-import mil.nga.giat.geowave.accumulo.BasicAccumuloOperations;
-import mil.nga.giat.geowave.accumulo.metadata.AccumuloAdapterStore;
-import mil.nga.giat.geowave.accumulo.metadata.AccumuloIndexStore;
-import mil.nga.giat.geowave.index.ByteArrayId;
-import mil.nga.giat.geowave.store.CloseableIterator;
-import mil.nga.giat.geowave.store.adapter.AdapterStore;
-import mil.nga.giat.geowave.store.adapter.DataAdapter;
-import mil.nga.giat.geowave.store.adapter.statistics.CountDataStatistics;
-import mil.nga.giat.geowave.store.adapter.statistics.DataStatisticsStore;
-import mil.nga.giat.geowave.store.dimension.DimensionField;
-import mil.nga.giat.geowave.store.index.CommonIndexValue;
-import mil.nga.giat.geowave.store.index.Index;
-import mil.nga.giat.geowave.store.query.BasicQuery;
-import mil.nga.giat.geowave.store.query.Query;
-import mil.nga.giat.geowave.vector.AccumuloDataStatisticsStoreExt;
-import mil.nga.giat.geowave.vector.VectorDataStore;
+import mil.nga.giat.geowave.datastore.accumulo.AccumuloOperations;
+import mil.nga.giat.geowave.datastore.accumulo.BasicAccumuloOperations;
+import mil.nga.giat.geowave.datastore.accumulo.metadata.AccumuloAdapterStore;
+import mil.nga.giat.geowave.datastore.accumulo.metadata.AccumuloIndexStore;
+import mil.nga.giat.geowave.core.index.ByteArrayId;
+import mil.nga.giat.geowave.core.store.CloseableIterator;
+import mil.nga.giat.geowave.core.store.adapter.AdapterStore;
+import mil.nga.giat.geowave.core.store.adapter.DataAdapter;
+import mil.nga.giat.geowave.core.store.adapter.statistics.CountDataStatistics;
+import mil.nga.giat.geowave.core.store.adapter.statistics.DataStatisticsStore;
+import mil.nga.giat.geowave.core.store.dimension.DimensionField;
+import mil.nga.giat.geowave.core.store.index.CommonIndexValue;
+import mil.nga.giat.geowave.core.store.index.Index;
+import mil.nga.giat.geowave.core.store.query.BasicQuery;
+import mil.nga.giat.geowave.core.store.query.Query;
+import mil.nga.giat.geowave.adapter.vector.AccumuloDataStatisticsStoreExt;
+import mil.nga.giat.geowave.adapter.vector.VectorDataStore;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
+import org.apache.hadoop.util.ClassUtil;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.joda.time.DateTime;
@@ -48,12 +49,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   private static final String PROVIDER_PROPERTIES_KEY_PREFIX = GeoWaveVectorDataProvider.class.getName() + "providerProperties.key";
   private static final String PROVIDER_PROPERTIES_VALUE_PREFIX = GeoWaveVectorDataProvider.class.getName() + "providerProperties.value";
 
+  private static Map<String, DataSourceEntry> dataSourceEntries = new HashMap<String, DataSourceEntry>();
   private static GeoWaveConnectionInfo connectionInfo;
-  private static AccumuloOperations storeOperations;
-  private static AdapterStore adapterStore;
-  private static DataStatisticsStore statisticsStore;
-  private static VectorDataStore dataStore;
-  private static Index index;
 
   // Package private for unit testing
   static boolean initialized = false;
@@ -69,6 +66,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   private static class ParseResults
   {
+    public String namespace;
     public String name;
     public Map<String, String> settings = new HashMap<String, String>();
   }
@@ -97,22 +95,32 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     connectionInfo = connInfo;
   }
 
-  public static DataStatisticsStore getStatisticsStore() throws AccumuloSecurityException, AccumuloException, IOException
+  public DataStatisticsStore getStatisticsStore() throws AccumuloSecurityException, AccumuloException, IOException
   {
-    initDataSource();
-    return statisticsStore;
+    String namespace = getNamespace();
+    initDataSource(namespace);
+    DataSourceEntry entry = getDataSourceEntry(namespace);
+    return entry.statisticsStore;
   }
 
-  public static Index getIndex() throws AccumuloSecurityException, AccumuloException, IOException
+  public Index getIndex() throws AccumuloSecurityException, AccumuloException, IOException
   {
-    initDataSource();
-    return index;
+    String namespace = getNamespace();
+    initDataSource(namespace);
+    DataSourceEntry entry = getDataSourceEntry(namespace);
+    return entry.index;
   }
 
   public String getGeoWaveResourceName() throws IOException
   {
     ParseResults results = parseResourceName(getResourceName());
     return results.name;
+  }
+
+  public String getNamespace() throws IOException
+  {
+    ParseResults results = parseResourceName(getResourceName());
+    return results.namespace;
   }
 
   public DataAdapter<?> getDataAdapter() throws AccumuloSecurityException, AccumuloException, IOException
@@ -155,7 +163,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   }
 
   /**
-   * Parses the input string into the name of the input and the optional query string
+   * Parses the input string into the optional namespace, the name of the input and
+   * the optional query string
    * that accompanies it. The two strings are separated by a semi-colon, and the query
    * should be included in double quotes if it contains any semi-colons or square brackets.
    * But the double quotes are not required otherwise.
@@ -170,10 +179,19 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     {
       throw new IOException("Missing name from GeoWave data source: " + input);
     }
+    int dotIndex = input.indexOf('.');
     ParseResults results = new ParseResults();
     if (semiColonIndex > 0)
     {
-      results.name = input.substring(0, semiColonIndex);
+      if (dotIndex >= 0)
+      {
+        results.namespace = input.substring(0, dotIndex);
+        results.name = input.substring(dotIndex + 1, semiColonIndex);
+      }
+      else
+      {
+        results.name = input.substring(0, semiColonIndex);
+      }
       // Start parsing the data source settings
       String strSettings = input.substring(semiColonIndex + 1);
       // Now parse each property of the geowave source.
@@ -181,7 +199,40 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     }
     else
     {
-      results.name = input;
+      if (dotIndex >= 0)
+      {
+        results.namespace = input.substring(0, dotIndex);
+        results.name = input.substring(dotIndex + 1);
+      }
+      else
+      {
+        results.name = input;
+      }
+    }
+    // If there is no namespace explicitly in the resource name, then we
+    // check to make sure the GeoWave configuration for MrGeo only has one
+    // namespace specified and use it. If there are multiple namespaces
+    // configured, then throw an exception.
+    if (results.namespace == null || results.namespace.isEmpty())
+    {
+      GeoWaveConnectionInfo connectionInfo = getConnectionInfo();
+      String[] namespaces = connectionInfo.getNamespaces();
+      if (namespaces == null || namespaces.length == 0)
+      {
+        throw new IOException("Missing missing " + GeoWaveConnectionInfo.GEOWAVE_NAMESPACES_KEY +
+                              " in the MrGeo configuration");
+      }
+      else
+      {
+        if (namespaces.length > 1)
+        {
+          throw new IOException(
+                  "You must specify a GeoWave namespace for " + input +
+                  " because multiple GeoWave namespaces are configured in MrGeo (e.g." +
+                  " MyNamespace." + input + ")");
+        }
+        results.namespace = namespaces[0];
+      }
     }
     return results;
   }
@@ -302,9 +353,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   @Override
   public VectorReader getVectorReader() throws IOException
   {
+    ParseResults results = parseResourceName(getResourceName());
     try
     {
-      init();
+      init(results);
     }
     catch (AccumuloSecurityException e)
     {
@@ -314,10 +366,11 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     {
       throw new IOException("AccumuloException in GeoWave data provider getVectorReader", e);
     }
+    DataSourceEntry entry = getDataSourceEntry(results.namespace);
     Query query = new BasicQuery(new BasicQuery.Constraints());
-    GeoWaveVectorReader reader = new GeoWaveVectorReader(dataStore,
-        adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
-        query, index, filter, providerProperties);
+    GeoWaveVectorReader reader = new GeoWaveVectorReader(results.namespace, entry.dataStore,
+        entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
+        query, entry.index, filter, providerProperties);
     return reader;
   }
 
@@ -387,68 +440,91 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   public static String[] listVectors(final ProviderProperties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
   {
     initConnectionInfo();
-    initDataSource();
     List<String> results = new ArrayList<String>();
-    CloseableIterator<DataAdapter<?>> iter = adapterStore.getAdapters();
-    try
+    for (String namespace: connectionInfo.getNamespaces())
     {
-      while (iter.hasNext())
+      initDataSource(namespace);
+      DataSourceEntry entry = getDataSourceEntry(namespace);
+      CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
+      try
       {
-        DataAdapter<?> adapter = iter.next();
-        if (adapter != null)
+        while (iter.hasNext())
         {
-          ByteArrayId adapterId = adapter.getAdapterId();
-          if (checkAuthorizations(adapterId, providerProperties))
+          DataAdapter<?> adapter = iter.next();
+          if (adapter != null)
           {
-            results.add(adapterId.getString());
+            ByteArrayId adapterId = adapter.getAdapterId();
+            if (checkAuthorizations(adapterId, namespace, providerProperties))
+            {
+              results.add(adapterId.getString());
+            }
           }
         }
       }
-    }
-    finally
-    {
-      if (iter != null)
+      finally
       {
-        iter.close();
+        if (iter != null)
+        {
+          iter.close();
+        }
       }
     }
     String[] resultArray = new String[results.size()];
     return results.toArray(resultArray);
   }
 
-  public static boolean canOpen(String input, ProviderProperties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
+  public static boolean canOpen(String input,
+                                ProviderProperties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
   {
     initConnectionInfo();
-    initDataSource();
     ParseResults results = parseResourceName(input);
+    initDataSource(results.namespace);
+    DataSourceEntry entry = getDataSourceEntry(results.namespace);
     ByteArrayId adapterId = new ByteArrayId(results.name);
-    DataAdapter<?> adapter = adapterStore.getAdapter(adapterId);
+    DataAdapter<?> adapter = entry.adapterStore.getAdapter(adapterId);
     if (adapter == null)
     {
       return false;
     }
-    return checkAuthorizations(adapterId, providerProperties);
+    return checkAuthorizations(adapterId, results.namespace, providerProperties);
   }
 
   private static boolean checkAuthorizations(ByteArrayId adapterId,
+                                             String namespace,
       ProviderProperties providerProperties) throws IOException, AccumuloException, AccumuloSecurityException
   {
     // Check to see if the requester is authorized to see any of the data in
     // the adapter.
-    return (getAdapterCount(adapterId, providerProperties) > 0L);
+    return (getAdapterCount(adapterId, namespace, providerProperties) > 0L);
+  }
+
+  private static DataSourceEntry getDataSourceEntry(String namespace) throws IOException
+  {
+    DataSourceEntry entry = dataSourceEntries.get(namespace);
+    if (entry == null)
+    {
+      throw new IOException("Data source was not yet initialized for namespace: " + namespace);
+    }
+    return entry;
   }
 
   public static long getAdapterCount(ByteArrayId adapterId,
+                                     String namespace,
                                      ProviderProperties providerProperties)
           throws IOException, AccumuloException, AccumuloSecurityException
   {
     initConnectionInfo();
-    initDataSource();
-    List<String> roles = providerProperties.getRoles();
+    initDataSource(namespace);
+    DataSourceEntry entry = getDataSourceEntry(namespace);
+    List<String> roles = null;
+    if (providerProperties != null)
+    {
+      roles = providerProperties.getRoles();
+    }
     if (roles != null && roles.size() > 0)
     {
-      String auths = StringUtils.join(providerProperties.getRoles(), ",");
-      CountDataStatistics<?> count = (CountDataStatistics<?>)statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID, auths);
+      String auths = StringUtils.join(roles, ",");
+      CountDataStatistics<?> count = (CountDataStatistics<?>)entry.statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID, auths);
       if (count != null && count.isSet())
       {
         return count.getCount();
@@ -456,7 +532,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     }
     else
     {
-      CountDataStatistics<?> count = (CountDataStatistics<?>)statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID);
+      CountDataStatistics<?> count = (CountDataStatistics<?>)entry.statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID);
       if (count != null && count.isSet())
       {
         return count.getCount();
@@ -472,12 +548,23 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     {
       return;
     }
+    ParseResults results = parseResourceName(getResourceName());
+    init(results);
+  }
+
+  private void init(ParseResults results) throws AccumuloSecurityException, AccumuloException, IOException
+  {
+    // Don't initialize more than once.
+    if (initialized)
+    {
+      return;
+    }
     initialized = true;
     // Extract the GeoWave adapter name and optional CQL string
-    ParseResults results = parseResourceName(getResourceName());
+    DataSourceEntry entry = getDataSourceEntry(results.namespace);
     // Now perform initialization for this specific data provider (i.e. for
     // this resource).
-    dataAdapter = adapterStore.getAdapter(new ByteArrayId(results.name));
+    dataAdapter = entry.adapterStore.getAdapter(new ByteArrayId(results.name));
     assignSettings(results.name, results.settings);
 
 // Testing code
@@ -606,39 +693,42 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     }
   }
 
-  private static void initDataSource() throws AccumuloException, AccumuloSecurityException, IOException
+  private static void initDataSource(String namespace) throws AccumuloException, AccumuloSecurityException, IOException
   {
-    if (storeOperations == null)
+    DataSourceEntry entry = dataSourceEntries.get(namespace);
+    if (entry == null)
     {
-      storeOperations = new BasicAccumuloOperations(
+      entry = new DataSourceEntry();
+      dataSourceEntries.put(namespace, entry);
+      entry.storeOperations = new BasicAccumuloOperations(
           connectionInfo.getZookeeperServers(),
           connectionInfo.getInstanceName(),
           connectionInfo.getUserName(),
           connectionInfo.getPassword(),
-          connectionInfo.getNamespace());
+          namespace);
       final AccumuloIndexStore indexStore = new AccumuloIndexStore(
-          storeOperations);
+          entry.storeOperations);
   
-      statisticsStore = new AccumuloDataStatisticsStoreExt(
-          storeOperations);
-      adapterStore = new AccumuloAdapterStore(
-          storeOperations);
-      dataStore = new VectorDataStore(
+      entry.statisticsStore = new AccumuloDataStatisticsStoreExt(
+          entry.storeOperations);
+      entry.adapterStore = new AccumuloAdapterStore(
+          entry.storeOperations);
+      entry.dataStore = new VectorDataStore(
           indexStore,
-          adapterStore,
-          statisticsStore,
-          storeOperations);
-      CloseableIterator<Index> indices = dataStore.getIndices();
+          entry.adapterStore,
+          entry.statisticsStore,
+          entry.storeOperations);
+      CloseableIterator<Index> indices = entry.dataStore.getIndices();
       try
       {
         if (indices.hasNext())
         {
-          index = indices.next();
+          entry.index = indices.next();
           if (log.isDebugEnabled())
           {
-            log.debug("Found GeoWave index " + index.getId().getString());
-            log.debug("  index type = " + index.getDimensionalityType().toString());
-            DimensionField<? extends CommonIndexValue>[] dimFields = index.getIndexModel().getDimensions();
+            log.debug("Found GeoWave index " + entry.index.getId().getString());
+//            log.debug("  index type = " + entry.index.getDimensionalityType().toString());
+            DimensionField<? extends CommonIndexValue>[] dimFields = entry.index.getIndexModel().getDimensions();
             for (DimensionField<? extends CommonIndexValue> dimField : dimFields)
             {
               log.debug("  Dimension field: " + dimField.getFieldId().getString());
@@ -651,5 +741,18 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
         indices.close();
       }
     }
+  }
+
+  static class DataSourceEntry
+  {
+    public DataSourceEntry()
+    {
+    }
+
+    private AccumuloOperations storeOperations;
+    private AdapterStore adapterStore;
+    private DataStatisticsStore statisticsStore;
+    private VectorDataStore dataStore;
+    private Index index;
   }
 }

@@ -95,11 +95,15 @@
     </dependency>
     <dependency>
       <groupId>mil.nga.giat</groupId>
-      <artifactId>geowave-accumulo</artifactId>
+      <artifactId>geowave-adapter-vector</artifactId>
     </dependency>
     <dependency>
       <groupId>mil.nga.giat</groupId>
-      <artifactId>geowave-vector</artifactId>
+      <artifactId>geowave-core-store</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>mil.nga.giat</groupId>
+      <artifactId>geowave-datastore-accumulo</artifactId>
     </dependency>
     <!--
     <dependency>
