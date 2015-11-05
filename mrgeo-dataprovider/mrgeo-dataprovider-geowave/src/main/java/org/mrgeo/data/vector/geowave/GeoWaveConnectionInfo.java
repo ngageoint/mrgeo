@@ -2,6 +2,7 @@ package org.mrgeo.data.vector.geowave;
 
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,14 +19,14 @@ public class GeoWaveConnectionInfo
   public static final String GEOWAVE_INSTANCE_KEY = "geowave.instance";
   public static final String GEOWAVE_USERNAME_KEY = "geowave.username";
   public static final String GEOWAVE_PASSWORD_KEY = "geowave.password";
-  public static final String GEOWAVE_NAMESPACE_KEY = "geowave.namespace";
+  public static final String GEOWAVE_NAMESPACES_KEY = "geowave.namespaces";
   public static final String GEOWAVE_FORCE_BBOX_COMPUTE_KEY = "geowave.force.bbox.compute";
 
   private String zookeeperServers;
   private String instanceName;
   private String userName;
   private String password;
-  private String namespace;
+  private String[] namespaces;
   private boolean forceBboxCompute = false;
 
   public static GeoWaveConnectionInfo load()
@@ -55,12 +56,13 @@ public class GeoWaveConnectionInfo
       log.info("Missing GeoWave connection info - password");
       return null;
     }
-    String namespace = props.getProperty(GEOWAVE_NAMESPACE_KEY);
-    if (namespace == null || namespace.isEmpty())
+    String namespaces = props.getProperty(GEOWAVE_NAMESPACES_KEY);
+    if (namespaces == null || namespaces.isEmpty())
     {
-      log.info("Missing GeoWave connection info - namespace");
+      log.debug("Missing GeoWave connection info - namespaces");
       return null;
     }
+    log.debug("Geowave namespaces = " + namespaces);
     String strForceBboxCompute = props.getProperty(GEOWAVE_FORCE_BBOX_COMPUTE_KEY);
     if (strForceBboxCompute != null)
     {
@@ -73,7 +75,7 @@ public class GeoWaveConnectionInfo
       forceBboxCompute = true;
     }
     return new GeoWaveConnectionInfo(zookeeperServers, instance, userName,
-        password, namespace, forceBboxCompute);
+        password, namespaces.split(","), forceBboxCompute);
   }
 
   public static GeoWaveConnectionInfo load(final Configuration conf)
@@ -114,11 +116,11 @@ public class GeoWaveConnectionInfo
       log.info("Missing GeoWave connection info from configuration - password");
       throw new IllegalArgumentException("Missing password setting for GeoWave");
     }
-    String namespace = conf.get(GEOWAVE_NAMESPACE_KEY);
-    if (namespace == null || namespace.isEmpty())
+    String namespaces = conf.get(GEOWAVE_NAMESPACES_KEY);
+    if (namespaces == null || namespaces.isEmpty())
     {
-      log.info("Missing GeoWave connection info from configuration - namespace");
-      throw new IllegalArgumentException("Missing namespace setting for GeoWave");
+      log.error("Missing GeoWave connection info from configuration - namespaces");
+      throw new IllegalArgumentException("Missing namespaces setting for GeoWave");
     }
     String strForceBboxCompute = conf.get(GEOWAVE_FORCE_BBOX_COMPUTE_KEY);
     boolean forceBboxCompute = false;
@@ -128,7 +130,7 @@ public class GeoWaveConnectionInfo
       forceBboxCompute = true;
     }
     return new GeoWaveConnectionInfo(zookeeperServers, instance, userName,
-        password, namespace, forceBboxCompute);
+        password, namespaces.split(","), forceBboxCompute);
   }
 
   public void writeToConfig(final Configuration conf)
@@ -140,17 +142,17 @@ public class GeoWaveConnectionInfo
     // TODO: Encrypt the password. Maybe initially we can just Base64 it? See
     // what the Accumulo plugin does.
     conf.set(GEOWAVE_PASSWORD_KEY, password);
-    conf.set(GEOWAVE_NAMESPACE_KEY, namespace);
+    conf.set(GEOWAVE_NAMESPACES_KEY, StringUtils.join(namespaces, ","));
   }
 
   public GeoWaveConnectionInfo(String zookeeperServers, String instanceName,
-      String userName, String password, String namespace, boolean forceBboxCompute)
+      String userName, String password, String[] namespaces, boolean forceBboxCompute)
   {
     this.zookeeperServers = zookeeperServers;
     this.instanceName = instanceName;
     this.userName = userName;
     this.password = password;
-    this.namespace = namespace;
+    this.namespaces = namespaces;
     this.forceBboxCompute = forceBboxCompute;
   }
 
@@ -174,9 +176,9 @@ public class GeoWaveConnectionInfo
     return password;
   }
 
-  public String getNamespace()
+  public String[] getNamespaces()
   {
-    return namespace;
+    return namespaces;
   }
 
   public boolean getForceBboxCompute()
@@ -195,9 +197,9 @@ public class GeoWaveConnectionInfo
     {
       result.put(GEOWAVE_ZOOKEEPER_SERVERS_KEY, zookeeperServers);
     }
-    if (namespace != null)
+    if (namespaces != null)
     {
-      result.put(GEOWAVE_NAMESPACE_KEY, namespace);
+      result.put(GEOWAVE_NAMESPACES_KEY, StringUtils.join(namespaces, ","));
     }
     if (userName != null)
     {
@@ -215,7 +217,7 @@ public class GeoWaveConnectionInfo
   {
     String instanceName = settings.get(GEOWAVE_INSTANCE_KEY);
     String zookeeperServers = settings.get(GEOWAVE_ZOOKEEPER_SERVERS_KEY);
-    String namespace = settings.get(GEOWAVE_NAMESPACE_KEY);
+    String namespaces = settings.get(GEOWAVE_NAMESPACES_KEY);
     String userName = settings.get(GEOWAVE_USERNAME_KEY);
     String password = settings.get(GEOWAVE_PASSWORD_KEY);
     String strForceBbox = settings.get(GEOWAVE_FORCE_BBOX_COMPUTE_KEY);
@@ -225,6 +227,6 @@ public class GeoWaveConnectionInfo
       forceBbox = Boolean.valueOf(strForceBbox);
     }
     return new GeoWaveConnectionInfo(zookeeperServers, instanceName,
-                                     userName, password, namespace, forceBbox);
+                                     userName, password, namespaces.split(","), forceBbox);
   }
 }

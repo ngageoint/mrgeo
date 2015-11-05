@@ -1,12 +1,12 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.store.CloseableIterator;
-import mil.nga.giat.geowave.store.adapter.DataAdapter;
-import mil.nga.giat.geowave.store.index.Index;
-import mil.nga.giat.geowave.store.query.Query;
-import mil.nga.giat.geowave.store.query.SpatialQuery;
-import mil.nga.giat.geowave.vector.VectorDataStore;
-import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
+import mil.nga.giat.geowave.core.store.CloseableIterator;
+import mil.nga.giat.geowave.core.store.adapter.DataAdapter;
+import mil.nga.giat.geowave.core.store.index.Index;
+import mil.nga.giat.geowave.core.store.query.Query;
+import mil.nga.giat.geowave.core.geotime.store.query.SpatialQuery;
+import mil.nga.giat.geowave.adapter.vector.VectorDataStore;
+import mil.nga.giat.geowave.adapter.vector.FeatureDataAdapter;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.geotools.factory.CommonFactoryFinder;
@@ -31,6 +31,7 @@ public class GeoWaveVectorReader implements VectorReader
 {
   static final Logger log = LoggerFactory.getLogger(GeoWaveVectorReader.class);
 
+  private String namespace;
   private VectorDataStore dataStore;
   private DataAdapter<?> adapter;
   private Query query;
@@ -38,9 +39,10 @@ public class GeoWaveVectorReader implements VectorReader
   private Filter filter;
   private ProviderProperties providerProperties;
 
-  public GeoWaveVectorReader(VectorDataStore dataStore, DataAdapter<?> adapter,
+  public GeoWaveVectorReader(String namespace, VectorDataStore dataStore, DataAdapter<?> adapter,
       Query query, Index index, Filter filter, ProviderProperties providerProperties)
   {
+    this.namespace = namespace;
     this.dataStore = dataStore;
     this.adapter = adapter;
     this.query = query;
@@ -113,6 +115,7 @@ public class GeoWaveVectorReader implements VectorReader
       if (filter == null)
       {
         return GeoWaveVectorDataProvider.getAdapterCount(adapter.getAdapterId(),
+                                                         namespace,
                                                          providerProperties);
       }
       else
