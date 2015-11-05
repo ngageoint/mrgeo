@@ -15,7 +15,7 @@
 
 package org.mrgeo.spark
 
-import org.apache.spark.{Logging, SparkFirehoseListener, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.scheduler._
 
 //class MrGeoListener(val context:SparkContext) extends SparkFirehoseListener with Logging {
@@ -125,13 +125,13 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
     super.onExecutorMetricsUpdate(executorMetricsUpdate)
   }
 
-  override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
-    println("Executor Added " + executorAdded)
-    super.onExecutorAdded(executorAdded)
-  }
-
-  override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
-    println("Executor Removed " + executorRemoved)
-    super.onExecutorRemoved(executorRemoved)
-  }
+//  override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
+//    println("Executor Added " + executorAdded)
+//    super.onExecutorAdded(executorAdded)
+//  }
+//
+//  override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
+//    println("Executor Removed " + executorRemoved)
+//    super.onExecutorRemoved(executorRemoved)
+//  }
 }

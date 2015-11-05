@@ -16,7 +16,6 @@
 package org.mrgeo.aggregators;
 
 import org.hamcrest.core.AnyOf;
-import org.hamcrest.core.IsEqual;
 import org.hamcrest.number.IsCloseTo;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -51,7 +50,7 @@ public class ModeAggregatorTest
 
     values[1] = nodata;
     result = agg.aggregate(values, nodata);
-    assertThat((double)result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsEqual.equalTo(0.54f)));
+    assertThat((double)result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsCloseTo.closeTo(0.54f, epsilon)));
 
     values[2] = nodata;
     result = agg.aggregate(values, nodata);
@@ -84,7 +83,7 @@ public class ModeAggregatorTest
     values[1] = nodata;
     result = agg.aggregate(values, nodata);
     //assertEquals(0.54, result, epsilon);
-    assertThat((double)result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsEqual.equalTo(0.54f)));
+    assertThat((double)result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsCloseTo.closeTo(0.54f, epsilon)));
 
     values[2] = nodata;
     result = agg.aggregate(values, nodata);
