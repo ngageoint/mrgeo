@@ -369,7 +369,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     Bounds bounds = null;
     try
@@ -411,13 +411,9 @@ public class WmsGenerator
     {
       bounds = RequestUtils.reprojectBounds(bounds, srs);
     }
-    catch (org.opengis.referencing.NoSuchAuthorityCodeException e)
-    {
-      return writeError(Response.Status.BAD_REQUEST, "InvalidCRS", e.getMessage());
-    }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
 
     // Return the resulting image
@@ -439,7 +435,7 @@ public class WmsGenerator
     catch (Exception e)
     {
       log.error("Unable to render the image in getTile", e);
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -553,7 +549,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     String format = getQueryParam(allParams, "format");
     if (format == null)
@@ -568,7 +564,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     try
     {
@@ -587,7 +583,7 @@ public class WmsGenerator
     catch (Exception e)
     {
       log.error("Unable to render the image in getMosaic", e);
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -727,7 +723,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     try
     {
@@ -744,7 +740,7 @@ public class WmsGenerator
     catch (Exception e)
     {
       log.error("Unable to render the image in getTile", e);
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -805,7 +801,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -878,7 +874,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
