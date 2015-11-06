@@ -32,15 +32,11 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.mrspyramid.rendering.KmlResponseBuilder;
 import org.mrgeo.utils.Bounds;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.media.jai.FloatDoubleColorModel;
 import javax.ws.rs.core.Response;
-import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -100,10 +96,7 @@ public class MrsPyramidService {
     {
         double[] extrema = {0, 0};
 
-        FloatDoubleColorModel colorModel = new FloatDoubleColorModel(ColorSpace
-                .getInstance(ColorSpace.CS_GRAY), false, false, Transparency.OPAQUE,
-                DataBuffer.TYPE_FLOAT);
-        WritableRaster wr = colorModel.createCompatibleWritableRaster(width, height);
+        WritableRaster wr = RasterUtils.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT);
 
         if (width > height) {
             extrema[1] = width-1;
@@ -121,8 +114,7 @@ public class MrsPyramidService {
             }
         }
 
-      ColorScaleApplier applier = (ColorScaleApplier)ImageHandlerFactory.getHandler(format,
-          ColorScaleApplier.class);
+      ColorScaleApplier applier = (ColorScaleApplier)ImageHandlerFactory.getHandler(format, ColorScaleApplier.class);
 
       return applier.applyColorScale(wr, cs, extrema, new double[]{-9999,0});
     }
@@ -136,8 +128,7 @@ public class MrsPyramidService {
     }
 
     public ImageRenderer getImageRenderer(String format) throws Exception {
-        return (ImageRenderer)ImageHandlerFactory.getHandler(format, ImageRenderer.class,
-                new Object[] { }, new Class<?>[] { CoordinateReferenceSystem.class });
+        return (ImageRenderer)ImageHandlerFactory.getHandler(format, ImageRenderer.class);
     }
 
     public Raster applyColorScaleToImage(String format, Raster result, ColorScale cs, ImageRenderer renderer, double[] extrema) throws Exception {

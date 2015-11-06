@@ -15,13 +15,10 @@
 
 package org.mrgeo.services.utils;
 
-import org.geotools.geometry.DirectPosition2D;
-import org.geotools.referencing.CRS;
+import org.gdal.osr.CoordinateTransformation;
+import org.gdal.osr.SpatialReference;
 import org.mrgeo.utils.Bounds;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
+import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +31,7 @@ public class RequestUtils
 
   /**
    * Parses a geographic bounds from a request parameter value
-   * 
+   *
    * @param param
    *          request parameter value
    * @return geographic bounds
@@ -52,40 +49,48 @@ public class RequestUtils
       throw new IllegalArgumentException("Bounding box must have four comma delimited arguments.");
     }
     return new Bounds(Double.valueOf(bBoxValues[0]), Double.valueOf(bBoxValues[1]),
-        Double.valueOf(bBoxValues[2]), Double.valueOf(bBoxValues[3]));
+            Double.valueOf(bBoxValues[2]), Double.valueOf(bBoxValues[3]));
   }
-    /**
-     * Reprojects a bounds to Geographic
-     *
-     * @param bounds
-     *            the projected input bounds
-     * @param epsg
-     *            the epsg string of the projected bounds crs
-     * @return geographic bounds
-     * @throws FactoryException
-     * @throws TransformException
-     * @throws NoSuchAuthorityCodeException
-     */
-  public static Bounds reprojectBounds(final Bounds bounds, final String epsg) throws NoSuchAuthorityCodeException, TransformException, FactoryException
+  /**
+   * Reprojects a bounds to Geographic
+   *
+   * @param bounds
+   *            the projected input bounds
+   * @param epsg
+   *            the epsg string of the projected bounds crs
+   * @return geographic bounds
+   */
+  public static Bounds reprojectBounds(final Bounds bounds, final String epsg)
   {
-      Bounds output = bounds.clone();
-      //If SRS requires reprojection, adjust the input bounds here to Geographic EPSG:4326
-      if (epsg != null && !(epsg.equalsIgnoreCase("EPSG:4326"))) {
+    if (epsg != null && !(epsg.equalsIgnoreCase("EPSG:4326")))
+    {
 
-        MathTransform xform = CRS.findMathTransform(CRS.decode(epsg, true), CRS.decode("EPSG:4326", true), true);
+      SpatialReference src = new SpatialReference(GDALUtils.EPSG4326());
+      SpatialReference dst = new SpatialReference();
+      String[] code = epsg.split(":");
+      dst.ImportFromEPSG(Integer.parseInt(code[1]));
 
-        DirectPosition2D source = new DirectPosition2D(bounds.getMinX(), bounds.getMinY());
-        DirectPosition2D min = new DirectPosition2D();
+      CoordinateTransformation tx = new CoordinateTransformation(src, dst);
 
-        xform.transform(source, min);
+      double[] c1;
+      double[] c2;
+      double[] c3;
+      double[] c4;
 
-        source = new DirectPosition2D(bounds.getMaxX(), bounds.getMaxY());
-        DirectPosition2D max = new DirectPosition2D();
+      c1 = tx.TransformPoint(bounds.getMinX(), bounds.getMinY());
+      c2 = tx.TransformPoint(bounds.getMinX(), bounds.getMaxY());
+      c3 = tx.TransformPoint(bounds.getMaxX(), bounds.getMinY());
+      c4 = tx.TransformPoint(bounds.getMaxX(), bounds.getMaxY());
 
-        xform.transform(source, max);
+      return new Bounds(Math.min(Math.min(c1[0], c2[0]), Math.min(c3[0], c4[0])),
+              Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),
+              Math.max(Math.max(c1[0], c2[0]), Math.max(c3[0], c4[0])),
+              Math.max(Math.max(c1[1], c2[1]), Math.max(c3[1], c4[1])));
 
-        output = new Bounds(min.x, min.y, max.x, max.y);
-      }
-      return output;
+    }
+    else
+    {
+      return bounds.clone();
+    }
   }
 }
