@@ -7,12 +7,16 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorDataProviderFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
 
 public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFactory
 {
+  static Logger log = LoggerFactory.getLogger(GeoWaveVectorDataProviderFactory.class);
+
   @Override
   public boolean isValid(Configuration conf)
   {
@@ -50,6 +54,7 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   @Override
   public void setConfiguration(Map<String, String> settings)
   {
+    log.error("GeoWave classpath is: " + System.getProperty("java.class.path"));
     GeoWaveConnectionInfo connInfo = GeoWaveConnectionInfo.fromMap(settings);
     GeoWaveVectorDataProvider.setConnectionInfo(connInfo);
   }
