@@ -235,11 +235,7 @@ public class GetMapTest extends WmsGeneratorTestAbstract
         .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
         .get(ClientResponse.class);
 
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-        content.contains("<ServiceException><![CDATA[Unsupported image format - image/abc]]></ServiceException>"));
-    response.close();
+    processXMLResponse(response, "testGetMapInvalidFormat.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test
@@ -257,12 +253,7 @@ public class GetMapTest extends WmsGeneratorTestAbstract
         .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
         .get(ClientResponse.class);
 
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-        content.contains(
-            "org.mrgeo.data.DataProviderNotFound: Unable to find a MrsImage data provider for IslandsElevation-v3"));
-    response.close();
+    processXMLResponse(response, "testGetMapInvalidLayer.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test
@@ -397,11 +388,7 @@ public class GetMapTest extends WmsGeneratorTestAbstract
         .queryParam("height", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
         .get(ClientResponse.class);
 
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-        content.contains("<ServiceException><![CDATA[Only one LAYER is supported]]></ServiceException>"));
-    response.close();
+    processXMLResponse(response, "testGetMapMultipleRequestLayers.xml", Response.Status.BAD_REQUEST);
   }
 
   /*

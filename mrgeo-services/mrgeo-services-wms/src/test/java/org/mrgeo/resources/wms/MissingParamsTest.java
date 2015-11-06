@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +36,15 @@ import static org.junit.Assert.assertTrue;
 public class MissingParamsTest extends WmsGeneratorTestAbstract
 {
   @SuppressWarnings("unused")
-  private static final Logger log = 
-  LoggerFactory.getLogger(MissingParamsTest.class);
+  private static final Logger log =
+          LoggerFactory.getLogger(MissingParamsTest.class);
 
-  @BeforeClass 
+  @BeforeClass
   public static void setUpForJUnit()
-  {    
-    try 
+  {
+    try
     {
+      baselineInput = TestUtils.composeInputDir(MissingParamsTest.class);
       WmsGeneratorTestAbstract.setUpForJUnit();
     }
     catch (Exception e)
@@ -78,27 +80,22 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
     }
 
     ClientResponse response = webResource.get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Missing required " + paramName + " parameter]]></ServiceException>"));
-    response.close();
+    processXMLResponse(response, "testGetMapMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
   }
 
-  @Test 
-  @Category(IntegrationTest.class)  
+  @Test
+  @Category(IntegrationTest.class)
   public void testGetMapMissingParams() throws Exception
   {
-    String[] paramNames = 
-        new String[]
-            {
-      "FORMAT",
-      "BBOX",
-      "LAYERS",
-      "WIDTH",
-      "HEIGHT"
-            };
+    String[] paramNames =
+            new String[]
+                    {
+                            "FORMAT",
+                            "BBOX",
+                            "LAYERS",
+                            "WIDTH",
+                            "HEIGHT"
+                    };
     for (int i = 0; i < paramNames.length; i++)
     {
       testGetMapMissingParam(paramNames[i]);
@@ -124,27 +121,21 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
     }
 
     ClientResponse response = webResource.get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Missing required " + paramName + " parameter]]></ServiceException>"));
-//    assertTrue("Unexpected response: " + content,
-//               content.contains("<ServiceException code=\"Missing request parameter: " + paramName));
-    response.close();
+
+    processXMLResponse(response, "testGetMosaicMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
   }
 
-  @Test 
-  @Category(IntegrationTest.class)  
+  @Test
+  @Category(IntegrationTest.class)
   public void testGetMosaicMissingParams() throws Exception
   {
-    String[] paramNames = 
-        new String[]
-            {
-      "FORMAT",
-      "BBOX",
-      "LAYERS"
-            };
+    String[] paramNames =
+            new String[]
+                    {
+                            "FORMAT",
+                            "BBOX",
+                            "LAYERS"
+                    };
     for (int i = 0; i < paramNames.length; i++)
     {
       testGetMosaicMissingParam(paramNames[i]);
@@ -178,28 +169,23 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
     }
 
     ClientResponse response = webResource.get(ClientResponse.class);
-    Assert.assertNotNull(response);
 
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Missing required " + paramName + " parameter]]></ServiceException>"));
-    response.close();
+    processXMLResponse(response, "testGetTileMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
   }
 
-  @Test 
-  @Category(IntegrationTest.class)  
+  @Test
+  @Category(IntegrationTest.class)
   public void testGetTileMissingParams() throws Exception
   {
-    String[] paramNames = 
-        new String[]
-            {
-      "FORMAT",
-      "LAYER",
-      "TILEROW",
-      "TILECOL",
-      "SCALE"
-            };
+    String[] paramNames =
+            new String[]
+                    {
+                            "FORMAT",
+                            "LAYER",
+                            "TILEROW",
+                            "TILECOL",
+                            "SCALE"
+                    };
     for (int i = 0; i < paramNames.length; i++)
     {
       testGetTileMissingParam(paramNames[i]);

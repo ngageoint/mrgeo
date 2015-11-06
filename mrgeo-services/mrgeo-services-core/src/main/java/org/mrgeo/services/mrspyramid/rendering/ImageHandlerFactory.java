@@ -50,14 +50,13 @@ public class ImageHandlerFactory
    * Returns a MrGeo WMS "image handler" for the requested image format
    * 
    */
-  public static Object getHandler(final String format, final Class<?> handlerType) throws Exception
-  {
-    return getHandler(format, handlerType, null, null);
-  }
+//  public static Object getHandler(final String format, final Class<?> handlerType) throws Exception
+//  {
+//    return getHandler(format, handlerType);
+//  }
 
   @SuppressWarnings("unused")
-  public static Object getHandler(String imageFormat, final Class<?> handlerType,
-    final Object[] constructorParams, final Class<?>[] constructorParamTypes) throws Exception
+  public static Object getHandler(String imageFormat, final Class<?> handlerType) throws Exception
   {
 
     if (imageFormatHandlers == null || mimeTypeHandlers == null)

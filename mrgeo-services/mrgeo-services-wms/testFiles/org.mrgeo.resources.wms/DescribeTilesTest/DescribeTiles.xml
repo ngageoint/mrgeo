@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE WMS_DescribeTilesResponse SYSTEM "http://schemas.opengis.net/wms/wms/1.4.0All.xsd">
 <WMS_DescribeTilesResponse xmlns="http://www.opengis.net/wms" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.4.0" xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.4.0/capabilities_1_4_0.xsd">
 <!--1.4.0 isn't out yet, but it does have a preliminary protocol for tiling.-->
 <!--See http://www.opengeospatial.org/standards/wms for details.-->
