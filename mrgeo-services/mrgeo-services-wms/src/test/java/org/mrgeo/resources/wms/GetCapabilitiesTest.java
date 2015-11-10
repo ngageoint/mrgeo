@@ -57,7 +57,7 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
     ClientResponse response = resource().path("/wms")
             .queryParam("SERVICE", "WMS")
             .get(ClientResponse.class);
-    processTextResponse(response, "GetCapabilities-1-1-1-EmptyRequest.xml");
+    processXMLResponse(response, "GetCapabilities-1-1-1-EmptyRequest.xml");
   }
   
   /*
@@ -75,8 +75,8 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
             .queryParam("SERVICE", "WMS")
             .queryParam("REQUEST", "getcapabilities")
             .get(ClientResponse.class);
-      
-    processTextResponse(response, "GetCapabilities-1-1-1-EmptyVersion.xml");
+
+    processXMLResponse(response, "GetCapabilities-1-1-1-EmptyVersion.xml");
   }
   
   @Test 
@@ -88,8 +88,8 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
             .queryParam("REQUEST", "getcapabilities")
             .queryParam("version", "1.1.1")
             .get(ClientResponse.class);
-      
-    processTextResponse(response, "GetCapabilities-1-1-1.xml");
+
+    processXMLResponse(response, "GetCapabilities-1-1-1.xml");
   }
   
   @Test 
@@ -101,8 +101,8 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
             .queryParam("REQUEST", "getcapabilities")
             .queryParam("VERSION", "1.3.0")
             .get(ClientResponse.class);
-      
-    processTextResponse(response, "GetCapabilities-1-3-0.xml");
+
+    processXMLResponse(response, "GetCapabilities-1-3-0.xml");
   }
   
   @Test 
@@ -114,8 +114,8 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
             .queryParam("REQUEST", "getcapabilities")
             .queryParam("VERSION", "1.4.0")
             .get(ClientResponse.class);
-      
-    processTextResponse(response, "GetCapabilities-1-4-0.xml");
+
+    processXMLResponse(response, "GetCapabilities-1-4-0.xml");
   }
   
   @Test 
@@ -128,7 +128,7 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
             .queryParam("version", "0.9.9")
             .get(ClientResponse.class);
 
-    processTextResponse(response, "GetCapabilities-1-1-1.xml");
+    processXMLResponse(response, "GetCapabilities-1-1-1.xml");
   }
   
   @Test 
@@ -140,8 +140,8 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
             .queryParam("REQUEST", "getcapabilities")
             .queryParam("version", "1.2.9")
             .get(ClientResponse.class);
-       
-    processTextResponse(response, "GetCapabilities-1-1-1.xml");
+
+    processXMLResponse(response, "GetCapabilities-1-1-1.xml");
   }
   
   @Test 
@@ -153,8 +153,8 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
             .queryParam("REQUEST", "getcapabilities")
             .queryParam("VERSION", "1.3.9")
             .get(ClientResponse.class);
-      
-    processTextResponse(response, "GetCapabilities-1-3-0.xml");
+
+    processXMLResponse(response, "GetCapabilities-1-3-0.xml");
   }
   
   @Test 
@@ -166,7 +166,7 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
             .queryParam("REQUEST", "getcapabilities")
             .queryParam("VERSION", "1.4.1")
             .get(ClientResponse.class);
-      
-    processTextResponse(response, "GetCapabilities-1-4-0.xml");
+
+    processXMLResponse(response, "GetCapabilities-1-4-0.xml");
   }
 }

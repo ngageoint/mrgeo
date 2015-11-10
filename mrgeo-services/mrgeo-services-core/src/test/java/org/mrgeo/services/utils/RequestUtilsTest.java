@@ -15,14 +15,11 @@
 
 package org.mrgeo.services.utils;
 
-import com.vividsolutions.jts.util.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.Bounds;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.operation.TransformException;
 
 public class RequestUtilsTest {
 
@@ -31,7 +28,7 @@ public class RequestUtilsTest {
     public void testBoundsFromParamGood() {
         String param = "66.047475576957,33.021709619141,68.594930410941,34.068157373047";
         Bounds bounds = RequestUtils.boundsFromParam(param);
-        Assert.equals(bounds, new Bounds(66.047475576957,33.021709619141,68.594930410941,34.068157373047));
+        Assert.assertEquals("Bounds are bad", bounds, new Bounds(66.047475576957,33.021709619141,68.594930410941,34.068157373047));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -43,20 +40,25 @@ public class RequestUtilsTest {
 
     @Test
     @Category(UnitTest.class)
-    public void testReprojectBounds4326() throws NoSuchAuthorityCodeException, TransformException, FactoryException {
+    public void testReprojectBounds4326()  {
         String epsg = "EPSG:4326";
         Bounds bounds = new Bounds(66.047475576957,33.021709619141,68.594930410941,34.068157373047);
         Bounds prjBounds = RequestUtils.reprojectBounds(bounds, epsg);
-        Assert.equals(bounds, prjBounds);
+        // no reprojection, should be the same as input
+        Assert.assertEquals("Bounds are bad", bounds, prjBounds);
     }
 
     @Test
     @Category(UnitTest.class)
-    public void testReprojectBounds3857() throws NoSuchAuthorityCodeException, TransformException, FactoryException {
+    public void testReprojectBounds3857()  {
         String epsg = "EPSG:3857";
-        Bounds bounds = new Bounds(7395870.7107807,3914591.5868208,7466766.0545053,3948376.7533182);
+        Bounds bounds = new Bounds(66.047475576957,33.021709619141,68.594930410941,34.068157373047);
         Bounds prjBounds = RequestUtils.reprojectBounds(bounds, epsg);
-        Assert.equals(prjBounds, new Bounds(66.43823698866211,33.14519138631994,67.07510069706927,33.3989375016381));
+
+        Assert.assertEquals("Bad bounds west", 7352371, prjBounds.getMinX(), 1.0);
+        Assert.assertEquals("Bad bounds south", 3898185, prjBounds.getMinY(), 1.0);
+        Assert.assertEquals("Bad bounds east", 7635952, prjBounds.getMaxX(), 1.0);
+        Assert.assertEquals("Bad bounds north", 4037957, prjBounds.getMaxY(), 1.0);
     }
 
 }
