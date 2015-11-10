@@ -56,16 +56,12 @@ public class BadRequestTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)
   public void testMissingServiceParameter() throws Exception
   {
-    WebResource wr = resource();
     ClientResponse response = resource()
             .path("/wms")
             .get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Missing required SERVICE parameter. Should be set to \"WMS\"]]></ServiceException>"));
-    response.close();
+
+    processXMLResponse(response, "wms-missing-serviceparameter.xml", Response.Status.BAD_REQUEST);
+
   }
 
   @Test
@@ -78,12 +74,8 @@ public class BadRequestTest extends WmsGeneratorTestAbstract
             .queryParam("SERVICE", "WMS")
             .queryParam("REQUEST", "blah")
             .get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Invalid request]]></ServiceException>"));
-    response.close();
+
+    processXMLResponse(response, "wms-invalid-requesttype.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test 
@@ -96,12 +88,7 @@ public class BadRequestTest extends WmsGeneratorTestAbstract
             .queryParam("SERVICE", "WFS")
             .get(ClientResponse.class);
 
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Invalid SERVICE parameter. Should be set to \"WMS\"]]></ServiceException>"));
-    response.close();
+    processXMLResponse(response, "wms-invalid-servicetype.xml", Response.Status.BAD_REQUEST);
   }
 
   /*
@@ -124,11 +111,6 @@ public class BadRequestTest extends WmsGeneratorTestAbstract
             .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
             .get(ClientResponse.class);
 
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException code=\"InvalidCRS\"><![CDATA[No code \"CRS:85\" from authority \"Web Map Service CRS\" found for object of type \"CoordinateReferenceSystem\".]]></ServiceException>"));
-    response.close();
+    processXMLResponse(response, "wms-invalid-coordsys.xml", Response.Status.BAD_REQUEST);
   }
 }

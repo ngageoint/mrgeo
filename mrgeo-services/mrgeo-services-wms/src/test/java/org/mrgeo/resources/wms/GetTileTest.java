@@ -66,12 +66,8 @@ public class GetTileTest extends WmsGeneratorTestAbstract
             .queryParam("TILECOL", "970")
             .queryParam("SCALE", "0.0027465820")
             .get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("Unable to open pyramid: IslandsElevation-v2,IslandsElevation-v3"));
-    response.close();
+
+    processXMLResponse(response, "testGetTileMultipleRequestLayers.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test
@@ -87,12 +83,8 @@ public class GetTileTest extends WmsGeneratorTestAbstract
             .queryParam("TILECOL", "970")
             .queryParam("SCALE", "0.0027465820")
             .get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("Unsupported image format - image/abc"));
-    response.close();
+
+    processXMLResponse(response, "testGetTileInvalidFormat.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test 
@@ -108,13 +100,8 @@ public class GetTileTest extends WmsGeneratorTestAbstract
             .queryParam("TILECOL", "970")
             .queryParam("SCALE", "0.0027465820")
             .get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-        content.contains(
-            "Unable to open pyramid: IslandsElevation-v3"));
-    response.close();
+
+    processXMLResponse(response, "testGetTileInvalidLayer.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test 
@@ -131,11 +118,7 @@ public class GetTileTest extends WmsGeneratorTestAbstract
             .queryParam("SCALE", "0.0027465820")
             .get(ClientResponse.class);
 
-    Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-        content.contains("Tile x/y out of range. (1, 1) range: (242, 56) to (243, 56) (inclusive)"));
-      response.close();
+    processXMLResponse(response, "testGetTileOutOfBoundsPng.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test 
@@ -206,11 +189,7 @@ public class GetTileTest extends WmsGeneratorTestAbstract
             .queryParam("SCALE", "0.0027465820")
             .get(ClientResponse.class);
 
-    Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("Tile x/y out of range. (1, 1) range: (242, 56) to (243, 56) (inclusive)"));
-    response.close();
+    processXMLResponse(response, "testGetTileOutOfBoundsJpg.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test 
@@ -246,11 +225,7 @@ public class GetTileTest extends WmsGeneratorTestAbstract
             .queryParam("SCALE", "0.0027465820")
             .get(ClientResponse.class);
 
-    Assert.assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("Tile x/y out of range. (1, 1) range: (242, 56) to (243, 56) (inclusive)"));
-    response.close();
+    processXMLResponse(response, "testGetTileOutOfBoundsTif.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test 
