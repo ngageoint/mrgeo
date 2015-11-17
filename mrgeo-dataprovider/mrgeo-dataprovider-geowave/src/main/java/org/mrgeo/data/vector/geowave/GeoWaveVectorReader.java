@@ -1,12 +1,13 @@
 package org.mrgeo.data.vector.geowave;
 
 import mil.nga.giat.geowave.core.store.CloseableIterator;
+import mil.nga.giat.geowave.core.store.DataStore;
 import mil.nga.giat.geowave.core.store.adapter.DataAdapter;
 import mil.nga.giat.geowave.core.store.index.Index;
+import mil.nga.giat.geowave.core.store.index.PrimaryIndex;
 import mil.nga.giat.geowave.core.store.query.Query;
 import mil.nga.giat.geowave.core.geotime.store.query.SpatialQuery;
-import mil.nga.giat.geowave.adapter.vector.VectorDataStore;
-import mil.nga.giat.geowave.adapter.vector.FeatureDataAdapter;
+import mil.nga.giat.geowave.core.store.query.QueryOptions;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.geotools.factory.CommonFactoryFinder;
@@ -32,15 +33,15 @@ public class GeoWaveVectorReader implements VectorReader
   static final Logger log = LoggerFactory.getLogger(GeoWaveVectorReader.class);
 
   private String namespace;
-  private VectorDataStore dataStore;
+  private DataStore dataStore;
   private DataAdapter<?> adapter;
   private Query query;
-  private Index index;
+  private PrimaryIndex index;
   private Filter filter;
   private ProviderProperties providerProperties;
 
-  public GeoWaveVectorReader(String namespace, VectorDataStore dataStore, DataAdapter<?> adapter,
-      Query query, Index index, Filter filter, ProviderProperties providerProperties)
+  public GeoWaveVectorReader(String namespace, DataStore dataStore, DataAdapter<?> adapter,
+      Query query, PrimaryIndex index, Filter filter, ProviderProperties providerProperties)
   {
     this.namespace = namespace;
     this.dataStore = dataStore;
@@ -60,8 +61,9 @@ public class GeoWaveVectorReader implements VectorReader
   public CloseableKVIterator<FeatureIdWritable, Geometry> get()
   {
     Integer limit = null; // no limit
-    CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
-                                                query, filter, limit);
+    QueryOptions queryOptions = new QueryOptions(adapter, index);
+    queryOptions.setLimit(limit);
+    CloseableIterator<?> iter = dataStore.query(queryOptions, query);
     return new GeoWaveVectorIterator(iter);
   }
 
@@ -80,8 +82,9 @@ public class GeoWaveVectorReader implements VectorReader
     Filter idFilter = ff.id(ids);
     Filter queryFilter = ff.and(idFilter, this.filter);
     Integer limit = null; // no limit
-    CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
-                                                query, queryFilter, limit);
+    QueryOptions queryOptions = new QueryOptions(adapter, index);
+    queryOptions.setLimit(limit);
+    CloseableIterator<?> iter = dataStore.query(queryOptions, query);
     if (iter.hasNext())
     {
       Object value = iter.next();
@@ -102,8 +105,9 @@ public class GeoWaveVectorReader implements VectorReader
     com.vividsolutions.jts.geom.Geometry queryGeometry = gf.toGeometry(bounds.toEnvelope());
     Query query = new SpatialQuery(queryGeometry);
     Integer limit = null; // no limit
-    CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
-                                                query, filter, limit);
+    QueryOptions queryOptions = new QueryOptions(adapter, index);
+    queryOptions.setLimit(limit);
+    CloseableIterator<?> iter = dataStore.query(queryOptions, query);
     return new GeoWaveVectorIterator(iter);
   }
 
@@ -123,8 +127,9 @@ public class GeoWaveVectorReader implements VectorReader
         // We must iterate through the returned features to get the count
         long count = 0L;
         Integer limit = null; // no limit
-        CloseableIterator<?> iter = dataStore.query((FeatureDataAdapter)adapter, index,
-                                                    query, filter, limit);
+        QueryOptions queryOptions = new QueryOptions(adapter, index);
+        queryOptions.setLimit(limit);
+        CloseableIterator<?> iter = dataStore.query(queryOptions, query);
         while (iter.hasNext())
         {
           count++;

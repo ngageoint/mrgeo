@@ -99,7 +99,7 @@
     </dependency>
     <dependency>
       <groupId>mil.nga.giat</groupId>
-      <artifactId>geowave-core-store</artifactId>
+      <artifactId>geowave-core-mapreduce</artifactId>
     </dependency>
     <dependency>
       <groupId>mil.nga.giat</groupId>
