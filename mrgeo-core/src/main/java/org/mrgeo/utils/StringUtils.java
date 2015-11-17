@@ -109,32 +109,61 @@ public class StringUtils
 
 public static String read(DataInput in) throws IOException
 {
-  byte[] data = new byte[in.readInt()];
-  in.readFully(data);
+  int len = in.readInt();
+  if (len == -1)
+  {
+    return null;
+  }
+  else
+  {
+    byte[] data = new byte[len];
+    in.readFully(data);
 
-  return new String(data,"UTF-8");
+    return new String(data, "UTF-8");
+  }
 }
 
 public static void write(String str, DataOutput out) throws IOException
 {
-  byte[] data=str.getBytes("UTF-8");
-  out.writeInt(data.length);
-  out.write(data);
+  if (str == null)
+  {
+    out.writeInt(-1);
+  }
+  else
+  {
+    byte[] data = str.getBytes("UTF-8");
+    out.writeInt(data.length);
+    out.write(data);
+  }
 }
 
 public static String read(DataInputStream stream) throws IOException
 {
-  byte[] data = new byte[stream.readInt()];
-  stream.readFully(data);
+  int len = stream.readInt();
+  if (len == -1)
+  {
+    return null;
+  }
+  else
+  {
+    byte[] data = new byte[len];
+    stream.readFully(data);
 
-  return new String(data,"UTF-8");
+    return new String(data, "UTF-8");
+  }
 }
 
 public static void write(String str, DataOutputStream stream) throws IOException
 {
-  byte[] data=str.getBytes("UTF-8");
-  stream.writeInt(data.length);
-  stream.write(data);
-
+  if (str == null)
+  {
+    stream.writeInt(-1);
+  }
+  else
+  {
+    byte[] data = str.getBytes("UTF-8");
+    stream.writeInt(data.length);
+    stream.write(data);
+  }
 }
 }
