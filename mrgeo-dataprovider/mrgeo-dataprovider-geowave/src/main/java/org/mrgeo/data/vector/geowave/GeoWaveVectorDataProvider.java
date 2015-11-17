@@ -478,15 +478,23 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   {
     initConnectionInfo();
     ParseResults results = parseResourceName(input);
-    initDataSource(results.namespace);
-    DataSourceEntry entry = getDataSourceEntry(results.namespace);
-    ByteArrayId adapterId = new ByteArrayId(results.name);
-    DataAdapter<?> adapter = entry.adapterStore.getAdapter(adapterId);
-    if (adapter == null)
+    try
     {
-      return false;
+      initDataSource(results.namespace);
+      DataSourceEntry entry = getDataSourceEntry(results.namespace);
+      ByteArrayId adapterId = new ByteArrayId(results.name);
+      DataAdapter<?> adapter = entry.adapterStore.getAdapter(adapterId);
+      if (adapter == null)
+      {
+        return false;
+      }
+      return checkAuthorizations(adapterId, results.namespace, providerProperties);
     }
-    return checkAuthorizations(adapterId, results.namespace, providerProperties);
+    catch(IllegalArgumentException e)
+    {
+      log.info("Unable to open " + input + " with the GeoWave data provider: " + e.getMessage());
+    }
+    return false;
   }
 
   private static boolean checkAuthorizations(ByteArrayId adapterId,
