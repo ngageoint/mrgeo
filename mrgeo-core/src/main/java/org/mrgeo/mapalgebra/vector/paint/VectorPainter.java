@@ -49,7 +49,6 @@ private GeometryPainter rasterPainter;
 private Composite composite;
 private WritableRaster raster;
 private GeometryPainter totalPainter = null;
-private Composite totalComposite = null;
 private WritableRaster totalRaster;
 
 /**
@@ -102,6 +101,9 @@ public void beforePaintingTile(final long tileId)
 
   totalRaster = null;
 
+  final Tile tile = TMSUtils.tileid(tileId, zoom);
+  final TMSUtils.Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tileSize);
+  Bounds b = new Bounds(tb.w, tb.s, tb.e, tb.n);
   if (aggregationType == AggregationType.AVERAGE)
   {
     totalRaster = raster.createCompatibleWritableRaster();
@@ -109,11 +111,11 @@ public void beforePaintingTile(final long tileId)
     final BufferedImage bi = RasterUtils.makeBufferedImage(totalRaster);
     final Graphics2D gr = bi.createGraphics();
 
-    totalComposite = new AdditiveComposite();
     gr.setComposite(new AdditiveComposite());
     gr.setStroke(new BasicStroke(0));
 
     totalPainter = new GeometryPainter(gr, totalRaster, new Color(1, 1, 1), new Color(0, 0, 0));
+    totalPainter.setBounds(b);
   }
 
   final BufferedImage bi = RasterUtils.makeBufferedImage(raster);
@@ -124,10 +126,6 @@ public void beforePaintingTile(final long tileId)
 
   rasterPainter = new GeometryPainter(gr, raster, new Color(1, 1, 1),
       new Color(0, 0, 0));
-
-  final Tile tile = TMSUtils.tileid(tileId, zoom);
-  final TMSUtils.Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tileSize);
-  Bounds b = new Bounds(tb.w, tb.s, tb.e, tb.n);
   rasterPainter.setBounds(b);
 }
 
