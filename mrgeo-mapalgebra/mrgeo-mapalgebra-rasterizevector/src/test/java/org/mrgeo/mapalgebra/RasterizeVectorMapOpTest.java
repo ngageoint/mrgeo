@@ -45,7 +45,7 @@ private static MapOpTestUtils testUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = true;
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
 private static final Logger log = LoggerFactory.getLogger(RasterizeVectorMapOpTest.class);
 private static String shapefile = "major_road_intersections_exploded";
