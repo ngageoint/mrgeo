@@ -45,7 +45,7 @@ private static MapOpTestUtils testUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = false;
+public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
 private static final Logger log = LoggerFactory.getLogger(RasterizeVectorMapOpTest.class);
 private static String shapefile = "major_road_intersections_exploded";
@@ -172,6 +172,23 @@ public void rasterizeSumBounds() throws Exception
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void rasterizeAverage() throws Exception
+{
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"AVERAGE\", 0.0001716614, \"" + column + "\")";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
 }
