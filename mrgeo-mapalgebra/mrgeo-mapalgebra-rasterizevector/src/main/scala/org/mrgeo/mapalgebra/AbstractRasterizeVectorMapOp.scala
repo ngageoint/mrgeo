@@ -96,30 +96,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   override def execute(context: SparkContext): Boolean = {
     val vectorRDD: VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
       rdd().getOrElse(throw new IOException("Missing vector RDD"))
-    val tiledVectors = vectorRDD.flatMap(U => {
-      val geom = U._2
-      var result = new ListBuffer[(TileIdWritable, Geometry)]
-      // For each geometry, compute the tile(s) that it intersects and output the
-      // the geometry to each of those tiles.
-      val envelope: Envelope = calculateEnvelope(geom)
-      val b: TMSUtils.Bounds = new TMSUtils.Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
-
-      bounds match {
-        case Some(filterBounds) =>
-          if (filterBounds.intersect(b)) {
-            val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
-            for (tileId <- tiles) {
-              result += ((tileId, geom))
-            }
-          }
-        case None =>
-          val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
-          for (tileId <- tiles) {
-            result += ((tileId, geom))
-          }
-      }
-      result
-    })
+    val tiledVectors = vectorsToTiledRDD(vectorRDD)
     val localRdd = new PairRDDFunctions(tiledVectors)
     val groupedGeometries = localRdd.groupByKey()
     val noData = Float.NaN
@@ -129,6 +106,29 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     true
   }
 
+  /**
+    * This method iterates through each of the features in the vectorRDD input and
+    * returns a new RDD of TileIdWritable and Geometry tuples. The idea is that for
+    * each feature, it identifies which tiles that feature intersects and then adds
+    * a tuple to the resulting RDD for each of this tiles paired with that feature.
+    * For example, if a feature intersects 5 tiles, then it adds 5 records for that
+    * feature to the returned RDD.
+    * @param vectorRDD
+    * @return
+    */
+  def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)]
+
+  /**
+    * The input RDD contains one tuple for each tile that intersects at least one
+    * feature. The first element of the tuple is the tile id, and the second element
+    * is an Iterable containing all of the features that intersect that tile id. This
+    * method is responsible for "painting" the set of features onto a raster of that
+    * tile and returning the tile id and raster as a tuple. The returned RDD is the
+    * collection of all the tiles containing features along with the "painted" rasters
+    * for each of those tiles.
+    * @param rdd
+    * @return
+    */
   def rasterize(rdd: RDD[(TileIdWritable, Iterable[Geometry])]): RDD[(TileIdWritable, RasterWritable)]
 
   def calculateEnvelope(f: Geometry): Envelope = {

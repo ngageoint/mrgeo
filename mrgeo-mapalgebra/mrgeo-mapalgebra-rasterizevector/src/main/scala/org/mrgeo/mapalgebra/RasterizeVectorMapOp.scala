@@ -15,20 +15,15 @@
 
 package org.mrgeo.mapalgebra
 
-import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
+import java.io.Externalizable
 
 import com.vividsolutions.jts.geom.Envelope
-import org.apache.spark.rdd.{RDD, PairRDDFunctions}
-import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.apache.spark.rdd.RDD
 import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
+import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.geometry.{Geometry, GeometryFactory}
-import org.mrgeo.job.JobArguments
-import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.vector.VectorMapOp
+import org.mrgeo.geometry.Geometry
+import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
 import org.mrgeo.utils._
 
@@ -68,5 +63,32 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       (tileId, raster)
     })
     result
+  }
+
+  override def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)] = {
+    vectorRDD.flatMap(U => {
+      val geom = U._2
+      var result = new ListBuffer[(TileIdWritable, Geometry)]
+      // For each geometry, compute the tile(s) that it intersects and output the
+      // the geometry to each of those tiles.
+      val envelope: Envelope = calculateEnvelope(geom)
+      val b: TMSUtils.Bounds = new TMSUtils.Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
+
+      bounds match {
+        case Some(filterBounds) =>
+          if (filterBounds.intersect(b)) {
+            val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
+            for (tileId <- tiles) {
+              result += ((tileId, geom))
+            }
+          }
+        case None =>
+          val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
+          for (tileId <- tiles) {
+            result += ((tileId, geom))
+          }
+      }
+      result
+    })
   }
 }
