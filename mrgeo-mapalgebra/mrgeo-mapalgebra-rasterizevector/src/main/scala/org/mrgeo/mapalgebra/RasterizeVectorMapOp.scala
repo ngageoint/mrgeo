@@ -18,7 +18,7 @@ package org.mrgeo.mapalgebra
 import java.io.Externalizable
 
 import com.vividsolutions.jts.geom.Envelope
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
@@ -45,7 +45,16 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     initialize(node, variables)
   }
 
-  override def rasterize(groupedGeometries: RDD[(TileIdWritable, Iterable[Geometry])]): RDD[(TileIdWritable, RasterWritable)] = {
+  override def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)] =
+  {
+    val tiledVectors = vectorsToTiledRDD(vectorRDD)
+    val localRdd = new PairRDDFunctions(tiledVectors)
+    val groupedGeometries = localRdd.groupByKey()
+    val noData = Float.NaN
+    rasterize(groupedGeometries)
+  }
+
+  def rasterize(groupedGeometries: RDD[(TileIdWritable, Iterable[Geometry])]): RDD[(TileIdWritable, RasterWritable)] = {
     val result = groupedGeometries.map(U => {
       val tileId = U._1
       val rvp = new VectorPainter(zoom,
@@ -65,7 +74,17 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     result
   }
 
-  override def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)] = {
+  /**
+    * This method iterates through each of the features in the vectorRDD input and
+    * returns a new RDD of TileIdWritable and Geometry tuples. The idea is that for
+    * each feature, it identifies which tiles that feature intersects and then adds
+    * a tuple to the resulting RDD for each of this tiles paired with that feature.
+    * For example, if a feature intersects 5 tiles, then it adds 5 records for that
+    * feature to the returned RDD.
+    * @param vectorRDD
+    * @return
+    */
+  def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)] = {
     vectorRDD.flatMap(U => {
       val geom = U._2
       var result = new ListBuffer[(TileIdWritable, Geometry)]

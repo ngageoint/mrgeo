@@ -96,27 +96,12 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   override def execute(context: SparkContext): Boolean = {
     val vectorRDD: VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
       rdd().getOrElse(throw new IOException("Missing vector RDD"))
-    val tiledVectors = vectorsToTiledRDD(vectorRDD)
-    val localRdd = new PairRDDFunctions(tiledVectors)
-    val groupedGeometries = localRdd.groupByKey()
-    val noData = Float.NaN
-    val result = rasterize(groupedGeometries)
+    val result = rasterize(vectorRDD)
     rasterRDD = Some(RasterRDD(result))
+    val noData = Double.NaN
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData, calcStats = false))
     true
   }
-
-  /**
-    * This method iterates through each of the features in the vectorRDD input and
-    * returns a new RDD of TileIdWritable and Geometry tuples. The idea is that for
-    * each feature, it identifies which tiles that feature intersects and then adds
-    * a tuple to the resulting RDD for each of this tiles paired with that feature.
-    * For example, if a feature intersects 5 tiles, then it adds 5 records for that
-    * feature to the returned RDD.
-    * @param vectorRDD
-    * @return
-    */
-  def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)]
 
   /**
     * The input RDD contains one tuple for each tile that intersects at least one
@@ -126,10 +111,10 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     * tile and returning the tile id and raster as a tuple. The returned RDD is the
     * collection of all the tiles containing features along with the "painted" rasters
     * for each of those tiles.
-    * @param rdd
+    * @param vectorRDD
     * @return
     */
-  def rasterize(rdd: RDD[(TileIdWritable, Iterable[Geometry])]): RDD[(TileIdWritable, RasterWritable)]
+  def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)]
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
     true

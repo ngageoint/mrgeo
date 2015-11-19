@@ -19,7 +19,7 @@ import java.awt.image.{WritableRaster, DataBuffer}
 import java.io.Externalizable
 
 import com.vividsolutions.jts.geom.Envelope
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
@@ -54,7 +54,17 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     initialize(node, variables)
   }
 
-  override def rasterize(groupedGeometries: RDD[(TileIdWritable, Iterable[Geometry])]): RDD[(TileIdWritable, RasterWritable)] = {
+  override def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)] =
+  {
+    val tiledVectors = vectorsToTiledRDD(vectorRDD)
+    val localRdd = new PairRDDFunctions(tiledVectors)
+    val groupedGeometries = localRdd.groupByKey()
+    rasterize(groupedGeometries)
+  }
+
+  def rasterize(groupedGeometries: RDD[(TileIdWritable,
+    Iterable[(Double, Double, Double, Boolean)])]): RDD[(TileIdWritable, RasterWritable)] =
+  {
     val result = groupedGeometries.map(U => {
       val tileId = U._1
       val raster = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_DOUBLE, Double.NaN)
@@ -64,13 +74,11 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       else {
         null
       }
-      for (geom <- U._2) {
-        if (geom.isInstanceOf[Point]) {
-          val pt = geom.asInstanceOf[Point]
-          val tile = TMSUtils.tileid(tileId.get(), zoom)
-          val pixel = TMSUtils.latLonToTilePixelUL(pt.getY, pt.getX, tile.tx, tile.ty, zoom, tilesize)
-          updateRaster(raster, countRaster, pixel, pt)
-        }
+      for (geomEntry <- U._2) {
+        val tile = TMSUtils.tileid(tileId.get(), zoom)
+        val pixel = TMSUtils.latLonToTilePixelUL(geomEntry._1, geomEntry._2,
+          tile.tx, tile.ty, zoom, tilesize)
+        updateRaster(raster, countRaster, pixel, geomEntry._1, geomEntry._2, geomEntry._3, geomEntry._4)
       }
       if (aggregationType == VectorPainter.AggregationType.AVERAGE) {
         for (x <- 0 until raster.getWidth) {
@@ -88,7 +96,7 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     result
   }
 
-  override def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)] = {
+  def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, (Double, Double, Double, Boolean))] = {
     val filtered = if (bounds.nonEmpty) {
       val filterBounds = bounds.get
       vectorRDD.filter(U => {
@@ -109,7 +117,14 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       if (U._2.isInstanceOf[Point]) {
         val pt = U._2.asInstanceOf[Point]
         val tile = TMSUtils.latLonToTile(pt.getY(), pt.getX(), zoom, tilesize)
-        (new TileIdWritable(TMSUtils.tileid(tile.tx, tile.ty, zoom)), U._2)
+        (new TileIdWritable(TMSUtils.tileid(tile.tx, tile.ty, zoom)),
+          (pt.getY, pt.getX,
+            if (column.isEmpty) {
+              0.0
+            } else {
+              pt.getAttribute(column.get).toDouble
+            },
+            column.isDefined))
       }
       else {
         throw new IllegalArgumentException(
@@ -120,10 +135,11 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   }
 
   private def updateRaster(raster: WritableRaster, countRaster: WritableRaster,
-                           pixel: TMSUtils.Pixel, geom: Point): Unit = {
+                           pixel: TMSUtils.Pixel, latitude: Double,
+                          longitude: Double, columnValue: Double,
+                          validColumnValue: Boolean): Unit = {
     aggregationType match {
       case VectorPainter.AggregationType.AVERAGE =>
-        val columnValue = geom.getAttribute(this.column.get).toDouble
         if (!columnValue.isNaN) {
           val c = countRaster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0) + 1
           countRaster.setSample(pixel.px.toInt, pixel.py.toInt, 0, c)
@@ -139,7 +155,6 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
         raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, 0.0)
 
       case VectorPainter.AggregationType.MAX =>
-        val columnValue = geom.getAttribute(this.column.get).toDouble
         if (!columnValue.isNaN) {
           var v = raster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0)
           if (v.isNaN) {
@@ -152,7 +167,6 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
         }
 
       case VectorPainter.AggregationType.MIN =>
-        val columnValue = geom.getAttribute(this.column.get).toDouble
         if (!columnValue.isNaN) {
           var v = raster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0)
           if (v.isNaN) {
@@ -165,19 +179,21 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
         }
 
       case VectorPainter.AggregationType.SUM =>
-        val columnValue = column match {
-          case Some(c) =>
-            geom.getAttribute(this.column.get).toDouble
-          case None =>
-            1.0
+        // For SUM, if the user provided a numeric field, sum the values
+        // of of that field across all features. Otherwise, just sum the
+        // number of points that map to the pixel.
+        val colVal = if (validColumnValue) {
+          columnValue
+        } else {
+          1.0
         }
-        if (!columnValue.isNaN) {
+        if (!colVal.isNaN) {
           var v = raster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0)
           if (v.isNaN) {
-            v = columnValue
+            v = colVal
           }
           else {
-            v = v + columnValue
+            v = v + colVal
           }
           raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, v)
         }
