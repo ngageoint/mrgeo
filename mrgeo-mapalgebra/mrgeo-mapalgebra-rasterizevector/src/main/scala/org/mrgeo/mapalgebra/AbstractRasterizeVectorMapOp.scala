@@ -131,22 +131,6 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     */
   def rasterize(rdd: RDD[(TileIdWritable, Iterable[Geometry])]): RDD[(TileIdWritable, RasterWritable)]
 
-  def calculateEnvelope(f: Geometry): Envelope = {
-    f.toJTS.getEnvelopeInternal
-  }
-
-  def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: TMSUtils.Bounds): List[TileIdWritable] = {
-    var tiles = new ListBuffer[TileIdWritable]
-    val tb: TMSUtils.TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
-    for (tx <- tb.w to tb.e) {
-      for (ty <- tb.s to tb.n) {
-        val tile: TileIdWritable = new TileIdWritable(TMSUtils.tileid(tx, ty, zoom))
-        tiles += tile
-      }
-    }
-    tiles.toList
-  }
-
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
     true
   }

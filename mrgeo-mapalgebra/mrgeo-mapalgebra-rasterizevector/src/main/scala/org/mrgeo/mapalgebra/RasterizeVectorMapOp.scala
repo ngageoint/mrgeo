@@ -91,4 +91,20 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       result
     })
   }
+
+  def calculateEnvelope(f: Geometry): Envelope = {
+    f.toJTS.getEnvelopeInternal
+  }
+
+  def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: TMSUtils.Bounds): List[TileIdWritable] = {
+    var tiles = new ListBuffer[TileIdWritable]
+    val tb: TMSUtils.TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
+    for (tx <- tb.w to tb.e) {
+      for (ty <- tb.s to tb.n) {
+        val tile: TileIdWritable = new TileIdWritable(TMSUtils.tileid(tx, ty, zoom))
+        tiles += tile
+      }
+    }
+    tiles.toList
+  }
 }
