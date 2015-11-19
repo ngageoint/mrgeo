@@ -57,8 +57,8 @@ public class DocumentUtils
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
     Transformer transformer = transformerFactory.newTransformer();
     transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-    transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, String.format(
-      "http://schemas.opengis.net/%s/%s/%sAll.xsd", service, service, version.toString()));
+//    transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, String.format(
+//      "http://schemas.opengis.net/%s/%s/%sAll.xsd", service, service, version.toString()));
     DOMSource source = new DOMSource(doc);
     StreamResult result = new StreamResult(out);
     transformer.transform(source, result);
