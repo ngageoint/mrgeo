@@ -15,20 +15,20 @@
 
 package org.mrgeo.mapalgebra
 
-import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
-import java.util
+import java.io._
 import java.util.regex.Pattern
+import javax.script.ScriptEngineManager
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
-import org.mrgeo.job.{PrepareJob, JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob, PrepareJob}
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.mapalgebra.vector.{VectorDataMapOp, VectorMapOp}
-import org.mrgeo.utils.{HadoopUtils, StringUtils}
+import org.mrgeo.utils.StringUtils
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -41,8 +41,8 @@ object MapAlgebra extends MrGeoDriver {
   final val ProtectionLevel = "protection.level"
   final val ProviderProperties = "provider.properties"
 
-  def mapalgebra(expression:String, output:String,
-      conf:Configuration, providerProperties: ProviderProperties, protectionLevel:String = null):Boolean = {
+  def mapalgebra(expression: String, output: String,
+      conf: Configuration, providerProperties: ProviderProperties, protectionLevel: String = null): Boolean = {
     val args = mutable.Map[String, String]()
 
     val name = "MapAlgebra"
@@ -50,15 +50,29 @@ object MapAlgebra extends MrGeoDriver {
     args += MapAlgebra -> expression
     args += Output -> output
 
-    args += ProtectionLevel -> { if (protectionLevel == null) "" else protectionLevel }
-    args += ProviderProperties -> { if (providerProperties == null) "" else data.ProviderProperties.toDelimitedString(providerProperties) }
+    args += ProtectionLevel -> {
+      if (protectionLevel == null) {
+        ""
+      }
+      else {
+        protectionLevel
+      }
+    }
+    args += ProviderProperties -> {
+      if (providerProperties == null) {
+        ""
+      }
+      else {
+        data.ProviderProperties.toDelimitedString(providerProperties)
+      }
+    }
 
-    run(name, classOf[MapAlgebra].getName, args.toMap, conf, Some(MapOpFactory.getMapOpClasses))
+//    run(name, classOf[MapAlgebra].getName, args.toMap, conf, Some(MapOpFactory.getMapOpClasses))
 
     true
   }
 
-  def validate(expression:String, providerProperties: ProviderProperties):Boolean = {
+  def validate(expression: String, providerProperties: ProviderProperties): Boolean = {
     try {
       new MapAlgebra().isValid(expression, providerProperties)
     }
@@ -75,7 +89,7 @@ object MapAlgebra extends MrGeoDriver {
     true
   }
 
-  def validateWithExceptions(expression:String, providerProperties: ProviderProperties) = {
+  def validateWithExceptions(expression: String, providerProperties: ProviderProperties) = {
     new MapAlgebra().isValid(expression, providerProperties)
   }
 
@@ -101,12 +115,12 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
 
   parser.initialize()
 
-  def isValid(expression:String,
+  def isValid(expression: String,
       providerproperties: ProviderProperties = ProviderProperties.fromDelimitedString("")) = {
     parse(expression)
   }
 
-  private def parse(expression: String, protectionLevel:String = null): Array[ParserNode] = {
+  private def parse(expression: String, protectionLevel: String = null): Array[ParserNode] = {
     val nodes = Array.newBuilder[ParserNode]
 
     val cleaned = cleanExpression(expression)
@@ -121,20 +135,23 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
 
     mapped.foreach {
       case ch@'"' =>
-        if (!insingle)
+        if (!insingle) {
           indouble = !indouble
+        }
         line += ch
       case ch@'\'' =>
-        if (!indouble)
+        if (!indouble) {
           insingle = !insingle
+        }
         line += ch
       case ch@';' =>
         if (!insingle && !indouble) {
           lines += line.result()
           line.clear()
         }
-        else
+        else {
           line += ch
+        }
       case ch => line += ch
     }
     //    mapped.foreach(ch =>
@@ -153,10 +170,12 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     //      })
     //
     if (indouble || insingle) {
-      if (indouble)
+      if (indouble) {
         throw new ParserException("Unclosed double quote: " + cleaned)
-      else
+      }
+      else {
         throw new ParserException("Unclosed single quote: " + cleaned)
+      }
     }
 
     if (line.nonEmpty) {
@@ -216,7 +235,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
 
       val fn = new ParserFunctionNode
       fn.setName(file)
-      fn.setMapOp(loadResource(file).orNull )
+      fn.setMapOp(loadResource(file).orNull)
 
       variables.put(vn, Some(fn))
       exp = exp.replace("[" + file + "]", variable)
@@ -236,7 +255,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     }
   }
 
-  private def buildMapOps(node: ParserNode):Unit = {
+  private def buildMapOps(node: ParserNode): Unit = {
     // special case for "="
     node match {
     case function: ParserFunctionNode =>
@@ -297,7 +316,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     }
   }
 
-  private def loadResource(name:String):Option[MapOp] = {
+  private def loadResource(name: String): Option[MapOp] = {
     try {
       val imdp = DataProviderFactory.getMrsImageDataProvider(name, AccessMode.READ, providerproperties)
       return Some(MrsPyramidMapOp(imdp))
@@ -321,12 +340,12 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     classes.result()
   }
 
-  var expression:String = null
-  var output:String = null
+  var expression: String = null
+  var output: String = null
   var providerproperties: ProviderProperties = null
-  var protectionLevel:String = null
+  var protectionLevel: String = null
 
-  var nodes:Array[ParserNode] = null
+  var nodes: Array[ParserNode] = null
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
     expression = job.getSetting(MapAlgebra.MapAlgebra)
@@ -355,7 +374,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
   }
 
 
-  private def register(node:ParserNode, job: JobArguments, conf: SparkConf): Array[Class[_]] = {
+  private def register(node: ParserNode, job: JobArguments, conf: SparkConf): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
     // depth first run
@@ -364,9 +383,9 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     })
 
     node match {
-    case function:ParserFunctionNode =>
+    case function: ParserFunctionNode =>
       function.getName match {
-      case "=" =>  // ignore assignments...
+      case "=" => // ignore assignments...
       case _ =>
         val mapop = function.getMapOp
 
@@ -381,16 +400,16 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     classes.result()
   }
 
-  private def setup(node:ParserNode, job: JobArguments, conf: SparkConf): Unit = {
+  private def setup(node: ParserNode, job: JobArguments, conf: SparkConf): Unit = {
     // depth first run
     node.getChildren.foreach(child => {
       setup(child, job, conf)
     })
 
     node match {
-    case function:ParserFunctionNode =>
+    case function: ParserFunctionNode =>
       function.getName match {
-      case "=" =>  // ignore assignments...
+      case "=" => // ignore assignments...
       case _ =>
         val mapop = function.getMapOp
 
@@ -433,7 +452,8 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
   }
 
 
-  private def save(node: ParserNode, output: String, providerproperties: ProviderProperties, context: SparkContext): Boolean = {
+  private def save(node: ParserNode, output: String, providerproperties: ProviderProperties,
+      context: SparkContext): Boolean = {
 
     node match {
     case function: ParserFunctionNode =>
@@ -474,17 +494,16 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
   }
 
 
-
-  private def execute(node:ParserNode, context:SparkContext): Unit = {
+  private def execute(node: ParserNode, context: SparkContext): Unit = {
     // depth first run
     node.getChildren.foreach(child => {
       execute(child, context)
     })
 
     node match {
-    case function:ParserFunctionNode =>
+    case function: ParserFunctionNode =>
       function.getName match {
-      case "=" =>  // ignore assignments...
+      case "=" => // ignore assignments...
       case _ =>
         val mapop = function.getMapOp
 
@@ -506,22 +525,47 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
 
 object TestMapAlgebra extends App {
 
-  val conf = HadoopUtils.createConfiguration()
-  val pp = ProviderProperties.fromDelimitedString("")
+  val baseDir: File = new File(System.getProperty("java.io.tmpdir"))
+  val username: String = "jython-" + System.getProperty("user.name")
+  val cacheDir: File = new File(baseDir, username)
 
-  HadoopUtils.setupLocalRunner(conf)
-
-  val expression = "x = 100; " +
-      "y = [/mrgeo/images/small-elevation]; " +
-      "z = 10 / [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] - x + y; " +
-      "a = [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation]; " +
-      "[/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation]"
+  //System.setProperty("python.path", "/usr/lib/python2.7")
+  System.setProperty("python.verbose", "debug")
+  System.setProperty("python.cachedir", cacheDir.getCanonicalPath)
 
 
-  val output = "test-mapalgebra"
-  if (MapAlgebra.validate(expression, pp)) {
-    //MapAlgebra.mapalgebra(expression, output, conf, pp)
+  //System.setProperty("python.home", "/usr/lib/python2.7/")
+
+  val manager = new ScriptEngineManager()
+  manager.getEngineFactories.foreach(engine => {
+    println(engine.getEngineName + " " + engine.getLanguageName + " " + engine.getNames)
+  })
+
+  println()
+  val engine = manager.getEngineByName("python")
+
+  if (engine != null) {
+    println(engine.getFactory.getEngineName)
   }
+  else {
+    println("no python")
+  }
+  //  val conf = HadoopUtils.createConfiguration()
+  //  val pp = ProviderProperties.fromDelimitedString("")
+  //
+  //  HadoopUtils.setupLocalRunner(conf)
+  //
+  //  val expression = "x = 100; " +
+  //      "y = [/mrgeo/images/small-elevation]; " +
+  //      "z = 10 / [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] - x + y; " +
+  //      "a = [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation]; " +
+  //      "[/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation]"
+  //
+  //
+  //  val output = "test-mapalgebra"
+  //  if (MapAlgebra.validate(expression, pp)) {
+  //    //MapAlgebra.mapalgebra(expression, output, conf, pp)
+  //  }
 
   System.exit(0)
 }

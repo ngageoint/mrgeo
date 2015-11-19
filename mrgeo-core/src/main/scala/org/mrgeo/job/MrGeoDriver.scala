@@ -38,7 +38,7 @@ abstract class MrGeoDriver extends Logging {
   def setup(job: JobArguments): Boolean
 
   def run(name:String, driver:String = this.getClass.getName, args:Map[String, String] = Map[String, String](),
-      hadoopConf:Configuration, additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None) = {
+      hadoopConf:Configuration, additionalClasses: Option[Seq[Class[_]]] = None) = {
     val job = new JobArguments()
 
     job.driverClass = driver
@@ -306,8 +306,9 @@ abstract class MrGeoDriver extends Logging {
     (cores, nodes, memory)
   }
 
+
   protected def setupDependencies(job:JobArguments, hadoopConf:Configuration,
-      additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None): mutable.Set[String] = {
+      additionalClasses: Option[Seq[Class[_]]] = None): mutable.Set[String] = {
 
     val dependencies = DependencyLoader.getDependencies(getClass)
     val qualified = DependencyLoader.copyDependencies(dependencies, hadoopConf)

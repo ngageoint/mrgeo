@@ -15,13 +15,28 @@
 
 package org.mrgeo.mapalgebra.save
 
+import org.apache.spark.{SparkContext, SparkConf}
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.{RasterMapOp, SaveRasterMapOp}
+import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object SaveMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("save")
+  }
+  override def registerWithParams: Array[String] = {
+    Array[String]("save(MapOp, String)")
+  }
+
+  def apply(mapop:MapOp, name:String):MapOp = {
+    mapop match {
+    case raster:RasterMapOp => new SaveRasterMapOp(Some(raster), name)
+    // TODO:  Uncomment this!
+    //case vector:VectorMapOp => SaveVectorMapOp(vector, name)
+    case _ => throw new ParserException("MapOp must be a RasterMapOp or VectorMapOp")
+    }
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp = {
@@ -46,3 +61,8 @@ object SaveMapOp extends MapOpRegistrar {
     }
   }
 }
+
+// Dummy class definition to allow the python reflection to find the SaveMapOp
+abstract class SaveMapOp extends MapOp {
+}
+

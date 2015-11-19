@@ -15,11 +15,10 @@
 
 package org.mrgeo.utils;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class StringUtils
 {
@@ -106,6 +105,24 @@ public class StringUtils
     }
     return values;
   }
+
+// This is a shim for concatenating string arrays, It was created because py4j couldn't
+// resulve the classes for the ArrayUtils.addAll()
+
+public static String[] concat(String[] a, String[] b)
+{
+  return ArrayUtils.addAll(a, b);
+}
+
+public static String[] concatUnique(String[] a, String[] b)
+{
+  Set<String> result = new HashSet<>();
+
+  result.addAll(Arrays.asList(a));
+  result.addAll(Arrays.asList(b));
+
+  return result.toArray(new String[result.size()]);
+}
 
 public static String read(DataInput in) throws IOException
 {

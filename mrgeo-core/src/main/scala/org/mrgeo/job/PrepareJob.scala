@@ -36,6 +36,7 @@ object PrepareJob extends Logging {
 
     val conf = SparkUtils.getConfiguration
 
+    println("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
     logInfo("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
     conf.setAppName(job.name)
         .setMaster(job.cluster)

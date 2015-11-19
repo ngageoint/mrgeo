@@ -16,13 +16,28 @@
 package org.mrgeo.mapalgebra
 
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 
 object AspectMapOp extends MapOpRegistrar {
    override def register: Array[String] = {
      Array[String]("aspect")
    }
+  override def registerWithParams: Array[String] = {
+    Array[String]("aspect(RasterMapOp)") // ,"aspect(RasterMapOp, String)")
+  }
+
+  def apply(raster:RasterMapOp):MapOp = {
+    new SlopeAspectMapOp(Some(raster), "rad", false)
+  }
+
+  def apply(raster:RasterMapOp, units:String):MapOp = {
+    new SlopeAspectMapOp(Some(raster), units, false)
+  }
 
    override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
      new SlopeAspectMapOp(node, false, variables)
  }
 
+// Dummy class definition to allow the python reflection to find the Aspect mapop
+abstract class AspectMapOp extends RasterMapOp {
+}

@@ -19,6 +19,8 @@ import org.mrgeo.mapalgebra.parser.ParserNode
 
 trait MapOpRegistrar {
   def register:Array[String]
+  def registerWithParams:Array[String] = Array.empty[String] // TODO:  Remove default after python testing!!!
+  def returnType:String = "RasterMapOp" // TODO:  Remove default after python testing!!!
 
   // apply should call the mapop constructor, which needs to throw ParserExceptions on errors
   def apply(node: ParserNode, variables: String => Option[ParserNode]):MapOp

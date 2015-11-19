@@ -15,14 +15,31 @@
 
 package org.mrgeo.mapalgebra
 
+import org.apache.spark.{SparkContext, SparkConf}
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 
 object SlopeMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("slope")
+  }
+  override def registerWithParams: Array[String] = {
+    Array[String]("slope(RasterMapOp)", "slope(RasterMapOp, String)")
+  }
+
+  def apply(raster:RasterMapOp):MapOp = {
+    new SlopeAspectMapOp(Some(raster), "rad", true)
+  }
+
+  def apply(raster:RasterMapOp, units:String):MapOp = {
+    new SlopeAspectMapOp(Some(raster), units, true)
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new SlopeAspectMapOp(node, true, variables)
 }
 
+// Dummy class definition to allow the python reflection to find the Slope mapop
+abstract class SlopeMapOp extends RasterMapOp {
+}

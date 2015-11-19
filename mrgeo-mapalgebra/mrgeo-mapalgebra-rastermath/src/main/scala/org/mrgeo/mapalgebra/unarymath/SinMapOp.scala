@@ -22,8 +22,13 @@ object SinMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("sin")
   }
+  override def registerWithParams: Array[String] = {
+    Array[String]("sin(RasterMapOp)")
+  }
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new SinMapOp(node, variables)
+
 }
 
 class SinMapOp extends RawUnaryMathMapOp {

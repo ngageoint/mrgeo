@@ -80,12 +80,38 @@ object MapOpFactory extends Logging {
     mapops.result()
   }
 
-  def getMapOpClasses: scala.collection.immutable.Set[Class[_]] = {
+  def getMapOpClasses: Array[Class[_]] = {
+    if (functions.isEmpty) {
+      registerFunctions()
+    }
+
     var result = Set.newBuilder[Class[_]]
     functions.values.foreach(c => {
       result += c.getClass
     })
+    result.result().toArray
+  }
+
+  def getMapOpClassNames: Array[String] = {
+
+    var result = Array.newBuilder[String]
+    getMapOpClasses.foreach(cl =>{
+      result += cl.getCanonicalName
+    })
+
     result.result()
+  }
+
+  def getMapOpNames: Array[String] = {
+    if (functions.isEmpty) {
+      registerFunctions()
+    }
+
+    var result = Set.newBuilder[String]
+    functions.keysIterator.foreach(c => {
+      result += c
+    })
+    result.result().toArray
   }
 
   // create a mapop from a function name, called by MapOpFactory("<name>")
