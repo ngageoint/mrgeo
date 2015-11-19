@@ -61,9 +61,6 @@ protected static Path smallElevationPath;
 private static final String greeceName = "greece";
 private static String greece = Defs.INPUT + greeceName;
 
-private static final String majorRoadShapeName = "major_road_intersections_exploded";
-protected static Path majorRoadShapePath;
-
 
 protected static final String pointsName = "input1"; // .tsv
 protected static String pointsPath;
@@ -125,20 +122,6 @@ public static void init() throws IOException
       testUtils.getInputHdfs(),
       pointsName + ".tsv.columns");
   pointsPath = testUtils.getInputHdfsFor(pointsName + ".tsv").toString();
-
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".shp");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".prj");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".shx");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".dbf");
-  majorRoadShapePath = testUtils.getInputHdfsFor(majorRoadShapeName + ".shp");
 
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allones);
   allonesPath = new Path(testUtils.getInputHdfs(), allones);
@@ -1752,58 +1735,6 @@ public void variables3() throws Exception
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
   }
 }
-
-@Test
-@Category(IntegrationTest.class)
-public void rasterizeVector1() throws Exception
-{
-  if (GEN_BASELINE_DATA_ONLY)
-  {
-    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("a = [%s]; RasterizeVector(a, \"MASK\", \"0.000092593\")", majorRoadShapePath.toString()), -9999);
-  }
-  else
-  {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("a = [%s]; RasterizeVector(a, \"MASK\", \"0.000092593\")", majorRoadShapePath.toString()));
-  }
-}
-
-@Test
-@Category(IntegrationTest.class)
-public void rasterizeVector2() throws Exception
-{
-  if (GEN_BASELINE_DATA_ONLY)
-  {
-    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ", pointsPath), -9999);
-  }
-  else
-  {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ", pointsPath));
-  }
-}
-
-@Test
-@Category(IntegrationTest.class)
-public void rasterizeVector3() throws Exception
-{
-  if (GEN_BASELINE_DATA_ONLY)
-  {
-    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath), -9999);
-  }
-  else
-  {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath));
-  }
-}
-
 
 
 }
