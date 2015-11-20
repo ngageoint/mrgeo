@@ -131,19 +131,16 @@ class MrGeoYarnDriver {
     // need to make sure the driver jar isn't included.  Yuck!
     val driver = new File(driverJar).getName
 
-    var clean = ""
+    val clean = Set.newBuilder[String]
     job.jars.foreach(jar => {
       if (!jar.contains(driver)) {
-        if (clean.length > 0) {
-          clean += ","
-        }
         clean += jar
       }
     })
 
 
     args += "--addJars"
-    args += clean
+    args += clean.result().mkString(",")
 
     args += "--arg"
     args += "--" + MrGeoYarnDriver.DRIVER
