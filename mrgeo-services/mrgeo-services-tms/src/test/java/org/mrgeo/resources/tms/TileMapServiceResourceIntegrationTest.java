@@ -562,7 +562,7 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
     String json = "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"ReliefShading\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
 
     MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-    params.add("color-scale", json);
+    params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
 
     when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
     when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
@@ -605,7 +605,7 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
     String json = "{\"foo\":\"bar\"}";
 
     MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-    params.add("color-scale", json);
+    params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
 
     WebResource webResource = resource();
     WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
@@ -633,7 +633,7 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
     when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
     MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-    params.add("color-scale", json);
+    params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
     params.add("min", String.valueOf(min));
     params.add("max", String.valueOf(max));
 
