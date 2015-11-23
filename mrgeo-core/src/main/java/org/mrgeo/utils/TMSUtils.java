@@ -91,6 +91,24 @@ public static class Bounds implements Serializable
     return (b.w > w && b.s > s && b.e < e && b.n < n);
   }
 
+  public boolean contains(double longitude, double latitude)
+  {
+    return contains(longitude, latitude, true);
+  }
+
+  /**
+   * Is the bounds fully contained within this bounds. Edges are included iff includeAdjacent is
+   * true
+   */
+  public boolean contains(double longitude, double latitude, final boolean includeAdjacent)
+  {
+    if (includeAdjacent)
+    {
+      return (longitude >= w && latitude >= s && longitude <= e && latitude <= n);
+    }
+    return (longitude > w && latitude > s && longitude < e && latitude < n);
+  }
+
   public org.mrgeo.utils.Bounds convertNewToOldBounds()
   {
     return new org.mrgeo.utils.Bounds(w, s, e, n);
