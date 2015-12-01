@@ -6,7 +6,7 @@ from pymrgeo.rastermapop import RasterMapOp
 if __name__ == "__main__":
     mrgeo = MrGeo()
 
-    #mrgeo.useDebug()
+    mrgeo.useDebug()
 
     mrgeo.start()
 
@@ -23,5 +23,8 @@ if __name__ == "__main__":
     small_elevation = mrgeo.load_resource("small-elevation")
     slope = small_elevation.slope()
     slope.save("slope-test")
+
+    slope = small_elevation.slope("rad")
+    slope.save("slope-test2")
 
     mrgeo.stop()

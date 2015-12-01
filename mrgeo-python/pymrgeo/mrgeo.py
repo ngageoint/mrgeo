@@ -80,6 +80,7 @@ class MrGeo(object):
         java_import(jvm, "org.mrgeo.mapalgebra.raster.MrsPyramidMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.vector.VectorMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.MapOp")
+        java_import(jvm, "org.mrgeo.utils.SparkUtils")
 
         #java_import(jvm, "org.mrgeo.data.DataProviderFactory")
         #java_import(jvm, "org.mrgeo.data.DataProviderFactory.AccessMode")
@@ -122,53 +123,7 @@ class MrGeo(object):
 
                             params = method[paren + 1:].split(',')
 
-                            mtypes = {}
-                            signature = name + '(self'
-                            call = "apply("
-                            found = False
-                            for param in params:
-                                if param is not None:
-                                    param = param.strip()
-                                    if len(param) > 0:
-                                        if param.endswith(')'):
-                                            param = param[:-1]
-                                        if len(param) > 0:
-                                            if ((not found) and
-                                                    (param == "MapOp" or
-                                                         (instance is "RasterMapOp" and param == "RasterMapOp") or
-                                                         (instance is "VectorMapOp" and param == "VectorMapOp"))):
-
-                                                found = True
-                                                if not call.endswith('('):
-                                                    call += ', '
-                                                call += "self.mapop"
-                                            else:
-                                                if param.lower() == 'string':
-                                                    param = "str_param"
-
-                                                if param in mtypes:
-                                                    cnt = mtypes[param] + 1
-                                                    mtypes[param] = cnt
-
-                                                    param += str(cnt)
-                                                else:
-                                                    mtypes[param] = 1
-
-                                                param = param[0].lower() + param[1:]
-
-                                                signature += ', ' + param
-
-                                                if not call.endswith('('):
-                                                    call += ', '
-                                                call += param
-
-                            signature += ')'
-
-                            # if not call.endswith('('):
-                            #     call += ', '
-                            #
-                            # call += 'context)'
-                            call += ')'
+                            call, signature = self._generate_signature(instance, name, params)
 
                             code = MrGeo._generate_code(name, mapop, signature, call, returntype)
 
@@ -183,6 +138,55 @@ class MrGeo(object):
                             elif self.is_instance_of(cls, jvm.MapOp):
                                 setattr(RasterMapOp, name, compiled.get(name))
                                 #setattr(VectorMapOp, name, compiled.get(name))
+
+    @staticmethod
+    def _generate_signature(instance, name, params):
+        mtypes = {}
+        signature = name + '(self'
+        call = "apply("
+        found = False
+        for param in params:
+            if param is not None:
+                param = param.strip()
+                if len(param) > 0:
+                    if param.endswith(')'):
+                        param = param[:-1]
+                    if len(param) > 0:
+                        if ((not found) and
+                                (param == "MapOp" or
+                                     (instance is "RasterMapOp" and param == "RasterMapOp") or
+                                     (instance is "VectorMapOp" and param == "VectorMapOp"))):
+
+                            found = True
+                            if not call.endswith('('):
+                                call += ', '
+                            call += "self.mapop"
+                        else:
+                            if param.lower() == 'string':
+                                param = "str_param"
+
+                            if param in mtypes:
+                                cnt = mtypes[param] + 1
+                                mtypes[param] = cnt
+
+                                param += str(cnt)
+                            else:
+                                mtypes[param] = 1
+
+                            param = param[0].lower() + param[1:]
+
+                            signature += ', ' + param
+
+                            if not call.endswith('('):
+                                call += ', '
+                            call += param
+        signature += ')'
+        # if not call.endswith('('):
+        #     call += ', '
+        #
+        # call += 'context)'
+        call += ')'
+        return call, signature
 
     @staticmethod
     def _generate_code(name, mapop, signature, call, returntype):
@@ -257,14 +261,11 @@ class MrGeo(object):
 
         if self.job.isDebug():
             master = "local"
-            pass
         elif self.job.isSpark():
             #TODO:  get the master for spark
             master = ""
-            pass
         elif self.job.isYarn():
-            master = "yarn-cluster"
-            pass
+            master = "yarn-client"
         else:
             cpus = (multiprocessing.cpu_count() / 4) * 3
             if cpus < 2:
@@ -277,10 +278,24 @@ class MrGeo(object):
 
         conf = jvm.PrepareJob.prepareJob(self.job)
 
+        # need to override the yarn mode to "yarn-client" for python
+        if self.job.isYarn():
+            conf.set("spark.master", "yarn-client")
+
+            mem = jvm.SparkUtils.humantokb(conf.get("spark.executor.memory"))
+            workers = int(conf.get("spark.executor.instances")) + 1  # one for the driver
+
+            conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem / workers), "m"))
+
+        for a in conf.getAll():
+            print(a._1(), a._2())
+
         # jsc = jvm.JavaSparkContext(master, appName, sparkHome, jars)
         jsc = jvm.JavaSparkContext(conf)
         self.sparkContext = jsc.sc()
         self.sparkPyContext = SparkContext(master=master, appName=self.job.name(), jsc=jsc, gateway=self.gateway)
+
+        print("started")
 
     def stop(self):
         if self.sparkContext:

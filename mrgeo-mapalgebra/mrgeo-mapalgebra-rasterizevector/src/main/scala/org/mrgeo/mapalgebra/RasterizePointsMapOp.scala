@@ -197,6 +197,7 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
           }
           raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, v)
         }
+      case _ =>
     }
   }
 }
