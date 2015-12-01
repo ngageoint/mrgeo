@@ -125,6 +125,9 @@
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/release</repository.url>
+    <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
   </properties>
   <distributionManagement>
     <repository>
