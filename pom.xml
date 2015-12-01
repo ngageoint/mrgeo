@@ -650,7 +650,7 @@
               <id>default-deploy</id>
               <configuration>
                 <skip>${alternate.deploy}</skip>
-                <!--<deployAtEnd>true</deployAtEnd>-->
+                <deployAtEnd>true</deployAtEnd>
               </configuration>
             </execution>
             <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->

@@ -34,13 +34,13 @@
   </licenses>
     <build>
     <plugins>
-      <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <executions>
+          <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
           <execution>
-            <id>deploy-pom-only</id>
+            <id>deploy-effective-pom</id>
             <goals>
               <goal>deploy-file</goal>
             </goals>
@@ -50,8 +50,8 @@
               <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
               <file>${project.build.directory}/${project.build.finalName}.pom</file>
               <packaging>pom</packaging>
-              <repositoryId>repository</repositoryId>
-              <url>${deploy.repository}</url>
+              <repositoryId>mrgeo-repository</repositoryId>
+              <url>${deploy.repository.url}</url>
             </configuration>
           </execution>
         </executions>
