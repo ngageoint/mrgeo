@@ -6,6 +6,8 @@ import mil.nga.giat.geowave.adapter.vector.FeatureDataAdapter;
 import mil.nga.giat.geowave.adapter.vector.query.cql.CQLQuery;
 import mil.nga.giat.geowave.core.geotime.store.query.*;
 import mil.nga.giat.geowave.core.store.DataStore;
+import mil.nga.giat.geowave.core.store.adapter.statistics.DataStatistics;
+import mil.nga.giat.geowave.core.store.adapter.statistics.RowRangeHistogramStatistics;
 import mil.nga.giat.geowave.core.store.dimension.NumericDimensionField;
 import mil.nga.giat.geowave.core.store.index.*;
 import mil.nga.giat.geowave.core.store.query.DistributableQuery;
@@ -65,11 +67,14 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   static boolean initialized = false;
 
   private DataAdapter<?> dataAdapter;
+  private PrimaryIndex primaryIndex;
+  private DistributableQuery query;
   private Filter filter;
   private String cqlFilter;
   private com.vividsolutions.jts.geom.Geometry spatialConstraint;
   private Date startTimeConstraint;
   private Date endTimeConstraint;
+  private String requestedIndexName;
   private GeoWaveVectorMetadataReader metaReader;
   private ProviderProperties providerProperties;
 
@@ -130,10 +135,99 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   public PrimaryIndex getPrimaryIndex() throws AccumuloSecurityException, AccumuloException, IOException
   {
+    if (primaryIndex != null)
+    {
+      return primaryIndex;
+    }
     String namespace = getNamespace();
+    String resourceName = getGeoWaveResourceName();
     initDataSource(namespace);
     DataSourceEntry entry = getDataSourceEntry(namespace);
-    return entry.index;
+    CloseableIterator<Index<?, ?>> indices = entry.indexStore.getIndices();
+    try
+    {
+      DistributableQuery query = getQuery();
+      while (indices.hasNext())
+      {
+        PrimaryIndex idx = (PrimaryIndex)indices.next();
+        String indexName = idx.getId().getString();
+        log.debug("Checking GeoWave index " + idx.getId().getString());
+        NumericDimensionField<? extends CommonIndexValue>[] dimFields = idx.getIndexModel().getDimensions();
+        for (NumericDimensionField<? extends CommonIndexValue> dimField : dimFields)
+        {
+          log.debug("  Dimension field: " + dimField.getFieldId().getString());
+        }
+
+        if (getStatisticsStore().getDataStatistics(
+                getDataAdapter().getAdapterId(),
+                RowRangeHistogramStatistics.composeId(idx.getId()),
+                getAuthorizations(providerProperties)) != null)
+        {
+          log.debug("  Index stores data for " + resourceName);
+          if (requestedIndexName != null && !requestedIndexName.isEmpty())
+          {
+            // The user requested a specific index. See if this is it, and then
+            // make sure it supports the query criteria if there is any.
+            if (indexName.equalsIgnoreCase(requestedIndexName))
+            {
+              log.debug("  Index matches the requested index");
+              // Make sure if there is query criteria that the requested index can support
+              // that query.
+              if (query != null && !query.isSupported(idx))
+              {
+                throw new IOException(
+                        "The requested index " + requestedIndexName + " does not support your query criteria");
+              }
+              primaryIndex = idx;
+              return primaryIndex;
+            }
+          }
+          else
+          {
+            // If there is no query, then just use the first index for this adapter
+            if (query == null)
+            {
+              log.debug("  Since there is no query, we will use this index");
+              primaryIndex = idx;
+              return primaryIndex;
+            }
+            else
+            {
+              // Make sure the index supports the query, and get the number of fields
+              // in the index. We want to use the index with the most fields.
+              if (query.isSupported(idx))
+              {
+                log.debug("  This index does support this query " + query.getClass().getName());
+                primaryIndex = idx;
+                return primaryIndex;
+              }
+              else
+              {
+                log.debug("  This index does not support this query " + query.getClass().getName());
+              }
+            }
+          }
+        }
+        else
+        {
+          // If the index does not contain data for the adapter, but it is the requested index
+          // then report an error to the user.
+          if (requestedIndexName != null && indexName.equalsIgnoreCase(requestedIndexName))
+          {
+            throw new IOException("The requested index " + requestedIndexName + " does not include " + resourceName);
+          }
+        }
+      }
+    }
+    finally
+    {
+      indices.close();
+    }
+    if (primaryIndex != null)
+    {
+      return primaryIndex;
+    }
+    throw new IOException("Unable to find GeoWave index for adapter " + resourceName);
   }
 
   public String getGeoWaveResourceName() throws IOException
@@ -189,6 +283,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   public DistributableQuery getQuery() throws AccumuloSecurityException, AccumuloException, IOException
   {
+    if (query != null)
+    {
+      return query;
+    }
     com.vividsolutions.jts.geom.Geometry spatialConstraint = getSpatialConstraint();
     Date startTimeConstraint = getStartTimeConstraint();
     Date endTimeConstraint = getEndTimeConstraint();
@@ -204,12 +302,12 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
         log.debug("Using GeoWave SpatialTemporalQuery");
         TemporalConstraints tc = getTemporalConstraints(startTimeConstraint, endTimeConstraint);
         SpatialTemporalQuery stq = new SpatialTemporalQuery(tc, spatialConstraint);
-        return new SpatialTemporalQuery(tc, spatialConstraint);
+        query = new SpatialTemporalQuery(tc, spatialConstraint);
       }
       else
       {
         log.debug("Using GeoWave SpatialQuery");
-        return new SpatialQuery(spatialConstraint);
+        query = new SpatialQuery(spatialConstraint);
       }
     }
     else
@@ -218,10 +316,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
       {
         log.debug("Using GeoWave TemporalQuery");
         TemporalConstraints tc = getTemporalConstraints(startTimeConstraint, endTimeConstraint);
-        return new TemporalQuery(tc);
+        query = new TemporalQuery(tc);
       }
     }
-    return null;
+    return query;
   }
 
   private String[] getAuthorizations(ProviderProperties providerProperties)
@@ -478,10 +576,20 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     Query query = new BasicQuery(new BasicQuery.Constraints());
     CQLQuery cqlQuery = new CQLQuery(query, filter,
                                      (FeatureDataAdapter)entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())));
-    GeoWaveVectorReader reader = new GeoWaveVectorReader(results.namespace, entry.dataStore,
-        entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
-        cqlQuery, entry.index, filter, providerProperties);
-    return reader;
+    try
+    {
+      return new GeoWaveVectorReader(results.namespace, entry.dataStore,
+                                     entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
+                                     cqlQuery, getPrimaryIndex(), filter, providerProperties);
+    }
+    catch (AccumuloSecurityException e)
+    {
+      throw new IOException(e);
+    }
+    catch (AccumuloException e)
+    {
+      throw new IOException(e);
+    }
   }
 
   @Override
@@ -510,7 +618,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
       DataAdapter<?> adapter = getDataAdapter();
       RecordReader delegateRecordReader =  new GeoWaveAccumuloRecordReader(
               query,
-              new QueryOptions(adapter, entry.index, getAuthorizations(getProviderProperties())),
+              new QueryOptions(adapter, getPrimaryIndex(), getAuthorizations(getProviderProperties())),
               false,
               entry.adapterStore,
               entry.storeOperations);
@@ -785,6 +893,11 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
             }
             break;
           }
+          case "index":
+          {
+            requestedIndexName = value.trim();
+            break;
+          }
           default:
             throw new IOException("Unrecognized setting for GeoWave data source " +
                                   name + ": " + keyName);
@@ -861,28 +974,6 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
           entry.statisticsStore,
           entry.secondaryIndexStore,
           entry.storeOperations);
-      CloseableIterator<Index<?, ?>> indices = entry.indexStore.getIndices();
-      try
-      {
-        if (indices.hasNext())
-        {
-          entry.index = (PrimaryIndex)indices.next();
-          if (log.isDebugEnabled())
-          {
-            log.debug("Found GeoWave index " + entry.index.getId().getString());
-//            log.debug("  index type = " + entry.index.getDimensionalityType().toString());
-            NumericDimensionField<? extends CommonIndexValue>[] dimFields = entry.index.getIndexModel().getDimensions();
-            for (NumericDimensionField<? extends CommonIndexValue> dimField : dimFields)
-            {
-              log.debug("  Dimension field: " + dimField.getFieldId().getString());
-            }
-          }
-        }
-      }
-      finally
-      {
-        indices.close();
-      }
     }
   }
 
@@ -898,6 +989,5 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     private AdapterStore adapterStore;
     private DataStatisticsStore statisticsStore;
     private DataStore dataStore;
-    private PrimaryIndex index;
   }
 }
