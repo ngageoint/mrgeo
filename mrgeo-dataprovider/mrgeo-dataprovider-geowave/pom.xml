@@ -38,18 +38,7 @@
       <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
-  <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-      </resource>
-      <resource>
-        <directory>${generatedResources}</directory>
-        <includes>
-          <include>**/*.properties</include>
-        </includes>
-      </resource>
-    </resources>
+  <repositories>
     <!-- Add the GeoWave Repos -->
     <repository>
       <id>geowave-maven-releases</id>
@@ -73,6 +62,19 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
+  </repositories>
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${generatedResources}</directory>
+        <includes>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <!-- Unit Test plugin -->
       <plugin>
