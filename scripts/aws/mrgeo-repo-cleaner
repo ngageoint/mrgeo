@@ -34,7 +34,7 @@ for line in $(aws s3 ls --recursive $BUCKET); do
               if [[ "$file" != *$timestamp* ]]
               then
                 s3file="s3://$BUCKET/"$(echo $file | awk '{print $4}')
-                echo "removing" $s3file
+                echo "removing" $s3file >> /tmp/mrgeo-repo-cleaner.log
                 $(aws s3 rm --quiet $s3file)
               fi
             fi
