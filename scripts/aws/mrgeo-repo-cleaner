@@ -4,6 +4,20 @@
 # Cleans the "old" timestamped artifacts from an s3 maven repo
 
 BUCKET="mrgeo-maven"
+# Uncomment for logging to /tmp/mrgeo-repo-cleaner.log
+LOG="true"
+
+# check if we are already running
+COMMAND=$0
+
+if pidof -x $COMMAND -o %PPID > /dev/null
+then
+  if [ -n "$LOG" ]
+  then
+    echo "${COMMAND} is already running." >> /tmp/mrgeo-repo-cleaner.log
+  fi
+  exit 1
+fi
 
 IFS=$'\n'
 for line in $(aws s3 ls --recursive $BUCKET); do
@@ -34,7 +48,10 @@ for line in $(aws s3 ls --recursive $BUCKET); do
               if [[ "$file" != *$timestamp* ]]
               then
                 s3file="s3://$BUCKET/"$(echo $file | awk '{print $4}')
-                echo "removing" $s3file
+                  if [ -n "$LOG" ]
+                  then
+                    echo "Removing" $s3file >> /tmp/mrgeo-repo-cleaner.log
+                  fi
                 $(aws s3 rm --quiet $s3file)
               fi
             fi
