@@ -53,6 +53,7 @@ usage() {
     echo "  -gs --generate-sources         - generate source jars"
     echo "  -j  --javadocs                 - include javadocs of dependencies (if available)"
     echo "  -jv  --javaversion <version>   - java version to use (1.7)"
+    echo "  -l  --license                  - generate licenses (normall off)"
     echo "  -p  --profile                  - turn on leak detection profiling"
     echo "  -s  --source                   - include source jars of dependencies (if available)"
     echo "  -sh --shade                    - generate the shaded (jar with dependencies) jars"
