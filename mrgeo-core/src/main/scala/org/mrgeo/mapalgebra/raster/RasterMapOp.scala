@@ -103,8 +103,10 @@ abstract class RasterMapOp extends MapOp {
         SparkUtils.saveMrsPyramid(rdd, provider, meta, meta.getMaxZoomLevel,
           context.hadoopConfiguration, providerproperties =  providerProperties)
       case _ =>
+        throw new IOException("Unable to save - no metadata was assigned in " + this.getClass.getName)
       }
     case _ =>
+      throw new IOException("Unable to save - no RDD was assigned in " + this.getClass.getName)
     }
   }
 

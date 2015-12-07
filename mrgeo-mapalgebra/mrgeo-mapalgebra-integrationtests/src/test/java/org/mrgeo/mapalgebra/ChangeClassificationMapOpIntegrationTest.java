@@ -41,9 +41,6 @@ public class ChangeClassificationMapOpIntegrationTest extends LocalRunnerTest
   @SuppressWarnings("unused")
   private static final Logger log = LoggerFactory.getLogger(ChangeClassificationMapOpIntegrationTest.class);
 
-  @Rule
-  public TestName testname = new TestName();
-
 
   private static MapOpTestUtils testUtils;
 
