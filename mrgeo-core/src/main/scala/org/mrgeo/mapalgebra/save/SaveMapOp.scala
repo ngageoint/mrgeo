@@ -30,7 +30,7 @@ object SaveMapOp extends MapOpRegistrar {
     Array[String]("save(MapOp, String)")
   }
 
-  def apply(mapop:MapOp, name:String):MapOp = {
+  def create(mapop:MapOp, name:String):MapOp = {
     mapop match {
     case raster:RasterMapOp => new SaveRasterMapOp(Some(raster), name)
     // TODO:  Uncomment this!

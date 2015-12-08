@@ -3,7 +3,7 @@ from __future__ import print_function
 import imp
 import multiprocessing
 import os
-import shutil
+import re
 import sys
 from threading import Lock
 
@@ -91,6 +91,9 @@ class MrGeo(object):
         # print("MapOps")
         for rawmapop in mapops:
             mapop = rawmapop.getCanonicalName().rstrip('$')
+
+            signatures = jvm.MapOpFactory.getSignatures(str(mapop))
+
             # print("  " + mapop)
             java_import(jvm, mapop)
 
@@ -107,13 +110,12 @@ class MrGeo(object):
                 print("mapop (" + mapop + ") is not a RasterMapOp, VectorMapOp, or MapOp")
                 break
 
+            names = {}
             returntype = cls.returnType()
-            for method in cls.registerWithParams():
+            for method in cls.register():
                 if method is not None:
-                    method = method.strip()
-                    if len(method) > 0:
-                        paren = method.find("(")
-                        name = method[:paren]
+                    name = method.strip()
+                    if len(name) > 0:
                         if name in reserved:
                             print("reserved: " + name)
                         elif name in symbols:
@@ -121,82 +123,98 @@ class MrGeo(object):
                         else:
                             print("method: " + name)
 
-                            params = method[paren + 1:].split(',')
+                            signature, call, types, values = self._generate_signature(instance, signatures)
+                            if name in names:
+                                existing_sig, existing_call, existing_types, existing_defs = names[name]
+                                signature, call, types, values = \
+                                    MrGeo._merge_signatures(existing_sig, existing_call, existing_types,
+                                                            existing_defs, signature, call, types, values)
 
-                            call, signature = self._generate_signature(instance, name, params)
+                                names[name] = (signature, call, types, values)
 
-                            code = MrGeo._generate_code(name, mapop, signature, call, returntype)
+            for name in names:
+                call, signature, defaults = names[name]
+                code = MrGeo._generate_code(name, mapop, signature, call, defaults, returntype)
 
-                            compiled = {}
-                            exec code in compiled
+                compiled = {}
+                exec code in compiled
 
-                            if instance == 'RasterMapOp':
-                                setattr(RasterMapOp, name, compiled.get(name))
-                            elif instance == "VectorMapOp":
-                                #setattr(VectorMapOp, name, compiled.get(name))
-                                pass
-                            elif self.is_instance_of(cls, jvm.MapOp):
-                                setattr(RasterMapOp, name, compiled.get(name))
-                                #setattr(VectorMapOp, name, compiled.get(name))
+                if instance == 'RasterMapOp':
+                    setattr(RasterMapOp, name, compiled.get(name))
+                elif instance == "VectorMapOp":
+                    #setattr(VectorMapOp, name, compiled.get(name))
+                    pass
+                elif self.is_instance_of(cls, jvm.MapOp):
+                    setattr(RasterMapOp, name, compiled.get(name))
+                    #setattr(VectorMapOp, name, compiled.get(name))
 
     @staticmethod
-    def _generate_signature(instance, name, params):
-        mtypes = {}
-        signature = name + '(self'
-        call = "apply("
+    def _merge_signatures(existing_sig, existing_call, existing_types, existing_defs,
+                          new_signature, new_call, new_types, new_values):
+
+        call = existing_call
+        signature = existing_sig
+        defaults = existing_defs
+        types = existing_types
+
+        return signature, call, types, defaults
+
+    @staticmethod
+    def _generate_signature(instance, signatures):
+        signature = ["self"]
+        call = []
+        types = []
+        values = []
+
         found = False
-        for param in params:
-            if param is not None:
-                param = param.strip()
-                if len(param) > 0:
-                    if param.endswith(')'):
-                        param = param[:-1]
-                    if len(param) > 0:
-                        if ((not found) and
-                                (param == "MapOp" or
-                                     (instance is "RasterMapOp" and param == "RasterMapOp") or
-                                     (instance is "VectorMapOp" and param == "VectorMapOp"))):
+        for sig in signatures:
+            for variable in sig.split(","):
+                names = re.split("[:=]+", variable)
+                name = names[0]
+                typ = names[1]
 
-                            found = True
-                            if not call.endswith('('):
-                                call += ', '
-                            call += "self.mapop"
-                        else:
-                            if param.lower() == 'string':
-                                param = "str_param"
+                if len(names) == 3:
+                    value = names[2]
+                else:
+                    value = None
 
-                            if param in mtypes:
-                                cnt = mtypes[param] + 1
-                                mtypes[param] = cnt
+                if ((not found) and
+                        (typ.endswith("MapOp") or
+                             (instance is "RasterMapOp" and typ.endswith("RasterMapOp")) or
+                             (instance is "VectorMapOp" and typ.endswith("VectorMapOp")))):
+                    found = True
+                    call += ["self.mapop"]
+                else:
+                    call += [name]
 
-                                param += str(cnt)
-                            else:
-                                mtypes[param] = 1
+                    s = name
+                    if value is not None:
+                        s += "=" + value
+                    signature += [s]
 
-                            param = param[0].lower() + param[1:]
+                values += [value]
+                types += [typ]
 
-                            signature += ', ' + param
-
-                            if not call.endswith('('):
-                                call += ', '
-                            call += param
-        signature += ')'
-        # if not call.endswith('('):
-        #     call += ', '
-        #
-        # call += 'context)'
-        call += ')'
-        return call, signature
+        return signature, call, types, values
 
     @staticmethod
-    def _generate_code(name, mapop, signature, call, returntype):
-        code = "def " + signature + ":" + "\n"
+    def _generate_code(name, mapop, signature, call, defaults, returntype):
+
+        sig = ""
+        for s, d in zip(signature, defaults):
+            if len(sig) > 0:
+                sig += ", "
+            sig += s
+            if d is not None:
+                sig += "=" + str(d)
+
+        code = "def " + name + "(" + sig + "):" + "\n"
         code += "    from py4j.java_gateway import JavaClass\n"
         code += "    #from rastermapop import RasterMapOp\n"
         code += "    import copy\n"
         code += "    print('" + name + "')\n"
         code += "    cls = JavaClass('" + mapop + "', gateway_client=self.gateway._gateway_client)\n"
-        code += "    newop = cls." + call + '\n'
+        code += "    newop = cls.apply(" + ", ".join(call) + ')\n'
         code += "    if (newop.setup(self.job, self.context.getConf()) and\n"
         code += "        newop.execute(self.context) and\n"
         code += "        newop.teardown(self.job, self.context.getConf())):\n"
@@ -206,7 +224,7 @@ class MrGeo(object):
         code += "        #return " + returntype + "(mapop = newop, gateway=self.gateway, context=self.context, job=self.job)\n"
         code += "    return None\n"
 
-        print(code)
+        # print(code)
 
         return code
 
@@ -323,6 +341,4 @@ class MrGeo(object):
 
         print("loaded " + name)
 
-        return RasterMapOp(mapop = mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)
-
-
+        return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)

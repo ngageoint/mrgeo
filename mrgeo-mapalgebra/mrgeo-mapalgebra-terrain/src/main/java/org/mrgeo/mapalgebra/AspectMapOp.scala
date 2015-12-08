@@ -26,11 +26,11 @@ object AspectMapOp extends MapOpRegistrar {
     Array[String]("aspect(RasterMapOp)") // ,"aspect(RasterMapOp, String)")
   }
 
-  def apply(raster:RasterMapOp):MapOp = {
+  def create(raster:RasterMapOp):MapOp = {
     new SlopeAspectMapOp(Some(raster), "rad", false)
   }
 
-  def apply(raster:RasterMapOp, units:String):MapOp = {
+  def create(raster:RasterMapOp, units:String):MapOp = {
     new SlopeAspectMapOp(Some(raster), units, false)
   }
 

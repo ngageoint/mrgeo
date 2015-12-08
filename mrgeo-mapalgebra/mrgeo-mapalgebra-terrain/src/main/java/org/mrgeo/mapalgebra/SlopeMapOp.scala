@@ -25,14 +25,10 @@ object SlopeMapOp extends MapOpRegistrar {
     Array[String]("slope")
   }
   override def registerWithParams: Array[String] = {
-    Array[String]("slope(RasterMapOp)", "slope(RasterMapOp, String)")
+    Array[String]("slope(RasterMapOp)", "slope(RasterMapOp, units=String='rad')")
   }
 
-  def apply(raster:RasterMapOp):MapOp = {
-    new SlopeAspectMapOp(Some(raster), "rad", true)
-  }
-
-  def apply(raster:RasterMapOp, units:String):MapOp = {
+  def create(raster:RasterMapOp, units:String="rad"):MapOp = {
     new SlopeAspectMapOp(Some(raster), units, true)
   }
 
