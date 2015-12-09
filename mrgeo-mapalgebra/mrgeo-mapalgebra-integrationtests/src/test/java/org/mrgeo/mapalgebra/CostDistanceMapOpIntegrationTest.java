@@ -56,9 +56,6 @@ import java.io.IOException;
 @SuppressWarnings("static-method")
 public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 {
-  @Rule
-  public TestName testname = new TestName();
-
   private static final Logger log = LoggerFactory.getLogger(CostDistanceMapOpIntegrationTest.class);
 
   private static MapOpTestUtils testUtils;
