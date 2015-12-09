@@ -40,9 +40,6 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   @SuppressWarnings("unused")
   private static final Logger log = LoggerFactory.getLogger(BuildPyramidMapOpIntegrationTest.class);
 
-  @Rule
-  public TestName testname = new TestName();
-
 
   private static MapOpTestUtils testUtils;
 

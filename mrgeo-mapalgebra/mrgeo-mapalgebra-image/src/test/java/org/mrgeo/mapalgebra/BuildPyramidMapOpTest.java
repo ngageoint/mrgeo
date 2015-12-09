@@ -33,9 +33,6 @@ public class BuildPyramidMapOpTest extends LocalRunnerTest
 @SuppressWarnings("unused")
 private static final Logger log = LoggerFactory.getLogger(BuildPyramidMapOpTest.class);
 
-@Rule
-public TestName testname = new TestName();
-
 @BeforeClass
 public static void init() throws IOException
 {

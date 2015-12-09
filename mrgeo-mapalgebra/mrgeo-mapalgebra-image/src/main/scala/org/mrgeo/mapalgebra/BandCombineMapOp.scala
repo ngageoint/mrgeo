@@ -25,8 +25,7 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.TMSUtils.TileBounds
-import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
+import org.mrgeo.utils.SparkUtils
 
 import scala.collection.mutable
 

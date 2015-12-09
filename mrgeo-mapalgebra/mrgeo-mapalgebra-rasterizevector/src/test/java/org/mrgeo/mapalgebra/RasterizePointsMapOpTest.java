@@ -37,9 +37,6 @@ import java.io.IOException;
 
 public class RasterizePointsMapOpTest extends LocalRunnerTest
 {
-  @Rule
-  public TestName testname = new TestName();
-
   private static MapOpTestUtils testUtils;
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
