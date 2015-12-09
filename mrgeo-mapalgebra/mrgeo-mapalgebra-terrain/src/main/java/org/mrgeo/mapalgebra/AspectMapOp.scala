@@ -22,9 +22,6 @@ object AspectMapOp extends MapOpRegistrar {
    override def register: Array[String] = {
      Array[String]("aspect")
    }
-  override def registerWithParams: Array[String] = {
-    Array[String]("aspect(RasterMapOp)") // ,"aspect(RasterMapOp, String)")
-  }
 
   def create(raster:RasterMapOp):MapOp = {
     new SlopeAspectMapOp(Some(raster), "rad", false)

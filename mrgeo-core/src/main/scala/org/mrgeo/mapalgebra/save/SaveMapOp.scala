@@ -26,9 +26,6 @@ object SaveMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("save")
   }
-  override def registerWithParams: Array[String] = {
-    Array[String]("save(MapOp, String)")
-  }
 
   def create(mapop:MapOp, name:String):MapOp = {
     mapop match {
