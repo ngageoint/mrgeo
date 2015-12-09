@@ -37,6 +37,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
   var rasterRDD:Option[RasterRDD] = None
 
+
   private[binarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode]) = {
 
     if (node.getNumChildren < 2) {
