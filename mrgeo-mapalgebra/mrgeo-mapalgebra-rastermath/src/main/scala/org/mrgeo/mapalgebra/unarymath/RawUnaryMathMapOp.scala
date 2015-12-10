@@ -33,10 +33,10 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
   private[unarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode]) = {
 
     if (node.getNumChildren < 1) {
-      throw new ParserException(node.getName + " requires one arguments")
+      throw new ParserException(node.getName + " requires one argument")
     }
     else if (node.getNumChildren > 1) {
-      throw new ParserException(node.getName + " requires only two arguments")
+      throw new ParserException(node.getName + " requires only one argument")
     }
 
     input = RasterMapOp.decodeToRaster(node.getChild(0), variables)

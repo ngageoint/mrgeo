@@ -16,12 +16,15 @@
 package org.mrgeo.mapalgebra.unarymath
 
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object SinMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("sin")
   }
+  def create(raster:RasterMapOp):MapOp =
+    new SinMapOp(Some(raster))
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new SinMapOp(node, variables)
@@ -29,6 +32,11 @@ object SinMapOp extends MapOpRegistrar {
 }
 
 class SinMapOp extends RawUnaryMathMapOp {
+
+  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+    this()
+    input = raster
+  }
 
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
