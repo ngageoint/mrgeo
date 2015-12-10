@@ -14,10 +14,33 @@ from pyspark.context import SparkContext
 
 from rastermapop import RasterMapOp
 
-from java_gateway import launch_gateway, get_field, set_field
+from java_gateway import launch_gateway, set_field
 
 
 class MrGeo(object):
+    operators = {"+": ["__add__", "__radd__", "__iadd__"],
+                 "-": ["__sub__", "__rsub__", "__isub__"],
+                 "*": ["__mul__", "__rmul__", "__imul__"],
+                 "/": ["__div__", "__truediv__", "__rdiv__", "__rtruediv__", "__idiv__", "__itruediv__"],
+                 "//": [],  # floor div
+                 "**": ["__pow__", "__rpow__", "__ipow__"], # pow
+                 "=": [], # assignment, can't do!
+                 "<": ["__lt__"],
+                 "<=": ["__le__"],
+                 ">": ["__lt__"],
+                 ">=": ["__ge__"],
+                 "==": ["__eq__"],
+                 "!=": ["__ne__"],
+                 "<>": [],
+                 "!": [],
+                 "&&": ["__and__", "__rand__", "__iand__"],
+                 "&": [],
+                 "||": ["__or__", "__ror__", "__ior__"],
+                 "|": [],
+                 "^": ["__xor__", "__rxor__", "__ixor__"],
+                 "^=": []}
+    reserved = ["or", "and", "str", "int", "long", "float", "bool"]
+
     gateway = None
     lock = Lock()
 
@@ -59,19 +82,13 @@ class MrGeo(object):
         set_field(self.job, "name", appname)
 
         # Yarn in the default
-        self.useYarn()
+        self.useyarn()
 
     def initialize(self):
         self._create_job()
         self._load_mapops()
 
     def _load_mapops(self):
-
-        symbols = {"+", "-", "*", "/",
-                   "=", "<", "<=", ">", ">=", "==", "!=", "<>", "!",
-                   "&&", "&", "||", "|", "^", "^="}
-        reserved = {"or", "and", "str", "int", "long", "float", "bool"}
-
         jvm = self.gateway.jvm
         client = self.gateway._gateway_client
         java_import(jvm, "org.mrgeo.job.*")
@@ -86,7 +103,6 @@ class MrGeo(object):
 
         mapops = jvm.MapOpFactory.getMapOpClasses()
 
-        # print("MapOps")
         for rawmapop in mapops:
             mapop = str(rawmapop.getCanonicalName().rstrip('$'))
 
@@ -108,92 +124,118 @@ class MrGeo(object):
             signatures = jvm.MapOpFactory.getSignatures(mapop)
 
             for method in cls.register():
-                code = None
+                codes = None
                 if method is not None:
                     name = method.strip().lower()
                     if len(name) > 0:
-                        if name in reserved:
+                        if name in self.reserved:
                             print("reserved: " + name)
                             continue
-                        elif name in symbols:
-                            print("symbol: " + name)
-                            continue
+                        elif name in self.operators:
+                            print("operator: " + name)
+                            codes = self._generate_operator_code(mapop, name, signatures, instance)
                         else:
                             print("method: " + name)
+                            codes = self._generate_method_code(mapop, name, signatures, instance)
 
-                        code = MrGeo._generate_params(mapop, name, signatures, instance)
+                if codes is not None:
+                    for method_name, code in codes.iteritems():
+                        print(code)
 
-                if code is not None:
-                    compiled = {}
-                    exec code in compiled
+                        compiled = {}
+                        exec code in compiled
 
-                    if instance == 'RasterMapOp':
-                        setattr(RasterMapOp, name, compiled.get(name))
-                    elif instance == "VectorMapOp":
-                        #setattr(VectorMapOp, name, compiled.get(name))
-                        pass
-                    elif self.is_instance_of(cls, jvm.MapOp):
-                        setattr(RasterMapOp, name, compiled.get(name))
-                        #setattr(VectorMapOp, name, compiled.get(name))
+                        if instance == 'RasterMapOp':
+                            setattr(RasterMapOp, method_name, compiled.get(method_name))
+                        elif instance == "VectorMapOp":
+                            #setattr(VectorMapOp, method_name, compiled.get(method_name))
+                            pass
+                        elif self.is_instance_of(cls, jvm.MapOp):
+                            setattr(RasterMapOp, method_name, compiled.get(method_name))
+                            #setattr(VectorMapOp, method_name, compiled.get(method_name))
 
-    @staticmethod
-    def _generate_params(mapop, name, signatures, instance):
-
-        methods = []
-        for sig in signatures:
-            found = False
-            method = []
-            for variable in sig.split(","):
-                names = re.split("[:=]+", variable)
-                new_name = names[0]
-                new_type = names[1]
-                new_signature = None
-
-                if len(names) == 3:
-                    new_value = names[2]
-                else:
-                    new_value = None
-
-                if ((not found) and
-                        (new_type.endswith("MapOp") or
-                             (instance is "RasterMapOp" and new_type.endswith("RasterMapOp")) or
-                             (instance is "VectorMapOp" and new_type.endswith("VectorMapOp")))):
-                    found = True
-                    new_call = "self.mapop"
-                else:
-                    new_call = new_name
-
-                if (new_type == "java.lang.String"):
-                    new_type = "__string__"
-
-                tup = (new_name, new_type, new_call, new_value)
-                method.append(tup)
-
-            methods.append(method)
+    def _generate_operator_code(self, mapop, name, signatures, instance):
+        methods = self._generate_methods(instance, signatures)
 
         if len(methods) == 0:
             return None
 
-        return MrGeo._generate_code(mapop, name, methods)
+        # need to change the parameter names to "other" for all except us
+        corrected_methods = []
+        for method in methods:
+            new_method = []
+            if len(method) > 2:
+                raise Exception("The parameters for an operator can only have 1 or 2 parameters")
+            for param in method:
+                lst = list(param)
+                if lst[2] != "self.mapop":
+                    lst[0] = "other"
+                new_method.append(tuple(lst))
+            corrected_methods.append(new_method)
 
-    @staticmethod
-    def _generate_code(mapop, call_name, methods):
-        signature = MrGeo._generate_signature(methods)
+        codes = {}
+        for method_name in self.operators[name]:
+            code = ""
+
+            # Signature
+            code += "def " + method_name + "(self, other):" + "\n"
+            code += "    print('" + name + "')\n"
+
+            code += self._generate_imports(mapop)
+            code += self._generate_calls(corrected_methods)
+            code += self._generate_run()
+
+            codes[method_name] = code
+        return codes
+
+    def _generate_method_code(self, mapop, name, signatures, instance):
+
+        methods = self._generate_methods(instance, signatures)
+
+        if len(methods) == 0:
+            return None
+
+        signature = self._generate_signature(methods)
 
         code = ""
         # Signature
-        code += "def " + call_name + "(" + signature + "):" + "\n"
+        code += "def " + name + "(" + signature + "):" + "\n"
+        code += "    print('" + name + "')\n"
+        code += self._generate_imports(mapop)
+        code += self._generate_calls(methods)
+        code += self._generate_run()
 
+        return {name:code}
+
+    def _generate_run(self):
+        code = ""
+        # Run the MapOp
+        code += "    if (op.setup(self.job, self.context.getConf()) and\n"
+        code += "        op.execute(self.context) and\n"
+        code += "        op.teardown(self.job, self.context.getConf())):\n"
+        # copy the Raster/VectorMapOp (so we got all the monkey patched code) and return it as the new mapop
+        # TODO:  Add VectorMapOp!
+        code += "        new_resource = copy.copy(self)\n"
+        code += "        new_resource.mapop = op\n"
+        code += "        return new_resource\n"
+        code += "    return None\n"
+        return code
+
+    def _generate_imports(self, mapop):
+        code = ""
         # imports
-        code += "    from py4j.java_gateway import JavaClass\n"
         code += "    import copy\n"
-        code += "    print('" + call_name + "')\n"
-
+        code += "    from numbers import Number\n"
+        code += "    from py4j.java_gateway import JavaClass\n"
         # Get the Java class
         code += "    cls = JavaClass('" + mapop + "', gateway_client=self.gateway._gateway_client)\n"
+        return code
+
+    def _generate_calls(self, methods):
 
         # Check the input params and call the appropriate create() method
         firstmethod = True
+        code = ""
         for method in methods:
             iftest = ""
             call = []
@@ -204,7 +246,6 @@ class MrGeo(object):
                 type_name = param[1]
                 call_name = param[2]
 
-                call += [call_name]
                 if firstparam:
                     firstparam = False
                     if firstmethod:
@@ -215,27 +256,30 @@ class MrGeo(object):
                 else:
                     iftest += " and"
 
+                # isinstance(x, (int, long, float))
+
                 if call_name == "self.mapop":
                     var_name = call_name
 
                 if type_name == "String":
                     iftest += " type(" + var_name + ") is str"
-                elif type_name == "Double":
-                    iftest += " type(" + var_name + ") is float"
-                elif type_name == "Float":
-                    iftest += " type(" + var_name + ") is float"
-                elif type_name == "Int":
-                    iftest += " type(" + var_name + ") is int"
+                    call_name = "str(" + var_name + ")"
+                elif type_name == "Double" or type_name == "Float":
+                    iftest += " isinstance(" + var_name + ", (int, long, float))"
+                    call_name = "float(" + var_name + ")"
                 elif type_name == "Long":
-                    iftest += " type(" + var_name + ") is long"
-                elif type_name == "Short":
-                    iftest += " type(" + var_name + ") is int"
-                elif type_name == "Char":
-                    iftest += " type(" + var_name + ") is int"
+                    iftest += " isinstance(" + var_name + ", (int, long, float))"
+                    call_name = "long(" + var_name + ")"
+                elif type_name == "Int" or type_name == "Short" or type_name == "Char":
+                    iftest += " isinstance(" + var_name + ", (int, long, float))"
+                    call_name = "int(" + var_name + ")"
                 elif type_name == "Boolean":
-                    iftest += " type(" + var_name + ") is bool"
+                    iftest += " isinstance(" + var_name + ", (int, long, float, str))"
+                    call_name = "True if " + var_name + " else False"
                 else:
                     iftest += " self.is_instance_of(" + var_name + ", '" + type_name + "')"
+
+                call += [call_name]
 
             if len(iftest) > 0:
                 iftest += ":\n"
@@ -246,24 +290,39 @@ class MrGeo(object):
         code += "    else:\n"
         code += "       raise Exception('input types differ (TODO: expand this message!)')\n"
 
-        # Run the MapOp
-        code += "    if (op.setup(self.job, self.context.getConf()) and\n"
-        code += "        op.execute(self.context) and\n"
-        code += "        op.teardown(self.job, self.context.getConf())):\n"
-
-        # copy the Raster/VectorMapOp (so we got all the monkey patched code) and return it as the new mapop
-        # TODO:  Add VectorMapOp!
-        code += "        new_resource = copy.copy(self)\n"
-        code += "        new_resource.mapop = op\n"
-        code += "        return new_resource\n"
-        code += "    return None\n"
-
-        print(code)
-
         return code
 
-    @staticmethod
-    def _in_signature(param, signature):
+    def _generate_methods(self, instance, signatures):
+        methods = []
+        for sig in signatures:
+            found = False
+            method = []
+            for variable in sig.split(","):
+                names = re.split("[:=]+", variable)
+                new_name = names[0]
+                new_type = names[1]
+
+                if len(names) == 3:
+                    new_value = names[2]
+                else:
+                    new_value = None
+
+                if ((not found) and
+                    (new_type.endswith("MapOp") or
+                    (instance is "RasterMapOp" and new_type.endswith("RasterMapOp")) or
+                        (instance is "VectorMapOp" and new_type.endswith("VectorMapOp")))):
+                    found = True
+                    new_call = "self.mapop"
+                else:
+                    new_call = new_name
+
+                tup = (new_name, new_type, new_call, new_value)
+                method.append(tup)
+
+            methods.append(method)
+        return methods
+
+    def _in_signature(self, param, signature):
         for s in signature:
             if s[0] == param[0]:
                 if s[1] == param[1]:
@@ -275,16 +334,12 @@ class MrGeo(object):
                     raise Exception("type parameters differ: " + str(s) + ": " + str(param))
         return False
 
-
-    @staticmethod
-    def _generate_signature(methods):
-
+    def _generate_signature(self, methods):
         signature = []
-
         dual = len(methods) > 1
         for method in methods:
             for param in method:
-                if not param[2] == "self.mapop" and not MrGeo._in_signature(param, signature):
+                if not param[2] == "self.mapop" and not self._in_signature(param, signature):
                     signature.append(param)
 
         sig = ["self"]
@@ -297,8 +352,6 @@ class MrGeo(object):
                 sig += [s[0]]
 
         return ",".join(sig)
-
-
 
     # @staticmethod
     # def _generate_code(mapop, name, signatures, instance):
@@ -367,10 +420,10 @@ class MrGeo(object):
 
         return False
 
-    def useDebug(self):
+    def usedebug(self):
         self.job.useDebug()
 
-    def useYarn(self):
+    def useyarn(self):
         self.job.useYarn()
 
     def start(self):
@@ -395,8 +448,9 @@ class MrGeo(object):
             else:
                 master = "local[" + str(cpus) + "]"
 
-        set_field(self.job, "jars", jvm.StringUtils.concatUnique(jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
-                                                                 jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
+        set_field(self.job, "jars",
+                            jvm.StringUtils.concatUnique(jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
+                                                         jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
 
         conf = jvm.PrepareJob.prepareJob(self.job)
 
@@ -409,8 +463,8 @@ class MrGeo(object):
 
             conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem / workers), "m"))
 
-        for a in conf.getAll():
-            print(a._1(), a._2())
+        # for a in conf.getAll():
+        #     print(a._1(), a._2())
 
         # jsc = jvm.JavaSparkContext(master, appName, sparkHome, jars)
         jsc = jvm.JavaSparkContext(conf)
@@ -433,7 +487,8 @@ class MrGeo(object):
     def load_resource(self, name):
         jvm = self.gateway.jvm
 
-        #providerProperties = ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
+        #providerProperties =
+        # ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
 
         pstr = self.job.getSetting(constants.provider_properties, "")
         pp = jvm.ProviderProperties.fromDelimitedString(pstr)

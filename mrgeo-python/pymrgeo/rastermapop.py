@@ -1,4 +1,5 @@
 
+import copy
 import py4j
 from py4j.java_gateway import JavaClass, JavaObject
 
@@ -15,6 +16,9 @@ class RasterMapOp(object):
         self.context = context
         self.mapop = mapop
         self.job = job
+
+    def clone(self):
+        return copy.copy(self)
 
     def is_instance_of(self, java_object, java_class):
         if isinstance(java_class, basestring):
@@ -35,7 +39,8 @@ class RasterMapOp(object):
         elif isinstance(java_object, JavaObject):
             cls = java_object.getClass()
         else:
-            raise Exception("java_object must be a JavaClass, or a JavaObject")
+            return False
+            #raise Exception("java_object must be a JavaClass, or a JavaObject")
 
         if cls.getCanonicalName() == name:
             return True
