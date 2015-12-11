@@ -37,6 +37,19 @@ object ConMapOp extends MapOpRegistrar {
     Array[String]("con")
   }
 
+  def create(test:RasterMapOp, positive:RasterMapOp, negative:RasterMapOp):MapOp =
+    new ConMapOp(test, positive, negative)
+
+  def create(test:RasterMapOp, positive:Double, negative:RasterMapOp):MapOp =
+    new ConMapOp(test, positive, negative)
+
+  def create(test:RasterMapOp, positive:RasterMapOp, negative:Double):MapOp =
+    new ConMapOp(test, positive, negative)
+
+  def create(test:RasterMapOp, positive:Double, negative:Double):MapOp =
+    new ConMapOp(test, positive, negative)
+
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new ConMapOp(node, variables)
 }
@@ -51,6 +64,79 @@ class ConMapOp extends RasterMapOp with Externalizable {
 
   private val rddMap = mutable.Map.empty[Int, Int]  // maps input order (key) to cogrouped position (value)
   private val constMap = mutable.Map.empty[Int, Double] // maps input order (key) to constant value
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:RasterMapOp, negative:RasterMapOp) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](3)
+    inputs(0) = test
+    inputs(1) = positive
+    inputs(2) = negative
+
+    rddMap.put(0, 0)
+    rddMap.put(1, 1)
+    rddMap.put(2, 2)
+
+    //constMap.put(0, 0)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = true
+    isRdd(2) = true
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:Double, negative:RasterMapOp) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+    inputs(1) = negative
+
+    rddMap.put(0, 0)
+    rddMap.put(2, 1)
+
+    constMap.put(1, positive)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = false
+    isRdd(2) = true
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:RasterMapOp, negative:Double) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+    inputs(1) = positive
+
+    rddMap.put(0, 0)
+    rddMap.put(1, 1)
+
+    constMap.put(2, negative)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = true
+    isRdd(2) = false
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:Double, negative:Double) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+
+    rddMap.put(0, 0)
+
+    constMap.put(1, positive)
+    constMap.put(2, negative)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = false
+    isRdd(2) = false
+  }
 
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
