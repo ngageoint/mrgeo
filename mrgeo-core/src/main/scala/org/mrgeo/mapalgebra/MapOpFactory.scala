@@ -120,48 +120,49 @@ object MapOpFactory extends Logging {
       registerFunctions()
     }
 
-    functions.values.filter(_.getClass.getCanonicalName.startsWith(classname)).map(mapop => {
-      val im = mirror reflect mapop
-      val create = newTermName("create")
-      val ts = im.symbol.typeSignature
-      val method = ts.member(create)
+    val mapop = functions.values.filter(_.getClass.getCanonicalName.startsWith(classname)).head
 
-      method match {
-      case symbol: TermSymbol =>
-        symbol.alternatives.map {
-          case creaters: MethodSymbol =>
-            creaters.paramss.head.map(_.asTerm).zipWithIndex.map {
-              case (term, index) =>
-                term.name + ":" + term.typeSignature + {
-                  if (term.isParamWithDefault) {
-                    val getter = ts member newTermName("create$default$" + (index + 1))
-                    if (getter != NoSymbol) {
-                      "=" + ((im reflectMethod getter.asMethod)() match {
-                      case s:String => "\"" + s + "\""
-                      case x => x
-                      })
-                    }
-                    else {
-                      method.typeSignature match {
-                      case t if t =:= typeOf[String] => null
-                      case t if t =:= typeOf[Double] => 0.0
-                      case t if t =:= typeOf[Float]  => 0.0F
-                      case t if t =:= typeOf[Long]   => 0L
-                      case t if t =:= typeOf[Int]    => 0
-                      case x                         => throw new IllegalArgumentException(x.toString)
-                      }
-                    }
+    val im = mirror reflect mapop
+    val create = newTermName("create")
+    val ts = im.symbol.typeSignature
+    val method = ts.member(create)
+
+    val rawsig = method match {
+    case symbol: TermSymbol =>
+      symbol.alternatives.map {
+        case creaters: MethodSymbol =>
+          creaters.paramss.head.map(_.asTerm).zipWithIndex.map {
+            case (term, index) =>
+              term.name + ":" + term.typeSignature + {
+                if (term.isParamWithDefault) {
+                  val getter = ts member newTermName("create$default$" + (index + 1))
+                  if (getter != NoSymbol) {
+                    "=" + ((im reflectMethod getter.asMethod)() match {
+                    case s:String => "\"" + s + "\""
+                    case x => x
+                    })
                   }
                   else {
-                    ""
+                    method.typeSignature match {
+                    case t if t =:= typeOf[String] => null
+                    case t if t =:= typeOf[Double] => 0.0
+                    case t if t =:= typeOf[Float]  => 0.0F
+                    case t if t =:= typeOf[Long]   => 0L
+                    case t if t =:= typeOf[Int]    => 0
+                    case x                         => throw new IllegalArgumentException(x.toString)
+                    }
                   }
                 }
-            }.mkString(",")
-          case _ => ""
-        }
-      case _ => Seq.empty[String]
+                else {
+                  ""
+                }
+              }
+          }.mkString(",")
+        case _ => ""
       }
-    }.toArray).reduce((a, b) => a ++ b)
+    case _ => Seq.empty[String]
+    }
+    rawsig.toArray
   }
 
 

@@ -6,6 +6,8 @@ from pymrgeo.rastermapop import RasterMapOp
 if __name__ == "__main__":
     mrgeo = MrGeo()
 
+    sys.exit(1)
+
     mrgeo.usedebug()
 
     mrgeo.start()

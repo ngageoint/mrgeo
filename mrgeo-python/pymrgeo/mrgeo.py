@@ -235,6 +235,7 @@ class MrGeo(object):
 
         # Check the input params and call the appropriate create() method
         firstmethod = True
+        varargcode = ""
         code = ""
         for method in methods:
             iftest = ""
@@ -246,38 +247,28 @@ class MrGeo(object):
                 type_name = param[1]
                 call_name = param[2]
 
-                if firstparam:
-                    firstparam = False
-                    if firstmethod:
-                        firstmethod = False
-                        iftest += "if"
+                if param[4]:
+                    call_name, it = self.method_name(call_name, type_name, "arg")
+                    var_name = "args"
+                    varargcode += "    for arg in args:\n"
+                    varargcode += "        if not(" + it + "):\n"
+                    varargcode += "            raise Exception('input types differ (TODO: expand this message!)')\n"
+                else:
+                    if firstparam:
+                        firstparam = False
+                        if firstmethod:
+                            firstmethod = False
+                            iftest += "if"
+                        else:
+                            iftest += "elif"
                     else:
-                        iftest += "elif"
-                else:
-                    iftest += " and"
+                        iftest += " and"
 
-                # isinstance(x, (int, long, float))
+                    if call_name == "self.mapop":
+                        var_name = call_name
 
-                if call_name == "self.mapop":
-                    var_name = call_name
-
-                if type_name == "String":
-                    iftest += " type(" + var_name + ") is str"
-                    call_name = "str(" + var_name + ")"
-                elif type_name == "Double" or type_name == "Float":
-                    iftest += " isinstance(" + var_name + ", (int, long, float))"
-                    call_name = "float(" + var_name + ")"
-                elif type_name == "Long":
-                    iftest += " isinstance(" + var_name + ", (int, long, float))"
-                    call_name = "long(" + var_name + ")"
-                elif type_name == "Int" or type_name == "Short" or type_name == "Char":
-                    iftest += " isinstance(" + var_name + ", (int, long, float))"
-                    call_name = "int(" + var_name + ")"
-                elif type_name == "Boolean":
-                    iftest += " isinstance(" + var_name + ", (int, long, float, str))"
-                    call_name = "True if " + var_name + " else False"
-                else:
-                    iftest += " self.is_instance_of(" + var_name + ", '" + type_name + "')"
+                    call_name, it = self.method_name(call_name, type_name, var_name)
+                    iftest += it
 
                 call += [call_name]
 
@@ -285,12 +276,36 @@ class MrGeo(object):
                 iftest += ":\n"
                 code += "    " + iftest
 
-            code += "       op = cls.create(" + ", ".join(call) + ')\n'
+            code += "        op = cls.create(" + ", ".join(call) + ')\n'
 
         code += "    else:\n"
-        code += "       raise Exception('input types differ (TODO: expand this message!)')\n"
+        code += "        raise Exception('input types differ (TODO: expand this message!)')\n"
+
+        if len(varargcode) > 0:
+            code += varargcode
 
         return code
+
+    def method_name(self, call_name, type_name, var_name):
+        iftest = ""
+        if type_name == "String":
+            iftest += " type(" + var_name + ") is str"
+            call_name = "str(" + var_name + ")"
+        elif type_name == "Double" or type_name == "Float":
+            iftest += " isinstance(" + var_name + ", (int, long, float))"
+            call_name = "float(" + var_name + ")"
+        elif type_name == "Long":
+            iftest += " isinstance(" + var_name + ", (int, long, float))"
+            call_name = "long(" + var_name + ")"
+        elif type_name == "Int" or type_name == "Short" or type_name == "Char":
+            iftest += " isinstance(" + var_name + ", (int, long, float))"
+            call_name = "int(" + var_name + ")"
+        elif type_name == "Boolean":
+            iftest += " isinstance(" + var_name + ", (int, long, float, str))"
+            call_name = "True if " + var_name + " else False"
+        else:
+            iftest += " self.is_instance_of(" + var_name + ", '" + type_name + "')"
+        return call_name, iftest
 
     def _generate_methods(self, instance, signatures):
         methods = []
@@ -301,6 +316,13 @@ class MrGeo(object):
                 names = re.split("[:=]+", variable)
                 new_name = names[0]
                 new_type = names[1]
+
+                # var args?
+                varargs = False
+                if new_type.endswith("*"):
+                    new_type = new_type[:-1]
+                    new_name = "args"
+                    varargs = True
 
                 if len(names) == 3:
                     new_value = names[2]
@@ -316,7 +338,7 @@ class MrGeo(object):
                 else:
                     new_call = new_name
 
-                tup = (new_name, new_type, new_call, new_value)
+                tup = (new_name, new_type, new_call, new_value, varargs)
                 method.append(tup)
 
             methods.append(method)
@@ -341,15 +363,21 @@ class MrGeo(object):
             for param in method:
                 if not param[2] == "self.mapop" and not self._in_signature(param, signature):
                     signature.append(param)
+                    if param[4]:
+                        # var args must be the last parameter
+                        break
 
         sig = ["self"]
         for s in signature:
-            if s[3] is not None:
-                sig += [s[0] + "=" + s[3]]
-            elif dual:
-                sig += [s[0] + "=None"]
+            if s[4]:
+                sig += ["*args"]
             else:
-                sig += [s[0]]
+                if s[3] is not None:
+                    sig += [s[0] + "=" + s[3]]
+                elif dual:
+                    sig += [s[0] + "=None"]
+                else:
+                    sig += [s[0]]
 
         return ",".join(sig)
 
