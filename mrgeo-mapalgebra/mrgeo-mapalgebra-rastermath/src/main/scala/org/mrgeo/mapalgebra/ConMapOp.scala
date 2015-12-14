@@ -37,17 +37,17 @@ object ConMapOp extends MapOpRegistrar {
     Array[String]("con")
   }
 
-  def create(test:RasterMapOp, positive:RasterMapOp, negative:RasterMapOp):MapOp =
-    new ConMapOp(test, positive, negative)
+  def create(test:RasterMapOp, positiveRaster:RasterMapOp, negativeRaster:RasterMapOp):MapOp =
+    new ConMapOp(test, positiveRaster, negativeRaster)
 
-  def create(test:RasterMapOp, positive:Double, negative:RasterMapOp):MapOp =
-    new ConMapOp(test, positive, negative)
+  def create(test:RasterMapOp, positiveConst:Double, negativeRaster:RasterMapOp):MapOp =
+    new ConMapOp(test, positiveConst, negativeRaster)
 
-  def create(test:RasterMapOp, positive:RasterMapOp, negative:Double):MapOp =
-    new ConMapOp(test, positive, negative)
+  def create(test:RasterMapOp, positiveRaster:RasterMapOp, negativeConst:Double):MapOp =
+    new ConMapOp(test, positiveRaster, negativeConst)
 
-  def create(test:RasterMapOp, positive:Double, negative:Double):MapOp =
-    new ConMapOp(test, positive, negative)
+  def create(test:RasterMapOp, positiveConst:Double, negativeConst:Double):MapOp =
+    new ConMapOp(test, positiveConst, negativeConst)
 
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =

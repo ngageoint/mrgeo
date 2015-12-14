@@ -36,9 +36,11 @@ object MosaicMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("mosaic")
   }
+  def create(first:RasterMapOp, others:RasterMapOp*):MapOp =
+    new MosaicMapOp(List(first) ++ others)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new MosaicMapOp(node, true, variables)
+    new MosaicMapOp(node, variables)
 }
 
 class MosaicMapOp extends RasterMapOp with Externalizable {
@@ -46,7 +48,13 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD:Option[RasterRDD] = None
   private var inputs:Array[Option[RasterMapOp]] = null
 
-  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(rasters:Seq[RasterMapOp]) = {
+    this()
+
+    inputs = rasters.map(Some(_)).toArray
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 2) {
@@ -62,15 +70,6 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
   }
 
   override def rdd(): Option[RasterRDD] = rasterRDD
-
-//  override def registerClasses(): Array[Class[_]] = {
-//    val classes = Array.newBuilder[Class[_]]
-//
-//    // yuck!  need to register spark private classes
-//    classes += ClassTag(Class.forName("org.apache.spark.util.collection.CompactBuffer")).wrap.runtimeClass
-//
-//    classes.result()
-//  }
 
   override def execute(context: SparkContext): Boolean = {
 

@@ -49,7 +49,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
     inputMapOp = raster
     this.base = base
   }
-  
+
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 

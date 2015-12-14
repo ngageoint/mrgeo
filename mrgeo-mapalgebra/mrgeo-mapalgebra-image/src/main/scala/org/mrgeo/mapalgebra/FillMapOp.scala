@@ -28,15 +28,33 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
 
-import scala.collection.mutable
-
 object FillMapOp extends MapOpRegistrar {
-  private[mapalgebra] val Fill = "fill"
-  private[mapalgebra] val FillBounds = "fillbounds"
 
   override def register: Array[String] = {
-    Array[String](Fill, FillBounds)
+    Array[String]("fill")
   }
+
+  def create(raster:RasterMapOp, fillRaster:RasterMapOp):MapOp =
+    new FillMapOp(raster, fillRaster, None)
+
+  def create(raster:RasterMapOp, constFill:Double):MapOp =
+    new FillMapOp(raster, constFill, None)
+
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new FillMapOp(node, variables)
+}
+
+object FillBoundsMapOp extends MapOpRegistrar {
+
+  override def register: Array[String] = {
+    Array[String]("fillbounds")
+  }
+
+  def create(raster:RasterMapOp, fillRaster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
+    new FillMapOp(raster, fillRaster, Some(new Bounds(w, s, e, n)))
+
+  def create(raster:RasterMapOp, constFill:Double, w:Double, s:Double, e:Double, n:Double):MapOp =
+    new FillMapOp(raster, constFill, Some(new Bounds(w, s, e, n)))
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new FillMapOp(node, variables)
@@ -50,18 +68,32 @@ class FillMapOp extends RasterMapOp with Externalizable {
   private var constFill:Option[Double] = None
   private var bounds:Option[Bounds] = None
 
+  private[mapalgebra] def this(raster:RasterMapOp, fillRaster:RasterMapOp, bounds:Option[Bounds]) = {
+    this()
+    inputMapOp = Some(raster)
+    fillMapOp = Some(fillRaster)
+    this.bounds = bounds
+  }
+
+  private[mapalgebra] def this(raster:RasterMapOp, const:Double, bounds:Option[Bounds]) = {
+    this()
+    inputMapOp = Some(raster)
+    constFill = Some(const)
+    this.bounds = bounds
+  }
+
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
     // get values unique for each function
     node.getName match {
-    case FillMapOp.Fill =>
+    case "fill" =>
       if (node.getNumChildren != 2) {
         throw new ParserException("Usage: fill(raster, fill value)")
       }
-    case FillMapOp.FillBounds =>
+    case "fillbounds" =>
       if (node.getNumChildren != 6) {
-        throw new ParserException("Usage: fill(raster, fill value, w, s, n, e)")
+        throw new ParserException("Usage: fill(raster, fill value, w, s, e, n)")
       }
 
       bounds = Some(new Bounds(MapOp.decodeDouble(node.getChild(2), variables).get,

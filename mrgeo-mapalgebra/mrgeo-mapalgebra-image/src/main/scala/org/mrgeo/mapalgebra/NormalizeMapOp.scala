@@ -32,6 +32,13 @@ object NormalizeMapOp extends MapOpRegistrar {
     Array[String]("normalize")
   }
 
+  def create(raster:RasterMapOp):MapOp =
+    new NormalizeMapOp(Some(raster), None, None)
+
+  def create(raster:RasterMapOp, min:Double, max:Double):MapOp =
+    new NormalizeMapOp(Some(raster), Some(min), Some(max))
+
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new NormalizeMapOp(node, variables)
 }
@@ -42,6 +49,13 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
   private var inputMapOp: Option[RasterMapOp] = None
   private var minVal:Option[Double] = None
   private var maxVal:Option[Double] = None
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], min:Option[Double], max:Option[Double]) = {
+    this()
+    inputMapOp = raster
+    minVal = min
+    maxVal = max
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()

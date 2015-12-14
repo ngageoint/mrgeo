@@ -27,15 +27,27 @@ import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 object CropMapOp extends MapOpRegistrar {
-  private[mapalgebra] val Crop = "crop"
-  private[mapalgebra] val CropExact = "cropexact"
-
   override def register: Array[String] = {
-    Array[String](Crop, CropExact)
+    Array[String]("crop")
   }
 
+  def create(raster:RasterMapOp, bounds:String):MapOp =
+    new CropMapOp(Some(raster), bounds, false)
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new CropMapOp(node, variables)
+    new CropMapOp(node, variables, false)
+}
+
+object CropExactMapOp extends MapOpRegistrar {
+  override def register: Array[String] = {
+    Array[String]("cropexact")
+  }
+
+  def create(raster:RasterMapOp, bounds:String):MapOp =
+    new CropMapOp(Some(raster), bounds, true)
+
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new CropMapOp(node, variables, true)
 }
 
 class CropMapOp extends RasterMapOp with Externalizable {
@@ -48,7 +60,15 @@ class CropMapOp extends RasterMapOp with Externalizable {
   private var cropBounds:TMSUtils.Bounds = null
   private var exact: Boolean = false
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(raster:Option[RasterMapOp], bounds:String, exact:Boolean) = {
+    this()
+
+    inputMapOp = raster
+    cropBounds = TMSUtils.Bounds.fromCommaString(bounds)
+    this.exact = exact
+  }
+
+  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode], exact:Boolean) = {
     this()
 
     if (node.getNumChildren != 5) {
@@ -57,12 +77,7 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
-    // get values unique for each function
-    node.getName match {
-    case CropMapOp.CropExact =>
-      exact = true
-    case _ =>
-    }
+    this.exact = exact
 
     cropBounds = new TMSUtils.Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
       MapOp.decodeDouble(node.getChild(2), variables).get,

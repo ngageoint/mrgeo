@@ -31,6 +31,9 @@ object BandExtractMapOp extends MapOpRegistrar {
     Array[String]("bandextract", "extract", "be")
   }
 
+  def create(raster:RasterMapOp, band:Int = 0) =
+    new BandExtractMapOp(Some(raster), band)
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new BandExtractMapOp(node, true, variables)
 }
@@ -40,6 +43,12 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
   private var input: Option[RasterMapOp] = null
   private var band: Int = 0
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], band:Int) = {
+    this()
+    input = raster
+    this.band = band
+  }
 
   private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
     this()
