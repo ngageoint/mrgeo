@@ -101,9 +101,6 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
 
-    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
-
     true
   }
 

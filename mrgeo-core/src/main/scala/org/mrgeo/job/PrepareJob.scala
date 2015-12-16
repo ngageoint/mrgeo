@@ -20,6 +20,7 @@ import java.util
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
+import java.io.IOException
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.{Logging, SparkConf}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
@@ -40,7 +41,6 @@ object PrepareJob extends Logging {
 
     val conf = SparkUtils.getConfiguration
 
-    println("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
     logInfo("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
     conf.setAppName(job.name)
         .setMaster(job.cluster)
@@ -93,11 +93,52 @@ object PrepareJob extends Logging {
           })
     }
 
+    val fracs = calculateMemoryFractions(job)
+    conf.set("spark.storage.memoryFraction", fracs._1.toString)
+    conf.set("spark.shuffle.memoryFraction", fracs._2.toString)
 
     conf
   }
 
-  private def loadYarnSettings(job:JobArguments) = {
+  def calculateMemoryFractions(job: JobArguments) = {
+    val exmem = if (job.executorMemKb > 0) job.executorMemKb else job.memoryKb
+
+    val pmem = SparkUtils.humantokb(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MAX_PROCESSING_MEM, "1G"))
+    val shufflefrac = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_SHUFFLE_FRACTION, "0.5").toDouble
+
+    if (shufflefrac < 0 || shufflefrac > 1) {
+      throw new IOException(MrGeoConstants.MRGEO_SHUFFLE_FRACTION + " must be between 0 and 1 (inclusive)")
+    }
+    val cachefrac = 1.0 - shufflefrac
+
+    val smemfrac = if (exmem > pmem * 2) {
+      (exmem - pmem).toDouble / exmem.toDouble
+    }
+    else {
+      0.5  // if less than 2x, 1/2 memory is for shuffle/cache
+    }
+
+    if (log.isInfoEnabled) {
+      val cfrac = smemfrac * cachefrac
+      val sfrac = smemfrac * shufflefrac
+      val pfrac = 1 - (cfrac + sfrac)
+      val p = (exmem * pfrac).toLong
+      val c = (exmem * cfrac).toLong
+      val s = (exmem * sfrac).toLong
+
+      logInfo("total memory:            " + SparkUtils.kbtohuman(exmem, "m"))
+      logInfo("mrgeo processing memory: " + SparkUtils.kbtohuman(p, "m") + " (" + pfrac + ")")
+      logInfo("shuffle/cache memory:    " + SparkUtils.kbtohuman(exmem - p, "m") + " (" + smemfrac + ")")
+      logInfo("    cache memory:   " + SparkUtils.kbtohuman(c, "m") + " (" + cfrac + ")")
+      logInfo("    shuffle memory: " + SparkUtils.kbtohuman(s, "m") + " (" + sfrac + ")")
+    }
+
+    // storage, shuffle fractions
+    (smemfrac * cachefrac, smemfrac * shufflefrac)
+
+  }
+
+ private def loadYarnSettings(job:JobArguments) = {
     val conf = HadoopUtils.createConfiguration()
 
     val res = calculateYarnResources()
@@ -236,7 +277,6 @@ object PrepareJob extends Logging {
 
     (cores, nodes, memory)
   }
-
 
   def setupSerializer(mrgeoJob: MrGeoJob, conf:SparkConf) = {
     val classes = Array.newBuilder[Class[_]]

@@ -494,9 +494,6 @@ class IngestImage extends MrGeoJob with Externalizable {
 
     job.isMemoryIntensive = true
 
-    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
-
     inputs = job.getSetting(IngestImage.Inputs).split(",")
     // This setting can use lots of memory, so we we'll set it to null here to clean up memory.
     // WARNING!  This definately can have side-effects

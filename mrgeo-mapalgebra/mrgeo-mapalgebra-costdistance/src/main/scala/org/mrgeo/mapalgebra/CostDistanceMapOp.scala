@@ -184,8 +184,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.30") // set the shuffle higher
     numExecutors = conf.getInt("spark.executor.instances", -1)
     CostDistanceMapOp.LOG.info("num executors = " + numExecutors)
 //    conf.set("spark.kryo.registrationRequired", "true")
@@ -1003,7 +1001,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   }
 
   override def registerClasses(): Array[Class[_]] = {
-    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
+    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable], classOf[TMSUtils.Pixel])
   }
 }
 

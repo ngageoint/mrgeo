@@ -346,7 +346,7 @@ class JobArguments() extends Logging {
     val maxMem = Runtime.getRuntime.maxMemory()
     if (maxMem != Long.MaxValue) {
       val mem = (maxMem * 0.95).round
-      memoryKb = mem
+      memoryKb = mem / 1024 // memory is in bytes, convert to kb
       logInfo("Setting max memory to: " + Memory.format(mem))
     }
   }
