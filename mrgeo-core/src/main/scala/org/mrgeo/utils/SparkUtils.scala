@@ -297,6 +297,9 @@ object SparkUtils extends Logging {
 
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
+
+        log.info("Loading MrsPyramid " + provider.getResourceName)
+
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsImagePyramidSimpleInputFormat],
       classOf[TileIdWritable],
@@ -421,7 +424,13 @@ object SparkUtils extends Logging {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
+//    val localpersist = if (tiles.getStorageLevel == StorageLevel.NONE) {
+//      tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
+//      true
+//    }
+//    else {
+//      false
+//    }
 
     val output = outputProvider.getResourceName
 
@@ -521,7 +530,10 @@ object SparkUtils extends Logging {
 
     val wrappedForSave = new PairRDDFunctions(sorted)
     wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
-    tiles.unpersist()
+
+//    if (localpersist) {
+//      tiles.unpersist()
+//    }
 
     if (sparkPartitioner != null)
     {
@@ -667,6 +679,8 @@ object SparkUtils extends Logging {
 
   def calculateMetadata(rdd:RasterRDD, zoom:Int, nodatas:Array[Number], calcStats:Boolean):MrsImagePyramidMetadata = {
     val meta = new MrsImagePyramidMetadata
+
+    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     meta.setPyramid(rdd.name)
     meta.setName(zoom)

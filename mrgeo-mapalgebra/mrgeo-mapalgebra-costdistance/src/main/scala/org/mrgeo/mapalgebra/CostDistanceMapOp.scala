@@ -1003,7 +1003,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   }
 
   override def registerClasses(): Array[Class[_]] = {
-    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
+    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable], classOf[TMSUtils.Pixel])
   }
 }
 
