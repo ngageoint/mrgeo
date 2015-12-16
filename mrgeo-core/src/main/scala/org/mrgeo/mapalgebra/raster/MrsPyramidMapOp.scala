@@ -83,7 +83,10 @@ class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider) exten
       rasterRDD = Some(SparkUtils.loadMrsPyramid(dataprovider, maxZoomForRDD.get, context()))
       zoomForRDD = Some(maxZoomForRDD.get)
     }
+  }
 
+  def zoom():Int = {
+    zoomForRDD.get
   }
 
   override def metadata():Option[MrsImagePyramidMetadata] =  {

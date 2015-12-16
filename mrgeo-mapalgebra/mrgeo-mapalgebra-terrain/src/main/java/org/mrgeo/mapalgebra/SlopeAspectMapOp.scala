@@ -86,9 +86,6 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.3") // set the shuffle higher
-
     true
   }
 

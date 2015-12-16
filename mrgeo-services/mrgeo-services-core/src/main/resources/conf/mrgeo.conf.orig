@@ -32,6 +32,16 @@ use.kryo.serialization=false
 # concurrent tasks will be be lowered by the appripriate amount
 memoryintensive.multiplier = 2
 
+# This is the maximum amount of memory to give to the workers for mrgeo processing.  Any memory
+# above this will be allocated to Spark shuffle and cache, based on the shuffle.fraction property.
+# The calculations WILL NOT kick in until there is twice the memory as max.processing.memory.  If
+# the worker memory is less than twice max.processing.memory, 1/2 will go to processing, and the
+# rest will be distributed to shuffle and storage based on the shuffle fraction.
+# For example, if max.processing.memory is 1G, when the worker reaches 2G or more, 1G will be allocated
+# to mrgeo for processing and the rest allocated to shuffle & storage.
+max.processing.memory=1024m
+shuffle.fraction=0.5
+
 # Additional classpath elements used for finding dependencies used in distributed
 # processing.  These are added AFTER MRGEO_HOME dependencies, but before
 # any others on the classpath
