@@ -60,14 +60,7 @@ private static void usage()
   }
 
   System.out.println("Generic options supported are:");
-  new HelpFormatter().printHelp("ingest <options> <input>", createOptions());
-//    System.out.println("  -l    verbose logging");
-//    System.out.println("  -mm   memory multiplier (spark only), multiple of the \"yarn.scheduler.minimum-allocation-mb\"");
-//    System.out.println("        parameter to allocate east worker in a spark job.  This parameter overrides the");
-//    System.out.println("        setting in mrgeo.conf");
-//    System.out.println("  -v    verbose logging");
-//    System.out.println("  -d    debug (very verbose) logging");
-//    System.out.println("Most commands print help when invoked without parameters.");
+  new HelpFormatter().printHelp("command <options>", createOptions());
 }
 
 /**
@@ -99,45 +92,6 @@ private static void loadCommands()
 public static void main(String[] args)
 {
   Configuration conf = HadoopUtils.createConfiguration();
-
-//  LoggingUtils.setDefaultLogLevel(LoggingUtils.WARN);
-//  try
-//  {
-//    Path base = new Path("s3://mrgeo/images/aster-30m/12");
-//
-//    FileSystem fs = base.getFileSystem(conf);
-//
-//    TileIdWritable first = new TileIdWritable();
-//    TileIdWritable last = new TileIdWritable();
-//    RasterWritable raster = new RasterWritable();
-//
-//    for (int i = 0; i < 1889; i++)
-//    {
-//      Path file = new Path(base, String.format("part-r-%05d", i));
-//
-//      System.out.println("Opening reader " + i + " (" + file + ")");
-//
-//      MapFile.Reader reader = new MapFile.Reader(file, conf);
-//      // read the 1st and last keys
-//      reader.finalKey(last);
-//      reader.reset();
-//      reader.next(first, raster);
-//
-//      if (last.get() < first.get())
-//      {
-//        System.out.println("Something wen't wrong!  Last (" +
-//            last.get() + ") is greater than first (" + first.get() + ")");
-//      }
-//
-//      // don't close the readers on purpose!
-//    }
-//  }
-//  catch (Exception e)
-//  {
-//    e.printStackTrace();
-//  }
-//
-//  System.exit(1);
 
   int res = 0;
   try
