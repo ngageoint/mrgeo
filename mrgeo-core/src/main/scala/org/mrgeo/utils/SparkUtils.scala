@@ -396,8 +396,9 @@ object SparkUtils extends Logging {
 
     // NOTE:  This is a very special case where we are adding levels to a pyramid (i.e. BuildPyramid).
     // The input data provider provides most of the parameters.
-    saveMrsPyramid(tiles, inputProvider, zoom, tilesize, nodatas, conf,
-      tiletype, bounds, bands, protectionlevel, providerproperties)
+//    saveMrsPyramid(tiles, inputProvider, zoom, tilesize, nodatas, conf,
+//      tiletype, bounds, bands, protectionlevel, providerproperties)
+    saveMrsPyramid(tiles, inputProvider, metadata, zoom, conf, providerproperties)
   }
 
   def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider,
