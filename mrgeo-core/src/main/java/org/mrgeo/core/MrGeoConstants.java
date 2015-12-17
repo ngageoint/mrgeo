@@ -67,6 +67,10 @@ public static final String MRGEO_USE_KRYO = "use.kryo.serialization";
 public static final String MRGEO_MEMORYINTENSIVE_MULTIPLIER = "memoryintensive.multiplier";
 public static final String MRGEO_FORCE_MEMORYINTENSIVE = "force.memoryintensive.multiplier";
 
+public static final String MRGEO_MAX_PROCESSING_MEM = "max.processing.memory";
+public static final String MRGEO_SHUFFLE_FRACTION = "shuffle.fraction";
+
+
 /*
  * Runtime configuration keys
  */
