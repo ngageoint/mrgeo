@@ -162,11 +162,23 @@ public static Options createOptions()
 {
   Options result = new Options();
 
-  Option mm = new Option("mm", "memory-multiplier", true, "memory multiplier (spark only), " +
+  Option mm = new Option("mm", "memory-multiplier", true, "memory multiplier, " +
       "multiple of the \"yarn.scheduler.minimum-allocation-mb\" parameter to allocate each worker " +
       "in a spark job.  This parameter overrides the setting in mrgeo.conf");
   mm.setRequired(false);
   result.addOption(mm);
+
+  Option minmem = new Option("mem", "memory", true, "Amount of memory to allocate to MrGeo processes " +
+      "from total allocated for each worker.  The remaining memory is allocated to the shuffle and " +
+      "storage caches.  This parameter overrides the setting in mrgeo.conf");
+  minmem.setRequired(false);
+  result.addOption(minmem);
+
+  Option sf = new Option("sf", "shuffle-fraction", true, "Fraction of the cache to allocated to " +
+      "the shuffle cache (0.0 - 1.0).  The remaining fraction is allocated to the storage cache." +
+      "  This parameter overrides the setting in mrgeo.conf");
+  sf.setRequired(false);
+  result.addOption(sf);
 
   result.addOption(new Option("l", "local-runner", false, "Use Hadoop & Spark's local runner (used for debugging)"));
   result.addOption(new Option("v", "verbose", false, "Verbose logging"));
@@ -242,6 +254,16 @@ public int run(String[] args) throws IOException
     float mult = Float.parseFloat(line.getOptionValue("mm"));
     MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_FORCE_MEMORYINTENSIVE, "true");
     MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_MEMORYINTENSIVE_MULTIPLIER, Float.toString(mult));
+  }
+
+  if (line.hasOption("mem"))
+  {
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_MAX_PROCESSING_MEM, line.getOptionValue("mem"));
+  }
+
+  if (line.hasOption("sf"))
+  {
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_SHUFFLE_FRACTION, line.getOptionValue("sf"));
   }
 
   String cmdStr = args[0];
