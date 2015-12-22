@@ -88,9 +88,9 @@ object PrepareJob extends Logging {
           })
     }
 
-    val fracs = calculateMemoryFractions(job)
-    conf.set("spark.storage.memoryFraction", fracs._1.toString)
-    conf.set("spark.shuffle.memoryFraction", fracs._2.toString)
+//    val fracs = calculateMemoryFractions(job)
+//    conf.set("spark.storage.memoryFraction", fracs._1.toString)
+//    conf.set("spark.shuffle.memoryFraction", fracs._2.toString)
 
     conf
   }
