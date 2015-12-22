@@ -99,7 +99,8 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     val result = rasterize(vectorRDD)
     rasterRDD = Some(RasterRDD(result))
     val noData = Double.NaN
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData,
+      bounds = null, calcStats = false))
     true
   }
 
