@@ -89,7 +89,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
       RasterWritable.toWritable(dst)
     })
 
-    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, calcStats = false)
+    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
 
     // repartition, because chances are the RDD only has 1 partition (ingest a single file)
     val partitioned = tiles.repartition(meta.getTileBounds(zoom).getHeight.toInt)

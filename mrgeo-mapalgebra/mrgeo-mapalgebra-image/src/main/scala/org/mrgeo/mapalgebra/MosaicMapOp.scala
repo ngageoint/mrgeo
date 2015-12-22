@@ -233,7 +233,8 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
       (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0), calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0),
+      bounds = bounds, calcStats = false))
 
     true
 

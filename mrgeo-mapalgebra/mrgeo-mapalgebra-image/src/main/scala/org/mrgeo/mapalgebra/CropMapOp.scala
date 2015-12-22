@@ -149,7 +149,15 @@ class CropMapOp extends RasterMapOp with Externalizable {
       filtered
     }))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues, calcStats = false))
+    val b = if (exact) {
+      cropBounds
+    }
+    else {
+      TMSUtils.tileToBounds(bounds, zoom, tilesize)
+    }
+
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues,
+      bounds = b.asBounds(), calcStats = false))
 
     true
   }
