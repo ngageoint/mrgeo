@@ -26,6 +26,7 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.Bounds
 
 import scala.collection.mutable
 
@@ -76,6 +77,7 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
     var tiletype: Int = -1
     var totalbands: Int = 0
 
+    var bounds = new Bounds()
     // loop through the inputs and load the pyramid RDDs and metadata
     for (input <- inputs) {
 
@@ -84,7 +86,7 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
         pyramids(i) = pyramid.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + pyramid.getClass.getName))
         val meta = pyramid.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName))
 
-
+        bounds.expand(meta.getBounds)
         // check for the same max zooms
         if (zoom < 0) {
           zoom = meta.getMaxZoomLevel
@@ -160,7 +162,7 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
       (group._1, RasterWritable.toWritable(dst))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata, bounds = bounds, calcStats = false))
 
     true
   }
