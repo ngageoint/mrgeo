@@ -197,7 +197,8 @@ class FillMapOp extends RasterMapOp with Externalizable {
       })
     }))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues,
+      bounds = TMSUtils.tileToBounds(tb, zoom, meta.getTilesize).asBounds(), calcStats = false))
 
     true
   }

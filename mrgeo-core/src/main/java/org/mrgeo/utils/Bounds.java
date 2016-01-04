@@ -101,6 +101,16 @@ public class Bounds  implements Comparable<Bounds>, Externalizable
     return new Bounds(minX, minY, maxX, maxY);
   }
 
+public static Bounds combine(Bounds ... bounds)
+{
+  Bounds answer = new Bounds();
+  for (Bounds b:bounds)
+  {
+    answer.expand(b);
+  }
+  return answer;
+}
+
   @Override
   public int compareTo(Bounds o)
   {

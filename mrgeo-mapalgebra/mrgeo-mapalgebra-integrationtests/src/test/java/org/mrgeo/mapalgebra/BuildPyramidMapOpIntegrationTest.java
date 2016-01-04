@@ -17,8 +17,10 @@ package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.fs.Path;
 import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
+import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -34,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-@Ignore
 public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 {
   @SuppressWarnings("unused")
@@ -113,6 +114,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     MrsImagePyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
 
@@ -128,6 +131,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   @Category(IntegrationTest.class)
   public void buildPyramidMeanAggregator() throws Exception
   {
+    BuildPyramid.setMIN_TILES_FOR_SPARK(5);
+
     String exp = String.format("BuildPyramid([%s], \"mean\")", smallElevationNoPyramidsPath);
 
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
@@ -139,6 +144,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     MrsImagePyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
@@ -167,6 +174,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     MrsImagePyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "SUM", metadata.getResamplingMethod());
 
@@ -193,6 +202,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     MrsImagePyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MODE", metadata.getResamplingMethod());
@@ -221,6 +232,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     MrsImagePyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "NEAREST", metadata.getResamplingMethod());
 
@@ -247,6 +260,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     MrsImagePyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MIN", metadata.getResamplingMethod());
@@ -275,6 +290,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     MrsImagePyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
+
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MAX", metadata.getResamplingMethod());
 
@@ -301,6 +318,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     MrsImagePyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MINAVGPAIR", metadata.getResamplingMethod());

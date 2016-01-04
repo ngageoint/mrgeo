@@ -127,8 +127,8 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
           (U._1, RasterWritable.toWritable(dst))
         })))
 
-        metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom,
-          meta.getDefaultValue(band), calcStats = false))
+        metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValue(band),
+          bounds = meta.getBounds, calcStats = false))
         true
       case _ =>
         throw new IOException("Can't work with input raster! Ouch!")

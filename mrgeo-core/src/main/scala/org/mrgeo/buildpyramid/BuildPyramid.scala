@@ -38,6 +38,7 @@ import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
 import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
 
+import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
@@ -46,6 +47,9 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
   final private val Pyramid = "pyramid"
   final private val Aggregator = "aggregator"
   final private val ProviderProperties = "provider.properties"
+
+  @BeanProperty
+  var MIN_TILES_FOR_SPARK = 1000  // made a var so the tests can muck with it...
 
   def build(pyramidName: String, aggregator: Aggregator, conf: Configuration,
       providerProperties: ProviderProperties):Boolean = {
@@ -184,7 +188,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       val tb = metadata.getTileBounds(fromlevel)
 
       // if we have less than 1000 tiles total, we'll use the local buildpyramid
-      if (tb.getWidth * tb.getHeight > 1000) {
+      if (tb.getWidth * tb.getHeight > BuildPyramid.MIN_TILES_FOR_SPARK) {
         val pyramid = SparkUtils.loadMrsPyramid(provider, fromlevel, context)
 
         val decimated: RDD[(TileIdWritable, RasterWritable)] = pyramid.map(tile => {

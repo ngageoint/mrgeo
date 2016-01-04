@@ -67,7 +67,7 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
 
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
-    if (node.getNumChildren == 3) {
+    if (node.getNumChildren == 2) {
       aggregator = Some(MapOp.decodeString(node.getChild(1)) match {
       case Some(s) =>
         val clazz = AggregatorRegistry.aggregatorRegistry.get(s.toUpperCase)

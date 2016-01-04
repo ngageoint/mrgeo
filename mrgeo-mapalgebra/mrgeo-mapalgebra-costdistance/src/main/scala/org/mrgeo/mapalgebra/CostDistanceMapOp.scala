@@ -389,7 +389,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       (new TileIdWritable(U._1), RasterWritable.toWritable(singleBandRaster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata,
+      bounds = outputBounds, calcStats = false))
     true
   }
 

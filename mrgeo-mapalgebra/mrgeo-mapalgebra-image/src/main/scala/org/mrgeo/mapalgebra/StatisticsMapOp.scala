@@ -475,7 +475,8 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Float.NaN, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Float.NaN,
+      bounds = null, calcStats = false))
 
     true
   }
