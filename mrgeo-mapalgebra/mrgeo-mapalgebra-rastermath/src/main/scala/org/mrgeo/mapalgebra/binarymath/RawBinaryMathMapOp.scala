@@ -147,15 +147,23 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     val answer = RasterRDD(rdd.map(tile => {
       val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
-            val v = raster.getSampleDouble(x, y, b)
+      val width = raster.getWidth
+      var b: Int = 0
+      while (b < raster.getNumBands) {
+        val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < width) {
+            val v = pixels(y * width + x)
             if (RasterMapOp.isNotNodata(v, nodatas(b))) {
               raster.setSample(x, y, b, function(const, v))
             }
+            x += 1
           }
+           y += 1
         }
+        b += 1
       }
       (tile._1, RasterWritable.toWritable(raster))
     }))
@@ -179,15 +187,23 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     val answer = RasterRDD(rdd.map(tile => {
       val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
-            val v = raster.getSampleDouble(x, y, b)
+      val width = raster.getWidth
+      var b: Int = 0
+      while (b < raster.getNumBands) {
+        val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < width) {
+            val v = pixels(y * width + x)
             if (RasterMapOp.isNotNodata(v, nodatas(b))) {
               raster.setSample(x, y, b, function(v, const))
             }
+            x += 1
           }
+          y += 1
         }
+        b += 1
       }
       (tile._1, RasterWritable.toWritable(raster))
     }))
@@ -237,12 +253,18 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
         val raster1 = RasterUtils.makeRasterWritable(RasterWritable.toRaster(iter1.head))
         val raster2 = RasterUtils.makeRasterWritable(RasterWritable.toRaster(iter2.head))
 
-        for (y <- 0 until raster1.getHeight) {
-          for (x <- 0 until raster1.getWidth) {
-            for (b <- 0 until raster1.getNumBands) {
-              val v1 = raster1.getSampleDouble(x, y, b)
+        val width = raster1.getWidth
+        var b: Int = 0
+        while (b < raster1.getNumBands) {
+          val pixels1 = raster1.getSamples(0, 0, width, raster1.getHeight, 0, null.asInstanceOf[Array[Double]])
+          val pixels2 = raster2.getSamples(0, 0, width, raster2.getHeight, 0, null.asInstanceOf[Array[Double]])
+          var y: Int = 0
+          while (y < raster1.getHeight) {
+            var x: Int = 0
+            while (x < width) {
+              val v1 = pixels1(y * width + x)
               if (RasterMapOp.isNotNodata(v1, nodata1(b))) {
-                val v2 = raster2.getSampleDouble(x, y, b)
+                val v2 = pixels2(y * width + x)
                 if (RasterMapOp.isNotNodata(v2, nodata2(b))) {
                   raster1.setSample(x, y, b, function(v1, v2))
                 }
@@ -251,8 +273,11 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
                   raster1.setSample(x, y, b, nodata1(b))
                 }
               }
+              x += 1
             }
+            y += 1
           }
+          b += 1
         }
 
         (tile._1, RasterWritable.toWritable(raster1))
