@@ -20,6 +20,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import javax.vecmath.Vector3d
 
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
@@ -85,9 +86,6 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.3") // set the shuffle higher
-
     true
   }
 
@@ -226,7 +224,8 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
     rasterRDD =
         Some(RasterRDD(calculate(tiles, bufferX, bufferY, nodatas(0).doubleValue(), zoom, tilesize)))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodatas, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array[Number](Float.NaN),
+      bounds = meta.getBounds, calcStats = false))
 
     true
   }

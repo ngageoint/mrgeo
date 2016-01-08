@@ -281,6 +281,12 @@ public class TestListener extends RunListener
     if (failfast)
     {
       System.err.println("FAILURE: " + failure);
+
+      String[] trace = failure.getTrace().split("\n");
+      for (String line: trace)
+      {
+        System.err.println("   " + line);
+      }
       System.exit(-1);
     }
   }

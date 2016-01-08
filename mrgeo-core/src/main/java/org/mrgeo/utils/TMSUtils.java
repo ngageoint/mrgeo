@@ -68,6 +68,23 @@ public static class Bounds implements Serializable
         .getMaxY());
   }
 
+  public static Bounds combine(Bounds ... bounds)
+  {
+    Bounds answer = null;
+    for (Bounds b:bounds)
+    {
+      if (answer == null)
+      {
+        answer = new Bounds(b.w, b.s, b.e, b.n);
+      }
+      else
+      {
+        answer.expand(b);
+      }
+    }
+    return answer;
+  }
+
   public org.mrgeo.utils.Bounds asBounds()
   {
     return new org.mrgeo.utils.Bounds(w, s, e, n);

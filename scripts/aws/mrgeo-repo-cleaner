@@ -1,0 +1,64 @@
+#!/bin/bash
+# mrgeo-repo-cleaner
+#
+# Cleans the "old" timestamped artifacts from an s3 maven repo
+
+BUCKET="mrgeo-maven"
+# Uncomment for logging to /tmp/mrgeo-repo-cleaner.log
+LOG="true"
+
+# check if we are already running
+COMMAND=$0
+
+if pidof -x $COMMAND -o %PPID > /dev/null
+then
+  if [ -n "$LOG" ]
+  then
+    echo "${COMMAND} is already running." >> /tmp/mrgeo-repo-cleaner.log
+  fi
+  exit 1
+fi
+
+IFS=$'\n'
+for line in $(aws s3 ls --recursive $BUCKET); do
+  #echo $line
+  if [[ "$line" == */ ]]
+  then
+    dir="$BUCKET/"$(echo $line | awk '{print $4}')
+    meta="$dir""maven-metadata.xml"
+    found=$(aws s3 ls $meta)
+
+    if [ -n "$found" ]
+    then
+      aws s3 cp --quiet "s3://$meta" /tmp
+
+      timestamp=$(xml2 < /tmp/maven-metadata.xml | grep "/metadata/versioning/snapshot/timestamp" | sed 's/.*=//')
+
+      if [ -n "$timestamp" ]
+      then
+        for file in $(aws s3 ls --recursive $dir); do
+
+          # not a directory
+          if [[ "$file" != */ ]]
+          then
+            # not the metadata file
+            if [[ "$file" != *maven-metadata.xml* ]]
+            then
+              # not the timestamped version
+              if [[ "$file" != *$timestamp* ]]
+              then
+                s3file="s3://$BUCKET/"$(echo $file | awk '{print $4}')
+                  if [ -n "$LOG" ]
+                  then
+                    echo "Removing" $s3file >> /tmp/mrgeo-repo-cleaner.log
+                  fi
+                $(aws s3 rm --quiet $s3file)
+              fi
+            fi
+          fi
+        done
+      fi
+    fi
+  fi
+done
+

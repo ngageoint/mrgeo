@@ -34,6 +34,8 @@ usage() {
     echo "  cdh545    - Cloudera hadoop 5.4.5"
     echo "  cdh547    - Cloudera hadoop 5.4.7"
     echo "  cdh548    - Cloudera hadoop 5.4.8"
+    echo "  cdh550    - Cloudera hadoop 5.5.0"
+    echo "  cdh551    - Cloudera hadoop 5.5.1"
     echo "  emr       - Amazon EMR hadoop 2.4.0 for AMI 3.7.0"
     echo "  mapr      - mapr hadoop"
     echo "phase:"
@@ -52,6 +54,7 @@ usage() {
     echo "  -gs --generate-sources         - generate source jars"
     echo "  -j  --javadocs                 - include javadocs of dependencies (if available)"
     echo "  -jv  --javaversion <version>   - java version to use (1.7)"
+    echo "  -l  --license                  - generate licenses (normall off)"
     echo "  -p  --profile                  - turn on leak detection profiling"
     echo "  -s  --source                   - include source jars of dependencies (if available)"
     echo "  -sh --shade                    - generate the shaded (jar with dependencies) jars"
@@ -281,11 +284,17 @@ while [ $# -gt 0 ] ; do
     "cdh545")
         BUILD="CDH545"
         ;;
+    "cdh547")
+        BUILD="CDH547"
+        ;;
     "cdh548")
         BUILD="CDH548"
         ;;
-    "cdh547")
-        BUILD="CDH547"
+    "cdh550")
+        BUILD="CDH550"
+        ;;
+    "cdh551")
+        BUILD="CDH551"
         ;;
     "build")
         PHASE="build"

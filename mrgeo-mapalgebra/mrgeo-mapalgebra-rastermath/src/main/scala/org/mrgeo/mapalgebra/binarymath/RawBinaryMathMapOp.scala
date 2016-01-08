@@ -26,7 +26,7 @@ import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.{Bounds, SparkUtils}
 
 abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   var constA:Option[Double] = None
@@ -160,7 +160,8 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodatas, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodatas,
+      bounds = meta.getBounds, calcStats = false))
 
     Some(answer)
 
@@ -191,7 +192,8 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodatas, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodatas,
+      bounds = meta.getBounds, calcStats = false))
 
     Some(answer)
 
@@ -257,7 +259,8 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       }
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster1.metadata().get.getMaxZoomLevel, nodata1, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(answer, raster1.metadata().get.getMaxZoomLevel, nodata1,
+      bounds = Bounds.combine(raster1.metadata().get.getBounds,raster2.metadata().get.getBounds), calcStats = false))
 
     Some(answer)
   }

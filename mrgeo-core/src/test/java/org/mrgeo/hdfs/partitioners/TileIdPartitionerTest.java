@@ -45,7 +45,6 @@ import java.util.Random;
 public class TileIdPartitionerTest extends LocalRunnerTest {
 
 @Rule public TemporaryFolder folder = new TemporaryFolder();
-@Rule public TestName testName = new TestName();
 
 static Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
 
@@ -98,7 +97,7 @@ public void setUp() throws IOException
 @Category(UnitTest.class)
 public void setSplitFile() throws IOException
 {
-  String file = new Path(outputHdfs, testName.getMethodName()).toString();
+  String file = new Path(outputHdfs, testname.getMethodName()).toString();
   Job job = Job.getInstance(conf);
 
   TileIdPartitioner.setSplitFile(file, job);
@@ -119,7 +118,7 @@ public void setSplitFileNonLocal() throws IOException
 {
   conf = HadoopUtils.createConfiguration(); // force local mode off...
 
-  String file = new Path(outputHdfs, testName.getMethodName()).toString();
+  String file = new Path(outputHdfs, testname.getMethodName()).toString();
   Job job = Job.getInstance(conf);
 
   TileIdPartitioner.setSplitFile(file, job);
@@ -141,7 +140,7 @@ public void setSplitFileNonLocal() throws IOException
 @Category(UnitTest.class)
 public void setupPartitionerLocal() throws IOException
 {
-  Job job = Job.getInstance(conf, testName.getMethodName());
+  Job job = Job.getInstance(conf, testname.getMethodName());
   FileSystem fs = HadoopFileUtils.getFileSystem(conf);
 
   SplitGenerator sg = new TestGenerator();
@@ -159,7 +158,7 @@ public void setupPartitioner() throws IOException
 {
   conf = HadoopUtils.createConfiguration();
 
-  Job job = Job.getInstance(conf, testName.getMethodName());
+  Job job = Job.getInstance(conf, testname.getMethodName());
   conf = job.getConfiguration();
 
   FileSystem fs = HadoopFileUtils.getFileSystem(conf);
@@ -216,7 +215,7 @@ public void getPartition() throws IOException
 {
   conf = HadoopUtils.createConfiguration();
 
-  Job job = Job.getInstance(conf, testName.getMethodName());
+  Job job = Job.getInstance(conf, testname.getMethodName());
   conf = job.getConfiguration();
 
   FileSystem fs = HadoopFileUtils.getFileSystem(conf);

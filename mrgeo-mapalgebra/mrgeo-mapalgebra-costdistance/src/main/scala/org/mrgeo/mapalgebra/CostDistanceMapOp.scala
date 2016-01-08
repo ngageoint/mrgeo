@@ -184,8 +184,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.30") // set the shuffle higher
     numExecutors = conf.getInt("spark.executor.instances", -1)
     CostDistanceMapOp.LOG.info("num executors = " + numExecutors)
 //    conf.set("spark.kryo.registrationRequired", "true")
@@ -260,25 +258,32 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     }
 
     log.info("tileBounds = " + tileBounds)
-    val startGeom = sourcePointsRDD.first()
-    if (startGeom == null || startGeom._2 == null || !startGeom._2.isInstanceOf[Point]) {
-      throw new IOException("Invalid starting point, expected a point geometry: " + startGeom)
-    }
-    val startPt = startGeom._2.asInstanceOf[Point]
     val width: Short = tilesize.toShort
     val height: Short = tilesize.toShort
     val res = TMSUtils.resolution(zoomLevel, tilesize)
     val outputNodata = Float.NaN
-    val tile: TMSUtils.Tile = TMSUtils.latLonToTile(startPt.getY.toFloat, startPt.getX.toFloat, zoomLevel,
-      tilesize)
-    val startTileId = TMSUtils.tileid(tile.tx, tile.ty, zoomLevel)
-    val startPixel = TMSUtils.latLonToTilePixelUL(startPt.getY.toFloat, startPt.getX.toFloat, tile.tx, tile.ty,
-      zoomLevel, tilesize)
 
-    // Use an accumulator to capture the pixel value of the start pixel within the
-    // start tile during the construction of out input RDD.
-    val startPointAccumulator = context.accumulator[Float](0.0f)
+    // Create a hash map lookup where the key is the tile id and the value is
+    // the set of pixels in the tile that are source points.
+    val starts = new scala.collection.mutable.HashMap[Long, scala.collection.mutable.Set[TMSUtils.Pixel]]
+      with scala.collection.mutable.MultiMap[Long, TMSUtils.Pixel]
+    val startTilesAndPoints = sourcePointsRDD.map(startGeom => {
+      if (startGeom == null || startGeom._2 == null || !startGeom._2.isInstanceOf[Point]) {
+        throw new IOException("Invalid starting point, expected a point geometry: " + startGeom)
+      }
+      val startPt = startGeom._2.asInstanceOf[Point]
+      val tile: TMSUtils.Tile = TMSUtils.latLonToTile(startPt.getY.toFloat, startPt.getX.toFloat, zoomLevel,
+        tilesize)
+      val startTileId = TMSUtils.tileid(tile.tx, tile.ty, zoomLevel)
+      val startPixel = TMSUtils.latLonToTilePixelUL(startPt.getY.toFloat, startPt.getX.toFloat, tile.tx, tile.ty,
+        zoomLevel, tilesize)
+      (startTileId, startPixel)
+    })
+    startTilesAndPoints.collect().foreach(entry => {
+      starts.addBinding(entry._1, entry._2)
+    })
 
+    // Limit processing to the tile bounds
     var resultsrdd = frictionRDD.filter(U => {
       // Trim the friction surface to only the tiles in our bounds
       val t = TMSUtils.tileid(U._1.get, zoomLevel)
@@ -295,28 +300,35 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       CostDistanceMapOp.LOG.info("No need to repartition")
       resultsrdd
     }
+    // Build a list of changed points to start the cost distance algorithm. It must
+    // contain all of the source points provided by the vector input.
+    var changesToProcess = new NeighborChangedPoints
+    var initialChangesAccum = context.accumulator(new NeighborChangedPoints)(NeighborChangesAccumulator)
     resultsrdd = resultsrdd.map(U => {
       val sourceRaster: Raster = RasterWritable.toRaster(U._2)
-      if (U._1.get == startTileId) {
-        startPointAccumulator.add(
-          sourceRaster.getSampleFloat(startPixel.px.toInt, startPixel.py.toInt, 0))
+      val startTileId = U._1.get()
+      if (starts.contains(startTileId)) {
+        val pointsInTile = starts.getOrElse(U._1.get(), default = scala.collection.mutable.Set[TMSUtils.Pixel]())
+        val costPoints = new ListBuffer[CostPoint]()
+        for (startPixel <- pointsInTile) {
+          val startPixelFriction = sourceRaster.getSampleFloat(startPixel.px.toInt, startPixel.py.toInt, 0)
+          CostDistanceMapOp.LOG.info("Initially putting tile " + startTileId + " " + TMSUtils.tileid(startTileId, zoomLevel) + " and point " + startPixel.px + ", " + startPixel.py + " in the list")
+          costPoints += new CostPoint(startPixel.px.toShort, startPixel.py.toShort, 0.0f, startPixelFriction)
+        }
+        val ncp = new NeighborChangedPoints
+        ncp.addPoints(startTileId, CostDistanceMapOp.SELF, costPoints.toList)
+        initialChangesAccum.add(ncp)
       }
       (U._1,
         RasterWritable.toWritable(makeCostDistanceRaster(U._1.get, sourceRaster, zoomLevel, res,
           width, height, outputNodata)))
     })
+    changesToProcess = initialChangesAccum.value
+    resultsrdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
+
     // Force the RDD to materialize
     val rddCount = resultsrdd.count()
     CostDistanceMapOp.LOG.info("RDD count " + rddCount)
-
-    // Construct an initial "list" of key value pairs  that includes the source
-    // point for the source
-    var changesToProcess = new NeighborChangedPoints
-    val startPixelFriction = startPointAccumulator.value
-    CostDistanceMapOp.LOG.info("Initially putting tile " + startTileId + " " + TMSUtils.tileid(startTileId, zoomLevel) + " and point " + startPixel.px + ", " + startPixel.py + " in the list")
-    changesToProcess.put(startTileId,
-      CostDistanceMapOp.SELF, List(new CostPoint(startPixel.px.toShort, startPixel.py.toShort, 0.0f,
-        startPixelFriction)))
 
     val pixelSizeMeters: Double = res * LatLng.METERS_PER_DEGREE
 
@@ -377,7 +389,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       (new TileIdWritable(U._1), RasterWritable.toWritable(singleBandRaster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoomLevel, outputNodata,
+      bounds = outputBounds, calcStats = false))
     true
   }
 
@@ -989,7 +1002,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   }
 
   override def registerClasses(): Array[Class[_]] = {
-    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
+    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable], classOf[TMSUtils.Pixel])
   }
 }
 

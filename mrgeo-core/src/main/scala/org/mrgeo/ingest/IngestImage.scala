@@ -89,7 +89,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
       RasterWritable.toWritable(dst)
     })
 
-    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, calcStats = false)
+    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
 
     // repartition, because chances are the RDD only has 1 partition (ingest a single file)
     val partitioned = tiles.repartition(meta.getTileBounds(zoom).getHeight.toInt)
@@ -493,9 +493,6 @@ class IngestImage extends MrGeoJob with Externalizable {
   override def setup(job: JobArguments, conf:SparkConf): Boolean = {
 
     job.isMemoryIntensive = true
-
-    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
 
     inputs = job.getSetting(IngestImage.Inputs).split(",")
     // This setting can use lots of memory, so we we'll set it to null here to clean up memory.
