@@ -46,7 +46,7 @@ public class LocalRunnerTest {
   public void initLocalRunner() throws IOException
   {
     conf = HadoopUtils.createConfiguration();
-    HadoopUtils.setupLocalRunner(conf);
+    //HadoopUtils.setupLocalRunner(conf);
 
     DataProviderFactory.invalidateCache();
   }

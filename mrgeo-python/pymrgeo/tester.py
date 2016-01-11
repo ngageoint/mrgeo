@@ -1,18 +1,19 @@
 import sys
 
+sys.path.append('lib/py4j-0.8.2.1-src.zip')
+
 from pymrgeo import MrGeo
-from pymrgeo.rastermapop import RasterMapOp
 
 if __name__ == "__main__":
     mrgeo = MrGeo()
 
-    sys.exit(1)
+    # sys.exit(1)
 
     mrgeo.usedebug()
 
     mrgeo.start()
 
-    # ones = mrgeo.load_resource("all-ones")
+    ones = mrgeo.load_resource("all-ones")
 
     # slope = ones.slope()
 
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     # aspect.save("aspect-test")
 
     print("***** Starting *****")
-    small_elevation = mrgeo.load_resource("small-elevation")
+    # small_elevation = mrgeo.load_resource("small-elevation")
     # slope = small_elevation.slope()
     # slope.save("slope-test")
     # print("***** Finished Slope 1 *****")
@@ -32,12 +33,17 @@ if __name__ == "__main__":
     # slope.save("slope-test2")
     # print("***** Finished Slope 2 *****")
 
-    sub1 = small_elevation - 5
-    sub2 = 5 - small_elevation
+    # sub1 = small_elevation - 5
+    # sub2 = 5 - small_elevation
+    #
+    # sub3 = small_elevation.clone()
+    # sub3 -= 5
 
-    sub3 = small_elevation.clone()
-    sub3 -= 5
+    hundreds = mrgeo.load_resource("all-hundreds")
+    # hundreds.export("/data/export/hundreds-export-test", singleFile=True)
 
+    sub = hundreds + ones
+    sub.export("/data/export/101-export-test", singleFile=True)
     mrgeo.stop()
 
     print("***** Done *****")

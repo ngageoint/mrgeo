@@ -24,6 +24,7 @@ import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Geometry
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
 import org.mrgeo.utils._
 
@@ -31,14 +32,50 @@ import scala.collection.mutable.ListBuffer
 
 object RasterizeVectorMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("RasterizeVector")
+    Array[String]("rasterizevector", "rasterize")
   }
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new RasterizeVectorMapOp(node, variables)
+
+  def create(vector: VectorMapOp, aggregator:String, cellsize:String, column:String = null) =
+  {
+    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null)
+  }
+
+}
+
+object RasterizeVectorExactMapOp extends MapOpRegistrar {
+  override def register: Array[String] = {
+    Array[String]("rasterizevectorexact", "rasterizeexact")
+  }
+
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new RasterizeVectorMapOp(node, variables)
+
+  def create(vector: VectorMapOp, aggregator:String, cellsize:String,
+      w:Double, s:Double, e:Double, n:Double, column:String = null) =
+  {
+    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column,
+      new TMSUtils.Bounds(w, n, e, s).toCommaString)
+  }
+
+//  def create(vector: VectorMapOp, aggregator:String, cellsize:String, bounds:String, column:String = null) =
+//  {
+//    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, bounds)
+//  }
+
 }
 
 class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externalizable
 {
+
+  def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
+    this()
+
+    initialize(vector, aggregator, cellsize, bounds, column)
+  }
+
+
   def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
@@ -50,7 +87,6 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val tiledVectors = vectorsToTiledRDD(vectorRDD)
     val localRdd = new PairRDDFunctions(tiledVectors)
     val groupedGeometries = localRdd.groupByKey()
-    val noData = Float.NaN
     rasterize(groupedGeometries)
   }
 
@@ -81,8 +117,6 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     * a tuple to the resulting RDD for each of this tiles paired with that feature.
     * For example, if a feature intersects 5 tiles, then it adds 5 records for that
     * feature to the returned RDD.
-    * @param vectorRDD
-    * @return
     */
   def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)] = {
     vectorRDD.flatMap(U => {
@@ -94,18 +128,18 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       val b: TMSUtils.Bounds = new TMSUtils.Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
 
       bounds match {
-        case Some(filterBounds) =>
-          if (filterBounds.intersect(b)) {
-            val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
-            for (tileId <- tiles) {
-              result += ((tileId, geom))
-            }
-          }
-        case None =>
+      case Some(filterBounds) =>
+        if (filterBounds.intersect(b)) {
           val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
           for (tileId <- tiles) {
             result += ((tileId, geom))
           }
+        }
+      case None =>
+        val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
+        for (tileId <- tiles) {
+          result += ((tileId, geom))
+        }
       }
       result
     })

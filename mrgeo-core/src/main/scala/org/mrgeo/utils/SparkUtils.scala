@@ -15,6 +15,7 @@
 
 package org.mrgeo.utils
 
+import java.awt.image.Raster
 import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util.Properties
@@ -298,7 +299,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
 
-        log.info("Loading MrsPyramid " + provider.getResourceName)
+    log.info("Loading MrsPyramid " + provider.getResourceName)
 
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsImagePyramidSimpleInputFormat],
@@ -396,8 +397,8 @@ object SparkUtils extends Logging {
 
     // NOTE:  This is a very special case where we are adding levels to a pyramid (i.e. BuildPyramid).
     // The input data provider provides most of the parameters.
-//    saveMrsPyramid(tiles, inputProvider, zoom, tilesize, nodatas, conf,
-//      tiletype, bounds, bands, protectionlevel, providerproperties)
+    //    saveMrsPyramid(tiles, inputProvider, zoom, tilesize, nodatas, conf,
+    //      tiletype, bounds, bands, protectionlevel, providerproperties)
     saveMrsPyramid(tiles, inputProvider, metadata, zoom, conf, providerproperties)
   }
 
@@ -425,13 +426,13 @@ object SparkUtils extends Logging {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-//    val localpersist = if (tiles.getStorageLevel == StorageLevel.NONE) {
-//      tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
-//      true
-//    }
-//    else {
-//      false
-//    }
+    //    val localpersist = if (tiles.getStorageLevel == StorageLevel.NONE) {
+    //      tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
+    //      true
+    //    }
+    //    else {
+    //      false
+    //    }
 
     val output = outputProvider.getResourceName
 
@@ -532,9 +533,9 @@ object SparkUtils extends Logging {
     val wrappedForSave = new PairRDDFunctions(sorted)
     wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
 
-//    if (localpersist) {
-//      tiles.unpersist()
-//    }
+    //    if (localpersist) {
+    //      tiles.unpersist()
+    //    }
 
     if (sparkPartitioner != null)
     {
@@ -631,6 +632,82 @@ object SparkUtils extends Logging {
 
     bounds
   }
+
+  def mergeTiles(rdd: RasterRDD, zoom:Int, tilesize:Int, nodatas:Array[Double], bounds:TMSUtils.Bounds = null) = {
+
+    val bnds = if (bounds != null) {
+      bounds
+    }
+    else {
+      SparkUtils.calculateBounds(RasterRDD(rdd), zoom, tilesize).getTMSBounds
+    }
+
+    val tilebounds = TMSUtils.tileBounds(bnds, zoom, tilesize)
+
+    val ul = TMSUtils.latLonToPixelsUL(tilebounds.n, tilebounds.w, zoom, tilesize)
+    val lr = TMSUtils.latLonToPixelsUL(tilebounds.s, tilebounds.e, zoom, tilesize)
+
+    val width = (lr.px - ul.px).toInt
+    val height = (lr.py - ul.py).toInt
+
+    log.debug("w: {} h: {}", width, height)
+
+    val sample = RasterWritable.toRaster(rdd.first()._2)
+
+    val model = sample.getSampleModel.createCompatibleSampleModel(width, height)
+
+    val merged = Raster.createWritableRaster(model, null)
+
+    // Initialize the full raster to the default values for the image
+    if (nodatas != null && nodatas.length > 0)
+    {
+      for (y <- 0 until merged.getHeight) {
+        for (x <- 0 until merged.getWidth) {
+          for (b <- nodatas.indices) {
+            merged.setSample(x, y, b, nodatas(b))
+          }
+        }
+      }
+    }
+
+    // because the data is distributed. and could be large, we need to collect a single partition at a time...
+    rdd.partitions.foreach(partition => {
+      val idx = partition.index
+      val partrdd = rdd.mapPartitionsWithIndex((part, data) => if (part == idx) data else Iterator(), preservesPartitioning = true)
+
+      val collected = partrdd.collect()
+      collected.foreach(tile => {
+        val id = TMSUtils.tileid(tile._1.get, zoom)
+        val tb = TMSUtils.tileBounds(id.tx, id.ty, zoom, tilesize)
+
+        // calculate the starting pixel for the source
+        // make sure we use the upper-left lat/lon
+        val start = TMSUtils.latLonToPixelsUL(tb.n, tb.w, zoom, tilesize)
+
+        val source = RasterWritable.toRaster(tile._2)
+        log.debug(s"Tile ${id.tx}, ${id.ty} with bounds ${tb.w}, ${tb.s}, ${tb.e}, ${tb.n}" +
+            s" pasted onto px ${start.px - ul.px} py ${start.py - ul.py}")
+
+        merged.setDataElements((start.px - ul.px).toInt, (start.py - ul.py).toInt, source)
+      })
+    })
+
+    val finalul = TMSUtils.latLonToPixelsUL(bnds.n, bnds.w, zoom, tilesize)
+    val finallr = TMSUtils.latLonToPixelsUL(bnds.s, bnds.e, zoom, tilesize)
+
+    val finalwidth = (finallr.px - finalul.px).toInt
+    val finalheight = (finallr.py - finalul.py).toInt
+
+    // if we need to, crop the image
+    if (finalul != ul || finallr != lr || finalwidth != width || finalheight != height) {
+      merged.createWritableChild((finalul.px - ul.px).toInt, (finalul.py - ul.py).toInt,
+        finalwidth, finalheight, 0, 0, null)
+    }
+    else {
+      merged
+    }
+  }
+
 
   @deprecated("Use RasterRDD method instead", "")
   def saveMrsPyramidRDD(tiles: RDD[(TileIdWritable, RasterWritable)],

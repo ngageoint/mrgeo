@@ -18,6 +18,7 @@ package org.mrgeo.test;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.gdal.gdal.Dataset;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -31,6 +32,7 @@ import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.utils.GDALJavaUtils;
+import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,6 +194,65 @@ public void compareRasterOutput(final String testName, final TestUtils.ValueTran
     if (image != null)
     {
       image.close();
+    }
+  }
+}
+public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator) throws IOException
+{
+  compareLocalRasterOutput(testName, null, testTranslator, (ProviderProperties)null);
+}
+public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
+    final ProviderProperties providerProperties) throws IOException
+{
+  compareLocalRasterOutput(testName, null, testTranslator, providerProperties);
+}
+
+public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
+    final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
+{
+  final File tf = new File(outputLocal);
+  final File testFile = new File(tf, testName + ".tif");
+
+  final Raster testRaster;
+  if (testFile.exists())
+  {
+    Dataset d = GDALUtils.open(testFile.getCanonicalPath());
+    testRaster = GDALUtils.toRaster(d);
+  }
+  else
+  {
+    final String inputLocalAbs = tf.getCanonicalFile().toURI().toString();
+    final MrsImagePyramid testPyramid = MrsImagePyramid.open(inputLocalAbs + "/" + testName,
+        providerProperties);
+    final MrsImage testImage = testPyramid.getImage(testPyramid.getMaximumLevel());
+    testRaster = RasterTileMerger.mergeTiles(testImage);
+  }
+
+  // The output against which to compare could either be a tif or a MrsImagePyramid.
+  // We check for the tif first.
+  final File file = new File(inputLocal);
+  final File baselineTif = new File(file, testName + ".tif");
+  if (baselineTif.exists())
+  {
+    TestUtils.compareRasters(baselineTif, baselineTranslator, testRaster, testTranslator);
+  }
+  else
+  {
+    final String inputLocalAbs = file.getCanonicalFile().toURI().toString();
+    final MrsImagePyramid goldenPyramid = MrsImagePyramid.open(inputLocalAbs + "/" + testName,
+        providerProperties);
+    final MrsImage goldenImage = goldenPyramid.getImage(goldenPyramid.getMaximumLevel());
+    try
+    {
+      TestUtils
+          .compareRasters(RasterTileMerger.mergeTiles(goldenImage), testRaster);
+    }
+    finally
+    {
+      if (goldenImage != null)
+      {
+        goldenImage.close();
+      }
     }
   }
 }

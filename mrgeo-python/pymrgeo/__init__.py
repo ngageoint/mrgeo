@@ -29,8 +29,20 @@ Public classes:
 
 """
 
+import sys
+from os import walk
+
+# find the py4j lib in the mrgeo path
+for (root, names, files) in walk('..'):
+    for file in files:
+        if file == 'py4j-0.8.2.1-src.zip':
+            sys.path.append(root + '/py4j-0.8.2.1-src.zip')
+
 from pymrgeo.mrgeo import MrGeo
+from pymrgeo.rastermapop import RasterMapOp
+
 
 __all__ = [
     "MrGeo"
+    "RasterMapOp"
 ]

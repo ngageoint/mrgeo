@@ -1,10 +1,7 @@
 from __future__ import print_function
 
-import imp
 import multiprocessing
-import os
 import re
-import sys
 from threading import Lock
 
 from py4j.java_gateway import java_import, JavaClass, JavaObject
@@ -24,7 +21,7 @@ class MrGeo(object):
                  "/": ["__div__", "__truediv__", "__rdiv__", "__rtruediv__", "__idiv__", "__itruediv__"],
                  "//": [],  # floor div
                  "**": ["__pow__", "__rpow__", "__ipow__"], # pow
-                 "=": [], # assignment, can't do!
+                 "=": [],  # assignment, can't do!
                  "<": ["__lt__"],
                  "<=": ["__le__"],
                  ">": ["__lt__"],
@@ -117,9 +114,9 @@ class MrGeo(object):
             elif self.is_instance_of(cls, jvm.MapOp):
                 instance = "MapOp"
             else:
-                #raise Exception("mapop (" + mapop + ") is not a RasterMapOp, VectorMapOp, or MapOp")
+                # raise Exception("mapop (" + mapop + ") is not a RasterMapOp, VectorMapOp, or MapOp")
                 print("mapop (" + mapop + ") is not a RasterMapOp, VectorMapOp, or MapOp")
-                break
+                continue
 
             signatures = jvm.MapOpFactory.getSignatures(mapop)
 
@@ -129,18 +126,18 @@ class MrGeo(object):
                     name = method.strip().lower()
                     if len(name) > 0:
                         if name in self.reserved:
-                            print("reserved: " + name)
+                            #print("reserved: " + name)
                             continue
                         elif name in self.operators:
-                            print("operator: " + name)
+                            #print("operator: " + name)
                             codes = self._generate_operator_code(mapop, name, signatures, instance)
                         else:
-                            print("method: " + name)
+                            #print("method: " + name)
                             codes = self._generate_method_code(mapop, name, signatures, instance)
 
                 if codes is not None:
                     for method_name, code in codes.iteritems():
-                        print(code)
+                        #print(code)
 
                         compiled = {}
                         exec code in compiled
@@ -148,11 +145,11 @@ class MrGeo(object):
                         if instance == 'RasterMapOp':
                             setattr(RasterMapOp, method_name, compiled.get(method_name))
                         elif instance == "VectorMapOp":
-                            #setattr(VectorMapOp, method_name, compiled.get(method_name))
+                            #  setattr(VectorMapOp, method_name, compiled.get(method_name))
                             pass
                         elif self.is_instance_of(cls, jvm.MapOp):
                             setattr(RasterMapOp, method_name, compiled.get(method_name))
-                            #setattr(VectorMapOp, method_name, compiled.get(method_name))
+                            #  setattr(VectorMapOp, method_name, compiled.get(method_name))
 
     def _generate_operator_code(self, mapop, name, signatures, instance):
         methods = self._generate_methods(instance, signatures)
@@ -168,8 +165,19 @@ class MrGeo(object):
                 raise Exception("The parameters for an operator can only have 1 or 2 parameters")
             for param in method:
                 lst = list(param)
-                if lst[2] != "self.mapop":
+                if lst[1].lower() == 'string' or \
+                                lst[1].lower() == 'double' or \
+                                lst[1].lower() == 'float' or \
+                                lst[1].lower() == 'long' or \
+                                lst[1].lower() == 'int' or \
+                                lst[1].lower() == 'short' or \
+                                lst[1].lower() == 'char' or \
+                                lst[1].lower() == 'boolean':
                     lst[0] = "other"
+                    lst[2] = "other"
+                elif lst[2] != "self.mapop":
+                    lst[0] = "other.mapop"
+                    lst[2] = "other.mapop"
                 new_method.append(tuple(lst))
             corrected_methods.append(new_method)
 
@@ -325,7 +333,14 @@ class MrGeo(object):
                     varargs = True
 
                 if len(names) == 3:
-                    new_value = names[2]
+                    if names[2].lower() == "true":
+                        new_value = "True"
+                    elif names[2].lower() == "false":
+                        new_value = "False"
+                    elif names[2].lower() == "null":
+                        new_value = "None"
+                    else:
+                        new_value = names[2]
                 else:
                     new_value = None
 
@@ -456,6 +471,7 @@ class MrGeo(object):
 
     def start(self):
         jvm = self.gateway.jvm
+
         self.job.addMrGeoProperties()
         dpf_properties = jvm.DataProviderFactory.getConfigurationFromProviders()
 

@@ -67,9 +67,9 @@ object MapAlgebra extends MrGeoDriver {
       }
     }
 
-//    run(name, classOf[MapAlgebra].getName, args.toMap, conf, Some(MapOpFactory.getMapOpClasses))
+    run(name, classOf[MapAlgebra].getName, args.toMap, conf, Some(MapOpFactory.getMapOpClasses.toSet))
 
-    true
+      true
   }
 
   def validate(expression: String, providerProperties: ProviderProperties): Boolean = {
