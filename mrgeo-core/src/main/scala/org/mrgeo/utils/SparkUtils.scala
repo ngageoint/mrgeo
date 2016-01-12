@@ -15,6 +15,7 @@
 
 package org.mrgeo.utils
 
+import java.awt.image.DataBuffer
 import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util.Properties
@@ -632,6 +633,73 @@ object SparkUtils extends Logging {
     bounds
   }
 
+  def calculateBoundsAndStats(rdd: RasterRDD, bands: Int, zoom: Int, tilesize: Int,
+                              nodata: Array[Number]): (Bounds, Array[ImageStats]) = {
+    val zero = Array.ofDim[ImageStats](bands)
+
+    for (i <- zero.indices) {
+      zero(i) = new ImageStats(Double.MaxValue, Double.MinValue, 0, 0)
+    }
+
+    val result = rdd.aggregate((new Bounds(), zero))((entry, t) => {
+      val bounds = entry._1
+      val stats = entry._2
+      val tile = TMSUtils.tileid(t._1.get, zoom)
+
+      // Handle the bounds
+      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize).asBounds()
+      tb.expand(entry._1)
+      // Handle the stats
+      val raster = RasterWritable.toRaster(t._2)
+
+      for (y <- 0 until raster.getHeight) {
+        for (x <- 0 until raster.getWidth) {
+          for (b <- 0 until raster.getNumBands) {
+            val p = raster.getSampleDouble(x, y, b)
+            if (nodata(b).doubleValue().isNaN) {
+              if (!p.isNaN) {
+                stats(b).count += 1
+                stats(b).sum += p
+                stats(b).max = Math.max(stats(b).max, p)
+                stats(b).min = Math.min(stats(b).min, p)
+              }
+            }
+            else if (p != nodata(b).doubleValue()) {
+              stats(b).count += 1
+              stats(b).sum += p
+              stats(b).max = Math.max(stats(b).max, p)
+              stats(b).min = Math.min(stats(b).min, p)
+            }
+          }
+        }
+      }
+
+      (tb, stats)
+    },
+    (result1, result2) => {
+      // combine the bounds
+      result1._1.expand(result2._1)
+      // combine the stats
+      val aggstat = result1._2.clone()
+
+      for (b <- aggstat.indices) {
+        aggstat(b).count += result2._2(b).count
+        aggstat(b).sum += result2._2(b).sum
+        aggstat(b).max = Math.max(aggstat(b).max, result2._2(b).max)
+        aggstat(b).min = Math.min(aggstat(b).min, result2._2(b).min)
+      }
+
+      result1
+    })
+    for (i <- result._2.indices) {
+      if (result._2(i).count > 0) {
+        result._2(i).mean = result._2(i).sum / result._2(i).count
+      }
+    }
+
+    result
+  }
+
   @deprecated("Use RasterRDD method instead", "")
   def saveMrsPyramidRDD(tiles: RDD[(TileIdWritable, RasterWritable)],
       outputProvider: MrsImageDataProvider, inputprovider: MrsImageDataProvider,
@@ -681,7 +749,7 @@ object SparkUtils extends Logging {
   def calculateMetadata(rdd:RasterRDD, zoom:Int, nodatas:Array[Number], calcStats:Boolean, bounds:Bounds):MrsImagePyramidMetadata = {
     val meta = new MrsImagePyramidMetadata
 
-    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
+//    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     meta.setPyramid(rdd.name)
     meta.setName(zoom)

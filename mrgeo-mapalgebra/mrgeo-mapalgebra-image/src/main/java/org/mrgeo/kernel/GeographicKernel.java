@@ -16,21 +16,31 @@
 package org.mrgeo.kernel;
 
 /**
- * Interface for a kernel in geographic space. Obviously the concept of a kernel
- * is a little different. The kernel for each row of data will be different due
- * to each row containing pixels of slightly different size (pixels get smaller
- * in width as you get close to the poles). Because of this, a kernel must be
- * generated for each latitude.
- * 
- * @author jason.surratt
- * 
+ * Interface for a kernel in geographic space. The assumption is that pixels
+ * are square, so the size of every pixel in geographic space is the same.
  */
 public interface GeographicKernel
 {
-  float[] createKernel(double latitude, double pixelWidth, double pixelHeight);
-  float[] createMaxSizeKernel(int zoom, int tileSize);
+  /**
+   * Create the kernel itself. The return value is an array of values
+   * representing a matrix of pixel weights. The array values appear
+   * in left to right, top to bottom order.
+   *
+   * @param pixelWidthMeters
+   * @param pixelHeightMeters
+   * @return
+   */
+  float[] createKernel(double pixelWidthMeters, double pixelHeightMeters);
 
-int getWidth();
-int getHeight();
+  /**
+   * Return the width of the kernel in pixels. The createKernel method
+   * must be called first.
+   */
+  int getWidth();
 
+  /**
+   * Return the height of the kernel in pixels. The createKernel method
+   * must be called first.
+   */
+  int getHeight();
 }
