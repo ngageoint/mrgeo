@@ -21,7 +21,7 @@ import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object MultMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("*")
+    Array[String]("mult", "*")
   }
   def create(raster:RasterMapOp, const:Double):MapOp = {
     new MultMapOp(Some(raster), Some(const))

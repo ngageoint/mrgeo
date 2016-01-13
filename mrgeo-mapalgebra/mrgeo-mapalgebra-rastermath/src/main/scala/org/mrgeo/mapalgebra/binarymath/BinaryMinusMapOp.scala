@@ -21,7 +21,7 @@ import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object BinaryMinusMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("-")
+    Array[String]("minus", "-")
   }
 
   def create(raster:RasterMapOp, const:Double):MapOp = {

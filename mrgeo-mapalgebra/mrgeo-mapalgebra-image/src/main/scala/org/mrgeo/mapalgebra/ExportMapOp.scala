@@ -1,8 +1,10 @@
 package org.mrgeo.mapalgebra
 
+import java.awt.image.WritableRaster
 import java.io._
 
 import org.apache.spark.{Logging, SparkContext, SparkConf}
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsImagePyramidMetadata
@@ -31,10 +33,10 @@ object ExportMapOp extends MapOpRegistrar {
   def create(raster:RasterMapOp, name:String, singleFile:Boolean = false, zoom:Int = -1, numTiles:Int = -1,
       mosaic:Int = -1, format:String = "tif", randomTiles:Boolean = false,
       tms:Boolean = false, colorscale:String = "", tileids:String = "",
-      bounds:String = "", allLevels:Boolean = false):MapOp = {
+      bounds:String = "", allLevels:Boolean = false, overridenodata:Double = Double.NegativeInfinity):MapOp = {
 
     new ExportMapOp(Some(raster), name, zoom, numTiles, mosaic, format, randomTiles, singleFile,
-      tms, colorscale, tileids, bounds, allLevels)
+      tms, colorscale, tileids, bounds, allLevels, overridenodata)
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp = {
@@ -61,10 +63,11 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   private var tileids:Option[Seq[Long]] = None
   private var bounds:Option[TMSUtils.Bounds] = None
   private var alllevels:Boolean = false
+  private var overridenodata:Option[Double] = None
 
   def this(raster:Option[RasterMapOp], name:String, zoom:Int, numTiles:Int, mosaic:Int, format:String,
       randomTiles:Boolean, singleFile:Boolean, tms:Boolean, colorscale:String, tileids:String,
-      bounds:String, allLevels:Boolean) = {
+      bounds:String, allLevels:Boolean, overridenodata:Double = Double.NegativeInfinity) = {
     this()
 
     this.raster = raster
@@ -72,7 +75,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     this.zoom = if (zoom > 0) Some(zoom) else None
     this.numTiles = if (numTiles > 0) Some(numTiles) else None
     this.mosaic = if (mosaic > 0) Some(mosaic) else None
-//    this.format = if (format != null && format.length > 0) Some(format) else None
+    //    this.format = if (format != null && format.length > 0) Some(format) else None
     this.colorscale = if (colorscale != null && colorscale.length > 0) Some(colorscale) else None
     this.tileids = if (tileids != null && tileids.length > 0) Some(tileids.split(",").map(_.toLong).toSeq) else None
     this.bounds = if (bounds != null && bounds.length > 0) Some(TMSUtils.Bounds.fromCommaString(bounds)) else None
@@ -80,6 +83,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     this.singlefile = singleFile
     this.tms = tms
     this.alllevels = allLevels
+    this.overridenodata = if (overridenodata != Double.NegativeInfinity) Some(overridenodata) else None
+
 
     this.format = Some(format match {
     case "tiff" | "geotiff" | "geotif" => "tif"
@@ -242,11 +247,60 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
     val filtered = rdd.filter(tile => tiles.contains(tile._1.get))
 
-    val image = SparkUtils.mergeTiles(RasterRDD(filtered), zoom.get, meta.getTilesize, meta.getDefaultValues)
-    val output = makeOutputName(name, format.get, filtered.keys.min().get(), zoom.get, meta.getTilesize, reformat)
+    val replaced = if (overridenodata.isDefined) {
+      val nodatas = meta.getDefaultValues
+      val over = overridenodata.get
 
-    val bnds = SparkUtils.calculateBounds(RasterRDD(filtered), zoom.get, meta.getTilesize)
-    GDALUtils.saveRaster(image, output, bnds, meta.getDefaultValue(0), format.get)
+      filtered.map(tile => {
+
+        def isNodata(value:Double, nodata:Double):Boolean = {
+          if (nodata.isNaN) {
+            value.isNaN
+          }
+          else {
+            nodata == value
+          }
+        }
+
+        val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+
+        var y = 0
+        var x = 0
+        var b = 0
+
+        while (b < raster.getNumBands) {
+          val nodata = nodatas(b)
+          while (y < raster.getHeight) {
+            while (x < raster.getWidth) {
+              val v = raster.getSampleDouble(x, y, b)
+
+              if (isNodata(v, nodata)) {
+                raster.setSample(x, y, b, over)
+              }
+              x += 1
+            }
+            y += 1
+          }
+          b += 1
+        }
+        (tile._1, RasterWritable.toWritable(raster))
+      })
+    }
+    else {
+      filtered
+    }
+
+    val nd = meta.getDefaultValues
+    if (overridenodata.isDefined) {
+      for (x <- 0 until nd.length) {
+        nd(x) = overridenodata.get
+      }
+    }
+    val image = SparkUtils.mergeTiles(RasterRDD(replaced), zoom.get, meta.getTilesize, nd)
+    val output = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
+
+    val bnds = SparkUtils.calculateBounds(RasterRDD(replaced), zoom.get, meta.getTilesize)
+    GDALUtils.saveRaster(image, output, bnds, nd(0), format.get)
   }
 
   override def setup(job: JobArguments, conf: SparkConf) = true

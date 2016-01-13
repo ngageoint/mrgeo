@@ -24,6 +24,7 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.TMSUtils.Bounds
 import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 object CropMapOp extends MapOpRegistrar {
@@ -31,24 +32,13 @@ object CropMapOp extends MapOpRegistrar {
     Array[String]("crop")
   }
 
-  def create(raster:RasterMapOp, bounds:String):MapOp =
-    new CropMapOp(Some(raster), bounds, false)
+  def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
+    new CropMapOp(Some(raster), w, s, e, n, false)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new CropMapOp(node, variables, false)
 }
 
-object CropExactMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
-    Array[String]("cropexact")
-  }
-
-  def create(raster:RasterMapOp, bounds:String):MapOp =
-    new CropMapOp(Some(raster), bounds, true)
-
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new CropMapOp(node, variables, true)
-}
 
 class CropMapOp extends RasterMapOp with Externalizable {
   private val EPSILON: Double = 1e-8
@@ -60,11 +50,11 @@ class CropMapOp extends RasterMapOp with Externalizable {
   private var cropBounds:TMSUtils.Bounds = null
   private var exact: Boolean = false
 
-  private[mapalgebra] def this(raster:Option[RasterMapOp], bounds:String, exact:Boolean) = {
+  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double, exact:Boolean) = {
     this()
 
     inputMapOp = raster
-    cropBounds = TMSUtils.Bounds.fromCommaString(bounds)
+    cropBounds = new Bounds(w, s, e, n)
     this.exact = exact
   }
 

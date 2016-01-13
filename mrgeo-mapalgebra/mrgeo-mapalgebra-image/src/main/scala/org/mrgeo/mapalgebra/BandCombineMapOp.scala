@@ -24,10 +24,11 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.utils.SparkUtils
 import org.mrgeo.utils.Bounds
 
+import scala.annotation.varargs
 import scala.collection.mutable
 
 object BandCombineMapOp extends MapOpRegistrar {
@@ -35,8 +36,12 @@ object BandCombineMapOp extends MapOpRegistrar {
     Array[String]("bandcombine", "bc")
   }
 
-  def create(first:RasterMapOp, others:RasterMapOp*):MapOp =
-    new BandCombineMapOp(List(first) ++ others)
+  def create(first:RasterMapOp, others:Array[RasterMapOp]):MapOp =
+    new BandCombineMapOp(List(first) ++ others.toList)
+
+//  @varargs  // create java compatible vararg code
+//  def create(first:RasterMapOp, others:RasterMapOp*):MapOp =
+//    new BandCombineMapOp(List(first) ++ others)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new BandCombineMapOp(node, variables)

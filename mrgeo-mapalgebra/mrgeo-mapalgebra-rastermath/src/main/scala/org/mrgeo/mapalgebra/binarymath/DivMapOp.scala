@@ -21,7 +21,7 @@ import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object DivMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("/")
+    Array[String]("div", "/")
   }
   def create(raster:RasterMapOp, const:Double):MapOp = {
     new DivMapOp(Some(raster), Some(const))
