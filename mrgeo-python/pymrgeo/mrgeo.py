@@ -82,6 +82,9 @@ class MrGeo(object):
         self.useyarn()
 
     def initialize(self):
+
+        self.gateway.jvm.py4j.GatewayServer.turnLoggingOn()
+
         self._create_job()
         self._load_mapops()
 
@@ -137,7 +140,7 @@ class MrGeo(object):
 
                 if codes is not None:
                     for method_name, code in codes.iteritems():
-                        #print(code)
+                        # print(code)
 
                         compiled = {}
                         exec code in compiled
@@ -175,10 +178,12 @@ class MrGeo(object):
                                 lst[1].lower() == 'boolean':
                     lst[0] = "other"
                     lst[2] = "other"
-                elif lst[2] != "self.mapop":
-                    lst[0] = "other.mapop"
-                    lst[2] = "other.mapop"
+                    # need to add this to the start of the list (in case we eventually check other.mapop from the elif
+                elif lst[2] != "self":
+                    lst[0] = "other"
+                    lst[2] = "other"
                 new_method.append(tuple(lst))
+
             corrected_methods.append(new_method)
 
         codes = {}
@@ -187,7 +192,7 @@ class MrGeo(object):
 
             # Signature
             code += "def " + method_name + "(self, other):" + "\n"
-            code += "    print('" + name + "')\n"
+            # code += "    print('" + name + "')\n"
 
             code += self._generate_imports(mapop)
             code += self._generate_calls(corrected_methods)
@@ -208,7 +213,7 @@ class MrGeo(object):
         code = ""
         # Signature
         code += "def " + name + "(" + signature + "):" + "\n"
-        code += "    print('" + name + "')\n"
+        # code += "    print('" + name + "')\n"
         code += self._generate_imports(mapop)
         code += self._generate_calls(methods)
         code += self._generate_run()
@@ -256,11 +261,19 @@ class MrGeo(object):
                 call_name = param[2]
 
                 if param[4]:
-                    call_name, it = self.method_name(call_name, type_name, "arg")
-                    var_name = "args"
+                    call_name, it, et = self.method_name(type_name, "arg")
+
+                    if len(varargcode) == 0:
+                        varargcode += "    array = self.gateway.new_array(self.gateway.jvm." + type_name + ", len(args))\n"
+                        varargcode += "    cnt = 0\n"
+                        call_name = "array"
+
                     varargcode += "    for arg in args:\n"
                     varargcode += "        if not(" + it + "):\n"
                     varargcode += "            raise Exception('input types differ (TODO: expand this message!)')\n"
+                    varargcode += "    for arg in args:\n"
+                    varargcode += "        array[cnt] = arg.mapop\n"
+                    varargcode += "        cnt += 1\n"
                 else:
                     if firstparam:
                         firstparam = False
@@ -272,10 +285,10 @@ class MrGeo(object):
                     else:
                         iftest += " and"
 
-                    if call_name == "self.mapop":
+                    if call_name == "self":
                         var_name = call_name
 
-                    call_name, it = self.method_name(call_name, type_name, var_name)
+                    call_name, it, et = self.method_name(type_name, var_name)
                     iftest += it
 
                 call += [call_name]
@@ -288,32 +301,48 @@ class MrGeo(object):
 
         code += "    else:\n"
         code += "        raise Exception('input types differ (TODO: expand this message!)')\n"
+        # code += "    import inspect\n"
+        # code += "    method = inspect.stack()[0][3]\n"
+        # code += "    print(method)\n"
 
         if len(varargcode) > 0:
-            code += varargcode
+            code = varargcode + code
 
         return code
 
-    def method_name(self, call_name, type_name, var_name):
-        iftest = ""
+    def method_name(self,  type_name, var_name):
         if type_name == "String":
-            iftest += " type(" + var_name + ") is str"
+            iftest = " type(" + var_name + ") is str"
             call_name = "str(" + var_name + ")"
+            excepttest = "not" + iftest
         elif type_name == "Double" or type_name == "Float":
-            iftest += " isinstance(" + var_name + ", (int, long, float))"
+            iftest = " isinstance(" + var_name + ", (int, long, float))"
             call_name = "float(" + var_name + ")"
+            excepttest = "not" + iftest
         elif type_name == "Long":
-            iftest += " isinstance(" + var_name + ", (int, long, float))"
+            iftest = " isinstance(" + var_name + ", (int, long, float))"
             call_name = "long(" + var_name + ")"
+            excepttest = "not" + iftest
         elif type_name == "Int" or type_name == "Short" or type_name == "Char":
-            iftest += " isinstance(" + var_name + ", (int, long, float))"
+            iftest = " isinstance(" + var_name + ", (int, long, float))"
             call_name = "int(" + var_name + ")"
+            excepttest = "not" + iftest
         elif type_name == "Boolean":
-            iftest += " isinstance(" + var_name + ", (int, long, float, str))"
+            iftest = " isinstance(" + var_name + ", (int, long, float, str))"
             call_name = "True if " + var_name + " else False"
+            excepttest = "not" + iftest
+        elif type_name.endswith("MapOp"):
+            base_var = var_name
+            var_name += ".mapop"
+            iftest = " hasattr(" + base_var + ", 'mapop') and self.is_instance_of(" + var_name + ", '" + type_name + "')"
+            call_name = var_name
+            excepttest = " hasattr(" + base_var + ", 'mapop') and not self.is_instance_of(" + var_name + ", '" + type_name + "')"
         else:
-            iftest += " self.is_instance_of(" + var_name + ", '" + type_name + "')"
-        return call_name, iftest
+            iftest = " self.is_instance_of(" + var_name + ", '" + type_name + "')"
+            call_name = var_name
+            excepttest = "not" + iftest
+
+        return call_name, iftest, excepttest
 
     def _generate_methods(self, instance, signatures):
         methods = []
@@ -337,6 +366,10 @@ class MrGeo(object):
                         new_value = "True"
                     elif names[2].lower() == "false":
                         new_value = "False"
+                    elif names[2].lower() == "infinity":
+                        new_value = "float('inf')"
+                    elif names[2].lower() == "-infinity":
+                        new_value = "float('-inf')"
                     elif names[2].lower() == "null":
                         new_value = "None"
                     else:
@@ -349,7 +382,7 @@ class MrGeo(object):
                     (instance is "RasterMapOp" and new_type.endswith("RasterMapOp")) or
                         (instance is "VectorMapOp" and new_type.endswith("VectorMapOp")))):
                     found = True
-                    new_call = "self.mapop"
+                    new_call = "self"
                 else:
                     new_call = new_name
 
@@ -376,7 +409,7 @@ class MrGeo(object):
         dual = len(methods) > 1
         for method in methods:
             for param in method:
-                if not param[2] == "self.mapop" and not self._in_signature(param, signature):
+                if not param[2] == "self" and not self._in_signature(param, signature):
                     signature.append(param)
                     if param[4]:
                         # var args must be the last parameter
@@ -515,7 +548,7 @@ class MrGeo(object):
         self.sparkContext = jsc.sc()
         self.sparkPyContext = SparkContext(master=master, appName=self.job.name(), jsc=jsc, gateway=self.gateway)
 
-        print("started")
+        # print("started")
 
     def stop(self):
         if self.sparkContext:
@@ -525,8 +558,6 @@ class MrGeo(object):
         if self.sparkPyContext:
             self.sparkPyContext.stop()
             self.sparkPyContext = None
-
-        self.job = None
 
     def load_resource(self, name):
         jvm = self.gateway.jvm
@@ -542,6 +573,6 @@ class MrGeo(object):
         mapop = jvm.MrsPyramidMapOp.apply(dp)
         mapop.context(self.sparkContext)
 
-        print("loaded " + name)
+        # print("loaded " + name)
 
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)

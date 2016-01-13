@@ -38,7 +38,7 @@ class MrGeoTests(unittest.TestCase):
             # test = raster.mapop.toDataset(False)
 
             testimage = self.outputdir + "testimage"
-            raster.export(testimage, singleFile=True, format="tiff")
+            raster.export(testimage, singleFile=True, format="tiff", overridenodata=-9999)
             testimage += ".tif"
             test = gdal.Open(testimage)
 
@@ -52,7 +52,7 @@ class MrGeoTests(unittest.TestCase):
 
     def saveraster(self, raster, testname):
         name = self.inputdir + testname
-        raster.export(name, singleFile=True, format="tiff")
+        raster.export(name, singleFile=True, format="tiff", overridenodata=-9999)
 
     @classmethod
     def copy(cls, srcfile, srcpath=None, dstpath=None, dstfile=None):
@@ -109,7 +109,8 @@ class MrGeoTests(unittest.TestCase):
     def setUpClass(cls):
         cls.classname = cls.__name__
 
-        print(cls.classname + " setup")
+
+        # print(cls.classname + " setup")
 
         cls.mrgeo = MrGeo()
         cls.gateway = cls.mrgeo.gateway
@@ -119,6 +120,7 @@ class MrGeoTests(unittest.TestCase):
         java_import(jvm, "org.mrgeo.core.MrGeoProperties")
         java_import(jvm, "org.mrgeo.hdfs.utils.HadoopFileUtils")
         java_import(jvm, "org.apache.hadoop.fs.Path")
+        java_import(jvm, "org.mrgeo.utils.LoggingUtils")
 
         fs = jvm.HadoopFileUtils.getFileSystem()
         p = jvm.Path(cls._INPUT_BASE).makeQualified(fs)
@@ -152,14 +154,40 @@ class MrGeoTests(unittest.TestCase):
         jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_IMAGE, cls.inputhdfs)
         jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_VECTOR, cls.inputhdfs)
 
+        jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
+
     def setUp(self):
         self.name = self._testMethodName
 
+        self._doublebox("Starting", self.classname + ":" + self.name)
         self.mrgeo.usedebug()
         self.mrgeo.start()
 
     def tearDown(self):
         self.mrgeo.stop()
+        self._doublebox("Test Finished", self.classname + ":" + self.name)
+
+
+    def _doublebox(self, text, name):
+        width = len(name)
+        if width < len(text):
+            width = len(text)
+
+        fmt = "{:*<" + str(width + 4) + "}"
+        print(fmt.format(""))
+        fmt = "{:<" + str(width + 2) + "}"
+        print(fmt.format("*") + " *")
+        fmt = "{:<" + str(width) + "}"
+        print("* " + fmt.format(text) + " *")
+        fmt = "{:<" + str(width + 2) + "}"
+        print(fmt.format("*") + " *")
+        fmt = "{:*<" + str(width + 4) + "}"
+        print(fmt.format(""))
+        fmt = "{:<" + str(width) + "}"
+        print("* " + fmt.format(name) + " *")
+        fmt = "{:*<" + str(width + 4) + "}"
+        print(fmt.format(""))
+        print("")
 
 if __name__ == '__main__':
     unittest.main()

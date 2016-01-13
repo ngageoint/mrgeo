@@ -31,44 +31,54 @@
 # ******************************************************************************
 
 from osgeo import gdal, osr
+import math
 import numpy
-from py4j.java_gateway import java_import
 
 
 #######################################################
-def compare_metadata(golden_md, new_md, id):
-    if golden_md is None and new_md is None:
+def compare_metadata(golden_md, test_md, id):
+    if golden_md is None and test_md is None:
         return 0
 
-    if len(list(golden_md.keys())) != len(list(new_md.keys())):
+    if len(list(golden_md.keys())) != len(list(test_md.keys())):
         print('Difference in %s metadata key count' % id)
         print('  Golden Keys: ' + str(list(golden_md.keys())))
-        print('  New Keys: ' + str(list(new_md.keys())))
+        print('  Test Keys: ' + str(list(test_md.keys())))
 
     for key in list(golden_md.keys()):
-        if key not in new_md:
-            print('New %s metadata lacks key \"%s\"' % (id, key))
-        elif new_md[key] != golden_md[key]:
+        if key not in test_md:
+            print('Test %s metadata lacks key \"%s\"' % (id, key))
+        elif test_md[key] != golden_md[key]:
             print('Metadata value difference for key "' + key + '"')
             print('  Golden: "' + golden_md[key] + '"')
-            print('  New:    "' + new_md[key] + '"')
+            print('  Test:    "' + test_md[key] + '"')
 
 
 #######################################################
 # Review and report on the actual image pixels that differ.
-def compare_image_pixels(test, golden_band, new_band):
-    diff_count = 0
-    max_diff = 0
+def compare_image_pixels(test, golden_band, test_band):
+
+    diffs = 0
+    maxdiff = 0
 
     for line in range(golden_band.YSize):
-        golden_line = golden_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
-        new_line = new_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
-        diff_line = golden_line - new_line
-        max_diff = max(max_diff,abs(diff_line).max())
-        diff_count += len(diff_line.nonzero()[0])
+        gline = golden_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
+        tline = test_band.ReadAsArray(0, line, test_band.XSize, 1)[0]
 
-    test.assertEqual(diff_count, 0, 'Pixels Differing: ' + str(diff_count))
-    test.assertEqual(max_diff, 0, 'Maximum Pixel Difference: ' + str(max_diff))
+        same = numpy.allclose(gline, tline, equal_nan=True)
+
+        if not same:
+            for x in range(0, golden_band.XSize):
+                g = gline[x]
+                t = tline[x]
+                if math.isnan(g) != math.isnan(t):
+                    diffs += 1
+                elif not math.isnan(g) and g != t:
+                    diffs += 1
+                    maxdiff = max(maxdiff, gline[x] - tline[x])
+
+    test.assertEqual(diffs, 0, 'Pixels Differing: ' + str(diffs) +
+                     'Maximum Pixel Difference: ' + str(maxdiff))
 
 
 #######################################################
@@ -77,9 +87,16 @@ def compare_band(test, golden_band, new_band, id):
                      '  Golden: ' + gdal.GetDataTypeName(golden_band.DataType) + "\n" +
                      '  New:    ' + gdal.GetDataTypeName(new_band.DataType))
 
-    test.assertEqual(golden_band.GetNoDataValue(), new_band.GetNoDataValue(), ('Band %s nodata values differ.\n' % id) +
+    gn = golden_band.GetNoDataValue()
+    nn = new_band.GetNoDataValue()
+    test.assertEqual(math.isnan(gn), math.isnan(nn), ('Band %s nodata values differ.\n' % id) +
                      '  Golden: ' + str(golden_band.GetNoDataValue()) + '\n' +
                      '  New:    ' + str(new_band.GetNoDataValue()))
+
+    if not math.isnan(gn) and not math.isnan(nn):
+        test.assertEqual(golden_band.GetNoDataValue(), new_band.GetNoDataValue(), ('Band %s nodata values differ.\n' % id) +
+                         '  Golden: ' + str(golden_band.GetNoDataValue()) + '\n' +
+                         '  New:    ' + str(new_band.GetNoDataValue()))
 
     # Can't check color interpolation, Geotiff save sets it to Gray
     # if golden_band.GetColorInterpretation() != new_band.GetColorInterpretation():

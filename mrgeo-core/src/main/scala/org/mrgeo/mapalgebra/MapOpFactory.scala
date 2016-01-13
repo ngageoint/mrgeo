@@ -133,7 +133,13 @@ object MapOpFactory extends Logging {
         case creaters: MethodSymbol =>
           creaters.paramss.head.map(_.asTerm).zipWithIndex.map {
             case (term, index) =>
-              term.name + ":" + term.typeSignature + {
+              term.name + ":" + (if (term.typeSignature.toString.startsWith("Array")) {
+                val ts = term.typeSignature.toString
+                ts.substring(ts.indexOf("[") + 1, ts.indexOf("]")) + "*"
+              }
+              else {
+                term.typeSignature.toString
+              }) + {
                 if (term.isParamWithDefault) {
                   val getter = ts member newTermName("create$default$" + (index + 1))
                   if (getter != NoSymbol) {
@@ -162,6 +168,7 @@ object MapOpFactory extends Logging {
       }
     case _ => Seq.empty[String]
     }
+
     rawsig.toArray
   }
 
