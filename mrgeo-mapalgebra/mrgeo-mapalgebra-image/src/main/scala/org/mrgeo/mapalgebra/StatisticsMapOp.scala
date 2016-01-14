@@ -47,9 +47,9 @@ object StatisticsMapOp extends MapOpRegistrar {
     Array[String]("statistics", "stats")
   }
 
-  def create(method:String, first:RasterMapOp, others:AnyRef*):MapOp = {
+  def create(method:String, first:RasterMapOp, others:Array[AnyRef]):MapOp = {
     val inputs:Seq[Either[Option[RasterMapOp], Option[String]]] =
-      (List(first) ++ others).flatMap(any => {
+      (List(first) ++ others.toList).flatMap(any => {
         any match {
         case raster:RasterMapOp => List(Left(Some(raster)))
         case string:String => List(Right(Some(string)))
