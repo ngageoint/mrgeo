@@ -15,7 +15,7 @@
 
 package org.mrgeo.utils
 
-import java.awt.image.DataBuffer
+import java.awt.image.{Raster, DataBuffer}
 import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util.Properties
