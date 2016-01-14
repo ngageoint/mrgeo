@@ -60,53 +60,37 @@ public LaplacianGeographicKernel(double sigma)
   f1 = -1.0 / (Math.PI * Math.pow(this.sigma, 4.0));
 }
 
-@Override
-public float[] createMaxSizeKernel(int zoom, int tileSize)
-{
-  double resolution = TMSUtils.resolution(zoom, tileSize);
-  return createKernel(MAX_LATITUDE, resolution, resolution);
-}
-
 /*
  * (non-Javadoc)
  *
  * @see com.spadac.MrGis.RasterOps.GeographicKernel#createKernel(double)
  */
 @Override
-public float[] createKernel(double latitude, double pixelWidth, double pixelHeight)
+public float[] createKernel(double pixelWidthMeters, double pixelHeightMeters)
 {
-  // pixel height in meters
-  double pixelHeightM = LatLng.calculateGreatCircleDistance(new LatLng(latitude, 0),
-      new LatLng(latitude + pixelHeight, 0));
+  kernelHeight = (int) (Math.ceil(kernelSize / pixelHeightMeters)) * 2 + 1;
+  kernelWidth = (int) (Math.ceil(kernelSize / pixelWidthMeters)) * 2 + 1;
+  // Make sure the kernel doesn't extend beyond the requested kernelSize by a pixel
+  // around the outside ring of the kernel.
+  if (kernelHeight * pixelHeightMeters > kernelSize)
+  {
+    kernelHeight -= 2;
+    kernelWidth -= 2;
+  }
 
-  // kernel radius in pixels
-  int halfKernelHeight = (int) (Math.ceil(kernelSize / pixelHeightM));
-  // kernel height in pixels
-  kernelHeight = halfKernelHeight * 2 + 1;
-
-  // the smallest lat in terms of circumference of the earth
-  double smallestLat = Math.abs(latitude) + halfKernelHeight * pixelHeight;
-  // the minimum pixel width of the kernel in meters
-  double minPixelWidthM = LatLng.calculateGreatCircleDistance(
-      new LatLng(smallestLat, 0), new LatLng(smallestLat, pixelWidth));
-
-  kernelWidth = (int) (Math.ceil(kernelSize / minPixelWidthM)) * 2 + 1;
-
-  kernelWidth = Math.max(1, kernelWidth);
   kernelHeight = Math.max(1, kernelHeight);
+  kernelWidth = Math.max(1, kernelWidth);
 
-  LatLng ll = new LatLng();
-  LatLng origin = new LatLng(latitude, 0);
   float[] data = new float[kernelWidth * kernelHeight];
   int i = 0;
   float sum = 0.0f;
   for (int py = -kernelHeight / 2; py <= kernelHeight / 2; py++)
   {
-    ll.setY(latitude + py * pixelHeight);
     for (int px = -kernelWidth / 2; px <= kernelWidth / 2; px++)
     {
-      ll.setX(px * pixelWidth);
-      double distance = LatLng.calculateGreatCircleDistance(origin, ll);
+      double vertDistance = Math.abs(py) * pixelHeightMeters;
+      double horizDistance = Math.abs(px) * pixelWidthMeters;
+      double distance = Math.sqrt(vertDistance * vertDistance + horizDistance * horizDistance);
       float v;
       // doing this avoids a squared off kernel effect. (makes it prettier
       // when using
