@@ -23,7 +23,7 @@ import scala.reflect.ClassTag
 
 class MrGeoRDD[K:ClassTag, V:ClassTag](parent: RDD[(K, V)])  extends RDD[(K, V)](parent) {
 
-  AutoPersister.persist(this)
+//  AutoPersister.persist(this)
 
   //  println("***************==")
   //  Thread.currentThread().getStackTrace.foreach(st => {
