@@ -27,7 +27,7 @@ import org.mrgeo.kernel.{GaussianGeographicKernel, LaplacianGeographicKernel}
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.utils.{SparkUtils, TMSUtils}
+import org.mrgeo.utils.{LatLng, SparkUtils, TMSUtils}
 
 object KernelMapOp extends MapOpRegistrar {
   val MaxLatitude: Double = 60.0
@@ -88,6 +88,10 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     }
   }
 
+  override def registerClasses(): Array[Class[_]] = {
+    Array[Class[_]](classOf[Array[Float]])
+  }
+
   override def rdd(): Option[RasterRDD] = rasterRDD
   override def execute(context: SparkContext): Boolean = {
 
@@ -95,8 +99,6 @@ class KernelMapOp extends RasterMapOp with Externalizable {
 
     val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
     val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
-
-    // copy this here to avoid serializing the whole mapop
 
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
@@ -113,20 +115,34 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       new LaplacianGeographicKernel(sigma)
     }
 
-    val weights = kernel.createMaxSizeKernel(zoom, tilesize)
+    val res = TMSUtils.resolution(zoom, tilesize)
+    val metersPerPixel = res * LatLng.METERS_PER_DEGREE
+    val weights = context.broadcast(kernel.createKernel(metersPerPixel, metersPerPixel))
 
     val kernelW: Int = kernel.getWidth
     val kernelH: Int = kernel.getHeight
 
-    val halfKernelW = kernelW / 2
-    val halfKernelH = kernelH / 2
+    log.info("Kernel w, h " + kernelW + ", " + kernelH)
+    val localWeights = kernel.createKernel(metersPerPixel, metersPerPixel)
+    for (ky <- 0 until kernelH) {
+      log.info(ky + ": " )
+      val sb = new StringBuffer()
+      for (kx <- 0 until kernelW) {
+        sb.append(localWeights(ky * kernelW + kx) + "     ")
+      }
+      log.info(sb.toString)
+    }
+
+    val halfKernelW = kernelW / 2 + 1
+    val halfKernelH = kernelH / 2 + 1
 
     val resolution = TMSUtils.resolution(zoom, tilesize)
-    val focal = FocalBuilder.create(rdd, halfKernelW, halfKernelH,
+    val focal = FocalBuilder.create(rdd, halfKernelW - 1, halfKernelH - 1,
       meta.getBounds, zoom, nodatas, context)
 
     rasterRDD = Some(RasterRDD(focal.map(tile => {
 
+      val startTime = System.currentTimeMillis()
       val nodata = nodatas(0).doubleValue()
       def isNodata(value:Double):Boolean = {
         if (nodata.isNaN) {
@@ -137,53 +153,49 @@ class KernelMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      // kernel is not serializable, so we need to create a new one each time.
-      val kernel = method match {
-      case KernelMapOp.Gaussian =>
-        new GaussianGeographicKernel(sigma)
-      case KernelMapOp.Laplacian =>
-        new LaplacianGeographicKernel(sigma)
-      }
-
       val t = TMSUtils.tileid(tile._1.get(), zoom)
       val bounds = TMSUtils.tileBounds(t, zoom, tilesize)
 
       val ul = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize)
       val src = RasterWritable.toRaster(tile._2)
+      val tileWidth = src.getWidth
       val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT)
 
-      for (y <- 0 until tilesize) {
-        val ll = TMSUtils.pixelToLatLonUL(ul.px, ul.py + y + kernelH, zoom, tilesize)
-
-        if (Math.abs(ll.lat) > KernelMapOp.MaxLatitude) {
-          for (x <- 0 until tilesize) {
-            dst.setSample(x, y, 0, Float.NaN)
-          }
-        }
-        else {
-          //          val weights = kernel.createKernel(ll.lat, resolution, resolution)
-          //
-          //          val kernelW: Int = kernel.getWidth
-          //          val kernelH: Int = kernel.getHeight
-
-          for (x <- 0 until tilesize) {
-
-            if (!isNodata(src.getSampleDouble(x + halfKernelW, y + halfKernelH, 0))) {
+      val useWeights = weights.value
+      val srcValues = src.getSamples(0, 0, src.getWidth, src.getHeight, 0, null.asInstanceOf[Array[Double]])
+      var nodataValues = new Array[Boolean](srcValues.length)
+      for (i <- 0 until srcValues.length) {
+        nodataValues(i) = isNodata(srcValues(i))
+      }
+      var loopMin: Long = Long.MaxValue
+      var loopMax: Long = Long.MinValue
+      val tileStart = System.currentTimeMillis()
+      var y: Int = 0
+      while (y < tilesize) {
+        var x: Int = 0
+        while (x < tilesize) {
+            if (!nodataValues((y + halfKernelH) * tileWidth + x + halfKernelW)) {
               var result: Double = 0.0f
               var weight: Double = 0.0f
 
-              for (ky <- 0 until kernelH) {
-                for (kx <- 0 until kernelW) {
-                  val w: Double = weights(ky * kernelW + kx)
-                  //println("x: " + (x + kx - halfKernelW) + " y: " + (y + ky - halfKernelH))
-                  //val v: Double = src.getSampleDouble(x + kx - halfKernelW, y + ky - halfKernelH, 0)
-                  val v: Double = src.getSampleDouble(x + kx, y + ky, 0)
-                  if (!isNodata(v)) {
+              val loopStart = System.currentTimeMillis()
+              var ky: Int = 0
+              while (ky <  kernelH) {
+                var kx: Int = 0
+                while (kx < kernelW) {
+                  if (!nodataValues((y + ky) * tileWidth + x + kx)) {
+                    val v: Double = srcValues((y + ky) * tileWidth + x + kx)
+                    val w: Double = useWeights(ky * kernelW + kx)
                     weight += w
                     result += v * w
                   }
+                  kx += 1
                 }
+                ky += 1
               }
+              val loopTime = (System.currentTimeMillis() - loopStart)
+              loopMin = Math.min(loopMin, loopTime)
+              loopMax = Math.max(loopMax, loopTime)
               if (weight == 0.0f) {
                 dst.setSample(x, y, 0, Float.NaN)
               }
@@ -194,10 +206,15 @@ class KernelMapOp extends RasterMapOp with Externalizable {
             else {
               dst.setSample(x, y, 0, Float.NaN)
             }
+          x += 1
           }
-        }
+        y += 1
       }
 
+      log.info("Time to process tile " + tile._1.get + " is " + (System.currentTimeMillis() - startTime))
+      log.info("  prep " + tile._1.get + " is " + (tileStart - startTime))
+      log.info("  just tile " + tile._1.get + " is " + (System.currentTimeMillis() - tileStart))
+      log.info("  loopMin = " + loopMin + ", loopMax = " + loopMax)
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })))
 
