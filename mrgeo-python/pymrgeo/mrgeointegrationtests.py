@@ -9,7 +9,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
 
     @classmethod
     def setUpClass(cls):
-        # cls.GENERATE_BASELINE_DATA = True
+        #cls.GENERATE_BASELINE_DATA = True
 
         super(MrGeoIntegrationTests, cls).setUpClass()
 
@@ -96,6 +96,33 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_crop_exact(self):
         crop = self.smallelevation.cropexact(142.05, -17.75, 142.2, -17.65)
         self.compareraster(crop, self.name)
+
+    def test_divide(self):
+        div = self.allhundreds / self.allones
+        self.compareraster(div, self.name)
+
+    def test_divide_constA(self):
+        div = self.allhundreds / 2.5
+        self.compareraster(div, self.name)
+
+    def test_divide_constB(self):
+        div = 2.5 / self.allhundreds
+        self.compareraster(div, self.name)
+
+    def test_divideAlt(self):
+        div = self.allhundreds.div(self.allones)
+        self.compareraster(div, self.name)
+
+    def test_divideAlt_constA(self):
+        div = self.allhundreds.div(const=2.5)
+        self.compareraster(div, self.name)
+
+    def test_export(self):
+        exp = self.smallelevation.export(self.outputdir + self.name, singleFile=True, format="tiff", overridenodata=-9999)
+
+        self.compareraster(exp, self.name)
+        self.comparelocalraster(self.name)
+
 
 
 

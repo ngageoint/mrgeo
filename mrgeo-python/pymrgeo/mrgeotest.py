@@ -49,6 +49,14 @@ class MrGeoTests(unittest.TestCase):
 
             remove(testimage)
 
+    def comparelocalraster(self, testname):
+        if not self.GENERATE_BASELINE_DATA:
+            golden = gdal.Open(self.inputdir + testname + ".tif")
+            test = gdal.Open(self.outputdir + testname + ".tif")
+
+            # compare as GDAL Datasets.
+            gdaltest.compare_db(self, golden, test)
+
 
     def saveraster(self, raster, testname):
         name = self.inputdir + testname
