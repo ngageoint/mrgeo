@@ -88,6 +88,10 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     }
   }
 
+  override def registerClasses(): Array[Class[_]] = {
+    Array[Class[_]](classOf[Array[Float]])
+  }
+
   override def rdd(): Option[RasterRDD] = rasterRDD
   override def execute(context: SparkContext): Boolean = {
 
