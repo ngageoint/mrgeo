@@ -16,17 +16,26 @@
 package org.mrgeo.mapalgebra.unarymath
 
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object TanMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("tan")
   }
+  def create(raster:RasterMapOp):MapOp =
+    new TanMapOp(Some(raster))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new TanMapOp(node, variables)
 }
 
 class TanMapOp extends RawUnaryMathMapOp {
+
+  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+    this()
+    input = raster
+  }
 
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()

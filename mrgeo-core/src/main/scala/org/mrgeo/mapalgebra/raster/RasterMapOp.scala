@@ -25,7 +25,9 @@ import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
-import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.{TMSUtils, GDALUtils, SparkUtils}
+
+import org.mrgeo.utils.MrGeoImplicits._
 
 object RasterMapOp {
 
@@ -60,15 +62,15 @@ object RasterMapOp {
   def decodeToRaster(node:ParserNode, variables: String => Option[ParserNode]): Option[RasterMapOp] = {
     node match {
     case func: ParserFunctionNode => func.getMapOp match {
-      case raster: RasterMapOp => Some(raster)
-      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+    case raster: RasterMapOp => Some(raster)
+    case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
     }
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).getOrElse(throw new ParserException("Variable \"" + node + " has not been assigned")) match {
       case func: ParserFunctionNode => func.getMapOp match {
-        case raster: RasterMapOp => Some(raster)
-        case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
-        }
+      case raster: RasterMapOp => Some(raster)
+      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+      }
       case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
@@ -85,7 +87,12 @@ abstract class RasterMapOp extends MapOp {
   def rdd():Option[RasterRDD]
 
   def rdd(zoom: Int):Option[RasterRDD] = {
-    throw new IOException("Unsupported zoom level for raster RDD")
+    if (meta != null && zoom == meta.getMaxZoomLevel) {
+      rdd()
+    }
+    else {
+      throw new IOException("rdd(zoom) rdd with zoom level other than max zoom not supported for raster RDD")
+    }
   }
 
   def metadata():Option[MrsImagePyramidMetadata] =  Option(meta)
@@ -110,5 +117,30 @@ abstract class RasterMapOp extends MapOp {
     }
   }
 
+  def toRaster(exact:Boolean = false) = {
+    val rasterrdd = rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
+    SparkUtils.mergeTiles(rasterrdd, meta.getMaxZoomLevel, meta.getTilesize, meta.getDefaultValues,
+      if (exact) meta.getBounds.getTMSBounds else null)
+  }
+
+  def toDataset(exact:Boolean = false) = {
+    val rasterrdd = rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
+
+    val zoom = meta.getMaxZoomLevel
+    val tilesize = meta.getTilesize
+
+    val raster = SparkUtils.mergeTiles(rasterrdd, zoom, tilesize, meta.getDefaultValues,
+      if (exact) meta.getBounds.getTMSBounds else null)
+
+    val bounds = if (exact) {
+      meta.getBounds.getTMSBounds
+    }
+    else {
+      TMSUtils.tileBounds(meta.getBounds.getTMSBounds, zoom, tilesize)
+    }
+
+    GDALUtils.toDataset(raster, meta.getDefaultValue(0), bounds)
+
+  }
 
 }

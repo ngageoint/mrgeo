@@ -392,7 +392,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 
       Raster cropped = merged.createChild(offsetX, offsetY, croppedW, croppedH, 0, 0, null);
 
-      Dataset src = GDALUtils.toDataset(cropped, pyramidMetadata.getDefaultValue(0));
+      Dataset src = GDALUtils.toDataset(cropped, pyramidMetadata.getDefaultValue(0), null);
       Dataset dst = GDALUtils.createEmptyMemoryRaster(src, width, height);
 
       final double res = TMSUtils.resolution(zoomLevel, tilesize);
