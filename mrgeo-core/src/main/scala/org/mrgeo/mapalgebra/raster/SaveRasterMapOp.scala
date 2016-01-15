@@ -32,6 +32,13 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
   private var input: Option[RasterMapOp] = None
   private var output:String = null
 
+  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], name:String) = {
+    this()
+
+    input = inputMapOp
+    output = name
+  }
+
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 

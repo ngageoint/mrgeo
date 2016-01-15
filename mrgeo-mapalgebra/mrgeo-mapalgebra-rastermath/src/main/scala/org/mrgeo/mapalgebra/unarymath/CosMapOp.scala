@@ -16,17 +16,25 @@
 package org.mrgeo.mapalgebra.unarymath
 
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object CosMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("cos")
   }
+  def create(raster:RasterMapOp):MapOp =
+    new CosMapOp(Some(raster))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new CosMapOp(node, variables)
 }
 
 class CosMapOp extends RawUnaryMathMapOp {
+  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+    this()
+    input = raster
+  }
 
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()

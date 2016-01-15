@@ -24,19 +24,21 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.TMSUtils.Bounds
 import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 object CropMapOp extends MapOpRegistrar {
-  private[mapalgebra] val Crop = "crop"
-  private[mapalgebra] val CropExact = "cropexact"
-
   override def register: Array[String] = {
-    Array[String](Crop, CropExact)
+    Array[String]("crop")
   }
 
+  def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
+    new CropMapOp(Some(raster), w, s, e, n, false)
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new CropMapOp(node, variables)
+    new CropMapOp(node, variables, false)
 }
+
 
 class CropMapOp extends RasterMapOp with Externalizable {
   private val EPSILON: Double = 1e-8
@@ -48,7 +50,15 @@ class CropMapOp extends RasterMapOp with Externalizable {
   private var cropBounds:TMSUtils.Bounds = null
   private var exact: Boolean = false
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double, exact:Boolean) = {
+    this()
+
+    inputMapOp = raster
+    cropBounds = new Bounds(w, s, e, n)
+    this.exact = exact
+  }
+
+  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode], exact:Boolean) = {
     this()
 
     if (node.getNumChildren != 5) {
@@ -57,12 +67,7 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
-    // get values unique for each function
-    node.getName match {
-    case CropMapOp.CropExact =>
-      exact = true
-    case _ =>
-    }
+    this.exact = exact
 
     cropBounds = new TMSUtils.Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
       MapOp.decodeDouble(node.getChild(2), variables).get,

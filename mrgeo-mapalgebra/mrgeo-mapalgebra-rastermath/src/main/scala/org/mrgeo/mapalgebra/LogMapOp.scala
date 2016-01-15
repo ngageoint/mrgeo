@@ -31,6 +31,9 @@ object LogMapOp extends MapOpRegistrar {
     Array[String]("log")
   }
 
+  def create(raster:RasterMapOp, base:Double = 1.0):MapOp =
+    new LogMapOp(Some(raster), Some(base))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new LogMapOp(node, variables)
 }
@@ -40,6 +43,12 @@ class LogMapOp extends RasterMapOp with Externalizable {
   private var inputMapOp:Option[RasterMapOp] = None
   private var base:Option[Double] = None
   private var rasterRDD:Option[RasterRDD] = None
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], base:Option[Double]) = {
+    this()
+    inputMapOp = raster
+    this.base = base
+  }
 
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()

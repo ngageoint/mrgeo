@@ -49,7 +49,7 @@ class JobArguments() extends Logging {
    * Whether the underlying operating system is Windows.
    */
   val isWindows = SystemUtils.IS_OS_WINDOWS
-  var name: String = null
+  var name: String = "foo" // null
   var cluster: String = "local[1]"
   var driverClass: String = null
   var driverJar: String = null

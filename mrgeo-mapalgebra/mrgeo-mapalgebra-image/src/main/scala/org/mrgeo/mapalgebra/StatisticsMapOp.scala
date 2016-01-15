@@ -32,16 +32,6 @@ import org.mrgeo.utils.SparkUtils
 import scala.util.Sorting
 
 object StatisticsMapOp extends MapOpRegistrar {
-
-  override def register: Array[String] = {
-    Array[String]("statistics", "stats")
-  }
-
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new StatisticsMapOp(node, variables)
-}
-
-class StatisticsMapOp extends RasterMapOp with Externalizable {
   private val Count = "count"
   private val Max = "max"
   private val Mean = "mean"
@@ -53,10 +43,45 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
   private val methods = Array[String](Min, Max, Mean, Median, Mode, StdDev, Sum, Count)
 
+  override def register: Array[String] = {
+    Array[String]("statistics", "stats")
+  }
+
+  def create(method:String, first:RasterMapOp, others:Array[AnyRef]):MapOp = {
+    val inputs:Seq[Either[Option[RasterMapOp], Option[String]]] =
+      (List(first) ++ others.toList).flatMap(any => {
+        any match {
+        case raster:RasterMapOp => List(Left(Some(raster)))
+        case string:String => List(Right(Some(string)))
+        case _ => List()
+        }
+      })
+
+    if (method.isEmpty || !methods.exists(_.equals(method.toLowerCase))) {
+      throw new ParserException("Invalid stastics method")
+    }
+
+
+    new StatisticsMapOp(inputs.toArray, method)
+  }
+
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+    new StatisticsMapOp(node, variables)
+}
+
+class StatisticsMapOp extends RasterMapOp with Externalizable {
+
+
   private var method: String = null
   private var inputs: Option[Array[Either[Option[RasterMapOp], Option[String]]]] = None
 
   private var rasterRDD: Option[RasterRDD] = None
+
+  private[mapalgebra] def this(inputs:Array[Either[Option[RasterMapOp], Option[String]]], method:String) = {
+    this()
+    this.inputs = Some(inputs)
+    this.method = method
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -68,7 +93,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
     method = {
       val m = MapOp.decodeString(node.getChild(0), variables)
 
-      if (m.isEmpty || !methods.exists(_.equals(m.get.toLowerCase))) {
+      if (m.isEmpty || !StatisticsMapOp.methods.exists(_.equals(m.get.toLowerCase))) {
         throw new ParserException("Invalid stastics method")
       }
       m.get.toLowerCase
@@ -81,18 +106,15 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
         inputbuilder += Left(raster)
       }
       catch {
-        case e:ParserException => {
+        case e:ParserException =>
           try {
             val str = MapOp.decodeString(node.getChild(i), variables)
             inputbuilder += Right(str)
           }
           catch {
-            case pe:ParserException => {
+            case pe:ParserException =>
               throw new ParserException(node.getChild(i).getName + " is not a string or raster")
-            }
           }
-
-        }
       }
     }
     inputs = if (inputbuilder.result().length > 0) Some(inputbuilder.result()) else None
@@ -135,7 +157,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
       case Right(right) =>
         right match {
         case Some(str) =>
-          val regex = str.replace("?", ".?").replace("*", ".*?");
+          val regex = str.replace("?", ".?").replace("*", ".*?")
           val hits = layers.getOrElse({
             layers = Some(DataProviderFactory.listImages(providerProperties))
             layers.get
@@ -405,7 +427,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
       }
 
       val bands = method match {
-      case Mean => 2
+      case StatisticsMapOp.Mean => 2
       case _ => 1
       }
 
@@ -413,9 +435,9 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
       var ndx: Int = 0
       method match {
-      case Mode => mode(tile._2, result, nodatas)
-      case Median => median(tile._2, result, nodatas)
-      case StdDev => stddev(tile._2, result, nodatas)
+      case StatisticsMapOp.Mode => mode(tile._2, result, nodatas)
+      case StatisticsMapOp.Median => median(tile._2, result, nodatas)
+      case StatisticsMapOp.StdDev => stddev(tile._2, result, nodatas)
       case _ =>
         tile._2.foreach(wr => {
 
@@ -424,11 +446,11 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
             val raster = RasterWritable.toRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
 
             method match {
-            case Count => count(raster, result, nodatas(ndx))
-            case Max => max(raster, result, nodatas(ndx))
-            case Mean => mean(raster, result, nodatas(ndx))
-            case Min => min(raster, result, nodatas(ndx))
-            case Sum => sum(raster, result, nodatas(ndx))
+            case StatisticsMapOp.Count => count(raster, result, nodatas(ndx))
+            case StatisticsMapOp.Max => max(raster, result, nodatas(ndx))
+            case StatisticsMapOp.Mean => mean(raster, result, nodatas(ndx))
+            case StatisticsMapOp.Min => min(raster, result, nodatas(ndx))
+            case StatisticsMapOp.Sum => sum(raster, result, nodatas(ndx))
 
             }
           }
@@ -437,7 +459,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
       }
 
       (tile._1, method match {
-      case Mean =>
+      case StatisticsMapOp.Mean =>
         val mean = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT, Float.NaN)
         for (y <- 0 until result.getHeight) {
           for (x <- 0 until result.getWidth) {

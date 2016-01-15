@@ -15,6 +15,7 @@
 
 package org.mrgeo.utils;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -24,28 +25,28 @@ import java.net.URISyntaxException;
 public class FileUtils
 {
 
-  public static File createUniqueTmpDir() throws IOException
-  {
-    final File baseDir = new File(System.getProperty("java.io.tmpdir"));
+public static File createUniqueTmpDir() throws IOException
+{
+  final File baseDir = new File(System.getProperty("java.io.tmpdir"));
 
-    final String username = "mrgeo-" + System.getProperty("user.name");
-    final String baseName = "-" + System.currentTimeMillis();
+  final String username = "mrgeo-" + System.getProperty("user.name");
+  final String baseName = "-" + System.currentTimeMillis();
 
-    final File tempDir = new File(baseDir, username + "/" + baseName);
+  final File tempDir = new File(baseDir, username + "/" + baseName);
 
-    return createDisposibleDirectory(tempDir);
-  }
+  return createDisposibleDirectory(tempDir);
+}
 
 
-  public static File createTmpUserDir() throws IOException
-  {
-    final File baseDir = new File(System.getProperty("java.io.tmpdir"));
-    final String username = "mrgeo-" + System.getProperty("user.name");
+public static File createTmpUserDir() throws IOException
+{
+  final File baseDir = new File(System.getProperty("java.io.tmpdir"));
+  final String username = "mrgeo-" + System.getProperty("user.name");
 
-    final File tempDir = new File(baseDir, username);
-    
-    return createDisposibleDirectory(tempDir);
-  }
+  final File tempDir = new File(baseDir, username);
+
+  return createDisposibleDirectory(tempDir);
+}
 
 public static File createDisposibleDirectory(File dir) throws IOException
 {
@@ -77,62 +78,81 @@ public static File createDir(File dir) throws IOException
   return dir;
 }
 
-  public static void deleteDir(final File dir) throws IOException
+public static void deleteDir(final File dir) throws IOException
+{
+  deleteDir(dir, false);
+}
+
+public static void deleteDir(final File dir, final Boolean recursive) throws IOException
+{
+  if (dir.exists() && dir.isDirectory())
   {
-    if (dir.exists() && dir.isDirectory())
+    if (recursive)
     {
-      if (!dir.delete())
+      for (File c : dir.listFiles())
       {
-        throw new IOException("Error deleting directory");
+        if (c.isDirectory()) {
+          deleteDir(c, true);
+        }
+        else if (!c.delete())
+        {
+          throw new IOException("Error deleting file");
+        }
       }
+
+    }
+    if (!dir.delete())
+    {
+      throw new IOException("Error deleting directory");
     }
   }
+}
 
 
-  public static String resolveURI(final String path)
+public static String resolveURI(final String path)
+{
+  try
   {
-    try
+    URI uri = new URI(path);
+    if (uri.getScheme() == null)
     {
-      URI uri = new URI(path);
-      if (uri.getScheme() == null)
-      {
-        String fragment = uri.getFragment();
-        URI part = new File(uri.getPath()).toURI();
+      String fragment = uri.getFragment();
+      URI part = new File(uri.getPath()).toURI();
 
-        uri = new URI(part.getScheme(), part.getPath(), fragment);
-      }
-      return uri.toString();
+      uri = new URI(part.getScheme(), part.getPath(), fragment);
     }
-    catch (URISyntaxException e)
-    {
-      e.printStackTrace();
-    }
-
-    return path;
+    return uri.toString();
+  }
+  catch (URISyntaxException e)
+  {
+    e.printStackTrace();
   }
 
-  public static String resolveURL(final String path)
+  return path;
+}
+
+public static String resolveURL(final String path)
+{
+  try
   {
-    try
+    URI uri = new URI(path);
+    if (uri.getScheme() == null)
     {
-      URI uri = new URI(path);
-      if (uri.getScheme() == null)
-      {
-        String fragment = uri.getFragment();
-        URI part = new File(uri.getPath()).toURI();
+      String fragment = uri.getFragment();
+      URI part = new File(uri.getPath()).toURI();
 
-        uri = new URI(part.getScheme(), part.getPath(), fragment);
-      }
-      return uri.toURL().toString();
+      uri = new URI(part.getScheme(), part.getPath(), fragment);
     }
-    catch (URISyntaxException e)
-    {
-    }
-    catch (MalformedURLException e)
-    {
-    }
-
-    return path;
+    return uri.toURL().toString();
   }
+  catch (URISyntaxException e)
+  {
+  }
+  catch (MalformedURLException e)
+  {
+  }
+
+  return path;
+}
 
 }

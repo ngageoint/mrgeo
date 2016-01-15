@@ -35,22 +35,28 @@ object InlineCsvMapOp extends MapOpRegistrar
   override def register: Array[String] = {
     Array[String]("InlineCsv", "csv")
   }
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+
+  def create(columns:String, values:String):MapOp = {
+    new InlineCsvMapOp(columns, values)
+  }
+
+  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp = {
     new InlineCsvMapOp(node, variables)
+  }
 
   def parseColumns(columns: String, delim: Char): ColumnDefinitionFile =
   {
-    var cdf: ColumnDefinitionFile = new ColumnDefinitionFile()
+    val cdf = new ColumnDefinitionFile()
     var columnList = new ListBuffer[Column]()
     val columnArray = columns.split(Character.toString(delim))
     columnArray.foreach(cs => {
       val c = new Column(cs, FactorType.Nominal)
-      columnList.+=(c)
+      columnList += c
     })
 
     cdf.setColumns(columnList.toList)
 
-    return cdf
+    cdf
   }
 }
 
@@ -63,6 +69,57 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
   private var records: Array[String] = null
   private var delimitedParser: DelimitedParser = null
   private var vectorrdd: Option[VectorRDD] = None
+
+  def this(columns:String, values:String) = {
+    this()
+
+    val cdf = if (columns != null && columns.length > 0) {
+      InlineCsvMapOp.parseColumns(columns, fieldSeparator)
+    }
+    else {
+      throw new ParserException("Missing the column definitions for inline csv")
+    }
+
+    records = if (values != null && values.length > 0) {
+      values.split(Character.toString(recordSeparator))
+    }
+    else {
+      throw new ParserException("Missing values for inline csv")
+    }
+
+
+    val attributes = new ListBuffer[String]()
+
+    var xCol: Int = -1
+    var yCol: Int = -1
+    var geometryCol: Int = -1
+    for ((col, i) <- cdf.getColumns.view.zipWithIndex) {
+      val c = col.getName
+
+      if (col.getType == Column.FactorType.Numeric)
+      {
+        if (c.equals("x"))
+        {
+          xCol = i
+        }
+        else if (c.equals("y"))
+        {
+          yCol = i
+        }
+      }
+      else
+      {
+        if (c.toLowerCase().equals("geometry"))
+        {
+          geometryCol = i
+        }
+      }
+      attributes.add(c)
+    }
+
+    delimitedParser = new DelimitedParser(attributes, xCol, yCol, geometryCol,
+      recordSeparator, encapsulator, cdf.isFirstLineHeader)
+  }
 
   def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -100,33 +157,29 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
 
     val columns = MapOp.decodeString(node.getChild(0))
     val cdf = columns match {
-      case Some(c) => {
+      case Some(c) =>
         InlineCsvMapOp.parseColumns(c, fieldSeparator)
-      }
-      case None => {
+      case None =>
         throw new ParserException("Missing the column definitions for inline csv")
-      }
     }
 
     val values = MapOp.decodeString(node.getChild(1))
     records = values match {
-      case Some(v) => {
+      case Some(v) =>
         values.get.split(Character.toString(recordSeparator))
-      }
-      case None => {
+      case None =>
         throw new ParserException("Missing values for inline csv")
-      }
     }
 
-    var attributes = new ListBuffer[String]()
+    val attributes = new ListBuffer[String]()
 
     var xCol: Int = -1
     var yCol: Int = -1
     var geometryCol: Int = -1
     for ((col, i) <- cdf.getColumns.view.zipWithIndex) {
-      val c = col.getName()
+      val c = col.getName
 
-      if (col.getType() == Column.FactorType.Numeric)
+      if (col.getType == Column.FactorType.Numeric)
       {
         if (c.equals("x"))
         {
@@ -148,11 +201,11 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
     }
 
     delimitedParser = new DelimitedParser(attributes, xCol, yCol, geometryCol,
-      recordSeparator, encapsulator, cdf.isFirstLineHeader())
+      recordSeparator, encapsulator, cdf.isFirstLineHeader)
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-    delimitedParser = new DelimitedParser();
+    delimitedParser = new DelimitedParser()
     delimitedParser.readExternal(in)
   }
 

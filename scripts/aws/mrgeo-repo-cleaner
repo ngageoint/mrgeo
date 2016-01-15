@@ -5,7 +5,7 @@
 
 BUCKET="mrgeo-maven"
 # Uncomment for logging to /tmp/mrgeo-repo-cleaner.log
-LOG="true"
+#LOG="true"
 
 # check if we are already running
 COMMAND=$0
