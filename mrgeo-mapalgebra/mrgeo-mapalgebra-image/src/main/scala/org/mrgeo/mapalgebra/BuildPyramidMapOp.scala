@@ -34,6 +34,9 @@ object BuildPyramidMapOp extends MapOpRegistrar {
     Array[String]("buildpyramid", "bp")
   }
 
+  def create(raster: RasterMapOp, aggregator:String = "MEAN") =
+    new BuildPyramidMapOp(Some(raster), Some(aggregator))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new BuildPyramidMapOp(node, true, variables)
 }
@@ -47,6 +50,12 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
 
   var providerProperties:ProviderProperties = null
 
+  private[mapalgebra] def this(raster:Option[RasterMapOp], aggregator:Option[String]) = {
+    this()
+
+    inputMapOp = raster
+    this.aggregator = aggregator
+  }
 
   private[mapalgebra] def this(node: ParserNode, isSlope: Boolean, variables: String => Option[ParserNode]) = {
     this()

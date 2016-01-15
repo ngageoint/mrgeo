@@ -40,6 +40,19 @@ object IngestImageMapOp extends MapOpRegistrar {
     Array[String]("ingest")
   }
 
+  def create(input:String):MapOp =
+    new IngestImageMapOp(input, None, None)
+
+  def create(input:String, zoom:Int):MapOp =
+    new IngestImageMapOp(input, Some(zoom), None)
+
+  def create(input:String, categorical:Boolean):MapOp =
+    new IngestImageMapOp(input, None, Some(categorical))
+
+  def create(input:String, zoom:Int, categorical:Boolean):MapOp =
+    new IngestImageMapOp(input, Some(zoom), Some(categorical))
+
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new IngestImageMapOp(node, variables)
 }
@@ -51,6 +64,13 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   private var input:Option[String] = None
   private var categorical:Option[Boolean] = None
   private var zoom:Option[Int] = None
+
+  private[mapalgebra] def this(input:String, zoom:Option[Int], categorical:Option[Boolean]) = {
+    this()
+    this.input = Some(input)
+    this.categorical = categorical
+    this.zoom = zoom
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()

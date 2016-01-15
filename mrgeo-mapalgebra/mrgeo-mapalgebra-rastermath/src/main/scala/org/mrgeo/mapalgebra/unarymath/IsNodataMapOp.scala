@@ -30,11 +30,19 @@ object IsNodataMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("isNodata", "isNull")
   }
+  def create(raster:RasterMapOp):MapOp =
+    new IsNodataMapOp(Some(raster))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new IsNodataMapOp(node, variables)
 }
 
 class IsNodataMapOp extends RawUnaryMathMapOp {
+
+  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+    this()
+    input = raster
+  }
 
   var nodata:Double = Double.NegativeInfinity
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {

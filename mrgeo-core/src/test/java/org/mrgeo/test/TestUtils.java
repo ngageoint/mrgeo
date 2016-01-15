@@ -261,6 +261,11 @@ public String getInputLocal()
   return inputLocal;
 }
 
+public String getInputLocalFor(final String filename)
+{
+  return new File(inputLocal, filename).toString();
+}
+
 public Path getOutputHdfs()
 {
   return outputHdfs;
@@ -274,6 +279,10 @@ public Path getOutputHdfsFor(final String fileName)
 public String getOutputLocal()
 {
   return outputLocal;
+}
+public String getOutputLocalFor(final String filename)
+{
+  return new File(outputLocal, filename).toString();
 }
 
 public Path getTestLocal()
@@ -454,7 +463,7 @@ public static String composeOutputDir(Class<?> c) throws IOException
   File dir = new File(result);
   if (dir.exists())
   {
-    FileUtils.deleteDir(dir);
+    FileUtils.deleteDir(dir, true);
   }
 
   if (!dir.mkdirs())
