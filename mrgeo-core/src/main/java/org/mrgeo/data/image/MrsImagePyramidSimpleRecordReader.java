@@ -40,19 +40,6 @@ public class MrsImagePyramidSimpleRecordReader extends MrsPyramidSimpleRecordRea
   }
 
   @Override
-  protected Map<String, MrsPyramidMetadata> readMetadata(Configuration conf)
-          throws ClassNotFoundException, IOException
-  {
-    Map<String, MrsImagePyramidMetadata> m = HadoopUtils.getMetadata(conf);
-    Map<String, MrsPyramidMetadata> results = new HashMap<String, MrsPyramidMetadata>(m.size());
-    for (String key : m.keySet())
-    {
-      results.put(key, m.get(key));
-    }
-    return results;
-  }
-
-  @Override
   protected RecordReader<TileIdWritable, RasterWritable> getRecordReader(
           final String name, final Configuration conf) throws DataProviderNotFound
   {

@@ -91,7 +91,7 @@ public abstract class MrsPyramidSimpleInputFormat<V> extends InputFormat<TileIdW
       while (iter.hasNext())
       {
         TiledInputSplit tiledSplit = iter.next();
-        MrsPyramidInputSplit mpsplit = new MrsPyramidInputSplit(tiledSplit, p.getName(), zoom);
+        MrsPyramidInputSplit mpsplit = new MrsPyramidInputSplit(tiledSplit, p.getName());
         results.add(mpsplit);
       }
     }

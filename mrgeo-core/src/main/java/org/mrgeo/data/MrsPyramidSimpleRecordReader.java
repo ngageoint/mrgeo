@@ -45,9 +45,6 @@ public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordR
 
   protected abstract T toNonWritableTile(TWritable tileValue) throws IOException;
 
-  protected abstract Map<String, MrsPyramidMetadata> readMetadata(final Configuration conf)
-          throws ClassNotFoundException, IOException;
-
   protected abstract TWritable toWritable(T val) throws IOException;
   protected abstract TWritable copyWritable(TWritable val);
 
@@ -118,32 +115,8 @@ public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordR
         inputBounds = ifContext.getBounds();
       }
       scannedInputReader = createRecordReader(fsplit, context);
-      final String pyramidName = fsplit.getName();
-
-      try
-      {
-        final Map<String, MrsPyramidMetadata> metadataMap = readMetadata(conf);
-        MrsPyramidMetadata metadata = metadataMap.get(pyramidName);
-        if (metadata == null)
-        {
-//          final String unqualifiedPyramidName = HadoopFileUtils.unqualifyPath(pyramidPath)
-//              .toString();
-          metadata = metadataMap.get(pyramidName);
-        }
-        if (metadata == null)
-        {
-          throw new IOException(
-                  "Internal error: Unable to fetch pyramid metadata from job config for " +
-                          pyramidName);
-        }
-        tilesize = metadata.getTilesize();
-        zoomLevel = fsplit.getZoomlevel();
-      }
-      catch (final ClassNotFoundException e)
-      {
-        e.printStackTrace();
-        throw new IOException(e);
-      }
+      tilesize = ifContext.getTileSize();
+      zoomLevel = ifContext.getZoomLevel();
     }
     else
     {

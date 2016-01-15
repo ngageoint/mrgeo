@@ -384,38 +384,6 @@ public static void adjustLogging()
     return result;
   }
 
-  public static Map<String, MrsImagePyramidMetadata> getMetadata(final Configuration config)
-      throws IOException, ClassNotFoundException
-  {
-    final Map<String, MrsImagePyramidMetadata> metadata = new HashMap<String, MrsImagePyramidMetadata>();
-
-    final Iterator<Entry<String, String>> props = config.iterator();
-    while (props.hasNext())
-    {
-      final Entry<String, String> entry = props.next();
-      if (entry.getKey().startsWith("mrspyramid.metadata."))
-      {
-        final MrsImagePyramidMetadata m = (MrsImagePyramidMetadata) Base64Utils
-            .decodeToObject(entry.getValue());
-        final String name = entry.getKey().substring(20); // strip the "mrspyramid.metadata."
-        metadata.put(name, m);
-      }
-    }
-    // Map<String, String> raw = config.getValByRegex("mrspyramid.metadata.*");
-    // for (String basename:raw.keySet())
-    // {
-    // MrsImagePyramidMetadata m = (MrsImagePyramidMetadata)
-    // Base64Utils.decodeToObject(config.get(basename,
-    // null));
-    // String name = basename.substring(20); // strip the "mrspyramid.metadata."
-    // metadata.put(name, m);
-    // }
-
-    return metadata;
-    // return (MrsImagePyramidMetadata) Base64Utils.decodeToObject(config.get("mrspyramid.metadata",
-    // null));
-  }
-
   public static String[]
   getStringArraySetting(final Configuration config, final String propertyName)
   {
@@ -449,66 +417,6 @@ public static void adjustLogging()
     }
     return tileClusterInfo;
   }
-
-  //  public static Map<String, MrsVectorPyramidMetadata> getVectorMetadata(final Configuration config)
-  //    throws IOException, ClassNotFoundException
-  //  {
-  //    final Map<String, MrsVectorPyramidMetadata> metadata = new HashMap<String, MrsVectorPyramidMetadata>();
-  //
-  //    final Iterator<Entry<String, String>> props = config.iterator();
-  //    final String metadataPrefix = "mrsvectorpyramid.metadata.";
-  //    final int metadataPrefixLen = metadataPrefix.length();
-  //    while (props.hasNext())
-  //    {
-  //      final Entry<String, String> entry = props.next();
-  //      if (entry.getKey().startsWith(metadataPrefix))
-  //      {
-  //        final MrsVectorPyramidMetadata m = (MrsVectorPyramidMetadata) Base64Utils
-  //          .decodeToObject(entry.getValue());
-  //        final String name = entry.getKey().substring(metadataPrefixLen); // strip the
-  //                                                                         // "mrspyramid.metadata."
-  //        metadata.put(name, m);
-  //      }
-  //    }
-  //    // Map<String, String> raw = config.getValByRegex("mrspyramid.metadata.*");
-  //    // for (String basename:raw.keySet())
-  //    // {
-  //    // MrsImagePyramidMetadata m = (MrsImagePyramidMetadata)
-  //    // Base64Utils.decodeToObject(config.get(basename,
-  //    // null));
-  //    // String name = basename.substring(20); // strip the "mrspyramid.metadata."
-  //    // metadata.put(name, m);
-  //    // }
-  //
-  //    return metadata;
-  //    // return (MrsImagePyramidMetadata) Base64Utils.decodeToObject(config.get("mrspyramid.metadata",
-  //    // null));
-  //  }
-
-  //  public static MrsVectorPyramidMetadata getVectorMetadata(final Configuration config,
-  //    final String pyramid) throws IOException, ClassNotFoundException
-  //  {
-  //    final MrsVectorPyramidMetadata metadata = (MrsVectorPyramidMetadata) Base64Utils
-  //      .decodeToObject(config.get("mrsvectorpyramid.metadata." + pyramid, null));
-  //
-  //    return metadata;
-  //    // return (MrsImagePyramidMetadata) Base64Utils.decodeToObject(config.get("mrspyramid.metadata",
-  //    // null));
-  //  }
-
-  // public static boolean hasHadoop()
-  // {
-  // // windows requires cygwin to run Hadoop. I don't like that, so we just
-  // // default to the raw fs
-  // // in windows this won't work for remote calls and such, but we should be
-  // // using linux for that.
-  // if (System.getProperty("os.name").toLowerCase().contains("windows"))
-  // {
-  // log.info("Running on an OS w/o Hadoop. Hmmm. This could get ugly.");
-  // return false;
-  // }
-  // return true;
-  // }
 
   public static void setJar(final Job job, Class clazz) throws IOException
   {
@@ -559,19 +467,6 @@ public static void adjustLogging()
     // Otherwise, check the MR1 setting
     String mr1Local = conf.get("mapred.job.tracker", "local");
     return mr1Local.equals("local");
-  }
-
-  public static void setMetadata(final Configuration conf, final MrsImagePyramidMetadata metadata)
-      throws IOException
-  {
-    log.debug("Setting hadoop configuration metadata using metadata instance " + metadata);
-    conf.set("mrspyramid.metadata." + metadata.getPyramid(), Base64Utils.encodeObject(metadata));
-  }
-
-  public static void setMetadata(final Job job, final MrsImagePyramidMetadata metadata)
-      throws IOException
-  {
-    setMetadata(job.getConfiguration(), metadata);
   }
 
   public static void setTileClusterInfo(final Configuration conf,

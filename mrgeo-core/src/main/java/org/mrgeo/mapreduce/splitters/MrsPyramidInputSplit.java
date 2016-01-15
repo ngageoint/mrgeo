@@ -38,28 +38,21 @@ public class MrsPyramidInputSplit extends InputSplit implements Writable
 {
   private TiledInputSplit wrappedInputSplit;
   private String name;
-  private int zoomlevel;
 
   public MrsPyramidInputSplit()
   {
   }
 
-  public MrsPyramidInputSplit(final TiledInputSplit split, String name, int zoomlevel) throws IOException
+  public MrsPyramidInputSplit(final TiledInputSplit split, String name) throws IOException
   {
     super();
     this.wrappedInputSplit = split;
     this.name = name;
-    this.zoomlevel = zoomlevel;
   }
 
   public String getName()
   {
     return name;
-  }
-
-  public int getZoomlevel()
-  {
-    return zoomlevel;
   }
 
   @Override
@@ -82,7 +75,6 @@ public class MrsPyramidInputSplit extends InputSplit implements Writable
     }
 
     name = in.readUTF();
-    zoomlevel = in.readInt();
   }
 
   @Override
@@ -102,7 +94,6 @@ public class MrsPyramidInputSplit extends InputSplit implements Writable
     }
 
     out.writeUTF(name);
-    out.writeInt(zoomlevel);
   }
 
   @Override

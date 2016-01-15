@@ -81,31 +81,8 @@ public abstract class MrsImageInputFormatProvider implements TiledInputFormatPro
                            final MrsImageDataProvider provider)
           throws DataProviderException
   {
-    try
-    {
-      Configuration conf = job.getConfiguration();
-      DataProviderFactory.saveProviderPropertiesToConfig(provider.getProviderProperties(), conf);
-      context.save(conf);
-      // Add the input pyramid metadata to the job configuration
-      String input = context.getInput();
-      MrsImagePyramid pyramid;
-      try
-      {
-        pyramid = MrsImagePyramid.open(input, context.getProviderProperties());
-      }
-      catch (IOException e)
-      {
-        throw new DataProviderException("Failure opening input image pyramid: " + input, e);
-      }
-      final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-      log.debug("In HadoopUtils.setupMrsPyramidInputFormat, loading pyramid for " + input +
-                " pyramid instance is " + pyramid + " metadata instance is " + metadata);
-
-      HadoopUtils.setMetadata(conf, metadata);
-    }
-    catch (IOException e)
-    {
-      throw new DataProviderException("Failure configuring map/reduce job " + context.toString(), e);
-    }
+    Configuration conf = job.getConfiguration();
+    DataProviderFactory.saveProviderPropertiesToConfig(provider.getProviderProperties(), conf);
+    context.save(conf);
   }
 }
