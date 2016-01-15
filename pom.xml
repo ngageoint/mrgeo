@@ -22,7 +22,7 @@
   <packaging>pom</packaging>
   <properties>
     <!-- version -->
-    <mrgeo.version>0.9.0-${final.classifier}-SNAPSHOT</mrgeo.version>
+    <mrgeo.version>1.0.0-${final.classifier}</mrgeo.version>
     <!-- classifier to tag onto the end of the jars -->
     <final.classifier>unknown</final.classifier>
     <!-- default location for the hadoop config files, used for testing -->
