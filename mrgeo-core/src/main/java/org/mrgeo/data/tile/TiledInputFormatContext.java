@@ -35,19 +35,15 @@ public class TiledInputFormatContext
 {
   private int zoomLevel;
   private int tileSize;
-  private Set<String> inputs;
+  private String input;
   private Bounds bounds;
-  private boolean includeEmptyTiles = false;
-  private double fillValue = Double.NaN;
   private ProviderProperties inputProviderProperties;
 
   private static final String className = TiledInputFormatContext.class.getSimpleName();
   private static final String ZOOM_LEVEL = className + ".zoomLevel";
   private static final String TILE_SIZE = className + ".tileSize";
-  private static final String INPUTS = className + ".inputs";
+  private static final String INPUT = className + ".input";
   private static final String BOUNDS = className + ".bounds";
-  private static final String INCLUDE_EMPTY_TILES = className + ".includeEmptyTiles";
-  private static final String FILL_VALUE = className + ".fillValue";
   private static final String PROVIDER_PROPERTY_KEY = className + "provProps";
 
   /**
@@ -58,11 +54,11 @@ public class TiledInputFormatContext
    * @param zoomlevel
    */
   public TiledInputFormatContext(final int zoomlevel, final int tileSize,
-      final Set<String> inputs, final ProviderProperties inputProviderProperties)
+      final String input, final ProviderProperties inputProviderProperties)
   {
     this.zoomLevel = zoomlevel;
     this.tileSize = tileSize;
-    this.inputs = inputs;
+    this.input = input;
     this.bounds = null;
     this.inputProviderProperties = inputProviderProperties;
   }
@@ -75,26 +71,13 @@ public class TiledInputFormatContext
    * @param zoomlevel
    */
   public TiledInputFormatContext(final int zoomlevel, final int tileSize,
-      final Set<String> inputs, final Bounds bounds,
+      final String input, final Bounds bounds,
       final ProviderProperties inputProviderProperties)
   {
     this.zoomLevel = zoomlevel;
     this.tileSize = tileSize;
-    this.inputs = inputs;
+    this.input = input;
     this.bounds = bounds;
-    this.inputProviderProperties = inputProviderProperties;
-  }
-
-  public TiledInputFormatContext(final int zoomlevel, final int tileSize,
-      final Set<String> inputs, final Bounds bounds, final double fillValue,
-      final ProviderProperties inputProviderProperties)
-  {
-    this.zoomLevel = zoomlevel;
-    this.tileSize = tileSize;
-    this.inputs = inputs;
-    this.bounds = bounds;
-    this.includeEmptyTiles = true;
-    this.fillValue = fillValue;
     this.inputProviderProperties = inputProviderProperties;
   }
 
@@ -102,23 +85,14 @@ public class TiledInputFormatContext
   {
   }
 
-  public Set<String> getInputs()
+  public String getInput()
   {
-    return inputs;
+    return input;
   }
 
   public ProviderProperties getProviderProperties()
   {
     return inputProviderProperties;
-  }
-
-  public String getFirstInput()
-  {
-    if (inputs.isEmpty())
-    {
-      throw new IllegalArgumentException("Cannot get first input - list is empty");
-    }
-    return inputs.iterator().next();
   }
 
   public int getZoomLevel()
@@ -136,29 +110,14 @@ public class TiledInputFormatContext
     return bounds;
   }
 
-  public boolean getIncludeEmptyTiles()
-  {
-    return includeEmptyTiles;
-  }
-
-  public double getFillValue()
-  {
-    return fillValue;
-  }
-
   public void save(final Configuration conf)
   {
-    conf.set(INPUTS, StringUtils.join(inputs, ","));
+    conf.set(INPUT, input);
     conf.setInt(ZOOM_LEVEL, zoomLevel);
     conf.setInt(TILE_SIZE, tileSize);
     if (bounds != null)
     {
       conf.set(BOUNDS, bounds.toDelimitedString());
-    }
-    conf.setBoolean(INCLUDE_EMPTY_TILES, includeEmptyTiles);
-    if (includeEmptyTiles)
-    {
-      conf.setFloat(FILL_VALUE, (float) fillValue);
     }
       conf.set(PROVIDER_PROPERTY_KEY, ProviderProperties.toDelimitedString(inputProviderProperties));
   }
@@ -166,27 +125,13 @@ public class TiledInputFormatContext
   public static TiledInputFormatContext load(final Configuration conf)
   {
     TiledInputFormatContext context = new TiledInputFormatContext();
-    context.inputs = new HashSet<String>();
-    String strInputs = conf.get(INPUTS);
-    if (strInputs != null)
-    {
-      String[] confInputs = strInputs.split(",");
-      for (String confInput : confInputs)
-      {
-        context.inputs.add(confInput);
-      }
-    }
+    context.input = conf.get(INPUT);
     context.zoomLevel = conf.getInt(ZOOM_LEVEL, 1);
     context.tileSize = conf.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     String confBounds = conf.get(BOUNDS);
     if (confBounds != null)
     {
       context.bounds = Bounds.fromDelimitedString(confBounds);
-    }
-    context.includeEmptyTiles = conf.getBoolean(INCLUDE_EMPTY_TILES, false);
-    if (context.includeEmptyTiles)
-    {
-      context.fillValue = conf.getFloat(FILL_VALUE, Float.NaN);
     }
     String strProviderProperties = conf.get(PROVIDER_PROPERTY_KEY);
     if (strProviderProperties != null)

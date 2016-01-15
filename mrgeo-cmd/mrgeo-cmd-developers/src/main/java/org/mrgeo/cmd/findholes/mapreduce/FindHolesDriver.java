@@ -78,10 +78,8 @@ public class FindHolesDriver {
 		job.setOutputValueClass(Text.class);
 
 		//Properties props = new Properties();
-		Set<String> inputs = new HashSet<String>();
-		inputs.add(input);
-		
-		TiledInputFormatContext tifc = new TiledInputFormatContext(zoom, mipm.getTilesize(), inputs, props);
+
+		TiledInputFormatContext tifc = new TiledInputFormatContext(zoom, mipm.getTilesize(), input, props);
 		MrsImageInputFormatProvider miifp = midp.getTiledInputFormatProvider(tifc);
 
 		// this is key for setting up the input

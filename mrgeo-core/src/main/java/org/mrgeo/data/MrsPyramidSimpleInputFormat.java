@@ -57,11 +57,12 @@ public abstract class MrsPyramidSimpleInputFormat<V> extends InputFormat<TileIdW
    * @throws InterruptedException
    */
   protected abstract List<TiledInputSplit> getNativeSplits(final JobContext context,
-                                                           final TiledInputFormatContext ifContext, final String input) throws IOException, InterruptedException;
+                                                           final TiledInputFormatContext ifContext,
+                                                           final String input) throws IOException, InterruptedException;
 
   /**
-   * Returns the list of MrsPyramidInputSplit objects required across all of the
-   * input pyramids. Sub-classes should have no need to override this method. It
+   * Returns the list of MrsPyramidInputSplit objects for the input pyramid.
+   * Sub-classes should have no need to override this method. It
    * contains logic required by all input formats (described in the overview
    * for this class).
    */
@@ -70,167 +71,32 @@ public abstract class MrsPyramidSimpleInputFormat<V> extends InputFormat<TileIdW
   {
     // Get the TiledInputFormatContext from the JobContext
     TiledInputFormatContext ifContext = TiledInputFormatContext.load(context.getConfiguration());
+    String input = ifContext.getInput();
 
-    // Get the list of inputs
-    Set<String> inputSet = ifContext.getInputs();
-//    String[] inputs = new String[inputSet.size()];
-//    int inputIndex = 0;
-//    for (String strInput : inputSet)
-//    {
-//      inputs[inputIndex++] = strInput;
-//    }
+    MrsPyramid p = MrsImagePyramid.open(input, context.getConfiguration());
+    String pyramid = p.getName();
+    int zoom = ifContext.getZoomLevel();
+    List<TiledInputSplit> nativeSplits = getNativeSplits(context, ifContext, pyramid);
+    List<TiledInputSplit> filteredSplits = filterInputSplits(ifContext,
+              nativeSplits, zoom,
+              p.getTileSize());
 
-    // only 1 file?, no more processing needed
-//    if (inputs.length == 1)
-//    {
-//        return nativeSplits;
-//    }
-
-    MrsPyramid[] pyramids = new MrsPyramid[inputSet.size()];
-    // Collect the pyramids
-//  for (int i=0; i < inputs.length; i++)
-    int inputIndex = 0;
-    for (String strInput : inputSet)
+    List<InputSplit> results = new LinkedList<InputSplit>();
+    // remove the current bounds from the post bounds list.
+    // Loop the native splits from this input, and create a new MrsPyramidInputSplit
+    // that wraps it and includes the pre/post bounds.
+    if (filteredSplits != null)
     {
-      // The path is to the actual pyramid, so we need to get the parent to get the pyramid. Yuck!
-      String pyramid = strInput;
-      MrsPyramid p = MrsImagePyramid.open(pyramid, context.getConfiguration());
-      pyramids[inputIndex] = p;
-      inputIndex++;
-    }
-
-    // TODO: Consider sorting based on the number of tiles for each source
-    // so that we sort in descending order by number of tiles. This way we
-    // split over more tiles which should distribute the work across more
-    // mappers.
-    // sort from largest to smallest
-    Arrays.sort(pyramids, new Comparator<MrsPyramid>(){
-      @Override
-      public int compare(MrsPyramid p1, MrsPyramid p2) {
-        Bounds b = p1.getBounds();
-        double a1 = b.getWidth() * b.getHeight();
-
-        b = p2.getBounds();
-        double a2 = b.getWidth() * b.getHeight();
-
-        // make this Double.compare(a2, a1) for largest to smallest sort
-        int result = Double.compare(a2, a1);
-        // If the pyramids are the same size, then sort the higher res pyramids
-        // above the lower res so that we map/reduce over the pyramid with
-        // the most tiles for map/reduce efficiency.
-        if (result == 0)
-        {
-          int v1 = p1.getMaximumLevel();
-          int v2 = p2.getMaximumLevel();
-          if (v1 == v2)
-          {
-            return 0;
-          }
-          return (v1 < v2) ? 1 : -1;
-        }
-        return result;
-      }
-    });
-
-    List<List<TiledInputSplit>> nativeSplitsPerInput = new LinkedList<List<TiledInputSplit>>();
-
-    // For each input, get its native input splits, zoom, and load its MrsImagePyramid.
-    Map<String, Bounds> post = new HashMap<String, Bounds>();
-    int[] zooms = new int[pyramids.length];
-    for (int i=0; i < pyramids.length; i++)
-    {
-      String pyramid = pyramids[i].getName();
-      zooms[i] = ifContext.getZoomLevel();
-      List<TiledInputSplit> splits = getNativeSplits(context, ifContext, pyramid);
-      nativeSplitsPerInput.add(filterInputSplits(ifContext,
-              splits, zooms[i],
-              pyramids[i].getTileSize()));
-      post.put(pyramid, pyramids[i].getBounds());
-    }
-
-    //TODO:  Combine smaller splits into a single, bigger split...
-    List<InputSplit> splits = new LinkedList<InputSplit>();
-    Map<String, Bounds> pre = new HashMap<String, Bounds>();
-    for (int i=0; i < pyramids.length; i++)
-    {
-      MrsPyramid pyramid = pyramids[i];
-      // remove the current bounds from the post bounds list.
-      Bounds b = post.remove(pyramid.getName());
-      // Loop the native splits from this input, and create a new MrsPyramidInputSplit
-      // that wraps it and includes the pre/post bounds.
-      List<TiledInputSplit> ns = nativeSplitsPerInput.get(i);
-      if (ns != null)
+      Iterator<TiledInputSplit> iter = filteredSplits.iterator();
+      while (iter.hasNext())
       {
-        Iterator<TiledInputSplit> iter = ns.iterator();
-        while (iter.hasNext())
-        {
-          TiledInputSplit tiledSplit = iter.next();
-          MrsPyramidInputSplit mpsplit =
-                  new MrsPyramidInputSplit(tiledSplit, pyramid.getName(), zooms[i],
-                          pre.values().toArray(new Bounds[0]),
-                          post.values().toArray(new Bounds[0]));
-          splits.add(mpsplit);
-        }
+        TiledInputSplit tiledSplit = iter.next();
+        MrsPyramidInputSplit mpsplit = new MrsPyramidInputSplit(tiledSplit, p.getName(), zoom);
+        results.add(mpsplit);
       }
-
-      // add the current bounds to the pre bounds list
-      pre.put(pyramid.getName(), b);
     }
 
-    return splits;
-  }
-
-  /**
-   * Add one new split to result for each row of tiles between fromTileId
-   * and toTileId. The from and to tiles can be in the same row or different
-   * rows.
-   *
-   * @param result
-   * @param fromTileId
-   * @param toTileId
-   * @param zoom
-   * @param tileSize
-   */
-  private void fillHoles(List<TiledInputSplit> result, long fromTileId,
-                         long toTileId, int zoom, int tileSize, TMSUtils.TileBounds cropBounds)
-  {
-    TMSUtils.Tile fromTile = TMSUtils.tileid(fromTileId, zoom);
-    TMSUtils.Tile toTile = TMSUtils.tileid(toTileId, zoom);
-    long txStart = fromTile.tx;
-    long tyStart = fromTile.ty;
-    // If the end of the "from" tile is to the right of the crop bounds, then
-    // move it up one row and start at the left side of the crop bounds.
-    if (txStart > cropBounds.e)
-    {
-      txStart = cropBounds.w;
-      tyStart = fromTile.ty + 1;
-    }
-    for (long ty = tyStart; ty <= toTile.ty; ty++)
-    {
-      long txEnd = -1;
-      if (ty < toTile.ty)
-      {
-        txEnd = cropBounds.e;
-      }
-      else
-      {
-        // It's in the same row as the ending tile. If the ending tile is left of
-        // the crop region, then we do not need to add a split for this row because
-        // it does not overlap the crop region in this row.
-        if (toTile.tx >= cropBounds.w)
-        {
-          txEnd = Math.min(toTile.tx, cropBounds.e);
-        }
-      }
-      // Add the new split if one is needed (e.g. txEnd >= 0)
-      if (txEnd >= 0 && txStart <= txEnd)
-      {
-        long startTileId = TMSUtils.tileid(txStart, ty, zoom);
-        long endTileId = TMSUtils.tileid(txEnd, ty, zoom);
-        result.add(new TiledInputSplit(null, startTileId, endTileId, zoom, tileSize));
-      }
-      txStart = cropBounds.w;
-    }
+    return results;
   }
 
   /**
@@ -245,7 +111,9 @@ public abstract class MrsPyramidSimpleInputFormat<V> extends InputFormat<TileIdW
    * @return
    */
   List<TiledInputSplit> filterInputSplits(final TiledInputFormatContext ifContext,
-                                          final List<TiledInputSplit> splits, final int zoomLevel, final int tileSize)
+                                          final List<TiledInputSplit> splits,
+                                          final int zoomLevel,
+                                          final int tileSize)
   {
     // If there are no splits or no crop region, just return the splits
     if (splits.size() == 0 || ifContext.getBounds() == null)
@@ -256,42 +124,12 @@ public abstract class MrsPyramidSimpleInputFormat<V> extends InputFormat<TileIdW
     TMSUtils.TileBounds cropBounds = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(ifContext.getBounds()),
             ifContext.getZoomLevel(), tileSize);
 
-    // sort the splits by tileid, so we can handle missing tiles in the case of a fill...S
-    Collections.sort(splits, new Comparator<TiledInputSplit>()
-    {
-      @Override
-      public int compare(TiledInputSplit t1, TiledInputSplit t2)
-      {
-        if (t1.getStartTileId() < t2.getStartTileId())
-          return -1;
-        return t1.getStartTileId() == t2.getStartTileId() ? 0 : 1;
-      }
-    });
-
     SplitIterator splitIter = new SplitIterator(splits, new RegionSplitVisitor(cropBounds));
-    TiledInputSplit firstSplit = null;
-    TiledInputSplit secondSplit = splitIter.next();
-    long fromTileId = TMSUtils.tileid(cropBounds.w, cropBounds.s, ifContext.getZoomLevel());
-    while (secondSplit != null)
+    TiledInputSplit split = splitIter.next();
+    while (split != null)
     {
-      long toTileId = secondSplit.getStartTileId() - 1;
-      if (ifContext.getIncludeEmptyTiles()) {
-        fillHoles(result, fromTileId, toTileId, ifContext.getZoomLevel(),
-                ifContext.getTileSize(), cropBounds);
-      }
-      result.add(secondSplit);
-      firstSplit = secondSplit;
-      secondSplit = splitIter.next();
-      fromTileId = firstSplit.getEndTileId() + 1;
-    }
-
-    // Post-processing to fill in holes beyond the last split but remaining
-    // within the crop bounds
-    if (ifContext.getIncludeEmptyTiles())
-    {
-      fillHoles(result, fromTileId,
-              TMSUtils.tileid(cropBounds.e, cropBounds.n, zoomLevel),
-              zoomLevel, tileSize, cropBounds);
+      result.add(split);
+      split = splitIter.next();
     }
     return result;
   }

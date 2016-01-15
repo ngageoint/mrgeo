@@ -416,39 +416,6 @@ public static void adjustLogging()
     // null));
   }
 
-  /**
-   * A convenience method to extract the first metadata out of configuration - useful 
-   * when there's guaranteed to be a single metadata stored in configuration (e.g., clients of 
-   * HdfsMrsPyramidSingleInputFormat)
-   *
-   * @param conf
-   * @return
-   */
-  public static MrsImagePyramidMetadata getSingleMetadata(final Configuration conf) {
-    Map<String, MrsImagePyramidMetadata> meta;
-    try {
-      meta = HadoopUtils.getMetadata(conf);
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException("Unable to extract metadata out of configuration");
-    }
-    MrsImagePyramidMetadata metadata = meta.values().iterator().next();
-    assert(metadata != null);
-    return metadata;
-  }
-
-  //  public static MrsImagePyramidMetadata
-  //    getMetadata(final Configuration config, final String pyramid) throws IOException,
-  //      ClassNotFoundException
-  //  {
-  //    final MrsImagePyramidMetadata metadata = (MrsImagePyramidMetadata) Base64Utils
-  //      .decodeToObject(config.get("mrspyramid.metadata." + pyramid, null));
-  //
-  //    return metadata;
-  //    // return (MrsImagePyramidMetadata) Base64Utils.decodeToObject(config.get("mrspyramid.metadata",
-  //    // null));
-  //  }
-
   public static String[]
   getStringArraySetting(final Configuration config, final String propertyName)
   {

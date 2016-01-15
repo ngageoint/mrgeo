@@ -16,58 +16,23 @@
 package org.mrgeo.data.image;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.MrsPyramidSimpleRecordReader;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
-import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
 
 import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MrsImagePyramidSimpleRecordReader extends MrsPyramidSimpleRecordReader<Raster, RasterWritable>
 {
-  private MrsImage image;
-
-  @Override
-  public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
-          InterruptedException
-  {
-    super.initialize(split, context);
-    if (split instanceof MrsPyramidInputSplit)
-    {
-      TiledInputFormatContext ifContext = TiledInputFormatContext.load(context.getConfiguration());
-      String imageName = ((MrsPyramidInputSplit)split).getName();
-      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
-              context.getConfiguration());
-      image = MrsImage.open(dp, ifContext.getZoomLevel());
-    }
-    else
-    {
-      throw new IOException("Got a split of type " + split.getClass().getCanonicalName() +
-              " but expected one of type " + MrsPyramidInputSplit.class.getCanonicalName());
-    }
-  }
-
-  @Override
-  public void close() throws IOException
-  {
-    image.close();
-    super.close();
-  }
-
   @Override
   protected Raster toNonWritableTile(RasterWritable tileValue) throws IOException
   {
@@ -82,7 +47,7 @@ public class MrsImagePyramidSimpleRecordReader extends MrsPyramidSimpleRecordRea
     Map<String, MrsPyramidMetadata> results = new HashMap<String, MrsPyramidMetadata>(m.size());
     for (String key : m.keySet())
     {
-      results.put(key, (MrsPyramidMetadata)m.get(key));
+      results.put(key, m.get(key));
     }
     return results;
   }
@@ -94,37 +59,6 @@ public class MrsImagePyramidSimpleRecordReader extends MrsPyramidSimpleRecordRea
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(name,
             DataProviderFactory.AccessMode.READ, conf);
     return dp.getRecordReader();
-  }
-
-  @Override
-  protected Raster createBlankTile(final double fill)
-  {
-    try
-    {
-      Raster anyTile = image.getAnyTile();
-
-      if (anyTile != null)
-      {
-        WritableRaster wr = anyTile.createCompatibleWritableRaster();
-
-        for (int y = wr.getMinY(); y < wr.getMinY() + wr.getHeight(); y++)
-        {
-          for (int x = wr.getMinX(); x < wr.getMinX() + wr.getWidth(); x++)
-          {
-            for (int b = 0; b < wr.getNumBands(); b++)
-            {
-              wr.setSample(x, y, b, fill);
-            }
-          }
-        }
-        return wr.createTranslatedChild(0, 0);
-      }
-    }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    }
-    return null;
   }
 
   @Override

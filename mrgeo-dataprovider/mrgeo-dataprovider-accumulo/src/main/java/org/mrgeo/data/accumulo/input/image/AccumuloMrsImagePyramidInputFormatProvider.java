@@ -57,13 +57,13 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
   public AccumuloMrsImagePyramidInputFormatProvider(TiledInputFormatContext context)
   {
     super(context);
-    this.table = context.getFirstInput();
+    this.table = context.getInput();
   } // end constructor
   
   public AccumuloMrsImagePyramidInputFormatProvider(Properties props, TiledInputFormatContext context)
   {
     super(context);
-    this.table = context.getFirstInput();
+    this.table = context.getInput();
     this.props = new Properties();
     Properties providerProps = AccumuloUtils.providerPropertiesToProperties(context.getProviderProperties());
     this.props.putAll(providerProps);
@@ -240,7 +240,7 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     String strAuths = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
     auths = AccumuloUtils.createAuthorizationsFromDelimitedString(strAuths);
 
-    String enc = AccumuloConnector.encodeAccumuloProperties(context.getFirstInput());
+    String enc = AccumuloConnector.encodeAccumuloProperties(context.getInput());
     job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ENCODED, enc);
 
 
@@ -281,19 +281,16 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
     AccumuloInputFormat.setScanAuthorizations(job, auths);
     
     // get the input table
-    for(final String input : context.getInputs()){
-      // put encoded string for Accumulo connections 
-      
-    	
-    	//TODO what needs to be done here?
-    	log.info("working with source " + input + " with auths = " + auths);
-      
-    	AccumuloMrsImagePyramidInputFormat.setInputTableName(job, input);
-      log.info("Set accumulo table name " + input + " into Configuration " + job.getConfiguration());
-      
-      
-    } // end for loop
-    
+    String input = context.getInput();
+    // put encoded string for Accumulo connections
+
+
+    //TODO what needs to be done here?
+    log.info("working with source " + input + " with auths = " + auths);
+
+    AccumuloMrsImagePyramidInputFormat.setInputTableName(job, input);
+    log.info("Set accumulo table name " + input + " into Configuration " + job.getConfiguration());
+
 
     log.info("setting column family to regex " + Integer.toString(context.getZoomLevel()));
     // think about scanners - set the zoom level of the job

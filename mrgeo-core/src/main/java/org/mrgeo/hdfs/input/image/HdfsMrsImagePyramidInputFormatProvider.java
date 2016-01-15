@@ -80,54 +80,47 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
     Configuration conf = job.getConfiguration();
     String strBasePath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "/mrgeo/images");
     conf.set("hdfs." + MrGeoConstants.MRGEO_HDFS_IMAGE, strBasePath);
-    // This is list of actual filenames of the input files (not just the
-    // pyramids)
-    final HashSet<String> zoomInputs = new HashSet<String>(context.getInputs().size());
 
-    // first calculate the actual filenames for the inputs (including zoom)
-    for (final String input : context.getInputs())
+    String input = context.getInput();
+    // first calculate the actual filename for the input (including zoom)
+    HdfsMrsImageDataProvider dp = new HdfsMrsImageDataProvider(job.getConfiguration(),
+                                                               input, null);
+    String image = HdfsMrsImagePyramidInputFormat.getZoomName(dp, context.getZoomLevel());
+    // if we don't have this zoom level, use the max, then we'll decimate/subsample that one
+    if (image == null)
     {
-      HdfsMrsImageDataProvider dp = new HdfsMrsImageDataProvider(job.getConfiguration(),
-                                                                 input, null);
-      String image = HdfsMrsImagePyramidInputFormat.getZoomName(dp, context.getZoomLevel());
-      // if we don't have this zoom level, use the max, then we'll decimate/subsample that one
-      if (image == null)
-      {
-        log.error("Could not get image in setupJob() at zoom level " +
-                  context.getZoomLevel() + " for " + input);
+      log.error("Could not get image in setupJob() at zoom level " +
+                context.getZoomLevel() + " for " + input);
 
+      try
+      {
+        MrsImagePyramid pyramid;
         try
         {
-          MrsImagePyramid pyramid;
-          try
-          {
-            pyramid = MrsImagePyramid.open(dp);
-          }
-          catch (IOException e)
-          {
-            throw new DataProviderException("Failure opening input image pyramid: " + input, e);
-          }
-          final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-
-          log.debug("In setupJob(), loading pyramid for " + input +
-                    " pyramid instance is " + pyramid + " metadata instance is " + metadata);
-
-          image = HdfsMrsImagePyramidInputFormat.getZoomName(dp, metadata.getMaxZoomLevel());
+          pyramid = MrsImagePyramid.open(dp);
         }
         catch (IOException e)
         {
-          throw new DataProviderException("Failure opening input image: " + input, e);
+          throw new DataProviderException("Failure opening input image pyramid: " + input, e);
         }
-      }
+        final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
 
-      zoomInputs.add(image);
+        log.debug("In setupJob(), loading pyramid for " + input +
+                  " pyramid instance is " + pyramid + " metadata instance is " + metadata);
+
+        image = HdfsMrsImagePyramidInputFormat.getZoomName(dp, metadata.getMaxZoomLevel());
+      }
+      catch (IOException e)
+      {
+        throw new DataProviderException("Failure opening input image: " + input, e);
+      }
     }
 
-    // setup common to all input formats
-//    MrsPyramidInputFormatUtils.setInputs(job, zoomInputs);
+    String zoomInput = image;
+
     try
     {
-      HdfsMrsImagePyramidInputFormat.setInputInfo(job, context.getZoomLevel(), zoomInputs);
+      HdfsMrsImagePyramidInputFormat.setInputInfo(job, context.getZoomLevel(), zoomInput);
     }
     catch (IOException e)
     {

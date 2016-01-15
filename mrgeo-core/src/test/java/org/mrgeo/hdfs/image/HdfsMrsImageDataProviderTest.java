@@ -141,9 +141,8 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetTiledInputFormatProvider() throws Exception
   {
-    Set<String> inputs = new HashSet<String>();
-    inputs.add(all_ones);
-    TiledInputFormatContext context = new TiledInputFormatContext(10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, inputs, null);
+    String input = all_ones;
+    TiledInputFormatContext context = new TiledInputFormatContext(10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, input, null);
 
     MrsImageInputFormatProvider p = provider.getTiledInputFormatProvider(context);
 

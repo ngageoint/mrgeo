@@ -33,269 +33,6 @@ import java.util.Map;
 
 public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordReader<TileIdWritable, TWritable>
 {
-  private class TileSplit
-  {
-    public TileSplit()
-    {
-    }
-    public long currentTx;
-    public long currentTy;
-
-    public long startTx;
-
-    public long endTx;
-    public long endTy;
-
-    public T tile;
-    public long id;
-
-  }
-
-  /**
-   * A record reader that always returns a blank tile of imagery for every tile within
-   * the split it is initialized with. When an image is used as input with a crop bounds
-   * and in fill mode, the MrsPyramidInputFormat manufactures splits to includes the tiles
-   * that the input image itself does not have tile data for. This record reader is used
-   * for those manufactured splits to return blank tiles for them.
-   */
-  private class AllBlankTilesRecordReader extends RecordReader<TileIdWritable, TWritable>
-  {
-    private long nextTileId;
-    private long endTileId;
-    private long tileCount;
-    private long totalTiles;
-    private TileIdWritable currentKey;
-    private TWritable currentValue;
-    private T blankValue;
-    private TiledInputFormatContext ifContext;
-    private TMSUtils.TileBounds cropBounds;
-
-    @Override
-    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
-            InterruptedException
-    {
-      if (split instanceof MrsPyramidInputSplit)
-      {
-        MrsPyramidInputSplit mrsPyramidInputSplit = (MrsPyramidInputSplit)split;
-        nextTileId = mrsPyramidInputSplit.getWrappedSplit().getStartTileId();
-        endTileId = mrsPyramidInputSplit.getWrappedSplit().getEndTileId();
-        totalTiles = endTileId - nextTileId + 1;
-        ifContext = TiledInputFormatContext.load(context.getConfiguration());
-        Bounds requestedBounds = ifContext.getBounds();
-        if (requestedBounds == null)
-        {
-          requestedBounds = new Bounds();
-        }
-        cropBounds = TMSUtils.boundsToTile(requestedBounds.getTMSBounds(),
-                ifContext.getZoomLevel(), ifContext.getTileSize());
-      }
-      else
-      {
-        throw new IOException("Invalid InputSplit passed to AllBlankTilesRecordReader.initialize: " + split.getClass().getName());
-      }
-    }
-
-    @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException
-    {
-      TMSUtils.Tile t = TMSUtils.tileid(nextTileId, zoomLevel);
-      while (!cropBounds.contains(t) && nextTileId < endTileId)
-      {
-        nextTileId++;
-        tileCount++;
-        t = TMSUtils.tileid(nextTileId, zoomLevel);
-      }
-      if (nextTileId > endTileId)
-      {
-        return false;
-      }
-      currentKey = new TileIdWritable(nextTileId);
-      currentValue = toWritable(getBlankTile());
-      nextTileId++;
-      tileCount++;
-      return true;
-    }
-
-    @Override
-    public TileIdWritable getCurrentKey() throws IOException, InterruptedException
-    {
-      return currentKey;
-    }
-
-    @Override
-    public TWritable getCurrentValue() throws IOException, InterruptedException
-    {
-      return currentValue;
-    }
-
-    @Override
-    public float getProgress() throws IOException, InterruptedException
-    {
-      return ((float)tileCount / (float)totalTiles);
-    }
-
-    @Override
-    public void close() throws IOException
-    {
-      // Nothing to close
-    }
-
-    private T getBlankTile()
-    {
-      if (blankValue == null)
-      {
-        blankValue = createBlankTile(ifContext.getFillValue());
-      }
-      return blankValue;
-    }
-  }
-
-  /**
-   * A wrapper record reader used within the MrsPyramidRecordReader to handle the case
-   * where the caller specified a bounds as well as wanting to return empty tiles
-   * in cases where the input image does not have imagery.
-   *
-   * This class iterates over all the tiles in the split. It also reads records
-   * from the delegate sequentially. For each tile iterated, if the delegate provides
-   * a tile record, that is returned, otherwise a blank tile is returned.
-   *
-   * Splits passed to this record reader must be instances of MrsPyramidInputSplit
-   * because that is where the tile bounds for iteration is obtained. The input
-   * format that uses this record reader is responsible for creating the proper
-   * splits.
-   *
-   * If empty tiles are not to be included, then this record reader is not used.
-   */
-  private class AllTilesRecordReader extends RecordReader<TileIdWritable, TWritable>
-  {
-    private RecordReader<TileIdWritable, TWritable> delegate;
-    private TiledInputFormatContext ifContext;
-    private long nextTileId;
-    private long endTileId;
-    private long totalTiles;
-    private long tileCount;
-    private TMSUtils.TileBounds cropBounds;
-    private TileIdWritable currentKey;
-    private TWritable currentValue;
-    private T blankValue;
-    private TileIdWritable delegateKey;
-
-    @Override
-    public void close() throws IOException
-    {
-      delegate.close();
-    }
-
-    @Override
-    public TileIdWritable getCurrentKey() throws IOException, InterruptedException
-    {
-      return currentKey;
-    }
-
-    @Override
-    public TWritable getCurrentValue() throws IOException, InterruptedException
-    {
-      return currentValue;
-    }
-
-    @Override
-    public float getProgress() throws IOException, InterruptedException
-    {
-      return ((float)tileCount / (float)totalTiles);
-    }
-
-    @Override
-    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
-            InterruptedException
-    {
-      if (split instanceof MrsPyramidInputSplit)
-      {
-        delegate = getRecordReader(((MrsPyramidInputSplit)split).getName(),
-                context.getConfiguration());
-        delegate.initialize(((MrsPyramidInputSplit) split).getWrappedSplit(), context);
-        ifContext = TiledInputFormatContext.load(context.getConfiguration());
-        Bounds requestedBounds = ifContext.getBounds();
-        if (requestedBounds == null)
-        {
-          requestedBounds = new Bounds();
-        }
-        cropBounds = TMSUtils.boundsToTile(requestedBounds.getTMSBounds(),
-                ifContext.getZoomLevel(), ifContext.getTileSize());
-        endTileId = ((MrsPyramidInputSplit)split).getWrappedSplit().getEndTileId();
-        nextTileId = ((MrsPyramidInputSplit)split).getWrappedSplit().getStartTileId();
-        totalTiles = endTileId - nextTileId + 1;
-        blankValue = null;
-      }
-      else
-      {
-        throw new IOException("Invalid split type " + split.getClass().getCanonicalName() +
-                ". Expected " + MrsPyramidInputSplit.class.getCanonicalName());
-      }
-    }
-
-    @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException
-    {
-      TMSUtils.Tile t = TMSUtils.tileid(nextTileId, zoomLevel);
-      while (!cropBounds.contains(t) && nextTileId < endTileId)
-      {
-        nextTileId++;
-        tileCount++;
-        t = TMSUtils.tileid(nextTileId, zoomLevel);
-      }
-      if (nextTileId > endTileId)
-      {
-        return false;
-      }
-      currentKey = new TileIdWritable(nextTileId);
-      // See if the key from the delegate matches the current tile.
-      if (delegateKey == null)
-      {
-        // Since native splits can begin with tiles that precede the nextTileId
-        // that is required, we need to skip over tiles returned from the
-        // delegate if they are less than the nextTileId. This can happen when
-        // the crop bounds are near the right and/or top sides of a source image.
-        boolean delegateResult = delegate.nextKeyValue();
-        while (delegateResult)
-        {
-          TileIdWritable tempKey = delegate.getCurrentKey();
-          if (tempKey != null && tempKey.get() >= nextTileId)
-          {
-            delegateKey = delegate.getCurrentKey();
-            break;
-          }
-          delegateResult = delegate.nextKeyValue();
-        }
-      }
-      // If the current tile does not exist in the delegate, then return
-      // a blank value, otherwise return the delegate's tile.
-      if (delegateKey != null && delegateKey.equals(currentKey))
-      {
-        currentValue = delegate.getCurrentValue();
-        // We've returned the current delegate key, so set the delegateKey
-        // to null in order to trigger a call to delegate.nextKeyValue() the
-        // next time this method is called.
-        delegateKey = null;
-      }
-      else
-      {
-        currentValue = toWritable(getBlankTile());
-      }
-      nextTileId++;
-      tileCount++;
-      return true;
-    }
-
-    private T getBlankTile()
-    {
-      if (blankValue == null)
-      {
-        blankValue = createBlankTile(ifContext.getFillValue());
-      }
-      return blankValue;
-    }
-  }
-
   private static final Logger log = LoggerFactory.getLogger(MrsPyramidSimpleRecordReader.class);
   private RecordReader<TileIdWritable, TWritable> scannedInputReader;
   private TiledInputFormatContext ifContext;
@@ -311,7 +48,6 @@ public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordR
   protected abstract Map<String, MrsPyramidMetadata> readMetadata(final Configuration conf)
           throws ClassNotFoundException, IOException;
 
-  protected abstract T createBlankTile(final double fill);
   protected abstract TWritable toWritable(T val) throws IOException;
   protected abstract TWritable copyWritable(TWritable val);
 
@@ -323,28 +59,12 @@ public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordR
           throws DataProviderNotFound, IOException
   {
     InputSplit initializeWithSplit = null;
-    RecordReader<TileIdWritable,TWritable> recordReader = null;
-    if (ifContext.getIncludeEmptyTiles())
-    {
-      if (split.getWrappedSplit().getWrappedSplit() == null)
-      {
-        recordReader = new AllBlankTilesRecordReader();
-      }
-      else
-      {
-        recordReader = new AllTilesRecordReader();
-      }
-      // The all tiles record readers need the MrsPyramidInputSplit which
-      // wraps the native split returned from the data plugin.
-      initializeWithSplit = split;
-    }
-    else
-    {
-      // The standard record reader needs the native split returned from
-      // the data plugin.
-      recordReader = getRecordReader(split.getName(), context.getConfiguration());
-      initializeWithSplit = split.getWrappedSplit();
-    }
+    // The record reader needs the native split returned from
+    // the data plugin.
+    RecordReader<TileIdWritable,TWritable> recordReader = getRecordReader(split.getName(),
+                                                                          context.getConfiguration());
+    initializeWithSplit = split.getWrappedSplit();
+
     try
     {
       recordReader.initialize(initializeWithSplit, context);
@@ -427,7 +147,8 @@ public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordR
     }
     else
     {
-      throw new IOException("Wrong InputSplit type: " + split.getClass().getName());
+      throw new IOException("Got a split of type " + split.getClass().getCanonicalName() +
+                            " but expected one of type " + MrsPyramidInputSplit.class.getCanonicalName());
     }
   }
 

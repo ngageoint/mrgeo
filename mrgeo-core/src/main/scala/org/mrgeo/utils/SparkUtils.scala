@@ -163,8 +163,8 @@ object SparkUtils extends Logging {
     val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val inputs = Set(provider.getResourceName)
-    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize, inputs, bounds, provider.getProviderProperties)
+    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
+      provider.getResourceName, bounds, provider.getProviderProperties)
     val ifp = provider.getTiledInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
 
@@ -211,8 +211,8 @@ object SparkUtils extends Logging {
     val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val inputs = Set(provider.getResourceName)
-    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize, inputs, provider.getProviderProperties)
+    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
+      provider.getResourceName, provider.getProviderProperties)
     val ifp = provider.getTiledInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
 
@@ -283,8 +283,8 @@ object SparkUtils extends Logging {
     val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val inputs = Set(provider.getResourceName)
-    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize, inputs, provider.getProviderProperties)
+    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
+      provider.getResourceName, provider.getProviderProperties)
     val ifp = provider.getTiledInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
 
@@ -324,8 +324,8 @@ object SparkUtils extends Logging {
     val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val inputs = Set(provider.getResourceName)
-    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize, inputs, bounds, provider.getProviderProperties)
+    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
+      provider.getResourceName, bounds, provider.getProviderProperties)
     val ifp = provider.getTiledInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
 
@@ -864,7 +864,7 @@ object SparkUtils extends Logging {
 
       meta.setImageStats(zoom, stats)
     }
-
+    
     meta
   }
 

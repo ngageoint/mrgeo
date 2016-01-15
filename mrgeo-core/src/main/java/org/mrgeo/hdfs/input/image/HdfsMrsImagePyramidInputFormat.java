@@ -218,17 +218,14 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
 
 
 public static void setInputInfo(final Job job, final int zoomlevel,
-    final Set<String> inputsWithZoom) throws IOException
+    final String inputWithZoom) throws IOException
 {
 //    job.setInputFormatClass(HdfsMrsImagePyramidInputFormat.class);
 
   //final String scannedInput = inputs.get(0);
   //FileInputFormat.addInputPath(job, new Path(scannedInput));
 
-  for (String inputWithZoom: inputsWithZoom)
-  {
-    FileInputFormat.addInputPath(job, new Path(inputWithZoom));
-  }
+  FileInputFormat.addInputPath(job, new Path(inputWithZoom));
   FileInputFormat.setInputPathFilter(job, MapFileFilter.class);
 }
 

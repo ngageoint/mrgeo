@@ -87,32 +87,21 @@ public abstract class MrsImageInputFormatProvider implements TiledInputFormatPro
       DataProviderFactory.saveProviderPropertiesToConfig(provider.getProviderProperties(), conf);
       context.save(conf);
       // Add the input pyramid metadata to the job configuration
-      for (final String input : context.getInputs())
+      String input = context.getInput();
+      MrsImagePyramid pyramid;
+      try
       {
-        MrsImagePyramid pyramid;
-        try
-        {
-          pyramid = MrsImagePyramid.open(input, context.getProviderProperties());
-        }
-        catch (IOException e)
-        {
-          throw new DataProviderException("Failure opening input image pyramid: " + input, e);
-        }
-        final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-        log.debug("In HadoopUtils.setupMrsPyramidInputFormat, loading pyramid for " + input +
-                  " pyramid instance is " + pyramid + " metadata instance is " + metadata);
-
-        String image = metadata.getName(context.getZoomLevel());
-        // if we don't have this zoom level, use the max, then we'll decimate/subsample that one
-        if (image == null)
-        {
-          log.error("Could not get image in setupMrsPyramidInputFormat at zoom level " +
-                    context.getZoomLevel() + " for " + pyramid);
-          image = metadata.getName(metadata.getMaxZoomLevel());
-        }
-
-        HadoopUtils.setMetadata(conf, metadata);
+        pyramid = MrsImagePyramid.open(input, context.getProviderProperties());
       }
+      catch (IOException e)
+      {
+        throw new DataProviderException("Failure opening input image pyramid: " + input, e);
+      }
+      final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+      log.debug("In HadoopUtils.setupMrsPyramidInputFormat, loading pyramid for " + input +
+                " pyramid instance is " + pyramid + " metadata instance is " + metadata);
+
+      HadoopUtils.setMetadata(conf, metadata);
     }
     catch (IOException e)
     {
