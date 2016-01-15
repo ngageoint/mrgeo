@@ -110,7 +110,7 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
     final double[] defaultValues,
     final Bounds bounds, final String protectionLevel) throws IOException
 {
-  MrsImagePyramidMetadata metadata;
+  MrsPyramidMetadata metadata;
   try
   {
     metadata = provider.getMetadataReader().read();
@@ -121,7 +121,7 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
   }
   catch (IOException e)
   {
-    metadata = new MrsImagePyramidMetadata();
+    metadata = new MrsPyramidMetadata();
     metadata.setMaxZoomLevel(zoom);
   }
 
@@ -140,7 +140,7 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
 public static void calculateMetadata(final int zoom,
     final MrsImageDataProvider provider,
     final ImageStats[] levelStats,
-    final MrsImagePyramidMetadata metadata) throws IOException
+    final MrsPyramidMetadata metadata) throws IOException
 {
 
 
@@ -263,7 +263,7 @@ public static MrsImagePyramid open(final MrsImageDataProvider provider) throws I
   return new MrsImagePyramid(provider);
 }
 
-public MrsImagePyramidMetadata.Classification getClassification() throws IOException
+public MrsPyramidMetadata.Classification getClassification() throws IOException
 {
   return provider.getMetadataReader().read().getClassification();
 }
@@ -306,7 +306,7 @@ public MrsImage getImage(final int level) throws IOException
   //     return MrsImage.open(metadata, level);
 }
 
-public MrsImagePyramidMetadata getMetadata() throws IOException
+public MrsPyramidMetadata getMetadata() throws IOException
 {
   return provider.getMetadataReader().read();
 }
@@ -357,7 +357,7 @@ protected MrsPyramidMetadata getMetadataInternal()
 //
 //      if (py != null)
 //      {
-//        MrsImagePyramidMetadata metadata = py.getMetadata();
+//        MrsPyramidMetadata metadata = py.getMetadata();
 //        metadata.reload();
 //      }
 //

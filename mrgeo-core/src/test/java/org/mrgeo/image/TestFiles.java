@@ -21,6 +21,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Bounds;
@@ -34,7 +35,7 @@ public abstract class TestFiles
   private Bounds[][] boundsOfTile;
   private TileBounds[] tileBoundsOfRow;
   
-  private MrsImagePyramidMetadata metadata;
+  private MrsPyramidMetadata metadata;
   
   protected void setup(String testFile,
       final ProviderProperties providerProperties) throws JsonGenerationException, JsonMappingException, IOException {
@@ -112,7 +113,7 @@ public abstract class TestFiles
     return rows;
   }
 
-  public MrsImagePyramidMetadata getMetadata()
+  public MrsPyramidMetadata getMetadata()
   {
     return metadata;
   }  

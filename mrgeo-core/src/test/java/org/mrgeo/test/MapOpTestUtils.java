@@ -25,12 +25,12 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ public MapOpTestUtils(final Class<?> testClass) throws IOException
   super(testClass);
 }
 
-public MrsImagePyramidMetadata getImageMetadata(final String testName)
+public MrsPyramidMetadata getImageMetadata(final String testName)
     throws IOException
 {
   MrsImageDataProvider dp =

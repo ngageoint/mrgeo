@@ -28,7 +28,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.image.MrsImageException;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
@@ -135,7 +135,7 @@ protected static Response createEmptyTile(final ImageResponseWriter writer, fina
 }
 
 protected static Document mrsPyramidMetadataToTileMapXml(final String raster, final String url,
-    final MrsImagePyramidMetadata mpm) throws ParserConfigurationException
+    final MrsPyramidMetadata mpm) throws ParserConfigurationException
 {
     /*
      * String tileMap = "<?xml version='1.0' encoding='UTF-8' ?>" +
@@ -500,7 +500,7 @@ public Response getTile(@PathParam("version") final String version,
     // return Response.status(Status.NOT_FOUND).entity("Tile not found").build();
     try
     {
-      final MrsImagePyramidMetadata metadata = service.getMetadata(pyramid);
+      final MrsPyramidMetadata metadata = service.getMetadata(pyramid);
 
       return createEmptyTile(((ImageResponseWriter) ImageHandlerFactory.getHandler(format,
           ImageResponseWriter.class)), metadata.getTilesize(), metadata.getTilesize());
@@ -549,7 +549,7 @@ public Response getTileMap(@PathParam("version") final String version,
     final String url = hsr.getRequestURL().toString();
     // Check cache for metadata, if not found read from pyramid
     // and store in cache
-    final MrsImagePyramidMetadata mpm = service.getMetadata(raster);
+    final MrsPyramidMetadata mpm = service.getMetadata(raster);
     final Document doc = mrsPyramidMetadataToTileMapXml(raster, url, mpm);
     final DOMSource source = new DOMSource(doc);
 

@@ -15,7 +15,7 @@
 
 package org.mrgeo.data.image;
 
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 
 import java.io.IOException;
 
@@ -25,5 +25,5 @@ import java.io.IOException;
 public interface MrsImagePyramidMetadataWriter
 {
   public void write() throws IOException;
-  public void write(MrsImagePyramidMetadata metadata) throws IOException;
+  public void write(MrsPyramidMetadata metadata) throws IOException;
 }

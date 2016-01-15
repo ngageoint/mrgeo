@@ -33,7 +33,7 @@ import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReaderContext;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +54,7 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
 
   private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidMetadataReader.class);
 
-  private MrsImagePyramidMetadata metadata = null;
+  private MrsPyramidMetadata metadata = null;
   private final AccumuloMrsImageDataProvider dataProvider;
   private final String name;
 
@@ -81,12 +81,12 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     this.cv = new ColumnVisibility();
   }
   
-  public void reset(MrsImagePyramidMetadata m){
+  public void reset(MrsPyramidMetadata m){
 	  metadata = m;
   }
   
   @Override
-  public MrsImagePyramidMetadata read() throws IOException
+  public MrsPyramidMetadata read() throws IOException
   {
 //    if(dataProvider == null){
 //      throw new IOException("DataProvider not set!");
@@ -118,7 +118,7 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
   } // end read
 
   @Override
-  public MrsImagePyramidMetadata reload() throws IOException
+  public MrsPyramidMetadata reload() throws IOException
   {
     if (metadata == null)
     {
@@ -136,16 +136,16 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
       throw new IOException("Can not load metadata, resource name is empty!");
     }
 
-    MrsImagePyramidMetadata copy = loadMetadata();
+    MrsPyramidMetadata copy = loadMetadata();
 
-    Set<Method> getters = ReflectionUtils.getAllMethods(MrsImagePyramidMetadata.class, 
+    Set<Method> getters = ReflectionUtils.getAllMethods(MrsPyramidMetadata.class,
         Predicates.<Method>and (
             Predicates.<AnnotatedElement>not(ReflectionUtils.withAnnotation(JsonIgnore.class)),
             ReflectionUtils.withModifier(Modifier.PUBLIC), 
             ReflectionUtils.withPrefix("get"), 
             ReflectionUtils. withParametersCount(0)));
 
-    Set<Method> setters = ReflectionUtils.getAllMethods(MrsImagePyramidMetadata.class, 
+    Set<Method> setters = ReflectionUtils.getAllMethods(MrsPyramidMetadata.class,
         Predicates.<Method>and(
             Predicates.<AnnotatedElement>not(ReflectionUtils.withAnnotation(JsonIgnore.class)),
             ReflectionUtils.withModifier(Modifier.PUBLIC), 
@@ -202,7 +202,7 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     this.conn = conn;
   } // end setConnector
 
-  private MrsImagePyramidMetadata loadMetadata() throws IOException{
+  private MrsPyramidMetadata loadMetadata() throws IOException{
 
     Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
     String authsString = mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
@@ -259,13 +259,13 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
       throw new IOException("Can not connect to table " + name + " with auths " + auths + " - " + e.getMessage());
     }
 
-    MrsImagePyramidMetadata retMeta = null;
+    MrsPyramidMetadata retMeta = null;
     Range range = new Range(MrGeoAccumuloConstants.MRGEO_ACC_METADATA, MrGeoAccumuloConstants.MRGEO_ACC_METADATA + " ");
     scan.setRange(range);
     scan.fetchColumn(new Text(MrGeoAccumuloConstants.MRGEO_ACC_METADATA), new Text(MrGeoAccumuloConstants.MRGEO_ACC_CQALL));
     for(Entry<Key, Value> entry : scan){
       ByteArrayInputStream bis = new ByteArrayInputStream(entry.getValue().get());
-      retMeta = MrsImagePyramidMetadata.load(bis);
+      retMeta = MrsPyramidMetadata.load(bis);
       bis.close();
       break;
     }

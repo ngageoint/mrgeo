@@ -25,11 +25,11 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 
 import java.awt.*;
@@ -375,12 +375,12 @@ public static String readFile(File f) throws IOException
   return new String(baselineBuffer);
 }
 
-public static MrsImagePyramidMetadata readImageMetadata(String filename) throws
+public static MrsPyramidMetadata readImageMetadata(String filename) throws
     IOException
 {
   try (FileInputStream stream = new FileInputStream(filename))
   {
-    return MrsImagePyramidMetadata.load(stream);
+    return MrsPyramidMetadata.load(stream);
   }
 }
 

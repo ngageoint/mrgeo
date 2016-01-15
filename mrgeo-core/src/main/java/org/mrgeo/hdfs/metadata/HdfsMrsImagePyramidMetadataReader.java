@@ -24,7 +24,7 @@ import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReaderContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ public class HdfsMrsImagePyramidMetadataReader implements MrsImagePyramidMetadat
 {
   private static final Logger log = LoggerFactory.getLogger(HdfsMrsImagePyramidMetadataReader.class);
 
-  private MrsImagePyramidMetadata metadata = null;
+  private MrsPyramidMetadata metadata = null;
   private final HdfsMrsImageDataProvider dataProvider;
   private Configuration conf;
   //private final MrsImagePyramidMetadataReaderContext context;
@@ -64,10 +64,10 @@ public class HdfsMrsImagePyramidMetadataReader implements MrsImagePyramidMetadat
 
   /**
    * Return the MrsPyramidMetadate for the supplied HDFS resource
-   * @see org.mrgeo.pyramid.MrsPyramidMetadataReader#read()
+   * @see org.mrgeo.pyramid.MrsImagePyramidMetadataReader#read()
    */
   @Override
-  public MrsImagePyramidMetadata read() throws IOException
+  public MrsPyramidMetadata read() throws IOException
   {
     if (dataProvider == null)
     {
@@ -92,7 +92,7 @@ public class HdfsMrsImagePyramidMetadataReader implements MrsImagePyramidMetadat
    * Check for existence and load the metadata
    * @throws IOException
    */
-  private MrsImagePyramidMetadata loadMetadata() throws IOException
+  private MrsPyramidMetadata loadMetadata() throws IOException
   {
     Path metapath = new Path(dataProvider.getResourcePath(true), HdfsMrsImageDataProvider.METADATA);
     FileSystem fs = HadoopFileUtils.getFileSystem(conf, metapath);
@@ -106,7 +106,7 @@ public class HdfsMrsImagePyramidMetadataReader implements MrsImagePyramidMetadat
       try
       {
         // load the metadata from the input stream
-        MrsImagePyramidMetadata meta = MrsImagePyramidMetadata.load(is);
+        MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
 
         // set the fully qualified path for the metadata file
         //Path fullPath = metapath.makeQualified(fs);
@@ -133,11 +133,11 @@ public class HdfsMrsImagePyramidMetadataReader implements MrsImagePyramidMetadat
    * Reload the metadata.  Uses the existing object and sets all the parameters (getters/setters) to the 
    * new values.  This allows anyone holding a reference to an existing metadata object to see the
    * updated values without having to reload the metadata themselves.
-   * @see org.mrgeo.pyramid.MrsPyramidMetadataReader#reload()
+   * @see org.mrgeo.pyramid.MrsImagePyramidMetadataReader#reload()
    */
   @SuppressWarnings("unchecked")
   @Override
-  public MrsImagePyramidMetadata reload() throws IOException
+  public MrsPyramidMetadata reload() throws IOException
   {
 
     if (metadata == null)
@@ -156,16 +156,16 @@ public class HdfsMrsImagePyramidMetadataReader implements MrsImagePyramidMetadat
       throw new IOException("Can not load metadata, resource name is empty!");
     }
 
-    MrsImagePyramidMetadata copy = loadMetadata();
+    MrsPyramidMetadata copy = loadMetadata();
 
-    Set<Method> getters = ReflectionUtils.getAllMethods(MrsImagePyramidMetadata.class, 
+    Set<Method> getters = ReflectionUtils.getAllMethods(MrsPyramidMetadata.class,
       Predicates.<Method>and (
         Predicates.<AnnotatedElement>not(ReflectionUtils.withAnnotation(JsonIgnore.class)),
         ReflectionUtils.withModifier(Modifier.PUBLIC), 
         ReflectionUtils.withPrefix("get"), 
         ReflectionUtils. withParametersCount(0)));
 
-    Set<Method> setters = ReflectionUtils.getAllMethods(MrsImagePyramidMetadata.class, 
+    Set<Method> setters = ReflectionUtils.getAllMethods(MrsPyramidMetadata.class,
       Predicates.<Method>and(
         Predicates.<AnnotatedElement>not(ReflectionUtils.withAnnotation(JsonIgnore.class)),
         ReflectionUtils.withModifier(Modifier.PUBLIC), 

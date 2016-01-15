@@ -28,8 +28,8 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
@@ -150,7 +150,7 @@ public class IngestImageTest
     MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
     Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
     
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
     Assert.assertEquals("", metadata.getProtectionLevel());
     
@@ -188,7 +188,7 @@ public class IngestImageTest
     MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
     Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
     
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
     Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
     
@@ -226,7 +226,7 @@ public class IngestImageTest
     MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
     Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
     
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
     Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
     
@@ -259,7 +259,7 @@ public class IngestImageTest
     MrsImagePyramid pyramid = MrsImagePyramid.open(all_ones_output, providerProperties);
     Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
     
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
     
     Assert.assertEquals("Wrong max zoom level", 10, metadata.getMaxZoomLevel());
@@ -309,7 +309,7 @@ public class IngestImageTest
     MrsImagePyramid pyramid = MrsImagePyramid.open(outputAster, providerProperties);
     Assert.assertNotNull("MrsImagePyramid not loaded", pyramid);
     
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("MrsImagePyramid metadata not loaded", metadata);
     
     Assert.assertEquals("Wrong max zoom level", 12, metadata.getMaxZoomLevel());

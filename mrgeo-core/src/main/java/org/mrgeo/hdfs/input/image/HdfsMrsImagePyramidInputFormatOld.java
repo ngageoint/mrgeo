@@ -34,8 +34,8 @@ import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
 import org.mrgeo.hdfs.tile.Splits;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Bounds;
 import org.mrgeo.utils.TMSUtils.TileBounds;
@@ -144,7 +144,7 @@ public class HdfsMrsImagePyramidInputFormatOld extends SequenceFileInputFormat<T
     splitfile.readSplits(inputWithZoom);
 
     MrsImagePyramidMetadataReader metadataReader = dp.getMetadataReader();
-    MrsImagePyramidMetadata metadata = metadataReader.read();
+    MrsPyramidMetadata metadata = metadataReader.read();
 
     // We need to read the splits file which contains the ending tile id for
     // each split. For each split, read its corresponding index file to

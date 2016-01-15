@@ -23,9 +23,9 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.accumulo.AccumuloDefs;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
 
 import java.io.*;
 
@@ -41,7 +41,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
   private AccumuloMrsImageDataProvider provider;
   private AccumuloMrsImagePyramidMetadataWriter writer;
   private AccumuloMrsImagePyramidMetadataReader reader;
-  private MrsImagePyramidMetadata metadata;
+  private MrsPyramidMetadata metadata;
   private String originalFileStr;
   private String originalMeta;
   
@@ -64,7 +64,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
   public void setup() throws IOException
   {
     
-    metadata = new MrsImagePyramidMetadata();
+    metadata = new MrsPyramidMetadata();
     
     provider = new AccumuloMrsImageDataProvider(junk);
 
@@ -87,7 +87,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
     fis.close();
 
     ByteArrayInputStream bis = new ByteArrayInputStream(b);
-    metadata = MrsImagePyramidMetadata.load(bis);
+    metadata = MrsPyramidMetadata.load(bis);
     bis.close();
     
     writer.write(metadata);
@@ -118,7 +118,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
   @Category(UnitTest.class)
   public void testRead() throws IOException
   {
-    MrsImagePyramidMetadata meta = reader.read();
+    MrsPyramidMetadata meta = reader.read();
     
     Assert.assertEquals("Classification incorrect", Classification.Continuous, meta.getClassification());
     Assert.assertEquals("Max zoom incorrect", 10, meta.getMaxZoomLevel());
@@ -154,7 +154,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
   @Category(UnitTest.class)
   public void testReload() throws IOException
   {
-    MrsImagePyramidMetadata meta = reader.read();
+    MrsPyramidMetadata meta = reader.read();
     
     final ByteArrayOutputStream orig = new ByteArrayOutputStream();
     meta.save(orig);

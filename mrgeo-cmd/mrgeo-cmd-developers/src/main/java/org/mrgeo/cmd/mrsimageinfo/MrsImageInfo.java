@@ -32,7 +32,7 @@ import org.mrgeo.data.image.MrsImagePyramidReaderContext;
 import org.mrgeo.data.tile.MrsTileReader;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.slf4j.Logger;
@@ -83,7 +83,7 @@ public class MrsImageInfo extends Command
     return String.format("%.1f%sB", bytes / Math.pow(unit, exp), pre);
   }
 
-  private static void printNodata(final MrsImagePyramidMetadata metadata)
+  private static void printNodata(final MrsPyramidMetadata metadata)
   {
     System.out.print("NoData: ");
     for (int band = 0; band < metadata.getBands(); band++)
@@ -117,7 +117,7 @@ public class MrsImageInfo extends Command
     System.out.println("");
   }
 
-  private static void printTileType(final MrsImagePyramidMetadata metadata)
+  private static void printTileType(final MrsPyramidMetadata metadata)
   {
     System.out.print("Type: ");
     switch (metadata.getTileType())
@@ -251,7 +251,7 @@ public class MrsImageInfo extends Command
     }
   }
 
-  private void printMetadata(final MrsImagePyramidMetadata metadata,
+  private void printMetadata(final MrsPyramidMetadata metadata,
       final ProviderProperties providerProperties) throws DataProviderNotFound
   {
     System.out.println("name: \"" + metadata.getPyramid() + "\"");

@@ -26,7 +26,7 @@ import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.tile.TiledInputFormatContext;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 
@@ -52,7 +52,7 @@ public class FindHolesDriver {
 		DataProviderFactory.saveProviderPropertiesToConfig(props, conf);
 
 		MrsImageDataProvider midp = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, conf); 
-		MrsImagePyramidMetadata mipm = midp.getMetadataReader().read();
+		MrsPyramidMetadata mipm = midp.getMetadataReader().read();
 
 		System.out.println("DP = " + midp.getClass().getCanonicalName());
 		System.out.println("DP resource = " + midp.getResourceName());

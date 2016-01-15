@@ -24,7 +24,7 @@ import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,7 @@ public class HdfsMrsImagePyramidMetadataWriter implements MrsImagePyramidMetadat
   @Override
   public void write() throws IOException
   {
-    MrsImagePyramidMetadata metadata = provider.getMetadataReader(null).read();
+    MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
 
     write(metadata);
   }
@@ -70,10 +70,10 @@ public class HdfsMrsImagePyramidMetadataWriter implements MrsImagePyramidMetadat
    * Write a provided metadata object to HDFS.
    * @param metadata MrsImagePyramidMetadata
    * @throws IOException 
-   * @see org.mrgeo.data.image.MrsImagePyramidMetadataWriter#write(MrsImagePyramidMetadata)
+   * @see org.mrgeo.data.image.MrsImagePyramidMetadataWriter#write(MrsPyramidMetadata)
   */
   @Override
-  public void write(MrsImagePyramidMetadata metadata) throws IOException
+  public void write(MrsPyramidMetadata metadata) throws IOException
   {
     if (!(provider instanceof HdfsMrsImageDataProvider))
     {

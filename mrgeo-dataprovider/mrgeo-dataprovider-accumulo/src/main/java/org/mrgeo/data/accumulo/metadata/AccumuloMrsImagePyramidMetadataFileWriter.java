@@ -29,7 +29,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +79,7 @@ public class AccumuloMrsImagePyramidMetadataFileWriter implements MrsImagePyrami
   @Override
   public void write() throws IOException
   {
-    MrsImagePyramidMetadata metadata = provider.getMetadataReader(null).read();
+    MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
 
     // need to determine if the write is to a bulk dir
     
@@ -88,7 +88,7 @@ public class AccumuloMrsImagePyramidMetadataFileWriter implements MrsImagePyrami
   
   
   @Override
-  public void write(MrsImagePyramidMetadata metadata) throws IOException{
+  public void write(MrsPyramidMetadata metadata) throws IOException{
     // write the metadata object to hdfs
     Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
     ColumnVisibility cv;

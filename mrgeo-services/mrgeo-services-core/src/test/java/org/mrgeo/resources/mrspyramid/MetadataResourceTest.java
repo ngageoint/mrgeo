@@ -33,8 +33,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
@@ -117,7 +117,7 @@ public class MetadataResourceTest extends JerseyTest
     WebResource webResource = resource();
     String content = webResource.path("metadata/all-ones" ).get(String.class);
     ObjectMapper mapper = new ObjectMapper();
-    MrsImagePyramidMetadata md = mapper.readValue(content, MrsImagePyramidMetadata.class);
+    MrsPyramidMetadata md = mapper.readValue(content, MrsPyramidMetadata.class);
     Assert.assertEquals(1, md.getBands());
     Assert.assertEquals(10, md.getMaxZoomLevel());
     Bounds bounds = md.getBounds();

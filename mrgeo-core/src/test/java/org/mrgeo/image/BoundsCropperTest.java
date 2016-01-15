@@ -22,6 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Bounds;
@@ -35,7 +36,7 @@ import java.util.List;
 @SuppressWarnings("static-method")
 public class BoundsCropperTest
 {
-  private static MrsImagePyramidMetadata imageMetadata;
+  private static MrsPyramidMetadata imageMetadata;
   private static AllOnes ALL_ONES;
   
   @BeforeClass
@@ -58,7 +59,7 @@ public class BoundsCropperTest
      */  
     Bounds interiorRowsTileBounds = ALL_ONES.getBoundsInteriorRows();
     
-    MrsImagePyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
+    MrsPyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
         Collections.singletonList(interiorRowsTileBounds), imageMetadata.getMaxZoomLevel());
 
     // compare lat/lon bounds
@@ -116,8 +117,8 @@ public class BoundsCropperTest
     userBounds.add(subsetTopRowBounds);
     userBounds.add(subsetBottomRowBounds);
    
-    MrsImagePyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
-                                                userBounds, imageMetadata.getMaxZoomLevel());
+    MrsPyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
+                                                                          userBounds, imageMetadata.getMaxZoomLevel());
 
     Bounds imageBounds = Bounds.convertOldToNewBounds(imageMetadata.getBounds());
     Bounds croppedBounds = Bounds.convertOldToNewBounds(croppedMetadata.getBounds());
@@ -144,7 +145,7 @@ public class BoundsCropperTest
     /* 
      * Here we test that when given world bounds, it uses the image bounds 
      */
-    MrsImagePyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
+    MrsPyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
         Collections.singletonList(Bounds.WORLD), imageMetadata.getMaxZoomLevel());
 
     Bounds imageBounds = Bounds.convertOldToNewBounds(imageMetadata.getBounds());
@@ -171,7 +172,7 @@ public class BoundsCropperTest
                                                 interiorRowBounds.n - epsilon);
 
 
-    MrsImagePyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
+    MrsPyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
         Collections.singletonList(subsetInteriorRowBounds), imageMetadata.getMaxZoomLevel());
 
     Bounds imageBounds = Bounds.convertOldToNewBounds(imageMetadata.getBounds());
@@ -192,7 +193,7 @@ public class BoundsCropperTest
     final int zoomLevel = imageMetadata.getMaxZoomLevel() - 1;
     Bounds interiorRowsTileBounds = ALL_ONES.getBoundsInteriorRows();
     
-    MrsImagePyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
+    MrsPyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
         Collections.singletonList(interiorRowsTileBounds), zoomLevel);
     
     Assert.assertEquals(croppedMetadata.getMaxZoomLevel(), zoomLevel);    

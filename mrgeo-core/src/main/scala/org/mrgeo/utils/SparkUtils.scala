@@ -15,7 +15,7 @@
 
 package org.mrgeo.utils
 
-import java.awt.image.{Raster, DataBuffer}
+import java.awt.image.Raster
 import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util.Properties
@@ -24,14 +24,14 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark._
 import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
-import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.image.{MrsImageDataProvider, MrsImagePyramidSimpleInputFormat}
+import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.{TileIdWritable, TiledInputFormatContext, TiledOutputFormatContext}
-import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
+import org.mrgeo.data.{DataProviderFactory, MrsPyramidSimpleInputFormat, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
-import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
+import org.mrgeo.image.{ImageStats, MrsImagePyramid}
+import org.mrgeo.pyramid.MrsPyramidMetadata
 import org.mrgeo.utils.MrGeoImplicits._
 
 import scala.collection.JavaConversions._
@@ -136,31 +136,31 @@ object SparkUtils extends Logging {
 
   @deprecated("Use RasterRDD method instead", "")
   def loadMrsPyramidAndMetadataRDD(imageName: String, context: SparkContext):
-  (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
+  (RDD[(TileIdWritable, RasterWritable)], MrsPyramidMetadata) = {
 
     val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
-    val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = dp.getMetadataReader.read()
 
     (loadMrsPyramidRDD(dp, metadata.getMaxZoomLevel, context), metadata)
   }
 
   @deprecated("Use RasterRDD method instead", "")
   def loadMrsPyramidAndMetadata(imageName: String, zoom: Int, bounds: Bounds, context: SparkContext):
-  (RDD[(TileIdWritable, RasterWritable)], MrsImagePyramidMetadata) = {
+  (RDD[(TileIdWritable, RasterWritable)], MrsPyramidMetadata) = {
 
     val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
-    val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = dp.getMetadataReader.read()
 
     (loadMrsPyramidRDD(dp, zoom, bounds, context), metadata)
   }
 
   @deprecated("Use RasterRDD method instead", "")
   def loadMrsPyramidRDD(provider:MrsImageDataProvider, zoom:Int, bounds:Bounds, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
     val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
@@ -179,7 +179,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
     val rdd = context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[MrsImagePyramidSimpleInputFormat],
+      classOf[MrsPyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
 
@@ -201,14 +201,14 @@ object SparkUtils extends Logging {
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
 
-    val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = dp.getMetadataReader.read()
 
     loadMrsPyramidRDD(dp, metadata.getMaxZoomLevel, context)
   }
 
   @deprecated("Use RasterRDD method instead", "")
   def loadMrsPyramidRDD(provider:MrsImageDataProvider, zoom:Int, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
     val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
@@ -227,7 +227,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
     val rdd = context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[MrsImagePyramidSimpleInputFormat],
+      classOf[MrsPyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
 
@@ -254,33 +254,33 @@ object SparkUtils extends Logging {
 
   @deprecated("Use RasterRDD method instead", "")
   def loadMrsPyramidRDD(provider: MrsImageDataProvider, context: SparkContext): RDD[(TileIdWritable, RasterWritable)] = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     loadMrsPyramidRDD(provider, metadata.getMaxZoomLevel, context)
   }
 
-  def loadMrsPyramidAndMetadata(imageName: String, context: SparkContext): (RasterRDD, MrsImagePyramidMetadata) = {
+  def loadMrsPyramidAndMetadata(imageName: String, context: SparkContext): (RasterRDD, MrsPyramidMetadata) = {
 
     val providerProps: ProviderProperties = null
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
-    val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = dp.getMetadataReader.read()
 
     (loadMrsPyramid(dp, metadata.getMaxZoomLevel, context), metadata)
   }
 
-  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, context: SparkContext): (RasterRDD, MrsImagePyramidMetadata) = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, context: SparkContext): (RasterRDD, MrsPyramidMetadata) = {
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
     (loadMrsPyramid(provider, metadata.getMaxZoomLevel, context), metadata)
   }
 
-  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, zoom:Int, context: SparkContext): (RasterRDD, MrsImagePyramidMetadata) = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, zoom:Int, context: SparkContext): (RasterRDD, MrsPyramidMetadata) = {
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
     (loadMrsPyramid(provider, zoom, context), metadata)
   }
 
   def loadMrsPyramid(provider:MrsImageDataProvider, zoom:Int, context: SparkContext): RasterRDD = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
     val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
@@ -302,7 +302,7 @@ object SparkUtils extends Logging {
         log.info("Loading MrsPyramid " + provider.getResourceName)
 
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[MrsImagePyramidSimpleInputFormat],
+      classOf[MrsPyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable]))
 
@@ -315,13 +315,13 @@ object SparkUtils extends Logging {
     //          classOf[RasterWritable])
   }
 
-  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, zoom:Int, bounds:Bounds, context: SparkContext): (RasterRDD, MrsImagePyramidMetadata) = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, zoom:Int, bounds:Bounds, context: SparkContext): (RasterRDD, MrsPyramidMetadata) = {
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
     (loadMrsPyramid(provider, zoom, bounds, context), metadata)
   }
 
   def loadMrsPyramid(provider:MrsImageDataProvider, zoom:Int, bounds:Bounds, context: SparkContext): RasterRDD = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
     val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
@@ -340,7 +340,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[MrsImagePyramidSimpleInputFormat],
+      classOf[MrsPyramidSimpleInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable]))
 
@@ -358,7 +358,7 @@ object SparkUtils extends Logging {
     val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
       DataProviderFactory.AccessMode.READ, providerProps)
 
-    val metadata: MrsImagePyramidMetadata = dp.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = dp.getMetadataReader.read()
 
     loadMrsPyramid(dp, metadata.getMaxZoomLevel, context)
   }
@@ -372,7 +372,7 @@ object SparkUtils extends Logging {
   }
 
   def loadMrsPyramid(provider: MrsImageDataProvider, context: SparkContext): RasterRDD = {
-    val metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read()
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     loadMrsPyramid(provider, metadata.getMaxZoomLevel, context)
   }
@@ -407,7 +407,7 @@ object SparkUtils extends Logging {
       bounds: Bounds = new Bounds(), bands: Int = -1,
       protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
-    val metadata = new MrsImagePyramidMetadata
+    val metadata = new MrsPyramidMetadata
     metadata.setMaxZoomLevel(zoom)
     metadata.setTilesize(tilesize)
     metadata.setDefaultValues(nodatas)
@@ -419,7 +419,7 @@ object SparkUtils extends Logging {
     saveMrsPyramid(tiles, outputProvider, metadata, zoom, conf, providerproperties)
   }
 
-  def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider, metadata:MrsImagePyramidMetadata,
+  def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider, metadata:MrsPyramidMetadata,
       zoom:Int, conf: Configuration, providerproperties:ProviderProperties): Unit = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
@@ -813,7 +813,7 @@ object SparkUtils extends Logging {
     calculateBounds(RasterRDD(rdd), zoom, tilesize)
   }
 
-  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodata:Double, calcStats:Boolean, bounds:Bounds):MrsImagePyramidMetadata = {
+  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodata:Double, calcStats:Boolean, bounds:Bounds):MrsPyramidMetadata = {
     val first = rdd.first()
     val raster = RasterWritable.toRaster(first._2)
 
@@ -821,8 +821,8 @@ object SparkUtils extends Logging {
     calculateMetadata(rdd, zoom, nodatas, calcStats, bounds)
   }
 
-  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodatas:Array[Number], calcStats:Boolean, bounds:Bounds):MrsImagePyramidMetadata = {
-    val meta = new MrsImagePyramidMetadata
+  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodatas:Array[Number], calcStats:Boolean, bounds:Bounds):MrsPyramidMetadata = {
+    val meta = new MrsPyramidMetadata
 
 //    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
 

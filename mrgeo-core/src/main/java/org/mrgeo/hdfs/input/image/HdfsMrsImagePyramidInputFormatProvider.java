@@ -28,12 +28,11 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashSet;
 
 public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatProvider
 {
@@ -103,7 +102,7 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
         {
           throw new DataProviderException("Failure opening input image pyramid: " + input, e);
         }
-        final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+        final MrsPyramidMetadata metadata = pyramid.getMetadata();
 
         log.debug("In setupJob(), loading pyramid for " + input +
                   " pyramid instance is " + pyramid + " metadata instance is " + metadata);

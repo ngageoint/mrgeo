@@ -20,18 +20,15 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
-import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.ingest.IngestImage
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.pyramid.MrsPyramidMetadata
 import org.mrgeo.utils.GDALUtils
 
-import scala.collection.mutable
 import scala.util.control.Breaks
 
 object IngestImageMapOp extends MapOpRegistrar {
@@ -162,7 +159,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     }
 
     metadata(result._2 match {
-    case md:MrsImagePyramidMetadata => md
+    case md:MrsPyramidMetadata => md
     case _ => null
     })
 

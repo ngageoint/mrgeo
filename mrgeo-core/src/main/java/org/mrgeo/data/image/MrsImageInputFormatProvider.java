@@ -22,9 +22,6 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.data.tile.TiledInputFormatProvider;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

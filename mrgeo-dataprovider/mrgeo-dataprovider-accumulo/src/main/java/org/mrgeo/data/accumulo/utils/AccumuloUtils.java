@@ -36,8 +36,8 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
+import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
@@ -249,8 +249,8 @@ public class AccumuloUtils {
 	 * @param auths is the authorizations to use when pulling metadata
 	 * @return the metadata object
 	 */
-	public static MrsImagePyramidMetadata getMetadataFromTable(String table, Connector conn, String auths){
-	  MrsImagePyramidMetadata retMeta = null;
+	public static MrsPyramidMetadata getMetadataFromTable(String table, Connector conn, String auths){
+	  MrsPyramidMetadata retMeta = null;
 	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
 
 	  Scanner scanner = null;
@@ -265,7 +265,7 @@ public class AccumuloUtils {
 	    for (Entry<Key,Value> entry : scanner){
 	      System.out.println("Key: " + entry.getKey().toString());
 	      if(entry.getKey().getColumnFamily().toString().equals("all")){
-	        retMeta = (MrsImagePyramidMetadata) Base64Utils.decodeToObject(entry.getValue().toString());
+	        retMeta = (MrsPyramidMetadata) Base64Utils.decodeToObject(entry.getValue().toString());
 	        break;
 	      }
 	    }
@@ -294,8 +294,8 @@ public class AccumuloUtils {
    * @return the metadata object
 	 */
 	@Deprecated
-	public static MrsImagePyramidMetadata buildMetadataFromTable(String table, Connector conn, String auths){
-	  MrsImagePyramidMetadata retMeta = new MrsImagePyramidMetadata();
+	public static MrsPyramidMetadata buildMetadataFromTable(String table, Connector conn, String auths){
+	  MrsPyramidMetadata retMeta = new MrsPyramidMetadata();
 	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
 
     Scanner scanner = null;
@@ -394,7 +394,7 @@ public class AccumuloUtils {
 	 * @return - true if successful in storing the data.
 	 */
 	@Deprecated
-	public static boolean storeMetadataIntoTable(String table, MrsImagePyramidMetadata metadata, Connector conn, String cv){
+	public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn, String cv){
 	  ColumnVisibility cViz = null;
 	  
 	  if(cv == null){
@@ -430,7 +430,7 @@ public class AccumuloUtils {
 	 * @param metadata - the MrsImagePyramidMetadata object to be stored
 	 * @param conn - the Accumulo connector to use
 	 */
-	public static boolean storeMetadataIntoTable(String table, MrsImagePyramidMetadata metadata, Connector conn, ColumnVisibility cViz){
+	public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn, ColumnVisibility cViz){
 	  ColumnVisibility columnVis;
 	  if(cViz == null){
 	    columnVis = cViz;

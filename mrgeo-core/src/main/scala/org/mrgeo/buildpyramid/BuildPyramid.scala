@@ -32,10 +32,11 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.{MrsTileReader, MrsTileWriter, TileIdWritable}
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
-import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
+import org.mrgeo.image.{ImageStats, MrsImagePyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
+import org.mrgeo.pyramid.MrsPyramidMetadata
 import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
 
 import scala.beans.BeanProperty
@@ -167,7 +168,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     val provider: MrsImageDataProvider =
       DataProviderFactory.getMrsImageDataProvider(pyramidName, AccessMode.READ, null.asInstanceOf[ProviderProperties])
 
-    var metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
+    var metadata: MrsPyramidMetadata = provider.getMetadataReader.read
 
     val maxLevel: Int = metadata.getMaxZoomLevel
 
@@ -261,14 +262,14 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     true
   }
 
-  private def deletelevel(level: Int, metadata: MrsImagePyramidMetadata, provider: MrsImageDataProvider) {
-    val imagedata: Array[MrsImagePyramidMetadata.ImageMetadata] = metadata.getImageMetadata
+  private def deletelevel(level: Int, metadata: MrsPyramidMetadata, provider: MrsImageDataProvider) {
+    val imagedata: Array[MrsPyramidMetadata.ImageMetadata] = metadata.getImageMetadata
 
     // delete the level
     provider.delete(level)
 
     // remove the metadata for the level
-    imagedata(level) = new MrsImagePyramidMetadata.ImageMetadata
+    imagedata(level) = new MrsPyramidMetadata.ImageMetadata
     provider.getMetadataWriter.write()
   }
 
@@ -280,7 +281,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    var metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
+    var metadata: MrsPyramidMetadata = provider.getMetadataReader.read
 
     val bounds: Bounds = metadata.getBounds
     val tilesize: Int = metadata.getTilesize

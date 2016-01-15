@@ -21,8 +21,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,7 @@ public class MrsImagePyramidMetadataTest
     try
     {
       final InputStream is = new ByteArrayInputStream(json.getBytes());
-      final MrsImagePyramidMetadata meta = MrsImagePyramidMetadata.load(is);
+      final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
       assertEquals(meta.getBounds().getMaxY(), 41.5, epsilon);
       assertEquals(meta.getBounds().getMaxX(), 25, epsilon);
       assertEquals(meta.getBounds().getMinX(), 24, epsilon);
@@ -78,7 +79,7 @@ public class MrsImagePyramidMetadataTest
     final String json = "{\"missing\":null,\"bounds\":{\"maxY\":41.5,\"maxX\":25,\"minX\":24,\"minY\":40.5},\"imageMetadata\":[{\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"maxZoomLevel\":3}";
 
     final InputStream is = new ByteArrayInputStream(json.getBytes());
-    MrsImagePyramidMetadata.load(is);
+    MrsPyramidMetadata.load(is);
   }
 
   @Test
@@ -89,7 +90,7 @@ public class MrsImagePyramidMetadataTest
     try
     {
       final InputStream is = new ByteArrayInputStream(json.getBytes());
-      final MrsImagePyramidMetadata meta = MrsImagePyramidMetadata.load(is);
+      final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
       assertNotNull(meta.getClassification());
       assertEquals("Categorical", meta.getClassification().name());
     }
@@ -108,7 +109,7 @@ public class MrsImagePyramidMetadataTest
     try
     {
       final InputStream is = new ByteArrayInputStream(json.getBytes());
-      final MrsImagePyramidMetadata meta = MrsImagePyramidMetadata.load(is);
+      final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
       assertNotNull(meta.getDefaultValue(0));
       assertEquals(Double.NaN, meta.getDefaultValue(0), epsilon);
       assertEquals(0, meta.getDefaultValueInt(0));
@@ -129,7 +130,7 @@ public class MrsImagePyramidMetadataTest
     try
     {
       final InputStream is = new ByteArrayInputStream(json.getBytes());
-      final MrsImagePyramidMetadata meta = MrsImagePyramidMetadata.load(is);
+      final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
       assertNotNull(meta.getStats());
       assertNotNull(meta.getStats(0));
     }
@@ -150,7 +151,7 @@ public class MrsImagePyramidMetadataTest
     try
     {
       final InputStream is = new ByteArrayInputStream(json.getBytes());
-      final MrsImagePyramidMetadata meta = MrsImagePyramidMetadata.load(is);
+      final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
       assertNotNull(meta.getStats());
       assertNotNull(meta.getStats(0));
     }
@@ -167,7 +168,7 @@ public class MrsImagePyramidMetadataTest
   {
     try
     {
-      final MrsImagePyramidMetadata metaIn = new MrsImagePyramidMetadata();
+      final MrsPyramidMetadata metaIn = new MrsPyramidMetadata();
       final double[] defaultValues = new double[1];
       defaultValues[0] = Double.NaN;
       metaIn.setPyramid("foo");
@@ -179,7 +180,7 @@ public class MrsImagePyramidMetadataTest
       metaIn.save(os);
       final byte[] jsonBytes = os.toByteArray();
       final InputStream is = new ByteArrayInputStream(jsonBytes);
-      final MrsImagePyramidMetadata metaOut = MrsImagePyramidMetadata.load(is);
+      final MrsPyramidMetadata metaOut = MrsPyramidMetadata.load(is);
       assertEquals(metaIn.getDefaultValue(0), metaOut.getDefaultValue(0), epsilon);
       assertEquals(metaIn.getDefaultValueInt(0), metaOut.getDefaultValueInt(0));
     }
@@ -196,7 +197,7 @@ public class MrsImagePyramidMetadataTest
   {
     try
     {
-      final MrsImagePyramidMetadata metaIn = new MrsImagePyramidMetadata();
+      final MrsPyramidMetadata metaIn = new MrsPyramidMetadata();
       metaIn.setPyramid("foo");
       metaIn.setTag("foo", "bar");
       metaIn.setTag("bar", "foo");
@@ -204,7 +205,7 @@ public class MrsImagePyramidMetadataTest
       metaIn.save(os);
       final byte[] jsonBytes = os.toByteArray();
       final InputStream is = new ByteArrayInputStream(jsonBytes);
-      final MrsImagePyramidMetadata metaOut = MrsImagePyramidMetadata.load(is);
+      final MrsPyramidMetadata metaOut = MrsPyramidMetadata.load(is);
       assertEquals(metaIn.getTags().size(), metaOut.getTags().size());
       assertEquals(metaIn.getTags(), metaOut.getTags());
     }
@@ -219,7 +220,7 @@ public class MrsImagePyramidMetadataTest
   @Category(UnitTest.class)
   public void testSetClassification()
   {
-    final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
+    final MrsPyramidMetadata metadata = new MrsPyramidMetadata();
     metadata.setClassification(Classification.Continuous);
     assertEquals(Classification.Continuous, metadata.getClassification());
     assertEquals("Continuous", metadata.getClassification().name());
@@ -232,7 +233,7 @@ public class MrsImagePyramidMetadataTest
   @Category(UnitTest.class)
   public void testSetMaxZoomLevel()
   {
-    final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
+    final MrsPyramidMetadata metadata = new MrsPyramidMetadata();
     // The +1 is because we want to be able to index ImageMetadata array by zoom level
     metadata.setMaxZoomLevel(10);
     assertEquals(10 + 1, metadata.getImageMetadata().length);

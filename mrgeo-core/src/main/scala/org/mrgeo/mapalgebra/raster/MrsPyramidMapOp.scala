@@ -20,9 +20,9 @@ import java.io.IOException
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.image.MrsImagePyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.MapOp
+import org.mrgeo.pyramid.MrsPyramidMetadata
 import org.mrgeo.utils.SparkUtils
 
 object MrsPyramidMapOp {
@@ -89,7 +89,7 @@ class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider) exten
     zoomForRDD.get
   }
 
-  override def metadata():Option[MrsImagePyramidMetadata] =  {
+  override def metadata():Option[MrsPyramidMetadata] =  {
     load()
     super.metadata()
   }

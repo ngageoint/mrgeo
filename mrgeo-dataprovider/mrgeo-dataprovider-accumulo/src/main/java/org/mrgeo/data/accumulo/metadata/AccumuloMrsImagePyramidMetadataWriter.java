@@ -28,7 +28,7 @@ import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +66,7 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
   @Override
   public void write() throws IOException
   {
-    MrsImagePyramidMetadata metadata = provider.getMetadataReader(null).read();
+    MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
 
     write(metadata);
   } // end write
@@ -83,7 +83,7 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
    * 
    */
   @Override
-  public void write(MrsImagePyramidMetadata metadata) throws IOException{
+  public void write(MrsPyramidMetadata metadata) throws IOException{
     Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
 
     String pl = metadata.getProtectionLevel();

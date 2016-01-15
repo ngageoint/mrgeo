@@ -29,7 +29,6 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  *

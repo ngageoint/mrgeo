@@ -22,9 +22,9 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.accumulo.AccumuloDefs;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
 
 import java.io.*;
 
@@ -39,7 +39,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
   private AccumuloMrsImageDataProvider provider;
   private AccumuloMrsImagePyramidMetadataWriter writer;
   private AccumuloMrsImagePyramidMetadataReader reader;
-  private MrsImagePyramidMetadata metadata;
+  private MrsPyramidMetadata metadata;
   private String originalFileStr;
   private String originalMeta;
   
@@ -59,7 +59,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
   public void setup() throws IOException
   {
     
-    metadata = new MrsImagePyramidMetadata();
+    metadata = new MrsPyramidMetadata();
     
     provider = new AccumuloMrsImageDataProvider(junk);
 
@@ -82,7 +82,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     fis.close();
 
     ByteArrayInputStream bis = new ByteArrayInputStream(b);
-    metadata = MrsImagePyramidMetadata.load(bis);
+    metadata = MrsPyramidMetadata.load(bis);
     bis.close();
     
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -129,7 +129,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     
     writer.write(metadata);
     
-    MrsImagePyramidMetadata newMeta = reader.read();
+    MrsPyramidMetadata newMeta = reader.read();
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     newMeta.save(bos);
     String newMetaStr = new String(bos.toByteArray());
@@ -175,7 +175,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     // write the metadata
     writer.write(metadata);
     
-    MrsImagePyramidMetadata newMeta = reader.read();
+    MrsPyramidMetadata newMeta = reader.read();
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     newMeta.save(bos);
     String newMetaStr = new String(bos.toByteArray());
@@ -211,7 +211,7 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     Assert.assertEquals("Tile size incorrect", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, metadata.getTilesize());
     
     // make a new metadata object
-    MrsImagePyramidMetadata newmeta = new MrsImagePyramidMetadata();
+    MrsPyramidMetadata newmeta = new MrsPyramidMetadata();
     
     // set a couple values in meta.
     newmeta.setPyramid(metadata.getPyramid());

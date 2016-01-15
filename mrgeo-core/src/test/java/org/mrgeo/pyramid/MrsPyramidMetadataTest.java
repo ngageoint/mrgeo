@@ -18,7 +18,6 @@ package org.mrgeo.pyramid;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 
 public class MrsPyramidMetadataTest
@@ -27,7 +26,7 @@ public class MrsPyramidMetadataTest
   @Category(UnitTest.class)
   public void testSetProtectionLevel()
   {
-    final MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
+    final MrsPyramidMetadata metadata = new MrsPyramidMetadata();
 
     String protectionLevel = "";
     metadata.setProtectionLevel(protectionLevel);

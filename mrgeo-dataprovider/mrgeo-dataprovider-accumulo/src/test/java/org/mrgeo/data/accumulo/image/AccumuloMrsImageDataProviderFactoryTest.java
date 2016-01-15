@@ -29,9 +29,9 @@ import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataWriter;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -81,7 +81,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
 //    System.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS, AccumuloDefs.ZOOKEEPERS);
 
     
-    MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
+    MrsPyramidMetadata metadata = new MrsPyramidMetadata();
     
     provider = new AccumuloMrsImageDataProvider(junk);
 
@@ -103,7 +103,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
     fis.close();
     
     ByteArrayInputStream bis = new ByteArrayInputStream(b);
-    metadata = MrsImagePyramidMetadata.load(bis);
+    metadata = MrsPyramidMetadata.load(bis);
     bis.close();
     
     ByteArrayOutputStream bos = new ByteArrayOutputStream();

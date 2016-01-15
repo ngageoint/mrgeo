@@ -27,6 +27,7 @@ import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.MrsTileReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ protected ColorModel colorModel = null;
 protected SampleModel sampleModel = null;
 protected String measurement = "Ratio"; // not sure what this is for...
 private MrsTileReader<Raster> reader = null; // The MrsImageReader for fetching the tiles
-private MrsImagePyramidMetadata metadata = null; // image metadata
+private MrsPyramidMetadata metadata = null; // image metadata
 
 private int zoomlevel = -1; // current zoom level of this image
 private int tilesize = -1; // size of a tile (here for convenience, it is in the metadata)
@@ -79,7 +80,7 @@ public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) 
 {
   try
   {
-    MrsImagePyramidMetadata meta = provider.getMetadataReader(null).read();
+    MrsPyramidMetadata meta = provider.getMetadataReader(null).read();
     // Check to see if there is an image at this zoom level before opening
     final String name = meta.getName(zoomlevel);
     if (name != null)
@@ -241,7 +242,7 @@ public int getMaxZoomlevel()
   return getMetadata().getMaxZoomLevel();
 }
 
-public MrsImagePyramidMetadata getMetadata()
+public MrsPyramidMetadata getMetadata()
 {
   if (metadata == null)
   {

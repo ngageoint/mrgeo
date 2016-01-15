@@ -28,7 +28,6 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.*;
 import org.mrgeo.image.BoundsCropper;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.MapReduceUtils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;

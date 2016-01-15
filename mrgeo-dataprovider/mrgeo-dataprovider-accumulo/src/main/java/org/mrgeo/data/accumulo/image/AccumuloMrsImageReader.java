@@ -21,7 +21,7 @@ import org.mrgeo.data.accumulo.tile.AccumuloMrsTileReader;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImagePyramidReaderContext;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.LongRectangle;
 
 import java.awt.image.Raster;
@@ -78,7 +78,7 @@ public class AccumuloMrsImageReader extends AccumuloMrsTileReader<Raster, Raster
   public long calculateTileCount(){
     int zl = context.getZoomlevel();
     try{
-      MrsImagePyramidMetadata meta = provider.getMetadataReader().read();
+      MrsPyramidMetadata meta = provider.getMetadataReader().read();
       LongRectangle lr = meta.getOrCreateTileBounds(zl);
       long count = (lr.getMaxX() - lr.getMinX() + 1) *
           (lr.getMaxY() - lr.getMinY() + 1);

@@ -19,6 +19,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
@@ -28,37 +30,53 @@ import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.Map;
 
-public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordReader<TileIdWritable, TWritable>
+public class MrsPyramidSimpleRecordReader extends RecordReader<TileIdWritable, RasterWritable>
 {
   private static final Logger log = LoggerFactory.getLogger(MrsPyramidSimpleRecordReader.class);
-  private RecordReader<TileIdWritable, TWritable> scannedInputReader;
+  private RecordReader<TileIdWritable, RasterWritable> scannedInputReader;
   private TiledInputFormatContext ifContext;
   private TileIdWritable key;
-  private TWritable value;
+  private RasterWritable value;
   private Bounds inputBounds = Bounds.world; // bounds of the map/reduce (either the image bounds or cropped though map algebra)
 
   private int tilesize;
   private int zoomLevel;
 
-  protected abstract T toNonWritableTile(TWritable tileValue) throws IOException;
+  protected Raster toNonWritableTile(RasterWritable tileValue) throws IOException
+  {
+    return RasterWritable.toRaster(tileValue);
+  }
 
-  protected abstract TWritable toWritable(T val) throws IOException;
-  protected abstract TWritable copyWritable(TWritable val);
+  protected RecordReader<TileIdWritable, RasterWritable> getRecordReader(
+          final String name, final Configuration conf) throws DataProviderNotFound
+  {
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(name,
+                                                                          DataProviderFactory.AccessMode.READ, conf);
+    return dp.getRecordReader();
+  }
 
-  protected abstract RecordReader<TileIdWritable,TWritable> getRecordReader(final String input,
-                                                                            final Configuration conf) throws DataProviderNotFound;
+  protected RasterWritable toWritable(Raster val) throws IOException
+  {
+    return RasterWritable.toWritable(val);
+  }
 
-  private RecordReader<TileIdWritable,TWritable> createRecordReader(
+  protected RasterWritable copyWritable(RasterWritable val)
+  {
+    return new RasterWritable(val);
+  }
+
+  private RecordReader<TileIdWritable,RasterWritable> createRecordReader(
           final MrsPyramidInputSplit split, final TaskAttemptContext context)
           throws DataProviderNotFound, IOException
   {
     InputSplit initializeWithSplit = null;
     // The record reader needs the native split returned from
     // the data plugin.
-    RecordReader<TileIdWritable,TWritable> recordReader = getRecordReader(split.getName(),
+    RecordReader<TileIdWritable,RasterWritable> recordReader = getRecordReader(split.getName(),
                                                                           context.getConfiguration());
     initializeWithSplit = split.getWrappedSplit();
 
@@ -89,7 +107,7 @@ public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordR
   }
 
   @Override
-  public TWritable getCurrentValue()
+  public RasterWritable getCurrentValue()
   {
     return value;
   }
@@ -147,7 +165,7 @@ public abstract class MrsPyramidSimpleRecordReader<T, TWritable> extends RecordR
     return false;
   }
 
-  private void setNextKeyValue(final long tileid, final TWritable tileValue)
+  private void setNextKeyValue(final long tileid, final RasterWritable tileValue)
   {
 //    long start = System.currentTimeMillis();
 //    log.info("setNextKeyValue");

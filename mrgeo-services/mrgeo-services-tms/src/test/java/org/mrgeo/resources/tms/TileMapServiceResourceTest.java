@@ -18,8 +18,8 @@ package org.mrgeo.resources.tms;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,7 +143,7 @@ public void testMrsPyramidMetadataToTileMapXml()
 
   final String response = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><TileMap tilemapservice=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0\" version=\"1.0.0\"><Title>CostDistanceHumveeV2</Title><Abstract/><SRS>EPSG:4326</SRS><BoundingBox maxx=\"72.0\" maxy=\"35.0\" minx=\"68.0\" miny=\"33.0\"/><Origin x=\"68.0\" y=\"33.0\"/><TileFormat extension=\"tif\" height=\"512\" mime-type=\"image/tiff\" width=\"512\"/><TileSets profile=\"global-geodetic\"><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/0\" order=\"0\" units-per-pixel=\"0.703125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/1\" order=\"1\" units-per-pixel=\"0.3515625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/2\" order=\"2\" units-per-pixel=\"0.17578125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/3\" order=\"3\" units-per-pixel=\"0.087890625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/4\" order=\"4\" units-per-pixel=\"0.0439453125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/5\" order=\"5\" units-per-pixel=\"0.02197265625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/6\" order=\"6\" units-per-pixel=\"0.010986328125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/7\" order=\"7\" units-per-pixel=\"0.0054931640625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/8\" order=\"8\" units-per-pixel=\"0.00274658203125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/9\" order=\"9\" units-per-pixel=\"0.001373291015625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/" + raster + "/10\" order=\"10\" units-per-pixel=\"6.866455078125E-4\"/></TileSets></TileMap>";
 
-  MrsImagePyramidMetadata mpm = new MrsImagePyramidMetadata();
+  MrsPyramidMetadata mpm = new MrsPyramidMetadata();
   mpm.setBounds(new Bounds(68, 33, 72, 35));
   mpm.setMaxZoomLevel(10);
   mpm.setTilesize(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);

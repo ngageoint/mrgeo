@@ -23,7 +23,6 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.Bounds;
 
@@ -35,7 +34,7 @@ public class MrsPyramidTest
   final String smallElevation = Defs.CWD + "/" + Defs.INPUT + "small-elevation-nopyramids";
 
   MrsImagePyramid noPyramids = null;
-  MrsImagePyramidMetadata noPyramidsMeta = null;
+  MrsPyramidMetadata noPyramidsMeta = null;
   MrsImagePyramid pyramid = null;
   ProviderProperties providerProperties;
   
@@ -140,8 +139,8 @@ public class MrsPyramidTest
   {
     
     // compare pyramids by comparing metadata
-    MrsImagePyramidMetadata m1 = expected.getMetadata();
-    MrsImagePyramidMetadata m2 = actual.getMetadata();
+    MrsPyramidMetadata m1 = expected.getMetadata();
+    MrsPyramidMetadata m2 = actual.getMetadata();
     
     Assert.assertEquals("Pyramid names are different", m1.getPyramid(), m2.getPyramid());
 

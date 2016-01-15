@@ -19,7 +19,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALJavaUtils;
@@ -171,7 +171,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
           (ProviderProperties) null);
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
       writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);
 

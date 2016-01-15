@@ -30,8 +30,8 @@ import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Bounds;
 import org.mrgeo.utils.TMSUtils.TileBounds;
@@ -117,7 +117,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   splitfile.readSplits(inputWithZoom);
 
   MrsImagePyramidMetadataReader metadataReader = dp.getMetadataReader();
-  MrsImagePyramidMetadata metadata = metadataReader.read();
+  MrsPyramidMetadata metadata = metadataReader.read();
 
   org.mrgeo.hdfs.tile.FileSplit fsplit = new org.mrgeo.hdfs.tile.FileSplit();
   fsplit.readSplits(inputWithZoom);

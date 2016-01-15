@@ -18,17 +18,15 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.fs.Path;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.slf4j.Logger;
@@ -86,7 +84,7 @@ public class ChangeClassificationMapOpIntegrationTest extends LocalRunnerTest
         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -113,7 +111,7 @@ public void changeToContinuous() throws Exception
       getProviderProperties());
   Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
   Assert.assertNotNull("Can't load metadata", metadata);
 
   Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
@@ -141,7 +139,7 @@ public void changeToContinuousMean() throws Exception
       getProviderProperties());
   Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
   Assert.assertNotNull("Can't load metadata", metadata);
 
   Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
@@ -169,7 +167,7 @@ public void changeToContinuousMean() throws Exception
         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -203,7 +201,7 @@ public void changeToContinuousMean() throws Exception
         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -224,7 +222,7 @@ public void changeToContinuousMean() throws Exception
         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -245,7 +243,7 @@ public void changeToContinuousMean() throws Exception
         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -266,7 +264,7 @@ public void changeToContinuousMean() throws Exception
         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -287,7 +285,7 @@ public void changeToContinuousMean() throws Exception
         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -308,7 +306,7 @@ public void changeToContinuousMean() throws Exception
         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());

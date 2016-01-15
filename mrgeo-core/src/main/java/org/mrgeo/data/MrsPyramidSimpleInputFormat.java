@@ -15,9 +15,10 @@
 
 package org.mrgeo.data;
 
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.*;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.image.MrsImageInputFormatProvider;
+import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.image.MrsImagePyramid;
@@ -39,26 +40,48 @@ import java.util.*;
  * classes for pyramid data can use that information to ensure that tiles are only
  * ever read once, regardless of which input pyramids contain data in that tile.
  */
-public abstract class MrsPyramidSimpleInputFormat<V> extends InputFormat<TileIdWritable, V>
+public class MrsPyramidSimpleInputFormat extends InputFormat<TileIdWritable, RasterWritable>
 {
   public MrsPyramidSimpleInputFormat()
   {
   }
 
+  public RecordReader<TileIdWritable, RasterWritable> createRecordReader(InputSplit inputSplit,
+                                                                         TaskAttemptContext context) throws IOException, InterruptedException
+  {
+    return new MrsPyramidSimpleRecordReader();
+  }
+
   /**
-   * Sub-classes must override this method so that the data access layer being used can
-   * return the native splits for that specific data format.
-   *
-   * @param context
-   * @param ifContext
-   * @param input
-   * @return
-   * @throws IOException
-   * @throws InterruptedException
+   * Return native splits from the data provider for the passed in input.
+   * It ensures that the native splits returned from the data provider are
+   * instances of TiledInputSplit.
    */
-  protected abstract List<TiledInputSplit> getNativeSplits(final JobContext context,
-                                                           final TiledInputFormatContext ifContext,
-                                                           final String input) throws IOException, InterruptedException;
+  protected List<TiledInputSplit> getNativeSplits(final JobContext context,
+                                                  final TiledInputFormatContext ifContext,
+                                                  final String input) throws IOException, InterruptedException
+  {
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(input,
+                                                                          DataProviderFactory.AccessMode.READ, context.getConfiguration());
+    MrsImageInputFormatProvider ifProvider = dp.getTiledInputFormatProvider(ifContext);
+    List<InputSplit> splits = ifProvider.getInputFormat(input).getSplits(context);
+    // In order to work with MrGeo and input bounds cropping, the splits must be
+    // of type TiledInputSplit.
+    List<TiledInputSplit> result = new ArrayList<TiledInputSplit>(splits.size());
+    for (InputSplit split : splits)
+    {
+      if (split instanceof TiledInputSplit)
+      {
+        result.add((TiledInputSplit)split);
+      }
+      else
+      {
+        throw new IOException("ERROR: native input splits must be instances of" +
+                              "TiledInputSplit. Received " + split.getClass().getCanonicalName());
+      }
+    }
+    return result;
+  }
 
   /**
    * Returns the list of MrsPyramidInputSplit objects for the input pyramid.

@@ -29,6 +29,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.image.*;
 import org.mrgeo.pyramid.MrsPyramid;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +150,7 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
 {
   try
   {
-    final MrsImagePyramidMetadata metadata = image.getMetadata();
+    final MrsPyramidMetadata metadata = image.getMetadata();
 
     final TMSUtils.Tile t = TMSUtils.tileid(tileid, zoom);
 
@@ -206,7 +207,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
 {
   try
   {
-    final MrsImagePyramidMetadata metadata = image.getMetadata();
+    final MrsPyramidMetadata metadata = image.getMetadata();
 
     Raster raster = RasterTileMerger.mergeTiles(image, tiles);
     Raster sampleRaster = null;

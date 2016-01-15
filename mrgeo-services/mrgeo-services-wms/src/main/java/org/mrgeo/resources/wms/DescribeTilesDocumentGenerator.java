@@ -19,7 +19,7 @@ import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.services.Version;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
@@ -44,7 +44,7 @@ public class DescribeTilesDocumentGenerator
   /*
    * Writes scale information for a layer
    */
-  private static void writeScaleInfo(MrsImagePyramidMetadata metadata, int zoom, Element matrixSet)
+  private static void writeScaleInfo(MrsPyramidMetadata metadata, int zoom, Element matrixSet)
   {
 
     double scale = TMSUtils.resolution(zoom, metadata.getTilesize());
@@ -131,7 +131,7 @@ public class DescribeTilesDocumentGenerator
       try
       {
         MrsImagePyramid pyramid = MrsImagePyramid.open(provider);
-        MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+        MrsPyramidMetadata metadata = pyramid.getMetadata();
 
         Element formats = XmlUtils.createElement(layer, "TiledFormats");
         XmlUtils.createTextElement2(formats, "Value", WmsGenerator.PNG_MIME_TYPE);
@@ -149,7 +149,7 @@ public class DescribeTilesDocumentGenerator
 
         if (pyramid.hasPyramids())
         {
-          MrsImagePyramidMetadata.ImageMetadata[] imeta = metadata.getImageMetadata();
+          MrsPyramidMetadata.ImageMetadata[] imeta = metadata.getImageMetadata();
           for (int zoom = pyramid.getMaximumLevel(); zoom > 0; zoom--)
           {
             if (imeta[zoom].name != null)

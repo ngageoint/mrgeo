@@ -33,7 +33,7 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;
@@ -112,7 +112,7 @@ public static String asKml(final String pyrName, final Bounds bounds, final int 
  * @return a zoom level
  * @throws Exception
  */
-private static int getZoomLevel(final MrsImagePyramidMetadata metadata, final Bounds bounds,
+private static int getZoomLevel(final MrsPyramidMetadata metadata, final Bounds bounds,
     final int width, final int height) throws Exception
 {
   log.debug("Determining zoom level for {}", metadata.getPyramid());
@@ -149,7 +149,7 @@ private static int getZoomLevel(final MrsImagePyramidMetadata metadata, final Bo
  * exception is thrown in case where image doesn't exist OR this more likely this won't be
  * needed at all once we rework MrsImagePyramid/MrsImage for non-pyramid data
  */
-private static boolean isZoomLevelValid(final MrsImagePyramidMetadata metadata,
+private static boolean isZoomLevelValid(final MrsPyramidMetadata metadata,
     final int zoomLevel) throws IOException
 {
   return (metadata.getName(zoomLevel) != null);
@@ -203,7 +203,7 @@ public double[] getDefaultValues()
     MrsImageDataProvider dp = getDataProvider();
     if (dp != null)
     {
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
       return metadata.getDefaultValues();
     }
   }
@@ -249,7 +249,7 @@ public double[] getExtrema()
     MrsImageDataProvider dp = getDataProvider();
     if (dp != null)
     {
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
       if (zoomLevel == -1)
       {
         return metadata.getExtrema(0);
@@ -307,7 +307,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
   MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName,
       AccessMode.READ, providerProperties);
   MrsImagePyramidMetadataReader r = dp.getMetadataReader();
-  final MrsImagePyramidMetadata pyramidMetadata = r.read();
+  final MrsPyramidMetadata pyramidMetadata = r.read();
   isTransparent = false;
 
   // get the correct zoom level based on the requested bounds
@@ -423,7 +423,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 
 
       int resample = gdalconstConstants.GRA_Bilinear;
-      if (pyramidMetadata.getClassification() == MrsImagePyramidMetadata.Classification.Categorical)
+      if (pyramidMetadata.getClassification() == MrsPyramidMetadata.Classification.Categorical)
       {
         // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
         // in which case we will use GRA_NearestNeighbour
@@ -544,7 +544,7 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
   imageName = pyramidName;
 
   MrsImagePyramid pyramid = null;
-  MrsImagePyramidMetadata metadata = null;
+  MrsPyramidMetadata metadata = null;
   try
   {
     pyramid = MrsImagePyramid.open(pyramidName, providerProperties);
@@ -567,7 +567,7 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
     final Raster maskRaster = maskImage.getTile(tileColumn, tileRow);
     log.debug("Retrieving mask tile {}, {}", tileColumn, tileRow);
 
-    final MrsImagePyramidMetadata maskMetadata = maskPyramid.getMetadata();
+    final MrsPyramidMetadata maskMetadata = maskPyramid.getMetadata();
     final double[] maskNodata = maskMetadata.getDefaultValues();
 
     for (int w = 0; w < maskRaster.getWidth(); w++)
@@ -670,7 +670,7 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
   imageName = pyramidName;
 
   MrsImagePyramid pyramid = null;
-  MrsImagePyramidMetadata metadata = null;
+  MrsPyramidMetadata metadata = null;
   try
   {
     pyramid = MrsImagePyramid.open(pyramidName, providerProperties);
@@ -692,7 +692,7 @@ public Raster renderImage(final String pyramidName, final int tileColumn, final 
     final Raster maskRaster = maskImage.getTile(tileColumn, tileRow);
     log.debug("Retrieving mask tile {}, {}", tileColumn, tileRow);
 
-    final MrsImagePyramidMetadata maskMetadata = maskPyramid.getMetadata();
+    final MrsPyramidMetadata maskMetadata = maskPyramid.getMetadata();
     final double[] maskNodata = maskMetadata.getDefaultValues();
 
     for (int w = 0; w < maskRaster.getWidth(); w++)
