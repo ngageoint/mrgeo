@@ -23,11 +23,19 @@ object NotMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("!")
   }
+  def create(raster:RasterMapOp):MapOp =
+    new NotMapOp(Some(raster))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new NotMapOp(node, variables)
 }
 
 class NotMapOp extends RawUnaryMathMapOp {
+
+  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+    this()
+    input = raster
+  }
 
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()

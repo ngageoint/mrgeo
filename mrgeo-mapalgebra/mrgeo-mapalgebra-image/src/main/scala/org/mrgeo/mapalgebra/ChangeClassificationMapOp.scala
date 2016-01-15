@@ -31,6 +31,12 @@ object ChangeClassificationMapOp extends MapOpRegistrar {
     Array[String]("changeClassification")
   }
 
+  def create(raster:RasterMapOp, classification: String):MapOp =
+    new ChangeClassificationMapOp(Some(raster), Some(classification))
+
+  def create(raster:RasterMapOp, classification: String, aggregator:String):MapOp =
+    new ChangeClassificationMapOp(Some(raster), Some(classification), Some(aggregator))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new ChangeClassificationMapOp(node, variables)
 }
@@ -43,6 +49,32 @@ class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
   private var classification: Option[Classification] = None
   private var aggregator: Option[String] = None
 
+  private[mapalgebra] def this(raster:Option[RasterMapOp], classification:Option[String], aggregator:Option[String] = None) = {
+    this()
+    inputMapOp = raster
+
+    this.aggregator = aggregator match {
+    case Some(s) =>
+      val clazz = AggregatorRegistry.aggregatorRegistry.get (s.toUpperCase)
+      if (clazz != null) {
+        Some(s.toUpperCase)
+      }
+      else {
+        throw new ParserException ("Invalid aggregator " + s)
+      }
+    case _ => None
+    }
+
+    this.classification = Some(classification match {
+    case Some(s) => s.toLowerCase match {
+      case "categorical" => Classification.Categorical
+      case _ => Classification.Continuous
+      }
+    case _ => throw new ParserException("Can't decode string")
+    })
+
+  }
+
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
@@ -54,7 +86,7 @@ class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
     classification = Some(MapOp.decodeString(node.getChild(1), variables) match {
-    case Some(s) => s match {
+    case Some(s) => s.toLowerCase match {
     case "categorical" => Classification.Categorical
     case _ => Classification.Continuous
     }
