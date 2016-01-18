@@ -30,7 +30,7 @@ import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;

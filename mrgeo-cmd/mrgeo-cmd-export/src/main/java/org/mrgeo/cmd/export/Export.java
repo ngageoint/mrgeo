@@ -31,7 +31,7 @@ import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.RasterTileMerger;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

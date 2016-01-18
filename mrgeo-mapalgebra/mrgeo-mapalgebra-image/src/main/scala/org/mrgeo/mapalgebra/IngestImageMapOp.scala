@@ -22,11 +22,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.hdfs.utils.HadoopFileUtils
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.ingest.IngestImage
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.pyramid.MrsPyramidMetadata
 import org.mrgeo.utils.GDALUtils
 
 import scala.util.control.Breaks

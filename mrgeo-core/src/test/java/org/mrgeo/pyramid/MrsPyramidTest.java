@@ -23,6 +23,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.Bounds;
 

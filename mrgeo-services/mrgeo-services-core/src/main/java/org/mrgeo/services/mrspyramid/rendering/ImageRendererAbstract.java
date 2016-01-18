@@ -33,7 +33,7 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;

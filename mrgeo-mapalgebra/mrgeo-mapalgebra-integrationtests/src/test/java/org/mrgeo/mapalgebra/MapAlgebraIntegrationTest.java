@@ -32,7 +32,7 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;

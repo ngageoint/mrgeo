@@ -21,7 +21,7 @@ import com.google.common.cache.LoadingCache;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
 
 import java.io.IOException;

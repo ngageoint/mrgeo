@@ -28,7 +28,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.junit.IntegrationTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.MapOpTestVectorUtils;

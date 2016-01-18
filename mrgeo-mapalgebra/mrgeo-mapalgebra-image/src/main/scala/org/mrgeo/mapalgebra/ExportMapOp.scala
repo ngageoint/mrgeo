@@ -7,10 +7,10 @@ import org.apache.spark.{Logging, SparkContext, SparkConf}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.pyramid.MrsPyramidMetadata
 import org.mrgeo.utils._
 
 import org.mrgeo.utils.MrGeoImplicits._

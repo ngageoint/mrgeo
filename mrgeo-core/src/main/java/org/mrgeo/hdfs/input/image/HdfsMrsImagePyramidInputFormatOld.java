@@ -35,7 +35,7 @@ import org.mrgeo.hdfs.input.MapFileFilter;
 import org.mrgeo.hdfs.tile.Splits;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Bounds;
 import org.mrgeo.utils.TMSUtils.TileBounds;

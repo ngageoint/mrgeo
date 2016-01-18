@@ -19,7 +19,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALJavaUtils;

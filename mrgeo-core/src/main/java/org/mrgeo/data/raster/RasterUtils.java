@@ -16,7 +16,7 @@
 package org.mrgeo.data.raster;
 
 import org.mrgeo.aggregators.Aggregator;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;

@@ -28,7 +28,7 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

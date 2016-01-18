@@ -21,11 +21,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.GeometryFactory
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
-import org.mrgeo.pyramid.MrsPyramidMetadata
 
 object LeastCostPathMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

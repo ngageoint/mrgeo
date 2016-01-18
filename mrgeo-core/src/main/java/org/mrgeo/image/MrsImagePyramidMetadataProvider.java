@@ -15,8 +15,6 @@
 
 package org.mrgeo.image;
 
-import org.mrgeo.pyramid.MrsPyramidMetadata;
-
 public interface MrsImagePyramidMetadataProvider
 {
   public MrsPyramidMetadata loadMetadata();

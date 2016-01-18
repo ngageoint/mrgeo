@@ -30,8 +30,8 @@ import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
-import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

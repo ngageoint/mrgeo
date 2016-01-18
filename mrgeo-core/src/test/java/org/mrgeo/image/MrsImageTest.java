@@ -21,7 +21,6 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LatLng;

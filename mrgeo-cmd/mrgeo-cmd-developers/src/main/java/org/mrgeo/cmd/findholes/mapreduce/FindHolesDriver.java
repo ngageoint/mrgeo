@@ -26,7 +26,7 @@ import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.image.ImageInputFormatContext;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 

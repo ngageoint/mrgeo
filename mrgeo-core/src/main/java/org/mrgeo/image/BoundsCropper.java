@@ -15,7 +15,6 @@
 
 package org.mrgeo.image;
 
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Bounds;

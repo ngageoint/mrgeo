@@ -25,7 +25,7 @@ import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
-import org.mrgeo.pyramid.MrsPyramidMetadata
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.utils.{LatLng, TMSUtils}
 import org.slf4j.{Logger, LoggerFactory}
 

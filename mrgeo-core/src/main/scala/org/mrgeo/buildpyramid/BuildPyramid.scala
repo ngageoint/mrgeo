@@ -32,11 +32,10 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
-import org.mrgeo.image.{ImageStats, MrsPyramid}
+import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
-import org.mrgeo.pyramid.MrsPyramidMetadata
 import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
 
 import scala.beans.BeanProperty

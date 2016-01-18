@@ -27,7 +27,6 @@ import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

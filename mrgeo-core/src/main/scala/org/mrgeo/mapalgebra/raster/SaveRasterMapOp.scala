@@ -20,10 +20,10 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.ProviderProperties
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
-import org.mrgeo.pyramid.MrsPyramidMetadata
 
 
 class SaveRasterMapOp extends RasterMapOp with Externalizable {

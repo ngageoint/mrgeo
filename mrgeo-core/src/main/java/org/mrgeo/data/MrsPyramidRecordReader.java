@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
 import java.awt.image.Raster;
 import java.io.IOException;
 
-public class MrsPyramidSimpleRecordReader extends RecordReader<TileIdWritable, RasterWritable>
+public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterWritable>
 {
-  private static final Logger log = LoggerFactory.getLogger(MrsPyramidSimpleRecordReader.class);
+  private static final Logger log = LoggerFactory.getLogger(MrsPyramidRecordReader.class);
   private RecordReader<TileIdWritable, RasterWritable> scannedInputReader;
   private ImageInputFormatContext ifContext;
   private TileIdWritable key;

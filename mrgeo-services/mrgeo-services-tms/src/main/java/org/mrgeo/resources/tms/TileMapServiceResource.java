@@ -28,7 +28,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.image.MrsImageException;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;

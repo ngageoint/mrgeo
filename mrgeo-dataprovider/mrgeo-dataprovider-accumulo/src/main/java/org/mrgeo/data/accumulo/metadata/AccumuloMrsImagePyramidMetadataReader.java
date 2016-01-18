@@ -33,7 +33,7 @@ import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReaderContext;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

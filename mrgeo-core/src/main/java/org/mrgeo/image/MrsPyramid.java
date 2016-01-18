@@ -29,7 +29,6 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;

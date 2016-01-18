@@ -28,10 +28,9 @@ import org.mrgeo.data.image.{ImageOutputFormatContext, ImageInputFormatContext, 
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile._
-import org.mrgeo.data.{DataProviderFactory, MrsPyramidSimpleInputFormat, ProviderProperties}
+import org.mrgeo.data.{DataProviderFactory, MrsPyramidInputFormat, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
-import org.mrgeo.image.{ImageStats, MrsPyramid}
-import org.mrgeo.pyramid.MrsPyramidMetadata
+import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
 import org.mrgeo.utils.MrGeoImplicits._
 
 import scala.collection.JavaConversions._
@@ -179,7 +178,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
     val rdd = context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[MrsPyramidSimpleInputFormat],
+      classOf[MrsPyramidInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
 
@@ -227,7 +226,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
     val rdd = context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[MrsPyramidSimpleInputFormat],
+      classOf[MrsPyramidInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable])
 
@@ -302,7 +301,7 @@ object SparkUtils extends Logging {
         log.info("Loading MrsPyramid " + provider.getResourceName)
 
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[MrsPyramidSimpleInputFormat],
+      classOf[MrsPyramidInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable]))
 
@@ -340,7 +339,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
-      classOf[MrsPyramidSimpleInputFormat],
+      classOf[MrsPyramidInputFormat],
       classOf[TileIdWritable],
       classOf[RasterWritable]))
 

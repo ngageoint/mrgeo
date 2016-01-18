@@ -18,7 +18,7 @@ package org.mrgeo.services.wcs;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;

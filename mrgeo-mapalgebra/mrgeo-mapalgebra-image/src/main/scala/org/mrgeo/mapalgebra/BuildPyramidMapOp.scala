@@ -23,11 +23,11 @@ import org.mrgeo.buildpyramid.BuildPyramid
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.pyramid.MrsPyramidMetadata
-import org.mrgeo.pyramid.MrsPyramidMetadata.Classification
+import MrsPyramidMetadata.Classification
 
 object BuildPyramidMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

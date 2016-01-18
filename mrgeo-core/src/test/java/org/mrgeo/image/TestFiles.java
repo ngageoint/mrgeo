@@ -21,7 +21,6 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Bounds;

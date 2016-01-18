@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.pyramid;
+package org.mrgeo.image;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.codehaus.jackson.JsonGenerationException;
@@ -22,7 +22,6 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.util.DefaultPrettyPrinter;
 import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.image.ImageStats;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;

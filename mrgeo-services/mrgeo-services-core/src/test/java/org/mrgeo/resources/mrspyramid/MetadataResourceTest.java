@@ -34,7 +34,7 @@ import org.mockito.stubbing.Answer;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;

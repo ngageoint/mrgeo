@@ -22,7 +22,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 import org.mrgeo.utils.TMSUtils.Bounds;

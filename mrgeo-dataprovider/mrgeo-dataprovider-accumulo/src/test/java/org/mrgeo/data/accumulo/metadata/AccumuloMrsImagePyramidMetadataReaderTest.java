@@ -24,8 +24,8 @@ import org.mrgeo.data.accumulo.AccumuloDefs;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
-import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
 
 import java.io.*;
 

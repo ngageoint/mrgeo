@@ -29,7 +29,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

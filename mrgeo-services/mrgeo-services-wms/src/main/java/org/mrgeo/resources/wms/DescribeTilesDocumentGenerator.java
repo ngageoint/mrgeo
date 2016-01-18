@@ -19,7 +19,7 @@ import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Version;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;

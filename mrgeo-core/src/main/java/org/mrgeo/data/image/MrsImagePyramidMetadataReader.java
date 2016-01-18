@@ -15,7 +15,7 @@
 
 package org.mrgeo.data.image;
 
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 

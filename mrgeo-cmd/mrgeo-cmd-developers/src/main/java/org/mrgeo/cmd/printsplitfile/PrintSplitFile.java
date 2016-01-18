@@ -26,7 +26,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.tile.SplitInfo;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 

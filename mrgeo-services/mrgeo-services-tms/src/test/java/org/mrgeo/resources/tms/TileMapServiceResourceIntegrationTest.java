@@ -35,7 +35,7 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.tms.TmsService;
 import org.mrgeo.services.utils.ImageTestUtils;
 import org.mrgeo.test.TestUtils;

@@ -41,16 +41,16 @@ import java.util.List;
  * classes for pyramid data can use that information to ensure that tiles are only
  * ever read once, regardless of which input pyramids contain data in that tile.
  */
-public class MrsPyramidSimpleInputFormat extends InputFormat<TileIdWritable, RasterWritable>
+public class MrsPyramidInputFormat extends InputFormat<TileIdWritable, RasterWritable>
 {
-  public MrsPyramidSimpleInputFormat()
+  public MrsPyramidInputFormat()
   {
   }
 
   public RecordReader<TileIdWritable, RasterWritable> createRecordReader(InputSplit inputSplit,
                                                                          TaskAttemptContext context) throws IOException, InterruptedException
   {
-    return new MrsPyramidSimpleRecordReader();
+    return new MrsPyramidRecordReader();
   }
 
   /**

@@ -19,7 +19,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

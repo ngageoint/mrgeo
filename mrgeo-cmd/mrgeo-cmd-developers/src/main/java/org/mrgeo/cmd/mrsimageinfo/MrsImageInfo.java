@@ -32,7 +32,7 @@ import org.mrgeo.data.image.MrsImagePyramidReaderContext;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.slf4j.Logger;

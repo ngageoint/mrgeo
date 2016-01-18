@@ -18,6 +18,7 @@ package org.mrgeo.pyramid;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 
 public class MrsPyramidMetadataTest

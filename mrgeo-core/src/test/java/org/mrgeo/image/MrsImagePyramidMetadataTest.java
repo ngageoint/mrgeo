@@ -22,8 +22,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
-import org.mrgeo.pyramid.MrsPyramidMetadata.Classification;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
