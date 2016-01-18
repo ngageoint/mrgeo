@@ -7,7 +7,7 @@ import org.apache.spark.{Logging, SparkContext, SparkConf}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -240,7 +240,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     true
   }
 
-  private def saveImage(rdd: RasterRDD, tiles: Set[Long], meta:MrsImagePyramidMetadata, reformat:Boolean = true) = {
+  private def saveImage(rdd: RasterRDD, tiles: Set[Long], meta:MrsPyramidMetadata, reformat:Boolean = true) = {
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
@@ -307,7 +307,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   override def teardown(job: JobArguments, conf: SparkConf) = true
 
 
-  private def calculateTiles(meta:MrsImagePyramidMetadata):Set[Long] = {
+  private def calculateTiles(meta:MrsPyramidMetadata):Set[Long] = {
     val tiles = mutable.Set.newBuilder[Long]
 
     val tilebounds = meta.getTileBounds(zoom.get)

@@ -18,7 +18,10 @@ package org.mrgeo.mapalgebra;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
@@ -26,10 +29,10 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
@@ -317,12 +320,12 @@ public void buildpyramid() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -358,7 +361,7 @@ public void buildpyramid() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -378,12 +381,12 @@ public void buildpyramidAfterSave() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -419,7 +422,7 @@ public void buildpyramidAfterSave() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -432,7 +435,7 @@ public void buildpyramidAfterSave() throws Exception
     md =  metadata.getImageMetadata();
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       if (i != md.length - 1)
       {
@@ -462,12 +465,12 @@ public void buildpyramidAlternate() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -503,7 +506,7 @@ public void buildpyramidAlternate() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -523,12 +526,12 @@ public void buildpyramidDoesNotExist() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -566,8 +569,8 @@ public void changeClassification() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "changeClassification([" + smallElevationPath + "], \"categorical\")");
 
-    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
-    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    MrsPyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsPyramidMetadata.Classification.Categorical, metadata.getClassification());
     Assert.assertEquals("mean", metadata.getResamplingMethod().toLowerCase());
   }
 }
@@ -587,8 +590,8 @@ public void changeClassificationAggregator() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "changeClassification([" + smallElevationPath + "], \"categorical\", \"max\")");
 
-    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
-    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    MrsPyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsPyramidMetadata.Classification.Categorical, metadata.getClassification());
     Assert.assertEquals("max", metadata.getResamplingMethod().toLowerCase());
 
   }

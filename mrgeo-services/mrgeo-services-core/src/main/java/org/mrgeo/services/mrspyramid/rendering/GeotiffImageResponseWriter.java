@@ -18,8 +18,8 @@ package org.mrgeo.services.mrspyramid.rendering;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALJavaUtils;
@@ -103,7 +103,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
   @Override
   public Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsImagePyramid pyramid)
+    final double scale, final MrsPyramid pyramid)
   {
     try
     {
@@ -133,7 +133,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
   @Override
   public void write(final Raster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsImagePyramid pyramid, final HttpServletResponse response)
+                    final double scale, final MrsPyramid pyramid, final HttpServletResponse response)
     throws ServletException
   {
     try
@@ -171,7 +171,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
           (ProviderProperties) null);
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
       writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);
 

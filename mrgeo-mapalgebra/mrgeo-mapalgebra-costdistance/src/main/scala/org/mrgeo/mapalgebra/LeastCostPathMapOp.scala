@@ -21,7 +21,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.GeometryFactory
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -39,7 +39,7 @@ object LeastCostPathMapOp extends MapOpRegistrar {
 class LeastCostPathMapOp extends VectorMapOp with Externalizable
 {
   var costDistanceMapOp: Option[RasterMapOp] = None
-  var costDistanceMetadata: MrsImagePyramidMetadata = null
+  var costDistanceMetadata: MrsPyramidMetadata = null
   var pointsMapOp: Option[VectorMapOp] = None
   var zoom: Int = -1
   var vectorrdd: Option[VectorRDD] = None

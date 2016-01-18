@@ -37,7 +37,7 @@ public class IngestImageSpi extends CommandSpi
   @Override
   public String getDescription()
   {
-    return "Ingest source imagery into MrsImagePyramid format";
+    return "Ingest source imagery into MrsPyramid format";
   }
   
 }

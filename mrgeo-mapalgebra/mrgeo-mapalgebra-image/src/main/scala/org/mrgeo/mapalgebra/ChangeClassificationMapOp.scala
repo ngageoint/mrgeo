@@ -20,10 +20,11 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.AggregatorRegistry
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
+import MrsPyramidMetadata.Classification
 
 object ChangeClassificationMapOp extends MapOpRegistrar {
 
