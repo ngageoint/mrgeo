@@ -26,8 +26,8 @@ import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.mapalgebra.vector.PgQueryInputFormat;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -359,11 +359,11 @@ public class HadoopVectorUtils
 //    // null));
 //  }
 
-  public static MrsImagePyramidMetadata
+  public static MrsPyramidMetadata
     getMetadata(final Configuration config, final String pyramid) throws IOException,
       ClassNotFoundException
   {
-    final MrsImagePyramidMetadata metadata = (MrsImagePyramidMetadata) Base64Utils
+    final MrsPyramidMetadata metadata = (MrsPyramidMetadata) Base64Utils
       .decodeToObject(config.get("mrspyramid.metadata." + pyramid, null));
 
     return metadata;
@@ -421,14 +421,14 @@ public class HadoopVectorUtils
     }
   }
 
-  public static void setMetadata(final Configuration conf, final MrsImagePyramidMetadata metadata)
+  public static void setMetadata(final Configuration conf, final MrsPyramidMetadata metadata)
     throws IOException
   {
     log.debug("Setting hadoop configuration metadata using metadata instance " + metadata);
     conf.set("mrspyramid.metadata." + metadata.getPyramid(), Base64Utils.encodeObject(metadata));
   }
 
-  public static void setMetadata(final Job job, final MrsImagePyramidMetadata metadata)
+  public static void setMetadata(final Job job, final MrsPyramidMetadata metadata)
     throws IOException
   {
     setMetadata(job.getConfiguration(), metadata);

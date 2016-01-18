@@ -25,7 +25,7 @@ import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.utils.{LatLng, TMSUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -35,7 +35,7 @@ object LeastCostPathCalculator {
   private val LOG: Logger = LoggerFactory.getLogger(classOf[LeastCostPathCalculator])
 
   @throws(classOf[IOException])
-  def run(cdrdd: RasterRDD, cdMetadata: MrsImagePyramidMetadata, zoomLevel: Int,
+  def run(cdrdd: RasterRDD, cdMetadata: MrsPyramidMetadata, zoomLevel: Int,
           destrdd: VectorRDD, sparkContext: SparkContext): VectorRDD = {
     var lcp: LeastCostPathCalculator = null
     lcp = new LeastCostPathCalculator(cdrdd, cdMetadata.getTilesize, zoomLevel,

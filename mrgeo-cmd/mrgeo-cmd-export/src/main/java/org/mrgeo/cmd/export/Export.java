@@ -27,8 +27,11 @@ import org.mrgeo.colorscale.applier.JpegColorScaleApplier;
 import org.mrgeo.colorscale.applier.PngColorScaleApplier;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.tile.TileNotFoundException;
-import org.mrgeo.image.*;
-import org.mrgeo.pyramid.MrsPyramid;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsImageException;
+import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.RasterTileMerger;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +152,7 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
 {
   try
   {
-    final MrsImagePyramidMetadata metadata = image.getMetadata();
+    final MrsPyramidMetadata metadata = image.getMetadata();
 
     final TMSUtils.Tile t = TMSUtils.tileid(tileid, zoom);
 
@@ -206,7 +209,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
 {
   try
   {
-    final MrsImagePyramidMetadata metadata = image.getMetadata();
+    final MrsPyramidMetadata metadata = image.getMetadata();
 
     Raster raster = RasterTileMerger.mergeTiles(image, tiles);
     Raster sampleRaster = null;
@@ -399,11 +402,11 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
       for (final String arg : line.getArgs())
       {
         // The input can be either an image or a vector.
-        MrsImagePyramid imagePyramid;
+        MrsPyramid imagePyramid;
         MrsPyramid pyramid = null;
         try
         {
-          imagePyramid = MrsImagePyramid.open(arg, providerProperties);
+          imagePyramid = MrsPyramid.open(arg, providerProperties);
           pyramid = imagePyramid;
         }
         catch(IOException e)

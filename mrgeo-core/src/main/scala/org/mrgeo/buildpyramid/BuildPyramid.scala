@@ -27,12 +27,12 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.image.{MrsImageDataProvider, MrsImageReader, MrsImageWriter}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.data.tile.{MrsTileReader, MrsTileWriter, TileIdWritable}
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
-import org.mrgeo.image.{ImageStats, MrsImagePyramid, MrsImagePyramidMetadata}
+import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
@@ -167,7 +167,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     val provider: MrsImageDataProvider =
       DataProviderFactory.getMrsImageDataProvider(pyramidName, AccessMode.READ, null.asInstanceOf[ProviderProperties])
 
-    var metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
+    var metadata: MrsPyramidMetadata = provider.getMetadataReader.read
 
     val maxLevel: Int = metadata.getMaxZoomLevel
 
@@ -240,7 +240,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
         // while we were running, there is chance the pyramid was removed from the cache and
         // reopened by another process. Re-opening it here will avoid some potential conflicts.
-        metadata = MrsImagePyramid.open(provider).getMetadata
+        metadata = MrsPyramid.open(provider).getMetadata
 
         // make sure the level is deleted
         deletelevel(tolevel, metadata, provider)
@@ -261,14 +261,14 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     true
   }
 
-  private def deletelevel(level: Int, metadata: MrsImagePyramidMetadata, provider: MrsImageDataProvider) {
-    val imagedata: Array[MrsImagePyramidMetadata.ImageMetadata] = metadata.getImageMetadata
+  private def deletelevel(level: Int, metadata: MrsPyramidMetadata, provider: MrsImageDataProvider) {
+    val imagedata: Array[MrsPyramidMetadata.ImageMetadata] = metadata.getImageMetadata
 
     // delete the level
     provider.delete(level)
 
     // remove the metadata for the level
-    imagedata(level) = new MrsImagePyramidMetadata.ImageMetadata
+    imagedata(level) = new MrsPyramidMetadata.ImageMetadata
     provider.getMetadataWriter.write()
   }
 
@@ -280,7 +280,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    var metadata: MrsImagePyramidMetadata = provider.getMetadataReader.read
+    var metadata: MrsPyramidMetadata = provider.getMetadataReader.read
 
     val bounds: Bounds = metadata.getBounds
     val tilesize: Int = metadata.getTilesize
@@ -290,7 +290,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     val outputTiles: util.TreeMap[TileIdWritable, WritableRaster] = new util.TreeMap[TileIdWritable, WritableRaster]()
 
-    val lastImage: MrsTileReader[Raster] = provider.getMrsTileReader(inputLevel)
+    val lastImage: MrsImageReader = provider.getMrsTileReader(inputLevel)
     val iter: KVIterator[TileIdWritable, Raster] = lastImage.get
     while (iter.hasNext) {
       val fromraster: Raster = iter.next
@@ -342,7 +342,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     val stats: Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
     log.debug("Writing output file: " + provider.getResourceName + " level: " + outputLevel)
-    val writer: MrsTileWriter[Raster] = provider.getMrsTileWriter(outputLevel, metadata.getProtectionLevel)
+    val writer: MrsImageWriter = provider.getMrsTileWriter(outputLevel, metadata.getProtectionLevel)
     import scala.collection.JavaConversions._
     for (tile <- outputTiles.entrySet) {
       logDebug("  writing tile: " + tile.getKey.get)
@@ -360,7 +360,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     // while we were running, there is chance the pyramid was removed from the cache and
     // reopened by another process. Re-opening it here will avoid some potential conflicts.
-    metadata = MrsImagePyramid.open(provider).getMetadata
+    metadata = MrsPyramid.open(provider).getMetadata
 
     metadata.setPixelBounds(outputLevel, new LongRectangle(0, 0, pne.px - psw.px, pne.py - psw.py))
     metadata.setTileBounds(outputLevel, b)

@@ -48,7 +48,7 @@ public class MissingPyramidsTest extends WmsGeneratorTestAbstract
 
   /*
    * These should return an empty image, since we don't support missing zoom levels above what
-   * exists in MrsImagePyramid yet.
+   * exists in MrsPyramid yet.
    * @todo Once the WMS can handle this case for non-pyramid data, update the baseline image for
    * this test.
    */
@@ -112,7 +112,7 @@ public class MissingPyramidsTest extends WmsGeneratorTestAbstract
 
   /*
    * These should return an empty image, since we don't support missing zoom levels above what
-   * exists in MrsImagePyramid yet.  "Extra metadata" implies that the levels described in the file don't
+   * exists in MrsPyramid yet.  "Extra metadata" implies that the levels described in the file don't
    * reflect what raster images actually exist in the pyramid.
    */
 
@@ -333,7 +333,7 @@ public class MissingPyramidsTest extends WmsGeneratorTestAbstract
 
   /*
    * These should return an empty image, since we don't support missing zoom levels above what
-   * exists in MrsImagePyramid yet.  "Extra metadata" implies that the levels described in the file don't
+   * exists in MrsPyramid yet.  "Extra metadata" implies that the levels described in the file don't
    * reflect what raster images actually exist in the pyramid.
    */
 
@@ -526,7 +526,7 @@ public class MissingPyramidsTest extends WmsGeneratorTestAbstract
 
   /*
    * These should return an empty image, since we don't support missing zoom levels above what
-   * exists in MrsImagePyramid yet.
+   * exists in MrsPyramid yet.
    * @todo Once the WMS can handle this case for non-pyramid data, update the baseline image for
    * this test.
    */

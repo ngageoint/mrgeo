@@ -26,7 +26,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.tile.SplitInfo;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 
@@ -80,7 +80,7 @@ public class PrintSplitFile extends Command
           return -1;
         }
 
-        MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+        MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
         if (zoomlevel > 0)
         {

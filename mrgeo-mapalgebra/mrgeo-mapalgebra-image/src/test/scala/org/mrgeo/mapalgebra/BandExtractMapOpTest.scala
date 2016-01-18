@@ -3,16 +3,11 @@ package org.mrgeo.mapalgebra
 import java.io.File
 
 import junit.framework.Assert
-import org.apache.hadoop.fs.Path
 import org.junit._
 import org.junit.experimental.categories.Category
-import org.junit.rules.TestName
 import org.mrgeo.core.Defs
-import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
-import org.mrgeo.data.image.MrsImageDataProvider
-import org.mrgeo.image.{ImageStats, MrsImagePyramidMetadata}
-import org.mrgeo.junit.{UnitTest, IntegrationTest}
+import org.mrgeo.data.ProviderProperties
+import org.mrgeo.junit.{IntegrationTest, UnitTest}
 import org.mrgeo.mapalgebra.parser.ParserException
 import org.mrgeo.test.{LocalRunnerTest, MapOpTestUtils}
 import org.scalatest.junit.AssertionsForJUnit

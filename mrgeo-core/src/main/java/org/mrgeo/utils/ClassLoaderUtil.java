@@ -15,6 +15,7 @@
 
 package org.mrgeo.utils;
 
+import org.apache.commons.io.FilenameUtils;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VirtualFile;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -197,5 +199,61 @@ public class ClassLoaderUtil
       }
     }
     return result;
+  }
+
+  private static String indent(int level)
+  {
+    String s = "";
+    for (int i = 0; i < level * 3; i++)
+    {
+      s += " ";
+    }
+
+    return s;
+  }
+
+  public static void dumpClasspath(ClassLoader loader, int level)
+  {
+    System.out.println(indent(level) + "Classloader " + loader + ":");
+
+    if (loader instanceof URLClassLoader)
+    {
+      URLClassLoader ucl = (URLClassLoader) loader;
+      //System.out.println("\t" + Arrays.toString(ucl.getURLs()));
+
+      URL[] urls = ucl.getURLs();
+      String[] names = new String[urls.length];
+
+      for (int i = 0; i < urls.length; i++)
+      {
+//        String name = urls[i].toString();
+        String name = FilenameUtils.getName(urls[i].toString());
+
+        if (name.length() > 0)
+        {
+          names[i] = name;
+        }
+        else
+        {
+          names[i] = urls[i].toString();
+        }
+
+      }
+      Arrays.sort(names);
+
+      for (String name: names)
+      {
+        System.out.println(indent(level + 1) + name);
+      }
+    }
+    else
+      System.out.println("\t(cannot display components as not a URLClassLoader)");
+
+    System.out.println("");
+    if (loader.getParent() != null)
+    {
+      dumpClasspath(loader.getParent(), level + 1);
+    }
+
   }
 }

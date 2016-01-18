@@ -38,43 +38,21 @@ public class MrsPyramidInputSplit extends InputSplit implements Writable
 {
   private TiledInputSplit wrappedInputSplit;
   private String name;
-  private Bounds[] preBounds;
-  private Bounds[] postBounds;
-  private int zoomlevel;
 
   public MrsPyramidInputSplit()
   {
   }
 
-  public MrsPyramidInputSplit(final TiledInputSplit split, String name, int zoomlevel,
-      Bounds[] preBounds, Bounds[] postBounds) throws IOException
+  public MrsPyramidInputSplit(final TiledInputSplit split, String name) throws IOException
   {
     super();
     this.wrappedInputSplit = split;
     this.name = name;
-    this.preBounds = preBounds;
-    this.postBounds = postBounds;
-    this.zoomlevel = zoomlevel;
   }
 
   public String getName()
   {
     return name;
-  }
-
-  public Bounds[] getPreBounds()
-  {
-    return preBounds;
-  }
-  
-  public Bounds[] getPostBounds()
-  {
-    return postBounds;
-  }
-
-  public int getZoomlevel()
-  {
-    return zoomlevel;
   }
 
   @Override
@@ -97,20 +75,6 @@ public class MrsPyramidInputSplit extends InputSplit implements Writable
     }
 
     name = in.readUTF();
-    zoomlevel = in.readInt();
-    int presize = in.readInt();
-    preBounds = new Bounds[presize];
-    for (int i = 0; i < presize; i++)
-    {
-      preBounds[i] = new Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
-    }
-
-    int postsize = in.readInt();
-    postBounds = new Bounds[postsize];
-    for (int i = 0; i < postsize; i++)
-    {
-      postBounds[i] = new Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble());
-    }
   }
 
   @Override
@@ -130,25 +94,6 @@ public class MrsPyramidInputSplit extends InputSplit implements Writable
     }
 
     out.writeUTF(name);
-    out.writeInt(zoomlevel);
-
-    out.writeInt(preBounds.length);
-    for (int i = 0; i < preBounds.length; i++)
-    {
-      out.writeDouble(preBounds[i].getMinX());
-      out.writeDouble(preBounds[i].getMinY());
-      out.writeDouble(preBounds[i].getMaxX());
-      out.writeDouble(preBounds[i].getMaxY());
-    }
-
-    out.writeInt(postBounds.length);
-    for (int i = 0; i < postBounds.length; i++)
-    {
-      out.writeDouble(postBounds[i].getMinX());
-      out.writeDouble(postBounds[i].getMinY());
-      out.writeDouble(postBounds[i].getMaxX());
-      out.writeDouble(postBounds[i].getMaxY());
-    }
   }
 
   @Override

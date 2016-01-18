@@ -362,7 +362,7 @@ overridenodata: Boolean, protectionLevel: String, nodata: Number): Boolean = {
 //      metadata.setDefaultValues(defaults)
 //    }
 //
-//    val writer: MrsTileWriter[Raster] = dp.getMrsTileWriter(metadata.getMaxZoomLevel)
+//    val writer: MrsImageWriter = dp.getMrsTileWriter(metadata.getMaxZoomLevel)
 //    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImageFromStream(input)
 //    log.info("  reading: " + input.toString)
 //    if (reader != null) {
@@ -422,7 +422,7 @@ providerProperties: ProviderProperties): Boolean = {
 //      metadata.setDefaultValues(defaults)
 //    }
 //
-//    val writer: MrsTileWriter[Raster] = provider.getMrsTileWriter(metadata.getMaxZoomLevel)
+//    val writer: MrsImageWriter = provider.getMrsTileWriter(metadata.getMaxZoomLevel)
 //    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImage(input)
 //    log.info("  reading: " + input)
 //    if (reader != null) {

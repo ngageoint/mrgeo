@@ -24,7 +24,7 @@ import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapreduce.job.JobManager;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
@@ -123,7 +123,7 @@ public class MrsPyramidService {
                                     ProviderProperties providerProperties,
                                     int zoomLevel) throws IOException
     {
-        MrsImagePyramid mp = getPyramid(pyramid, providerProperties);
+        MrsPyramid mp = getPyramid(pyramid, providerProperties);
         return (mp.getMetadata().getName(zoomLevel) != null);
     }
 
@@ -206,16 +206,16 @@ public class MrsPyramidService {
      */
     public String getMetadata(String imgName) throws IOException
     {
-      MrsImagePyramid pyramid = MrsImagePyramid.open(imgName,
-          SecurityUtils.getProviderProperties());
+      MrsPyramid pyramid = MrsPyramid.open(imgName,
+                                           SecurityUtils.getProviderProperties());
       ObjectMapper mapper = new ObjectMapper();
       return mapper.writeValueAsString(pyramid.getMetadata());
     }
 
-    public MrsImagePyramid getPyramid(String name,
-        ProviderProperties providerProperties) throws IOException
+    public MrsPyramid getPyramid(String name,
+                                 ProviderProperties providerProperties) throws IOException
     {
-        return MrsImagePyramid.open(name, providerProperties);
+        return MrsPyramid.open(name, providerProperties);
     }
 
     public String formatValue(Double value, String units) {

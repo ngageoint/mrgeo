@@ -15,7 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.utils.Bounds;
 
 import javax.servlet.ServletException;
@@ -50,9 +50,9 @@ public interface ImageResponseWriter
   void write(final Raster raster, double[] defaults, final HttpServletResponse response) throws ServletException;
 
   Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow, final double scale,
-    final MrsImagePyramid pyramid) throws IOException;
+    final MrsPyramid pyramid) throws IOException;
   void write(final Raster raster, final int tileColumn, final int tileRow, final double scale,
-    final MrsImagePyramid pyramid, final HttpServletResponse response) throws ServletException, IOException;
+             final MrsPyramid pyramid, final HttpServletResponse response) throws ServletException, IOException;
 
   /**
    * 

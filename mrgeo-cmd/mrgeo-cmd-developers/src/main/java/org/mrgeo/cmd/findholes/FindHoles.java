@@ -53,7 +53,7 @@ public class FindHoles extends Command{
 	public static Options createOptions(){
 		Options retOpt = new Options();
 
-		Option output = new Option("o", "output", true, "MrsImagePyramid image name");
+		Option output = new Option("o", "output", true, "MrsPyramid image name");
 	    output.setRequired(true);
 	    retOpt.addOption(output);
 		

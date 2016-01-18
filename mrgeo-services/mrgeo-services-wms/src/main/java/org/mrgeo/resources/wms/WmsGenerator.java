@@ -24,7 +24,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
@@ -606,7 +606,7 @@ public class WmsGenerator
   }
 
   /*
-   * Returns a list of all MrsImagePyramid version 2 data in the home data directory
+   * Returns a list of all MrsPyramid version 2 data in the home data directory
    */
   private static MrsImageDataProvider[] getPyramidFilesList(
       final ProviderProperties providerProperties) throws IOException
@@ -734,7 +734,7 @@ public class WmsGenerator
       Response.ResponseBuilder builder =  ((ImageResponseWriter) ImageHandlerFactory
               .getHandler(format, ImageResponseWriter.class))
               .write(result, tileCol, tileRow, scale,
-                     MrsImagePyramid.open(layer, providerProperties));
+                     MrsPyramid.open(layer, providerProperties));
       return setupCaching(builder, allParams).build();
     }
     catch (Exception e)

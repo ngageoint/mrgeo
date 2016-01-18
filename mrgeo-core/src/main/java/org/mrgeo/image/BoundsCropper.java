@@ -59,7 +59,7 @@ public class BoundsCropper
    * @param zoomLevel
    * @return
    */
-  public static MrsImagePyramidMetadata getCroppedMetadata(MrsImagePyramidMetadata origMetadata, 
+  public static MrsPyramidMetadata getCroppedMetadata(MrsPyramidMetadata origMetadata,
                                                       List<Bounds> userBounds, int zoomLevel) {
    
     double minX = Double.POSITIVE_INFINITY, minY = Double.POSITIVE_INFINITY;
@@ -112,7 +112,7 @@ public class BoundsCropper
                                                               upperPx.py - lowerPx.py);
     
     // time to create the new metadata
-    MrsImagePyramidMetadata croppedMetadata = new MrsImagePyramidMetadata(); 
+    MrsPyramidMetadata croppedMetadata = new MrsPyramidMetadata();
     croppedMetadata.setPyramid(origMetadata.getPyramid());
     croppedMetadata.setBounds(Bounds.convertNewToOldBounds(newImageBounds));
     croppedMetadata.setTilesize(origMetadata.getTilesize());

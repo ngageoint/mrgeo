@@ -16,8 +16,9 @@
 package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.buildpyramid.BuildPyramid;
@@ -25,10 +26,10 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.slf4j.Logger;
@@ -81,10 +82,10 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationPath.toString(), providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationPath.toString(), providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
@@ -107,11 +108,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
@@ -138,11 +139,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
@@ -167,11 +168,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
@@ -196,11 +197,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
@@ -225,11 +226,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
@@ -254,11 +255,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
@@ -283,11 +284,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
@@ -312,11 +313,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
