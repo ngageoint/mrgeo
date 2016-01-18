@@ -107,7 +107,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   }
 
   @Override
-  public MrsTileReader<Raster> getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException
+  public MrsImageReader getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException
   {
     return new HdfsMrsImageReader(this, context);
   }

@@ -37,7 +37,7 @@ import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.ImageOutputFormatContext;
+import org.mrgeo.data.image.ImageOutputFormatContext;
 import org.mrgeo.hdfs.partitioners.SparkTileIdPartitioner;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.Bounds;

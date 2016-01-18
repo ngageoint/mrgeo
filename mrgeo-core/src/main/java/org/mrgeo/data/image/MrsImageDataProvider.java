@@ -136,7 +136,7 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
   public abstract MrsImagePyramidMetadataWriter getMetadataWriter(
     MrsImagePyramidMetadataWriterContext context);
 
-  public MrsTileReader<Raster> getMrsTileReader(final int zoomlevel) throws IOException
+  public MrsImageReader getMrsTileReader(final int zoomlevel) throws IOException
   {
     final MrsImagePyramidReaderContext context = new MrsImagePyramidReaderContext();
     context.setZoomlevel(zoomlevel);
@@ -144,13 +144,13 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
   }
 
   /**
-   * Return an instance of a MrsTileReader class to be used for reading tiled data. This method may
+   * Return an instance of a MrsImageReader class to be used for reading tiled data. This method may
    * be invoked by callers regardless of whether they are running within a Spark job or not.
    * 
    * @return
    * @throws IOException 
    */
-  public abstract MrsTileReader<Raster> getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException;
+  public abstract MrsImageReader getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException;
 
   public MrsTileWriter<Raster> getMrsTileWriter(final int zoomlevel,
                                                 final String protectionLevel) throws IOException

@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.data.tile;
+package org.mrgeo.data.image;
 
 import org.mrgeo.data.KVIterator;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 
+import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -27,12 +29,12 @@ import java.util.Enumeration;
 import java.util.List;
 
 
-public abstract class MrsTileReader<T>
+public abstract class MrsImageReader
 {
 
   /**
    * Recursively find Classes from a given directory
-   * 
+   *
    * @param directory
    *          directory to look at
    * @param packageName
@@ -70,7 +72,7 @@ public abstract class MrsTileReader<T>
 
   /**
    * This will pull in a list of classes under the package name given.
-   * 
+   *
    * @param packageName
    *          where to look in the java space
    * @return an array of classes found
@@ -114,7 +116,7 @@ public abstract class MrsTileReader<T>
    *          item to retrieve
    * @return the result of the query
    */
-  public abstract T get(TileIdWritable key);
+  public abstract Raster get(TileIdWritable key);
 
   /**
    * Need to know the zoom level of the data being used
@@ -140,11 +142,11 @@ public abstract class MrsTileReader<T>
    */
   public abstract boolean exists(TileIdWritable key);
 
-  public abstract KVIterator<TileIdWritable, T> get();
+  public abstract KVIterator<TileIdWritable, Raster> get();
 
-  public abstract KVIterator<TileIdWritable, T> get(final LongRectangle tileBounds);
+  public abstract KVIterator<TileIdWritable, Raster> get(final LongRectangle tileBounds);
 
-  public abstract KVIterator<Bounds, T> get(final Bounds bounds);
+  public abstract KVIterator<Bounds, Raster> get(final Bounds bounds);
 
   /**
    * Need to be able to pull a series of items from the data store
@@ -155,7 +157,7 @@ public abstract class MrsTileReader<T>
    *          where to end (inclusive)
    * @return an Iterator through the data
    */
-  public abstract KVIterator<TileIdWritable, T> get(TileIdWritable startKey,
+  public abstract KVIterator<TileIdWritable, Raster> get(TileIdWritable startKey,
     TileIdWritable endKey);
 
   /**

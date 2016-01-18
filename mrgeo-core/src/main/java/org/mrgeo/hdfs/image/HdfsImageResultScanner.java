@@ -13,28 +13,31 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.hdfs.tile;
+package org.mrgeo.hdfs.image;
 
 import org.apache.hadoop.io.MapFile;
-import org.apache.hadoop.io.Writable;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.hdfs.image.HdfsMrsImageReader;
+import org.mrgeo.hdfs.tile.Splits;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
 
+import java.awt.image.Raster;
 import java.io.IOException;
 
 /**
  * HdfsResultScanner is for pulling items from the data store / MapFiles in HDFS in a Iterator
  * format.
  */
-public abstract class HdfsTileResultScanner<T, TWritable extends Writable> implements CloseableKVIterator<TileIdWritable, T>
+public class HdfsImageResultScanner implements CloseableKVIterator<TileIdWritable, Raster>
 {
-//private static final Logger log = LoggerFactory.getLogger(HdfsTileResultScanner.class);
+//private static final Logger log = LoggerFactory.getLogger(HdfsImageResultScanner.class);
 
 // reader used for pulling items
-private final HdfsMrsTileReader<T, TWritable> reader;
+private final HdfsMrsImageReader reader;
 
 // hdfs specific reader
 private MapFile.Reader mapfile;
@@ -43,7 +46,7 @@ private MapFile.Reader mapfile;
 private int curPartitionIndex;
 
 // return item
-private TWritable currentValue;
+private RasterWritable currentValue;
 
 // keep track of where things are
 private TileIdWritable currentKey;
@@ -71,10 +74,13 @@ public void close() throws IOException
 }
 
 // For image: return RasterWritable.toRaster(currentValue)
-protected abstract T toNonWritable(TWritable val) throws IOException;
+protected Raster toNonWritable(RasterWritable val) throws IOException
+{
+  return RasterWritable.toRaster(val);
+}
 
-public HdfsTileResultScanner(final LongRectangle bounds,
-    final HdfsMrsTileReader<T, TWritable> reader)
+public HdfsImageResultScanner(final LongRectangle bounds,
+                              final HdfsMrsImageReader reader)
 {
   this.reader = reader;
 
@@ -96,8 +102,8 @@ public HdfsTileResultScanner(final LongRectangle bounds,
  * @param reader
  *          the reader being used
  */
-public HdfsTileResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
-    final HdfsMrsTileReader<T, TWritable> reader)
+public HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
+                              final HdfsMrsImageReader reader)
 {
   // this.partitions = partitions;
   this.reader = reader;
@@ -122,7 +128,7 @@ public TileIdWritable currentKey()
 }
 
 @Override
-public T currentValue()
+public Raster currentValue()
 {
   try
   {
@@ -218,7 +224,7 @@ public boolean hasNext()
  * Get the value from the MapFile and prepares the Raster output.
  */
 @Override
-public T next()
+public Raster next()
 {
   try
   {
@@ -305,7 +311,7 @@ private void primeScanner(final long startTileId, final long endTileId)
           endKey.set(endTileId);
           // Because package names for some of our Writable value classes changed,
           // we need to create the
-          currentValue = (TWritable)mapfile.getValueClass().newInstance();
+          currentValue = (RasterWritable)mapfile.getValueClass().newInstance();
         }
       }
       catch (InstantiationException | IllegalAccessException e)

@@ -442,7 +442,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * @throws IOException if there is a problem connecting to or reading from Accumulo.
    */
   @Override
-  public MrsTileReader<Raster> getMrsTileReader(MrsImagePyramidReaderContext context)
+  public MrsImageReader getMrsTileReader(MrsImagePyramidReaderContext context)
       throws IOException
   {
     return new AccumuloMrsImageReader(queryProps, this, context);

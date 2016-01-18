@@ -24,7 +24,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidReaderContext;
 import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.data.tile.MrsTileReader;
+import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
@@ -51,7 +51,7 @@ private static final Logger log = LoggerFactory.getLogger(MrsImage.class);
 protected ColorModel colorModel = null;
 protected SampleModel sampleModel = null;
 protected String measurement = "Ratio"; // not sure what this is for...
-private MrsTileReader<Raster> reader = null; // The MrsImageReader for fetching the tiles
+private MrsImageReader reader = null; // The MrsImageReader for fetching the tiles
 private MrsPyramidMetadata metadata = null; // image metadata
 
 private int zoomlevel = -1; // current zoom level of this image

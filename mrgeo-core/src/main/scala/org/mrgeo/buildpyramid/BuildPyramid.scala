@@ -27,10 +27,10 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.image.{MrsImageReader, MrsImageDataProvider}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.data.tile.{MrsTileReader, MrsTileWriter, TileIdWritable}
+import org.mrgeo.data.tile.{MrsTileWriter, TileIdWritable}
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
 import org.mrgeo.image.{ImageStats, MrsImagePyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
@@ -291,7 +291,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     val outputTiles: util.TreeMap[TileIdWritable, WritableRaster] = new util.TreeMap[TileIdWritable, WritableRaster]()
 
-    val lastImage: MrsTileReader[Raster] = provider.getMrsTileReader(inputLevel)
+    val lastImage: MrsImageReader = provider.getMrsTileReader(inputLevel)
     val iter: KVIterator[TileIdWritable, Raster] = lastImage.get
     while (iter.hasNext) {
       val fromraster: Raster = iter.next

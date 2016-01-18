@@ -29,7 +29,7 @@ import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidReaderContext;
-import org.mrgeo.data.tile.MrsTileReader;
+import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.text.DecimalFormat;
 
@@ -316,7 +315,7 @@ public class MrsImageInfo extends Command
             AccessMode.READ, providerProperties);
         MrsImagePyramidReaderContext context = new MrsImagePyramidReaderContext();
         context.setZoomlevel(zoom);
-        MrsTileReader<Raster> reader;
+        MrsImageReader reader;
         try
         {
           reader = dp.getMrsTileReader(context);

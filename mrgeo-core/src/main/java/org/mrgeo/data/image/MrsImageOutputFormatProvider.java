@@ -24,7 +24,6 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.ImageOutputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.partitioners.SparkTileIdPartitioner;
 import org.mrgeo.utils.TMSUtils;

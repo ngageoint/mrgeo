@@ -25,7 +25,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.tile.MrsTileReader;
+import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.junit.UnitTest;
 
@@ -33,10 +33,10 @@ import java.awt.image.Raster;
 import java.io.IOException;
 
 
-public class HdfsMrsTileReaderTest
+public class HdfsMrsImageReaderTest
 {
   String image = Defs.CWD + "/" + Defs.INPUT + "all-ones";
-  MrsTileReader<Raster> reader;
+  MrsImageReader reader;
   private ProviderProperties providerProperties;
 
   @Before

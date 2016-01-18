@@ -21,7 +21,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

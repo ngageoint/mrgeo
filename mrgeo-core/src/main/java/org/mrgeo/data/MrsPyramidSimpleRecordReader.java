@@ -21,7 +21,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.ImageInputFormatContext;
+import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.utils.Bounds;

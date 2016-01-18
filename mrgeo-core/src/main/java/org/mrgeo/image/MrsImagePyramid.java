@@ -27,7 +27,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
-import org.mrgeo.data.tile.MrsTileReader;
+import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.pyramid.MrsPyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
@@ -145,11 +145,11 @@ public static void calculateMetadata(final int zoom,
 
 
   // HACK!!! (kinda...) Need to make metadata is there so the provider can get the
-  //          MrsTileReader (it does a canOpen(), which makes sure metadata is present)
+  //          MrsImageReader (it does a canOpen(), which makes sure metadata is present)
   MrsImagePyramidMetadataWriter metadataWriter = provider.getMetadataWriter();
   metadataWriter.write(metadata);
 
-  final MrsTileReader<Raster> reader = provider.getMrsTileReader(zoom);
+  final MrsImageReader reader = provider.getMrsTileReader(zoom);
   try
   {
 
