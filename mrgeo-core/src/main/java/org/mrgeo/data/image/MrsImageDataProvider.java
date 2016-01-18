@@ -23,9 +23,8 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.*;
+import org.mrgeo.data.tile.TileIdWritable;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 
 /**
@@ -152,8 +151,8 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
    */
   public abstract MrsImageReader getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException;
 
-  public MrsTileWriter<Raster> getMrsTileWriter(final int zoomlevel,
-                                                final String protectionLevel) throws IOException
+  public MrsImageWriter getMrsTileWriter(final int zoomlevel,
+                                         final String protectionLevel) throws IOException
   {
     final MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(zoomlevel, 0,
                                                                                   protectionLevel);
@@ -162,7 +161,7 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
 
   public abstract void delete(final int zoomlevel) throws IOException;
 
-  public abstract MrsTileWriter<Raster> getMrsTileWriter(MrsImagePyramidWriterContext context) throws IOException;
+  public abstract MrsImageWriter getMrsTileWriter(MrsImagePyramidWriterContext context) throws IOException;
 
   /**
    * Return an instance of a RecordReader class to be used in Spark jobs for reading tiled

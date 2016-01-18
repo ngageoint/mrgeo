@@ -25,7 +25,8 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.*;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.*;
+import org.mrgeo.data.image.MrsImageWriter;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.input.image.HDFSMrsImagePyramidRecordReader;
 import org.mrgeo.hdfs.input.image.HdfsMrsImagePyramidInputFormatProvider;
 import org.mrgeo.hdfs.metadata.HdfsMrsImagePyramidMetadataReader;
@@ -35,7 +36,6 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -120,7 +120,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   }
 
   @Override
-  public MrsTileWriter<Raster> getMrsTileWriter(MrsImagePyramidWriterContext context)
+  public MrsImageWriter getMrsTileWriter(MrsImagePyramidWriterContext context)
   {
     return new HdfsMrsImageWriter(this, context);
   }

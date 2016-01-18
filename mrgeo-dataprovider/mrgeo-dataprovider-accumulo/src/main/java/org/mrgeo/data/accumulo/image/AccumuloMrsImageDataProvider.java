@@ -32,13 +32,13 @@ import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.*;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.*;
+import org.mrgeo.data.image.MrsImageWriter;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
@@ -455,7 +455,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * @return An instance of AccumuloMrsImageWriter.
    */
   @Override
-  public MrsTileWriter<Raster> getMrsTileWriter(MrsImagePyramidWriterContext context) throws IOException
+  public MrsImageWriter getMrsTileWriter(MrsImagePyramidWriterContext context) throws IOException
   {
 	  // get the protection level set within the metadata of the tabe
 	  return new AccumuloMrsImageWriter(this, context, context.getProtectionLevel());

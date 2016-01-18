@@ -24,7 +24,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.mrgeo.data.image.MrsImagePyramidWriterContext;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.MrsTileWriter;
+import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.HadoopUtils;
@@ -32,7 +32,7 @@ import org.mrgeo.utils.HadoopUtils;
 import java.awt.image.Raster;
 import java.io.IOException;
 
-public class HdfsMrsImageWriter extends MrsTileWriter<Raster>
+public class HdfsMrsImageWriter implements MrsImageWriter
 {
   final private HdfsMrsImageDataProvider provider;
   final private MrsImagePyramidWriterContext context;

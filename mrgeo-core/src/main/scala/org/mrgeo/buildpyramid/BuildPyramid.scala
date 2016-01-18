@@ -27,10 +27,10 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.{MrsImageReader, MrsImageDataProvider}
+import org.mrgeo.data.image.{MrsImageDataProvider, MrsImageReader, MrsImageWriter}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.data.tile.{MrsTileWriter, TileIdWritable}
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
 import org.mrgeo.image.{ImageStats, MrsImagePyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
@@ -343,7 +343,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     val stats: Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
     log.debug("Writing output file: " + provider.getResourceName + " level: " + outputLevel)
-    val writer: MrsTileWriter[Raster] = provider.getMrsTileWriter(outputLevel, metadata.getProtectionLevel)
+    val writer: MrsImageWriter = provider.getMrsTileWriter(outputLevel, metadata.getProtectionLevel)
     import scala.collection.JavaConversions._
     for (tile <- outputTiles.entrySet) {
       logDebug("  writing tile: " + tile.getKey.get)

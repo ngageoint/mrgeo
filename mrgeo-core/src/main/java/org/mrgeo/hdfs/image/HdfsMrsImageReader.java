@@ -27,7 +27,7 @@ import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.image.MrsImagePyramidReaderContext;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.MrsTileException;
+import org.mrgeo.data.image.MrsImageException;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.FileSplit;
@@ -305,7 +305,7 @@ public class HdfsMrsImageReader extends MrsImageReader
     }
     catch (final IOException e)
     {
-      throw new MrsTileException(e);
+      throw new MrsImageException(e);
     }
   }
 
@@ -381,15 +381,15 @@ public class HdfsMrsImageReader extends MrsImageReader
       log.error("Got IOException when reading tile", e);
       System.err.println("Got IOException when reading tile");
       e.printStackTrace();
-      throw new MrsTileException(e);
+      throw new MrsImageException(e);
     }
     catch (InstantiationException e)
     {
-      throw new MrsTileException(e);
+      throw new MrsImageException(e);
     }
     catch (IllegalAccessException e)
     {
-      throw new MrsTileException(e);
+      throw new MrsImageException(e);
     }
     finally
     {

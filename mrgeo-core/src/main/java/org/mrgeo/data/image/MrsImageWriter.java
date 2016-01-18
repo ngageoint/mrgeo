@@ -13,28 +13,17 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.data.tile;
+package org.mrgeo.data.image;
 
-public class MrsTileException extends RuntimeException
+import org.mrgeo.data.tile.TileIdWritable;
+
+import java.awt.image.Raster;
+import java.io.IOException;
+
+public interface MrsImageWriter
 {
-  private static final long serialVersionUID = 1L;
-  private final Exception origException;
+  public void append(final TileIdWritable k, final Raster tile) throws IOException;
+  public void close() throws IOException;
 
-  public MrsTileException(final Exception e)
-  {
-    this.origException = e;
-    printStackTrace();
-  }
-
-  public MrsTileException(final String msg)
-  {
-    final Exception e = new Exception(msg);
-    this.origException = e;
-  }
-
-  @Override
-  public void printStackTrace()
-  {
-    origException.printStackTrace();
-  }
+  public String getName() throws IOException;
 }
