@@ -70,10 +70,10 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
           for (b <- 0 until raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
             if (RasterMapOp.isNodata(v, nodata)) {
-              raster.setSample(x, y, b, 0)
+              raster.setSample(x, y, b, 1)
             }
             else {
-              raster.setSample(x, y, b, 1)
+              raster.setSample(x, y, b, 0)
             }
           }
         }
