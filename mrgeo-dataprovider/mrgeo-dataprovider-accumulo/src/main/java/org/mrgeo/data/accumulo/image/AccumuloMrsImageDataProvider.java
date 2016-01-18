@@ -23,10 +23,10 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.accumulo.input.image.AccumuloMrsImagePyramidInputFormatProvider;
-import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataReader;
-import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataWriter;
-import org.mrgeo.data.accumulo.output.image.AccumuloMrsImagePyramidOutputFormatProvider;
+import org.mrgeo.data.accumulo.input.image.AccumuloMrsPyramidInputFormatProvider;
+import org.mrgeo.data.accumulo.metadata.AccumuloMrsPyramidMetadataReader;
+import org.mrgeo.data.accumulo.metadata.AccumuloMrsPyramidMetadataWriter;
+import org.mrgeo.data.accumulo.output.image.AccumuloMrsPyramidOutputFormatProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
@@ -62,8 +62,8 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 {
 
   // the classes that are used for metadata
-  private AccumuloMrsImagePyramidMetadataReader metaReader = null;
-  private MrsImagePyramidMetadataWriter metaWriter = null;
+  private AccumuloMrsPyramidMetadataReader metaReader = null;
+  private MrsPyramidMetadataWriter metaWriter = null;
 
   // table we are connecting to for data
   private String table;
@@ -75,7 +75,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
   private String resolvedResourceName;
 
   // output controller
-  private AccumuloMrsImagePyramidOutputFormatProvider outFormatProvider = null;
+  private AccumuloMrsPyramidOutputFormatProvider outFormatProvider = null;
 
   // logging
   private static Logger log = LoggerFactory.getLogger(AccumuloMrsImageDataProvider.class);
@@ -312,12 +312,12 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * 
    * @param context - is the image context for the input for the job.
    * 
-   * @return An instance of AccumuloMrsImagePyramidInputFormatProvider is returned.
+   * @return An instance of AccumuloMrsPyramidInputFormatProvider is returned.
    */
   @Override
   public MrsImageInputFormatProvider getImageInputFormatProvider(ImageInputFormatContext context)
   {
-    return new AccumuloMrsImagePyramidInputFormatProvider(context);
+    return new AccumuloMrsPyramidInputFormatProvider(context);
   } // end getImageInputFormatProvider
 
   
@@ -326,12 +326,12 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * 
    * @param context - is the image context for the output of the job.
    * 
-   * @return An instance of AccumuloMrsImagePyramidOutputFormatProvider.
+   * @return An instance of AccumuloMrsPyramidOutputFormatProvider.
    */
   @Override
   public MrsImageOutputFormatProvider getTiledOutputFormatProvider(ImageOutputFormatContext context)
   {
-    return new AccumuloMrsImagePyramidOutputFormatProvider(this, context, cv);
+    return new AccumuloMrsPyramidOutputFormatProvider(this, context, cv);
   } // end getTiledOutputFormatProvider
 
 
@@ -389,17 +389,17 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
   /**
    * The class that provides reading metadata from the Accumulo table is returned.
    * @param context - is the context of what is to be read.
-   * @return An instance of AccumuloMrsImagePyramidMetadataReader that is able to read from Accumulo.
+   * @return An instance of AccumuloMrsPyramidMetadataReader that is able to read from Accumulo.
    */
   @Override
-  public MrsImagePyramidMetadataReader getMetadataReader(
-      MrsImagePyramidMetadataReaderContext context){
+  public MrsPyramidMetadataReader getMetadataReader(
+      MrsPyramidMetadataReaderContext context){
 
     //TODO: get Authorizations for reading from the context
     
     // check if the metadata reader has been created
     if(metaReader == null){
-      metaReader = new AccumuloMrsImagePyramidMetadataReader(this, context);
+      metaReader = new AccumuloMrsPyramidMetadataReader(this, context);
     }
     
     return metaReader;
@@ -410,23 +410,23 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * This class will return the class that write the metadata information to
    * the Accumulo table.
    * @param context - is the context of what is to be written.
-   * @return An instance of AccumuloMrsImagePyramidMetadataWriter that is able to write to Accumulo.
+   * @return An instance of AccumuloMrsPyramidMetadataWriter that is able to write to Accumulo.
    */
   @Override
-  public MrsImagePyramidMetadataWriter getMetadataWriter(
-      MrsImagePyramidMetadataWriterContext context){
+  public MrsPyramidMetadataWriter getMetadataWriter(
+      MrsPyramidMetadataWriterContext context){
     
     // check to see if the metadata writer exists already
     if(metaWriter == null){
       if(outFormatProvider != null && outFormatProvider.bulkJob()){
 
         //TODO: think about working with file output - big jobs may need to work that way
-        metaWriter = new AccumuloMrsImagePyramidMetadataWriter(this, context);
+        metaWriter = new AccumuloMrsPyramidMetadataWriter(this, context);
         
       } else {
     	  
     	  // get the metadata writer ready
-    	  metaWriter = new AccumuloMrsImagePyramidMetadataWriter(this, context);
+    	  metaWriter = new AccumuloMrsPyramidMetadataWriter(this, context);
 
       }
     }
@@ -442,7 +442,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * @throws IOException if there is a problem connecting to or reading from Accumulo.
    */
   @Override
-  public MrsImageReader getMrsTileReader(MrsImagePyramidReaderContext context)
+  public MrsImageReader getMrsTileReader(MrsPyramidReaderContext context)
       throws IOException
   {
     return new AccumuloMrsImageReader(queryProps, this, context);
@@ -455,7 +455,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * @return An instance of AccumuloMrsImageWriter.
    */
   @Override
-  public MrsImageWriter getMrsTileWriter(MrsImagePyramidWriterContext context) throws IOException
+  public MrsImageWriter getMrsTileWriter(MrsPyramidWriterContext context) throws IOException
   {
 	  // get the protection level set within the metadata of the tabe
 	  return new AccumuloMrsImageWriter(this, context, context.getProtectionLevel());
@@ -471,7 +471,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
   {
     log.info("trying to load record reader.");
     
-    return AccumuloMrsImagePyramidInputFormat.makeRecordReader();
+    return AccumuloMrsPyramidInputFormat.makeRecordReader();
   } // end getRecordReader
 
   

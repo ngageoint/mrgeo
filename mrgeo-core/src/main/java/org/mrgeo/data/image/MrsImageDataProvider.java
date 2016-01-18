@@ -109,7 +109,7 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
   }
 
 
-  public MrsImagePyramidMetadataReader getMetadataReader()
+  public MrsPyramidMetadataReader getMetadataReader()
   {
     return getMetadataReader(null);
   }
@@ -119,10 +119,10 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
    * 
    * @return
    */
-  public abstract MrsImagePyramidMetadataReader getMetadataReader(
-    MrsImagePyramidMetadataReaderContext context);
+  public abstract MrsPyramidMetadataReader getMetadataReader(
+    MrsPyramidMetadataReaderContext context);
 
-  public MrsImagePyramidMetadataWriter getMetadataWriter()
+  public MrsPyramidMetadataWriter getMetadataWriter()
   {
     return getMetadataWriter(null);
   }
@@ -132,12 +132,12 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
    * 
    * @return
    */
-  public abstract MrsImagePyramidMetadataWriter getMetadataWriter(
-    MrsImagePyramidMetadataWriterContext context);
+  public abstract MrsPyramidMetadataWriter getMetadataWriter(
+    MrsPyramidMetadataWriterContext context);
 
   public MrsImageReader getMrsTileReader(final int zoomlevel) throws IOException
   {
-    final MrsImagePyramidReaderContext context = new MrsImagePyramidReaderContext();
+    final MrsPyramidReaderContext context = new MrsPyramidReaderContext();
     context.setZoomlevel(zoomlevel);
     return getMrsTileReader(context);
   }
@@ -149,19 +149,19 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
    * @return
    * @throws IOException 
    */
-  public abstract MrsImageReader getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException;
+  public abstract MrsImageReader getMrsTileReader(MrsPyramidReaderContext context) throws IOException;
 
   public MrsImageWriter getMrsTileWriter(final int zoomlevel,
                                          final String protectionLevel) throws IOException
   {
-    final MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(zoomlevel, 0,
-                                                                                  protectionLevel);
+    final MrsPyramidWriterContext context = new MrsPyramidWriterContext(zoomlevel, 0,
+                                                                        protectionLevel);
     return getMrsTileWriter(context);
   }
 
   public abstract void delete(final int zoomlevel) throws IOException;
 
-  public abstract MrsImageWriter getMrsTileWriter(MrsImagePyramidWriterContext context) throws IOException;
+  public abstract MrsImageWriter getMrsTileWriter(MrsPyramidWriterContext context) throws IOException;
 
   /**
    * Return an instance of a RecordReader class to be used in Spark jobs for reading tiled

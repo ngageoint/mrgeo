@@ -31,8 +31,8 @@ import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
-import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
-import org.mrgeo.data.image.MrsImagePyramidMetadataReaderContext;
+import org.mrgeo.data.image.MrsPyramidMetadataReader;
+import org.mrgeo.data.image.MrsPyramidMetadataReaderContext;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
@@ -49,10 +49,10 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
-public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMetadataReader
+public class AccumuloMrsPyramidMetadataReader implements MrsPyramidMetadataReader
 {
 
-  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidMetadataReader.class);
+  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidMetadataReader.class);
 
   private MrsPyramidMetadata metadata = null;
   private final AccumuloMrsImageDataProvider dataProvider;
@@ -63,8 +63,8 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
   private ColumnVisibility cv = null;
   	
   
-  public AccumuloMrsImagePyramidMetadataReader(AccumuloMrsImageDataProvider dataProvider,
-      MrsImagePyramidMetadataReaderContext context){
+  public AccumuloMrsPyramidMetadataReader(AccumuloMrsImageDataProvider dataProvider,
+                                          MrsPyramidMetadataReaderContext context){
     this.dataProvider = dataProvider;
     this.name = dataProvider.getResourceName();
     if(dataProvider.getColumnVisibility() == null){
@@ -75,7 +75,7 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
  
   } // end constructor
   
-  public AccumuloMrsImagePyramidMetadataReader(String name){
+  public AccumuloMrsPyramidMetadataReader(String name){
     this.dataProvider = null;
     this.name = name;
     this.cv = new ColumnVisibility();
@@ -291,4 +291,4 @@ public class AccumuloMrsImagePyramidMetadataReader implements MrsImagePyramidMet
     return retStr;
   } // end toString
   
-} // end AccumuloMrsImagePyramidMetadataReader
+} // end AccumuloMrsPyramidMetadataReader

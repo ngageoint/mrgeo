@@ -13,9 +13,29 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.image;
+package org.mrgeo.data.image;
 
-public interface MrsImagePyramidMetadataProvider
+public class MrsPyramidReaderContext
 {
-  public MrsPyramidMetadata loadMetadata();
+
+  int zoomlevel;
+
+  public MrsPyramidReaderContext()
+  {
+  }
+
+  public MrsPyramidReaderContext(int zoomlevel)
+  {
+    this.zoomlevel = zoomlevel;
+  }
+
+  public int getZoomlevel()
+  {
+    return zoomlevel;
+  }
+  
+  public void setZoomlevel(int zoom)
+  {
+    zoomlevel = zoom;
+  }
 }

@@ -30,7 +30,7 @@ import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import java.io.*;
 
 @Ignore
-public class AccumuloMrsImagePyramidMetadataReaderTest
+public class AccumuloMrsPyramidMetadataReaderTest
 {
 
   private static String junk = "junkadp";
@@ -39,8 +39,8 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
   private File file;
   
   private AccumuloMrsImageDataProvider provider;
-  private AccumuloMrsImagePyramidMetadataWriter writer;
-  private AccumuloMrsImagePyramidMetadataReader reader;
+  private AccumuloMrsPyramidMetadataWriter writer;
+  private AccumuloMrsPyramidMetadataReader reader;
   private MrsPyramidMetadata metadata;
   private String originalFileStr;
   private String originalMeta;
@@ -71,10 +71,10 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
     String fstr = AccumuloDefs.CWD + AccumuloDefs.INPUTDIR + AccumuloDefs.INPUTMETADATADIR + AccumuloDefs.INPUTMETADATAFILE;
     file = new File(fstr);
 
-    writer = (AccumuloMrsImagePyramidMetadataWriter) provider.getMetadataWriter();
+    writer = (AccumuloMrsPyramidMetadataWriter) provider.getMetadataWriter();
     writer.setConnector(conn);
 
-    reader = (AccumuloMrsImagePyramidMetadataReader) provider.getMetadataReader();
+    reader = (AccumuloMrsPyramidMetadataReader) provider.getMetadataReader();
     reader.setConnector(conn);
     
     FileInputStream fis = new FileInputStream(file);
@@ -131,7 +131,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
   public void testBadTable() throws IOException
   {
     provider = new AccumuloMrsImageDataProvider(badTable);
-    reader = new AccumuloMrsImagePyramidMetadataReader(provider, null);
+    reader = new AccumuloMrsPyramidMetadataReader(provider, null);
     reader.setConnector(conn);
 
     reader.read();
@@ -143,7 +143,7 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
   @Category(UnitTest.class)
   public void testReadNoProvider() throws IOException
   {
-    reader = new AccumuloMrsImagePyramidMetadataReader(null, null);
+    reader = new AccumuloMrsPyramidMetadataReader(null, null);
 
     reader.read();
   }
@@ -188,4 +188,4 @@ public class AccumuloMrsImagePyramidMetadataReaderTest
 
   
   
-} // end AccumuloMrsImagePyramidMetadataReaderTest
+} // end AccumuloMrsPyramidMetadataReaderTest

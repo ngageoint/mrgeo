@@ -34,11 +34,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatProvider
+public class HdfsMrsPyramidInputFormatProvider extends MrsImageInputFormatProvider
 {
-  private static final Logger log = LoggerFactory.getLogger(HdfsMrsImagePyramidInputFormatProvider.class);
+  private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidInputFormatProvider.class);
   
-  public HdfsMrsImagePyramidInputFormatProvider(ImageInputFormatContext context)
+  public HdfsMrsPyramidInputFormatProvider(ImageInputFormatContext context)
   {
     super(context);
   }
@@ -46,7 +46,7 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
   @Override
   public InputFormat<TileIdWritable,RasterWritable> getInputFormat(final String input)
   {
-    return new HdfsMrsImagePyramidInputFormat(input, context.getZoomLevel());
+    return new HdfsMrsPyramidInputFormat(input, context.getZoomLevel());
   }
 
   @Override
@@ -84,7 +84,7 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
     // first calculate the actual filename for the input (including zoom)
     HdfsMrsImageDataProvider dp = new HdfsMrsImageDataProvider(job.getConfiguration(),
                                                                input, null);
-    String image = HdfsMrsImagePyramidInputFormat.getZoomName(dp, context.getZoomLevel());
+    String image = HdfsMrsPyramidInputFormat.getZoomName(dp, context.getZoomLevel());
     // if we don't have this zoom level, use the max, then we'll decimate/subsample that one
     if (image == null)
     {
@@ -107,7 +107,7 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
         log.debug("In setupJob(), loading pyramid for " + input +
                   " pyramid instance is " + pyramid + " metadata instance is " + metadata);
 
-        image = HdfsMrsImagePyramidInputFormat.getZoomName(dp, metadata.getMaxZoomLevel());
+        image = HdfsMrsPyramidInputFormat.getZoomName(dp, metadata.getMaxZoomLevel());
       }
       catch (IOException e)
       {
@@ -119,7 +119,7 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
 
     try
     {
-      HdfsMrsImagePyramidInputFormat.setInputInfo(job, context.getZoomLevel(), zoomInput);
+      HdfsMrsPyramidInputFormat.setInputInfo(job, context.getZoomLevel(), zoomInput);
     }
     catch (IOException e)
     {

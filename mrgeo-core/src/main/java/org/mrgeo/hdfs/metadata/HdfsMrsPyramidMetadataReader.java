@@ -20,8 +20,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
-import org.mrgeo.data.image.MrsImagePyramidMetadataReaderContext;
+import org.mrgeo.data.image.MrsPyramidMetadataReader;
+import org.mrgeo.data.image.MrsPyramidMetadataReaderContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsPyramidMetadata;
@@ -39,23 +39,23 @@ import java.util.Set;
 
 /**
  */
-public class HdfsMrsImagePyramidMetadataReader implements MrsImagePyramidMetadataReader
+public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
 {
-  private static final Logger log = LoggerFactory.getLogger(HdfsMrsImagePyramidMetadataReader.class);
+  private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidMetadataReader.class);
 
   private MrsPyramidMetadata metadata = null;
   private final HdfsMrsImageDataProvider dataProvider;
   private Configuration conf;
-  //private final MrsImagePyramidMetadataReaderContext context;
+  //private final MrsPyramidMetadataReaderContext context;
 
   /**
    * Constructor 
    * @param dataProvider MrsImagePyramidDataProvider DataProvider (image pyramid) providing this metadata
-   * @param context MrsImagePyramidMetadataReaderContext Additional context data for loading the metadata (currently not used)
+   * @param context MrsPyramidMetadataReaderContext Additional context data for loading the metadata (currently not used)
    */
-  public HdfsMrsImagePyramidMetadataReader(HdfsMrsImageDataProvider dataProvider,
-      Configuration conf,
-      MrsImagePyramidMetadataReaderContext context)
+  public HdfsMrsPyramidMetadataReader(HdfsMrsImageDataProvider dataProvider,
+                                      Configuration conf,
+                                      MrsPyramidMetadataReaderContext context)
   {
     this.dataProvider = dataProvider;
     this.conf = conf;

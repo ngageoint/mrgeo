@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.accumulo.AccumuloDefs;
-import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataWriter;
+import org.mrgeo.data.accumulo.metadata.AccumuloMrsPyramidMetadataWriter;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -51,7 +51,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
   
   private AccumuloMrsImageDataProviderFactory factory;
   private AccumuloMrsImageDataProvider provider;
-  private AccumuloMrsImagePyramidMetadataWriter writer;
+  private AccumuloMrsPyramidMetadataWriter writer;
   private ProviderProperties providerProperties;
 
   private static Connector conn = null;
@@ -88,7 +88,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
     String fstr = AccumuloDefs.CWD + AccumuloDefs.INPUTDIR + AccumuloDefs.INPUTMETADATADIR + AccumuloDefs.INPUTMETADATAFILE;
     file = new File(fstr);
 
-    writer = (AccumuloMrsImagePyramidMetadataWriter) provider.getMetadataWriter();
+    writer = (AccumuloMrsPyramidMetadataWriter) provider.getMetadataWriter();
     writer.setConnector(conn);
 
     //System.out.println(file.exists());

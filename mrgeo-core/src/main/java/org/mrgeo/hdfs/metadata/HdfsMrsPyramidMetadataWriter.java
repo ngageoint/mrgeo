@@ -20,8 +20,8 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
+import org.mrgeo.data.image.MrsPyramidMetadataWriter;
+import org.mrgeo.data.image.MrsPyramidMetadataWriterContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsPyramidMetadata;
@@ -34,21 +34,21 @@ import java.io.IOException;
  * @author tim.tisler
  * @version $Revision: 1.0 $
  */
-public class HdfsMrsImagePyramidMetadataWriter implements MrsImagePyramidMetadataWriter
+public class HdfsMrsPyramidMetadataWriter implements MrsPyramidMetadataWriter
 {
-  private static final Logger log = LoggerFactory.getLogger(HdfsMrsImagePyramidMetadataWriter.class);
+  private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidMetadataWriter.class);
 
   private final MrsImageDataProvider provider;
   private Configuration conf;
 
   /**
-   * Constructor for HdfsMrsImagePyramidMetadataWriter.
+   * Constructor for HdfsMrsPyramidMetadataWriter.
    * @param provider MrsImageDataProvider
-   * @param context MrsImagePyramidMetadataWriterContext
+   * @param context MrsPyramidMetadataWriterContext
    */
-  public HdfsMrsImagePyramidMetadataWriter(MrsImageDataProvider provider,
-      Configuration conf,
-      MrsImagePyramidMetadataWriterContext context)
+  public HdfsMrsPyramidMetadataWriter(MrsImageDataProvider provider,
+                                      Configuration conf,
+                                      MrsPyramidMetadataWriterContext context)
   {
     this.provider = provider;
     this.conf = conf;
@@ -57,7 +57,7 @@ public class HdfsMrsImagePyramidMetadataWriter implements MrsImagePyramidMetadat
   /**
    * Write the (already loaded) metadata for the provider to HDFS
    * @throws IOException
-   * @see org.mrgeo.data.image.MrsImagePyramidMetadataWriter#write()
+   * @see MrsPyramidMetadataWriter#write()
    */
   @Override
   public void write() throws IOException
@@ -70,7 +70,7 @@ public class HdfsMrsImagePyramidMetadataWriter implements MrsImagePyramidMetadat
    * Write a provided metadata object to HDFS.
    * @param metadata MrsImagePyramidMetadata
    * @throws IOException 
-   * @see org.mrgeo.data.image.MrsImagePyramidMetadataWriter#write(MrsPyramidMetadata)
+   * @see MrsPyramidMetadataWriter#write(MrsPyramidMetadata)
   */
   @Override
   public void write(MrsPyramidMetadata metadata) throws IOException

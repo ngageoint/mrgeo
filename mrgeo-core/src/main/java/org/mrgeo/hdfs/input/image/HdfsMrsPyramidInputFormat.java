@@ -22,7 +22,7 @@ import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
+import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageInputFormatContext;
@@ -43,9 +43,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<TileIdWritable,RasterWritable>
+public class HdfsMrsPyramidInputFormat extends SequenceFileInputFormat<TileIdWritable,RasterWritable>
 {
-private static Logger log = LoggerFactory.getLogger(HdfsMrsImagePyramidInputFormat.class);
+private static Logger log = LoggerFactory.getLogger(HdfsMrsPyramidInputFormat.class);
 private String input;
 private int inputZoom;
 
@@ -55,11 +55,11 @@ private int inputZoom;
  * On the "Driver" side, developers should use the DataProviderFactory to get
  * and InputFormatProvider, from which the InputFormat can be obtained.
  */
-public HdfsMrsImagePyramidInputFormat()
+public HdfsMrsPyramidInputFormat()
 {
 }
 
-public HdfsMrsImagePyramidInputFormat(final String input, final int zoom)
+public HdfsMrsPyramidInputFormat(final String input, final int zoom)
 {
   this.input = input;
   this.inputZoom = zoom;
@@ -70,7 +70,7 @@ public RecordReader<TileIdWritable, RasterWritable> createRecordReader(final Inp
     final TaskAttemptContext context)
     throws IOException
 {
-  return new HDFSMrsImagePyramidRecordReader();
+  return new HdfsMrsPyramidRecordReader();
 }
 
 public static String getZoomName(final HdfsMrsImageDataProvider dp,
@@ -115,7 +115,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   org.mrgeo.hdfs.tile.FileSplit splitfile = new org.mrgeo.hdfs.tile.FileSplit();
   splitfile.readSplits(inputWithZoom);
 
-  MrsImagePyramidMetadataReader metadataReader = dp.getMetadataReader();
+  MrsPyramidMetadataReader metadataReader = dp.getMetadataReader();
   MrsPyramidMetadata metadata = metadataReader.read();
 
   org.mrgeo.hdfs.tile.FileSplit fsplit = new org.mrgeo.hdfs.tile.FileSplit();
@@ -219,7 +219,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
 public static void setInputInfo(final Job job, final int zoomlevel,
     final String inputWithZoom) throws IOException
 {
-//    job.setInputFormatClass(HdfsMrsImagePyramidInputFormat.class);
+//    job.setInputFormatClass(HdfsMrsPyramidInputFormat.class);
 
   //final String scannedInput = inputs.get(0);
   //FileInputFormat.addInputPath(job, new Path(scannedInput));

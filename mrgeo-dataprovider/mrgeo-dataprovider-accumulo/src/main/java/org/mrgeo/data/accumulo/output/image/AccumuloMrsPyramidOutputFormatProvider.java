@@ -34,7 +34,7 @@ import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
+import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageOutputFormatContext;
@@ -54,10 +54,10 @@ import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputFormatProvider
+public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormatProvider
 {
   final MrsImageDataProvider provider;
-  final static Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidOutputFormatProvider.class);
+  final static Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidOutputFormatProvider.class);
   
   private int zoomLevel = -1;
   private int tileSize = -1;
@@ -84,9 +84,9 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   private String workDir = null;
   
   
-  public AccumuloMrsImagePyramidOutputFormatProvider(final AccumuloMrsImageDataProvider provider,
-                                                     final ImageOutputFormatContext context,
-                                                     final ColumnVisibility cv){
+  public AccumuloMrsPyramidOutputFormatProvider(final AccumuloMrsImageDataProvider provider,
+                                                final ImageOutputFormatContext context,
+                                                final ColumnVisibility cv){
     
     super(context);
     
@@ -153,11 +153,11 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
     // TODO Auto-generated method stub
 
     if(doBulk || forceBulk){
-      return new AccumuloMrsImagePyramidFileOutputFormat(zoomLevel, cv);
-      //return new AccumuloMrsImagePyramidFileOutputFormat();
+      return new AccumuloMrsPyramidFileOutputFormat(zoomLevel, cv);
+      //return new AccumuloMrsPyramidFileOutputFormat();
     } else {
 
-      return new AccumuloMrsImagePyramidOutputFormat(zoomLevel, cv);
+      return new AccumuloMrsPyramidOutputFormat(zoomLevel, cv);
     }
   } // end getOutputFormat
 
@@ -173,7 +173,7 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   
   
   @Override
-  public MrsImagePyramidMetadataWriter getMetadataWriter()
+  public MrsPyramidMetadataWriter getMetadataWriter()
   {
     return provider.getMetadataWriter();
   }
@@ -296,7 +296,7 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
         } else {
           workDir = "";
         }
-        workDir += AccumuloMrsImagePyramidFileOutputFormat.class.getSimpleName() +
+        workDir += AccumuloMrsPyramidFileOutputFormat.class.getSimpleName() +
                    File.separator +
                    this.table +
                    File.separator;// +
@@ -363,19 +363,19 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
             throw new DataProviderException("Problem creating output splits.txt for bulk ingest directory.");
           }
 
-          job.setOutputFormatClass(AccumuloMrsImagePyramidFileOutputFormat.class);
+          job.setOutputFormatClass(AccumuloMrsPyramidFileOutputFormat.class);
         }
         Path workFilesPath = new Path(workDir + "files");
         if (job != null)
         {
-          AccumuloMrsImagePyramidFileOutputFormat.setOutputPath(job, workFilesPath);
-          //AccumuloMrsImagePyramidFileOutputFormat.setZoomLevel(zoomLevel);
+          AccumuloMrsPyramidFileOutputFormat.setOutputPath(job, workFilesPath);
+          //AccumuloMrsPyramidFileOutputFormat.setZoomLevel(zoomLevel);
         }
         else
         {
           Path outputDir = workFilesPath.getFileSystem(conf).makeQualified(
                   workFilesPath);
-//          conf.set(AccumuloMrsImagePyramidFileOutputFormat.OUTDIR, outputDir.toString());
+//          conf.set(AccumuloMrsPyramidFileOutputFormat.OUTDIR, outputDir.toString());
           conf.set("mapred.output.dir", outputDir.toString());
           conf.set("mapreduce.output.fileoutputformat.outputdir", outputDir.toString());
         }
@@ -384,10 +384,10 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
         if (job != null)
         {
           log.info("Setting the output format of: " +
-                   AccumuloMrsImagePyramidOutputFormat.class.getCanonicalName());
+                   AccumuloMrsPyramidOutputFormat.class.getCanonicalName());
 
-          job.setOutputFormatClass(AccumuloMrsImagePyramidOutputFormat.class);
-          AccumuloMrsImagePyramidOutputFormat.setJob(job);
+          job.setOutputFormatClass(AccumuloMrsPyramidOutputFormat.class);
+          AccumuloMrsPyramidOutputFormat.setJob(job);
 
           log.info("Setting zoom level to " + zoomLevel);
           log.info("Visibility is " + cv.toString());
@@ -529,4 +529,4 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   {
     return null;
   }
-} // end AccumuloMrsImagePyramidOutputFormatProvider
+} // end AccumuloMrsPyramidOutputFormatProvider

@@ -23,7 +23,7 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
-import org.mrgeo.data.image.MrsImagePyramidWriterContext;
+import org.mrgeo.data.image.MrsPyramidWriterContext;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -36,7 +36,7 @@ public class AccumuloMrsImageWriter implements MrsImageWriter
 {
 
   final private AccumuloMrsImageDataProvider provider;
-  final private MrsImagePyramidWriterContext context;
+  final private MrsPyramidWriterContext context;
   private Connector conn;
   private Properties mrgeoAccProps;
   private ColumnVisibility cv;
@@ -54,7 +54,7 @@ public class AccumuloMrsImageWriter implements MrsImageWriter
    * @param pl - the protection level of the image to be stored
    */
   public AccumuloMrsImageWriter(AccumuloMrsImageDataProvider provider,
-      MrsImagePyramidWriterContext context, String pl){
+                                MrsPyramidWriterContext context, String pl){
 
     this.provider = provider;
     this.context = context;

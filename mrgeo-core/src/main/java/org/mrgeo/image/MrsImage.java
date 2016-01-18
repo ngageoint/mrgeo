@@ -22,7 +22,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidReaderContext;
+import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -56,11 +56,11 @@ private MrsPyramidMetadata metadata = null; // image metadata
 private int zoomlevel = -1; // current zoom level of this image
 private int tilesize = -1; // size of a tile (here for convenience, it is in the metadata)
 private MrsImageDataProvider provider;
-private MrsImagePyramidReaderContext context;
+private MrsPyramidReaderContext context;
 
 private MrsImage(MrsImageDataProvider provider, final int zoomlevel)
 {
-  context = new MrsImagePyramidReaderContext();
+  context = new MrsPyramidReaderContext();
   context.setZoomlevel(zoomlevel);
   this.provider = provider;
 

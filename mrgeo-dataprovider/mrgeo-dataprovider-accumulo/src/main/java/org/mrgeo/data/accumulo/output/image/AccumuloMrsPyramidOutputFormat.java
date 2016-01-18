@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWritable, RasterWritable>
+public class AccumuloMrsPyramidOutputFormat extends OutputFormat<TileIdWritable, RasterWritable>
 {
   private int zoomLevel = -1;
   private String table = null;
@@ -68,8 +68,8 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
 
   private static Job job;
   
-  public AccumuloMrsImagePyramidOutputFormat(){}
-  public AccumuloMrsImagePyramidOutputFormat(int z, ColumnVisibility cv){
+  public AccumuloMrsPyramidOutputFormat(){}
+  public AccumuloMrsPyramidOutputFormat(int z, ColumnVisibility cv){
     zoomLevel = z;
     colViz = cv;
   }
@@ -79,7 +79,7 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
     zoomLevel = z;
   }
   
-  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidOutputFormat.class);
+  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidOutputFormat.class);
   
   public static void setJob(Job j){
 	  job = j;
@@ -313,4 +313,4 @@ public class AccumuloMrsImagePyramidOutputFormat extends OutputFormat<TileIdWrit
 
   
   
-} // end AccumuloMrsImagePyramidOutputFormat
+} // end AccumuloMrsPyramidOutputFormat

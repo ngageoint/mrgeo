@@ -22,7 +22,7 @@ import java.io.IOException;
 /**
  * An interface for writing image metadata.
  */
-public interface MrsImagePyramidMetadataWriter
+public interface MrsPyramidMetadataWriter
 {
   public void write() throws IOException;
   public void write(MrsPyramidMetadata metadata) throws IOException;

@@ -26,7 +26,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
+import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -306,7 +306,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
 
   MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName,
       AccessMode.READ, providerProperties);
-  MrsImagePyramidMetadataReader r = dp.getMetadataReader();
+  MrsPyramidMetadataReader r = dp.getMetadataReader();
   final MrsPyramidMetadata pyramidMetadata = r.read();
   isTransparent = false;
 

@@ -25,7 +25,7 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
+import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -43,14 +43,14 @@ import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
 
-public class HdfsMrsImagePyramidOutputFormatProvider extends MrsImageOutputFormatProvider
+public class HdfsMrsPyramidOutputFormatProvider extends MrsImageOutputFormatProvider
 {
 final HdfsMrsImageDataProvider provider;
 
 Path splitFileTmp = null;
 
-public HdfsMrsImagePyramidOutputFormatProvider(final HdfsMrsImageDataProvider provider,
-    final ImageOutputFormatContext context)
+public HdfsMrsPyramidOutputFormatProvider(final HdfsMrsImageDataProvider provider,
+                                          final ImageOutputFormatContext context)
 {
   super(context);
 
@@ -156,7 +156,7 @@ private void performTeardown(final Configuration conf) throws DataProviderExcept
 }
 
 @Override
-public MrsImagePyramidMetadataWriter getMetadataWriter()
+public MrsPyramidMetadataWriter getMetadataWriter()
 {
   return provider.getMetadataWriter();
 }

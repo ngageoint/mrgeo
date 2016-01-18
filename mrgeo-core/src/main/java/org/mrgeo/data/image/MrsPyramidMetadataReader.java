@@ -15,11 +15,15 @@
 
 package org.mrgeo.data.image;
 
-public class MrsImagePyramidMetadataWriterContext
+import org.mrgeo.image.MrsPyramidMetadata;
+
+import java.io.IOException;
+
+/**
+ * An interface for reading image metadata.
+ */
+public interface MrsPyramidMetadataReader
 {
-
-  public MrsImagePyramidMetadataWriterContext()
-  {
-  }
-
+  public MrsPyramidMetadata read() throws IOException;
+  public MrsPyramidMetadata reload() throws IOException;
 }

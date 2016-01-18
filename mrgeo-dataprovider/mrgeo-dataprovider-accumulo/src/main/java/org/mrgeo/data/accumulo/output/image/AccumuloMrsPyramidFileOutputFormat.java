@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class AccumuloMrsImagePyramidFileOutputFormat extends FileOutputFormat<Key, Value>
+public class AccumuloMrsPyramidFileOutputFormat extends FileOutputFormat<Key, Value>
 {
   
   private String vizStr = null;
@@ -44,10 +44,10 @@ public class AccumuloMrsImagePyramidFileOutputFormat extends FileOutputFormat<Ke
   private RecordWriter _innerRecordWriter = null;
   private int zoomLevel = -1;
   
-  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidFileOutputFormat.class);
+  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidFileOutputFormat.class);
 
-  public AccumuloMrsImagePyramidFileOutputFormat(){}
-  public AccumuloMrsImagePyramidFileOutputFormat(int z, ColumnVisibility cv){
+  public AccumuloMrsPyramidFileOutputFormat(){}
+  public AccumuloMrsPyramidFileOutputFormat(int z, ColumnVisibility cv){
     zoomLevel = z;
     this.cv = cv;
     vizStr = new String(this.cv.getExpression());
@@ -162,4 +162,4 @@ public class AccumuloMrsImagePyramidFileOutputFormat extends FileOutputFormat<Ke
   } // end AccumuloMrGeoFileRecordWriter
   
 
-} // end AccumuloMrsImagePyramidFileOutputFormat
+} // end AccumuloMrsPyramidFileOutputFormat

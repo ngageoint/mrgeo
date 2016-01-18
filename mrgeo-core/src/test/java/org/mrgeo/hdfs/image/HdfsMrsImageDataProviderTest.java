@@ -27,11 +27,11 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.image.*;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.ImageOutputFormatContext;
-import org.mrgeo.hdfs.input.image.HDFSMrsImagePyramidRecordReader;
-import org.mrgeo.hdfs.input.image.HdfsMrsImagePyramidInputFormatProvider;
-import org.mrgeo.hdfs.metadata.HdfsMrsImagePyramidMetadataReader;
-import org.mrgeo.hdfs.metadata.HdfsMrsImagePyramidMetadataWriter;
-import org.mrgeo.hdfs.output.image.HdfsMrsImagePyramidOutputFormatProvider;
+import org.mrgeo.hdfs.input.image.HdfsMrsPyramidRecordReader;
+import org.mrgeo.hdfs.input.image.HdfsMrsPyramidInputFormatProvider;
+import org.mrgeo.hdfs.metadata.HdfsMrsPyramidMetadataReader;
+import org.mrgeo.hdfs.metadata.HdfsMrsPyramidMetadataWriter;
+import org.mrgeo.hdfs.output.image.HdfsMrsPyramidOutputFormatProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
@@ -145,7 +145,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
 
     MrsImageInputFormatProvider p = provider.getImageInputFormatProvider(context);
 
-    Assert.assertEquals("Wrong class", HdfsMrsImagePyramidInputFormatProvider.class, p.getClass());
+    Assert.assertEquals("Wrong class", HdfsMrsPyramidInputFormatProvider.class, p.getClass());
   }
 
   @Test
@@ -156,7 +156,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
 
     MrsImageOutputFormatProvider p = provider.getTiledOutputFormatProvider(context);
 
-    Assert.assertEquals("Wrong class", HdfsMrsImagePyramidOutputFormatProvider.class, p.getClass());
+    Assert.assertEquals("Wrong class", HdfsMrsPyramidOutputFormatProvider.class, p.getClass());
 
   }
 
@@ -164,7 +164,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetRecordReader() throws Exception
   {
-    Assert.assertEquals("Wrong class", HDFSMrsImagePyramidRecordReader.class, provider.getRecordReader().getClass());
+    Assert.assertEquals("Wrong class", HdfsMrsPyramidRecordReader.class, provider.getRecordReader().getClass());
   }
 
   @Test
@@ -178,7 +178,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetMrsTileReader() throws Exception
   {
-    MrsImagePyramidReaderContext context = new MrsImagePyramidReaderContext(10);
+    MrsPyramidReaderContext context = new MrsPyramidReaderContext(10);
 
     Assert.assertEquals("Wrong class", HdfsMrsImageReader.class, provider.getMrsTileReader(context).getClass());
   }
@@ -187,7 +187,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetMrsTileWriter() throws Exception
   {
-    MrsImagePyramidWriterContext context = new MrsImagePyramidWriterContext(10, 1, "");
+    MrsPyramidWriterContext context = new MrsPyramidWriterContext(10, 1, "");
 
     Assert.assertEquals("Wrong class", HdfsMrsImageWriter.class, provider.getMrsTileWriter(context).getClass());
   }
@@ -196,11 +196,11 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetMetadataReader() throws Exception
   {
-    MrsImagePyramidMetadataReaderContext context = new MrsImagePyramidMetadataReaderContext();
+    MrsPyramidMetadataReaderContext context = new MrsPyramidMetadataReaderContext();
 
-    MrsImagePyramidMetadataReader reader = provider.getMetadataReader(context);
+    MrsPyramidMetadataReader reader = provider.getMetadataReader(context);
 
-    Assert.assertEquals("Wrong class", HdfsMrsImagePyramidMetadataReader.class, reader.getClass());
+    Assert.assertEquals("Wrong class", HdfsMrsPyramidMetadataReader.class, reader.getClass());
 
     Assert.assertEquals("Should be same object", reader, provider.getMetadataReader(context));
   }
@@ -209,11 +209,11 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetMetadataWriter() throws Exception
   {
-    MrsImagePyramidMetadataWriterContext context = new MrsImagePyramidMetadataWriterContext();
+    MrsPyramidMetadataWriterContext context = new MrsPyramidMetadataWriterContext();
 
-    MrsImagePyramidMetadataWriter writer = provider.getMetadataWriter(context);
+    MrsPyramidMetadataWriter writer = provider.getMetadataWriter(context);
 
-    Assert.assertEquals("Wrong class", HdfsMrsImagePyramidMetadataWriter.class, writer.getClass());
+    Assert.assertEquals("Wrong class", HdfsMrsPyramidMetadataWriter.class, writer.getClass());
 
     Assert.assertEquals("Should be same object", writer, provider.getMetadataWriter(context));
   }

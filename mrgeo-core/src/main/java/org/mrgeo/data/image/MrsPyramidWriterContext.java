@@ -15,18 +15,20 @@
 
 package org.mrgeo.data.image;
 
-public class MrsImagePyramidReaderContext
+public class MrsPyramidWriterContext
 {
+  private int zoomlevel;
+  private int partNum;
+  private String protectionLevel;
 
-  int zoomlevel;
-
-  public MrsImagePyramidReaderContext()
+  public MrsPyramidWriterContext()
   {
   }
-
-  public MrsImagePyramidReaderContext(int zoomlevel)
+  public MrsPyramidWriterContext(int zoomlevel, int partition, String protectionLevel)
   {
     this.zoomlevel = zoomlevel;
+    this.partNum = partition;
+    this.protectionLevel = protectionLevel;
   }
 
   public int getZoomlevel()
@@ -37,5 +39,20 @@ public class MrsImagePyramidReaderContext
   public void setZoomlevel(int zoom)
   {
     zoomlevel = zoom;
+  }
+  
+  public int getPartNum()
+  {
+    return partNum;
+  }
+  
+  public void setPartNum(int part)
+  {
+    partNum = part;
+  }
+
+  public String getProtectionLevel()
+  {
+    return protectionLevel;
   }
 }

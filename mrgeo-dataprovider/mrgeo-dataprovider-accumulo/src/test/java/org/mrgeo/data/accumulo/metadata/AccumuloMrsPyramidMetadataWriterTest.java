@@ -29,7 +29,7 @@ import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import java.io.*;
 
 @Ignore
-public class AccumuloMrsImagePyramidMetadataWriterTest
+public class AccumuloMrsPyramidMetadataWriterTest
 {
 
   private static String junk = "junk";
@@ -37,8 +37,8 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
   private File file;
   
   private AccumuloMrsImageDataProvider provider;
-  private AccumuloMrsImagePyramidMetadataWriter writer;
-  private AccumuloMrsImagePyramidMetadataReader reader;
+  private AccumuloMrsPyramidMetadataWriter writer;
+  private AccumuloMrsPyramidMetadataReader reader;
   private MrsPyramidMetadata metadata;
   private String originalFileStr;
   private String originalMeta;
@@ -66,10 +66,10 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     String fstr = AccumuloDefs.CWD + AccumuloDefs.INPUTDIR + AccumuloDefs.INPUTMETADATADIR + AccumuloDefs.INPUTMETADATAFILE;
     file = new File(fstr);
 
-    writer = (AccumuloMrsImagePyramidMetadataWriter) provider.getMetadataWriter();
+    writer = (AccumuloMrsPyramidMetadataWriter) provider.getMetadataWriter();
     writer.setConnector(conn);
 
-    reader = (AccumuloMrsImagePyramidMetadataReader) provider.getMetadataReader();
+    reader = (AccumuloMrsPyramidMetadataReader) provider.getMetadataReader();
     reader.setConnector(conn);
     
     FileInputStream fis = new FileInputStream(file);
@@ -229,4 +229,4 @@ public class AccumuloMrsImagePyramidMetadataWriterTest
     
   }
 
-} // end AccumuloMrsImagePyramidMetadataWriterTest
+} // end AccumuloMrsPyramidMetadataWriterTest

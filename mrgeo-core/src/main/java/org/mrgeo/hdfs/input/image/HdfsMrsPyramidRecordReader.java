@@ -13,63 +13,53 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.data.accumulo.input.image;
+package org.mrgeo.hdfs.input.image;
 
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileRecordReader;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 
 import java.io.IOException;
 
-public class AccumuloMrsImagePyramidRecordReader extends RecordReader<TileIdWritable, RasterWritable>
+public class HdfsMrsPyramidRecordReader extends SequenceFileRecordReader<TileIdWritable, RasterWritable>
 {
 
   @Override
-  public void close() throws IOException
+  public TileIdWritable getCurrentKey()
   {
     // TODO Auto-generated method stub
-    
+    return super.getCurrentKey();
   }
 
   @Override
-  public TileIdWritable getCurrentKey() throws IOException, InterruptedException
+  public RasterWritable getCurrentValue()
   {
     // TODO Auto-generated method stub
-    return null;
+    return super.getCurrentValue();
   }
 
   @Override
-  public RasterWritable getCurrentValue() throws IOException, InterruptedException
-  {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public float getProgress() throws IOException, InterruptedException
-  {
-    // TODO Auto-generated method stub
-    return 0;
-  }
-
-  @Override
-  public void initialize(InputSplit arg0, TaskAttemptContext arg1) throws IOException,
+  public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
-    // TODO Auto-generated method stub
-    
+    if (split instanceof TiledInputSplit)
+    {
+      super.initialize(((TiledInputSplit)split).getWrappedSplit(), context);
+    }
+    else
+    {
+      // Should never happen
+      super.initialize(split, context);
+    }
   }
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException
   {
     // TODO Auto-generated method stub
-    return false;
+    return super.nextKeyValue();
   }
-
-
-
-
-} // end AccumuloMrsImagePyramidRecordReader
+}

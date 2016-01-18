@@ -30,11 +30,11 @@ import org.apache.hadoop.io.compress.Decompressor;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.KVIterator;
-import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataReader;
+import org.mrgeo.data.accumulo.metadata.AccumuloMrsPyramidMetadataReader;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
-import org.mrgeo.data.image.MrsImagePyramidReaderContext;
+import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -109,19 +109,19 @@ public class AccumuloMrsImageReader extends MrsImageReader
   private boolean useCompression = false;
 
   // metadata reader
-  private AccumuloMrsImagePyramidMetadataReader reader;
+  private AccumuloMrsPyramidMetadataReader reader;
 
   // properties needed for connecting to out
   private Properties AMTR_props;
 
   private AccumuloMrsImageDataProvider provider;
-  private MrsImagePyramidReaderContext context;
+  private MrsPyramidReaderContext context;
   private int tileSize = -1;
   private Properties queryProps;
   //private int zoomLevel = -1;
 
   public AccumuloMrsImageReader(AccumuloMrsImageDataProvider provider,
-      MrsImagePyramidReaderContext context) throws IOException {
+      MrsPyramidReaderContext context) throws IOException {
     String enc = provider.getResolvedName();
     // set the zoom level
     this.zoomLevel = context.getZoomlevel();
@@ -154,7 +154,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
 
       try
       {
-        reader = new AccumuloMrsImagePyramidMetadataReader(table);
+        reader = new AccumuloMrsPyramidMetadataReader(table);
         metadata = reader.read();
       }
       catch (DataProviderException dpe)
@@ -182,7 +182,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
    * @param props - properties to be considered for connections and scans
    */
   public AccumuloMrsImageReader(Properties props, AccumuloMrsImageDataProvider provider,
-      MrsImagePyramidReaderContext context) throws IOException {
+      MrsPyramidReaderContext context) throws IOException {
     String enc = provider.getResolvedName();
     if(AccumuloConnector.isEncoded(enc)){
       try

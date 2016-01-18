@@ -26,7 +26,7 @@ import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
+import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.Bounds;
@@ -180,7 +180,7 @@ public static void calculateMetadata(final int zoom,
 
   // HACK!!! (kinda...) Need to make metadata is there so the provider can get the
   //          MrsImageReader (it does a canOpen(), which makes sure metadata is present)
-  MrsImagePyramidMetadataWriter metadataWriter = provider.getMetadataWriter();
+  MrsPyramidMetadataWriter metadataWriter = provider.getMetadataWriter();
   metadataWriter.write(metadata);
 
   final MrsImageReader reader = provider.getMrsTileReader(zoom);

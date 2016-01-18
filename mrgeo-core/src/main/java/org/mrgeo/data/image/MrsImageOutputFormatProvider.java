@@ -110,7 +110,7 @@ public abstract class MrsImageOutputFormatProvider implements ProtectionLevelVal
    */
   public abstract void teardownForSpark(final Configuration conf) throws DataProviderException;
 
-  public abstract MrsImagePyramidMetadataWriter getMetadataWriter();
+  public abstract MrsPyramidMetadataWriter getMetadataWriter();
   public abstract MrsImageDataProvider getImageProvider();
 
   /**

@@ -22,7 +22,7 @@ import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-import org.mrgeo.data.image.MrsImagePyramidWriterContext;
+import org.mrgeo.data.image.MrsPyramidWriterContext;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -35,7 +35,7 @@ import java.io.IOException;
 public class HdfsMrsImageWriter implements MrsImageWriter
 {
   final private HdfsMrsImageDataProvider provider;
-  final private MrsImagePyramidWriterContext context;
+  final private MrsPyramidWriterContext context;
   // Do not use the following variable directly, instead call
   // getConfiguration() since it is created on-demand
   private Configuration conf;
@@ -45,7 +45,7 @@ public class HdfsMrsImageWriter implements MrsImageWriter
 
   // image = path to mapfile directory- e.g., /hdfs/path/to/mapfile (will contain data and index
   // dirs)
-  public HdfsMrsImageWriter(HdfsMrsImageDataProvider provider, MrsImagePyramidWriterContext context)
+  public HdfsMrsImageWriter(HdfsMrsImageDataProvider provider, MrsPyramidWriterContext context)
   {
     this.provider = provider;
     this.context = context;

@@ -45,9 +45,9 @@ import java.util.Map.Entry;
 
 
 /**
- * AccumuloMrsImagePyramidInputFormat handles Accumulo as an input format to map reduce jobs.
+ * AccumuloMrsPyramidInputFormat handles Accumulo as an input format to map reduce jobs.
  */
-public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWritable, RasterWritable>
+public class AccumuloMrsPyramidInputFormat extends InputFormatBase<TileIdWritable, RasterWritable>
 {
 
   // table to use as input
@@ -57,7 +57,7 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
   private int inputZoom;
 
   // logger for the class
-  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidInputFormat.class);
+  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidInputFormat.class);
   
 
   /**
@@ -325,4 +325,4 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
   }
   
   
-} // end AccumuloMrsImagePyramidRecordReader
+} // end AccumuloMrsPyramidRecordReader

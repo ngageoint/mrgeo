@@ -26,8 +26,8 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
+import org.mrgeo.data.image.MrsPyramidMetadataWriter;
+import org.mrgeo.data.image.MrsPyramidMetadataWriterContext;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,22 +36,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMetadataWriter
+public class AccumuloMrsPyramidMetadataWriter implements MrsPyramidMetadataWriter
 {
 
-  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidMetadataWriter.class);
+  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidMetadataWriter.class);
   
   private final MrsImageDataProvider provider;
   
   private Connector conn = null;
   
   /**
-   * Constructor for HdfsMrsImagePyramidMetadataWriter.
+   * Constructor for HdfsMrsPyramidMetadataWriter.
    * @param provider MrsImageDataProvider
-   * @param context MrsImagePyramidMetadataWriterContext
+   * @param context MrsPyramidMetadataWriterContext
    */
-  public AccumuloMrsImagePyramidMetadataWriter(MrsImageDataProvider provider,
-      MrsImagePyramidMetadataWriterContext context)
+  public AccumuloMrsPyramidMetadataWriter(MrsImageDataProvider provider,
+                                          MrsPyramidMetadataWriterContext context)
   {
     this.provider = provider;
     
@@ -61,7 +61,7 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
   /**
    * Write the (already loaded) metadata for the provider to Accumulo
    * @throws IOException
-   * @see org.mrgeo.data.image.MrsImagePyramidMetadataWriter#write()
+   * @see MrsPyramidMetadataWriter#write()
    */
   @Override
   public void write() throws IOException
@@ -169,4 +169,4 @@ public class AccumuloMrsImagePyramidMetadataWriter implements MrsImagePyramidMet
   } // end setConnector
 
   
-} // end AccumuloMrsImagePyramidMetadataWriter
+} // end AccumuloMrsPyramidMetadataWriter

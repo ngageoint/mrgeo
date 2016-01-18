@@ -25,7 +25,7 @@ import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.data.KVIterator;
-import org.mrgeo.data.image.MrsImagePyramidReaderContext;
+import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageException;
 import org.mrgeo.data.image.MrsImageReader;
@@ -56,13 +56,13 @@ public class HdfsMrsImageReader extends MrsImageReader
   private final static int READER_CACHE_EXPIRE = 10; // minutes
 
   final private HdfsMrsImageDataProvider provider;
-  final private MrsImagePyramidReaderContext context;
+  final private MrsPyramidReaderContext context;
   final int tileSize;
   private boolean canBeCached = true;
 
 
   public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
-    MrsImagePyramidReaderContext context) throws IOException
+    MrsPyramidReaderContext context) throws IOException
   {
     String path = new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString();
 

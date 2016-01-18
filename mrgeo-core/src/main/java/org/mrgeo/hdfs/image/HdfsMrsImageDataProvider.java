@@ -27,11 +27,11 @@ import org.mrgeo.data.image.*;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.input.image.HDFSMrsImagePyramidRecordReader;
-import org.mrgeo.hdfs.input.image.HdfsMrsImagePyramidInputFormatProvider;
-import org.mrgeo.hdfs.metadata.HdfsMrsImagePyramidMetadataReader;
-import org.mrgeo.hdfs.metadata.HdfsMrsImagePyramidMetadataWriter;
-import org.mrgeo.hdfs.output.image.HdfsMrsImagePyramidOutputFormatProvider;
+import org.mrgeo.hdfs.input.image.HdfsMrsPyramidRecordReader;
+import org.mrgeo.hdfs.input.image.HdfsMrsPyramidInputFormatProvider;
+import org.mrgeo.hdfs.metadata.HdfsMrsPyramidMetadataReader;
+import org.mrgeo.hdfs.metadata.HdfsMrsPyramidMetadataWriter;
+import org.mrgeo.hdfs.output.image.HdfsMrsPyramidOutputFormatProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +47,8 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   public final static String METADATA = "metadata";
 
   private Configuration conf;
-  private HdfsMrsImagePyramidMetadataReader metaReader = null;
-  private HdfsMrsImagePyramidMetadataWriter metaWriter = null;
+  private HdfsMrsPyramidMetadataReader metaReader = null;
+  private HdfsMrsPyramidMetadataWriter metaWriter = null;
   private Path resourcePath;
 
   public HdfsMrsImageDataProvider(final Configuration conf,
@@ -84,19 +84,19 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   @Override
   public MrsImageInputFormatProvider getImageInputFormatProvider(ImageInputFormatContext context)
   {
-    return new HdfsMrsImagePyramidInputFormatProvider(context);
+    return new HdfsMrsPyramidInputFormatProvider(context);
   }
 
   @Override
   public MrsImageOutputFormatProvider getTiledOutputFormatProvider(ImageOutputFormatContext context)
   {
-    return new HdfsMrsImagePyramidOutputFormatProvider(this, context);
+    return new HdfsMrsPyramidOutputFormatProvider(this, context);
   }
 
   @Override
   public RecordReader<TileIdWritable, RasterWritable> getRecordReader()
   {
-    return new HDFSMrsImagePyramidRecordReader();
+    return new HdfsMrsPyramidRecordReader();
   }
 
   @Override
@@ -107,7 +107,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   }
 
   @Override
-  public MrsImageReader getMrsTileReader(MrsImagePyramidReaderContext context) throws IOException
+  public MrsImageReader getMrsTileReader(MrsPyramidReaderContext context) throws IOException
   {
     return new HdfsMrsImageReader(this, context);
   }
@@ -120,27 +120,27 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   }
 
   @Override
-  public MrsImageWriter getMrsTileWriter(MrsImagePyramidWriterContext context)
+  public MrsImageWriter getMrsTileWriter(MrsPyramidWriterContext context)
   {
     return new HdfsMrsImageWriter(this, context);
   }
 
   @Override
-  public MrsImagePyramidMetadataReader getMetadataReader(MrsImagePyramidMetadataReaderContext context)
+  public MrsPyramidMetadataReader getMetadataReader(MrsPyramidMetadataReaderContext context)
   {
     if (metaReader == null)
     {
-      metaReader = new HdfsMrsImagePyramidMetadataReader(this, getConfiguration(), context);
+      metaReader = new HdfsMrsPyramidMetadataReader(this, getConfiguration(), context);
     }
     return metaReader;
   }
 
   @Override
-  public MrsImagePyramidMetadataWriter getMetadataWriter(MrsImagePyramidMetadataWriterContext context)
+  public MrsPyramidMetadataWriter getMetadataWriter(MrsPyramidMetadataWriterContext context)
   {
     if (metaWriter == null)
     {
-      metaWriter = new HdfsMrsImagePyramidMetadataWriter(this, getConfiguration(), context);
+      metaWriter = new HdfsMrsPyramidMetadataWriter(this, getConfiguration(), context);
     }
     return metaWriter;
   }
@@ -451,7 +451,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   //  {
   //    if (inputFormatConfig instanceof MrsImageTiledInputFormatContext)
   //    {
-  //      return new HdfsMrsImagePyramidInputFormatProvider((MrsImageTiledInputFormatContext)inputFormatConfig);
+  //      return new HdfsMrsPyramidInputFormatProvider((MrsImageTiledInputFormatContext)inputFormatConfig);
   //    }
   //    else if (inputFormatConfig instanceof MrsImagePyramidSingleInputFormatConfig)
   //    {
@@ -465,7 +465,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   //  {
   //    if (outputFormatConfig instanceof ImageOutputFormatContext)
   //    {
-  //      return new HdfsMrsImagePyramidOutputFormatProvider((ImageOutputFormatContext)outputFormatConfig);
+  //      return new HdfsMrsPyramidOutputFormatProvider((ImageOutputFormatContext)outputFormatConfig);
   //    }
   //    return null;
   //  }

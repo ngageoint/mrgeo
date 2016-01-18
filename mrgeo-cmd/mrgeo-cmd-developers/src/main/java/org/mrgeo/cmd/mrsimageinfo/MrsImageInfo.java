@@ -28,7 +28,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidReaderContext;
+import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsPyramid;
@@ -313,7 +313,7 @@ public class MrsImageInfo extends Command
       {
         MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(metadata.getPyramid(),
             AccessMode.READ, providerProperties);
-        MrsImagePyramidReaderContext context = new MrsImagePyramidReaderContext();
+        MrsPyramidReaderContext context = new MrsPyramidReaderContext();
         context.setZoomlevel(zoom);
         MrsImageReader reader;
         try

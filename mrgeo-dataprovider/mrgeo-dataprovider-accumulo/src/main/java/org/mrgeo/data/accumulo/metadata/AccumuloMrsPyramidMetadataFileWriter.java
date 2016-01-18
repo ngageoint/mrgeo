@@ -26,8 +26,8 @@ import org.apache.hadoop.fs.Path;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
-import org.mrgeo.data.image.MrsImagePyramidMetadataWriterContext;
+import org.mrgeo.data.image.MrsPyramidMetadataWriter;
+import org.mrgeo.data.image.MrsPyramidMetadataWriterContext;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.slf4j.Logger;
@@ -37,19 +37,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-public class AccumuloMrsImagePyramidMetadataFileWriter implements MrsImagePyramidMetadataWriter
+public class AccumuloMrsPyramidMetadataFileWriter implements MrsPyramidMetadataWriter
 {
 
   
-  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsImagePyramidMetadataFileWriter.class);
+  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidMetadataFileWriter.class);
   
   private final MrsImageDataProvider provider;
 
   private String workDir = null;
   
 
-  public AccumuloMrsImagePyramidMetadataFileWriter(String workDir, MrsImageDataProvider provider,
-      MrsImagePyramidMetadataWriterContext context)
+  public AccumuloMrsPyramidMetadataFileWriter(String workDir, MrsImageDataProvider provider,
+                                              MrsPyramidMetadataWriterContext context)
   {
     //this.provider = (AccumuloMrsImageDataProvider)provider;
     this.workDir = workDir;
@@ -58,12 +58,12 @@ public class AccumuloMrsImagePyramidMetadataFileWriter implements MrsImagePyrami
   }
   
   /**
-   * Constructor for HdfsMrsImagePyramidMetadataWriter.
+   * Constructor for HdfsMrsPyramidMetadataWriter.
    * @param provider MrsImageDataProvider
-   * @param context MrsImagePyramidMetadataWriterContext
+   * @param context MrsPyramidMetadataWriterContext
    */
-  public AccumuloMrsImagePyramidMetadataFileWriter(MrsImageDataProvider provider,
-      MrsImagePyramidMetadataWriterContext context)
+  public AccumuloMrsPyramidMetadataFileWriter(MrsImageDataProvider provider,
+                                              MrsPyramidMetadataWriterContext context)
   {
     //this.provider = (AccumuloMrsImageDataProvider)provider;
     this.provider = provider;
@@ -74,7 +74,7 @@ public class AccumuloMrsImagePyramidMetadataFileWriter implements MrsImagePyrami
   /**
    * Write the (already loaded) metadata for the provider to Accumulo
    * @throws IOException
-   * @see org.mrgeo.data.image.MrsImagePyramidMetadataWriter#write()
+   * @see MrsPyramidMetadataWriter#write()
    */
   @Override
   public void write() throws IOException
@@ -131,4 +131,4 @@ public class AccumuloMrsImagePyramidMetadataFileWriter implements MrsImagePyrami
   } // end write
 
   
-} // end AccumuloMrsImagePyramidMetadataFileWriter
+} // end AccumuloMrsPyramidMetadataFileWriter

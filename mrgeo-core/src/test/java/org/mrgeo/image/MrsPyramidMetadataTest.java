@@ -16,6 +16,7 @@
 package org.mrgeo.image;
 
 import org.codehaus.jackson.map.exc.UnrecognizedPropertyException;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -31,9 +32,9 @@ import java.io.*;
 import static org.junit.Assert.*;
 
 @SuppressWarnings("static-method")
-public class MrsImagePyramidMetadataTest
+public class MrsPyramidMetadataTest
 {
-  private static final Logger log = LoggerFactory.getLogger(MrsImagePyramidMetadataTest.class);
+  private static final Logger log = LoggerFactory.getLogger(MrsPyramidMetadataTest.class);
   final double epsilon = 0.00000001;
 
   
@@ -241,5 +242,21 @@ public class MrsImagePyramidMetadataTest
     metadata.setMaxZoomLevel(11);
     assertEquals(11 + 1, metadata.getImageMetadata().length);
   }
-  
+
+  @Test
+  @Category(UnitTest.class)
+  public void testSetProtectionLevel()
+  {
+    final MrsPyramidMetadata metadata = new MrsPyramidMetadata();
+
+    String protectionLevel = "";
+    metadata.setProtectionLevel(protectionLevel);
+    Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
+    protectionLevel = "public";
+    metadata.setProtectionLevel(protectionLevel);
+    Assert.assertEquals(protectionLevel, metadata.getProtectionLevel());
+    protectionLevel = null;
+    metadata.setProtectionLevel(protectionLevel);
+    Assert.assertNull(metadata.getProtectionLevel());
+  }
 }
