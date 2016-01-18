@@ -82,13 +82,13 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   }
 
   @Override
-  public MrsImageInputFormatProvider getImageInputFormatProvider(TiledInputFormatContext context)
+  public MrsImageInputFormatProvider getImageInputFormatProvider(ImageInputFormatContext context)
   {
     return new HdfsMrsImagePyramidInputFormatProvider(context);
   }
 
   @Override
-  public MrsImageOutputFormatProvider getTiledOutputFormatProvider(TiledOutputFormatContext context)
+  public MrsImageOutputFormatProvider getTiledOutputFormatProvider(ImageOutputFormatContext context)
   {
     return new HdfsMrsImagePyramidOutputFormatProvider(this, context);
   }
@@ -447,7 +447,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   //  }
   //
   //  @Override
-  //  public InputFormatProvider getInputFormatProvider(final TiledInputFormatContext inputFormatConfig)
+  //  public InputFormatProvider getInputFormatProvider(final ImageInputFormatContext inputFormatConfig)
   //  {
   //    if (inputFormatConfig instanceof MrsImageTiledInputFormatContext)
   //    {
@@ -463,9 +463,9 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   //  @Override
   //  public OutputFormatProvider getOutputFormatProvider(final OutputFormatConfig outputFormatConfig)
   //  {
-  //    if (outputFormatConfig instanceof TiledOutputFormatContext)
+  //    if (outputFormatConfig instanceof ImageOutputFormatContext)
   //    {
-  //      return new HdfsMrsImagePyramidOutputFormatProvider((TiledOutputFormatContext)outputFormatConfig);
+  //      return new HdfsMrsImagePyramidOutputFormatProvider((ImageOutputFormatContext)outputFormatConfig);
   //    }
   //    return null;
   //  }

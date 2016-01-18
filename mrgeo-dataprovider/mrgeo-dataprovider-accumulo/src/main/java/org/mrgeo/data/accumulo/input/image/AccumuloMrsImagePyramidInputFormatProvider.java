@@ -35,7 +35,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
+import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.utils.Base64Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,13 +54,13 @@ public class AccumuloMrsImagePyramidInputFormatProvider extends MrsImageInputFor
   private Authorizations auths;
   private Properties props;
   
-  public AccumuloMrsImagePyramidInputFormatProvider(TiledInputFormatContext context)
+  public AccumuloMrsImagePyramidInputFormatProvider(ImageInputFormatContext context)
   {
     super(context);
     this.table = context.getInput();
   } // end constructor
   
-  public AccumuloMrsImagePyramidInputFormatProvider(Properties props, TiledInputFormatContext context)
+  public AccumuloMrsImagePyramidInputFormatProvider(Properties props, ImageInputFormatContext context)
   {
     super(context);
     this.table = context.getInput();

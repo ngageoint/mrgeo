@@ -28,8 +28,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
@@ -75,7 +75,7 @@ public class AccumuloMrsImagePyramidInputFormat extends InputFormatBase<TileIdWr
     Configuration conf = context.getConfiguration();
 
     // get the input context for the image
-    TiledInputFormatContext tifc = TiledInputFormatContext.load(conf);
+    ImageInputFormatContext tifc = ImageInputFormatContext.load(conf);
     
     // get the zoom level of the pyramid
     int zl = tifc.getZoomLevel();

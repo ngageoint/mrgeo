@@ -25,7 +25,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
-import org.mrgeo.data.tile.TiledInputFormatContext;
+import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
@@ -77,7 +77,7 @@ public class FindHolesDriver {
 
 		//Properties props = new Properties();
 
-		TiledInputFormatContext tifc = new TiledInputFormatContext(zoom, mipm.getTilesize(), input, props);
+		ImageInputFormatContext tifc = new ImageInputFormatContext(zoom, mipm.getTilesize(), input, props);
 		MrsImageInputFormatProvider miifp = midp.getImageInputFormatProvider(tifc);
 
 		// this is key for setting up the input

@@ -187,7 +187,7 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
    * @return
    */
   public abstract MrsImageInputFormatProvider getImageInputFormatProvider(
-    final TiledInputFormatContext context);
+    final ImageInputFormatContext context);
 
   /**
    * Return an instance of an OutputFormat class to be used in Spark jobs for producing tiled
@@ -196,5 +196,5 @@ public abstract class MrsImageDataProvider implements ProtectionLevelValidator
    * @return
    */
   public abstract MrsImageOutputFormatProvider getTiledOutputFormatProvider(
-    final TiledOutputFormatContext context);
+    final ImageOutputFormatContext context);
 }

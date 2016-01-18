@@ -25,8 +25,8 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.image.*;
-import org.mrgeo.data.tile.TiledInputFormatContext;
-import org.mrgeo.data.tile.TiledOutputFormatContext;
+import org.mrgeo.data.tile.ImageInputFormatContext;
+import org.mrgeo.data.tile.ImageOutputFormatContext;
 import org.mrgeo.hdfs.input.image.HDFSMrsImagePyramidRecordReader;
 import org.mrgeo.hdfs.input.image.HdfsMrsImagePyramidInputFormatProvider;
 import org.mrgeo.hdfs.metadata.HdfsMrsImagePyramidMetadataReader;
@@ -140,7 +140,8 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   public void testGetTiledInputFormatProvider() throws Exception
   {
     String input = all_ones;
-    TiledInputFormatContext context = new TiledInputFormatContext(10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, input, null);
+    ImageInputFormatContext
+            context = new ImageInputFormatContext(10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, input, null);
 
     MrsImageInputFormatProvider p = provider.getImageInputFormatProvider(context);
 
@@ -151,7 +152,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetTiledOutputFormatProvider() throws Exception
   {
-    TiledOutputFormatContext context = new TiledOutputFormatContext("foo", new Bounds(), 10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "");
+    ImageOutputFormatContext context = new ImageOutputFormatContext("foo", new Bounds(), 10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "");
 
     MrsImageOutputFormatProvider p = provider.getTiledOutputFormatProvider(context);
 

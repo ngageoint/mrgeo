@@ -27,7 +27,7 @@ import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.data.tile.{TileIdWritable, TiledInputFormatContext, TiledOutputFormatContext}
+import org.mrgeo.data.tile._
 import org.mrgeo.data.{DataProviderFactory, MrsPyramidSimpleInputFormat, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsImagePyramid}
@@ -163,7 +163,7 @@ object SparkUtils extends Logging {
     val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
+    val tifc = new ImageInputFormatContext(zoom, metadata.getTilesize,
       provider.getResourceName, bounds, provider.getProviderProperties)
     val ifp = provider.getImageInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
@@ -211,7 +211,7 @@ object SparkUtils extends Logging {
     val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
+    val tifc = new ImageInputFormatContext(zoom, metadata.getTilesize,
       provider.getResourceName, provider.getProviderProperties)
     val ifp = provider.getImageInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
@@ -283,7 +283,7 @@ object SparkUtils extends Logging {
     val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
+    val tifc = new ImageInputFormatContext(zoom, metadata.getTilesize,
       provider.getResourceName, provider.getProviderProperties)
     val ifp = provider.getImageInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
@@ -324,7 +324,7 @@ object SparkUtils extends Logging {
     val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
 
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
+    val tifc = new ImageInputFormatContext(zoom, metadata.getTilesize,
       provider.getResourceName, bounds, provider.getProviderProperties)
     val ifp = provider.getImageInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
@@ -458,7 +458,7 @@ object SparkUtils extends Logging {
     // on.  This can be a problem for fast calculating/small partitions
     val stats = SparkUtils.calculateStats(tiles, bands, metadata.getDefaultValues)
     val tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
-    val tofc = new TiledOutputFormatContext(output, bounds, zoom, tilesize, metadata.getProtectionLevel)
+    val tofc = new ImageOutputFormatContext(output, bounds, zoom, tilesize, metadata.getProtectionLevel)
     val tofp = outputProvider.getTiledOutputFormatProvider(tofc)
     val sparkPartitioner = tofp.getPartitionerForSpark(tileBounds, zoom)
     val conf1 = tofp.setupSparkJob(conf)

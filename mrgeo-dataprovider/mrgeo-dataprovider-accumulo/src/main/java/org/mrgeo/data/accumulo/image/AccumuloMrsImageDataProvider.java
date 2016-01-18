@@ -315,7 +315,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * @return An instance of AccumuloMrsImagePyramidInputFormatProvider is returned.
    */
   @Override
-  public MrsImageInputFormatProvider getImageInputFormatProvider(TiledInputFormatContext context)
+  public MrsImageInputFormatProvider getImageInputFormatProvider(ImageInputFormatContext context)
   {
     return new AccumuloMrsImagePyramidInputFormatProvider(context);
   } // end getImageInputFormatProvider
@@ -329,7 +329,7 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * @return An instance of AccumuloMrsImagePyramidOutputFormatProvider.
    */
   @Override
-  public MrsImageOutputFormatProvider getTiledOutputFormatProvider(TiledOutputFormatContext context)
+  public MrsImageOutputFormatProvider getTiledOutputFormatProvider(ImageOutputFormatContext context)
   {
     return new AccumuloMrsImagePyramidOutputFormatProvider(this, context, cv);
   } // end getTiledOutputFormatProvider

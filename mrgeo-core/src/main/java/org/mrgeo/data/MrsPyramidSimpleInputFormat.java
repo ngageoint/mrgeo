@@ -19,8 +19,8 @@ import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
@@ -57,7 +57,7 @@ public class MrsPyramidSimpleInputFormat extends InputFormat<TileIdWritable, Ras
    * instances of TiledInputSplit.
    */
   protected List<TiledInputSplit> getNativeSplits(final JobContext context,
-                                                  final TiledInputFormatContext ifContext,
+                                                  final ImageInputFormatContext ifContext,
                                                   final String input) throws IOException, InterruptedException
   {
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(input,
@@ -91,8 +91,8 @@ public class MrsPyramidSimpleInputFormat extends InputFormat<TileIdWritable, Ras
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
   {
-    // Get the TiledInputFormatContext from the JobContext
-    TiledInputFormatContext ifContext = TiledInputFormatContext.load(context.getConfiguration());
+    // Get the ImageInputFormatContext from the JobContext
+    ImageInputFormatContext ifContext = ImageInputFormatContext.load(context.getConfiguration());
     String input = ifContext.getInput();
 
     MrsPyramid p = MrsImagePyramid.open(input, context.getConfiguration());
@@ -132,7 +132,7 @@ public class MrsPyramidSimpleInputFormat extends InputFormat<TileIdWritable, Ras
    * @param tileSize
    * @return
    */
-  List<TiledInputSplit> filterInputSplits(final TiledInputFormatContext ifContext,
+  List<TiledInputSplit> filterInputSplits(final ImageInputFormatContext ifContext,
                                           final List<TiledInputSplit> splits,
                                           final int zoomLevel,
                                           final int tileSize)

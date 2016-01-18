@@ -21,10 +21,9 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
-import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
@@ -32,13 +31,12 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
 import java.io.IOException;
-import java.util.Map;
 
 public class MrsPyramidSimpleRecordReader extends RecordReader<TileIdWritable, RasterWritable>
 {
   private static final Logger log = LoggerFactory.getLogger(MrsPyramidSimpleRecordReader.class);
   private RecordReader<TileIdWritable, RasterWritable> scannedInputReader;
-  private TiledInputFormatContext ifContext;
+  private ImageInputFormatContext ifContext;
   private TileIdWritable key;
   private RasterWritable value;
   private Bounds inputBounds = Bounds.world; // bounds of the map/reduce (either the image bounds or cropped though map algebra)
@@ -127,7 +125,7 @@ public class MrsPyramidSimpleRecordReader extends RecordReader<TileIdWritable, R
       final MrsPyramidInputSplit fsplit = (MrsPyramidInputSplit) split;
       final Configuration conf = context.getConfiguration();
 
-      ifContext = TiledInputFormatContext.load(context.getConfiguration());
+      ifContext = ImageInputFormatContext.load(context.getConfiguration());
       if (ifContext.getBounds() != null)
       {
         inputBounds = ifContext.getBounds();

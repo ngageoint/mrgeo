@@ -15,14 +15,10 @@
 
 package org.mrgeo.data.tile;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.Bounds;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * This interface marks an implementing class as containing configuration
@@ -31,7 +27,7 @@ import java.util.Set;
  * that implements this interface and pass it to data plugins to configure
  * the map/reduce job appropriately.
  */
-public class TiledInputFormatContext
+public class ImageInputFormatContext
 {
   private int zoomLevel;
   private int tileSize;
@@ -39,7 +35,7 @@ public class TiledInputFormatContext
   private Bounds bounds;
   private ProviderProperties inputProviderProperties;
 
-  private static final String className = TiledInputFormatContext.class.getSimpleName();
+  private static final String className = ImageInputFormatContext.class.getSimpleName();
   private static final String ZOOM_LEVEL = className + ".zoomLevel";
   private static final String TILE_SIZE = className + ".tileSize";
   private static final String INPUT = className + ".input";
@@ -53,8 +49,8 @@ public class TiledInputFormatContext
    * 
    * @param zoomlevel
    */
-  public TiledInputFormatContext(final int zoomlevel, final int tileSize,
-      final String input, final ProviderProperties inputProviderProperties)
+  public ImageInputFormatContext(final int zoomlevel, final int tileSize,
+                                 final String input, final ProviderProperties inputProviderProperties)
   {
     this.zoomLevel = zoomlevel;
     this.tileSize = tileSize;
@@ -70,9 +66,9 @@ public class TiledInputFormatContext
    * 
    * @param zoomlevel
    */
-  public TiledInputFormatContext(final int zoomlevel, final int tileSize,
-      final String input, final Bounds bounds,
-      final ProviderProperties inputProviderProperties)
+  public ImageInputFormatContext(final int zoomlevel, final int tileSize,
+                                 final String input, final Bounds bounds,
+                                 final ProviderProperties inputProviderProperties)
   {
     this.zoomLevel = zoomlevel;
     this.tileSize = tileSize;
@@ -81,7 +77,7 @@ public class TiledInputFormatContext
     this.inputProviderProperties = inputProviderProperties;
   }
 
-  protected TiledInputFormatContext()
+  protected ImageInputFormatContext()
   {
   }
 
@@ -122,9 +118,9 @@ public class TiledInputFormatContext
       conf.set(PROVIDER_PROPERTY_KEY, ProviderProperties.toDelimitedString(inputProviderProperties));
   }
 
-  public static TiledInputFormatContext load(final Configuration conf)
+  public static ImageInputFormatContext load(final Configuration conf)
   {
-    TiledInputFormatContext context = new TiledInputFormatContext();
+    ImageInputFormatContext context = new ImageInputFormatContext();
     context.input = conf.get(INPUT);
     context.zoomLevel = conf.getInt(ZOOM_LEVEL, 1);
     context.tileSize = conf.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);

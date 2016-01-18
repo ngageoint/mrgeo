@@ -21,8 +21,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,9 +37,9 @@ import java.io.IOException;
 public abstract class MrsImageInputFormatProvider
 {
   private static final Logger log = LoggerFactory.getLogger(MrsImageInputFormatProvider.class);
-  protected TiledInputFormatContext context;
+  protected ImageInputFormatContext context;
 
-  public MrsImageInputFormatProvider(TiledInputFormatContext config)
+  public MrsImageInputFormatProvider(ImageInputFormatContext config)
   {
     this.context = config;
   }

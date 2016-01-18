@@ -25,7 +25,7 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.mrgeo.data.image.MrsImagePyramidMetadataReader;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
+import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 
 public class HdfsMrsImagePyramidInputFormat extends SequenceFileInputFormat<TileIdWritable,RasterWritable>
@@ -105,7 +104,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   // tile id's for each split. First we read the splits file and get the
   // partition info, then we break the partition into blocks, which become the
   // actual splits used.
-  TiledInputFormatContext ifContext = TiledInputFormatContext.load(conf);
+  ImageInputFormatContext ifContext = ImageInputFormatContext.load(conf);
   final int zoom = ifContext.getZoomLevel();
   final int tilesize = ifContext.getTileSize();
 

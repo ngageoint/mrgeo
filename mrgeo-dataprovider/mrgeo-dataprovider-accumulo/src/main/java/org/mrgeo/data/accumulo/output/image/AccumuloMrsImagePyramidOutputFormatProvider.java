@@ -37,7 +37,7 @@ import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledOutputFormatContext;
+import org.mrgeo.data.tile.ImageOutputFormatContext;
 import org.mrgeo.hdfs.partitioners.SparkTileIdPartitioner;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.Bounds;
@@ -75,7 +75,7 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   private Properties props;
   
   private ColumnVisibility cv = null;
-  //private TiledOutputFormatContext context;
+  //private ImageOutputFormatContext context;
   
   /*
    *  it is assumed that output for bulk ingest will be of the form
@@ -85,7 +85,7 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
   
   
   public AccumuloMrsImagePyramidOutputFormatProvider(final AccumuloMrsImageDataProvider provider,
-                                                     final TiledOutputFormatContext context,
+                                                     final ImageOutputFormatContext context,
                                                      final ColumnVisibility cv){
     
     super(context);
@@ -227,7 +227,7 @@ public class AccumuloMrsImagePyramidOutputFormatProvider extends MrsImageOutputF
       Properties props = AccumuloConnector.getAccumuloProperties();
       if(props != null){
 
-        // this used to be the variable "name" in TiledOutputFormatContext, but was always "".
+        // this used to be the variable "name" in ImageOutputFormatContext, but was always "".
         String enc = AccumuloConnector.encodeAccumuloProperties("");
         conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE, enc);
 

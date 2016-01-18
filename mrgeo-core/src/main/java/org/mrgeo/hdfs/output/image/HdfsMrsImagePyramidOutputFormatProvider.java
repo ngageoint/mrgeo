@@ -29,7 +29,7 @@ import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledOutputFormatContext;
+import org.mrgeo.data.tile.ImageOutputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.partitioners.HdfsSparkTileIdPartitioner;
 import org.mrgeo.hdfs.partitioners.ImageSplitGenerator;
@@ -50,7 +50,7 @@ final HdfsMrsImageDataProvider provider;
 Path splitFileTmp = null;
 
 public HdfsMrsImagePyramidOutputFormatProvider(final HdfsMrsImageDataProvider provider,
-    final TiledOutputFormatContext context)
+    final ImageOutputFormatContext context)
 {
   super(context);
 

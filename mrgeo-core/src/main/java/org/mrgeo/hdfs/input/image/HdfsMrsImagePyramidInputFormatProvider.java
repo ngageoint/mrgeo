@@ -25,7 +25,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
+import org.mrgeo.data.tile.ImageInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
@@ -38,7 +38,7 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
 {
   private static final Logger log = LoggerFactory.getLogger(HdfsMrsImagePyramidInputFormatProvider.class);
   
-  public HdfsMrsImagePyramidInputFormatProvider(TiledInputFormatContext context)
+  public HdfsMrsImagePyramidInputFormatProvider(ImageInputFormatContext context)
   {
     super(context);
   }

@@ -17,7 +17,7 @@ package org.mrgeo.data.tile;
 
 import org.mrgeo.utils.Bounds;
 
-public class TiledOutputFormatContext
+public class ImageOutputFormatContext
 {
   private String output;
   private int zoomlevel;
@@ -33,7 +33,7 @@ public class TiledOutputFormatContext
    * 
    * @param output
    */
-  public TiledOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
+  public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
   {
     this.output = output;
     this.bounds = bounds.clone();
@@ -44,7 +44,7 @@ public class TiledOutputFormatContext
     this.calculatePartitions = false;
   }
   
-  public TiledOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize,
+  public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize,
                                   String protectionLevel, int tiletype, int bands)
   {
     this.output = output;
