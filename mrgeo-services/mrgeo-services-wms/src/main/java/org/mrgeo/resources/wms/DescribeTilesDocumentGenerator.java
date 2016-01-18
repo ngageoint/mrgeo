@@ -18,7 +18,7 @@ package org.mrgeo.resources.wms;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.services.Version;
 import org.mrgeo.utils.Bounds;
@@ -130,7 +130,7 @@ public class DescribeTilesDocumentGenerator
 
       try
       {
-        MrsImagePyramid pyramid = MrsImagePyramid.open(provider);
+        MrsPyramid pyramid = MrsPyramid.open(provider);
         MrsPyramidMetadata metadata = pyramid.getMetadata();
 
         Element formats = XmlUtils.createElement(layer, "TiledFormats");

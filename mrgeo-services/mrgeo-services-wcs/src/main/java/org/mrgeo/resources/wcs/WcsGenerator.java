@@ -323,7 +323,7 @@ private static Document generateCapabilities(Version version, UriInfo uriInfo, P
 
 
 /*
- * Returns a list of all MrsImagePyramid version 2 data in the home data directory
+ * Returns a list of all MrsPyramid version 2 data in the home data directory
  */
 private static MrsImageDataProvider[] getPyramidFilesList(
     final ProviderProperties providerProperties) throws IOException

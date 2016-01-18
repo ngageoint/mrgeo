@@ -32,7 +32,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
-import org.mrgeo.image.{ImageStats, MrsImagePyramid}
+import org.mrgeo.image.{ImageStats, MrsPyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
@@ -241,7 +241,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
         // while we were running, there is chance the pyramid was removed from the cache and
         // reopened by another process. Re-opening it here will avoid some potential conflicts.
-        metadata = MrsImagePyramid.open(provider).getMetadata
+        metadata = MrsPyramid.open(provider).getMetadata
 
         // make sure the level is deleted
         deletelevel(tolevel, metadata, provider)
@@ -361,7 +361,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     // while we were running, there is chance the pyramid was removed from the cache and
     // reopened by another process. Re-opening it here will avoid some potential conflicts.
-    metadata = MrsImagePyramid.open(provider).getMetadata
+    metadata = MrsPyramid.open(provider).getMetadata
 
     metadata.setPixelBounds(outputLevel, new LongRectangle(0, 0, pne.px - psw.px, pne.py - psw.py))
     metadata.setTileBounds(outputLevel, b)

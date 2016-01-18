@@ -33,7 +33,7 @@ import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.services.tms.TmsService;
@@ -151,8 +151,8 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
       return getPyramid(pyramid).getMetadata();
   }
 
-  private MrsImagePyramid getPyramid(String pyramid) throws IOException {
-    return MrsImagePyramid.open(pyramid, (ProviderProperties)null);
+  private MrsPyramid getPyramid(String pyramid) throws IOException {
+    return MrsPyramid.open(pyramid, (ProviderProperties)null);
   }
 
   @Test

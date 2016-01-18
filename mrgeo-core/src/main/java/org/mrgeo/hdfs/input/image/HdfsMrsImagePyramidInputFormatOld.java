@@ -33,7 +33,7 @@ import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
 import org.mrgeo.hdfs.tile.Splits;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.TMSUtils;
@@ -109,7 +109,7 @@ public class HdfsMrsImagePyramidInputFormatOld extends SequenceFileInputFormat<T
   {
     try
     {
-      MrsImagePyramid pyramid = MrsImagePyramid.open(dp);
+      MrsPyramid pyramid = MrsPyramid.open(dp);
       String zoomName = pyramid.getMetadata().getName(zoomLevel);
       if (zoomName != null)
       {

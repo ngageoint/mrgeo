@@ -110,7 +110,7 @@ public void testRootResourceXml()
 @Category(UnitTest.class)
 public void testMrsPyramidToTileMapServiceXml()
 {
-  final String response = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><TileMapService services=\"http://localhost:8080/mrgeo-services/api/tms\" version=\"1.0.0\"><Title>Tile Map Service</Title><Abstract>MrGeo MrsImagePyramid rasters available as TMS</Abstract><TileMaps><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistance\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"CostDistance\"/><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/Elevation\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"Elevation\"/><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/HumveeFriction\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"HumveeFriction\"/></TileMaps></TileMapService>";
+  final String response = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><TileMapService services=\"http://localhost:8080/mrgeo-services/api/tms\" version=\"1.0.0\"><Title>Tile Map Service</Title><Abstract>MrGeo MrsPyramid rasters available as TMS</Abstract><TileMaps><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistance\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"CostDistance\"/><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/Elevation\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"Elevation\"/><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/HumveeFriction\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"HumveeFriction\"/></TileMaps></TileMapService>";
 
   List<String> names = new ArrayList<String>();
   names.add("HumveeFriction");

@@ -27,7 +27,7 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,10 +93,10 @@ public class HdfsMrsImagePyramidInputFormatProvider extends MrsImageInputFormatP
 
       try
       {
-        MrsImagePyramid pyramid;
+        MrsPyramid pyramid;
         try
         {
-          pyramid = MrsImagePyramid.open(dp);
+          pyramid = MrsPyramid.open(dp);
         }
         catch (IOException e)
         {

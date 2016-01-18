@@ -31,7 +31,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidReaderContext;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.image.ImageStats;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
@@ -182,17 +182,17 @@ public class MrsImageInfo extends Command
         final FileSystem fs = p.getFileSystem(config);
         if (!fs.exists(p))
         {
-          System.out.println("MrsImagePyramid does not exist: \"" + pyramidName + "\"");
+          System.out.println("MrsPyramid does not exist: \"" + pyramidName + "\"");
           new HelpFormatter().printHelp("MrsImageInfo <pyramid>", options);
           return 1;
         }
 
         System.out.println("");
         System.out.println("");
-        System.out.println("MrsImagePyramid Information");
+        System.out.println("MrsPyramid Information");
         System.out.println("======================");
 
-        final MrsImagePyramid pyramid = MrsImagePyramid.open(pyramidName, providerProperties);
+        final MrsPyramid pyramid = MrsPyramid.open(pyramidName, providerProperties);
         printMetadata(pyramid.getMetadata(), providerProperties);
 
         if (line.hasOption("v"))

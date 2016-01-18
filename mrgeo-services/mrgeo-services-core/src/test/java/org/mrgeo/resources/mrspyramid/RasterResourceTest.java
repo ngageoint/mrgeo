@@ -36,7 +36,7 @@ import org.mockito.stubbing.Answer;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.MapAlgebraJob;
 import org.mrgeo.mapreduce.job.JobDetails;
@@ -205,7 +205,7 @@ public class RasterResourceTest extends JerseyTest
   @Category(UnitTest.class)
   public void testGetImageAsKML() throws Exception
   {
-    MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+    MrsPyramid pyramidMock = mock(MrsPyramid.class);
     when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
     when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
             .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
@@ -233,7 +233,7 @@ public class RasterResourceTest extends JerseyTest
   @Category(UnitTest.class)
   public void testGetImageBadColorScaleName() throws Exception
   {
-    MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+    MrsPyramid pyramidMock = mock(MrsPyramid.class);
     when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
     when(service.getColorScaleFromName(anyString())).thenAnswer(new Answer() {
           public Object answer(InvocationOnMock invocation) throws FileNotFoundException {
@@ -267,7 +267,7 @@ public class RasterResourceTest extends JerseyTest
   @Category(UnitTest.class)
   public void testGetImageBadFormat() throws Exception
   {
-    MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+    MrsPyramid pyramidMock = mock(MrsPyramid.class);
     when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
     when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
     when(service.getImageRenderer(anyString())).thenThrow(new IllegalArgumentException("INVALID FORMAT"));
@@ -311,7 +311,7 @@ public class RasterResourceTest extends JerseyTest
   public void testGetImagePng() throws Exception
   {
       String typ = "image/png";
-      MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+      MrsPyramid pyramidMock = mock(MrsPyramid.class);
       when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
       when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
       when(service.getColorScaleFromName(anyString())).thenReturn(null);
@@ -355,7 +355,7 @@ public class RasterResourceTest extends JerseyTest
   public void testGetImageTiff() throws Exception
   {
       String typ = "image/tiff";
-      MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+      MrsPyramid pyramidMock = mock(MrsPyramid.class);
       when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
       when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
       when(service.getColorScaleFromName(anyString())).thenReturn(null);

@@ -20,7 +20,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
 
@@ -52,8 +52,8 @@ public class TmsService {
     }
 
     @SuppressWarnings("static-method")
-    public MrsImagePyramid getPyramid(String raster) throws IOException {
-        return MrsImagePyramid.open(raster, (ProviderProperties)null);
+    public MrsPyramid getPyramid(String raster) throws IOException {
+        return MrsPyramid.open(raster, (ProviderProperties)null);
     }
 
     public MrsPyramidMetadata getMetadata(String raster) throws ExecutionException {

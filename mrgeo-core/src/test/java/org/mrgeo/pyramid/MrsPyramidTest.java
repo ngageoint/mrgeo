@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.Bounds;
 
@@ -33,16 +33,16 @@ public class MrsPyramidTest
 {
   final String smallElevation = Defs.CWD + "/" + Defs.INPUT + "small-elevation-nopyramids";
 
-  MrsImagePyramid noPyramids = null;
+  MrsPyramid noPyramids = null;
   MrsPyramidMetadata noPyramidsMeta = null;
-  MrsImagePyramid pyramid = null;
+  MrsPyramid pyramid = null;
   ProviderProperties providerProperties;
   
   @Before
   public void setUp() throws Exception
   {
     providerProperties = null;
-    noPyramids = MrsImagePyramid.open(smallElevation, providerProperties);
+    noPyramids = MrsPyramid.open(smallElevation, providerProperties);
     noPyramidsMeta = noPyramids.getMetadata();
   }
 
@@ -56,7 +56,7 @@ public class MrsPyramidTest
   @Category(UnitTest.class)
   public void openPyramid() throws Exception
   {
-    MrsImagePyramid p = MrsImagePyramid.open(smallElevation, providerProperties);
+    MrsPyramid p = MrsPyramid.open(smallElevation, providerProperties);
     comparePyramids(noPyramids, p);
   }
   
@@ -64,7 +64,7 @@ public class MrsPyramidTest
   @Category(UnitTest.class)
   public void loadPyramid() throws Exception
   {
-    MrsImagePyramid p = MrsImagePyramid.loadPyramid(smallElevation, providerProperties);
+    MrsPyramid p = MrsPyramid.loadPyramid(smallElevation, providerProperties);
     comparePyramids(noPyramids, p);
   }
   
@@ -73,14 +73,14 @@ public class MrsPyramidTest
   public void missingPyramid() throws Exception
   {
     // a bad pyramid
-    MrsImagePyramid.open("/bad/path/to/file", providerProperties);
+    MrsPyramid.open("/bad/path/to/file", providerProperties);
   }
 
   @Test  
   @Category(UnitTest.class)
   public void hasPyramids() throws Exception
   {
-    Assert.assertEquals("MrsImagePyramid should not have pyramids built", false, noPyramids.hasPyramids());
+    Assert.assertEquals("MrsPyramid should not have pyramids built", false, noPyramids.hasPyramids());
   }
   
 //  @Test
@@ -134,7 +134,7 @@ public class MrsPyramidTest
 //    return metadata;
 //  }
 
-  private static boolean comparePyramids(final MrsImagePyramid expected, final MrsImagePyramid actual)
+  private static boolean comparePyramids(final MrsPyramid expected, final MrsPyramid actual)
       throws IOException
   {
     

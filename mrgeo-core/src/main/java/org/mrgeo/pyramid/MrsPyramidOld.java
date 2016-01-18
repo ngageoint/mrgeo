@@ -13,32 +13,11 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package org.mrgeo.cmd.export;
+package org.mrgeo.pyramid;
 
+import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.LongRectangle;
 
-import org.mrgeo.cmd.Command;
-import org.mrgeo.cmd.CommandSpi;
-
-
-public class ExportSpi extends CommandSpi
+public abstract class MrsPyramidOld
 {
-
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return Export.class;
-  }
-
-  @Override
-  public String getCommandName()
-  {
-    return "export";
-  }
-
-  @Override
-  public String getDescription()
-  {
-    return "Export a MrsPyramidOld image to a geotiff";
-  }
-  
 }

@@ -26,7 +26,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * This class is an InputSplit used by the MrGeo core for MrsPyramid data. It
+ * This class is an InputSplit used by the MrGeo core for MrsPyramidOld data. It
  * wraps an actual "native" split provided by a data plugin and includes
  * additional information required by the MrGeo core. The native split is
  * created by the data plugin provider so that pyramids can be split in

@@ -16,19 +16,21 @@
 package org.mrgeo.data;
 
 import org.apache.hadoop.mapreduce.*;
+import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
-import org.mrgeo.pyramid.MrsPyramid;
 import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This class is the base class for the Hadoop InputFormat classes that are configured
@@ -95,7 +97,7 @@ public class MrsPyramidSimpleInputFormat extends InputFormat<TileIdWritable, Ras
     ImageInputFormatContext ifContext = ImageInputFormatContext.load(context.getConfiguration());
     String input = ifContext.getInput();
 
-    MrsPyramid p = MrsImagePyramid.open(input, context.getConfiguration());
+    MrsPyramid p = MrsPyramid.open(input, context.getConfiguration());
     String pyramid = p.getName();
     int zoom = ifContext.getZoomLevel();
     List<TiledInputSplit> nativeSplits = getNativeSplits(context, ifContext, pyramid);

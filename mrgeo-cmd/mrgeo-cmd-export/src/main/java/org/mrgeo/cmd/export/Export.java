@@ -27,8 +27,10 @@ import org.mrgeo.colorscale.applier.JpegColorScaleApplier;
 import org.mrgeo.colorscale.applier.PngColorScaleApplier;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.tile.TileNotFoundException;
-import org.mrgeo.image.*;
-import org.mrgeo.pyramid.MrsPyramid;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsImageException;
+import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
@@ -400,11 +402,11 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
       for (final String arg : line.getArgs())
       {
         // The input can be either an image or a vector.
-        MrsImagePyramid imagePyramid;
+        MrsPyramid imagePyramid;
         MrsPyramid pyramid = null;
         try
         {
-          imagePyramid = MrsImagePyramid.open(arg, providerProperties);
+          imagePyramid = MrsPyramid.open(arg, providerProperties);
           pyramid = imagePyramid;
         }
         catch(IOException e)

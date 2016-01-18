@@ -140,7 +140,7 @@ protected static Document mrsPyramidMetadataToTileMapXml(final String raster, fi
     /*
      * String tileMap = "<?xml version='1.0' encoding='UTF-8' ?>" +
      * "<TileMap version='1.0.0' tilemapservice='http://localhost/mrgeo-services/api/tms/1.0.0'>" +
-     * "  <Title>AfPk Elevation V2</Title>" + "  <Abstract>A test of V2 MrsImagePyramid.</Abstract>"
+     * "  <Title>AfPk Elevation V2</Title>" + "  <Abstract>A test of V2 MrsPyramid.</Abstract>"
      * + "  <SRS>EPSG:4326</SRS>" + "  <BoundingBox minx='68' miny='33' maxx='72' maxy='35' />" +
      * "  <Origin x='68' y='33' />" +
      * "  <TileFormat width='512' height='512' mime-type='image/tiff' extension='tif' />" +
@@ -294,7 +294,7 @@ protected static Document mrsPyramidToTileMapServiceXml(final String url,
   rootElement.appendChild(title);
 
   final Element abst = doc.createElement("Abstract");
-  abst.setTextContent("MrGeo MrsImagePyramid rasters available as TMS");
+  abst.setTextContent("MrGeo MrsPyramid rasters available as TMS");
   rootElement.appendChild(abst);
 
   final Element tilesets = doc.createElement("TileMaps");
@@ -558,7 +558,7 @@ public Response getTileMap(@PathParam("version") final String version,
   }
   catch (final ExecutionException e)
   {
-    log.error("MrsImagePyramid " + raster + " not found", e);
+    log.error("MrsPyramid " + raster + " not found", e);
     return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + raster).build();
   }
   catch (final ParserConfigurationException ex)

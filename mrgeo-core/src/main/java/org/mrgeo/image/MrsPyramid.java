@@ -29,7 +29,6 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImagePyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.pyramid.MrsPyramid;
 import org.mrgeo.pyramid.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
@@ -42,9 +41,9 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-public class MrsImagePyramid extends MrsPyramid
+public class MrsPyramid
 {
-static Logger log = LoggerFactory.getLogger(MrsImagePyramid.class);
+static Logger log = LoggerFactory.getLogger(MrsPyramid.class);
 
 private final static int IMAGE_CACHE_SIZE = 3;
 private final static int IMAGE_CACHE_EXPIRE = 10; // minutes
@@ -77,15 +76,51 @@ final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBui
     });
 
 
-final protected MrsImageDataProvider provider;
+final private MrsImageDataProvider provider;
 
-protected MrsImagePyramid(MrsImageDataProvider provider)
+private MrsPyramid(MrsImageDataProvider provider)
 {
   super();
 
   this.provider = provider;
 
 }
+
+  public Bounds getBounds()
+  {
+    return getMetadataInternal().getBounds();
+  }
+
+  public LongRectangle getTileBounds(int zoomLevel)
+  {
+    return getMetadataInternal().getTileBounds(zoomLevel);
+  }
+
+  public int getTileSize()
+  {
+    return getMetadataInternal().getTilesize();
+  }
+
+  public int getMaximumLevel()
+  {
+    return getMetadataInternal().getMaxZoomLevel();
+  }
+
+  public int getNumLevels()
+  {
+    return getMetadataInternal().getMaxZoomLevel();
+  }
+
+  /**
+   * Return true if there is data at each of the pyramid levels.
+   *
+   * @return
+   */
+  public boolean hasPyramids()
+  {
+    MrsPyramidMetadata metadata = getMetadataInternal();
+    return metadata.hasPyramids();
+  }
 
 public static void calculateMetadataWithProvider(final String pyramidname, final int zoom,
     final MrsImageDataProvider provider,
@@ -188,7 +223,7 @@ public static void calculateMetadata(final int zoom,
     }
     else
     {
-      log.error("Error calculating MrsImagePyramid metadata, could not get a valid raster from the MrsImage");
+      log.error("Error calculating MrsPyramid metadata, could not get a valid raster from the MrsImage");
     }
 
     provider.getMetadataWriter(null).write(metadata);
@@ -219,7 +254,7 @@ public static void calculateMetadata(final int zoom,
 {
   try
   {
-    MrsImagePyramid.open(name, providerProperties);
+    MrsPyramid.open(name, providerProperties);
     return true;
   }
   catch (final JsonGenerationException e)
@@ -236,31 +271,31 @@ public static void calculateMetadata(final int zoom,
 }
 
 @Deprecated
-public static MrsImagePyramid loadPyramid(final String name,
-      final ProviderProperties providerProperties) throws IOException
+public static MrsPyramid loadPyramid(final String name,
+                                     final ProviderProperties providerProperties) throws IOException
 {
-  return MrsImagePyramid.open(name, providerProperties);
+  return MrsPyramid.open(name, providerProperties);
 }
 
-public static MrsImagePyramid open(final String name,
-      final ProviderProperties providerProperties) throws IOException
+public static MrsPyramid open(final String name,
+                              final ProviderProperties providerProperties) throws IOException
 {
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(name,
       AccessMode.READ, providerProperties);
-  return new MrsImagePyramid(provider);
+  return new MrsPyramid(provider);
 }
 
-public static MrsImagePyramid open(final String name,
-    final Configuration conf) throws IOException
+public static MrsPyramid open(final String name,
+                              final Configuration conf) throws IOException
 {
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(name,
       AccessMode.READ, conf);
-  return new MrsImagePyramid(provider);
+  return new MrsPyramid(provider);
 }
 
-public static MrsImagePyramid open(final MrsImageDataProvider provider) throws IOException
+public static MrsPyramid open(final MrsImageDataProvider provider) throws IOException
 {
-  return new MrsImagePyramid(provider);
+  return new MrsPyramid(provider);
 }
 
 public MrsPyramidMetadata.Classification getClassification() throws IOException
@@ -323,14 +358,12 @@ public ImageStats getStats()
   return null;
 }
 
-@Override
 public String getName()
 {
   return provider.getResourceName();
 }
 
-@Override
-protected MrsPyramidMetadata getMetadataInternal()
+private MrsPyramidMetadata getMetadataInternal()
 {
   try
   {
@@ -353,7 +386,7 @@ protected MrsPyramidMetadata getMetadataInternal()
 //
 //      // just like the open, we need to unqualify the pyramid name to remove any hdfs://... stuff
 //      Path unqualified = HadoopFileUtils.unqualifyPath(new Path(pyramid));
-//      MrsImagePyramid py = pyramidCache.getIfPresent(unqualified.toString());
+//      MrsPyramid py = pyramidCache.getIfPresent(unqualified.toString());
 //
 //      if (py != null)
 //      {
