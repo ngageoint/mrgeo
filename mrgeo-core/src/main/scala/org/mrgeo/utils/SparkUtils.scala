@@ -165,7 +165,7 @@ object SparkUtils extends Logging {
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
     val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
       provider.getResourceName, bounds, provider.getProviderProperties)
-    val ifp = provider.getTiledInputFormatProvider(tifc)
+    val ifp = provider.getImageInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
 
     //    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
@@ -213,7 +213,7 @@ object SparkUtils extends Logging {
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
     val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
       provider.getResourceName, provider.getProviderProperties)
-    val ifp = provider.getTiledInputFormatProvider(tifc)
+    val ifp = provider.getImageInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
 
     //    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
@@ -285,7 +285,7 @@ object SparkUtils extends Logging {
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
     val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
       provider.getResourceName, provider.getProviderProperties)
-    val ifp = provider.getTiledInputFormatProvider(tifc)
+    val ifp = provider.getImageInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
 
     //    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,
@@ -326,7 +326,7 @@ object SparkUtils extends Logging {
     val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
     val tifc = new TiledInputFormatContext(zoom, metadata.getTilesize,
       provider.getResourceName, bounds, provider.getProviderProperties)
-    val ifp = provider.getTiledInputFormatProvider(tifc)
+    val ifp = provider.getImageInputFormatProvider(tifc)
     val conf2 = ifp.setupSparkJob(conf1, provider)
 
     //    MrsImageDataProvider.setupMrsPyramidSingleSimpleInputFormat(job, provider.getResourceName,

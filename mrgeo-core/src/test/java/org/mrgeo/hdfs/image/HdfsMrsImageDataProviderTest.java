@@ -39,8 +39,6 @@ import org.mrgeo.utils.Bounds;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
 {
@@ -144,7 +142,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
     String input = all_ones;
     TiledInputFormatContext context = new TiledInputFormatContext(10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, input, null);
 
-    MrsImageInputFormatProvider p = provider.getTiledInputFormatProvider(context);
+    MrsImageInputFormatProvider p = provider.getImageInputFormatProvider(context);
 
     Assert.assertEquals("Wrong class", HdfsMrsImagePyramidInputFormatProvider.class, p.getClass());
   }

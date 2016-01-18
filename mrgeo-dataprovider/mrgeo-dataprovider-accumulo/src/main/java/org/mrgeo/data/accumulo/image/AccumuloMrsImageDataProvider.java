@@ -315,10 +315,10 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
    * @return An instance of AccumuloMrsImagePyramidInputFormatProvider is returned.
    */
   @Override
-  public MrsImageInputFormatProvider getTiledInputFormatProvider(TiledInputFormatContext context)
+  public MrsImageInputFormatProvider getImageInputFormatProvider(TiledInputFormatContext context)
   {
     return new AccumuloMrsImagePyramidInputFormatProvider(context);
-  } // end getTiledInputFormatProvider
+  } // end getImageInputFormatProvider
 
   
   /**

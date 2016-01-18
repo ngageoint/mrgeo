@@ -19,25 +19,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
-import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderException;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.*;
-import org.mrgeo.image.BoundsCropper;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapreduce.MapReduceUtils;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.TMSUtils;
 
 import java.awt.image.Raster;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * This class is what the MrGeo core code calls to make use of image pyramids
@@ -53,16 +42,37 @@ import java.util.Set;
  * implement its abstract methods.
  * 
  * This class also contains a series of static methods that are conveniences
- * for configuring map/reduces jobs that use image pyramids as input data.
+ * for configuring Spark jobs that use image pyramids as input data.
  */
-public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
+public abstract class MrsImageDataProvider implements ProtectionLevelValidator
 {
+  private String resourceName;
+
   protected ProviderProperties providerProperties;
 
   protected MrsImageDataProvider()
   {
-    super();
+    resourceName = null;
   }
+
+  /**
+   * Sub-classes which use the default constructor must subsequently call
+   * this method to assign the resource name,
+   *
+   * @param resourceName
+   */
+  protected void setResourceName(String resourceName)
+  {
+    this.resourceName = resourceName;
+  }
+
+  public String getResourceName()
+  {
+    return resourceName;
+  }
+
+  public abstract void delete() throws IOException;
+  public abstract void move(String toResource) throws IOException;
 
   /**
    * Override this method if your data provider needs to perform Hadoop job
@@ -96,7 +106,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
 
   public MrsImageDataProvider(final String resourceName)
   {
-    super(resourceName);
+    this.resourceName = resourceName;
   }
 
 
@@ -135,7 +145,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
 
   /**
    * Return an instance of a MrsTileReader class to be used for reading tiled data. This method may
-   * be invoked by callers regardless of whether they are running within a map/reduce job or not.
+   * be invoked by callers regardless of whether they are running within a Spark job or not.
    * 
    * @return
    * @throws IOException 
@@ -155,7 +165,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
   public abstract MrsTileWriter<Raster> getMrsTileWriter(MrsImagePyramidWriterContext context) throws IOException;
 
   /**
-   * Return an instance of a RecordReader class to be used in map/reduce jobs for reading tiled
+   * Return an instance of a RecordReader class to be used in Spark jobs for reading tiled
    * data.
    * 
    * @return
@@ -163,7 +173,7 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
   public abstract RecordReader<TileIdWritable, RasterWritable> getRecordReader();
 
   /**
-   * Return an instance of a RecordWriter class to be used in map/reduce jobs for writing tiled
+   * Return an instance of a RecordWriter class to be used in Spark jobs for writing tiled
    * data.
    * 
    * @return
@@ -171,16 +181,16 @@ public abstract class MrsImageDataProvider extends TileDataProvider<Raster>
   public abstract RecordWriter<TileIdWritable, RasterWritable> getRecordWriter();
 
   /**
-   * Return an instance of an InputFormat class to be used in map/reduce jobs for processing tiled
+   * Return an instance of an InputFormat class to be used in Spark jobs for processing tiled
    * data.
    * 
    * @return
    */
-  public abstract MrsImageInputFormatProvider getTiledInputFormatProvider(
+  public abstract MrsImageInputFormatProvider getImageInputFormatProvider(
     final TiledInputFormatContext context);
 
   /**
-   * Return an instance of an OutputFormat class to be used in map/reduce jobs for producing tiled
+   * Return an instance of an OutputFormat class to be used in Spark jobs for producing tiled
    * data.
    * 
    * @return

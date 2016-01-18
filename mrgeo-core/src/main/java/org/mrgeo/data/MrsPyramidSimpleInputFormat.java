@@ -25,7 +25,6 @@ import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.pyramid.MrsPyramid;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.TMSUtils;
 
 import java.io.IOException;
@@ -63,7 +62,7 @@ public class MrsPyramidSimpleInputFormat extends InputFormat<TileIdWritable, Ras
   {
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(input,
                                                                           DataProviderFactory.AccessMode.READ, context.getConfiguration());
-    MrsImageInputFormatProvider ifProvider = dp.getTiledInputFormatProvider(ifContext);
+    MrsImageInputFormatProvider ifProvider = dp.getImageInputFormatProvider(ifContext);
     List<InputSplit> splits = ifProvider.getInputFormat(input).getSplits(context);
     // In order to work with MrGeo and input bounds cropping, the splits must be
     // of type TiledInputSplit.

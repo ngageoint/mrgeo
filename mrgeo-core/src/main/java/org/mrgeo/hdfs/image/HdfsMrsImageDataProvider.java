@@ -82,7 +82,7 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
   }
 
   @Override
-  public MrsImageInputFormatProvider getTiledInputFormatProvider(TiledInputFormatContext context)
+  public MrsImageInputFormatProvider getImageInputFormatProvider(TiledInputFormatContext context)
   {
     return new HdfsMrsImagePyramidInputFormatProvider(context);
   }

@@ -31,8 +31,6 @@ import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
 
 public class FindHolesDriver {
 
@@ -80,7 +78,7 @@ public class FindHolesDriver {
 		//Properties props = new Properties();
 
 		TiledInputFormatContext tifc = new TiledInputFormatContext(zoom, mipm.getTilesize(), input, props);
-		MrsImageInputFormatProvider miifp = midp.getTiledInputFormatProvider(tifc);
+		MrsImageInputFormatProvider miifp = midp.getImageInputFormatProvider(tifc);
 
 		// this is key for setting up the input
 		job.setInputFormatClass(miifp.getInputFormat(input).getClass());
