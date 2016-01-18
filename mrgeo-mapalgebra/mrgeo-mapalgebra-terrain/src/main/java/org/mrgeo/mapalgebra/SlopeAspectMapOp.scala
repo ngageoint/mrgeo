@@ -55,6 +55,20 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD:Option[RasterRDD] = None
 
+  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], units:String, isSlope:Boolean) = {
+    this()
+
+    this.inputMapOp = inputMapOp
+    this.slope = isSlope
+
+    if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
+        units.equalsIgnoreCase("percent"))) {
+      throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
+    }
+    this.units = units
+
+  }
+
   private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
     this()
 

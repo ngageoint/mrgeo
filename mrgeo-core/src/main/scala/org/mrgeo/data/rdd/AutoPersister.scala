@@ -7,7 +7,7 @@ object AutoPersister {
   val defaultStorageLevel = StorageLevel.MEMORY_AND_DISK_SER
 
   def persist(rdd:RDD[_], storageLevel: StorageLevel = defaultStorageLevel) = {
-    rdd.id
+    //rdd.id
 
     rdd.persist(defaultStorageLevel)
   }

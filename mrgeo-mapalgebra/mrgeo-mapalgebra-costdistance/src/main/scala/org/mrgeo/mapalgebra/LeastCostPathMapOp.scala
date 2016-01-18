@@ -39,7 +39,7 @@ object LeastCostPathMapOp extends MapOpRegistrar {
 class LeastCostPathMapOp extends VectorMapOp with Externalizable
 {
   var costDistanceMapOp: Option[RasterMapOp] = None
-  var costDistanceMetadata: MrsImagePyramidMetadata = null;
+  var costDistanceMetadata: MrsImagePyramidMetadata = null
   var pointsMapOp: Option[VectorMapOp] = None
   var zoom: Int = -1
   var vectorrdd: Option[VectorRDD] = None
@@ -78,13 +78,13 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def execute(context: SparkContext): Boolean = {
-    var destPoints: String = null
+    //var destPoints: String = null
     costDistanceMetadata =
       costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input")).
         metadata().getOrElse(throw new IOException("Missing metadata for cost distance input"))
     if (zoom < 0)
     {
-      zoom = costDistanceMetadata.getMaxZoomLevel()
+      zoom = costDistanceMetadata.getMaxZoomLevel
     }
     //TODO: Need to instantiate and run LeastCostPathCalculator here
     // It currently writes the output tsv file directly. That should ideally

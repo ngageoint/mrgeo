@@ -35,6 +35,9 @@ object KernelMapOp extends MapOpRegistrar {
   val Gaussian: String = "gaussian"
   val Laplacian: String = "laplacian"
 
+  def create(raster:RasterMapOp, method:String, sigma:Double):MapOp =
+    new KernelMapOp(Some(raster), method, sigma)
+
   override def register: Array[String] = {
     Array[String]("kernel")
   }
@@ -50,6 +53,17 @@ class KernelMapOp extends RasterMapOp with Externalizable {
   private var sigma:Double = 0
   private var inputMapOp:Option[RasterMapOp] = None
 
+  private[mapalgebra] def this(raster:Option[RasterMapOp], method:String, sigma:Double) = {
+    this()
+    inputMapOp = raster
+    this.sigma = sigma
+
+    method.toLowerCase match {
+    case KernelMapOp.Gaussian =>
+    case KernelMapOp.Laplacian =>
+    case _ => throw new ParserException("Bad kernel method: " + method)
+    }
+  }
 
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()

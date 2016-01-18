@@ -50,6 +50,7 @@ object MapOpFactory extends Logging {
       case mapop: MapOpRegistrar =>
         logInfo("  " + mapop)
         mapop.register.foreach(op => {
+          logInfo("    (" + op.toLowerCase + ")")
           functions.put(op.toLowerCase, mapop)
         })
       case _ =>
@@ -80,13 +81,97 @@ object MapOpFactory extends Logging {
     mapops.result()
   }
 
-  def getMapOpClasses: scala.collection.immutable.Set[Class[_]] = {
-    var result = Set.newBuilder[Class[_]]
+  def getMapOpClasses: Array[Class[_]] = {
+    if (functions.isEmpty) {
+      registerFunctions()
+    }
+
+    val result = Set.newBuilder[Class[_]]
     functions.values.foreach(c => {
       result += c.getClass
     })
+    result.result().toArray
+  }
+
+  def getMapOpClassNames: Array[String] = {
+
+    val result = Array.newBuilder[String]
+    getMapOpClasses.foreach(cl =>{
+      result += cl.getCanonicalName
+    })
+
     result.result()
   }
+
+  def getMapOpNames: Array[String] = {
+    if (functions.isEmpty) {
+      registerFunctions()
+    }
+
+    val result = Set.newBuilder[String]
+    functions.keysIterator.foreach(c => {
+      result += c
+    })
+    result.result().toArray
+  }
+
+  def getSignatures(classname:String): Array[String] = {
+    if (functions.isEmpty) {
+      registerFunctions()
+    }
+
+    val mapop = functions.values.filter(_.getClass.getCanonicalName.startsWith(classname)).head
+
+    val im = mirror reflect mapop
+    val create = newTermName("create")
+    val ts = im.symbol.typeSignature
+    val method = ts.member(create)
+
+    val rawsig = method match {
+    case symbol: TermSymbol =>
+      symbol.alternatives.map {
+        case creaters: MethodSymbol =>
+          creaters.paramss.head.map(_.asTerm).zipWithIndex.map {
+            case (term, index) =>
+              term.name + ":" + (if (term.typeSignature.toString.startsWith("Array")) {
+                val ts = term.typeSignature.toString
+                ts.substring(ts.indexOf("[") + 1, ts.indexOf("]")) + "*"
+              }
+              else {
+                term.typeSignature.toString
+              }) + {
+                if (term.isParamWithDefault) {
+                  val getter = ts member newTermName("create$default$" + (index + 1))
+                  if (getter != NoSymbol) {
+                    "=" + ((im reflectMethod getter.asMethod)() match {
+                    case s:String => "\"" + s + "\""
+                    case x => x
+                    })
+                  }
+                  else {
+                    method.typeSignature match {
+                    case t if t =:= typeOf[String] => null
+                    case t if t =:= typeOf[Double] => 0.0
+                    case t if t =:= typeOf[Float]  => 0.0F
+                    case t if t =:= typeOf[Long]   => 0L
+                    case t if t =:= typeOf[Int]    => 0
+                    case x                         => throw new IllegalArgumentException(x.toString)
+                    }
+                  }
+                }
+                else {
+                  ""
+                }
+              }
+          }.mkString(",")
+        case _ => ""
+      }
+    case _ => Seq.empty[String]
+    }
+
+    rawsig.toArray
+  }
+
 
   // create a mapop from a function name, called by MapOpFactory("<name>")
   def apply(node: ParserNode, variables: String => Option[ParserNode]): Option[MapOp] = {
@@ -159,4 +244,6 @@ object MapOpFactory extends Logging {
     }))
   }
 }
+
+
 
