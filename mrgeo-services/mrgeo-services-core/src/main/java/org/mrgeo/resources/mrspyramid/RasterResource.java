@@ -107,7 +107,7 @@ public class RasterResource
   }
 
   /*
-   * Accepts a GeoTiff stream for in-memory ingest to MrsPyramidOld.
+   * Accepts a GeoTiff stream for in-memory ingest to MrsPyramid.
    *
    * @param output - unique id, this will be the name of the ingested raster
    *

@@ -38,7 +38,7 @@ public class ExportSpi extends CommandSpi
   @Override
   public String getDescription()
   {
-    return "Export a MrsPyramidOld image to a geotiff";
+    return "Export a MrsPyramid image to a geotiff";
   }
   
 }

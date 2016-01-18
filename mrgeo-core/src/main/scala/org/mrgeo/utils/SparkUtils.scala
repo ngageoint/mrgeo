@@ -299,7 +299,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
 
-        log.info("Loading MrsPyramidOld " + provider.getResourceName)
+        log.info("Loading MrsPyramid " + provider.getResourceName)
 
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsPyramidSimpleInputFormat],
@@ -483,7 +483,7 @@ object SparkUtils extends Logging {
     //    if (repartitionMethod != null) {
     //      // The new method exists, so let's call it through reflection because it's
     //      // more efficient.
-    //      log.info("Saving MrsPyramidOld using new repartition method")
+    //      log.info("Saving MrsPyramid using new repartition method")
     //      val sorted: RDD[(TileIdWritable, RasterWritable)] = repartitionMethod.invoke(orderedTiles, sparkPartitioner).asInstanceOf[RDD[(TileIdWritable, RasterWritable)]]
     //      val saveSorted = new PairRDDFunctions(sorted)
     //      val saveMethodName = "saveAsNewAPIHadoopFile"
@@ -507,7 +507,7 @@ object SparkUtils extends Logging {
     //    }
     //    else {
     //      // This is an older version of Spark, so use the old partition and sort.
-    //      log.info("Saving MrsPyramidOld using old repartition method")
+    //      log.info("Saving MrsPyramid using old repartition method")
     //      val wrapped = new PairRDDFunctions(tiles)
     //      val partitioned = wrapped.partitionBy(sparkPartitioner)
     //
