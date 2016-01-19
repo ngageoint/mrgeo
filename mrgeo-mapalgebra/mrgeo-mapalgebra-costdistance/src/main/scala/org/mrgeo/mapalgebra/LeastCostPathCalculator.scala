@@ -1,20 +1,32 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
 import java.awt.image.Raster
 import java.io._
 import java.text.DecimalFormat
 
-import com.google.common.cache.{LoadingCache, CacheLoader, Cache, CacheBuilder}
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
-import org.mrgeo.geometry.{WritableLineString, GeometryFactory, Geometry, Point}
-import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.utils.{LatLng, HadoopUtils, TMSUtils}
+import org.mrgeo.data.vector.FeatureIdWritable
+import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
+import org.mrgeo.image.MrsPyramidMetadata
+import org.mrgeo.utils.{LatLng, TMSUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -23,7 +35,7 @@ object LeastCostPathCalculator {
   private val LOG: Logger = LoggerFactory.getLogger(classOf[LeastCostPathCalculator])
 
   @throws(classOf[IOException])
-  def run(cdrdd: RasterRDD, cdMetadata: MrsImagePyramidMetadata, zoomLevel: Int,
+  def run(cdrdd: RasterRDD, cdMetadata: MrsPyramidMetadata, zoomLevel: Int,
           destrdd: VectorRDD, sparkContext: SparkContext): VectorRDD = {
     var lcp: LeastCostPathCalculator = null
     lcp = new LeastCostPathCalculator(cdrdd, cdMetadata.getTilesize, zoomLevel,
@@ -104,8 +116,8 @@ class LeastCostPathCalculator extends Externalizable
       lcp.setAttribute("MINSPEED", df.format(pathMinSpeed))
       lcp.setAttribute("MAXSPEED", df.format(pathMaxSpeed))
       lcp.setAttribute("AVGSPEED", df.format(pathDistance / pathCost))
-      val lcpData = new ListBuffer[(LongWritable, Geometry)]()
-      lcpData += ((new LongWritable(1), lcp))
+      val lcpData = new ListBuffer[(FeatureIdWritable, Geometry)]()
+      lcpData += ((new FeatureIdWritable(1), lcp))
       VectorRDD(sparkContext.parallelize(lcpData))
     } finally {
       cdrdd.unpersist()

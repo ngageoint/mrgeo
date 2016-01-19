@@ -1,23 +1,22 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-import java.util.List;
-
-import mil.nga.giat.geowave.store.CloseableIterator;
-
-import org.apache.hadoop.io.LongWritable;
+import mil.nga.giat.geowave.core.store.CloseableIterator;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.type.AttributeDescriptor;
 
-public class GeoWaveVectorIterator implements CloseableKVIterator<LongWritable, Geometry>
+import java.io.IOException;
+import java.util.List;
+
+public class GeoWaveVectorIterator implements CloseableKVIterator<FeatureIdWritable, Geometry>
 {
   private CloseableIterator<?> geoWaveIter;
   private Geometry currValue;
-  private LongWritable currKey = new LongWritable();
+  private FeatureIdWritable currKey = new FeatureIdWritable();
 
   public GeoWaveVectorIterator(CloseableIterator<?> iter)
   {
@@ -66,7 +65,7 @@ public class GeoWaveVectorIterator implements CloseableKVIterator<LongWritable, 
   }
 
   @Override
-  public LongWritable currentKey()
+  public FeatureIdWritable currentKey()
   {
     return currKey;
   }
@@ -77,17 +76,17 @@ public class GeoWaveVectorIterator implements CloseableKVIterator<LongWritable, 
     return currValue;
   }
 
-  public static void setKeyFromFeature(LongWritable key, SimpleFeature feature)
+  public static void setKeyFromFeature(FeatureIdWritable key, SimpleFeature feature)
   {
     // NOTE: The feature id key is not used for processing anywhere in MrGeo.
     // In fact, some of the input formats for vector data hard-code the key
     // to different values. For example CsvInputFormat hard-codes the key for
     // every record to -1. Since the key is never used, I Just hard-code it
     // here to keep things simple.
-    // In the future, if needed, we should switch the LongWritable key to a
+    // In the future, if needed, we should switch the FeatureIdWritable key to a
     // Text key and use the actual feature ID returned from SimpleFeature as
     // the key value. This will have a large ripple effect because input formats,
-    // record readers, mappers, and reducers that used to rely on LongWritable
+    // record readers, mappers, and reducers that used to rely on FeatureIdWritable
     // key values will have to be changed to Text, and the compiler will not be
     // able to automatically find the code that needs to change.
     key.set(-1L);

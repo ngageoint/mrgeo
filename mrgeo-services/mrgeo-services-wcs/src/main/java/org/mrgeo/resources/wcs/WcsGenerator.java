@@ -240,7 +240,7 @@ private Response describeCoverage(UriInfo uriInfo,
   }
   catch (Exception e)
   {
-    return writeError(Response.Status.BAD_REQUEST, e);
+    return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 }
 
@@ -293,7 +293,7 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
   }
   catch (Exception e)
   {
-    return writeError(Response.Status.BAD_REQUEST, e);
+    return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
 
@@ -323,7 +323,7 @@ private static Document generateCapabilities(Version version, UriInfo uriInfo, P
 
 
 /*
- * Returns a list of all MrsImagePyramid version 2 data in the home data directory
+ * Returns a list of all MrsPyramid version 2 data in the home data directory
  */
 private static MrsImageDataProvider[] getPyramidFilesList(
     final ProviderProperties providerProperties) throws IOException
@@ -380,7 +380,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
       }
       catch (Exception e)
       {
-        return writeError(Response.Status.BAD_REQUEST, e);
+        return writeError(Response.Status.BAD_REQUEST, e.getMessage());
       }
     }
     else
@@ -434,13 +434,9 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   {
     bounds = RequestUtils.reprojectBounds(bounds, crs);
   }
-  catch (org.opengis.referencing.NoSuchAuthorityCodeException e)
-  {
-    return writeError(Response.Status.BAD_REQUEST, "InvalidCRS", e.getMessage());
-  }
   catch (Exception e)
   {
-    return writeError(Response.Status.BAD_REQUEST, e);
+    return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
   // Return the resulting image
@@ -460,7 +456,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   catch (Exception e)
   {
     log.error("Unable to render the image in getCoverage", e);
-    return writeError(Response.Status.BAD_REQUEST, e);
+    return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 }
 

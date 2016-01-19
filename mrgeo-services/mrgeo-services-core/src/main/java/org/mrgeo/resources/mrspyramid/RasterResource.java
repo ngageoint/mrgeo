@@ -19,9 +19,9 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONStringer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.mapalgebra.MapAlgebraJob;
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.mapalgebra.MapAlgebraJob;
 import org.mrgeo.resources.job.JobInfoResponse;
 import org.mrgeo.resources.job.JobResponseFormatter;
 import org.mrgeo.services.SecurityUtils;
@@ -87,7 +87,7 @@ public class RasterResource
   {
     try
     {
-      // TODO: After MrsImagePyramid 2.0 is complete, we will no longer specify a
+      // TODO: After MrsPyramid 2.0 is complete, we will no longer specify a
       // full path but instead just the resource name. This is because there is no concept of
       // paths in Accumulo.
 //      String outputPathStr = service.getOutputImageStr(basePath, outputId);
@@ -216,7 +216,7 @@ public class RasterResource
 
       if ( zoomLevel != -1 )
       {
-        MrsImagePyramid pyramid = service.getPyramid(imgName, SecurityUtils.getProviderProperties());
+        MrsPyramid pyramid = service.getPyramid(imgName, SecurityUtils.getProviderProperties());
         if (pyramid == null)
         {
           return Response.status(Status.NOT_FOUND).entity(imgName + " not found").build();
@@ -233,7 +233,7 @@ public class RasterResource
       //in the original wms code
       if (!format.equals(KML_INPUT_FORMAT))
       {
-        MrsImagePyramid pyramid = service.getPyramid(imgName, SecurityUtils.getProviderProperties());
+        MrsPyramid pyramid = service.getPyramid(imgName, SecurityUtils.getProviderProperties());
         if (pyramid == null)
         {
           return Response.status(Status.NOT_FOUND).entity(imgName + " not found").build();

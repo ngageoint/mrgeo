@@ -15,7 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.GDALJavaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class JpegImageResponseWriter extends ImageResponseWriterAbstract
   public void writeToStream(final Raster raster, double[] defaults, final ByteArrayOutputStream byteStream)
     throws IOException
   {
-    GDALUtils.saveRaster(raster, byteStream, "jpeg");
+    GDALJavaUtils.saveRaster(raster, byteStream, "jpeg");
     byteStream.close();
   }
 }

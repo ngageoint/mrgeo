@@ -1,5 +1,16 @@
 /*
- * Copyright (c) 2009-2010 by SPADAC Inc.  All rights reserved.
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.mrgeo.kernel;
@@ -49,53 +60,37 @@ public LaplacianGeographicKernel(double sigma)
   f1 = -1.0 / (Math.PI * Math.pow(this.sigma, 4.0));
 }
 
-@Override
-public float[] createMaxSizeKernel(int zoom, int tileSize)
-{
-  double resolution = TMSUtils.resolution(zoom, tileSize);
-  return createKernel(MAX_LATITUDE, resolution, resolution);
-}
-
 /*
  * (non-Javadoc)
  *
  * @see com.spadac.MrGis.RasterOps.GeographicKernel#createKernel(double)
  */
 @Override
-public float[] createKernel(double latitude, double pixelWidth, double pixelHeight)
+public float[] createKernel(double pixelWidthMeters, double pixelHeightMeters)
 {
-  // pixel height in meters
-  double pixelHeightM = LatLng.calculateGreatCircleDistance(new LatLng(latitude, 0),
-      new LatLng(latitude + pixelHeight, 0));
+  kernelHeight = (int) (Math.ceil(kernelSize / pixelHeightMeters)) * 2 + 1;
+  kernelWidth = (int) (Math.ceil(kernelSize / pixelWidthMeters)) * 2 + 1;
+  // Make sure the kernel doesn't extend beyond the requested kernelSize by a pixel
+  // around the outside ring of the kernel.
+  if (kernelHeight * pixelHeightMeters > kernelSize)
+  {
+    kernelHeight -= 2;
+    kernelWidth -= 2;
+  }
 
-  // kernel radius in pixels
-  int halfKernelHeight = (int) (Math.ceil(kernelSize / pixelHeightM));
-  // kernel height in pixels
-  kernelHeight = halfKernelHeight * 2 + 1;
-
-  // the smallest lat in terms of circumference of the earth
-  double smallestLat = Math.abs(latitude) + halfKernelHeight * pixelHeight;
-  // the minimum pixel width of the kernel in meters
-  double minPixelWidthM = LatLng.calculateGreatCircleDistance(
-      new LatLng(smallestLat, 0), new LatLng(smallestLat, pixelWidth));
-
-  kernelWidth = (int) (Math.ceil(kernelSize / minPixelWidthM)) * 2 + 1;
-
-  kernelWidth = Math.max(1, kernelWidth);
   kernelHeight = Math.max(1, kernelHeight);
+  kernelWidth = Math.max(1, kernelWidth);
 
-  LatLng ll = new LatLng();
-  LatLng origin = new LatLng(latitude, 0);
   float[] data = new float[kernelWidth * kernelHeight];
   int i = 0;
   float sum = 0.0f;
   for (int py = -kernelHeight / 2; py <= kernelHeight / 2; py++)
   {
-    ll.setY(latitude + py * pixelHeight);
     for (int px = -kernelWidth / 2; px <= kernelWidth / 2; px++)
     {
-      ll.setX(px * pixelWidth);
-      double distance = LatLng.calculateGreatCircleDistance(origin, ll);
+      double vertDistance = Math.abs(py) * pixelHeightMeters;
+      double horizDistance = Math.abs(px) * pixelWidthMeters;
+      double distance = Math.sqrt(vertDistance * vertDistance + horizDistance * horizDistance);
       float v;
       // doing this avoids a squared off kernel effect. (makes it prettier
       // when using

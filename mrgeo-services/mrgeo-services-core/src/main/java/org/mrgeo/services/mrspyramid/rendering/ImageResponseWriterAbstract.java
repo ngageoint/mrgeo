@@ -15,7 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.Bounds;
 import org.slf4j.Logger;
@@ -88,14 +88,14 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
 
   @Override
   public Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsImagePyramid pyramid) throws IOException
+    final double scale, final MrsPyramid pyramid) throws IOException
   {
     return write(raster, pyramid.getMetadata().getDefaultValues());
   }
 
   @Override
   public void write(final Raster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsImagePyramid pyramid, final HttpServletResponse response)
+                    final double scale, final MrsPyramid pyramid, final HttpServletResponse response)
       throws ServletException, IOException
   {
     write(raster, pyramid.getMetadata().getDefaultValues(), response);

@@ -1,14 +1,29 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
-import java.awt.image.WritableRaster
-import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
-import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.data.raster.RasterWritable
+import org.apache.spark.{SparkConf, SparkContext}
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 object NormalizeMapOp extends MapOpRegistrar {
@@ -16,6 +31,13 @@ object NormalizeMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("normalize")
   }
+
+  def create(raster:RasterMapOp):MapOp =
+    new NormalizeMapOp(Some(raster), None, None)
+
+  def create(raster:RasterMapOp, min:Double, max:Double):MapOp =
+    new NormalizeMapOp(Some(raster), Some(min), Some(max))
+
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new NormalizeMapOp(node, variables)
@@ -27,6 +49,13 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
   private var inputMapOp: Option[RasterMapOp] = None
   private var minVal:Option[Double] = None
   private var maxVal:Option[Double] = None
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], min:Option[Double], max:Option[Double]) = {
+    this()
+    inputMapOp = raster
+    minVal = min
+    maxVal = max
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -85,7 +114,7 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
     val range = max - min
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
       for (y <- 0 until raster.getHeight) {
         for (x <- 0 until raster.getWidth) {
@@ -100,7 +129,8 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues,
+      bounds = meta.getBounds, calcStats = false))
 
     true
   }

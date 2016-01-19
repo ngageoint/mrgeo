@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
 import java.awt.image.WritableRaster
@@ -5,12 +20,13 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
+import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.TMSUtils.TileBounds
 import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
 
@@ -20,9 +36,11 @@ object MosaicMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("mosaic")
   }
+  def create(first:RasterMapOp, others:RasterMapOp*):MapOp =
+    new MosaicMapOp(List(first) ++ others)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new MosaicMapOp(node, true, variables)
+    new MosaicMapOp(node, variables)
 }
 
 class MosaicMapOp extends RasterMapOp with Externalizable {
@@ -30,10 +48,16 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD:Option[RasterRDD] = None
   private var inputs:Array[Option[RasterMapOp]] = null
 
-  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(rasters:Seq[RasterMapOp]) = {
     this()
 
-    if (node.getNumChildren > 2) {
+    inputs = rasters.map(Some(_)).toArray
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren < 2) {
       throw new ParserException(node.getName + " requires at least two arguments")
     }
 
@@ -46,15 +70,6 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
   }
 
   override def rdd(): Option[RasterRDD] = rasterRDD
-
-//  override def registerClasses(): Array[Class[_]] = {
-//    val classes = Array.newBuilder[Class[_]]
-//
-//    // yuck!  need to register spark private classes
-//    classes += ClassTag(Class.forName("org.apache.spark.util.collection.CompactBuffer")).wrap.runtimeClass
-//
-//    classes.result()
-//  }
 
   override def execute(context: SparkContext): Boolean = {
 
@@ -159,8 +174,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
             val writable = wr.asInstanceOf[Seq[RasterWritable]].head
 
             if (dst == null) {
-              // the tile conversion is a WritableRaster, we can just typecast here
-              dst = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
+              dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(writable))
               dstnodata = nodata(img)
 
               val looper = new Breaks
@@ -185,7 +199,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
               var hasnodata = false
 
               // the tile conversion is a WritableRaster, we can just typecast here
-              val src = RasterWritable.toRaster(writable).asInstanceOf[WritableRaster]
+              val src = RasterUtils.makeRasterWritable(RasterWritable.toRaster(writable))
               val srcnodata = nodata(img)
 
               for (y <- 0 until dst.getHeight) {
@@ -218,7 +232,8 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
       (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0)(0)))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0),
+      bounds = bounds, calcStats = false))
 
     true
 

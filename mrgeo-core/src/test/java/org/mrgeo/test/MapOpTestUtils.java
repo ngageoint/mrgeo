@@ -18,19 +18,20 @@ package org.mrgeo.test;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.junit.Assert;
+import org.gdal.gdal.Dataset;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public MapOpTestUtils(final Class<?> testClass) throws IOException
   super(testClass);
 }
 
-public MrsImagePyramidMetadata getImageMetadata(final String testName)
+public MrsPyramidMetadata getImageMetadata(final String testName)
     throws IOException
 {
   MrsImageDataProvider dp =
@@ -66,7 +67,7 @@ public void generateBaselinePyramid(final Configuration conf, final String testN
   runMapAlgebraExpression(conf, testName, ex);
 
   final Path src = new Path(outputHdfs, testName);
-    final MrsImagePyramid pyramid = MrsImagePyramid.open(src.toString(), (ProviderProperties)null);
+  final MrsPyramid pyramid = MrsPyramid.open(src.toString(), (ProviderProperties)null);
   if (pyramid != null)
   {
     final Path dst = new Path(inputLocal, testName);
@@ -92,8 +93,8 @@ public void generateBaselineTif(final Configuration conf, final String testName,
 
 public void saveBaselineTif(String testName, double nodata) throws IOException
 {
-  final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
-        (ProviderProperties)null);
+  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
+                                             (ProviderProperties)null);
   final MrsImage image = pyramid.getHighestResImage();
 
   try
@@ -101,8 +102,7 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
     Raster raster = RasterTileMerger.mergeTiles(image);
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
 
-    GDALUtils.saveRaster(raster, baselineTif.getCanonicalPath(),
-        image.getBounds(), image.getMaxZoomlevel(), image.getTilesize(), nodata);
+    GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), image.getBounds(), nodata);
 
   }
   finally
@@ -155,13 +155,13 @@ public void compareRasterOutput(final String testName, final TestUtils.ValueTran
 public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
     final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
 {
-  final MrsImagePyramid pyramid = MrsImagePyramid.open(new Path(outputHdfs, testName).toString(),
-      providerProperties);
+  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
+                                             providerProperties);
   final MrsImage image = pyramid.getHighestResImage();
 
   try
   {
-    // The output against which to compare could either be a tif or a MrsImagePyramid.
+    // The output against which to compare could either be a tif or a MrsPyramid.
     // We check for the tif first.
     final File file = new File(inputLocal);
     final File baselineTif = new File(file, testName + ".tif");
@@ -172,8 +172,8 @@ public void compareRasterOutput(final String testName, final TestUtils.ValueTran
     else
     {
       final String inputLocalAbs = file.getCanonicalFile().toURI().toString();
-      final MrsImagePyramid goldenPyramid = MrsImagePyramid.open(inputLocalAbs + "/" + testName,
-          providerProperties);
+      final MrsPyramid goldenPyramid = MrsPyramid.open(inputLocalAbs + "/" + testName,
+                                                       providerProperties);
       final MrsImage goldenImage = goldenPyramid.getImage(image.getZoomlevel());
       try
       {
@@ -194,6 +194,65 @@ public void compareRasterOutput(final String testName, final TestUtils.ValueTran
     if (image != null)
     {
       image.close();
+    }
+  }
+}
+public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator) throws IOException
+{
+  compareLocalRasterOutput(testName, null, testTranslator, (ProviderProperties)null);
+}
+public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
+    final ProviderProperties providerProperties) throws IOException
+{
+  compareLocalRasterOutput(testName, null, testTranslator, providerProperties);
+}
+
+public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
+    final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
+{
+  final File tf = new File(outputLocal);
+  final File testFile = new File(tf, testName + ".tif");
+
+  final Raster testRaster;
+  if (testFile.exists())
+  {
+    Dataset d = GDALUtils.open(testFile.getCanonicalPath());
+    testRaster = GDALUtils.toRaster(d);
+  }
+  else
+  {
+    final String inputLocalAbs = tf.getCanonicalFile().toURI().toString();
+    final MrsPyramid testPyramid = MrsPyramid.open(inputLocalAbs + "/" + testName,
+                                                   providerProperties);
+    final MrsImage testImage = testPyramid.getImage(testPyramid.getMaximumLevel());
+    testRaster = RasterTileMerger.mergeTiles(testImage);
+  }
+
+  // The output against which to compare could either be a tif or a MrsPyramid.
+  // We check for the tif first.
+  final File file = new File(inputLocal);
+  final File baselineTif = new File(file, testName + ".tif");
+  if (baselineTif.exists())
+  {
+    TestUtils.compareRasters(baselineTif, baselineTranslator, testRaster, testTranslator);
+  }
+  else
+  {
+    final String inputLocalAbs = file.getCanonicalFile().toURI().toString();
+    final MrsPyramid goldenPyramid = MrsPyramid.open(inputLocalAbs + "/" + testName,
+                                                     providerProperties);
+    final MrsImage goldenImage = goldenPyramid.getImage(goldenPyramid.getMaximumLevel());
+    try
+    {
+      TestUtils
+          .compareRasters(RasterTileMerger.mergeTiles(goldenImage), testRaster);
+    }
+    finally
+    {
+      if (goldenImage != null)
+      {
+        goldenImage.close();
+      }
     }
   }
 }
@@ -223,13 +282,8 @@ public void runMapAlgebraExpression(final Configuration conf, final String testN
   long start = System.currentTimeMillis();
 
   ProviderProperties pp = ProviderProperties.fromDelimitedString("");
-  if (MapAlgebra.validate(ex, pp)) {
-    MapAlgebra.mapalgebra(ex, (new Path(outputHdfs, testName)).toString(), conf, pp, null);
-  }
-  else
-  {
-    Assert.fail("Invalid MapAlgebra syntax: " + ex);
-  }
+  MapAlgebra.validateWithExceptions(ex, pp);
+  MapAlgebra.mapalgebra(ex, (new Path(outputHdfs, testName)).toString(), conf, pp, null);
 
   log.info("Test Execution time: " + (System.currentTimeMillis() - start));
 }

@@ -155,10 +155,10 @@
       <artifactId>jts</artifactId>
     </dependency>
     <!--
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-    </dependency>
+         <dependency>
+         <groupId>commons-codec</groupId>
+         <artifactId>commons-codec</artifactId>
+         </dependency>
     -->
     <dependency>
       <groupId>commons-collections</groupId>
@@ -183,6 +183,10 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-jexl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.py4j</groupId>
+      <artifactId>py4j</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jboss</groupId>

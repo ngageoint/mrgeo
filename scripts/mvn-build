@@ -11,7 +11,7 @@ usage() {
     echo "  mapalgebra   - mrgeo-core/mrgeo-vector/mrgeo-mapalgebra"
     echo "  cmd          - mrgeo-core/mrgeo-vector/mrgeo-cmd"
     echo "  dataprovider - mrgeo-core/mrgeo-dataprovider"
-    echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-legion/mrgeo-services"
+    echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-services"
     echo "build type:"
     echo "  apache    - apache hadoop"
     echo "  apache220 - Apache hadoop, version 2.2.0"
@@ -33,6 +33,9 @@ usage() {
     echo "  cdh544    - Cloudera hadoop 5.4.4"
     echo "  cdh545    - Cloudera hadoop 5.4.5"
     echo "  cdh547    - Cloudera hadoop 5.4.7"
+    echo "  cdh548    - Cloudera hadoop 5.4.8"
+    echo "  cdh550    - Cloudera hadoop 5.5.0"
+    echo "  cdh551    - Cloudera hadoop 5.5.1"
     echo "  emr       - Amazon EMR hadoop 2.4.0 for AMI 3.7.0"
     echo "  mapr      - mapr hadoop"
     echo "phase:"
@@ -51,6 +54,7 @@ usage() {
     echo "  -gs --generate-sources         - generate source jars"
     echo "  -j  --javadocs                 - include javadocs of dependencies (if available)"
     echo "  -jv  --javaversion <version>   - java version to use (1.7)"
+    echo "  -l  --license                  - generate licenses (normall off)"
     echo "  -p  --profile                  - turn on leak detection profiling"
     echo "  -s  --source                   - include source jars of dependencies (if available)"
     echo "  -sh --shade                    - generate the shaded (jar with dependencies) jars"
@@ -152,10 +156,6 @@ SKIPCMDINTEGRATION="-Pskip-cmd-integration-tests"
 SKIPCMDUNIT="-Pskip-cmd-unit-tests"
 SKIPCMD="-Pskip-cmd-tests"
 
-SKIPLEGIONINTEGRATION="-Pskip-legion-integration-tests"
-SKIPLEGIONUNIT="-Pskip-legion-unit-tests"
-SKIPLEGION="-Pskip-legion-tests"
-
 SKIPSERVICESINTEGRATION="-Pskip-services-integration-tests"
 SKIPSERVICESUNIT="-Pskip-services-unit-tests"
 SKIPSERVICES="-Pskip-services-tests"
@@ -204,13 +204,6 @@ while [ $# -gt 0 ] ; do
     "cmd-only")
         MODULE="cmd"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
-        ;;
-    "legion")
-        MODULE="legion"
-        ;;
-    "legion-only")
-        MODULE="legion"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPNET $SKIPSERVICES $ARGS"
         ;;
     "services")
         MODULE="services"
@@ -282,6 +275,15 @@ while [ $# -gt 0 ] ; do
         ;;
     "cdh547")
         BUILD="CDH547"
+        ;;
+    "cdh548")
+        BUILD="CDH548"
+        ;;
+    "cdh550")
+        BUILD="CDH550"
+        ;;
+    "cdh551")
+        BUILD="CDH551"
         ;;
     "build")
         PHASE="build"

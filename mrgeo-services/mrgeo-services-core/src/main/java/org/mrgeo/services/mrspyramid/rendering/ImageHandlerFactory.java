@@ -15,7 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.apache.commons.lang3.ClassUtils;
+import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,21 +49,14 @@ public class ImageHandlerFactory
   /**
    * Returns a MrGeo WMS "image handler" for the requested image format
    * 
-   * @param imageFormat
-   *          mage format the requested image handler supports
-   * @param handlerType
-   *          a supported image handler type (see comments below to see how that is determined)
-   * @return an object of specified type
-   * @throws Exception
    */
-  public static Object getHandler(final String format, final Class<?> handlerType) throws Exception
-  {
-    return getHandler(format, handlerType, null, null);
-  }
+//  public static Object getHandler(final String format, final Class<?> handlerType) throws Exception
+//  {
+//    return getHandler(format, handlerType);
+//  }
 
   @SuppressWarnings("unused")
-  public static Object getHandler(String imageFormat, final Class<?> handlerType,
-    final Object[] constructorParams, final Class<?>[] constructorParamTypes) throws Exception
+  public static Object getHandler(String imageFormat, final Class<?> handlerType) throws Exception
   {
 
     if (imageFormatHandlers == null || mimeTypeHandlers == null)
@@ -242,17 +235,6 @@ public class ImageHandlerFactory
   /**
    * Returns a MrGeo WMS "image handler" for the requested image format
    * 
-   * @param imageFormat
-   *          image format the requested image handler supports
-   * @param handlerType
-   *          a supported image handler type (see comments below to see how that is determined)
-   * @param constructorParams
-   *          parameters to pass to the image handlers constructor; optional (pass null for none)
-   * @param constructorParamTypes
-   *          parameters types to pass to the image handlers constructor; optional (pass null for
-   *          none)
-   * @return an object of specified type
-   * @throws Exception
    */
 
   private static synchronized void loadHandlers()
@@ -262,7 +244,7 @@ public class ImageHandlerFactory
       imageFormatHandlers = new HashMap<Class<?>, Map<String, Class<?>>>();
       mimeTypeHandlers = new HashMap<Class<?>, Map<String, Class<?>>>();
 
-      Reflections reflections = new Reflections(ClassUtils.getPackageName(ImageRenderer.class));
+      Reflections reflections = new Reflections("org.mrgeo"); // ClassUtils.getPackageName(ImageRenderer.class));
 
       // image format renderers
       mimeTypeHandlers.put(ImageRenderer.class, new HashMap<String, Class<?>>());
@@ -285,7 +267,7 @@ public class ImageHandlerFactory
         addFormatHandlers(formatHandlers, clazz);
       }
 
-      reflections = new Reflections(ClassUtils.getPackageName(ColorScaleApplier.class));
+      //reflections = new Reflections(ClassUtils.getPackageName(ColorScaleApplier.class));
 
       // Color scale appliers
       mimeTypeHandlers.put(ColorScaleApplier.class, new HashMap<String, Class<?>>());
@@ -307,7 +289,7 @@ public class ImageHandlerFactory
         addFormatHandlers(formatHandlers, clazz);
       }
 
-      reflections = new Reflections(ClassUtils.getPackageName(ImageResponseWriter.class));
+      //reflections = new Reflections(ClassUtils.getPackageName(ImageResponseWriter.class));
 
       // image response writers
       mimeTypeHandlers.put(ImageResponseWriter.class, new HashMap<String, Class<?>>());

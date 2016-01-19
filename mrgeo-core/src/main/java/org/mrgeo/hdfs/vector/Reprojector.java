@@ -15,10 +15,8 @@
 
 package org.mrgeo.hdfs.vector;
 
-import org.gdal.gdal.gdal;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
-import org.gdal.osr.osr;
 import org.mrgeo.geometry.PointFilter;
 import org.mrgeo.geometry.WritablePoint;
 
@@ -86,11 +84,11 @@ public class Reprojector implements PointFilter
 
   private Reprojector(SpatialReference sourceSrs, SpatialReference destSrs)
   {
-    coordinateTransformation = osr.CreateCoordinateTransformation(sourceSrs, destSrs);
-    if (coordinateTransformation == null)
-    {
-      throw new IllegalArgumentException("Cannot perform transformation: " + gdal.GetLastErrorMsg());
-    }
+    coordinateTransformation = new CoordinateTransformation(sourceSrs, destSrs);
+//    if (coordinateTransformation == null)
+//    {
+//      throw new IllegalArgumentException("Cannot perform transformation: " + gdal.GetLastErrorMsg());
+//    }
   }
 
   @Override

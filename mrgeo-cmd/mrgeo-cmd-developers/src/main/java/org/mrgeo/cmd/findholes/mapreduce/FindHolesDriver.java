@@ -15,15 +15,6 @@
 
 package org.mrgeo.cmd.findholes.mapreduce;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -34,11 +25,12 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
-import org.mrgeo.data.tile.TiledInputFormatContext;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.utils.DependencyLoader;
+import org.mrgeo.data.image.ImageInputFormatContext;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
+
+import java.io.*;
 
 public class FindHolesDriver {
 
@@ -58,7 +50,7 @@ public class FindHolesDriver {
 		DataProviderFactory.saveProviderPropertiesToConfig(props, conf);
 
 		MrsImageDataProvider midp = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, conf); 
-		MrsImagePyramidMetadata mipm = midp.getMetadataReader().read();
+		MrsPyramidMetadata mipm = midp.getMetadataReader().read();
 
 		System.out.println("DP = " + midp.getClass().getCanonicalName());
 		System.out.println("DP resource = " + midp.getResourceName());
@@ -84,11 +76,9 @@ public class FindHolesDriver {
 		job.setOutputValueClass(Text.class);
 
 		//Properties props = new Properties();
-		Set<String> inputs = new HashSet<String>();
-		inputs.add(input);
-		
-		TiledInputFormatContext tifc = new TiledInputFormatContext(zoom, mipm.getTilesize(), inputs, props);
-		MrsImageInputFormatProvider miifp = midp.getTiledInputFormatProvider(tifc);
+
+		ImageInputFormatContext tifc = new ImageInputFormatContext(zoom, mipm.getTilesize(), input, props);
+		MrsImageInputFormatProvider miifp = midp.getImageInputFormatProvider(tifc);
 
 		// this is key for setting up the input
 		job.setInputFormatClass(miifp.getInputFormat(input).getClass());

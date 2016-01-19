@@ -15,16 +15,14 @@
 
 package org.mrgeo.job
 
-import org.apache.spark.Logging
-import org.mrgeo.data.DataProviderFactory
-
-import collection.JavaConversions.asScalaSet
 import org.apache.commons.lang3.SystemUtils
+import org.apache.spark.Logging
 import org.mrgeo.core.MrGeoProperties
+import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.utils.{FileUtils, Memory}
 
+import scala.collection.JavaConversions.{asScalaSet, _}
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.JavaConversions._
 
 class JobArguments() extends Logging {
 
@@ -51,7 +49,7 @@ class JobArguments() extends Logging {
    * Whether the underlying operating system is Windows.
    */
   val isWindows = SystemUtils.IS_OS_WINDOWS
-  var name: String = null
+  var name: String = "foo" // null
   var cluster: String = "local[1]"
   var driverClass: String = null
   var driverJar: String = null
@@ -244,15 +242,15 @@ class JobArguments() extends Logging {
     verbose = true
     parse(tail)
 
-  case ("--cores") :: value :: tail =>
+  case ("--cores" | "--executor-cores") :: value :: tail =>
     cores = value.toInt
     parse(tail)
 
-  case ("--executors") :: value :: tail =>
+  case ("--executors" | "--num-executors") :: value :: tail =>
     executors = value.toInt
     parse(tail)
 
-  case ("--memory") :: value :: tail =>
+  case ("--memory | --executor-memory") :: value :: tail =>
     memoryKb = value.toInt
     parse(tail)
 
@@ -348,7 +346,7 @@ class JobArguments() extends Logging {
     val maxMem = Runtime.getRuntime.maxMemory()
     if (maxMem != Long.MaxValue) {
       val mem = (maxMem * 0.95).round
-      memoryKb = mem
+      memoryKb = mem / 1024 // memory is in bytes, convert to kb
       logInfo("Setting max memory to: " + Memory.format(mem))
     }
   }

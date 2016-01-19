@@ -21,16 +21,20 @@ package org.mrgeo.resources.tms;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScaleManager;
+import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.image.MrsImageException;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.SecurityUtils;
-import org.mrgeo.services.mrspyramid.ColorScaleManager;
-import org.mrgeo.services.mrspyramid.rendering.*;
+import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
+import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
+import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
 import org.mrgeo.services.tms.TmsService;
 import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
@@ -131,12 +135,12 @@ protected static Response createEmptyTile(final ImageResponseWriter writer, fina
 }
 
 protected static Document mrsPyramidMetadataToTileMapXml(final String raster, final String url,
-    final MrsImagePyramidMetadata mpm) throws ParserConfigurationException
+    final MrsPyramidMetadata mpm) throws ParserConfigurationException
 {
     /*
      * String tileMap = "<?xml version='1.0' encoding='UTF-8' ?>" +
      * "<TileMap version='1.0.0' tilemapservice='http://localhost/mrgeo-services/api/tms/1.0.0'>" +
-     * "  <Title>AfPk Elevation V2</Title>" + "  <Abstract>A test of V2 MrsImagePyramid.</Abstract>"
+     * "  <Title>AfPk Elevation V2</Title>" + "  <Abstract>A test of V2 MrsPyramid.</Abstract>"
      * + "  <SRS>EPSG:4326</SRS>" + "  <BoundingBox minx='68' miny='33' maxx='72' maxy='35' />" +
      * "  <Origin x='68' y='33' />" +
      * "  <TileFormat width='512' height='512' mime-type='image/tiff' extension='tif' />" +
@@ -290,7 +294,7 @@ protected static Document mrsPyramidToTileMapServiceXml(final String url,
   rootElement.appendChild(title);
 
   final Element abst = doc.createElement("Abstract");
-  abst.setTextContent("MrGeo MrsImagePyramid rasters available as TMS");
+  abst.setTextContent("MrGeo MrsPyramid rasters available as TMS");
   rootElement.appendChild(abst);
 
   final Element tilesets = doc.createElement("TileMaps");
@@ -496,7 +500,7 @@ public Response getTile(@PathParam("version") final String version,
     // return Response.status(Status.NOT_FOUND).entity("Tile not found").build();
     try
     {
-      final MrsImagePyramidMetadata metadata = service.getMetadata(pyramid);
+      final MrsPyramidMetadata metadata = service.getMetadata(pyramid);
 
       return createEmptyTile(((ImageResponseWriter) ImageHandlerFactory.getHandler(format,
           ImageResponseWriter.class)), metadata.getTilesize(), metadata.getTilesize());
@@ -545,7 +549,7 @@ public Response getTileMap(@PathParam("version") final String version,
     final String url = hsr.getRequestURL().toString();
     // Check cache for metadata, if not found read from pyramid
     // and store in cache
-    final MrsImagePyramidMetadata mpm = service.getMetadata(raster);
+    final MrsPyramidMetadata mpm = service.getMetadata(raster);
     final Document doc = mrsPyramidMetadataToTileMapXml(raster, url, mpm);
     final DOMSource source = new DOMSource(doc);
 
@@ -554,7 +558,7 @@ public Response getTileMap(@PathParam("version") final String version,
   }
   catch (final ExecutionException e)
   {
-    log.error("MrsImagePyramid " + raster + " not found", e);
+    log.error("MrsPyramid " + raster + " not found", e);
     return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + raster).build();
   }
   catch (final ParserConfigurationException ex)

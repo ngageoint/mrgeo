@@ -15,25 +15,25 @@
 
 package org.mrgeo.hdfs.vector;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
-public class DelimitedVectorRecordReader extends RecordReader<LongWritable, Geometry>
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DelimitedVectorRecordReader extends RecordReader<FeatureIdWritable, Geometry>
 {
   private DelimitedParser delimitedParser;
   private LineRecordReader recordReader;
@@ -171,9 +171,9 @@ public class DelimitedVectorRecordReader extends RecordReader<LongWritable, Geom
   }
 
   @Override
-  public LongWritable getCurrentKey() throws IOException, InterruptedException
+  public FeatureIdWritable getCurrentKey() throws IOException, InterruptedException
   {
-    LongWritable key = recordReader.getCurrentKey();
+    FeatureIdWritable key = new FeatureIdWritable(recordReader.getCurrentKey().get());
     return key;
   }
 

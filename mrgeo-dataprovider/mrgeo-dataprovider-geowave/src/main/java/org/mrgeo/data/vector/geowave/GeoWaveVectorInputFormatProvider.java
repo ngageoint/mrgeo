@@ -1,18 +1,18 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveInputConfigurator;
-import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveInputFormat;
-import mil.nga.giat.geowave.store.adapter.DataAdapter;
-import mil.nga.giat.geowave.store.index.Index;
-import mil.nga.giat.geowave.store.query.*;
+import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveInputConfigurator;
+import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveInputFormat;
+import mil.nga.giat.geowave.core.store.adapter.DataAdapter;
+import mil.nga.giat.geowave.core.store.index.Index;
+import mil.nga.giat.geowave.core.geotime.store.query.*;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorInputFormatContext;
 import org.mrgeo.data.vector.VectorInputFormatProvider;
 import org.mrgeo.geometry.Geometry;
@@ -39,7 +39,7 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
   }
 
   @Override
-  public InputFormat<LongWritable, Geometry> getInputFormat(String input)
+  public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
   {
     return new GeoWaveVectorInputFormat();
   }
@@ -50,24 +50,25 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
     super.setupJob(job, providerProperties);
     Configuration conf = job.getConfiguration();
     GeoWaveConnectionInfo connectionInfo = GeoWaveVectorDataProvider.getConnectionInfo();
-    GeoWaveInputFormat.setAccumuloOperationsInfo(
-        job,
-        connectionInfo.getZookeeperServers(),
-        connectionInfo.getInstanceName(),
-        connectionInfo.getUserName(),
-        connectionInfo.getPassword(),
-        connectionInfo.getNamespace());
-    connectionInfo.writeToConfig(conf);
-    DataAdapter<?> adapter;
     try
     {
+      GeoWaveInputFormat.setAccumuloOperationsInfo(
+          job,
+          connectionInfo.getZookeeperServers(),
+          connectionInfo.getInstanceName(),
+          connectionInfo.getUserName(),
+          connectionInfo.getPassword(),
+          dataProvider.getNamespace());
+      connectionInfo.writeToConfig(conf);
+
+      DataAdapter<?> adapter;
       adapter = dataProvider.getDataAdapter();
       if (adapter == null)
       {
         throw new DataProviderException("Missing data adapter in data provider for " + dataProvider.getPrefixedResourceName());
       }
       GeoWaveInputFormat.addDataAdapter(conf, adapter);
-      Index index = GeoWaveVectorDataProvider.getIndex();
+      Index index = dataProvider.getIndex();
       if (index == null)
       {
         throw new DataProviderException("Missing index in data provider for " + dataProvider.getPrefixedResourceName());
@@ -124,7 +125,11 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
     {
       throw new DataProviderException(e);
     }
-    List<String> userRoles = providerProperties.getRoles();
+    List<String> userRoles = null;
+    if (providerProperties != null)
+    {
+      userRoles = providerProperties.getRoles();
+    }
     if (userRoles != null)
     {
       for (String role: userRoles)

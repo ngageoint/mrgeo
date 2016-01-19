@@ -17,6 +17,7 @@ package org.mrgeo.mapreduce;
 
 import org.apache.hadoop.io.Writable;
 import org.mrgeo.geometry.*;
+import org.mrgeo.utils.StringUtils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -101,12 +102,10 @@ public class GeometryWritable implements Writable
     for (Map.Entry attr : g.getAllAttributesSorted().entrySet())
     {
       out.writeUTF(attr.getKey().toString());
-      // Cannot use writeUTF for the value because there is a limit of 65K
+      // Cannot use writeUTF for the value because there is a limit of 64K
       // characters that it will write to the stream, and geometry values can
       // get longer than that.
-      byte[] attrBytes = attr.getValue().toString().getBytes(CHAR_ENCODING);
-      out.writeInt(attrBytes.length);
-      out.write(attrBytes);
+      StringUtils.write(attr.getValue().toString(), out);
 //      out.writeUTF(attr.getValue().toString());
     }
   }

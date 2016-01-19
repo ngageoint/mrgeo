@@ -15,6 +15,7 @@
 
 package org.mrgeo.utils;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -22,7 +23,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.ClassUtil;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -38,10 +38,7 @@ import java.io.*;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -66,6 +63,11 @@ public class DependencyLoader
 
   public static Set<String> copyDependencies(final Set<String> localDependencies, Configuration conf) throws IOException
   {
+    if (conf == null)
+    {
+      conf = HadoopUtils.createConfiguration();
+    }
+
     FileSystem fs = HadoopFileUtils.getFileSystem(conf);
     Path hdfsBase =
         new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
@@ -96,12 +98,38 @@ public class DependencyLoader
 
   }
 
-  public static Set<String> getAndCopyDependencies(final Class<?> clazz, Configuration conf) throws IOException
+public static String[] getAndCopyDependencies(final String clazz, Configuration conf)
+    throws IOException, ClassNotFoundException
+{
+  Class cl = Class.forName(clazz);
+  return getAndCopyDependencies(cl, conf);
+}
+
+public static String[] getAndCopyDependencies(final String[] clazzes, Configuration conf)
+    throws IOException, ClassNotFoundException
+{
+  if (conf == null)
+  {
+    conf = HadoopUtils.createConfiguration();
+  }
+
+  String[] qualified = new String[]{};
+  for (String clazz: clazzes)
+  {
+    qualified = ArrayUtils.addAll(qualified, getAndCopyDependencies(clazz, conf));
+  }
+
+  return qualified;
+}
+
+public static String[] getAndCopyDependencies(final Class<?> clazz, Configuration conf) throws IOException
   {
     // get the list of dependencies
     Set<String> rawDeps = getDependencies(clazz);
 
-    return copyDependencies(rawDeps, conf);
+    Set<String> strings = copyDependencies(rawDeps, conf);
+
+    return strings.toArray(new String[strings.size()]);
   }
 
   public static String getMasterJar(final Class<?> clazz) throws IOException

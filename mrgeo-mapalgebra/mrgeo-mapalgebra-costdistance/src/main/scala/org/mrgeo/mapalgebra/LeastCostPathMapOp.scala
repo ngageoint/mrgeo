@@ -1,11 +1,27 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.ProviderProperties
 import org.mrgeo.data.rdd.VectorRDD
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.data.vector.FeatureIdWritable
+import org.mrgeo.geometry.GeometryFactory
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -23,7 +39,7 @@ object LeastCostPathMapOp extends MapOpRegistrar {
 class LeastCostPathMapOp extends VectorMapOp with Externalizable
 {
   var costDistanceMapOp: Option[RasterMapOp] = None
-  var costDistanceMetadata: MrsImagePyramidMetadata = null;
+  var costDistanceMetadata: MrsPyramidMetadata = null
   var pointsMapOp: Option[VectorMapOp] = None
   var zoom: Int = -1
   var vectorrdd: Option[VectorRDD] = None
@@ -50,17 +66,25 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
     pointsMapOp = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
+  override def registerClasses(): Array[Class[_]] = {
+    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
+  }
+
+  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+//    conf.set("spark.kryo.registrationRequired", "true")
+    true
+  }
+
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def execute(context: SparkContext): Boolean = {
-    var destPoints: String = null
+    //var destPoints: String = null
     costDistanceMetadata =
       costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input")).
         metadata().getOrElse(throw new IOException("Missing metadata for cost distance input"))
     if (zoom < 0)
     {
-      zoom = costDistanceMetadata.getMaxZoomLevel()
+      zoom = costDistanceMetadata.getMaxZoomLevel
     }
     //TODO: Need to instantiate and run LeastCostPathCalculator here
     // It currently writes the output tsv file directly. That should ideally

@@ -23,23 +23,22 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.joda.time.format.DateTimeFormat;
 import org.mrgeo.cmd.Command;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.ImageStats;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidReaderContext;
-import org.mrgeo.data.tile.MrsTileReader;
+import org.mrgeo.data.image.MrsPyramidReaderContext;
+import org.mrgeo.data.image.MrsImageReader;
+import org.mrgeo.image.ImageStats;
+import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.text.DecimalFormat;
 
@@ -83,7 +82,7 @@ public class MrsImageInfo extends Command
     return String.format("%.1f%sB", bytes / Math.pow(unit, exp), pre);
   }
 
-  private static void printNodata(final MrsImagePyramidMetadata metadata)
+  private static void printNodata(final MrsPyramidMetadata metadata)
   {
     System.out.print("NoData: ");
     for (int band = 0; band < metadata.getBands(); band++)
@@ -117,7 +116,7 @@ public class MrsImageInfo extends Command
     System.out.println("");
   }
 
-  private static void printTileType(final MrsImagePyramidMetadata metadata)
+  private static void printTileType(final MrsPyramidMetadata metadata)
   {
     System.out.print("Type: ");
     switch (metadata.getTileType())
@@ -183,17 +182,17 @@ public class MrsImageInfo extends Command
         final FileSystem fs = p.getFileSystem(config);
         if (!fs.exists(p))
         {
-          System.out.println("MrsImagePyramid does not exist: \"" + pyramidName + "\"");
+          System.out.println("MrsPyramid does not exist: \"" + pyramidName + "\"");
           new HelpFormatter().printHelp("MrsImageInfo <pyramid>", options);
           return 1;
         }
 
         System.out.println("");
         System.out.println("");
-        System.out.println("MrsImagePyramid Information");
+        System.out.println("MrsPyramid Information");
         System.out.println("======================");
 
-        final MrsImagePyramid pyramid = MrsImagePyramid.open(pyramidName, providerProperties);
+        final MrsPyramid pyramid = MrsPyramid.open(pyramidName, providerProperties);
         printMetadata(pyramid.getMetadata(), providerProperties);
 
         if (line.hasOption("v"))
@@ -251,7 +250,7 @@ public class MrsImageInfo extends Command
     }
   }
 
-  private void printMetadata(final MrsImagePyramidMetadata metadata,
+  private void printMetadata(final MrsPyramidMetadata metadata,
       final ProviderProperties providerProperties) throws DataProviderNotFound
   {
     System.out.println("name: \"" + metadata.getPyramid() + "\"");
@@ -314,9 +313,9 @@ public class MrsImageInfo extends Command
       {
         MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(metadata.getPyramid(),
             AccessMode.READ, providerProperties);
-        MrsImagePyramidReaderContext context = new MrsImagePyramidReaderContext();
+        MrsPyramidReaderContext context = new MrsPyramidReaderContext();
         context.setZoomlevel(zoom);
-        MrsTileReader<Raster> reader;
+        MrsImageReader reader;
         try
         {
           reader = dp.getMrsTileReader(context);

@@ -24,273 +24,278 @@ import java.util.*;
 
 /**
  * @author jason.surratt
- * 
+ *
  */
 public class LineStringImpl extends GeometryImpl implements WritableLineString
 {
-  List<WritablePoint> points = new ArrayList<>();
-  
-  LineStringImpl()
-  {
-  }
-  
-  LineStringImpl(Map<String, String>attributes)
-  {
-    this.attributes.putAll(attributes);
-  }
+List<WritablePoint> points = new ArrayList<>();
 
-  LineStringImpl(Point... points)
-  {
-    for (Point p : points)
-    {
-      this.points.add((WritablePoint) p.asWritable());
-    }
-  }
+LineStringImpl()
+{
+}
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see
-   * com.spadac.Geometry.WritableLinearRing#addPoint(com.spadac.Geometry.Point)
-   */
-  @Override
-  public void addPoint(Point p)
+LineStringImpl(Map<String, String>attributes)
+{
+  this.attributes.putAll(attributes);
+}
+
+LineStringImpl(Point... points)
+{
+  for (Point p : points)
   {
+    this.points.add((WritablePoint) p.asWritable());
+  }
+}
+
+public static Class[] getClasses()
+{
+  return new Class[]{LineStringImpl.class, ArrayList.class};
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see
+ * com.spadac.Geometry.WritableLinearRing#addPoint(com.spadac.Geometry.Point)
+ */
+@Override
+public void addPoint(Point p)
+{
 //    if (points.isEmpty() || (p.getGeohashBits() != points.lastElement().getGeohashBits()))
 //    {
-      points.add((WritablePoint) p.createWritableClone());
+  points.add((WritablePoint) p.createWritableClone());
 //    }
 //    else
 //    {
 //      System.out.println("Skipping " + p + " points size is " + points.size());
 //    }
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.Geometry#createWritableClone()
+ */
+@Override
+public WritableGeometry createWritableClone()
+{
+  LineStringImpl result = new LineStringImpl();
+  for (Point p : points)
+  {
+    result.points.add((WritablePoint) p.createWritableClone());
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.Geometry#createWritableClone()
-   */
-  @Override
-  public WritableGeometry createWritableClone()
+  result.attributes.putAll(attributes);
+
+  return result;
+}
+
+@Override
+public void filter(PointFilter pf)
+{
+  for (WritablePoint p : points)
   {
-    LineStringImpl result = new LineStringImpl();
-    for (Point p : points)
+    pf.filter(p);
+  }
+}
+
+
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.LinearRing#getNumPoints()
+ */
+@Override
+public int getNumPoints()
+{
+  return points.size();
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.LinearRing#getPoint(int)
+ */
+@Override
+public Point getPoint(int i)
+{
+  return points.get(i);
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.LinearRing#getPoints()
+ */
+@Override
+public Vector<Point> getPoints()
+{
+  Vector<Point> result = new Vector<Point>();
+  for (Point p : points)
+  {
+    result.add(p);
+  }
+  return result;
+}
+
+@Override
+public boolean isValid()
+{
+  return points.size() >= 2;
+}
+
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.WritableLinearRing#setPoints(java.util.Collection)
+ */
+@Override
+public void setPoints(Collection<Point> points)
+{
+  this.points.clear();
+  for (Point p : points)
+  {
+    this.points.add((WritablePoint) p.createWritableClone());
+  }
+}
+@Override
+public void read(DataInputStream stream) throws IOException
+{
+  int size = stream.readInt();
+  points = new ArrayList<>(size);
+
+  for (int i = 0; i < size; i++)
+  {
+    PointImpl p = new PointImpl();
+    p.read(stream);
+
+    addPoint(p);
+  }
+}
+
+@Override
+public void write(DataOutputStream stream) throws IOException
+{
+  stream.writeInt(points.size());
+  for (Point p : points)
+  {
+    p.write(stream);
+  }
+}
+
+private synchronized void writeObject(ObjectOutputStream stream) throws IOException
+{
+  DataOutputStream dos = new DataOutputStream(stream);
+  write(dos);
+  writeAttributes(dos);
+}
+
+private synchronized void readObject(ObjectInputStream stream) throws IOException
+{
+  DataInputStream dis = new DataInputStream(stream);
+  read(dis);
+  readAttributes(dis);
+}
+
+@Override
+public Type type()
+{
+  return Geometry.Type.LINESTRING;
+}
+
+@Override
+public void fromJTS(com.vividsolutions.jts.geom.LineString jtsLine)
+{
+  points.clear();
+
+  for (int i = 0; i < jtsLine.getNumPoints(); i++)
+  {
+    WritablePoint pt = new PointImpl();
+    pt.fromJTS(jtsLine.getPointN(i));
+
+    addPoint(pt);
+  }
+}
+
+@Override
+public com.vividsolutions.jts.geom.LineString toJTS()
+{
+  Coordinate[] coordinates = new Coordinate[getNumPoints()];
+  for (int i = 0; i < getNumPoints(); i++)
+  {
+    Point pt = getPoint(i);
+    coordinates[i] = new Coordinate(pt.getX(), pt.getY());
+  }
+  com.vividsolutions.jts.geom.GeometryFactory factory = new com.vividsolutions.jts.geom.GeometryFactory();
+
+  return factory.createLineString(coordinates);
+}
+
+@Override
+public Bounds getBounds()
+{
+  if (bounds == null)
+  {
+    bounds = new Bounds();
+
+    for (Point pt: points)
     {
-      result.points.add((WritablePoint) p.createWritableClone());
+      bounds.expand(pt.getX(), pt.getY());
     }
-
-    result.attributes.putAll(attributes);
-
-    return result;
   }
 
-  @Override
-  public void filter(PointFilter pf)
+  return bounds;
+}
+
+
+@Override
+public void addPoint(double x, double y)
+{
+  points.add(GeometryFactory.createPoint(x, y));
+}
+
+@Override
+public boolean isEmpty()
+{
+  return points.isEmpty();
+}
+
+
+@Override
+public Geometry clip(Polygon geom)
+{
+  Geometry clipped = super.clip(geom);
+
+  // got a linestring back...  just return it
+  if (clipped instanceof LineString && !clipped.isEmpty())
   {
-    for (WritablePoint p : points)
+    return clipped;
+  }
+  else if (clipped instanceof GeometryCollection)
+  {
+    WritableGeometryCollection collection = (WritableGeometryCollection) clipped;
+    // got a collection.  Need to make sure they are only linestrings.
+    Iterator<? extends Geometry> iter = collection.iterator();
+    while (iter.hasNext())
     {
-      pf.filter(p);
-    }
-  }
-
-
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.LinearRing#getNumPoints()
-   */
-  @Override
-  public int getNumPoints()
-  {
-    return points.size();
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.LinearRing#getPoint(int)
-   */
-  @Override
-  public Point getPoint(int i)
-  {
-    return points.get(i);
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.LinearRing#getPoints()
-   */
-  @Override
-  public Vector<Point> getPoints()
-  {
-    Vector<Point> result = new Vector<Point>();
-    for (Point p : points)
-    {
-      result.add(p);
-    }
-    return result;
-  }
-
-  @Override
-  public boolean isValid()
-  {
-    return points.size() >= 2;
-  }
-
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.WritableLinearRing#setPoints(java.util.Collection)
-   */
-  @Override
-  public void setPoints(Collection<Point> points)
-  {
-    this.points.clear();
-    for (Point p : points)
-    {
-      this.points.add((WritablePoint) p.createWritableClone());
-    }
-  }
-  @Override
-  public void read(DataInputStream stream) throws IOException
-  {
-    int size = stream.readInt();
-    points = new ArrayList<>(size);
-
-    for (int i = 0; i < size; i++)
-    {
-      PointImpl p = new PointImpl();
-      p.read(stream);
-      
-      addPoint(p);
-    }
-  }
-
-  @Override
-  public void write(DataOutputStream stream) throws IOException
-  {
-    stream.writeInt(points.size());
-    for (Point p : points)
-    {
-      p.write(stream);
-    }
-  }
-
-  private synchronized void writeObject(ObjectOutputStream stream) throws IOException
-  {
-    DataOutputStream dos = new DataOutputStream(stream);
-    write(dos);
-    writeAttributes(dos);
-  }
-
-  private synchronized void readObject(ObjectInputStream stream) throws IOException
-  {
-    DataInputStream dis = new DataInputStream(stream);
-    read(dis);
-    readAttributes(dis);
-  }
-
-  @Override
-  public Type type()
-  {
-    return Geometry.Type.LINESTRING;
-  }
-
-  @Override
-  public void fromJTS(com.vividsolutions.jts.geom.LineString jtsLine)
-  {
-    points.clear();
-    
-    for (int i = 0; i < jtsLine.getNumPoints(); i++)
-    {
-      WritablePoint pt = new PointImpl();
-      pt.fromJTS(jtsLine.getPointN(i));
-      
-      addPoint(pt);
-    }
-  }
-
-  @Override
-  public com.vividsolutions.jts.geom.LineString toJTS()
-  {
-    Coordinate[] coordinates = new Coordinate[getNumPoints()];
-    for (int i = 0; i < getNumPoints(); i++)
-    {
-      Point pt = getPoint(i);
-      coordinates[i] = new Coordinate(pt.getX(), pt.getY());
-    }
-    com.vividsolutions.jts.geom.GeometryFactory factory = new com.vividsolutions.jts.geom.GeometryFactory();
-    
-    return factory.createLineString(coordinates);
-  }
-
-  @Override
-  public Bounds getBounds()
-  {
-    if (bounds == null)
-    {
-      bounds = new Bounds();
-
-      for (Point pt: points)
+      Geometry g = iter.next();
+      if (!(g instanceof LineString) || g.isEmpty())
       {
-        bounds.expand(pt.getX(), pt.getY());
+        iter.remove();
       }
     }
-    
-    return bounds;
-  }
-  
-
-  @Override
-  public void addPoint(double x, double y)
-  {
-    points.add(GeometryFactory.createPoint(x, y));
-  }
-
-  @Override
-  public boolean isEmpty()
-  {
-    return points.isEmpty();
-  }
-
-
-  @Override
-  public Geometry clip(Polygon geom)
-  {
-    Geometry clipped = super.clip(geom);
-    
-    // got a linestring back...  just return it
-    if (clipped instanceof LineString && !clipped.isEmpty())
+    if (collection.getNumGeometries() == 0)
     {
-      return clipped;
+      return null;
     }
-    else if (clipped instanceof GeometryCollection)
+    else if (collection.getNumGeometries() == 1)
     {
-      WritableGeometryCollection collection = (WritableGeometryCollection) clipped;
-      // got a collection.  Need to make sure they are only linestrings.
-      Iterator<? extends Geometry> iter = collection.iterator();
-      while (iter.hasNext())
-      {
-        Geometry g = iter.next();
-        if (!(g instanceof LineString) || g.isEmpty())
-        {
-          iter.remove();
-        }
-      }
-      if (collection.getNumGeometries() == 0)
-      {
-        return null;
-      }
-      else if (collection.getNumGeometries() == 1)
-      {
-        return collection.getGeometry(0);
-      }
-      return collection;
+      return collection.getGeometry(0);
     }
-    return null;
+    return collection;
   }
+  return null;
+}
 }

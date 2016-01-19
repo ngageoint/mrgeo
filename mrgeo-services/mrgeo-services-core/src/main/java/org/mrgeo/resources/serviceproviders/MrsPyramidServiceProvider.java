@@ -15,13 +15,12 @@
 
 package org.mrgeo.resources.serviceproviders;
 
-import javax.ws.rs.core.Context;
-import javax.ws.rs.ext.Provider;
-
+import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 
-import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.Provider;
 
 /**
  * @author Steve Ingram

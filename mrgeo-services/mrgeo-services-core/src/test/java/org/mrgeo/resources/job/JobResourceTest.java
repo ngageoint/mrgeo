@@ -28,11 +28,11 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
+import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapreduce.job.JobDetails;
 import org.mrgeo.mapreduce.job.JobManager;
 import org.mrgeo.mapreduce.job.JobNotFoundException;
 import org.mrgeo.mapreduce.job.JobTestManager;
-import org.mrgeo.junit.UnitTest;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;

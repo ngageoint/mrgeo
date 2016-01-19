@@ -15,12 +15,12 @@
 
 package org.mrgeo.resources.wms;
 
-import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.Version;
-import org.mrgeo.services.mrspyramid.ColorScaleManager;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.utils.LatLng;
@@ -221,7 +221,7 @@ public class GetCapabilitiesDocumentGenerator
 
       try
       {
-        MrsImagePyramid pyramid = MrsImagePyramid.open(provider);
+        MrsPyramid pyramid = MrsPyramid.open(provider);
         try
         {
 

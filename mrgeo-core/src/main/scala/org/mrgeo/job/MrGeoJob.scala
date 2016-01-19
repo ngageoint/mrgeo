@@ -16,9 +16,8 @@
 package org.mrgeo.job
 
 import org.apache.spark._
-import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
-
-import scala.collection.JavaConversions._
+import org.mrgeo.hdfs.utils.HadoopFileUtils
+import org.mrgeo.spark.MrGeoListener
 
 abstract class MrGeoJob extends Logging {
   def registerClasses(): Array[Class[_]]
@@ -31,19 +30,27 @@ abstract class MrGeoJob extends Logging {
 
   private[job] def run(job:JobArguments, conf:SparkConf) = {
     // need to do this here, so we can call registerClasses() on the job.
-    PrepareJob.setupSerializer(this, job, conf)
+    PrepareJob.setupSerializer(this, conf)
 
     logInfo("Setting up job")
     setup(job, conf)
 
     val context = new SparkContext(conf)
+
+    //context.addSparkListener(new MrGeoListener(context))
+
+    val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
+
     try {
       logInfo("Running job")
+      context.setCheckpointDir(checkpointDir)
       execute(context)
     }
     finally {
       logInfo("Stopping spark context")
       context.stop()
+
+      HadoopFileUtils.delete(context.hadoopConfiguration, checkpointDir)
     }
 
     teardown(job, conf)

@@ -25,15 +25,12 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.FileUtils;
-import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.utils.*;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -264,6 +261,11 @@ public String getInputLocal()
   return inputLocal;
 }
 
+public String getInputLocalFor(final String filename)
+{
+  return new File(inputLocal, filename).toString();
+}
+
 public Path getOutputHdfs()
 {
   return outputHdfs;
@@ -277,6 +279,10 @@ public Path getOutputHdfsFor(final String fileName)
 public String getOutputLocal()
 {
   return outputLocal;
+}
+public String getOutputLocalFor(final String filename)
+{
+  return new File(outputLocal, filename).toString();
 }
 
 public Path getTestLocal()
@@ -369,12 +375,12 @@ public static String readFile(File f) throws IOException
   return new String(baselineBuffer);
 }
 
-public static MrsImagePyramidMetadata readImageMetadata(String filename) throws
+public static MrsPyramidMetadata readImageMetadata(String filename) throws
     IOException
 {
   try (FileInputStream stream = new FileInputStream(filename))
   {
-    return MrsImagePyramidMetadata.load(stream);
+    return MrsPyramidMetadata.load(stream);
   }
 }
 
@@ -457,7 +463,7 @@ public static String composeOutputDir(Class<?> c) throws IOException
   File dir = new File(result);
   if (dir.exists())
   {
-    FileUtils.deleteDir(dir);
+    FileUtils.deleteDir(dir, true);
   }
 
   if (!dir.mkdirs())
@@ -705,7 +711,7 @@ public static void compareRenderedImageToConstant(RenderedImage i, double consta
 
 public static void saveRaster(Raster raster, String type, String filename) throws IOException
 {
-  GDALUtils.saveRaster(raster, filename, type);
+  GDALJavaUtils.saveRaster(raster, filename, type);
 }
 
 private static int getPixelId(int x, int y, int width)
@@ -824,7 +830,7 @@ public void generateBaselineTif(final String testName,
   tb = TMSUtils.tileBounds(tb, zoom, raster.getWidth());
 
   final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-  GDALUtils.saveRaster(raster, baselineTif.getCanonicalPath(), nodata);
+  GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), nodata);
 
 }
 

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
@@ -7,11 +22,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.ingest.IngestImage
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
 import org.mrgeo.utils.GDALUtils
 
 import scala.util.control.Breaks
@@ -22,18 +37,37 @@ object IngestImageMapOp extends MapOpRegistrar {
     Array[String]("ingest")
   }
 
+  def create(input:String):MapOp =
+    new IngestImageMapOp(input, None, None)
+
+  def create(input:String, zoom:Int):MapOp =
+    new IngestImageMapOp(input, Some(zoom), None)
+
+  def create(input:String, categorical:Boolean):MapOp =
+    new IngestImageMapOp(input, None, Some(categorical))
+
+  def create(input:String, zoom:Int, categorical:Boolean):MapOp =
+    new IngestImageMapOp(input, Some(zoom), Some(categorical))
+
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new IngestImageMapOp(node, variables)
 }
 
 class IngestImageMapOp extends RasterMapOp with Externalizable {
-  private val TileSize = "tilesize"
 
   private var rasterRDD: Option[RasterRDD] = None
 
   private var input:Option[String] = None
   private var categorical:Option[Boolean] = None
   private var zoom:Option[Int] = None
+
+  private[mapalgebra] def this(input:String, zoom:Option[Int], categorical:Option[Boolean]) = {
+    this()
+    this.input = Some(input)
+    this.categorical = categorical
+    this.zoom = zoom
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -53,13 +87,16 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     }
   }
 
+  override def registerClasses(): Array[Class[_]] = {
+    // IngestImage ultimately creates a WrappedArray of Array[String], WrappedArray is already
+    // registered, so we need the Array[String]
+    Array[Class[_]](classOf[Array[String]])
+  }
+
 
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-
-    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
 
     true
   }
@@ -94,13 +131,13 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
       zoom = Some(newZoom)
     }
 
-    var nodata = Double.NaN
+    var nodatas:Array[Number] = null
 
     val done = new Breaks
     done.breakable({
       filebuilder.result().foreach(file => {
         try {
-          nodata = GDALUtils.getnodata(file)
+          nodatas = GDALUtils.getnodatas(file)
           done.break()
         }
         catch {
@@ -113,14 +150,16 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
       categorical = Some(false)
     }
 
-    val result = IngestImage.ingest(context, filebuilder.result(), zoom.get, tilesize, categorical.get, nodata)
+    val result = IngestImage.ingest(context, filebuilder.result(), zoom.get, tilesize, categorical.get, nodatas)
     rasterRDD = result._1 match {
-    case rrdd:RasterRDD => Some(rrdd)
+    case rrdd:RasterRDD =>
+      rrdd.checkpoint()
+      Some(rrdd)
     case _ => None
     }
 
     metadata(result._2 match {
-    case md:MrsImagePyramidMetadata => md
+    case md:MrsPyramidMetadata => md
     case _ => null
     })
 

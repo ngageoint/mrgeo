@@ -1,20 +1,32 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra.raster
 
 import java.io.IOException
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
-import org.mrgeo.mapalgebra.parser.{ParserVariableNode, ParserException, ParserFunctionNode, ParserNode}
-import org.mrgeo.utils.{Bounds, SparkUtils}
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
+import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.{GDALUtils, SparkUtils, TMSUtils}
 
 object RasterMapOp {
 
@@ -49,15 +61,15 @@ object RasterMapOp {
   def decodeToRaster(node:ParserNode, variables: String => Option[ParserNode]): Option[RasterMapOp] = {
     node match {
     case func: ParserFunctionNode => func.getMapOp match {
-      case raster: RasterMapOp => Some(raster)
-      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+    case raster: RasterMapOp => Some(raster)
+    case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
     }
     case variable: ParserVariableNode =>
       MapOp.decodeVariable(variable, variables).getOrElse(throw new ParserException("Variable \"" + node + " has not been assigned")) match {
       case func: ParserFunctionNode => func.getMapOp match {
-        case raster: RasterMapOp => Some(raster)
-        case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
-        }
+      case raster: RasterMapOp => Some(raster)
+      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+      }
       case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
@@ -68,17 +80,22 @@ object RasterMapOp {
 
 abstract class RasterMapOp extends MapOp {
 
-  private var meta:MrsImagePyramidMetadata = null
+  private var meta:MrsPyramidMetadata = null
 
 
   def rdd():Option[RasterRDD]
 
   def rdd(zoom: Int):Option[RasterRDD] = {
-    throw new IOException("Unsupported zoom level for raster RDD")
+    if (meta != null && zoom == meta.getMaxZoomLevel) {
+      rdd()
+    }
+    else {
+      throw new IOException("rdd(zoom) rdd with zoom level other than max zoom not supported for raster RDD")
+    }
   }
 
-  def metadata():Option[MrsImagePyramidMetadata] =  Option(meta)
-  def metadata(meta:MrsImagePyramidMetadata) = { this.meta = meta}
+  def metadata():Option[MrsPyramidMetadata] =  Option(meta)
+  def metadata(meta:MrsPyramidMetadata) = { this.meta = meta}
 
   def save(output: String, providerProperties:ProviderProperties, context:SparkContext) = {
     rdd() match {
@@ -92,10 +109,37 @@ abstract class RasterMapOp extends MapOp {
         SparkUtils.saveMrsPyramid(rdd, provider, meta, meta.getMaxZoomLevel,
           context.hadoopConfiguration, providerproperties =  providerProperties)
       case _ =>
+        throw new IOException("Unable to save - no metadata was assigned in " + this.getClass.getName)
       }
     case _ =>
+      throw new IOException("Unable to save - no RDD was assigned in " + this.getClass.getName)
     }
   }
 
+  def toRaster(exact:Boolean = false) = {
+    val rasterrdd = rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
+    SparkUtils.mergeTiles(rasterrdd, meta.getMaxZoomLevel, meta.getTilesize, meta.getDefaultValues,
+      if (exact) meta.getBounds.getTMSBounds else null)
+  }
+
+  def toDataset(exact:Boolean = false) = {
+    val rasterrdd = rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
+
+    val zoom = meta.getMaxZoomLevel
+    val tilesize = meta.getTilesize
+
+    val raster = SparkUtils.mergeTiles(rasterrdd, zoom, tilesize, meta.getDefaultValues,
+      if (exact) meta.getBounds.getTMSBounds else null)
+
+    val bounds = if (exact) {
+      meta.getBounds.getTMSBounds
+    }
+    else {
+      TMSUtils.tileBounds(meta.getBounds.getTMSBounds, zoom, tilesize)
+    }
+
+    GDALUtils.toDataset(raster, meta.getDefaultValue(0), bounds)
+
+  }
 
 }

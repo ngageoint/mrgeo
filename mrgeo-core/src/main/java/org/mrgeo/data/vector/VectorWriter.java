@@ -15,15 +15,14 @@
 
 package org.mrgeo.data.vector;
 
-import java.io.IOException;
-
-import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.geometry.Geometry;
+
+import java.io.IOException;
 
 
 public interface VectorWriter
 {
-  public abstract void append(final LongWritable key, final Geometry value)
+  public abstract void append(final FeatureIdWritable key, final Geometry value)
       throws IOException;
   public abstract void close() throws IOException;
 }

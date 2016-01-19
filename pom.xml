@@ -22,7 +22,7 @@
   <packaging>pom</packaging>
   <properties>
     <!-- version -->
-    <mrgeo.version>0.6.0-${final.classifier}-SNAPSHOT</mrgeo.version>
+    <mrgeo.version>1.1.0-${final.classifier}-SNAPSHOT</mrgeo.version>
     <!-- classifier to tag onto the end of the jars -->
     <final.classifier>unknown</final.classifier>
     <!-- default location for the hadoop config files, used for testing -->
@@ -49,7 +49,7 @@
     <!--<gdal.version>1.11.2</gdal.version>-->
     <gdal.version>1.10.1</gdal.version>
     <geotools.version>12.1</geotools.version>
-    <geowave.version>0.8.5-SNAPSHOT</geowave.version>
+    <geowave.version>0.9.0-SNAPSHOT</geowave.version>
     <gson.version>2.2.2</gson.version>
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
@@ -70,6 +70,7 @@
     <mahout.version>0.9-cdh5.3.0</mahout.version>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
+    <py4j.version>0.8.2</py4j.version>
     <reflections.version>0.9.9-RC1</reflections.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spark.version>1.2.0-cdh5.3.0</spark.version>
@@ -82,7 +83,7 @@
     <cas-client.version>3.2.1</cas-client.version>
     <ehcache.version>1.7.2</ehcache.version>
     <jboss.version>3.1.0.Final</jboss.version>
-    <jersey.version>1.16</jersey.version>
+    <jersey.version>1.19</jersey.version>
     <jetty.version>8.1.14.v20131031</jetty.version>
     <rhino.version>1.6R5</rhino.version>
     <spring-cas-client.version>3.0.8.RELEASE</spring-cas-client.version>
@@ -90,6 +91,7 @@
     <spring.version>3.2.1.RELEASE</spring.version>
     <!-- testing frameworks -->
     <cpsuite.version>1.2.7</cpsuite.version>
+    <hamcrest.version>1.3</hamcrest.version>
     <httpunit.version>1.7</httpunit.version>
     <junit.version>4.8.2</junit.version>
     <mockito.version>1.9.5</mockito.version>
@@ -97,7 +99,7 @@
     <scalatest.version>2.2.5</scalatest.version>
     <xmlunit.version>1.5</xmlunit.version>
     <!-- Maven plugin versions -->
-    <build-helper-maven.version>1.9.1</build-helper-maven.version>
+    <build-helper-maven.version>1.10</build-helper-maven.version>
     <buildnumber-maven.version>1.3</buildnumber-maven.version>
     <cobertura-maven.version>2.6</cobertura-maven.version>
     <license-maven.version>1.8</license-maven.version>
@@ -124,17 +126,67 @@
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- repositories -->
+    <repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/release</repository.url>
+    <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
   </properties>
+  <repositories>
+    <repository>
+      <id>mrgeo-maven-release</id>
+      <name>MrGeo AWS Release Repository</name>
+      <url>${repository.url}</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>mrgeo-maven-snapshot</id>
+      <name>MrGeo AWS Snapshot Repository</name>
+      <url>${snapshot.repository.url}</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>central</id>
+      <name>Maven Central Repository</name>
+      <url>http://repo1.maven.org/maven2/</url>
+    </repository>
+    <repository>
+      <id>osgeo</id>
+      <name>Open Source Geospatial Foundation Repository</name>
+      <url>http://download.osgeo.org/webdav/geotools/</url>
+    </repository>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>mrgeo-maven-plugin</id>
+      <name>MrGeo S3 Plugin Repository</name>
+      <url>${repository.url}</url>
+    </pluginRepository>
+  </pluginRepositories>
   <distributionManagement>
     <repository>
-      <id>repository</id>
+      <id>mrgeo-repository</id>
       <url>${repository.url}</url>
       <layout>default</layout>
+      <uniqueVersion>false</uniqueVersion>
     </repository>
     <snapshotRepository>
-      <id>repository</id>
+      <id>mrgeo-repository</id>
       <url>${snapshot.repository.url}</url>
       <layout>default</layout>
+      <uniqueVersion>false</uniqueVersion>
     </snapshotRepository>
   </distributionManagement>
   <build>
@@ -145,6 +197,13 @@
         <filtering>true</filtering>
       </testResource>
     </testResources>
+    <extensions>
+      <extension>
+        <groupId>org.springframework.build</groupId>
+        <artifactId>aws-maven</artifactId>
+        <version>5.0.0.RELEASE</version>
+      </extension>
+    </extensions>
     <pluginManagement>
       <plugins>
         <!-- make sure scala is before java... -->
@@ -190,6 +249,7 @@
             <scalaVersion>${scala.version}</scalaVersion>
             <recompileMode>incremental</recompileMode>
             <args>
+              <arg>-feature</arg>
               <arg>-deprecation</arg>
               <arg>-target:jvm-${java.version}</arg>
               <arg>-Xmax-classfile-name</arg>
@@ -550,10 +610,12 @@
                   }
 
                   if (project.version.endsWith("-SNAPSHOT")) {
-                  project.properties.setProperty("deploy.repository", project.properties.getProperty("snapshot.repository.url", ""));
+                  project.properties.setProperty("deploy.repository", project.properties.getProperty("snapshot.repository", ""));
+                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("snapshot.repository.url", ""));
                   }
                   else {
-                  project.properties.setProperty("deploy.repository", project.properties.getProperty("repository.url", ""));
+                  project.properties.setProperty("deploy.repository", project.properties.getProperty("repository", ""));
+                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("repository.url", ""));
                   }
                 </source>
               </configuration>
@@ -569,12 +631,12 @@
               <id>default-deploy</id>
               <configuration>
                 <skip>${alternate.deploy}</skip>
-                <deployAtEnd>true</deployAtEnd>
+                <!--<deployAtEnd>true</deployAtEnd>-->
               </configuration>
             </execution>
             <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
             <execution>
-              <id>deploy-pom-only</id>
+              <id>deploy-effective-pom</id>
               <goals>
                 <goal>deploy-file</goal>
               </goals>
@@ -584,8 +646,8 @@
                 <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
                 <file>${project.build.directory}/${project.build.finalName}.pom</file>
                 <packaging>pom</packaging>
-                <repositoryId>repository</repositoryId>
-                <url>${deploy.repository}</url>
+                <repositoryId>mrgeo-repository</repositoryId>
+                <url>${deploy.repository.url}</url>
               </configuration>
             </execution>
           </executions>
@@ -747,6 +809,131 @@
          |                    any punctuation (i.e CDH 4.5.0 becomes CDH450), used when ultimately build RPMs
          | release.arguments - any arguments to use for releases, usually blank
     -->
+    <profile>
+      <id>CDH551-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
+        <mahout.version>0.9-cdh5.5.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH551</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.5.1</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.5.1</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.5.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.1</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.1-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH550-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.5.0</hadoop.version>
+        <mahout.version>0.9-cdh5.5.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.0</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH550</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.5.0</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.5.0</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.5.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.0</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.0-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH548-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.4.8</hadoop.version>
+        <mahout.version>0.9-cdh5.4.8</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.3.0-cdh5.4.8</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.4.8</final.classifier>
+        <release.arguments />
+      </properties>
+    </profile>
+    <profile>
+      <id>CDH548</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.4.8</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.4.8</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.4.8</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.3.0-cdh5.4.8</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.4.8-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
     <profile>
       <id>CDH547-yarn</id>
       <properties>
@@ -1040,6 +1227,12 @@
         <final.classifier>cdh5.3.2</final.classifier>
         <release.arguments />
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>CDH532</id>
@@ -1054,6 +1247,14 @@
         <release.arguments />
       </properties>
       <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-yarn-api</artifactId>
+        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1075,6 +1276,12 @@
         <final.classifier>cdh5.3.1</final.classifier>
         <release.arguments />
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>CDH531</id>
@@ -1089,6 +1296,14 @@
         <release.arguments />
       </properties>
       <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-yarn-api</artifactId>
+        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1110,6 +1325,12 @@
         <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>CDH530</id>
@@ -1124,6 +1345,14 @@
         <release.arguments />
       </properties>
       <dependencies>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-core_${spark.scala.version}</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-yarn-api</artifactId>
+        </dependency>
         <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
@@ -1325,6 +1554,7 @@
       <properties>
         <hadoop.version>2.4.0</hadoop.version>
         <accumulo.version>1.6.1</accumulo.version>
+        <geowave.version>0.9.0-SNAPSHOT</geowave.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -1845,6 +2075,12 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-all</artifactId>
+        <version>${hamcrest.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>io.takari.junit</groupId>
         <artifactId>takari-cpsuite</artifactId>
         <version>${cpsuite.version}</version>
@@ -1982,6 +2218,10 @@
             <groupId>com.thoughtworks.paranamer</groupId>
             <artifactId>paranamer</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
         </exclusions>
         <!--<scope>provided</scope>-->
       </dependency>
@@ -2051,14 +2291,31 @@
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-graphx_${spark.scala.version}</artifactId>
-        <version>${spark.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
         <artifactId>spark-yarn_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
         <scope>${spark.scope}</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.accumulo</groupId>
@@ -2221,6 +2478,11 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>net.sf.py4j</groupId>
+        <artifactId>py4j</artifactId>
+        <version>${py4j.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.gdal</groupId>
         <artifactId>gdal</artifactId>
         <version>${gdal.version}</version>
@@ -2254,198 +2516,6 @@
           </exclusion>
         </exclusions>
       </dependency>
-      <!--
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-api</artifactId>
-           <version>${geotools.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-imagemosaic</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-jdbc</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-opengis</artifactId>
-           <version>${geotools.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-property</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-process</artifactId>
-           <version>${geotools.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-process-raster</artifactId>
-           <version>${geotools.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-image</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-geotiff</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-coverage</artifactId>
-           <version>${geotools.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-geometry</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-shapefile</artifactId>
-           <version>${geotools.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-transform</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-xml</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools.xsd</groupId>
-           <artifactId>gt-xsd-kml</artifactId>
-           <version>${geotools.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-process-feature</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-svg</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-wfs-ng</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-wms</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools</groupId>
-           <artifactId>gt-wms</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools.xsd</groupId>
-           <artifactId>gt-xsd-sld</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.geotools.ogc</groupId>
-           <artifactId>net.opengis.wfs</artifactId>
-           <version>${geotools.version}</version>
-           <scope>runtime</scope>
-           </dependency>
-      -->
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-referencing</artifactId>
-        <version>${geotools.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-epsg-hsql</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-epsg-wkt</artifactId>
-        <version>${geotools.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-      <!--
-           <dependency>
-           <groupId>geotiff</groupId>
-           <artifactId>geotiff-jai</artifactId>
-           <version>${geotiff-jai.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>xtiff-jai</groupId>
-           <artifactId>xtiff-jai</artifactId>
-           <version>${xtiff-jai.version}</version>
-           <exclusions>
-           <exclusion>
-           <groupId>jai</groupId>
-           <artifactId>jai-core</artifactId>
-           </exclusion>
-           <exclusion>
-           <groupId>jai</groupId>
-           <artifactId>jai-codec</artifactId>
-           </exclusion>
-           </exclusions>
-           </dependency>
-
-           <dependency>
-           <groupId>javax.media</groupId>
-           <artifactId>jai_codec</artifactId>
-           <version>${jai.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>javax.media</groupId>
-           <artifactId>jai_core</artifactId>
-           <version>${jai.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>javax.media</groupId>
-           <artifactId>jai_imageio</artifactId>
-           <version>${jai-imageio.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.jaitools</groupId>
-           <artifactId>jt-utils</artifactId>
-           <version>${jaitools.version}</version>
-           </dependency>
-           <dependency>
-           <groupId>org.jaitools</groupId>
-           <artifactId>jt-zonalstats</artifactId>
-           <version>${jaitools.version}</version>
-           </dependency>
-      -->
       <dependency>
         <groupId>com.carrotsearch</groupId>
         <artifactId>hppc</artifactId>
@@ -2503,6 +2573,11 @@
       <dependency>
         <groupId>com.sun.jersey</groupId>
         <artifactId>jersey-servlet</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-client</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>
@@ -2630,46 +2705,6 @@
           </exclusion>
         </exclusions>
       </dependency>
-      <!-- Jetty has dependencies for servlet-api...  We need to make the scope "provided" to make sure those
-           jars are not included in the final war (tomcat will provide it...)
-      -->
-      <!--
-           <dependency>
-           <groupId>org.mortbay.jetty</groupId>
-           <artifactId>servlet-api-2.5</artifactId>
-           <version>6.1.14</version>
-           <scope>provided</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.mortbay.jetty</groupId>
-           <artifactId>servlet-api</artifactId>
-           <version>2.5-20081211</version>
-           <scope>provided</scope>
-           </dependency>
-      -->
-      <!--
-           <dependency>
-           <groupId>commons-logging</groupId>
-           <artifactId>commons-logging</artifactId>
-           <version>1.1.1</version>
-           <scope>provided</scope>
-           </dependency>
-           <dependency>
-           <groupId>commons-logging</groupId>
-           <artifactId>commons-logging-api</artifactId>
-           <version>1.0.4</version>
-           <scope>provided</scope>
-           </dependency>
-      -->
-      <!-- Keep servlet-api.jar out of the system -->
-      <!--
-           <dependency>
-           <groupId>javax.servlet</groupId>
-           <artifactId>servlet-api</artifactId>
-           <version>2.5</version>
-           <scope>provided</scope>
-           </dependency>
-      -->
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
@@ -2730,7 +2765,7 @@
       </dependency>
       <dependency>
         <groupId>mil.nga.giat</groupId>
-        <artifactId>geowave-accumulo</artifactId>
+        <artifactId>geowave-adapter-vector</artifactId>
         <version>${geowave.version}</version>
         <exclusions>
           <exclusion>
@@ -2741,7 +2776,18 @@
       </dependency>
       <dependency>
         <groupId>mil.nga.giat</groupId>
-        <artifactId>geowave-vector</artifactId>
+        <artifactId>geowave-core-store</artifactId>
+        <version>${geowave.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>mil.nga.giat</groupId>
+        <artifactId>geowave-datastore-accumulo</artifactId>
         <version>${geowave.version}</version>
         <exclusions>
           <exclusion>
@@ -2767,7 +2813,7 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-yarn_${spark.scala.version}</artifactId>
     </dependency>
-    <!-- and junit, mrunit, cpsuite in test... -->
+    <!-- and junit, hamcrest, mrunit, cpsuite in test... -->
     <dependency>
       <groupId>org.apache.mrunit</groupId>
       <artifactId>mrunit</artifactId>
@@ -2778,8 +2824,16 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.takari.junit</groupId>
       <artifactId>takari-cpsuite</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>xmlunit</groupId>
+      <artifactId>xmlunit</artifactId>
     </dependency>
     <!-- NOTE!!!  Very important!
          ========================
@@ -2794,21 +2848,17 @@
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
       <artifactId>jcl-over-slf4j</artifactId>
       <!--<scope>runtime</scope>-->
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
-    </dependency>
-    <!-- make sure we include geotools epsg plugins in the final jars -->
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-epsg-hsql</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-epsg-wkt</artifactId>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->

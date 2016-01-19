@@ -15,29 +15,28 @@
 
 package org.mrgeo.data.accumulo.image;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-
 import junit.framework.Assert;
-
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableExistsException;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.accumulo.AccumuloDefs;
-import org.mrgeo.data.accumulo.metadata.AccumuloMrsImagePyramidMetadataWriter;
-import org.mrgeo.data.accumulo.utils.AccumuloConnector;
-import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
-import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
-import org.mrgeo.junit.UnitTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.accumulo.AccumuloDefs;
+import org.mrgeo.data.accumulo.metadata.AccumuloMrsPyramidMetadataWriter;
+import org.mrgeo.data.accumulo.utils.AccumuloConnector;
+import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.junit.UnitTest;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 
 public class AccumuloMrsImageDataProviderFactoryTest
 {
@@ -52,7 +51,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
   
   private AccumuloMrsImageDataProviderFactory factory;
   private AccumuloMrsImageDataProvider provider;
-  private AccumuloMrsImagePyramidMetadataWriter writer;
+  private AccumuloMrsPyramidMetadataWriter writer;
   private ProviderProperties providerProperties;
 
   private static Connector conn = null;
@@ -82,14 +81,14 @@ public class AccumuloMrsImageDataProviderFactoryTest
 //    System.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS, AccumuloDefs.ZOOKEEPERS);
 
     
-    MrsImagePyramidMetadata metadata = new MrsImagePyramidMetadata();
+    MrsPyramidMetadata metadata = new MrsPyramidMetadata();
     
     provider = new AccumuloMrsImageDataProvider(junk);
 
     String fstr = AccumuloDefs.CWD + AccumuloDefs.INPUTDIR + AccumuloDefs.INPUTMETADATADIR + AccumuloDefs.INPUTMETADATAFILE;
     file = new File(fstr);
 
-    writer = (AccumuloMrsImagePyramidMetadataWriter) provider.getMetadataWriter();
+    writer = (AccumuloMrsPyramidMetadataWriter) provider.getMetadataWriter();
     writer.setConnector(conn);
 
     //System.out.println(file.exists());
@@ -104,7 +103,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
     fis.close();
     
     ByteArrayInputStream bis = new ByteArrayInputStream(b);
-    metadata = MrsImagePyramidMetadata.load(bis);
+    metadata = MrsPyramidMetadata.load(bis);
     bis.close();
     
     ByteArrayOutputStream bos = new ByteArrayOutputStream();

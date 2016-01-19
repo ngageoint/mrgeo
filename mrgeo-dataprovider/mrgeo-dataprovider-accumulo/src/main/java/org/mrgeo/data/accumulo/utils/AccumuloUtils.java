@@ -15,29 +15,8 @@
 
 package org.mrgeo.data.accumulo.utils;
 
-import java.awt.image.Raster;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.admin.TableOperationsImpl;
 import org.apache.accumulo.core.client.security.tokens.AuthenticationToken;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
@@ -46,29 +25,29 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.accumulo.core.security.Credentials;
-import org.apache.accumulo.core.security.thrift.TCredentials;
 import org.apache.accumulo.core.util.BadArgumentException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.Compressor;
-import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class AccumuloUtils {
 	static Logger log = LoggerFactory.getLogger(AccumuloUtils.class);
@@ -270,8 +249,8 @@ public class AccumuloUtils {
 	 * @param auths is the authorizations to use when pulling metadata
 	 * @return the metadata object
 	 */
-	public static MrsImagePyramidMetadata getMetadataFromTable(String table, Connector conn, String auths){
-	  MrsImagePyramidMetadata retMeta = null;
+	public static MrsPyramidMetadata getMetadataFromTable(String table, Connector conn, String auths){
+	  MrsPyramidMetadata retMeta = null;
 	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
 
 	  Scanner scanner = null;
@@ -286,7 +265,7 @@ public class AccumuloUtils {
 	    for (Entry<Key,Value> entry : scanner){
 	      System.out.println("Key: " + entry.getKey().toString());
 	      if(entry.getKey().getColumnFamily().toString().equals("all")){
-	        retMeta = (MrsImagePyramidMetadata) Base64Utils.decodeToObject(entry.getValue().toString());
+	        retMeta = (MrsPyramidMetadata) Base64Utils.decodeToObject(entry.getValue().toString());
 	        break;
 	      }
 	    }
@@ -315,8 +294,8 @@ public class AccumuloUtils {
    * @return the metadata object
 	 */
 	@Deprecated
-	public static MrsImagePyramidMetadata buildMetadataFromTable(String table, Connector conn, String auths){
-	  MrsImagePyramidMetadata retMeta = new MrsImagePyramidMetadata();
+	public static MrsPyramidMetadata buildMetadataFromTable(String table, Connector conn, String auths){
+	  MrsPyramidMetadata retMeta = new MrsPyramidMetadata();
 	  Authorizations authorizations = createAuthorizationsFromDelimitedString(auths);
 
     Scanner scanner = null;
@@ -415,7 +394,7 @@ public class AccumuloUtils {
 	 * @return - true if successful in storing the data.
 	 */
 	@Deprecated
-	public static boolean storeMetadataIntoTable(String table, MrsImagePyramidMetadata metadata, Connector conn, String cv){
+	public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn, String cv){
 	  ColumnVisibility cViz = null;
 	  
 	  if(cv == null){
@@ -451,7 +430,7 @@ public class AccumuloUtils {
 	 * @param metadata - the MrsImagePyramidMetadata object to be stored
 	 * @param conn - the Accumulo connector to use
 	 */
-	public static boolean storeMetadataIntoTable(String table, MrsImagePyramidMetadata metadata, Connector conn, ColumnVisibility cViz){
+	public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn, ColumnVisibility cViz){
 	  ColumnVisibility columnVis;
 	  if(cViz == null){
 	    columnVis = cViz;

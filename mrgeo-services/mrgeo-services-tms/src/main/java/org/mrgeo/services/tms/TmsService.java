@@ -15,21 +15,20 @@
 
 package org.mrgeo.services.tms;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.services.SecurityUtils;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.services.SecurityUtils;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 
 /**
  * @author Steve Ingram
@@ -37,27 +36,27 @@ import com.google.common.cache.LoadingCache;
  */
 public class TmsService {
 
-    private LoadingCache<String, MrsImagePyramidMetadata> metadataCache;
+    private LoadingCache<String, MrsPyramidMetadata> metadataCache;
 
     public TmsService() {
         metadataCache = CacheBuilder.newBuilder()
                 .maximumSize(1000)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build(
-                        new CacheLoader<String, MrsImagePyramidMetadata>() {
+                        new CacheLoader<String, MrsPyramidMetadata>() {
                             @Override
-                            public MrsImagePyramidMetadata load(String raster) throws Exception {
+                            public MrsPyramidMetadata load(String raster) throws Exception {
                                 return getPyramid(raster).getMetadata();
                             }
                         });
     }
 
     @SuppressWarnings("static-method")
-    public MrsImagePyramid getPyramid(String raster) throws IOException {
-        return MrsImagePyramid.open(raster, (ProviderProperties)null);
+    public MrsPyramid getPyramid(String raster) throws IOException {
+        return MrsPyramid.open(raster, (ProviderProperties)null);
     }
 
-    public MrsImagePyramidMetadata getMetadata(String raster) throws ExecutionException {
+    public MrsPyramidMetadata getMetadata(String raster) throws ExecutionException {
         return metadataCache.get(raster);
     }
 

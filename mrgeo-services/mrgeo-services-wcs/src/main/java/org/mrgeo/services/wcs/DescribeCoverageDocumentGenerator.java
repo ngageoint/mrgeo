@@ -18,7 +18,7 @@ package org.mrgeo.services.wcs;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
@@ -63,7 +63,7 @@ public class DescribeCoverageDocumentGenerator
 
     for (MrsImageDataProvider provider : getLayers(layers))
     {
-      MrsImagePyramidMetadata metadata = provider.getMetadataReader().read();
+      MrsPyramidMetadata metadata = provider.getMetadataReader().read();
 
       int maxzoom = metadata.getMaxZoomLevel();
 
@@ -116,7 +116,7 @@ public class DescribeCoverageDocumentGenerator
 
       // Interpolations
       Element interp = XmlUtils.createElement(bands, "wcs:InterpolationMethods");
-      if (metadata.getClassification() == MrsImagePyramidMetadata.Classification.Categorical)
+      if (metadata.getClassification() == MrsPyramidMetadata.Classification.Categorical)
       {
         XmlUtils.createTextElement2(interp, "wcs:Default", "nearest neighbour");
       }
@@ -148,7 +148,7 @@ public class DescribeCoverageDocumentGenerator
     //noinspection LoopStatementThatDoesntLoop
     for (MrsImageDataProvider provider : getLayers(layers))
     {
-      MrsImagePyramidMetadata metadata = provider.getMetadataReader().read();
+      MrsPyramidMetadata metadata = provider.getMetadataReader().read();
 
       int maxzoom = metadata.getMaxZoomLevel();
 
@@ -260,7 +260,7 @@ public class DescribeCoverageDocumentGenerator
 
       // Interpolations
       Element interp = XmlUtils.createElement(offering, "supportedInterpolations");
-      if (metadata.getClassification() == MrsImagePyramidMetadata.Classification.Categorical)
+      if (metadata.getClassification() == MrsPyramidMetadata.Classification.Categorical)
       {
         interp.setAttribute("default", "nearest neighbour");
         XmlUtils.createTextElement2(interp, "interpolationMethod", "nearest neighbour");

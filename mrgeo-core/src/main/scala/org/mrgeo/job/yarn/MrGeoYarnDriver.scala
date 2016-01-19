@@ -15,15 +15,13 @@
 
 package org.mrgeo.job.yarn
 
-import java.io.{PrintWriter, File}
-import org.apache.spark.deploy.yarn.ApplicationMaster
+import java.io.{File, PrintWriter}
+
 import org.apache.spark.SparkConf
-import org.mrgeo.core.{MrGeoProperties, MrGeoConstants}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.{HadoopUtils, GDALUtils, DependencyLoader, SparkUtils}
+import org.mrgeo.utils.SparkUtils
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
 object MrGeoYarnDriver {
@@ -133,19 +131,16 @@ class MrGeoYarnDriver {
     // need to make sure the driver jar isn't included.  Yuck!
     val driver = new File(driverJar).getName
 
-    var clean = ""
+    val clean = Set.newBuilder[String]
     job.jars.foreach(jar => {
       if (!jar.contains(driver)) {
-        if (clean.length > 0) {
-          clean += ","
-        }
         clean += jar
       }
     })
 
 
     args += "--addJars"
-    args += clean
+    args += clean.result().mkString(",")
 
     args += "--arg"
     args += "--" + MrGeoYarnDriver.DRIVER
@@ -154,7 +149,7 @@ class MrGeoYarnDriver {
     args += job.driverClass
 
     // this is silly, but arguments are passed simply as parameters to the java process that is spun
-    // off as the spark driver.  We need to make sure the command line isn't too long.  If it is, we'll
+    // off as the spark driver.  We need to make sure the command line isn't too long.  If it is,q we'll
     // put the params into a file that we'll send along to the driver...
     var length:Int = 0
     job.params.foreach(p => {

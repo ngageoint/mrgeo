@@ -15,11 +15,14 @@
 
 package org.mrgeo.aggregators;
 
+import org.hamcrest.core.AnyOf;
+import org.hamcrest.number.IsCloseTo;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 
 @SuppressWarnings("static-method")
@@ -44,15 +47,15 @@ public class ModeAggregatorTest
     values[0] = nodata;
     result = agg.aggregate(values, nodata);
     assertEquals(0.32, result, epsilon);
- 
+
     values[1] = nodata;
     result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
+    assertThat((double)result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsCloseTo.closeTo(0.54f, epsilon)));
+
     values[2] = nodata;
     result = agg.aggregate(values, nodata);
     assertEquals(0.54, result, epsilon);
- 
+
     values[3] = nodata;
     result = agg.aggregate(values, nodata);
     assertEquals(nodata, result, epsilon);
@@ -79,8 +82,9 @@ public class ModeAggregatorTest
  
     values[1] = nodata;
     result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
+    //assertEquals(0.54, result, epsilon);
+    assertThat((double)result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsCloseTo.closeTo(0.54f, epsilon)));
+
     values[2] = nodata;
     result = agg.aggregate(values, nodata);
     assertEquals(0.54, result, epsilon);

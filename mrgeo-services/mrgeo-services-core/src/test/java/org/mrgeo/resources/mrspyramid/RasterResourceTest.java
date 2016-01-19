@@ -15,27 +15,15 @@
 
 package org.mrgeo.resources.mrspyramid;
 
-import static junit.framework.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.awt.image.Raster;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.StringWriter;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.core.DefaultResourceConfig;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
+import com.sun.jersey.test.framework.JerseyTest;
+import com.sun.jersey.test.framework.LowLevelAppDescriptor;
+import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
 import junit.framework.Assert;
-
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.custommonkey.xmlunit.Diff;
@@ -46,13 +34,13 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
+import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.MapAlgebraJob;
 import org.mrgeo.mapreduce.job.JobDetails;
 import org.mrgeo.mapreduce.job.JobManager;
-import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.resources.job.JobInfoResponse;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
@@ -61,14 +49,20 @@ import org.mrgeo.utils.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
-import com.sun.jersey.test.framework.JerseyTest;
-import com.sun.jersey.test.framework.LowLevelAppDescriptor;
-import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import java.awt.image.Raster;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.StringWriter;
+
+import static junit.framework.Assert.assertEquals;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class RasterResourceTest extends JerseyTest
 {
@@ -211,7 +205,7 @@ public class RasterResourceTest extends JerseyTest
   @Category(UnitTest.class)
   public void testGetImageAsKML() throws Exception
   {
-    MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+    MrsPyramid pyramidMock = mock(MrsPyramid.class);
     when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
     when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
             .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
@@ -239,7 +233,7 @@ public class RasterResourceTest extends JerseyTest
   @Category(UnitTest.class)
   public void testGetImageBadColorScaleName() throws Exception
   {
-    MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+    MrsPyramid pyramidMock = mock(MrsPyramid.class);
     when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
     when(service.getColorScaleFromName(anyString())).thenAnswer(new Answer() {
           public Object answer(InvocationOnMock invocation) throws FileNotFoundException {
@@ -273,7 +267,7 @@ public class RasterResourceTest extends JerseyTest
   @Category(UnitTest.class)
   public void testGetImageBadFormat() throws Exception
   {
-    MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+    MrsPyramid pyramidMock = mock(MrsPyramid.class);
     when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
     when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
     when(service.getImageRenderer(anyString())).thenThrow(new IllegalArgumentException("INVALID FORMAT"));
@@ -317,7 +311,7 @@ public class RasterResourceTest extends JerseyTest
   public void testGetImagePng() throws Exception
   {
       String typ = "image/png";
-      MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+      MrsPyramid pyramidMock = mock(MrsPyramid.class);
       when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
       when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
       when(service.getColorScaleFromName(anyString())).thenReturn(null);
@@ -361,7 +355,7 @@ public class RasterResourceTest extends JerseyTest
   public void testGetImageTiff() throws Exception
   {
       String typ = "image/tiff";
-      MrsImagePyramid pyramidMock = mock(MrsImagePyramid.class);
+      MrsPyramid pyramidMock = mock(MrsPyramid.class);
       when(pyramidMock.getBounds()).thenReturn(new Bounds("142,-18, 143,-17"));
       when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
       when(service.getColorScaleFromName(anyString())).thenReturn(null);

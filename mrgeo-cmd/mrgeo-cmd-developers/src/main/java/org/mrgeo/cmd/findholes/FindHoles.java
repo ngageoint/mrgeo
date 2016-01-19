@@ -15,26 +15,18 @@
 
 package org.mrgeo.cmd.findholes;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.findholes.mapreduce.FindHolesDriver;
-import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * options are output directior and zoom level
@@ -61,7 +53,7 @@ public class FindHoles extends Command{
 	public static Options createOptions(){
 		Options retOpt = new Options();
 
-		Option output = new Option("o", "output", true, "MrsImagePyramid image name");
+		Option output = new Option("o", "output", true, "MrsPyramid image name");
 	    output.setRequired(true);
 	    retOpt.addOption(output);
 		

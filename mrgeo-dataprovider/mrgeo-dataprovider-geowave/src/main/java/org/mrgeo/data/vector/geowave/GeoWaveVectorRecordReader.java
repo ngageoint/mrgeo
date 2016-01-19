@@ -1,29 +1,27 @@
 package org.mrgeo.data.vector.geowave;
 
-import java.io.IOException;
-
-import mil.nga.giat.geowave.accumulo.mapreduce.input.GeoWaveRecordReader;
-
-import org.apache.hadoop.io.LongWritable;
+import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveRecordReader;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
-import org.mrgeo.data.vector.VectorInputSplit;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geometry>
+import java.io.IOException;
+
+public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, Geometry>
 {
   static Logger log = LoggerFactory.getLogger(GeoWaveVectorRecordReader.class);
   public static final String CQL_FILTER = GeoWaveVectorRecordReader.class.getName() + ".cqlFilter";
 
   private GeoWaveRecordReader<Object> delegateReader;
-  private LongWritable currKey = new LongWritable();
+  private FeatureIdWritable currKey = new FeatureIdWritable();
   private Geometry currValue;
   private Filter cqlFilter;
   private String strCqlFilter;
@@ -33,10 +31,6 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
-    if (!(split instanceof VectorInputSplit))
-    {
-      throw new IOException("Expected split to be of type VectorInputSplit, but got: " + split.getClass().getName());
-    }
     strCqlFilter = context.getConfiguration().get(CQL_FILTER);
     if (strCqlFilter != null && !strCqlFilter.isEmpty())
     {
@@ -52,9 +46,8 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
       }
     }
     delegateReader = new GeoWaveRecordReader<Object>();
-    // Pass the native split wrapped by VectorInputSplit back into the native reader.
     log.info("Calling GeoWave delegate reader initialize()");
-    delegateReader.initialize(((VectorInputSplit) split).getWrappedInputSplit(), context);
+    delegateReader.initialize(split, context);
     log.info("Done calling GeoWave delegate reader initialize()");
   }
 
@@ -99,7 +92,7 @@ public class GeoWaveVectorRecordReader extends RecordReader<LongWritable, Geomet
   }
 
   @Override
-  public LongWritable getCurrentKey() throws IOException, InterruptedException
+  public FeatureIdWritable getCurrentKey() throws IOException, InterruptedException
   {
     return currKey;
   }

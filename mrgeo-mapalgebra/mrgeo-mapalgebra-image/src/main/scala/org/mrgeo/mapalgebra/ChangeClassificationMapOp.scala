@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
@@ -5,16 +20,23 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.AggregatorRegistry
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification
+import org.mrgeo.image.MrsPyramidMetadata
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
+import MrsPyramidMetadata.Classification
 
 object ChangeClassificationMapOp extends MapOpRegistrar {
 
   override def register: Array[String] = {
     Array[String]("changeClassification")
   }
+
+  def create(raster:RasterMapOp, classification: String):MapOp =
+    new ChangeClassificationMapOp(Some(raster), Some(classification))
+
+  def create(raster:RasterMapOp, classification: String, aggregator:String):MapOp =
+    new ChangeClassificationMapOp(Some(raster), Some(classification), Some(aggregator))
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new ChangeClassificationMapOp(node, variables)
@@ -28,6 +50,32 @@ class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
   private var classification: Option[Classification] = None
   private var aggregator: Option[String] = None
 
+  private[mapalgebra] def this(raster:Option[RasterMapOp], classification:Option[String], aggregator:Option[String] = None) = {
+    this()
+    inputMapOp = raster
+
+    this.aggregator = aggregator match {
+    case Some(s) =>
+      val clazz = AggregatorRegistry.aggregatorRegistry.get (s.toUpperCase)
+      if (clazz != null) {
+        Some(s.toUpperCase)
+      }
+      else {
+        throw new ParserException ("Invalid aggregator " + s)
+      }
+    case _ => None
+    }
+
+    this.classification = Some(classification match {
+    case Some(s) => s.toLowerCase match {
+      case "categorical" => Classification.Categorical
+      case _ => Classification.Continuous
+      }
+    case _ => throw new ParserException("Can't decode string")
+    })
+
+  }
+
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
@@ -39,7 +87,7 @@ class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
     classification = Some(MapOp.decodeString(node.getChild(1), variables) match {
-    case Some(s) => s match {
+    case Some(s) => s.toLowerCase match {
     case "categorical" => Classification.Categorical
     case _ => Classification.Continuous
     }

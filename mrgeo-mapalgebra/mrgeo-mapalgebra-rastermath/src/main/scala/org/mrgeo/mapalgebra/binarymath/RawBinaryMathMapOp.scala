@@ -1,28 +1,32 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra.binarymath
 
-import java.awt.image.WritableRaster
-import java.io.{IOException, Externalizable, ObjectInput, ObjectOutput}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.{SparkUtils, TMSUtils, GDALUtils}
-
-//object RawBinaryMathMapOpRegistrar extends MapOpRegistrar {
-//  override def register: Array[String] = {
-//    Array[String]("+", "-", "*", "/")
-//  }
-//  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-//    new RawBinaryMathMapOp(node, variables)
-//
-//  override def toString: String = "RawBinaryMathMapOp (object)"
-//
-//}
+import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.{Bounds, SparkUtils}
 
 abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   var constA:Option[Double] = None
@@ -32,6 +36,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   var varB:Option[RasterMapOp] = None
 
   var rasterRDD:Option[RasterRDD] = None
+
 
   private[binarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode]) = {
 
@@ -45,37 +50,62 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     val childA = node.getChild(0)
     val childB = node.getChild(1)
 
-    childA match {
-    case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
-    case func:ParserFunctionNode => varA = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+    try {
+      varA = RasterMapOp.decodeToRaster(childA, variables)
     }
-    case variable:ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
-      case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
-      case func:ParserFunctionNode => varA = func.getMapOp match {
-        case raster:RasterMapOp => Some(raster)
-        case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
-      }
-      }
+    catch {
+      case e:ParserException =>
+        try {
+          constA = MapOp.decodeDouble(childA, variables)
+        }
+        catch {
+          case e: ParserException => throw new ParserException("First term \"" + childA + "\" is not a raster or constant")
+        }
+    }
+    try {
+      varB = RasterMapOp.decodeToRaster(childB, variables)
+    }
+    catch {
+      case e:ParserException =>
+        try {
+          constB = MapOp.decodeDouble(childB, variables)
+        }
+        catch {
+          case e: ParserException => throw new ParserException("Second term \"" + childB + "\" is not a raster or constant")
+        }
     }
 
-    childB match {
-    case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
-    case func:ParserFunctionNode => varB = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
-    }
-    case variable:ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
-      case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
-      case func:ParserFunctionNode => varB = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
-      }
-      }
-    }
+//    childA match {
+//    case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
+//    case func:ParserFunctionNode => varA = func.getMapOp match {
+//      case raster:RasterMapOp => Some(raster)
+//      case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+//    }
+//    case variable:ParserVariableNode =>
+//      MapOp.decodeVariable(variable, variables).get match {
+//      case const:ParserConstantNode => constA = MapOp.decodeDouble(const)
+//      case func:ParserFunctionNode => varA = func.getMapOp match {
+//        case raster:RasterMapOp => Some(raster)
+//        case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+//      }
+//      }
+//    }
+
+//    childB match {
+//    case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
+//    case func:ParserFunctionNode => varB = func.getMapOp match {
+//      case raster:RasterMapOp => Some(raster)
+//      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
+//    }
+//    case variable:ParserVariableNode =>
+//      MapOp.decodeVariable(variable, variables).get match {
+//      case const:ParserConstantNode => constB = MapOp.decodeDouble(const)
+//      case func:ParserFunctionNode => varB = func.getMapOp match {
+//      case raster:RasterMapOp => Some(raster)
+//      case _ =>  throw new ParserException("Second term \"" + childB + "\" is not a raster input")
+//      }
+//      }
+//    }
 
     if (constA.isEmpty && varA.isEmpty) {
       throw new ParserException("First term \"" + childA + "\" is invalid")
@@ -110,26 +140,37 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
   private[binarymath] def computeWithConstantA(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
     val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
+    val meta = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+
     // copy this here to avoid serializing the whole mapop
-    val nodata = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)).getDefaultValue(0)
+    val nodatas = meta.getDefaultValues
 
     val answer = RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
-            val v = raster.getSampleDouble(x, y, b)
-            if (RasterMapOp.isNotNodata(v, nodata)) {
+      val width = raster.getWidth
+      var b: Int = 0
+      while (b < raster.getNumBands) {
+        val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < width) {
+            val v = pixels(y * width + x)
+            if (RasterMapOp.isNotNodata(v, nodatas(b))) {
               raster.setSample(x, y, b, function(const, v))
             }
+            x += 1
           }
+           y += 1
         }
+        b += 1
       }
       (tile._1, RasterWritable.toWritable(raster))
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodatas,
+      bounds = meta.getBounds, calcStats = false))
 
     Some(answer)
 
@@ -139,26 +180,37 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
     val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
+    val meta = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+
     // copy this here to avoid serializing the whole mapop
-    val nodata = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName)).getDefaultValue(0)
+    val nodatas = meta.getDefaultValues
 
     val answer = RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
-            val v = raster.getSampleDouble(x, y, b)
-            if (RasterMapOp.isNotNodata(v, nodata)) {
+      val width = raster.getWidth
+      var b: Int = 0
+      while (b < raster.getNumBands) {
+        val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < width) {
+            val v = pixels(y * width + x)
+            if (RasterMapOp.isNotNodata(v, nodatas(b))) {
               raster.setSample(x, y, b, function(v, const))
             }
+            x += 1
           }
+          y += 1
         }
+        b += 1
       }
       (tile._1, RasterWritable.toWritable(raster))
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(answer, raster.metadata().get.getMaxZoomLevel, nodatas,
+      bounds = meta.getBounds, calcStats = false))
 
     Some(answer)
 
@@ -170,12 +222,16 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
     // copy this here to avoid serializing the whole mapop
     val nodata1 = raster1.metadata() match {
-    case Some(metadata) => metadata.getDefaultValue(0)
-    case _ => Double.NaN
+    case Some(metadata) => metadata.getDefaultValues
+    case _ =>
+      val raster = RasterWritable.toRaster(rdd1.first()._2)
+      Array.fill[Double](raster.getNumBands)(Double.NaN)
     }
     val nodata2 = raster2.metadata() match {
-    case Some(metadata) => metadata.getDefaultValue(0)
-    case _ => Double.NaN
+    case Some(metadata) => metadata.getDefaultValues
+    case _ =>
+      val raster = RasterWritable.toRaster(rdd2.first()._2)
+      Array.fill[Double](raster.getNumBands)(Double.NaN)
     }
 
     // group the RDDs
@@ -195,32 +251,42 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       }
       else {
         // we know there are only 1 item in each group's iterator, so we can use head()
-        val raster1 = RasterWritable.toRaster(iter1.head).asInstanceOf[WritableRaster]
-        val raster2 = RasterWritable.toRaster(iter2.head).asInstanceOf[WritableRaster]
+        val raster1 = RasterUtils.makeRasterWritable(RasterWritable.toRaster(iter1.head))
+        val raster2 = RasterUtils.makeRasterWritable(RasterWritable.toRaster(iter2.head))
 
-        for (y <- 0 until raster1.getHeight) {
-          for (x <- 0 until raster1.getWidth) {
-            for (b <- 0 until raster1.getNumBands) {
-              val v1 = raster1.getSampleDouble(x, y, b)
-              if (RasterMapOp.isNotNodata(v1, nodata1)) {
-                val v2 = raster2.getSampleDouble(x, y, b)
-                if (RasterMapOp.isNotNodata(v2, nodata2)) {
+        val width = raster1.getWidth
+        var b: Int = 0
+        while (b < raster1.getNumBands) {
+          val pixels1 = raster1.getSamples(0, 0, width, raster1.getHeight, 0, null.asInstanceOf[Array[Double]])
+          val pixels2 = raster2.getSamples(0, 0, width, raster2.getHeight, 0, null.asInstanceOf[Array[Double]])
+          var y: Int = 0
+          while (y < raster1.getHeight) {
+            var x: Int = 0
+            while (x < width) {
+              val v1 = pixels1(y * width + x)
+              if (RasterMapOp.isNotNodata(v1, nodata1(b))) {
+                val v2 = pixels2(y * width + x)
+                if (RasterMapOp.isNotNodata(v2, nodata2(b))) {
                   raster1.setSample(x, y, b, function(v1, v2))
                 }
                 else {
                   // if raster2 is nodata, we need to set raster1's pixel to nodata as well
-                  raster1.setSample(x, y, b, nodata1)
+                  raster1.setSample(x, y, b, nodata1(b))
                 }
               }
+              x += 1
             }
+            y += 1
           }
+          b += 1
         }
 
         (tile._1, RasterWritable.toWritable(raster1))
       }
     }))
 
-    metadata(SparkUtils.calculateMetadata(answer, raster1.metadata().get.getMaxZoomLevel, nodata1))
+    metadata(SparkUtils.calculateMetadata(answer, raster1.metadata().get.getMaxZoomLevel, nodata1,
+      bounds = Bounds.combine(raster1.metadata().get.getBounds,raster2.metadata().get.getBounds), calcStats = false))
 
     Some(answer)
   }

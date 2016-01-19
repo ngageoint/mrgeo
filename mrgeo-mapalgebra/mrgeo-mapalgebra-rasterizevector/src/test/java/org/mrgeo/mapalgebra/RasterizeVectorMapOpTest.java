@@ -38,9 +38,6 @@ import java.io.IOException;
 @SuppressWarnings("static-method")
 public class RasterizeVectorMapOpTest extends LocalRunnerTest
 {
-@Rule
-public TestName testname = new TestName();
-
 private static MapOpTestUtils testUtils;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
@@ -172,6 +169,57 @@ public void rasterizeSumBounds() throws Exception
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void rasterizeAverage() throws Exception
+{
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"AVERAGE\", 0.0001716614, \"" + column + "\")";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void rasterizeMin() throws Exception
+{
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"MIN\", 0.0001716614, \"" + column + "\")";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void rasterizeMax() throws Exception
+{
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"MAX\", 0.0001716614, \"" + column + "\")";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
 }

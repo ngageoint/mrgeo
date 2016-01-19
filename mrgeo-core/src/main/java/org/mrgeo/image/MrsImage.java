@@ -17,16 +17,16 @@ package org.mrgeo.image;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.KVIterator;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImagePyramidReaderContext;
+import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.data.tile.MrsTileReader;
+import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,17 +50,17 @@ private static final Logger log = LoggerFactory.getLogger(MrsImage.class);
 protected ColorModel colorModel = null;
 protected SampleModel sampleModel = null;
 protected String measurement = "Ratio"; // not sure what this is for...
-private MrsTileReader<Raster> reader = null; // The MrsImageReader for fetching the tiles
-private MrsImagePyramidMetadata metadata = null; // image metadata
+private MrsImageReader reader = null; // The MrsImageReader for fetching the tiles
+private MrsPyramidMetadata metadata = null; // image metadata
 
 private int zoomlevel = -1; // current zoom level of this image
 private int tilesize = -1; // size of a tile (here for convenience, it is in the metadata)
 private MrsImageDataProvider provider;
-private MrsImagePyramidReaderContext context;
+private MrsPyramidReaderContext context;
 
 private MrsImage(MrsImageDataProvider provider, final int zoomlevel)
 {
-  context = new MrsImagePyramidReaderContext();
+  context = new MrsPyramidReaderContext();
   context.setZoomlevel(zoomlevel);
   this.provider = provider;
 
@@ -79,7 +79,7 @@ public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) 
 {
   try
   {
-    MrsImagePyramidMetadata meta = provider.getMetadataReader(null).read();
+    MrsPyramidMetadata meta = provider.getMetadataReader(null).read();
     // Check to see if there is an image at this zoom level before opening
     final String name = meta.getName(zoomlevel);
     if (name != null)
@@ -241,7 +241,7 @@ public int getMaxZoomlevel()
   return getMetadata().getMaxZoomLevel();
 }
 
-public MrsImagePyramidMetadata getMetadata()
+public MrsPyramidMetadata getMetadata()
 {
   if (metadata == null)
   {

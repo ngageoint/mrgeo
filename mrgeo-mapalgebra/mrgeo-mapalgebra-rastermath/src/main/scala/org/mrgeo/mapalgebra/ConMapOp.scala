@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
 import java.awt.image.{DataBuffer, Raster}
@@ -7,9 +22,10 @@ import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
+import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 import scala.collection.JavaConversions._
@@ -20,6 +36,19 @@ object ConMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("con")
   }
+
+  def create(test:RasterMapOp, positiveRaster:RasterMapOp, negativeRaster:RasterMapOp):MapOp =
+    new ConMapOp(test, positiveRaster, negativeRaster)
+
+  def create(test:RasterMapOp, positiveConst:Double, negativeRaster:RasterMapOp):MapOp =
+    new ConMapOp(test, positiveConst, negativeRaster)
+
+  def create(test:RasterMapOp, positiveRaster:RasterMapOp, negativeConst:Double):MapOp =
+    new ConMapOp(test, positiveRaster, negativeConst)
+
+  def create(test:RasterMapOp, positiveConst:Double, negativeConst:Double):MapOp =
+    new ConMapOp(test, positiveConst, negativeConst)
+
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new ConMapOp(node, variables)
@@ -35,6 +64,79 @@ class ConMapOp extends RasterMapOp with Externalizable {
 
   private val rddMap = mutable.Map.empty[Int, Int]  // maps input order (key) to cogrouped position (value)
   private val constMap = mutable.Map.empty[Int, Double] // maps input order (key) to constant value
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:RasterMapOp, negative:RasterMapOp) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](3)
+    inputs(0) = test
+    inputs(1) = positive
+    inputs(2) = negative
+
+    rddMap.put(0, 0)
+    rddMap.put(1, 1)
+    rddMap.put(2, 2)
+
+    //constMap.put(0, 0)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = true
+    isRdd(2) = true
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:Double, negative:RasterMapOp) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+    inputs(1) = negative
+
+    rddMap.put(0, 0)
+    rddMap.put(2, 1)
+
+    constMap.put(1, positive)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = false
+    isRdd(2) = true
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:RasterMapOp, negative:Double) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+    inputs(1) = positive
+
+    rddMap.put(0, 0)
+    rddMap.put(1, 1)
+
+    constMap.put(2, negative)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = true
+    isRdd(2) = false
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:Double, negative:Double) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+
+    rddMap.put(0, 0)
+
+    constMap.put(1, positive)
+    constMap.put(2, negative)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = false
+    isRdd(2) = false
+  }
 
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -222,7 +324,8 @@ class ConMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
+      bounds = meta.getBounds, calcStats = false))
 
     true
   }

@@ -1,13 +1,28 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RawLocalFileSystem;
-import org.apache.hadoop.io.LongWritable;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.WritableGeometry;
 import org.mrgeo.junit.UnitTest;
@@ -43,12 +58,12 @@ public class CsvOutputFormatTest
       f.setAttribute("string1", "foo");
       f.setAttribute("int1", "1");
       f.setAttribute("double1", "2.0");
-      writer.write(new LongWritable(0), f);
+      writer.write(new FeatureIdWritable(0), f);
 
       f.setAttribute("string1", "bar");
       f.setAttribute("int1", "3");
       f.setAttribute("double1", "4.0");
-      writer.write(new LongWritable(1), f);
+      writer.write(new FeatureIdWritable(1), f);
 
       writer.close(null);
 

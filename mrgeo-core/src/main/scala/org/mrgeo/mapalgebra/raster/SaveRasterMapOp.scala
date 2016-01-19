@@ -1,14 +1,29 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra.raster
 
-import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.ProviderProperties
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
-import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
+import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
 
 
 class SaveRasterMapOp extends RasterMapOp with Externalizable {
@@ -16,6 +31,13 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
   private var input: Option[RasterMapOp] = None
   private var output:String = null
+
+  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], name:String) = {
+    this()
+
+    input = inputMapOp
+    output = name
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -39,7 +61,7 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
     case Some(pyramid) =>
 
       rasterRDD = pyramid.rdd()
-      val meta = new MrsImagePyramidMetadata(pyramid.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName)))
+      val meta = new MrsPyramidMetadata(pyramid.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName)))
 
       // set the pyramid name to the output
       meta.setPyramid(output)

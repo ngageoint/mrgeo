@@ -73,12 +73,8 @@ public class GetMosaicTest extends WmsGeneratorTestAbstract
             .queryParam("FORMAT", "image/png")
             .queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750")
             .get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[Only one LAYER is supported]]></ServiceException>"));
-    response.close();
+
+    processXMLResponse(response, "testGetMosaicMultipleRequestLayers.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test 
@@ -92,12 +88,8 @@ public class GetMosaicTest extends WmsGeneratorTestAbstract
             .queryParam("FORMAT", "image/abc")
             .queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750")
             .get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("<ServiceException><![CDATA[java.lang.IllegalArgumentException: Unsupported image format - image/abc"));
-    response.close();
+
+    processXMLResponse(response, "testGetMosaicInvalidFormat.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test 
@@ -111,12 +103,8 @@ public class GetMosaicTest extends WmsGeneratorTestAbstract
             .queryParam("FORMAT", "image/png")
             .queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750")
             .get(ClientResponse.class);
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains("Unable to find a MrsImage data provider for IslandsElevation-v3"));
-    response.close();
+
+    processXMLResponse(response, "testGetMosaicInvalidLayer.xml", Response.Status.BAD_REQUEST);
   }
 
   /*

@@ -16,7 +16,7 @@
 package org.mrgeo.data.raster;
 
 import org.mrgeo.aggregators.Aggregator;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
@@ -330,14 +330,15 @@ public static void fillWithNodata(final WritableRaster raster, final Number[] no
 }
 
 private static void copyPixel(final int x, final int y, final int b, final Raster src,
-    final WritableRaster dst, double[] nodatas)
+    final WritableRaster dst, Number nodata)
 {
+
   switch (src.getTransferType())
   {
   case DataBuffer.TYPE_BYTE:
   {
     final byte p = (byte) src.getSample(x, y, b);
-    if (p != (byte)nodatas[b])
+    if (p != nodata.byteValue())
     {
       dst.setSample(x, y, b, p);
     }
@@ -346,7 +347,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_FLOAT:
   {
     final float p = src.getSampleFloat(x, y, b);
-    if (!Float.isNaN(p) && p != (float)nodatas[b])
+    if (!Float.isNaN(p) && p != nodata.floatValue())
     {
       dst.setSample(x, y, b, p);
     }
@@ -356,7 +357,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_DOUBLE:
   {
     final double p = src.getSampleDouble(x, y, b);
-    if (!Double.isNaN(p) && p != nodatas[b])
+    if (!Double.isNaN(p) && p != nodata.doubleValue())
     {
       dst.setSample(x, y, b, p);
     }
@@ -366,7 +367,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_INT:
   {
     final int p = src.getSample(x, y, b);
-    if (p != (int)nodatas[b])
+    if (p != nodata.intValue())
     {
       dst.setSample(x, y, b, p);
     }
@@ -376,7 +377,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_SHORT:
   {
     final short p = (short) src.getSample(x, y, b);
-    if (p != (short)nodatas[b])
+    if (p != nodata.shortValue())
     {
       dst.setSample(x, y, b, p);
     }
@@ -386,7 +387,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_USHORT:
   {
     final int p = src.getSample(x, y, b);
-    if (p != (int)nodatas[b])
+    if (p != nodata.shortValue())
     {
       dst.setSample(x, y, b, p);
     }
@@ -405,7 +406,7 @@ public static void mosaicTile(final Raster src, final WritableRaster dst, final 
     {
       for (int b = 0; b < src.getNumBands(); b++)
       {
-        copyPixel(x, y, b, src, dst, nodatas);
+        copyPixel(x, y, b, src, dst, nodatas[b]);
       }
     }
   }
@@ -439,12 +440,12 @@ public static BufferedImage makeBufferedImage(Raster raster)
 
 public static WritableRaster makeRasterWritable(final Raster raster)
 {
-  // create a writable raster using the sample model and actual data buffer from the source raster
+  if (raster instanceof WritableRaster)
+  {
+    return (WritableRaster)raster;
+  }
 
-  // create a child raster
-  // writable = writable.createWritableChild(raster.getMinX() - raster.getSampleModelTranslateX(),
-  // raster.getMinY() - raster.getSampleModelTranslateY(), raster.getWidth(),
-  // raster.getHeight(), raster.getMinX(), raster.getMinY(), null);
+  // create a writable raster using the sample model and actual data buffer from the source raster
   return Raster.createWritableRaster(raster.getSampleModel(),
       raster.getDataBuffer(), null);
 }
@@ -1055,7 +1056,7 @@ private static void scaleRasterNearestInt(final Raster src, final WritableRaster
   }
 }
 
-public static void fillWithNodata(final WritableRaster raster, final MrsImagePyramidMetadata metadata)
+public static void fillWithNodata(final WritableRaster raster, final MrsPyramidMetadata metadata)
 {
 
   int elements = raster.getHeight() * raster.getWidth();
@@ -1089,7 +1090,7 @@ public static void fillWithNodata(final WritableRaster raster, final MrsImagePyr
 }
 
 public static void decimate(final Raster parent, final WritableRaster child, final Aggregator aggregator,
-    final MrsImagePyramidMetadata metadata)
+    final MrsPyramidMetadata metadata)
 {
   final int w = parent.getWidth();
   final int h = parent.getHeight();

@@ -18,17 +18,15 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.fs.Path;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
-import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.slf4j.Logger;
@@ -40,9 +38,6 @@ public class ChangeClassificationMapOpIntegrationTest extends LocalRunnerTest
 {
   @SuppressWarnings("unused")
   private static final Logger log = LoggerFactory.getLogger(ChangeClassificationMapOpIntegrationTest.class);
-
-  @Rule
-  public TestName testname = new TestName();
 
 
   private static MapOpTestUtils testUtils;
@@ -85,11 +80,11 @@ public class ChangeClassificationMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationPath.toString(),
-        getProviderProperties());
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationPath.toString(),
+                                         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -112,11 +107,11 @@ public void changeToContinuous() throws Exception
   testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
   // check the in-place pyramid
-  MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationCategoricalPath.toString(),
-      getProviderProperties());
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationCategoricalPath.toString(),
+                                       getProviderProperties());
   Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
   Assert.assertNotNull("Can't load metadata", metadata);
 
   Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
@@ -140,11 +135,11 @@ public void changeToContinuousMean() throws Exception
   testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
   // check the in-place pyramid
-  MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationCategoricalPath.toString(),
-      getProviderProperties());
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationCategoricalPath.toString(),
+                                       getProviderProperties());
   Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
   Assert.assertNotNull("Can't load metadata", metadata);
 
   Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
@@ -168,11 +163,11 @@ public void changeToContinuousMean() throws Exception
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath[0].toString(),
-        getProviderProperties());
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[0].toString(),
+                                         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -202,11 +197,11 @@ public void changeToContinuousMean() throws Exception
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath[1].toString(),
-        getProviderProperties());
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[1].toString(),
+                                         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -223,11 +218,11 @@ public void changeToContinuousMean() throws Exception
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath[2].toString(),
-        getProviderProperties());
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[2].toString(),
+                                         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -244,11 +239,11 @@ public void changeToContinuousMean() throws Exception
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath[3].toString(),
-        getProviderProperties());
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[3].toString(),
+                                         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -265,11 +260,11 @@ public void changeToContinuousMean() throws Exception
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath[4].toString(),
-        getProviderProperties());
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[4].toString(),
+                                         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -286,11 +281,11 @@ public void changeToContinuousMean() throws Exception
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath[5].toString(),
-        getProviderProperties());
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[5].toString(),
+                                         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
@@ -307,11 +302,11 @@ public void changeToContinuousMean() throws Exception
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath[6].toString(),
-        getProviderProperties());
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[6].toString(),
+                                         getProviderProperties());
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());

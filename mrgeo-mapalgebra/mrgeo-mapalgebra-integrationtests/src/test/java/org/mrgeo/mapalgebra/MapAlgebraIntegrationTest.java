@@ -18,19 +18,21 @@ package org.mrgeo.mapalgebra;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
@@ -47,9 +49,6 @@ import java.io.IOException;
  */
 public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
-@Rule
-public TestName testname = new TestName();
-
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
 public final static boolean GEN_BASELINE_DATA_ONLY = false;
@@ -60,9 +59,6 @@ protected static Path smallElevationPath;
 
 private static final String greeceName = "greece";
 private static String greece = Defs.INPUT + greeceName;
-
-private static final String majorRoadShapeName = "major_road_intersections_exploded";
-protected static Path majorRoadShapePath;
 
 
 protected static final String pointsName = "input1"; // .tsv
@@ -84,7 +80,7 @@ private static final String allonesnopyramids = "all-ones-no-pyramids";
 private static final String allonesholes = "all-ones-with-holes";
 private static final String allhundredsholes = "all-hundreds-with-holes";
 
-private static String smallslope = Defs.INPUT +"SmallSlopeBaseline.tif";
+private static String smallelevationtif = Defs.INPUT + "small-elevation.tif";
 
 private static final String regularpoints = "regular-points";
 private static Path regularpointsPath;
@@ -126,20 +122,6 @@ public static void init() throws IOException
       pointsName + ".tsv.columns");
   pointsPath = testUtils.getInputHdfsFor(pointsName + ".tsv").toString();
 
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".shp");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".prj");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".shx");
-  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
-      testUtils.getInputHdfs(),
-      majorRoadShapeName + ".dbf");
-  majorRoadShapePath = testUtils.getInputHdfsFor(majorRoadShapeName + ".shp");
-
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allones);
   allonesPath = new Path(testUtils.getInputHdfs(), allones);
 
@@ -166,8 +148,8 @@ public static void init() throws IOException
   smallElevationPath = new Path(testUtils.getInputHdfs(), smallElevationName);
 
 
-  File file = new File(smallslope);
-  smallslope = new Path("file://" + file.getAbsolutePath()).toString();
+  File file = new File(smallelevationtif);
+  smallelevationtif = new Path("file://" + file.getAbsolutePath()).toString();
 
   file = new File(smallElevation);
   smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
@@ -187,7 +169,6 @@ public void add() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format("[%s] + [%s]", allones, allones), -9999);
-
   }
   else
   {
@@ -288,6 +269,50 @@ public void aspectRad() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void bandcombine() throws Exception
+{
+  String exp = String.format("bandcombine([%s], [%s])", allones, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void bandcombineAlternate() throws Exception
+{
+//  LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+
+//  String blue = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B2-blue.TIF";
+//  String green = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B3-green.TIF";
+//  String red = "file:///data/gis-data/images/landsat8/LC80101172015002LGN00_B4-red.TIF";
+//  String exp = String.format("bc(ingest('%s'), ingest('%s'), ingest('%s'))", red, green, blue);
+
+//  String exp = String.format("bc([%s], [%s], [%s])",
+//      "/mrgeo/images/landsat-red", "/mrgeo/images/landsat-green", "/mrgeo/images/landsat-blue");
+
+  String exp = String.format("bc([%s], [%s])", allones, allhundreds);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+
+@Test
+@Category(IntegrationTest.class)
 public void buildpyramid() throws Exception
 {
   // copy the pyramid here, in case it has been used in another buildpyramid test
@@ -295,12 +320,12 @@ public void buildpyramid() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -336,7 +361,7 @@ public void buildpyramid() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -356,12 +381,12 @@ public void buildpyramidAfterSave() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -397,7 +422,7 @@ public void buildpyramidAfterSave() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -410,7 +435,7 @@ public void buildpyramidAfterSave() throws Exception
     md =  metadata.getImageMetadata();
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       if (i != md.length - 1)
       {
@@ -440,12 +465,12 @@ public void buildpyramidAlternate() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -481,7 +506,7 @@ public void buildpyramidAlternate() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -501,12 +526,12 @@ public void buildpyramidDoesNotExist() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -544,8 +569,8 @@ public void changeClassification() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "changeClassification([" + smallElevationPath + "], \"categorical\")");
 
-    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
-    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    MrsPyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsPyramidMetadata.Classification.Categorical, metadata.getClassification());
     Assert.assertEquals("mean", metadata.getResamplingMethod().toLowerCase());
   }
 }
@@ -565,8 +590,8 @@ public void changeClassificationAggregator() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "changeClassification([" + smallElevationPath + "], \"categorical\", \"max\")");
 
-    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
-    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    MrsPyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsPyramidMetadata.Classification.Categorical, metadata.getClassification());
     Assert.assertEquals("max", metadata.getResamplingMethod().toLowerCase());
 
   }
@@ -781,6 +806,26 @@ public void divideAddConstant() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void export() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("export([%s], \"%s\", \"true\")", allones, testUtils.getInputLocalFor(testname.getMethodName())), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("export([%s], \"%s\", \"true\")", allones, testUtils.getOutputLocalFor(testname.getMethodName())));
+
+    // now check the file that was saved...
+    testUtils.compareLocalRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void expressionIncompletePathInput1() throws Exception
 {
   // test expressions with file names mixed in with fullpaths
@@ -956,18 +1001,16 @@ public void hillshade() throws Exception
 @Category(IntegrationTest.class)
 public void ingest() throws Exception
 {
-//    java.util.Properties prop = MrGeoProperties.getInstance();
-//    prop.setProperty(HadoopUtils.IMAGE_BASE, testUtils.getInputHdfs().toUri().toString());
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("ingest(\"%s\")", smallslope), -9999);
+        String.format("ingest(\"%s\")", smallelevationtif), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("ingest(\"%s\")", smallslope));
+        String.format("ingest(\"%s\")", smallelevationtif));
   }
 }
 
@@ -1042,6 +1085,7 @@ public void kernelLaplacian() throws Exception
         String.format("kernel(\"laplacian\", [%s], 100.0)", regularpointsPath));
   }
 }
+
 
 @Test
 @Category(IntegrationTest.class)
@@ -1466,6 +1510,7 @@ public void slopeDeg() throws Exception
 
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void slopePercent() throws Exception
@@ -1484,6 +1529,161 @@ public void slopePercent() throws Exception
 
   }
 }
+
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsCount() throws Exception
+{
+  String exp = String.format("statistics('count', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMax() throws Exception
+{
+  String exp = String.format("statistics('max', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMean() throws Exception
+{
+  String exp = String.format("statistics('mean', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMedian() throws Exception
+{
+  String exp = String.format("statistics('median', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMin() throws Exception
+{
+  String exp = String.format("statistics('min', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsMode() throws Exception
+{
+  String exp = String.format("statistics('mode', [%s], [%s], [%s], [%s])", allones, alltwos, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsSum() throws Exception
+{
+  String exp = String.format("statistics('sum', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsStdDev() throws Exception
+{
+  String exp = String.format("statistics('stddev', [%s], [%s], [%s])", allones, alltwos, allhundreds);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void statisticsWildcard() throws Exception
+{
+  String exp = String.format("statistics('mean', '%s')", "all*");
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
@@ -1555,55 +1755,5 @@ public void variables3() throws Exception
   }
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void rasterizeVector1() throws Exception
-{
-  if (GEN_BASELINE_DATA_ONLY)
-  {
-    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("a = [%s]; RasterizeVector(a, \"MASK\", \"0.000092593\")", majorRoadShapePath.toString()), -9999);
-  }
-  else
-  {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("a = [%s]; RasterizeVector(a, \"MASK\", \"0.000092593\")", majorRoadShapePath.toString()));
-  }
-}
-
-@Test
-@Category(IntegrationTest.class)
-public void rasterizeVector2() throws Exception
-{
-  if (GEN_BASELINE_DATA_ONLY)
-  {
-    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ", pointsPath), -9999);
-  }
-  else
-  {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("a = [%s]; RasterizeVector(a, \"MIN\", 1, \"c\") ", pointsPath));
-  }
-}
-
-@Test
-@Category(IntegrationTest.class)
-public void rasterizeVector3() throws Exception
-{
-  if (GEN_BASELINE_DATA_ONLY)
-  {
-    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath), -9999);
-  }
-  else
-  {
-    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("RasterizeVector([%s], \"SUM\", 1)", pointsPath));
-  }
-}
 
 }

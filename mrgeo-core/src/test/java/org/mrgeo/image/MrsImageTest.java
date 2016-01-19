@@ -16,15 +16,7 @@
 package org.mrgeo.image;
 
 
-import java.io.File;
-import java.io.IOException;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
@@ -34,6 +26,9 @@ import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.TMSUtils;
+
+import java.io.File;
+import java.io.IOException;
 
 @SuppressWarnings("static-method")
 public class MrsImageTest extends LocalRunnerTest
@@ -137,7 +132,7 @@ public class MrsImageTest extends LocalRunnerTest
     // The reason for doing so is because in order to calculate the lat/lons, we'd do the exact
     // same calculation as the convertToLatLng(), so we'd really would'nt be testing the
     // algorithm, just that we can do the same calculation twice...
-    MrsImagePyramidMetadata meta = allOnesImage.getMetadata();
+    MrsPyramidMetadata meta = allOnesImage.getMetadata();
     LongRectangle pixelBounds = meta.getPixelBounds(zoom);
     int tilesize = meta.getTilesize();
 
@@ -182,7 +177,7 @@ public class MrsImageTest extends LocalRunnerTest
     // TMSUtils to convert back to pixels (an alternate method), then making sure we get same px/py
     // out of the calculation.
 
-    MrsImagePyramidMetadata meta = allOnesImage.getMetadata();
+    MrsPyramidMetadata meta = allOnesImage.getMetadata();
     LongRectangle pixelBounds = meta.getPixelBounds(zoom);
     int tilesize = meta.getTilesize();
 

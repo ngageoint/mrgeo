@@ -18,6 +18,8 @@ package org.mrgeo.test;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
@@ -26,6 +28,9 @@ import org.mrgeo.utils.LoggingUtils;
 import java.io.IOException;
 
 public class LocalRunnerTest {
+
+  @Rule
+  public TestName testname = new TestName();
 
   protected Configuration conf = null;
 

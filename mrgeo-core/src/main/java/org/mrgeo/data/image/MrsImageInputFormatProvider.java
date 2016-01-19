@@ -16,15 +16,12 @@
 package org.mrgeo.data.image;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.tile.TiledInputFormatContext;
-import org.mrgeo.data.tile.TiledInputFormatProvider;
-import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,20 +33,52 @@ import java.io.IOException;
  * a sub-class of this class if they wish to provide storage for
  * image pyramids.
  */
-public abstract class MrsImageInputFormatProvider implements TiledInputFormatProvider<RasterWritable>
+public abstract class MrsImageInputFormatProvider
 {
   private static final Logger log = LoggerFactory.getLogger(MrsImageInputFormatProvider.class);
-  protected TiledInputFormatContext context;
+  protected ImageInputFormatContext context;
 
-  public MrsImageInputFormatProvider(TiledInputFormatContext config)
+  public MrsImageInputFormatProvider(ImageInputFormatContext config)
   {
     this.context = config;
   }
 
   /**
-   * Sub-classes that override this method must call super.setupJob(job).
+   * Return an input format to be used during map reduce jobs. This input
+   * format however, will not be configured as the input format in the
+   * job configuration. Instead a MrGeo input format like MrsImagePyramidInputFormat
+   * will be used in the job itself. The class returned from this method
+   * will be called by the MrsImagePyramidInputFormat class to perform
+   * the actual input of data and then transform it into the actual inputs
+   * passed to the mappers.
+   *
+   * At a more detailed level, the input transformation referred to above
+   * includes constructing a TileCollection which is emitted as the input
+   * to the mappers. It includes surrounding tile neighborhood data (if
+   * required) as well as corresponding tiles from other inputs (if required).
+   *
+   * @param input
+   * @return
    */
-  @Override
+  public abstract InputFormat<TileIdWritable, RasterWritable> getInputFormat(final String input);
+
+  /**
+   * Perform all Spark job setup required for your input format here. Typically that
+   * involves job configuration settings for passing values to mappers and/or
+   * reducers. Do not call setInputFormatClass. The core framework sets the
+   * input format class to a core class like MrsImagePyramidInputFormat which
+   * in turn uses your class returned from getInputFormat().
+   *
+   * If you do call setInputFormatClass, you will likely get class incompatibility
+   * exceptions when you run the job because mappers will expect to receive
+   * TileCollections. Please see the description of getInputFormat() for more
+   * information.
+   *
+   * Sub-classes that override this method must call super.setupJob(job).
+   *
+   * @param conf
+   * @param provider
+   */
   public Configuration setupSparkJob(Configuration conf, MrsImageDataProvider provider)
           throws DataProviderException
   {
@@ -67,56 +96,42 @@ public abstract class MrsImageInputFormatProvider implements TiledInputFormatPro
   }
 
   /**
+   * Perform all job setup required for your input format here. Typically that
+   * involves job configuration settings for passing values to mappers and/or
+   * reducers. Do not call setInputFormatClass. The core framework sets the
+   * input format class to a core class like MrsImagePyramidInputFormat which
+   * in turn uses your class returned from getInputFormat().
+   *
+   * If you do call setInputFormatClass, you will likely get class incompatibility
+   * exceptions when you run the job because mappers will expect to receive
+   * TileCollections. Please see the description of getInputFormat() for more
+   * information.
+   *
    * Any sub-classes that need to override this method to do additional setup
    * work should call super.setupJob(job) to perform default job setup too.
+   *
+   * @param job
    */
-  @Override
   public void setupJob(Job job, final MrsImageDataProvider provider) throws DataProviderException
   {
     provider.setupJob(job);
     setupConfig(job, provider);
   }
 
+
+  /**
+   * Perform any processing required after the map/reduce has completed.
+   *
+   * @param job
+   */
+  public abstract void teardown(final Job job) throws DataProviderException;
+
   private void setupConfig(final Job job,
                            final MrsImageDataProvider provider)
           throws DataProviderException
   {
-    try
-    {
-      Configuration conf = job.getConfiguration();
-      DataProviderFactory.saveProviderPropertiesToConfig(provider.getProviderProperties(), conf);
-      context.save(conf);
-      // Add the input pyramid metadata to the job configuration
-      for (final String input : context.getInputs())
-      {
-        MrsImagePyramid pyramid;
-        try
-        {
-          pyramid = MrsImagePyramid.open(input, context.getProviderProperties());
-        }
-        catch (IOException e)
-        {
-          throw new DataProviderException("Failure opening input image pyramid: " + input, e);
-        }
-        final MrsImagePyramidMetadata metadata = pyramid.getMetadata();
-        log.debug("In HadoopUtils.setupMrsPyramidInputFormat, loading pyramid for " + input +
-                  " pyramid instance is " + pyramid + " metadata instance is " + metadata);
-
-        String image = metadata.getName(context.getZoomLevel());
-        // if we don't have this zoom level, use the max, then we'll decimate/subsample that one
-        if (image == null)
-        {
-          log.error("Could not get image in setupMrsPyramidInputFormat at zoom level " +
-                    context.getZoomLevel() + " for " + pyramid);
-          image = metadata.getName(metadata.getMaxZoomLevel());
-        }
-
-        HadoopUtils.setMetadata(conf, metadata);
-      }
-    }
-    catch (IOException e)
-    {
-      throw new DataProviderException("Failure configuring map/reduce job " + context.toString(), e);
-    }
+    Configuration conf = job.getConfiguration();
+    DataProviderFactory.saveProviderPropertiesToConfig(provider.getProviderProperties(), conf);
+    context.save(conf);
   }
 }

@@ -15,17 +15,20 @@
 
 package org.mrgeo.hdfs.vector;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.vividsolutions.jts.io.WKTReader;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.GeometryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vividsolutions.jts.io.WKTReader;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is responsible for converting a line of text into a Geometry
@@ -42,7 +45,7 @@ import com.vividsolutions.jts.io.WKTReader;
  * for cases where the first line is the column header</li>
  * </ul>
  */
-public class DelimitedParser
+public class DelimitedParser implements Externalizable
 {
   static final Logger log = LoggerFactory.getLogger(DelimitedParser.class);
 
@@ -54,7 +57,14 @@ public class DelimitedParser
   private char encapsulator;
   private boolean skipFirstLine;
   private WKTReader _wktReader;
-  
+
+  /**
+   * Should only be used for serialization.
+   */
+  public DelimitedParser()
+  {
+  }
+
   public DelimitedParser(List<String> attributeNames, int xCol, int yCol,
       int geometryCol, char delimiter, char encapsulator, boolean skipFirstLine)
   {
@@ -259,5 +269,50 @@ public class DelimitedParser
     result.add(buf.toString());
 
     return result.toArray(new String[result.size()]);
+  }
+
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException
+  {
+    if (attributeNames != null)
+    {
+      out.writeBoolean(true);
+      out.writeInt(attributeNames.size());
+      for (String name: attributeNames)
+      {
+        out.writeUTF(name);
+      }
+    }
+    else
+    {
+      out.writeBoolean(false);
+    }
+    out.writeInt(xCol);
+    out.writeInt(yCol);
+    out.writeInt(geometryCol);
+    out.writeChar(delimiter);
+    out.writeChar(encapsulator);
+    out.writeBoolean(skipFirstLine);
+  }
+
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+  {
+    boolean hasAttributes = in.readBoolean();
+    if (hasAttributes)
+    {
+      attributeNames = new ArrayList<String>();
+      int count = in.readInt();
+      for (int i=0; i < count; i++)
+      {
+        attributeNames.add(in.readUTF());
+      }
+    }
+    xCol = in.readInt();
+    yCol = in.readInt();
+    geometryCol = in.readInt();
+    delimiter = in .readChar();
+    encapsulator = in.readChar();
+    skipFirstLine = in.readBoolean();
   }
 }

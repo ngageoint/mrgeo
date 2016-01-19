@@ -1,27 +1,49 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
-import java.io.{IOException, ObjectInput, ObjectOutput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.rdd.PairRDDFunctions
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
-import org.mrgeo.utils.{SparkUtils, Bounds, TMSUtils}
+import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
 
 object FillMapOp extends MapOpRegistrar {
-  private[mapalgebra] val Fill = "fill"
-  private[mapalgebra] val FillBounds = "fillbounds"
 
   override def register: Array[String] = {
-    Array[String](Fill, FillBounds)
+    Array[String]("fill")
   }
+
+  def create(raster:RasterMapOp, fillRaster:RasterMapOp):MapOp =
+    new FillMapOp(raster, fillRaster, None)
+
+  def create(raster:RasterMapOp, constFill:Double):MapOp =
+    new FillMapOp(raster, constFill, None)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new FillMapOp(node, variables)
 }
+
 
 class FillMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
@@ -31,18 +53,32 @@ class FillMapOp extends RasterMapOp with Externalizable {
   private var constFill:Option[Double] = None
   private var bounds:Option[Bounds] = None
 
+  private[mapalgebra] def this(raster:RasterMapOp, fillRaster:RasterMapOp, bounds:Option[Bounds]) = {
+    this()
+    inputMapOp = Some(raster)
+    fillMapOp = Some(fillRaster)
+    this.bounds = bounds
+  }
+
+  private[mapalgebra] def this(raster:RasterMapOp, const:Double, bounds:Option[Bounds]) = {
+    this()
+    inputMapOp = Some(raster)
+    constFill = Some(const)
+    this.bounds = bounds
+  }
+
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
     // get values unique for each function
     node.getName match {
-    case FillMapOp.Fill =>
+    case "fill" =>
       if (node.getNumChildren != 2) {
         throw new ParserException("Usage: fill(raster, fill value)")
       }
-    case FillMapOp.FillBounds =>
+    case "fillbounds" =>
       if (node.getNumChildren != 6) {
-        throw new ParserException("Usage: fill(raster, fill value, w, s, n, e)")
+        throw new ParserException("Usage: fill(raster, fill value, w, s, e, n)")
       }
 
       bounds = Some(new Bounds(MapOp.decodeDouble(node.getChild(2), variables).get,
@@ -73,6 +109,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
     }
 
   }
+
 
   override def rdd(): Option[RasterRDD] = rasterRDD
   override def setup(job: JobArguments, conf: SparkConf): Boolean = true
@@ -110,7 +147,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
       val src = RasterWritable.toRaster(rdd.first()._2)
       val constRaster = RasterWritable.toWritable(RasterUtils.createCompatibleEmptyRaster(src, const))
 
-      val joined = test.leftOuterJoin(rdd)
+      val joined = new PairRDDFunctions(test).leftOuterJoin(rdd)
       joined.map(tile => {
         // if we have a tile, use it, otherwise (None case), make a new tile with the constant value
         tile._2._2 match {
@@ -127,7 +164,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
       val src = RasterWritable.toRaster(rdd.first()._2)
       val nodataRaster = RasterWritable.toWritable(RasterUtils.createCompatibleEmptyRaster(src, nodata))
 
-      val joined = test.cogroup(rdd, fillrdd)
+      val joined = new PairRDDFunctions(test).cogroup(rdd, fillrdd)
       joined.map(tile => {
 
         // if the src tile is not empty, use it
@@ -145,7 +182,8 @@ class FillMapOp extends RasterMapOp with Externalizable {
       })
     }))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValue(0)))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues,
+      bounds = TMSUtils.tileToBounds(tb, zoom, meta.getTilesize).asBounds(), calcStats = false))
 
     true
   }

@@ -1,23 +1,37 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.image.ImageStats;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.ImageStats;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.MapOpTestVectorUtils;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +54,6 @@ import java.io.IOException;
 @SuppressWarnings("static-method")
 public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 {
-  @Rule
-  public TestName testname = new TestName();
-
   private static final Logger log = LoggerFactory.getLogger(CostDistanceMapOpIntegrationTest.class);
 
   private static MapOpTestUtils testUtils;
@@ -93,6 +104,10 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
                  + "friction = [" + frictionSurface + "];\n"
                  + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
+    // Start point in tile tx=702 ty = 348, pixel px = 510 py = 0
+//    String exp = "srcPoint = InlineCsv(\"GEOMETRY\", \"'POINT(9.029234 45.223345)'\");\n"
+//                 + "friction = [/mrgeo/images/dave-tobler-raw-spm_nowater];\n"
+//                 + "result = CostDistance(srcPoint, 9, friction, 2000000, -3.5, 36.8, 9.9, 45.6)";
     // For tobler-raw-4tiles
 //    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(65.1 30.1)'\");\n"
 //                 + "friction = [" + frictionSurface + "];\n"
@@ -100,17 +115,25 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
     if (GEN_BASELINE_DATA_ONLY)
     {
+      long start = System.currentTimeMillis();
       testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+      long timeDelta = System.currentTimeMillis() - start;
+      System.out.println("testCostDistance took " + timeDelta);
+      log.error("testCostDistance took " + timeDelta);
     }
     else
     {
+      long start = System.currentTimeMillis();
       testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+      long timeDelta = System.currentTimeMillis() - start;
+      log.error("testCostDistance took " + timeDelta);
+      System.out.println("testCostDistance took " + timeDelta);
 
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
           new Path(testUtils.getOutputHdfs(), testname.getMethodName()).toUri().toString(),
           AccessMode.READ, (ProviderProperties)null);
 
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
       ImageStats[] stats = metadata.getStats();
       ImageStats[] imageStats = metadata.getImageStats(metadata.getMaxZoomLevel());
@@ -122,8 +145,8 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
       double epsilon = 0.5;
       Assert.assertEquals(0, bandStats.min, epsilon);
       Assert.assertEquals(50000, bandStats.max, epsilon);
-      Assert.assertEquals(33112.808371797866, bandStats.mean, epsilon);
-      Assert.assertEquals(1852051, bandStats.count);
+      Assert.assertEquals(33142.46070624142, bandStats.mean, epsilon);
+      Assert.assertEquals(1562052, bandStats.count);
     }
   }
 
@@ -148,7 +171,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
           new Path(testUtils.getOutputHdfs(), testname.getMethodName()).toUri().toString(),
           AccessMode.READ, (ProviderProperties)null);
 
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
       ImageStats[] stats = metadata.getStats();
       ImageStats[] imageStats = metadata.getImageStats(metadata.getMaxZoomLevel());

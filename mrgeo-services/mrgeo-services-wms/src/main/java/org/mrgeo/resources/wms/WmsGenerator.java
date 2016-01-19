@@ -16,17 +16,21 @@
 package org.mrgeo.resources.wms;
 
 import org.apache.commons.lang3.StringUtils;
+import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScale.ColorScaleException;
+import org.mrgeo.colorscale.ColorScaleManager;
+import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.colorscale.ColorScale;
-import org.mrgeo.colorscale.ColorScale.ColorScaleException;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
-import org.mrgeo.services.mrspyramid.ColorScaleManager;
-import org.mrgeo.services.mrspyramid.rendering.*;
+import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
+import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
+import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.Bounds;
@@ -365,7 +369,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     Bounds bounds = null;
     try
@@ -407,13 +411,9 @@ public class WmsGenerator
     {
       bounds = RequestUtils.reprojectBounds(bounds, srs);
     }
-    catch (org.opengis.referencing.NoSuchAuthorityCodeException e)
-    {
-      return writeError(Response.Status.BAD_REQUEST, "InvalidCRS", e.getMessage());
-    }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
 
     // Return the resulting image
@@ -435,7 +435,7 @@ public class WmsGenerator
     catch (Exception e)
     {
       log.error("Unable to render the image in getTile", e);
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -549,7 +549,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     String format = getQueryParam(allParams, "format");
     if (format == null)
@@ -564,7 +564,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     try
     {
@@ -583,7 +583,7 @@ public class WmsGenerator
     catch (Exception e)
     {
       log.error("Unable to render the image in getMosaic", e);
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -606,7 +606,7 @@ public class WmsGenerator
   }
 
   /*
-   * Returns a list of all MrsImagePyramid version 2 data in the home data directory
+   * Returns a list of all MrsPyramid version 2 data in the home data directory
    */
   private static MrsImageDataProvider[] getPyramidFilesList(
       final ProviderProperties providerProperties) throws IOException
@@ -723,7 +723,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     try
     {
@@ -734,13 +734,13 @@ public class WmsGenerator
       Response.ResponseBuilder builder =  ((ImageResponseWriter) ImageHandlerFactory
               .getHandler(format, ImageResponseWriter.class))
               .write(result, tileCol, tileRow, scale,
-                     MrsImagePyramid.open(layer, providerProperties));
+                     MrsPyramid.open(layer, providerProperties));
       return setupCaching(builder, allParams).build();
     }
     catch (Exception e)
     {
       log.error("Unable to render the image in getTile", e);
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -801,7 +801,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -874,7 +874,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
-      return writeError(Response.Status.BAD_REQUEST, e);
+      return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
 

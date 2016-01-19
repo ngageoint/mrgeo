@@ -77,7 +77,7 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
             .queryParam("REQUEST", "describetiles")
             .get(ClientResponse.class);
 
-    processTextResponse(response, "DescribeTiles.xml");
+    processXMLResponse(response, "DescribeTiles.xml");
   }
 
   @Test
@@ -90,14 +90,7 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
             .queryParam("VERSION", "1.3.0")
             .get(ClientResponse.class);
 
-    Assert.assertNotNull(response);
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    String content = response.getEntity(String.class);
-    assertTrue("Unexpected response: " + content,
-               content.contains(
-                       "<ServiceException><![CDATA[Describe tiles is only supported with version >= 1.4.0]]></ServiceException>")
-    );
-    response.close();
+    processXMLResponse(response, "DescribeTilesEarlyVersion.xml", Response.Status.BAD_REQUEST);
   }
 
   @Test
@@ -109,6 +102,6 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
             .queryParam("REQUEST", "describetiles")
             .queryParam("VERSION", "1.4.0")
             .get(ClientResponse.class);
-    processTextResponse(response, "DescribeTiles.xml");
+    processXMLResponse(response, "DescribeTiles.xml");
   }
 }

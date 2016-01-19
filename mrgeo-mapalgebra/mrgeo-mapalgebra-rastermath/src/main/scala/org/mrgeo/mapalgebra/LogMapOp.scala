@@ -1,20 +1,38 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.mapalgebra
 
-import java.awt.image.WritableRaster
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.job.JobArguments
+import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 object LogMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("log")
   }
+
+  def create(raster:RasterMapOp, base:Double = 1.0):MapOp =
+    new LogMapOp(Some(raster), Some(base))
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new LogMapOp(node, variables)
@@ -25,6 +43,12 @@ class LogMapOp extends RasterMapOp with Externalizable {
   private var inputMapOp:Option[RasterMapOp] = None
   private var base:Option[Double] = None
   private var rasterRDD:Option[RasterRDD] = None
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], base:Option[Double]) = {
+    this()
+    inputMapOp = raster
+    this.base = base
+  }
 
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -65,7 +89,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
     }
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
       for (y <- 0 until raster.getHeight) {
         for (x <- 0 until raster.getWidth) {
@@ -81,7 +105,8 @@ class LogMapOp extends RasterMapOp with Externalizable {
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodata))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
+      bounds = meta.getBounds, calcStats = false))
 
     true
   }

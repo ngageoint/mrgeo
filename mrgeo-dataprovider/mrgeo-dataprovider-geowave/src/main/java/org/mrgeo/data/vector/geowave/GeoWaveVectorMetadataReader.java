@@ -1,14 +1,14 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.index.ByteArrayId;
-import mil.nga.giat.geowave.store.adapter.DataAdapter;
-import mil.nga.giat.geowave.store.adapter.statistics.DataStatistics;
-import mil.nga.giat.geowave.vector.adapter.FeatureDataAdapter;
-import mil.nga.giat.geowave.vector.stats.FeatureBoundingBoxStatistics;
+import mil.nga.giat.geowave.core.index.ByteArrayId;
+import mil.nga.giat.geowave.core.store.adapter.DataAdapter;
+import mil.nga.giat.geowave.core.store.adapter.statistics.DataStatistics;
+import mil.nga.giat.geowave.adapter.vector.FeatureDataAdapter;
+import mil.nga.giat.geowave.adapter.vector.stats.FeatureBoundingBoxStatistics;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.hadoop.io.LongWritable;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorMetadata;
 import org.mrgeo.data.vector.VectorMetadataReader;
 import org.mrgeo.data.vector.VectorReader;
@@ -96,7 +96,7 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
     FeatureBoundingBoxStatistics boundsStats = null;
     String geometryField = sft.getGeometryDescriptor().getLocalName();
     log.info("GeoWave geometry field is: " + geometryField);
-    DataStatistics<?> stats = GeoWaveVectorDataProvider.getStatisticsStore().getDataStatistics(
+    DataStatistics<?> stats = dataProvider.getStatisticsStore().getDataStatistics(
             new ByteArrayId(dataProvider.getGeoWaveResourceName()),
             FeatureBoundingBoxStatistics.composeId(geometryField));
     boundsStats = (FeatureBoundingBoxStatistics) stats;
@@ -116,7 +116,7 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
       {
         log.info("Computing BBOX by iterating features");
         VectorReader reader = dataProvider.getVectorReader();
-        CloseableKVIterator<LongWritable, Geometry> iter = reader.get();
+        CloseableKVIterator<FeatureIdWritable, Geometry> iter = reader.get();
         double minX = Double.MAX_VALUE;
         double minY = Double.MAX_VALUE;
         double maxX = Double.MIN_VALUE;

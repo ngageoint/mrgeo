@@ -1,13 +1,28 @@
+/*
+ * Copyright 2009-2015 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 package org.mrgeo.utils
 
-import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector._
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.geometry.Geometry
+
 import scala.collection.JavaConversions._
 
 object SparkVectorUtils
@@ -29,7 +44,7 @@ object SparkVectorUtils
     val conf2 = vfp.setupJob(job, provider.getProviderProperties)
     VectorRDD(context.newAPIHadoopRDD(job.getConfiguration,
       classOf[VectorInputFormat],
-      classOf[LongWritable],
+      classOf[FeatureIdWritable],
       classOf[Geometry]))
   }
 
