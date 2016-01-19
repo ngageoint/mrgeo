@@ -280,15 +280,19 @@ object IngestImage extends MrGeoDriver with Externalizable {
         GDALUtils.close(src)
 
         val bandlist = Array.ofDim[Int](bands)
-        for (x <- 0 until bands) {
+        var x: Int = 0
+        while (x < bands) {
           bandlist(x) = x + 1 // bands are ones based
+          x += 1
         }
 
 
         val buffer = Array.ofDim[Byte](datasize * tilesize * tilesize * bands)
 
-        for (dty <- 0 until tiles.height.toInt) {
-          for (dtx <- 0 until tiles.width.toInt) {
+        var dty: Int = 0
+        while (dty < tiles.height.toInt) {
+          var dtx: Int = 0
+          while (dtx < tiles.width.toInt) {
 
             //val start = System.currentTimeMillis()
 
@@ -319,7 +323,9 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
             //val time = System.currentTimeMillis() - start
             //println(tx + ", " + ty + ", " + time)
+            dtx += 1
           }
+          dty += 1
         }
 
         GDALUtils.close(scaled)

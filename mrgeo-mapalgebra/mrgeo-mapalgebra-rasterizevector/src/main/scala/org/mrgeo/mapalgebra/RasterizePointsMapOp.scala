@@ -95,14 +95,18 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
         updateRaster(raster, countRaster, pixel, geomEntry._1, geomEntry._2, geomEntry._3, geomEntry._4)
       }
       if (aggregationType == VectorPainter.AggregationType.AVERAGE) {
-        for (x <- 0 until raster.getWidth) {
-          for (y <- 0 until raster.getHeight) {
+        var x: Int = 0
+        while (x < raster.getWidth) {
+          var y: Int = 0
+          while (y < raster.getHeight) {
             val v = raster.getSampleDouble(x, y, 0)
             if (!v.isNaN) {
               val c = countRaster.getSampleDouble(x, y, 0)
               raster.setSample(x, y, 0, v / c)
             }
+            y += 1
           }
+          x += 1
         }
       }
       (tileId, RasterWritable.toWritable(raster))
