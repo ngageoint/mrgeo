@@ -198,4 +198,5 @@ class MrGeoTests(unittest.TestCase):
         print("")
 
 if __name__ == '__main__':
+    print('running tests')
     unittest.main()
