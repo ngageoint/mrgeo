@@ -31,13 +31,16 @@ import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.ImageStats
-import org.mrgeo.job.PrepareJob._
 import org.mrgeo.job.yarn.MrGeoYarnDriver
 import org.mrgeo.utils._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
+
+object MrGeoDriver extends Logging {
+
+}
 
 abstract class MrGeoDriver extends Logging {
 
@@ -95,14 +98,14 @@ abstract class MrGeoDriver extends Logging {
         addYarnClasses(cl)
 
       case "spark" =>
-        val conf = PrepareJob.prepareJob(job)
+        val conf = prepareJob(job)
         val master = conf.get("spark.master", "spark://localhost:7077")
         job.useSpark(master)
       case _ => job.useLocal()
       }
     }
 
-    val conf = PrepareJob.prepareJob(job)
+    val conf = prepareJob(job)
 
     // yarn needs to be run in its own client code, so we'll set up it up separately
     if (job.isYarn) {
@@ -485,55 +488,6 @@ abstract class MrGeoDriver extends Logging {
     // storage, shuffle fractions
     (smemfrac * cachefrac, smemfrac * shufflefrac)
 
-  }
-
-  def setupSerializer(mrgeoJob: MrGeoJob, conf:SparkConf) = {
-    val classes = Array.newBuilder[Class[_]]
-
-    // automatically include common classes
-    classes += classOf[TileIdWritable]
-    classes += classOf[RasterWritable]
-
-    classes += classOf[Array[(TileIdWritable, RasterWritable)]]
-    classes += classOf[Bounds]
-
-    classes += classOf[ImageStats]
-    classes += classOf[Array[ImageStats]]
-
-    // include the old TileIdWritable & RasterWritable
-    classes += classOf[org.mrgeo.core.mapreduce.formats.TileIdWritable]
-    classes += classOf[org.mrgeo.core.mapreduce.formats.RasterWritable]
-
-    // context.parallelize() calls create a WrappedArray.ofRef()
-    classes += classOf[mutable.WrappedArray.ofRef[_]]
-
-    // TODO:  Need to call DataProviders to register classes
-    classes += classOf[FileSplitInfo]
-
-    classes ++= mrgeoJob.registerClasses()
-
-    registerClasses(classes.result(), conf)
-  }
-
-  def registerClasses(classes:Array[Class[_]], conf:SparkConf) = {
-    if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_USE_KRYO, "false").equals("true")) {
-      try {
-        val all = mutable.HashSet.empty[String]
-        all ++= conf.get("spark.kryo.classesToRegister", "").split(",").filter(!_.isEmpty)
-
-        all ++= classes.filter(!_.getName.isEmpty).map(_.getName)
-
-        conf.set("spark.kryo.classesToRegister", all.mkString(","))
-        conf.set("spark.serializer", classOf[KryoSerializer].getName)
-      }
-      catch {
-        case nsme: NoSuchMethodException => conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
-        case e: Exception => e.printStackTrace()
-      }
-    }
-    else {
-      conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
-    }
   }
 
 }
