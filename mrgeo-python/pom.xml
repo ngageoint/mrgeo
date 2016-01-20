@@ -18,11 +18,11 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo</artifactId>
-    <version>1.0.0</version>
+    <version>${mrgeo.version}</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>mrgeo-python</artifactId>
-  <version>1.0.0</version>
+  <version>${mrgeo.version}</version>
   <name>mrgeo-python</name>
   <packaging>pom</packaging>
   <licenses>
