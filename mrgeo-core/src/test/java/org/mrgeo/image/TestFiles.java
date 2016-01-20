@@ -34,7 +34,7 @@ public abstract class TestFiles
   private Bounds[][] boundsOfTile;
   private TileBounds[] tileBoundsOfRow;
   
-  private MrsImagePyramidMetadata metadata;
+  private MrsPyramidMetadata metadata;
   
   protected void setup(String testFile,
       final ProviderProperties providerProperties) throws JsonGenerationException, JsonMappingException, IOException {
@@ -112,7 +112,7 @@ public abstract class TestFiles
     return rows;
   }
 
-  public MrsImagePyramidMetadata getMetadata()
+  public MrsPyramidMetadata getMetadata()
   {
     return metadata;
   }  

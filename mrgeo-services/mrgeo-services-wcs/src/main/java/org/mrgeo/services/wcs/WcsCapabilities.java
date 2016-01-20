@@ -16,7 +16,7 @@
 package org.mrgeo.services.wcs;
 
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.Version;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
@@ -189,7 +189,7 @@ public class WcsCapabilities
       XmlUtils.createTextElement2(layer, "ows:Title", provider.getResourceName());
       XmlUtils.createTextElement2(layer, "ows:Abstract", provider.getResourceName());
 
-      MrsImagePyramid pyramid = MrsImagePyramid.open(provider);
+      MrsPyramid pyramid = MrsPyramid.open(provider);
       minx = Math.min(minx, pyramid.getBounds().getMinX());
       miny = Math.min(miny, pyramid.getBounds().getMinY());
       maxx = Math.max(maxx, pyramid.getBounds().getMaxX());
@@ -233,7 +233,7 @@ public class WcsCapabilities
       XmlUtils.createTextElement2(layer, "name", provider.getResourceName());
       XmlUtils.createTextElement2(layer, "label", provider.getResourceName());
 
-      MrsImagePyramid pyramid = MrsImagePyramid.open(provider);
+      MrsPyramid pyramid = MrsPyramid.open(provider);
       minx = Math.min(minx, pyramid.getBounds().getMinX());
       miny = Math.min(miny, pyramid.getBounds().getMinY());
       maxx = Math.max(maxx, pyramid.getBounds().getMaxX());

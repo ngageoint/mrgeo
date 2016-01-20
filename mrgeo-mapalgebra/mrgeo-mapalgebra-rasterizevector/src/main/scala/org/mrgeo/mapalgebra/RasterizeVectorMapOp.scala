@@ -131,11 +131,15 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: TMSUtils.Bounds): List[TileIdWritable] = {
     var tiles = new ListBuffer[TileIdWritable]
     val tb: TMSUtils.TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
-    for (tx <- tb.w to tb.e) {
-      for (ty <- tb.s to tb.n) {
+    var tx: Long = tb.w
+    while (tx <= tb.e) {
+      var ty: Long = tb.s
+      while (ty <= tb.n) {
         val tile: TileIdWritable = new TileIdWritable(TMSUtils.tileid(tx, ty, zoom))
         tiles += tile
+        ty += 1
       }
+      tx += 1
     }
     tiles.toList
   }

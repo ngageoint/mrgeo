@@ -181,14 +181,20 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
 
               // check if there are any nodatas in the 1st tile
               looper.breakable {
-                for (y <- 0 until dst.getHeight) {
-                  for (x <- 0 until dst.getWidth) {
-                    for (b <- 0 until dst.getNumBands) {
+                var y: Int = 0
+                while (y < dst.getHeight) {
+                  var x: Int = 0
+                  while (x < dst.getWidth) {
+                    var b: Int = 0
+                    while (b < dst.getNumBands) {
                       if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
                         looper.break()
                       }
+                      b += 1
                     }
+                    x += 1
                   }
+                  y += 1
                 }
                 // we only get here if there aren't any nodatas, so we can just take the 1st tile verbatim
                 done.break()
@@ -202,9 +208,12 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
               val src = RasterUtils.makeRasterWritable(RasterWritable.toRaster(writable))
               val srcnodata = nodata(img)
 
-              for (y <- 0 until dst.getHeight) {
-                for (x <- 0 until dst.getWidth) {
-                  for (b <- 0 until dst.getNumBands) {
+              var y: Int = 0
+              while (y < dst.getHeight) {
+                var x: Int = 0
+                while (x < dst.getWidth) {
+                  var b: Int = 0
+                  while (b < dst.getNumBands) {
                     if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
                       val sample = src.getSampleDouble(x, y, b)
                       // if the src is also nodata, remember this, we still have to look in other tiles
@@ -215,8 +224,11 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
                         dst.setSample(x, y, b, sample)
                       }
                     }
+                    b += 1
                   }
+                  x += 1
                 }
+                y += 1
               }
               // we've filled up the tile, nothing left to do...
               if (!hasnodata) {

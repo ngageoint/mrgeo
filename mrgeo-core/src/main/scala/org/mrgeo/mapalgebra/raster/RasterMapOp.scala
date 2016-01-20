@@ -22,12 +22,11 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
-import org.mrgeo.utils.{TMSUtils, GDALUtils, SparkUtils}
-
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.{GDALUtils, SparkUtils, TMSUtils}
 
 object RasterMapOp {
 
@@ -81,7 +80,7 @@ object RasterMapOp {
 
 abstract class RasterMapOp extends MapOp {
 
-  private var meta:MrsImagePyramidMetadata = null
+  private var meta:MrsPyramidMetadata = null
 
 
   def rdd():Option[RasterRDD]
@@ -95,8 +94,8 @@ abstract class RasterMapOp extends MapOp {
     }
   }
 
-  def metadata():Option[MrsImagePyramidMetadata] =  Option(meta)
-  def metadata(meta:MrsImagePyramidMetadata) = { this.meta = meta}
+  def metadata():Option[MrsPyramidMetadata] =  Option(meta)
+  def metadata(meta:MrsPyramidMetadata) = { this.meta = meta}
 
   def save(output: String, providerProperties:ProviderProperties, context:SparkContext) = {
     rdd() match {

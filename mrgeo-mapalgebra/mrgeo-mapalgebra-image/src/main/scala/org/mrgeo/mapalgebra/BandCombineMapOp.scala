@@ -126,8 +126,10 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
               "one is " + meta.getTileType + ", others are " + tiletype)
         }
 
-        for (b <- 0 until meta.getBands) {
+        var b: Int = 0
+        while (b < meta.getBands) {
           nodatabuilder +=  meta getDefaultValue b
+          b += 1
         }
 
         totalbands += meta.getBands
@@ -158,13 +160,19 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
         if (wr != null && wr.nonEmpty) {
           val raster = RasterWritable.toRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
 
-          for (y <- 0 until raster.getHeight) {
-            for (x <- 0 until raster.getWidth) {
-              for (b <- 0 until raster.getNumBands) {
+          var y: Int = 0
+          while (y < raster.getHeight) {
+            var x: Int = 0
+            while (x < raster.getWidth) {
+              var b: Int = 0
+              while (b < raster.getNumBands) {
                 val v = raster.getSampleDouble(x, y, b)
                 dst.setSample(x, y, startband + b, v)
+                b += 1
               }
+              x += 1
             }
+            y += 1
           }
           startband += raster.getNumBands
         }

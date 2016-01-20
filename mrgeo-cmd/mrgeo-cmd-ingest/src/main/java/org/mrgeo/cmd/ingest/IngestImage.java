@@ -75,7 +75,7 @@ public static Options createOptions()
 {
   Options result = MrGeo.createOptions();
 
-  Option output = new Option("o", "output", true, "MrsImagePyramid image name");
+  Option output = new Option("o", "output", true, "MrsPyramid image name");
   output.setRequired(true);
   result.addOption(output);
 
