@@ -65,9 +65,12 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
       val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
+      var y: Int = 0
+      while (y <  raster.getHeight) {
+        var x: Int = 0
+        while (x < raster.getWidth) {
+          var b: Int = 0
+          while (b < raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
             if (RasterMapOp.isNodata(v, nodata)) {
               raster.setSample(x, y, b, 1)
@@ -75,8 +78,11 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
             else {
               raster.setSample(x, y, b, 0)
             }
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
       (tile._1, RasterWritable.toWritable(raster))
     })))

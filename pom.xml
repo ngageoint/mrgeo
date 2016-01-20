@@ -70,7 +70,7 @@
     <mahout.version>0.9-cdh5.3.0</mahout.version>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
-    <py4j.version>0.8.2</py4j.version>
+    <py4j.version>0.8.2.1</py4j.version>
     <reflections.version>0.9.9-RC1</reflections.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spark.version>1.2.0-cdh5.3.0</spark.version>
@@ -102,6 +102,7 @@
     <build-helper-maven.version>1.10</build-helper-maven.version>
     <buildnumber-maven.version>1.3</buildnumber-maven.version>
     <cobertura-maven.version>2.6</cobertura-maven.version>
+    <exec-maven.version>1.4.0</exec-maven.version>
     <license-maven.version>1.8</license-maven.version>
     <pomtools-maven.version>0.1.2</pomtools-maven.version>
     <maven-assembly.version>2.5.4</maven-assembly.version>
@@ -434,6 +435,31 @@
               <id>verify</id>
               <goals>
                 <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>${exec-maven.version}</version>
+          <executions>
+            <execution>
+              <configuration>
+                <skip>${skip-python-integration-tests}</skip>
+                <executable>python</executable>
+                <workingDirectory>${project.basedir}/src/test/python</workingDirectory>
+                <arguments>
+                  <argument>mrgeotest.py</argument>
+                </arguments>
+                <environmentVariables>
+                  <PYTHONPATH>${project.basedir}/src/main/python:${env.SPARK_HOME}/python:${project.basedir}/lib:${env.PYTHONPATH}</PYTHONPATH>
+                </environmentVariables>
+              </configuration>
+              <id>python-test</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>exec</goal>
               </goals>
             </execution>
           </executions>
@@ -1745,6 +1771,24 @@
       </properties>
     </profile>
     <profile>
+      <id>skip-python-unit-tests</id>
+      <properties>
+        <skip.mrgeo.python.tests>true</skip.mrgeo.python.tests>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-python-integration-tests</id>
+      <properties>
+        <skip.mrgeo.python.integration.tests>true</skip.mrgeo.python.integration.tests>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-python-tests</id>
+      <properties>
+        <skip.mrgeo.python.tests>true</skip.mrgeo.python.tests>
+      </properties>
+    </profile>
+    <profile>
       <id>skip-all-unit-tests</id>
       <properties>
         <skip.mrgeo.core.tests>true</skip.mrgeo.core.tests>
@@ -1753,6 +1797,7 @@
         <skip.mrgeo.dataprovider.tests>true</skip.mrgeo.dataprovider.tests>
         <skip.mrgeo.cmd.tests>true</skip.mrgeo.cmd.tests>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
+        <skip.mrgeo.python.tests>true</skip.mrgeo.python.tests>
       </properties>
     </profile>
     <profile>
@@ -1764,6 +1809,7 @@
         <skip.mrgeo.mapalgebra.integration.tests>true</skip.mrgeo.mapalgebra.integration.tests>
         <skip.mrgeo.dataprovider.integration.tests>true</skip.mrgeo.dataprovider.integration.tests>
         <skip.mrgeo.cmd.integration.tests>true</skip.mrgeo.cmd.integration.tests>
+        <skip.mrgeo.python.integration.tests>true</skip.mrgeo.python.integration.tests>
       </properties>
     </profile>
     <profile>
@@ -1781,6 +1827,8 @@
         <skip.mrgeo.cmd.integration.tests>true</skip.mrgeo.cmd.integration.tests>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
         <skip.mrgeo.services.integration.tests>true</skip.mrgeo.services.integration.tests>
+        <skip.mrgeo.python.tests>true</skip.mrgeo.python.tests>
+        <skip.mrgeo.python.integration.tests>true</skip.mrgeo.python.integration.tests>
       </properties>
     </profile>
     <!-- Module build profiles -->
@@ -1798,6 +1846,7 @@
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
         <module>mrgeo-services</module>
+        <module>mrgeo-python</module>
         <module>distribution</module>
       </modules>
     </profile>
@@ -1879,6 +1928,23 @@
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-services</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-python</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>python</value>
+        </property>
+      </activation>
+      <modules>
+        <!--
+             <module>mrgeo-core</module>
+             <module>mrgeo-mapalgebra</module>
+             <module>mrgeo-dataprovider</module>
+        -->
+        <module>mrgeo-python</module>
       </modules>
     </profile>
     <!-- profiles that may be included in child POMs -->

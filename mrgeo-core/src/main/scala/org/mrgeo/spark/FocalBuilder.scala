@@ -58,8 +58,10 @@ object FocalBuilder extends Logging {
       val srcW = src.getWidth
       val srcH = src.getHeight
 
-      for (y <- -offsetY to offsetY) {
-        for (x <- -offsetX to offsetX) {
+      var y: Int = -offsetY
+      while (y <= offsetY) {
+        var x: Int = -offsetX
+        while (x <= offsetX) {
           val to = new TMSUtils.Tile(from.tx + x, from.ty + y)
           if (to.ty >= minY && to.ty <= maxY && to.tx >= minX && to.tx <= maxX) {
             var srcX = -1
@@ -101,7 +103,9 @@ object FocalBuilder extends Logging {
             val piece = src.createChild(srcX, srcY, width, height, 0, 0, null)
             pieces.append((new TileIdWritable(TMSUtils.tileid(to.tx, to.ty, zoom)), (dstX, dstY, width, height, RasterWritable.toWritable(piece))))
           }
+          x += 1
         }
+        y += 1
       }
       pieces.iterator
 

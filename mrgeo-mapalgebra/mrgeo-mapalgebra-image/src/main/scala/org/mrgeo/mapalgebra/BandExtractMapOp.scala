@@ -118,11 +118,15 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
         rasterRDD = Some(RasterRDD(inputRDD.map(U => {
           val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, tiletype, nodata)
           val sourceRaster = RasterWritable.toRaster(U._2)
-          for (y <- 0 until sourceRaster.getHeight) {
-            for (x <- 0 until sourceRaster.getWidth) {
+          var y: Int = 0
+          while (y < sourceRaster.getHeight) {
+            var x: Int = 0
+            while (x < sourceRaster.getWidth) {
               val v = sourceRaster.getSampleDouble(x, y, band)
               dst.setSample(x, y, 0, v)
+              x += 1
             }
+            y += 1
           }
           (U._1, RasterWritable.toWritable(dst))
         })))

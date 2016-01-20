@@ -379,11 +379,15 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
         sourceRaster.getHeight, 1)
       val singleBandRaster = Raster.createWritableRaster(model, null)
       val totalCostBand = sourceRaster.getNumBands - 1
-      for (x <- 0 until sourceRaster.getWidth) {
-        for (y <- 0 until sourceRaster.getHeight) {
+      var x: Int = 0
+      while (x < sourceRaster.getWidth) {
+        var y: Int = 0
+        while (y < sourceRaster.getHeight) {
           val s: Float = sourceRaster.getSampleFloat(x, y, totalCostBand)
           singleBandRaster.setSample(x, y, 0, s)
+          y += 1
         }
+        x += 1
       }
       val t = TMSUtils.tileid(U._1.get, zoomLevel)
       (new TileIdWritable(U._1), RasterWritable.toWritable(singleBandRaster))
@@ -459,20 +463,26 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
 
     val sourceValue: Array[Float] = new Array[Float](sourceBands)
     val newValue: Array[Float] = new Array[Float](numBands)
-    for (py <- 0 until source.getHeight) {
-      for (px <- 0 until source.getWidth) {
+    var py: Int = 0
+    while (py < source.getHeight) {
+      var px: Int = 0
+      while (px < source.getWidth) {
         // When the source friction surface contains a single band, we compute
         // the friction values for each of the eight directions from that single
         // band value. As a result, all the diagonal directions will have the
         // same cost, all the vertical directions will have the same cost, and
         // all the horizontal directions will have the same cost.
         source.getPixel(px, py, sourceValue)
-        for (b <- 0 until sourceBands) {
+        var b: Int = 0
+        while (b < sourceBands) {
           newValue(b) = sourceValue(b)
+          b += 1
         }
         newValue(numBands - 1) = nodata
         bandedRaster.setPixel(px, py, newValue)
+        px += 1
       }
+      py += 1
     }
 //    RasterWritable.toWritable(bandedRaster)
     bandedRaster
@@ -775,13 +785,17 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val origLeftEdgeValues: Array[Float] = new Array[Float](height)
     val origRightEdgeValues: Array[Float] = new Array[Float](height)
     val preStart: Double = System.nanoTime()
-    for (px <- 0 until width) {
+    var px: Int = 0
+    while (px < width) {
       origTopEdgeValues(px) = raster.getSampleFloat(px, 0, totalCostBand)
       origBottomEdgeValues(px) = raster.getSampleFloat(px, height-1, totalCostBand)
+      px += 1
     }
-    for (py <- 0 until height) {
+    var py: Int = 0
+    while (py < height) {
       origLeftEdgeValues(py) = raster.getSampleFloat(0, py, totalCostBand)
       origRightEdgeValues(py) = raster.getSampleFloat(width-1, py, totalCostBand)
+      py += 1
     }
     // First determine the impact of the changed neighbor pixels on the
     // outer ring of pixels for this tile. The changed pixels for this
@@ -870,7 +884,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     // Find edge pixels that have changed so we know how to send messages
     val topChanges = new ListBuffer[CostPoint]()
     val bottomChanges = new ListBuffer[CostPoint]()
-    for (px <- 0 until width) {
+    px = 0
+    while (px < width) {
       if (tile.ty < tileBounds.n) {
         val currTopCost = raster.getSampleFloat(px, 0, totalCostBand)
         val currTopFriction = raster.getSampleFloat(px, 0, 0)
@@ -910,6 +925,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
             currBottomCost, currBottomFriction)
         }
       }
+      px += 1
     }
     if (topChanges.nonEmpty) {
       val aboveTile = TMSUtils.tileid(tile.tx, tile.ty + 1, zoomLevel)
@@ -923,7 +939,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     // Don't process corner pixels again (already handled as part of top/bottom
     val leftChanges = new ListBuffer[CostPoint]()
     val rightChanges = new ListBuffer[CostPoint]()
-    for (py <- 0 until height) {
+    py = 0
+    while (py < height) {
       if (tile.tx > tileBounds.w) {
         val currLeftCost = raster.getSampleFloat(0, py, totalCostBand)
         val currLeftFriction = raster.getSampleFloat(0, py, 0)
@@ -940,6 +957,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
           rightChanges += new CostPoint((width - 1).toShort, py.toShort, currRightCost, currRightFriction)
         }
       }
+      py += 1
     }
     if (leftChanges.nonEmpty) {
       val leftTile = TMSUtils.tileid(tile.tx - 1, tile.ty, zoomLevel)
@@ -1159,7 +1177,8 @@ class NeighborChangedPoints extends Externalizable {
 
   override def readExternal(in: ObjectInput): Unit = {
     val tileCount = in.readInt()
-    for (i <- 0 until tileCount) {
+    var i: Int = 0
+    while (i < tileCount) {
       val tileId = in.readLong()
       for(direction <- 0 until CostDistanceMapOp.DIRECTION_COUNT) {
         val hasChanges = in.readBoolean()
@@ -1175,6 +1194,7 @@ class NeighborChangedPoints extends Externalizable {
           addPoints(tileId, direction.toByte, cpList.toList)
         }
       }
+      i += 1
     }
   }
 
