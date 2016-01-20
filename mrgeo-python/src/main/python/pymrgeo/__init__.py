@@ -35,7 +35,7 @@ import sys
 
 def walker(dirname, filename):
     for (root, names, files) in os.walk(dirname):
-        print('looking in ' + root)
+        # print('looking in ' + root)
         for f in files:
             if f == filename:
                 return root + '/' + filename
@@ -69,7 +69,8 @@ def loadlib(lib):
     print('found ' + lib + ' in: ' + str(libpath))
 
 
-print(sys.path)
+# print(os.environ['PYTHONPATH'].split(os.pathsep))
+# print(sys.path)
 
 loadlib('py4j-0.8.2.1-src.zip')
 loadlib('pyspark.zip')

@@ -529,7 +529,7 @@ class MrGeo(object):
                             jvm.StringUtils.concatUnique(jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
                                                          jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
 
-        conf = jvm.PrepareJob.prepareJob(self.job)
+        conf = jvm.MrGeoDriver.prepareJob(self.job)
 
         # need to override the yarn mode to "yarn-client" for python
         if self.job.isYarn():

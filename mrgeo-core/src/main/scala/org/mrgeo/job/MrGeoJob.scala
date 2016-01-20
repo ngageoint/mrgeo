@@ -76,6 +76,7 @@ object MrGeoJob extends Logging {
         conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
       }
     }
+
   }
 
 abstract class MrGeoJob extends Logging {

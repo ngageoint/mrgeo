@@ -39,6 +39,59 @@ import scala.collection.mutable
 import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
 
 object MrGeoDriver extends Logging {
+  final def prepareJob(job: JobArguments): SparkConf = {
+
+    val conf = SparkUtils.getConfiguration
+
+    logInfo("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
+    conf.setAppName(job.name)
+        .setMaster(job.cluster)
+        .setJars(job.jars)
+    //.registerKryoClasses(registerClasses())
+
+    if (job.isYarn) {
+      //loadYarnSettings(job)
+
+      // running in "cluster" mode, the driver runs within a YARN process
+      conf.setMaster(job.YARN + "-cluster")
+
+      conf.set("spark.yarn.preserve.staging.files", "true")
+      conf.set("spark.eventLog.overwrite", "true") // overwrite event logs
+
+      var path:String = ""
+      if (conf.contains("spark.driver.extraLibraryPath")) {
+        path = ":" + conf.get("spark.driver.extraLibraryPath")
+      }
+      conf.set("spark.driver.extraLibraryPath",
+        MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, "") + path)
+
+      if (conf.contains("spark.executor.extraLibraryPath")) {
+        path = ":" + conf.get("spark.executor.extraLibraryPath")
+      }
+      conf.set("spark.executor.extraLibraryPath",
+        MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, ""))
+    }
+    else if (job.isSpark) {
+      conf.set("spark.driver.memory", if (job.memoryKb > 0) {
+        SparkUtils.kbtohuman(job.memoryKb, "m")
+      }
+      else {
+        "128m"
+      })
+          .set("spark.driver.cores", if (job.cores > 0) {
+            job.cores.toString
+          }
+          else {
+            "1"
+          })
+    }
+
+    //    val fracs = calculateMemoryFractions(job)
+    //    conf.set("spark.storage.memoryFraction", fracs._1.toString)
+    //    conf.set("spark.shuffle.memoryFraction", fracs._2.toString)
+
+    conf
+  }
 
 }
 
@@ -98,14 +151,14 @@ abstract class MrGeoDriver extends Logging {
         addYarnClasses(cl)
 
       case "spark" =>
-        val conf = prepareJob(job)
+        val conf = MrGeoDriver.prepareJob(job)
         val master = conf.get("spark.master", "spark://localhost:7077")
         job.useSpark(master)
       case _ => job.useLocal()
       }
     }
 
-    val conf = prepareJob(job)
+    val conf = MrGeoDriver.prepareJob(job)
 
     // yarn needs to be run in its own client code, so we'll set up it up separately
     if (job.isYarn) {
@@ -398,59 +451,6 @@ abstract class MrGeoDriver extends Logging {
     dependencies
   }
 
-  final def prepareJob(job: JobArguments): SparkConf = {
-
-    val conf = SparkUtils.getConfiguration
-
-    logInfo("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
-    conf.setAppName(job.name)
-        .setMaster(job.cluster)
-        .setJars(job.jars)
-    //.registerKryoClasses(registerClasses())
-
-    if (job.isYarn) {
-      //loadYarnSettings(job)
-
-      // running in "cluster" mode, the driver runs within a YARN process
-      conf.setMaster(job.YARN + "-cluster")
-
-      conf.set("spark.yarn.preserve.staging.files", "true")
-      conf.set("spark.eventLog.overwrite", "true") // overwrite event logs
-
-      var path:String = ""
-      if (conf.contains("spark.driver.extraLibraryPath")) {
-        path = ":" + conf.get("spark.driver.extraLibraryPath")
-      }
-      conf.set("spark.driver.extraLibraryPath",
-        MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, "") + path)
-
-      if (conf.contains("spark.executor.extraLibraryPath")) {
-        path = ":" + conf.get("spark.executor.extraLibraryPath")
-      }
-      conf.set("spark.executor.extraLibraryPath",
-        MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, ""))
-    }
-    else if (job.isSpark) {
-      conf.set("spark.driver.memory", if (job.memoryKb > 0) {
-        SparkUtils.kbtohuman(job.memoryKb, "m")
-      }
-      else {
-        "128m"
-      })
-          .set("spark.driver.cores", if (job.cores > 0) {
-            job.cores.toString
-          }
-          else {
-            "1"
-          })
-    }
-
-    //    val fracs = calculateMemoryFractions(job)
-    //    conf.set("spark.storage.memoryFraction", fracs._1.toString)
-    //    conf.set("spark.shuffle.memoryFraction", fracs._2.toString)
-
-    conf
-  }
 
   def calculateMemoryFractions(job: JobArguments) = {
     val exmem = if (job.executorMemKb > 0) job.executorMemKb else job.memoryKb
