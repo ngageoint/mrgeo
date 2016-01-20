@@ -16,8 +16,67 @@
 package org.mrgeo.job
 
 import org.apache.spark._
+import org.apache.spark.serializer.KryoSerializer
+import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
+import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.spark.MrGeoListener
+import org.mrgeo.image.ImageStats
+import org.mrgeo.utils.Bounds
+
+import scala.collection.mutable
+
+object MrGeoJob extends Logging {
+    def setupSerializer(mrgeoJob: MrGeoJob, conf: SparkConf) = {
+      val classes = Array.newBuilder[Class[_]]
+
+      // automatically include common classes
+      classes += classOf[TileIdWritable]
+      classes += classOf[RasterWritable]
+
+      classes += classOf[Array[(TileIdWritable, RasterWritable)]]
+      classes += classOf[Bounds]
+
+      classes += classOf[ImageStats]
+      classes += classOf[Array[ImageStats]]
+
+      // include the old TileIdWritable & RasterWritable
+      classes += classOf[org.mrgeo.core.mapreduce.formats.TileIdWritable]
+      classes += classOf[org.mrgeo.core.mapreduce.formats.RasterWritable]
+
+      // context.parallelize() calls create a WrappedArray.ofRef()
+      classes += classOf[mutable.WrappedArray.ofRef[_]]
+
+      // TODO:  Need to call DataProviders to register classes
+      classes += classOf[FileSplitInfo]
+
+      classes ++= mrgeoJob.registerClasses()
+
+      registerClasses(classes.result(), conf)
+    }
+
+    def registerClasses(classes: Array[Class[_]], conf: SparkConf) = {
+      if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_USE_KRYO, "false").equals("true")) {
+        try {
+          val all = mutable.HashSet.empty[String]
+          all ++= conf.get("spark.kryo.classesToRegister", "").split(",").filter(!_.isEmpty)
+
+          all ++= classes.filter(!_.getName.isEmpty).map(_.getName)
+
+          conf.set("spark.kryo.classesToRegister", all.mkString(","))
+          conf.set("spark.serializer", classOf[KryoSerializer].getName)
+        }
+        catch {
+          case nsme: NoSuchMethodException => conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
+          case e: Exception => e.printStackTrace()
+        }
+      }
+      else {
+        conf.set("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
+      }
+    }
+  }
 
 abstract class MrGeoJob extends Logging {
   def registerClasses(): Array[Class[_]]
@@ -30,7 +89,7 @@ abstract class MrGeoJob extends Logging {
 
   private[job] def run(job:JobArguments, conf:SparkConf) = {
     // need to do this here, so we can call registerClasses() on the job.
-    PrepareJob.setupSerializer(this, conf)
+    MrGeoJob.setupSerializer(this, conf)
 
     logInfo("Setting up job")
     setup(job, conf)

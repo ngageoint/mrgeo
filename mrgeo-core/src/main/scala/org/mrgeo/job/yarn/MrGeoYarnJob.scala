@@ -20,7 +20,7 @@ import java.io.{BufferedReader, InputStreamReader}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{Logging, SparkContext}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.job.{PrepareJob, JobArguments, MrGeoJob}
+import org.mrgeo.job.{JobArguments, MrGeoJob}
 import org.mrgeo.spark.MrGeoListener
 import org.mrgeo.utils.SparkUtils
 
@@ -99,7 +99,7 @@ object MrGeoYarnJob extends Logging {
         val conf = SparkUtils.getConfiguration
 
         // need to do this here, so we can call registerClasses() on the job.
-        PrepareJob.setupSerializer(mrgeo, conf)
+        MrGeoJob.setupSerializer(mrgeo, conf)
 
         logInfo("Setting up job: " + job.name)
         mrgeo.setup(job, conf)
