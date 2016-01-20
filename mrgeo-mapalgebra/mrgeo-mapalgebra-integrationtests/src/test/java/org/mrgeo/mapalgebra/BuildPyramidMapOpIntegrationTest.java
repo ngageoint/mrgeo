@@ -31,6 +31,7 @@ import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
+import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +62,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   @Before
   public void setup() throws IOException
   {
+    BuildPyramid.setMIN_TILES_FOR_SPARK(5);
+
     providerProperties = null;
     Path parent = new Path(testUtils.getInputHdfs(), testname.getMethodName());
     HadoopFileUtils.copyToHdfs(Defs.INPUT, parent, smallElevationNoPyramids, true);
@@ -76,6 +79,7 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   @Category(IntegrationTest.class)
   public void buildPyramidExistingPyramids() throws Exception
   {
+    //LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
     String exp = String.format("BuildPyramid([%s])", smallElevationPath);
 
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
