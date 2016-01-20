@@ -79,7 +79,6 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   @Category(IntegrationTest.class)
   public void buildPyramidExistingPyramids() throws Exception
   {
-    //LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
     String exp = String.format("BuildPyramid([%s])", smallElevationPath);
 
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
