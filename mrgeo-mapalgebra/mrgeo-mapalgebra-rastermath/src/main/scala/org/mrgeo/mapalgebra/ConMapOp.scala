@@ -278,9 +278,12 @@ class ConMapOp extends RasterMapOp with Externalizable {
       }
       val done = new Breaks
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
+      var y: Int = 0
+      while (y < raster.getHeight) {
+        var x: Int = 0
+        while (x < raster.getWidth) {
+          var b: Int = 0
+          while (b < raster.getNumBands) {
             done.breakable {
               for (i <- 0 until termCount - 1 by 2) {
                 // get the conditional value, either from the rdd or constant
@@ -317,8 +320,11 @@ class ConMapOp extends RasterMapOp with Externalizable {
               raster.setSample(x, y, b, v)
 
             }
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
 
       (tile._1, RasterWritable.toWritable(raster))
@@ -355,7 +361,8 @@ class ConMapOp extends RasterMapOp with Externalizable {
     var index = -1
     var datatype = -1
 
-    for (i <- (if (useOutputs) 1 else 0) until inputs.length by 2) {
+    var i: Int = if (useOutputs) 1 else 0
+    while (i < inputs.length) {
       if (isRdd(i)) {
         // look up the rdd in the input->rdd map
         val input = inputs(rddMap(i))
@@ -408,6 +415,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
           datatype = dt
         }
       }
+      i += 2
     }
 
     (index, datatype)
@@ -419,26 +427,34 @@ class ConMapOp extends RasterMapOp with Externalizable {
   override def readExternal(in: ObjectInput): Unit = {
     rddMap.clear()
     var cnt = in.readInt()
-    for (i <- 0 until cnt) {
+    var i: Int = 0
+    while (i < cnt) {
       rddMap.put(in.readInt(), in.readInt())
+      i += 1
     }
 
     constMap.clear()
     cnt = in.readInt()
-    for (i <- 0 until cnt) {
+    i = 0
+    while (i < cnt) {
       constMap.put(in.readInt(), in.readDouble())
+      i += 1
     }
 
     cnt = in.readInt()
     nodatas = Array.ofDim[Double](cnt)
-    for (i <- 0 until cnt) {
+    i = 0
+    while (i < cnt) {
       nodatas(i) = in.readDouble()
+      i += 1
     }
 
     cnt = in.readInt()
     isRdd = Array.ofDim[Boolean](cnt)
-    for (i <- 0 until cnt) {
+    i = 0
+    while (i < cnt) {
       isRdd(i) = in.readBoolean()
+      i += 1
     }
 
   }
