@@ -417,6 +417,7 @@
           <executions>
             <execution>
               <id>integration-test</id>
+              <phase>integration-test</phase>
               <goals>
                 <goal>integration-test</goal>
               </goals>
@@ -445,22 +446,22 @@
           <version>${exec-maven.version}</version>
           <executions>
             <execution>
+              <id>python-test</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>exec</goal>
+              </goals>
               <configuration>
-                <skip>${skip-python-integration-tests}</skip>
                 <executable>python</executable>
                 <workingDirectory>${project.basedir}/src/test/python</workingDirectory>
                 <arguments>
                   <argument>mrgeotest.py</argument>
                 </arguments>
                 <environmentVariables>
-                  <PYTHONPATH>${project.basedir}/src/main/python:${env.SPARK_HOME}/python:${project.basedir}/lib:${env.PYTHONPATH}</PYTHONPATH>
+                  <PYTHONPATH>${project.basedir}/src/main/python:${env.SPARK_HOME}/python:${env.SPARK_HOME}/python/lib:${project.basedir}/lib:${env.PYTHONPATH}</PYTHONPATH>
+                  <BASEDIR>${project.basedir}</BASEDIR>
                 </environmentVariables>
               </configuration>
-              <id>python-test</id>
-              <phase>integration-test</phase>
-              <goals>
-                <goal>exec</goal>
-              </goals>
             </execution>
           </executions>
         </plugin>
