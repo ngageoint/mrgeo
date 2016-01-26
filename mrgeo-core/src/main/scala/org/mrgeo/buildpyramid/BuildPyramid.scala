@@ -40,6 +40,7 @@ import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
+import scala.collection.immutable.TreeMap
 import scala.collection.mutable
 
 object BuildPyramid extends MrGeoDriver with Externalizable {
@@ -288,7 +289,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     deletelevel(outputLevel, metadata, provider)
 
-    val outputTiles: util.TreeMap[TileIdWritable, WritableRaster] = new util.TreeMap[TileIdWritable, WritableRaster]()
+    val outputTiles = TreeMap.empty[TileIdWritable, WritableRaster]
 
     val lastImage: MrsImageReader = provider.getMrsTileReader(inputLevel)
     val iter: KVIterator[TileIdWritable, Raster] = lastImage.get
@@ -306,7 +307,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       val outputkey: TileIdWritable = new TileIdWritable(TMSUtils.tileid(outputTile.tx, outputTile.ty, outputLevel))
       var outputRaster: WritableRaster = null
 
-      if (!outputTiles.containsKey(outputkey)) {
+      if (!outputTiles.contains(outputkey)) {
         outputRaster = fromraster.createCompatibleWritableRaster(tilesize, tilesize)
         RasterUtils.fillWithNodata(outputRaster, metadata)
         outputTiles.put(outputkey, outputRaster)

@@ -51,7 +51,7 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-          <skip>${skip.mrgeo.python.tests}</skip>
+          <skip>${skip.mrgeo.python.integration.tests}</skip>
         </configuration>
       </plugin>
     </plugins>
