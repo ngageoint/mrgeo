@@ -140,7 +140,7 @@ class LeastCostPathCalculator extends Externalizable
     var deltaX: Long = 0
     var deltaY: Long = 0
     var i: Int = 0
-    for (i <- 0 until 8) {
+    while (i < 8) {
       var xNeighbor: Short = (curPixel.px + dx(i)).toShort
       var yNeighbor: Short = (curPixel.py + dy(i)).toShort
       if (xNeighbor >= 0 && xNeighbor <= widthMinusOne && yNeighbor >= 0 && yNeighbor <= widthMinusOne) {
@@ -204,6 +204,7 @@ class LeastCostPathCalculator extends Externalizable
         deltaX = dx(i)
         deltaY = dy(i)
       }
+      i += 1
     }
 
     if (leastValue == curValue) return false

@@ -567,9 +567,12 @@ object SparkUtils extends Logging {
     val stats = rdd.aggregate(zero)((stats, t) => {
       val tile = RasterWritable.toRaster(t._2)
 
-      for (y <- 0 until tile.getHeight) {
-        for (x <- 0 until tile.getWidth) {
-          for (b <- 0 until tile.getNumBands) {
+      var y: Int = 0
+      while (y < tile.getHeight) {
+        var x: Int = 0
+        while (x < tile.getWidth) {
+          var b: Int = 0
+          while (b < tile.getNumBands) {
             val p = tile.getSampleDouble(x, y, b)
             if (nodata(b).doubleValue().isNaN) {
               if (!p.isNaN) {
@@ -585,8 +588,11 @@ object SparkUtils extends Logging {
               stats(b).max = Math.max(stats(b).max, p)
               stats(b).min = Math.min(stats(b).min, p)
             }
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
 
       stats
@@ -660,12 +666,18 @@ object SparkUtils extends Logging {
     // Initialize the full raster to the default values for the image
     if (nodatas != null && nodatas.length > 0)
     {
-      for (y <- 0 until merged.getHeight) {
-        for (x <- 0 until merged.getWidth) {
-          for (b <- nodatas.indices) {
+      var y: Int = 0
+      while (y < merged.getHeight) {
+        var x: Int = 0
+        while (x < merged.getWidth) {
+          var b: Int = 0
+          while (b < nodatas.length) {
             merged.setSample(x, y, b, nodatas(b))
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
     }
 
