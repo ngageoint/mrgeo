@@ -178,8 +178,10 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       val useWeights = weights.value
       val srcValues = src.getSamples(0, 0, src.getWidth, src.getHeight, 0, null.asInstanceOf[Array[Double]])
       var nodataValues = new Array[Boolean](srcValues.length)
-      for (i <- 0 until srcValues.length) {
+      var i: Int = 0
+      while (i < srcValues.length) {
         nodataValues(i) = isNodata(srcValues(i))
+        i += 1
       }
       var loopMin: Long = Long.MaxValue
       var loopMax: Long = Long.MinValue
