@@ -26,6 +26,7 @@ import org.mrgeo.image.ImageStats
 import org.mrgeo.utils.Bounds
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
 object MrGeoJob extends Logging {
     def setupSerializer(mrgeoJob: MrGeoJob, conf: SparkConf) = {
@@ -36,6 +37,8 @@ object MrGeoJob extends Logging {
       classes += classOf[RasterWritable]
 
       classes += classOf[Array[(TileIdWritable, RasterWritable)]]
+      classes += classOf[Array[TileIdWritable]]
+
       classes += classOf[Bounds]
 
       classes += classOf[ImageStats]
@@ -48,8 +51,16 @@ object MrGeoJob extends Logging {
       // context.parallelize() calls create a WrappedArray.ofRef()
       classes += classOf[mutable.WrappedArray.ofRef[_]]
 
+      // rdd.sortByKey() uses all these, yuck!
+      classes += classOf[Array[(_, _, _)]]
+      classes += classOf[ClassTag[_]]
+      classes += Class.forName("scala.reflect.ClassTag$$anon$1") // this is silly!!!
+      classes += classOf[Class[_]]
+
+
       // TODO:  Need to call DataProviders to register classes
       classes += classOf[FileSplitInfo]
+
 
       classes ++= mrgeoJob.registerClasses()
 
