@@ -1186,10 +1186,12 @@ class NeighborChangedPoints extends Externalizable {
           val cpCount = in.readInt()
           var cpList = ListBuffer[CostPoint]()
           cpList.sizeHint(cpCount)
-          for (cpIndex <- 0 until cpCount) {
+          var cpIndex: Int = 0
+          while (cpIndex < cpCount) {
             val cp = new CostPoint()
             cp.readExternal(in)
             cpList += cp
+            cpIndex += 1
           }
           addPoints(tileId, direction.toByte, cpList.toList)
         }
