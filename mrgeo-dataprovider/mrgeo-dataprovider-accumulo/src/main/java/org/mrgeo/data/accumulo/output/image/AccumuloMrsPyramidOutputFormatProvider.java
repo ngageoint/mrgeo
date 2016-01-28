@@ -410,9 +410,9 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
 
 
   @Override
-  public void teardown(Job job) throws DataProviderException
+  public void teardown(Configuration conf) throws DataProviderException
   {
-    performTeardown(job.getConfiguration());
+    performTeardown(conf);
   }
 
   @Override

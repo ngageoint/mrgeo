@@ -121,18 +121,7 @@ private void setup(final Configuration conf, Job job) throws IOException
 }
 
 @Override
-public void teardown(final Job job) throws DataProviderException
-{
-  performTeardown(job.getConfiguration());
-}
-
-@Override
-public void teardownForSpark(final Configuration conf) throws DataProviderException
-{
-  // nothing to do
-}
-
-private void performTeardown(final Configuration conf) throws DataProviderException
+public void teardown(final Configuration conf) throws DataProviderException
 {
   try
   {
@@ -153,6 +142,12 @@ private void performTeardown(final Configuration conf) throws DataProviderExcept
   {
     throw new DataProviderException("Error in teardown", e);
   }
+}
+
+@Override
+public void teardownForSpark(final Configuration conf) throws DataProviderException
+{
+  // nothing to do
 }
 
 @Override
