@@ -99,9 +99,9 @@ public abstract class MrsImageOutputFormatProvider implements ProtectionLevelVal
   /**
    * Perform any processing required after the map/reduce has completed.
    *
-   * @param job
+   * @param conf
    */
-  public abstract void teardown(final Job job) throws DataProviderException;
+  public abstract void teardown(final Configuration conf) throws DataProviderException;
 
   /**
    * Perform any processing required after a Spark job has completed.

@@ -27,7 +27,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.{MrsImageDataProvider, MrsImageReader, MrsImageWriter}
+import org.mrgeo.data.image.{ImageOutputFormatContext, MrsImageDataProvider, MrsImageReader, MrsImageWriter}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
@@ -36,7 +36,7 @@ import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
-import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
+import org.mrgeo.utils._
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
@@ -371,6 +371,12 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     lastImage.close()
     provider.getMetadataWriter(null).write()
 
+    val tofc = new ImageOutputFormatContext(provider.getResourceName, bounds, outputLevel,
+      tilesize, metadata.getProtectionLevel)
+    val tofp = provider.getTiledOutputFormatProvider(tofc)
+    // Don't use teardownForSpark because we built this level in locally, so we want
+    // to avoid using Spark at this point
+    tofp.teardown(HadoopUtils.createConfiguration())
     true
   }
 
