@@ -36,7 +36,7 @@ object SparkVectorUtils
   }
 
   def loadVectorRDD(provider:VectorDataProvider, context: SparkContext): VectorRDD = {
-//    val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
+//    val conf1 = provider.setupOutput(context.hadoopConfiguration)
     val inputs = Set(provider.getResourceName)
     val vifc = new VectorInputFormatContext(inputs, provider.getProviderProperties)
     val vfp = provider.getVectorInputFormatProvider(vifc)

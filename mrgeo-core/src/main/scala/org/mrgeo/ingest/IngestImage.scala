@@ -26,11 +26,12 @@ import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.image.{ImageOutputFormatContext, MrsPyramidWriterContext, MrsImageOutputFormatProvider, MrsImageDataProvider}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
+import org.mrgeo.hdfs.partitioners.BlockSizePartitioner
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
@@ -91,9 +92,10 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
     val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
 
-    // repartition, because chances are the RDD only has 1 partition (ingest a single file)
-    val partitioned = tiles.repartition(meta.getTileBounds(zoom).getHeight.toInt)
-    (RasterRDD(partitioned), meta)
+
+//    // repartition, because chances are the RDD only has 1 partition (ingest a single file)
+//    val partitioned = tiles.repartition(meta.getTileBounds(zoom).getHeight.toInt)
+    (RasterRDD(tiles), meta)
   }
 
 
@@ -131,7 +133,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
       AccessMode.OVERWRITE, providerProperties)
     args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
 
-    var p: String = ""
+    //var p: String = ""
     if (providerProperties != null) {
       args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
     }
