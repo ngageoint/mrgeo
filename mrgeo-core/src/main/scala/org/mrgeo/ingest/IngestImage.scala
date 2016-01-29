@@ -495,6 +495,8 @@ class IngestImage extends MrGeoJob with Externalizable {
     classes += classOf[TileIdWritable]
     classes += classOf[RasterWritable]
 
+    classes += classOf[Array[String]]
+
     classes.result()
   }
 
