@@ -119,7 +119,7 @@ object GDALUtils extends Logging {
       }
 
       band.GetNoDataValue(nodata)
-      nodatas += nodata(0)
+      nodatas += (if (nodata(0) == null) { java.lang.Double.NaN } else { nodata(0) })
       i += 1
     }
 
