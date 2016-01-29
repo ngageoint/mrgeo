@@ -336,7 +336,7 @@ while [ $# -gt 0 ] ; do
         PHASE="eclipse"
         ;;
     "-c" | "--conf")
-        ARGS=$ARGS" --Dhadoop-config="$2
+        ARGS=$ARGS" -Dhadoop-config="$2
         CONF=$2
         shift 1
         ;;
