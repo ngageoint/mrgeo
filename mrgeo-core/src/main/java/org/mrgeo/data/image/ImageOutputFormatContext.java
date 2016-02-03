@@ -26,7 +26,6 @@ public class ImageOutputFormatContext
   private Bounds bounds;
   private int tiletype;
   private String protectionLevel;
-  final private boolean calculatePartitions;
 
   /**
    * This constructor is used when producing a single image output.
@@ -40,8 +39,6 @@ public class ImageOutputFormatContext
     this.zoomlevel = zoomlevel;
     this.tilesize = tilesize;
     this.protectionLevel = protectionLevel;
-    // don't have bands, and tiletype, can't calculate partitions based on size
-    this.calculatePartitions = false;
   }
   
   public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize,
@@ -54,7 +51,6 @@ public class ImageOutputFormatContext
     this.tilesize =  tilesize;
     this.tiletype = tiletype;
     this.protectionLevel = protectionLevel;
-    this.calculatePartitions = true;
   }
 
 
@@ -88,11 +84,6 @@ public class ImageOutputFormatContext
     return tiletype;
   }
   
-  public boolean isCalculatePartitions()
-  {
-    return calculatePartitions;
-  }
-
   public String getProtectionLevel()
   {
     return protectionLevel;
