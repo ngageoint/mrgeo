@@ -31,7 +31,7 @@ public class PrintSplitFileSpi extends CommandSpi
   @Override
   public String getCommandName()
   {
-    return "printsplit";
+    return "printsplits";
   }
 
   @Override

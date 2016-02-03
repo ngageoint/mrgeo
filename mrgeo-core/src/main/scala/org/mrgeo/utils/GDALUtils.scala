@@ -67,7 +67,6 @@ object GDALUtils extends Logging {
   private val VSI_PREFIX: String = "/vsimem/"
   private val GDAL_PAM_ENABLED: String = "GDAL_PAM_ENABLED"
 
-  loadLibrary()
   initializeGDAL()
 
   // empty method to force static initializer
@@ -119,7 +118,7 @@ object GDALUtils extends Logging {
       }
 
       band.GetNoDataValue(nodata)
-      nodatas += nodata(0)
+      nodatas += (if (nodata(0) == null) { java.lang.Double.NaN } else { nodata(0) })
       i += 1
     }
 
@@ -640,45 +639,13 @@ object GDALUtils extends Logging {
     }
   }
 
-  private def loadLibrary() = {
-    val libs: Array[String] = Array("libgdaljni.so", "libgdalconstjni.so", "libosrjni.so", "libgdal.so")
-
-    val rawPath: String = MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, null)
-    if (rawPath != null) {
-      // gdal jars to load.  In the order they should be loaded...
-      val paths = rawPath.split(":")
-
-      logDebug("Looking for GDAL Libraries in " + rawPath)
-      libs.foreach(lib => {
-        val break = new Breaks
-
-        break.breakable({
-          paths.foreach(path => {
-            val file = new File(path, lib)
-            val msg = " Looking for: " + file.getCanonicalPath
-            if (file.exists()) {
-              System.load(file.getCanonicalPath)
-              logDebug(msg + " found")
-              break.break()
-            }
-            else {
-              logDebug(msg + " not found")
-            }
-          })
-
-          logError("ERROR!!! Can not find gdal library " + lib + " in path " + rawPath)
-        })
-      })
-    }
-    else {
-      logWarning("Can't load GDAL libraries, " + MrGeoConstants.GDAL_PATH +
-          " not found in the mrgeo configuration.  This may or may not be a problem.")
-
-      System.loadLibrary("gdal")
-    }
-  }
-
   private def initializeGDAL() = {
+    // Monkeypatch the system library path to use the gdal paths (for loading the gdal libraries
+    MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, "").
+        split(File.pathSeparator).foreach(path => {
+      ClassLoaderUtil.addLibraryPath(path)
+    })
+
     osr.UseExceptions()
 
     if (gdal.GetDriverCount == 0) {

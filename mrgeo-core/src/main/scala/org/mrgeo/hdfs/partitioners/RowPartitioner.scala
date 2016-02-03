@@ -22,21 +22,26 @@ import org.apache.hadoop.fs.Path
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
+import org.mrgeo.hdfs.output.image.HdfsMrsPyramidOutputFormatProvider
 import org.mrgeo.hdfs.tile.{FileSplit, PartitionerSplit}
-import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.{Bounds, TMSUtils, SparkUtils}
 
 @SerialVersionUID(-1)
-class HdfsSparkTileIdPartitioner(splitGenerator: SplitGenerator)
-  extends SparkTileIdPartitioner with Externalizable
+class RowPartitioner() extends FileSplitPartitioner() with Externalizable
 {
   private val splits = new PartitionerSplit
 
-  if (splitGenerator != null) {
-    splits.generateSplits(splitGenerator)
-  }
+  def this(bounds:Bounds, zoom:Int, tilesize:Int)
+  {
+    this()
 
-  def this() {
-    this(null)
+    val tileBounds: TMSUtils.TileBounds = TMSUtils
+        .boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+    val tileIncrement: Int = 1
+    val splitGenerator: ImageSplitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s, tileBounds.e,
+      tileBounds.n, zoom, tileIncrement)
+
+    splits.generateSplits(splitGenerator)
   }
 
   override def numPartitions: Int = {
@@ -45,24 +50,12 @@ class HdfsSparkTileIdPartitioner(splitGenerator: SplitGenerator)
 
   override def getPartition(key: Any): Int = {
     key match {
-      case id: TileIdWritable =>
-        val split = splits.getSplit(id.get())
-        split.getPartition
-      case _ => throw new RuntimeException("Bad type sent into SparkTileIdPartitioner.getPartition(): " +
+    case id: TileIdWritable =>
+      val split = splits.getSplit(id.get())
+      split.getPartition
+    case _ => throw new RuntimeException("Bad type sent into SparkTileIdPartitioner.getPartition(): " +
         key.getClass + ". Expected org.mrgeo.data.tile.TileIdWritable or a subclass.")
     }
-  }
-
-  def generateFileSplits(rdd:RasterRDD, pyramid:String, zoom:Int, conf:Configuration) = {
-    val fileSplits = new FileSplit
-
-    val splitinfo = SparkUtils.calculateSplitData(rdd)
-    fileSplits.generateSplits(splitinfo)
-
-    val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
-    val inputWithZoom = new Path(dp.getResourcePath(false), "" + zoom)
-
-    fileSplits.writeSplits(inputWithZoom)
   }
 
   override def readExternal(in: ObjectInput): Unit = {

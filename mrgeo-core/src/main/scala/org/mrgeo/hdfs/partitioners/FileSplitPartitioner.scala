@@ -18,10 +18,25 @@ package org.mrgeo.hdfs.partitioners
 import java.io._
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 import org.apache.spark.Partitioner
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
+import org.mrgeo.hdfs.tile.FileSplit
+import org.mrgeo.utils.SparkUtils
 
-trait SparkTileIdPartitioner extends Partitioner with Externalizable
+abstract class FileSplitPartitioner() extends Partitioner with Externalizable
 {
-  def generateFileSplits(rdd:RasterRDD, pyramid:String, zoom:Int, conf:Configuration)
+  def writeSplits(rdd:RasterRDD, pyramid:String, zoom:Int, conf:Configuration) = {
+    val fileSplits = new FileSplit
+
+    val splitinfo = SparkUtils.calculateSplitData(rdd)
+    fileSplits.generateSplits(splitinfo)
+
+    val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
+    val inputWithZoom = new Path(dp.getResourcePath(false), "" + zoom)
+
+    fileSplits.writeSplits(inputWithZoom)
+  }
+
 }
