@@ -40,17 +40,26 @@ public class JexlParserAdapter implements ParserAdapter
     twoArgFunctions = new HashMap<Class<? extends JexlNode>, String>();
     twoArgFunctions.put(ASTAssignment.class, "=");
     twoArgFunctions.put(ASTLTNode.class, "<");
+    twoArgFunctions.put(ASTLTNode.class, "lt");
     twoArgFunctions.put(ASTLENode.class, "<=");
+    twoArgFunctions.put(ASTLENode.class, "le");
     twoArgFunctions.put(ASTGTNode.class, ">");
+    twoArgFunctions.put(ASTGTNode.class, "gt");
     twoArgFunctions.put(ASTGENode.class, ">=");
+    twoArgFunctions.put(ASTGENode.class, "ge");
     twoArgFunctions.put(ASTEQNode.class, "==");
+    twoArgFunctions.put(ASTEQNode.class, "eq");
     twoArgFunctions.put(ASTNENode.class, "!=");
+    twoArgFunctions.put(ASTNENode.class, "ne");
     twoArgFunctions.put(ASTDivNode.class, "/");
+    twoArgFunctions.put(ASTDivNode.class, "div");
     twoArgFunctions.put(ASTMulNode.class, "*");
     twoArgFunctions.put(ASTAndNode.class, "&&");
+    twoArgFunctions.put(ASTAndNode.class, "and");
     twoArgFunctions.put(ASTBitwiseAndNode.class, "&");
     twoArgFunctions.put(ASTOrNode.class, "||");
     twoArgFunctions.put(ASTBitwiseOrNode.class, "|");
+    twoArgFunctions.put(ASTBitwiseOrNode.class, "or");
   }
 
   @Override
@@ -65,11 +74,14 @@ public class JexlParserAdapter implements ParserAdapter
   @Override
   public void initializeForTesting()
   {
+    System.out.println("initializeForTesting");
+
   }
 
   @Override
   public void afterFunctionsLoaded()
   {
+    System.out.println("afterFunctionsLoaded");
   }
 
   @Override
@@ -86,6 +98,7 @@ public class JexlParserAdapter implements ParserAdapter
   @Override
   public void addFunction(String functionName)
   {
+    System.out.println("addFunction");
   }
 
   @Override

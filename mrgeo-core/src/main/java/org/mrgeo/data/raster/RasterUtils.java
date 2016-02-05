@@ -185,9 +185,7 @@ public static WritableRaster createEmptyRaster(final int width, final int height
     final int bands, final int datatype,
     final double nodata)
 {
-  // we'll force the empty raster to be a banded model, for simplicity of the code.
-  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
-  final WritableRaster raster = Raster.createWritableRaster(model, null);
+  final WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
   fillWithNodata(raster, nodata);
   return raster;
 }
@@ -195,9 +193,7 @@ public static WritableRaster createEmptyRaster(final int width, final int height
     final int bands, final int datatype,
     final Number[] nodatas)
 {
-  // we'll force the empty raster to be a banded model, for simplicity of the code.
-  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
-  final WritableRaster raster = Raster.createWritableRaster(model, null);
+  final WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
   fillWithNodata(raster, nodatas);
   return raster;
 }
