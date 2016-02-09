@@ -15,6 +15,7 @@
 
 package org.mrgeo.mapalgebra.unarymath
 
+import java.awt.image.DataBuffer
 import java.io.IOException
 
 import org.apache.spark.SparkContext
@@ -44,7 +45,6 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     input = raster
   }
 
-  var nodata:Double = Double.NegativeInfinity
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
@@ -60,10 +60,12 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     val rdd = input.get.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + input.getClass.getName))
 
     // copy this here to avoid serializing the whole mapop
-    val nodata = meta.getDefaultValue(0)
+    val nodatas = meta.getDefaultValues
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+      val raster = RasterWritable.toRaster(tile._2)
+
+      val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, DataBuffer.TYPE_BYTE)
 
       var y: Int = 0
       while (y <  raster.getHeight) {
@@ -72,11 +74,11 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
           var b: Int = 0
           while (b < raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
-            if (RasterMapOp.isNodata(v, nodata)) {
-              raster.setSample(x, y, b, 1)
+            if (RasterMapOp.isNodata(v, nodatas(b))) {
+              output.setSample(x, y, b, 1)
             }
             else {
-              raster.setSample(x, y, b, 0)
+              output.setSample(x, y, b, 0)
             }
             b += 1
           }
@@ -84,7 +86,7 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
         }
         y += 1
       }
-      (tile._1, RasterWritable.toWritable(raster))
+      (tile._1, RasterWritable.toWritable(output))
     })))
 
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,

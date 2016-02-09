@@ -15,6 +15,8 @@
 
 package org.mrgeo.mapalgebra.binarymath
 
+import java.awt.image.DataBuffer
+
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
@@ -59,4 +61,8 @@ class LessThanMapOp extends RawBinaryMathMapOp {
   }
 
   override private[binarymath] def function(a: Double, b: Double): Double = if (a < b) 1 else 0
+
+  override private[binarymath] def datatype():Int = { DataBuffer.TYPE_BYTE }
+  override private[binarymath] def nodata():Double = { 255 }
+
 }
