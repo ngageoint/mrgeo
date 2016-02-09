@@ -51,7 +51,7 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     initialize(node, variables)
   }
 
-  // Unfortunately
+  // Unfortunately, the logic for isnodata uses nodata values, so we can't use the generic RawUnary execute
   override def execute(context: SparkContext): Boolean = {
 
     // our metadata is the same as the raster
