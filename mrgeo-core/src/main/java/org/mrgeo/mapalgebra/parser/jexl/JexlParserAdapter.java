@@ -74,14 +74,11 @@ public class JexlParserAdapter implements ParserAdapter
   @Override
   public void initializeForTesting()
   {
-    System.out.println("initializeForTesting");
-
   }
 
   @Override
   public void afterFunctionsLoaded()
   {
-    System.out.println("afterFunctionsLoaded");
   }
 
   @Override
@@ -98,7 +95,6 @@ public class JexlParserAdapter implements ParserAdapter
   @Override
   public void addFunction(String functionName)
   {
-    System.out.println("addFunction");
   }
 
   @Override
@@ -162,7 +158,7 @@ public class JexlParserAdapter implements ParserAdapter
       }
       else if (oldNum instanceof Float)
       {
-        return new Float(0.0 - oldNum.floatValue());
+        return (float)(0.0 - oldNum.floatValue());
       }
       else if (oldNum instanceof Short)
       {
