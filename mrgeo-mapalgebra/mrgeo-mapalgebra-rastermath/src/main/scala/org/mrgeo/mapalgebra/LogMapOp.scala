@@ -87,6 +87,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
       1
     }
 
+    val nodata = meta.getDefaultValues
     val outputnodata = Array.fill[Double](meta.getBands)(Float.NaN)
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
@@ -101,7 +102,7 @@ class LogMapOp extends RasterMapOp with Externalizable {
           var b: Int = 0
           while (b < raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
-            if (RasterMapOp.isNotNodata(v, outputnodata(b))) {
+            if (RasterMapOp.isNotNodata(v, nodata(b))) {
               output.setSample(x, y, b, Math.log(v) / baseVal)
             }
             else {
