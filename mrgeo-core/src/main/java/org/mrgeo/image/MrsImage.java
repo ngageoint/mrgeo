@@ -419,6 +419,15 @@ public int getTileHeight()
   return getTilesize();
 }
 
+public KVIterator<TileIdWritable, Raster> getTiles()
+{
+  if (reader == null)
+  {
+    openReader();
+  }
+  return reader.get();
+}
+
 public KVIterator<TileIdWritable, Raster> getTiles(final LongRectangle tileBounds)
 {
   if (reader == null)

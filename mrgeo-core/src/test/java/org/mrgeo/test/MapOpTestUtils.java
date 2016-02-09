@@ -31,8 +31,10 @@ import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,14 +97,16 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
 {
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
                                              (ProviderProperties)null);
-  final MrsImage image = pyramid.getHighestResImage();
+  MrsPyramidMetadata meta = pyramid.getMetadata();
+  final MrsImage image = pyramid.getImage(meta.getMaxZoomLevel());
 
   try
   {
     Raster raster = RasterTileMerger.mergeTiles(image);
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
 
-    GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), image.getBounds(), nodata);
+    Bounds tilesBounds = TMSUtils.tileBounds(meta.getBounds().getTMSBounds(), image.getMaxZoomlevel(), image.getTilesize()).asBounds();
+    GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), tilesBounds, nodata);
 
   }
   finally

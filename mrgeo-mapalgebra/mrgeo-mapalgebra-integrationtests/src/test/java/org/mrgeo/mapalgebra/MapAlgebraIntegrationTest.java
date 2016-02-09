@@ -27,8 +27,12 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
@@ -40,6 +44,8 @@ import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
@@ -93,6 +99,8 @@ private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationT
 //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
+
+private ProviderProperties providerProperties = null;
 
 @Before
 public void setup()
@@ -649,7 +657,7 @@ public void conLTE() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("con([%s] <= 100, 0, 1)", smallElevationPath), -9999);
+        String.format("con([%s] <= 100, 0, 1)", smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -667,7 +675,7 @@ public void conNE() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("con([%s] != 200, 2, 0)", smallElevationPath), -9999);
+        String.format("con([%s] != 200, 2, 0)", smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -685,7 +693,7 @@ public void conLteGte() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("([%s] <= 100) || ([%s] >= 200)", smallElevationPath, smallElevationPath), -9999);
+        String.format("([%s] <= 100) || ([%s] >= 200)", smallElevationPath, smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -703,7 +711,7 @@ public void conLtGt() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("([%s] < 100) || ([%s] > 200)", smallElevationPath, smallElevationPath), -9999);
+        String.format("([%s] < 100) || ([%s] > 200)", smallElevationPath, smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -1752,6 +1760,69 @@ public void variables3() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testDataTypeByte() throws Exception
+{
+  String exp = String.format("[%s] gt 200", smallElevationPath);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, Byte.MAX_VALUE);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        exp);
+
+    checkDataTypes(DataBuffer.TYPE_BYTE);
+  }
+}
+
+
+@Test
+@Category(IntegrationTest.class)
+public void testDataTypeFloat() throws Exception
+{
+  String exp = String.format("([%s] lt 200) + 500", smallElevationPath);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        exp);
+
+    checkDataTypes(DataBuffer.TYPE_FLOAT);
+  }
+}
+
+private void checkDataTypes(int type) throws IOException
+{
+  MrsPyramid
+      pyramid = MrsPyramid.open(testUtils.getOutputHdfsFor(testname.getMethodName()).toString(), providerProperties);
+  org.junit.Assert.assertNotNull("Can't load pyramid", pyramid);
+
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  org.junit.Assert.assertNotNull("Can't load metadata", metadata);
+
+  org.junit.Assert.assertEquals("Bad tile type", type, metadata.getTileType());
+
+  MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
+  org.junit.Assert.assertNotNull("Can't load image", image);
+
+  KVIterator<TileIdWritable, Raster> iter = image.getTiles();
+  while (iter.hasNext())
+  {
+    Raster raster = iter.currentValue();
+    org.junit.Assert.assertEquals("Bad tile type", type, raster.getSampleModel().getDataType());
+
+    iter.next();
   }
 }
 

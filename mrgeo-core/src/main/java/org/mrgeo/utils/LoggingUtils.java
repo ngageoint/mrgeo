@@ -37,7 +37,13 @@ public static final String OFF = "off";
 
 static final Logger log = LoggerFactory.getLogger(LoggingUtils.class);
 
+
 private static String defaultLevel = OFF;
+
+static
+{
+  initialize();
+}
 
 public static void setLogLevel(final String className, final String level)
 {
@@ -48,7 +54,7 @@ public static void setLogLevel(final String className, final String level)
   {
     // TODO:  If we update to slf4j 1.7.1+ the properties prefix is in a string constant
     System.setProperty("org.slf4j.simpleLogger.log." + className, level);
-    log.info("Setting log level to: " + level);
+    System.err.println("Setting log level to: " + level);
   }
   else if (loggerClassName.equalsIgnoreCase("Log4JLoggerAdapter"))
   {
@@ -66,29 +72,9 @@ public static void setLogLevel(final String className, final String level)
 
       setLevel.invoke(logger, levelEnum);
 
-      log.debug("Changed log level for: {} to: {}", className, level);
+      System.err.println("Changed log level for: " + className + " to: " + level);
     }
-    catch (SecurityException e)
-    {
-      e.printStackTrace();
-    }
-    catch (NoSuchMethodException e)
-    {
-      e.printStackTrace();
-    }
-    catch (ClassNotFoundException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IllegalArgumentException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IllegalAccessException e)
-    {
-      e.printStackTrace();
-    }
-    catch (InvocationTargetException e)
+    catch (SecurityException | NoSuchMethodException | ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
     {
       e.printStackTrace();
     }
@@ -147,27 +133,7 @@ public static String getLogLevel(final String className)
       }
 
     }
-    catch (SecurityException e)
-    {
-      e.printStackTrace();
-    }
-    catch (NoSuchMethodException e)
-    {
-      e.printStackTrace();
-    }
-    catch (ClassNotFoundException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IllegalArgumentException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IllegalAccessException e)
-    {
-      e.printStackTrace();
-    }
-    catch (InvocationTargetException e)
+    catch (ClassNotFoundException | SecurityException | IllegalArgumentException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e)
     {
       e.printStackTrace();
     }
@@ -191,47 +157,25 @@ public static void setDefaultLogLevel(final String level)
   {
     // TODO:  If we update to slf4j 1.7.1+ the properties are in a string constant
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", level);
-    log.info("Setting default log level to: " + level);
+    System.err.println("LoggingUtils: Setting default log level to: " + level.toUpperCase());
   }
   else if (loggerClassName.equalsIgnoreCase("Log4JLoggerAdapter"))
   {
     try
     {
-      Class<?> log4jLoggerFactory = Class.forName("org.apache.log4j.Logger");
+      Object logger = getRootLogger();
       Class<?> levelClass = Class.forName("org.apache.log4j.Level");
 
-      Method getLogger = log4jLoggerFactory.getMethod("getRootLogger", (Class<?>[])null);
-      Object logger = getLogger.invoke(null);
       Method setLevel = logger.getClass().getMethod("setLevel",  levelClass);
 
       Object levelEnum = getLog4JLevel(level);
 
       setLevel.invoke(logger, levelEnum);
 
-      log.debug("Changed default log level to: {}", level);
-
+      setDefaultLoggerFormat();
+      System.err.println("LoggingUtils: Setting default (root) log level to: " + level.toUpperCase());
     }
-    catch (ClassNotFoundException e)
-    {
-      e.printStackTrace();
-    }
-    catch (SecurityException e)
-    {
-      e.printStackTrace();
-    }
-    catch (NoSuchMethodException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IllegalArgumentException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IllegalAccessException e)
-    {
-      e.printStackTrace();
-    }
-    catch (InvocationTargetException e)
+    catch (ClassNotFoundException | SecurityException | IllegalArgumentException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e)
     {
       e.printStackTrace();
     }
@@ -278,12 +222,77 @@ public static void setLoggerToFile(final String file)
   {
     // TODO:  If we update to slf4j 1.7.1+ the properties are in a string constant
     System.setProperty("org.slf4j.simpleLogger.logFile", file);
-    log.info("Setting logging output to: " + file);
+    System.err.println("Setting logging output to: " + file);
   }
-  //    else if (loggerClass.equalsIgnoreCase("Log4JLoggerAdapter"))
-  //    {
-  //
-  //    }
+  else if (loggerClass.equalsIgnoreCase("Log4JLoggerAdapter"))
+  {
+    try
+    {
+      Object rootlogger = getRootLogger();
+      Method getAppenders = rootlogger.getClass().getMethod("getAllAppenders");
+
+      Enumeration e = (Enumeration) getAppenders.invoke(rootlogger);
+      Object fileappender = null;
+      Object layout = null;
+      while (e.hasMoreElements())
+      {
+        Object appender = e.nextElement();
+
+        Method getLayout = appender.getClass().getMethod("getLayout");
+        layout = getLayout.invoke(appender);
+
+        if (appender.getClass().getSimpleName().equalsIgnoreCase("FileAppender")) {
+          fileappender = appender;
+          break;
+        }
+      }
+
+      if (fileappender == null)
+      {
+        Class<?> fileappenderclass = Class.forName("org.apache.log4j.FileAppender");
+        Constructor<?> constructor = fileappenderclass.getConstructor();
+        fileappender = constructor.newInstance();
+
+        Class<?> appenderclass = Class.forName("org.apache.log4j.Appender");
+
+        Method addappender = rootlogger.getClass().getMethod("addAppender", appenderclass);
+        addappender.invoke(rootlogger, fileappender);
+      }
+
+      // setFile(String file)
+      Method setfile = fileappender.getClass().getMethod("setFile", String.class);
+      setfile.invoke(fileappender, file);
+
+      // setAppend(boolean append)
+      Method append = fileappender.getClass().getMethod("setAppend", boolean.class);
+      append.invoke(fileappender, true);
+
+
+      if (layout != null)
+      {
+        // setLayout(Layout layout)
+        Class<?> layoutclass = Class.forName("org.apache.log4j.Layout");
+        Method setLayout = fileappender.getClass().getMethod("setLayout", layoutclass);
+        setLayout.invoke(fileappender, layout);
+      }
+      else
+      {
+        setDefaultLoggerFormat();
+      }
+
+      // activateOptions()
+      Method activate = fileappender.getClass().getMethod("activateOptions");
+      activate.invoke(fileappender);
+
+      System.err.println("Setting logging output to: " + file);
+
+    }
+    catch (ClassNotFoundException | SecurityException | IllegalArgumentException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e)
+    {
+      e.printStackTrace();
+    }
+
+  }
   else
   {
     throw new UnsupportedOperationException("Only the slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
@@ -298,7 +307,6 @@ public static void setDefaultLoggerFormat()
 public static void setLoggerFormat(String pattern)
 {
   String loggerClass = log.getClass().getSimpleName();
-  log.info("Using logger: " + loggerClass);
   if (loggerClass.equalsIgnoreCase("SimpleLogger"))
   {
     // TODO:  If we update to slf4j 1.7.1+ the properties are in a string constant
@@ -308,7 +316,7 @@ public static void setLoggerFormat(String pattern)
     System.setProperty("org.slf4j.simpleLogger.showLogName", "true");
     System.setProperty("org.slf4j.simpleLogger.showShortLogName", "false");
     System.setProperty("org.slf4j.simpleLogger.levelInBrackets", "true");
-    log.info("Setting up Simplelogger default output format");
+    System.err.println("Setting up Simplelogger default output format");
   }
   else if (loggerClass.equalsIgnoreCase("Log4JLoggerAdapter"))
   {
@@ -337,34 +345,10 @@ public static void setLoggerFormat(String pattern)
         setLayout.invoke(appender, layout);
       }
 
-      log.info("Setting up Log4JLoggerAdapter default output format");
+      System.err.println("Setting up Log4JLoggerAdapter default output format");
 
     }
-    catch (ClassNotFoundException e)
-    {
-      e.printStackTrace();
-    }
-    catch (SecurityException e)
-    {
-      e.printStackTrace();
-    }
-    catch (NoSuchMethodException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IllegalArgumentException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IllegalAccessException e)
-    {
-      e.printStackTrace();
-    }
-    catch (InvocationTargetException e)
-    {
-      e.printStackTrace();
-    }
-    catch (InstantiationException e)
+    catch (ClassNotFoundException | SecurityException | IllegalArgumentException | NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e)
     {
       e.printStackTrace();
     }
@@ -386,37 +370,25 @@ public static boolean finer(String level, String compareTo)
 //    public static final String ERROR = "error";
 //    public static final String OFF = "off";
 
-  if (level == ALL)
+  switch (level)
   {
+  case ALL:
     return false;
-  }
-  else if (level ==  FINE)
-  {
-    return !(compareTo == ALL);
-  }
-  else if (level == TRACE)
-  {
-    return !(compareTo == ALL || compareTo == FINE);
-  }
-  else if (level == DEBUG)
-  {
-    return !(compareTo == ALL || compareTo == FINE || compareTo == TRACE);
-  }
-  else if (level == INFO)
-  {
-    return !(compareTo == ALL || compareTo == FINE || compareTo == TRACE || compareTo == DEBUG);
-  }
-  else if (level == WARN)
-  {
-    return (compareTo != OFF && compareTo != ERROR && compareTo != WARN);
-  }
-  else if (level == ERROR)
-  {
-    return (compareTo != OFF && compareTo != ERROR);
-  }
-  else if (level == OFF)
-  {
-    return (compareTo != OFF);
+  case FINE:
+    return !(compareTo.equals(ALL));
+  case TRACE:
+    return !(compareTo.equals(ALL) || compareTo.equals(FINE));
+  case DEBUG:
+    return !(compareTo.equals(ALL) || compareTo.equals(FINE) || compareTo.equals(TRACE));
+  case INFO:
+    return !(compareTo.equals(ALL) || compareTo.equals(FINE) ||
+        compareTo.equals(TRACE) || compareTo.equals(DEBUG));
+  case WARN:
+    return (!compareTo.equals(OFF) && !compareTo.equals(ERROR) && !compareTo.equals(WARN));
+  case ERROR:
+    return (!compareTo.equals(OFF) && !compareTo.equals(ERROR));
+  case OFF:
+    return (!compareTo.equals(OFF));
   }
 
   return false;
@@ -428,32 +400,11 @@ private static String getSlf4jLevel(final Object levelEnum)
   {
     Class<?> levelClass = Class.forName("org.apache.log4j.Level");
     Method toLevel = levelClass.getMethod("toString",  ( Class<?>[])null);
-    String level = (String) toLevel.invoke(null, levelEnum);
 
-    return level;
+    return (String) toLevel.invoke(null, levelEnum);
 
   }
-  catch (ClassNotFoundException e)
-  {
-    e.printStackTrace();
-  }
-  catch (SecurityException e)
-  {
-    e.printStackTrace();
-  }
-  catch (NoSuchMethodException e)
-  {
-    e.printStackTrace();
-  }
-  catch (IllegalArgumentException e)
-  {
-    e.printStackTrace();
-  }
-  catch (IllegalAccessException e)
-  {
-    e.printStackTrace();
-  }
-  catch (InvocationTargetException e)
+  catch (ClassNotFoundException | SecurityException | IllegalArgumentException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e)
   {
     e.printStackTrace();
   }
@@ -467,36 +418,76 @@ private static Object getLog4JLevel(final String level)
   {
     Class<?> levelClass = Class.forName("org.apache.log4j.Level");
     Method toLevel = levelClass.getMethod("toLevel",  String.class);
-    Object levelEnum = toLevel.invoke(null, level);
 
-    return levelEnum;
+    return toLevel.invoke(null, level);
 
   }
-  catch (ClassNotFoundException e)
-  {
-    e.printStackTrace();
-  }
-  catch (SecurityException e)
-  {
-    e.printStackTrace();
-  }
-  catch (NoSuchMethodException e)
-  {
-    e.printStackTrace();
-  }
-  catch (IllegalArgumentException e)
-  {
-    e.printStackTrace();
-  }
-  catch (IllegalAccessException e)
-  {
-    e.printStackTrace();
-  }
-  catch (InvocationTargetException e)
+  catch (ClassNotFoundException | SecurityException | IllegalArgumentException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e)
   {
     e.printStackTrace();
   }
 
   return null;
 }
+
+private static void initialize()
+{
+  String loggerClassName = log.getClass().getSimpleName();
+
+  if (loggerClassName.equalsIgnoreCase("SimpleLogger"))
+  {
+    // no op
+  }
+  else if (loggerClassName.equalsIgnoreCase("Log4JLoggerAdapter"))
+  {
+    try
+    {
+      // See if the root logger has any appenders. If not, initialize with the basic configurator
+      Object rootlogger = getRootLogger();
+      Method getAppenders = rootlogger.getClass().getMethod("getAllAppenders");
+
+      Object appenders = getAppenders.invoke(rootlogger);
+      Method hasMore = appenders.getClass().getMethod("hasMoreElements");
+
+      if (!(boolean)hasMore.invoke(appenders))
+      {
+        Class<?> basicConfiguratorClass = Class.forName("org.apache.log4j.BasicConfigurator");
+        //Class<?> levelClass = Class.forName("org.apache.log4j.Level");
+        Method configure = basicConfiguratorClass.getMethod("configure");
+        configure.invoke(null);
+      }
+    }
+    catch (IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchMethodException e)
+    {
+      e.printStackTrace();
+    }
+
+    System.err.println("LoggingUtils: Initializing log4j logger to use a basic configuration:");
+  }
+  else
+  {
+    throw new UnsupportedOperationException(
+        "Only the Log4J & slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
+  }
+}
+
+private static Object getRootLogger() throws ClassNotFoundException
+{
+  try
+  {
+    Class<?> log4jLoggerFactory = Class.forName("org.apache.log4j.Logger");
+
+    Method getLogger = log4jLoggerFactory.getMethod("getRootLogger", (Class<?>[])null);
+
+    return getLogger.invoke(null);
+  }
+  catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException e)
+  {
+    e.printStackTrace();
+  }
+
+  throw new ClassNotFoundException("Can't find root logger!");
+
+}
+
 }

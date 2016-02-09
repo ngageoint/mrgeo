@@ -209,7 +209,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
                 }
                 ky += 1
               }
-              val loopTime = (System.currentTimeMillis() - loopStart)
+              val loopTime = System.currentTimeMillis() - loopStart
               loopMin = Math.min(loopMin, loopTime)
               loopMax = Math.max(loopMax, loopTime)
               if (weight == 0.0f) {
@@ -234,7 +234,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, nodatas,
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, Array.fill[Number](1)(Float.NaN),
       bounds = meta.getBounds, calcStats = false))
 
     true
