@@ -25,8 +25,7 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.partitioners.SparkTileIdPartitioner;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.hdfs.partitioners.FileSplitPartitioner;
 
 import java.io.IOException;
 
@@ -36,54 +35,28 @@ import java.io.IOException;
  */
 public abstract class MrsImageOutputFormatProvider implements ProtectionLevelValidator
 {
-  protected ImageOutputFormatContext context;
+protected ImageOutputFormatContext context;
 
-  public MrsImageOutputFormatProvider(ImageOutputFormatContext context)
-  {
-    this.context = context;
-  }
+public MrsImageOutputFormatProvider(ImageOutputFormatContext context)
+{
+  this.context = context;
+}
 
-  /**
-   * For any additional Hadoop job input initialization besides setting
-   * the actual output format class (see getOutputFormatClass method in
-   * this interface), place that initialization code in this method.
-   *
-   * Sub-classes that override this method must call super.setupJob(job).
-   *
-   * @param job
-   * @throws IOException
-   */
-  public void setupJob(Job job) throws DataProviderException
-  {
-    setupConfig(job);
-  }
 
-  /**
-   * For any additional Spark configuration besides setting
-   * the actual output format class (see getOutputFormatClass method in
-   * this interface), place that initialization code in this method.
-   *
-   * Sub-classes that override this method must call super.setupJob(job).
-   *
-   * @param conf
-   * @throws IOException
-   */
-  public Configuration setupSparkJob(Configuration conf) throws DataProviderException
+/**
+ * For any additional Spark configuration besides setting
+ * the actual output format class (see getOutputFormatClass method in
+ * this interface), place that initialization code in this method.
+ *
+ * Sub-classes that override this method must call super.setupJob(job).
+ *
+ */
+public Configuration setupOutput(Configuration conf) throws DataProviderException
+{
+  try
   {
-    try
-    {
-      Job job = new Job(conf);
-      setupConfig(job);
-      return job.getConfiguration();
-    }
-    catch(IOException e)
-    {
-      throw new DataProviderException("Error configuring a spark job ", e);
-    }
-  }
+    Job job = new Job(conf);
 
-  private void setupConfig(Job job)
-  {
     job.setOutputKeyClass(TileIdWritable.class);
     job.setOutputValueClass(RasterWritable.class);
     job.setOutputFormatClass(getOutputFormat().getClass());
@@ -92,32 +65,40 @@ public abstract class MrsImageOutputFormatProvider implements ProtectionLevelVal
       job.getConfiguration().set(MrGeoConstants.MRGEO_PROTECTION_LEVEL, context.getProtectionLevel());
     }
     job.getConfiguration().setBoolean("mapreduce.fileoutputcommitter.marksuccessfuljobs", false);
+
+    return job.getConfiguration();
   }
+  catch(IOException e)
+  {
+    throw new DataProviderException("Error configuring a spark job ", e);
+  }
+}
 
-  public abstract OutputFormat<WritableComparable<?>, Writable> getOutputFormat();
 
-  /**
-   * Perform any processing required after the map/reduce has completed.
-   *
-   * @param job
-   */
-  public abstract void teardown(final Job job) throws DataProviderException;
+public abstract OutputFormat<WritableComparable<?>, Writable> getOutputFormat();
 
-  /**
-   * Perform any processing required after a Spark job has completed.
-   *
-   * @param conf
-   */
-  public abstract void teardownForSpark(final Configuration conf) throws DataProviderException;
+/**
+ * Perform any processing required after the map/reduce has completed.
+ *
+ * @param conf
+ */
+public abstract void teardown(final Configuration conf) throws DataProviderException;
 
-  public abstract MrsPyramidMetadataWriter getMetadataWriter();
-  public abstract MrsImageDataProvider getImageProvider();
+/**
+ * Perform any processing required after a Spark job has completed.
+ *
+ * @param conf
+ */
+public abstract void teardownForSpark(final Configuration conf) throws DataProviderException;
 
-  /**
-   * If a data provider needs tiled data partitioned when a Spark job produces
-   * output, then the data provider implementation should return that partitioner
-   * from this method. Otherwise, return null.
-   *
-   */
-  public abstract SparkTileIdPartitioner getPartitionerForSpark(TMSUtils.TileBounds tileBounds, int zoom);
+public abstract MrsPyramidMetadataWriter getMetadataWriter();
+public abstract MrsImageDataProvider getImageProvider();
+
+/**
+ * If a data provider needs tiled data partitioned when a Spark job produces
+ * output, then the data provider implementation should return that partitioner
+ * from this method. Otherwise, return null.
+ *
+ */
+public abstract FileSplitPartitioner getSparkPartitioner();
 }

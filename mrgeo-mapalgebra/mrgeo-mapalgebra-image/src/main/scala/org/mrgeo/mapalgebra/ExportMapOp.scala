@@ -326,8 +326,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     else if (bounds.isDefined)
     {
       val tilebounds = TMSUtils.boundsToTile(bounds.get, zoom.get, meta.getTilesize)
-      for (ty <- tilebounds.w to tilebounds.e) {
-        for (tx <- tilebounds.s to tilebounds.e) {
+      for (ty <- tilebounds.s to tilebounds.n) {
+        for (tx <- tilebounds.w to tilebounds.e) {
           tiles += TMSUtils.tileid(tx, ty, zoom.get)
         }
       }

@@ -38,7 +38,7 @@ import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageOutputFormatContext;
-import org.mrgeo.hdfs.partitioners.SparkTileIdPartitioner;
+import org.mrgeo.hdfs.partitioners.FileSplitPartitioner;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
@@ -185,20 +185,13 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
   }
 
   @Override
-  public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
+  public Configuration setupOutput(final Configuration conf) throws DataProviderException
   {
     Configuration conf1 = provider.setupSparkJob(conf);
-    Configuration conf2 = super.setupSparkJob(conf1);
+    Configuration conf2 = super.setupOutput(conf1);
     setupConfig(conf2, null);
     return conf2;
   }
-
-  @Override
-  public void setupJob(final Job job) throws DataProviderException {
-    provider.setupJob(job);
-    super.setupJob(job);
-    setupConfig(job.getConfiguration(), job);
-  } // end setupJob
 
 
   private void setupConfig(final Configuration conf, final Job job) throws DataProviderException
@@ -410,9 +403,9 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
 
 
   @Override
-  public void teardown(Job job) throws DataProviderException
+  public void teardown(Configuration conf) throws DataProviderException
   {
-    performTeardown(job.getConfiguration());
+    performTeardown(conf);
   }
 
   @Override
@@ -525,7 +518,7 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
   }
 
   @Override
-  public SparkTileIdPartitioner getPartitionerForSpark(TMSUtils.TileBounds tileBounds, int zoom)
+  public FileSplitPartitioner getSparkPartitioner()
   {
     return null;
   }

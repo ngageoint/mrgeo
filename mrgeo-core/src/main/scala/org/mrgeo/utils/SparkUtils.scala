@@ -387,12 +387,12 @@ object SparkUtils extends Logging {
 
     val metadata = inputProvider.getMetadataReader.read()
 
-    val bounds = metadata.getBounds
-    val bands = metadata.getBands
-    val tiletype = metadata.getTileType
-    val tilesize = metadata.getTilesize
-    val nodatas = metadata.getDefaultValues
-    val protectionlevel = metadata.getProtectionLevel
+//    val bounds = metadata.getBounds
+//    val bands = metadata.getBands
+//    val tiletype = metadata.getTileType
+//    val tilesize = metadata.getTilesize
+//    val nodatas = metadata.getDefaultValues
+//    val protectionlevel = metadata.getProtectionLevel
 
     // NOTE:  This is a very special case where we are adding levels to a pyramid (i.e. BuildPyramid).
     // The input data provider provides most of the parameters.
@@ -456,67 +456,12 @@ object SparkUtils extends Logging {
     // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
     // on.  This can be a problem for fast calculating/small partitions
     val stats = SparkUtils.calculateStats(tiles, bands, metadata.getDefaultValues)
-    val tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
-    val tofc = new ImageOutputFormatContext(output, bounds, zoom, tilesize, metadata.getProtectionLevel)
+    // val tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+    val tofc = new ImageOutputFormatContext(output, bounds, zoom, tilesize,
+      metadata.getProtectionLevel, metadata.getTileType, bands)
     val tofp = outputProvider.getTiledOutputFormatProvider(tofc)
-    val sparkPartitioner = tofp.getPartitionerForSpark(tileBounds, zoom)
-    val conf1 = tofp.setupSparkJob(conf)
-
-    // The following commented out section was in place for older versions of Spark
-    // that did not include the OrderRDDFunctions.repartitionAndSortWithinPartitions
-    // method. Since we're standardizing on Spark 1.2.0 as a minimum, we leave the
-    // following commented out.
-    //    var repartitionMethod: java.lang.reflect.Method = null
-    //    val orderedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
-    //    val repartitionMethodName = "repartitionAndSortWithinPartitions"
-    //    try {
-    //      repartitionMethod = orderedTiles.getClass.getDeclaredMethod(repartitionMethodName,
-    //        classOf[Partitioner])
-    //    }
-    //    catch {
-    //      case nsm: NoSuchMethodException => {
-    //        // Ignore. On older versions of Spark, this method does not exist, and
-    //        // that is handled later in the code with repartitionMethod == null.
-    //      }
-    //    }
-    //    if (repartitionMethod != null) {
-    //      // The new method exists, so let's call it through reflection because it's
-    //      // more efficient.
-    //      log.info("Saving MrsPyramid using new repartition method")
-    //      val sorted: RDD[(TileIdWritable, RasterWritable)] = repartitionMethod.invoke(orderedTiles, sparkPartitioner).asInstanceOf[RDD[(TileIdWritable, RasterWritable)]]
-    //      val saveSorted = new PairRDDFunctions(sorted)
-    //      val saveMethodName = "saveAsNewAPIHadoopFile"
-    //      val saveMethod = saveSorted.getClass.getDeclaredMethod(saveMethodName,
-    //        classOf[String] /* name */,
-    //        classOf[Class[Any]]  /* keyClass */,
-    //        classOf[Class[Any]] /*valueClass */,
-    //        classOf[Class[OutputFormat[Any,Any]]] /* outputFormatClass */,
-    //        classOf[Configuration] /* configuration */)
-    //      if (saveMethod != null) {
-    //        saveMethod.invoke(saveSorted, name, classOf[TileIdWritable], classOf[RasterWritable],
-    //          tofp.getOutputFormat.getClass, conf)
-    //        //        sorted.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
-    //        //logInfo("sorted has " + sorted.count() + " tiles in " + sorted.partitions.length + " partitions")
-    //      }
-    //      else {
-    //        val msg = "Unable to find method " + saveMethodName + " in class " + saveSorted.getClass.getName
-    //        logError(msg)
-    //        throw new IllegalArgumentException(msg)
-    //      }
-    //    }
-    //    else {
-    //      // This is an older version of Spark, so use the old partition and sort.
-    //      log.info("Saving MrsPyramid using old repartition method")
-    //      val wrapped = new PairRDDFunctions(tiles)
-    //      val partitioned = wrapped.partitionBy(sparkPartitioner)
-    //
-    //      //logInfo("partitioned has " + partitioned.count() + " tiles in " + partitioned.partitions.length + " partitions")
-    //      // free up the tile's cache, it's not needed any more...
-    //
-    //      val wrapped1 = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](partitioned)
-    //      var s = new PairRDDFunctions(wrapped1.sortByKey())
-    //      s.saveAsNewAPIHadoopFile(name, classOf[TileIdWritable], classOf[RasterWritable], tofp.getOutputFormat.getClass, conf)
-    //    }
+    val sparkPartitioner = tofp.getSparkPartitioner
+    val conf1 = tofp.setupOutput(conf)
 
     // Repartition the output if the output data provider requires it
     val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
@@ -527,6 +472,7 @@ object SparkUtils extends Logging {
       else {
         wrappedTiles.sortByKey()
       })
+    //val sorted: RasterRDD = RasterRDD(tiles.sortByKey())
 
 
     val wrappedForSave = new PairRDDFunctions(sorted)
@@ -538,7 +484,7 @@ object SparkUtils extends Logging {
 
     if (sparkPartitioner != null)
     {
-      sparkPartitioner.generateFileSplits(sorted, output, zoom, conf1)
+      sparkPartitioner.writeSplits(sorted, output, zoom, conf1)
     }
     tofp.teardownForSpark(conf1)
 
@@ -567,9 +513,12 @@ object SparkUtils extends Logging {
     val stats = rdd.aggregate(zero)((stats, t) => {
       val tile = RasterWritable.toRaster(t._2)
 
-      for (y <- 0 until tile.getHeight) {
-        for (x <- 0 until tile.getWidth) {
-          for (b <- 0 until tile.getNumBands) {
+      var y: Int = 0
+      while (y < tile.getHeight) {
+        var x: Int = 0
+        while (x < tile.getWidth) {
+          var b: Int = 0
+          while (b < tile.getNumBands) {
             val p = tile.getSampleDouble(x, y, b)
             if (nodata(b).doubleValue().isNaN) {
               if (!p.isNaN) {
@@ -585,8 +534,11 @@ object SparkUtils extends Logging {
               stats(b).max = Math.max(stats(b).max, p)
               stats(b).min = Math.min(stats(b).min, p)
             }
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
 
       stats
@@ -660,12 +612,18 @@ object SparkUtils extends Logging {
     // Initialize the full raster to the default values for the image
     if (nodatas != null && nodatas.length > 0)
     {
-      for (y <- 0 until merged.getHeight) {
-        for (x <- 0 until merged.getWidth) {
-          for (b <- nodatas.indices) {
+      var y: Int = 0
+      while (y < merged.getHeight) {
+        var x: Int = 0
+        while (x < merged.getWidth) {
+          var b: Int = 0
+          while (b < nodatas.length) {
             merged.setSample(x, y, b, nodatas(b))
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
     }
 

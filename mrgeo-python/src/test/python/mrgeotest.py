@@ -1,15 +1,15 @@
-import unittest
 
 from pymrgeo import MrGeo
 import gdaltest
 
-from os import getcwd, path, makedirs, remove
+import os
 from osgeo import gdal
 from py4j.java_gateway import java_import
 import shutil
+from unittest import TestSuite, TestCase, defaultTestLoader, main
 
 
-class MrGeoTests(unittest.TestCase):
+class MrGeoTests(TestCase):
 
     GENERATE_BASELINE_DATA = False
 
@@ -17,11 +17,11 @@ class MrGeoTests(unittest.TestCase):
     mrgeo = None
     gateway = None
 
-    _CWD = getcwd()
-    _OUTPUT = "testFiles/output/"
+    _CWD = os.getcwd()
+    _OUTPUT = "output"
     _OUTPUT_HDFS = None
     _OUTPUT_BASE = "/mrgeo/test-files/output/"
-    _INPUT = "testFiles/"
+    _INPUT = "testFiles"
     _INPUT_HDFS = None
     _INPUT_BASE = "/mrgeo/test-files/"
 
@@ -47,7 +47,7 @@ class MrGeoTests(unittest.TestCase):
             # compare as GDAL Datasets.
             gdaltest.compare_db(self, golden, test)
 
-            remove(testimage)
+            os.remove(testimage)
 
     def comparelocalraster(self, testname):
         if not self.GENERATE_BASELINE_DATA:
@@ -76,11 +76,11 @@ class MrGeoTests(unittest.TestCase):
         else:
             src = srcfile
 
-        if not path.exists(src):
-            if path.exists(cls.inputdir + src):
+        if not os.path.exists(src):
+            if os.path.exists(cls.inputdir + src):
                 src = cls.inputdir + src
 
-        if not path.exists(src):
+        if not os.path.exists(src):
             raise Exception("Source (" + src + ") is not a file or directory")
 
         if dstfile is not None:
@@ -89,7 +89,7 @@ class MrGeoTests(unittest.TestCase):
                 dst += '/'
             dst += dstfile
 
-            if not path.isfile(src):
+            if not os.path.isfile(src):
                 raise Exception("Source (" + src + ") is must be a file")
 
             if jvm.HadoopFileUtils.exists(dst):
@@ -103,7 +103,7 @@ class MrGeoTests(unittest.TestCase):
         else:
             dst = cls.inputhdfs
 
-        basefile = path.basename(src)
+        basefile = os.path.basename(src)
         dstfile = dst + basefile
 
         if jvm.HadoopFileUtils.exists(dstfile):
@@ -137,20 +137,33 @@ class MrGeoTests(unittest.TestCase):
         p = jvm.Path(cls._OUTPUT_BASE).makeQualified(fs)
         cls._OUTPUT_HDFS = p
 
-        cls.inputdir = path.abspath(cls._INPUT + "/" + cls.classname) + '/'
-        cls.outputdir = path.abspath(cls._OUTPUT + "/" + cls.classname) + '/'
+        basedir = os.getenv('BASEDIR', '.')
+        dirname = os.path.abspath(basedir)
+        try:
+            while True:
+                names = os.listdir(dirname)
+                if cls._INPUT in names:
+                    break
+                dirname = os.path.abspath(os.path.join(dirname, os.pardir))
+        except:
+            pass
+
+        basedir = os.path.abspath(dirname)
+
+        cls.inputdir = os.path.abspath(basedir + '/' + cls._INPUT + "/" + cls.classname) + '/'
+        cls.outputdir = os.path.abspath(basedir + '/' + cls._INPUT + '/' + cls._OUTPUT + "/" + cls.classname) + '/'
 
         cls.inputhdfs = jvm.Path(cls._INPUT_HDFS, "python/" + cls.classname).makeQualified(fs).toString() + '/'
         cls.outputhdfs = jvm.Path(cls._OUTPUT_HDFS, "python/" + cls.classname).makeQualified(fs).toString() + '/'
 
-        if not path.exists(cls.inputdir):
-            makedirs(cls.inputdir)
+        if not os.path.exists(cls.inputdir):
+            os.makedirs(cls.inputdir)
 
-        if path.exists(cls.outputdir):
+        if os.path.exists(cls.outputdir):
             shutil.rmtree(cls.outputdir, ignore_errors=True)
 
-        if not path.exists(cls.outputdir):
-            makedirs(cls.outputdir)
+        if not os.path.exists(cls.outputdir):
+            os.makedirs(cls.outputdir)
 
         jvm.HadoopFileUtils.create(cls.inputhdfs)
 
@@ -175,7 +188,6 @@ class MrGeoTests(unittest.TestCase):
         self.mrgeo.stop()
         self._doublebox("Test Finished", self.classname + ":" + self.name)
 
-
     def _doublebox(self, text, name):
         width = len(name)
         if width < len(text):
@@ -197,5 +209,15 @@ class MrGeoTests(unittest.TestCase):
         print(fmt.format(""))
         print("")
 
+
+def load_tests(loader, tests, pattern):
+
+    suite = TestSuite()
+    for all_test_suite in defaultTestLoader.discover('.', pattern='*tests.py'):
+        for test_suite in all_test_suite:
+            suite.addTests(test_suite)
+    return suite
+
 if __name__ == '__main__':
-    unittest.main()
+    print('running tests')
+    main()

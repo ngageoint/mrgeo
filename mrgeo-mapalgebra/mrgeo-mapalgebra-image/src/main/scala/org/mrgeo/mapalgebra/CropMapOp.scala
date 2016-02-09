@@ -132,15 +132,21 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
           val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
-          for (y <- 0 until raster.getHeight) {
-            for (x <- 0 until raster.getWidth) {
-              for (b <- 0 until raster.getNumBands) {
+          var y: Int = 0
+          while (y < raster.getHeight) {
+            var x: Int = 0
+            while (x < raster.getWidth) {
+              var b: Int = 0
+              while (b < raster.getNumBands) {
                 if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY)
                 {
                   raster.setSample(x, y, 0, nodata)
                 }
+                b += 1
               }
+              x += 1
             }
+            y += 1
           }
 
           (tile._1, RasterWritable.toWritable(raster))

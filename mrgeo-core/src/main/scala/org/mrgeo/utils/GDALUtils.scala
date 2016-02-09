@@ -67,7 +67,6 @@ object GDALUtils extends Logging {
   private val VSI_PREFIX: String = "/vsimem/"
   private val GDAL_PAM_ENABLED: String = "GDAL_PAM_ENABLED"
 
-  loadLibrary()
   initializeGDAL()
 
   // empty method to force static initializer
@@ -111,14 +110,16 @@ object GDALUtils extends Logging {
     val nodatas = Array.newBuilder[Double]
 
     val nodata = Array.ofDim[java.lang.Double](1)
-    for (i <- 1 to src.GetRasterCount()) {
+    var i: Int = 1
+    while (i <= src.GetRasterCount()) {
       val band: Band = src.GetRasterBand(i)
       if (datatype < 0) {
         datatype = band.getDataType
       }
 
       band.GetNoDataValue(nodata)
-      nodatas += nodata(0)
+      nodatas += (if (nodata(0) == null) { java.lang.Double.NaN } else { nodata(0) })
+      i += 1
     }
 
     createEmptyMemoryRaster(width, height, bands, datatype, nodatas.result())
@@ -131,11 +132,13 @@ object GDALUtils extends Logging {
 
     if (dataset != null) {
       if (nodatas != null) {
-        for (i <- 1 to dataset.getRasterCount) {
+        var i: Int = 1
+        while (i <= dataset.getRasterCount) {
           val nodata: Double = nodatas(i - 1)
           val band: Band = dataset.GetRasterBand(i)
           band.Fill(nodata)
           band.SetNoDataValue(nodata)
+          i += 1
         }
       }
       return dataset
@@ -300,17 +303,19 @@ object GDALUtils extends Logging {
   def swapBytes(bytes: Array[Byte], gdaldatatype: Int) = {
 
     var tmp: Byte = 0
+    var i: Int = 0
     gdaldatatype match {
       // 2 byte value... swap byte 1 with 2
     case gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 =>
-      for (i <- bytes.indices by 2) {
+      while (i + 1 < bytes.length) {
         tmp = bytes(i)
         bytes(i) = bytes(i + 1)
         bytes(i + 1) = tmp
+        i += 2
       }
     // 4 byte value... swap bytes 1 & 4, 2 & 3
     case gdalconstConstants.GDT_UInt32 | gdalconstConstants.GDT_Int32 | gdalconstConstants.GDT_Float32 =>
-      for (i <- bytes.indices by 4) {
+      while (i + 3 < bytes.length) {
         // swap 0 & 3
         tmp = bytes(i)
         bytes(i) = bytes(i + 3)
@@ -320,10 +325,11 @@ object GDALUtils extends Logging {
         tmp = bytes(i + 1)
         bytes(i + 1) = bytes(i + 2)
         bytes(i + 2) = tmp
+        i += 4
       }
     // 8 byte value... swap bytes 1 & 8, 2 & 7, 3 & 6, 4 & 5
     case gdalconstConstants.GDT_Float64 =>
-      for (i <- bytes.indices by 4) {
+      while (i + 7 < bytes.length) {
         // swap 0 & 7
         tmp = bytes(i)
         bytes(i) = bytes(i + 7)
@@ -343,6 +349,7 @@ object GDALUtils extends Logging {
         tmp = bytes(i + 3)
         bytes(i + 3) = bytes(i + 4)
         bytes(i + 4) = tmp
+        i += 8
       }
     }
   }
@@ -614,7 +621,8 @@ object GDALUtils extends Logging {
     else {
       val bytes: ByteBuffer = ByteBuffer.allocateDirect(linestride.toInt)
       bytes.order(ByteOrder.nativeOrder)
-      for (y <- 0 until height) {
+      var y: Int = 0
+      while (y < height) {
         bytes.rewind()
         val elements: AnyRef = raster.getDataElements(raster.getMinX, raster.getMinY + y, raster.getWidth, 1, null)
         elements match {
@@ -626,49 +634,18 @@ object GDALUtils extends Logging {
         }
         ds.WriteRaster_Direct(0, y, width, 1, width, 1, datatype, bytes, bandlist, pixelstride, linestride,
           bandstride)
+        y += 1
       }
     }
   }
 
-  private def loadLibrary() = {
-    val libs: Array[String] = Array("libgdaljni.so", "libgdalconstjni.so", "libosrjni.so", "libgdal.so")
-
-    val rawPath: String = MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, null)
-    if (rawPath != null) {
-      // gdal jars to load.  In the order they should be loaded...
-      val paths = rawPath.split(":")
-
-      logDebug("Looking for GDAL Libraries in " + rawPath)
-      libs.foreach(lib => {
-        val break = new Breaks
-
-        break.breakable({
-          paths.foreach(path => {
-            val file = new File(path, lib)
-            val msg = " Looking for: " + file.getCanonicalPath
-            if (file.exists()) {
-              System.load(file.getCanonicalPath)
-              logDebug(msg + " found")
-              break.break()
-            }
-            else {
-              logDebug(msg + " not found")
-            }
-          })
-
-          logError("ERROR!!! Can not find gdal library " + lib + " in path " + rawPath)
-        })
-      })
-    }
-    else {
-      logWarning("Can't load GDAL libraries, " + MrGeoConstants.GDAL_PATH +
-          " not found in the mrgeo configuration.  This may or may not be a problem.")
-
-      System.loadLibrary("gdal")
-    }
-  }
-
   private def initializeGDAL() = {
+    // Monkeypatch the system library path to use the gdal paths (for loading the gdal libraries
+    MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, "").
+        split(File.pathSeparator).foreach(path => {
+      ClassLoaderUtil.addLibraryPath(path)
+    })
+
     osr.UseExceptions()
 
     if (gdal.GetDriverCount == 0) {

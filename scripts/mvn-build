@@ -12,6 +12,7 @@ usage() {
     echo "  cmd          - mrgeo-core/mrgeo-vector/mrgeo-cmd"
     echo "  dataprovider - mrgeo-core/mrgeo-dataprovider"
     echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-services"
+    echo "  python       - mrgeo-core/mrgeo-vector/mrgeo-dataprovider/mrgeo-mapalgebra/mrgeo-python"
     echo "build type:"
     echo "  apache    - apache hadoop"
     echo "  apache220 - Apache hadoop, version 2.2.0"
@@ -22,6 +23,7 @@ usage() {
     echo "  apache251 - Apache hadoop, version 2.5.1"
     echo "  apache252 - Apache hadoop, version 2.5.2"
     echo "  apache260 - Apache hadoop, version 2.6.0"
+    echo "  apache271 - Apache hadoop, version 2.7.1"
     echo "  cdh530    - Cloudera hadoop 5.3.0"
     echo "  cdh531    - Cloudera hadoop 5.3.1"
     echo "  cdh532    - Cloudera hadoop 5.3.2"
@@ -160,6 +162,10 @@ SKIPSERVICESINTEGRATION="-Pskip-services-integration-tests"
 SKIPSERVICESUNIT="-Pskip-services-unit-tests"
 SKIPSERVICES="-Pskip-services-tests"
 
+SKIPPYTHONINTEGRATION="-Pskip-python-integration-tests"
+SKIPPYTHONUNIT="-Pskip-python-unit-tests"
+SKIPPYTHON="-Pskip-python-tests"
+
 SKIPALLINTEGRATION="-Pskip-all-integration-tests"
 SKIPALLUNIT="-Pskip-all-unit-tests"
 SKIPALL="-Pskip-all-tests"
@@ -175,42 +181,49 @@ while [ $# -gt 0 ] ; do
         ;;
     "core" | "core-only")
         MODULE="core"
-        ARGS="$SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPYTHON $SKIPSERVICES $ARGS"
         ;;
     "mapalgebra")
         MODULE="mapalgebra"
         ;;
     "mapalgebra-only")
         MODULE="mapalgebra"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPCMD $SKIPPYTHON $SKIPSERVICES $ARGS"
         ;;
     "vector")
         MODULE="vector"
         ;;
     "vector-only")
         MODULE="vector"
-        ARGS="$SKIPCORE $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPYTHON $SKIPSERVICES $ARGS"
         ;;
     "dataprovider")
         MODULE="dataprovider"
         ;;
     "dataprovider-only")
         MODULE="dataprovider"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPMAPALGEBRA $SKIPCMD $SKIPPYTHON $SKIPSERVICES $ARGS"
         ;;
     "cmd")
         MODULE="cmd"
         ;;
     "cmd-only")
         MODULE="cmd"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPLEGION $SKIPNET $SKIPSERVICES $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPPYTHON $SKIPSERVICES $ARGS"
         ;;
     "services")
         MODULE="services"
         ;;
     "services-only")
         MODULE="services"
-        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPLEGION $SKIPNET $ARGS"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPPYTHON $ARGS"
+        ;;
+    "python")
+        MODULE="python"
+        ;;
+    "python-only")
+        MODULE="python"
+        ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPSERVICES $ARGS"
         ;;
     "apache220")
         BUILD="apache220"
@@ -235,6 +248,9 @@ while [ $# -gt 0 ] ; do
         ;;
     "apache260")
         BUILD="apache260"
+        ;;
+    "apache271")
+        BUILD="apache271"
         ;;
     "emr")
         BUILD="emr"
@@ -324,7 +340,7 @@ while [ $# -gt 0 ] ; do
         PHASE="eclipse"
         ;;
     "-c" | "--conf")
-        ARGS=$ARGS" --Dhadoop-config="$2
+        ARGS=$ARGS" -Dhadoop-config="$2
         CONF=$2
         shift 1
         ;;

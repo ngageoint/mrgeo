@@ -29,14 +29,51 @@ Public classes:
 
 """
 
+import os
 import sys
-from os import walk
 
-# find the py4j lib in the mrgeo path
-for (root, names, files) in walk('..'):
-    for file in files:
-        if file == 'py4j-0.8.2.1-src.zip':
-            sys.path.append(root + '/py4j-0.8.2.1-src.zip')
+
+def walker(dirname, filename):
+    for (root, names, files) in os.walk(dirname):
+        # print('looking in ' + root)
+        for f in files:
+            if f == filename:
+                return root + '/' + filename
+    return None
+
+
+def loadlib(lib):
+    if lib in sys.path:
+        print(lib + ' aready in path')
+        return
+
+    libpath = None
+
+    try:
+        pypath = os.environ['PYTHONPATH'].split(os.pathsep)
+    except KeyError:
+        pypath = []
+
+    # print('pypath is: ' + str(pypath))
+    for dirname in pypath:
+        libpath = walker(dirname, lib)
+        if libpath is not None:
+            sys.path.append(libpath)
+            break
+
+    if libpath is None:
+        libpath = walker('..', lib)
+        if libpath is not None:
+            sys.path.append(libpath)
+
+    print('found ' + lib + ' in: ' + str(libpath))
+
+
+# print(os.environ['PYTHONPATH'].split(os.pathsep))
+# print(sys.path)
+
+loadlib('py4j-0.8.2.1-src.zip')
+loadlib('pyspark.zip')
 
 from pymrgeo.mrgeo import MrGeo
 from pymrgeo.rastermapop import RasterMapOp
