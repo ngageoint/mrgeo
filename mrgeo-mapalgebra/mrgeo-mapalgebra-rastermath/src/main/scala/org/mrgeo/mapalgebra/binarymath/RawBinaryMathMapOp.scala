@@ -22,6 +22,7 @@ import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
@@ -254,72 +255,12 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     // group the RDDs
     val group = new PairRDDFunctions(rdd1).cogroup(rdd2)
 
-    val answer = RasterRDD(group.map(tile => {
+    val answer = RasterRDD(group.flatMap(tile => {
       val iter1 = tile._2._1
       val iter2 = tile._2._2
 
-      // raster 1 is missing, non-overlapping tile, use raster 2
-      if (iter1.isEmpty) {
-        if (convertr2) {
-          val raster = RasterWritable.toRaster(iter2.head)
-          val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, datatype())
-
-          val width = raster.getWidth
-          var b: Int = 0
-          while (b < raster.getNumBands) {
-            val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
-            var y: Int = 0
-            while (y < raster.getHeight) {
-              var x: Int = 0
-              while (x < width) {
-                val v = pixels(y * width + x)
-                // if raster2 is nodata, we need to set raster1's pixel to nodata as well
-                if (RasterMapOp.isNodata(v, nodata2(b))) {
-                  output.setSample(x, y, b, outputnodata(b))
-                }
-                else {
-                  output.setSample(x, y, b, v)
-                }
-                x += 1
-              }
-              y += 1
-            }
-            b += 1
-          }
-          (tile._1, RasterWritable.toWritable(output))
-        }
-        else {
-          (tile._1, iter2.head)
-        }
-      }
-      else if (iter2.isEmpty) {
-        // raster 2 is missing, non-overlapping tile, use raster 1
-        if (convertr1) {
-          val raster = RasterWritable.toRaster(iter1.head)
-          val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, datatype())
-
-          val width = raster.getWidth
-          var b: Int = 0
-          while (b < raster.getNumBands) {
-            val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
-            var y: Int = 0
-            while (y < raster.getHeight) {
-              var x: Int = 0
-              while (x < width) {
-                output.setSample(x, y, b, pixels(y * width + x))
-                x += 1
-              }
-              y += 1
-            }
-            b += 1
-          }
-          (tile._1, RasterWritable.toWritable(output))
-        }
-        else {
-          (tile._1, iter1.head)
-        }
-      }
-      else {
+      // if raster 1 or 2 is missing, we can't do the binary math
+      if (iter1.nonEmpty && iter2.nonEmpty) {
         // we know there are only 1 item in each group's iterator, so we can use head()
         val raster1 = RasterWritable.toRaster(iter1.head)
         val raster2 = RasterWritable.toRaster(iter2.head)
@@ -361,7 +302,10 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
           b += 1
         }
 
-        (tile._1, RasterWritable.toWritable(output))
+        Array((tile._1, RasterWritable.toWritable(output))).iterator
+      }
+      else {
+        Array.empty[(TileIdWritable, RasterWritable)].iterator
       }
     }))
 
