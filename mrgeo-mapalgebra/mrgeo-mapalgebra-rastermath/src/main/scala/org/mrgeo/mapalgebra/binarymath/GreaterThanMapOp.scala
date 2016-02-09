@@ -23,7 +23,7 @@ import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object GreaterThanMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String](">", "gt", "goober")
+    Array[String](">", "gt")
   }
   def create(raster:RasterMapOp, const:Double):MapOp = {
     new GreaterThanMapOp(Some(raster), Some(const))
