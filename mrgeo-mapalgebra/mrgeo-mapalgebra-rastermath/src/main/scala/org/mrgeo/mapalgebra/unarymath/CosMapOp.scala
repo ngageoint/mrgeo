@@ -15,6 +15,8 @@
 
 package org.mrgeo.mapalgebra.unarymath
 
+import java.awt.image.DataBuffer
+
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
@@ -43,4 +45,8 @@ class CosMapOp extends RawUnaryMathMapOp {
   }
 
   override private[unarymath] def function(a: Double): Double = Math.cos(a)
+
+  override private[unarymath] def datatype():Int = { DataBuffer.TYPE_FLOAT }
+  override private[unarymath] def nodata():Double = { Float.NaN }
+
 }
