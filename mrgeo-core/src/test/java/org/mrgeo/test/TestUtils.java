@@ -25,11 +25,11 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 
 import java.awt.*;
@@ -261,6 +261,11 @@ public String getInputLocal()
   return inputLocal;
 }
 
+public String getInputLocalFor(final String filename)
+{
+  return new File(inputLocal, filename).toString();
+}
+
 public Path getOutputHdfs()
 {
   return outputHdfs;
@@ -274,6 +279,10 @@ public Path getOutputHdfsFor(final String fileName)
 public String getOutputLocal()
 {
   return outputLocal;
+}
+public String getOutputLocalFor(final String filename)
+{
+  return new File(outputLocal, filename).toString();
 }
 
 public Path getTestLocal()
@@ -366,12 +375,12 @@ public static String readFile(File f) throws IOException
   return new String(baselineBuffer);
 }
 
-public static MrsImagePyramidMetadata readImageMetadata(String filename) throws
+public static MrsPyramidMetadata readImageMetadata(String filename) throws
     IOException
 {
   try (FileInputStream stream = new FileInputStream(filename))
   {
-    return MrsImagePyramidMetadata.load(stream);
+    return MrsPyramidMetadata.load(stream);
   }
 }
 
@@ -454,7 +463,7 @@ public static String composeOutputDir(Class<?> c) throws IOException
   File dir = new File(result);
   if (dir.exists())
   {
-    FileUtils.deleteDir(dir);
+    FileUtils.deleteDir(dir, true);
   }
 
   if (!dir.mkdirs())

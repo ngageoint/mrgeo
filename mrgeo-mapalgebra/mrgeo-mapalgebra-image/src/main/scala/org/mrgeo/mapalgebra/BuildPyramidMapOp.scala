@@ -23,16 +23,19 @@ import org.mrgeo.buildpyramid.BuildPyramid
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
-import org.mrgeo.image.MrsImagePyramidMetadata
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
+import MrsPyramidMetadata.Classification
 
 object BuildPyramidMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("buildpyramid", "bp")
   }
+
+  def create(raster: RasterMapOp, aggregator:String = "MEAN") =
+    new BuildPyramidMapOp(Some(raster), Some(aggregator))
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new BuildPyramidMapOp(node, true, variables)
@@ -47,6 +50,12 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
 
   var providerProperties:ProviderProperties = null
 
+  private[mapalgebra] def this(raster:Option[RasterMapOp], aggregator:Option[String]) = {
+    this()
+
+    inputMapOp = raster
+    this.aggregator = aggregator
+  }
 
   private[mapalgebra] def this(node: ParserNode, isSlope: Boolean, variables: String => Option[ParserNode]) = {
     this()
@@ -58,7 +67,7 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
 
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
-    if (node.getNumChildren == 3) {
+    if (node.getNumChildren == 2) {
       aggregator = Some(MapOp.decodeString(node.getChild(1)) match {
       case Some(s) =>
         val clazz = AggregatorRegistry.aggregatorRegistry.get(s.toUpperCase)
@@ -79,7 +88,7 @@ class BuildPyramidMapOp extends RasterMapOp with Externalizable {
     val input: RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
     rasterRDD = input.rdd()
-    val meta = new MrsImagePyramidMetadata(input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName)))
+    val meta = new MrsPyramidMetadata(input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName)))
 
     // Need to see if this is a saved pyramid.  If it is, we can buildpyramids, otherwise it is
     // a temporary RDD and we need to error out

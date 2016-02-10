@@ -1,6 +1,11 @@
 # top level conf directory
 conf
 
+# python compiled files
+*.pyc
+**/*.pyc
+**/**/*.pyc
+
 # all eclipse generated files
 .classpath
 .project
@@ -82,3 +87,6 @@ mrgeo-core/src/main/scripts/WpsTools.pyc
 /.nv
 #/monocle-2
 #/mrgeo-external-services
+
+# pyspark, moved into mrgeo for testing...
+mrgeo-python/pyspark

@@ -16,32 +16,32 @@
 package org.mrgeo.mapalgebra;
 
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
+import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImagePyramid;
-import org.mrgeo.image.MrsImagePyramidMetadata;
-import org.mrgeo.image.MrsImagePyramidMetadata.Classification;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
+import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-@Ignore
 public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 {
   @SuppressWarnings("unused")
   private static final Logger log = LoggerFactory.getLogger(BuildPyramidMapOpIntegrationTest.class);
-
-  @Rule
-  public TestName testname = new TestName();
 
 
   private static MapOpTestUtils testUtils;
@@ -63,6 +63,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   @Before
   public void setup() throws IOException
   {
+    BuildPyramid.setMIN_TILES_FOR_SPARK(5);
+
     providerProperties = null;
     Path parent = new Path(testUtils.getInputHdfs(), testname.getMethodName());
     HadoopFileUtils.copyToHdfs(Defs.INPUT, parent, smallElevationNoPyramids, true);
@@ -83,10 +85,10 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationPath.toString(), providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationPath.toString(), providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
@@ -94,6 +96,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -109,18 +116,25 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -131,23 +145,32 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   @Category(IntegrationTest.class)
   public void buildPyramidMeanAggregator() throws Exception
   {
+    BuildPyramid.setMIN_TILES_FOR_SPARK(5);
+
     String exp = String.format("BuildPyramid([%s], \"mean\")", smallElevationNoPyramidsPath);
 
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -163,18 +186,25 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "SUM", metadata.getResamplingMethod());
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -190,18 +220,25 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MODE", metadata.getResamplingMethod());
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -217,18 +254,25 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "NEAREST", metadata.getResamplingMethod());
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -244,18 +288,25 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MIN", metadata.getResamplingMethod());
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -271,18 +322,25 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MAX", metadata.getResamplingMethod());
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -298,18 +356,25 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
     testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
     // check the in-place pyramid
-    MrsImagePyramid pyramid = MrsImagePyramid.open(smallElevationNoPyramidsPath.toString(),
-        providerProperties);
+    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath.toString(),
+                                         providerProperties);
     Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    MrsImagePyramidMetadata metadata = pyramid.getMetadata();
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Can't load metadata", metadata);
+
+    Assert.assertEquals("Wrong number of levels", 10, metadata.getMaxZoomLevel());
 
     Assert.assertEquals("Bad classification", Classification.Continuous, metadata.getClassification());
     Assert.assertEquals("Bad resampling method", "MINAVGPAIR", metadata.getResamplingMethod());
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();

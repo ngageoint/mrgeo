@@ -49,7 +49,7 @@ class JobArguments() extends Logging {
    * Whether the underlying operating system is Windows.
    */
   val isWindows = SystemUtils.IS_OS_WINDOWS
-  var name: String = null
+  var name: String = "foo" // null
   var cluster: String = "local[1]"
   var driverClass: String = null
   var driverJar: String = null
@@ -346,7 +346,7 @@ class JobArguments() extends Logging {
     val maxMem = Runtime.getRuntime.maxMemory()
     if (maxMem != Long.MaxValue) {
       val mem = (maxMem * 0.95).round
-      memoryKb = mem
+      memoryKb = mem / 1024 // memory is in bytes, convert to kb
       logInfo("Setting max memory to: " + Memory.format(mem))
     }
   }

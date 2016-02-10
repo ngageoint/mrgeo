@@ -18,23 +18,31 @@ package org.mrgeo.mapalgebra
 import java.awt.image.{WritableRaster, DataBuffer}
 import java.io.Externalizable
 
-import com.vividsolutions.jts.geom.Envelope
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.geometry.{Point, Geometry}
+import org.mrgeo.geometry.Point
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
 import org.mrgeo.utils.TMSUtils
 
+
 object RasterizePointsMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("RasterizePoints")
+    Array[String]("rasterizepoints")
   }
+
+  def create(vector: VectorMapOp, aggregator:String, cellsize:String, column:String = null) =
+  {
+    new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, null)
+  }
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new RasterizePointsMapOp(node, variables)
 }
+
 
 /**
   * This class is an optimization of the RasterizeVectorMapOp capability specifically
@@ -48,6 +56,12 @@ object RasterizePointsMapOp extends MapOpRegistrar {
   */
 class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externalizable
 {
+  def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
+    this()
+
+    initialize(vector, aggregator, cellsize, bounds, column)
+  }
+
   def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
@@ -81,14 +95,18 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
         updateRaster(raster, countRaster, pixel, geomEntry._1, geomEntry._2, geomEntry._3, geomEntry._4)
       }
       if (aggregationType == VectorPainter.AggregationType.AVERAGE) {
-        for (x <- 0 until raster.getWidth) {
-          for (y <- 0 until raster.getHeight) {
+        var x: Int = 0
+        while (x < raster.getWidth) {
+          var y: Int = 0
+          while (y < raster.getHeight) {
             val v = raster.getSampleDouble(x, y, 0)
             if (!v.isNaN) {
               val c = countRaster.getSampleDouble(x, y, 0)
               raster.setSample(x, y, 0, v / c)
             }
+            y += 1
           }
+          x += 1
         }
       }
       (tileId, RasterWritable.toWritable(raster))
@@ -100,11 +118,10 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val filtered = if (bounds.nonEmpty) {
       val filterBounds = bounds.get
       vectorRDD.filter(U => {
-        if (U._2.isInstanceOf[Point]) {
-          val pt = U._2.asInstanceOf[Point]
+        U._2 match {
+        case pt: Point =>
           filterBounds.contains(pt.getX, pt.getY)
-        }
-        else {
+        case _ =>
           false
         }
       })
@@ -114,22 +131,22 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     }
 
     filtered.map(U => {
-      if (U._2.isInstanceOf[Point]) {
-        val pt = U._2.asInstanceOf[Point]
-        val tile = TMSUtils.latLonToTile(pt.getY(), pt.getX(), zoom, tilesize)
+      U._2 match {
+      case pt: Point =>
+        val tile = TMSUtils.latLonToTile(pt.getY, pt.getX, zoom, tilesize)
         (new TileIdWritable(TMSUtils.tileid(tile.tx, tile.ty, zoom)),
-          (pt.getY, pt.getX,
-            if (column.isEmpty) {
-              0.0
-            } else {
-              pt.getAttribute(column.get).toDouble
-            },
-            column.isDefined))
-      }
-      else {
+            (pt.getY, pt.getX,
+                if (column.isEmpty) {
+                  0.0
+                }
+                else {
+                  pt.getAttribute(column.get).toDouble
+                },
+                column.isDefined))
+      case _ =>
         throw new IllegalArgumentException(
           "Cannot use RasterizePoints map algebra for non-point geometry: " +
-            U._2.getClass.getName)
+              U._2.getClass.getName)
       }
     })
   }
@@ -197,6 +214,7 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
           }
           raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, v)
         }
+      case _ =>
     }
   }
 }

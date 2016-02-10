@@ -19,7 +19,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.image.MrsImagePyramid;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.utils.Bounds;
 import org.slf4j.Logger;
@@ -181,7 +181,7 @@ public class KmlGenerator
   }
 
   /*
- * Returns a list of all MrsImagePyramid version 2 data in the home data directory
+ * Returns a list of all MrsPyramid version 2 data in the home data directory
  */
   private static MrsImageDataProvider[] getPyramidFilesList(
       final ProviderProperties providerProperties) throws IOException
@@ -194,8 +194,8 @@ public class KmlGenerator
 
     for (int i = 0; i < images.length; i++)
     {
-      // original code looked for a MrsImagePyramid.toc file, not sure why, it wasn't used anywhere else...
-//      Path toc = new Path(f.getPath(), "MrsImagePyramid.toc");
+      // original code looked for a MrsPyramid.toc file, not sure why, it wasn't used anywhere else...
+//      Path toc = new Path(f.getPath(), "MrsPyramid.toc");
 //      if (fs.exists(toc))
 //      {
 //        files.add(f);
@@ -253,7 +253,7 @@ public class KmlGenerator
 
       try
       {
-        MrsImagePyramid mp = MrsImagePyramid.open(f);
+        MrsPyramid mp = MrsPyramid.open(f);
 
         minx = Math.min(minx, mp.getBounds().getMinX());
         miny = Math.min(miny, mp.getBounds().getMinY());
@@ -819,7 +819,7 @@ public class KmlGenerator
 //    FileSystem fs = HadoopFileUtils.getFileSystem(filePath);
 //    if (fs.exists(filePath))
 //    {
-//      MrsImagePyramid  pyramid = MrsImagePyramid.open(filePath.toString(), providerProperties);
+//      MrsPyramid  pyramid = MrsPyramid.open(filePath.toString(), providerProperties);
 //      if (pyramid != null)
 //      {
 //        level = pyramid.getNumLevels();
@@ -912,7 +912,7 @@ public class KmlGenerator
     double maxY = inputBounds.getMaxY();
 
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(layer, DataProviderFactory.AccessMode.READ, providerProperties);
-    MrsImagePyramid  pyramid = MrsImagePyramid.open(dp);
+    MrsPyramid pyramid = MrsPyramid.open(dp);
 
     int level = pyramid.getMaximumLevel();
 

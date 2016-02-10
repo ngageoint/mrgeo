@@ -37,6 +37,19 @@ object ConMapOp extends MapOpRegistrar {
     Array[String]("con")
   }
 
+  def create(test:RasterMapOp, positiveRaster:RasterMapOp, negativeRaster:RasterMapOp):MapOp =
+    new ConMapOp(test, positiveRaster, negativeRaster)
+
+  def create(test:RasterMapOp, positiveConst:Double, negativeRaster:RasterMapOp):MapOp =
+    new ConMapOp(test, positiveConst, negativeRaster)
+
+  def create(test:RasterMapOp, positiveRaster:RasterMapOp, negativeConst:Double):MapOp =
+    new ConMapOp(test, positiveRaster, negativeConst)
+
+  def create(test:RasterMapOp, positiveConst:Double, negativeConst:Double):MapOp =
+    new ConMapOp(test, positiveConst, negativeConst)
+
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new ConMapOp(node, variables)
 }
@@ -51,6 +64,79 @@ class ConMapOp extends RasterMapOp with Externalizable {
 
   private val rddMap = mutable.Map.empty[Int, Int]  // maps input order (key) to cogrouped position (value)
   private val constMap = mutable.Map.empty[Int, Double] // maps input order (key) to constant value
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:RasterMapOp, negative:RasterMapOp) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](3)
+    inputs(0) = test
+    inputs(1) = positive
+    inputs(2) = negative
+
+    rddMap.put(0, 0)
+    rddMap.put(1, 1)
+    rddMap.put(2, 2)
+
+    //constMap.put(0, 0)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = true
+    isRdd(2) = true
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:Double, negative:RasterMapOp) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+    inputs(1) = negative
+
+    rddMap.put(0, 0)
+    rddMap.put(2, 1)
+
+    constMap.put(1, positive)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = false
+    isRdd(2) = true
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:RasterMapOp, negative:Double) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+    inputs(1) = positive
+
+    rddMap.put(0, 0)
+    rddMap.put(1, 1)
+
+    constMap.put(2, negative)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = true
+    isRdd(2) = false
+  }
+
+  private[mapalgebra] def this(test:RasterMapOp, positive:Double, negative:Double) = {
+    this()
+
+    inputs = Array.ofDim[RasterMapOp](2)
+    inputs(0) = test
+
+    rddMap.put(0, 0)
+
+    constMap.put(1, positive)
+    constMap.put(2, negative)
+
+    isRdd = Array.ofDim[Boolean](3)
+    isRdd(0) = true
+    isRdd(1) = false
+    isRdd(2) = false
+  }
 
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -192,9 +278,12 @@ class ConMapOp extends RasterMapOp with Externalizable {
       }
       val done = new Breaks
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
+      var y: Int = 0
+      while (y < raster.getHeight) {
+        var x: Int = 0
+        while (x < raster.getWidth) {
+          var b: Int = 0
+          while (b < raster.getNumBands) {
             done.breakable {
               for (i <- 0 until termCount - 1 by 2) {
                 // get the conditional value, either from the rdd or constant
@@ -231,14 +320,18 @@ class ConMapOp extends RasterMapOp with Externalizable {
               raster.setSample(x, y, b, v)
 
             }
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
 
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
+      bounds = meta.getBounds, calcStats = false))
 
     true
   }
@@ -268,7 +361,8 @@ class ConMapOp extends RasterMapOp with Externalizable {
     var index = -1
     var datatype = -1
 
-    for (i <- (if (useOutputs) 1 else 0) until inputs.length by 2) {
+    var i: Int = if (useOutputs) 1 else 0
+    while (i < inputs.length) {
       if (isRdd(i)) {
         // look up the rdd in the input->rdd map
         val input = inputs(rddMap(i))
@@ -321,6 +415,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
           datatype = dt
         }
       }
+      i += 2
     }
 
     (index, datatype)
@@ -332,26 +427,34 @@ class ConMapOp extends RasterMapOp with Externalizable {
   override def readExternal(in: ObjectInput): Unit = {
     rddMap.clear()
     var cnt = in.readInt()
-    for (i <- 0 until cnt) {
+    var i: Int = 0
+    while (i < cnt) {
       rddMap.put(in.readInt(), in.readInt())
+      i += 1
     }
 
     constMap.clear()
     cnt = in.readInt()
-    for (i <- 0 until cnt) {
+    i = 0
+    while (i < cnt) {
       constMap.put(in.readInt(), in.readDouble())
+      i += 1
     }
 
     cnt = in.readInt()
     nodatas = Array.ofDim[Double](cnt)
-    for (i <- 0 until cnt) {
+    i = 0
+    while (i < cnt) {
       nodatas(i) = in.readDouble()
+      i += 1
     }
 
     cnt = in.readInt()
     isRdd = Array.ofDim[Boolean](cnt)
-    for (i <- 0 until cnt) {
+    i = 0
+    while (i < cnt) {
       isRdd(i) = in.readBoolean()
+      i += 1
     }
 
   }

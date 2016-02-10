@@ -67,7 +67,6 @@ object GDALUtils extends Logging {
   private val VSI_PREFIX: String = "/vsimem/"
   private val GDAL_PAM_ENABLED: String = "GDAL_PAM_ENABLED"
 
-  loadLibrary()
   initializeGDAL()
 
   // empty method to force static initializer
@@ -111,14 +110,16 @@ object GDALUtils extends Logging {
     val nodatas = Array.newBuilder[Double]
 
     val nodata = Array.ofDim[java.lang.Double](1)
-    for (i <- 1 to src.GetRasterCount()) {
+    var i: Int = 1
+    while (i <= src.GetRasterCount()) {
       val band: Band = src.GetRasterBand(i)
       if (datatype < 0) {
         datatype = band.getDataType
       }
 
       band.GetNoDataValue(nodata)
-      nodatas += nodata(0)
+      nodatas += (if (nodata(0) == null) { java.lang.Double.NaN } else { nodata(0) })
+      i += 1
     }
 
     createEmptyMemoryRaster(width, height, bands, datatype, nodatas.result())
@@ -131,11 +132,13 @@ object GDALUtils extends Logging {
 
     if (dataset != null) {
       if (nodatas != null) {
-        for (i <- 1 to dataset.getRasterCount) {
+        var i: Int = 1
+        while (i <= dataset.getRasterCount) {
           val nodata: Double = nodatas(i - 1)
           val band: Band = dataset.GetRasterBand(i)
           band.Fill(nodata)
           band.SetNoDataValue(nodata)
+          i += 1
         }
       }
       return dataset
@@ -144,7 +147,8 @@ object GDALUtils extends Logging {
     null
   }
 
-  def toDataset(raster: Raster, nodata: Double = Double.NegativeInfinity): Dataset = {
+  def toDataset(raster: Raster, nodata: Double = Double.NegativeInfinity,
+      bounds:Either[Bounds, TMSUtils.Bounds] = null): Dataset = {
     val nodatas = if (nodata == Double.NegativeInfinity) null else Array.fill[Double](raster.getNumBands)(nodata)
     val datatype = toGDALDataType(raster.getTransferType)
 
@@ -153,6 +157,40 @@ object GDALUtils extends Logging {
     if (ds != null) {
       copyToDataset(ds, raster)
     }
+
+    val bnds = if (bounds == null) {
+      null
+    }
+    else {
+      bounds match {
+      case Left(b) => TMSUtils.Bounds.asTMSBounds(b)
+      case Right(t) => t
+      }
+    }
+
+    val xform = new Array[Double](6)
+    if (bnds != null) {
+
+      xform(0) = bnds.w
+      xform(1) = bnds.width / ds.getRasterXSize
+      xform(2) = 0
+      xform(3) = bnds.n
+      xform(4) = 0
+      xform(5) = -bnds.height / ds.getRasterYSize
+
+      ds.SetProjection(GDALUtils.EPSG4326)
+    }
+    else
+    {
+      xform(0) = 0
+      xform(1) = ds.getRasterXSize
+      xform(2) = 0
+      xform(3) = 0
+      xform(4) = 0
+      xform(5) = -ds.getRasterYSize
+    }
+
+    ds.SetGeoTransform(xform)
 
     ds
   }
@@ -265,17 +303,19 @@ object GDALUtils extends Logging {
   def swapBytes(bytes: Array[Byte], gdaldatatype: Int) = {
 
     var tmp: Byte = 0
+    var i: Int = 0
     gdaldatatype match {
       // 2 byte value... swap byte 1 with 2
     case gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 =>
-      for (i <- bytes.indices by 2) {
+      while (i + 1 < bytes.length) {
         tmp = bytes(i)
         bytes(i) = bytes(i + 1)
         bytes(i + 1) = tmp
+        i += 2
       }
     // 4 byte value... swap bytes 1 & 4, 2 & 3
     case gdalconstConstants.GDT_UInt32 | gdalconstConstants.GDT_Int32 | gdalconstConstants.GDT_Float32 =>
-      for (i <- bytes.indices by 4) {
+      while (i + 3 < bytes.length) {
         // swap 0 & 3
         tmp = bytes(i)
         bytes(i) = bytes(i + 3)
@@ -285,10 +325,11 @@ object GDALUtils extends Logging {
         tmp = bytes(i + 1)
         bytes(i + 1) = bytes(i + 2)
         bytes(i + 2) = tmp
+        i += 4
       }
     // 8 byte value... swap bytes 1 & 8, 2 & 7, 3 & 6, 4 & 5
     case gdalconstConstants.GDT_Float64 =>
-      for (i <- bytes.indices by 4) {
+      while (i + 7 < bytes.length) {
         // swap 0 & 7
         tmp = bytes(i)
         bytes(i) = bytes(i + 7)
@@ -308,6 +349,7 @@ object GDALUtils extends Logging {
         tmp = bytes(i + 3)
         bytes(i + 3) = bytes(i + 4)
         bytes(i + 4) = tmp
+        i += 8
       }
     }
   }
@@ -490,7 +532,6 @@ object GDALUtils extends Logging {
         xform(4) = 0
         xform(5) = -bnds.height / ds.getRasterYSize
 
-        ds.SetGeoTransform(xform)
         ds.SetProjection(GDALUtils.EPSG4326)
       }
       else
@@ -503,11 +544,13 @@ object GDALUtils extends Logging {
         xform(5) = -ds.getRasterYSize
       }
 
+      ds.SetGeoTransform(xform)
+
       ds
     case Right(d) => d
     }
 
-    saveRaster(dataset, filename, bnds, format, options)
+    saveRaster(dataset, filename, format, options)
 
     output match {
     case Right(stream) =>
@@ -578,7 +621,8 @@ object GDALUtils extends Logging {
     else {
       val bytes: ByteBuffer = ByteBuffer.allocateDirect(linestride.toInt)
       bytes.order(ByteOrder.nativeOrder)
-      for (y <- 0 until height) {
+      var y: Int = 0
+      while (y < height) {
         bytes.rewind()
         val elements: AnyRef = raster.getDataElements(raster.getMinX, raster.getMinY + y, raster.getWidth, 1, null)
         elements match {
@@ -590,49 +634,18 @@ object GDALUtils extends Logging {
         }
         ds.WriteRaster_Direct(0, y, width, 1, width, 1, datatype, bytes, bandlist, pixelstride, linestride,
           bandstride)
+        y += 1
       }
     }
   }
 
-  private def loadLibrary() = {
-    val libs: Array[String] = Array("libgdaljni.so", "libgdalconstjni.so", "libosrjni.so", "libgdal.so")
-
-    val rawPath: String = MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, null)
-    if (rawPath != null) {
-      // gdal jars to load.  In the order they should be loaded...
-      val paths = rawPath.split(":")
-
-      logDebug("Looking for GDAL Libraries in " + rawPath)
-      libs.foreach(lib => {
-        val break = new Breaks
-
-        break.breakable({
-          paths.foreach(path => {
-            val file = new File(path, lib)
-            val msg = " Looking for: " + file.getCanonicalPath
-            if (file.exists()) {
-              System.load(file.getCanonicalPath)
-              logDebug(msg + " found")
-              break.break()
-            }
-            else {
-              logDebug(msg + " not found")
-            }
-          })
-
-          logError("ERROR!!! Can not find gdal library " + lib + " in path " + rawPath)
-        })
-      })
-    }
-    else {
-      logWarning("Can't load GDAL libraries, " + MrGeoConstants.GDAL_PATH +
-          " not found in the mrgeo configuration.  This may or may not be a problem.")
-
-      System.loadLibrary("gdal")
-    }
-  }
-
   private def initializeGDAL() = {
+    // Monkeypatch the system library path to use the gdal paths (for loading the gdal libraries
+    MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, "").
+        split(File.pathSeparator).foreach(path => {
+      ClassLoaderUtil.addLibraryPath(path)
+    })
+
     osr.UseExceptions()
 
     if (gdal.GetDriverCount == 0) {
@@ -659,8 +672,7 @@ object GDALUtils extends Logging {
     }
   }
 
-  private def saveRaster(ds:Dataset, file:String, bounds:TMSUtils.Bounds,
-      format:String, options:Array[String]): Unit = {
+  private def saveRaster(ds:Dataset, file:String, format:String, options:Array[String]): Unit = {
     val fmt = mapType(format)
     val driver = gdal.GetDriverByName(fmt)
 
@@ -709,6 +721,60 @@ object GDALUtils extends Logging {
          "gtif" => "GTiff"
     case _ => format
     }
+  }
+
+
+  def getRasterDataAsString(ds:Dataset, band:Int, x:Int, y:Int, width:Int, height:Int):String = {
+    getRasterDataAsString(ds.GetRasterBand(band), x, y, width, height)
+  }
+
+  def getRasterDataAsString(band:Band, x:Int, y:Int, width:Int, height:Int):String = {
+
+    val datatype = band.getDataType
+    val pixelsize = gdal.GetDataTypeSize(datatype) / 8
+
+    val linesize = pixelsize * width
+    val rastersize = linesize * height
+
+//    val data: ByteBuffer = ByteBuffer.allocateDirect(rastersize)
+//    data.order(ByteOrder.nativeOrder)
+
+    // read the data
+//    val bytesread = band.ReadRaster_Direct(x, y, width, height, width, height, data)
+    val data = band.ReadRaster_Direct(x, y, width, height)
+
+    {
+      var cnt = 0
+
+      try {
+        while (true) {
+          val b = data.get()
+          println(cnt + " " + b)
+          cnt += 1
+        }
+      }
+      catch {
+        case bue: BufferUnderflowException =>
+      }
+    }
+
+    // data.rewind
+    println("Band data (" + rastersize + " bytes)")
+
+    //val bytes = Array.fill[Byte](rastersize){ math.random.toByte }
+    val bytes = Array.ofDim[Byte](rastersize)
+    data.get(bytes)
+
+    var cnt = 0
+    bytes.foreach(b => {
+      print(b + " ")
+      cnt += 1
+      if (cnt % 100 == 0)
+        println()
+    })
+    println()
+
+    new String(bytes)
   }
 }
 

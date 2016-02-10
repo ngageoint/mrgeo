@@ -20,6 +20,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import javax.vecmath.Vector3d
 
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
@@ -54,6 +55,20 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD:Option[RasterRDD] = None
 
+  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], units:String, isSlope:Boolean) = {
+    this()
+
+    this.inputMapOp = inputMapOp
+    this.slope = isSlope
+
+    if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
+        units.equalsIgnoreCase("percent"))) {
+      throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
+    }
+    this.units = units
+
+  }
+
   private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
     this()
 
@@ -85,9 +100,6 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    conf.set("spark.storage.memoryFraction", "0.2") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.3") // set the shuffle higher
-
     true
   }
 
@@ -139,15 +151,19 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         // get the elevations of the 3x3 grid of elevations, if a neighbor is nodata, make the elevation
         // the same as the origin, this makes the slopes a little prettier
         var ndx = 0
-        for (dy <- y - 1 to y + 1) {
-          for (dx <- x - 1 to x + 1) {
+        var dy: Int = y - 1
+        while (dy <= y + 1) {
+          var dx: Int = x - 1
+          while (dx <= x + 1) {
             z(ndx) = raster.getSampleDouble(dx, dy, 0)
             if (isnodata(z(ndx), nodata)) {
               z(ndx) = origin
             }
 
             ndx += 1
+            dx += 1
           }
+          dy += 1
         }
 
         vx.z = ((z(pp) + z(pz) * 2 + z(pn)) - (z(np) + z(nz) * 2 + z(nn))) / 8.0
@@ -189,12 +205,16 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
       val answer = RasterUtils.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT) // , Float.NaN)
 
-      for (y <- 0 until height) {
-        for (x <- 0 until width) {
+      var y: Int = 0
+      while (y < height) {
+        var x: Int = 0
+        while (x < width) {
           val normal = calculateNormal(x + bufferX, y + bufferY)
 
           answer.setSample(x, y, 0, calculateAngle(normal))
+          x += 1
         }
+        y += 1
       }
 
       (new TileIdWritable(tile._1), RasterWritable.toWritable(answer))
@@ -226,7 +246,8 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
     rasterRDD =
         Some(RasterRDD(calculate(tiles, bufferX, bufferY, nodatas(0).doubleValue(), zoom, tilesize)))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodatas, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array[Number](Float.NaN),
+      bounds = meta.getBounds, calcStats = false))
 
     true
   }

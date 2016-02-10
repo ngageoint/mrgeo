@@ -15,18 +15,29 @@
 
 package org.mrgeo.mapalgebra.unarymath
 
+import java.awt.image.DataBuffer
+
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object TanMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("tan")
   }
+  def create(raster:RasterMapOp):MapOp =
+    new TanMapOp(Some(raster))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new TanMapOp(node, variables)
 }
 
 class TanMapOp extends RawUnaryMathMapOp {
+
+  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+    this()
+    input = raster
+  }
 
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -35,4 +46,8 @@ class TanMapOp extends RawUnaryMathMapOp {
   }
 
   override private[unarymath] def function(a: Double): Double = Math.tan(a)
+
+  override private[unarymath] def datatype():Int = { DataBuffer.TYPE_FLOAT }
+  override private[unarymath] def nodata():Double = { Float.NaN }
+
 }

@@ -18,19 +18,25 @@ package org.mrgeo.mapalgebra;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.image.MrsImagePyramidMetadata;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
@@ -38,6 +44,8 @@ import org.mrgeo.utils.HadoopUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
@@ -47,9 +55,6 @@ import java.io.IOException;
  */
 public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
-@Rule
-public TestName testname = new TestName();
-
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
 public final static boolean GEN_BASELINE_DATA_ONLY = false;
@@ -94,6 +99,8 @@ private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationT
 //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
+
+private ProviderProperties providerProperties = null;
 
 @Before
 public void setup()
@@ -321,12 +328,12 @@ public void buildpyramid() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -362,7 +369,7 @@ public void buildpyramid() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -382,12 +389,12 @@ public void buildpyramidAfterSave() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -423,7 +430,7 @@ public void buildpyramidAfterSave() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -436,7 +443,7 @@ public void buildpyramidAfterSave() throws Exception
     md =  metadata.getImageMetadata();
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       if (i != md.length - 1)
       {
@@ -466,12 +473,12 @@ public void buildpyramidAlternate() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -507,7 +514,7 @@ public void buildpyramidAlternate() throws Exception
 
     for (int i = 1; i < md.length; i++)
     {
-      MrsImagePyramidMetadata.ImageMetadata d = md[i];
+      MrsPyramidMetadata.ImageMetadata d = md[i];
 
       Assert.assertEquals("Level name incorrect", Integer.toString(i), d.name);
       Assert.assertNotNull("Tile Bounds missing", d.tileBounds);
@@ -527,12 +534,12 @@ public void buildpyramidDoesNotExist() throws Exception
   Path path = new Path(testUtils.getOutputHdfs(), allonesnopyramids);
 
   // make sure the levels don't exist
-  MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsImagePyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
+  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
-    MrsImagePyramidMetadata.ImageMetadata d = md[i];
+    MrsPyramidMetadata.ImageMetadata d = md[i];
 
     if (i != md.length - 1)
     {
@@ -570,8 +577,8 @@ public void changeClassification() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "changeClassification([" + smallElevationPath + "], \"categorical\")");
 
-    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
-    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    MrsPyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsPyramidMetadata.Classification.Categorical, metadata.getClassification());
     Assert.assertEquals("mean", metadata.getResamplingMethod().toLowerCase());
   }
 }
@@ -591,8 +598,8 @@ public void changeClassificationAggregator() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "changeClassification([" + smallElevationPath + "], \"categorical\", \"max\")");
 
-    MrsImagePyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
-    Assert.assertEquals(MrsImagePyramidMetadata.Classification.Categorical, metadata.getClassification());
+    MrsPyramidMetadata metadata = testUtils.getImageMetadata(testname.getMethodName());
+    Assert.assertEquals(MrsPyramidMetadata.Classification.Categorical, metadata.getClassification());
     Assert.assertEquals("max", metadata.getResamplingMethod().toLowerCase());
 
   }
@@ -650,7 +657,7 @@ public void conLTE() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("con([%s] <= 100, 0, 1)", smallElevationPath), -9999);
+        String.format("con([%s] <= 100, 0, 1)", smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -668,7 +675,7 @@ public void conNE() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("con([%s] != 200, 2, 0)", smallElevationPath), -9999);
+        String.format("con([%s] != 200, 2, 0)", smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -686,7 +693,7 @@ public void conLteGte() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("([%s] <= 100) || ([%s] >= 200)", smallElevationPath, smallElevationPath), -9999);
+        String.format("([%s] <= 100) || ([%s] >= 200)", smallElevationPath, smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -704,7 +711,7 @@ public void conLtGt() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("([%s] < 100) || ([%s] > 200)", smallElevationPath, smallElevationPath), -9999);
+        String.format("([%s] < 100) || ([%s] > 200)", smallElevationPath, smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -802,6 +809,26 @@ public void divideAddConstant() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] / [%s] + 3", allones, allones));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void export() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("export([%s], \"%s\", \"true\")", allones, testUtils.getInputLocalFor(testname.getMethodName())), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("export([%s], \"%s\", \"true\")", allones, testUtils.getOutputLocalFor(testname.getMethodName())));
+
+    // now check the file that was saved...
+    testUtils.compareLocalRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
   }
 }
 
@@ -1733,6 +1760,69 @@ public void variables3() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testDataTypeByte() throws Exception
+{
+  String exp = String.format("[%s] gt 200", smallElevationPath);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, Byte.MAX_VALUE);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        exp);
+
+    checkDataTypes(DataBuffer.TYPE_BYTE);
+  }
+}
+
+
+@Test
+@Category(IntegrationTest.class)
+public void testDataTypeFloat() throws Exception
+{
+  String exp = String.format("([%s] lt 200) + 500", smallElevationPath);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        exp);
+
+    checkDataTypes(DataBuffer.TYPE_FLOAT);
+  }
+}
+
+private void checkDataTypes(int type) throws IOException
+{
+  MrsPyramid
+      pyramid = MrsPyramid.open(testUtils.getOutputHdfsFor(testname.getMethodName()).toString(), providerProperties);
+  org.junit.Assert.assertNotNull("Can't load pyramid", pyramid);
+
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  org.junit.Assert.assertNotNull("Can't load metadata", metadata);
+
+  org.junit.Assert.assertEquals("Bad tile type", type, metadata.getTileType());
+
+  MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
+  org.junit.Assert.assertNotNull("Can't load image", image);
+
+  KVIterator<TileIdWritable, Raster> iter = image.getTiles();
+  while (iter.hasNext())
+  {
+    Raster raster = iter.currentValue();
+    org.junit.Assert.assertEquals("Bad tile type", type, raster.getSampleModel().getDataType());
+
+    iter.next();
   }
 }
 

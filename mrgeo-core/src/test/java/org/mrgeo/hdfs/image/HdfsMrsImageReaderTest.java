@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.KVIterator;
-import org.mrgeo.data.image.MrsImagePyramidReaderContext;
+import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.junit.UnitTest;
@@ -95,7 +95,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   public void init() throws IOException
   {
     HdfsMrsImageDataProvider provider = new HdfsMrsImageDataProvider(conf, all_ones, null);
-    MrsImagePyramidReaderContext context = new MrsImagePyramidReaderContext(zoomlevel);
+    MrsPyramidReaderContext context = new MrsPyramidReaderContext(zoomlevel);
 
     reader = new HdfsMrsImageReader(provider, context);
   }

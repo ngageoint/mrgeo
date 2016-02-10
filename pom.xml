@@ -22,7 +22,7 @@
   <packaging>pom</packaging>
   <properties>
     <!-- version -->
-    <mrgeo.version>0.9.0-${final.classifier}-SNAPSHOT</mrgeo.version>
+    <mrgeo.version>1.1.0-${final.classifier}-SNAPSHOT</mrgeo.version>
     <!-- classifier to tag onto the end of the jars -->
     <final.classifier>unknown</final.classifier>
     <!-- default location for the hadoop config files, used for testing -->
@@ -70,6 +70,7 @@
     <mahout.version>0.9-cdh5.3.0</mahout.version>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
+    <py4j.version>0.8.2.1</py4j.version>
     <reflections.version>0.9.9-RC1</reflections.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spark.version>1.2.0-cdh5.3.0</spark.version>
@@ -101,6 +102,7 @@
     <build-helper-maven.version>1.10</build-helper-maven.version>
     <buildnumber-maven.version>1.3</buildnumber-maven.version>
     <cobertura-maven.version>2.6</cobertura-maven.version>
+    <exec-maven.version>1.4.0</exec-maven.version>
     <license-maven.version>1.8</license-maven.version>
     <pomtools-maven.version>0.1.2</pomtools-maven.version>
     <maven-assembly.version>2.5.4</maven-assembly.version>
@@ -166,28 +168,6 @@
       <id>cloudera</id>
       <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
     </repository>
-    <repository>
-      <id>geowave-maven-releases</id>
-      <name>GeoWave AWS Release Repository</name>
-      <url>http://geowave-maven.s3-website-us-east-1.amazonaws.com/release</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>geowave-maven-snapshot</id>
-      <name>GeoWave AWS Snapshot Repository</name>
-      <url>http://geowave-maven.s3-website-us-east-1.amazonaws.com/snapshot</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
@@ -201,11 +181,13 @@
       <id>mrgeo-repository</id>
       <url>${repository.url}</url>
       <layout>default</layout>
+      <uniqueVersion>false</uniqueVersion>
     </repository>
     <snapshotRepository>
       <id>mrgeo-repository</id>
       <url>${snapshot.repository.url}</url>
       <layout>default</layout>
+      <uniqueVersion>false</uniqueVersion>
     </snapshotRepository>
   </distributionManagement>
   <build>
@@ -435,6 +417,7 @@
           <executions>
             <execution>
               <id>integration-test</id>
+              <phase>integration-test</phase>
               <goals>
                 <goal>integration-test</goal>
               </goals>
@@ -454,6 +437,31 @@
               <goals>
                 <goal>verify</goal>
               </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>${exec-maven.version}</version>
+          <executions>
+            <execution>
+              <id>python-test</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>exec</goal>
+              </goals>
+              <configuration>
+                <executable>python</executable>
+                <workingDirectory>${project.basedir}/src/test/python</workingDirectory>
+                <arguments>
+                  <argument>mrgeotest.py</argument>
+                </arguments>
+                <environmentVariables>
+                  <PYTHONPATH>${project.basedir}/src/main/python:${env.SPARK_HOME}/python:${env.SPARK_HOME}/python/lib:${project.basedir}/lib:${env.PYTHONPATH}</PYTHONPATH>
+                  <BASEDIR>${project.basedir}</BASEDIR>
+                </environmentVariables>
+              </configuration>
             </execution>
           </executions>
         </plugin>
@@ -650,7 +658,7 @@
               <id>default-deploy</id>
               <configuration>
                 <skip>${alternate.deploy}</skip>
-                <deployAtEnd>true</deployAtEnd>
+                <!--<deployAtEnd>true</deployAtEnd>-->
               </configuration>
             </execution>
             <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
@@ -828,6 +836,96 @@
          |                    any punctuation (i.e CDH 4.5.0 becomes CDH450), used when ultimately build RPMs
          | release.arguments - any arguments to use for releases, usually blank
     -->
+    <profile>
+      <id>CDH552-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
+        <mahout.version>0.9-cdh5.5.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.2</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.2</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH552</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.5.2</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.5.2</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.5.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.1</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.2-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH551-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
+        <mahout.version>0.9-cdh5.5.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH551</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.5.1</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.5.1</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.5.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.1</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.1-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
     <profile>
       <id>CDH550-yarn</id>
       <properties>
@@ -1512,6 +1610,28 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <id>apache271</id>
+      <properties>
+        <hadoop.version>2.7.1</hadoop.version>
+        <mahout.version>0.7</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <spark.version>1.6.0</spark.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.7.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
     <!--
          | Profiles defining the various build options.  The template for these are:
          | <profile>
@@ -1526,17 +1646,17 @@
     <profile>
       <id>emr</id>
       <properties>
-        <hadoop.version>2.4.0</hadoop.version>
+        <hadoop.version>2.7.1</hadoop.version>
         <accumulo.version>1.6.1</accumulo.version>
         <geowave.version>0.9.0-SNAPSHOT</geowave.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.scope>compile</spark.scope>
-        <final.classifier>2.4.0</final.classifier>
+        <final.classifier>2.7.1</final.classifier>
         <release.arguments />
-        <gdal.version>1.9.2</gdal.version>
-        <spark.version>1.3.1</spark.version>
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>1.6.0</spark.version>
       </properties>
     </profile>
     <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->
@@ -1719,6 +1839,24 @@
       </properties>
     </profile>
     <profile>
+      <id>skip-python-unit-tests</id>
+      <properties>
+        <skip.mrgeo.python.tests>true</skip.mrgeo.python.tests>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-python-integration-tests</id>
+      <properties>
+        <skip.mrgeo.python.integration.tests>true</skip.mrgeo.python.integration.tests>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-python-tests</id>
+      <properties>
+        <skip.mrgeo.python.tests>true</skip.mrgeo.python.tests>
+      </properties>
+    </profile>
+    <profile>
       <id>skip-all-unit-tests</id>
       <properties>
         <skip.mrgeo.core.tests>true</skip.mrgeo.core.tests>
@@ -1727,6 +1865,7 @@
         <skip.mrgeo.dataprovider.tests>true</skip.mrgeo.dataprovider.tests>
         <skip.mrgeo.cmd.tests>true</skip.mrgeo.cmd.tests>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
+        <skip.mrgeo.python.tests>true</skip.mrgeo.python.tests>
       </properties>
     </profile>
     <profile>
@@ -1738,6 +1877,7 @@
         <skip.mrgeo.mapalgebra.integration.tests>true</skip.mrgeo.mapalgebra.integration.tests>
         <skip.mrgeo.dataprovider.integration.tests>true</skip.mrgeo.dataprovider.integration.tests>
         <skip.mrgeo.cmd.integration.tests>true</skip.mrgeo.cmd.integration.tests>
+        <skip.mrgeo.python.integration.tests>true</skip.mrgeo.python.integration.tests>
       </properties>
     </profile>
     <profile>
@@ -1755,6 +1895,8 @@
         <skip.mrgeo.cmd.integration.tests>true</skip.mrgeo.cmd.integration.tests>
         <skip.mrgeo.services.tests>true</skip.mrgeo.services.tests>
         <skip.mrgeo.services.integration.tests>true</skip.mrgeo.services.integration.tests>
+        <skip.mrgeo.python.tests>true</skip.mrgeo.python.tests>
+        <skip.mrgeo.python.integration.tests>true</skip.mrgeo.python.integration.tests>
       </properties>
     </profile>
     <!-- Module build profiles -->
@@ -1772,6 +1914,7 @@
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-cmd</module>
         <module>mrgeo-services</module>
+        <module>mrgeo-python</module>
         <module>distribution</module>
       </modules>
     </profile>
@@ -1853,6 +1996,23 @@
         <module>mrgeo-mapalgebra</module>
         <module>mrgeo-dataprovider</module>
         <module>mrgeo-services</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-python</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>python</value>
+        </property>
+      </activation>
+      <modules>
+        <!--
+             <module>mrgeo-core</module>
+             <module>mrgeo-mapalgebra</module>
+             <module>mrgeo-dataprovider</module>
+        -->
+        <module>mrgeo-python</module>
       </modules>
     </profile>
     <!-- profiles that may be included in child POMs -->
@@ -2452,6 +2612,11 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>net.sf.py4j</groupId>
+        <artifactId>py4j</artifactId>
+        <version>${py4j.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.gdal</groupId>
         <artifactId>gdal</artifactId>
         <version>${gdal.version}</version>
@@ -2674,46 +2839,6 @@
           </exclusion>
         </exclusions>
       </dependency>
-      <!-- Jetty has dependencies for servlet-api...  We need to make the scope "provided" to make sure those
-           jars are not included in the final war (tomcat will provide it...)
-      -->
-      <!--
-           <dependency>
-           <groupId>org.mortbay.jetty</groupId>
-           <artifactId>servlet-api-2.5</artifactId>
-           <version>6.1.14</version>
-           <scope>provided</scope>
-           </dependency>
-           <dependency>
-           <groupId>org.mortbay.jetty</groupId>
-           <artifactId>servlet-api</artifactId>
-           <version>2.5-20081211</version>
-           <scope>provided</scope>
-           </dependency>
-      -->
-      <!--
-           <dependency>
-           <groupId>commons-logging</groupId>
-           <artifactId>commons-logging</artifactId>
-           <version>1.1.1</version>
-           <scope>provided</scope>
-           </dependency>
-           <dependency>
-           <groupId>commons-logging</groupId>
-           <artifactId>commons-logging-api</artifactId>
-           <version>1.0.4</version>
-           <scope>provided</scope>
-           </dependency>
-      -->
-      <!-- Keep servlet-api.jar out of the system -->
-      <!--
-           <dependency>
-           <groupId>javax.servlet</groupId>
-           <artifactId>servlet-api</artifactId>
-           <version>2.5</version>
-           <scope>provided</scope>
-           </dependency>
-      -->
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>

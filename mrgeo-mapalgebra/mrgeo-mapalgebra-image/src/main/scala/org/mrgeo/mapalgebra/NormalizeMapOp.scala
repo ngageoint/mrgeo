@@ -32,6 +32,13 @@ object NormalizeMapOp extends MapOpRegistrar {
     Array[String]("normalize")
   }
 
+  def create(raster:RasterMapOp):MapOp =
+    new NormalizeMapOp(Some(raster), None, None)
+
+  def create(raster:RasterMapOp, min:Double, max:Double):MapOp =
+    new NormalizeMapOp(Some(raster), Some(min), Some(max))
+
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new NormalizeMapOp(node, variables)
 }
@@ -42,6 +49,13 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
   private var inputMapOp: Option[RasterMapOp] = None
   private var minVal:Option[Double] = None
   private var maxVal:Option[Double] = None
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], min:Option[Double], max:Option[Double]) = {
+    this()
+    inputMapOp = raster
+    minVal = min
+    maxVal = max
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -102,20 +116,27 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
       val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
+      var y: Int = 0
+      while (y < raster.getHeight) {
+        var x: Int = 0
+        while (x < raster.getWidth) {
+          var b: Int = 0
+          while (b < raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodata)) {
               raster.setSample(x, y, b, (v - min) / range)
             }
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
       (tile._1, RasterWritable.toWritable(raster))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues,
+      bounds = meta.getBounds, calcStats = false))
 
     true
   }

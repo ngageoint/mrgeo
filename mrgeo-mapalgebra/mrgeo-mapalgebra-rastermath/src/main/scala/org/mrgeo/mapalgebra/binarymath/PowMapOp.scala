@@ -15,18 +15,44 @@
 
 package org.mrgeo.mapalgebra.binarymath
 
-import org.mrgeo.mapalgebra.parser.ParserNode
+import java.awt.image.DataBuffer
+
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object PowMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("pow")
+    Array[String]("pow", "**")
   }
+  def create(raster:RasterMapOp, const:Double):MapOp = {
+    new PowMapOp(Some(raster), Some(const))
+  }
+  def create(rasterA:RasterMapOp, rasterB:RasterMapOp):MapOp = {
+    new PowMapOp(Some(rasterA), Some(rasterB))
+  }
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new PowMapOp(node, variables)
 }
 
 class PowMapOp extends RawBinaryMathMapOp {
+
+  private[binarymath] def this(raster: Option[RasterMapOp], paramB:Option[Any]) = {
+    this()
+
+    varA = raster
+
+    paramB match {
+    case Some(rasterB:RasterMapOp) => varB = Some(rasterB)
+    case Some(double:Double) => constB = Some(double)
+    case Some(int:Int) => constB = Some(int.toDouble)
+    case Some(long:Long) => constB = Some(long.toDouble)
+    case Some(float:Float) => constB = Some(float.toDouble)
+    case Some(short:Short) => constB = Some(short.toDouble)
+    case _ =>  throw new ParserException("Second term \"" + paramB + "\" is not a raster or constant")
+    }
+  }
 
   private[binarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -35,4 +61,5 @@ class PowMapOp extends RawBinaryMathMapOp {
   }
 
   override private[binarymath] def function(a: Double, b: Double): Double = Math.pow(a, b)
+
 }

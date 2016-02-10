@@ -15,7 +15,7 @@
 
 package org.mrgeo.job
 
-import java.io.File
+import java.io.{IOException, File}
 import java.net.URL
 import java.util
 
@@ -23,15 +23,77 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.util.ClassUtil
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
-import org.apache.spark.Logging
+import org.apache.spark.serializer.KryoSerializer
+import org.apache.spark.{SparkConf, Logging}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
+import org.mrgeo.image.ImageStats
 import org.mrgeo.job.yarn.MrGeoYarnDriver
 import org.mrgeo.utils._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.tools.nsc.util.ScalaClassLoader.URLClassLoader
+
+object MrGeoDriver extends Logging {
+  final def prepareJob(job: JobArguments): SparkConf = {
+
+    val conf = SparkUtils.getConfiguration
+
+    logInfo("spark.app.name: " + conf.get("spark.app.name", "<not set>") + "  job.name: " + job.name)
+    conf.setAppName(job.name)
+        .setMaster(job.cluster)
+        .setJars(job.jars)
+    //.registerKryoClasses(registerClasses())
+
+    if (job.isYarn) {
+      //loadYarnSettings(job)
+
+      // running in "cluster" mode, the driver runs within a YARN process
+      conf.setMaster(job.YARN + "-cluster")
+
+      conf.set("spark.yarn.preserve.staging.files", "true")
+      conf.set("spark.eventLog.overwrite", "true") // overwrite event logs
+
+      var path:String = ""
+      if (conf.contains("spark.driver.extraLibraryPath")) {
+        path = ":" + conf.get("spark.driver.extraLibraryPath")
+      }
+      conf.set("spark.driver.extraLibraryPath",
+        MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, "") + path)
+
+      if (conf.contains("spark.executor.extraLibraryPath")) {
+        path = ":" + conf.get("spark.executor.extraLibraryPath")
+      }
+      conf.set("spark.executor.extraLibraryPath",
+        MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, ""))
+    }
+    else if (job.isSpark) {
+      conf.set("spark.driver.memory", if (job.memoryKb > 0) {
+        SparkUtils.kbtohuman(job.memoryKb, "m")
+      }
+      else {
+        "128m"
+      })
+          .set("spark.driver.cores", if (job.cores > 0) {
+            job.cores.toString
+          }
+          else {
+            "1"
+          })
+    }
+
+    //    val fracs = calculateMemoryFractions(job)
+    //    conf.set("spark.storage.memoryFraction", fracs._1.toString)
+    //    conf.set("spark.shuffle.memoryFraction", fracs._2.toString)
+
+    conf
+  }
+
+}
 
 abstract class MrGeoDriver extends Logging {
 
@@ -89,14 +151,14 @@ abstract class MrGeoDriver extends Logging {
         addYarnClasses(cl)
 
       case "spark" =>
-        val conf = PrepareJob.prepareJob(job)
+        val conf = MrGeoDriver.prepareJob(job)
         val master = conf.get("spark.master", "spark://localhost:7077")
         job.useSpark(master)
       case _ => job.useLocal()
       }
     }
 
-    val conf = PrepareJob.prepareJob(job)
+    val conf = MrGeoDriver.prepareJob(job)
 
     // yarn needs to be run in its own client code, so we'll set up it up separately
     if (job.isYarn) {
@@ -171,15 +233,56 @@ abstract class MrGeoDriver extends Logging {
 
     val res = calculateYarnResources()
 
-    job.cores = 1 // 1 task per executor
-    job.executors = res._1 / job.cores
+//    job.cores = 1 // 1 task per executor
+//    job.executors = res._1 / job.cores
+//
+//    val sparkConf = SparkUtils.getConfiguration
+//
+//    val mem = res._3
+//
+//
+//    // this is not only a min memory, but a "unit of allocation", each allocation a multiple of this number
+//    val minmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
+//      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB)
+//    val maxmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_MB,
+//      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_MB)
+//
+//    val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
+//
+//    logInfo("Initial values:  min memory: " + minmemory + "  (" + SparkUtils.kbtohuman(minmemory * 1024, "m") +
+//        ") max memory: " + maxmemory + "  (" + SparkUtils.kbtohuman(maxmemory * 1024, "m") +
+//        ") overhead: " + executorMemoryOverhead + "  (" + SparkUtils.kbtohuman(executorMemoryOverhead * 1024, "m") +
+//        ") executors: " + job.executors +
+//        " cluster memory: " + mem + " (" + SparkUtils.kbtohuman(mem * 1024, "m") + ")")
+//
+//    var mult = 1.0
+//
+//    if (job.isMemoryIntensive ||
+//        MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_FORCE_MEMORYINTENSIVE, "false").toBoolean) {
+//      mult = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MEMORYINTENSIVE_MULTIPLIER, "2.0").toDouble
+//
+//      logInfo("Memory intensive job.  multiplier: " + mult + " min memory now: " + (minmemory * mult).toInt +
+//          "  (" + SparkUtils.kbtohuman((minmemory * mult).toInt * 1024, "m") + ")")
+//    }
+//
+//    // memory is allocated in units on minmemory (YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB).
+//    var confmem = configureYarnMemory(res._1, res._2, res._3, minmemory, (minmemory * mult).toInt, maxmemory)
+//
+//    var actualoverhead = if ((confmem._2 * 0.1) > executorMemoryOverhead) (confmem._2 * 0.1).toLong else executorMemoryOverhead
+//
+//    // if we are sucking up more than 1/2 memory in overhead, expand the memory
+//    while (confmem._2 < actualoverhead * 2) {
+//      mult += 1
+//      confmem = configureYarnMemory(res._1, res._2, res._3, minmemory, (minmemory * mult).toInt, maxmemory)
+//      actualoverhead = if ((confmem._2 * 0.1) > executorMemoryOverhead) (confmem._2 * 0.1).toLong else executorMemoryOverhead
+//    }
+//
+//    job.executors = confmem._1
+//    job.executorMemKb = (confmem._2 - actualoverhead)  * 1024 // mb to kb
+//    job.memoryKb = mem * 1024 // mem is in mb, convert to kb
 
     val sparkConf = SparkUtils.getConfiguration
 
-    val mem = res._3
-
-
-    // this is not only a min memory, but a "unit of allocation", each allocation a multiple of this number
     val minmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
       YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB)
     val maxmemory = conf.getLong(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_MB,
@@ -187,43 +290,19 @@ abstract class MrGeoDriver extends Logging {
 
     val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
 
-    logInfo("Initial values:  min memory: " + minmemory + "  (" + SparkUtils.kbtohuman(minmemory * 1024, "m") +
-        ") max memory: " + maxmemory + "  (" + SparkUtils.kbtohuman(maxmemory * 1024, "m") +
-        ") overhead: " + executorMemoryOverhead + "  (" + SparkUtils.kbtohuman(executorMemoryOverhead * 1024, "m") +
-        ") executors: " + job.executors +
-        " cluster memory: " + mem + " (" + SparkUtils.kbtohuman(mem * 1024, "m") + ")")
+    val mem = res._3
+    val actualoverhead = ((if ((mem * 0.1) > executorMemoryOverhead) mem * 0.1 else executorMemoryOverhead) * 0.95).toLong
 
-    var mult = 1.0
+    job.cores = res._1
+    job.executors = res._2 // reserve 1 executor for the driver
+    job.executorMemKb = (mem - actualoverhead) * 1024 // memory per worker
+    job.memoryKb = res._4 * 1024  // total memory (includes driver memory)
 
-    if (job.isMemoryIntensive ||
-        MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_FORCE_MEMORYINTENSIVE, "false").toBoolean) {
-      mult = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MEMORYINTENSIVE_MULTIPLIER, "2.0").toDouble
-
-      logInfo("Memory intensive job.  multiplier: " + mult + " min memory now: " + (minmemory * mult).toInt +
-          "  (" + SparkUtils.kbtohuman((minmemory * mult).toInt * 1024, "m") + ")")
-    }
-
-    // memory is allocated in units on minmemory (YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB).
-    var confmem = configureYarnMemory(res._1, res._2, res._3, minmemory, (minmemory * mult).toInt, maxmemory)
-
-    var actualoverhead = if ((confmem._2 * 0.1) > executorMemoryOverhead) (confmem._2 * 0.1).toLong else executorMemoryOverhead
-
-    // if we are sucking up more than 1/2 memory in overhead, expand the memory
-    while (confmem._2 < actualoverhead * 2) {
-      mult += 1
-      confmem = configureYarnMemory(res._1, res._2, res._3, minmemory, (minmemory * mult).toInt, maxmemory)
-      actualoverhead = if ((confmem._2 * 0.1) > executorMemoryOverhead) (confmem._2 * 0.1).toLong else executorMemoryOverhead
-    }
-
-    job.executors = confmem._1
-    job.executorMemKb = (confmem._2 - actualoverhead)  * 1024 // mb to kb
-    job.memoryKb = mem * 1024 // mem is in mb, convert to kb
-
-    logInfo("Configuring job (" + job.name + ") with " + job.executors + " tasks and " + SparkUtils.kbtohuman(job.memoryKb, "m") +
-        " total memory, " + SparkUtils.kbtohuman(job.executorMemKb + (actualoverhead * 1024), "m") + " per worker (" +
-        SparkUtils.kbtohuman(job.executorMemKb, "m") + " + " +
+    logInfo("Configuring job (" + job.name + ") with " + (job.executors + 1) + " workers (1 driver, " + job.executors + " executors)  with " +
+        job.cores + " threads each and " + SparkUtils.kbtohuman(job.memoryKb, "m") +
+        " total memory, " + SparkUtils.kbtohuman(job.executorMemKb + (actualoverhead * 1024), "m") +
+        " per worker (" + SparkUtils.kbtohuman(job.executorMemKb, "m") + " + " +
         SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)" )
-
   }
 
 
@@ -255,7 +334,7 @@ abstract class MrGeoDriver extends Logging {
     (executors.toInt, executorMemory.toLong)
   }
 
-  private def calculateYarnResources():(Int, Int, Long) = {
+  private def calculateYarnResources():(Int, Int, Long, Long) = {
 
     val cl = getClass.getClassLoader
 
@@ -289,21 +368,40 @@ abstract class MrGeoDriver extends Logging {
 
     val nr = getNodeReports.invoke(yc, na).asInstanceOf[util.ArrayList[NodeReport]]
 
-    var cores:Int = 0
-    var memory:Long = 0
+    var cores:Int = Int.MaxValue
+    var memory:Long = Long.MaxValue
+    var totalmemory:Long = 0
 
     nr.foreach(rep => {
       val res = rep.getCapability
 
-      memory = memory + res.getMemory
-      cores = cores + res.getVirtualCores
+      memory = Math.min(memory, res.getMemory)
+      cores = Math.min(cores, res.getVirtualCores)
+      totalmemory += res.getMemory
+
     })
+
+    val mincores = conf.getInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_VCORES,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_VCORES)
+    val maxcores = conf.getInt(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES)
+
+    cores  = Math.max(Math.min(cores, maxcores), mincores)
 
     val nodes:Int = nr.length
 
     stop.invoke(yc)
 
-    (cores, nodes, memory)
+
+    // returns: (cores per nodes, nodes, memory (mb) per node)
+
+    //  we need a minimum of 2 nodes (one for the worker, 1 for the driver)
+    if (nodes == 1) {
+      (cores - 1, nodes, memory / 2, totalmemory)
+    }
+    else {
+      (cores, nodes, memory, totalmemory)
+    }
   }
 
   protected def setupDependencies(job:JobArguments, hadoopConf:Configuration,
@@ -351,6 +449,45 @@ abstract class MrGeoDriver extends Logging {
     job.setJars(jars.toString())
 
     dependencies
+  }
+
+
+  def calculateMemoryFractions(job: JobArguments) = {
+    val exmem = if (job.executorMemKb > 0) job.executorMemKb else job.memoryKb
+
+    val pmem = SparkUtils.humantokb(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MAX_PROCESSING_MEM, "1G"))
+    val shufflefrac = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_SHUFFLE_FRACTION, "0.5").toDouble
+
+    if (shufflefrac < 0 || shufflefrac > 1) {
+      throw new IOException(MrGeoConstants.MRGEO_SHUFFLE_FRACTION + " must be between 0 and 1 (inclusive)")
+    }
+    val cachefrac = 1.0 - shufflefrac
+
+    val smemfrac = if (exmem > pmem * 2) {
+      (exmem - pmem).toDouble / exmem.toDouble
+    }
+    else {
+      0.5  // if less than 2x, 1/2 memory is for shuffle/cache
+    }
+
+    if (log.isInfoEnabled) {
+      val cfrac = smemfrac * cachefrac
+      val sfrac = smemfrac * shufflefrac
+      val pfrac = 1 - (cfrac + sfrac)
+      val p = (exmem * pfrac).toLong
+      val c = (exmem * cfrac).toLong
+      val s = (exmem * sfrac).toLong
+
+      logInfo("total memory:            " + SparkUtils.kbtohuman(exmem, "m"))
+      logInfo("mrgeo processing memory: " + SparkUtils.kbtohuman(p, "m") + " (" + pfrac + ")")
+      logInfo("shuffle/cache memory:    " + SparkUtils.kbtohuman(exmem - p, "m") + " (" + smemfrac + ")")
+      logInfo("    cache memory:   " + SparkUtils.kbtohuman(c, "m") + " (" + cfrac + ")")
+      logInfo("    shuffle memory: " + SparkUtils.kbtohuman(s, "m") + " (" + sfrac + ")")
+    }
+
+    // storage, shuffle fractions
+    (smemfrac * cachefrac, smemfrac * shufflefrac)
+
   }
 
 }

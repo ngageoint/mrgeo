@@ -23,6 +23,8 @@ import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.aggregators.*;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,6 +144,16 @@ public int run(String[] args, final Configuration conf,
     {
       // TODO: Need to obtain provider properties
       //if (!BuildPyramidDriver.build(input, aggregator, conf, providerProperties))
+
+      // Validate that the user provided an image
+      try
+      {
+        DataProviderFactory.getMrsImageDataProvider(input, DataProviderFactory.AccessMode.READ, providerProperties);
+      }
+      catch (DataProviderNotFound e) {
+        log.error(input + " is not an image");
+        return -1;
+      }
       if (!org.mrgeo.buildpyramid.BuildPyramid.build(input, aggregator, conf, providerProperties))
       {
         log.error("BuildPyramid exited with error");
@@ -152,7 +164,7 @@ public int run(String[] args, final Configuration conf,
     catch (Exception e)
     {
       e.printStackTrace();
-      log.error("BuildPyramid exited with error");
+      log.error("BuildPyramid exited with error", e);
       return -1;
     }
   }

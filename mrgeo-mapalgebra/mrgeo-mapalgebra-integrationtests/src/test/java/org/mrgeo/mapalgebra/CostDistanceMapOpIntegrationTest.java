@@ -18,10 +18,8 @@ package org.mrgeo.mapalgebra;
 import org.apache.hadoop.fs.Path;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -29,8 +27,8 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.ImageStats;
-import org.mrgeo.image.MrsImagePyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.MapOpTestVectorUtils;
@@ -56,9 +54,6 @@ import java.io.IOException;
 @SuppressWarnings("static-method")
 public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 {
-  @Rule
-  public TestName testname = new TestName();
-
   private static final Logger log = LoggerFactory.getLogger(CostDistanceMapOpIntegrationTest.class);
 
   private static MapOpTestUtils testUtils;
@@ -138,7 +133,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
           new Path(testUtils.getOutputHdfs(), testname.getMethodName()).toUri().toString(),
           AccessMode.READ, (ProviderProperties)null);
 
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
       ImageStats[] stats = metadata.getStats();
       ImageStats[] imageStats = metadata.getImageStats(metadata.getMaxZoomLevel());
@@ -176,7 +171,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
           new Path(testUtils.getOutputHdfs(), testname.getMethodName()).toUri().toString(),
           AccessMode.READ, (ProviderProperties)null);
 
-      MrsImagePyramidMetadata metadata = dp.getMetadataReader().read();
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
       ImageStats[] stats = metadata.getStats();
       ImageStats[] imageStats = metadata.getImageStats(metadata.getMaxZoomLevel());

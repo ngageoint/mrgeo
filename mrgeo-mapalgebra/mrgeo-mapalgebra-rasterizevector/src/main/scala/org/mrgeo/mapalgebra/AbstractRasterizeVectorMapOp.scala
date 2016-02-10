@@ -99,7 +99,8 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     val result = rasterize(vectorRDD)
     rasterRDD = Some(RasterRDD(result))
     val noData = Double.NaN
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData,
+      bounds = null, calcStats = false))
     true
   }
 
@@ -227,4 +228,59 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
       bounds = Some(new TMSUtils.Bounds(b(0), b(1), b(2), b(3)))
     }
   }
+
+  def initialize(vector: Option[VectorMapOp], aggregator: String, cellsize: String, bounds: String,
+      column: String): Unit = {
+    vectorMapOp = vector
+    aggregationType =
+        try {
+          VectorPainter.AggregationType.valueOf(aggregator.toUpperCase)
+        }
+        catch {
+          case e: IllegalArgumentException => throw new ParserException("Aggregation type must be one of: " +
+              StringUtils.join(VectorPainter.AggregationType.values, ", "))
+        }
+
+    if (aggregationType == VectorPainter.AggregationType.GAUSSIAN) {
+      throw new ParserException("Invalid aggregation type for rasterize vector")
+    }
+    tilesize = MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE,
+      MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT).toInt
+
+    val cs =
+      if (cellsize.endsWith("m")) {
+        val meters = cellsize.replace("m", "").toDouble
+        meters / LatLng.METERS_PER_DEGREE
+      }
+      else if (cellsize.endsWith("z")) {
+        val zoom = cellsize.replace("z", "").toInt
+        TMSUtils.resolution(zoom, tilesize)
+      }
+      else {
+        if (cellsize.endsWith("d")) {
+          cellsize.replace("d", "").toDouble
+        }
+        else {
+          cellsize.toDouble
+        }
+      }
+
+    zoom = TMSUtils.zoomForPixelSize(cs, tilesize)
+
+    this.column = if (column == null || column.length == 0) {
+      None
+    }
+    else {
+      Some(column)
+    }
+
+    if (aggregationType != VectorPainter.AggregationType.SUM && this.column.isEmpty) {
+      throw new ParserException("A column name must not be specified with " + aggregationType)
+    }
+
+    if (bounds != null && bounds.length > 0) {
+      this.bounds = Some(TMSUtils.Bounds.fromCommaString(bounds))
+    }
+  }
+
 }

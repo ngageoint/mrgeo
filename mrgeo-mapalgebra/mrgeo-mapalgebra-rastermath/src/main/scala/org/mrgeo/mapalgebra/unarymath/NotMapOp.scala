@@ -15,6 +15,8 @@
 
 package org.mrgeo.mapalgebra.unarymath
 
+import java.awt.image.DataBuffer
+
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
@@ -23,11 +25,19 @@ object NotMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("!")
   }
+  def create(raster:RasterMapOp):MapOp =
+    new NotMapOp(Some(raster))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new NotMapOp(node, variables)
 }
 
 class NotMapOp extends RawUnaryMathMapOp {
+
+  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+    this()
+    input = raster
+  }
 
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -36,4 +46,8 @@ class NotMapOp extends RawUnaryMathMapOp {
   }
 
   override private[unarymath] def function(a: Double): Double = if (a >= -RasterMapOp.EPSILON && a <= RasterMapOp.EPSILON) 0 else 1
+
+  override private[unarymath] def datatype():Int = { DataBuffer.TYPE_BYTE }
+  override private[unarymath] def nodata():Double = { Byte.MaxValue }
+
 }

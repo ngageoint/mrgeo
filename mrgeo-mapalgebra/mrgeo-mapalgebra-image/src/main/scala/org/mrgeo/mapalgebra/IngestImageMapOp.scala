@@ -20,18 +20,15 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
-import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.image.MrsImagePyramidMetadata
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.ingest.IngestImage
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.GDALUtils
 
-import scala.collection.mutable
 import scala.util.control.Breaks
 
 object IngestImageMapOp extends MapOpRegistrar {
@@ -39,6 +36,19 @@ object IngestImageMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("ingest")
   }
+
+  def create(input:String):MapOp =
+    new IngestImageMapOp(input, None, None)
+
+  def create(input:String, zoom:Int):MapOp =
+    new IngestImageMapOp(input, Some(zoom), None)
+
+  def create(input:String, categorical:Boolean):MapOp =
+    new IngestImageMapOp(input, None, Some(categorical))
+
+  def create(input:String, zoom:Int, categorical:Boolean):MapOp =
+    new IngestImageMapOp(input, Some(zoom), Some(categorical))
+
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new IngestImageMapOp(node, variables)
@@ -51,6 +61,13 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   private var input:Option[String] = None
   private var categorical:Option[Boolean] = None
   private var zoom:Option[Int] = None
+
+  private[mapalgebra] def this(input:String, zoom:Option[Int], categorical:Option[Boolean]) = {
+    this()
+    this.input = Some(input)
+    this.categorical = categorical
+    this.zoom = zoom
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -80,9 +97,6 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-
-    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
 
     true
   }
@@ -145,7 +159,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     }
 
     metadata(result._2 match {
-    case md:MrsImagePyramidMetadata => md
+    case md:MrsPyramidMetadata => md
     case _ => null
     })
 

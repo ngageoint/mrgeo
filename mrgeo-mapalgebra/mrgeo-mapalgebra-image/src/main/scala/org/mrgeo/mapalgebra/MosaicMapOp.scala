@@ -36,9 +36,11 @@ object MosaicMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("mosaic")
   }
+  def create(first:RasterMapOp, others:RasterMapOp*):MapOp =
+    new MosaicMapOp(List(first) ++ others)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new MosaicMapOp(node, true, variables)
+    new MosaicMapOp(node, variables)
 }
 
 class MosaicMapOp extends RasterMapOp with Externalizable {
@@ -46,7 +48,13 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD:Option[RasterRDD] = None
   private var inputs:Array[Option[RasterMapOp]] = null
 
-  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(rasters:Seq[RasterMapOp]) = {
+    this()
+
+    inputs = rasters.map(Some(_)).toArray
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 2) {
@@ -62,15 +70,6 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
   }
 
   override def rdd(): Option[RasterRDD] = rasterRDD
-
-//  override def registerClasses(): Array[Class[_]] = {
-//    val classes = Array.newBuilder[Class[_]]
-//
-//    // yuck!  need to register spark private classes
-//    classes += ClassTag(Class.forName("org.apache.spark.util.collection.CompactBuffer")).wrap.runtimeClass
-//
-//    classes.result()
-//  }
 
   override def execute(context: SparkContext): Boolean = {
 
@@ -182,14 +181,20 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
 
               // check if there are any nodatas in the 1st tile
               looper.breakable {
-                for (y <- 0 until dst.getHeight) {
-                  for (x <- 0 until dst.getWidth) {
-                    for (b <- 0 until dst.getNumBands) {
+                var y: Int = 0
+                while (y < dst.getHeight) {
+                  var x: Int = 0
+                  while (x < dst.getWidth) {
+                    var b: Int = 0
+                    while (b < dst.getNumBands) {
                       if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
                         looper.break()
                       }
+                      b += 1
                     }
+                    x += 1
                   }
+                  y += 1
                 }
                 // we only get here if there aren't any nodatas, so we can just take the 1st tile verbatim
                 done.break()
@@ -203,9 +208,12 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
               val src = RasterUtils.makeRasterWritable(RasterWritable.toRaster(writable))
               val srcnodata = nodata(img)
 
-              for (y <- 0 until dst.getHeight) {
-                for (x <- 0 until dst.getWidth) {
-                  for (b <- 0 until dst.getNumBands) {
+              var y: Int = 0
+              while (y < dst.getHeight) {
+                var x: Int = 0
+                while (x < dst.getWidth) {
+                  var b: Int = 0
+                  while (b < dst.getNumBands) {
                     if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
                       val sample = src.getSampleDouble(x, y, b)
                       // if the src is also nodata, remember this, we still have to look in other tiles
@@ -216,8 +224,11 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
                         dst.setSample(x, y, b, sample)
                       }
                     }
+                    b += 1
                   }
+                  x += 1
                 }
+                y += 1
               }
               // we've filled up the tile, nothing left to do...
               if (!hasnodata) {
@@ -233,7 +244,8 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
       (new TileIdWritable(U._1), RasterWritable.toWritable(dst))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0), calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, nodata(0),
+      bounds = bounds, calcStats = false))
 
     true
 

@@ -26,11 +26,12 @@ import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.image.{ImageOutputFormatContext, MrsPyramidWriterContext, MrsImageOutputFormatProvider, MrsImageDataProvider}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
+import org.mrgeo.hdfs.partitioners.BlockSizePartitioner
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
@@ -89,11 +90,12 @@ object IngestImage extends MrGeoDriver with Externalizable {
       RasterWritable.toWritable(dst)
     })
 
-    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, calcStats = false)
+    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
 
-    // repartition, because chances are the RDD only has 1 partition (ingest a single file)
-    val partitioned = tiles.repartition(meta.getTileBounds(zoom).getHeight.toInt)
-    (RasterRDD(partitioned), meta)
+
+//    // repartition, because chances are the RDD only has 1 partition (ingest a single file)
+//    val partitioned = tiles.repartition(meta.getTileBounds(zoom).getHeight.toInt)
+    (RasterRDD(tiles), meta)
   }
 
 
@@ -131,7 +133,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
       AccessMode.OVERWRITE, providerProperties)
     args += Protection -> ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
 
-    var p: String = ""
+    //var p: String = ""
     if (providerProperties != null) {
       args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
     }
@@ -280,15 +282,19 @@ object IngestImage extends MrGeoDriver with Externalizable {
         GDALUtils.close(src)
 
         val bandlist = Array.ofDim[Int](bands)
-        for (x <- 0 until bands) {
+        var x: Int = 0
+        while (x < bands) {
           bandlist(x) = x + 1 // bands are ones based
+          x += 1
         }
 
 
         val buffer = Array.ofDim[Byte](datasize * tilesize * tilesize * bands)
 
-        for (dty <- 0 until tiles.height.toInt) {
-          for (dtx <- 0 until tiles.width.toInt) {
+        var dty: Int = 0
+        while (dty < tiles.height.toInt) {
+          var dtx: Int = 0
+          while (dtx < tiles.width.toInt) {
 
             //val start = System.currentTimeMillis()
 
@@ -319,7 +325,9 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
             //val time = System.currentTimeMillis() - start
             //println(tx + ", " + ty + ", " + time)
+            dtx += 1
           }
+          dty += 1
         }
 
         GDALUtils.close(scaled)
@@ -362,7 +370,7 @@ overridenodata: Boolean, protectionLevel: String, nodata: Number): Boolean = {
 //      metadata.setDefaultValues(defaults)
 //    }
 //
-//    val writer: MrsTileWriter[Raster] = dp.getMrsTileWriter(metadata.getMaxZoomLevel)
+//    val writer: MrsImageWriter = dp.getMrsTileWriter(metadata.getMaxZoomLevel)
 //    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImageFromStream(input)
 //    log.info("  reading: " + input.toString)
 //    if (reader != null) {
@@ -422,7 +430,7 @@ providerProperties: ProviderProperties): Boolean = {
 //      metadata.setDefaultValues(defaults)
 //    }
 //
-//    val writer: MrsTileWriter[Raster] = provider.getMrsTileWriter(metadata.getMaxZoomLevel)
+//    val writer: MrsImageWriter = provider.getMrsTileWriter(metadata.getMaxZoomLevel)
 //    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImage(input)
 //    log.info("  reading: " + input)
 //    if (reader != null) {
@@ -487,15 +495,14 @@ class IngestImage extends MrGeoJob with Externalizable {
     classes += classOf[TileIdWritable]
     classes += classOf[RasterWritable]
 
+    classes += classOf[Array[String]]
+
     classes.result()
   }
 
   override def setup(job: JobArguments, conf:SparkConf): Boolean = {
 
     job.isMemoryIntensive = true
-
-    conf.set("spark.storage.memoryFraction", "0.25") // set the storage amount lower...
-    conf.set("spark.shuffle.memoryFraction", "0.50") // set the shuffle higher
 
     inputs = job.getSetting(IngestImage.Inputs).split(",")
     // This setting can use lots of memory, so we we'll set it to null here to clean up memory.

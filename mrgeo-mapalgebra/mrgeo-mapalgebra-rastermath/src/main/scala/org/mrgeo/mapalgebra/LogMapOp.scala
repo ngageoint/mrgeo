@@ -15,6 +15,7 @@
 
 package org.mrgeo.mapalgebra
 
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
@@ -31,6 +32,9 @@ object LogMapOp extends MapOpRegistrar {
     Array[String]("log")
   }
 
+  def create(raster:RasterMapOp, base:Double = 1.0):MapOp =
+    new LogMapOp(Some(raster), Some(base))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new LogMapOp(node, variables)
 }
@@ -40,6 +44,12 @@ class LogMapOp extends RasterMapOp with Externalizable {
   private var inputMapOp:Option[RasterMapOp] = None
   private var base:Option[Double] = None
   private var rasterRDD:Option[RasterRDD] = None
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], base:Option[Double]) = {
+    this()
+    inputMapOp = raster
+    this.base = base
+  }
 
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -67,8 +77,6 @@ class LogMapOp extends RasterMapOp with Externalizable {
     val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
     val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
-    // copy this here to avoid serializing the whole mapop
-    val nodata = meta.getDefaultValue(0)
 
     // precompute the denominator for the calculation
     val baseVal =
@@ -79,24 +87,39 @@ class LogMapOp extends RasterMapOp with Externalizable {
       1
     }
 
-    rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+    val nodata = meta.getDefaultValues
+    val outputnodata = Array.fill[Double](meta.getBands)(Float.NaN)
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
+    rasterRDD = Some(RasterRDD(rdd.map(tile => {
+      val raster = RasterWritable.toRaster(tile._2)
+
+      val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, DataBuffer.TYPE_FLOAT)
+
+      var y: Int = 0
+      while (y < raster.getHeight) {
+        var x: Int = 0
+        while (x < raster.getWidth) {
+          var b: Int = 0
+          while (b < raster.getNumBands) {
             val v = raster.getSampleDouble(x, y, b)
-            if (RasterMapOp.isNotNodata(v, nodata)) {
-              raster.setSample(x, y, b, Math.log(v) / baseVal)
+            if (RasterMapOp.isNotNodata(v, nodata(b))) {
+              output.setSample(x, y, b, Math.log(v) / baseVal)
             }
+            else {
+              output.setSample(x, y, b, outputnodata(b))
+            }
+            b += 1
           }
+          x += 1
         }
+        y += 1
       }
 
-      (tile._1, RasterWritable.toWritable(raster))
+      (tile._1, RasterWritable.toWritable(output))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues, calcStats = false))
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, outputnodata,
+      bounds = meta.getBounds, calcStats = false))
 
     true
   }
