@@ -559,11 +559,22 @@ class MrGeo(object):
             self.sparkPyContext.stop()
             self.sparkPyContext = None
 
-    def load_resource(self, name):
+    def list_images(self):
         jvm = self.gateway.jvm
 
-        #providerProperties =
-        # ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
+        pstr = self.job.getSetting(constants.provider_properties, "")
+        pp = jvm.ProviderProperties.fromDelimitedString(pstr)
+
+        rawimages = jvm.DataProviderFactory.listImages(pp)
+
+        images = []
+        for image in rawimages:
+            images.append(str(image))
+
+        return images
+
+    def load_image(self, name):
+        jvm = self.gateway.jvm
 
         pstr = self.job.getSetting(constants.provider_properties, "")
         pp = jvm.ProviderProperties.fromDelimitedString(pstr)
