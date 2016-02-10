@@ -54,7 +54,8 @@ def loadlib(lib):
     except KeyError:
         pypath = []
 
-    # print('pypath is: ' + str(pypath))
+
+    #print('pypath is: ' + str(pypath))
     for dirname in pypath:
         libpath = walker(dirname, lib)
         if libpath is not None:
@@ -66,7 +67,10 @@ def loadlib(lib):
         if libpath is not None:
             sys.path.append(libpath)
 
-    print('found ' + lib + ' in: ' + str(libpath))
+    if libpath is None:
+        print('Can\'t find library! ' + lib)
+    else:
+        print('Found ' + lib + ' in: ' + str(libpath))
 
 
 # print(os.environ['PYTHONPATH'].split(os.pathsep))
