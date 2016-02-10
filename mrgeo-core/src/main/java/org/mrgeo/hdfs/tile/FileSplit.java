@@ -313,12 +313,26 @@ public boolean isVersion2(Path splitsfile) throws IOException
 private void readSplits(Scanner reader)
 {
   int count = Integer.parseInt(reader.nextLine());
-  splits = new FileSplitInfo[count];
+  List<FileSplitInfo> splitsList = new ArrayList<FileSplitInfo>(count);
 
-  for (int i = 0; i < splits.length; i++)
+  for (int i = 0; i < count; i++)
   {
-    splits[i] = new FileSplitInfo(reader.nextLong(), reader.nextLong(), reader.next(), reader.nextInt());
+    long startTileId = reader.nextLong();
+    long endTileId = reader.nextLong();
+    String name = reader.next();
+    int partition = reader.nextInt();
+    // There may be partitions with no tiles in them when ingested imagery has
+    // no data within the region of that particular split. We account for that
+    // by ignoring those empty partitions when reading the data so as not to
+    // waste time processing empty partitions. When there are no tiles in the
+    // partition, the startTileId will be greater than the endTileId.
+    if (startTileId <= endTileId)
+    {
+      splitsList.add(new FileSplitInfo(startTileId, endTileId, name, partition));
+    }
   }
+  splits = new FileSplitInfo[splitsList.size()];
+  splitsList.toArray(splits);
 }
 
 @Override

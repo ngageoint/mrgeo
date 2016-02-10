@@ -282,6 +282,16 @@ public static void delete(final Path path) throws IOException
   delete(HadoopUtils.createConfiguration(), path);
 }
 
+/**
+ * Deletes the specified path. If the scheme is s3 or s3n, then it will wait
+ * until the path is gone to return or else throw an IOException indicating
+ * that the path still exists. This is because s3 operates under eventual
+ * consistency so deletes are not guarantted to happen right away.
+ *
+ * @param conf
+ * @param path
+ * @throws IOException
+ */
 public static void delete(final Configuration conf, final Path path) throws IOException
 {
   final FileSystem fs = getFileSystem(conf, path);
@@ -290,6 +300,36 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
     if (fs.delete(path, true) == false)
     {
       throw new IOException("Error deleting directory " + path.toString());
+    }
+    Path qualifiedPath = path.makeQualified(fs);
+    URI pathUri = qualifiedPath.toUri();
+    String scheme = pathUri.getScheme().toLowerCase();
+    if (scheme.equals("s3") || scheme.equals("s3n")) {
+      boolean stillExists = fs.exists(path);
+      int waitCount = 0;
+      int sleepIndex = 0;
+      // Wait for S3 to finish the deletion in phases - initially checking
+      // more frequently and then less frequently as time goes by.
+      int[][] waitPhases = { {60, 1}, {120, 2}, {60, 15} };
+      while (sleepIndex < waitPhases.length) {
+        while (stillExists && waitCount < waitPhases[sleepIndex][0]) {
+          waitCount++;
+          log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path.toString() + " to be deleted");
+          try
+          {
+            Thread.sleep(waitPhases[sleepIndex][1] * 1000);
+          }
+          catch (InterruptedException e)
+          {
+            log.warn("While waiting for " + path.toString() + " to be deleted", e);
+          }
+          stillExists = fs.exists(path);
+        }
+        sleepIndex++;
+      }
+      if (stillExists) {
+        throw new IOException(path.toString() + " was not deleted within the waiting period");
+      }
     }
   }
 }

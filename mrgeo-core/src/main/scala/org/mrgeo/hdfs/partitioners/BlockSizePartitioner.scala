@@ -91,8 +91,11 @@ class BlockSizePartitioner() extends FileSplitPartitioner() with Externalizable 
     val splitsbuilder = Array.newBuilder[Long]
 
     val length = in.readInt()
-    for (i <- 0 until length) {
+
+    var i: Int = 0
+    while (i < length) {
       splitsbuilder += in.readLong()
+      i += 1
     }
     splits = splitsbuilder.result()
   }
