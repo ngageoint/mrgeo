@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     mrgeo.start()
 
-    ones = mrgeo.load_image("all-ones")
+    ones = mrgeo.load_image("all-ones-save")
 
     # slope = ones.slope()
 
@@ -40,11 +40,11 @@ if __name__ == "__main__":
     # sub3 = small_elevation.clone()
     # sub3 -= 5
 
-    hundreds = mrgeo.load_image("all-hundreds")
+    hundreds = mrgeo.load_image("all-hundreds-save")
     # hundreds.export("/data/export/hundreds-export-test", singleFile=True)
 
     sub = hundreds + ones
-    sub.export("/data/export/101-export-test", singleFile=True)
+    # sub.export("/data/export/101-export-test", singleFile=True)
     mrgeo.stop()
 
     print("***** Done *****")

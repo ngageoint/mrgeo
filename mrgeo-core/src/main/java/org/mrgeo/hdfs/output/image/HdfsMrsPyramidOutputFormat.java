@@ -40,33 +40,6 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
 {
   private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidOutputFormat.class);
 
-  public static void setInfo(final Configuration conf, final Job job)
-  {
-    // index every entry
-    conf.set("io.map.index.interval", "1");
-
-    if (job != null)
-    {
-      // compress at a record level
-      SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.RECORD);
-    }
-  }
-
-  public static void setOutputInfo(final Configuration conf, final Job job, final String output)
-  {
-    setInfo(conf, job);
-    if (job != null)
-    {
-      FileOutputFormat.setOutputPath(job, new Path(output));
-    }
-    else
-    {
-//      conf.set(HdfsMrsPyramidOutputFormat.OUTDIR, output);
-      conf.set("mapred.output.dir", output);
-      conf.set("mapreduce.output.fileoutputformat.outputdir", output);
-    }
-  }
-
   @Override
   public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttemptContext context) throws IOException
   {

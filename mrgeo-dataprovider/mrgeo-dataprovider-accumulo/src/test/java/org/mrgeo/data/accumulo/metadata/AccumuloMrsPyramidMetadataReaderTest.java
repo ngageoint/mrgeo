@@ -111,7 +111,7 @@ public class AccumuloMrsPyramidMetadataReaderTest
 //    } catch(AccumuloException ae){
 //      
 //    }
-  } // end teardown
+  } // end finalizeExternalSave
 
   @Ignore
   @Test
