@@ -1,6 +1,5 @@
 import sys
 
-sys.path.append('lib/py4j-0.8.2.1-src.zip')
 
 from pymrgeo import MrGeo
 
@@ -11,9 +10,11 @@ if __name__ == "__main__":
 
     mrgeo.usedebug()
 
+    images = mrgeo.list_images()
+
     mrgeo.start()
 
-    ones = mrgeo.load_resource("all-ones")
+    ones = mrgeo.load_image("all-ones")
 
     # slope = ones.slope()
 
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     # sub3 = small_elevation.clone()
     # sub3 -= 5
 
-    hundreds = mrgeo.load_resource("all-hundreds")
+    hundreds = mrgeo.load_image("all-hundreds")
     # hundreds.export("/data/export/hundreds-export-test", singleFile=True)
 
     sub = hundreds + ones

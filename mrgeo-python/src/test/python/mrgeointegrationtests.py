@@ -21,9 +21,9 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def setUp(self):
         super(MrGeoIntegrationTests, self).setUp()
 
-        self.allones = self.mrgeo.load_resource("all-ones")
-        self.allhundreds = self.mrgeo.load_resource("all-hundreds")
-        self.smallelevation = self.mrgeo.load_resource("small-elevation")
+        self.allones = self.mrgeo.load_image("all-ones")
+        self.allhundreds = self.mrgeo.load_image("all-hundreds")
+        self.smallelevation = self.mrgeo.load_image("small-elevation")
 
     def test_add(self):
         add = self.allones + self.allhundreds
