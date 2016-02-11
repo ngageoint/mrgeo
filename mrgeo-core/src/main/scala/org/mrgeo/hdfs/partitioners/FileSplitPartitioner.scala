@@ -27,6 +27,9 @@ import org.mrgeo.utils.SparkUtils
 
 abstract class FileSplitPartitioner() extends Partitioner with Externalizable
 {
+  def hasFixedPartitions:Boolean
+  def calculateNumPartitions(raster:RasterRDD, output:String):Int = 1
+
   def writeSplits(rdd:RasterRDD, pyramid:String, zoom:Int, conf:Configuration) = {
     val fileSplits = new FileSplit
 
