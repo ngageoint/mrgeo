@@ -446,10 +446,8 @@ private static void initialize()
       Object rootlogger = getRootLogger();
       Method getAppenders = rootlogger.getClass().getMethod("getAllAppenders");
 
-      Object appenders = getAppenders.invoke(rootlogger);
-      Method hasMore = appenders.getClass().getMethod("hasMoreElements");
-
-      if (!(boolean)hasMore.invoke(appenders))
+      Enumeration appenders = (Enumeration)getAppenders.invoke(rootlogger);
+      if (!appenders.hasMoreElements())
       {
         Class<?> basicConfiguratorClass = Class.forName("org.apache.log4j.BasicConfigurator");
         //Class<?> levelClass = Class.forName("org.apache.log4j.Level");

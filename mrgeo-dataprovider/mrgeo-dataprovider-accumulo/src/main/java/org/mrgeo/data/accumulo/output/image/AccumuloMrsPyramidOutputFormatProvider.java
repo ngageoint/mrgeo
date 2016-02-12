@@ -18,6 +18,7 @@ package org.mrgeo.data.accumulo.output.image;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.Pair;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -36,6 +37,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageOutputFormatContext;
 import org.mrgeo.hdfs.partitioners.FileSplitPartitioner;
@@ -161,7 +163,42 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
     }
   } // end getOutputFormat
 
-  public boolean bulkJob(){
+@Override
+public void save(RasterRDD raster, Configuration conf)
+{
+  // IMPLEMENT THIS SCALA CODE IN JAVA!
+  throw new NotImplementedException("AccumuloMrsPyramidOutputFormatProvider.save not yet implemeted");
+//  val sparkPartitioner = tofp.getSparkPartitioner
+//  val conf1 = tofp.setupOutput(conf)
+//
+//  // Repartition the output if the output data provider requires it
+//  val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
+//    val sorted: RasterRDD = RasterRDD(
+//  if (sparkPartitioner != null) {
+//    wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+//  }
+//  else {
+//    wrappedTiles.sortByKey()
+//  })
+//  //val sorted: RasterRDD = RasterRDD(tiles.sortByKey())
+//
+//
+//  val wrappedForSave = new PairRDDFunctions(sorted)
+//  wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
+//
+////    if (localpersist) {
+////      tiles.unpersist()
+////    }
+//
+//  if (sparkPartitioner != null)
+//  {
+//    sparkPartitioner.writeSplits(sorted, output, zoom, conf1)
+//  }
+//  tofp.teardownForSpark(conf1)
+
+}
+
+public boolean bulkJob(){
     //return false;
     return doBulk;
   }
@@ -172,14 +209,8 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
 //  } // end getWorkDir
   
   
-  @Override
-  public MrsPyramidMetadataWriter getMetadataWriter()
-  {
-    return provider.getMetadataWriter();
-  }
 
-  @Override
-  public MrsImageDataProvider getImageProvider()
+  private MrsImageDataProvider getImageProvider()
   {
     return provider;
   }
@@ -403,13 +434,12 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
 
 
   @Override
-  public void teardown(Configuration conf) throws DataProviderException
+  public void finalizeExternalSave(Configuration conf) throws DataProviderException
   {
     performTeardown(conf);
   }
 
-  @Override
-  public void teardownForSpark(final Configuration conf) throws DataProviderException
+  private void teardownForSpark(final Configuration conf) throws DataProviderException
   {
     performTeardown(conf);
   }
@@ -502,7 +532,7 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
       
     }
     
-  } // end teardown
+  } // end finalizeExternalSave
   
   
   public byte[] longToBytes(long x) {
@@ -517,9 +547,4 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
     return AccumuloUtils.validateProtectionLevel(protectionLevel);
   }
 
-  @Override
-  public FileSplitPartitioner getSparkPartitioner()
-  {
-    return null;
-  }
 } // end AccumuloMrsPyramidOutputFormatProvider
