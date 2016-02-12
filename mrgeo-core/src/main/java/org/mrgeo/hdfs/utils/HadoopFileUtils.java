@@ -297,6 +297,7 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
   final FileSystem fs = getFileSystem(conf, path);
   if (fs.exists(path))
   {
+    log.info("Deleting path " + path.toString());
     if (fs.delete(path, true) == false)
     {
       throw new IOException("Error deleting directory " + path.toString());
@@ -306,12 +307,13 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
     String scheme = pathUri.getScheme().toLowerCase();
     if (scheme.equals("s3") || scheme.equals("s3n")) {
       boolean stillExists = fs.exists(path);
-      int waitCount = 0;
       int sleepIndex = 0;
       // Wait for S3 to finish the deletion in phases - initially checking
       // more frequently and then less frequently as time goes by.
       int[][] waitPhases = { {60, 1}, {120, 2}, {60, 15} };
       while (sleepIndex < waitPhases.length) {
+        int waitCount = 0;
+        log.info("Sleep index " + sleepIndex);
         while (stillExists && waitCount < waitPhases[sleepIndex][0]) {
           waitCount++;
           log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path.toString() + " to be deleted");
@@ -324,6 +326,7 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
             log.warn("While waiting for " + path.toString() + " to be deleted", e);
           }
           stillExists = fs.exists(path);
+          log.info("After waiting exists = " + stillExists);
         }
         sleepIndex++;
       }
@@ -331,6 +334,10 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
         throw new IOException(path.toString() + " was not deleted within the waiting period");
       }
     }
+  }
+  else
+  {
+    log.info("Path already does not exist " + path.toString());
   }
 }
 
