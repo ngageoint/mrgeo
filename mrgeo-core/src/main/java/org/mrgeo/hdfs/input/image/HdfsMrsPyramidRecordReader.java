@@ -15,30 +15,59 @@
 
 package org.mrgeo.hdfs.input.image;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileRecordReader;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 
 import java.io.IOException;
 
-public class HdfsMrsPyramidRecordReader extends SequenceFileRecordReader<TileIdWritable, RasterWritable>
+public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterWritable>
 {
+  private SequenceFile.Reader reader;
+  private TileIdWritable key;
+  private RasterWritable value;
+  private long startTileId;
+  private long endTileId;
+  private long recordCount = 0;
+  private boolean more = true;
 
   @Override
   public TileIdWritable getCurrentKey()
   {
-    // TODO Auto-generated method stub
-    return super.getCurrentKey();
+    return key;
   }
 
   @Override
   public RasterWritable getCurrentValue()
   {
-    // TODO Auto-generated method stub
-    return super.getCurrentValue();
+    return value;
+  }
+
+  @Override
+  public float getProgress() throws IOException, InterruptedException
+  {
+    if (startTileId == endTileId)
+    {
+      return 0.0f;
+    }
+    else
+    {
+      return Math.min(1.0f, (recordCount - startTileId) / (float) (endTileId - startTileId));
+    }
+  }
+
+  @Override
+  public void close() throws IOException
+  {
+    reader.close();
   }
 
   @Override
@@ -47,19 +76,45 @@ public class HdfsMrsPyramidRecordReader extends SequenceFileRecordReader<TileIdW
   {
     if (split instanceof TiledInputSplit)
     {
-      super.initialize(((TiledInputSplit)split).getWrappedSplit(), context);
+      TiledInputSplit tiledInputSplit = (TiledInputSplit)split;
+      startTileId = tiledInputSplit.getStartTileId();
+      endTileId = tiledInputSplit.getEndTileId();
+      FileSplit fileSplit = (FileSplit)((TiledInputSplit)split).getWrappedSplit();
+      Configuration conf = context.getConfiguration();
+      Path path = fileSplit.getPath();
+      FileSystem fs = path.getFileSystem(conf);
+      this.reader = new SequenceFile.Reader(fs, path, conf);
+      try
+      {
+        this.key = (TileIdWritable)reader.getKeyClass().newInstance();
+        this.value = (RasterWritable)reader.getValueClass().newInstance();
+      }
+      catch (InstantiationException e)
+      {
+        e.printStackTrace();
+      }
+      catch (IllegalAccessException e)
+      {
+        e.printStackTrace();
+      }
     }
     else
     {
-      // Should never happen
-      super.initialize(split, context);
+      throw new IOException("Expected a TiledInputSplit but received " + split.getClass().getName());
     }
   }
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException
   {
-    // TODO Auto-generated method stub
-    return super.nextKeyValue();
+    if (more)
+    {
+      more = reader.next(key, value);
+      if (!more) {
+        key = null;
+        value = null;
+      }
+    }
+    return more;
   }
 }
