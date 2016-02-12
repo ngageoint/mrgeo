@@ -126,7 +126,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
 //    } catch(Exception e){
 //      e.printStackTrace();
 //    }
-  } // end teardown
+  } // end finalizeExternalSave
   
   
   @Test

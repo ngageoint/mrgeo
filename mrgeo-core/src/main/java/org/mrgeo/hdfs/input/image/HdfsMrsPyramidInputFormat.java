@@ -21,7 +21,6 @@ import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -43,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class HdfsMrsPyramidInputFormat extends SequenceFileInputFormat<TileIdWritable,RasterWritable>
+public class HdfsMrsPyramidInputFormat extends InputFormat<TileIdWritable,RasterWritable>
 {
 private static Logger log = LoggerFactory.getLogger(HdfsMrsPyramidInputFormat.class);
 private String input;
@@ -142,10 +141,6 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
 
     final FileSystem fs = HadoopFileUtils.getFileSystem(conf, dataFile);
 
-//      final FileStatus status = fs.getFileStatus(dataFile);
-//      final BlockLocation[] blocks = fs.getFileBlockLocations(status, 0, status.getLen());
-    final BlockLocation[] blocks = fs.getFileBlockLocations(dataFile, 0, Integer.MAX_VALUE);
-
     final long endTileId = split.getEndId();
     final long startTileId = split.getStartId();
 
@@ -171,24 +166,16 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
         // range allowed).
         long s = TMSUtils.tileid(tb.w, tb.s, zoom);
         long e = TMSUtils.tileid(tb.e, tb.n, zoom);
-        for (BlockLocation block : blocks)
-        {
-          result.add(new TiledInputSplit(new FileSplit(dataFile, block.getOffset(),
-              block.getLength(), block.getHosts()), s, e,
-              zoom, metadata.getTilesize()));
-        }
+        result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null), s, e,
+            zoom, metadata.getTilesize()));
       }
     }
     else
     {
       // If no bounds were specified by the caller, then we include
       // all splits.
-      for (BlockLocation block : blocks)
-      {
-        result
-            .add(new TiledInputSplit(new FileSplit(dataFile, block.getOffset(), block.getLength(), block.getHosts()),
-                startTileId, endTileId, zoom, metadata.getTilesize()));
-      }
+      result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null),
+              startTileId, endTileId, zoom, metadata.getTilesize()));
     }
   }
 

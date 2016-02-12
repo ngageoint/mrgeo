@@ -24,8 +24,10 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.partitioners.FileSplitPartitioner;
+import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 
@@ -48,10 +50,8 @@ public MrsImageOutputFormatProvider(ImageOutputFormatContext context)
  * the actual output format class (see getOutputFormatClass method in
  * this interface), place that initialization code in this method.
  *
- * Sub-classes that override this method must call super.setupJob(job).
- *
  */
-public Configuration setupOutput(Configuration conf) throws DataProviderException
+protected Configuration setupOutput(Configuration conf) throws DataProviderException
 {
   try
   {
@@ -74,31 +74,10 @@ public Configuration setupOutput(Configuration conf) throws DataProviderExceptio
   }
 }
 
+protected abstract OutputFormat<WritableComparable<?>, Writable> getOutputFormat();
 
-public abstract OutputFormat<WritableComparable<?>, Writable> getOutputFormat();
-
-/**
- * Perform any processing required after the map/reduce has completed.
- *
- * @param conf
- */
-public abstract void teardown(final Configuration conf) throws DataProviderException;
-
-/**
- * Perform any processing required after a Spark job has completed.
- *
- * @param conf
- */
-public abstract void teardownForSpark(final Configuration conf) throws DataProviderException;
-
-public abstract MrsPyramidMetadataWriter getMetadataWriter();
-public abstract MrsImageDataProvider getImageProvider();
-
-/**
- * If a data provider needs tiled data partitioned when a Spark job produces
- * output, then the data provider implementation should return that partitioner
- * from this method. Otherwise, return null.
- *
- */
-public abstract FileSplitPartitioner getSparkPartitioner();
+public abstract void save(RasterRDD raster, Configuration conf);
+public abstract void finalizeExternalSave(final Configuration conf) throws DataProviderException;
 }
+
+

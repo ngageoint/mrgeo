@@ -65,4 +65,7 @@ class RowPartitioner() extends FileSplitPartitioner() with Externalizable
   override def writeExternal(out: ObjectOutput): Unit = {
     splits.writeExternal(out)
   }
+
+  def hasFixedPartitions:Boolean = false
+
 }
