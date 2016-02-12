@@ -376,7 +376,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     val tofp = provider.getTiledOutputFormatProvider(tofc)
     // Don't use teardownForSpark because we built this level in locally, so we want
     // to avoid using Spark at this point
-    tofp.teardown(HadoopUtils.createConfiguration())
+    tofp.finalizeExternalSave(HadoopUtils.createConfiguration())
     true
   }
 

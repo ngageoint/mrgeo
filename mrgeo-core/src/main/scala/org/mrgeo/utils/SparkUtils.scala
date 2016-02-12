@@ -23,14 +23,14 @@ import java.util.Properties
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark._
-import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
-import org.mrgeo.data.image.{ImageOutputFormatContext, ImageInputFormatContext, MrsImageDataProvider}
+import org.apache.spark.rdd.RDD
+import org.mrgeo.data.image.{ImageInputFormatContext, ImageOutputFormatContext, MrsImageDataProvider}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile._
 import org.mrgeo.data.{DataProviderFactory, MrsPyramidInputFormat, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
-import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
+import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
 import org.mrgeo.utils.MrGeoImplicits._
 
 import scala.collection.JavaConversions._
@@ -421,10 +421,6 @@ object SparkUtils extends Logging {
   def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider, metadata:MrsPyramidMetadata,
       zoom:Int, conf: Configuration, providerproperties:ProviderProperties): Unit = {
 
-    implicit val tileIdOrdering = new Ordering[TileIdWritable] {
-      override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
-    }
-
 //    val localpersist = if (tiles.getStorageLevel == StorageLevel.NONE) {
 //      tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
 //      true
@@ -453,41 +449,14 @@ object SparkUtils extends Logging {
 
 
     val bands = metadata.getBands
-    // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
-    // on.  This can be a problem for fast calculating/small partitions
+
     val stats = SparkUtils.calculateStats(tiles, bands, metadata.getDefaultValues)
-    // val tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+
     val tofc = new ImageOutputFormatContext(output, bounds, zoom, tilesize,
       metadata.getProtectionLevel, metadata.getTileType, bands)
     val tofp = outputProvider.getTiledOutputFormatProvider(tofc)
-    val sparkPartitioner = tofp.getSparkPartitioner
-    val conf1 = tofp.setupOutput(conf)
 
-    // Repartition the output if the output data provider requires it
-    val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
-    val sorted: RasterRDD = RasterRDD(
-      if (sparkPartitioner != null) {
-        wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-      }
-      else {
-        wrappedTiles.sortByKey()
-      })
-    //val sorted: RasterRDD = RasterRDD(tiles.sortByKey())
-
-
-    val wrappedForSave = new PairRDDFunctions(sorted)
-    wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
-
-//    if (localpersist) {
-//      tiles.unpersist()
-//    }
-
-    if (sparkPartitioner != null)
-    {
-      sparkPartitioner.writeSplits(sorted, output, zoom, conf1)
-    }
-    tofp.teardownForSpark(conf1)
-
+    tofp.save(tiles, conf)
 
     // calculate and save metadata
     MrsPyramid.calculateMetadata(zoom, outputProvider, stats,
