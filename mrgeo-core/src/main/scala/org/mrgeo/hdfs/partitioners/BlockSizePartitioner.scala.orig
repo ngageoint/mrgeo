@@ -33,7 +33,19 @@ class BlockSizePartitioner() extends FileSplitPartitioner() with Externalizable 
 
     val tilesperblock = (blocksize / imagebytes) - 1  // subtract 1 for the 0-based counting
 
+<<<<<<< HEAD
+    val length = in.readInt()
+
+    var i: Int = 0
+    while (i < length) {
+      splitsbuilder += in.readLong()
+      i += 1
+    }
+    splits = splitsbuilder.result()
+  }
+=======
     partitions = Math.ceil(raster.count() / tilesperblock.toDouble).toInt
+>>>>>>> master
 
     partitions
   }

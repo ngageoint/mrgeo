@@ -89,7 +89,7 @@ public int run(final String[] args, final Configuration conf,
     {
     }
 
-    log.error("Exiting due to broken pipe from Python driver");
+    log.info("Exiting");
     return 0;
 
   }

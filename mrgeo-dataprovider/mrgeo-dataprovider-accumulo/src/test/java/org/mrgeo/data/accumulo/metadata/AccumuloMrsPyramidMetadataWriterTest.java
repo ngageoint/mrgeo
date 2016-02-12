@@ -104,7 +104,7 @@ public class AccumuloMrsPyramidMetadataWriterTest
 //    } catch(AccumuloException ae){
 //      
 //    }
-  } // end teardown
+  } // end finalizeExternalSave
 
   
   @Ignore
