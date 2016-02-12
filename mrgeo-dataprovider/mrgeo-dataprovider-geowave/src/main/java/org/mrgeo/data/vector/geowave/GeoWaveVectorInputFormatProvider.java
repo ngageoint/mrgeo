@@ -1,9 +1,14 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveInputConfigurator;
-import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveInputFormat;
+import mil.nga.giat.geowave.core.cli.GenericStoreCommandLineOptions;
+import mil.nga.giat.geowave.core.store.adapter.AdapterStore;
+import mil.nga.giat.geowave.core.store.config.ConfigUtils;
+import mil.nga.giat.geowave.core.store.index.PrimaryIndex;
+import mil.nga.giat.geowave.core.store.query.DistributableQuery;
+import mil.nga.giat.geowave.core.store.query.QueryOptions;
+import mil.nga.giat.geowave.mapreduce.input.GeoWaveInputConfigurator;
+import mil.nga.giat.geowave.mapreduce.input.GeoWaveInputFormat;
 import mil.nga.giat.geowave.core.store.adapter.DataAdapter;
-import mil.nga.giat.geowave.core.store.index.Index;
 import mil.nga.giat.geowave.core.geotime.store.query.*;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -21,7 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
 {
@@ -52,13 +59,38 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
     GeoWaveConnectionInfo connectionInfo = GeoWaveVectorDataProvider.getConnectionInfo();
     try
     {
-      GeoWaveInputFormat.setAccumuloOperationsInfo(
-          job,
-          connectionInfo.getZookeeperServers(),
-          connectionInfo.getInstanceName(),
-          connectionInfo.getUserName(),
-          connectionInfo.getPassword(),
-          dataProvider.getNamespace());
+      // TODO: Probably should make "accumulo" a mrgeo.conf geowave setting
+//      final GenericStoreCommandLineOptions<AdapterStore> options = ((PersistableAdapterStore)dataProvider.getAdapterStore()).getCliOptions();
+//      GeoWaveInputFormat.setAdapterStoreName(
+//              config,
+//              options.getFactory().getName());
+//      GeoWaveInputFormat.setStoreConfigOptions(
+//              config,
+//              ConfigUtils.valuesToStrings(
+//                      options.getConfigOptions(),
+//                      options.getFactory().getOptions()));
+//      GeoWaveInputFormat.setGeoWaveNamespace(
+//              config,
+//              options.getNamespace());
+      GeoWaveInputFormat.setDataStoreName(
+              conf,
+              "accumulo");
+      Map<String, String> options = new HashMap<String, String>();
+      options.put("user", connectionInfo.getUserName());
+      options.put("password", connectionInfo.getPassword());
+      options.put("zookeeper", connectionInfo.getZookeeperServers());
+      options.put("instance", connectionInfo.getInstanceName());
+      GeoWaveInputFormat.setStoreConfigOptions(
+              conf,
+              options);
+      GeoWaveInputFormat.setGeoWaveNamespace(conf, dataProvider.getNamespace());
+//      GeoWaveInputFormat.setAccumuloOperationsInfo(
+//          job,
+//          connectionInfo.getZookeeperServers(),
+//          connectionInfo.getInstanceName(),
+//          connectionInfo.getUserName(),
+//          connectionInfo.getPassword(),
+//          dataProvider.getNamespace());
       connectionInfo.writeToConfig(conf);
 
       DataAdapter<?> adapter;
@@ -68,7 +100,7 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
         throw new DataProviderException("Missing data adapter in data provider for " + dataProvider.getPrefixedResourceName());
       }
       GeoWaveInputFormat.addDataAdapter(conf, adapter);
-      Index index = dataProvider.getIndex();
+      PrimaryIndex index = dataProvider.getPrimaryIndex();
       if (index == null)
       {
         throw new DataProviderException("Missing index in data provider for " + dataProvider.getPrefixedResourceName());
@@ -81,36 +113,15 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
         conf.set(GeoWaveVectorRecordReader.CQL_FILTER, cql);
       }
       // Configure queries and index based on properties defined in the data provider
-      com.vividsolutions.jts.geom.Geometry spatialConstraint = dataProvider.getSpatialConstraint();
-      Date startTimeConstraint = dataProvider.getStartTimeConstraint();
-      Date endTimeConstraint = dataProvider.getEndTimeConstraint();
-      if ((startTimeConstraint == null) != (endTimeConstraint == null))
+      DistributableQuery query = dataProvider.getQuery();
+      if (query != null)
       {
-        throw new DataProviderException("When querying a GeoWave data source by time," +
-                                        " both the start and the end are required.");
+        GeoWaveInputFormat.setQuery(conf, query);
       }
-      if (spatialConstraint != null)
+      QueryOptions queryOptions = dataProvider.getQueryOptions(providerProperties);
+      if (queryOptions != null)
       {
-        if (startTimeConstraint != null || endTimeConstraint != null)
-        {
-          log.debug("Using GeoWave SpatialTemporalQuery");
-          TemporalConstraints tc = getTemporalConstraints(startTimeConstraint, endTimeConstraint);
-          GeoWaveInputFormat.setQuery(conf, new SpatialTemporalQuery(tc, spatialConstraint));
-        }
-        else
-        {
-          log.debug("Using GeoWave SpatialQuery");
-          GeoWaveInputFormat.setQuery(conf, new SpatialQuery(spatialConstraint));
-        }
-      }
-      else
-      {
-        if (startTimeConstraint != null || endTimeConstraint != null)
-        {
-          log.debug("Using GeoWave TemporalQuery");
-          TemporalConstraints tc = getTemporalConstraints(startTimeConstraint, endTimeConstraint);
-          GeoWaveInputFormat.setQuery(conf, new TemporalQuery(tc));
-        }
+        GeoWaveInputFormat.setQueryOptions(conf, queryOptions);
       }
     }
     catch (AccumuloSecurityException e)
@@ -125,19 +136,7 @@ public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
     {
       throw new DataProviderException(e);
     }
-    List<String> userRoles = null;
-    if (providerProperties != null)
-    {
-      userRoles = providerProperties.getRoles();
-    }
-    if (userRoles != null)
-    {
-      for (String role: userRoles)
-      {
-        GeoWaveInputConfigurator.addAuthorization(GeoWaveInputFormat.class, conf, role.trim());
-      }
-    }
-    
+
 //    if (query != null) {
 //      GeoWaveInputFormat.setQuery(
 //          job,
