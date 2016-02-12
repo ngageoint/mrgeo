@@ -1,15 +1,19 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveInputFormat;
+import mil.nga.giat.geowave.mapreduce.input.GeoWaveInputFormat;
 import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 
 public class GeoWaveVectorInputFormat extends InputFormat<FeatureIdWritable, Geometry>
 {
+  static Logger log = LoggerFactory.getLogger(GeoWaveVectorInputFormat.class);
+
   private GeoWaveInputFormat delegate = new GeoWaveInputFormat();
 
   public GeoWaveVectorInputFormat()
@@ -36,7 +40,8 @@ public class GeoWaveVectorInputFormat extends InputFormat<FeatureIdWritable, Geo
   public RecordReader<FeatureIdWritable, Geometry> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException
   {
-    RecordReader<FeatureIdWritable, Geometry> result = new GeoWaveVectorRecordReader();
+    RecordReader delegateReader = delegate.createRecordReader(split, context);
+    RecordReader<FeatureIdWritable, Geometry> result = new GeoWaveVectorRecordReader(delegateReader);
     result.initialize(split, context);
     return result;
   }
