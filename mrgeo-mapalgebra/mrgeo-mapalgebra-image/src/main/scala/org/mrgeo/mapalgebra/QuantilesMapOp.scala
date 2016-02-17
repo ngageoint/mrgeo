@@ -3,33 +3,71 @@ package org.mrgeo.mapalgebra
 import java.awt.image.{DataBuffer, Raster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
-import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 
 import scala.language.existentials
 
 
-object QuantileMapOp extends MapOpRegistrar {
+object QuantilesMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("quantiles")
   }
 
+  def create(raster: RasterMapOp, numQuantiles: Int, fraction:Float = 100.0f) =
+    new QuantilesMapOp(Some(raster), Some(numQuantiles), Some(fraction))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new QuantileMapOp(node, true, variables)
+    new QuantilesMapOp(node, variables)
 }
 
-class QuantileMapOp extends RasterMapOp with Externalizable {
+class QuantilesMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
 
   private var inputMapOp: Option[RasterMapOp] = None
+  private var numQuantiles: Option[Int] = None
+  private var fraction: Option[Float] = None
 
-  def this(node: ParserNode, isSlope: Boolean, variables: String => Option[ParserNode]) {
+  private[mapalgebra] def this(raster:Option[RasterMapOp], numQuantiles:Option[Int],
+                               fraction: Option[Float]) = {
     this()
+
+    this.inputMapOp = raster
+    this.numQuantiles = numQuantiles
+    this.fraction = fraction
+  }
+
+  def this(node: ParserNode, variables: String => Option[ParserNode]) {
+    this()
+
+    if ((node.getNumChildren < 2) || (node.getNumChildren > 3)) {
+      throw new ParserException(
+        "quantiles usage: quantiles(source raster, num quantiles, [percent of pixels to use])")
+    }
+
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+    numQuantiles = MapOp.decodeInt(node.getChild(1), variables)
+    if (numQuantiles.isEmpty) {
+      throw new ParserException("The value for the numQuantiles parameter must be an integer")
+    }
+    if (node.getNumChildren > 2) {
+      fraction = MapOp.decodeFloat(node.getChild(2), variables)
+      fraction match {
+        case Some(f) => {
+          if ((f <= 0.0 || f > 1.0)) {
+            throw new ParserException(
+              "The fraction passed to quantiles " + f + " must be between 0.0 and 1.0")
+          }
+        }
+        case None => throw new ParserException(
+          "The value for the fraction parameter must be a number between 0.0 and 1.0");
+      }
+    }
   }
 
   override def rdd(): Option[RasterRDD] = {
@@ -69,6 +107,7 @@ class QuantileMapOp extends RasterMapOp with Externalizable {
     }
 
     val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
+    val numberOfQuantiles = numQuantiles getOrElse(throw new IOException("numQuantiles not valid!"))
 
     val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
     rasterRDD = input.rdd()
@@ -79,50 +118,70 @@ class QuantileMapOp extends RasterMapOp with Externalizable {
 //    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
 //      bounds = meta.getBounds, calcStats = false))
 
-    val quantiles = Array[Float](0.25f, 0.5f, 0.75f)
+    // Compute the quantile values
+    val quantiles = new Array[Float](numberOfQuantiles - 1)
+    for (i <- quantiles.indices) {
+      quantiles(i) = 1.0f / numberOfQuantiles.toFloat * (i + 1).toFloat
+    }
+
     var b: Int = 0
     val dt = meta.getTileType
     while (b < meta.getBands) {
       val nodata = meta.getDefaultValue(b)
       val sortedPixelValues = meta.getTileType match {
         case DataBuffer.TYPE_DOUBLE => {
-          val pixelValues = rdd.flatMap(U => {
+          var pixelValues = rdd.flatMap(U => {
             getDoublePixelValues(RasterWritable.toRaster(U._2), b)
           }).filter(value => {
             !RasterMapOp.isNodata(value, nodata)
           })
+          if (fraction.isDefined && fraction.get < 1.0f) {
+            pixelValues = pixelValues.sample(false, fraction.get)
+          }
           pixelValues.sortBy(x => x)
         }
         case DataBuffer.TYPE_FLOAT => {
-          val pixelValues = rdd.flatMap(U => {
+          var pixelValues = rdd.flatMap(U => {
             getFloatPixelValues(RasterWritable.toRaster(U._2), b)
           }).filter(value => {
             !RasterMapOp.isNodata(value, nodata)
           })
+          if (fraction.isDefined && fraction.get < 1.0f) {
+            pixelValues = pixelValues.sample(false, fraction.get)
+          }
           pixelValues.sortBy(x => x)
         }
         case (DataBuffer.TYPE_INT | DataBuffer.TYPE_USHORT) => {
-          val pixelValues = rdd.flatMap(U => {
+          var pixelValues = rdd.flatMap(U => {
             getIntPixelValues(RasterWritable.toRaster(U._2), b)
           }).filter(value => {
             value != nodata.toInt
           })
+          if (fraction.isDefined && fraction.get < 1.0f) {
+            pixelValues = pixelValues.sample(false, fraction.get)
+          }
           pixelValues.sortBy(x => x)
         }
         case DataBuffer.TYPE_SHORT => {
-          val pixelValues = rdd.flatMap(U => {
+          var pixelValues = rdd.flatMap(U => {
             getShortPixelValues(RasterWritable.toRaster(U._2), b)
           }).filter(value => {
             value != nodata.toShort
           })
+          if (fraction.isDefined && fraction.get < 1.0f) {
+            pixelValues = pixelValues.sample(false, fraction.get)
+          }
           pixelValues.sortBy(x => x)
         }
         case DataBuffer.TYPE_BYTE => {
-          val pixelValues = rdd.flatMap(U => {
+          var pixelValues = rdd.flatMap(U => {
             getBytePixelValues(RasterWritable.toRaster(U._2), b)
           }).filter(value => {
             value != nodata.toByte
           })
+          if (fraction.isDefined && fraction.get < 1.0f) {
+            pixelValues = pixelValues.sample(false, fraction.get)
+          }
           pixelValues.sortBy(x => x)
         }
       }
@@ -139,10 +198,12 @@ class QuantileMapOp extends RasterMapOp with Externalizable {
           log.info("quantile " + q._1 + " is at index " + quantileKey + " and has value " + quantileValue)
           quantileValues(q._2) = quantileValue
         })
-        log.error("Setting quantiles for band " + b + " to:")
-        quantileValues.foreach(v => {
-          log.error("  " + v)
-        })
+        if (log.isInfoEnabled) {
+          log.info("Setting quantiles for band " + b + " to:")
+          quantileValues.foreach(v => {
+            log.info("  " + v)
+          })
+        }
         meta.setQuantiles(b, quantileValues)
       }
       else {
