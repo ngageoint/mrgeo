@@ -58,7 +58,9 @@ object MapOp {
     if (value.isDefined) {
       Some(value.get.toFloat)
     }
-    None
+    else {
+      None
+    }
   }
 
   def decodeFloat(node:ParserNode, variables: String => Option[ParserNode]): Option[Float] = {
