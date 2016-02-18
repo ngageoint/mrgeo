@@ -19,7 +19,7 @@ object QuantilesMapOp extends MapOpRegistrar {
     Array[String]("quantiles")
   }
 
-  def create(raster: RasterMapOp, numQuantiles: Int, fraction:Float = 100.0f) =
+  def create(raster: RasterMapOp, numQuantiles: Int, fraction:Float = 1.0f) =
     new QuantilesMapOp(Some(raster), Some(numQuantiles), Some(fraction))
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
