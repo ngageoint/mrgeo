@@ -23,16 +23,13 @@ https://spark.apache.org/docs/latest/api/python/index.html
 
 """
 
-import atexit
 import fnmatch
 import os
 import sys
 import select
 import signal
-import shlex
 import socket
 import struct
-import platform
 from subprocess import Popen, PIPE
 
 if sys.version >= '3':
@@ -86,30 +83,63 @@ def launch_gateway():
 
         script = find_script()
 
+        fork = True
+        if "MRGEO_HOST" in os.environ:
+            requesthost = os.environ["MRGEO_HOST"]
+            fork = False
+        else:
+            requesthost = socket.gethostname()
+
+        if "MRGEO_PORT" in os.environ:
+            requestport = int(os.environ["MRGEO_PORT"])
+            fork = False
+        else:
+            requestport = 0
+
+
         # Start a socket that will be used by PythonGatewayServer to communicate its port to us
         callback_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         callback_socket.bind(('127.0.0.1', 0))
+
         callback_socket.listen(1)
         callback_host, callback_port = callback_socket.getsockname()
-        env = dict(os.environ)
-        env['_MRGEO_DRIVER_CALLBACK_HOST'] = callback_host
-        env['_MRGEO_DRIVER_CALLBACK_PORT'] = str(callback_port)
-
-        command = [script, "python", "-v", "-h", callback_host, "-p", str(callback_port)]
-
-        # Launch the Java gateway.
-        # We open a pipe to stdin so that the Java gateway can die when the pipe is broken
-        # Don't send ctrl-c / SIGINT to the Java gateway:
-        def preexec_func():
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-        proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=env)
 
         gateway_port = None
-        # We use select() here in order to avoid blocking indefinitely if the subprocess dies
-        # before connecting
-        while gateway_port is None and proc.poll() is None:
-            timeout = 1  # (seconds)
+
+        if fork:
+            command = [script, "python", "-v", "-h", callback_host, "-p", str(callback_port)]
+
+            # Launch the Java gateway.
+            # We open a pipe to stdin so that the Java gateway can die when the pipe is broken
+            # Don't send ctrl-c / SIGINT to the Java gateway:
+            def preexec_func():
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+            proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func)
+
+            # We use select() here in order to avoid blocking indefinitely if the subprocess dies
+            # before connecting
+            while gateway_port is None and proc.poll() is None:
+                timeout = 1  # (seconds)
+                readable, _, _ = select.select([callback_socket], [], [], timeout)
+                if callback_socket in readable:
+                    gateway_connection = callback_socket.accept()[0]
+                    # Determine which ephemeral port the server started on:
+                    gateway_port = read_int(gateway_connection.makefile(mode="rb"))
+
+                    gateway_connection.close()
+                    callback_socket.close()
+        else:
+            connection_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            connection_socket.connect((requesthost, requestport))
+
+            connection_socket.send(callback_host + "\n")
+            connection_socket.send(str(callback_port) + "\n")
+
+            connection_socket.close()
+
+            timeout = 60  # (seconds)
             readable, _, _ = select.select([callback_socket], [], [], timeout)
             if callback_socket in readable:
                 gateway_connection = callback_socket.accept()[0]
@@ -119,12 +149,12 @@ def launch_gateway():
                 callback_socket.close()
 
         if gateway_port is None:
-            raise Exception("Java gateway process exited before sending the driver its port number")
+                    raise Exception("Java gateway process exited before sending the driver its port number")
 
     print("Talking with MrGeo on port " + str(gateway_port))
 
     # Connect to the gateway
-    gateway = JavaGateway(GatewayClient(port=gateway_port), auto_convert=True)
+    gateway = JavaGateway(GatewayClient(address= requesthost, port=gateway_port), auto_convert=True)
 
     # Import the classes used by MrGeo
     java_import(gateway.jvm, "org.mrgeo.python.*")

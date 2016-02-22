@@ -70,7 +70,7 @@
     <mahout.version>0.9-cdh5.3.0</mahout.version>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
-    <py4j.version>0.8.2.1</py4j.version>
+    <py4j.version>0.9.1</py4j.version>
     <reflections.version>0.9.9-RC1</reflections.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spark.version>1.2.0-cdh5.3.0</spark.version>
