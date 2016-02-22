@@ -11,7 +11,7 @@ from pyspark.context import SparkContext
 
 from rastermapop import RasterMapOp
 
-from java_gateway import launch_gateway, set_field
+from java_gateway import launch_gateway, set_field, is_remote
 
 
 class MrGeo(object):
@@ -201,14 +201,13 @@ class MrGeo(object):
         return codes
 
     def _generate_method_code(self, mapop, name, signatures, instance):
-
         methods = self._generate_methods(instance, signatures)
 
         jvm = self.gateway.jvm
         client = self.gateway._gateway_client
         cls = JavaClass(mapop, gateway_client=client)
 
-        is_export = self.is_instance_of(cls, jvm.ExportMapOp)
+        is_export = is_remote() and self.is_instance_of(cls, jvm.ExportMapOp)
 
         if len(methods) == 0:
             return None

@@ -31,12 +31,14 @@ import signal
 import socket
 import struct
 from subprocess import Popen, PIPE
+from py4j.java_gateway import java_import, JavaGateway, GatewayClient, get_method
+from py4j.java_collections import ListConverter
 
 if sys.version >= '3':
     xrange = range
 
-from py4j.java_gateway import java_import, JavaGateway, GatewayClient, get_method
-from py4j.java_collections import ListConverter
+
+_isremote = False
 
 
 # patching ListConverter, or it will convert bytearray into Java ArrayList
@@ -56,26 +58,32 @@ def read_int(stream):
 
 def find_script():
     if "MRGEO_HOME" in os.environ:
-        MRGEO_HOME = os.environ["MRGEO_HOME"]
+        mrgeo_home = os.environ["MRGEO_HOME"]
     else:
         raise Exception("MRGEO_HOME is not set!")
 
     script = "mrgeo"
 
-    if os.path.isfile(os.path.join(MRGEO_HOME, script)):
-        return os.path.join(MRGEO_HOME, script)
+    if os.path.isfile(os.path.join(mrgeo_home, script)):
+        return os.path.join(mrgeo_home, script)
 
-    if os.path.isfile(os.path.join(MRGEO_HOME + "/bin", script)):
-        return os.path.join(MRGEO_HOME + "/bin", script)
+    if os.path.isfile(os.path.join(mrgeo_home + "/bin", script)):
+        return os.path.join(mrgeo_home + "/bin", script)
 
-    for root, dirnames, filenames in os.walk(MRGEO_HOME):
+    for root, dirnames, filenames in os.walk(mrgeo_home):
         for filename in fnmatch.filter(filenames, script):
             return os.path.join(root, filename)
 
-    raise Exception('Can not find "' + script + '" within MRGEO_HOME (' + MRGEO_HOME + ')')
+    raise Exception('Can not find "' + script + '" within MRGEO_HOME (' + mrgeo_home + ')')
 
+def is_remote():
+    return _isremote
 
 def launch_gateway():
+    global _isremote
+    requesthost = socket.gethostname()
+    requestport = 0
+
     if "MRGEO_GATEWAY_PORT" in os.environ:
         gateway_port = int(os.environ["MRGEO_GATEWAY_PORT"])
     else:
@@ -87,15 +95,10 @@ def launch_gateway():
         if "MRGEO_HOST" in os.environ:
             requesthost = os.environ["MRGEO_HOST"]
             fork = False
-        else:
-            requesthost = socket.gethostname()
 
         if "MRGEO_PORT" in os.environ:
             requestport = int(os.environ["MRGEO_PORT"])
             fork = False
-        else:
-            requestport = 0
-
 
         # Start a socket that will be used by PythonGatewayServer to communicate its port to us
         callback_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -148,13 +151,15 @@ def launch_gateway():
                 gateway_connection.close()
                 callback_socket.close()
 
+        _isremote = not fork
+
         if gateway_port is None:
                     raise Exception("Java gateway process exited before sending the driver its port number")
 
     print("Talking with MrGeo on port " + str(gateway_port))
 
     # Connect to the gateway
-    gateway = JavaGateway(GatewayClient(address= requesthost, port=gateway_port), auto_convert=True)
+    gateway = JavaGateway(GatewayClient(address=requesthost, port=gateway_port), auto_convert=True)
 
     # Import the classes used by MrGeo
     java_import(gateway.jvm, "org.mrgeo.python.*")
