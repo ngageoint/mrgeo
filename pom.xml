@@ -49,7 +49,7 @@
     <!--<gdal.version>1.11.2</gdal.version>-->
     <gdal.version>1.10.1</gdal.version>
     <geotools.version>12.1</geotools.version>
-    <geowave.version>0.9.0-SNAPSHOT</geowave.version>
+    <geowave.version>0.9.0</geowave.version>
     <gson.version>2.2.2</gson.version>
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
@@ -1648,7 +1648,7 @@
       <properties>
         <hadoop.version>2.7.1</hadoop.version>
         <accumulo.version>1.6.1</accumulo.version>
-        <geowave.version>0.9.0-SNAPSHOT</geowave.version>
+        <geowave.version>0.9.0</geowave.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
@@ -2910,7 +2910,7 @@
       </dependency>
       <dependency>
         <groupId>mil.nga.giat</groupId>
-        <artifactId>geowave-core-store</artifactId>
+        <artifactId>geowave-core-mapreduce</artifactId>
         <version>${geowave.version}</version>
         <exclusions>
           <exclusion>

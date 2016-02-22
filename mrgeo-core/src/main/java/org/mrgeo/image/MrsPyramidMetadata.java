@@ -114,6 +114,18 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy) {
   this.bands = copy.bands;
   this.defaultValues = ArrayUtils.clone(copy.defaultValues);
   this.tileType = copy.tileType;
+  if (copy.quantiles == null)
+  {
+    this.quantiles = null;
+  }
+  else
+  {
+    quantiles = new double[copy.quantiles.length][];
+    for (int b=0; b < copy.quantiles.length; b++)
+    {
+      this.quantiles[b] = copy.quantiles[b].clone();
+    }
+  }
 
   this.classification = copy.classification;
   this.resamplingMethod = copy.resamplingMethod;
@@ -223,6 +235,27 @@ public String getProtectionLevel()
   return protectionLevel;
 }
 
+  /**
+   * Returns the quantiles for the specified band for this image. Note that the return value
+   * can be null.
+   *
+   * @return
+   */
+  @JsonIgnore
+  public double[] getQuantiles(int band)
+  {
+    if (quantiles != null && band < getBands())
+    {
+      return quantiles[band];
+    }
+    return null;
+  }
+
+  public double[][] getQuantiles()
+  {
+    return quantiles;
+  }
+
   /*
    * end get section
    */
@@ -282,6 +315,19 @@ public void setProtectionLevel(final String protectionLevel)
   this.protectionLevel = protectionLevel;
 }
 
+  public void setQuantiles(double[][] quantiles)
+  {
+    this.quantiles = quantiles;
+  }
+
+  @JsonIgnore
+  public void setQuantiles(final int band, final double[] quantiles)
+  {
+    if (this.quantiles == null) {
+      this.quantiles = new double[getBands()][];
+    }
+    this.quantiles[band] = quantiles.clone();
+  }
   /*
    * end set section
    */
@@ -342,6 +388,7 @@ public boolean hasPyramids()
 // pyramid-level image
 
   private int bands = 0; // number of bands in the image
+  private double[][] quantiles; // quantiles computed in each band for the entire image pyramid
 
   // default (pixel) value, by band. Geotools calls these defaults, but they are
 // really

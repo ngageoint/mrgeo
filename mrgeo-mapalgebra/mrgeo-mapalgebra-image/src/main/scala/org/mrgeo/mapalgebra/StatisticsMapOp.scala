@@ -332,11 +332,13 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val rasters = rasterbuilder.result()
 
+        val valuebuilder = Array.newBuilder[Double]
+        valuebuilder.sizeHint(rasters.length)
         var y: Int = 0
         while (y < result.getHeight) {
           var x: Int = 0
           while (x < result.getWidth) {
-            val valuebuilder = Array.newBuilder[Double]
+            valuebuilder.clear
 
             var ndx: Int = 0
             while (ndx < rasters.length) {
@@ -399,11 +401,13 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val rasters = rasterbuilder.result()
 
+        val valuebuilder = Array.newBuilder[Double]
+        valuebuilder.sizeHint(rasters.length)
         var y: Int = 0
         while (y < result.getHeight) {
           var x: Int = 0
           while (x < result.getWidth) {
-            val valuebuilder = Array.newBuilder[Double]
+            valuebuilder.clear
 
             var ndx: Int = 0
             while (ndx < rasters.length) {
