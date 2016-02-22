@@ -26,7 +26,7 @@ object QuantilesMapOpTest
   @BeforeClass
   def init()
   {
-    testUtils = new MapOpTestUtils(classOf[BandExtractMapOpTest])
+    testUtils = new MapOpTestUtils(classOf[QuantilesMapOpTest])
 
     var file = new File(smallElevation)
     smallElevation = "file://" + file.getAbsolutePath()
