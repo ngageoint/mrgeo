@@ -83,8 +83,6 @@ class MrGeo(object):
 
     def initialize(self):
 
-        self.gateway.jvm.py4j.GatewayServer.turnLoggingOn()
-
         self._create_job()
         self._load_mapops()
 
