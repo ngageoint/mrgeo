@@ -20,7 +20,7 @@ class MrGeo(object):
                  "*": ["__mul__", "__rmul__", "__imul__"],
                  "/": ["__div__", "__truediv__", "__rdiv__", "__rtruediv__", "__idiv__", "__itruediv__"],
                  "//": [],  # floor div
-                 "**": ["__pow__", "__rpow__", "__ipow__"], # pow
+                 "**": ["__pow__", "__rpow__", "__ipow__"],  # pow
                  "=": [],  # assignment, can't do!
                  "<": ["__lt__"],
                  "<=": ["__le__"],
@@ -95,6 +95,7 @@ class MrGeo(object):
         java_import(jvm, "org.mrgeo.mapalgebra.MapOpFactory")
         java_import(jvm, "org.mrgeo.mapalgebra.raster.RasterMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.raster.MrsPyramidMapOp")
+        java_import(jvm, "org.mrgeo.mapalgebra.ExportMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.vector.VectorMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.MapOp")
         java_import(jvm, "org.mrgeo.utils.SparkUtils")
@@ -129,13 +130,13 @@ class MrGeo(object):
                     name = method.strip().lower()
                     if len(name) > 0:
                         if name in self.reserved:
-                            #print("reserved: " + name)
+                            # print("reserved: " + name)
                             continue
                         elif name in self.operators:
-                            #print("operator: " + name)
+                            # print("operator: " + name)
                             codes = self._generate_operator_code(mapop, name, signatures, instance)
                         else:
-                            #print("method: " + name)
+                            # print("method: " + name)
                             codes = self._generate_method_code(mapop, name, signatures, instance)
 
                 if codes is not None:
@@ -169,13 +170,13 @@ class MrGeo(object):
             for param in method:
                 lst = list(param)
                 if lst[1].lower() == 'string' or \
-                                lst[1].lower() == 'double' or \
-                                lst[1].lower() == 'float' or \
-                                lst[1].lower() == 'long' or \
-                                lst[1].lower() == 'int' or \
-                                lst[1].lower() == 'short' or \
-                                lst[1].lower() == 'char' or \
-                                lst[1].lower() == 'boolean':
+                    lst[1].lower() == 'double' or \
+                    lst[1].lower() == 'float' or \
+                    lst[1].lower() == 'long' or \
+                    lst[1].lower() == 'int' or \
+                    lst[1].lower() == 'short' or \
+                    lst[1].lower() == 'char' or \
+                    lst[1].lower() == 'boolean':
                     lst[0] = "other"
                     lst[2] = "other"
                     # need to add this to the start of the list (in case we eventually check other.mapop from the elif
@@ -205,6 +206,12 @@ class MrGeo(object):
 
         methods = self._generate_methods(instance, signatures)
 
+        jvm = self.gateway.jvm
+        client = self.gateway._gateway_client
+        cls = JavaClass(mapop, gateway_client=client)
+
+        is_export = self.is_instance_of(cls, jvm.ExportMapOp)
+
         if len(methods) == 0:
             return None
 
@@ -213,15 +220,18 @@ class MrGeo(object):
         code = ""
         # Signature
         code += "def " + name + "(" + signature + "):" + "\n"
+
         # code += "    print('" + name + "')\n"
-        code += self._generate_imports(mapop)
-        code += self._generate_calls(methods)
-        code += self._generate_run()
+        code += self._generate_imports(mapop, is_export)
+        code += self._generate_calls(methods, is_export)
+        code += self._generate_run(is_export)
+        # print(code)
 
-        return {name:code}
+        return {name: code}
 
-    def _generate_run(self):
+    def _generate_run(self, is_export=False):
         code = ""
+
         # Run the MapOp
         code += "    if (op.setup(self.job, self.context.getConf()) and\n"
         code += "        op.execute(self.context) and\n"
@@ -230,26 +240,117 @@ class MrGeo(object):
         # TODO:  Add VectorMapOp!
         code += "        new_resource = copy.copy(self)\n"
         code += "        new_resource.mapop = op\n"
+
+        if is_export:
+            code += self._generate_saveraster()
+
         code += "        return new_resource\n"
         code += "    return None\n"
         return code
 
-    def _generate_imports(self, mapop):
+    def _generate_saveraster(self):
+        code = ""
+        # code += "        \n"
+        code += "        cls = JavaClass('org.mrgeo.mapalgebra.ExportMapOp', gateway_client=self.gateway._gateway_client)\n"
+        code += "        if hasattr(self, 'mapop') and self.is_instance_of(self.mapop, 'org.mrgeo.mapalgebra.raster.RasterMapOp') and type(name) is str and isinstance(singleFile, (int, long, float, str)) and isinstance(zoom, (int, long, float)) and isinstance(numTiles, (int, long, float)) and isinstance(mosaic, (int, long, float)) and type(format) is str and isinstance(randomTiles, (int, long, float, str)) and isinstance(tms, (int, long, float, str)) and type(colorscale) is str and type(tileids) is str and type(bounds) is str and isinstance(allLevels, (int, long, float, str)) and isinstance(overridenodata, (int, long, float)):\n"
+        code += "            op = cls.create(self.mapop, str(name), True if singleFile else False, int(zoom), int(numTiles), int(mosaic), str(format), True if randomTiles else False, True if tms else False, str(colorscale), str(tileids), str(bounds), True if allLevels else False, float(overridenodata))\n"
+        code += "        else:\n"
+        code += "            raise Exception('input types differ (TODO: expand this message!)')\n"
+        code += "        if (op.setup(self.job, self.context.getConf()) and\n"
+        code += "                op.execute(self.context) and\n"
+        code += "                op.teardown(self.job, self.context.getConf())):\n"
+        code += "            new_resource = copy.copy(self)\n"
+        code += "            new_resource.mapop = op\n"
+        code += "            gdalutils = JavaClass('org.mrgeo.utils.GDALUtils', gateway_client=self.gateway._gateway_client)\n"
+        code += "            java_image = op.image()\n"
+        code += "            width = java_image.getRasterXSize()\n"
+        code += "            height = java_image.getRasterYSize()\n"
+        code += "            options = []\n"
+        code += "            if format == 'jpg' or format == 'jpeg':\n"
+        code += "                driver_name = 'jpeg'\n"
+        code += "                extension = 'jpg'\n"
+        code += "            elif format == 'tif' or format == 'tiff' or format == 'geotif' or format == 'geotiff' or format == 'gtif'  or format == 'gtiff':\n"
+        code += "                driver_name = 'GTiff'\n"
+        code += "                options.append('INTERLEAVE=BAND')\n"
+        code += "                options.append('COMPRESS=DEFLATE')\n"
+        code += "                options.append('PREDICTOR=1')\n"
+        code += "                options.append('ZLEVEL=6')\n"
+        code += "                options.append('TILES=YES')\n"
+        code += "                if width < 2048:\n"
+        code += "                    options.append('BLOCKXSIZE=' + str(width))\n"
+        code += "                else:\n"
+        code += "                    options.append('BLOCKXSIZE=2048')\n"
+        code += "                if height < 2048:\n"
+        code += "                    options.append('BLOCKYSIZE=' + str(height))\n"
+        code += "                else:\n"
+        code += "                    options.append('BLOCKYSIZE=2048')\n"
+        code += "                extension = 'tif'\n"
+        code += "            else:\n"
+        code += "                driver_name = format\n"
+        code += "                extension = format\n"
+        code += "            datatype = java_image.GetRasterBand(1).getDataType()\n"
+        code += "            if not local_name.endswith(extension):\n"
+        code += "                local_name += '.' + extension\n"
+        code += "            driver = gdal.GetDriverByName(driver_name)\n"
+        code += "            local_image = driver.Create(local_name, width, height, java_image.getRasterCount(), datatype, options)\n"
+        code += "            local_image.SetProjection(str(java_image.GetProjection()))\n"
+        code += "            local_image.SetGeoTransform(java_image.GetGeoTransform())\n"
+        code += "            java_nodatas = gdalutils.getnodatas(java_image)\n"
+        code += "            print('saving image to ' + local_name)\n"
+        code += "            print('downloading data... (' + str(gdalutils.getRasterBytes(java_image, 1) * local_image.RasterCount / 1024) + ' kb uncompressed)')\n"
+        code += "            for i in xrange(1, local_image.RasterCount + 1):\n"
+        code += "                start = time.time()\n"
+        code += "                raw_data = gdalutils.getRasterDataAsCompressedBase64(java_image, i, 0, 0, width, height)\n"
+        code += "                print('compressed/encoded data ' + str(len(raw_data)))\n"
+        code += "                decoded_data = base64.b64decode(raw_data)\n"
+        code += "                print('decoded data ' + str(len(decoded_data)))\n"
+        code += "                decompressed_data = zlib.decompress(decoded_data, 16 + zlib.MAX_WBITS)\n"
+        code += "                print('decompressed data ' + str(len(decompressed_data)))\n"
+        code += "                byte_data = numpy.frombuffer(decompressed_data, dtype='b')\n"
+        code += "                print('byte data ' + str(len(byte_data)))\n"
+        code += "                image_data = byte_data.view(gdal_array.GDALTypeCodeToNumericTypeCode(datatype))\n"
+        code += "                print('gdal-type data ' + str(len(image_data)))\n"
+        code += "                image_data = image_data.reshape((-1, width))\n"
+        code += "                print('reshaped ' + str(len(image_data)) + ' x ' + str(len(image_data[0])))\n"
+        code += "                band = local_image.GetRasterBand(i)\n"
+        code += "                print('writing band ' + str(i))\n"
+        code += "                band.WriteArray(image_data)\n"
+        code += "                end = time.time()\n"
+        code += "                print('elapsed time: ' + str(end - start) + ' sec.')\n"
+        code += "                band.SetNoDataValue(java_nodatas[i - 1])\n"
+        code += "            local_image.FlushCache()\n"
+        code += "            print('flushed cache')\n"
+
+        return code
+
+    def _generate_imports(self, mapop, is_export=False):
         code = ""
         # imports
         code += "    import copy\n"
         code += "    from numbers import Number\n"
+        if is_export:
+            code += "    import base64\n"
+            code += "    import numpy\n"
+            code += "    from osgeo import gdal, gdal_array\n"
+            code += "    import time\n"
+            code += "    import zlib\n"
+
         code += "    from py4j.java_gateway import JavaClass\n"
         # Get the Java class
         code += "    cls = JavaClass('" + mapop + "', gateway_client=self.gateway._gateway_client)\n"
         return code
 
-    def _generate_calls(self, methods):
+    def _generate_calls(self, methods, is_export=False):
 
         # Check the input params and call the appropriate create() method
         firstmethod = True
         varargcode = ""
         code = ""
+
+        if is_export:
+            code += "    local_name = name\n"
+            code += "    name = 'In-Memory'\n"
+
         for method in methods:
             iftest = ""
             call = []
@@ -310,7 +411,7 @@ class MrGeo(object):
 
         return code
 
-    def method_name(self,  type_name, var_name):
+    def method_name(self, type_name, var_name):
         if type_name == "String":
             iftest = " type(" + var_name + ") is str"
             call_name = "str(" + var_name + ")"
@@ -378,9 +479,9 @@ class MrGeo(object):
                     new_value = None
 
                 if ((not found) and
-                    (new_type.endswith("MapOp") or
-                    (instance is "RasterMapOp" and new_type.endswith("RasterMapOp")) or
-                        (instance is "VectorMapOp" and new_type.endswith("VectorMapOp")))):
+                        (new_type.endswith("MapOp") or
+                             (instance is "RasterMapOp" and new_type.endswith("RasterMapOp")) or
+                             (instance is "VectorMapOp" and new_type.endswith("VectorMapOp")))):
                     found = True
                     new_call = "self"
                 else:
@@ -514,7 +615,7 @@ class MrGeo(object):
         if self.job.isDebug():
             master = "local"
         elif self.job.isSpark():
-            #TODO:  get the master for spark
+            # TODO:  get the master for spark
             master = ""
         elif self.job.isYarn():
             master = "yarn-client"
@@ -526,8 +627,9 @@ class MrGeo(object):
                 master = "local[" + str(cpus) + "]"
 
         set_field(self.job, "jars",
-                            jvm.StringUtils.concatUnique(jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
-                                                         jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
+                  jvm.StringUtils.concatUnique(
+                      jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
+                      jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
 
         conf = jvm.MrGeoDriver.prepareJob(self.job)
 
