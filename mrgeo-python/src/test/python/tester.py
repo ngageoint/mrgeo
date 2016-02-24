@@ -1,20 +1,25 @@
+﻿# -*- coding: utf-8 -*-
+
 import sys
 
-
+import numpy
+import zlib
+import struct
 from pymrgeo import MrGeo
 
 if __name__ == "__main__":
+
     mrgeo = MrGeo()
 
     # sys.exit(1)
 
     mrgeo.usedebug()
 
-    images = mrgeo.list_images()
+    # images = mrgeo.list_images()
 
     mrgeo.start()
 
-    ones = mrgeo.load_image("all-ones-save")
+    # ones = mrgeo.load_image("all-ones-save")
 
     # slope = ones.slope()
 
@@ -41,9 +46,15 @@ if __name__ == "__main__":
     # sub3 -= 5
 
     hundreds = mrgeo.load_image("all-hundreds-save")
+    hundreds.export("/data/export/100-export-test", singleFile=True)
+
+    slope = mrgeo.load_image("santiago-aster")
+    slope.export("/data/export/santiago-aster", singleFile=True)
+
     # hundreds.export("/data/export/hundreds-export-test", singleFile=True)
 
-    sub = hundreds + ones
+    # sub = hundreds + ones
+    #
     # sub.export("/data/export/101-export-test", singleFile=True)
     mrgeo.stop()
 
