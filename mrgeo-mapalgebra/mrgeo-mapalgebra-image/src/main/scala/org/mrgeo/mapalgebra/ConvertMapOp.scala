@@ -242,14 +242,10 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
         oldNodataIsNan(U._2) = java.lang.Double.isNaN(U._1)
       })
       val zoom = meta.getMaxZoomLevel
-      val oldMins = new Array[Double](meta.getBands)
-      val oldMaxs = new Array[Double](meta.getBands)
-      var b: Int = 0
-      while (b < oldMins.length) {
-        val stats = meta.getImageStats(zoom, b)
-        oldMins(b) = stats.min
-        oldMaxs(b) = stats.max
-        b += 1
+      var stats = meta.getStats
+      if (stats == null) {
+        stats = SparkUtils.calculateStats(rdd, meta.getBands,
+          org.mrgeo.utils.MrGeoImplicits.toNumber(meta.getDefaultValues))
       }
       val result = rdd.map(U => {
         val src = RasterWritable.toRaster(U._2)
@@ -277,7 +273,7 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
                     srcVal
                   }
                   else {
-                    converter(srcVal, oldMins(b), oldMaxs(b), newTileType)
+                    converter(srcVal, stats(b).min, stats(b).max, newTileType)
                   }
                 }
               }
@@ -286,7 +282,7 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
                   newNodata(b).doubleValue()
                 }
                 else {
-                  converter(srcVal, oldMins(b), oldMaxs(b), newTileType)
+                  converter(srcVal, stats(b).min, stats(b).max, newTileType)
                 }
               }
               dst.setSample(px, py, b, dstVal)
