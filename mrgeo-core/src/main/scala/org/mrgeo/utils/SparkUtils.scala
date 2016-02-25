@@ -26,7 +26,7 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.mrgeo.data.image.{ImageInputFormatContext, ImageOutputFormatContext, MrsImageDataProvider}
 import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.rdd.{AutoPersister, RasterRDD}
 import org.mrgeo.data.tile._
 import org.mrgeo.data.{DataProviderFactory, MrsPyramidInputFormat, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
@@ -421,6 +421,8 @@ object SparkUtils extends Logging {
   def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider, metadata:MrsPyramidMetadata,
       zoom:Int, conf: Configuration, providerproperties:ProviderProperties): Unit = {
 
+    AutoPersister.incrementRef(tiles)
+
 //    val localpersist = if (tiles.getStorageLevel == StorageLevel.NONE) {
 //      tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
 //      true
@@ -461,6 +463,8 @@ object SparkUtils extends Logging {
     // calculate and save metadata
     MrsPyramid.calculateMetadata(zoom, outputProvider, stats,
       metadata)
+
+    AutoPersister.decrementRef(tiles)
   }
 
   @deprecated("Use RasterRDD method instead", "")
