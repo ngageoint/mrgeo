@@ -85,7 +85,6 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
     public void write(WritableComparable<?> key, Writable value)
         throws IOException
     {
-      log.warn("Writing HDFS record for tile " + key.toString());
       // there may ba a case or two where an extended TileIdWritable is written as the key
       // (buildpyramid does it).  So we strip out any of that information when we write the
       // actual key.
