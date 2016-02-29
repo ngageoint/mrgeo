@@ -28,8 +28,8 @@ object ConvertMapOp extends MapOpRegistrar {
     toType match {
       // We want values from 0 .. 254 rather than -127 .. 127
       case DataBuffer.TYPE_BYTE => Math.max(Math.min(value, 254.0), 0.0)
-      case DataBuffer.TYPE_SHORT => Math.max(Math.min(value, Short.MaxValue.toDouble), Short.MinValue.toDouble)
-      case DataBuffer.TYPE_INT => Math.max(Math.min(value, Int.MaxValue.toDouble), Int.MinValue.toDouble)
+      case DataBuffer.TYPE_SHORT => Math.max(Math.min(value, Short.MaxValue.toDouble), (Short.MinValue + 1).toDouble)
+      case DataBuffer.TYPE_INT => Math.max(Math.min(value, Int.MaxValue.toDouble), (Int.MinValue + 1).toDouble)
       case DataBuffer.TYPE_FLOAT => Math.max(Math.min(value, Float.MaxValue.toDouble), Float.MinValue.toDouble)
       case DataBuffer.TYPE_DOUBLE => Math.max(Math.min(value, Double.MaxValue), Double.MinValue) // should not get called
     }
