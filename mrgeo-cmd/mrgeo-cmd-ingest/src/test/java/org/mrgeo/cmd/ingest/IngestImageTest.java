@@ -32,6 +32,7 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LoggingUtils;
 import org.mrgeo.utils.LongRectangle;
 
 import java.io.ByteArrayOutputStream;
@@ -69,6 +70,8 @@ public class IngestImageTest
   @BeforeClass
   public static void init() throws IOException
   {
+    LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
+
     Properties props = MrGeoProperties.getInstance();
     origProtectionLevelRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
     origProtectionLevelDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);

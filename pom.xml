@@ -174,6 +174,13 @@
       <id>mrgeo-maven-plugin</id>
       <name>MrGeo S3 Plugin Repository</name>
       <url>${repository.url}</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </pluginRepository>
   </pluginRepositories>
   <distributionManagement>
@@ -836,6 +843,51 @@
          |                    any punctuation (i.e CDH 4.5.0 becomes CDH450), used when ultimately build RPMs
          | release.arguments - any arguments to use for releases, usually blank
     -->
+    <profile>
+      <id>CDH560-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.6.0</hadoop.version>
+        <mahout.version>0.9-cdh5.6.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.6.0</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.6.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>CDH560</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.6.0</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.6.0</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.6.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.6.0</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.6.0-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
     <profile>
       <id>CDH552-yarn</id>
       <properties>

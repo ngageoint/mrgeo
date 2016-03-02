@@ -36,6 +36,7 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
+import org.mrgeo.mapalgebra.ExportMapOp;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
@@ -183,6 +184,46 @@ public void add() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s]", allones, allones));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void addFloatConstant() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("[%s] + 3.14", allhundreds), -9999);
+
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("[%s] + 3.14", allhundreds));
+
+  }
+}
+
+// This test shows the limit of floating point math presision.  3,000,000,000 + 100 in floating point
+// is actually 3,000,000,000.  Who knew?
+@Test
+@Category(IntegrationTest.class)
+public void add3Billion() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("[%s] + 3000000000.0", allhundreds), -9999);
+
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("[%s] + 3000000000.0", allhundreds));
+
   }
 }
 
@@ -829,6 +870,30 @@ public void export() throws Exception
 
     // now check the file that was saved...
     testUtils.compareLocalRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void exportInMemory() throws Exception
+{
+
+  ExportMapOp.inMemoryTestPath_$eq(testUtils.getOutputLocalFor(testname.getMethodName()));
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("export([%s], \"%s\", \"true\")", allones, ExportMapOp.IN_MEMORY()), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("export([%s], \"%s\", \"true\")", allones, ExportMapOp.IN_MEMORY()));
+
+
+    // now check the file that was saved...
+    testUtils.compareLocalRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
+
   }
 }
 

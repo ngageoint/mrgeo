@@ -1,18 +1,59 @@
 package org.mrgeo.data.rdd
 
+import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
-object AutoPersister {
+import scala.collection.mutable
+
+object AutoPersister extends Logging {
+
+  val references = mutable.Map.empty[Int, Int]
+
   val defaultStorageLevel = StorageLevel.MEMORY_AND_DISK_SER
 
-  def persist(rdd:RDD[_], storageLevel: StorageLevel = defaultStorageLevel) = {
-    //rdd.id
-
-    rdd.persist(defaultStorageLevel)
+  def getRef(rdd:RDD[_]): Int = {
+    references.getOrElse(rdd.id, 0)
   }
 
+  // force a persist
+  def persist(rdd:RDD[_], storageLevel: StorageLevel = defaultStorageLevel) = {
+    rdd.persist(storageLevel)
+    incrementRef(rdd)
+  }
+
+  // force an unpersist
   def unpersist(rdd:RDD[_]) = {
     rdd.unpersist()
+    references.remove(rdd.id)
   }
+
+  // decrement the ref count, unpersist if needed
+  def decrementRef(rdd:RDD[_]):Int = {
+    val cnt = references.getOrElse(rdd.id, return 0) - 1
+    logInfo("decrement ref: " + rdd.id + " from: " + (cnt + 1) + " to: " + cnt + (if (cnt <= 0) " unpersisting" else ""))
+
+    references.put(rdd.id, cnt)
+    if (cnt <= 0 && rdd.getStorageLevel != StorageLevel.NONE) {
+      rdd.unpersist()
+      references.remove(rdd.id)
+    }
+
+    cnt
+  }
+
+  // increment the ref count, persist when the count hits 2 (no need to persist over that)
+  def incrementRef(rdd:RDD[_], storageLevel: StorageLevel = defaultStorageLevel):Int = {
+
+    val cnt = references.getOrElseUpdate(rdd.id, 0) + 1
+
+    logInfo("increment ref: " + rdd.id + " from: " + (cnt - 1) + " to: " + cnt + (if (cnt == 2) " persisting" else ""))
+    references.put(rdd.id, cnt)
+
+    if (cnt == 2 && rdd.getStorageLevel == StorageLevel.NONE) {
+      rdd.persist(storageLevel)
+    }
+    cnt
+  }
+
 }
