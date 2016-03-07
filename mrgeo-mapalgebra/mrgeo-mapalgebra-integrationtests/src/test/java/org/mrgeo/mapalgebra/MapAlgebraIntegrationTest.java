@@ -1867,7 +1867,24 @@ public void testDataTypeFloat() throws Exception
   }
 }
 
-private void checkDataTypes(int type) throws IOException
+  @Test
+  @Category(IntegrationTest.class)
+  public void tpi() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("tpi([%s])", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("tpi([%s])", smallElevation));
+    }
+  }
+
+  private void checkDataTypes(int type) throws IOException
 {
   MrsPyramid
       pyramid = MrsPyramid.open(testUtils.getOutputHdfsFor(testname.getMethodName()).toString(), providerProperties);

@@ -133,11 +133,11 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     val metersPerPixel = res * LatLng.METERS_PER_DEGREE
     val weights = context.broadcast(kernel.createKernel(metersPerPixel, metersPerPixel))
 
+    val localWeights = kernel.createKernel(metersPerPixel, metersPerPixel)
     val kernelW: Int = kernel.getWidth
     val kernelH: Int = kernel.getHeight
-
     log.info("Kernel w, h " + kernelW + ", " + kernelH)
-    val localWeights = kernel.createKernel(metersPerPixel, metersPerPixel)
+
     for (ky <- 0 until kernelH) {
       log.info(ky + ": " )
       val sb = new StringBuffer()
@@ -172,46 +172,52 @@ class KernelMapOp extends RasterMapOp with Externalizable {
 
       val ul = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize)
       val src = RasterWritable.toRaster(tile._2)
+      // tileWidth is the pixel width of the source tile including the neighborhood.
       val tileWidth = src.getWidth
       val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT)
 
       val useWeights = weights.value
       val srcValues = src.getSamples(0, 0, src.getWidth, src.getHeight, 0, null.asInstanceOf[Array[Double]])
-      var nodataValues = new Array[Boolean](srcValues.length)
+      var pixelHasValue = new Array[Boolean](srcValues.length)
       var i: Int = 0
       while (i < srcValues.length) {
-        nodataValues(i) = isNodata(srcValues(i))
+        pixelHasValue(i) = !isNodata(srcValues(i))
         i += 1
       }
-      var loopMin: Long = Long.MaxValue
-      var loopMax: Long = Long.MinValue
+//      var loopMin: Long = Long.MaxValue
+//      var loopMax: Long = Long.MinValue
       val tileStart = System.currentTimeMillis()
+      var ky: Int = 0
+      var kx: Int = 0
+      var result: Double = 0.0f
+      var weight: Double = 0.0f
+      var x: Int = 0
       var y: Int = 0
       while (y < tilesize) {
-        var x: Int = 0
+        x = 0
         while (x < tilesize) {
-            if (!nodataValues((y + halfKernelH) * tileWidth + x + halfKernelW)) {
-              var result: Double = 0.0f
-              var weight: Double = 0.0f
+            if (pixelHasValue((y + halfKernelH) * tileWidth + x + halfKernelW)) {
+              result = 0.0f
+              weight = 0.0f
 
-              val loopStart = System.currentTimeMillis()
-              var ky: Int = 0
+//              val loopStart = System.currentTimeMillis()
+              ky = 0
               while (ky <  kernelH) {
-                var kx: Int = 0
+                kx = 0
                 while (kx < kernelW) {
-                  if (!nodataValues((y + ky) * tileWidth + x + kx)) {
-                    val v: Double = srcValues((y + ky) * tileWidth + x + kx)
+                  val index = (y + ky) * tileWidth + x + kx
+                  if (pixelHasValue(index)) {
                     val w: Double = useWeights(ky * kernelW + kx)
                     weight += w
-                    result += v * w
+                    result += srcValues(index) * w
                   }
                   kx += 1
                 }
                 ky += 1
               }
-              val loopTime = System.currentTimeMillis() - loopStart
-              loopMin = Math.min(loopMin, loopTime)
-              loopMax = Math.max(loopMax, loopTime)
+//              val loopTime = System.currentTimeMillis() - loopStart
+//              loopMin = Math.min(loopMin, loopTime)
+//              loopMax = Math.max(loopMax, loopTime)
               if (weight == 0.0f) {
                 dst.setSample(x, y, 0, Float.NaN)
               }
@@ -230,7 +236,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       log.info("Time to process tile " + tile._1.get + " is " + (System.currentTimeMillis() - startTime))
       log.info("  prep " + tile._1.get + " is " + (tileStart - startTime))
       log.info("  just tile " + tile._1.get + " is " + (System.currentTimeMillis() - tileStart))
-      log.info("  loopMin = " + loopMin + ", loopMax = " + loopMax)
+//      log.info("  loopMin = " + loopMin + ", loopMax = " + loopMax)
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
     })))
 
