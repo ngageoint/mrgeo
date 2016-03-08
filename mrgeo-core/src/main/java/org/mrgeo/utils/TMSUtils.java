@@ -234,6 +234,31 @@ public static class Bounds implements Serializable
     }
 
   }
+  public void expandBy(final double v)
+  {
+    n += v;
+    s -= v;
+    w -= v;
+    e += v;
+  }
+
+  public void expandBy(final double x, final double y)
+  {
+    n += y;
+    s -= y;
+
+    w -= x;
+    e += x;
+  }
+
+  public void
+  expandBy(final double west, final double south, final double east, final double north)
+  {
+      n += north;
+      s -= south;
+      w -= west;
+      e += east;
+  }
 
   @Override
   public int hashCode()
