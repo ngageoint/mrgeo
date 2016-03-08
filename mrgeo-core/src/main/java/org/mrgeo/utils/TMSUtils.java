@@ -244,7 +244,7 @@ public static class Bounds implements Serializable
 
   public void expandBy(final double x, final double y)
   {
-    n += x;
+    n += y;
     s -= y;
 
     w -= x;
