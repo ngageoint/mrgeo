@@ -311,7 +311,9 @@ object GDALUtils extends Logging {
     var tmp: Byte = 0
     var i: Int = 0
     gdaldatatype match {
-      // 2 byte value... swap byte 1 with 2
+    // Since it's byte data, there is nothing to swap - do nothing
+    case gdalconstConstants.GDT_Byte => {}
+    // 2 byte value... swap byte 1 with 2
     case gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 =>
       while (i + 1 < bytes.length) {
         tmp = bytes(i)
