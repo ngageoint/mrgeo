@@ -36,12 +36,12 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapalgebra.ExportMapOp;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1144,12 +1144,30 @@ public void kernelGaussian() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void kernelGaussian2k() throws Exception
+{
+  LoggingUtils.setLogLevel("org.mrgeo.mapalgebra.KernelMapOp", LoggingUtils.INFO);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("kernel(\"gaussian\", [%s], 2000.0)", regularpointsPath), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("kernel(\"gaussian\", [%s], 2000.0)", regularpointsPath));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void kernelLaplacian() throws Exception
 {
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("kernel(\"laplacian\", [%s], 100.0)", regularpointsPath), -9999);
+        String.format("kernel(\"laplacian\", [%s], 100.0)", smallElevation), -9999);
   }
   else
   {
