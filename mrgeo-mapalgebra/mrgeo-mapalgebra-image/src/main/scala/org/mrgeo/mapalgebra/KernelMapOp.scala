@@ -24,7 +24,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
-import org.mrgeo.kernel.{LaplacianGeographicKernelOld, GaussianGeographicKernel, Kernel, LaplacianGeographicKernel}
+import org.mrgeo.kernel.{Kernel, LaplacianGeographicKernel, GaussianGeographicKernel}
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
@@ -144,19 +144,6 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       naiveKernel(focal, kernel, nodatas, context)
     case _ =>
       val metersPerPixel = TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE
-
-      val k2 = new LaplacianGeographicKernelOld(sigma, metersPerPixel, metersPerPixel)
-
-      val localWeights = k2.getKernel
-      println("Kernel w, h " + k2.getWidth + ", " + k2.getHeight)
-      for (ky <- 0 until k2.getHeight) {
-        // log.info(ky + ": ")
-        val sb = new StringBuffer()
-        for (kx <- 0 until k2.getWidth) {
-          print("%2.6f".format(localWeights(ky * k2.getWidth + kx)) + "     ")
-        }
-        println()
-      }
 
       focal.flatMap(tile => {
         kernel.calculate(tile._1.get(), RasterWritable.toRaster(tile._2), nodatas) match {
