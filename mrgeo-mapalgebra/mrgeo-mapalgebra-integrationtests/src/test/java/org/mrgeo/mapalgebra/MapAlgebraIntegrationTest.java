@@ -1146,7 +1146,6 @@ public void kernelGaussian() throws Exception
 @Category(IntegrationTest.class)
 public void kernelGaussian2k() throws Exception
 {
-  LoggingUtils.setLogLevel("org.mrgeo.mapalgebra.KernelMapOp", LoggingUtils.INFO);
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
