@@ -1167,7 +1167,7 @@ public void kernelLaplacian() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("kernel(\"laplacian\", [%s], 100.0)", smallElevation), -9999);
+        String.format("kernel(\"laplacian\", [%s], 100.0)", regularpointsPath), -9999);
   }
   else
   {
