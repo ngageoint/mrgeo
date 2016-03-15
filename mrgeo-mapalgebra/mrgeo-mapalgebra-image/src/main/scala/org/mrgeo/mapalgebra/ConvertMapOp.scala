@@ -1,6 +1,6 @@
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{Raster, WritableRaster, DataBuffer}
+import java.awt.image.DataBuffer
 import java.io.{IOException, ObjectOutput, ObjectInput, Externalizable}
 
 import org.apache.spark.{SparkContext, SparkConf}
@@ -11,6 +11,8 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.SparkUtils
+
+import org.mrgeo.utils.MrGeoImplicits._
 
 object ConvertMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -245,7 +247,7 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
       var stats = meta.getStats
       if (stats == null) {
         stats = SparkUtils.calculateStats(rdd, meta.getBands,
-          org.mrgeo.utils.MrGeoImplicits.toNumber(meta.getDefaultValues))
+          meta.getDefaultValues)
       }
       val result = rdd.map(U => {
         val src = RasterWritable.toRaster(U._2)

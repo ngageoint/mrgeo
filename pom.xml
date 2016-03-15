@@ -68,6 +68,8 @@
     <jts.version>1.13</jts.version>
     <kryo.version>2.21</kryo.version>
     <mahout.version>0.9-cdh5.3.0</mahout.version>
+    <opencv.version>2.4.9-7</opencv.version>
+    <opencv.group>nu.pattern</opencv.group>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
     <py4j.version>0.9.1</py4j.version>
@@ -262,6 +264,7 @@
               <arg>-target:jvm-${java.version}</arg>
               <arg>-Xmax-classfile-name</arg>
               <arg>143</arg>
+              <arg>-optimize</arg>
             </args>
             <javacArgs>
               <javacArg>-source ${java.version}</javacArg>
@@ -2985,6 +2988,14 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <!-- NOTE:  This is just for testing!!!  We need a better way to correllate the opencv
+                  binaries and the jar.
+      -->
+      <dependency>
+        <groupId>${opencv.group}</groupId>
+        <artifactId>opencv</artifactId>
+        <version>${opencv.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
