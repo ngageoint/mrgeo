@@ -384,6 +384,7 @@ do
   STATUS=`aws emr describe-cluster --cluster-id $CLUSTER_ID`
 
   CLUSTERSTATUS=`echo $STATUS | jq -r '.Cluster.Status.State'`
+  NAME=`echo $STATUS | jq -r '.Cluster.Name'`
 
   STARTTIME=`echo $STATUS | jq -r '.Cluster.Status.Timeline.CreationDateTime'`
   STARTTIME=${STARTTIME%.*}
@@ -408,15 +409,15 @@ do
     i=0
     while [ $i -lt $len ]
     do
-      if [ ${INSTANCES[i+1]} == ${INSTANCES[i+4]} ]
+      if [ ${INSTANCES[i+2]} == ${INSTANCES[i+5]} ]
       then
-        NODES=${INSTANCES[i+1]}
+        NODES=${INSTANCES[i+2]}
       else
-        NODES=${INSTANCES[i+4]}"/"${INSTANCES[i+1]}
+        NODES=${INSTANCES[i+5]}"/"${INSTANCES[i+2]}
       fi
 
-      echo "  "${INSTANCES[i]}" ("${NODES}"-"${INSTANCES[i+2]}") : "${INSTANCES[i+3]}
-      i=$((i+5))
+      echo "  "${INSTANCES[i]}" ("${NODES}"-"${INSTANCES[i+3]}") : "${INSTANCES[i+4]}
+      i=$((i+6))
     done
   fi
   sleep 15
