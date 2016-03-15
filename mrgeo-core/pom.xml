@@ -181,6 +181,10 @@
       <artifactId>gdal</artifactId>
     </dependency>
     <dependency>
+      <groupId>${opencv.group}</groupId>
+      <artifactId>opencv</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-jexl</artifactId>
     </dependency>

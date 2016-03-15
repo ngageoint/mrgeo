@@ -22,6 +22,7 @@ import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -239,7 +240,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
     val tilesize = meta.getTilesize
     val bands = meta.getBands
 
-    rasterRDD = Some(RasterRDD(groups.map(tile => {
+    rasterRDD = Some(RasterRDD(groups.flatMap(tile => {
 
       val termCount = isRdd.length
 
@@ -266,7 +267,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
           }
 
           ri match {
-          case r:Raster =>
+          case r: Raster =>
             Some(r.getSampleDouble(x, y, b))
           case a =>
             None
@@ -278,6 +279,9 @@ class ConMapOp extends RasterMapOp with Externalizable {
       }
       val done = new Breaks
 
+      var hasdata = false
+
+      //NOTE:  the raster is already filled with nodata, no need to do do any setting of resultant pixels with nodata
       var y: Int = 0
       while (y < raster.getHeight) {
         var x: Int = 0
@@ -289,36 +293,33 @@ class ConMapOp extends RasterMapOp with Externalizable {
                 // get the conditional value, either from the rdd or constant
                 val v = getValue(i, x, y, b) match {
                 case Some(d) => d
-                case _ => nodata
+                case _ => done.break()
                 }
-
-                //println(getValue(i, x, y, b))
 
                 // check for nodata
                 if (RasterMapOp.isNodata(v, nodatas(i))) {
-                  raster.setSample(x, y, b, nodata)
                   done.break()
                 }
                 // greater than 0, so take the true case
                 else if (!RasterMapOp.nearZero(v)) {
-                  val v = getValue(i + 1, x, y, b) match {
-                  case Some(d) => d
-                  case _ => nodata
+                  getValue(i + 1, x, y, b) match {
+                  case Some(d) =>
+                    raster.setSample(x, y, b, d)
+                    hasdata = true
+                  case _ =>
                   }
-
-                  raster.setSample(x, y, b, v)
                   done.break()
                 }
               }
 
               // didn't find one in the loop, take the last entry (the else)
-              val v = getValue(termCount - 1, x, y, b) match {
-              case Some(d) => d
-              case _ => nodata
+              getValue(termCount - 1, x, y, b) match {
+              case Some(d) => {
+                raster.setSample(x, y, b, d)
+                hasdata = true
               }
-
-              raster.setSample(x, y, b, v)
-
+              case _ =>
+              }
             }
             b += 1
           }
@@ -327,7 +328,10 @@ class ConMapOp extends RasterMapOp with Externalizable {
         y += 1
       }
 
-      (tile._1, RasterWritable.toWritable(raster))
+      if (hasdata)
+        Array((tile._1, RasterWritable.toWritable(raster))).iterator
+      else
+        Array.empty[(TileIdWritable, RasterWritable)].iterator
     })))
 
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
