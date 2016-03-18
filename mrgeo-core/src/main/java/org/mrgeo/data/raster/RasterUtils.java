@@ -1210,6 +1210,27 @@ public static int getElementSize(final int rasterDataType)
   return size;
 }
 
+public static double getDefaultNoDataForType(final int rasterDataType)
+{
+  switch (rasterDataType)
+  {
+    case DataBuffer.TYPE_BYTE:
+      return 255;
+    case DataBuffer.TYPE_FLOAT:
+      return Float.NaN;
+    case DataBuffer.TYPE_DOUBLE:
+      return Double.NaN;
+    case DataBuffer.TYPE_INT:
+      return Integer.MIN_VALUE;
+    case DataBuffer.TYPE_SHORT:
+    case DataBuffer.TYPE_USHORT:
+      return Short.MIN_VALUE;
+    default:
+      throw new RasterWritable.RasterWritableException(
+              "Error trying to get default nodata value from raster. Bad raster data type " + rasterDataType);
+  }
+}
+
 public static int getElementSize(final Raster r)
 {
   return getElementSize(r.getTransferType());

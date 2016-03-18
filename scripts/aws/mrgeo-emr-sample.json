@@ -7,6 +7,7 @@
   "AccessKey": "",
   "SecretAccessKey": "",
   "GDALBootstrap": "s3://mrgeo-deploy/gdal1.11.1/install-gdal.sh",
+  "OpenCVBootstrap": "s3://mrgeo-deploy/opencv2.4.9/install-opencv.sh",
   "InstallMrGeoStep": "s3://mrgeo-deploy/mrgeo-setup.sh",
   "zone": "us-east-1b",
   "zones": [

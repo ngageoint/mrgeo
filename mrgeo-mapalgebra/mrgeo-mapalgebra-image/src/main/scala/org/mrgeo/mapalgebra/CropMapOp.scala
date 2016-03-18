@@ -20,6 +20,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -95,70 +96,77 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
     bounds = TMSUtils.boundsToTile(cropBounds, zoom, tilesize)
 
-    val filtered = rdd.filter(tile => {
-      val t = TMSUtils.tileid(tile._1.get(), zoom)
-      (t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)
-    })
+//    val filtered = rdd.filter(tile => {
+//      val t = TMSUtils.tileid(tile._1.get(), zoom)
+//      (t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)
+//    })
 
 
-    rasterRDD = Some(RasterRDD(if (exact) {
-      val pp = calculateCrop(zoom, tilesize)
+    rasterRDD = Some(RasterRDD(
 
-      val t = pp._1.py
-      val r = pp._1.px
-      val b = pp._2.py
-      val l = pp._2.px
+      rdd.flatMap(tile => {
+        val t = TMSUtils.tileid(tile._1.get(), zoom)
+        if ((t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)) {
+          if (exact) {
+            val pp = calculateCrop(zoom, tilesize)
 
-      filtered.map(tile => {
-        val tt = TMSUtils.tileid(tile._1.get(), zoom)
-        if ((tt.tx == bounds.w) || (tt.tx == bounds.e) || (tt.ty == bounds.s) || (tt.ty == bounds.n)) {
-          var minCopyX:Long = 0
-          var maxCopyX:Long = tilesize
-          var minCopyY:Long = 0
-          var maxCopyY:Long = tilesize
+            val t = pp._1.py
+            val r = pp._1.px
+            val b = pp._2.py
+            val l = pp._2.px
+            val tt = TMSUtils.tileid(tile._1.get(), zoom)
+            if ((tt.tx == bounds.w) || (tt.tx == bounds.e) || (tt.ty == bounds.s) || (tt.ty == bounds.n)) {
+              var minCopyX:Long = 0
+              var maxCopyX:Long = tilesize
+              var minCopyY:Long = 0
+              var maxCopyY:Long = tilesize
 
-          if (tt.tx == bounds.w) {
-            minCopyX = l
-          }
-          if (tt.tx == bounds.e) {
-            maxCopyX = r
-          }
-          if (tt.ty == bounds.s) {
-            maxCopyY = b
-          }
-          if (tt.ty == bounds.n) {
-            minCopyY = t
-          }
-
-          val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
-
-          var y: Int = 0
-          while (y < raster.getHeight) {
-            var x: Int = 0
-            while (x < raster.getWidth) {
-              var b: Int = 0
-              while (b < raster.getNumBands) {
-                if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY)
-                {
-                  raster.setSample(x, y, 0, nodata)
-                }
-                b += 1
+              if (tt.tx == bounds.w) {
+                minCopyX = l
               }
-              x += 1
-            }
-            y += 1
-          }
+              if (tt.tx == bounds.e) {
+                maxCopyX = r
+              }
+              if (tt.ty == bounds.s) {
+                maxCopyY = b
+              }
+              if (tt.ty == bounds.n) {
+                minCopyY = t
+              }
 
-          (tile._1, RasterWritable.toWritable(raster))
+              val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+
+              var y: Int = 0
+              while (y < raster.getHeight) {
+                var x: Int = 0
+                while (x < raster.getWidth) {
+                  var b: Int = 0
+                  while (b < raster.getNumBands) {
+                    if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY)
+                    {
+                      raster.setSample(x, y, 0, nodata)
+                    }
+                    b += 1
+                  }
+                  x += 1
+                }
+                y += 1
+              }
+
+              Array((tile._1, RasterWritable.toWritable(raster))).iterator
+            }
+            else {
+              Array(tile).iterator
+            }
+          }
+          else {
+            Array(tile).iterator
+          }
         }
         else {
-          tile
+          Array.empty[(TileIdWritable, RasterWritable)].iterator
         }
-      })
-    }
-    else {
-      filtered
-    }))
+      })))
 
     val b = if (exact) {
       cropBounds
@@ -203,11 +211,13 @@ class CropMapOp extends RasterMapOp with Externalizable {
   override def readExternal(in: ObjectInput): Unit = {
     exact = in.readBoolean()
     bounds = TMSUtils.TileBounds.fromCommaString(in.readUTF())
+    cropBounds = TMSUtils.Bounds.fromCommaString(in.readUTF())
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
     out.writeBoolean(exact)
     out.writeUTF(bounds.toCommaString)
+    out.writeUTF(cropBounds.toCommaString)
   }
 }
 
