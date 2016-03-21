@@ -22,6 +22,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.PairRDDFunctions
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
@@ -40,7 +41,6 @@ object IsNodataMapOp extends MapOpRegistrar {
 }
 
 class IsNodataMapOp extends RawUnaryMathMapOp {
-  private var bounds:Option[Bounds] = None
 
   private[unarymath] def this(raster: Option[RasterMapOp]) = {
     this()
@@ -51,6 +51,10 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     this()
 
     initialize(node, variables)
+  }
+
+  protected def getOutputBounds(inputMetadata: MrsPyramidMetadata): Bounds = {
+    inputMetadata.getBounds
   }
 
   // Unfortunately, the logic for isnodata uses nodata values, so we can't use the generic RawUnary execute
@@ -65,11 +69,8 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     val nodatas = meta.getDefaultValues
     val zoom = meta.getMaxZoomLevel
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds match {
-      case Some(b) => b
-      case None => meta.getBounds
-    }), zoom, meta.getTilesize)
-
+    val bounds = getOutputBounds(meta)
+    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), zoom, meta.getTilesize)
     val allTiles = RasterMapOp.createEmptyRasterRDD(context, tb, zoom)
     val src = RasterWritable.toRaster(rdd.first()._2)
     // If there are tiles missing from the input that are within the bounds,
@@ -112,7 +113,7 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
 
     val outputNodatas = Array.fill[Double](meta.getBands)(RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE))
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, outputNodatas,
-      bounds = meta.getBounds, calcStats = false))
+      bounds = bounds, calcStats = false))
 
     true
   }

@@ -42,6 +42,7 @@ import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LoggingUtils;
+import org.mrgeo.utils.LongRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1151,6 +1152,83 @@ public void isNodataWithMissingTiles() throws Exception
     Assert.assertNotNull("Unable to load output image metadata", metadata);
     Assert.assertEquals("Wrong number of bands", 1, metadata.getBands());
     Assert.assertEquals("Unexpected nodata value", 255.0, metadata.getDefaultValue(0), 1e-8);
+    // Check the tile bounds in the metadata
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("Unable to get tile bounds for max zoom", tb);
+    Assert.assertEquals(915, tb.getMinX());
+    Assert.assertEquals(917, tb.getMaxX());
+    Assert.assertEquals(203, tb.getMinY());
+    Assert.assertEquals(205, tb.getMaxY());
+    Assert.assertEquals(DataBuffer.TYPE_BYTE, metadata.getTileType());
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void isNodataWithBoundsRaster() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("isNodataBounds([%s], [%s])",
+                                                kphforsmallelevation, allhundreds), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("isNodataBounds([%s], [%s])", kphforsmallelevation, allhundreds));
+    // Make sure that the output nodata value is 255 (the value
+    // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
+    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load output image", pyramid);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("Unable to load output image metadata", metadata);
+    Assert.assertEquals("Wrong number of bands", 1, metadata.getBands());
+    Assert.assertEquals("Unexpected nodata value", 255.0, metadata.getDefaultValue(0), 1e-8);
+    // Check the bounds in the metadata - should match allhundreds
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("Unable to get tile bounds for max zoom", tb);
+    Assert.assertEquals(915, tb.getMinX());
+    Assert.assertEquals(917, tb.getMaxX());
+    Assert.assertEquals(203, tb.getMinY());
+    Assert.assertEquals(206, tb.getMaxY());
+    Assert.assertEquals(DataBuffer.TYPE_BYTE, metadata.getTileType());
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void isNodataWithBounds() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("isNodataBounds([%s], 141.719, -18.247, 142.617, -17.264)",
+                                                kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("isNodataBounds([%s], 141.719, -18.247, 142.617, -17.264)",
+                                                kphforsmallelevation));
+    // Make sure that the output nodata value is 255 (the value
+    // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
+    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load output image", pyramid);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("Unable to load output image metadata", metadata);
+    Assert.assertEquals("Wrong number of bands", 1, metadata.getBands());
+    Assert.assertEquals("Unexpected nodata value", 255.0, metadata.getDefaultValue(0), 1e-8);
+    // Check the bounds in the metadata - should match allhundreds
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("Unable to get tile bounds for max zoom", tb);
+    Assert.assertEquals(915, tb.getMinX());
+    Assert.assertEquals(917, tb.getMaxX());
+    Assert.assertEquals(204, tb.getMinY());
+    Assert.assertEquals(206, tb.getMaxY());
+    Assert.assertEquals(DataBuffer.TYPE_BYTE, metadata.getTileType());
   }
 }
 
