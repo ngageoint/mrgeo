@@ -20,7 +20,9 @@ import java.io.IOException
 import org.apache.spark.SparkContext
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
@@ -74,6 +76,20 @@ object RasterMapOp {
       }
     case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
     }
+  }
+
+  def createEmptyRasterRDD(context: SparkContext, tb: TMSUtils.TileBounds, zoom: Int) = {
+    val tileBuilder = Array.newBuilder[(TileIdWritable, RasterWritable)]
+    for (ty <- tb.s to tb.n) {
+      for (tx <- tb.w to tb.e) {
+        val id = TMSUtils.tileid(tx, ty, zoom)
+
+        val tuple = (new TileIdWritable(id), new RasterWritable())
+        tileBuilder += tuple
+      }
+    }
+
+    new RasterRDD(context.parallelize(tileBuilder.result()))
   }
 }
 
@@ -141,5 +157,4 @@ abstract class RasterMapOp extends MapOp {
     GDALUtils.toDataset(raster, meta.getDefaultValue(0), bounds)
 
   }
-
 }

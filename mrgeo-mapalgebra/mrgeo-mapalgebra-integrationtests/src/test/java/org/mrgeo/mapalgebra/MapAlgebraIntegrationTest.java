@@ -86,6 +86,9 @@ private static Path allhundredsupPath;
 private static final String allonesnopyramids = "all-ones-no-pyramids";
 private static final String allonesholes = "all-ones-with-holes";
 private static final String allhundredsholes = "all-hundreds-with-holes";
+// the kph-for-small-elevation overlaps small-elevation and all-ones and has some missing
+// tiles so we can perform some nodata checks against it.
+private static final String kphforsmallelevation = "kph-for-small-elevation";
 
 private static String smallelevationtif = Defs.INPUT + "small-elevation.tif";
 
@@ -147,6 +150,7 @@ public static void init() throws IOException
   allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), kphforsmallelevation);
 
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
   regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
@@ -1124,6 +1128,31 @@ public void isNull() throws Exception
   }
 }
 
+
+@Test
+@Category(IntegrationTest.class)
+public void isNodataWithMissingTiles() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("isNodata([%s])", kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("isNodata([%s])", kphforsmallelevation));
+    // Make sure that the output nodata value is 255 (the value
+    // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
+    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load output image", pyramid);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("Unable to load output image metadata", metadata);
+    Assert.assertEquals("Wrong number of bands", 1, metadata.getBands());
+    Assert.assertEquals("Unexpected nodata value", 255.0, metadata.getDefaultValue(0), 1e-8);
+  }
+}
 
 @Test
 @Category(IntegrationTest.class)

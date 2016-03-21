@@ -130,17 +130,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
     case None => meta.getBounds
     }), zoom, meta.getTilesize)
 
-    val tileBuilder = Array.newBuilder[(TileIdWritable, RasterWritable)]
-    for (ty <- tb.s to tb.n) {
-      for (tx <- tb.w to tb.e) {
-        val id = TMSUtils.tileid(tx, ty, zoom)
-
-        val tuple = (new TileIdWritable(id), new RasterWritable())
-        tileBuilder += tuple
-      }
-    }
-
-    val test = context.parallelize(tileBuilder.result())
+    val test = RasterMapOp.createEmptyRasterRDD(context, tb, zoom)
 
     rasterRDD = Some(RasterRDD(constFill match {
     case Some(const) =>
