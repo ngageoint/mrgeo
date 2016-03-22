@@ -1013,6 +1013,51 @@ public void fillBounds() throws Exception
   }
 }
 
+@Test
+@Category(IntegrationTest.class)
+public void fillToRasterBounds() throws Exception
+{
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("fillBounds([%s], -1, [%s])",
+                                                kphforsmallelevation, allhundreds), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("fillBounds([%s], -1, [%s])",
+                                                kphforsmallelevation, allhundreds));
+    // Make sure that the output nodata value is 255 (the value
+    // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
+    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load output image", pyramid);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("Unable to load output image metadata", metadata);
+    // Check the bounds in the metadata - should match allhundreds
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("Unable to get tile bounds for max zoom", tb);
+    Assert.assertEquals(915, tb.getMinX());
+    Assert.assertEquals(917, tb.getMaxX());
+    Assert.assertEquals(203, tb.getMinY());
+    Assert.assertEquals(206, tb.getMaxY());
+    // Make sure the output type is the same as the input type
+    MrsPyramid inputPyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load input image", inputPyramid);
+    MrsPyramidMetadata inputMetadata = inputPyramid.getMetadata();
+    Assert.assertNotNull("Unable to load input image metadata", inputMetadata);
+    Assert.assertEquals("Wrong number of bands", inputMetadata.getBands(), metadata.getBands());
+    for (int b = 0; b < inputMetadata.getBands(); b++)
+    {
+      Assert.assertEquals("Unexpected nodata value in band " + b, inputMetadata.getDefaultValue(b),
+                          metadata.getDefaultValue(b), 1e-8);
+    }
+    Assert.assertEquals(inputMetadata.getTileType(), metadata.getTileType());
+  }
+}
+
 @Ignore
 @Test
 @Category(IntegrationTest.class)
