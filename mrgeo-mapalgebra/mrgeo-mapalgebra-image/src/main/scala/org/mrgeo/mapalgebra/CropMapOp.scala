@@ -34,49 +34,60 @@ object CropMapOp extends MapOpRegistrar {
   }
 
   def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
-    new CropMapOp(Some(raster), w, s, e, n, false)
+    new CropMapOp(Some(raster), w, s, e, n)
+
+  def create(raster:RasterMapOp, rasterForBounds: RasterMapOp):MapOp =
+    new CropMapOp(Some(raster), Some(rasterForBounds))
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new CropMapOp(node, variables, false)
+    new CropMapOp(node, variables)
 }
 
 
 class CropMapOp extends RasterMapOp with Externalizable {
-  private val EPSILON: Double = 1e-8
-
   private var rasterRDD: Option[RasterRDD] = None
 
-  private var inputMapOp: Option[RasterMapOp] = None
-  private var bounds:TMSUtils.TileBounds = null
-  private var cropBounds:TMSUtils.Bounds = null
-  private var exact: Boolean = false
+  protected var inputMapOp: Option[RasterMapOp] = None
+  protected var rasterForBoundsMapOp: Option[RasterMapOp] = None
+  protected var bounds:TMSUtils.TileBounds = null
+  protected var cropBounds:TMSUtils.Bounds = null
 
-  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double, exact:Boolean) = {
+  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double) = {
     this()
 
     inputMapOp = raster
     cropBounds = new Bounds(w, s, e, n)
-    this.exact = exact
   }
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode], exact:Boolean) = {
+  private[mapalgebra] def this(raster:Option[RasterMapOp], rasterForBounds: Option[RasterMapOp]) = {
     this()
 
-    if (node.getNumChildren != 5) {
-      throw new ParserException("Usage: crop(raster, w, s, e, n)")
-    }
-
-    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-
-    this.exact = exact
-
-    cropBounds = new TMSUtils.Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
-      MapOp.decodeDouble(node.getChild(2), variables).get,
-      MapOp.decodeDouble(node.getChild(3), variables).get,
-      MapOp.decodeDouble(node.getChild(4), variables).get)
-
+    inputMapOp = raster
+    rasterForBoundsMapOp = rasterForBounds
   }
 
+  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren != 5 && node.getNumChildren != 2) {
+      throw new ParserException("Usage: crop(raster, w, s, e, n) or crop(raster, rasterForBounds)")
+    }
+    parseChildren(node, variables)
+  }
+
+  protected def parseChildren(node: ParserNode, variables: String => Option[ParserNode]) = {
+    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+
+    if (node.getNumChildren == 2) {
+      rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
+    }
+    else {
+      cropBounds = new TMSUtils.Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
+        MapOp.decodeDouble(node.getChild(2), variables).get,
+        MapOp.decodeDouble(node.getChild(3), variables).get,
+        MapOp.decodeDouble(node.getChild(4), variables).get)
+    }
+  }
 
   override def rdd(): Option[RasterRDD] = rasterRDD
 
@@ -92,8 +103,14 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
-    val nodata = meta.getDefaultValue(0)
+    val nodatas = meta.getDefaultValues
 
+    if (rasterForBoundsMapOp.isDefined) {
+      cropBounds = TMSUtils.Bounds.asTMSBounds(rasterForBoundsMapOp.get.metadata() match {
+          case Some(meta) =>  meta.getBounds
+          case _ => throw new IOException("Unable to get metadata for the bounds raster")
+      })
+    }
     bounds = TMSUtils.boundsToTile(cropBounds, zoom, tilesize)
 
 //    val filtered = rdd.filter(tile => {
@@ -107,73 +124,14 @@ class CropMapOp extends RasterMapOp with Externalizable {
       rdd.flatMap(tile => {
         val t = TMSUtils.tileid(tile._1.get(), zoom)
         if ((t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)) {
-          if (exact) {
-            val pp = calculateCrop(zoom, tilesize)
-
-            val t = pp._1.py
-            val r = pp._1.px
-            val b = pp._2.py
-            val l = pp._2.px
-            val tt = TMSUtils.tileid(tile._1.get(), zoom)
-            if ((tt.tx == bounds.w) || (tt.tx == bounds.e) || (tt.ty == bounds.s) || (tt.ty == bounds.n)) {
-              var minCopyX:Long = 0
-              var maxCopyX:Long = tilesize
-              var minCopyY:Long = 0
-              var maxCopyY:Long = tilesize
-
-              if (tt.tx == bounds.w) {
-                minCopyX = l
-              }
-              if (tt.tx == bounds.e) {
-                maxCopyX = r
-              }
-              if (tt.ty == bounds.s) {
-                maxCopyY = b
-              }
-              if (tt.ty == bounds.n) {
-                minCopyY = t
-              }
-
-              val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
-
-              var y: Int = 0
-              while (y < raster.getHeight) {
-                var x: Int = 0
-                while (x < raster.getWidth) {
-                  var b: Int = 0
-                  while (b < raster.getNumBands) {
-                    if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY)
-                    {
-                      raster.setSample(x, y, 0, nodata)
-                    }
-                    b += 1
-                  }
-                  x += 1
-                }
-                y += 1
-              }
-
-              Array((tile._1, RasterWritable.toWritable(raster))).iterator
-            }
-            else {
-              Array(tile).iterator
-            }
-          }
-          else {
-            Array(tile).iterator
-          }
+          processTile(tile, zoom, tilesize, nodatas)
         }
         else {
           Array.empty[(TileIdWritable, RasterWritable)].iterator
         }
       })))
 
-    val b = if (exact) {
-      cropBounds
-    }
-    else {
-      TMSUtils.tileToBounds(bounds, zoom, tilesize)
-    }
+    val b = getOutputBounds(zoom, tilesize)
 
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues,
       bounds = b.asBounds(), calcStats = false))
@@ -181,41 +139,25 @@ class CropMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  private def calculateCrop(zoom:Int, tilesize:Int) = {
-    var bottomRightWorldPixel: TMSUtils.Pixel = TMSUtils
-        .latLonToPixelsUL(cropBounds.s, cropBounds.e, zoom, tilesize)
+  protected def getOutputBounds(zoom: Int, tilesize: Int): TMSUtils.Bounds = {
+    // Use the bounds of the tiles processed
+    TMSUtils.tileToBounds(bounds, zoom, tilesize)
+  }
 
-    val bottomRightAtPixelBoundary: TMSUtils.LatLon = TMSUtils
-        .pixelToLatLonUL(bottomRightWorldPixel.px, bottomRightWorldPixel.py, zoom, tilesize)
-
-    if (Math.abs(bottomRightAtPixelBoundary.lat - cropBounds.n) < EPSILON) {
-      bottomRightWorldPixel = new TMSUtils.Pixel(bottomRightWorldPixel.px, bottomRightWorldPixel.py - 1)
-    }
-
-    if (Math.abs(bottomRightAtPixelBoundary.lon - cropBounds.e) < EPSILON) {
-      bottomRightWorldPixel = new TMSUtils.Pixel(bottomRightWorldPixel.px - 1, bottomRightWorldPixel.py)
-    }
-
-    val bottomRightPt: TMSUtils.LatLon = TMSUtils
-        .pixelToLatLonUL(bottomRightWorldPixel.px, bottomRightWorldPixel.py, zoom, tilesize)
-    val b: TMSUtils.Bounds = new TMSUtils.Bounds(cropBounds.w, bottomRightPt.lat, bottomRightPt.lon, cropBounds.n)
-
-    (
-        TMSUtils.latLonToTilePixelUL(cropBounds.n, bottomRightPt.lon, bounds.e, bounds.n, zoom, tilesize),
-        TMSUtils.latLonToTilePixelUL(bottomRightPt.lat, cropBounds.w, bounds.w, bounds.s, zoom, tilesize)
-    )
+  protected def processTile(tile: (TileIdWritable, RasterWritable),
+                            zoom: Int, tilesize: Int,
+                            nodatas: Array[Double]): TraversableOnce[(TileIdWritable, RasterWritable)] = {
+    Array(tile).iterator
   }
 
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def readExternal(in: ObjectInput): Unit = {
-    exact = in.readBoolean()
     bounds = TMSUtils.TileBounds.fromCommaString(in.readUTF())
     cropBounds = TMSUtils.Bounds.fromCommaString(in.readUTF())
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeBoolean(exact)
     out.writeUTF(bounds.toCommaString)
     out.writeUTF(cropBounds.toCommaString)
   }
