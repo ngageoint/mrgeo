@@ -11,6 +11,7 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.quantiles.Quantiles
 
 import scala.language.existentials
 
@@ -25,134 +26,6 @@ object QuantilesMapOp extends MapOpRegistrar {
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new QuantilesMapOp(node, variables)
-
-  def getDoublePixelValues(raster: Raster, band: Int): Array[Double] = {
-    raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Double]])
-  }
-
-  def getFloatPixelValues(raster: Raster, band: Int): Array[Float] = {
-    raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Float]])
-  }
-
-  def getIntPixelValues(raster: Raster, band: Int): Array[Int] = {
-    raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Int]])
-  }
-
-  def getShortPixelValues(raster: Raster, band: Int): Array[Short] = {
-    val intValues = raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Int]])
-    intValues.map(U => {
-      U.toShort
-    })
-  }
-
-  def getBytePixelValues(raster: Raster, band: Int): Array[Byte] = {
-    val intValues = raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Int]])
-    intValues.map(U => {
-      U.toByte
-    })
-  }
-
-  def compute(rdd: RasterRDD, numberOfQuantiles: Int, fraction: Option[Float], meta: MrsPyramidMetadata) = {
-    val quantiles = new Array[Float](numberOfQuantiles - 1)
-    for (i <- quantiles.indices) {
-      quantiles(i) = 1.0f / numberOfQuantiles.toFloat * (i + 1).toFloat
-    }
-
-    var b: Int = 0
-    val dt = meta.getTileType
-    var result: Map[Int, Array[Double]] = Map()
-    while (b < meta.getBands) {
-      val nodata = meta.getDefaultValue(b)
-      val sortedPixelValues = meta.getTileType match {
-        case DataBuffer.TYPE_DOUBLE => {
-          var pixelValues = rdd.flatMap(U => {
-            getDoublePixelValues(RasterWritable.toRaster(U._2), b)
-          }).filter(value => {
-            !RasterMapOp.isNodata(value, nodata)
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x)
-        }
-        case DataBuffer.TYPE_FLOAT => {
-          var pixelValues = rdd.flatMap(U => {
-            getFloatPixelValues(RasterWritable.toRaster(U._2), b)
-          }).filter(value => {
-            !RasterMapOp.isNodata(value, nodata)
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x)
-        }
-        case (DataBuffer.TYPE_INT | DataBuffer.TYPE_USHORT) => {
-          var pixelValues = rdd.flatMap(U => {
-            getIntPixelValues(RasterWritable.toRaster(U._2), b)
-          }).filter(value => {
-            value != nodata.toInt
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x)
-        }
-        case DataBuffer.TYPE_SHORT => {
-          var pixelValues = rdd.flatMap(U => {
-            getShortPixelValues(RasterWritable.toRaster(U._2), b)
-          }).filter(value => {
-            value != nodata.toShort
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x)
-        }
-        case DataBuffer.TYPE_BYTE => {
-          var pixelValues = rdd.flatMap(U => {
-            getBytePixelValues(RasterWritable.toRaster(U._2), b)
-          }).filter(value => {
-            value != nodata.toByte
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x)
-        }
-      }
-      val count = sortedPixelValues.count()
-      if (count >= quantiles.length) {
-//        log.info("value count is " + count)
-        // Add an index to the sorted pixel values, but we want it as the key instead
-        // of the value.
-        val sortedWithIndexKey = sortedPixelValues.zipWithIndex().map(_.swap)
-        val quantileValues = new Array[Double](quantiles.length)
-        quantiles.zipWithIndex.foreach(q => {
-          val quantileKey: Long = (q._1 * count).ceil.toLong
-          val quantileValue = sortedWithIndexKey.lookup(quantileKey).head.toString.toDouble
-//          log.info("quantile " + q._1 + " is at index " + quantileKey + " and has value " + quantileValue)
-          quantileValues(q._2) = quantileValue
-        })
-//        if (log.isInfoEnabled) {
-//          log.info("Setting quantiles for band " + b + " to:")
-//          quantileValues.foreach(v => {
-//            log.info("  " + v)
-//          })
-//        }
-        result += (b -> quantileValues)
-      }
-//      else {
-//        log.warn("Unable to compute quantiles because there are only " + count + " values")
-//      }
-      b += 1
-    }
-    result
-  }
 }
 
 class QuantilesMapOp extends RasterMapOp with Externalizable {
@@ -248,7 +121,7 @@ class QuantilesMapOp extends RasterMapOp with Externalizable {
 //      bounds = meta.getBounds, calcStats = false))
 
     // Compute the quantile values and save them to metadata
-    val quantiles = QuantilesMapOp.compute(rdd, numberOfQuantiles, fraction, meta)
+    val quantiles = Quantiles.compute(rdd, numberOfQuantiles, fraction, meta)
     var b: Int = 0
     while (b < meta.getBands) {
       if (quantiles.contains(b)) {
