@@ -75,6 +75,7 @@
     <module>mrgeo-cmd-buildpyramid</module>
     <module>mrgeo-cmd-export</module>
     <module>mrgeo-cmd-mapalgebra</module>
+    <module>mrgeo-cmd-quantiles</module>
     <module>mrgeo-cmd-webserver</module>
   </modules>
   <dependencies>

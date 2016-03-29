@@ -159,6 +159,10 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-cmd-quantiles</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-cmd-webserver</artifactId>
     </dependency>
     <dependency>
