@@ -19,7 +19,8 @@ object TpiMapOp extends MapOpRegistrar {
 
 class TpiMapOp extends TerrainIndexMapOp
 {
-  private var kernelSize: Int = 3
+  // Chad suggested a 33 pixel "radius" by default for TPI for good results
+  private var kernelSize: Int = 67
 
   private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
     this()
