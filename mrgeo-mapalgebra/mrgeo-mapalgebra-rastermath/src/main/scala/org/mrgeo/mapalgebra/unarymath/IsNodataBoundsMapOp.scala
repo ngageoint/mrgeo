@@ -36,7 +36,7 @@ class IsNodataBoundsMapOp extends IsNodataMapOp {
   private[unarymath] def this(raster: RasterMapOp, rasterForBounds: RasterMapOp) = {
     this()
     this.input = Some(raster)
-    this.bounds = bounds
+    this.rasterForBounds = Some(rasterForBounds)
   }
 
   private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
