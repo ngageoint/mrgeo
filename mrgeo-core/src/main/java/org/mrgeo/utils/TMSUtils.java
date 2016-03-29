@@ -690,9 +690,69 @@ public static class TileBounds implements Serializable
 // Tile 0, 0 is the lower-left corner of the world grid!
 // Pixel 0, 0 is the lower-left corner of the world grid!
 
-public static int MAXZOOMLEVEL = 22; // max zoom level (the highest X value
+public static int MAXZOOMLEVEL = 22; // max zoom level (the highest X value can be as an int)
 
-// can be as an int)
+
+// limits bounds to +=180, +=90
+public static TMSUtils.Bounds limit(final TMSUtils.Bounds bounds)
+{
+  double n, s, e, w;
+
+  if (bounds.w < -180.0)
+  {
+    w = -180.0;
+  }
+  else if (bounds.w >= 180.0)
+  {
+    w = 179.9999999999;
+  }
+  else
+  {
+    w = bounds.w;
+  }
+
+  if (bounds.s < -90.0)
+  {
+    s = -90.0;
+  }
+  else if (bounds.s >= 90.0)
+  {
+    s = 89.9999999999;
+  }
+  else
+  {
+    s = bounds.s;
+  }
+
+  if (bounds.e < -180.0)
+  {
+    e = 180.0;
+  }
+  else if (bounds.e >= 180.0)
+  {
+    e = 179.9999999999;
+  }
+  else
+  {
+    e = bounds.e;
+  }
+
+  if (bounds.n < -90.0)
+  {
+    n = -90.0;
+  }
+  else if (bounds.n >= 90.0)
+  {
+    n = 89.9999999999;
+  }
+  else
+  {
+    n = bounds.n;
+  }
+
+  return new TMSUtils.Bounds(w, s, e, n);
+}
+
 
 // Converts lat/lon bounds to the correct tile bounds for a zoom level
 public static TileBounds boundsToTile(final TMSUtils.Bounds bounds, final int zoom,

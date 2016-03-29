@@ -90,11 +90,11 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.compareraster(cos, self.name)
 
     def test_crop(self):
-        crop = self.smallelevation.crop(142.05, -17.75, 142.2, -17.65)
+        crop = self.smallelevation.crop(w=142.05, s=-17.75, e=142.2, n=-17.65)
         self.compareraster(crop, self.name)
 
     def test_crop_exact(self):
-        crop = self.smallelevation.cropexact(142.05, -17.75, 142.2, -17.65)
+        crop = self.smallelevation.cropexact(w=142.05, s=-17.75, e=142.2, n=-17.65)
         self.compareraster(crop, self.name)
 
     def test_divide(self):
