@@ -123,11 +123,8 @@ class QuantilesMapOp extends RasterMapOp with Externalizable {
     // Compute the quantile values and save them to metadata
     val quantiles = Quantiles.compute(rdd, numberOfQuantiles, fraction, meta)
     var b: Int = 0
-    while (b < meta.getBands) {
-      if (quantiles.contains(b)) {
-        val quantileValues = quantiles(b)
-        meta.setQuantiles(b, quantileValues)
-      }
+    while (b < quantiles.length) {
+      meta.setQuantiles(b, quantiles(b))
       b += 1
     }
     metadata(meta)
