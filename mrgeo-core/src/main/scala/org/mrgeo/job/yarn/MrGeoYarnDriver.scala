@@ -101,14 +101,16 @@ class MrGeoYarnDriver {
     args += "--jar"
     args += driverJar
 
-    //val executors = conf.get("spark.executor.instances", "2").toInt
-    // For Spark 1.6.0, passing --num-executors no longer works. Instead, you
-    // have to set the spark.executor.instances configuration setting.
-    conf.set("spark.executor.instances", job.executors.toString)
-    args += "--num-executors"
-    //args += executors.toString
-    args += job.executors.toString
-
+    // if dynamic allocation is _not_ enabled, we need to set the num-executors
+    if (!conf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = false)) {
+      //val executors = conf.get("spark.executor.instances", "2").toInt
+      // For Spark 1.6.0, passing --num-executors no longer works. Instead, you
+      // have to set the spark.executor.instances configuration setting.
+      conf.set("spark.executor.instances", job.executors.toString)
+      args += "--num-executors"
+      //args += executors.toString
+      args += job.executors.toString
+    }
     args += "--executor-cores"
 //    args += conf.get("spark.executor.cores", "1")
     args +=  job.cores.toString
