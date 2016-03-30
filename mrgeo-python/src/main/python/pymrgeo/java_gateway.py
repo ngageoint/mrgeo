@@ -57,8 +57,11 @@ def read_int(stream):
 
 
 def find_script():
-    if "MRGEO_HOME" in os.environ:
+    if "MRGEO_COMMON_HOME" in os.environ:
+        mrgeo_home = os.environ["MRGEO_COMMON_HOME"]
+    elif "MRGEO_HOME" in os.environ:
         mrgeo_home = os.environ["MRGEO_HOME"]
+        print("MRGEO_HOME has been deprecated, use MRGEO_COMMON_HOME and MRGEO_CONF_DIR instead.")
     else:
         raise Exception("MRGEO_HOME is not set!")
 
@@ -74,7 +77,7 @@ def find_script():
         for filename in fnmatch.filter(filenames, script):
             return os.path.join(root, filename)
 
-    raise Exception('Can not find "' + script + '" within MRGEO_HOME (' + mrgeo_home + ')')
+    raise Exception('Can not find "' + script + '" within MRGEO_COMMON_HOME (' + mrgeo_home + ')')
 
 def is_remote():
     return _isremote

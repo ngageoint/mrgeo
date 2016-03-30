@@ -1,11 +1,22 @@
 #!/bin/bash
 
-CMD_JAR=$MRGEO_HOME/mrgeo-cmd-core*.jar
+
+if [ -n $MRGEO_COMMON_HOME ]; then
+  HOME_DIR=$MRGEO_COMMON_HOME
+elif [ -n $MRGEO_HOME ]; then
+  HOME_DIR=$MRGEO_HOME
+  echo "MRGEO_HOME is deprecated, use MRGEO_COMMON_HOME and MRGEO_CONF_DIR instead."
+else
+  echo "MRGEO_COMMON_HOME not set!"
+  exit -1
+fi
+
+CMD_JAR=$HOME_DIR/mrgeo-cmd-core*.jar
 if [ ! -e $CMD_JAR ]
 then
   # could this be a dev environment?
 
-  FILES=`find $MRGEO_HOME -name "mrgeo-cmd-distribution*.jar"`
+  FILES=`find $HOME_DIR -name "mrgeo-cmd-distribution*.jar"`
   for file in $FILES;
   do
     if [[ $file != *-tests.jar ]]
@@ -19,11 +30,11 @@ then
   then
     LIBS=`dirname $CMD_JAR`:`dirname $CMD_JAR`/lib/*
   else
-    echo "Can't find mrgeo-cmd-core jar file.  Make sure MRGEO_HOME is set properly"
+    echo "Can't find mrgeo-cmd-core jar file.  Make sure MRGEO_COMMON_HOME is set properly"
     exit -1
   fi
 else
-  LIBS=$MRGEO_HOME/*:$MRGEO_HOME/lib/*
+  LIBS=$HOME_DIR/*:$HOME_DIR/lib/*
 fi
 
 #echo $CMD_JAR
