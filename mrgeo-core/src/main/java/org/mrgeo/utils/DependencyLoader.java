@@ -48,6 +48,7 @@ public class DependencyLoader
   private static final Logger log = LoggerFactory.getLogger(DependencyLoader.class);
   private static final String CLASSPATH_FILES = "mapred.job.classpath.files";
 
+  private static boolean printedMrGeoHomeWarning = false;
   public static Set<String> getDependencies(final Class<?> clazz) throws IOException
   {
     Set<File> files = findDependencies(clazz);
@@ -352,12 +353,25 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
       }
     }
 
-    // prepend MRGEO_HOME
-    String mrgeo = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
+    // prepend MRGEO_COMMON_HOME
+    String mrgeo = System.getenv(MrGeoConstants.MRGEO_COMMON_HOME);
     if (mrgeo == null)
     {
-      log.info(MrGeoConstants.MRGEO_ENV_HOME + " environment variable is undefined. Trying system property");
-      mrgeo = System.getProperty(MrGeoConstants.MRGEO_ENV_HOME);
+      // try the deprecated MRGEO_HOME
+      mrgeo = System.getenv(MrGeoConstants.MRGEO_HOME);
+
+      if (mrgeo != null && !printedMrGeoHomeWarning)
+      {
+        log.error(MrGeoConstants.MRGEO_HOME + " environment variable has been deprecated.  " +
+            "Use " + MrGeoConstants.MRGEO_CONF_DIR + " and " + MrGeoConstants.MRGEO_COMMON_HOME + " instead");
+        printedMrGeoHomeWarning = true;
+      }
+    }
+
+    if (mrgeo == null)
+    {
+      log.info(MrGeoConstants.MRGEO_COMMON_HOME + " environment variable is undefined. Trying system property");
+      mrgeo = System.getProperty(MrGeoConstants.MRGEO_COMMON_HOME, System.getProperty(MrGeoConstants.MRGEO_HOME));
     }
     if (mrgeo != null)
     {
@@ -372,7 +386,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     }
     else
     {
-      log.error(MrGeoConstants.MRGEO_ENV_HOME + " is not defined, and may result in inability to find dependent JAR files");
+      log.error(MrGeoConstants.MRGEO_COMMON_HOME + " is not defined, and may result in inability to find dependent JAR files");
     }
 
     // now perform any variable replacement in the classpath

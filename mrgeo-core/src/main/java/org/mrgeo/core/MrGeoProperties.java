@@ -20,77 +20,85 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
 public class MrGeoProperties {
-    private static Properties properties;
+private static Properties properties;
 
-    private static Logger log = LoggerFactory.getLogger(MrGeoProperties.class);
+private static Logger log = LoggerFactory.getLogger(MrGeoProperties.class);
 
-    private MrGeoProperties() {
+private MrGeoProperties() {
 
-      // not even this class can instantiate the constructor
-      throw new AssertionError();
+  // not even this class can instantiate the constructor
+  throw new AssertionError();
 
-    } // end base constructor
+} // end base constructor
 
 
-    public static Properties getInstance() {
-        if( properties == null ) {
-            // This reduces concurrency to just when properties need creating, making access more efficient once created
-            synchronized (MrGeoProperties.class) {
-                if ( properties == null ) {
-                    properties = new Properties();
-                    String home = System.getenv( MrGeoConstants.MRGEO_ENV_HOME );
+public static Properties getInstance() {
 
-                    if( home == null ) {
-                        // Try loading from properties file. This is the method used for
-                        // JBoss deployments
-                        try {
-                            properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
-                        } catch( Exception e ) {
-                            // An empty props object is fine
-                        }
-                        home = properties.getProperty( MrGeoConstants.MRGEO_ENV_HOME );
-                        // If we loaded properties from JBoss module, no need to load from file system
-                        if ( home == null ) log.error(MrGeoConstants.MRGEO_ENV_HOME + " environment variable not set!");
-                    }
-                    if ( home != null )
-                    {
-                        if(! home.endsWith(File.separator)){
-                            home += File.separator;
-                        }
-                        try {
-
-                            File mrgeoConf = new File( home + MrGeoConstants.MRGEO_CONF );
-                            if( mrgeoConf.exists() ) {
-                                properties.load( new FileInputStream( mrgeoConf ) );
-                            }
-                        } catch( FileNotFoundException e ) {
-                            e.printStackTrace();
-                        } catch( IOException e ) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        log.error(MrGeoConstants.MRGEO_ENV_HOME + " environment variable not set!");
-                    }
-                }
-            }
+  if( properties == null ) {
+    // This reduces concurrency to just when properties need creating, making access more efficient once created
+    synchronized (MrGeoProperties.class) {
+      if ( properties == null ) {
+        properties = new Properties();
+        try
+        {
+          String conf = findMrGeoConf();
+          properties.load( new FileInputStream( conf ) );
         }
-        return properties;
-    }
-    
-    public static boolean isDevelopmentMode()
-    {
-      boolean developmentMode = false; // default value
-      Properties props = getInstance();
-      String strDevelopmentMode = props.getProperty(MrGeoConstants.MRGEO_DEVELOPMENT_MODE);
-      if (strDevelopmentMode != null && strDevelopmentMode.equalsIgnoreCase("true"))
-      {
-        developmentMode = true;
+        catch (IOException e)
+        {
+          // Try loading from properties file. This is the method used for JBoss deployments
+          try {
+            properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
+          }
+          catch ( Exception ignored ) {
+            // An empty props object is fine
+          }
+        }
       }
-      return developmentMode;
     }
+  }
+  return properties;
+}
+
+public static boolean isDevelopmentMode()
+{
+  boolean developmentMode = false; // default value
+  Properties props = getInstance();
+  String strDevelopmentMode = props.getProperty(MrGeoConstants.MRGEO_DEVELOPMENT_MODE);
+  if (strDevelopmentMode != null && strDevelopmentMode.equalsIgnoreCase("true"))
+  {
+    developmentMode = true;
+  }
+  return developmentMode;
+}
+
+public static String findMrGeoConf() throws IOException
+{
+  String conf = System.getenv(MrGeoConstants.MRGEO_CONF_DIR);
+  if (conf == null)
+  {
+    String home = System.getenv(MrGeoConstants.MRGEO_HOME);
+    File dir = new File(home, MrGeoConstants.MRGEO_HOME_CONF_DIR);
+
+    if (dir.exists())
+    {
+      log.error(MrGeoConstants.MRGEO_HOME + " environment variable has been deprecated.  " +
+          "Use " + MrGeoConstants.MRGEO_CONF_DIR + " and " + MrGeoConstants.MRGEO_COMMON_HOME + " instead");
+      conf = dir.getCanonicalPath();
+    }
+  }
+
+  File file = new File(conf, MrGeoConstants.MRGEO_CONF);
+  if (file.exists())
+  {
+    return file.getCanonicalPath();
+  }
+
+  throw new IOException(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath());
+}
+
 }

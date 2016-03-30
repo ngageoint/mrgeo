@@ -56,10 +56,9 @@ class MrGeoYarnDriver {
           run.invoke(client)
         }
         catch {
-          case e:Exception => {
+          case e:Exception =>
             e.printStackTrace()
             throw e
-          }
         }
       }
     }

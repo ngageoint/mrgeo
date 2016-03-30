@@ -30,7 +30,6 @@ import com.sun.jersey.test.framework.spi.container.grizzly2.GrizzlyTestContainer
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLAssert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -170,7 +169,7 @@ public class WmsGeneratorTestAbstract extends JerseyTest
 
     Properties mrgeoProperties = MrGeoProperties.getInstance();
 
-    mrgeoProperties.put(MrGeoConstants.MRGEO_ENV_HOME, inputHdfs.toString());
+    mrgeoProperties.put(MrGeoConstants.MRGEO_COMMON_HOME, inputHdfs.toString());
     mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, inputHdfs.toString());
     mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, inputHdfs.toString());
     mrgeoProperties.put("base.path", inputHdfs.toString());

@@ -62,7 +62,7 @@ public class ColorScaleManagerTest {
       final ColorScale csExp = ColorScale.loadFromJSON(colorScaleJSON);
       
       final Properties mrgeoConf = new Properties();
-      mrgeoConf.put(MrGeoConstants.MRGEO_ENV_HOME, TestUtils.composeInputDir(ColorScaleManagerTest.class));
+      mrgeoConf.put(MrGeoConstants.MRGEO_COMMON_HOME, TestUtils.composeInputDir(ColorScaleManagerTest.class));
       mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_IMAGE, TestUtils.composeInputDir(ColorScaleManagerTest.class));
       mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(ColorScaleManagerTest.class));
 
