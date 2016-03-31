@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.core;
@@ -33,9 +34,17 @@ public class MrGeoConstants
 /*
  * Global configuration keys
  */
-public static final String MRGEO_ENV_HOME = "MRGEO_HOME";
+@Deprecated
+public static final String MRGEO_HOME = "MRGEO_HOME";
+@Deprecated
+public static final String MRGEO_HOME_CONF_DIR = "/conf";
+
+public static final String MRGEO_CONF_DIR = "MRGEO_CONF_DIR";
+public static final String MRGEO_COMMON_HOME = "MRGEO_COMMON_HOME";
+public static final String MRGEO_CONF = "mrgeo.conf";
+
+
 public static final String MRGEO_SETTINGS = "settings.properties";
-public static final String MRGEO_CONF = "conf/mrgeo.conf";
 public static final String MRGEO_DEVELOPMENT_MODE = "development.mode";
 
 public static final String MRGEO_CLUSTER = "cluster";
