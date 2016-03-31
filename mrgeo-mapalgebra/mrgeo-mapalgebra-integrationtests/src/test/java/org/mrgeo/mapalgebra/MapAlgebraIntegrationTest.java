@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra;
@@ -27,8 +28,12 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
@@ -37,9 +42,13 @@ import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LoggingUtils;
+import org.mrgeo.utils.LongRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
@@ -79,6 +88,9 @@ private static Path allhundredsupPath;
 private static final String allonesnopyramids = "all-ones-no-pyramids";
 private static final String allonesholes = "all-ones-with-holes";
 private static final String allhundredsholes = "all-hundreds-with-holes";
+// the kph-for-small-elevation overlaps small-elevation and all-ones and has some missing
+// tiles so we can perform some nodata checks against it.
+private static final String kphforsmallelevation = "kph-for-small-elevation";
 
 private static String smallelevationtif = Defs.INPUT + "small-elevation.tif";
 
@@ -93,6 +105,8 @@ private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationT
 //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
+
+private ProviderProperties providerProperties = null;
 
 @Before
 public void setup()
@@ -138,6 +152,7 @@ public static void init() throws IOException
   allhundredsupPath = new Path(testUtils.getInputHdfs(), allhundredsup);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allonesholes);
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), allhundredsholes);
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), kphforsmallelevation);
 
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), regularpoints);
   regularpointsPath = new Path(testUtils.getInputHdfs(), regularpoints);
@@ -175,6 +190,46 @@ public void add() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s]", allones, allones));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void addFloatConstant() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("[%s] + 3.14", allhundreds), -9999);
+
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("[%s] + 3.14", allhundreds));
+
+  }
+}
+
+// This test shows the limit of floating point math presision.  3,000,000,000 + 100 in floating point
+// is actually 3,000,000,000.  Who knew?
+@Test
+@Category(IntegrationTest.class)
+public void add3Billion() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("[%s] + 3000000000.0", allhundreds), -9999);
+
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("[%s] + 3000000000.0", allhundreds));
+
   }
 }
 
@@ -649,7 +704,7 @@ public void conLTE() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("con([%s] <= 100, 0, 1)", smallElevationPath), -9999);
+        String.format("con([%s] <= 100, 0, 1)", smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -667,7 +722,7 @@ public void conNE() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("con([%s] != 200, 2, 0)", smallElevationPath), -9999);
+        String.format("con([%s] != 200, 2, 0)", smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -685,7 +740,7 @@ public void conLteGte() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("([%s] <= 100) || ([%s] >= 200)", smallElevationPath, smallElevationPath), -9999);
+        String.format("([%s] <= 100) || ([%s] >= 200)", smallElevationPath, smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -703,7 +758,7 @@ public void conLtGt() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("([%s] < 100) || ([%s] > 200)", smallElevationPath, smallElevationPath), -9999);
+        String.format("([%s] < 100) || ([%s] > 200)", smallElevationPath, smallElevationPath), Byte.MAX_VALUE);
   }
   else
   {
@@ -751,6 +806,25 @@ public void crop() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void cropToRaster() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "crop([%s], [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "crop([%s], [%s])", smallElevationPath, kphforsmallelevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void cropExact() throws Exception
 {
   if (GEN_BASELINE_DATA_ONLY)
@@ -767,6 +841,25 @@ public void cropExact() throws Exception
         String.format(
             "cropExact([%s],  142.05, -17.75, 142.2, -17.65)",
             smallElevationPath));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void cropExactToRaster() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "cropExact([%s], [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "cropExact([%s], [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
@@ -821,6 +914,30 @@ public void export() throws Exception
 
     // now check the file that was saved...
     testUtils.compareLocalRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void exportInMemory() throws Exception
+{
+
+  ExportMapOp.inMemoryTestPath_$eq(testUtils.getOutputLocalFor(testname.getMethodName()));
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("export([%s], \"%s\", \"true\")", allones, ExportMapOp.IN_MEMORY()), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("export([%s], \"%s\", \"true\")", allones, ExportMapOp.IN_MEMORY()));
+
+
+    // now check the file that was saved...
+    testUtils.compareLocalRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
+
   }
 }
 
@@ -932,6 +1049,51 @@ public void fillBounds() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         "fillBounds([" + allhundredsholes + "], 1, 141.6, -18.6, 143.0, -17.0)");
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void fillToRasterBounds() throws Exception
+{
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("fillBounds([%s], -1, [%s])",
+                                                kphforsmallelevation, allhundreds), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("fillBounds([%s], -1, [%s])",
+                                                kphforsmallelevation, allhundreds));
+    // Make sure that the output nodata value is 255 (the value
+    // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
+    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load output image", pyramid);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("Unable to load output image metadata", metadata);
+    // Check the bounds in the metadata - should match allhundreds
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("Unable to get tile bounds for max zoom", tb);
+    Assert.assertEquals(915, tb.getMinX());
+    Assert.assertEquals(917, tb.getMaxX());
+    Assert.assertEquals(203, tb.getMinY());
+    Assert.assertEquals(206, tb.getMaxY());
+    // Make sure the output type is the same as the input type
+    MrsPyramid inputPyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load input image", inputPyramid);
+    MrsPyramidMetadata inputMetadata = inputPyramid.getMetadata();
+    Assert.assertNotNull("Unable to load input image metadata", inputMetadata);
+    Assert.assertEquals("Wrong number of bands", inputMetadata.getBands(), metadata.getBands());
+    for (int b = 0; b < inputMetadata.getBands(); b++)
+    {
+      Assert.assertEquals("Unexpected nodata value in band " + b, inputMetadata.getDefaultValue(b),
+                          metadata.getDefaultValue(b), 1e-8);
+    }
+    Assert.assertEquals(inputMetadata.getTileType(), metadata.getTileType());
   }
 }
 
@@ -1054,6 +1216,108 @@ public void isNull() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void isNodataWithMissingTiles() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("isNodata([%s])", kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("isNodata([%s])", kphforsmallelevation));
+    // Make sure that the output nodata value is 255 (the value
+    // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
+    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load output image", pyramid);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("Unable to load output image metadata", metadata);
+    Assert.assertEquals("Wrong number of bands", 1, metadata.getBands());
+    Assert.assertEquals("Unexpected nodata value", 255.0, metadata.getDefaultValue(0), 1e-8);
+    // Check the tile bounds in the metadata
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("Unable to get tile bounds for max zoom", tb);
+    Assert.assertEquals(915, tb.getMinX());
+    Assert.assertEquals(917, tb.getMaxX());
+    Assert.assertEquals(203, tb.getMinY());
+    Assert.assertEquals(205, tb.getMaxY());
+    Assert.assertEquals(DataBuffer.TYPE_BYTE, metadata.getTileType());
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void isNodataWithBoundsRaster() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("isNodataBounds([%s], [%s])",
+                                                kphforsmallelevation, allhundreds), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("isNodataBounds([%s], [%s])", kphforsmallelevation, allhundreds));
+    // Make sure that the output nodata value is 255 (the value
+    // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
+    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load output image", pyramid);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("Unable to load output image metadata", metadata);
+    Assert.assertEquals("Wrong number of bands", 1, metadata.getBands());
+    Assert.assertEquals("Unexpected nodata value", 255.0, metadata.getDefaultValue(0), 1e-8);
+    // Check the bounds in the metadata - should match allhundreds
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("Unable to get tile bounds for max zoom", tb);
+    Assert.assertEquals(915, tb.getMinX());
+    Assert.assertEquals(917, tb.getMaxX());
+    Assert.assertEquals(203, tb.getMinY());
+    Assert.assertEquals(206, tb.getMaxY());
+    Assert.assertEquals(DataBuffer.TYPE_BYTE, metadata.getTileType());
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void isNodataWithBounds() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("isNodataBounds([%s], 141.719, -18.247, 142.617, -17.264)",
+                                                kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("isNodataBounds([%s], 141.719, -18.247, 142.617, -17.264)",
+                                                kphforsmallelevation));
+    // Make sure that the output nodata value is 255 (the value
+    // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
+    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    Assert.assertNotNull("Unable to load output image", pyramid);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    Assert.assertNotNull("Unable to load output image metadata", metadata);
+    Assert.assertEquals("Wrong number of bands", 1, metadata.getBands());
+    Assert.assertEquals("Unexpected nodata value", 255.0, metadata.getDefaultValue(0), 1e-8);
+    // Check the bounds in the metadata - should match allhundreds
+    LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
+    Assert.assertNotNull("Unable to get tile bounds for max zoom", tb);
+    Assert.assertEquals(915, tb.getMinX());
+    Assert.assertEquals(917, tb.getMaxX());
+    Assert.assertEquals(204, tb.getMinY());
+    Assert.assertEquals(206, tb.getMaxY());
+    Assert.assertEquals(DataBuffer.TYPE_BYTE, metadata.getTileType());
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void kernelGaussian() throws Exception
 {
   if (GEN_BASELINE_DATA_ONLY)
@@ -1066,6 +1330,23 @@ public void kernelGaussian() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("kernel(\"gaussian\", [%s], 100.0)", regularpointsPath));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void kernelGaussian2k() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("kernel(\"gaussian\", [%s], 2000.0)", regularpointsPath), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("kernel(\"gaussian\", [%s], 2000.0)", regularpointsPath));
   }
 }
 
@@ -1752,6 +2033,86 @@ public void variables3() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("a = [%s]; b = 3; a / [%s] + b", allones, allones));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testDataTypeByte() throws Exception
+{
+  String exp = String.format("[%s] gt 200", smallElevationPath);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, Byte.MAX_VALUE);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        exp);
+
+    checkDataTypes(DataBuffer.TYPE_BYTE);
+  }
+}
+
+
+@Test
+@Category(IntegrationTest.class)
+public void testDataTypeFloat() throws Exception
+{
+  String exp = String.format("([%s] lt 200) + 500", smallElevationPath);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        exp);
+
+    checkDataTypes(DataBuffer.TYPE_FLOAT);
+  }
+}
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void tpi() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("tpi([%s])", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("tpi([%s])", smallElevation));
+    }
+  }
+
+  private void checkDataTypes(int type) throws IOException
+{
+  MrsPyramid
+      pyramid = MrsPyramid.open(testUtils.getOutputHdfsFor(testname.getMethodName()).toString(), providerProperties);
+  org.junit.Assert.assertNotNull("Can't load pyramid", pyramid);
+
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  org.junit.Assert.assertNotNull("Can't load metadata", metadata);
+
+  org.junit.Assert.assertEquals("Bad tile type", type, metadata.getTileType());
+
+  MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
+  org.junit.Assert.assertNotNull("Can't load image", image);
+
+  KVIterator<TileIdWritable, Raster> iter = image.getTiles();
+  while (iter.hasNext())
+  {
+    Raster raster = iter.currentValue();
+    org.junit.Assert.assertEquals("Bad tile type", type, raster.getSampleModel().getDataType());
+
+    iter.next();
   }
 }
 

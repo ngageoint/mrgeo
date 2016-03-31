@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -151,15 +152,19 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         // get the elevations of the 3x3 grid of elevations, if a neighbor is nodata, make the elevation
         // the same as the origin, this makes the slopes a little prettier
         var ndx = 0
-        for (dy <- y - 1 to y + 1) {
-          for (dx <- x - 1 to x + 1) {
+        var dy: Int = y - 1
+        while (dy <= y + 1) {
+          var dx: Int = x - 1
+          while (dx <= x + 1) {
             z(ndx) = raster.getSampleDouble(dx, dy, 0)
             if (isnodata(z(ndx), nodata)) {
               z(ndx) = origin
             }
 
             ndx += 1
+            dx += 1
           }
+          dy += 1
         }
 
         vx.z = ((z(pp) + z(pz) * 2 + z(pn)) - (z(np) + z(nz) * 2 + z(nn))) / 8.0
@@ -201,12 +206,16 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
       val answer = RasterUtils.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT) // , Float.NaN)
 
-      for (y <- 0 until height) {
-        for (x <- 0 until width) {
+      var y: Int = 0
+      while (y < height) {
+        var x: Int = 0
+        while (x < width) {
           val normal = calculateNormal(x + bufferX, y + bufferY)
 
           answer.setSample(x, y, 0, calculateAngle(normal))
+          x += 1
         }
+        y += 1
       }
 
       (new TileIdWritable(tile._1), RasterWritable.toWritable(answer))

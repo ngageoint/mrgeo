@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -118,11 +119,15 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
         rasterRDD = Some(RasterRDD(inputRDD.map(U => {
           val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, tiletype, nodata)
           val sourceRaster = RasterWritable.toRaster(U._2)
-          for (y <- 0 until sourceRaster.getHeight) {
-            for (x <- 0 until sourceRaster.getWidth) {
+          var y: Int = 0
+          while (y < sourceRaster.getHeight) {
+            var x: Int = 0
+            while (x < sourceRaster.getWidth) {
               val v = sourceRaster.getSampleDouble(x, y, band)
               dst.setSample(x, y, 0, v)
+              x += 1
             }
+            y += 1
           }
           (U._1, RasterWritable.toWritable(dst))
         })))

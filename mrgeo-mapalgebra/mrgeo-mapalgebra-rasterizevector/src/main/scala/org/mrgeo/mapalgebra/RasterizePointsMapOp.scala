@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -95,14 +96,18 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
         updateRaster(raster, countRaster, pixel, geomEntry._1, geomEntry._2, geomEntry._3, geomEntry._4)
       }
       if (aggregationType == VectorPainter.AggregationType.AVERAGE) {
-        for (x <- 0 until raster.getWidth) {
-          for (y <- 0 until raster.getHeight) {
+        var x: Int = 0
+        while (x < raster.getWidth) {
+          var y: Int = 0
+          while (y < raster.getHeight) {
             val v = raster.getSampleDouble(x, y, 0)
             if (!v.isNaN) {
               val c = countRaster.getSampleDouble(x, y, 0)
               raster.setSample(x, y, 0, v / c)
             }
+            y += 1
           }
+          x += 1
         }
       }
       (tileId, RasterWritable.toWritable(raster))

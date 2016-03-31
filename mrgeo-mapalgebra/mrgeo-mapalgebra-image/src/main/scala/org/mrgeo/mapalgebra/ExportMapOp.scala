@@ -1,9 +1,26 @@
+/*
+ * Copyright 2009-2016 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ *
+ */
+
 package org.mrgeo.mapalgebra
 
 import java.awt.image.WritableRaster
 import java.io._
 
 import org.apache.spark.{Logging, SparkContext, SparkConf}
+import org.gdal.gdal.Dataset
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
@@ -25,6 +42,10 @@ object ExportMapOp extends MapOpRegistrar {
   private val ID: String = "$ID"
   private val LAT: String = "$LAT"
   private val LON: String = "$LON"
+
+  val IN_MEMORY = "In-Memory"
+
+  var inMemoryTestPath:String = null
 
   override def register: Array[String] = {
     Array[String]("export")
@@ -64,6 +85,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   private var bounds:Option[TMSUtils.Bounds] = None
   private var alllevels:Boolean = false
   private var overridenodata:Option[Double] = None
+
+  private var mergedimage:Option[Dataset] = None
 
   def this(raster:Option[RasterMapOp], name:String, zoom:Int, numTiles:Int, mosaic:Int, format:String,
       randomTiles:Boolean, singleFile:Boolean, tms:Boolean, colorscale:String, tileids:String,
@@ -192,6 +215,12 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
   override def rdd(): Option[RasterRDD] = rasterRDD
 
+  def image():Dataset = {
+    mergedimage match {
+    case Some(d) => d
+    case None => null
+    }
+  }
 
   override def execute(context: SparkContext): Boolean = {
 
@@ -237,6 +266,10 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     rasterRDD = raster.get.rdd()
     metadata(raster.get.metadata().get)
 
+    if (ExportMapOp.inMemoryTestPath != null) {
+      val output = makeOutputName(ExportMapOp.inMemoryTestPath, format.get, 0, 0, 0, false)
+      GDALUtils.saveRaster(mergedimage.get, output, null, meta.getDefaultValueDouble(0), format.get)
+    }
     true
   }
 
@@ -296,11 +329,16 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
         nd(x) = overridenodata.get
       }
     }
-    val image = SparkUtils.mergeTiles(RasterRDD(replaced), zoom.get, meta.getTilesize, nd)
-    val output = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
-
     val bnds = SparkUtils.calculateBounds(RasterRDD(replaced), zoom.get, meta.getTilesize)
-    GDALUtils.saveRaster(image, output, bnds, nd(0), format.get)
+    val image = SparkUtils.mergeTiles(RasterRDD(replaced), zoom.get, meta.getTilesize, nd)
+
+    if (name == ExportMapOp.IN_MEMORY) {
+      mergedimage = Some(GDALUtils.toDataset(image, nd, bnds))
+    }
+    else {
+      val output = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
+      GDALUtils.saveRaster(image, output, bnds, nd(0), format.get)
+    }
   }
 
   override def setup(job: JobArguments, conf: SparkConf) = true
@@ -326,8 +364,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     else if (bounds.isDefined)
     {
       val tilebounds = TMSUtils.boundsToTile(bounds.get, zoom.get, meta.getTilesize)
-      for (ty <- tilebounds.w to tilebounds.e) {
-        for (tx <- tilebounds.s to tilebounds.e) {
+      for (ty <- tilebounds.s to tilebounds.n) {
+        for (tx <- tilebounds.w to tilebounds.e) {
           tiles += TMSUtils.tileid(tx, ty, zoom.get)
         }
       }

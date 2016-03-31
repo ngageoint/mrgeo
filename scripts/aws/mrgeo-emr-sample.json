@@ -1,0 +1,41 @@
+{
+  "MasterType": "m3.xlarge",
+  "WorkerType": "m3.xlarge",
+  "WorkerNodes": 3,
+  "Spot": 1,
+  "InstallAccumulo": 0,
+  "AccessKey": "",
+  "SecretAccessKey": "",
+  "GDALBootstrap": "s3://mrgeo-deploy/gdal1.11.1/install-gdal.sh",
+  "OpenCVBootstrap": "s3://mrgeo-deploy/opencv2.4.9/install-opencv.sh",
+  "InstallMrGeoStep": "s3://mrgeo-deploy/mrgeo-setup.sh",
+  "zone": "us-east-1b",
+  "zones": [
+    {
+      "zone": "us-east-1a",
+      "subnetId": "subnet-11111111"
+    },
+    {
+      "zone": "us-east-1b",
+      "subnetId": "subnet-22222222"
+    },
+    {
+      "zone": "us-east-1d",
+      "subnetId": "subnet-33333333"
+    },
+    {
+      "zone": "us-east-1e",
+      "subnetId": "subnet-44444444"
+    }
+  ],
+  "tags": [
+    {
+      "Key": "billing",
+      "Value": "mrgeo"
+    }
+  ],
+  "Ec2KeyName": "my-keypair-name",
+  "LogUri": "s3://my-bucket/logs",
+  "ClusterName": "",
+  "ClusterPrefix": "MrGeo-"
+}

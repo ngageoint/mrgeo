@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra.parser.jexl;
@@ -40,17 +41,26 @@ public class JexlParserAdapter implements ParserAdapter
     twoArgFunctions = new HashMap<Class<? extends JexlNode>, String>();
     twoArgFunctions.put(ASTAssignment.class, "=");
     twoArgFunctions.put(ASTLTNode.class, "<");
+    twoArgFunctions.put(ASTLTNode.class, "lt");
     twoArgFunctions.put(ASTLENode.class, "<=");
+    twoArgFunctions.put(ASTLENode.class, "le");
     twoArgFunctions.put(ASTGTNode.class, ">");
+    twoArgFunctions.put(ASTGTNode.class, "gt");
     twoArgFunctions.put(ASTGENode.class, ">=");
+    twoArgFunctions.put(ASTGENode.class, "ge");
     twoArgFunctions.put(ASTEQNode.class, "==");
+    twoArgFunctions.put(ASTEQNode.class, "eq");
     twoArgFunctions.put(ASTNENode.class, "!=");
+    twoArgFunctions.put(ASTNENode.class, "ne");
     twoArgFunctions.put(ASTDivNode.class, "/");
+    twoArgFunctions.put(ASTDivNode.class, "div");
     twoArgFunctions.put(ASTMulNode.class, "*");
     twoArgFunctions.put(ASTAndNode.class, "&&");
+    twoArgFunctions.put(ASTAndNode.class, "and");
     twoArgFunctions.put(ASTBitwiseAndNode.class, "&");
     twoArgFunctions.put(ASTOrNode.class, "||");
     twoArgFunctions.put(ASTBitwiseOrNode.class, "|");
+    twoArgFunctions.put(ASTBitwiseOrNode.class, "or");
   }
 
   @Override
@@ -149,7 +159,7 @@ public class JexlParserAdapter implements ParserAdapter
       }
       else if (oldNum instanceof Float)
       {
-        return new Float(0.0 - oldNum.floatValue());
+        return (float)(0.0 - oldNum.floatValue());
       }
       else if (oldNum instanceof Short)
       {

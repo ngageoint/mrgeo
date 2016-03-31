@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -24,7 +25,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.{DataProviderFactory, DataProviderNotFound, ProviderProperties}
-import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob, PrepareJob}
+import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.mapalgebra.vector.{VectorDataMapOp, VectorMapOp}
@@ -368,7 +369,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
       classes ++= register(node, job, conf)
     })
 
-    PrepareJob.registerClasses(classes.result(), conf)
+    MrGeoJob.registerClasses(classes.result(), conf)
 
     true
   }

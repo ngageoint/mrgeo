@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.image;
@@ -26,7 +27,6 @@ public class ImageOutputFormatContext
   private Bounds bounds;
   private int tiletype;
   private String protectionLevel;
-  final private boolean calculatePartitions;
 
   /**
    * This constructor is used when producing a single image output.
@@ -40,8 +40,6 @@ public class ImageOutputFormatContext
     this.zoomlevel = zoomlevel;
     this.tilesize = tilesize;
     this.protectionLevel = protectionLevel;
-    // don't have bands, and tiletype, can't calculate partitions based on size
-    this.calculatePartitions = false;
   }
   
   public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize,
@@ -54,7 +52,6 @@ public class ImageOutputFormatContext
     this.tilesize =  tilesize;
     this.tiletype = tiletype;
     this.protectionLevel = protectionLevel;
-    this.calculatePartitions = true;
   }
 
 
@@ -88,11 +85,6 @@ public class ImageOutputFormatContext
     return tiletype;
   }
   
-  public boolean isCalculatePartitions()
-  {
-    return calculatePartitions;
-  }
-
   public String getProtectionLevel()
   {
     return protectionLevel;

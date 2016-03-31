@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra;
@@ -32,6 +33,7 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
+import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +64,8 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
   @Before
   public void setup() throws IOException
   {
+    BuildPyramid.setMIN_TILES_FOR_SPARK(5);
+
     providerProperties = null;
     Path parent = new Path(testUtils.getInputHdfs(), testname.getMethodName());
     HadoopFileUtils.copyToHdfs(Defs.INPUT, parent, smallElevationNoPyramids, true);
@@ -93,6 +97,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -122,6 +131,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -153,6 +167,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -182,6 +201,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -211,6 +235,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -240,6 +269,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -269,6 +303,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -298,6 +337,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();
@@ -327,6 +371,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
     for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
     {
+      // Check for splits before opening the image because that will create
+      // the splits if it is missing
+      Path splitsPath = new Path(smallElevationNoPyramidsPath, level + "/splits");
+      Assert.assertTrue("Missing splits file in " + splitsPath.toString(),
+                        HadoopFileUtils.exists(conf, splitsPath));
       MrsImage image = pyramid.getImage(level);
       Assert.assertNotNull("MrsImage image missing for level " + level, image);
       image.close();

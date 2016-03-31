@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -140,7 +141,7 @@ class LeastCostPathCalculator extends Externalizable
     var deltaX: Long = 0
     var deltaY: Long = 0
     var i: Int = 0
-    for (i <- 0 until 8) {
+    while (i < 8) {
       var xNeighbor: Short = (curPixel.px + dx(i)).toShort
       var yNeighbor: Short = (curPixel.py + dy(i)).toShort
       if (xNeighbor >= 0 && xNeighbor <= widthMinusOne && yNeighbor >= 0 && yNeighbor <= widthMinusOne) {
@@ -204,6 +205,7 @@ class LeastCostPathCalculator extends Externalizable
         deltaX = dx(i)
         deltaY = dy(i)
       }
+      i += 1
     }
 
     if (leastValue == curValue) return false

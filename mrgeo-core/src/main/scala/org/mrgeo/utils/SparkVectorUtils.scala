@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.utils
@@ -36,8 +37,8 @@ object SparkVectorUtils
   }
 
   def loadVectorRDD(provider:VectorDataProvider, context: SparkContext): VectorRDD = {
-//    val conf1 = provider.setupSparkJob(context.hadoopConfiguration)
-    val inputs = Set(provider.getResourceName)
+//    val conf1 = provider.setupOutput(context.hadoopConfiguration)
+    val inputs = Set(provider.getPrefixedResourceName)
     val vifc = new VectorInputFormatContext(inputs, provider.getProviderProperties)
     val vfp = provider.getVectorInputFormatProvider(vifc)
     val job = Job.getInstance(context.hadoopConfiguration)

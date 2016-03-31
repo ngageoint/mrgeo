@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -22,6 +23,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -35,10 +37,10 @@ object FillMapOp extends MapOpRegistrar {
   }
 
   def create(raster:RasterMapOp, fillRaster:RasterMapOp):MapOp =
-    new FillMapOp(raster, fillRaster, None)
+    new FillMapOp(raster, fillRaster)
 
   def create(raster:RasterMapOp, constFill:Double):MapOp =
-    new FillMapOp(raster, constFill, None)
+    new FillMapOp(raster, constFill)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new FillMapOp(node, variables)
@@ -48,71 +50,60 @@ object FillMapOp extends MapOpRegistrar {
 class FillMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
 
-  private var inputMapOp: Option[RasterMapOp] = None
-  private var fillMapOp:Option[RasterMapOp] = None
-  private var constFill:Option[Double] = None
-  private var bounds:Option[Bounds] = None
+  protected var inputMapOp: Option[RasterMapOp] = None
+  protected var fillMapOp:Option[RasterMapOp] = None
+  protected var constFill:Option[Double] = None
 
-  private[mapalgebra] def this(raster:RasterMapOp, fillRaster:RasterMapOp, bounds:Option[Bounds]) = {
+  private[mapalgebra] def this(raster:RasterMapOp, fillRaster:RasterMapOp) = {
     this()
     inputMapOp = Some(raster)
     fillMapOp = Some(fillRaster)
-    this.bounds = bounds
   }
 
-  private[mapalgebra] def this(raster:RasterMapOp, const:Double, bounds:Option[Bounds]) = {
+  private[mapalgebra] def this(raster:RasterMapOp, const:Double) = {
     this()
     inputMapOp = Some(raster)
     constFill = Some(const)
-    this.bounds = bounds
   }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
-    // get values unique for each function
-    node.getName match {
-    case "fill" =>
-      if (node.getNumChildren != 2) {
-        throw new ParserException("Usage: fill(raster, fill value)")
-      }
-    case "fillbounds" =>
-      if (node.getNumChildren != 6) {
-        throw new ParserException("Usage: fill(raster, fill value, w, s, e, n)")
-      }
-
-      bounds = Some(new Bounds(MapOp.decodeDouble(node.getChild(2), variables).get,
-        MapOp.decodeDouble(node.getChild(3), variables).get,
-        MapOp.decodeDouble(node.getChild(4), variables).get,
-        MapOp.decodeDouble(node.getChild(5), variables).get))
+    if (node.getNumChildren != 2) {
+      throw new ParserException("Usage: fill(raster, fill value)")
     }
+    parseChildren(node, variables)
+  }
 
+  protected def parseChildren(node: ParserNode, variables: String => Option[ParserNode]) = {
     // these are common between functions
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
     val childA = node.getChild(1)
 
     childA match {
-    case const:ParserConstantNode => constFill = MapOp.decodeDouble(const)
-    case func:ParserFunctionNode => fillMapOp = func.getMapOp match {
-    case raster:RasterMapOp => Some(raster)
-    case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
-    }
-    case variable:ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).get match {
       case const:ParserConstantNode => constFill = MapOp.decodeDouble(const)
       case func:ParserFunctionNode => fillMapOp = func.getMapOp match {
-      case raster:RasterMapOp => Some(raster)
-      case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+        case raster:RasterMapOp => Some(raster)
+        case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
       }
-      }
+      case variable:ParserVariableNode =>
+        MapOp.decodeVariable(variable, variables).get match {
+          case const:ParserConstantNode => constFill = MapOp.decodeDouble(const)
+          case func:ParserFunctionNode => fillMapOp = func.getMapOp match {
+            case raster:RasterMapOp => Some(raster)
+            case _ =>  throw new ParserException("First term \"" + childA + "\" is not a raster input")
+          }
+        }
     }
-
   }
-
 
   override def rdd(): Option[RasterRDD] = rasterRDD
   override def setup(job: JobArguments, conf: SparkConf): Boolean = true
+
+  protected def getOutputBounds(inputMetadata: MrsPyramidMetadata): Bounds = {
+    inputMetadata.getBounds
+  }
 
   override def execute(context: SparkContext): Boolean = {
 
@@ -125,22 +116,10 @@ class FillMapOp extends RasterMapOp with Externalizable {
     val nodata = meta.getDefaultValue(0)
 
     //rasterRDD = Some(RasterRDD(rdd.filter(tile => tile._1.get() % 2 == 0)))
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds match {
-    case Some(b) => b
-    case None => meta.getBounds
-    }), zoom, meta.getTilesize)
+    val bounds = getOutputBounds(meta)
+    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), zoom, meta.getTilesize)
 
-    val tileBuilder = Array.newBuilder[(TileIdWritable, RasterWritable)]
-    for (ty <- tb.s to tb.n) {
-      for (tx <- tb.w to tb.e) {
-        val id = TMSUtils.tileid(tx, ty, zoom)
-
-        val tuple = (new TileIdWritable(id), new RasterWritable())
-        tileBuilder += tuple
-      }
-    }
-
-    val test = context.parallelize(tileBuilder.result())
+    val test = RasterMapOp.createEmptyRasterRDD(context, tb, zoom)
 
     rasterRDD = Some(RasterRDD(constFill match {
     case Some(const) =>

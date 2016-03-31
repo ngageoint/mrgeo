@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,15 +11,18 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.utils
 
 import java.awt.image._
-import java.io.{File, IOException, InputStream, OutputStream}
+import java.io._
 import java.net.URI
 import java.nio._
 import java.nio.file.Files
+import java.util.zip.GZIPOutputStream
+import javax.xml.bind.DatatypeConverter
 
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.ArrayUtils
@@ -34,7 +37,6 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.utils.MrGeoImplicits._
 
 import scala.collection.JavaConversions._
-import scala.util.control.Breaks
 
 
 
@@ -67,7 +69,6 @@ object GDALUtils extends Logging {
   private val VSI_PREFIX: String = "/vsimem/"
   private val GDAL_PAM_ENABLED: String = "GDAL_PAM_ENABLED"
 
-  loadLibrary()
   initializeGDAL()
 
   // empty method to force static initializer
@@ -111,14 +112,16 @@ object GDALUtils extends Logging {
     val nodatas = Array.newBuilder[Double]
 
     val nodata = Array.ofDim[java.lang.Double](1)
-    for (i <- 1 to src.GetRasterCount()) {
+    var i: Int = 1
+    while (i <= src.GetRasterCount()) {
       val band: Band = src.GetRasterBand(i)
       if (datatype < 0) {
         datatype = band.getDataType
       }
 
       band.GetNoDataValue(nodata)
-      nodatas += nodata(0)
+      nodatas += (if (nodata(0) == null) { java.lang.Double.NaN } else { nodata(0) })
+      i += 1
     }
 
     createEmptyMemoryRaster(width, height, bands, datatype, nodatas.result())
@@ -131,11 +134,13 @@ object GDALUtils extends Logging {
 
     if (dataset != null) {
       if (nodatas != null) {
-        for (i <- 1 to dataset.getRasterCount) {
+        var i: Int = 1
+        while (i <= dataset.getRasterCount) {
           val nodata: Double = nodatas(i - 1)
           val band: Band = dataset.GetRasterBand(i)
           band.Fill(nodata)
           band.SetNoDataValue(nodata)
+          i += 1
         }
       }
       return dataset
@@ -147,6 +152,11 @@ object GDALUtils extends Logging {
   def toDataset(raster: Raster, nodata: Double = Double.NegativeInfinity,
       bounds:Either[Bounds, TMSUtils.Bounds] = null): Dataset = {
     val nodatas = if (nodata == Double.NegativeInfinity) null else Array.fill[Double](raster.getNumBands)(nodata)
+    toDataset(raster, nodatas, bounds)
+  }
+
+  def toDataset(raster: Raster, nodatas: Array[Double],
+      bounds:Either[Bounds, TMSUtils.Bounds]): Dataset = {
     val datatype = toGDALDataType(raster.getTransferType)
 
     val ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth, raster.getHeight, raster.getNumBands, datatype, nodatas)
@@ -300,17 +310,21 @@ object GDALUtils extends Logging {
   def swapBytes(bytes: Array[Byte], gdaldatatype: Int) = {
 
     var tmp: Byte = 0
+    var i: Int = 0
     gdaldatatype match {
-      // 2 byte value... swap byte 1 with 2
+    // Since it's byte data, there is nothing to swap - do nothing
+    case gdalconstConstants.GDT_Byte => {}
+    // 2 byte value... swap byte 1 with 2
     case gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 =>
-      for (i <- bytes.indices by 2) {
+      while (i + 1 < bytes.length) {
         tmp = bytes(i)
         bytes(i) = bytes(i + 1)
         bytes(i + 1) = tmp
+        i += 2
       }
     // 4 byte value... swap bytes 1 & 4, 2 & 3
     case gdalconstConstants.GDT_UInt32 | gdalconstConstants.GDT_Int32 | gdalconstConstants.GDT_Float32 =>
-      for (i <- bytes.indices by 4) {
+      while (i + 3 < bytes.length) {
         // swap 0 & 3
         tmp = bytes(i)
         bytes(i) = bytes(i + 3)
@@ -320,10 +334,11 @@ object GDALUtils extends Logging {
         tmp = bytes(i + 1)
         bytes(i + 1) = bytes(i + 2)
         bytes(i + 2) = tmp
+        i += 4
       }
     // 8 byte value... swap bytes 1 & 8, 2 & 7, 3 & 6, 4 & 5
     case gdalconstConstants.GDT_Float64 =>
-      for (i <- bytes.indices by 4) {
+      while (i + 7 < bytes.length) {
         // swap 0 & 7
         tmp = bytes(i)
         bytes(i) = bytes(i + 7)
@@ -343,6 +358,7 @@ object GDALUtils extends Logging {
         tmp = bytes(i + 3)
         bytes(i + 3) = bytes(i + 4)
         bytes(i + 4) = tmp
+        i += 8
       }
     }
   }
@@ -614,7 +630,8 @@ object GDALUtils extends Logging {
     else {
       val bytes: ByteBuffer = ByteBuffer.allocateDirect(linestride.toInt)
       bytes.order(ByteOrder.nativeOrder)
-      for (y <- 0 until height) {
+      var y: Int = 0
+      while (y < height) {
         bytes.rewind()
         val elements: AnyRef = raster.getDataElements(raster.getMinX, raster.getMinY + y, raster.getWidth, 1, null)
         elements match {
@@ -626,49 +643,18 @@ object GDALUtils extends Logging {
         }
         ds.WriteRaster_Direct(0, y, width, 1, width, 1, datatype, bytes, bandlist, pixelstride, linestride,
           bandstride)
+        y += 1
       }
     }
   }
 
-  private def loadLibrary() = {
-    val libs: Array[String] = Array("libgdaljni.so", "libgdalconstjni.so", "libosrjni.so", "libgdal.so")
-
-    val rawPath: String = MrGeoProperties.getInstance.getProperty(MrGeoConstants.GDAL_PATH, null)
-    if (rawPath != null) {
-      // gdal jars to load.  In the order they should be loaded...
-      val paths = rawPath.split(":")
-
-      logDebug("Looking for GDAL Libraries in " + rawPath)
-      libs.foreach(lib => {
-        val break = new Breaks
-
-        break.breakable({
-          paths.foreach(path => {
-            val file = new File(path, lib)
-            val msg = " Looking for: " + file.getCanonicalPath
-            if (file.exists()) {
-              System.load(file.getCanonicalPath)
-              logDebug(msg + " found")
-              break.break()
-            }
-            else {
-              logDebug(msg + " not found")
-            }
-          })
-
-          logError("ERROR!!! Can not find gdal library " + lib + " in path " + rawPath)
-        })
-      })
-    }
-    else {
-      logWarning("Can't load GDAL libraries, " + MrGeoConstants.GDAL_PATH +
-          " not found in the mrgeo configuration.  This may or may not be a problem.")
-
-      System.loadLibrary("gdal")
-    }
-  }
-
   private def initializeGDAL() = {
+    // Monkeypatch the system library path to use the gdal paths (for loading the gdal libraries
+    MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, "").
+        split(File.pathSeparator).foreach(path => {
+      ClassLoaderUtil.addLibraryPath(path)
+    })
+
     osr.UseExceptions()
 
     if (gdal.GetDriverCount == 0) {
@@ -752,53 +738,154 @@ object GDALUtils extends Logging {
   }
 
   def getRasterDataAsString(band:Band, x:Int, y:Int, width:Int, height:Int):String = {
+    new String(getRasterData(band, x, y, width, height))
+  }
 
+  def getRasterDataAsBase64(ds:Dataset, band:Int, x:Int, y:Int, width:Int, height:Int):String = {
+    getRasterDataAsBase64(ds.GetRasterBand(band), x, y, width, height)
+  }
+
+  def getRasterDataAsBase64(band:Band, x:Int, y:Int, width:Int, height:Int):String = {
+
+    val data = getRasterBuffer(band, x, y, width, height)
+    val rastersize: Int = getRasterBytes(band, width, height)
+
+    val chunksize = 3072 // This _must_ be a multiple of 3 for chunking of base64 to work
+
+    val builder = StringBuilder.newBuilder
+    val chunk = Array.ofDim[Byte](chunksize)
+
+    var dataremaining = rastersize
+    while (dataremaining > chunksize) {
+      data.get(chunk)
+
+      builder ++= DatatypeConverter.printBase64Binary(chunk)
+      dataremaining -= chunksize
+    }
+    if (dataremaining > 0) {
+      val smallchunk = Array.ofDim[Byte](dataremaining)
+      data.get(smallchunk)
+
+      builder ++= DatatypeConverter.printBase64Binary(smallchunk)
+    }
+
+    builder.result()
+    //DatatypeConverter.printBase64Binary(getRasterData(band, x, y, width, height))
+  }
+
+  def getRasterDataAsCompressedBase64(ds:Dataset, band:Int, x:Int, y:Int, width:Int, height:Int):String = {
+    getRasterDataAsCompressedBase64(ds.GetRasterBand(band), x, y, width, height)
+  }
+
+  def getRasterDataAsCompressedBase64(band:Band, x:Int, y:Int, width:Int, height:Int):String = {
+    val data = getRasterDataCompressed(band, x, y, width, height)
+
+    val base64 = DatatypeConverter.printBase64Binary(data)
+    logInfo("raster data: base64: " + base64.length)
+
+    base64
+  }
+
+  def getRasterDataAsCompressedString(ds:Dataset, band:Int, x:Int, y:Int, width:Int, height:Int):String = {
+    getRasterDataAsCompressedString(ds.GetRasterBand(band), x, y, width, height)
+  }
+
+  def getRasterDataAsCompressedString(band:Band, x:Int, y:Int, width:Int, height:Int):String = {
+    val data = getRasterDataCompressed(band, x, y, width, height)
+    new String(data, "UTF-8")
+  }
+
+  def getRasterDataCompressed(ds:Dataset, band:Int, x:Int, y:Int, width:Int, height:Int):Array[Byte] = {
+    getRasterDataCompressed(ds.GetRasterBand(band), x, y, width, height)
+  }
+
+  def getRasterDataCompressed(band:Band, x:Int, y:Int, width:Int, height:Int):Array[Byte] = {
+    val data = getRasterBuffer(band, x, y, width, height)
+    val rastersize: Int = getRasterBytes(band, width, height)
+
+    logInfo("raster data: original: " + rastersize)
+
+    //    var base64Str = DatatypeConverter.printBase64Binary(data)
+    //    println("Base64: " + base64Str.length)
+    //    data = null
+    //
+    //    var base64 = base64Str.getBytes
+    //    println("Base64 bytes: " + base64.length)
+    //    base64Str = null
+    //
+    //    val outputStream = new ByteArrayOutputStream(base64.length)
+    val outputStream = new ByteArrayOutputStream(rastersize)
+    val zipper = new GZIPOutputStream(outputStream)
+
+    val chunksize = 4096
+    val chunk = Array.ofDim[Byte](chunksize)
+
+    var dataremaining = rastersize
+    while (dataremaining > chunksize) {
+      data.get(chunk)
+
+      zipper.write(chunk)
+
+      dataremaining -= chunksize
+    }
+
+    if (dataremaining > 0) {
+      val smallchunk = Array.ofDim[Byte](dataremaining)
+      data.get(smallchunk)
+
+      zipper.write(smallchunk)
+    }
+
+    //zipper.write(base64)
+    //base64 = null
+
+    zipper.close()
+    outputStream.close()
+    val output = outputStream.toByteArray
+
+    logInfo("raster data: compressed: " + output.length)
+
+    output
+  }
+
+  def getRasterData(ds:Dataset, band:Int, x:Int, y:Int, width:Int, height:Int):Array[Byte] = {
+    getRasterData(ds.GetRasterBand(band), x, y, width, height)
+  }
+
+  def getRasterData(band:Band, x:Int, y:Int, width:Int, height:Int):Array[Byte] = {
+    val rastersize: Int = getRasterBytes(band, width, height)
+    val data = getRasterBuffer(band, x, y, width, height)
+
+    val bytes = Array.ofDim[Byte](rastersize)
+    data.get(bytes)
+
+    logInfo("read (" + bytes.length + " bytes (I think)")
+
+    bytes
+  }
+
+  private def getRasterBytes(band: Band, width: Int, height: Int): Int = {
     val datatype = band.getDataType
     val pixelsize = gdal.GetDataTypeSize(datatype) / 8
 
     val linesize = pixelsize * width
     val rastersize = linesize * height
-
-//    val data: ByteBuffer = ByteBuffer.allocateDirect(rastersize)
-//    data.order(ByteOrder.nativeOrder)
-
-    // read the data
-//    val bytesread = band.ReadRaster_Direct(x, y, width, height, width, height, data)
-    val data = band.ReadRaster_Direct(x, y, width, height)
-
-    {
-      var cnt = 0
-
-      try {
-        while (true) {
-          val b = data.get()
-          println(cnt + " " + b)
-          cnt += 1
-        }
-      }
-      catch {
-        case bue: BufferUnderflowException =>
-      }
-    }
-
-    // data.rewind
-    println("Band data (" + rastersize + " bytes)")
-
-    //val bytes = Array.fill[Byte](rastersize){ math.random.toByte }
-    val bytes = Array.ofDim[Byte](rastersize)
-    data.get(bytes)
-
-    var cnt = 0
-    bytes.foreach(b => {
-      print(b + " ")
-      cnt += 1
-      if (cnt % 100 == 0)
-        println()
-    })
-    println()
-
-    new String(bytes)
+    rastersize
   }
+
+  def getRasterBytes(band: Band): Int = {
+    getRasterBytes(band, band.GetXSize(), band.GetYSize())
+  }
+
+  def getRasterBytes(ds:Dataset, band:Int): Int = {
+    val b = ds.GetRasterBand(band)
+    getRasterBytes(b, b.GetXSize(), b.GetYSize())
+  }
+
+  private def getRasterBuffer(band:Band, x:Int, y:Int, width:Int, height:Int):ByteBuffer = {
+    band.ReadRaster_Direct(x, y, width, height, band.getDataType).order(ByteOrder.nativeOrder())
+  }
+
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.cmd.printsplitfile;
@@ -19,6 +20,7 @@ import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.cmd.Command;
+import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
@@ -41,11 +43,15 @@ public class PrintSplitFile extends Command
 
   public static Options createOptions()
   {
-    final Options result = new Options();
+    Options result = MrGeo.createOptions();
 
     final Option zoom = new Option("z", "zoom", true, "Zoom level");
     zoom.setRequired(false);
     result.addOption(zoom);
+
+    final Option regen = new Option("r", "regenerate", false, "Regenerate Splits");
+    regen.setRequired(false);
+    result.addOption(regen);
 
     return result;
   }
@@ -62,11 +68,15 @@ public class PrintSplitFile extends Command
       final CommandLineParser parser = new PosixParser();
       line = parser.parse(options, args);
 
+
       int zoomlevel = -1;
       if (line.hasOption("z"))
       {
         zoomlevel = Integer.valueOf(line.getOptionValue("z"));
       }
+
+      boolean renerate = line.hasOption("r");
+
 
       for (final String name : line.getArgs())
       {
@@ -82,17 +92,40 @@ public class PrintSplitFile extends Command
 
         MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
-        if (zoomlevel > 0)
+        if (zoomlevel <= 0)
         {
-          for (int i = metadata.getMaxZoomLevel(); i > 0; i--)
+          for (zoomlevel = metadata.getMaxZoomLevel(); zoomlevel > 0; zoomlevel--)
           {
-            System.out.println("Zoom level: " + i);
-            printlevel(dp, i);
+            if (renerate)
+            {
+              FileSplit split = new FileSplit();
+
+              Path parent = new Path(new Path(dp.getResourceName()), "" + zoomlevel);
+
+              System.out.println("Regenerating splits for " + parent.toString());
+
+              split.generateSplits(parent, conf);
+              split.writeSplits(parent);
+            }
+
+            System.out.println("Zoom level: " + zoomlevel);
+            printlevel(dp, zoomlevel);
             System.out.println("---------------");
           }
         }
         else
         {
+          if (renerate)
+          {
+            FileSplit split = new FileSplit();
+
+            Path parent = new Path(new Path(dp.getResourceName()), "" + zoomlevel);
+            System.out.println("Regenerating splits for " + parent.toString());
+
+            split.generateSplits(parent, conf);
+            split.writeSplits(parent);
+          }
+
           printlevel(dp, zoomlevel);
         }
       }
@@ -114,22 +147,29 @@ public class PrintSplitFile extends Command
     Path parent = new Path(new Path(dp.getResourceName()), "" + zoomlevel);
     FileSplit fs = new FileSplit();
 
-    String splitname = fs.findSplitFile(parent);
-    System.out.println("split file: " + splitname);
-
-    fs.readSplits(parent);
-    System.out.println("min\tmax\tpartition\tname");
-
-    SplitInfo[] splits = fs.getSplits();
-    for (SplitInfo split: splits)
+    try
     {
-      System.out.println(((FileSplit.FileSplitInfo) split).getStartId());
-      System.out.println("\t");
-      System.out.println(((FileSplit.FileSplitInfo) split).getEndId());
-      System.out.println("\t");
-      System.out.println(((FileSplit.FileSplitInfo) split).getName());
-      System.out.println("\t");
-      System.out.println(split.getPartition());
+      String splitname = fs.findSplitFile(parent);
+      System.out.println("split file: " + splitname);
+
+      fs.readSplits(parent);
+      System.out.println("min\tmax\tname\t\tpartition");
+
+      SplitInfo[] splits = fs.getSplits();
+      for (SplitInfo split : splits)
+      {
+        System.out.print(((FileSplit.FileSplitInfo) split).getStartId());
+        System.out.print("\t");
+        System.out.print(((FileSplit.FileSplitInfo) split).getEndId());
+        System.out.print("\t");
+        System.out.print(((FileSplit.FileSplitInfo) split).getName());
+        System.out.print("\t");
+        System.out.println(split.getPartition());
+      }
+    }
+    finally
+    {
+
     }
 
   }

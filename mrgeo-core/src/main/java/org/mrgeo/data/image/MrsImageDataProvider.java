@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.image;
@@ -23,7 +24,9 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 
@@ -45,155 +48,157 @@ import java.io.IOException;
  */
 public abstract class MrsImageDataProvider implements ProtectionLevelValidator
 {
-  private String resourceName;
+private String resourceName;
 
-  protected ProviderProperties providerProperties;
+protected ProviderProperties providerProperties;
 
-  protected MrsImageDataProvider()
-  {
-    resourceName = null;
-  }
+protected MrsImageDataProvider()
+{
+  resourceName = null;
+}
 
-  /**
-   * Sub-classes which use the default constructor must subsequently call
-   * this method to assign the resource name,
-   *
-   * @param resourceName
-   */
-  protected void setResourceName(String resourceName)
-  {
-    this.resourceName = resourceName;
-  }
+/**
+ * Sub-classes which use the default constructor must subsequently call
+ * this method to assign the resource name,
+ *
+ * @param resourceName
+ */
+protected void setResourceName(String resourceName)
+{
+  this.resourceName = resourceName;
+}
 
-  public String getResourceName()
-  {
-    return resourceName;
-  }
+public String getResourceName()
+{
+  return resourceName;
+}
 
-  public abstract void delete() throws IOException;
-  public abstract void move(String toResource) throws IOException;
+public abstract void delete() throws IOException;
 
-  /**
-   * Override this method if your data provider needs to perform Hadoop job
-   * setup the same way for handling image input and output.
-   *
-   * @param job
-   * @throws DataProviderException
-   * @throws IOException
-   */
-  public void setupJob(final Job job) throws DataProviderException
-  {
-  }
+public abstract void move(String toResource) throws IOException;
 
-  /**
-   * Override this method if your data provider needs to perform Spark job
-   * setup the same way for handling image input and output.
-   *
-   * @param conf
-   * @throws DataProviderException
-   * @throws IOException
-   */
-  public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
-  {
-    return conf;
-  }
+/**
+ * Override this method if your data provider needs to perform Hadoop job
+ * setup the same way for handling image input and output.
+ *
+ * @param job
+ * @throws DataProviderException
+ * @throws IOException
+ */
+public void setupJob(final Job job) throws DataProviderException
+{
+}
 
-  public ProviderProperties getProviderProperties()
-  {
-    return providerProperties;
-  }
+/**
+ * Override this method if your data provider needs to perform Spark job
+ * setup the same way for handling image input and output.
+ *
+ * @param conf
+ * @throws DataProviderException
+ * @throws IOException
+ */
+public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
+{
+  return conf;
+}
 
-  public MrsImageDataProvider(final String resourceName)
-  {
-    this.resourceName = resourceName;
-  }
+public ProviderProperties getProviderProperties()
+{
+  return providerProperties;
+}
+
+public MrsImageDataProvider(final String resourceName)
+{
+  this.resourceName = resourceName;
+}
 
 
-  public MrsPyramidMetadataReader getMetadataReader()
-  {
-    return getMetadataReader(null);
-  }
+public MrsPyramidMetadataReader getMetadataReader()
+{
+  return getMetadataReader(null);
+}
 
-  /**
-   * Return an instance of a class that can read metadata for this resource.
-   * 
-   * @return
-   */
-  public abstract MrsPyramidMetadataReader getMetadataReader(
+/**
+ * Return an instance of a class that can read metadata for this resource.
+ *
+ * @return
+ */
+public abstract MrsPyramidMetadataReader getMetadataReader(
     MrsPyramidMetadataReaderContext context);
 
-  public MrsPyramidMetadataWriter getMetadataWriter()
-  {
-    return getMetadataWriter(null);
-  }
+public MrsPyramidMetadataWriter getMetadataWriter()
+{
+  return getMetadataWriter(null);
+}
 
-  /**
-   * Return an instance of a class that can write metadata for this resource.
-   * 
-   * @return
-   */
-  public abstract MrsPyramidMetadataWriter getMetadataWriter(
+/**
+ * Return an instance of a class that can write metadata for this resource.
+ *
+ * @return
+ */
+public abstract MrsPyramidMetadataWriter getMetadataWriter(
     MrsPyramidMetadataWriterContext context);
 
-  public MrsImageReader getMrsTileReader(final int zoomlevel) throws IOException
-  {
-    final MrsPyramidReaderContext context = new MrsPyramidReaderContext();
-    context.setZoomlevel(zoomlevel);
-    return getMrsTileReader(context);
-  }
+public MrsImageReader getMrsTileReader(final int zoomlevel) throws IOException
+{
+  final MrsPyramidReaderContext context = new MrsPyramidReaderContext();
+  context.setZoomlevel(zoomlevel);
+  return getMrsTileReader(context);
+}
 
-  /**
-   * Return an instance of a MrsImageReader class to be used for reading tiled data. This method may
-   * be invoked by callers regardless of whether they are running within a Spark job or not.
-   * 
-   * @return
-   * @throws IOException 
-   */
-  public abstract MrsImageReader getMrsTileReader(MrsPyramidReaderContext context) throws IOException;
+/**
+ * Return an instance of a MrsImageReader class to be used for reading tiled data. This method may
+ * be invoked by callers regardless of whether they are running within a Spark job or not.
+ *
+ * @return
+ * @throws IOException
+ */
+public abstract MrsImageReader getMrsTileReader(MrsPyramidReaderContext context) throws IOException;
 
-  public MrsImageWriter getMrsTileWriter(final int zoomlevel,
-                                         final String protectionLevel) throws IOException
-  {
-    final MrsPyramidWriterContext context = new MrsPyramidWriterContext(zoomlevel, 0,
-                                                                        protectionLevel);
-    return getMrsTileWriter(context);
-  }
+public MrsImageWriter getMrsTileWriter(final int zoomlevel,
+    final String protectionLevel) throws IOException
+{
+  final MrsPyramidWriterContext context = new MrsPyramidWriterContext(zoomlevel, 0,
+      protectionLevel);
+  return getMrsTileWriter(context);
+}
 
-  public abstract void delete(final int zoomlevel) throws IOException;
+public abstract void delete(final int zoomlevel) throws IOException;
 
-  public abstract MrsImageWriter getMrsTileWriter(MrsPyramidWriterContext context) throws IOException;
+public abstract MrsImageWriter getMrsTileWriter(MrsPyramidWriterContext context) throws IOException;
 
-  /**
-   * Return an instance of a RecordReader class to be used in Spark jobs for reading tiled
-   * data.
-   * 
-   * @return
-   */
-  public abstract RecordReader<TileIdWritable, RasterWritable> getRecordReader();
+/**
+ * Return an instance of a RecordReader class to be used in Spark jobs for reading tiled
+ * data.
+ *
+ * @return
+ */
+public abstract RecordReader<TileIdWritable, RasterWritable> getRecordReader();
 
-  /**
-   * Return an instance of a RecordWriter class to be used in Spark jobs for writing tiled
-   * data.
-   * 
-   * @return
-   */
-  public abstract RecordWriter<TileIdWritable, RasterWritable> getRecordWriter();
+/**
+ * Return an instance of a RecordWriter class to be used in Spark jobs for writing tiled
+ * data.
+ *
+ * @return
+ */
+public abstract RecordWriter<TileIdWritable, RasterWritable> getRecordWriter();
 
-  /**
-   * Return an instance of an InputFormat class to be used in Spark jobs for processing tiled
-   * data.
-   * 
-   * @return
-   */
-  public abstract MrsImageInputFormatProvider getImageInputFormatProvider(
+/**
+ * Return an instance of an InputFormat class to be used in Spark jobs for processing tiled
+ * data.
+ *
+ * @return
+ */
+public abstract MrsImageInputFormatProvider getImageInputFormatProvider(
     final ImageInputFormatContext context);
 
-  /**
-   * Return an instance of an OutputFormat class to be used in Spark jobs for producing tiled
-   * data.
-   * 
-   * @return
-   */
-  public abstract MrsImageOutputFormatProvider getTiledOutputFormatProvider(
+/**
+ * Return an instance of an OutputFormat class to be used in Spark jobs for producing tiled
+ * data.
+ *
+ * @return
+ */
+public abstract MrsImageOutputFormatProvider getTiledOutputFormatProvider(
     final ImageOutputFormatContext context);
+
 }

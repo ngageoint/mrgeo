@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -100,7 +101,8 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
     }
 
     val inputbuilder = Array.newBuilder[Either[Option[RasterMapOp], Option[String]]]
-    for (i <- 1 until node.getNumChildren) {
+    var i: Int = 1
+    while (i < node.getNumChildren) {
       try {
         val raster = RasterMapOp.decodeToRaster(node.getChild(i), variables)
         inputbuilder += Left(raster)
@@ -116,6 +118,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
               throw new ParserException(node.getChild(i).getName + " is not a string or raster")
           }
       }
+      i += 1
     }
     inputs = if (inputbuilder.result().length > 0) Some(inputbuilder.result()) else None
   }
@@ -205,8 +208,10 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
       val epsilon = 1e-8
 
       def count(raster: Raster, result: WritableRaster, nodata: Double) = {
-        for (y <- 0 until raster.getHeight) {
-          for (x <- 0 until raster.getWidth) {
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < raster.getWidth) {
             val px = raster.getSampleDouble(x, y, 0)
 
             if (RasterMapOp.isNotNodata(px, nodata)) {
@@ -218,13 +223,17 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                 result.setSample(x, y, 0, cnt + 1)
               }
             }
+            x += 1
           }
+          y += 1
         }
       }
 
       def min(raster: Raster, result: WritableRaster, nodata: Double) = {
-        for (y <- 0 until raster.getHeight) {
-          for (x <- 0 until raster.getWidth) {
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < raster.getWidth) {
             val px = raster.getSampleDouble(x, y, 0)
 
             if (RasterMapOp.isNotNodata(px, nodata)) {
@@ -236,13 +245,17 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                 result.setSample(x, y, 0, Math.min(src, px))
               }
             }
+            x += 1
           }
+          y += 1
         }
       }
 
       def max(raster: Raster, result: WritableRaster, nodata: Double) = {
-        for (y <- 0 until raster.getHeight) {
-          for (x <- 0 until raster.getWidth) {
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < raster.getWidth) {
             val px = raster.getSampleDouble(x, y, 0)
 
             if (RasterMapOp.isNotNodata(px, nodata)) {
@@ -254,13 +267,17 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                 result.setSample(x, y, 0, Math.max(src, px))
               }
             }
+            x += 1
           }
+          y += 1
         }
       }
 
       def mean(raster: Raster, result: WritableRaster, nodata: Double) = {
-        for (y <- 0 until raster.getHeight) {
-          for (x <- 0 until raster.getWidth) {
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < raster.getWidth) {
             val px = raster.getSampleDouble(x, y, 0)
 
             if (RasterMapOp.isNotNodata(px, nodata)) {
@@ -275,13 +292,17 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                 result.setSample(x, y, 1, cnt + 1)
               }
             }
+            x += 1
           }
+          y += 1
         }
       }
 
       def sum(raster: Raster, result: WritableRaster, nodata: Double) = {
-        for (y <- 0 until raster.getHeight) {
-          for (x <- 0 until raster.getWidth) {
+        var y: Int = 0
+        while (y < raster.getHeight) {
+          var x: Int = 0
+          while (x < raster.getWidth) {
             val px = raster.getSampleDouble(x, y, 0)
 
             if (RasterMapOp.isNotNodata(px, nodata)) {
@@ -293,7 +314,9 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                 result.setSample(x, y, 0, src + px)
               }
             }
+            x += 1
           }
+          y += 1
         }
       }
 
@@ -310,17 +333,23 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val rasters = rasterbuilder.result()
 
-        for (y <- 0 until result.getHeight) {
-          for (x <- 0 until result.getWidth) {
-            val valuebuilder = Array.newBuilder[Double]
+        val valuebuilder = Array.newBuilder[Double]
+        valuebuilder.sizeHint(rasters.length)
+        var y: Int = 0
+        while (y < result.getHeight) {
+          var x: Int = 0
+          while (x < result.getWidth) {
+            valuebuilder.clear
 
-            for (ndx <- rasters.indices) {
+            var ndx: Int = 0
+            while (ndx < rasters.length) {
               if (rasters(ndx) != null) {
                 val px = rasters(ndx).getSampleDouble(x, y, 0)
                 if (RasterMapOp.isNotNodata(px, nodatas(ndx))) {
                   valuebuilder += px
                 }
               }
+              ndx += 1
             }
 
             val values = valuebuilder.result
@@ -333,7 +362,8 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
               var curval = mode
               var curcount = modecount
 
-              for (i <- 1 until values.length) {
+              var i: Int = 1
+              while (i < values.length) {
                 if (values(i) > (curval - epsilon) && values(i) < (curval + epsilon)) {
                   curcount += 1
                 }
@@ -345,6 +375,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                   curval = values(i)
                   curcount = 1
                 }
+                i += 1
               }
               if (curcount > modecount) {
                 mode = curval
@@ -352,7 +383,9 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
               result.setSample(x, y, 0, mode)
             }
+            x += 1
           }
+          y += 1
         }
       }
 
@@ -369,24 +402,32 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val rasters = rasterbuilder.result()
 
-        for (y <- 0 until result.getHeight) {
-          for (x <- 0 until result.getWidth) {
-            val valuebuilder = Array.newBuilder[Double]
+        val valuebuilder = Array.newBuilder[Double]
+        valuebuilder.sizeHint(rasters.length)
+        var y: Int = 0
+        while (y < result.getHeight) {
+          var x: Int = 0
+          while (x < result.getWidth) {
+            valuebuilder.clear
 
-            for (ndx <- rasters.indices) {
+            var ndx: Int = 0
+            while (ndx < rasters.length) {
               if (rasters(ndx) != null) {
                 val px = rasters(ndx).getSampleDouble(x, y, 0)
                 if (RasterMapOp.isNotNodata(px, nodatas(ndx))) {
                   valuebuilder += px
                 }
               }
+              ndx += 1
             }
 
             val values = valuebuilder.result
             if (values.length > 0) {
               result.setSample(x, y, 0, values.length / 2)
             }
+            x += 1
           }
+          y += 1
         }
       }
 
@@ -403,14 +444,17 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val rasters = rasterbuilder.result()
 
-        for (y <- 0 until result.getHeight) {
-          for (x <- 0 until result.getWidth) {
+        var y: Int = 0
+        while (y < result.getHeight) {
+          var x: Int = 0
+          while (x < result.getWidth) {
 
             var sum1:Double = 0
             var sum2:Double = 0
 
             var cnt = 0
-            for (ndx <- rasters.indices) {
+            var ndx: Int = 0
+            while (ndx < rasters.length) {
               if (rasters(ndx) != null) {
                 val px = rasters(ndx).getSampleDouble(x, y, 0)
                 if (RasterMapOp.isNotNodata(px, nodatas(ndx))) {
@@ -419,10 +463,13 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                   cnt += 1
                 }
               }
+              ndx += 1
             }
             val stddev = Math.sqrt(cnt * sum2 - Math.pow(sum1, 2)) / cnt
             result.setSample(x, y, 0, stddev)
+            x += 1
           }
+          y += 1
         }
       }
 
@@ -461,13 +508,17 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
       (tile._1, method match {
       case StatisticsMapOp.Mean =>
         val mean = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT, Float.NaN)
-        for (y <- 0 until result.getHeight) {
-          for (x <- 0 until result.getWidth) {
+        var y: Int = 0
+        while (y < result.getHeight) {
+          var x: Int = 0
+          while (x < result.getWidth) {
             val total = result.getSampleDouble(x, y, 0)
             if (RasterMapOp.isNotNodata(total, Float.NaN)) {
               mean.setSample(x, y, 0, total / result.getSampleDouble(x, y, 1))
             }
+            x += 1
           }
+          y += 1
         }
         RasterWritable.toWritable(mean)
       case _ => RasterWritable.toWritable(result)

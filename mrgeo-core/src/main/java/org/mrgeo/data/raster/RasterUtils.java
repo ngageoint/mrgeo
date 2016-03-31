@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.raster;
@@ -185,9 +186,7 @@ public static WritableRaster createEmptyRaster(final int width, final int height
     final int bands, final int datatype,
     final double nodata)
 {
-  // we'll force the empty raster to be a banded model, for simplicity of the code.
-  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
-  final WritableRaster raster = Raster.createWritableRaster(model, null);
+  final WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
   fillWithNodata(raster, nodata);
   return raster;
 }
@@ -195,9 +194,7 @@ public static WritableRaster createEmptyRaster(final int width, final int height
     final int bands, final int datatype,
     final Number[] nodatas)
 {
-  // we'll force the empty raster to be a banded model, for simplicity of the code.
-  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
-  final WritableRaster raster = Raster.createWritableRaster(model, null);
+  final WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
   fillWithNodata(raster, nodatas);
   return raster;
 }
@@ -1212,6 +1209,27 @@ public static int getElementSize(final int rasterDataType)
         "Error trying to get element size from raster. Bad raster data type");
   }
   return size;
+}
+
+public static double getDefaultNoDataForType(final int rasterDataType)
+{
+  switch (rasterDataType)
+  {
+    case DataBuffer.TYPE_BYTE:
+      return 255;
+    case DataBuffer.TYPE_FLOAT:
+      return Float.NaN;
+    case DataBuffer.TYPE_DOUBLE:
+      return Double.NaN;
+    case DataBuffer.TYPE_INT:
+      return Integer.MIN_VALUE;
+    case DataBuffer.TYPE_SHORT:
+    case DataBuffer.TYPE_USHORT:
+      return Short.MIN_VALUE;
+    default:
+      throw new RasterWritable.RasterWritableException(
+              "Error trying to get default nodata value from raster. Bad raster data type " + rasterDataType);
+  }
 }
 
 public static int getElementSize(final Raster r)

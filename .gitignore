@@ -1,6 +1,11 @@
 # top level conf directory
 conf
 
+# python compiled files
+*.pyc
+**/*.pyc
+**/**/*.pyc
+
 # all eclipse generated files
 .classpath
 .project

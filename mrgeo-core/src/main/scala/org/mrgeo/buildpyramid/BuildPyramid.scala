@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.buildpyramid
@@ -27,7 +28,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.{MrsImageDataProvider, MrsImageReader, MrsImageWriter}
+import org.mrgeo.data.image.{ImageOutputFormatContext, MrsImageDataProvider, MrsImageReader, MrsImageWriter}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
@@ -36,7 +37,7 @@ import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
-import org.mrgeo.utils.{Bounds, LongRectangle, SparkUtils, TMSUtils}
+import org.mrgeo.utils._
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
@@ -288,7 +289,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     deletelevel(outputLevel, metadata, provider)
 
-    val outputTiles: util.TreeMap[TileIdWritable, WritableRaster] = new util.TreeMap[TileIdWritable, WritableRaster]()
+    val outputTiles = new util.TreeMap[TileIdWritable, WritableRaster]()
 
     val lastImage: MrsImageReader = provider.getMrsTileReader(inputLevel)
     val iter: KVIterator[TileIdWritable, Raster] = lastImage.get
@@ -306,7 +307,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       val outputkey: TileIdWritable = new TileIdWritable(TMSUtils.tileid(outputTile.tx, outputTile.ty, outputLevel))
       var outputRaster: WritableRaster = null
 
-      if (!outputTiles.containsKey(outputkey)) {
+      if (!outputTiles.contains(outputkey)) {
         outputRaster = fromraster.createCompatibleWritableRaster(tilesize, tilesize)
         RasterUtils.fillWithNodata(outputRaster, metadata)
         outputTiles.put(outputkey, outputRaster)
@@ -371,6 +372,12 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     lastImage.close()
     provider.getMetadataWriter(null).write()
 
+    val tofc = new ImageOutputFormatContext(provider.getResourceName, bounds, outputLevel,
+      tilesize, metadata.getProtectionLevel)
+    val tofp = provider.getTiledOutputFormatProvider(tofc)
+    // Don't use teardownForSpark because we built this level in locally, so we want
+    // to avoid using Spark at this point
+    tofp.finalizeExternalSave(HadoopUtils.createConfiguration())
     true
   }
 

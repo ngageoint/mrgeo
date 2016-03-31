@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra.unarymath
 
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
@@ -62,11 +64,19 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
 
     val rdd = input.get.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + input.getClass.getName))
 
+    val r = RasterWritable.toRaster(rdd.first()._2)
+    val convert = datatype() != DataBuffer.TYPE_UNDEFINED && r.getSampleModel.getDataType != datatype()
+
     // copy this here to avoid serializing the whole mapop
-    val nodata = meta.getDefaultValue(0)
+    val nodatas = meta.getDefaultValues
+
+    val outputnodata = if (convert)  Array.fill[Double](meta.getBands)(nodata()) else nodatas
+    val outputdatatype = if (convert) datatype() else r.getSampleModel.getDataType
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+      val raster = RasterWritable.toRaster(tile._2)
+
+      val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, outputdatatype)
 
       val width = raster.getWidth
       var b: Int = 0
@@ -77,8 +87,11 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
           var x: Int = 0
           while (x < width) {
             val v = pixels(y * width + x)
-            if (RasterMapOp.isNotNodata(v, nodata)) {
-              raster.setSample(x, y, b, function(v))
+            if (RasterMapOp.isNotNodata(v, nodatas(b))) {
+              output.setSample(x, y, b, function(v))
+            }
+            else {
+              output.setSample(x, y, b, outputnodata(b))
             }
             x += 1
           }
@@ -86,10 +99,10 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
         }
         b += 1
       }
-      (tile._1, RasterWritable.toWritable(raster))
+      (tile._1, RasterWritable.toWritable(output))
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, outputnodata,
       bounds = meta.getBounds, calcStats = false))
 
     true
@@ -104,5 +117,9 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
   override def rdd():Option[RasterRDD] = {
     rasterRDD
   }
+
+  private[unarymath] def datatype():Int = { DataBuffer.TYPE_UNDEFINED }
+  private[unarymath] def nodata():Double = { Float.NaN }
+
 
 }

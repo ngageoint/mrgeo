@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.job.yarn
@@ -56,10 +57,9 @@ class MrGeoYarnDriver {
           run.invoke(client)
         }
         catch {
-          case e:Exception => {
+          case e:Exception =>
             e.printStackTrace()
             throw e
-          }
         }
       }
     }
@@ -101,24 +101,32 @@ class MrGeoYarnDriver {
     args += "--jar"
     args += driverJar
 
-    val executors = conf.get("spark.executor.instances", "2").toInt
-    args += "--num-executors"
-    args += executors.toString
-
+    // if dynamic allocation is _not_ enabled, we need to set the num-executors
+    if (!conf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = false)) {
+      //val executors = conf.get("spark.executor.instances", "2").toInt
+      // For Spark 1.6.0, passing --num-executors no longer works. Instead, you
+      // have to set the spark.executor.instances configuration setting.
+      conf.set("spark.executor.instances", job.executors.toString)
+      args += "--num-executors"
+      //args += executors.toString
+      args += job.executors.toString
+    }
     args += "--executor-cores"
-    args += conf.get("spark.executor.cores", "1")
+//    args += conf.get("spark.executor.cores", "1")
+    args +=  job.cores.toString
 
     // spark.executor.memory is the total memory available to spark,
     // --executor-memory is the memory per executor.  Go figure...
+    conf.set("spark.executor.memory", SparkUtils.kbtohuman(job.memoryKb, "m"))
     args += "--executor-memory"
     args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
     args += "--driver-cores"
-    args += conf.get("spark.driver.cores", "1")
+//    args += conf.get("spark.driver.cores", "1")
+    args += "1"
 
     args += "--driver-memory"
     args += SparkUtils.kbtohuman(job.executorMemKb, "m")
-
 
     args += "--name"
     if (job.name != null && job.name.length > 0) {
@@ -138,7 +146,6 @@ class MrGeoYarnDriver {
       }
     })
 
-
     args += "--addJars"
     args += clean.result().mkString(",")
 
@@ -149,7 +156,7 @@ class MrGeoYarnDriver {
     args += job.driverClass
 
     // this is silly, but arguments are passed simply as parameters to the java process that is spun
-    // off as the spark driver.  We need to make sure the command line isn't too long.  If it is,q we'll
+    // off as the spark driver.  We need to make sure the command line isn't too long.  If it is, we'll
     // put the params into a file that we'll send along to the driver...
     var length:Int = 0
     job.params.foreach(p => {
