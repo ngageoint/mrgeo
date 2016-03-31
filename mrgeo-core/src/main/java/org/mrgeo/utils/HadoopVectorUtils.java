@@ -45,7 +45,7 @@ import java.util.UUID;
  */
 public class HadoopVectorUtils
 {
-  private static final Logger log = LoggerFactory.getLogger(HadoopUtils.class);
+  private static final Logger log = LoggerFactory.getLogger(HadoopVectorUtils.class);
   private static Random random = new Random(System.currentTimeMillis());
 
   private static Constructor<?> taskAttempt = null;

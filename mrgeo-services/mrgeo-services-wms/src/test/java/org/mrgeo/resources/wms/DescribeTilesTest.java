@@ -16,7 +16,6 @@
 package org.mrgeo.resources.wms;
 
 import com.sun.jersey.api.client.ClientResponse;
-import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -49,7 +48,7 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
 
       Properties mrgeoProperties = MrGeoProperties.getInstance();
 
-      mrgeoProperties.put(MrGeoConstants.MRGEO_ENV_HOME, inputHdfs.toString());
+      mrgeoProperties.put(MrGeoConstants.MRGEO_COMMON_HOME, inputHdfs.toString());
       mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, inputHdfs.toString());
       mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, inputHdfs.toString());
 

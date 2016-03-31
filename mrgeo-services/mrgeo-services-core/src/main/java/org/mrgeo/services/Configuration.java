@@ -16,6 +16,7 @@
 package org.mrgeo.services;
 
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,74 +27,36 @@ import java.util.Properties;
  */
 public class Configuration
 {
-  private static Configuration instance = null;
+private static Configuration instance = null;
 
-  /**
-   * Made Configuration not throw a checked exception
-   * @return Configuration
-   */
-  public static Configuration getInstance()
+/**
+ * Made Configuration not throw a checked exception
+ * @return Configuration
+ */
+public static Configuration getInstance()
+{
+  if (instance == null)
   {
-    if (instance == null)
-    {
-      // This reduces the concurrency to just when an instance needs creating versus every access
-      synchronized(Configuration.class) {
-        if ( instance == null ) instance = new Configuration();
-      }
-    }
-    return instance;
-  }
-
-  private Properties properties;
-
-  /**
-   * Private constructor to comply with Singleton Pattern
-   */
-  private Configuration()
-  {
-    properties = new Properties();
-
-    String home = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
-    if (home == null)
-    {
-
-      // Try loading from properties file. This is the method used for
-      // JBoss deployments
-      try
-      {
-        properties.load(this.getClass().getClassLoader().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS));
-      }
-      catch(Exception e)
-      {
-        // An empty props object is fine
-      }
-
-      home = properties.getProperty(MrGeoConstants.MRGEO_ENV_HOME);
-
-      if (home == null)
-      {
-        throw new IllegalStateException(MrGeoConstants.MRGEO_ENV_HOME + " environment variable must be set.");
-      }
-    }
-    if (!home.endsWith("/"))
-    {
-      home += "/";
-    }
-
-    // If we read it from JBoss module, no need to load properties from file system
-
-    String conf = home + MrGeoConstants.MRGEO_CONF;
-
-    try {
-      FileInputStream fis = new FileInputStream(conf);
-      properties.load(fis);
-    } catch (IOException ioe) {
-      throw new IllegalStateException("Error loading properties", ioe);
+    // This reduces the concurrency to just when an instance needs creating versus every access
+    synchronized(Configuration.class) {
+      if ( instance == null ) instance = new Configuration();
     }
   }
+  return instance;
+}
 
-  public Properties getProperties()
-  {
-    return properties;
-  }
+private Properties properties;
+
+/**
+ * Private constructor to comply with Singleton Pattern
+ */
+private Configuration()
+{
+  properties = MrGeoProperties.getInstance();
+}
+
+public Properties getProperties()
+{
+  return properties;
+}
 }

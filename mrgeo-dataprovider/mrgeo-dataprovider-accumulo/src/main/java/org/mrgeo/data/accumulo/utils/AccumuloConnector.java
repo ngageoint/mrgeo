@@ -109,26 +109,38 @@ public static boolean isEncoded(String s) {
 
 // TODO: need to make sure the path is correctly set - think about MRGEO
 // environment variables
-public static String getAccumuloPropertiesLocation() {
-  String conf = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
-  if (conf == null) {
-    conf = "/opt/mrgeo";
-  }
-  if (conf != null) {
-    if (!conf.endsWith(File.separator)) {
-      conf += File.separator;
+public static String getAccumuloPropertiesLocation()
+{
+  try
+  {
+    String conf = System.getenv(MrGeoConstants.MRGEO_CONF_DIR);
+
+    if (conf == null)
+    {
+      String home = System.getenv(MrGeoConstants.MRGEO_HOME);
+      File dir = new File(home, MrGeoConstants.MRGEO_HOME_CONF_DIR);
+
+      if (dir.exists())
+      {
+        log.warn(MrGeoConstants.MRGEO_HOME + " environment variable has been deprecated.  " +
+            "Use " + MrGeoConstants.MRGEO_CONF_DIR + " and " + MrGeoConstants.MRGEO_COMMON_HOME + " instead");
+        conf = dir.getCanonicalPath();
+      }
     }
-  } else {
-    conf = "";
+
+    File file = new File(conf, MrGeoAccumuloConstants.MRGEO_ACC_CONF_FILE_NAME);
+    if (file.exists())
+    {
+      return file.getCanonicalPath();
+    }
+    log.error(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath());
+
   }
-  conf += "conf" + File.separator
-      + MrGeoAccumuloConstants.MRGEO_ACC_CONF_FILE_NAME;
-  log.info("looking for conf at: " + conf);
-  File f = new File(conf);
-  if (!f.exists()) {
-    return null;
+  catch (IOException e)
+  {
   }
-  return conf;
+
+  return null;
 }
 
 public static void setAccumuloProperties(Map<String, String> props)

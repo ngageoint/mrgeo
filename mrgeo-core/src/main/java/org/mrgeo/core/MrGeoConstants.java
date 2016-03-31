@@ -33,9 +33,17 @@ public class MrGeoConstants
 /*
  * Global configuration keys
  */
-public static final String MRGEO_ENV_HOME = "MRGEO_HOME";
+@Deprecated
+public static final String MRGEO_HOME = "MRGEO_HOME";
+@Deprecated
+public static final String MRGEO_HOME_CONF_DIR = "/conf";
+
+public static final String MRGEO_CONF_DIR = "MRGEO_CONF_DIR";
+public static final String MRGEO_COMMON_HOME = "MRGEO_COMMON_HOME";
+public static final String MRGEO_CONF = "mrgeo.conf";
+
+
 public static final String MRGEO_SETTINGS = "settings.properties";
-public static final String MRGEO_CONF = "conf/mrgeo.conf";
 public static final String MRGEO_DEVELOPMENT_MODE = "development.mode";
 
 public static final String MRGEO_CLUSTER = "cluster";

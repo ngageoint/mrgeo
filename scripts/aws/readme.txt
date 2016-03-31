@@ -14,7 +14,8 @@ command line using something like the following:
 Note: The SSH command to use is available from within the Amazon Manager
 Once ssh'ed to the master node:
 
-export MRGEO_HOME=/home/haoop/mrgeo
+export MRGEO_COMMON_HOME=/home/haoop/mrgeo
+export MRGEO_CONF_DIR=/home/haoop/mrgeo/conf
 cd mrgeo
 bin/mrgeo mapalgebra -e "put your map algebra here" -o /mrgeo/images/myoutput
 
