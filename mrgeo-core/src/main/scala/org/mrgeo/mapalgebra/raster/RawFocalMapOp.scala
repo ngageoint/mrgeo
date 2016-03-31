@@ -49,7 +49,7 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     rasterRDD =
       Some(RasterRDD(calculate(tiles, neighborhoodWidth, neighborhoodHeight, nodatas, zoom, tilesize)))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array[Number](Float.NaN),
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array.fill[Number](meta.getBands)(getOutputNoData),
       bounds = meta.getBounds, calcStats = false))
 
     true
@@ -115,6 +115,14 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     */
   protected def getNeighborhoodInfo: (Int, Int)
 
+  protected def getOutputTileType: Int = {
+    DataBuffer.TYPE_FLOAT
+  }
+
+  protected def getOutputNoData: Double = {
+    Double.NaN
+  }
+
   protected def calculateRasterIndex(rasterWidth: Int, x: Int, y:Int): Int =
   {
     y * rasterWidth + x
@@ -124,11 +132,12 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
                         neighborhoodWidth: Int, neighborhoodHeight: Int,
                         nodatas:Array[Number], zoom:Int, tilesize:Int) =
   {
+    val outputNoData = getOutputNoData
     tiles.map(tile => {
 
       val raster = RasterWritable.toRaster(tile._2)
       val answer = RasterUtils.createEmptyRaster(tilesize, tilesize, raster.getNumBands,
-        DataBuffer.TYPE_FLOAT) // , Float.NaN)
+        getOutputTileType) // , Float.NaN)
 
       // If neighborhoodWidth is an odd value, then the neighborhood has the same number of pixels to the left
       // and right of the source pixel. If even, then it has one fewer pixels to the left of the
@@ -191,7 +200,7 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
                   yAboveOffset, neighborhoodHeight, tile._1.get()))
             }
             else {
-              answer.setSample(x, y, band, Float.NaN)
+              answer.setSample(x, y, band, outputNoData)
             }
             x += 1
           }
