@@ -27,7 +27,8 @@ import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
 import org.mrgeo.image.MrsPyramidMetadata
-import org.mrgeo.utils.{LatLng, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.LatLng
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -53,7 +54,7 @@ class LeastCostPathCalculator extends Externalizable
   private var tileSize: Int = -1
   private var curRaster: Raster = null
   private var curTile: TMSUtils.Tile = null
-  private var curTileBounds: TMSUtils.Bounds = null
+  private var curTileBounds: Bounds = null
   private var resolution: Double = .0
   private var curPixel: TMSUtils.Pixel = null
   private var curValue: Double = 0.0
@@ -193,7 +194,7 @@ class LeastCostPathCalculator extends Externalizable
         xNeighbor = widthMinusOne
       }
       else {
-        assert((true))
+        assert(true)
       }
       val value: Float = candNextRaster.getSampleFloat(xNeighbor, yNeighbor, 0)
       if (!value.isNaN && value >= 0 && value < leastValue) {
@@ -230,10 +231,12 @@ class LeastCostPathCalculator extends Externalizable
     }
     val deltaDistance = LatLng.calculateGreatCircleDistance(p1, p2)
     pathDistance += deltaDistance.toFloat
+
     val speed: Double = deltaDistance / deltaTime
     if (speed < pathMinSpeed) pathMinSpeed = speed
     if (speed > pathMaxSpeed) pathMaxSpeed = speed
-    return true
+
+    true
   }
 
   private def getTile(tx: Long, ty: Long): Raster = {
@@ -241,7 +244,7 @@ class LeastCostPathCalculator extends Externalizable
     val result = tilecache.get(tileid)
     result match {
       case Some(r) => r
-      case None => {
+      case None =>
         tilecache.clear()
         // Each time a tile needs to be loaded into the cache, get a 7 x 7 area
         // of tiles centered around the requested tile. Because of how LCP works,
@@ -256,7 +259,6 @@ class LeastCostPathCalculator extends Externalizable
           tilecache += (U._1.get() -> raster)
         })
         tilecache.get(tileid).get
-      }
     }
   }
 

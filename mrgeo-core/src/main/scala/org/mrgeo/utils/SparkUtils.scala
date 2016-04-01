@@ -33,6 +33,7 @@ import org.mrgeo.data.{DataProviderFactory, MrsPyramidInputFormat, ProviderPrope
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
@@ -543,8 +544,8 @@ object SparkUtils extends Logging {
 
     val bounds = rdd.aggregate(new Bounds())((bounds, t) => {
       val tile = TMSUtils.tileid(t._1.get, zoom)
+      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize)
 
-      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize).asBounds()
       tb.expand(bounds)
 
       tb
@@ -558,13 +559,13 @@ object SparkUtils extends Logging {
     bounds
   }
 
-  def mergeTiles(rdd: RasterRDD, zoom:Int, tilesize:Int, nodatas:Array[Double], bounds:TMSUtils.Bounds = null) = {
+  def mergeTiles(rdd: RasterRDD, zoom:Int, tilesize:Int, nodatas:Array[Double], bounds:Bounds = null) = {
 
     val bnds = if (bounds != null) {
       bounds
     }
     else {
-      SparkUtils.calculateBounds(RasterRDD(rdd), zoom, tilesize).getTMSBounds
+      SparkUtils.calculateBounds(RasterRDD(rdd), zoom, tilesize)
     }
 
     val tilebounds = TMSUtils.tileBounds(bnds, zoom, tilesize)
@@ -653,7 +654,7 @@ object SparkUtils extends Logging {
       val tile = TMSUtils.tileid(t._1.get, zoom)
 
       // Handle the bounds
-      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize).asBounds()
+      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize)
       tb.expand(entry._1)
       // Handle the stats
       val raster = RasterWritable.toRaster(t._2)
@@ -783,11 +784,11 @@ object SparkUtils extends Logging {
 
     meta.setName(zoom, zoom.toString)
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bnds), zoom, tilesize)
+    val tb = TMSUtils.boundsToTile(bnds, zoom, tilesize)
     meta.setTileBounds(zoom, tb.toLongRectangle)
 
-    val pll: TMSUtils.Pixel = TMSUtils.latLonToPixels(bnds.getMinY, bnds.getMinX, zoom, tilesize)
-    val pur: TMSUtils.Pixel = TMSUtils.latLonToPixels(bnds.getMaxY, bnds.getMaxX, zoom, tilesize)
+    val pll: TMSUtils.Pixel = TMSUtils.latLonToPixels(bnds.s, bnds.w, zoom, tilesize)
+    val pur: TMSUtils.Pixel = TMSUtils.latLonToPixels(bnds.n, bnds.e, zoom, tilesize)
     meta.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py))
 
     if (calcStats) {

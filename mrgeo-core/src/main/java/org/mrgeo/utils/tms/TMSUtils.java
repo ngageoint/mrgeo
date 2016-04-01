@@ -14,11 +14,13 @@
  *
  */
 
-package org.mrgeo.utils;
+package org.mrgeo.utils.tms;
 
 /**
  *
  */
+
+import org.mrgeo.utils.LongRectangle;
 
 import java.io.Serializable;
 
@@ -27,350 +29,6 @@ import java.io.Serializable;
  */
 public class TMSUtils
 {
-// TODO - Replace org.mrgeo.utils.Bounds with this one. This one is heavily used in v2
-// whereas the other one is legacy. At its core, its just four double fields, so no real reason
-// to choose the old one over new.
-public static class Bounds implements Serializable
-{
-  public double n;
-  public double s;
-  public double e;
-  public double w;
-
-  public static final Bounds WORLD = new Bounds(-180, -90, 180, 90);
-
-  public Bounds(final double w, final double s, final double e, final double n)
-  {
-    this.n = n;
-    this.s = s;
-    this.e = e;
-    this.w = w;
-  }
-
-  public static org.mrgeo.utils.Bounds asBounds(final Bounds newBounds)
-  {
-    return new org.mrgeo.utils.Bounds(newBounds.w, newBounds.s, newBounds.e, newBounds.n);
-  }
-
-  public static Bounds asTMSBounds(final org.mrgeo.utils.Bounds oldBounds)
-  {
-    return new Bounds(oldBounds.getMinX(), oldBounds.getMinY(), oldBounds.getMaxX(), oldBounds
-        .getMaxY());
-  }
-
-  public static org.mrgeo.utils.Bounds convertNewToOldBounds(final Bounds newBounds)
-  {
-    return new org.mrgeo.utils.Bounds(newBounds.w, newBounds.s, newBounds.e, newBounds.n);
-  }
-
-  public static Bounds convertOldToNewBounds(final org.mrgeo.utils.Bounds oldBounds)
-  {
-    return new Bounds(oldBounds.getMinX(), oldBounds.getMinY(), oldBounds.getMaxX(), oldBounds
-        .getMaxY());
-  }
-
-  public static Bounds combine(Bounds ... bounds)
-  {
-    Bounds answer = null;
-    for (Bounds b:bounds)
-    {
-      if (answer == null)
-      {
-        answer = new Bounds(b.w, b.s, b.e, b.n);
-      }
-      else
-      {
-        answer.expand(b);
-      }
-    }
-    return answer;
-  }
-
-  public org.mrgeo.utils.Bounds asBounds()
-  {
-    return new org.mrgeo.utils.Bounds(w, s, e, n);
-  }
-
-  public boolean contains(final Bounds b)
-  {
-    return contains(b, true);
-  }
-
-  /**
-   * Is the bounds fully contained within this bounds. Edges are included iff includeAdjacent is
-   * true
-   */
-  public boolean contains(final Bounds b, final boolean includeAdjacent)
-  {
-    if (includeAdjacent)
-    {
-      return (b.w >= w && b.s >= s && b.e <= e && b.n <= n);
-    }
-    return (b.w > w && b.s > s && b.e < e && b.n < n);
-  }
-
-  public boolean contains(double longitude, double latitude)
-  {
-    return contains(longitude, latitude, true);
-  }
-
-  /**
-   * Is the bounds fully contained within this bounds. Edges are included iff includeAdjacent is
-   * true
-   */
-  public boolean contains(double longitude, double latitude, final boolean includeAdjacent)
-  {
-    if (includeAdjacent)
-    {
-      return (longitude >= w && latitude >= s && longitude <= e && latitude <= n);
-    }
-    return (longitude > w && latitude > s && longitude < e && latitude < n);
-  }
-
-  public org.mrgeo.utils.Bounds convertNewToOldBounds()
-  {
-    return new org.mrgeo.utils.Bounds(w, s, e, n);
-  }
-
-  @Override
-  public boolean equals(final Object obj)
-  {
-    if (this == obj)
-    {
-      return true;
-    }
-    if (obj == null)
-    {
-      return false;
-    }
-    if (getClass() != obj.getClass())
-    {
-      return false;
-    }
-    final Bounds other = (Bounds) obj;
-    if (Double.doubleToLongBits(e) != Double.doubleToLongBits(other.e))
-    {
-      return false;
-    }
-    if (Double.doubleToLongBits(n) != Double.doubleToLongBits(other.n))
-    {
-      return false;
-    }
-    if (Double.doubleToLongBits(s) != Double.doubleToLongBits(other.s))
-    {
-      return false;
-    }
-    if (Double.doubleToLongBits(w) != Double.doubleToLongBits(other.w))
-    {
-      return false;
-    }
-    return true;
-  }
-
-  public void expand(final Bounds b)
-  {
-    if (n < b.n)
-    {
-      n = b.n;
-    }
-    if (s > b.s)
-    {
-      s = b.s;
-    }
-
-    if (w > b.w)
-    {
-      w = b.w;
-    }
-
-    if (e < b.e)
-    {
-      e = b.e;
-    }
-  }
-
-  public void expand(final double x, final double y)
-  {
-    if (n < y)
-    {
-      n = y;
-    }
-    if (s > y)
-    {
-      s = y;
-    }
-
-    if (w > x)
-    {
-      w = x;
-    }
-
-    if (e < x)
-    {
-      e = x;
-    }
-
-  }
-
-  public void
-  expand(final double west, final double south, final double east, final double north)
-  {
-    if (n < north)
-    {
-      n = north;
-    }
-    if (s > south)
-    {
-      s = south;
-    }
-
-    if (w > west)
-    {
-      w = west;
-    }
-
-    if (e < east)
-    {
-      e = east;
-    }
-
-  }
-  public void expandBy(final double v)
-  {
-    n += v;
-    s -= v;
-    w -= v;
-    e += v;
-  }
-
-  public void expandBy(final double x, final double y)
-  {
-    n += y;
-    s -= y;
-
-    w -= x;
-    e += x;
-  }
-
-  public void
-  expandBy(final double west, final double south, final double east, final double north)
-  {
-      n += north;
-      s -= south;
-      w -= west;
-      e += east;
-  }
-
-  @Override
-  public int hashCode()
-  {
-    final int prime = 31;
-    int result = 1;
-    long temp;
-    temp = Double.doubleToLongBits(e);
-    result = prime * result + (int) (temp ^ (temp >>> 32));
-    temp = Double.doubleToLongBits(n);
-    result = prime * result + (int) (temp ^ (temp >>> 32));
-    temp = Double.doubleToLongBits(s);
-    result = prime * result + (int) (temp ^ (temp >>> 32));
-    temp = Double.doubleToLongBits(w);
-    result = prime * result + (int) (temp ^ (temp >>> 32));
-    return result;
-  }
-
-  public boolean intersect(final Bounds b)
-  {
-    return intersect(b, true);
-  }
-
-  /**
-   * If the two boundaries are adjacent, this would return true iff includeAdjacent is true
-   *
-   * @param b
-   * @param includeAdjacent
-   * @return
-   */
-  public boolean intersect(final Bounds b, final boolean includeAdjacent)
-  {
-    final Bounds intersectBounds = new Bounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
-        .min(this.e, b.e), Math.min(this.n, b.n));
-    if (includeAdjacent)
-    {
-      return (intersectBounds.w <= intersectBounds.e && intersectBounds.s <= intersectBounds.n);
-    }
-    return (intersectBounds.w < intersectBounds.e && intersectBounds.s < intersectBounds.n);
-  }
-
-  @Override
-  public String toString()
-  {
-    return "Bounds [w=" + w + ", s=" + s + ", e=" + e + ", n=" + n + "]";
-  }
-
-  public String toCommaString()
-  {
-    return w + "," + s + "," + e + "," + n;
-  }
-  public static Bounds fromCommaString(String str) {
-    String[] split = str.split(",");
-
-    double w = Double.parseDouble(split[0]);
-    double s = Double.parseDouble(split[1]);
-    double e = Double.parseDouble(split[2]);
-    double n = Double.parseDouble(split[3]);
-
-    return new Bounds(w, s, e, n);
-  }
-
-  public Bounds union(final Bounds b)
-  {
-    return new Bounds(Math.min(this.w, b.w), Math.min(this.s, b.s), Math.max(
-        this.e, b.e), Math.max(this.n, b.n));
-  }
-
-  public Bounds intersection(final Bounds b)
-  {
-    return intersection(b, true);
-  }
-
-  /**
-   * If the two boundaries are adjacent, this would return true iff includeAdjacent is true
-   *
-   * @param b
-   * @param includeAdjacent
-   * @return
-   */
-  public Bounds intersection(final Bounds b, final boolean includeAdjacent)
-  {
-
-    final Bounds intersectBounds = new Bounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
-        .min(this.e, b.e), Math.min(this.n, b.n));
-    if (includeAdjacent)
-    {
-      if (intersectBounds.w <= intersectBounds.e && intersectBounds.s <= intersectBounds.n)
-      {
-        return intersectBounds;
-      }
-    }
-    else if (intersectBounds.w < intersectBounds.e && intersectBounds.s < intersectBounds.n)
-    {
-      return intersectBounds;
-    }
-
-    return null;
-  }
-
-  public double width()
-  {
-    return e - w;
-  }
-
-  public double height()
-  {
-    return n - s;
-  }
-
-}
 
 
 public static class LatLon implements Serializable
@@ -695,7 +353,7 @@ public static int MAXZOOMLEVEL = 22; // max zoom level (the highest X value can 
 
 
 // limits bounds to +=180, +=90
-public static TMSUtils.Bounds limit(final TMSUtils.Bounds bounds)
+public static Bounds limit(final Bounds bounds)
 {
   double n, s, e, w;
 
@@ -751,12 +409,12 @@ public static TMSUtils.Bounds limit(final TMSUtils.Bounds bounds)
     n = bounds.n;
   }
 
-  return new TMSUtils.Bounds(w, s, e, n);
+  return new Bounds(w, s, e, n);
 }
 
 
 // Converts lat/lon bounds to the correct tile bounds for a zoom level
-public static TileBounds boundsToTile(final TMSUtils.Bounds bounds, final int zoom,
+public static TileBounds boundsToTile(final Bounds bounds, final int zoom,
     final int tilesize)
 {
   final Tile ll = latLonToTile(bounds.s, bounds.w, zoom, tilesize, false);
@@ -779,7 +437,7 @@ public static TileBounds boundsToTile(final TMSUtils.Bounds bounds, final int zo
 // Converts lat/lon bounds to the correct tile bounds for a zoom level. Use this function
 // to compute the tile bounds when working with vector data because it does not use the
 // excludeEdge feature of the latLonToTile() function when computing the upper right tile.
-public static TileBounds boundsToTileExact(final TMSUtils.Bounds bounds, final int zoom,
+public static TileBounds boundsToTileExact(final Bounds bounds, final int zoom,
     final int tilesize)
 {
   final Tile ll = latLonToTile(bounds.s, bounds.w, zoom, tilesize, false);
@@ -813,7 +471,7 @@ public static TileBounds boundsToTileExact(final TMSUtils.Bounds bounds, final i
 public static Tile calculateTile(final Tile tile, final int srcZoom, final int dstZoom,
     final int tilesize)
 {
-  final TMSUtils.Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, srcZoom, tilesize);
+  final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, srcZoom, tilesize);
 
   return TMSUtils.latLonToTile(bounds.s, bounds.w, dstZoom, tilesize);
 }
@@ -984,9 +642,9 @@ public static Bounds tileBounds(final TMSUtils.Tile tile, final int zoom, final 
 }
 
 // Converts lat/lon bounds to the correct tile bounds, in lat/lon for a zoom level
-public static Bounds tileBounds(final TMSUtils.Bounds bounds, final int zoom, final int tilesize)
+public static Bounds tileBounds(final Bounds bounds, final int zoom, final int tilesize)
 {
-  final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
+  final TMSUtils.TileBounds tb = boundsToTile(bounds, zoom, tilesize);
   return TMSUtils.tileToBounds(tb, zoom, tilesize);
 }
 

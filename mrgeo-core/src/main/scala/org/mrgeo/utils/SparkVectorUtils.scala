@@ -23,6 +23,7 @@ import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector._
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.geometry.Geometry
+import org.mrgeo.utils.tms.Bounds
 
 import scala.collection.JavaConversions._
 

@@ -20,11 +20,10 @@ import org.apache.hadoop.io.MapFile;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.image.HdfsMrsImageReader;
 import org.mrgeo.hdfs.tile.Splits;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
 
 import java.awt.image.Raster;
 import java.io.IOException;

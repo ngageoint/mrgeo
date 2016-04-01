@@ -23,9 +23,9 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.util.DefaultPrettyPrinter;
 import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +93,7 @@ protected int tilesize; // tile width/height, in pixels
 
 protected int maxZoomLevel; // maximum zoom level (minimum pixel size)
 
-protected Map<String, String> tags = new HashMap<String, String>(); // freeform k,v pairs of tags
+protected Map<String, String> tags = new HashMap<>(); // freeform k,v pairs of tags
 
 protected String protectionLevel = "";
 
@@ -107,7 +107,7 @@ public MrsPyramidMetadata()
 
 public MrsPyramidMetadata(MrsPyramidMetadata copy) {
   this.pyramid = copy.pyramid;
-  this.bounds = new Bounds(copy.bounds.getMinX(), copy.bounds.getMinY(), copy.bounds.getMaxX(), copy.bounds.getMaxY());
+  this.bounds = copy.bounds.clone();
   this.tilesize = copy.tilesize;
   this.maxZoomLevel = copy.maxZoomLevel;
   this.tags.putAll(copy.tags);
@@ -239,8 +239,6 @@ public String getProtectionLevel()
   /**
    * Returns the quantiles for the specified band for this image. Note that the return value
    * can be null.
-   *
-   * @return
    */
   @JsonIgnore
   public double[] getQuantiles(int band)
@@ -302,7 +300,7 @@ public void setTilesize(final int size)
 public void setTags(final Map<String, String> tags)
 {
   // make a copy of the tags...
-  this.tags = new HashMap<String, String>(tags);
+  this.tags = new HashMap<>(tags);
 }
 
 @JsonIgnore
@@ -429,8 +427,7 @@ public boolean hasPyramids()
    * @throws IOException
    */
   @Deprecated
-  public static MrsPyramidMetadata load(final File file) throws JsonGenerationException,
-          JsonMappingException, IOException
+  public static MrsPyramidMetadata load(final File file) throws IOException
   {
     final ObjectMapper mapper = new ObjectMapper();
     final MrsPyramidMetadata metadata = mapper.readValue(file, MrsPyramidMetadata.class);
@@ -454,8 +451,7 @@ public boolean hasPyramids()
    * @throws JsonMappingException
    * @throws IOException
    */
-  public static MrsPyramidMetadata load(final InputStream stream) throws JsonGenerationException,
-          JsonMappingException, IOException
+  public static MrsPyramidMetadata load(final InputStream stream) throws IOException
   {
     final ObjectMapper mapper = new ObjectMapper();
     return mapper.readValue(stream, MrsPyramidMetadata.class);
@@ -502,27 +498,27 @@ public boolean hasPyramids()
 
   public static int toTileType(final String tiletype)
   {
-    if (tiletype == "Byte")
+    if (tiletype.equals("Byte"))
     {
       return DataBuffer.TYPE_BYTE;
     }
-    if (tiletype == "Float")
+    if (tiletype.equals("Float"))
     {
       return DataBuffer.TYPE_FLOAT;
     }
-    if (tiletype == "Double")
+    if (tiletype.equals("Double"))
     {
       return DataBuffer.TYPE_DOUBLE;
     }
-    if (tiletype == "Int")
+    if (tiletype.equals("Int"))
     {
       return DataBuffer.TYPE_INT;
     }
-    if (tiletype == "Short")
+    if (tiletype.equals("Short"))
     {
       return DataBuffer.TYPE_SHORT;
     }
-    if (tiletype == "UShort")
+    if (tiletype.equals("UShort"))
     {
       return DataBuffer.TYPE_USHORT;
     }
@@ -823,10 +819,7 @@ public boolean hasPyramids()
     LongRectangle tilebounds = getTileBounds(zoomlevel);
     if (tilebounds == null)
     {
-      TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
-                                              bounds.getMaxX(), bounds.getMaxY());
-
-      TMSUtils.TileBounds tb = TMSUtils.boundsToTile(b, zoomlevel, tilesize);
+      TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
       tilebounds = new LongRectangle(tb.w, tb.s, tb.e, tb.n);
     }
     return tilebounds;
@@ -843,8 +836,8 @@ public boolean hasPyramids()
 //    TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
 //        bounds.getMaxX(), bounds.getMaxY());
 
-    TMSUtils.Pixel ll = TMSUtils.latLonToPixels(bounds.getMinX(), bounds.getMinY(), zoomlevel, tilesize);
-    TMSUtils.Pixel ur = TMSUtils.latLonToPixels(bounds.getMaxX(), bounds.getMaxY(), zoomlevel, tilesize);
+    TMSUtils.Pixel ll = TMSUtils.latLonToPixels(bounds.w, bounds.s, zoomlevel, tilesize);
+    TMSUtils.Pixel ur = TMSUtils.latLonToPixels(bounds.e, bounds.n, zoomlevel, tilesize);
 
     return new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
   }
@@ -902,8 +895,7 @@ public boolean hasPyramids()
 
 
 
-  public void save(final OutputStream stream) throws JsonGenerationException, JsonMappingException,
-          IOException
+  public void save(final OutputStream stream) throws IOException
   {
     final ObjectMapper mapper = new ObjectMapper();
     try
@@ -911,7 +903,8 @@ public boolean hasPyramids()
       DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
       pp.indentArraysWith(new DefaultPrettyPrinter.Lf2SpacesIndenter());
 
-      mapper.prettyPrintingWriter(pp).writeValue(stream, this);
+      //mapper.prettyPrintingWriter(pp).writeValue(stream, this);
+      mapper.writer(pp).writeValue(stream, this);
     }
     catch (NoSuchMethodError e)
     {
@@ -948,14 +941,13 @@ public boolean hasPyramids()
 
   public void setImageMetadata(final ImageMetadata[] metadata)
   {
-
     // this will make sure the size of the image metadata matches the zoom, with empty levels as needed
     if (metadata == null)
     {
-      imageData = metadata;
+      imageData = null;
       for (int i = 0; i <= maxZoomLevel; i++)
       {
-        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
+        imageData = ArrayUtils.add(imageData, new ImageMetadata());
       }
 
       return;
@@ -971,13 +963,13 @@ public boolean hasPyramids()
     imageData = metadata;
     if ((maxZoomLevel + 1) < imageData.length)
     {
-      imageData = (ImageMetadata[]) ArrayUtils.subarray(metadata, 0, maxZoomLevel + 1);
+      imageData = ArrayUtils.subarray(metadata, 0, maxZoomLevel + 1);
     }
     else if (maxZoomLevel > imageData.length)
     {
       for (int i = imageData.length; i <= maxZoomLevel; i++)
       {
-        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
+        imageData = ArrayUtils.add(imageData, new ImageMetadata());
       }
     }
 
@@ -990,18 +982,18 @@ public boolean hasPyramids()
     {
       for (int i = 0; i <= zoomlevel; i++)
       {
-        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
+        imageData = ArrayUtils.add(imageData, new ImageMetadata());
       }
     }
     else if (zoomlevel < maxZoomLevel)
     {
-      imageData = (ImageMetadata[]) ArrayUtils.subarray(imageData, 0, zoomlevel + 1);
+      imageData = ArrayUtils.subarray(imageData, 0, zoomlevel + 1);
     }
     else if (zoomlevel > maxZoomLevel)
     {
       for (int i = maxZoomLevel + 1; i <= zoomlevel; i++)
       {
-        imageData = (ImageMetadata[]) ArrayUtils.add(imageData, new ImageMetadata());
+        imageData = ArrayUtils.add(imageData, new ImageMetadata());
       }
     }
     this.maxZoomLevel = zoomlevel;

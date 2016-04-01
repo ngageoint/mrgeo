@@ -20,9 +20,9 @@ import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.TMSUtils.Tile;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +103,7 @@ public void beforePaintingTile(final long tileId)
   totalRaster = null;
 
   final Tile tile = TMSUtils.tileid(tileId, zoom);
-  final TMSUtils.Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tileSize);
+  final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tileSize);
   Bounds b = new Bounds(tb.w, tb.s, tb.e, tb.n);
   if (aggregationType == AggregationType.AVERAGE)
   {

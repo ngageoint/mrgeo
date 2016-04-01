@@ -17,7 +17,7 @@
 package org.mrgeo.data;
 
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -32,6 +32,7 @@ import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils._
 
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.tms.TMSUtils
 
 
 object KernelMapOp extends MapOpRegistrar {

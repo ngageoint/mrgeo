@@ -20,7 +20,7 @@ import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.tile.PartitionerSplit;
 import org.mrgeo.hdfs.tile.SplitInfo;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
 
 import java.util.ArrayList;
 import java.util.List;

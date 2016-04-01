@@ -28,8 +28,9 @@ import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
-import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.{GDALUtils, SparkUtils, TMSUtils}
+//import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.tms.TMSUtils
+import org.mrgeo.utils.{GDALUtils, SparkUtils}
 
 object RasterMapOp {
 
@@ -136,7 +137,7 @@ abstract class RasterMapOp extends MapOp {
   def toRaster(exact:Boolean = false) = {
     val rasterrdd = rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
     SparkUtils.mergeTiles(rasterrdd, meta.getMaxZoomLevel, meta.getTilesize, meta.getDefaultValues,
-      if (exact) meta.getBounds.getTMSBounds else null)
+      if (exact) meta.getBounds else null)
   }
 
   def toDataset(exact:Boolean = false) = {
@@ -146,13 +147,13 @@ abstract class RasterMapOp extends MapOp {
     val tilesize = meta.getTilesize
 
     val raster = SparkUtils.mergeTiles(rasterrdd, zoom, tilesize, meta.getDefaultValues,
-      if (exact) meta.getBounds.getTMSBounds else null)
+      if (exact) meta.getBounds else null)
 
     val bounds = if (exact) {
-      meta.getBounds.getTMSBounds
+      meta.getBounds
     }
     else {
-      TMSUtils.tileBounds(meta.getBounds.getTMSBounds, zoom, tilesize)
+      TMSUtils.tileBounds(meta.getBounds, zoom, tilesize)
     }
 
     GDALUtils.toDataset(raster, meta.getDefaultValue(0), bounds)

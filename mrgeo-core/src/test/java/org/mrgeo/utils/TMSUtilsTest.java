@@ -24,6 +24,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 
 @SuppressWarnings("static-method")
 public class TMSUtilsTest
@@ -108,12 +110,12 @@ public class TMSUtilsTest
       Assert.assertEquals("Bad ll pixel y", (long)(ts * Math.pow(2, z - 1)) / 3, third.py);
     }
 
-    TMSUtils.Pixel ll = TMSUtils.latLonToPixels(b.getMinY(), b.getMinX(), zoom, ts);
+    TMSUtils.Pixel ll = TMSUtils.latLonToPixels(b.s, b.w, zoom, ts);
 
     Assert.assertEquals("Bad ll pixel x", px.getMinX(), ll.px);
     Assert.assertEquals("Bad ll pixel y", px.getMinY(), ll.py);
 
-    TMSUtils.Pixel ur = TMSUtils.latLonToPixels(b.getMaxY(), b.getMaxX(), zoom, ts);
+    TMSUtils.Pixel ur = TMSUtils.latLonToPixels(b.n, b.e, zoom, ts);
 
     Assert.assertEquals("Bad ur pixel x", px.getMaxX(), ur.px);
     Assert.assertEquals("Bad ur pixel y", px.getMaxY(), ur.py);
@@ -146,12 +148,12 @@ public class TMSUtilsTest
       Assert.assertEquals("Bad ll pixel y", (long)(Math.pow(2, z - 1)) / 3, third.ty);
     }
 
-    TMSUtils.Tile ll = TMSUtils.latLonToTile(b.getMinY(), b.getMinX(), zoom, ts);
+    TMSUtils.Tile ll = TMSUtils.latLonToTile(b.s, b.w, zoom, ts);
 
     Assert.assertEquals("Bad ll tile x", tiles.getMinX(), ll.tx);
     Assert.assertEquals("Bad ll tile y", tiles.getMinY(), ll.ty);
 
-    TMSUtils.Tile ur = TMSUtils.latLonToTile(b.getMaxY(), b.getMaxX(), zoom, ts);
+    TMSUtils.Tile ur = TMSUtils.latLonToTile(b.n, b.e, zoom, ts);
 
     Assert.assertEquals("Bad ur tile x", tiles.getMaxX(), ur.tx);
     Assert.assertEquals("Bad ur tile y", tiles.getMaxY(), ur.ty);
@@ -314,7 +316,7 @@ public class TMSUtilsTest
     {
       double res = TMSUtils.resolution(z, ts);
 
-      TMSUtils.Bounds zero = TMSUtils.tileBounds(0, 0, z, ts);
+      Bounds zero = TMSUtils.tileBounds(0, 0, z, ts);
 
       Assert.assertEquals("Bad ll lat", -90.0, zero.s, 0.0001);
       Assert.assertEquals("Bad ll lon", -180.0, zero.w, 0.0001);
@@ -333,7 +335,7 @@ public class TMSUtilsTest
       //      Assert.assertEquals("Bad ll pixel y", (int)(Math.pow(2, z - 1)) / 3, (int)third.ty);
 
       // remember to subtract 1 from the tile calculation because we need to upper right tile
-      TMSUtils.Bounds max = TMSUtils.tileBounds((int)(2 * Math.pow(2, z - 1)) - 1, (int)(Math.pow(2, z - 1)) - 1, z, ts);
+      Bounds max = TMSUtils.tileBounds((int)(2 * Math.pow(2, z - 1)) - 1, (int)(Math.pow(2, z - 1)) - 1, z, ts);
       Assert.assertEquals("Bad ll lat", 90.0 - (res * ts), max.s, 0.0001);
       Assert.assertEquals("Bad ll lon", 180.0 - (res * ts), max.w, 0.0001);
 
@@ -343,7 +345,7 @@ public class TMSUtilsTest
       // the middle calculation doesn't work a level 1 (too few tiles)
       if (z > 1)
       {
-        TMSUtils.Bounds middle = TMSUtils.tileBounds((int)(2 * Math.pow(2, z - 1)) / 2, (int)(Math.pow(2, z - 1)) / 2, z, ts);
+        Bounds middle = TMSUtils.tileBounds((int)(2 * Math.pow(2, z - 1)) / 2, (int)(Math.pow(2, z - 1)) / 2, z, ts);
 
         Assert.assertEquals("Bad ll lat", 0.0, middle.s, 0.0001);
         Assert.assertEquals("Bad ll lon", 0.0, middle.w, 0.0001);
@@ -354,14 +356,14 @@ public class TMSUtilsTest
 
     }
 
-    TMSUtils.Bounds ll = TMSUtils.tileBounds(tiles.getMinX(), tiles.getMinY(), zoom, ts);
-    TMSUtils.Bounds ur = TMSUtils.tileBounds(tiles.getMaxX(), tiles.getMaxY(), zoom, ts);
+    Bounds ll = TMSUtils.tileBounds(tiles.getMinX(), tiles.getMinY(), zoom, ts);
+    Bounds ur = TMSUtils.tileBounds(tiles.getMaxX(), tiles.getMaxY(), zoom, ts);
 
-    Assert.assertEquals("Bad ll lat", tb.getMinY(), ll.s, 0.0001);
-    Assert.assertEquals("Bad ll lon", tb.getMinX(), ll.w, 0.0001);
+    Assert.assertEquals("Bad ll lat", tb.s, ll.s, 0.0001);
+    Assert.assertEquals("Bad ll lon", tb.w, ll.w, 0.0001);
 
-    Assert.assertEquals("Bad ur lat", tb.getMaxY(), ur.s, 0.0001);
-    Assert.assertEquals("Bad ur lon", tb.getMaxX(), ur.w, 0.0001);
+    Assert.assertEquals("Bad ur lat", tb.n, ur.s, 0.0001);
+    Assert.assertEquals("Bad ur lon", tb.e, ur.w, 0.0001);
   }
 
   @Test
@@ -428,32 +430,32 @@ public class TMSUtilsTest
   @Test
   @Category(UnitTest.class)
   public void testBoundsIntersect() {
-    TMSUtils.Bounds b1 = new TMSUtils.Bounds(141.7066, -18.3733, 142.5600, -17.5200);
+    Bounds b1 = new Bounds(141.7066, -18.3733, 142.5600, -17.5200);
     
     {
       // test when two bounds are exactly same
-      TMSUtils.Bounds b2 = b1;
-      Assert.assertEquals(true, b1.intersect(b2));
+      Bounds b2 = b1.clone();
+      Assert.assertEquals(true, b1.intersects(b2));
     }
     
     {
       // test when b2 sits on top of b1 (shares a boundary)
-      TMSUtils.Bounds b2 = new TMSUtils.Bounds(b1.w, b1.n, b1.e, b1.n+1);
-      Assert.assertEquals(true, b1.intersect(b2));
+      Bounds b2 = new Bounds(b1.w, b1.n, b1.e, b1.n+1);
+      Assert.assertEquals(true, b1.intersects(b2));
     }
 
     {
       // test when b2 is fully contained within b1 
       double smallDelta = 0.000001;
-      TMSUtils.Bounds b2 = new TMSUtils.Bounds(b1.w-smallDelta, b1.n-smallDelta, 
+      Bounds b2 = new Bounds(b1.w-smallDelta, b1.n-smallDelta,
                                                 b1.e-smallDelta, b1.n-smallDelta);
-      Assert.assertEquals(true, b1.intersect(b2));
+      Assert.assertEquals(true, b1.intersects(b2));
     }
     
     {
       // test when b2 has no overlap with b1 
-      TMSUtils.Bounds b2 = new TMSUtils.Bounds(b1.e+1, b1.s, b1.e+2, b1.n);
-      Assert.assertEquals(false, b1.intersect(b2));
+      Bounds b2 = new Bounds(b1.e+1, b1.s, b1.e+2, b1.n);
+      Assert.assertEquals(false, b1.intersects(b2));
     }
   
   }

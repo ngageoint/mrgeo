@@ -21,7 +21,6 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import javax.vecmath.Vector3d
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
@@ -30,7 +29,8 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.utils.{LatLng, SparkUtils, TMSUtils}
+import org.mrgeo.utils.tms.TMSUtils
+import org.mrgeo.utils.{LatLng, SparkUtils}
 
 object SlopeAspectMapOp {
   final val Input = "input"
@@ -232,7 +232,7 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(meta.getBounds), zoom, tilesize)
+    val tb = TMSUtils.boundsToTile(meta.getBounds, zoom, tilesize)
 
     val nodatas = Array.ofDim[Number](meta.getBands)
     for (i <- nodatas.indices) {

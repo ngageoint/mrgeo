@@ -20,9 +20,9 @@ import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,10 +49,7 @@ public static Set<Long> getTileIdsFromBounds(final MrsImage image, final Bounds 
 
 public static Set<Long> getTileIdsFromBounds( final Bounds bounds, final int zoomlevel, final int tilesize)
 {
-  final TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(), bounds
-      .getMaxX(), bounds.getMaxY());
-
-  final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(b, zoomlevel, tilesize);
+  final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
 
   // we used to check if the tx/ty was within the image, but that was removed because when we
   // send in a bounds, we really need an image that matches those bounds (in tile space),
@@ -83,7 +80,7 @@ public static WritableRaster mergeTiles(final MrsImage image)
 
 public static WritableRaster mergeTiles(final MrsImage image, final Bounds bounds)
 {
-  final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), image
+  final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, image
       .getZoomlevel(), image.getTilesize());
 
   return RasterTileMerger.mergeTiles(image, tb);
@@ -124,14 +121,13 @@ public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Til
   final int tilesize = image.getTilesize();
 
   // 1st calculate the pixel size of the merged image.
-  TMSUtils.Bounds imageBounds = null;
+  Bounds imageBounds = null;
   WritableRaster merged = null;
 
   for (final TMSUtils.Tile tile : tiles)
   {
     log.debug("tx: {} ty: {}", tile.tx, tile.ty);
-    final TMSUtils.Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
-
+    final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
     try
     {
       // expand the image bounds by the tile
@@ -163,7 +159,7 @@ public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Til
 
   for (final TMSUtils.Tile tile : tiles)
   {
-    final TMSUtils.Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, image.getZoomlevel(),
+    final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, image.getZoomlevel(),
         image.getTilesize());
 
     // calculate the starting pixel for the source
@@ -226,7 +222,7 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
   final int tilesize = image.getTilesize();
 
   // 1st calculate the pixel size of the merged image.
-  final TMSUtils.Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoom, tilesize);
+  final Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoom, tilesize);
   WritableRaster merged;
 
   final TMSUtils.Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, image
@@ -286,7 +282,7 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
       {
         final TMSUtils.Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoom);
 
-        final TMSUtils.Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
+        final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
 
         // calculate the starting pixel for the source
         // make sure we use the upper-left lat/lon

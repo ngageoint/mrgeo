@@ -16,7 +16,7 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{WritableRaster, Raster, DataBuffer}
+import java.awt.image.DataBuffer
 import java.io.{IOException, ObjectOutput, ObjectInput, Externalizable}
 
 import org.apache.spark.rdd.RDD
@@ -27,7 +27,8 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.utils.{SparkUtils, TMSUtils}
+import org.mrgeo.utils.tms.TMSUtils
+import org.mrgeo.utils.SparkUtils
 
 abstract class TerrainIndexMapOp extends RasterMapOp with Externalizable {
 
@@ -46,7 +47,7 @@ abstract class TerrainIndexMapOp extends RasterMapOp with Externalizable {
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(meta.getBounds), zoom, tilesize)
+    val tb = TMSUtils.boundsToTile(meta.getBounds, zoom, tilesize)
 
     val nodatas = Array.ofDim[Number](meta.getBands)
     for (i <- nodatas.indices) {
@@ -56,8 +57,8 @@ abstract class TerrainIndexMapOp extends RasterMapOp with Externalizable {
     val kernelInfo = getKernelInfo
     val kernelWidth = kernelInfo._1
     val kernelHeight = kernelInfo._2
-    val bufferX = (kernelWidth / 2).toInt
-    val bufferY = (kernelHeight / 2).toInt
+    val bufferX = kernelWidth / 2
+    val bufferY = kernelHeight / 2
 
     val tiles = FocalBuilder.create(rdd, bufferX, bufferY, meta.getBounds, zoom, nodatas, context)
 
@@ -108,7 +109,7 @@ abstract class TerrainIndexMapOp extends RasterMapOp with Externalizable {
       value.isNaN
     }
     else {
-      (value == nodata)
+      value == nodata
     }
   }
 
@@ -139,18 +140,18 @@ abstract class TerrainIndexMapOp extends RasterMapOp with Externalizable {
       // and right of the source pixel. If even, then it has one fewer pixels to the left of the
       // source value than to the right.
       val xLeftOffset = if ((kernelWidth % 2) == 0) {
-        (kernelWidth / 2).toInt - 1
+        kernelWidth / 2 - 1
       }
       else {
-        (kernelWidth / 2).toInt
+        kernelWidth / 2
       }
       // If kernelHeight is an odd value, then the kernel has the same number of pixels above and
       // below the source pixel. If even, then it has one fewer pixel above than below.
       val yAboveOffset = if ((kernelHeight % 2) == 0) {
-        (kernelHeight / 2).toInt - 1
+        kernelHeight / 2 - 1
       }
       else {
-        (kernelHeight / 2).toInt
+        kernelHeight / 2
       }
       val rasterWidth = raster.getWidth
       val rasterValues = raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,

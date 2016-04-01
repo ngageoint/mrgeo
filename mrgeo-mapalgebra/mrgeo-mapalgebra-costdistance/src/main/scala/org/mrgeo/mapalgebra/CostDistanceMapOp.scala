@@ -21,7 +21,6 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.SparkContext._
 import org.apache.spark.{Accumulator, AccumulatorParam, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
@@ -33,6 +32,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils._
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -250,8 +250,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val frictionRDD = inputFriction.rdd(zoomLevel) getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputFriction.getClass.getName))
 
     tileBounds = {
-      val requestedTMSBounds = TMSUtils.Bounds.convertOldToNewBounds(outputBounds)
-      TMSUtils.boundsToTile(requestedTMSBounds, zoomLevel, tilesize)
+      TMSUtils.boundsToTile(outputBounds, zoomLevel, tilesize)
     }
     if (tileBounds == null)
     {
@@ -436,19 +435,19 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val diagonalDistanceInMeters = Math.sqrt(2) * distanceInMeters
     // Find the coordinates of the point that is distance meters to right and distance
     // meters above the top right corner of the sources points MBR.
-    val tr = new LatLng(bounds.getMaxY, bounds.getMaxX)
+    val tr = new LatLng(bounds.n, bounds.e)
     val trExpanded = LatLng.calculateCartesianDestinationPoint(tr, diagonalDistanceInMeters, 45.0)
 
     // Find the coordinates of the point that is distance meters to left and distance
     // meters below the bottom left corner of the sources points MBR.
-    val bl = new LatLng(bounds.getMinY, bounds.getMinX)
+    val bl = new LatLng(bounds.s, bounds.w)
     val blExpanded = LatLng.calculateCartesianDestinationPoint(bl, diagonalDistanceInMeters, 225.0)
 
     // Make sure the returned bounds does not extend beyond the image bounds itself.
-    new Bounds(Math.max(blExpanded.getLng, imageBounds.getMinX),
-      Math.max(blExpanded.getLat, imageBounds.getMinY),
-      Math.min(trExpanded.getLng, imageBounds.getMaxX),
-      Math.min(trExpanded.getLat, imageBounds.getMaxY))
+    new Bounds(Math.max(blExpanded.getLng, imageBounds.w),
+      Math.max(blExpanded.getLat, imageBounds.s),
+      Math.min(trExpanded.getLng, imageBounds.e),
+      Math.min(trExpanded.getLat, imageBounds.n))
   }
 
   def makeCostDistanceRaster(tileId: Long, source: Raster,
@@ -553,14 +552,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
    * This method updates the pixels in the destination raster and adds the modified
    * pixels to the queue which is used for processing the tile later.
    *
-   * @param queue
-   * @param tileId
-   * @param raster
-   * @param width
-   * @param height
-   * @param res
-   * @param pixelSizeMeters
-   * @param neighborChanges
    */
   def propagateNeighborChangesToOuterPixels(queue: java.util.concurrent.PriorityBlockingQueue[CostPoint],
                                             tileId: Long,
@@ -578,16 +569,16 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val numBands: Short = raster.getNumBands.toShort
     val costBand: Short = (numBands - 1).toShort // 0-based index of the last band is the cost band
 
-    neighborChanges.view.zipWithIndex foreach { case (cpList, direction) => {
+    neighborChanges.view.zipWithIndex foreach { case (cpList, direction) =>
       if (cpList != null) {
         for (srcPoint <- cpList) {
           direction match {
-            case CostDistanceMapOp.SELF => {
+            case CostDistanceMapOp.SELF =>
               // This direction is only used at the start of the algorithm for source
               // points inside of tiles. Just add these changed points to the queue.
               queue.add(srcPoint)
-            }
-            case CostDistanceMapOp.ABOVE => {
+
+            case CostDistanceMapOp.ABOVE =>
               // The destination tile is above the source tile. If any changed pixels in
               // the source tile are in the top row of the tile, then compute the changes
               // that would propagate to that pixel's neighbors in the bottom row of the
@@ -610,8 +601,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                   }
                 }
               }
-            }
-            case CostDistanceMapOp.BELOW => {
+
+            case CostDistanceMapOp.BELOW =>
               // The destination tile is below the source tile. For any pixels that changed
               // in the source tile, propagate those changes to the neighboring pixels in the
               // top row of the destination tile.
@@ -632,8 +623,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                   }
                 }
               }
-            }
-            case CostDistanceMapOp.LEFT => {
+
+            case CostDistanceMapOp.LEFT =>
               // The destination tile is to the left of the source tile. For any pixels that changed
               // in the source tile, propagate those changes to the neighboring pixels in the
               // right-most column of the destination tile.
@@ -654,8 +645,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                   }
                 }
               }
-            }
-            case CostDistanceMapOp.RIGHT => {
+
+            case CostDistanceMapOp.RIGHT =>
               // The destination tile is to the right of the source tile. For any pixels that changed
               // in the source tile, propagate those changes to the neighboring pixels in the
               // left-most column of the destination tile.
@@ -676,8 +667,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                   }
                 }
               }
-            }
-            case CostDistanceMapOp.ABOVE_LEFT => {
+
+            case CostDistanceMapOp.ABOVE_LEFT =>
               // The destination tile is to the top-left of the source tile. If the top-left
               // pixel of the source tile changed, propagate that change to the bottom-right
               // pixel of the destination tile.
@@ -694,8 +685,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                   rightValues,
                   queue)
               }
-            }
-            case CostDistanceMapOp.ABOVE_RIGHT => {
+
+            case CostDistanceMapOp.ABOVE_RIGHT =>
               // The destination tile is to the top-right of the source tile. If the top-right
               // pixel of the source tile changed, propagate that change to the bottom-left
               // pixel of the destination tile.
@@ -712,8 +703,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                   rightValues,
                   queue)
               }
-            }
-            case CostDistanceMapOp.BELOW_LEFT => {
+
+            case CostDistanceMapOp.BELOW_LEFT =>
               // The destination tile is to the bottom-left of the source tile. If the bottom-left
               // pixel of the source tile changed, propagate that change to the top-right
               // pixel of the destination tile.
@@ -730,8 +721,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                   rightValues,
                   queue)
               }
-            }
-            case CostDistanceMapOp.BELOW_RIGHT => {
+
+            case CostDistanceMapOp.BELOW_RIGHT =>
               // The destination tile is to the bottom-right of the source tile. If the bottom-right
               // pixel of the source tile changed, propagate that change to the top-left
               // pixel of the destination tile.
@@ -748,11 +739,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                   rightValues,
                   queue)
               }
-            }
+
           }
         }
       }
-    }
     }
   }
 
@@ -979,14 +969,12 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   {
     val distanceMeters = direction match {
       case (TraversalDirection.DOWN | TraversalDirection.UP |
-            TraversalDirection.LEFT | TraversalDirection.RIGHT) => {
+            TraversalDirection.LEFT | TraversalDirection.RIGHT) =>
         // Vertical direction
         pixelSizeMeters
-      }
       case (TraversalDirection.DOWN_LEFT | TraversalDirection.DOWN_RIGHT |
-            TraversalDirection.UP_LEFT | TraversalDirection.UP_RIGHT) => {
+            TraversalDirection.UP_LEFT | TraversalDirection.UP_RIGHT) =>
         Math.sqrt(2.0 * pixelSizeMeters * pixelSizeMeters)
-      }
     }
     (pixelFriction * distanceMeters).toFloat
   }
@@ -1074,9 +1062,7 @@ class NeighborChangedPoints extends Externalizable {
   // direction is from the neighbor tile toward the tile in the key.
   private val changes = new util.HashMap[Long, Array[List[CostPoint]]]()
 
-  def size(): Int = {
-    return changes.size()
-  }
+  def size(): Int = changes.size()
 
   def dump(zoomLevel: Int): Unit = {
     val iter = changes.keySet().iterator()
@@ -1084,7 +1070,7 @@ class NeighborChangedPoints extends Externalizable {
       val tileId = iter.next()
       println("  tile id: " + TMSUtils.tileid(tileId, zoomLevel))
       val value = changes.get(tileId)
-      for (direction <- 0 until value.length) {
+      for (direction <- value.indices) {
         val dir = direction.toByte match {
           case CostDistanceMapOp.ABOVE => "ABOVE"
           case CostDistanceMapOp.ABOVE_LEFT => "ABOVE_LEFT"
@@ -1114,7 +1100,7 @@ class NeighborChangedPoints extends Externalizable {
     while (iter.hasNext) {
       val tileId = iter.next()
       val value = changes.get(tileId)
-      for (direction <- 0 until value.length) {
+      for (direction <- value.indices) {
         if (value(direction) != null) {
           changeCount += value(direction).size
         }
@@ -1141,13 +1127,10 @@ class NeighborChangedPoints extends Externalizable {
     value(direction) = points
   }
 
-  def keySet(): util.Set[Long] = {
-    return changes.keySet()
-  }
+  def keySet(): util.Set[Long] = changes.keySet()
 
-  def get(tileId: Long): Array[List[CostPoint]] = {
-    return changes.get(tileId)
-  }
+  def get(tileId: Long): Array[List[CostPoint]] = changes.get(tileId)
+
 
   def +=(other: NeighborChangedPoints): NeighborChangedPoints = {
     val numOtherChanges = other.changes.size()
@@ -1164,11 +1147,11 @@ class NeighborChangedPoints extends Externalizable {
           // We will never have multiple cost point lists for this tile from
           // the same direction (e.g. array index), so we can just perform
           // an assignment.
-          value.view.zipWithIndex foreach { case (cpList, index) => {
+          value.view.zipWithIndex foreach { case (cpList, index) =>
             if (cpList != null) {
               myValue(index) = cpList
             }
-          }
+
           }
         }
       }

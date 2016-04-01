@@ -31,6 +31,7 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils._
 
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 
 //import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -82,7 +83,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   private var tms:Boolean = false
   private var colorscale:Option[String] = None
   private var tileids:Option[Seq[Long]] = None
-  private var bounds:Option[TMSUtils.Bounds] = None
+  private var bounds:Option[Bounds] = None
   private var alllevels:Boolean = false
   private var overridenodata:Option[Double] = None
 
@@ -101,7 +102,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     //    this.format = if (format != null && format.length > 0) Some(format) else None
     this.colorscale = if (colorscale != null && colorscale.length > 0) Some(colorscale) else None
     this.tileids = if (tileids != null && tileids.length > 0) Some(tileids.split(",").map(_.toLong).toSeq) else None
-    this.bounds = if (bounds != null && bounds.length > 0) Some(TMSUtils.Bounds.fromCommaString(bounds)) else None
+    this.bounds = if (bounds != null && bounds.length > 0) Some(Bounds.fromCommaString(bounds)) else None
     this.randomtile = randomTiles
     this.singlefile = singleFile
     this.tms = tms
@@ -191,7 +192,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     // Check for optional format string
     if (node.getNumChildren > 11)
       MapOp.decodeString(node.getChild(11), variables) match {
-      case Some(s) => bounds = Some(TMSUtils.Bounds.fromCommaString(s))
+      case Some(s) => bounds = Some(Bounds.fromCommaString(s))
       case _ =>
       }
 
@@ -267,7 +268,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     metadata(raster.get.metadata().get)
 
     if (ExportMapOp.inMemoryTestPath != null) {
-      val output = makeOutputName(ExportMapOp.inMemoryTestPath, format.get, 0, 0, 0, false)
+      val output = makeOutputName(ExportMapOp.inMemoryTestPath, format.get, 0, 0, 0, reformat = false)
       GDALUtils.saveRaster(mergedimage.get, output, null, meta.getDefaultValueDouble(0), format.get)
     }
     true
@@ -411,7 +412,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     }
     else {
       val t: TMSUtils.Tile = TMSUtils.tileid(tileid, zoom)
-      val bounds: TMSUtils.Bounds = TMSUtils.tileBounds(t.tx, t.ty, zoom, tilesize)
+      val bounds: Bounds = TMSUtils.tileBounds(t.tx, t.ty, zoom, tilesize)
       var output: String = null
       if (template.contains(ExportMapOp.X) || template.contains(ExportMapOp.Y) ||
           template.contains(ExportMapOp.ZOOM) || template.contains(ExportMapOp.ID) ||

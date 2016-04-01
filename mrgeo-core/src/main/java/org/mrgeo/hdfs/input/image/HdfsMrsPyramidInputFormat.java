@@ -28,13 +28,12 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.TMSUtils.Bounds;
-import org.mrgeo.utils.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +46,6 @@ public class HdfsMrsPyramidInputFormat extends InputFormat<TileIdWritable,Raster
 {
 private static Logger log = LoggerFactory.getLogger(HdfsMrsPyramidInputFormat.class);
 private String input;
-private int inputZoom;
 
 /**
  * This constructor should only be used by the Hadoop framework on the data
@@ -59,10 +57,9 @@ public HdfsMrsPyramidInputFormat()
 {
 }
 
-public HdfsMrsPyramidInputFormat(final String input, final int zoom)
+public HdfsMrsPyramidInputFormat(final String input)
 {
   this.input = input;
-  this.inputZoom = zoom;
 }
 
 @Override
@@ -124,23 +121,13 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo[] splits =
       (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo[]) fsplit.getSplits();
 
-  List<InputSplit> result = new ArrayList<InputSplit>(splits.length);
+  List<InputSplit> result = new ArrayList<>(splits.length);
 
-  final Bounds requestedBounds;
-  if (ifContext.getBounds() != null)
-  {
-    requestedBounds = ifContext.getBounds().getTMSBounds();
-  }
-  else
-  {
-    requestedBounds = null;
-  }
+  final Bounds requestedBounds = ifContext.getBounds();
   for (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo split : splits)
   {
     final Path part = new Path(inputWithZoom, split.getName());
     final Path dataFile = new Path(part, MapFile.DATA_FILE_NAME);
-
-    final FileSystem fs = HadoopFileUtils.getFileSystem(conf, dataFile);
 
     final long endTileId = split.getEndId();
     final long startTileId = split.getStartId();
@@ -156,7 +143,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
     if (requestedBounds != null)
     {
       // Only include the split if it intersects the requested bounds.
-      if (requestedBounds.intersect(partFileBounds, false /* include adjacent splits */))
+      if (requestedBounds.intersects(partFileBounds, false /* include adjacent splits */))
       {
         Bounds intersected = requestedBounds.intersection(partFileBounds, false);
 
@@ -204,8 +191,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
 }
 
 
-public static void setInputInfo(final Job job, final int zoomlevel,
-    final String inputWithZoom) throws IOException
+public static void setInputInfo(final Job job, final String inputWithZoom) throws IOException
 {
 //    job.setInputFormatClass(HdfsMrsPyramidInputFormat.class);
 

@@ -27,7 +27,7 @@ import org.mrgeo.geometry.Point
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.TMSUtils
+import org.mrgeo.utils.tms.TMSUtils
 
 
 object RasterizePointsMapOp extends MapOpRegistrar {

@@ -27,15 +27,15 @@ import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.{ImageOutputFormatContext, MrsPyramidWriterContext, MrsImageOutputFormatProvider, MrsImageDataProvider}
+import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
-import org.mrgeo.hdfs.partitioners.BlockSizePartitioner
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -110,7 +110,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     args += Inputs -> input
     args += Output -> output
     if (bounds != null) {
-      args += Bounds -> bounds.toDelimitedString
+      args += Bounds -> bounds.toCommaString
     }
     args += Zoom -> zoomlevel.toString
     args += Tilesize -> tilesize.toString
@@ -214,7 +214,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
         val bands = src.GetRasterCount()
 
-        val imageBounds = GDALUtils.getBounds(src).getTMSBounds
+        val imageBounds = GDALUtils.getBounds(src)
         val tiles = TMSUtils.boundsToTile(imageBounds, zoom, tilesize)
         val tileBounds = TMSUtils.tileBounds(imageBounds, zoom, tilesize)
 
@@ -516,7 +516,7 @@ class IngestImage extends MrGeoJob with Externalizable {
       bounds = new Bounds()
     }
     else {
-      bounds = Bounds.fromDelimitedString(boundstr)
+      bounds = Bounds.fromCommaString(boundstr)
     }
 
     zoom = job.getSetting(IngestImage.Zoom).toInt

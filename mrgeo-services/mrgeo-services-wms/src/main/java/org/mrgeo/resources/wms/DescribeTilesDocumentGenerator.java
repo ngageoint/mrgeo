@@ -22,9 +22,9 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Version;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,11 +50,11 @@ public class DescribeTilesDocumentGenerator
 
     double scale = TMSUtils.resolution(zoom, metadata.getTilesize());
     Element tileMatrix = XmlUtils.createElement(matrixSet, "TileMatrix");
-    tileMatrix.setAttribute("scale", new Double(scale).toString());
+    tileMatrix.setAttribute("scale", Double.toString(scale));
 
     Bounds bounds = metadata.getBounds();
     XmlUtils.createTextElement2(tileMatrix, "gml:Point",
-        String.format("%f %f", bounds.getMinX(), bounds.getMaxY()));
+        String.format("%f %f", bounds.w, bounds.n));
 
     LongRectangle tb = metadata.getTileBounds(zoom);
 
@@ -67,10 +67,6 @@ public class DescribeTilesDocumentGenerator
    */
 
   /**
-   * @param version    WMS version
-   * @param requestUrl HTTP request url
-   * @param providers
-   * @return
    * @throws IOException
    */
   public Document generateDoc(Version version, String requestUrl,
@@ -102,11 +98,6 @@ public class DescribeTilesDocumentGenerator
     return doc;
   }
 
-  /**
-   * @param dt
-   * @param version
-   * @param providers
-   */
   private void addLayersToDescribeTiles(Element dt, Version version,
       MrsImageDataProvider[] providers) throws IOException
   {
@@ -144,9 +135,9 @@ public class DescribeTilesDocumentGenerator
 
         Element matrixSet = XmlUtils.createElement(crs, "TiledMatrixSet");
         XmlUtils.createTextElement2(
-            matrixSet, "TileWidth", new Integer(metadata.getTilesize()).toString());
+            matrixSet, "TileWidth", Integer.toString(metadata.getTilesize()));
         XmlUtils.createTextElement2(
-            matrixSet, "TileHeight", new Integer(metadata.getTilesize()).toString());
+            matrixSet, "TileHeight", Integer.toString(metadata.getTilesize()));
 
         if (pyramid.hasPyramids())
         {

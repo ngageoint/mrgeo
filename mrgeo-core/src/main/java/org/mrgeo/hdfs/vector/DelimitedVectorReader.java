@@ -25,7 +25,7 @@ import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.data.vector.VectorReaderContext;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -89,10 +89,7 @@ public class DelimitedVectorReader implements VectorReader
      * 
      * If both min and max feature id are <= 0, then this visitor will accept
      * all features.
-     * 
-     * @param minFeatureId
-     * @param maxFeatureId
-     */
+     **/
     public FeatureIdRangeVisitor(long minFeatureId, long maxFeatureId)
     {
       this.minFeatureId = minFeatureId;
@@ -103,7 +100,7 @@ public class DelimitedVectorReader implements VectorReader
     public boolean accept(long id, Geometry geometry)
     {
       boolean acceptable = true;
-      if (acceptable && minFeatureId > 0)
+      if (minFeatureId > 0)
       {
         acceptable = (id >= minFeatureId);
       }
@@ -134,11 +131,7 @@ public class DelimitedVectorReader implements VectorReader
     public boolean accept(long id, Geometry geometry)
     {
       Bounds geomBounds = geometry.getBounds();
-      if (geomBounds != null)
-      {
-        return geomBounds.intersects(bounds);
-      }
-      return false;
+      return geomBounds != null && geomBounds.intersects(bounds);
     }
 
     @Override
@@ -173,7 +166,7 @@ public class DelimitedVectorReader implements VectorReader
     }
     String fileName = provider.getResolvedResourceName(true);
     Path columnsPath = new Path(fileName + ".columns");
-    List<String> attributeNames = new ArrayList<String>();
+    List<String> attributeNames = new ArrayList<>();
     int xCol = -1;
     int yCol = -1;
     int geometryCol = -1;
@@ -270,9 +263,8 @@ public class DelimitedVectorReader implements VectorReader
         }
       }
     }
-    DelimitedParser delimitedParser = new DelimitedParser(attributeNames,
+    return new DelimitedParser(attributeNames,
         xCol, yCol, geometryCol, delimiter, '\"', skipFirstLine);
-    return delimitedParser;
   }
 
   @Override
@@ -281,8 +273,7 @@ public class DelimitedVectorReader implements VectorReader
     HdfsFileReader fileReader = new HdfsFileReader();
     fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
     DelimitedParser delimitedParser = getDelimitedParser();
-    DelimitedReader reader = new DelimitedReader(fileReader, delimitedParser);
-    return reader;
+    return new DelimitedReader(fileReader, delimitedParser);
   }
 
   @Override
@@ -302,8 +293,7 @@ public class DelimitedVectorReader implements VectorReader
     DelimitedReader reader = new DelimitedReader(fileReader, delimitedParser, visitor);
     if (reader.hasNext())
     {
-      Geometry geometry = reader.next();
-      return geometry;
+      return reader.next();
     }
     return null;
   }
@@ -315,16 +305,14 @@ public class DelimitedVectorReader implements VectorReader
     fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
     DelimitedParser delimitedParser = getDelimitedParser();
     BoundsVisitor visitor = new BoundsVisitor(bounds);
-    DelimitedReader reader = new DelimitedReader(fileReader, delimitedParser, visitor);
-    return reader;
+    return new DelimitedReader(fileReader, delimitedParser, visitor);
   }
 
   @Override
   public long count() throws IOException
   {
     long featureCount = 0L;
-    CloseableKVIterator<FeatureIdWritable, Geometry> iter = get();
-    try
+    try (CloseableKVIterator<FeatureIdWritable, Geometry> iter = get())
     {
       while (iter.hasNext())
       {
@@ -333,10 +321,6 @@ public class DelimitedVectorReader implements VectorReader
           featureCount++;
         }
       }
-    }
-    finally
-    {
-      iter.close();
     }
     return featureCount;
   }

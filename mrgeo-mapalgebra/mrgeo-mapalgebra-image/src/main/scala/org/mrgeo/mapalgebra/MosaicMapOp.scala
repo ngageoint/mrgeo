@@ -28,8 +28,9 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.TMSUtils.TileBounds
-import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import TMSUtils.TileBounds
+import org.mrgeo.utils.SparkUtils
 
 import scala.util.control.Breaks
 
@@ -140,7 +141,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
       }
     }
 
-    val tileBounds: TileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+    val tileBounds: TileBounds = TMSUtils.boundsToTile(bounds, zoom, tilesize)
 
     logDebug("Bounds: " + bounds.toString)
     logDebug("TileBounds: " + tileBounds.toString)

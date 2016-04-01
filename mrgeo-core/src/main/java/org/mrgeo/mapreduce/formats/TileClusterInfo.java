@@ -16,8 +16,8 @@
 
 package org.mrgeo.mapreduce.formats;
 
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -100,14 +100,14 @@ public class TileClusterInfo implements Serializable
    * array is not large enough, and ArrayOutOfBoundsException will be
    * thrown by Java.
    * 
-   * Only neighbor tiles that intersect the bounds passed in will be
+   * Only neighbor tiles that intersects the bounds passed in will be
    * returned. 
    * 
    * @param baseTileId The tile id for which to return the required
    * neighbors.
    * @param zoom The zoom level being used
    * @param tileSize The tile size being used
-   * @param bounds The bounds which returned neighbors must intersect
+   * @param bounds The bounds which returned neighbors must intersects
    * 
    * @return Null if no neighbors required or an array of 1 or more
    * neighbor tile id's otherwise. The baseTileId will not be included
@@ -139,7 +139,7 @@ public class TileClusterInfo implements Serializable
             tx -= numXTiles;
           }
           long ty = baseTile.ty + y;
-          TMSUtils.Bounds tileBounds = TMSUtils.tileBounds(tx, ty, zoom, tileSize);
+          Bounds tileBounds = TMSUtils.tileBounds(tx, ty, zoom, tileSize);
           if (bounds.intersects(tileBounds.w, tileBounds.s, tileBounds.e, tileBounds.n) &&
               TMSUtils.isValidTile(tx, ty, zoom))
           {

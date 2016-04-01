@@ -23,7 +23,7 @@ import org.mrgeo.data.vector.VectorDataProvider;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.data.vector.VectorReaderContext;
 import org.mrgeo.geometry.Geometry;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.IOException;
 

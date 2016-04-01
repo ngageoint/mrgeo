@@ -16,14 +16,11 @@
 
 package org.mrgeo.mapalgebra
 
-import java.io.{ObjectOutput, ObjectInput, Externalizable}
-
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.TMSUtils
-import org.mrgeo.utils.TMSUtils.Bounds
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 
 object CropExactMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -140,7 +137,7 @@ class CropExactMapOp extends CropMapOp {
 
     val bottomRightPt: TMSUtils.LatLon = TMSUtils
       .pixelToLatLonUL(bottomRightWorldPixel.px, bottomRightWorldPixel.py, zoom, tilesize)
-    val b: TMSUtils.Bounds = new TMSUtils.Bounds(cropBounds.w, bottomRightPt.lat, bottomRightPt.lon, cropBounds.n)
+    val b: Bounds = new Bounds(cropBounds.w, bottomRightPt.lat, bottomRightPt.lon, cropBounds.n)
 
     (
       TMSUtils.latLonToTilePixelUL(cropBounds.n, bottomRightPt.lon, bounds.e, bounds.n, zoom, tilesize),

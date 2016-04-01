@@ -25,11 +25,10 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.SparkUtils
-import org.mrgeo.utils.Bounds
+import org.mrgeo.utils.tms.Bounds
 
-import scala.annotation.varargs
 import scala.collection.mutable
 
 object BandCombineMapOp extends MapOpRegistrar {

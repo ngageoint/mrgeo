@@ -22,7 +22,7 @@ import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.{Logging, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.utils.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 
 import scala.collection.mutable.ListBuffer
 
@@ -41,7 +41,7 @@ object FocalBuilder extends Logging {
     val dstW = sample.getWidth + bufferX * 2
     val dstH = sample.getHeight + bufferY * 2
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), zoom, tilesize)
+    val tb = TMSUtils.boundsToTile(bounds, zoom, tilesize)
     val minX = tb.w
     val minY = tb.s
     val maxX = tb.e

@@ -21,7 +21,7 @@ import org.apache.spark.serializer.KryoRegistrator
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.serializers.{BoundsSerializer, RasterWritableSerializer}
-import org.mrgeo.utils.Bounds
+import org.mrgeo.utils.tms.Bounds
 
 class KryoRegistrar extends KryoRegistrator
 {

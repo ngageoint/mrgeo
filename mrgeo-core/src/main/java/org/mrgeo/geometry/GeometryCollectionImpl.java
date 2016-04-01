@@ -17,7 +17,7 @@
 package org.mrgeo.geometry;
 
 import com.vividsolutions.jts.geom.GeometryFactory;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.*;
 import java.util.*;

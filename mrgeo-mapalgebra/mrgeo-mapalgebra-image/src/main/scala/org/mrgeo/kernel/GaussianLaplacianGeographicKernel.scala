@@ -19,8 +19,9 @@ package org.mrgeo.kernel
 import java.awt.image.{DataBuffer, Raster}
 
 import org.mrgeo.data.raster.RasterUtils
-import org.mrgeo.utils.TMSUtils.LatLon
-import org.mrgeo.utils.{LatLng, OpenCVUtils, TMSUtils}
+import org.mrgeo.utils.tms.TMSUtils
+import TMSUtils.LatLon
+import org.mrgeo.utils.{LatLng, OpenCVUtils}
 import org.opencv.core.{CvType, Mat}
 
 abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:Int, sigmaMult:Int) extends Kernel(kernelWidth, kernelHeight) {

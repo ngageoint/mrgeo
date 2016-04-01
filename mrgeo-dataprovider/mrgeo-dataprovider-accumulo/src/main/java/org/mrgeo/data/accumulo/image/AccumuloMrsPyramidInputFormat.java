@@ -32,7 +32,7 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

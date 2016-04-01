@@ -16,7 +16,8 @@
 
 package org.mrgeo.data.image;
 
-import org.mrgeo.utils.Bounds;
+
+import org.mrgeo.utils.tms.Bounds;
 
 public class ImageOutputFormatContext
 {

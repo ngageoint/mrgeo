@@ -30,9 +30,9 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,41 +86,41 @@ private MrsPyramid(MrsImageDataProvider provider)
 
 }
 
-  public Bounds getBounds()
-  {
-    return getMetadataInternal().getBounds();
-  }
+public Bounds getBounds()
+{
+  return getMetadataInternal().getBounds();
+}
 
-  public LongRectangle getTileBounds(int zoomLevel)
-  {
-    return getMetadataInternal().getTileBounds(zoomLevel);
-  }
+public LongRectangle getTileBounds(int zoomLevel)
+{
+  return getMetadataInternal().getTileBounds(zoomLevel);
+}
 
-  public int getTileSize()
-  {
-    return getMetadataInternal().getTilesize();
-  }
+public int getTileSize()
+{
+  return getMetadataInternal().getTilesize();
+}
 
-  public int getMaximumLevel()
-  {
-    return getMetadataInternal().getMaxZoomLevel();
-  }
+public int getMaximumLevel()
+{
+  return getMetadataInternal().getMaxZoomLevel();
+}
 
-  public int getNumLevels()
-  {
-    return getMetadataInternal().getMaxZoomLevel();
-  }
+public int getNumLevels()
+{
+  return getMetadataInternal().getMaxZoomLevel();
+}
 
-  /**
-   * Return true if there is data at each of the pyramid levels.
-   *
-   * @return
-   */
-  public boolean hasPyramids()
-  {
-    MrsPyramidMetadata metadata = getMetadataInternal();
-    return metadata.hasPyramids();
-  }
+/**
+ * Return true if there is data at each of the pyramid levels.
+ *
+ * @return
+ */
+public boolean hasPyramids()
+{
+  MrsPyramidMetadata metadata = getMetadataInternal();
+  return metadata.hasPyramids();
+}
 
 public static void calculateMetadataWithProvider(final String pyramidname, final int zoom,
     final MrsImageDataProvider provider,
@@ -131,8 +131,7 @@ public static void calculateMetadataWithProvider(final String pyramidname, final
   // update the pyramid level stats
   if (statsProvider != null)
   {
-    ImageStats[] levelStats = null;
-    levelStats = ImageStats.readStats(statsProvider);
+    ImageStats[] levelStats = ImageStats.readStats(statsProvider);
 
     calculateMetadata(pyramidname, zoom, provider, levelStats, defaultValues,
         bounds, protectionLevel);
@@ -198,15 +197,12 @@ public static void calculateMetadata(final int zoom,
 
       final Bounds bounds = metadata.getBounds();
 
-      final TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
-          bounds.getMaxX(), bounds.getMaxY());
-
-      final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(b, zoom, tilesize);
+      final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
       metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
 
-      final TMSUtils.Pixel pll = TMSUtils.latLonToPixels(bounds.getMinY(), bounds.getMinX(), zoom,
+      final TMSUtils.Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
           tilesize);
-      final TMSUtils.Pixel pur = TMSUtils.latLonToPixels(bounds.getMaxY(), bounds.getMaxX(), zoom,
+      final TMSUtils.Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
           tilesize);
       metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
 
@@ -250,20 +246,14 @@ public static void calculateMetadata(final int zoom,
 //    return false;
 //  }
 
-  public static boolean isValid(final String name, final ProviderProperties providerProperties)
+public static boolean isValid(final String name, final ProviderProperties providerProperties)
 {
   try
   {
     MrsPyramid.open(name, providerProperties);
     return true;
   }
-  catch (final JsonGenerationException e)
-  {
-  }
-  catch (final JsonMappingException e)
-  {
-  }
-  catch (final IOException e)
+  catch (final IOException ignored)
   {
   }
 
@@ -272,13 +262,13 @@ public static void calculateMetadata(final int zoom,
 
 @Deprecated
 public static MrsPyramid loadPyramid(final String name,
-                                     final ProviderProperties providerProperties) throws IOException
+    final ProviderProperties providerProperties) throws IOException
 {
   return MrsPyramid.open(name, providerProperties);
 }
 
 public static MrsPyramid open(final String name,
-                              final ProviderProperties providerProperties) throws IOException
+    final ProviderProperties providerProperties) throws IOException
 {
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(name,
       AccessMode.READ, providerProperties);
@@ -286,7 +276,7 @@ public static MrsPyramid open(final String name,
 }
 
 public static MrsPyramid open(final String name,
-                              final Configuration conf) throws IOException
+    final Configuration conf) throws IOException
 {
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(name,
       AccessMode.READ, conf);
@@ -306,8 +296,6 @@ public MrsPyramidMetadata.Classification getClassification() throws IOException
 /**
  * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
  *
- * @return
- * @throws IOException
  */
 public MrsImage getHighestResImage() throws IOException
 {
@@ -317,8 +305,6 @@ public MrsImage getHighestResImage() throws IOException
 /**
  * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
  *
- * @return
- * @throws IOException
  */
 public MrsImage getImage(final int level) throws IOException
 {

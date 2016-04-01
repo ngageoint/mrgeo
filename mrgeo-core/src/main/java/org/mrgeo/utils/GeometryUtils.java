@@ -19,6 +19,7 @@ package org.mrgeo.utils;
 import com.vividsolutions.jts.geom.TopologyException;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
 import org.mrgeo.geometry.*;
+import org.mrgeo.utils.tms.Bounds;
 
 public class GeometryUtils
 {
@@ -182,7 +183,7 @@ public class GeometryUtils
   {
     final LinearRing ring = poly.getExteriorRing();
     final Bounds b = ring.getBounds();
-    if (b.containsPoint(p.getX(), p.getY()))
+    if (b.contains(p.getX(), p.getY()))
     {
       boolean odd = false;
 
@@ -385,10 +386,10 @@ public class GeometryUtils
   public static LinearRing toRing(final Bounds bounds)
   {
     final WritableLinearRing ring = GeometryFactory.createLinearRing();
-    ring.addPoint(bounds.getMinX(), bounds.getMinY());
-    ring.addPoint(bounds.getMinX(), bounds.getMaxY());
-    ring.addPoint(bounds.getMaxX(), bounds.getMaxY());
-    ring.addPoint(bounds.getMaxX(), bounds.getMinY());
+    ring.addPoint(bounds.w, bounds.s);
+    ring.addPoint(bounds.w, bounds.n);
+    ring.addPoint(bounds.e, bounds.n);
+    ring.addPoint(bounds.e, bounds.s);
 
     ring.closeRing();
     return ring;

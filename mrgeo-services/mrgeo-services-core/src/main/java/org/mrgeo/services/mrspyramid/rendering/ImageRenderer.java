@@ -17,7 +17,7 @@
 package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.awt.image.Raster;
 
@@ -32,37 +32,29 @@ public interface ImageRenderer
   /**
    * Returns the default value used in the source raster data
    * 
-   * @return
    */
   double[] getDefaultValues();
 
   /**
    * Returns the minimum/maximum raster values from the source data
    * 
-   * @return
    */
   double[] getExtrema();
 
   /**
    * Returns the mime types for the image renderer
-   * 
-   * @return a mime type string
-   */
+   **/
   String[] getMimeTypes();
 
   /**
    * Returns the WMS format types for the image renderer
    * 
-   * @return a format string
    */
   String[] getWmsFormats();
 
   /**
    * Determines if the rendered image was rendered as transparent
-   * 
-   * @return true if the resulting image output is transparent; false otherwise
-   * @todo semi-hack
-   */
+   **/
   boolean outputIsTransparent();
 
   /**

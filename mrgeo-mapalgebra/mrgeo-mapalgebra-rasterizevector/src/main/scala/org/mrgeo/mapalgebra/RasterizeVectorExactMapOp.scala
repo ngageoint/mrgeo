@@ -18,7 +18,7 @@ package org.mrgeo.mapalgebra
 
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.vector.VectorMapOp
-import org.mrgeo.utils.TMSUtils
+import org.mrgeo.utils.tms.Bounds
 
 object RasterizeVectorExactMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -32,7 +32,7 @@ object RasterizeVectorExactMapOp extends MapOpRegistrar {
       w:Double, s:Double, e:Double, n:Double, column:String = null) =
   {
     new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column,
-      new TMSUtils.Bounds(w, n, e, s).toCommaString)
+      new Bounds(w, n, e, s).toCommaString)
   }
 
   //  def create(vector: VectorMapOp, aggregator:String, cellsize:String, bounds:String, column:String = null) =

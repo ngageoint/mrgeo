@@ -33,10 +33,10 @@ import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,14 +100,7 @@ public class HdfsMrsImageReader extends MrsImageReader
     readSplits(modifiedPath);
 
     // set the profile
-    if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
-    {
-      profile = true;
-    }
-    else
-    {
-      profile = false;
-    }
+    profile = System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0;
   }
 
   private MapFile.Reader loadReader(int partitionIndex) throws IOException
@@ -237,8 +230,7 @@ public class HdfsMrsImageReader extends MrsImageReader
     {
       TileIdWritable key = tileIterator.currentKey();
       TMSUtils.Tile tile = TMSUtils.tileid(key.get(), zoomLevel);
-      TMSUtils.Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tileSize);
-      return TMSUtils.Bounds.convertNewToOldBounds(bounds);
+      return TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tileSize);
     }
 
     @Override
@@ -287,17 +279,12 @@ public class HdfsMrsImageReader extends MrsImageReader
         {
           if (dirFile.getPath().getName().equals("index"))
           {
-            SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf);
-            try
+            try (SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf))
             {
               while (index.nextRawKey(key) >= 0)
               {
                 count++;
               }
-            }
-            finally
-            {
-              index.close();
             }
           }
         }
@@ -384,11 +371,7 @@ public class HdfsMrsImageReader extends MrsImageReader
       e.printStackTrace();
       throw new MrsImageException(e);
     }
-    catch (InstantiationException e)
-    {
-      throw new MrsImageException(e);
-    }
-    catch (IllegalAccessException e)
+    catch (InstantiationException | IllegalAccessException e)
     {
       throw new MrsImageException(e);
     }
@@ -411,12 +394,9 @@ public class HdfsMrsImageReader extends MrsImageReader
   @Override
   public KVIterator<Bounds, Raster> get(final Bounds bounds)
   {
-    TMSUtils.Bounds newBounds = TMSUtils.Bounds.convertOldToNewBounds(bounds);
-    TMSUtils.TileBounds tileBounds = TMSUtils.boundsToTile(newBounds, getZoomlevel(),
-                                                           getTileSize());
-    return new BoundsResultScanner(get(new LongRectangle(
-            tileBounds.w, tileBounds.s, tileBounds.e, tileBounds.n)),
-                                   getZoomlevel(), getTileSize());
+    TMSUtils.TileBounds tileBounds = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTileSize());
+    return new BoundsResultScanner(get(new LongRectangle(tileBounds.w, tileBounds.s, tileBounds.e, tileBounds.n)),
+        getZoomlevel(), getTileSize());
   }
 
   private void readSplits(final String parent) throws IOException
