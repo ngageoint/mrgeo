@@ -26,6 +26,7 @@ import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
 
 import java.io.File;
@@ -144,11 +145,11 @@ public class MrsImageTest extends LocalRunnerTest
     LatLng lr = allOnesImage.convertToLatLng(pixelBounds.getMaxX(), pixelBounds.getMaxY());
     LatLng ct = allOnesImage.convertToLatLng(pixelBounds.getCenterX(), pixelBounds.getCenterY());
 
-    TMSUtils.Pixel ultms = TMSUtils.latLonToPixels(ul.getLat(), ul.getLng(), zoom, tilesize);
-    TMSUtils.Pixel lrtms = TMSUtils.latLonToPixels(lr.getLat(), lr.getLng(), zoom, tilesize);
-    TMSUtils.Pixel cttms = TMSUtils.latLonToPixels(ct.getLat(), ct.getLng(), zoom, tilesize);
+    Pixel ultms = TMSUtils.latLonToPixels(ul.getLat(), ul.getLng(), zoom, tilesize);
+    Pixel lrtms = TMSUtils.latLonToPixels(lr.getLat(), lr.getLng(), zoom, tilesize);
+    Pixel cttms = TMSUtils.latLonToPixels(ct.getLat(), ct.getLng(), zoom, tilesize);
 
-    TMSUtils.Pixel cnr = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom, tilesize);
+    Pixel cnr = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom, tilesize);
 
     long ulx = ultms.px - cnr.px;
     long uly = ultms.py - cnr.py;
@@ -192,11 +193,11 @@ public class MrsImageTest extends LocalRunnerTest
     LatLng ct = allOnesImage.convertToPixelCenterLatLng(pixelBounds.getCenterX(),
         pixelBounds.getCenterY());
 
-    TMSUtils.Pixel ultms = TMSUtils.latLonToPixels(ul.getLat(), ul.getLng(), zoom, tilesize);
-    TMSUtils.Pixel lrtms = TMSUtils.latLonToPixels(lr.getLat(), lr.getLng(), zoom, tilesize);
-    TMSUtils.Pixel cttms = TMSUtils.latLonToPixels(ct.getLat(), ct.getLng(), zoom, tilesize);
+    Pixel ultms = TMSUtils.latLonToPixels(ul.getLat(), ul.getLng(), zoom, tilesize);
+    Pixel lrtms = TMSUtils.latLonToPixels(lr.getLat(), lr.getLng(), zoom, tilesize);
+    Pixel cttms = TMSUtils.latLonToPixels(ct.getLat(), ct.getLng(), zoom, tilesize);
 
-    TMSUtils.Pixel cnr = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom, tilesize);
+    Pixel cnr = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom, tilesize);
 
     long ulx = ultms.px - cnr.px;
     long uly = ultms.py - cnr.py;

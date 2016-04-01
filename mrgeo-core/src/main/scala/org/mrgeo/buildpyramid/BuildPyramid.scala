@@ -38,7 +38,7 @@ import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
 import org.mrgeo.utils._
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Pixel, Bounds, TMSUtils}
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
@@ -201,13 +201,13 @@ class BuildPyramid extends MrGeoJob with Externalizable {
           val frombounds: Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
 
           // calculate the starting pixel for the from-tile (make sure to use the NW coordinate)
-          val fromcorner: TMSUtils.Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
+          val fromcorner: Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
 
           val totile: TMSUtils.Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
           val tobounds: Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
 
           // calculate the starting pixel for the to-tile (make sure to use the NW coordinate) in the from-tile's pixel space
-          val tocorner: TMSUtils.Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
+          val tocorner: Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
 
           val tokey = new TileIdWritable(TMSUtils.tileid(totile.tx, totile.ty, tolevel))
 
@@ -318,9 +318,9 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       }
 
       val outputBounds: Bounds = TMSUtils.tileBounds(outputTile.tx, outputTile.ty, outputLevel, tilesize)
-      val corner: TMSUtils.Pixel = TMSUtils.latLonToPixelsUL(outputBounds.n, outputBounds.w, outputLevel, tilesize)
+      val corner: Pixel = TMSUtils.latLonToPixelsUL(outputBounds.n, outputBounds.w, outputLevel, tilesize)
       val inputBounds: Bounds = TMSUtils.tileBounds(inputTile.tx, inputTile.ty, inputLevel, tilesize)
-      val start: TMSUtils.Pixel = TMSUtils.latLonToPixelsUL(inputBounds.n, inputBounds.w, outputLevel, tilesize)
+      val start: Pixel = TMSUtils.latLonToPixelsUL(inputBounds.n, inputBounds.w, outputLevel, tilesize)
       val tox: Int = (start.px - corner.px).toInt
       val toy: Int = (start.py - corner.py).toInt
       logDebug(
@@ -355,8 +355,8 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     val tb: TMSUtils.TileBounds = TMSUtils
         .boundsToTile(bounds, outputLevel, tilesize)
     val b: LongRectangle = new LongRectangle(tb.w, tb.s, tb.e, tb.n)
-    val psw: TMSUtils.Pixel = TMSUtils.latLonToPixels(bounds.s, bounds.w, outputLevel, tilesize)
-    val pne: TMSUtils.Pixel = TMSUtils.latLonToPixels(bounds.n, bounds.e, outputLevel, tilesize)
+    val psw: Pixel = TMSUtils.latLonToPixels(bounds.s, bounds.w, outputLevel, tilesize)
+    val pne: Pixel = TMSUtils.latLonToPixels(bounds.n, bounds.e, outputLevel, tilesize)
 
 
     // while we were running, there is chance the pyramid was removed from the cache and

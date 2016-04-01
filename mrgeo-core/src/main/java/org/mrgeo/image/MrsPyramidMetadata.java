@@ -25,6 +25,7 @@ import org.codehaus.jackson.util.DefaultPrettyPrinter;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -836,8 +837,8 @@ public boolean hasPyramids()
 //    TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
 //        bounds.getMaxX(), bounds.getMaxY());
 
-    TMSUtils.Pixel ll = TMSUtils.latLonToPixels(bounds.w, bounds.s, zoomlevel, tilesize);
-    TMSUtils.Pixel ur = TMSUtils.latLonToPixels(bounds.e, bounds.n, zoomlevel, tilesize);
+    Pixel ll = TMSUtils.latLonToPixels(bounds.w, bounds.s, zoomlevel, tilesize);
+    Pixel ur = TMSUtils.latLonToPixels(bounds.e, bounds.n, zoomlevel, tilesize);
 
     return new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
   }

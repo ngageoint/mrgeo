@@ -31,62 +31,6 @@ public class TMSUtils
 {
 
 
-public static class LatLon implements Serializable
-{
-  final public double lat;
-  final public double lon;
-
-  public LatLon(final double lat, final double lon)
-  {
-    this.lat = lat;
-    this.lon = lon;
-  }
-
-  @Override
-  public String toString()
-  {
-    return String.format("LatLon [lon (x): %f  lat(y): %f]", lon, lat);
-  }
-}
-
-public static class Pixel implements Serializable
-{
-  final public long px;
-  final public long py;
-
-  public Pixel(final long px, final long py)
-  {
-    this.px = px;
-    this.py = py;
-  }
-
-  @Override
-  public boolean equals(final Object obj)
-  {
-    if (obj instanceof TMSUtils.Pixel)
-    {
-      final TMSUtils.Pixel other = (TMSUtils.Pixel) obj;
-      return (px == other.px) && (py == other.py);
-    }
-    return super.equals(obj);
-  }
-
-  @Override
-  public int hashCode()
-  {
-    // Based on Point2D.hashCode() implementation
-    long bits = px;
-    bits ^= py * 31;
-    return (((int) bits) ^ ((int) (bits >> 32)));
-  }
-
-  @Override
-  public String toString()
-  {
-    return "Pixel [px=" + px + ", py=" + py + "]";
-  }
-}
-
 public static class Tile implements Comparable<Tile>, Serializable
 {
   final public long tx;
@@ -734,8 +678,8 @@ private static Tile latLonToTile(final double lat, final double lon, final int z
 
   if (excludeEdge)
   {
-    TMSUtils.Tile tile = TMSUtils.pixelsToTile(p.px, p.py, tilesize);
-    final TMSUtils.Tile t = TMSUtils.pixelsToTile(p.px - 1, p.py - 1, tilesize);
+    TMSUtils.Tile tile = pixelsToTile(p.px, p.py, tilesize);
+    final TMSUtils.Tile t = pixelsToTile(p.px - 1, p.py - 1, tilesize);
 
     // lon is on an x tile boundary, so we'll move it to the left
     if (t.tx < tile.tx)

@@ -33,7 +33,7 @@ import org.mrgeo.data.{DataProviderFactory, MrsPyramidInputFormat, ProviderPrope
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Pixel, Bounds, TMSUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
@@ -787,8 +787,8 @@ object SparkUtils extends Logging {
     val tb = TMSUtils.boundsToTile(bnds, zoom, tilesize)
     meta.setTileBounds(zoom, tb.toLongRectangle)
 
-    val pll: TMSUtils.Pixel = TMSUtils.latLonToPixels(bnds.s, bnds.w, zoom, tilesize)
-    val pur: TMSUtils.Pixel = TMSUtils.latLonToPixels(bnds.n, bnds.e, zoom, tilesize)
+    val pll: Pixel = TMSUtils.latLonToPixels(bnds.s, bnds.w, zoom, tilesize)
+    val pur: Pixel = TMSUtils.latLonToPixels(bnds.n, bnds.e, zoom, tilesize)
     meta.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py))
 
     if (calcStats) {

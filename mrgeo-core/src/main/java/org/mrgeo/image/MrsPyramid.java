@@ -32,6 +32,7 @@ import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -200,9 +201,9 @@ public static void calculateMetadata(final int zoom,
       final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
       metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
 
-      final TMSUtils.Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
+      final Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
           tilesize);
-      final TMSUtils.Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
+      final Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
           tilesize);
       metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
 

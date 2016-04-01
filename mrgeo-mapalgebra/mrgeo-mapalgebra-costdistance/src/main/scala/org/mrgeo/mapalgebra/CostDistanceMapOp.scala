@@ -32,7 +32,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils._
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Pixel, Bounds, TMSUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -265,8 +265,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
 
     // Create a hash map lookup where the key is the tile id and the value is
     // the set of pixels in the tile that are source points.
-    val starts = new scala.collection.mutable.HashMap[Long, scala.collection.mutable.Set[TMSUtils.Pixel]]
-      with scala.collection.mutable.MultiMap[Long, TMSUtils.Pixel]
+    val starts = new scala.collection.mutable.HashMap[Long, scala.collection.mutable.Set[Pixel]]
+      with scala.collection.mutable.MultiMap[Long, Pixel]
     val startTilesAndPoints = sourcePointsRDD.map(startGeom => {
       if (startGeom == null || startGeom._2 == null || !startGeom._2.isInstanceOf[Point]) {
         throw new IOException("Invalid starting point, expected a point geometry: " + startGeom)
@@ -308,7 +308,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       val sourceRaster: Raster = RasterWritable.toRaster(U._2)
       val startTileId = U._1.get()
       if (starts.contains(startTileId)) {
-        val pointsInTile = starts.getOrElse(U._1.get(), default = scala.collection.mutable.Set[TMSUtils.Pixel]())
+        val pointsInTile = starts.getOrElse(U._1.get(), default = scala.collection.mutable.Set[Pixel]())
         val costPoints = new ListBuffer[CostPoint]()
         for (startPixel <- pointsInTile) {
           val startPixelFriction = sourceRaster.getSampleFloat(startPixel.px.toInt, startPixel.py.toInt, 0)
@@ -1009,7 +1009,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   }
 
   override def registerClasses(): Array[Class[_]] = {
-    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable], classOf[TMSUtils.Pixel])
+    GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable], classOf[Pixel])
   }
 }
 

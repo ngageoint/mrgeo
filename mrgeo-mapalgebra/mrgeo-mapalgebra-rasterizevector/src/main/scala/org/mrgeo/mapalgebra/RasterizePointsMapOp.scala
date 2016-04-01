@@ -27,7 +27,7 @@ import org.mrgeo.geometry.Point
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.tms.TMSUtils
+import org.mrgeo.utils.tms.{Pixel, TMSUtils}
 
 
 object RasterizePointsMapOp extends MapOpRegistrar {
@@ -153,7 +153,7 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   }
 
   private def updateRaster(raster: WritableRaster, countRaster: WritableRaster,
-                           pixel: TMSUtils.Pixel, latitude: Double,
+                           pixel: Pixel, latitude: Double,
                           longitude: Double, columnValue: Double,
                           validColumnValue: Boolean): Unit = {
     aggregationType match {

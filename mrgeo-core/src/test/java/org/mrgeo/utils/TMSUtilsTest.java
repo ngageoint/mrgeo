@@ -25,6 +25,8 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.LatLon;
+import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
 
 @SuppressWarnings("static-method")
@@ -90,32 +92,32 @@ public class TMSUtilsTest
   {
     for (int z = 1; z < TMSUtils.MAXZOOMLEVEL; z++)
     {
-      TMSUtils.Pixel min = TMSUtils.latLonToPixels(-90.0, -180.0, z, ts);
+      Pixel min = TMSUtils.latLonToPixels(-90.0, -180.0, z, ts);
       Assert.assertEquals("Bad ll pixel x", 0, min.px);
       Assert.assertEquals("Bad ll pixel y", 0, min.py);
 
-      TMSUtils.Pixel max = TMSUtils.latLonToPixels(90.0, 180.0, z, ts);
+      Pixel max = TMSUtils.latLonToPixels(90.0, 180.0, z, ts);
 
       Assert.assertEquals("Bad ll pixel x", (long)(ts * Math.pow(2, z - 1) * 2.0), max.px);
       Assert.assertEquals("Bad ll pixel y", (long)(ts * Math.pow(2, z - 1)), max.py);
 
-      TMSUtils.Pixel middle = TMSUtils.latLonToPixels(0.0, 0.0, z, ts);
+      Pixel middle = TMSUtils.latLonToPixels(0.0, 0.0, z, ts);
 
       Assert.assertEquals("Bad ll pixel x", (long)(ts * Math.pow(2, z - 1) * 2.0) / 2, middle.px);
       Assert.assertEquals("Bad ll pixel y", (long)(ts * Math.pow(2, z - 1)) / 2, middle.py);
 
-      TMSUtils.Pixel third = TMSUtils.latLonToPixels(-30.0, -60.0, z, ts);
+      Pixel third = TMSUtils.latLonToPixels(-30.0, -60.0, z, ts);
 
       Assert.assertEquals("Bad ll pixel x", (long)(ts * Math.pow(2, z - 1) * 2.0) / 3, third.px);
       Assert.assertEquals("Bad ll pixel y", (long)(ts * Math.pow(2, z - 1)) / 3, third.py);
     }
 
-    TMSUtils.Pixel ll = TMSUtils.latLonToPixels(b.s, b.w, zoom, ts);
+    Pixel ll = TMSUtils.latLonToPixels(b.s, b.w, zoom, ts);
 
     Assert.assertEquals("Bad ll pixel x", px.getMinX(), ll.px);
     Assert.assertEquals("Bad ll pixel y", px.getMinY(), ll.py);
 
-    TMSUtils.Pixel ur = TMSUtils.latLonToPixels(b.n, b.e, zoom, ts);
+    Pixel ur = TMSUtils.latLonToPixels(b.n, b.e, zoom, ts);
 
     Assert.assertEquals("Bad ur pixel x", px.getMaxX(), ur.px);
     Assert.assertEquals("Bad ur pixel y", px.getMaxY(), ur.py);
@@ -177,8 +179,8 @@ public class TMSUtilsTest
     zoom = 1;
     int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
     TMSUtils.Tile tile = TMSUtils.latLonToTile(lat, lon, zoom, tileSize);
-    TMSUtils.Pixel ptUl = TMSUtils.latLonToTilePixelUL(lat, lon, tile.tx, tile.ty, zoom, tileSize);
-    TMSUtils.Pixel pt = TMSUtils.latLonToTilePixel(lat, lon, tile.tx, tile.ty, zoom, tileSize);
+    Pixel ptUl = TMSUtils.latLonToTilePixelUL(lat, lon, tile.tx, tile.ty, zoom, tileSize);
+    Pixel pt = TMSUtils.latLonToTilePixel(lat, lon, tile.tx, tile.ty, zoom, tileSize);
     Assert.assertEquals(0, pt.py);
     Assert.assertEquals(511, ptUl.py);
     lat = 89.9999;
@@ -198,8 +200,8 @@ public class TMSUtilsTest
     double lon = 0.0;
     zoom = 1;
     int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
-    TMSUtils.Pixel pt = TMSUtils.latLonToPixels(lat, lon, zoom, tileSize);
-    TMSUtils.Pixel ptUl = TMSUtils.latLonToPixelsUL(lat, lon, zoom, tileSize);
+    Pixel pt = TMSUtils.latLonToPixels(lat, lon, zoom, tileSize);
+    Pixel ptUl = TMSUtils.latLonToPixelsUL(lat, lon, zoom, tileSize);
     Assert.assertEquals(0, pt.py);
     Assert.assertEquals(511, ptUl.py);
     lat = 89.9999;
@@ -470,7 +472,7 @@ public class TMSUtilsTest
     long width = 2 * height;
     double resolution = TMSUtils.resolution(zoom, tileSize);
     // Check the bottom-left point
-    TMSUtils.LatLon result = TMSUtils.pixelToLatLon(0, 0, zoom, tileSize);
+    LatLon result = TMSUtils.pixelToLatLon(0, 0, zoom, tileSize);
     Assert.assertEquals(-180.0, result.lon, 1e-8);
     Assert.assertEquals(-90.0, result.lat, 1e-8);
     // Check the pixel left of center
@@ -501,7 +503,7 @@ public class TMSUtilsTest
     long width = 2 * height;
     double resolution = TMSUtils.resolution(zoom, tileSize);
     // Check the bottom-left point
-    TMSUtils.LatLon result = TMSUtils.pixelToLatLonUL(0, 0, zoom, tileSize);
+    LatLon result = TMSUtils.pixelToLatLonUL(0, 0, zoom, tileSize);
     Assert.assertEquals(-180.0, result.lon, 1e-8);
     Assert.assertEquals(90.0 - resolution, result.lat, 1e-8);
     // Check the pixel left of center

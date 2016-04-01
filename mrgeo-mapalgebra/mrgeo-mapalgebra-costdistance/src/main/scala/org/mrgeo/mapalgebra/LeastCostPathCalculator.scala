@@ -27,7 +27,7 @@ import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
 import org.mrgeo.image.MrsPyramidMetadata
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Pixel, Bounds, TMSUtils}
 import org.mrgeo.utils.LatLng
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -56,7 +56,7 @@ class LeastCostPathCalculator extends Externalizable
   private var curTile: TMSUtils.Tile = null
   private var curTileBounds: Bounds = null
   private var resolution: Double = .0
-  private var curPixel: TMSUtils.Pixel = null
+  private var curPixel: Pixel = null
   private var curValue: Double = 0.0
   private var pathCost: Double = 0f
   private var pathDistance: Double = 0f
@@ -216,7 +216,7 @@ class LeastCostPathCalculator extends Externalizable
       val lon: Double = curTileBounds.w + (curPixel.px * resolution)
       new LatLng(lat, lon)
     }
-    curPixel = new TMSUtils.Pixel(minXNeighbor, minYNeighbor)
+    curPixel = new Pixel(minXNeighbor, minYNeighbor)
     val deltaTime: Double = curValue - leastValue
     curValue = leastValue
     if (!(curTile == minNextTile)) {

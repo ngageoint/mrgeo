@@ -22,6 +22,7 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,9 +153,9 @@ public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Til
     throw new MrsImageException("Error, could not calculate the bounds of the tiles");
   }
 
-  final TMSUtils.Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, image
+  final Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, image
       .getZoomlevel(), image.getTilesize());
-  final TMSUtils.Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, image
+  final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, image
       .getZoomlevel(), image.getTilesize());
 
   for (final TMSUtils.Tile tile : tiles)
@@ -164,7 +165,7 @@ public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Til
 
     // calculate the starting pixel for the source
     // make sure we use the upper-left lat/lon
-    final TMSUtils.Pixel start = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, image
+    final Pixel start = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, image
         .getZoomlevel(), image.getTilesize());
 
     Raster source;
@@ -225,10 +226,10 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
   final Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoom, tilesize);
   WritableRaster merged;
 
-  final TMSUtils.Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, image
+  final Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, image
       .getZoomlevel(), image.getTilesize());
 
-  final TMSUtils.Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, image
+  final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, image
       .getZoomlevel(), image.getTilesize());
 
   final int width = (int) (lr.px - ul.px);
@@ -286,7 +287,7 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
 
         // calculate the starting pixel for the source
         // make sure we use the upper-left lat/lon
-        final TMSUtils.Pixel start = TMSUtils
+        final Pixel start = TMSUtils
             .latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize);
 
         log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,

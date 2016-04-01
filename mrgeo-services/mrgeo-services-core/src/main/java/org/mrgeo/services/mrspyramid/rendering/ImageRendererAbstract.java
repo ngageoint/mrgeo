@@ -37,6 +37,7 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -368,15 +369,15 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoomLevel, tilesize);
       Bounds actualBounds = TMSUtils.tileToBounds(tb, zoomLevel, tilesize);
 
-      TMSUtils.Pixel requestedUL =
+      Pixel requestedUL =
           TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoomLevel, tilesize);
-      TMSUtils.Pixel requestedLR =
+      Pixel requestedLR =
           TMSUtils.latLonToPixelsUL(bounds.s, bounds.e, zoomLevel, tilesize);
 
 
-      TMSUtils.Pixel actualUL =
+      Pixel actualUL =
           TMSUtils.latLonToPixelsUL(actualBounds.n, actualBounds.w, zoomLevel, tilesize);
-//      TMSUtils.Pixel actualLR =
+//      Pixel actualLR =
 //          TMSUtils.latLonToPixelsUL(actualBounds.s, actualBounds.e, zoomLevel, tilesize);
 
       int offsetX = (int) (requestedUL.px - actualUL.px);

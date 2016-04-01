@@ -18,6 +18,7 @@ package org.mrgeo.image;
 
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.tms.TMSUtils.TileBounds;
 import org.slf4j.Logger;
@@ -100,9 +101,9 @@ public class BoundsCropper
                                                               zoomLevel, 
                                                               origMetadata.getTilesize());
     
-    final TMSUtils.Pixel lowerPx = TMSUtils.latLonToPixels(newImageBounds.s, newImageBounds.w,  
+    final Pixel lowerPx = TMSUtils.latLonToPixels(newImageBounds.s, newImageBounds.w,
                                                             zoomLevel, origMetadata.getTilesize());
-    final TMSUtils.Pixel upperPx = TMSUtils.latLonToPixels(newImageBounds.n, newImageBounds.e, 
+    final Pixel upperPx = TMSUtils.latLonToPixels(newImageBounds.n, newImageBounds.e,
                                                             zoomLevel, origMetadata.getTilesize());
 
     final LongRectangle pixelBounds = new LongRectangle(0, 0, upperPx.px - lowerPx.px, 
