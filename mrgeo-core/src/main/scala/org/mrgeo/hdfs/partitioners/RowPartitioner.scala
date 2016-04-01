@@ -25,7 +25,7 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
 import org.mrgeo.hdfs.output.image.HdfsMrsPyramidOutputFormatProvider
 import org.mrgeo.hdfs.tile.{FileSplit, PartitionerSplit}
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
 import org.mrgeo.utils.{SparkUtils}
 
 @SerialVersionUID(-1)
@@ -37,7 +37,7 @@ class RowPartitioner() extends FileSplitPartitioner() with Externalizable
   {
     this()
 
-    val tileBounds: TMSUtils.TileBounds = TMSUtils
+    val tileBounds: TileBounds = TMSUtils
         .boundsToTile(bounds, zoom, tilesize)
     val tileIncrement: Int = 1
     val splitGenerator: ImageSplitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s, tileBounds.e,

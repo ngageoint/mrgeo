@@ -26,6 +26,7 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -136,7 +137,7 @@ public class MrsPyramidInputFormat extends InputFormat<TileIdWritable, RasterWri
       return splits;
     }
     List<TiledInputSplit> result = new ArrayList<>();
-    TMSUtils.TileBounds cropBounds = TMSUtils.boundsToTile(ifContext.getBounds(),
+    TileBounds cropBounds = TMSUtils.boundsToTile(ifContext.getBounds(),
             ifContext.getZoomLevel(), tileSize);
 
     SplitIterator splitIter = new SplitIterator(splits, new RegionSplitVisitor(cropBounds));

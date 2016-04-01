@@ -16,250 +16,9 @@
 
 package org.mrgeo.utils.tms;
 
-/**
- *
- */
-
-import org.mrgeo.utils.LongRectangle;
-
-import java.io.Serializable;
-
-/**
- *
- */
 public class TMSUtils
 {
 
-
-public static class TileBounds implements Serializable
-{
-  public long n;
-  public long s;
-  public long e;
-  public long w;
-
-  public TileBounds(final long tx, final long ty)
-  {
-    this.n = ty;
-    this.s = ty;
-    this.e = tx;
-    this.w = tx;
-  }
-
-  public TileBounds(final long w, final long s, final long e, final long n)
-  {
-    this.n = n;
-    this.s = s;
-    this.e = e;
-    this.w = w;
-  }
-
-  public TileBounds(final Tile t)
-  {
-    this.n = t.ty;
-    this.s = t.ty;
-    this.e = t.tx;
-    this.w = t.tx;
-  }
-
-  public long width()
-  {
-    return e - w + 1;
-  }
-
-  public long height()
-  {
-    return n - s + 1;
-  }
-
-  public LongRectangle toLongRectangle()
-  {
-    return new LongRectangle(w, s, e, n);
-  }
-
-  public static TileBounds convertFromLongRectangle(final LongRectangle rectangle)
-  {
-    return new TileBounds(rectangle.getMinX(), rectangle.getMinY(), rectangle.getMaxX(),
-        rectangle.getMaxY());
-  }
-
-  public static LongRectangle convertToLongRectangle(final TileBounds bounds)
-  {
-    return new LongRectangle(bounds.w, bounds.s, bounds.e, bounds.n);
-  }
-
-  public void expand(final long tx, final long ty)
-  {
-    if (n < ty)
-    {
-      n = ty;
-    }
-    if (s > ty)
-    {
-      s = ty;
-    }
-
-    if (w > tx)
-    {
-      w = tx;
-    }
-
-    if (e < tx)
-    {
-      e = tx;
-    }
-
-  }
-
-  public void expand(final long west, final long south, final long east, final long north)
-  {
-    if (n < north)
-    {
-      n = north;
-    }
-    if (s > south)
-    {
-      s = south;
-    }
-
-    if (w > west)
-    {
-      w = west;
-    }
-
-    if (e < east)
-    {
-      e = east;
-    }
-
-  }
-
-  public void expand(final Tile t)
-  {
-    if (n < t.ty)
-    {
-      n = t.ty;
-    }
-    if (s > t.ty)
-    {
-      s = t.ty;
-    }
-
-    if (w > t.tx)
-    {
-      w = t.tx;
-    }
-
-    if (e < t.tx)
-    {
-      e = t.tx;
-    }
-
-  }
-
-  public void expand(final TileBounds b)
-  {
-    if (n < b.n)
-    {
-      n = b.n;
-    }
-    if (s > b.s)
-    {
-      s = b.s;
-    }
-
-    if (w > b.w)
-    {
-      w = b.w;
-    }
-
-    if (e < b.e)
-    {
-      e = b.e;
-    }
-  }
-
-  @Override
-  public String toString()
-  {
-    return "TileBounds [w=" + w + ", s=" + s + ", e=" + e + ", n=" + n + "]";
-  }
-
-  public String toCommaString()
-  {
-    return w + "," + s + "," + e + "," + n;
-  }
-
-  public static TileBounds fromCommaString(String str) {
-    String[] split = str.split(",");
-
-    long w = Long.parseLong(split[0]);
-    long s = Long.parseLong(split[1]);
-    long e = Long.parseLong(split[2]);
-    long n = Long.parseLong(split[3]);
-
-    return new TileBounds(w, s, e, n);
-  }
-
-  public boolean contains(final long tx, final long ty) {
-    return contains(new Tile(tx, ty), true);
-  }
-
-  public boolean contains(final long tx, final long ty, final boolean includeAdjacent) {
-    return contains(new Tile(tx, ty), includeAdjacent);
-  }
-
-  public boolean contains(final Tile tile) {
-    return contains(tile, true);
-  }
-
-  public boolean contains(final Tile tile, final boolean includeAdjacent) {
-    if (includeAdjacent)
-    {
-      return (tile.tx >= w && tile.ty >= s && tile.tx <= e && tile.ty <= n);
-    }
-    else
-    {
-      return (tile.tx > w && tile.ty > s && tile.tx < e && tile.ty < n);
-    }
-  }
-
-  public TileBounds intersection(final TileBounds b)
-  {
-    return intersection(b, true);
-  }
-
-  /**
-   * If the two boundaries are adjacent, this would return true iff includeAdjacent is true
-   *
-   * @param b
-   * @param includeAdjacent
-   * @return
-   */
-  public TileBounds intersection(final TileBounds b, final boolean includeAdjacent)
-  {
-
-    final TileBounds intersectBounds = new TileBounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
-        .min(this.e, b.e), Math.min(this.n, b.n));
-    if (includeAdjacent)
-    {
-      if (intersectBounds.w <= intersectBounds.e && intersectBounds.s <= intersectBounds.n)
-      {
-        return intersectBounds;
-      }
-    }
-    else if (intersectBounds.w < intersectBounds.e && intersectBounds.s < intersectBounds.n)
-    {
-      return intersectBounds;
-    }
-
-    return null;
-  }
-
-}
-
-// Tile 0, 0 is the lower-left corner of the world grid!
-// Pixel 0, 0 is the lower-left corner of the world grid!
 
 public static int MAXZOOMLEVEL = 22; // max zoom level (the highest X value can be as an int)
 
@@ -463,10 +222,6 @@ public static long numYTiles(final int zoomlevel)
  * Compute the worldwide tile in which the specified pixel resides. The pixel coordinates are
  * provided based on 0, 0 being bottom, left.
  *
- * @param px
- * @param py
- * @param tilesize
- * @return
  */
 public static Tile pixelsToTile(final double px, final double py, final int tilesize)
 {
@@ -477,18 +232,12 @@ public static Tile pixelsToTile(final double px, final double py, final int tile
  * Compute the worldwide tile in which the specified pixel resides. The pixel coordinates are
  * provided based on 0, 0 being top, left.
  *
- * @param px
- * @param py
- * @param zoom
- * @param tilesize
- * @return
  */
 public static Tile pixelsULToTile(final double px, final double py, final int zoom,
     final int tilesize)
 {
   final Tile tileFromBottom = pixelsToTile(px, py, tilesize);
-  final Tile tileFromTop = new Tile(tileFromBottom.tx, numYTiles(zoom) - tileFromBottom.ty - 1);
-  return tileFromTop;
+  return new Tile(tileFromBottom.tx, numYTiles(zoom) - tileFromBottom.ty - 1);
   // long numYTiles = numYTiles(zoom);
   // long numXTiles = numXTiles(zoom);
   // long tilesFromTop = (long)(py / numXTiles);
@@ -506,9 +255,8 @@ public static LatLon pixelToLatLon(final long px, final long py, final int zoom,
   final double resolution = resolution(zoom, tilesize);
   final long pixelsFromTileLeft = px - tilepx.px;
   final long pixelsFromTileBottom = py - tilepx.py;
-  final LatLon result = new LatLon(bounds.s + (pixelsFromTileBottom * resolution), bounds.w +
+  return new LatLon(bounds.s + (pixelsFromTileBottom * resolution), bounds.w +
       (pixelsFromTileLeft * resolution));
-  return result;
 }
 
 public static LatLon pixelToLatLonUL(final long px, final long py, final int zoom,
@@ -521,9 +269,8 @@ public static LatLon pixelToLatLonUL(final long px, final long py, final int zoo
   final double resolution = resolution(zoom, tilesize);
   final long pixelsFromTileLeft = px - tilepx.px;
   final long pixelsFromTileTop = py - tilepx.py;
-  final LatLon result = new LatLon(bounds.n - (pixelsFromTileTop * resolution), bounds.w +
+  return new LatLon(bounds.n - (pixelsFromTileTop * resolution), bounds.w +
       (pixelsFromTileLeft * resolution));
-  return result;
 }
 
 // Resolution (deg/pixel) for given zoom level (measured at Equator)"
@@ -556,7 +303,7 @@ public static Bounds tileBounds(final Tile tile, final int zoom, final int tiles
 // Converts lat/lon bounds to the correct tile bounds, in lat/lon for a zoom level
 public static Bounds tileBounds(final Bounds bounds, final int zoom, final int tilesize)
 {
-  final TMSUtils.TileBounds tb = boundsToTile(bounds, zoom, tilesize);
+  final TileBounds tb = boundsToTile(bounds, zoom, tilesize);
   return TMSUtils.tileToBounds(tb, zoom, tilesize);
 }
 
@@ -612,7 +359,7 @@ public static double[] tileSWNEBoundsArray(final long tx, final long ty, final i
 }
 
 // Converts tile bounds to the correct lat/lon bounds for a zoom level
-public static Bounds tileToBounds(final TMSUtils.TileBounds bounds, final int zoom,
+public static Bounds tileToBounds(final TileBounds bounds, final int zoom,
     final int tilesize)
 {
   final Bounds ll = tileBounds(bounds.w, bounds.s, zoom, tilesize);

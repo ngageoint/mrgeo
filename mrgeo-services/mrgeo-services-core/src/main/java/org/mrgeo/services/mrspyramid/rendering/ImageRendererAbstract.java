@@ -39,6 +39,7 @@ import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -366,7 +367,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       log.debug("merged image width: {}", merged.getWidth());
       log.debug("merged image height: {}", merged.getHeight());
 
-      TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoomLevel, tilesize);
+      TileBounds tb = TMSUtils.boundsToTile(bounds, zoomLevel, tilesize);
       Bounds actualBounds = TMSUtils.tileToBounds(tb, zoomLevel, tilesize);
 
       Pixel requestedUL =

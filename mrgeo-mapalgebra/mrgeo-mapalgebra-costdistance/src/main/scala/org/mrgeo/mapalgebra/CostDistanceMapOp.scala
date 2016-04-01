@@ -32,7 +32,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils._
-import org.mrgeo.utils.tms.{Tile, Pixel, Bounds, TMSUtils}
+import org.mrgeo.utils.tms._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -106,7 +106,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   var sourcePointsMapOp:Option[VectorMapOp] = None
   var frictionZoom:Option[Int] = None
   var requestedBounds:Option[Bounds] = None
-  var tileBounds: TMSUtils.TileBounds = null
+  var tileBounds: TileBounds = null
   var numExecutors: Int = -1
 
   var maxCost:Double = -1
@@ -1005,7 +1005,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
   override def readExternal(in: ObjectInput): Unit = {
     zoomLevel = in.readInt()
     maxCost = in.readDouble()
-    tileBounds = TMSUtils.TileBounds.fromCommaString(in.readUTF())
+    tileBounds = TileBounds.fromCommaString(in.readUTF())
   }
 
   override def registerClasses(): Array[Class[_]] = {

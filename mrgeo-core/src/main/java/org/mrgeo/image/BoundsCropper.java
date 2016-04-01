@@ -20,7 +20,7 @@ import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.tms.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +97,7 @@ public class BoundsCropper
                                        Math.min(cropTileBounds.n, imageBounds.n));
     
     // find the tile bounds corresponding to the new image bounds - this becomes the new tile bounds
-    TMSUtils.TileBounds newTileBounds = TMSUtils.boundsToTile(newImageBounds, 
+    TileBounds newTileBounds = TMSUtils.boundsToTile(newImageBounds,
                                                               zoomLevel, 
                                                               origMetadata.getTilesize());
     

@@ -29,7 +29,7 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
 //import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.TMSUtils
+import org.mrgeo.utils.tms.{TileBounds, TMSUtils}
 import org.mrgeo.utils.{GDALUtils, SparkUtils}
 
 object RasterMapOp {
@@ -80,7 +80,7 @@ object RasterMapOp {
     }
   }
 
-  def createEmptyRasterRDD(context: SparkContext, tb: TMSUtils.TileBounds, zoom: Int) = {
+  def createEmptyRasterRDD(context: SparkContext, tb: TileBounds, zoom: Int) = {
     val tileBuilder = Array.newBuilder[(TileIdWritable, RasterWritable)]
     for (ty <- tb.s to tb.n) {
       for (tx <- tb.w to tb.e) {

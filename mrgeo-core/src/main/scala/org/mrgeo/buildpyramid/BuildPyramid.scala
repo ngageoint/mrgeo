@@ -38,7 +38,7 @@ import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
 import org.mrgeo.utils._
-import org.mrgeo.utils.tms.{Tile, Pixel, Bounds, TMSUtils}
+import org.mrgeo.utils.tms._
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
@@ -352,7 +352,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       ImageStats.computeAndUpdateStats(stats, tile.getValue, metadata.getDefaultValues)
     }
     writer.close()
-    val tb: TMSUtils.TileBounds = TMSUtils
+    val tb: TileBounds = TMSUtils
         .boundsToTile(bounds, outputLevel, tilesize)
     val b: LongRectangle = new LongRectangle(tb.w, tb.s, tb.e, tb.n)
     val psw: Pixel = TMSUtils.latLonToPixels(bounds.s, bounds.w, outputLevel, tilesize)

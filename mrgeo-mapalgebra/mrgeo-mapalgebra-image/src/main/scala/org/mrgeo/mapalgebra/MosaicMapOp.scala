@@ -28,8 +28,7 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
-import TMSUtils.TileBounds
+import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
 import org.mrgeo.utils.SparkUtils
 
 import scala.util.control.Breaks

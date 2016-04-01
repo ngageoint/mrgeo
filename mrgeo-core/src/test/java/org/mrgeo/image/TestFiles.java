@@ -25,7 +25,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.tms.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.TileBounds;
 
 import java.io.IOException;
 

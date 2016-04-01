@@ -28,7 +28,7 @@ import org.mrgeo.geometry.Geometry
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
 
 import scala.collection.mutable.ListBuffer
 
@@ -161,7 +161,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
 
   def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: Bounds): List[TileIdWritable] = {
     var tiles = new ListBuffer[TileIdWritable]
-    val tb: TMSUtils.TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
+    val tb: TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
     var tx: Long = tb.w
     while (tx <= tb.e) {
       var ty: Long = tb.s

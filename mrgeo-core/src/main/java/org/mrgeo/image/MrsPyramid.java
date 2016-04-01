@@ -34,6 +34,7 @@ import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,7 +199,7 @@ public static void calculateMetadata(final int zoom,
 
       final Bounds bounds = metadata.getBounds();
 
-      final TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
+      final TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
       metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
 
       final Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,

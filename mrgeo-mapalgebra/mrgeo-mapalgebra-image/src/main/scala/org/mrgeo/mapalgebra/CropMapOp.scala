@@ -27,7 +27,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
 
 object CropMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -50,7 +50,7 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
   protected var inputMapOp: Option[RasterMapOp] = None
   protected var rasterForBoundsMapOp: Option[RasterMapOp] = None
-  protected var bounds:TMSUtils.TileBounds = null
+  protected var bounds:TileBounds = null
   protected var cropBounds:Bounds = null
 
   private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double) = {
@@ -152,7 +152,7 @@ class CropMapOp extends RasterMapOp with Externalizable {
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def readExternal(in: ObjectInput): Unit = {
-    bounds = TMSUtils.TileBounds.fromCommaString(in.readUTF())
+    bounds = TileBounds.fromCommaString(in.readUTF())
     cropBounds = Bounds.fromCommaString(in.readUTF())
   }
 

@@ -44,7 +44,7 @@ import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.tms.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,6 +16,7 @@
 
 package org.mrgeo.utils.tms;
 
+// Pixel 0, 0 is the lower-left corner of the world grid!
 public class Pixel
 {
   final public long px;

@@ -27,6 +27,7 @@ import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -820,7 +821,7 @@ public boolean hasPyramids()
     LongRectangle tilebounds = getTileBounds(zoomlevel);
     if (tilebounds == null)
     {
-      TMSUtils.TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
+      TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
       tilebounds = new LongRectangle(tb.w, tb.s, tb.e, tb.n);
     }
     return tilebounds;
