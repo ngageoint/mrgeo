@@ -34,6 +34,7 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.tms.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,8 +133,8 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
     final long endTileId = split.getEndId();
     final long startTileId = split.getStartId();
 
-    final TMSUtils.Tile startTile = TMSUtils.tileid(startTileId, zoom);
-    final TMSUtils.Tile endTile = TMSUtils.tileid(endTileId, zoom);
+    final Tile startTile = TMSUtils.tileid(startTileId, zoom);
+    final Tile endTile = TMSUtils.tileid(endTileId, zoom);
 
     final TileBounds partFileTileBounds =
         new TileBounds(startTile.tx, startTile.ty, endTile.tx, endTile.ty);

@@ -37,6 +37,7 @@ import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -229,7 +230,7 @@ public class HdfsMrsImageReader extends MrsImageReader
     public Bounds currentKey()
     {
       TileIdWritable key = tileIterator.currentKey();
-      TMSUtils.Tile tile = TMSUtils.tileid(key.get(), zoomLevel);
+      Tile tile = TMSUtils.tileid(key.get(), zoomLevel);
       return TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tileSize);
     }
 

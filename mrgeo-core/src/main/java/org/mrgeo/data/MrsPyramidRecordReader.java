@@ -27,6 +27,7 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,7 +151,7 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
       final long id = scannedInputReader.getCurrentKey().get();
 //      log.info("scannedInputReader returned key " + id);
 
-      final TMSUtils.Tile tile = TMSUtils.tileid(id, zoomLevel);
+      final Tile tile = TMSUtils.tileid(id, zoomLevel);
       final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tilesize);
       if (inputBounds.intersects(tb.w, tb.s, tb.e, tb.n))
       {
@@ -170,7 +171,7 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
 //    log.info("setNextKeyValue");
 //    try
 //    {
-//      TMSUtils.Tile t = TMSUtils.tileid(tileid, zoomLevel);
+//      Tile t = TMSUtils.tileid(tileid, zoomLevel);
 //      QuickExport.saveLocalGeotiff("/export/home/dave.johnson/splits", raster, t.tx, t.ty,
 //          zoomLevel, tilesize, -9999);
 //    }

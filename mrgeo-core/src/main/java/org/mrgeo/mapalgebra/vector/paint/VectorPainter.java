@@ -22,7 +22,7 @@ import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.tms.TMSUtils.Tile;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

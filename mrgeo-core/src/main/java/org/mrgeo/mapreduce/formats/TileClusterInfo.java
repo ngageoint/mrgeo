@@ -18,6 +18,7 @@ package org.mrgeo.mapreduce.formats;
 
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -118,7 +119,7 @@ public class TileClusterInfo implements Serializable
   {
     int index = 0;
     Arrays.fill(neighbors, -1);
-    TMSUtils.Tile baseTile = TMSUtils.tileid(baseTileId, zoom);
+    Tile baseTile = TMSUtils.tileid(baseTileId, zoom);
     long numXTiles = TMSUtils.numXTiles(zoom);
     for (long x = offsetX; x < offsetX + width; x++)
     {

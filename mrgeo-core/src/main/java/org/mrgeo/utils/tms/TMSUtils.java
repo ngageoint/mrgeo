@@ -31,38 +31,6 @@ public class TMSUtils
 {
 
 
-public static class Tile implements Comparable<Tile>, Serializable
-{
-  final public long tx;
-  final public long ty;
-
-  public Tile(final long tx, final long ty)
-  {
-    this.tx = tx;
-    this.ty = ty;
-  }
-
-  @Override
-  public int compareTo(final Tile tile)
-  {
-    if (this.ty == tile.ty && this.tx == tile.tx)
-    {
-      return 0;
-    }
-    else if (this.ty < tile.ty || (this.ty == tile.ty && this.tx < tile.tx))
-    {
-      return -1;
-    }
-    return 1;
-  }
-
-  @Override
-  public String toString()
-  {
-    return "Tile [tx=" + tx + ", ty=" + ty + "]";
-  }
-}
-
 public static class TileBounds implements Serializable
 {
   public long n;
@@ -580,7 +548,7 @@ public static Bounds tileBounds(final long tx, final long ty, final int zoom, fi
 
 }
 
-public static Bounds tileBounds(final TMSUtils.Tile tile, final int zoom, final int tilesize)
+public static Bounds tileBounds(final Tile tile, final int zoom, final int tilesize)
 {
   return tileBounds(tile.tx, tile.ty, zoom, tilesize);
 }
@@ -678,19 +646,19 @@ private static Tile latLonToTile(final double lat, final double lon, final int z
 
   if (excludeEdge)
   {
-    TMSUtils.Tile tile = pixelsToTile(p.px, p.py, tilesize);
-    final TMSUtils.Tile t = pixelsToTile(p.px - 1, p.py - 1, tilesize);
+    Tile tile = pixelsToTile(p.px, p.py, tilesize);
+    final Tile t = pixelsToTile(p.px - 1, p.py - 1, tilesize);
 
     // lon is on an x tile boundary, so we'll move it to the left
     if (t.tx < tile.tx)
     {
-      tile = new TMSUtils.Tile(t.tx, tile.ty);
+      tile = new Tile(t.tx, tile.ty);
     }
 
     // lat is on a y tile boundary, so we'll move it down
     if (t.ty < tile.ty)
     {
-      tile = new TMSUtils.Tile(tile.tx, t.ty);
+      tile = new Tile(tile.tx, t.ty);
     }
 
     return tile;

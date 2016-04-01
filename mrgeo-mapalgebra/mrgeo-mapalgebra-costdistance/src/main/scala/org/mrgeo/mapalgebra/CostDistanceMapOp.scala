@@ -32,7 +32,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils._
-import org.mrgeo.utils.tms.{Pixel, Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Tile, Pixel, Bounds, TMSUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -272,7 +272,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
         throw new IOException("Invalid starting point, expected a point geometry: " + startGeom)
       }
       val startPt = startGeom._2.asInstanceOf[Point]
-      val tile: TMSUtils.Tile = TMSUtils.latLonToTile(startPt.getY.toFloat, startPt.getX.toFloat, zoomLevel,
+      val tile: Tile = TMSUtils.latLonToTile(startPt.getY.toFloat, startPt.getX.toFloat, zoomLevel,
         tilesize)
       val startTileId = TMSUtils.tileid(tile.tx, tile.ty, zoomLevel)
       val startPixel = TMSUtils.latLonToTilePixelUL(startPt.getY.toFloat, startPt.getX.toFloat, tile.tx, tile.ty,
@@ -492,14 +492,14 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     val tile = TMSUtils.tileid(destTileId, zoom)
     val srcTile = direction match {
 //      case CostDistanceMapOp.SELF => tile
-      case TraversalDirection.UP => new TMSUtils.Tile(tile.tx, tile.ty - 1)
-      case TraversalDirection.UP_LEFT => new TMSUtils.Tile(tile.tx + 1, tile.ty - 1)
-      case TraversalDirection.UP_RIGHT => new TMSUtils.Tile(tile.tx - 1, tile.ty - 1)
-      case TraversalDirection.DOWN => new TMSUtils.Tile(tile.tx, tile.ty + 1)
-      case TraversalDirection.DOWN_LEFT => new TMSUtils.Tile(tile.tx + 1, tile.ty + 1)
-      case TraversalDirection.DOWN_RIGHT => new TMSUtils.Tile(tile.tx - 1, tile.ty + 1)
-      case TraversalDirection.LEFT => new TMSUtils.Tile(tile.tx + 1, tile.ty)
-      case TraversalDirection.RIGHT => new TMSUtils.Tile(tile.tx - 1, tile.ty)
+      case TraversalDirection.UP => new Tile(tile.tx, tile.ty - 1)
+      case TraversalDirection.UP_LEFT => new Tile(tile.tx + 1, tile.ty - 1)
+      case TraversalDirection.UP_RIGHT => new Tile(tile.tx - 1, tile.ty - 1)
+      case TraversalDirection.DOWN => new Tile(tile.tx, tile.ty + 1)
+      case TraversalDirection.DOWN_LEFT => new Tile(tile.tx + 1, tile.ty + 1)
+      case TraversalDirection.DOWN_RIGHT => new Tile(tile.tx - 1, tile.ty + 1)
+      case TraversalDirection.LEFT => new Tile(tile.tx + 1, tile.ty)
+      case TraversalDirection.RIGHT => new Tile(tile.tx - 1, tile.ty)
     }
     TMSUtils.tileid(srcTile.tx, srcTile.ty, zoom)
   }
@@ -812,7 +812,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     var counter: Long = 0L
 
     // Set up variables used for calculating great circle distances of pixels
-    val tile: TMSUtils.Tile = TMSUtils.tileid(tileId, zoom)
+    val tile: Tile = TMSUtils.tileid(tileId, zoom)
 
     // Process the queue of changed points until it is empty
     breakable {

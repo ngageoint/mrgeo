@@ -38,7 +38,7 @@ import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
 import org.mrgeo.utils._
-import org.mrgeo.utils.tms.{Pixel, Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Tile, Pixel, Bounds, TMSUtils}
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
@@ -197,13 +197,13 @@ class BuildPyramid extends MrGeoJob with Externalizable {
           val fromkey = tile._1
           val fromraster = RasterWritable.toRaster(tile._2)
 
-          val fromtile: TMSUtils.Tile = TMSUtils.tileid(fromkey.get, fromlevel)
+          val fromtile: Tile = TMSUtils.tileid(fromkey.get, fromlevel)
           val frombounds: Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
 
           // calculate the starting pixel for the from-tile (make sure to use the NW coordinate)
           val fromcorner: Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
 
-          val totile: TMSUtils.Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
+          val totile: Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
           val tobounds: Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
 
           // calculate the starting pixel for the to-tile (make sure to use the NW coordinate) in the from-tile's pixel space
@@ -298,13 +298,13 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       val fromraster: Raster = iter.next
 
       val tileid: Long = iter.currentKey.get
-      val inputTile: TMSUtils.Tile = TMSUtils.tileid(tileid, inputLevel)
+      val inputTile: Tile = TMSUtils.tileid(tileid, inputLevel)
 
       val toraster: WritableRaster = fromraster.createCompatibleWritableRaster(tilesize / 2, tilesize / 2)
 
       RasterUtils.decimate(fromraster, toraster, aggregator, metadata)
 
-      val outputTile: TMSUtils.Tile = TMSUtils.calculateTile(inputTile, inputLevel, outputLevel, tilesize)
+      val outputTile: Tile = TMSUtils.calculateTile(inputTile, inputLevel, outputLevel, tilesize)
       val outputkey: TileIdWritable = new TileIdWritable(TMSUtils.tileid(outputTile.tx, outputTile.ty, outputLevel))
       var outputRaster: WritableRaster = null
 

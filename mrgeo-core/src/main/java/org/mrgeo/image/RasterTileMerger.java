@@ -24,6 +24,7 @@ import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +90,7 @@ public static WritableRaster mergeTiles(final MrsImage image, final Bounds bound
 
 public static WritableRaster mergeTiles(final MrsImage image, final long[] tiles)
 {
-  final TMSUtils.Tile[] tileids = new TMSUtils.Tile[tiles.length];
+  final Tile[] tileids = new Tile[tiles.length];
   for (int i = 0; i < tiles.length; i++)
   {
     tileids[i] = TMSUtils.tileid(tiles[i], image.getZoomlevel());
@@ -107,7 +108,7 @@ public static WritableRaster mergeTiles(final MrsImage image, final LongRectangl
 
 public static WritableRaster mergeTiles(final MrsImage image, final TileIdWritable[] tiles)
 {
-  final TMSUtils.Tile[] tileids = new TMSUtils.Tile[tiles.length];
+  final Tile[] tileids = new Tile[tiles.length];
   for (int i = 0; i < tiles.length; i++)
   {
     tileids[i] = TMSUtils.tileid(tiles[i].get(), image.getZoomlevel());
@@ -116,7 +117,7 @@ public static WritableRaster mergeTiles(final MrsImage image, final TileIdWritab
   return RasterTileMerger.mergeTiles(image, tileids);
 }
 
-public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Tile[] tiles)
+public static WritableRaster mergeTiles(final MrsImage image, final Tile[] tiles)
 {
   final int zoom = image.getZoomlevel();
   final int tilesize = image.getTilesize();
@@ -125,7 +126,7 @@ public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Til
   Bounds imageBounds = null;
   WritableRaster merged = null;
 
-  for (final TMSUtils.Tile tile : tiles)
+  for (final Tile tile : tiles)
   {
     log.debug("tx: {} ty: {}", tile.tx, tile.ty);
     final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
@@ -158,7 +159,7 @@ public static WritableRaster mergeTiles(final MrsImage image, final TMSUtils.Til
   final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, image
       .getZoomlevel(), image.getTilesize());
 
-  for (final TMSUtils.Tile tile : tiles)
+  for (final Tile tile : tiles)
   {
     final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, image.getZoomlevel(),
         image.getTilesize());
@@ -281,7 +282,7 @@ mergeTiles(final MrsImage image, final TMSUtils.TileBounds tileBounds)
       final Raster source = iter.currentValue();
       if (source != null)
       {
-        final TMSUtils.Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoom);
+        final Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoom);
 
         final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
 

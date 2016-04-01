@@ -24,10 +24,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.utils.tms.Bounds;
-import org.mrgeo.utils.tms.LatLon;
-import org.mrgeo.utils.tms.Pixel;
-import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.*;
 
 @SuppressWarnings("static-method")
 public class TMSUtilsTest
@@ -129,39 +126,39 @@ public class TMSUtilsTest
   {
     for (int z = 1; z < TMSUtils.MAXZOOMLEVEL; z++)
     {
-      TMSUtils.Tile min = TMSUtils.latLonToTile(-90.0, -180.0, z, ts);
+      Tile min = TMSUtils.latLonToTile(-90.0, -180.0, z, ts);
 
       Assert.assertEquals("Bad ll tile x", 0, (int)min.tx);
       Assert.assertEquals("Bad ll tile y", 0, (int)min.ty);
 
-      TMSUtils.Tile max = TMSUtils.latLonToTile(90.0, 180.0, z, ts);
+      Tile max = TMSUtils.latLonToTile(90.0, 180.0, z, ts);
 
       Assert.assertEquals("Bad ll tile x", (long)(2 * Math.pow(2, z - 1)), max.tx);
       Assert.assertEquals("Bad ll tile y", (long)(Math.pow(2, z - 1)), max.ty);
 
-      TMSUtils.Tile middle = TMSUtils.latLonToTile(0.0, 0.0, z, ts);
+      Tile middle = TMSUtils.latLonToTile(0.0, 0.0, z, ts);
 
       Assert.assertEquals("Bad ll pixel x", (long)(Math.pow(2, z - 1) * 2.0) / 2, middle.tx);
       Assert.assertEquals("Bad ll pixel y", (long)(Math.pow(2, z - 1)) / 2, middle.ty);
 
-      TMSUtils.Tile third = TMSUtils.latLonToTile(-30.0, -60.0, z, ts);
+      Tile third = TMSUtils.latLonToTile(-30.0, -60.0, z, ts);
 
       Assert.assertEquals("Bad ll pixel x", (long)(Math.pow(2, z - 1) * 2.0) / 3, third.tx);
       Assert.assertEquals("Bad ll pixel y", (long)(Math.pow(2, z - 1)) / 3, third.ty);
     }
 
-    TMSUtils.Tile ll = TMSUtils.latLonToTile(b.s, b.w, zoom, ts);
+    Tile ll = TMSUtils.latLonToTile(b.s, b.w, zoom, ts);
 
     Assert.assertEquals("Bad ll tile x", tiles.getMinX(), ll.tx);
     Assert.assertEquals("Bad ll tile y", tiles.getMinY(), ll.ty);
 
-    TMSUtils.Tile ur = TMSUtils.latLonToTile(b.n, b.e, zoom, ts);
+    Tile ur = TMSUtils.latLonToTile(b.n, b.e, zoom, ts);
 
     Assert.assertEquals("Bad ur tile x", tiles.getMaxX(), ur.tx);
     Assert.assertEquals("Bad ur tile y", tiles.getMaxY(), ur.ty);
     
     // Check a value that's just to the right of a tile x border
-    TMSUtils.Tile check = TMSUtils.latLonToTile(0.0, 0.00001, 1, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
+    Tile check = TMSUtils.latLonToTile(0.0, 0.00001, 1, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
     Assert.assertEquals(1, check.tx);
     Assert.assertEquals(0, check.ty);
     // Check a value that's just above a y tile border
@@ -178,7 +175,7 @@ public class TMSUtilsTest
     double lon = 0.0;
     zoom = 1;
     int tileSize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
-    TMSUtils.Tile tile = TMSUtils.latLonToTile(lat, lon, zoom, tileSize);
+    Tile tile = TMSUtils.latLonToTile(lat, lon, zoom, tileSize);
     Pixel ptUl = TMSUtils.latLonToTilePixelUL(lat, lon, tile.tx, tile.ty, zoom, tileSize);
     Pixel pt = TMSUtils.latLonToTilePixel(lat, lon, tile.tx, tile.ty, zoom, tileSize);
     Assert.assertEquals(0, pt.py);
@@ -216,31 +213,31 @@ public class TMSUtilsTest
   @Category(UnitTest.class)
   public void pixelsToTile()
   {
-    TMSUtils.Tile zero = TMSUtils.pixelsToTile(0, 0, ts);
+    Tile zero = TMSUtils.pixelsToTile(0, 0, ts);
 
     Assert.assertEquals("Bad ll tile x", 0, zero.tx);
     Assert.assertEquals("Bad ll tile y", 0, zero.ty);
 
     for (int z = 1; z < TMSUtils.MAXZOOMLEVEL; z++)
     {
-      TMSUtils.Tile max = TMSUtils.pixelsToTile((2 * Math.pow(2, z - 1)) * ts, Math.pow(2, z - 1) * ts, ts);
+      Tile max = TMSUtils.pixelsToTile((2 * Math.pow(2, z - 1)) * ts, Math.pow(2, z - 1) * ts, ts);
 
       Assert.assertEquals("Bad ll tile x", (long)(2 * Math.pow(2, z - 1)), max.tx);
       Assert.assertEquals("Bad ll tile y", (long)(Math.pow(2, z - 1)), max.ty);
 
-      TMSUtils.Tile middle = TMSUtils.pixelsToTile((2 * Math.pow(2, z - 1)) * ts / 2, Math.pow(2, z - 1) * ts / 2, ts);
+      Tile middle = TMSUtils.pixelsToTile((2 * Math.pow(2, z - 1)) * ts / 2, Math.pow(2, z - 1) * ts / 2, ts);
 
       Assert.assertEquals("Bad ll pixel x", (long)(Math.pow(2, z - 1) * 2.0) / 2, middle.tx);
       Assert.assertEquals("Bad ll pixel y", (long)(Math.pow(2, z - 1)) / 2, middle.ty);
 
-      TMSUtils.Tile third = TMSUtils.pixelsToTile((2 * Math.pow(2, z - 1)) * ts / 3, Math.pow(2, z - 1) * ts / 3, ts);
+      Tile third = TMSUtils.pixelsToTile((2 * Math.pow(2, z - 1)) * ts / 3, Math.pow(2, z - 1) * ts / 3, ts);
 
       Assert.assertEquals("Bad ll pixel x", (long)(Math.pow(2, z - 1) * 2.0) / 3, third.tx);
       Assert.assertEquals("Bad ll pixel y", (long)(Math.pow(2, z - 1)) / 3, third.ty);
     }
 
-    TMSUtils.Tile ll = TMSUtils.pixelsToTile(px.getMinX(), px.getMinY(), ts);
-    TMSUtils.Tile ur = TMSUtils.pixelsToTile(px.getMaxX(), px.getMaxY(), ts);
+    Tile ll = TMSUtils.pixelsToTile(px.getMinX(), px.getMinY(), ts);
+    Tile ur = TMSUtils.pixelsToTile(px.getMaxX(), px.getMaxY(), ts);
 
     Assert.assertEquals("Bad ll tile x", tiles.getMinX(), ll.tx);
     Assert.assertEquals("Bad ll tile y", tiles.getMinY(), ll.ty);
@@ -253,7 +250,7 @@ public class TMSUtilsTest
   @Category(UnitTest.class)
   public void pixelsULToTile()
   {
-    TMSUtils.Tile zero = TMSUtils.pixelsULToTile(0, 0, 1, ts);
+    Tile zero = TMSUtils.pixelsULToTile(0, 0, 1, ts);
 
     Assert.assertEquals("Bad ll tile x", 0, zero.tx);
     Assert.assertEquals("Bad ll tile y", 0, zero.ty);
@@ -271,25 +268,25 @@ public class TMSUtilsTest
 
       // Make sure the bottom, right corner is returned for the max pixel values
       // since we're using top, left as the anchor.
-      TMSUtils.Tile max = TMSUtils.pixelsULToTile(maxPixelX, maxPixelY, z, ts);
+      Tile max = TMSUtils.pixelsULToTile(maxPixelX, maxPixelY, z, ts);
       Assert.assertEquals("Bad ll tile x at zoom " + z, (long)maxXTile, max.tx);
       Assert.assertEquals("Bad ll tile y at zoom " + z, 0, max.ty);
 
       // Check the center pixel
-      TMSUtils.Tile middle = TMSUtils.pixelsULToTile(numXPixels / 2, numYPixels / 2, z, ts);
+      Tile middle = TMSUtils.pixelsULToTile(numXPixels / 2, numYPixels / 2, z, ts);
       Assert.assertEquals("Bad ll pixel x at zoom " + z, (long)(numXTiles) / 2, middle.tx);
       Assert.assertEquals("Bad ll pixel y at zoom " + z, Math.max(0, (long)(numYTiles) / 2 - 1), middle.ty);
 
       // Check the pixel whose coordinates are 1/3 of the pixel height and width. In tile
       // coordinates, the X tile coordinate should be 1/3 of the distance from the left
       // side, and the y coordinate should be 2/3 of the distance from the bottom.
-      TMSUtils.Tile third = TMSUtils.pixelsULToTile(numXPixels / 3, numYPixels / 3, z, ts);
+      Tile third = TMSUtils.pixelsULToTile(numXPixels / 3, numYPixels / 3, z, ts);
       Assert.assertEquals("Bad ll pixel x at zoom " + z, (long)(numXTiles) / 3, third.tx);
       Assert.assertEquals("Bad ll pixel y at zoom " + z, Math.max(0, (long)(2.0 * numYTiles / 3.0)), third.ty);
     }
 
-    TMSUtils.Tile ll = TMSUtils.pixelsToTile(px.getMinX(), px.getMinY(), ts);
-    TMSUtils.Tile ur = TMSUtils.pixelsToTile(px.getMaxX(), px.getMaxY(), ts);
+    Tile ll = TMSUtils.pixelsToTile(px.getMinX(), px.getMinY(), ts);
+    Tile ur = TMSUtils.pixelsToTile(px.getMaxX(), px.getMaxY(), ts);
 
     Assert.assertEquals("Bad ll tile x at zoom ", tiles.getMinX(), ll.tx);
     Assert.assertEquals("Bad ll tile y at zoom ", tiles.getMinY(), ll.ty);
@@ -331,7 +328,7 @@ public class TMSUtilsTest
       //      Assert.assertEquals("Bad ll pixel x", (int)(Math.pow(2, z - 1) * 2.0) / 2, (int)middle.tx);
       //      Assert.assertEquals("Bad ll pixel y", (int)(Math.pow(2, z - 1)) / 2, (int)middle.ty);
       //
-      //      TMSUtils.Tile third = TMSUtils.latLonToTile(-30.0, -60.0, z, ts);
+      //      Tile third = TMSUtils.latLonToTile(-30.0, -60.0, z, ts);
       //
       //      Assert.assertEquals("Bad ll pixel x", (int)(Math.pow(2, z - 1) * 2.0) / 3, (int)third.tx);
       //      Assert.assertEquals("Bad ll pixel y", (int)(Math.pow(2, z - 1)) / 3, (int)third.ty);
@@ -379,7 +376,7 @@ public class TMSUtilsTest
         // convert to long and back to tx/ty...
         long l = TMSUtils.tileid(tx, ty, zoom);
 
-        TMSUtils.Tile id = TMSUtils.tileid(l, zoom);
+        Tile id = TMSUtils.tileid(l, zoom);
 
         Assert.assertEquals("Bad tile x", tx, id.tx);
         Assert.assertEquals("Bad tile y", ty, id.ty);
@@ -389,7 +386,7 @@ public class TMSUtilsTest
     long l = TMSUtils.tileid(123, 456, zoom);
     Assert.assertEquals("Bad tile id", 467067, l);
 
-    TMSUtils.Tile id = TMSUtils.tileid(123456, zoom);
+    Tile id = TMSUtils.tileid(123456, zoom);
     Assert.assertEquals("Bad tile x", 576, id.tx);
     Assert.assertEquals("Bad tile y", 120, id.ty);
 

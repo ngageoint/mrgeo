@@ -31,7 +31,7 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils._
 
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Tile, Bounds, TMSUtils}
 
 //import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -411,7 +411,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       makeTMSOutputName(template, format, tileid, zoom)
     }
     else {
-      val t: TMSUtils.Tile = TMSUtils.tileid(tileid, zoom)
+      val t: Tile = TMSUtils.tileid(tileid, zoom)
       val bounds: Bounds = TMSUtils.tileBounds(t.tx, t.ty, zoom, tilesize)
       var output: String = null
       if (template.contains(ExportMapOp.X) || template.contains(ExportMapOp.Y) ||
@@ -465,7 +465,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
   @throws(classOf[IOException])
   private def makeTMSOutputName(base: String, format: String, tileid: Long, zoom: Int): String = {
-    val t: TMSUtils.Tile = TMSUtils.tileid(tileid, zoom)
+    val t: Tile = TMSUtils.tileid(tileid, zoom)
     val output: String = "%s/%d/%d/%d.%s".format(base, zoom, t.tx, t.ty,
       format match {
       case "tif" | "tiff" =>

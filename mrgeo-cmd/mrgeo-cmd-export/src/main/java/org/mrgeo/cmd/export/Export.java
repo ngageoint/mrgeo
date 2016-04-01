@@ -36,6 +36,7 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,7 +158,7 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
   {
     final MrsPyramidMetadata metadata = image.getMetadata();
 
-    final TMSUtils.Tile t = TMSUtils.tileid(tileid, zoom);
+    final Tile t = TMSUtils.tileid(tileid, zoom);
 
     Raster raster = image.getTile(t.tx, t.ty);
 
@@ -228,7 +229,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
       {
         minId = lid;
       }
-      final TMSUtils.Tile tile = TMSUtils.tileid(lid, zoomlevel);
+      final Tile tile = TMSUtils.tileid(lid, zoomlevel);
       final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
 
       // expand the image bounds by the tile
@@ -465,7 +466,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
               }
               for (final Long tileid : tiles)
               {
-                final TMSUtils.Tile t = TMSUtils.tileid(tileid, zoomlevel);
+                final Tile t = TMSUtils.tileid(tileid, zoomlevel);
                 final Set<Long> tilesToMosaic = new HashSet<>();
                 final LongRectangle tileBounds = pyramid.getTileBounds(zoomlevel);
                 for (long ty1 = t.ty; ((ty1 < (t.ty + mosaicTileCount)) && (ty1 <= tileBounds
@@ -527,7 +528,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
 
 private String makeTMSOutputName(String base, String format, long tileid, int zoom) throws IOException
 {
-  final TMSUtils.Tile t = TMSUtils.tileid(tileid, zoom);
+  final Tile t = TMSUtils.tileid(tileid, zoom);
 
   String output = String.format("%s/%d/%d/%d", base, zoom, t.tx, t.ty);
 
@@ -558,7 +559,7 @@ private String makeOutputName(String template, String format, long tileid, int z
     return makeTMSOutputName(template, format, tileid, zoom);
   }
 
-  final TMSUtils.Tile t = TMSUtils.tileid(tileid, zoom);
+  final Tile t = TMSUtils.tileid(tileid, zoom);
   Bounds bounds = TMSUtils.tileBounds(t.tx, t.ty, zoom, tilesize);
 
   String output;

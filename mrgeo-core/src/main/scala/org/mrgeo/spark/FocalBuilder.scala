@@ -22,7 +22,7 @@ import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.{Logging, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Tile, Bounds, TMSUtils}
 
 import scala.collection.mutable.ListBuffer
 
@@ -63,7 +63,7 @@ object FocalBuilder extends Logging {
       while (y <= offsetY) {
         var x: Int = -offsetX
         while (x <= offsetX) {
-          val to = new TMSUtils.Tile(from.tx + x, from.ty + y)
+          val to = new Tile(from.tx + x, from.ty + y)
           if (to.ty >= minY && to.ty <= maxY && to.tx >= minX && to.tx <= maxX) {
             var srcX = -1
             var dstX = -1
