@@ -31,8 +31,9 @@ import org.mrgeo.utils.{SparkUtils, TMSUtils}
 
 abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
 
-  private[mapalgebra] var inputMapOp: Option[RasterMapOp] = None
+  protected var inputMapOp: Option[RasterMapOp] = None
   private var rasterRDD:Option[RasterRDD] = None
+  private var outputNoDatas: Option[Array[Number]] = None
 
   override def rdd(): Option[RasterRDD] = rasterRDD
 
@@ -63,9 +64,9 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     val tiles = FocalBuilder.create(rdd, bufferX, bufferY, meta.getBounds, zoom, nodatas, context)
 
     rasterRDD =
-      Some(RasterRDD(calculate(tiles, neighborhoodWidth, neighborhoodHeight, nodatas, zoom, tilesize)))
+      Some(RasterRDD(calculate(tiles, bufferX, bufferY, neighborhoodWidth, neighborhoodHeight, nodatas, zoom, tilesize)))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array.fill[Number](meta.getBands)(getOutputNoData),
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, getOutputNoData,
       bounds = meta.getBounds, calcStats = false))
 
     true
@@ -98,7 +99,7 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     * @return
     */
   protected def computePixelValue(rasterValues: Array[Double], notnodata: Array[Boolean],
-                                  rasterWidth: Int,
+                                  outNoData: Double, rasterWidth: Int,
                                   processX: Int, processY: Int,
                                   xLeftOffset: Int, neighborhoodWidth: Int,
                                   yAboveOffset: Int, neighborhoodHeight: Int, tileId: Long): Double
@@ -110,7 +111,9 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     *
     * @param meta
     */
-  protected def beforeExecute(meta: MrsPyramidMetadata): Unit = {}
+  protected def beforeExecute(meta: MrsPyramidMetadata): Unit = {
+    outputNoDatas = Some(Array.fill[Number](meta.getBands)(Double.NaN))
+  }
 
   private def isNoData(value: Double, nodata: Double): Boolean =
   {
@@ -135,8 +138,11 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     DataBuffer.TYPE_FLOAT
   }
 
-  protected def getOutputNoData: Double = {
-    Double.NaN
+  protected def getOutputNoData: Array[Number] = {
+    outputNoDatas match {
+      case Some(nodatas) => nodatas
+      case None => throw new IllegalStateException("The output nodata values have not been set")
+    }
   }
 
   protected def calculateRasterIndex(rasterWidth: Int, x: Int, y:Int): Int =
@@ -145,6 +151,7 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
   }
 
   private def calculate(tiles:RDD[(TileIdWritable, RasterWritable)],
+                        bufferX: Int, bufferY: Int,
                         neighborhoodWidth: Int, neighborhoodHeight: Int,
                         nodatas:Array[Number], zoom:Int, tilesize:Int) =
   {
@@ -173,13 +180,15 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
         (neighborhoodHeight / 2).toInt
       }
       val rasterWidth = raster.getWidth
+      val rasterHeight = raster.getHeight
       var band: Int = 0
       while (band < raster.getNumBands) {
-        val rasterValues = raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-          raster.getHeight, band, null.asInstanceOf[Array[Double]])
+        val outputNoDataForBand = outputNoData(band).doubleValue()
+        val rasterValues = raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + rasterWidth,
+          rasterHeight, band, null.asInstanceOf[Array[Double]])
         // For performance, construct an array of booleans indicating whether or not each
         // pixel value in the source raster is nodata or not
-        val notnodata = new Array[Boolean](rasterWidth * raster.getHeight)
+        val notnodata = new Array[Boolean](rasterWidth * rasterHeight)
         var i: Int = 0
         while (i < rasterValues.length) {
           notnodata(i) = !isNoData(rasterValues(i), nodatas(band).doubleValue())
@@ -187,7 +196,8 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
         }
         var py = 0
         var px = 0
-        while (py < raster.getHeight) {
+        while (py < rasterHeight) {
+          px = 0
           while (px < rasterWidth) {
             val index = calculateRasterIndex(rasterWidth, px, py)
             val v = raster.getSampleDouble(px, py, band)
@@ -207,16 +217,17 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
         while (y < tilesize) {
           x = 0
           while (x < tilesize) {
-            val srcX = x + xLeftOffset
-            val srcY = y + yAboveOffset
+            val srcX = x + bufferX
+            val srcY = y + bufferY
             // If the source pixel is nodata, skip it
             if (notnodata(calculateRasterIndex(rasterWidth, srcX, srcY))) {
               answer.setSample(x, y, band,
-                computePixelValue(rasterValues, notnodata, rasterWidth, srcX, srcY, xLeftOffset, neighborhoodWidth,
+                computePixelValue(rasterValues, notnodata, outputNoDataForBand,
+                  rasterWidth, srcX, srcY, xLeftOffset, neighborhoodWidth,
                   yAboveOffset, neighborhoodHeight, tile._1.get()))
             }
             else {
-              answer.setSample(x, y, band, outputNoData)
+              answer.setSample(x, y, band, outputNoDataForBand)
             }
             x += 1
           }

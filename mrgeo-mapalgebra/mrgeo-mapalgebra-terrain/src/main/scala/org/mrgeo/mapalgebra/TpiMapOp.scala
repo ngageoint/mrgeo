@@ -61,7 +61,7 @@ class TpiMapOp extends RawFocalMapOp
   }
 
   override protected def computePixelValue(rasterValues: Array[Double], notnodata: Array[Boolean],
-                                           rasterWidth: Int,
+                                           outNoData: Double, rasterWidth: Int,
                                            processX: Int, processY: Int,
                                            xLeftOffset: Int, neighborhoodWidth: Int,
                                            yAboveOffset: Int, neighborhoodHeight: Int, tileId: Long): Double =
@@ -86,7 +86,12 @@ class TpiMapOp extends RawFocalMapOp
       }
       y += 1
     }
-    processPixel - sum / count
+    if (count > 0) {
+      processPixel - sum / count
+    }
+    else {
+      outNoData
+    }
   }
 
   /**
