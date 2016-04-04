@@ -24,7 +24,7 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.ImageStats
-import org.mrgeo.utils.Bounds
+import org.mrgeo.utils.tms.Bounds
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -77,6 +77,7 @@ object MrGeoJob extends Logging {
           all ++= classes.filter(!_.getName.isEmpty).map(_.getName)
 
           conf.set("spark.kryo.classesToRegister", all.mkString(","))
+          conf.set("spark.kryo.registrator", classOf[KryoRegistrar].getName)
           conf.set("spark.serializer", classOf[KryoSerializer].getName)
         }
         catch {

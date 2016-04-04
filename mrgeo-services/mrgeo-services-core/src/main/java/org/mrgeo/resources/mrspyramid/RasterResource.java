@@ -31,7 +31,7 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
 import org.mrgeo.services.utils.HttpUtil;
 import org.mrgeo.services.utils.RequestUtils;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +126,6 @@ public class RasterResource
       String pyramidOutput = service.ingestImage(request.getInputStream(), output,
           protectionLevel, SecurityUtils.getProviderProperties());
       //TODO: write a metadata record to catalog??
-      StringBuilder bld = new StringBuilder();
 //          String url = request.getRequestURI().substring(request.getContextPath().length());
 //          URI uri = new URI(url);
       String createdDate = new DateTime(DateTimeZone.UTC).toString();
@@ -170,7 +169,7 @@ public class RasterResource
       @QueryParam("srs") String srs,
       @QueryParam("zoom-level") @DefaultValue("-1") int zoomLevel)
   {
-    String error = "";
+    String error;
     try
     {
       String[] bBoxValues = bbox.split(",");
@@ -241,12 +240,12 @@ public class RasterResource
         }
         if (!bounds.toEnvelope().intersects(pyramid.getBounds().toEnvelope()))
         {
-          log.debug("request bounds does not intersect image bounds");
+          log.debug("request bounds does not intersects image bounds");
           byte imageData[] = service.getEmptyTile(width, height, format);
           String type = service.getContentType(format);
           return Response.ok(imageData).header("Content-Type", type).build();
         }
-        ImageRenderer renderer = null;
+        ImageRenderer renderer;
         try
         {
           renderer = service.getImageRenderer(format);

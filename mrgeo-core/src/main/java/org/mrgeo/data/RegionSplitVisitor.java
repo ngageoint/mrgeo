@@ -17,16 +17,18 @@
 package org.mrgeo.data;
 
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RegionSplitVisitor implements SplitVisitor
 {
   static Logger log = LoggerFactory.getLogger(SplitVisitor.class);
-  private TMSUtils.TileBounds region;
+  private TileBounds region;
 
-  public RegionSplitVisitor(TMSUtils.TileBounds region)
+  public RegionSplitVisitor(TileBounds region)
   {
     this.region = region;
     log.debug("Created RegionSplitVisitor with region: " + region.toString());
@@ -36,8 +38,8 @@ public class RegionSplitVisitor implements SplitVisitor
   public boolean accept(TiledInputSplit split)
   {
     int zoom = split.getZoomLevel();
-    TMSUtils.Tile startTile = TMSUtils.tileid(split.getStartTileId(), zoom);
-    TMSUtils.Tile endTile = TMSUtils.tileid(split.getEndTileId(), zoom);
+//    Tile startTile = TMSUtils.tileid(split.getStartTileId(), zoom);
+//    Tile endTile = TMSUtils.tileid(split.getEndTileId(), zoom);
     boolean result = splitOverlapsTileBounds(
             TMSUtils.tileid(split.getStartTileId(), zoom),
             TMSUtils.tileid(split.getEndTileId(), zoom),
@@ -49,8 +51,8 @@ public class RegionSplitVisitor implements SplitVisitor
     return result;
   }
 
-  boolean splitOverlapsTileBounds(final TMSUtils.Tile splitStartTile,
-                                  final TMSUtils.Tile splitEndTile, final TMSUtils.TileBounds cropBounds)
+  boolean splitOverlapsTileBounds(final Tile splitStartTile,
+                                  final Tile splitEndTile, final TileBounds cropBounds)
   {
     // If the split is either before or beyond the crop, then skip this split
     if (splitEndTile.ty < cropBounds.s || (splitEndTile.ty == cropBounds.s && splitEndTile.tx < cropBounds.w))

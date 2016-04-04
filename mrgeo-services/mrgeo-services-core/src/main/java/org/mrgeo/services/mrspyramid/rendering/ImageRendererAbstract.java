@@ -20,7 +20,6 @@ import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
 import org.gdal.osr.SpatialReference;
-import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -36,9 +35,11 @@ import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.resources.KmlGenerator;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,8 +88,7 @@ public ImageRendererAbstract(final String srsWkt)
  * @return KML String
  * @throws IOException
  */
-public static String asKml(final String pyrName, final Bounds bounds, final int width,
-    final int height, final ColorScale cs, String requestUrl,
+public static String asKml(final String pyrName, final Bounds bounds, String requestUrl,
     final ProviderProperties providerProperties) throws IOException
 {
   final URL url = new URL(requestUrl);
@@ -117,8 +117,8 @@ private static int getZoomLevel(final MrsPyramidMetadata metadata, final Bounds 
     final int width, final int height) throws Exception
 {
   log.debug("Determining zoom level for {}", metadata.getPyramid());
-  final double pixelSizeLon = bounds.getWidth() / width;
-  final double pixelSizeLat = bounds.getHeight() / height;
+  final double pixelSizeLon = bounds.width() / width;
+  final double pixelSizeLat = bounds.height() / height;
   final int tileSize = metadata.getTilesize();
   final int zoomY = TMSUtils.zoomForPixelSize(pixelSizeLat, tileSize);
   final int zoomX = TMSUtils.zoomForPixelSize(pixelSizeLon, tileSize);
@@ -146,9 +146,6 @@ private static int getZoomLevel(final MrsPyramidMetadata metadata, final Bounds 
  * @param zoomLevel requested zoom level
  * @return true if the source data contains an image at the requested zoom level; false otherwise
  * @throws IOException
- * @TODO poorly implemented method, I think...but enough to get by for now; rewrite so no
- * exception is thrown in case where image doesn't exist OR this more likely this won't be
- * needed at all once we rework MrsPyramid/MrsImage for non-pyramid data
  */
 private static boolean isZoomLevelValid(final MrsPyramidMetadata metadata,
     final int zoomLevel) throws IOException
@@ -299,8 +296,8 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
   if (log.isDebugEnabled())
   {
     log.debug("requested bounds: {}", bounds.toString());
-    log.debug("requested bounds width: {}", bounds.getWidth());
-    log.debug("requested bounds height: {}", bounds.getHeight());
+    log.debug("requested bounds width: {}", bounds.width());
+    log.debug("requested bounds height: {}", bounds.height());
     log.debug("requested width: {}", width);
     log.debug("requested height: {}", height);
   }
@@ -319,7 +316,7 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
   // image
   if (!bounds.intersects(pyramidMetadata.getBounds()))
   {
-    log.debug("request bounds does not intersect image bounds");
+    log.debug("request bounds does not intersects image bounds");
     isTransparent = true;
     return RasterUtils.createEmptyRaster(width, height, pyramidMetadata.getBands(),
         pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
@@ -370,19 +367,18 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       log.debug("merged image width: {}", merged.getWidth());
       log.debug("merged image height: {}", merged.getHeight());
 
-      TMSUtils.Bounds requestedBounds = bounds.getTMSBounds();
-      TMSUtils.TileBounds tb = TMSUtils.boundsToTile(requestedBounds, zoomLevel, tilesize);
-      TMSUtils.Bounds actualBounds = TMSUtils.tileToBounds(tb, zoomLevel, tilesize);
+      TileBounds tb = TMSUtils.boundsToTile(bounds, zoomLevel, tilesize);
+      Bounds actualBounds = TMSUtils.tileToBounds(tb, zoomLevel, tilesize);
 
-      TMSUtils.Pixel requestedUL =
-          TMSUtils.latLonToPixelsUL(requestedBounds.n, requestedBounds.w, zoomLevel, tilesize);
-      TMSUtils.Pixel requestedLR =
-          TMSUtils.latLonToPixelsUL(requestedBounds.s, requestedBounds.e, zoomLevel, tilesize);
+      Pixel requestedUL =
+          TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoomLevel, tilesize);
+      Pixel requestedLR =
+          TMSUtils.latLonToPixelsUL(bounds.s, bounds.e, zoomLevel, tilesize);
 
 
-      TMSUtils.Pixel actualUL =
+      Pixel actualUL =
           TMSUtils.latLonToPixelsUL(actualBounds.n, actualBounds.w, zoomLevel, tilesize);
-//      TMSUtils.Pixel actualLR =
+//      Pixel actualLR =
 //          TMSUtils.latLonToPixelsUL(actualBounds.s, actualBounds.e, zoomLevel, tilesize);
 
       int offsetX = (int) (requestedUL.px - actualUL.px);
@@ -401,10 +397,10 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       final double[] srcxform = new double[6];
 
       // set the transform for the src
-      srcxform[0] = requestedBounds.w; /* top left x */
+      srcxform[0] = bounds.w; /* top left x */
       srcxform[1] = res; /* w-e pixel resolution */
       srcxform[2] = 0; /* 0 */
-      srcxform[3] = requestedBounds.n; /* top left y */
+      srcxform[3] = bounds.n; /* top left y */
       srcxform[4] = 0; /* 0 */
       srcxform[5] = -res; /* n-s pixel resolution (negative value) */
 
@@ -413,12 +409,12 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       // now change only the resolution for the dst
       final double[] dstxform = new double[6];
 
-      dstxform[0] = requestedBounds.w; /* top left x */
-      dstxform[1] = (requestedBounds.e - requestedBounds.w) / width; /* w-e pixel resolution */
+      dstxform[0] = bounds.w; /* top left x */
+      dstxform[1] = (bounds.e - bounds.w) / width; /* w-e pixel resolution */
       dstxform[2] = 0; /* 0 */
-      dstxform[3] = requestedBounds.n; /* top left y */
+      dstxform[3] = bounds.n; /* top left y */
       dstxform[4] = 0; /* 0 */
-      dstxform[5] = (requestedBounds.s - requestedBounds.n) / height; /* n-s pixel resolution (negative value) */
+      dstxform[5] = (bounds.s - bounds.n) / height; /* n-s pixel resolution (negative value) */
 
       dst.SetGeoTransform(dstxform);
 
@@ -462,8 +458,8 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
     log.error("Error processing request for image: {}", pyramidName);
 
     log.error("requested bounds: {}", bounds.toString());
-    log.error("requested bounds width: {}", bounds.getWidth());
-    log.error("requested bounds height: {}", bounds.getHeight());
+    log.error("requested bounds width: {}", bounds.width());
+    log.error("requested bounds height: {}", bounds.height());
     log.error("requested width: {}", width);
     log.error("requested height: {}", height);
 
@@ -782,10 +778,10 @@ protected double[] getImageTileEnvelope(final Bounds bounds, final int zoom,
 
   final double[] xform = new double[6];
 
-  xform[0] = bounds.getMinY(); /* top left x */
+  xform[0] = bounds.w; /* top left x */
   xform[1] = res; /* w-e pixel resolution */
   xform[2] = 0; /* 0 */
-  xform[3] = bounds.getMaxY(); /* top left y */
+  xform[3] = bounds.n; /* top left y */
   xform[4] = 0; /* 0 */
   xform[5] = -res; /* n-s pixel resolution (negative value) */
 

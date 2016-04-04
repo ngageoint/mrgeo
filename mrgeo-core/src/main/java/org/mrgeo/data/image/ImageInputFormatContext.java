@@ -19,7 +19,7 @@ package org.mrgeo.data.image;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 /**
  * This interface marks an implementing class as containing configuration
@@ -47,9 +47,8 @@ public class ImageInputFormatContext
    * Use this constructor to include input at a zoom level from all of the specified
    * image pyramids. The map/reduce job will have access to all the tiles from those
    * input.
-   * 
-   * @param zoomlevel
-   */
+   *
+   * */
   public ImageInputFormatContext(final int zoomlevel, final int tileSize,
                                  final String input, final ProviderProperties inputProviderProperties)
   {
@@ -65,7 +64,6 @@ public class ImageInputFormatContext
    * image pyramids. The map/reduce job will have access to all the tiles from those
    * input.
    * 
-   * @param zoomlevel
    */
   public ImageInputFormatContext(final int zoomlevel, final int tileSize,
                                  final String input, final Bounds bounds,
@@ -114,7 +112,7 @@ public class ImageInputFormatContext
     conf.setInt(TILE_SIZE, tileSize);
     if (bounds != null)
     {
-      conf.set(BOUNDS, bounds.toDelimitedString());
+      conf.set(BOUNDS, bounds.toCommaString());
     }
       conf.set(PROVIDER_PROPERTY_KEY, ProviderProperties.toDelimitedString(inputProviderProperties));
   }
@@ -128,7 +126,7 @@ public class ImageInputFormatContext
     String confBounds = conf.get(BOUNDS);
     if (confBounds != null)
     {
-      context.bounds = Bounds.fromDelimitedString(confBounds);
+      context.bounds = Bounds.fromCommaString(confBounds);
     }
     String strProviderProperties = conf.get(PROVIDER_PROPERTY_KEY);
     if (strProviderProperties != null)

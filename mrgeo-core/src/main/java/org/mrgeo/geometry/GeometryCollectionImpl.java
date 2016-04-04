@@ -17,7 +17,7 @@
 package org.mrgeo.geometry;
 
 import com.vividsolutions.jts.geom.GeometryFactory;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.*;
 import java.util.*;
@@ -302,14 +302,19 @@ public class GeometryCollectionImpl extends GeometryImpl implements WritableGeom
   {
     if (bounds == null)
     {
-      bounds = new Bounds();
-
       for (Geometry geometry: geometries)
       {
         Bounds b = geometry.getBounds();
         if (b != null)
         {
-          bounds.expand(b);
+          if (bounds == null)
+          {
+            bounds = b;
+          }
+          else
+          {
+            bounds = bounds.expand(b);
+          }
         }
       }
     }

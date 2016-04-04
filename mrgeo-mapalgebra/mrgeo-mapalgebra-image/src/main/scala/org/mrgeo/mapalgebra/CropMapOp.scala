@@ -19,15 +19,15 @@ package org.mrgeo.mapalgebra
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.TMSUtils.Bounds
-import org.mrgeo.utils.{SparkUtils, TMSUtils}
+import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
 
 object CropMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -50,8 +50,8 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
   protected var inputMapOp: Option[RasterMapOp] = None
   protected var rasterForBoundsMapOp: Option[RasterMapOp] = None
-  protected var bounds:TMSUtils.TileBounds = null
-  protected var cropBounds:TMSUtils.Bounds = null
+  protected var bounds:TileBounds = null
+  protected var cropBounds:Bounds = null
 
   private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double) = {
     this()
@@ -83,7 +83,7 @@ class CropMapOp extends RasterMapOp with Externalizable {
       rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
     }
     else {
-      cropBounds = new TMSUtils.Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
+      cropBounds = new Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
         MapOp.decodeDouble(node.getChild(2), variables).get,
         MapOp.decodeDouble(node.getChild(3), variables).get,
         MapOp.decodeDouble(node.getChild(4), variables).get)
@@ -107,17 +107,15 @@ class CropMapOp extends RasterMapOp with Externalizable {
     val nodatas = meta.getDefaultValues
 
     if (rasterForBoundsMapOp.isDefined) {
-      cropBounds = TMSUtils.Bounds.asTMSBounds(rasterForBoundsMapOp.get.metadata() match {
-          case Some(meta) =>  meta.getBounds
-          case _ => throw new IOException("Unable to get metadata for the bounds raster")
-      })
+      cropBounds = rasterForBoundsMapOp.get.metadata().getOrElse(
+        throw new IOException("Unable to get metadata for the bounds raster")).getBounds
     }
     bounds = TMSUtils.boundsToTile(cropBounds, zoom, tilesize)
 
-//    val filtered = rdd.filter(tile => {
-//      val t = TMSUtils.tileid(tile._1.get(), zoom)
-//      (t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)
-//    })
+    //    val filtered = rdd.filter(tile => {
+    //      val t = TMSUtils.tileid(tile._1.get(), zoom)
+    //      (t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)
+    //    })
 
 
     rasterRDD = Some(RasterRDD(
@@ -135,27 +133,27 @@ class CropMapOp extends RasterMapOp with Externalizable {
     val b = getOutputBounds(zoom, tilesize)
 
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues,
-      bounds = b.asBounds(), calcStats = false))
+      bounds = b, calcStats = false))
 
     true
   }
 
-  protected def getOutputBounds(zoom: Int, tilesize: Int): TMSUtils.Bounds = {
+  protected def getOutputBounds(zoom: Int, tilesize: Int): Bounds = {
     // Use the bounds of the tiles processed
     TMSUtils.tileToBounds(bounds, zoom, tilesize)
   }
 
   protected def processTile(tile: (TileIdWritable, RasterWritable),
-                            zoom: Int, tilesize: Int,
-                            nodatas: Array[Double]): TraversableOnce[(TileIdWritable, RasterWritable)] = {
+      zoom: Int, tilesize: Int,
+      nodatas: Array[Double]): TraversableOnce[(TileIdWritable, RasterWritable)] = {
     Array(tile).iterator
   }
 
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def readExternal(in: ObjectInput): Unit = {
-    bounds = TMSUtils.TileBounds.fromCommaString(in.readUTF())
-    cropBounds = TMSUtils.Bounds.fromCommaString(in.readUTF())
+    bounds = TileBounds.fromCommaString(in.readUTF())
+    cropBounds = Bounds.fromCommaString(in.readUTF())
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {

@@ -28,6 +28,8 @@ package org.mrgeo.utils;
 //(c) 2008 Tom Carden
 //Distributed under the MIT License
 
+import org.mrgeo.utils.tms.Bounds;
+
 public class GeoHash
 {
   private static int BITS[] = { 16, 8, 4, 2, 1 };
@@ -104,7 +106,7 @@ public class GeoHash
     double maxLat = 90.0;
     double minLon = -180.0;
     double maxLon = 180.0;
-    final int i = 0;
+    //final int i = 0;
 
     double lat = 0;
     double lon = 0;

@@ -81,9 +81,9 @@ private static final String VERSION = "1.0.0";
 private static final String SRS = "EPSG:4326";
 private static final String GENERAL_ERROR = "An error occurred in Tile Map Service";
 private static String imageBaseDir = HadoopUtils.getDefaultImageBaseDirectory();
-public static String KML_VERSION = "http://www.opengis.net/kml/2.2";
-public static String KML_EXTENSIONS = "http://www.google.com/kml/ext/2.2";
-public static String KML_MIME_TYPE = "application/vnd.google-earth.kml+xml";
+//public static String KML_VERSION = "http://www.opengis.net/kml/2.2";
+//public static String KML_EXTENSIONS = "http://www.google.com/kml/ext/2.2";
+//public static String KML_MIME_TYPE = "application/vnd.google-earth.kml+xml";
 
 @Context
 TmsService service;
@@ -198,25 +198,25 @@ protected static Document mrsPyramidMetadataToTileMapXml(final String raster, fi
   final Element bbox = doc.createElement("BoundingBox");
   rootElement.appendChild(bbox);
   final Attr minx = doc.createAttribute("minx");
-  minx.setValue(String.valueOf(mpm.getBounds().getMinX()));
+  minx.setValue(String.valueOf(mpm.getBounds().w));
   bbox.setAttributeNode(minx);
   final Attr miny = doc.createAttribute("miny");
-  miny.setValue(String.valueOf(mpm.getBounds().getMinY()));
+  miny.setValue(String.valueOf(mpm.getBounds().s));
   bbox.setAttributeNode(miny);
   final Attr maxx = doc.createAttribute("maxx");
-  maxx.setValue(String.valueOf(mpm.getBounds().getMaxX()));
+  maxx.setValue(String.valueOf(mpm.getBounds().e));
   bbox.setAttributeNode(maxx);
   final Attr maxy = doc.createAttribute("maxy");
-  maxy.setValue(String.valueOf(mpm.getBounds().getMaxY()));
+  maxy.setValue(String.valueOf(mpm.getBounds().n));
   bbox.setAttributeNode(maxy);
 
   final Element origin = doc.createElement("Origin");
   rootElement.appendChild(origin);
   final Attr x = doc.createAttribute("x");
-  x.setValue(String.valueOf(mpm.getBounds().getMinX()));
+  x.setValue(String.valueOf(mpm.getBounds().w));
   origin.setAttributeNode(x);
   final Attr y = doc.createAttribute("y");
-  y.setValue(String.valueOf(mpm.getBounds().getMinY()));
+  y.setValue(String.valueOf(mpm.getBounds().s));
   origin.setAttributeNode(y);
 
   final Element tileformat = doc.createElement("TileFormat");

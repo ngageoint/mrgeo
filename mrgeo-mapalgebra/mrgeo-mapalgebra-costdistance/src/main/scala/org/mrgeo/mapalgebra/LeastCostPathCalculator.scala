@@ -27,7 +27,8 @@ import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
 import org.mrgeo.image.MrsPyramidMetadata
-import org.mrgeo.utils.{LatLng, TMSUtils}
+import org.mrgeo.utils.tms.{Tile, Pixel, Bounds, TMSUtils}
+import org.mrgeo.utils.LatLng
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ListBuffer
@@ -52,10 +53,10 @@ class LeastCostPathCalculator extends Externalizable
   private var zoomLevel: Int = -1
   private var tileSize: Int = -1
   private var curRaster: Raster = null
-  private var curTile: TMSUtils.Tile = null
-  private var curTileBounds: TMSUtils.Bounds = null
+  private var curTile: Tile = null
+  private var curTileBounds: Bounds = null
   private var resolution: Double = .0
-  private var curPixel: TMSUtils.Pixel = null
+  private var curPixel: Pixel = null
   private var curValue: Double = 0.0
   private var pathCost: Double = 0f
   private var pathDistance: Double = 0f
@@ -130,9 +131,9 @@ class LeastCostPathCalculator extends Externalizable
       LeastCostPathCalculator.LOG.debug("curPixel = " + curPixel + " with value " + curValue)
     }
     var candNextRaster: Raster = curRaster
-    var candNextTile: TMSUtils.Tile = curTile
+    var candNextTile: Tile = curTile
     var minNextRaster: Raster = null
-    var minNextTile: TMSUtils.Tile = null
+    var minNextTile: Tile = null
     var minXNeighbor: Short = Short.MaxValue
     var minYNeighbor: Short = Short.MaxValue
     val tileWidth: Int = tileSize
@@ -149,51 +150,51 @@ class LeastCostPathCalculator extends Externalizable
         candNextTile = curTile
       }
       else if (xNeighbor == -1 && yNeighbor == -1) {
-        candNextTile = new TMSUtils.Tile(curTile.tx - 1, curTile.ty + 1)
+        candNextTile = new Tile(curTile.tx - 1, curTile.ty + 1)
         candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
         xNeighbor = widthMinusOne
         yNeighbor = widthMinusOne
       }
       else if (xNeighbor >= 0 && xNeighbor <= widthMinusOne && yNeighbor == -1) {
-        candNextTile = new TMSUtils.Tile(curTile.tx, curTile.ty + 1)
+        candNextTile = new Tile(curTile.tx, curTile.ty + 1)
         candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
         yNeighbor = widthMinusOne
       }
       else if (xNeighbor == tileWidth && yNeighbor == -1) {
-        candNextTile = new TMSUtils.Tile(curTile.tx + 1, curTile.ty + 1)
+        candNextTile = new Tile(curTile.tx + 1, curTile.ty + 1)
         candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
         xNeighbor = 0
         yNeighbor = widthMinusOne
       }
       else if (xNeighbor == tileWidth && yNeighbor >= 0 && yNeighbor <= widthMinusOne) {
-        candNextTile = new TMSUtils.Tile(curTile.tx + 1, curTile.ty)
+        candNextTile = new Tile(curTile.tx + 1, curTile.ty)
         candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
         xNeighbor = 0
       }
       else if (xNeighbor == tileWidth && yNeighbor == tileWidth) {
-        candNextTile = new TMSUtils.Tile(curTile.tx + 1, curTile.ty - 1)
+        candNextTile = new Tile(curTile.tx + 1, curTile.ty - 1)
         candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
         xNeighbor = 0
         yNeighbor = 0
       }
       else if (xNeighbor >= 0 && xNeighbor <= widthMinusOne && yNeighbor == tileWidth) {
-        candNextTile = new TMSUtils.Tile(curTile.tx, curTile.ty - 1)
+        candNextTile = new Tile(curTile.tx, curTile.ty - 1)
         candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
         yNeighbor = 0
       }
       else if (xNeighbor == -1 && yNeighbor == tileWidth) {
-        candNextTile = new TMSUtils.Tile(curTile.tx - 1, curTile.ty - 1)
+        candNextTile = new Tile(curTile.tx - 1, curTile.ty - 1)
         candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
         xNeighbor = widthMinusOne
         yNeighbor = 0
       }
       else if (xNeighbor == -1 && yNeighbor >= 0 && yNeighbor <= widthMinusOne) {
-        candNextTile = new TMSUtils.Tile(curTile.tx - 1, curTile.ty)
+        candNextTile = new Tile(curTile.tx - 1, curTile.ty)
         candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
         xNeighbor = widthMinusOne
       }
       else {
-        assert((true))
+        assert(true)
       }
       val value: Float = candNextRaster.getSampleFloat(xNeighbor, yNeighbor, 0)
       if (!value.isNaN && value >= 0 && value < leastValue) {
@@ -215,7 +216,7 @@ class LeastCostPathCalculator extends Externalizable
       val lon: Double = curTileBounds.w + (curPixel.px * resolution)
       new LatLng(lat, lon)
     }
-    curPixel = new TMSUtils.Pixel(minXNeighbor, minYNeighbor)
+    curPixel = new Pixel(minXNeighbor, minYNeighbor)
     val deltaTime: Double = curValue - leastValue
     curValue = leastValue
     if (!(curTile == minNextTile)) {
@@ -230,10 +231,12 @@ class LeastCostPathCalculator extends Externalizable
     }
     val deltaDistance = LatLng.calculateGreatCircleDistance(p1, p2)
     pathDistance += deltaDistance.toFloat
+
     val speed: Double = deltaDistance / deltaTime
     if (speed < pathMinSpeed) pathMinSpeed = speed
     if (speed > pathMaxSpeed) pathMaxSpeed = speed
-    return true
+
+    true
   }
 
   private def getTile(tx: Long, ty: Long): Raster = {
@@ -241,7 +244,7 @@ class LeastCostPathCalculator extends Externalizable
     val result = tilecache.get(tileid)
     result match {
       case Some(r) => r
-      case None => {
+      case None =>
         tilecache.clear()
         // Each time a tile needs to be loaded into the cache, get a 7 x 7 area
         // of tiles centered around the requested tile. Because of how LCP works,
@@ -256,7 +259,6 @@ class LeastCostPathCalculator extends Externalizable
           tilecache += (U._1.get() -> raster)
         })
         tilecache.get(tileid).get
-      }
     }
   }
 

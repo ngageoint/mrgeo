@@ -18,7 +18,7 @@ package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.ServletUtils;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

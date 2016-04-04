@@ -22,13 +22,13 @@ import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.SparkUtils
 
 object FillMapOp extends MapOpRegistrar {
 
@@ -117,7 +117,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
 
     //rasterRDD = Some(RasterRDD(rdd.filter(tile => tile._1.get() % 2 == 0)))
     val bounds = getOutputBounds(meta)
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), zoom, meta.getTilesize)
+    val tb = TMSUtils.boundsToTile(bounds, zoom, meta.getTilesize)
 
     val test = RasterMapOp.createEmptyRasterRDD(context, tb, zoom)
 
@@ -162,7 +162,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
     }))
 
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, meta.getDefaultValues,
-      bounds = TMSUtils.tileToBounds(tb, zoom, meta.getTilesize).asBounds(), calcStats = false))
+      bounds = TMSUtils.tileToBounds(tb, zoom, meta.getTilesize), calcStats = false))
 
     true
   }

@@ -228,10 +228,10 @@ public class GetCapabilitiesDocumentGenerator
 
           //MrsImagePyramidMetadata pyramidMetadata = pyramid.getMetadata();
 
-          minx = Math.min(minx, pyramid.getBounds().getMinX());
-          miny = Math.min(miny, pyramid.getBounds().getMinY());
-          maxx = Math.max(maxx, pyramid.getBounds().getMaxX());
-          maxy = Math.max(maxy, pyramid.getBounds().getMaxY());
+          minx = Math.min(minx, pyramid.getBounds().w);
+          miny = Math.min(miny, pyramid.getBounds().s);
+          maxx = Math.max(maxx, pyramid.getBounds().e);
+          maxy = Math.max(maxy, pyramid.getBounds().n);
 
           if (!version.isLess("1.3.0"))
           {
@@ -264,24 +264,24 @@ public class GetCapabilitiesDocumentGenerator
               XmlUtils.createTextElement2(layer, "CRS", "CRS:84");
               Element bb = XmlUtils.createElement(layer, "EX_GeographicBoundingBox");
               XmlUtils.createTextElement2(bb, "westBoundLongitude",
-                  String.valueOf(pyramid.getBounds().getMinX()));
+                  String.valueOf(pyramid.getBounds().w));
               XmlUtils.createTextElement2(bb, "eastBoundLongitude",
-                  String.valueOf(pyramid.getBounds().getMaxX()));
+                  String.valueOf(pyramid.getBounds().e));
               XmlUtils.createTextElement2(bb, "southBoundLatitude",
-                  String.valueOf(pyramid.getBounds().getMinY()));
+                  String.valueOf(pyramid.getBounds().s));
               XmlUtils.createTextElement2(bb, "northBoundLatitude",
-                  String.valueOf(pyramid.getBounds().getMaxY()));
+                  String.valueOf(pyramid.getBounds().n));
 
               bb = XmlUtils.createElement(layer, "BoundingBox");
               XmlUtils.createTextElement2(bb, "CRS", "EPSG:4326");
               XmlUtils.createTextElement2(bb, "minx",
-                  String.valueOf(pyramid.getBounds().getMinX()));
+                  String.valueOf(pyramid.getBounds().w));
               XmlUtils.createTextElement2(bb, "maxx",
-                  String.valueOf(pyramid.getBounds().getMaxX()));
+                  String.valueOf(pyramid.getBounds().e));
               XmlUtils.createTextElement2(bb, "miny",
-                  String.valueOf(pyramid.getBounds().getMinY()));
+                  String.valueOf(pyramid.getBounds().s));
               XmlUtils.createTextElement2(bb, "maxy",
-                  String.valueOf(pyramid.getBounds().getMaxY()));
+                  String.valueOf(pyramid.getBounds().n));
 
             }
             finally
@@ -298,21 +298,21 @@ public class GetCapabilitiesDocumentGenerator
           }
 
           Element bb = XmlUtils.createElement(layer, "LatLonBoundingBox");
-          bb.setAttribute("minx", String.valueOf(pyramid.getBounds().getMinX()));
-          bb.setAttribute("miny", String.valueOf(pyramid.getBounds().getMinY()));
-          bb.setAttribute("maxx", String.valueOf(pyramid.getBounds().getMaxX()));
-          bb.setAttribute("maxy", String.valueOf(pyramid.getBounds().getMaxY()));
+          bb.setAttribute("minx", String.valueOf(pyramid.getBounds().w));
+          bb.setAttribute("miny", String.valueOf(pyramid.getBounds().s));
+          bb.setAttribute("maxx", String.valueOf(pyramid.getBounds().e));
+          bb.setAttribute("maxy", String.valueOf(pyramid.getBounds().n));
 
           bb = XmlUtils.createElement(layer, "BoundingBox");
           XmlUtils.createTextElement2(bb, "SRS", "EPSG:4326");
           XmlUtils.createTextElement2(bb, "minx",
-              String.valueOf(pyramid.getBounds().getMinX()));
+              String.valueOf(pyramid.getBounds().w));
           XmlUtils.createTextElement2(bb, "maxx",
-              String.valueOf(pyramid.getBounds().getMaxX()));
+              String.valueOf(pyramid.getBounds().e));
           XmlUtils.createTextElement2(bb, "miny",
-              String.valueOf(pyramid.getBounds().getMinY()));
+              String.valueOf(pyramid.getBounds().s));
           XmlUtils.createTextElement2(bb, "maxy",
-              String.valueOf(pyramid.getBounds().getMaxY()));
+              String.valueOf(pyramid.getBounds().n));
 
           // make styles
 

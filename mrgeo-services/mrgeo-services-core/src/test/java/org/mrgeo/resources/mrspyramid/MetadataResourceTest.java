@@ -37,8 +37,8 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.tms.Bounds;
 
 import javax.ws.rs.core.Context;
 import java.awt.image.DataBuffer;
@@ -123,10 +123,10 @@ public class MetadataResourceTest extends JerseyTest
     Assert.assertEquals(10, md.getMaxZoomLevel());
     Bounds bounds = md.getBounds();
 
-    Assert.assertEquals("Bad bounds - min x", 141.7066, bounds.getMinX(), 0.0001);
-    Assert.assertEquals("Bad bounds - min y", -18.3733, bounds.getMinY(), 0.0001);
-    Assert.assertEquals("Bad bounds - max x", 142.56, bounds.getMaxX(), 0.0001);
-    Assert.assertEquals("Bad bounds - max y", -17.52, bounds.getMaxY(), 0.0001);
+    Assert.assertEquals("Bad bounds - min x", 141.7066, bounds.w, 0.0001);
+    Assert.assertEquals("Bad bounds - min y", -18.3733, bounds.s, 0.0001);
+    Assert.assertEquals("Bad bounds - max x", 142.56, bounds.e, 0.0001);
+    Assert.assertEquals("Bad bounds - max y", -17.52, bounds.n, 0.0001);
 
     Assert.assertEquals(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, md.getTilesize());
     Assert.assertEquals(DataBuffer.TYPE_FLOAT, md.getTileType());

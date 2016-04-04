@@ -24,7 +24,7 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.progress.Progress;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ public class MapReduceUtils
 
   public static boolean runJob(Job job, Progress progress, JobListener jl) throws JobFailedException, JobCancelledException
   {
-    boolean success=false;
+    boolean success;
     if (jl !=null) {
       //append job id to the job name for easy identification
       job.setJobName("ID_" + jl.getUserJobId() + "_" + job.getJobName()); 
@@ -66,7 +66,7 @@ public class MapReduceUtils
       {
         float initP = progress.get();
         float percentP = 100 - initP;
-        while (job.isComplete() == false)
+        while (!job.isComplete())
         {
           float p = job.mapProgress() * .9f + job.reduceProgress() * .1f;
           progress.set(p * percentP + initP);
@@ -84,21 +84,11 @@ public class MapReduceUtils
       
       log.info("Job {} time: {}ms", job.getJobName(), (System.currentTimeMillis() - start));
 
-      if (job.isSuccessful() == false)
+      if (!job.isSuccessful())
       {
         throw new JobFailedException("Job failed: " + job.getTrackingURL());
       }
       success = job.isSuccessful();
-    }
-    catch (InterruptedException e)
-    {
-      e.printStackTrace();
-      throw new JobFailedException(e.getMessage());
-    }
-    catch (ClassNotFoundException e)
-    {
-      e.printStackTrace();
-      throw new JobFailedException(e.getMessage());
     }
     // when submitting jobs under JBoss, Exception doesn't appear to be caught
     catch ( Throwable e ) {
@@ -125,12 +115,7 @@ public class MapReduceUtils
       job.submit();
       log.info("Job {} startup: {}ms", job.getJobName(), (System.currentTimeMillis() - start));
     }
-    catch (InterruptedException e)
-    {
-      e.printStackTrace();
-      throw new JobFailedException(e.getMessage());
-    }
-    catch (ClassNotFoundException e)
+    catch (InterruptedException | ClassNotFoundException e)
     {
       e.printStackTrace();
       throw new JobFailedException(e.getMessage());
@@ -142,10 +127,6 @@ public class MapReduceUtils
    * that a return value of true does not mean the job was successful, just that
    * it completed.
    * 
-   * @param job
-   * @param progress
-   * @param jl
-   * @return
    * @throws IOException
    * @throws FileNotFoundException
    * @throws JobFailedException
@@ -184,11 +165,10 @@ public class MapReduceUtils
    * 
    * @param provider
    *          the data provider through which to write out the bounds
-   * @param Bounds
+   * @param bounds
    *          the Bounds object to serialize
    * @throws IOException
    * @throws InterruptedException
-   * @throws Exception
    */
   static public void writeBounds(final AdHocDataProvider provider, 
       Bounds bounds) throws IOException, InterruptedException
@@ -238,20 +218,17 @@ public class MapReduceUtils
       final int size = provider.size();
       for (int i = 0; i < size; i++)
       {
-        final InputStream stream = provider.get(i);
-        try
+        try (InputStream stream = provider.get(i))
         {
           Bounds bnds = mapper.readValue(stream, Bounds.class);
-          if (finalBounds == null) {
+          if (finalBounds == null)
+          {
             finalBounds = bnds;
           }
-          else if (bnds != null) {
-            finalBounds.expand(bnds);
+          else if (bnds != null)
+          {
+            finalBounds = finalBounds.expand(bnds);
           }
-        }
-        finally
-        {
-          stream.close();
         }
       }
       return finalBounds;

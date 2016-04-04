@@ -21,8 +21,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GeometryUtils;
+import org.mrgeo.utils.tms.Bounds;
 
 @SuppressWarnings("static-method")
 public class LineStringImplTest extends LocalRunnerTest
