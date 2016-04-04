@@ -27,7 +27,8 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.utils.{SparkUtils, TMSUtils}
+import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.tms.TMSUtils
 
 abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
 
@@ -48,7 +49,7 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(meta.getBounds), zoom, tilesize)
+    val tb = TMSUtils.boundsToTile(meta.getBounds, zoom, tilesize)
 
     val nodatas = Array.ofDim[Number](meta.getBands)
     for (i <- nodatas.indices) {
