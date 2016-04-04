@@ -47,7 +47,7 @@ public class HdfsMrsPyramidInputFormatProvider extends MrsImageInputFormatProvid
   @Override
   public InputFormat<TileIdWritable,RasterWritable> getInputFormat(final String input)
   {
-    return new HdfsMrsPyramidInputFormat(input, context.getZoomLevel());
+    return new HdfsMrsPyramidInputFormat(input);
   }
 
   @Override
@@ -120,7 +120,7 @@ public class HdfsMrsPyramidInputFormatProvider extends MrsImageInputFormatProvid
 
     try
     {
-      HdfsMrsPyramidInputFormat.setInputInfo(job, context.getZoomLevel(), zoomInput);
+      HdfsMrsPyramidInputFormat.setInputInfo(job, zoomInput);
     }
     catch (IOException e)
     {

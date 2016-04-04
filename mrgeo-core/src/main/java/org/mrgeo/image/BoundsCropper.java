@@ -17,9 +17,10 @@
 package org.mrgeo.image;
 
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.TMSUtils.Bounds;
-import org.mrgeo.utils.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,10 +56,6 @@ public class BoundsCropper
    * then care is taken to set the maximum zoom level of the returned data to the provided zoom 
    * level. 
    * 
-   * @param origMetadata
-   * @param userBounds
-   * @param zoomLevel
-   * @return
    */
   public static MrsPyramidMetadata getCroppedMetadata(MrsPyramidMetadata origMetadata,
                                                       List<Bounds> userBounds, int zoomLevel) {
@@ -84,10 +81,10 @@ public class BoundsCropper
     Bounds cropTileBounds = TMSUtils.tileBounds(cropBounds, zoomLevel, origMetadata.getTilesize());
     
     // get the original image bounds
-    Bounds imageBounds = Bounds.convertOldToNewBounds(origMetadata.getBounds());
-    
+    Bounds imageBounds = origMetadata.getBounds();
+
     // complain if the user bounds has no overlap with 
-    if(!imageBounds.intersect(cropTileBounds)) {
+    if(!imageBounds.intersects(cropTileBounds)) {
       throw new IllegalArgumentException(String.format("Oops - cropped bounds and image bounds " 
           + "do not overlap: cropped bounds=%s, image bounds=%s", cropTileBounds, imageBounds));
     }
@@ -100,13 +97,13 @@ public class BoundsCropper
                                        Math.min(cropTileBounds.n, imageBounds.n));
     
     // find the tile bounds corresponding to the new image bounds - this becomes the new tile bounds
-    TMSUtils.TileBounds newTileBounds = TMSUtils.boundsToTile(newImageBounds, 
+    TileBounds newTileBounds = TMSUtils.boundsToTile(newImageBounds,
                                                               zoomLevel, 
                                                               origMetadata.getTilesize());
     
-    final TMSUtils.Pixel lowerPx = TMSUtils.latLonToPixels(newImageBounds.s, newImageBounds.w,  
+    final Pixel lowerPx = TMSUtils.latLonToPixels(newImageBounds.s, newImageBounds.w,
                                                             zoomLevel, origMetadata.getTilesize());
-    final TMSUtils.Pixel upperPx = TMSUtils.latLonToPixels(newImageBounds.n, newImageBounds.e, 
+    final Pixel upperPx = TMSUtils.latLonToPixels(newImageBounds.n, newImageBounds.e,
                                                             zoomLevel, origMetadata.getTilesize());
 
     final LongRectangle pixelBounds = new LongRectangle(0, 0, upperPx.px - lowerPx.px, 
@@ -115,7 +112,7 @@ public class BoundsCropper
     // time to create the new metadata
     MrsPyramidMetadata croppedMetadata = new MrsPyramidMetadata();
     croppedMetadata.setPyramid(origMetadata.getPyramid());
-    croppedMetadata.setBounds(Bounds.convertNewToOldBounds(newImageBounds));
+    croppedMetadata.setBounds(newImageBounds);
     croppedMetadata.setTilesize(origMetadata.getTilesize());
     croppedMetadata.setTileType(origMetadata.getTileType());
     croppedMetadata.setBands(1);

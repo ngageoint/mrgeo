@@ -16,7 +16,8 @@
 
 package org.mrgeo.data.vector;
 
-import org.mrgeo.utils.Bounds;
+
+import org.mrgeo.utils.tms.Bounds;
 
 import java.util.ArrayList;
 import java.util.List;

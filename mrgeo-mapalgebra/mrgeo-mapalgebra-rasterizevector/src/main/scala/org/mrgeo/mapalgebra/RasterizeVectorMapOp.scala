@@ -16,7 +16,7 @@
 
 package org.mrgeo.mapalgebra
 
-import java.io.{DataOutputStream, ByteArrayOutputStream, Externalizable}
+import java.io.{ByteArrayOutputStream, DataOutputStream, Externalizable}
 
 import com.vividsolutions.jts.geom.Envelope
 import org.apache.spark.AccumulatorParam
@@ -28,7 +28,7 @@ import org.mrgeo.geometry.Geometry
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils._
+import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
 
 import scala.collection.mutable.ListBuffer
 
@@ -116,11 +116,11 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       finally {
         dos.close()
       }
-      val b: TMSUtils.Bounds = new TMSUtils.Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
+      val b: Bounds = new Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
 
       bounds match {
       case Some(filterBounds) =>
-        if (filterBounds.intersect(b)) {
+        if (filterBounds.intersects(b)) {
           val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
           for (tileId <- tiles) {
             result += ((tileId, geom))
@@ -148,7 +148,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     log.info("Max geometry serialized size is " + maxSize)
     // The divide by 2 is not scientific. It simply doubles the number of partitions
     // which, during testing, significatnly improved performance.
-    val geomsPerPartition = (Integer.MAX_VALUE / maxSize / 2).toInt
+    val geomsPerPartition = Integer.MAX_VALUE / maxSize / 2
     log.info("Can fit " + geomsPerPartition + " geometries in a partition")
     val partitions = (count / geomsPerPartition).toInt + 1
     log.info("Using " + partitions + " partitions for RasterizeVector")
@@ -159,9 +159,9 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     f.toJTS.getEnvelopeInternal
   }
 
-  def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: TMSUtils.Bounds): List[TileIdWritable] = {
+  def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: Bounds): List[TileIdWritable] = {
     var tiles = new ListBuffer[TileIdWritable]
-    val tb: TMSUtils.TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
+    val tb: TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
     var tx: Long = tb.w
     while (tx <= tb.e) {
       var ty: Long = tb.s

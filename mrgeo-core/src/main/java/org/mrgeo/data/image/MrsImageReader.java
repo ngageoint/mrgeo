@@ -18,8 +18,8 @@ package org.mrgeo.data.image;
 
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.awt.image.Raster;
 import java.io.File;

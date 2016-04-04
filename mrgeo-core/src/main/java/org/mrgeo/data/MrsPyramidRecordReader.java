@@ -25,8 +25,9 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
   private ImageInputFormatContext ifContext;
   private TileIdWritable key;
   private RasterWritable value;
-  private Bounds inputBounds = Bounds.world; // bounds of the map/reduce (either the image bounds or cropped though map algebra)
+  private Bounds inputBounds = Bounds.WORLD; // bounds of the map/reduce (either the image bounds or cropped though map algebra)
 
   private int tilesize;
   private int zoomLevel;
@@ -70,9 +71,9 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
 
   private RecordReader<TileIdWritable,RasterWritable> createRecordReader(
           final MrsPyramidInputSplit split, final TaskAttemptContext context)
-          throws DataProviderNotFound, IOException
+          throws IOException
   {
-    InputSplit initializeWithSplit = null;
+    InputSplit initializeWithSplit;
     // The record reader needs the native split returned from
     // the data plugin.
     RecordReader<TileIdWritable,RasterWritable> recordReader = getRecordReader(split.getName(),
@@ -124,7 +125,7 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
     if (split instanceof MrsPyramidInputSplit)
     {
       final MrsPyramidInputSplit fsplit = (MrsPyramidInputSplit) split;
-      final Configuration conf = context.getConfiguration();
+      //final Configuration conf = context.getConfiguration();
 
       ifContext = ImageInputFormatContext.load(context.getConfiguration());
       if (ifContext.getBounds() != null)
@@ -150,8 +151,8 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
       final long id = scannedInputReader.getCurrentKey().get();
 //      log.info("scannedInputReader returned key " + id);
 
-      final TMSUtils.Tile tile = TMSUtils.tileid(id, zoomLevel);
-      final TMSUtils.Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tilesize);
+      final Tile tile = TMSUtils.tileid(id, zoomLevel);
+      final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tilesize);
       if (inputBounds.intersects(tb.w, tb.s, tb.e, tb.n))
       {
         // RasterWritable.toRaster(scannedInputReader.getCurrentValue())
@@ -170,7 +171,7 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
 //    log.info("setNextKeyValue");
 //    try
 //    {
-//      TMSUtils.Tile t = TMSUtils.tileid(tileid, zoomLevel);
+//      Tile t = TMSUtils.tileid(tileid, zoomLevel);
 //      QuickExport.saveLocalGeotiff("/export/home/dave.johnson/splits", raster, t.tx, t.ty,
 //          zoomLevel, tilesize, -9999);
 //    }

@@ -36,17 +36,15 @@ import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
-import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageOutputFormatContext;
-import org.mrgeo.hdfs.partitioners.FileSplitPartitioner;
 import org.mrgeo.utils.Base64Utils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +105,7 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
 
     // get the tile bounds
     this.bounds = context.getBounds();
-    this.tileBounds = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(this.bounds), this.zoomLevel, this.tileSize);
+    this.tileBounds = TMSUtils.boundsToTile(this.bounds, this.zoomLevel, this.tileSize);
     
     this.table = context.getOutput();
     if(table.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX)){

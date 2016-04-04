@@ -41,10 +41,11 @@ import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -544,10 +545,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
   public KVIterator<Bounds, Raster> get(final Bounds bounds){
 
     //TODO: make this bounds request work
-
-    TMSUtils.Bounds newBounds = TMSUtils.Bounds.convertOldToNewBounds(bounds);
-
-    TMSUtils.TileBounds tileBounds = TMSUtils.boundsToTile(newBounds,
+    TileBounds tileBounds = TMSUtils.boundsToTile(bounds,
                                                            zoomLevel,
                                                            getTileSize());
 

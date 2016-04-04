@@ -191,17 +191,17 @@ public class WcsCapabilities
       XmlUtils.createTextElement2(layer, "ows:Abstract", provider.getResourceName());
 
       MrsPyramid pyramid = MrsPyramid.open(provider);
-      minx = Math.min(minx, pyramid.getBounds().getMinX());
-      miny = Math.min(miny, pyramid.getBounds().getMinY());
-      maxx = Math.max(maxx, pyramid.getBounds().getMaxX());
-      maxy = Math.max(maxy, pyramid.getBounds().getMaxY());
+      minx = Math.min(minx, pyramid.getBounds().w);
+      miny = Math.min(miny, pyramid.getBounds().s);
+      maxx = Math.max(maxx, pyramid.getBounds().e);
+      maxy = Math.max(maxy, pyramid.getBounds().n);
 
 
       Element envelope = XmlUtils.createElement(layer, "ows:WGS84BoundingBox");
       XmlUtils.createTextElement2(envelope, "ows:LowerCorner",
-          pyramid.getBounds().getMinX() + " " + pyramid.getBounds().getMinY());
+          pyramid.getBounds().w + " " + pyramid.getBounds().s);
       XmlUtils.createTextElement2(envelope, "ows:UpperCorner",
-          pyramid.getBounds().getMaxX() + " " + pyramid.getBounds().getMaxY());
+          pyramid.getBounds().e + " " + pyramid.getBounds().n);
     }
 
   }
@@ -235,19 +235,19 @@ public class WcsCapabilities
       XmlUtils.createTextElement2(layer, "label", provider.getResourceName());
 
       MrsPyramid pyramid = MrsPyramid.open(provider);
-      minx = Math.min(minx, pyramid.getBounds().getMinX());
-      miny = Math.min(miny, pyramid.getBounds().getMinY());
-      maxx = Math.max(maxx, pyramid.getBounds().getMaxX());
-      maxy = Math.max(maxy, pyramid.getBounds().getMaxY());
+      minx = Math.min(minx, pyramid.getBounds().w);
+      miny = Math.min(miny, pyramid.getBounds().s);
+      maxx = Math.max(maxx, pyramid.getBounds().e);
+      maxy = Math.max(maxy, pyramid.getBounds().n);
 
       Element envelope = XmlUtils.createElement(layer, "lonLatEnvelope");
       envelope.setAttribute("srsName", "WGS84(DD)");
       XmlUtils.createTextElement2(envelope, "gml:pos",
-          "" + pyramid.getBounds().getMinX() + " " +
-              pyramid.getBounds().getMinY());
+          "" + pyramid.getBounds().w + " " +
+              pyramid.getBounds().s);
       XmlUtils.createTextElement2(envelope, "gml:pos",
-          "" + pyramid.getBounds().getMaxX() + " " +
-              pyramid.getBounds().getMaxY());
+          "" + pyramid.getBounds().e + " " +
+              pyramid.getBounds().n);
       parent.appendChild(layer);
     }
   }

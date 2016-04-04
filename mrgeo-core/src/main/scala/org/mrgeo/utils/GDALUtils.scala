@@ -35,6 +35,7 @@ import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 
 import scala.collection.JavaConversions._
 
@@ -150,13 +151,13 @@ object GDALUtils extends Logging {
   }
 
   def toDataset(raster: Raster, nodata: Double = Double.NegativeInfinity,
-      bounds:Either[Bounds, TMSUtils.Bounds] = null): Dataset = {
+      bounds:Bounds = null): Dataset = {
     val nodatas = if (nodata == Double.NegativeInfinity) null else Array.fill[Double](raster.getNumBands)(nodata)
     toDataset(raster, nodatas, bounds)
   }
 
   def toDataset(raster: Raster, nodatas: Array[Double],
-      bounds:Either[Bounds, TMSUtils.Bounds]): Dataset = {
+      bounds: Bounds): Dataset = {
     val datatype = toGDALDataType(raster.getTransferType)
 
     val ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth, raster.getHeight, raster.getNumBands, datatype, nodatas)
@@ -165,25 +166,15 @@ object GDALUtils extends Logging {
       copyToDataset(ds, raster)
     }
 
-    val bnds = if (bounds == null) {
-      null
-    }
-    else {
-      bounds match {
-      case Left(b) => TMSUtils.Bounds.asTMSBounds(b)
-      case Right(t) => t
-      }
-    }
-
     val xform = new Array[Double](6)
-    if (bnds != null) {
+    if (bounds != null) {
 
-      xform(0) = bnds.w
-      xform(1) = bnds.width / ds.getRasterXSize
+      xform(0) = bounds.w
+      xform(1) = bounds.width / ds.getRasterXSize
       xform(2) = 0
-      xform(3) = bnds.n
+      xform(3) = bounds.n
       xform(4) = 0
-      xform(5) = -bnds.height / ds.getRasterYSize
+      xform(5) = -bounds.height / ds.getRasterYSize
 
       ds.SetProjection(GDALUtils.EPSG4326)
     }
@@ -313,7 +304,7 @@ object GDALUtils extends Logging {
     var i: Int = 0
     gdaldatatype match {
     // Since it's byte data, there is nothing to swap - do nothing
-    case gdalconstConstants.GDT_Byte => {}
+    case gdalconstConstants.GDT_Byte =>
     // 2 byte value... swap byte 1 with 2
     case gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 =>
       while (i + 1 < bytes.length) {
@@ -454,8 +445,8 @@ object GDALUtils extends Logging {
       val image = GDALUtils.open(imagename)
       if (image != null) {
         val b = getBounds(image)
-        val px = b.getWidth / image.GetRasterXSize
-        val py = b.getHeight / image.GetRasterYSize
+        val px = b.width() / image.GetRasterXSize
+        val py = b.height() / image.GetRasterYSize
         val zx = TMSUtils.zoomForPixelSize(Math.abs(px), tilesize)
         val zy = TMSUtils.zoomForPixelSize(Math.abs(py), tilesize)
 
@@ -508,22 +499,12 @@ object GDALUtils extends Logging {
   }
 
   def saveRaster(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
-      bounds:Either[Bounds, TMSUtils.Bounds] = null, nodata:Double = Double.NegativeInfinity,
+      bounds:Bounds = null, nodata:Double = Double.NegativeInfinity,
       format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit =  {
 
     val filename = output match {
     case Left(f) => f
     case Right(stream) => File.createTempFile("tmp-file", "").getCanonicalPath
-    }
-
-    val bnds = if (bounds == null) {
-      null
-    }
-    else {
-      bounds match {
-      case Left(b) => TMSUtils.Bounds.asTMSBounds(b)
-      case Right(t) => t
-      }
     }
 
     val dataset = raster match {
@@ -532,14 +513,13 @@ object GDALUtils extends Logging {
 
       val xform = new Array[Double](6)
 
-      if (bnds != null) {
-
-        xform(0) = bnds.w
-        xform(1) = bnds.width / ds.getRasterXSize
+      if (bounds != null) {
+        xform(0) = bounds.w
+        xform(1) = bounds.width / ds.getRasterXSize
         xform(2) = 0
-        xform(3) = bnds.n
+        xform(3) = bounds.n
         xform(4) = 0
-        xform(5) = -bnds.height / ds.getRasterYSize
+        xform(5) = -bounds.height / ds.getRasterYSize
 
         ds.SetProjection(GDALUtils.EPSG4326)
       }

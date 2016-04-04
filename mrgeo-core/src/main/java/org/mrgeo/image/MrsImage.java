@@ -29,6 +29,8 @@ import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.*;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +50,9 @@ public class MrsImage
 private static final Logger log = LoggerFactory.getLogger(MrsImage.class);
 
 // create a simple color model
-protected ColorModel colorModel = null;
-protected SampleModel sampleModel = null;
-protected String measurement = "Ratio"; // not sure what this is for...
+//protected ColorModel colorModel = null;
+//protected SampleModel sampleModel = null;
+//protected String measurement = "Ratio"; // not sure what this is for...
 private MrsImageReader reader = null; // The MrsImageReader for fetching the tiles
 private MrsPyramidMetadata metadata = null; // image metadata
 
@@ -85,16 +87,11 @@ public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) 
     final String name = meta.getName(zoomlevel);
     if (name != null)
     {
-      final MrsImage image = new MrsImage(provider, zoomlevel);
-      return image;
+      return new MrsImage(provider, zoomlevel);
     }
   }
   // TODO this seems weird to catch and eat these here...
-  catch (final MrsImageException e)
-  {
-    // e.printStackTrace();
-  }
-  catch (final NullPointerException e)
+  catch (final MrsImageException | NullPointerException e)
   {
     // e.printStackTrace();
   }
@@ -145,7 +142,7 @@ public final double convertToWorldX(final double px)
   final double resolution = TMSUtils.resolution(getZoomlevel(), getTilesize());
   final Bounds bounds = getMetadata().getBounds();
 
-  return bounds.getMinX() + (px * resolution);
+  return bounds.w + (px * resolution);
 }
 
 public final double convertToWorldY(final double py)
@@ -153,7 +150,7 @@ public final double convertToWorldY(final double py)
   final double resolution = TMSUtils.resolution(getZoomlevel(), getTilesize());
   final Bounds bounds = getMetadata().getBounds();
 
-  return bounds.getMinY() + ((getPixelMaxY() - py) * resolution);
+  return bounds.s + ((getPixelMaxY() - py) * resolution);
 }
 
 public Raster getAnyTile() throws IOException
@@ -178,9 +175,6 @@ public Raster getAnyTile() throws IOException
   }
 }
 
-/**
- * @return
- */
 public Bounds getBounds()
 {
   return getMetadata().getBounds();
@@ -325,7 +319,6 @@ public RenderedImage getRenderedImage() throws IOException
  * @param bounds
  *          requested bounds
  * @return rendered image
- * @throws IOException
  */
 public RenderedImage getRenderedImage(final Bounds bounds)
 {

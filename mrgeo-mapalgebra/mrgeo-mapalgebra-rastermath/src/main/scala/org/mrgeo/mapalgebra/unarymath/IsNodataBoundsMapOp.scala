@@ -22,7 +22,7 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.{TMSUtils, Bounds}
+import org.mrgeo.utils.tms.Bounds
 
 object IsNodataBoundsMapOp extends MapOpRegistrar {
   override def register: Array[String] = {

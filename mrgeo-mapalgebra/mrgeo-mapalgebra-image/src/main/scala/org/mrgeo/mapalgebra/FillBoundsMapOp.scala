@@ -21,7 +21,7 @@ import java.io.IOException
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.Bounds
+import org.mrgeo.utils.tms.Bounds
 
 object FillBoundsMapOp extends MapOpRegistrar {
 
@@ -99,22 +99,17 @@ class FillBoundsMapOp extends FillMapOp {
     }
   }
 
-  override def getOutputBounds(inputMetadata: MrsPyramidMetadata): Bounds = {
-    rasterForBounds match {
-      case Some(rfb) => {
-        rfb.metadata() match {
-          case Some(metadata) => metadata.getBounds
-          case _ => throw new ParserException("Unable to read metadata for bounds raster: ")
-        }
+  override def getOutputBounds(inputMetadata: MrsPyramidMetadata): Bounds = rasterForBounds match {
+    case Some(rfb) =>
+      rfb.metadata() match {
+        case Some(metadata) => metadata.getBounds
+        case _ => throw new ParserException("Unable to read metadata for bounds raster: ")
       }
-      case _ => {
-        bounds match {
-          case Some(b) => {
-            b
-          }
-          case _ => throw new IOException("Invalid bounds specified to fillBounds")
-        }
+    case _ =>
+      bounds match {
+        case Some(b) =>
+          b
+        case _ => throw new IOException("Invalid bounds specified to fillBounds")
       }
-    }
   }
 }

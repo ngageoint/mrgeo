@@ -32,6 +32,8 @@ import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -802,7 +804,7 @@ public void generateBaselineTif(final String testName,
 public void generateBaselineTif(final String testName, final Raster raster)
     throws IOException, JobFailedException, JobCancelledException, ParserException
 {
-  generateBaselineTif( testName, raster, Bounds.world, Double.NaN);
+  generateBaselineTif( testName, raster, Bounds.WORLD, Double.NaN);
 }
 public void generateBaselineTif(final String testName,
     final BufferedImage image, Bounds bounds)
@@ -814,7 +816,7 @@ public void generateBaselineTif(final String testName,
 public void generateBaselineTif(final String testName, final RenderedImage image)
     throws IOException, JobFailedException, JobCancelledException, ParserException
 {
-  generateBaselineTif(testName, image.getData(), Bounds.world, Double.NaN);
+  generateBaselineTif(testName, image.getData(), Bounds.WORLD, Double.NaN);
 }
 
 
@@ -823,16 +825,11 @@ public void generateBaselineTif(final String testName,
     throws IOException, JobFailedException, JobCancelledException, ParserException
 {
 
-  double pixelsize = bounds.getWidth() / raster.getWidth();
+  double pixelsize = bounds.width() / raster.getWidth();
   int zoom = TMSUtils.zoomForPixelSize(pixelsize, raster.getWidth());
-
-  TMSUtils.Bounds tb = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
-      bounds.getMaxY());
-  tb = TMSUtils.tileBounds(tb, zoom, raster.getWidth());
 
   final File baselineTif = new File(new File(inputLocal), testName + ".tif");
   GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), nodata);
-
 }
 
 

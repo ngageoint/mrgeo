@@ -22,9 +22,9 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.ServletUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALJavaUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +68,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
     {
       final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
-      writeStream(raster, Bounds.world, Double.NaN, byteStream);
+      writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
 
       return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
         getResponseMimeType()).header("Content-Disposition", "attachment; filename=image.tif");
@@ -93,7 +93,7 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
     final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
     try
     {
-      writeStream(raster, Bounds.world, Double.NaN, byteStream);
+      writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
       ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
     }
     catch (final IOException e)
@@ -111,10 +111,10 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
       final int tilesize = pyramid.getMetadata().getTilesize();
 
       final int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
-      final TMSUtils.Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
+      final Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
       final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
-      writeStream(raster, bounds.asBounds(), pyramid.getMetadata().getDefaultValue(0), byteStream);
+      writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
 
       return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
         getResponseMimeType()).header("Content-Disposition",
@@ -142,11 +142,11 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
     final int tilesize = pyramid.getMetadata().getTilesize();
 
     final int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
-    final TMSUtils.Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
+    final Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
 
     response.setContentType(getResponseMimeType());
     final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-      writeStream(raster, bounds.asBounds(), pyramid.getMetadata().getDefaultValue(0), byteStream);
+      writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
       ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
     }
     catch (final IOException e)
@@ -156,13 +156,6 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
   }
 
-  /**
-   * 
-   * @param imageName
-   * @param bounds
-   * @return
-   * @throws IOException
-   */
   @Override
   public Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds)
   {

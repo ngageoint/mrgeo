@@ -20,11 +20,11 @@ import org.apache.hadoop.io.MapFile;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.image.HdfsMrsImageReader;
 import org.mrgeo.hdfs.tile.Splits;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 
 import java.awt.image.Raster;
 import java.io.IOException;
@@ -184,7 +184,7 @@ public boolean hasNext()
           {
             // if we fall within the boundries return positive, otherwise slerp up the tile and
             // try the next one.
-            final TMSUtils.Tile t = TMSUtils.tileid(currentKey.get(), zoom);
+            final Tile t = TMSUtils.tileid(currentKey.get(), zoom);
             if (t.tx >= rowStart && t.tx <= rowEnd)
             {
               return true;
@@ -255,7 +255,7 @@ private boolean inRange(TileIdWritable key)
     {
       // if we fall within the boundries return positive, otherwise slerp up the tile and
       // try the next one.
-      final TMSUtils.Tile t = TMSUtils.tileid(key.get(), zoom);
+      final Tile t = TMSUtils.tileid(key.get(), zoom);
       if (t.tx >= rowStart && t.tx <= rowEnd)
       {
         return true;

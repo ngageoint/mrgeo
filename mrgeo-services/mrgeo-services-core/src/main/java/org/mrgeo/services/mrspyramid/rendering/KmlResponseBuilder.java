@@ -18,7 +18,7 @@ package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.ws.rs.core.Response;
@@ -54,7 +54,7 @@ public Response getResponse(final String pyrName, final Bounds bounds, final int
   try
   {
     final String kmlBody = ImageRendererAbstract
-        .asKml(pyrName, bounds, width, height, cs, reqUrl, providerProperties);
+        .asKml(pyrName, bounds, reqUrl, providerProperties);
     final String type = new MimetypesFileTypeMap().getContentType(getFormatSuffix());
     final String headerInfo = "attachment; filename=" + pyrName + "." + getFormatSuffix();
     return Response.ok(kmlBody, type).header("Content-Disposition", headerInfo).header(

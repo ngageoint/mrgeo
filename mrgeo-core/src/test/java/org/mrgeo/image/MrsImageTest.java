@@ -23,10 +23,11 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
+import org.mrgeo.utils.tms.TMSUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class MrsImageTest extends LocalRunnerTest
   private static String allOnes = Defs.INPUT + allonesName;
 
   private MrsImage allOnesImage;
-  private ProviderProperties providerProperties;
+  private ProviderProperties providerProperties = null;
 
   @BeforeClass
   public static void init() throws Exception
@@ -79,7 +80,7 @@ public class MrsImageTest extends LocalRunnerTest
     String badImage = "this/is/a/bad/name";
     try
     {
-      MrsImage image = MrsImage.open(badImage, zoom, providerProperties);
+      MrsImage.open(badImage, zoom, providerProperties);
       Assert.fail("Expected IOException");
     }
     catch (IOException e)
@@ -94,7 +95,7 @@ public class MrsImageTest extends LocalRunnerTest
  {
     try
     {
-      MrsImage image = MrsImage.open((String) null, 0, providerProperties);
+      MrsImage.open(null, 0, providerProperties);
     }
     catch (IOException e)
     {
@@ -144,11 +145,11 @@ public class MrsImageTest extends LocalRunnerTest
     LatLng lr = allOnesImage.convertToLatLng(pixelBounds.getMaxX(), pixelBounds.getMaxY());
     LatLng ct = allOnesImage.convertToLatLng(pixelBounds.getCenterX(), pixelBounds.getCenterY());
 
-    TMSUtils.Pixel ultms = TMSUtils.latLonToPixels(ul.getLat(), ul.getLng(), zoom, tilesize);
-    TMSUtils.Pixel lrtms = TMSUtils.latLonToPixels(lr.getLat(), lr.getLng(), zoom, tilesize);
-    TMSUtils.Pixel cttms = TMSUtils.latLonToPixels(ct.getLat(), ct.getLng(), zoom, tilesize);
+    Pixel ultms = TMSUtils.latLonToPixels(ul.getLat(), ul.getLng(), zoom, tilesize);
+    Pixel lrtms = TMSUtils.latLonToPixels(lr.getLat(), lr.getLng(), zoom, tilesize);
+    Pixel cttms = TMSUtils.latLonToPixels(ct.getLat(), ct.getLng(), zoom, tilesize);
 
-    TMSUtils.Pixel cnr = TMSUtils.latLonToPixels(bounds.getMinY(), bounds.getMinX(), zoom, tilesize);
+    Pixel cnr = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom, tilesize);
 
     long ulx = ultms.px - cnr.px;
     long uly = ultms.py - cnr.py;
@@ -192,11 +193,11 @@ public class MrsImageTest extends LocalRunnerTest
     LatLng ct = allOnesImage.convertToPixelCenterLatLng(pixelBounds.getCenterX(),
         pixelBounds.getCenterY());
 
-    TMSUtils.Pixel ultms = TMSUtils.latLonToPixels(ul.getLat(), ul.getLng(), zoom, tilesize);
-    TMSUtils.Pixel lrtms = TMSUtils.latLonToPixels(lr.getLat(), lr.getLng(), zoom, tilesize);
-    TMSUtils.Pixel cttms = TMSUtils.latLonToPixels(ct.getLat(), ct.getLng(), zoom, tilesize);
+    Pixel ultms = TMSUtils.latLonToPixels(ul.getLat(), ul.getLng(), zoom, tilesize);
+    Pixel lrtms = TMSUtils.latLonToPixels(lr.getLat(), lr.getLng(), zoom, tilesize);
+    Pixel cttms = TMSUtils.latLonToPixels(ct.getLat(), ct.getLng(), zoom, tilesize);
 
-    TMSUtils.Pixel cnr = TMSUtils.latLonToPixels(bounds.getMinY(), bounds.getMinX(), zoom, tilesize);
+    Pixel cnr = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom, tilesize);
 
     long ulx = ultms.px - cnr.px;
     long uly = ultms.py - cnr.py;

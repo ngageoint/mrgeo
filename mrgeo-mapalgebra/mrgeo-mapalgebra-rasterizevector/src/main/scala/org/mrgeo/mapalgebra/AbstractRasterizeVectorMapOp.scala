@@ -18,22 +18,21 @@ package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
-import com.vividsolutions.jts.geom.Envelope
-import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.geometry.{Geometry, GeometryFactory}
+import org.mrgeo.geometry.GeometryFactory
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.{LatLng, StringUtils, SparkUtils, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.{LatLng, StringUtils, SparkUtils}
 
-import scala.collection.mutable.ListBuffer
 
 abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externalizable
 {
@@ -43,7 +42,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   var tilesize: Int = -1
   var zoom: Int = -1
   var column: Option[String] = None
-  var bounds: Option[TMSUtils.Bounds] = None
+  var bounds: Option[Bounds] = None
 
   override def rdd(): Option[RasterRDD] = {
     rasterRDD
@@ -68,7 +67,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     val hasBounds = in.readBoolean()
     bounds = hasBounds match {
       case true =>
-        Some(new TMSUtils.Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
+        Some(new Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
       case false => None
     }
   }
@@ -108,13 +107,12 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   /**
     * The input RDD contains one tuple for each tile that intersects at least one
     * feature. The first element of the tuple is the tile id, and the second element
-    * is an Iterable containing all of the features that intersect that tile id. This
+    * is an Iterable containing all of the features that intersects that tile id. This
     * method is responsible for "painting" the set of features onto a raster of that
     * tile and returning the tile id and raster as a tuple. The returned RDD is the
     * collection of all the tiles containing features along with the "painted" rasters
     * for each of those tiles.
-    * @param vectorRDD
-    * @return
+    *
     */
   def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)]
 
@@ -188,8 +186,8 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
         3
       // SUM can be used with or without a column name being specified. If used
       // with a column name, it sums the values of that column for all features
-      // that intersect that pixel. Without the column, it sums the number of
-      // features that intersect the pixel.
+      // that intersects that pixel. Without the column, it sums the number of
+      // features that intersects the pixel.
       case VectorPainter.AggregationType.SUM =>
         if (node.getNumChildren == 4 || node.getNumChildren == 8) {
           column = MapOp.decodeString(node.getChild(3))
@@ -226,7 +224,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
             throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
         }
       }
-      bounds = Some(new TMSUtils.Bounds(b(0), b(1), b(2), b(3)))
+      bounds = Some(new Bounds(b(0), b(1), b(2), b(3)))
     }
   }
 
@@ -280,7 +278,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     }
 
     if (bounds != null && bounds.length > 0) {
-      this.bounds = Some(TMSUtils.Bounds.fromCommaString(bounds))
+      this.bounds = Some(Bounds.fromCommaString(bounds))
     }
   }
 

@@ -36,7 +36,7 @@ import org.mrgeo.hdfs.output.image.HdfsMrsPyramidOutputFormatProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.File;
 import java.io.IOException;
@@ -153,7 +153,7 @@ public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetTiledOutputFormatProvider() throws Exception
   {
-    ImageOutputFormatContext context = new ImageOutputFormatContext("foo", new Bounds(), 10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "");
+    ImageOutputFormatContext context = new ImageOutputFormatContext("foo", null, 10, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "");
 
     MrsImageOutputFormatProvider p = provider.getTiledOutputFormatProvider(context);
 

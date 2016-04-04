@@ -17,7 +17,7 @@
 package org.mrgeo.geometry;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.*;
 import java.util.*;
@@ -239,11 +239,16 @@ public Bounds getBounds()
 {
   if (bounds == null)
   {
-    bounds = new Bounds();
-
     for (Point pt: points)
     {
-      bounds.expand(pt.getX(), pt.getY());
+      if (bounds == null)
+      {
+        bounds = new Bounds(pt.getX(), pt.getY(), pt.getX(), pt.getY());
+      }
+      else
+      {
+        bounds = bounds.expand(pt.getX(), pt.getY());
+      }
     }
   }
 

@@ -16,14 +16,11 @@
 
 package org.mrgeo.mapalgebra
 
-import java.io.{ObjectOutput, ObjectInput, Externalizable}
-
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.TMSUtils
-import org.mrgeo.utils.TMSUtils.Bounds
+import org.mrgeo.utils.tms.{Pixel, LatLon, Bounds, TMSUtils}
 
 object CropExactMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -124,23 +121,23 @@ class CropExactMapOp extends CropMapOp {
   }
 
   private def calculateCrop(zoom:Int, tilesize:Int) = {
-    var bottomRightWorldPixel: TMSUtils.Pixel = TMSUtils
+    var bottomRightWorldPixel: Pixel = TMSUtils
       .latLonToPixelsUL(cropBounds.s, cropBounds.e, zoom, tilesize)
 
-    val bottomRightAtPixelBoundary: TMSUtils.LatLon = TMSUtils
+    val bottomRightAtPixelBoundary: LatLon = TMSUtils
       .pixelToLatLonUL(bottomRightWorldPixel.px, bottomRightWorldPixel.py, zoom, tilesize)
 
     if (Math.abs(bottomRightAtPixelBoundary.lat - cropBounds.n) < EPSILON) {
-      bottomRightWorldPixel = new TMSUtils.Pixel(bottomRightWorldPixel.px, bottomRightWorldPixel.py - 1)
+      bottomRightWorldPixel = new Pixel(bottomRightWorldPixel.px, bottomRightWorldPixel.py - 1)
     }
 
     if (Math.abs(bottomRightAtPixelBoundary.lon - cropBounds.e) < EPSILON) {
-      bottomRightWorldPixel = new TMSUtils.Pixel(bottomRightWorldPixel.px - 1, bottomRightWorldPixel.py)
+      bottomRightWorldPixel = new Pixel(bottomRightWorldPixel.px - 1, bottomRightWorldPixel.py)
     }
 
-    val bottomRightPt: TMSUtils.LatLon = TMSUtils
+    val bottomRightPt: LatLon = TMSUtils
       .pixelToLatLonUL(bottomRightWorldPixel.px, bottomRightWorldPixel.py, zoom, tilesize)
-    val b: TMSUtils.Bounds = new TMSUtils.Bounds(cropBounds.w, bottomRightPt.lat, bottomRightPt.lon, cropBounds.n)
+    val b: Bounds = new Bounds(cropBounds.w, bottomRightPt.lat, bottomRightPt.lon, cropBounds.n)
 
     (
       TMSUtils.latLonToTilePixelUL(cropBounds.n, bottomRightPt.lon, bounds.e, bounds.n, zoom, tilesize),

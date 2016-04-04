@@ -34,9 +34,9 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,8 +196,8 @@ private void calculateParams(final Dataset image)
   Bounds imageBounds = GDALUtils.getBounds(image);
 
   log.debug("    image bounds: (lon/lat) " +
-      imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
-      imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
+      imageBounds.w + ", " + imageBounds.s + " to " +
+      imageBounds.e + ", " + imageBounds.n);
 
 
   if (bounds == null)
@@ -206,7 +206,7 @@ private void calculateParams(final Dataset image)
   }
   else
   {
-    bounds.expand(imageBounds);
+    bounds = bounds.expand(imageBounds);
   }
 
   // Calculate some parameters only for the first input file because they should
@@ -224,7 +224,6 @@ private void calculateParams(final Dataset image)
  * parameters that are expected to be the same across all of the input files for
  * this data source - namely bands, tiletype, and nodata.
  *
- * @param image
  */
 private void calculateMinimalParams(final Dataset image)
 {

@@ -19,7 +19,6 @@ package org.mrgeo.mapreduce.splitters;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 
 import java.io.DataInput;
@@ -67,7 +66,7 @@ public class MrsPyramidInputSplit extends InputSplit implements Writable
       {
         Class<?> splitClass = Class.forName(wrappedSplitClassName);
         wrappedInputSplit = (TiledInputSplit)ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
-        ((Writable)wrappedInputSplit).readFields(in);
+        wrappedInputSplit.readFields(in);
       }
       catch (ClassNotFoundException e)
       {
@@ -83,11 +82,11 @@ public class MrsPyramidInputSplit extends InputSplit implements Writable
   {
     // Write a boolean indicating whether the wrapped input split is writable. If
     // it is, then write it after the boolean.
-    if (wrappedInputSplit instanceof Writable)
+    if (wrappedInputSplit != null)
     {
       out.writeBoolean(true);
       out.writeUTF(wrappedInputSplit.getClass().getName());
-      ((Writable)wrappedInputSplit).write(out);
+     wrappedInputSplit.write(out);
     }
     else
     {

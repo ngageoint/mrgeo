@@ -28,7 +28,8 @@ import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.{Bounds, TMSUtils, SparkUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.SparkUtils
 
 object IsNodataMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -71,7 +72,7 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     val zoom = meta.getMaxZoomLevel
 
     val bounds = getOutputBounds(meta)
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bounds), zoom, meta.getTilesize)
+    val tb = TMSUtils.boundsToTile(bounds, zoom, meta.getTilesize)
     val allTiles = RasterMapOp.createEmptyRasterRDD(context, tb, zoom)
     val src = RasterWritable.toRaster(rdd.first()._2)
     // If there are tiles missing from the input that are within the bounds,
