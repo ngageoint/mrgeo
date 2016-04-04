@@ -19,11 +19,9 @@ package org.mrgeo.job.serializers
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.utils.tms.Bounds
+import org.mrgeo.utils.tms.{Pixel, Bounds}
 
-class Serializers {
-
-}
+class Serializers {}
 
 class RasterWritableSerializer extends Serializer[RasterWritable] {
   override def write(kryo: Kryo, output: Output, rw: RasterWritable) = {
@@ -49,6 +47,17 @@ class BoundsSerializer extends Serializer[Bounds] {
   }
 
   override def read(kryo: Kryo, input: Input, `type`: Class[Bounds]): Bounds = {
-    new Bounds(input.readDouble(),input.readDouble(),input.readDouble(),input.readDouble())
+    new Bounds(input.readDouble(), input.readDouble(), input.readDouble(), input.readDouble())
+  }
+}
+
+class PixelSerializer extends Serializer[Pixel] {
+  override def write(kryo: Kryo, output: Output, pixel: Pixel): Unit = {
+    output.writeLong(pixel.px)
+    output.writeLong(pixel.py)
+  }
+
+  override def read(kryo: Kryo, input: Input, `type`: Class[Pixel]): Pixel = {
+    new Pixel(input.readLong(), input.readLong())
   }
 }

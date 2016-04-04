@@ -239,7 +239,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
       }
       else
       {
-        imageBounds.expand(bounds);
+        imageBounds = imageBounds.expand(bounds);
       }
 
       if (sampleRaster == null)

@@ -17,27 +17,30 @@
 package org.mrgeo.utils.tms;
 
 import com.vividsolutions.jts.geom.Envelope;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonCreator;
 
 import java.io.*;
+import java.util.Map;
 
-public class Bounds implements Externalizable
+public class Bounds implements Serializable
 {
+
+
 public static final Bounds WORLD = new Bounds(-180, -90, 180, 90);
 
-public double w;
-public double s;
-public double n;
-public double e;
+final public double w;
+final public double s;
+final public double n;
+final public double e;
 
-private boolean set = false;
-private int individualParamSet = 0;
+//private boolean set = false;
+//private int individualParamSet = 0;
 
 
-public Bounds()
-{
-  clear();
-}
+//public Bounds()
+//{
+//  clear();
+//}
 
 public Bounds(final double w, final double s, final double e, final double n)
 {
@@ -46,7 +49,58 @@ public Bounds(final double w, final double s, final double e, final double n)
   this.e = e;
   this.w = w;
 
-  set = true;
+  //set = true;
+}
+
+
+@JsonCreator
+public Bounds(Map<String, Object> props)
+{
+  double n = Double.NaN;
+  double s = Double.NaN;
+  double e = Double.NaN;
+  double w = Double.NaN;
+
+  if (props.containsKey("w"))
+  {
+    w = Double.parseDouble(props.get("w").toString());
+  }
+  else if (props.containsKey("minX"))
+  {
+    w = Double.parseDouble(props.get("minX").toString());
+  }
+
+  if (props.containsKey("s"))
+  {
+    s = Double.parseDouble(props.get("s").toString());
+  }
+  else if (props.containsKey("minY"))
+  {
+    s = Double.parseDouble(props.get("minY").toString());
+  }
+
+  if (props.containsKey("e"))
+  {
+    e = Double.parseDouble(props.get("e").toString());
+  }
+  else if (props.containsKey("maxX"))
+  {
+    e = Double.parseDouble(props.get("maxX").toString());
+  }
+
+  if (props.containsKey("n"))
+  {
+    n = Double.parseDouble(props.get("n").toString());
+  }
+  else if (props.containsKey("maxY"))
+  {
+    n = Double.parseDouble(props.get("maxY").toString());
+  }
+
+  this.n = n;
+  this.s = s;
+  this.e = e;
+  this.w = w;
 }
 
 @Override
@@ -54,6 +108,8 @@ public Bounds clone()
 {
   return new Bounds(w, s, e, n);
 }
+
+
 
 public Envelope toEnvelope()
 {
@@ -72,131 +128,131 @@ public static Bounds combine(Bounds... bounds)
     }
     else
     {
-      answer.expand(b);
+      answer = answer.expand(b);
     }
   }
   return answer;
 }
 
-public void clear()
-{
-  w = Double.MAX_VALUE;
-  s = Double.MAX_VALUE;
-  e = -Double.MAX_VALUE;
-  n = -Double.MAX_VALUE;
-
-  set = false;
-}
-
-
-// Getters/Setters are _ONLY_ for JSON serialization, they should never be used outside there.  So they are private...
-@SuppressWarnings("unused")
-private double getE()
-{
-  return e;
-}
-
-@SuppressWarnings("unused")
-private double getN()
-{
-  return n;
-}
-
-@SuppressWarnings("unused")
-private double getW()
-{
-  return w;
-}
-
-@SuppressWarnings("unused")
-private double getS()
-{
-  return s;
-}
-
-@SuppressWarnings("unused")
-private void setMaxX(double maxX)
-{
-  individualParamSet |= 1;
-  set = set | individualParamSet == 15;
-
-  this.e = maxX;
-}
-
-@SuppressWarnings("unused")
-private void setMaxY(double maxY)
-{
-  individualParamSet |= 2;
-  set = set | individualParamSet == 15;
-
-  this.n = maxY;
-}
-
-@SuppressWarnings("unused")
-private void setMinX(double minX)
-{
-  individualParamSet |= 4;
-  set = set | individualParamSet == 15;
-
-  this.w = minX;
-}
-
-@SuppressWarnings("unused")
-private void setMinY(double minY)
-{
-  individualParamSet |= 8;
-  set = set | individualParamSet == 15;
-
-  this.s = minY;
-}
-
-@SuppressWarnings("unused")
-private void setE(double e)
-{
-  individualParamSet |= 1;
-  set = set | individualParamSet == 15;
-
-  this.e = e;
-}
-
-@SuppressWarnings("unused")
-private void setN(double n)
-{
-  individualParamSet |= 2;
-  set = set | individualParamSet == 15;
-
-  this.n = n;
-}
-
-@SuppressWarnings("unused")
-private void setW(double w)
-{
-  individualParamSet |= 4;
-  set = set | individualParamSet == 15;
-
-  this.w = w;
-}
-
-@SuppressWarnings("unused")
-private void setS(double s)
-{
-  individualParamSet |= 8;
-  set = set | individualParamSet == 15;
-
-  this.s = s;
-}
+//public void clear()
+//{
+//  w = Double.MAX_VALUE;
+//  s = Double.MAX_VALUE;
+//  e = -Double.MAX_VALUE;
+//  n = -Double.MAX_VALUE;
+//
+//  set = false;
+//}
+//
+//
+//// Getters/Setters are _ONLY_ for JSON serialization, they should never be used outside there.  So they are private...
+//@SuppressWarnings("unused")
+//private double getE()
+//{
+//  return e;
+//}
+//
+//@SuppressWarnings("unused")
+//private double getN()
+//{
+//  return n;
+//}
+//
+//@SuppressWarnings("unused")
+//private double getW()
+//{
+//  return w;
+//}
+//
+//@SuppressWarnings("unused")
+//private double getS()
+//{
+//  return s;
+//}
+//
+//@SuppressWarnings("unused")
+//private void setMaxX(double maxX)
+//{
+//  individualParamSet |= 1;
+//  set = set | individualParamSet == 15;
+//
+//  this.e = maxX;
+//}
+//
+//@SuppressWarnings("unused")
+//private void setMaxY(double maxY)
+//{
+//  individualParamSet |= 2;
+//  set = set | individualParamSet == 15;
+//
+//  this.n = maxY;
+//}
+//
+//@SuppressWarnings("unused")
+//private void setMinX(double minX)
+//{
+//  individualParamSet |= 4;
+//  set = set | individualParamSet == 15;
+//
+//  this.w = minX;
+//}
+//
+//@SuppressWarnings("unused")
+//private void setMinY(double minY)
+//{
+//  individualParamSet |= 8;
+//  set = set | individualParamSet == 15;
+//
+//  this.s = minY;
+//}
+//
+//@SuppressWarnings("unused")
+//private void setE(double e)
+//{
+//  individualParamSet |= 1;
+//  set = set | individualParamSet == 15;
+//
+//  this.e = e;
+//}
+//
+//@SuppressWarnings("unused")
+//private void setN(double n)
+//{
+//  individualParamSet |= 2;
+//  set = set | individualParamSet == 15;
+//
+//  this.n = n;
+//}
+//
+//@SuppressWarnings("unused")
+//private void setW(double w)
+//{
+//  individualParamSet |= 4;
+//  set = set | individualParamSet == 15;
+//
+//  this.w = w;
+//}
+//
+//@SuppressWarnings("unused")
+//private void setS(double s)
+//{
+//  individualParamSet |= 8;
+//  set = set | individualParamSet == 15;
+//
+//  this.s = s;
+//}
 
 public boolean contains(final Bounds b)
 {
   return contains(b, true);
 }
 
-@JsonIgnore
-public boolean isValid()
-{
-  return (set && (w != Double.MAX_VALUE) && (s != Double.MAX_VALUE)
-      && (e != -Double.MAX_VALUE) && (n != -Double.MAX_VALUE));
-}
+//@JsonIgnore
+//public boolean isValid()
+//{
+//  return (set && (w != Double.MAX_VALUE) && (s != Double.MAX_VALUE)
+//      && (e != -Double.MAX_VALUE) && (n != -Double.MAX_VALUE));
+//}
 
 /**
  * Is the bounds fully contained within this bounds. Edges are included iff includeAdjacent is
@@ -253,99 +309,68 @@ public boolean equals(final Object obj)
 
 }
 
-public void expand(final Bounds b)
+public Bounds expand(final Bounds b)
 {
-  if (n < b.n)
+  if (b != null)
   {
-    n = b.n;
+    return expand(b.w, b.s, b.e, b.n);
   }
-  if (s > b.s)
+  else
   {
-    s = b.s;
-  }
-
-  if (w > b.w)
-  {
-    w = b.w;
-  }
-
-  if (e < b.e)
-  {
-    e = b.e;
+    return this;
   }
 }
 
-public void expand(final double x, final double y)
+public Bounds expand(final double x, final double y)
 {
-  if (n < y)
-  {
-    n = y;
-  }
-  if (s > y)
-  {
-    s = y;
-  }
-
-  if (w > x)
-  {
-    w = x;
-  }
-
-  if (e < x)
-  {
-    e = x;
-  }
-
+  return expand(x, y, x, y);
 }
 
-public void
+public Bounds
 expand(final double west, final double south, final double east, final double north)
 {
-  if (n < north)
+  double nn = n;
+  double ns = s;
+  double ne = e;
+  double nw = w;
+
+  if (nn < north)
   {
-    n = north;
+    nn = north;
   }
-  if (s > south)
+  if (ns > south)
   {
-    s = south;
+    ns = south;
   }
 
-  if (w > west)
+  if (nw > west)
   {
-    w = west;
+    nw = west;
   }
 
-  if (e < east)
+  if (ne < east)
   {
-    e = east;
+    ne = east;
   }
+
+  return new Bounds(nw, ns, ne, nn);
 
 }
 
-public void expandBy(final double v)
+public Bounds expandBy(final double v)
 {
-  n += v;
-  s -= v;
-  w -= v;
-  e += v;
+  return expandBy(v, v, v, v);
 }
 
-public void expandBy(final double x, final double y)
+public Bounds expandBy(final double x, final double y)
 {
-  n += y;
-  s -= y;
-
-  w -= x;
-  e += x;
+  return expandBy(x, y, x, y);
 }
 
-public void
+public Bounds
 expandBy(final double west, final double south, final double east, final double north)
 {
-  n += north;
-  s -= south;
-  w -= west;
-  e += east;
+  return new Bounds(w - west, s - south, e + east, n + north);
 }
 
 @Override
@@ -457,33 +482,6 @@ public double width()
 public double height()
 {
   return n - s;
-}
-
-
-@Override
-public void writeExternal(ObjectOutput out) throws IOException
-{
-  out.writeBoolean(set);
-  if (set)
-  {
-    out.writeDouble(w);
-    out.writeDouble(s);
-    out.writeDouble(e);
-    out.writeDouble(n);
-  }
-}
-
-@Override
-public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
-{
-  set = in.readBoolean();
-  if (set)
-  {
-    w = in.readDouble();
-    s = in.readDouble();
-    e = in.readDouble();
-    n = in.readDouble();
-  }
 }
 
 }

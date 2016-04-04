@@ -37,7 +37,10 @@ public class ImageOutputFormatContext
   public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
   {
     this.output = output;
-    this.bounds = bounds.clone();
+    if (bounds != null)
+    {
+      this.bounds = bounds.clone();
+    }
     this.zoomlevel = zoomlevel;
     this.tilesize = tilesize;
     this.protectionLevel = protectionLevel;
@@ -47,7 +50,10 @@ public class ImageOutputFormatContext
                                   String protectionLevel, int tiletype, int bands)
   {
     this.output = output;
-    this.bounds = bounds.clone();
+    if (bounds != null)
+    {
+      this.bounds = bounds.clone();
+    }
     this.bands = bands;
     this.zoomlevel = zoomlevel;
     this.tilesize =  tilesize;

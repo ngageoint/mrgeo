@@ -16,8 +16,10 @@
 
 package org.mrgeo.utils.tms;
 
+import java.io.*;
+
 // Pixel 0, 0 is the lower-left corner of the world grid!
-public class Pixel
+public class Pixel implements Serializable
 {
   final public long px;
   final public long py;
@@ -53,4 +55,5 @@ public class Pixel
   {
     return "Pixel [px=" + px + ", py=" + py + "]";
   }
+
 }

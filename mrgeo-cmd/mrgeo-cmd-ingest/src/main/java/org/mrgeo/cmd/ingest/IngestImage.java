@@ -206,7 +206,7 @@ private void calculateParams(final Dataset image)
   }
   else
   {
-    bounds.expand(imageBounds);
+    bounds = bounds.expand(imageBounds);
   }
 
   // Calculate some parameters only for the first input file because they should

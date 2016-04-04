@@ -302,14 +302,19 @@ public class GeometryCollectionImpl extends GeometryImpl implements WritableGeom
   {
     if (bounds == null)
     {
-      bounds = new Bounds();
-
       for (Geometry geometry: geometries)
       {
         Bounds b = geometry.getBounds();
         if (b != null)
         {
-          bounds.expand(b);
+          if (bounds == null)
+          {
+            bounds = b;
+          }
+          else
+          {
+            bounds = bounds.expand(b);
+          }
         }
       }
     }

@@ -77,6 +77,7 @@ object MrGeoJob extends Logging {
           all ++= classes.filter(!_.getName.isEmpty).map(_.getName)
 
           conf.set("spark.kryo.classesToRegister", all.mkString(","))
+          conf.set("spark.kryo.registrator", classOf[KryoRegistrar].getName)
           conf.set("spark.serializer", classOf[KryoSerializer].getName)
         }
         catch {

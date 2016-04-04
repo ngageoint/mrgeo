@@ -365,7 +365,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
 
 
   String crs;
-  Bounds bounds = new Bounds();
+  Bounds bounds = null;
   try
   {
     if (version.isLess("1.1.0"))
@@ -570,7 +570,7 @@ private String getBoundsParam(MultivaluedMap<String, String> allParams, String p
     }
   }
 
-  bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+  bounds = bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
 
   return crs;
 }

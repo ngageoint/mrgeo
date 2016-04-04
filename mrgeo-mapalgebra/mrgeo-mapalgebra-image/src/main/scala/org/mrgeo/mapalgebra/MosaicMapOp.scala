@@ -86,7 +86,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
     var tilesize: Int = -1
     var tiletype: Int = -1
     var numbands: Int = -1
-    val bounds: Bounds = new Bounds()
+    var bounds: Bounds = null
 
     // loop through the inputs and load the pyramid RDDs and metadata
     for (input <- inputs) {
@@ -132,7 +132,12 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
         }
 
         // expand the total bounds
-        bounds.expand(meta.getBounds)
+        if (bounds == null) {
+          bounds = meta.getBounds
+        }
+        else {
+          bounds = bounds.expand(meta.getBounds)
+        }
 
         i += 1
 

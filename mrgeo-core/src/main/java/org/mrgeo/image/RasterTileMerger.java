@@ -136,7 +136,7 @@ public static WritableRaster mergeTiles(final MrsImage image, final Tile[] tiles
       }
       else
       {
-        imageBounds.expand(tb);
+        imageBounds = imageBounds.expand(tb);
       }
 
     }

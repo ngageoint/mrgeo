@@ -512,10 +512,7 @@ class IngestImage extends MrGeoJob with Externalizable {
     output = job.getSetting(IngestImage.Output)
 
     val boundstr = job.getSetting(IngestImage.Bounds, null)
-    if (boundstr == null) {
-      bounds = new Bounds()
-    }
-    else {
+    if (boundstr != null) {
       bounds = Bounds.fromCommaString(boundstr)
     }
 

@@ -14,7 +14,7 @@
  *
  */
 
-package org.mrgeo.utils;
+package org.mrgeo.utils.tms;
 
 
 import org.junit.After;
@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.*;
 
 @SuppressWarnings("static-method")

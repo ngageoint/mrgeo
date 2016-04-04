@@ -227,7 +227,7 @@ public class MapReduceUtils
           }
           else if (bnds != null)
           {
-            finalBounds.expand(bnds);
+            finalBounds = finalBounds.expand(bnds);
           }
         }
       }
