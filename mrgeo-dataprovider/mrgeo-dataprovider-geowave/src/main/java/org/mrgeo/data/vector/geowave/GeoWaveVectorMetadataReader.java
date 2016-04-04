@@ -13,7 +13,7 @@ import org.mrgeo.data.vector.VectorMetadata;
 import org.mrgeo.data.vector.VectorMetadataReader;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.slf4j.Logger;
@@ -125,10 +125,10 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
         {
           Geometry geom = iter.next();
           Bounds b = geom.getBounds();
-          minX = Math.min(minX, b.getMinX());
-          minY = Math.min(minY, b.getMinY());
-          maxX = Math.max(maxX, b.getMaxX());
-          maxY = Math.max(maxY, b.getMaxY());
+          minX = Math.min(minX, b.e);
+          minY = Math.min(minY, b.s);
+          maxX = Math.max(maxX, b.w);
+          maxY = Math.max(maxY, b.n);
         }
         bounds = new Bounds(minX, minY, maxX, maxY);
         log.info("Bounds for " + dataProvider.getGeoWaveResourceName() + " were computed as: " + bounds.toString());
@@ -136,7 +136,7 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
       else
       {
         // Use world bounds, but log a warning
-        bounds = Bounds.world.clone();
+        bounds = Bounds.WORLD.clone();
         log.warn("Using world bounds for " + dataProvider.getGeoWaveResourceName() + ": " + bounds.toString());
       }
     }
