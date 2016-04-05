@@ -14,7 +14,7 @@
  *
  */
 
-package org.mrgeo.mapalgebra.raster
+package org.mrgeo.mapalgebra
 
 import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
@@ -26,6 +26,7 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils.SparkUtils
 import org.mrgeo.utils.tms.TMSUtils

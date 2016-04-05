@@ -20,7 +20,7 @@ import java.awt.image.{WritableRaster, Raster}
 
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.mapalgebra.raster.{RawFocalMapOp, RasterMapOp}
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 
 object TpiMapOp extends MapOpRegistrar {
   def create(raster: RasterMapOp): MapOp =

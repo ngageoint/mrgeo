@@ -7,7 +7,7 @@ import org.apache.spark.SparkConf
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.mapalgebra.raster.{RasterMapOp, RawFocalMapOp}
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.LatLng
 import org.mrgeo.utils.tms.TMSUtils
 
