@@ -125,9 +125,9 @@ public class GeoWaveVectorMetadataReader implements VectorMetadataReader
         {
           Geometry geom = iter.next();
           Bounds b = geom.getBounds();
-          minX = Math.min(minX, b.e);
+          minX = Math.min(minX, b.w);
           minY = Math.min(minY, b.s);
-          maxX = Math.max(maxX, b.w);
+          maxX = Math.max(maxX, b.e);
           maxY = Math.max(maxY, b.n);
         }
         bounds = new Bounds(minX, minY, maxX, maxY);
