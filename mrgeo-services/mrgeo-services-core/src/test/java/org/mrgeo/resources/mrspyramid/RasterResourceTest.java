@@ -101,69 +101,69 @@ public void setUp() throws Exception
   Mockito.reset(service, request);
 }
 
-@Test
-@Category(UnitTest.class)
-public void testCreateJob() throws Exception
-{
-  JobManager jobManager = mock(JobManager.class);
-  when(jobManager.submitJob(anyString(), (MapAlgebraJob) any())).thenReturn(5L);
-  when(jobManager.getJob(Mockito.anyLong())).thenAnswer(new Answer() {
-    public Object answer(InvocationOnMock invocation) {
-      JobDetails details = mock(JobDetails.class);
-      when(details.getJobId()).thenReturn(5L);
-      return details;
-    }
-  });
+//@Test
+//@Category(UnitTest.class)
+//public void testCreateJob() throws Exception
+//{
+//  JobManager jobManager = mock(JobManager.class);
+//  when(jobManager.submitJob(anyString(), (MapAlgebraJob) any())).thenReturn(5L);
+//  when(jobManager.getJob(Mockito.anyLong())).thenAnswer(new Answer() {
+//    public Object answer(InvocationOnMock invocation) {
+//      JobDetails details = mock(JobDetails.class);
+//      when(details.getJobId()).thenReturn(5L);
+//      return details;
+//    }
+//  });
+//
+//  when(service.getJobManager()).thenReturn(jobManager);
+////    when(service.getOutputImageStr(anyString(), anyString())).thenReturn("/foo/bar");
+//  when(request.getScheme()).thenReturn("http");
+//  when(request.getHeader(anyString())).thenReturn(null);
+//
+//  final WebResource webResource = resource();
+//  final String ma = ("a = [some points]; RasterizeVector(a, \"LAST\", 0.3, \"c\") ");
+//
+//  final JobInfoResponse res = webResource.path("raster/testCreateJob/mapalgebra")
+//      .queryParam("basePath", "/foo/bar").type(MediaType.TEXT_PLAIN)
+//      .put(JobInfoResponse.class, ma);
+//  Assert.assertTrue(res.getJobId() != 0);
+//  Assert.assertTrue(res.getStatusUrl().startsWith("http:"));
+//  final long jobId = res.getJobId();
+//  assertEquals(jobId, 5L);
+//}
 
-  when(service.getJobManager()).thenReturn(jobManager);
-//    when(service.getOutputImageStr(anyString(), anyString())).thenReturn("/foo/bar");
-  when(request.getScheme()).thenReturn("http");
-  when(request.getHeader(anyString())).thenReturn(null);
-
-  final WebResource webResource = resource();
-  final String ma = ("a = [some points]; RasterizeVector(a, \"LAST\", 0.3, \"c\") ");
-
-  final JobInfoResponse res = webResource.path("raster/testCreateJob/mapalgebra")
-      .queryParam("basePath", "/foo/bar").type(MediaType.TEXT_PLAIN)
-      .put(JobInfoResponse.class, ma);
-  Assert.assertTrue(res.getJobId() != 0);
-  Assert.assertTrue(res.getStatusUrl().startsWith("http:"));
-  final long jobId = res.getJobId();
-  assertEquals(jobId, 5L);
-}
-
-@Test
-@Category(UnitTest.class)
-public void testCreateJobHttpsStatus() throws Exception
-{
-  JobManager jobManager = mock(JobManager.class);
-  when(jobManager.submitJob(anyString(), (MapAlgebraJob) any())).thenReturn(5L);
-  when(jobManager.getJob(Mockito.anyLong())).thenAnswer(new Answer() {
-    public Object answer(InvocationOnMock invocation) {
-      JobDetails details = mock(JobDetails.class);
-      when(details.getJobId()).thenReturn(5L);
-      return details;
-    }
-  });
-
-  when(service.getJobManager()).thenReturn(jobManager);
-//    when(service.getOutputImageStr(anyString(), anyString())).thenReturn("/foo/bar");
-  when(request.getScheme()).thenReturn("http");
-  when(request.getHeader(anyString())).thenReturn("on");
-
-  final WebResource webResource = resource();
-  final String ma = "a = [some points]; RasterizeVector(a, \"LAST\", 0.3, \"c\") ";
-
-  final JobInfoResponse res = webResource.path("raster/testCreateJob/mapalgebra")
-      .queryParam("basePath", "/foo/bar").type(MediaType.TEXT_PLAIN)
-      .header("X-Forwarded-SSL", "on").put(JobInfoResponse.class, ma);
-  Assert.assertTrue(res.getJobId() != 0);
-  Assert.assertTrue("Status URL does not start with 'https:', was '" + res.getStatusUrl() + "'",
-      res.getStatusUrl().startsWith("https:"));
-
-  // we only care about the status URL being changed
-  // so no further assertions
-}
+//@Test
+//@Category(UnitTest.class)
+//public void testCreateJobHttpsStatus() throws Exception
+//{
+//  JobManager jobManager = mock(JobManager.class);
+//  when(jobManager.submitJob(anyString(), (MapAlgebraJob) any())).thenReturn(5L);
+//  when(jobManager.getJob(Mockito.anyLong())).thenAnswer(new Answer() {
+//    public Object answer(InvocationOnMock invocation) {
+//      JobDetails details = mock(JobDetails.class);
+//      when(details.getJobId()).thenReturn(5L);
+//      return details;
+//    }
+//  });
+//
+//  when(service.getJobManager()).thenReturn(jobManager);
+////    when(service.getOutputImageStr(anyString(), anyString())).thenReturn("/foo/bar");
+//  when(request.getScheme()).thenReturn("http");
+//  when(request.getHeader(anyString())).thenReturn("on");
+//
+//  final WebResource webResource = resource();
+//  final String ma = "a = [some points]; RasterizeVector(a, \"LAST\", 0.3, \"c\") ";
+//
+//  final JobInfoResponse res = webResource.path("raster/testCreateJob/mapalgebra")
+//      .queryParam("basePath", "/foo/bar").type(MediaType.TEXT_PLAIN)
+//      .header("X-Forwarded-SSL", "on").put(JobInfoResponse.class, ma);
+//  Assert.assertTrue(res.getJobId() != 0);
+//  Assert.assertTrue("Status URL does not start with 'https:', was '" + res.getStatusUrl() + "'",
+//      res.getStatusUrl().startsWith("https:"));
+//
+//  // we only care about the status URL being changed
+//  // so no further assertions
+//}
 
 String returnXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
     "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" +

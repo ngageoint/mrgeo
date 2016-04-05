@@ -18,13 +18,15 @@ package org.mrgeo.mapreduce.job;
 
 public class JobTestManager extends JobManager
 {
-  protected JobTestManager(JobCollection j) { super(j); jobCollection = j;}
+  protected JobTestManager() {
+    super();
+  }
+
   synchronized public static JobManager getInstance()
   {
     if (theInstance == null || ! (theInstance instanceof JobTestManager))
     {
-      theInstance = 
-          new JobTestManager(new JobsListImpl());
+      theInstance = new JobTestManager();
     }
     return theInstance;
   }

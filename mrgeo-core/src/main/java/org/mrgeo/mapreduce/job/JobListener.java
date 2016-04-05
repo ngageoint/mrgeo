@@ -55,44 +55,44 @@ public class JobListener
   }
   
   public void addJob(Job job) throws JobCancelledException {
-    if (isCancelled()) {
-      throw new JobCancelledException("Job cancelled, no new hadoop jobs can be added.");
-    }
-    synchronized (jobsListLock)
-    {
-      jobsList.add(job);      
-    }
-    try {
-      JobManager.getInstance().addHadoopJob(_userJobId, job);      
-    }
-    catch (JobNotFoundException j) {
-      //log it and move on
-      _log.warn("Unable to find job " + _userJobId + " " + j.getMessage());
-    }
+//    if (isCancelled()) {
+//      throw new JobCancelledException("Job cancelled, no new hadoop jobs can be added.");
+//    }
+//    synchronized (jobsListLock)
+//    {
+//      jobsList.add(job);
+//    }
+//    try {
+//      JobManager.getInstance().addHadoopJob(_userJobId, job);
+//    }
+//    catch (JobNotFoundException j) {
+//      //log it and move on
+//      _log.warn("Unable to find job " + _userJobId + " " + j.getMessage());
+//    }
   }
   
   public boolean cancelAll() throws JobCancelFailedException {
     boolean success = true;
-    setCancelled();
-    synchronized (jobsListLock)
-    {
-      for (Job job : jobsList) {
-        _log.info("User requested cancellation - killing job " + job.getJobName());
-        //this is a hadoop job, so kill it.
-        try {
-          job.killJob();         
-        }
-        catch (IOException e) {
-          //log it, make a note of the fact that the job cancel failed 
-          //so you can propagate the exception back
-          _log.error("Kill job failed for " + job.getJobID());
-          success = false;          
-        }
-      }
-      if (!success) {
-        throw new JobCancelFailedException("Cancel failed for some of the hadoop jobs, see log for details.");
-      }
-    }
+//    setCancelled();
+//    synchronized (jobsListLock)
+//    {
+//      for (Job job : jobsList) {
+//        _log.info("User requested cancellation - killing job " + job.getJobName());
+//        //this is a hadoop job, so kill it.
+//        try {
+//          job.killJob();
+//        }
+//        catch (IOException e) {
+//          //log it, make a note of the fact that the job cancel failed
+//          //so you can propagate the exception back
+//          _log.error("Kill job failed for " + job.getJobID());
+//          success = false;
+//        }
+//      }
+//      if (!success) {
+//        throw new JobCancelFailedException("Cancel failed for some of the hadoop jobs, see log for details.");
+//      }
+//    }
     return success;      
     }
 }

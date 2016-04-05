@@ -28,129 +28,34 @@ import java.util.concurrent.Future;
 
 public class JobManager
 {
-  //class handles Job related operations, CRUD, get all jobs. It manages the underlying Jobs collection.
-  //The user of this class does not need to be concerned about the details of the underlying persistence mechanism
-  //of jobs.
   private static final Logger _log = LoggerFactory.getLogger(JobManager.class);
   protected static JobManager theInstance;
-  protected JobManager(JobCollection j) { jobCollection = j;}
-  JobCollection jobCollection = null;
+
+  protected JobManager() {
+  }
+
   synchronized public static JobManager getInstance()
   {
     if (theInstance == null)
     {
-      //for now we will use a jobcollection that is a memory map.
-      theInstance = new JobManager(new JobsListImpl());
+      theInstance = new JobManager();
     }
     return theInstance;
   }
-  private Map<Long, Future<RunnableJob>> runningJobs = new HashMap<Long, Future<RunnableJob>>();
 
   private ExecutorService threadPool = Executors.newCachedThreadPool();
 
   public long submitJob(String name, RunnableJob job) {
-    long jobId = createJob(name, null, null);
-    JobProgress p = new JobProgress(jobId);
-    JobListener jl = new JobListener(jobId);
-    job.setProgress(p);
-    job.setJobListener(jl);
-    if (jobId != -1) {
-      Future<RunnableJob> f = (Future<RunnableJob>) threadPool.submit(job);
-      synchronized (runningJobs)
-      {
-        runningJobs.put(jobId, f);               
-      }
-    }
-    else {
-      _log.error("Submit failed for job " + name );
-    }
-    return jobId;
-  }
-  
-  public long createJob(String name, String instructions, String type) {
-    return jobCollection.addJob(name, instructions, type); 
-  }
-  
-  public void updateJobProgress(long jobId, float progress) throws JobNotFoundException {
-    jobCollection.updateJobProgress(jobId, progress);
-  }
-  public void updateJobFailed(long jobId, String result) throws JobNotFoundException {
-    jobCollection.updateJobFailed(jobId, result);
-  }
-  public void updateJobCancelled(long jobId) throws JobNotFoundException {
-    jobCollection.updateJobCancelled(jobId);
-  }
-
-  public void updateJobSuccess(long jobId, String result, String kml) throws JobNotFoundException {
-    jobCollection.updateJobSuccess(jobId, result, kml);
-  }
-  
-  public void setJobStarting(long jobId) throws JobNotFoundException {
-    jobCollection.setJobStarting(jobId);
-  }
-
-  public void deleteJob(long jobId) throws JobNotFoundException {
-    jobCollection.deleteJob(jobId);
-  }
-  
-  public JobDetails getJob(long jobId) throws JobNotFoundException {
-    return jobCollection.getJob(jobId);
-  }
-
-//  public JobDetails[] getAllJobs() {
-//    return jobCollection.getAllJobs();
-//  }
-  public int getJobCount() {
-    return jobCollection.getJobCount();
-  }  
-
-  public JobDetails[] getJobs(int pageSize, int startNdx) {
-    return jobCollection.getJobs(pageSize, startNdx);
-  }
-  public float getJobProgress(long jobId) throws JobNotFoundException {
-    return jobCollection.getJobProgress(jobId);
-  }
-  public boolean isJobFailed(long jobId) throws JobNotFoundException {
-    return jobCollection.isJobFailed(jobId);
-  }
-  public String getJobResult(long jobId) throws JobNotFoundException {
-    return jobCollection.getJobResult(jobId);
-  }
-  public void cancelJob(long jobId) {
-    synchronized (runningJobs)
-    {
-      Future<RunnableJob> f = runningJobs.get(jobId);
-      _log.info("Cancelling job for jobId " + jobId);
-      f.cancel(true);
-    }
-  }
-  public void addHadoopJob(long jobId, org.apache.hadoop.mapreduce.Job job) throws JobNotFoundException {
-    jobCollection.addHadoopJob(jobId, job);
-  }
-  
-  public void updateTaskProgress(long jobId, long taskId, float progress) throws JobNotFoundException {
-    jobCollection.updateTaskProgress(jobId, taskId, progress);
-  }
-  public void updateTaskFailed(long jobId, long taskId, String result) throws JobNotFoundException {
-    jobCollection.updateTaskFailed(jobId, taskId, result);
-  }
-  public void updateTaskCancelled(long jobId, long taskId) throws JobNotFoundException {
-    jobCollection.updateTaskCancelled(jobId, taskId);
-  }
-
-  public void updateTaskSuccess(long jobId, long taskId, String result, String kml) throws JobNotFoundException {
-    jobCollection.updateTaskSuccess(jobId, taskId);
-  }
-  public void updateTaskNotExecuted(long jobId, long taskId) throws JobNotFoundException {
-    jobCollection.updateTaskNotExecuted(jobId, taskId);
-  }
-  public void setTaskStarting(long jobId, long taskId) throws JobNotFoundException {
-    jobCollection.setTaskStarting(jobId, taskId);
-  }  
-  public float getTaskProgress(long jobId, long taskID) throws JobNotFoundException {
-    return jobCollection.getTaskProgress(jobId, taskID);
-  }
-  public boolean isTaskFailed(long jobId, long taskId) throws JobNotFoundException {
-    return jobCollection.isTaskFailed(jobId, taskId);
+    // For now, we aren't going to worry about monitoring job status. We can add that
+    // later as needed. To do this, we would need the applicationId which can be gotten
+    // from SparkListener.onApplicationStart. We would actually need the applicationId
+    // for both the map algebra job and the build pyramid job that follows it. However,
+    // we can't configure a SparkListener directly from here because the SparkContext is
+    // created on the driver side (which runs on a worker node). Instead, we would have
+    // to define a REST endpoint like ".../job/register/<jobId>" and pass that URI to
+    // the remote side to call back from the MrGeoListener it sets up (or something
+    // similar to that).
+    threadPool.submit(job);
+    return -1L;
   }
 }

@@ -38,95 +38,95 @@ public class JobProgress implements Progress
   @Override
   public void complete(String result, String kml)
   {
-    try {
-      JobManager.getInstance().updateJobSuccess(_jobId, result, kml);
-    }
-    catch (JobNotFoundException e) {
-      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());      
-    }
+//    try {
+//      JobManager.getInstance().updateJobSuccess(_jobId, result, kml);
+//    }
+//    catch (JobNotFoundException e) {
+//      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());
+//    }
   }
 
   @Override
   public void failed(String result)
   {
-    try
-    {
-      JobManager.getInstance().updateJobFailed(_jobId, result);
-    }
-    catch (JobNotFoundException e) {
-      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());      
-    }
+//    try
+//    {
+//      JobManager.getInstance().updateJobFailed(_jobId, result);
+//    }
+//    catch (JobNotFoundException e) {
+//      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());
+//    }
   }
 
   @Override
   public float get()
   {
     float progress = 0.0f;
-    try {
-      progress = JobManager.getInstance().getJobProgress(_jobId);      
-    }
-    catch (JobNotFoundException e) {
-      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());      
-    }
+//    try {
+//      progress = JobManager.getInstance().getJobProgress(_jobId);
+//    }
+//    catch (JobNotFoundException e) {
+//      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());
+//    }
     return progress;
   }
 
   @Override
   public String getResult()
   {
-    try {
-      String result = JobManager.getInstance().getJobResult(_jobId); 
-      return result;
-    }
-    catch (JobNotFoundException e) {
-      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());      
-    }
+//    try {
+//      String result = JobManager.getInstance().getJobResult(_jobId);
+//      return result;
+//    }
+//    catch (JobNotFoundException e) {
+//      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());
+//    }
     return null;
   }
 
   @Override
   public boolean isFailed()
   {
-    try {
-      boolean failed = JobManager.getInstance().isJobFailed(_jobId);
-      return failed;
-    }
-    catch (JobNotFoundException e) {
-      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());      
-    }
+//    try {
+//      boolean failed = JobManager.getInstance().isJobFailed(_jobId);
+//      return failed;
+//    }
+//    catch (JobNotFoundException e) {
+//      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());
+//    }
     return false;
   }
 
   @Override
   public void set(float progress)
   {
-    try {
-      JobManager.getInstance().updateJobProgress(_jobId, progress);      
-    }
-    catch (JobNotFoundException e) {
-      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());      
-    }
+//    try {
+//      JobManager.getInstance().updateJobProgress(_jobId, progress);
+//    }
+//    catch (JobNotFoundException e) {
+//      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());
+//    }
   }
 
   @Override
   public void starting()
   {
-    try {
-      JobManager.getInstance().setJobStarting(_jobId);      
-    }
-    catch (JobNotFoundException e) {
-      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());      
-    }
+//    try {
+//      JobManager.getInstance().setJobStarting(_jobId);
+//    }
+//    catch (JobNotFoundException e) {
+//      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());
+//    }
   }
   
   @Override
   public void cancelled()
   {
-    try {
-      JobManager.getInstance().updateJobCancelled(_jobId);      
-    }
-    catch (JobNotFoundException e) {
-      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());      
-    }
+//    try {
+//      JobManager.getInstance().updateJobCancelled(_jobId);
+//    }
+//    catch (JobNotFoundException e) {
+//      _log.error("Error occurred while updating status for job " + _jobId + " " + e.getMessage());
+//    }
   }
 }
