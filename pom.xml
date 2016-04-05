@@ -127,12 +127,15 @@
     <maven-surefire.version>2.18.1</maven-surefire.version>
     <maven-war.version>2.6</maven-war.version>
     <scalatest.plugin.version>1.0</scalatest.plugin.version>
+
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
     <!-- repositories -->
     <repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/release</repository.url>
     <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
+
   </properties>
   <repositories>
     <repository>
@@ -266,12 +269,11 @@
               <arg>-Xmax-classfile-name</arg>
               <arg>143</arg>
               <arg>-optimize</arg>
+              <!--<arg>-source ${java.version}</arg>-->
+              <!--<arg>-target ${java.version}</arg>-->
+              <!--<arg>-XDignore.symbol.file=true</arg>-->
             </args>
-            <javacArgs>
-              <javacArg>-source ${java.version}</javacArg>
-              <javacArg>-target ${java.version}</javacArg>
-              <javacArg>-XDignore.symbol.file=true</javacArg>
-            </javacArgs>
+            
             <sourceDir>${project.basedir}/src/main/scala</sourceDir>
             <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
             <outputDir>${project.build.directory}/classes</outputDir>
@@ -519,7 +521,7 @@
                 <goal>test-jar</goal>
               </goals>
               <configuration>
-                <testClassesDir>${project.build.directory}/test-classes</testClassesDir>
+                <testClassesDirectory>${project.build.directory}/test-classes</testClassesDirectory>
               </configuration>
             </execution>
           </executions>
@@ -599,7 +601,7 @@
             </execution>
             <execution>
               <id>generate-dependencies</id>
-              <phase />
+              <!--<phase />-->
               <goals>
                 <goal>list-dependencies</goal>
               </goals>
@@ -648,11 +650,9 @@
                   }
 
                   if (project.version.endsWith("-SNAPSHOT")) {
-                  project.properties.setProperty("deploy.repository", project.properties.getProperty("snapshot.repository", ""));
                   project.properties.setProperty("deploy.repository.url", project.properties.getProperty("snapshot.repository.url", ""));
                   }
                   else {
-                  project.properties.setProperty("deploy.repository", project.properties.getProperty("repository", ""));
                   project.properties.setProperty("deploy.repository.url", project.properties.getProperty("repository.url", ""));
                   }
                 </source>
@@ -1767,6 +1767,9 @@
       <id>intellij</id>
       <properties>
         <hadoop.scope>compile</hadoop.scope>
+        <alternate.deploy>false</alternate.deploy>
+        <deploy.repository.url>unknown</deploy.repository.url>
+        <skipLicenses>true</skipLicenses>
       </properties>
     </profile>
     <!--
