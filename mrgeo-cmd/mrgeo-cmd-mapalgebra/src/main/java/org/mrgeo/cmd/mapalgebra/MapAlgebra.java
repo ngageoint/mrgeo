@@ -30,8 +30,6 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.mapreduce.job.JobCancelledException;
-import org.mrgeo.mapreduce.job.JobFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

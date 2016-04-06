@@ -14,16 +14,20 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
-public class JobNotFoundException extends Exception
+public class JobCancelledException extends Exception
 {
-  private static final long serialVersionUID = -31067678342230393L;
+
+  /**
+   * 
+   */
+  private static final long serialVersionUID = -28067678342230393L;
 
   /**
    * @param string
    */
-  public JobNotFoundException(String string)
+  public JobCancelledException(String string)
   {
     super(string);
   }

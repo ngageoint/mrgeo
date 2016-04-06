@@ -14,26 +14,30 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
-/**
- * @author jason.surratt
- * 
- */
-public class JobFailedException extends Exception
+public class JobResults
 {
+  private boolean started;
+  private boolean finished;
+  private boolean failed;
+  private String failureMessage;
 
-  /**
-   * 
-   */
-  private static final long serialVersionUID = 1L;
-
-  /**
-   * @param string
-   */
-  public JobFailedException(String string)
+  public void starting()
   {
-    super(string);
+    this.started = true;
   }
 
+  public void succeeded()
+  {
+    finished = true;
+    failed = false;
+  }
+
+  public void failed(String failureMessage)
+  {
+    finished = true;
+    failed = true;
+    this.failureMessage = failureMessage;
+  }
 }

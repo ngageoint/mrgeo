@@ -17,8 +17,8 @@
 package org.mrgeo.resources.job;
 
 import com.sun.jersey.api.NotFoundException;
-import org.mrgeo.mapreduce.job.JobDetails;
-import org.mrgeo.mapreduce.job.JobManager;
+import org.mrgeo.job.JobDetails;
+import org.mrgeo.job.JobManager;
 import org.mrgeo.services.utils.HttpUtil;
 
 import javax.servlet.http.HttpServletRequest;

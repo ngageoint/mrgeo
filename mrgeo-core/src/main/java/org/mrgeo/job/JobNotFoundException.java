@@ -14,30 +14,18 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
-public class JobResults
+public class JobNotFoundException extends Exception
 {
-  private boolean started;
-  private boolean finished;
-  private boolean failed;
-  private String failureMessage;
+  private static final long serialVersionUID = -31067678342230393L;
 
-  public void starting()
+  /**
+   * @param string
+   */
+  public JobNotFoundException(String string)
   {
-    this.started = true;
+    super(string);
   }
 
-  public void succeeded()
-  {
-    finished = true;
-    failed = false;
-  }
-
-  public void failed(String failureMessage)
-  {
-    finished = true;
-    failed = true;
-    this.failureMessage = failureMessage;
-  }
 }

@@ -14,7 +14,7 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
 import org.apache.hadoop.mapreduce.Job;
 

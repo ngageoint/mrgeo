@@ -14,25 +14,26 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
-public class JobTestManager extends JobManager
+/**
+ * @author jason.surratt
+ * 
+ */
+public class JobFailedException extends Exception
 {
-  protected JobTestManager() {
-    super();
+
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
+
+  /**
+   * @param string
+   */
+  public JobFailedException(String string)
+  {
+    super(string);
   }
 
-  synchronized public static JobManager getInstance()
-  {
-    if (theInstance == null || ! (theInstance instanceof JobTestManager))
-    {
-      theInstance = new JobTestManager();
-    }
-    return theInstance;
-  }
-  
-  synchronized public static void reset()
-  {
-    theInstance = null;
-  }
 }

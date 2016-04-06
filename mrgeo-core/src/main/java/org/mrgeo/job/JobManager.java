@@ -14,7 +14,7 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

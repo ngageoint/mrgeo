@@ -14,7 +14,9 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
+
+import org.mrgeo.job.JobResults;
 
 public interface RunnableJob extends Runnable
 {

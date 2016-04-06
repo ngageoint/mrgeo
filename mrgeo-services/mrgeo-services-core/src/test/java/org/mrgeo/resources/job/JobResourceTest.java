@@ -24,7 +24,7 @@ import com.sun.jersey.test.framework.spi.container.TestContainerException;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
 import org.mockito.Mockito;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
-import org.mrgeo.mapreduce.job.JobTestManager;
+import org.mrgeo.job.JobTestManager;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;

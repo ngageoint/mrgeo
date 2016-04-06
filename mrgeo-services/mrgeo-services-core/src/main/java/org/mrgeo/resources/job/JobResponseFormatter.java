@@ -17,7 +17,7 @@
 package org.mrgeo.resources.job;
 
 import org.apache.hadoop.mapreduce.Job;
-import org.mrgeo.mapreduce.job.JobDetails;
+import org.mrgeo.job.JobDetails;
 
 import java.util.*;
 
