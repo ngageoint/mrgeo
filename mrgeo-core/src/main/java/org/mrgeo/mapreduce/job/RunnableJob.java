@@ -21,5 +21,4 @@ import org.mrgeo.progress.Progress;
 public interface RunnableJob extends Runnable
 {
   public void setProgress(Progress p);
-  public void setJobListener(JobListener jobListener);
 }

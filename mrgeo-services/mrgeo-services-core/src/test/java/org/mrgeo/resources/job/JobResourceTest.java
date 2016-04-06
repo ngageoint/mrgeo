@@ -16,23 +16,14 @@
 
 package org.mrgeo.resources.job;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
 import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import com.sun.jersey.test.framework.spi.container.TestContainerException;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
-import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapreduce.job.JobDetails;
-import org.mrgeo.mapreduce.job.JobManager;
-import org.mrgeo.mapreduce.job.JobNotFoundException;
 import org.mrgeo.mapreduce.job.JobTestManager;
 
 import javax.servlet.http.HttpServletRequest;
@@ -73,7 +64,6 @@ public class JobResourceTest extends JerseyTest
 //    long jobid4 = JobManager.getInstance().createJob("job 4 no type 50 failed", "instructions 4", null);
 //    long jobid5 = JobManager.getInstance().createJob("job 5 success", "instructions 5", "type 5");
 //    try {
-//      JobManager.getInstance().updateJobProgress(jobid4, 50);
 //      JobManager.getInstance().updateJobFailed(jobid4, "Job Failed");
 //      JobManager.getInstance().updateJobSuccess(jobid5, "result 5", "kml 5");
 //    }

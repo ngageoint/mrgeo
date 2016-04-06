@@ -35,7 +35,6 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
 import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
-import org.mrgeo.mapreduce.job.JobListener
 import org.mrgeo.progress.Progress
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms._
@@ -66,7 +65,7 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
   }
 
   def build(pyramidName: String, aggregator: Aggregator,
-      conf: Configuration, progress: Progress, jobListener: JobListener, providerProperties: ProviderProperties): Boolean = {
+      conf: Configuration, progress: Progress, providerProperties: ProviderProperties): Boolean = {
     build(pyramidName, aggregator, conf, providerProperties)
   }
 
@@ -76,7 +75,7 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
   }
 
   def buildlevel(pyramidName: String, level: Int, aggregator: Aggregator,
-      conf: Configuration, progress: Progress, jobListener: JobListener,
+      conf: Configuration, progress: Progress,
       providerProperties: ProviderProperties): Boolean = {
     throw new NotImplementedException("Not yet implemented")
   }

@@ -24,7 +24,6 @@ import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapreduce.job.JobCancelFailedException;
-import org.mrgeo.mapreduce.job.JobListener;
 import org.mrgeo.mapreduce.job.RunnableJob;
 import org.mrgeo.progress.Progress;
 import org.mrgeo.utils.HadoopUtils;
@@ -37,7 +36,6 @@ public class MapAlgebraJob implements RunnableJob
   String _expression;
   String _output;
   Progress _progress;
-  JobListener jobListener = null;
   private String protectionLevel;
   private ProviderProperties providerProperties;
 
@@ -80,24 +78,5 @@ public class MapAlgebraJob implements RunnableJob
       _progress.failed(e.getMessage());
     }
   }
-  
-  private void cancel()
-  {
-    try
-    {
-      jobListener.cancelAll();
-    }
-    catch (JobCancelFailedException j)
-    {
-      _log.error("Cancel failed due to " + j.getMessage());
-    }
-  }
-
-  @Override
-  public void setJobListener(JobListener jListener)
-  {
-    jobListener = jListener;   
-  }
-  
 }
 
