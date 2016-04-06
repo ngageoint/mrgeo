@@ -28,23 +28,10 @@ public class JobInfoDetailedResponse extends JobInfoResponse
 {
   //this class will contain the hadoop jobs list in the future
   String _instructions;
-  List<Long> _hadoopJobs = new ArrayList<Long>();
   public String getInstructions() {
     return _instructions;
   }
   public void setInstructions(String instructions) {
     _instructions = instructions;
   }
-  @XmlElement(name="tasks")
-  public List<Long> getHadoopJobs() {
-    return _hadoopJobs;
-  }
-  public void setHadoopJobs(List<Long> jobs) {
-    _hadoopJobs = jobs;
-  }
-
-  public void addHadoopJob(Job job) {
-    _hadoopJobs.add(new Long(job.getJobID().getId()));
-  }
-  
 }
