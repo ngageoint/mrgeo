@@ -601,7 +601,7 @@
             </execution>
             <execution>
               <id>generate-dependencies</id>
-              <!--<phase />-->
+              <phase />
               <goals>
                 <goal>list-dependencies</goal>
               </goals>
