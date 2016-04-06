@@ -32,7 +32,6 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.mapreduce.job.JobCancelledException;
 import org.mrgeo.mapreduce.job.JobFailedException;
-import org.mrgeo.progress.ProgressHierarchy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,54 +151,24 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
     String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
 
 
-//    MapAlgebraParser parser = new MapAlgebraParser(conf, useProtectionLevel, providerProperties);
-//    MapOpHadoop root = parser.parse(expression);
-//
-//    log.debug("inputs: " + root.getInputs().toString());
-//
-//    MapAlgebraExecutioner executioner = new MapAlgebraExecutioner();
-//
-//    executioner.setOutputName(output);
-//    executioner.setRoot(root);
-    ProgressHierarchy progress = new ProgressHierarchy();
-//    executioner.execute(conf, progress);
-
     boolean valid = org.mrgeo.mapalgebra.MapAlgebra.validate(expression, providerProperties);
     if (valid) {
-      org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
-          providerProperties, useProtectionLevel);
+      if (org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
+          providerProperties, useProtectionLevel)) {
+        if (line.hasOption("b"))
+        {
+          System.out.println("Building pyramids...");
+          if (!BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties)) {
+            System.out.println("Building pyramids failed. See YARN logs for more information.");
+          }
+        }
+        System.out.println("Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) /1000.0) + " seconds");
+      }
     }
-    if (progress.isFailed())
-    {
-      throw new JobFailedException(progress.getResult());
-    }
-
-
-    if (line.hasOption("b"))
-    {
-      System.out.println("Building pyramids...");
-      BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties);
-    }
-
-    System.out.println("Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) /1000.0) + " seconds");
-  }
-  catch (IOException e)
-  {
-    e.printStackTrace();
-    return 1;
-  }
-  catch (JobFailedException e)
-  {
-    e.printStackTrace();
-    return 1;
-  }
-  catch (JobCancelledException e)
-  {
-    e.printStackTrace();
-    return 1;
   }
   catch (Exception e)
   {
+    System.out.println("Failure while running map algebra " + e.getMessage());
     e.printStackTrace();
     return -1;
   }

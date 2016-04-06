@@ -16,7 +16,28 @@
 
 package org.mrgeo.mapreduce.job;
 
-public interface RunnableJob extends Runnable
+public class JobResults
 {
-  public void setJobResults(JobResults jr);
+  private boolean started;
+  private boolean finished;
+  private boolean failed;
+  private String failureMessage;
+
+  public void starting()
+  {
+    this.started = true;
+  }
+
+  public void succeeded()
+  {
+    finished = true;
+    failed = false;
+  }
+
+  public void failed(String failureMessage)
+  {
+    finished = true;
+    failed = true;
+    this.failureMessage = failureMessage;
+  }
 }
