@@ -19,17 +19,15 @@
   <groupId>org.mrgeo</groupId>
   <artifactId>mrgeo</artifactId>
   <name>MrGeo</name>
-  <version>${mrgeo.version}</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
-    <!-- version -->
-    <mrgeo.version>1.1.0-${final.classifier}-SNAPSHOT</mrgeo.version>
     <!-- classifier to tag onto the end of the jars -->
     <final.classifier>unknown</final.classifier>
+
     <!-- default location for the hadoop config files, used for testing -->
     <hadoop.config>/etc/hadoop/conf</hadoop.config>
-    <!-- classifier put on the distribution -->
-    <distribution.classifier>CDH530</distribution.classifier>
+
     <!-- compiler versions -->
     <java.version>1.7</java.version>
     <scala.version>2.10.4</scala.version>
@@ -107,7 +105,7 @@
     <cobertura-maven.version>2.6</cobertura-maven.version>
     <exec-maven.version>1.4.0</exec-maven.version>
     <license-maven.version>1.8</license-maven.version>
-    <pomtools-maven.version>0.1.2</pomtools-maven.version>
+    <pomtools-maven.version>0.2.1</pomtools-maven.version>
     <maven-assembly.version>2.5.4</maven-assembly.version>
     <maven-clean.version>2.6.1</maven-clean.version>
     <maven-compiler.version>3.2</maven-compiler.version>
@@ -204,6 +202,7 @@
     </snapshotRepository>
   </distributionManagement>
   <build>
+      <finalName>${project.artifactId}-${mrgeo.version}</finalName>
     <defaultGoal>install</defaultGoal>
     <testResources>
       <testResource>
@@ -273,7 +272,7 @@
               <!--<arg>-target ${java.version}</arg>-->
               <!--<arg>-XDignore.symbol.file=true</arg>-->
             </args>
-            
+
             <sourceDir>${project.basedir}/src/main/scala</sourceDir>
             <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
             <outputDir>${project.build.directory}/classes</outputDir>
@@ -596,6 +595,7 @@
                 <goal>generate-pom</goal>
               </goals>
               <configuration>
+                  <version>${mrgeo.version}</version>
                 <output>${project.build.directory}/${project.build.finalName}.pom</output>
               </configuration>
             </execution>
@@ -658,6 +658,25 @@
                 </source>
               </configuration>
             </execution>
+            <execution>
+              <id>build-mrgeo-version</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>bsh-property</goal>
+              </goals>
+              <configuration>
+                <source>
+                  String version = project.version.replaceAll("-SNAPSHOT$", "") + "-" +
+                    project.properties.getProperty("final.classifier", "");
+
+                  if (project.version.endsWith("-SNAPSHOT")) {
+                      version += "-SNAPSHOT";
+                  }
+
+                  project.properties.setProperty("mrgeo.version", version);
+                </source>
+              </configuration>
+            </execution>
           </executions>
         </plugin>
         <plugin>
@@ -669,6 +688,7 @@
               <id>default-deploy</id>
               <configuration>
                 <skip>${alternate.deploy}</skip>
+                <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
                 <!--<deployAtEnd>true</deployAtEnd>-->
               </configuration>
             </execution>
@@ -696,6 +716,7 @@
           <artifactId>maven-install-plugin</artifactId>
           <version>${maven-install.version}</version>
           <executions>
+              <!--
             <execution>
               <id>install-effective-pom</id>
               <goals>
@@ -708,10 +729,27 @@
                 <packaging>pom</packaging>
               </configuration>
             </execution>
+            -->
+            <execution>
+              <id>install-artifact</id>
+              <goals>
+                <goal>install-file</goal>
+              </goals>
+              <phase>install</phase>
+              <configuration>
+                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
+                <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>${project.artifactId}</artifactId>
+                <version>${mrgeo.version}</version>
+                <packaging>${project.packaging}</packaging>
+              </configuration>
+            </execution>
             <execution>
               <id>default-install</id>
               <configuration>
-                <skip>${alternate.deploy}</skip>
+                <skip>true</skip>
+                <!--<skip>${alternate.deploy}</skip>-->
               </configuration>
             </execution>
           </executions>
@@ -1767,9 +1805,11 @@
       <id>intellij</id>
       <properties>
         <hadoop.scope>compile</hadoop.scope>
+        <!--
         <alternate.deploy>false</alternate.deploy>
         <deploy.repository.url>unknown</deploy.repository.url>
         <skipLicenses>true</skipLicenses>
+        -->
       </properties>
     </profile>
     <!--
@@ -2104,167 +2144,167 @@
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-buildpyramid</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-developers</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-distribution</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-export</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-ingest</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-mapalgebra</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-quantiles</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-webserver</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider-accumulo</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider-geowave</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider-distribution</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra</artifactId>
         <type>pom</type>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-image</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-integrationtests</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-rasterizevector</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-terrain</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-vector</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-tms</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-wms</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-wcs</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
