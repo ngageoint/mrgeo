@@ -89,7 +89,10 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
       conf.set("mapreduce.output.fileoutputformat.outputdir", outputPath.toString)
 
       // compress
-      conf.setBoolean(FileOutputFormat.COMPRESS, true)
+      // The constant seems to be missing from at least CDH 5.6.0 (non-yarn), so we'll use the
+      // hard-coded string...
+      //conf.setBoolean(FileOutputFormat.COMPRESS, true)
+      conf.setBoolean("mapreduce.output.fileoutputformat.compress", true)
 
       // add every tile to the index
       conf.set("io.map.index.interval", "1")
