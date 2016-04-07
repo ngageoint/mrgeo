@@ -26,7 +26,7 @@ import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.mapreduce.job.JobManager;
+import org.mrgeo.job.JobManager;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;

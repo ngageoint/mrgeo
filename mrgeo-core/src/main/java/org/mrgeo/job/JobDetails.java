@@ -14,11 +14,7 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
-
-import org.apache.hadoop.mapreduce.Job;
-
-import java.util.Vector;
+package org.mrgeo.job;
 
 public class JobDetails
 {
@@ -30,7 +26,6 @@ public class JobDetails
   
   TaskDetails taskDetails = null;
   long _jobId;
-  float _progress;
   String _name;
   String _status;
   String _result;
@@ -40,8 +35,7 @@ public class JobDetails
   long _started = -1;
   long _duration = -1; //time in ms that job ran
   String _message;
-  private Vector<Job> _hadoopJobs = new Vector<Job>();
-  
+
   public long getStartedDateTime() {
     return _started;
   }
@@ -62,13 +56,6 @@ public class JobDetails
     _jobId = jobId;
   }
   
-  public float getProgress() {
-    return _progress;
-  }
-  public void setProgress(float progress) {
-    _progress = progress;
-  }
-
   public String getName() {
     return _name;
   }
@@ -121,12 +108,6 @@ public class JobDetails
     _type = type;
   }
   
-  public void addHadoopJob(Job job) {
-    _hadoopJobs.add(job);
-  }
-  public Vector<Job> getHadoopJobs() {
-    return _hadoopJobs;
-  }
   public void setMessage(String msg) {
     _message = msg;
   }
@@ -174,13 +155,6 @@ public class JobDetails
     getTaskDetails(taskID).setDuration(d);
   } 
 
-  public float getProgress(long taskID) {
-    return getTaskDetails(taskID).getProgress();
-  }
-  public void setProgress(float progress, long taskID) {
-    getTaskDetails(taskID).setProgress(progress);
-  }
-
   public String getTaskName(long taskID) {
     return getTaskDetails(taskID).getName();
   }
@@ -196,12 +170,6 @@ public class JobDetails
     getTaskDetails(taskID).setStatus(status);  
   }
 
-  public void addHadoopJob(Job job, long taskID) {
-    getTaskDetails(taskID).addHadoopJob(job);
-  }
-  public Vector<Job> getHadoopJobs(long taskID) {
-    return getTaskDetails(taskID).getHadoopJobs();
-  }
   public void setMessage(String msg, long taskID) {
     getTaskDetails(taskID).setMessage(msg);
   }

@@ -14,9 +14,18 @@
  *
  */
 
-package org.mrgeo.progress;
+package org.mrgeo.job;
 
-public interface ProgressListener
+public class JobNotFoundException extends Exception
 {
-  public void change();
+  private static final long serialVersionUID = -31067678342230393L;
+
+  /**
+   * @param string
+   */
+  public JobNotFoundException(String string)
+  {
+    super(string);
+  }
+
 }

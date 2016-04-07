@@ -14,9 +14,7 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
-
-import org.apache.hadoop.mapreduce.Job;
+package org.mrgeo.job;
 
 import java.util.Vector;
 
@@ -29,14 +27,12 @@ public class TaskDetails
   public final static String CANCELLED = "Cancelled";
   
   long _jobId;
-  float _progress;
   String _name;
   String _status=null;
   long _started = -1;
   long _duration = -1; //time in ms that job ran
   String _message;
-  private Vector<Job> _hadoopJobs = new Vector<Job>();
-  
+
   public TaskDetails(long taskId) {
     _jobId = taskId;
   }
@@ -61,13 +57,6 @@ public class TaskDetails
     _jobId = jobId;
   }
   
-  public float getProgress() {
-    return _progress;
-  }
-  public void setProgress(float progress) {
-    _progress = progress;
-  }
-
   public String getName() {
     return _name;
   }
@@ -92,12 +81,6 @@ public class TaskDetails
     }
   }
 
-  public void addHadoopJob(Job job) {
-    _hadoopJobs.add(job);
-  }
-  public Vector<Job> getHadoopJobs() {
-    return _hadoopJobs;
-  }
   public void setMessage(String msg) {
     _message = msg;
   }

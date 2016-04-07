@@ -14,23 +14,22 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
-public class JobTestManager extends JobManager
+public class JobCancelledException extends Exception
 {
-  protected JobTestManager(JobCollection j) { super(j); jobCollection = j;}
-  synchronized public static JobManager getInstance()
+
+  /**
+   * 
+   */
+  private static final long serialVersionUID = -28067678342230393L;
+
+  /**
+   * @param string
+   */
+  public JobCancelledException(String string)
   {
-    if (theInstance == null || ! (theInstance instanceof JobTestManager))
-    {
-      theInstance = 
-          new JobTestManager(new JobsListImpl());
-    }
-    return theInstance;
+    super(string);
   }
-  
-  synchronized public static void reset()
-  {
-    theInstance = null;
-  }
+
 }
