@@ -26,8 +26,8 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapreduce.job.JobCancelledException;
-import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.job.JobCancelledException;
+import org.mrgeo.job.JobFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

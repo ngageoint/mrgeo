@@ -14,12 +14,26 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
-import org.mrgeo.progress.Progress;
-
-public interface RunnableJob extends Runnable
+/**
+ * @author jason.surratt
+ * 
+ */
+public class JobFailedException extends Exception
 {
-  public void setProgress(Progress p);
-  public void setJobListener(JobListener jobListener);
+
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
+
+  /**
+   * @param string
+   */
+  public JobFailedException(String string)
+  {
+    super(string);
+  }
+
 }
