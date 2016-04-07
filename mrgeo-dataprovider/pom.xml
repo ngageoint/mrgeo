@@ -19,11 +19,11 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo</artifactId>
-    <version>${mrgeo.version}</version>
+    <version>1.1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>mrgeo-dataprovider</artifactId>
-  <version>${mrgeo.version}</version>
+  <version>1.1.0-SNAPSHOT</version>
   <name>mrgeo-dataprovider</name>
   <packaging>pom</packaging>
   <build>
