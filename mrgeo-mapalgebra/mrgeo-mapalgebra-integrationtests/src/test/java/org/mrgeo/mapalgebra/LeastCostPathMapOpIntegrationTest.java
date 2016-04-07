@@ -32,8 +32,8 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.hdfs.vector.DelimitedVectorReader;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapreduce.job.JobCancelledException;
-import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.job.JobCancelledException;
+import org.mrgeo.job.JobFailedException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 

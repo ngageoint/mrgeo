@@ -96,11 +96,15 @@ public class RasterResource
       // a new security layer and pass those properties to MapAlgebraJob.
       MapAlgebraJob job = new MapAlgebraJob(expression, outputId,
           protectionLevel, SecurityUtils.getProviderProperties());
-      long jobId = service.getJobManager().submitJob("MapAlgebra job " + outputId, job);
-      String jobUri = uriInfo.getBaseUri().toString() + "job/";
-      jobUri = HttpUtil.updateSchemeFromHeaders(jobUri, request);
-      JobInfoResponse jr = JobResponseFormatter.createJobResponse(service.getJobManager().getJob(jobId), jobUri);
-      return Response.status(Status.ACCEPTED).entity(jr).build();
+      service.getJobManager().submitJob("MapAlgebra job " + outputId, job);
+//      long jobId = service.getJobManager().submitJob("MapAlgebra job " + outputId, job);
+//      String jobUri = uriInfo.getBaseUri().toString() + "job/";
+//      jobUri = HttpUtil.updateSchemeFromHeaders(jobUri, request);
+      // TODO: Revisit the response whenever we re-think how job status reporting
+      // will work within Spark.
+//      JobInfoResponse jr = JobResponseFormatter.createJobResponse(service.getJobManager().getJob(jobId), jobUri);
+//      return Response.status(Status.ACCEPTED).entity(jr).build();
+      return Response.status(Status.ACCEPTED).build();
     } catch (Exception e) {
       throw new WebApplicationException(
           Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build() );
@@ -113,46 +117,46 @@ public class RasterResource
    * @param output - unique id, this will be the name of the ingested raster
    *
    */
-  @POST
-  @Path("/{output}/ingest/")
-  @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_OCTET_STREAM)
-  public Response ingestRaster(@PathParam("output") String output,
-      @QueryParam("protectionLevel") @DefaultValue("") String protectionLevel)
-  {
-    try {
-      // TODO: Need to construct provider properties from the WebRequest using
-      // a new security layer and pass those properties to MapAlgebraJob.
-      String pyramidOutput = service.ingestImage(request.getInputStream(), output,
-          protectionLevel, SecurityUtils.getProviderProperties());
-      //TODO: write a metadata record to catalog??
-//          String url = request.getRequestURI().substring(request.getContextPath().length());
-//          URI uri = new URI(url);
-      String createdDate = new DateTime(DateTimeZone.UTC).toString();
-      String json = new JSONStringer()
-          .object()
-          .key("path").value( pyramidOutput )
-              //.key("uri").value( uri )
-          .key("created_date").value( createdDate )
-          .endObject()
-          .toString();
-      return Response.ok().entity( json ).build();
-    } catch (IOException ioe) {
-      log.error("Error reading POST content", ioe);
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Error reading POST content").build();
-    } catch (IllegalStateException e) {
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Output path already exists").build();
-    } catch (URISyntaxException e) {
-      log.error("Error creating pyramid URI", e);
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Error creating pyramid URI").build();
-    } catch (JSONException e) {
-      log.error("Error creating JSON response", e);
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Error creating JSON response").build();
-    } catch (Exception e) {
-      log.error("Error ingesting raster", e);
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Error ingesting raster").build();
-    }
-  }
+//  @POST
+//  @Path("/{output}/ingest/")
+//  @Produces(MediaType.APPLICATION_JSON)
+//  @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+//  public Response ingestRaster(@PathParam("output") String output,
+//      @QueryParam("protectionLevel") @DefaultValue("") String protectionLevel)
+//  {
+//    try {
+//      // TODO: Need to construct provider properties from the WebRequest using
+//      // a new security layer and pass those properties to MapAlgebraJob.
+//      String pyramidOutput = service.ingestImage(request.getInputStream(), output,
+//          protectionLevel, SecurityUtils.getProviderProperties());
+//      //TODO: write a metadata record to catalog??
+////          String url = request.getRequestURI().substring(request.getContextPath().length());
+////          URI uri = new URI(url);
+//      String createdDate = new DateTime(DateTimeZone.UTC).toString();
+//      String json = new JSONStringer()
+//          .object()
+//          .key("path").value( pyramidOutput )
+//              //.key("uri").value( uri )
+//          .key("created_date").value( createdDate )
+//          .endObject()
+//          .toString();
+//      return Response.ok().entity( json ).build();
+//    } catch (IOException ioe) {
+//      log.error("Error reading POST content", ioe);
+//      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Error reading POST content").build();
+//    } catch (IllegalStateException e) {
+//      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Output path already exists").build();
+//    } catch (URISyntaxException e) {
+//      log.error("Error creating pyramid URI", e);
+//      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Error creating pyramid URI").build();
+//    } catch (JSONException e) {
+//      log.error("Error creating JSON response", e);
+//      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Error creating JSON response").build();
+//    } catch (Exception e) {
+//      log.error("Error ingesting raster", e);
+//      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type("text/plain").entity("Error ingesting raster").build();
+//    }
+//  }
 
   @GET
   @Produces("image/*")

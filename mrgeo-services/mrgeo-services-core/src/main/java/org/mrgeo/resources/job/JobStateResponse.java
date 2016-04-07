@@ -24,7 +24,6 @@ public class JobStateResponse
 {
   private Date _startTime; //time when job was started
   private long _duration; //duration of the jib in ms from start to completion
-  private float _percent;
   private String _message;
   private String _state;
   private boolean _isFinished;
@@ -38,15 +37,6 @@ public class JobStateResponse
     return _startTime;
   }
   
-  public void setPercent(float percent)
-  {
-    this._percent = percent;
-  }
-
-  public float getPercent()
-  {
-    return _percent;
-  } 
   public void setState(String state)
   {
     this._state = state;

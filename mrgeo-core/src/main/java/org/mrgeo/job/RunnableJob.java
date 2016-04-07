@@ -14,18 +14,11 @@
  *
  */
 
-package org.mrgeo.mapreduce.job;
+package org.mrgeo.job;
 
-public class JobNotFoundException extends Exception
+import org.mrgeo.job.JobResults;
+
+public interface RunnableJob extends Runnable
 {
-  private static final long serialVersionUID = -31067678342230393L;
-
-  /**
-   * @param string
-   */
-  public JobNotFoundException(String string)
-  {
-    super(string);
-  }
-
+  public void setJobResults(JobResults jr);
 }
