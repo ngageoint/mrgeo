@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2009-2016 DigitalGlobe, Inc.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~ http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and limitations under the License.
-  ~
-  -->
+     ~ Copyright 2009-2016 DigitalGlobe, Inc.
+     ~
+     ~ Licensed under the Apache License, Version 2.0 (the "License");
+     ~ you may not use this file except in compliance with the License.
+     ~ You may obtain a copy of the License at
+     ~
+     ~ http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+     ~
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -65,27 +65,95 @@
           <skipTests>${skip.mrgeo.core.integration.tests}</skipTests>
         </configuration>
       </plugin>
-        <plugin>
-          <artifactId>maven-install-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>install-test-artifact</id>
-              <goals>
-                <goal>install-file</goal>
-              </goals>
-              <phase>install</phase>
-              <configuration>
-                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
-                <file>${project.build.directory}/${project.build.finalName}-tests.${project.packaging}</file>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>${project.artifactId}</artifactId>
-                <version>${mrgeo.version}</version>
-                <packaging>test-jar</packaging>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
+      <!--<plugin>-->
+        <!--<artifactId>maven-install-plugin</artifactId>-->
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<id>install-test-artifact</id>-->
+            <!--<goals>-->
+              <!--<goal>install-file</goal>-->
+            <!--</goals>-->
+            <!--<phase>install</phase>-->
+            <!--<configuration>-->
+              <!--<pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>-->
+              <!--<file>${project.build.directory}/${project.build.finalName}-tests.${project.packaging}</file>-->
+              <!--<groupId>${project.groupId}</groupId>-->
+              <!--<artifactId>${project.artifactId}</artifactId>-->
+              <!--<version>${mrgeo.version}</version>-->
+              <!--<packaging>test-jar</packaging>-->
+            <!--</configuration>-->
+          <!--</execution>-->
+        <!--</executions>-->
+      <!--</plugin>-->
+      <!-- Make sure Build Helper is before Deploy! -->
+            <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+      </plugin>
 
+      <!--<plugin>-->
+        <!--<artifactId>maven-deploy-plugin</artifactId>-->
+                  <!--<executions>-->
+            <!--&lt;!&ndash; Force maven to only deploy the effective pom.  Just for this pom, not children &ndash;&gt;-->
+            <!--<execution>-->
+              <!--<id>deploy-artifact</id>-->
+              <!--<goals>-->
+                <!--<goal>deploy-file</goal>-->
+              <!--</goals>-->
+              <!--<phase>deploy</phase>-->
+              <!--<configuration>-->
+                <!--<pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>-->
+                <!--<generatePom>true</generatePom>-->
+                <!--<file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>-->
+                <!--<files />-->
+                <!--<javaDoc />-->
+                <!--<sources />-->
+                <!--<groupId>${project.groupId}</groupId>-->
+                <!--<artifactId>${project.artifactId}</artifactId>-->
+                <!--<version>${mrgeo.version}</version>-->
+                <!--<packaging>${project.packaging}</packaging>-->
+                <!--<repositoryId>mrgeo-repository</repositoryId>-->
+                <!--<url>${deploy.repository.url}</url>-->
+                <!--<uniqueVersion>false</uniqueVersion>-->
+              <!--</configuration>-->
+            <!--</execution>-->
+            <!--<execution>-->
+              <!--<id>default-deploy</id>-->
+              <!--<goals>-->
+                <!--<goal>deploy</goal>-->
+              <!--</goals>-->
+              <!--<configuration>-->
+                <!--<skip>true</skip>-->
+                <!--&lt;!&ndash;<skip>${alternate.deploy}</skip> &ndash;&gt;-->
+                <!--&lt;!&ndash;<file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>&ndash;&gt;-->
+                <!--&lt;!&ndash;<deployAtEnd>true</deployAtEnd>&ndash;&gt;-->
+              <!--</configuration>-->
+            <!--</execution>-->
+          <!--</executions>-->
+
+        <!--&lt;!&ndash;-->
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<id>deploy-test-artifact</id>-->
+            <!--<goals>-->
+              <!--<goal>deploy-file</goal>-->
+            <!--</goals>-->
+            <!--<phase>deploy</phase>-->
+            <!--<configuration>-->
+              <!--<pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>-->
+              <!--<file>${project.build.directory}/${project.build.finalName}-tests.${project.packaging}</file>-->
+              <!--<groupId>${project.groupId}</groupId>-->
+              <!--<artifactId>${project.artifactId}</artifactId>-->
+              <!--<version>${mrgeo.version}</version>-->
+              <!--<packaging>test-jar</packaging>-->
+              <!--<repositoryId>mrgeo-repository</repositoryId>-->
+              <!--<url>${deploy.repository.url}</url>-->
+              <!--<uniqueVersion>false</uniqueVersion>-->
+            <!--</configuration>-->
+          <!--</execution>-->
+        <!--</executions>-->
+      <!--&ndash;&gt;-->
+      <!--</plugin>-->
       <plugin>
         <groupId>com.pyx4j</groupId>
         <artifactId>maven-junction-plugin</artifactId>

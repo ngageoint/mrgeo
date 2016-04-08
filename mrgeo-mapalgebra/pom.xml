@@ -34,12 +34,12 @@
     </license>
   </licenses>
   <build>
+      <!--
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <executions>
-          <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
           <execution>
             <id>deploy-effective-pom</id>
             <goals>
@@ -58,6 +58,7 @@
         </executions>
       </plugin>
     </plugins>
+    -->
   </build>
   <modules>
     <module>mrgeo-mapalgebra-image</module>
