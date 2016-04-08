@@ -120,13 +120,8 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
       val zn = 7
       val pn = 8
 
-      val bounds = TMSUtils.tileBounds(TMSUtils.tileid(tile._1.get, zoom), zoom, tilesize)
-
-      // calculate the great circle distance of the tile (through the middle)
-      val midx = bounds.w + ((bounds.e - bounds.w) / 2.0)
-      val midy = bounds.s + ((bounds.n - bounds.s) / 2.0)
-      val dx = LatLng.calculateGreatCircleDistance(new LatLng(midy, bounds.w), new LatLng(midy, bounds.e)) / tilesize
-      val dy = LatLng.calculateGreatCircleDistance(new LatLng(bounds.n, midx), new LatLng(bounds.s, midx)) / tilesize
+      val dx = TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE
+      val dy = dx
 
       val z = Array.ofDim[Double](9)
 
