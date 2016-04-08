@@ -1,5 +1,39 @@
 #!/bin/bash
 
-set -e 
+# Get the existing version of the build
+VERSION=`mvn help:evaluate -Dexpression=project.version | grep -v '\['`
+#echo $VERSION
 
-scripts/mvn-build deploy $@
+# Get the build type
+BUILD=`scripts/mvn-build buildtype $@`
+#echo $BUILD
+
+# Check for SNAPSHOT, and add the BUILD as part of the version name
+if [[ $VERSION == *"-SNAPSHOT" ]]; then
+  echo "have snapshot"
+  NEWVERSION=${VERSION%"-SNAPSHOT"}-$BUILD-SNAPSHOT
+else
+  echo "no snapshot"
+  NEWVERSION=${VERSION}-$BUILD
+fi
+#echo $NEWVERSION
+
+# Do a build first, to make sure everything works OK
+#scripts/mvn-build build $@
+
+# Set the new version
+scripts/mvn-build version $NEWVERSION
+
+if [ $? -eq 0 ]; then
+
+    # Do a clean
+    scripts/mvn-build clean $@
+
+    # Do the deploy
+    scripts/mvn-build deploy $@
+fi
+
+# always do this step
+# Set the version back to the original
+scripts/mvn-build version revert
+

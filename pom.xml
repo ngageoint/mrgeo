@@ -111,6 +111,7 @@
     <maven-deploy.version>2.8.2</maven-deploy.version>
     <maven-eclipse.version>2.9</maven-eclipse.version>
     <maven-failsafe.version>2.18.1</maven-failsafe.version>
+    <maven-help.version>2.2</maven-help.version>
     <maven-install.version>2.5.2</maven-install.version>
     <maven-jar.version>2.5</maven-jar.version>
     <maven-javadoc.version>2.9.1</maven-javadoc.version>
@@ -245,6 +246,17 @@
           <artifactId>pomtools-maven-plugin</artifactId>
           <version>${pomtools-maven.version}</version>
           <executions>
+            <execution>
+              <id>generate-pom</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>generate-pom</goal>
+              </goals>
+              <configuration>
+                <version>${mrgeo.version}</version>
+                <output>${project.build.directory}/${project.build.finalName}.pom</output>
+              </configuration>
+            </execution>
             <execution>
               <id>generate-dependencies</id>
               <phase />
@@ -631,6 +643,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
           <version>${maven-clean.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-help-plugin</artifactId>
+          <version>${maven-help.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>

@@ -63,7 +63,7 @@ def find_script():
         mrgeo_home = os.environ["MRGEO_HOME"]
         print("MRGEO_HOME has been deprecated, use MRGEO_COMMON_HOME and MRGEO_CONF_DIR instead.")
     else:
-        raise Exception("MRGEO_HOME is not set!")
+        raise Exception("MRGEO_COMMON_HOME is not set!")
 
     script = "mrgeo"
 
