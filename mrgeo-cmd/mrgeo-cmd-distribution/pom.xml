@@ -162,20 +162,19 @@
           </execution>
         </executions>
       </plugin>
-      <!-- effectivly turn off the deploy, just deploy the pom... -->
+      <!-- turn off the deploy-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <executions>
           <execution>
-            <id>default-deploy</id>
+            <id>deploy-artifact</id>
+            <goals>
+              <goal>deploy-file</goal>
+            </goals>
+            <phase>none</phase>
             <configuration>
-              <skip>true</skip>
             </configuration>
-          </execution>
-          <execution>
-            <id>deploy-pom-only</id>
-            <inherited>true</inherited>
           </execution>
         </executions>
       </plugin>

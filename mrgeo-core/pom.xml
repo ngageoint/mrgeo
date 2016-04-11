@@ -65,11 +65,6 @@
           <skipTests>${skip.mrgeo.core.integration.tests}</skipTests>
         </configuration>
       </plugin>
-      <!-- Make sure Build Helper is before Deploy! -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-      </plugin>
       <plugin>
         <groupId>com.pyx4j</groupId>
         <artifactId>maven-junction-plugin</artifactId>

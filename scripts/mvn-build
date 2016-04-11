@@ -63,6 +63,7 @@ usage() {
     echo "  -s  --source                   - include source jars of dependencies (if available)"
     echo "  -sh --shade                    - generate the shaded (jar with dependencies) jars"
     echo "  -y  --yarn                     - use hadoop YARN (for hadoop 2+, instead of mr1)"
+    echo "  -q  --quiet                    - quiet (no prints from this script)"
     echo "other:"
     echo "  buildtype  - return the build type (apache260, cdh560, etc.), no further processing is done"
     echo " "
@@ -375,6 +376,9 @@ while [ $# -gt 0 ] ; do
     "-y" | "--yarn")
         USEYARN=true
         ;;
+    "-q" | "--quiet")
+        QUIET="true"
+        ;;
     "-g" | "--geowave")
         ARGS=$ARGS" -Pinclude-geowave"
         ;;
@@ -409,23 +413,25 @@ fi
 
 export HOME=$CWD
 
-echo " "
-echo "Phase: " $PHASE
-echo "Module: " $MODULE
-echo " "
-echo "Building for " $BUILD
-echo "-----------------------"
-echo "  JAVA_HOME:           " $JAVA_HOME
-echo "  HADOOP_HOME:         " $HADOOP_HOME
-echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
-echo "  MRGEO_COMMON_HOME:   " $MRGEO_COMMON_HOME
-echo "  MRGEO_CONF_DIR:      " $MRGEO_CONF_DIR
-echo "  MRGEO_HOME:          " $MRGEO_HOME
-echo "  Build:               " $HOME
-echo " "
-echo "  Additional maven args: " $ARGS
-echo " "
 
+if [ -z "$QUIET" ]; then
+    echo " "
+    echo "Phase: " $PHASE
+    echo "Module: " $MODULE
+    echo " "
+    echo "Building for " $BUILD
+    echo "-----------------------"
+    echo "  JAVA_HOME:           " $JAVA_HOME
+    echo "  HADOOP_HOME:         " $HADOOP_HOME
+    echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
+    echo "  MRGEO_COMMON_HOME:   " $MRGEO_COMMON_HOME
+    echo "  MRGEO_CONF_DIR:      " $MRGEO_CONF_DIR
+    echo "  MRGEO_HOME:          " $MRGEO_HOME
+    echo "  Build:               " $HOME
+    echo " "
+    echo "  Additional maven args: " $ARGS
+    echo " "
+fi
 
 ARGS="-P$BUILD -Dmodules=$MODULE -DfailIfNoTests=false $LICENSE $ARGS"
 
@@ -469,9 +475,10 @@ case $PHASE in
    ;;
 esac
 
-echo "-----------------------"
-echo "  Maven command: "
-echo "mvn $ARGS"
-echo " "
-
+if [ -z "$QUIET" ]; then
+    echo "-----------------------"
+    echo "  Maven command: "
+    echo "mvn $ARGS"
+    echo " "
+fi
 mvn $ARGS
