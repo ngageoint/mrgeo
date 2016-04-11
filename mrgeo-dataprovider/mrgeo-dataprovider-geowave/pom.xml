@@ -28,7 +28,6 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <generatedResources>${project.build.directory}/generated-resources</generatedResources>
   </properties>
   <name>mrgeo-dataprovider-geowave</name>
   <url>http://mrgeo.org</url>
