@@ -29,7 +29,7 @@
     <!-- compiler versions -->
     <java.version>1.7</java.version>
     <scala.version>2.10.4</scala.version>
-    <!-- Many of these default/specific to the CDH5.3.0/YARN version,
+    <!-- Many of these default/specific to the cdh5.3.0/YARN version,
          they will be overridden with profiles for the other versions.  -->
     <accumulo.version>1.6.0</accumulo.version>
     <antlr.version>3.1.3</antlr.version>
@@ -748,7 +748,7 @@
     <!--
          | Profiles defining the various build types.  The template for these are:
          | <profile>
-         |   <id>CDH520-yarn</id>
+         |   <id>cdh520-yarn</id>
          |   <properties>
          |     <hadoop.version></hadoop.version>
          |     <mahout.version></mahout.version>
@@ -764,11 +764,11 @@
          | hadoop.config - the path to the hadoop config files (used for tests), usually /etc/hadoop/conf
          | slf4j.version - the slf4j version to use, this version must not conflict with the hadoop slf4j version
          | final.classifier - the classifier for the final (distribution) artifacts, usually the hadoop version without
-         |                    any punctuation (i.e CDH 4.5.0 becomes CDH450), used when ultimately build RPMs
+         |                    any punctuation (i.e cdh 4.5.0 becomes cdh450), used when ultimately build RPMs
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
-      <id>CDH560-yarn</id>
+      <id>cdh560-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.6.0</hadoop.version>
         <mahout.version>0.9-cdh5.6.0</mahout.version>
@@ -787,7 +787,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH560</id>
+      <id>cdh560</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.6.0</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.6.0</hadoop.yarn.version>
@@ -813,7 +813,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH552-yarn</id>
+      <id>cdh552-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
         <mahout.version>0.9-cdh5.5.2</mahout.version>
@@ -832,7 +832,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH552</id>
+      <id>cdh552</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.5.2</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.5.2</hadoop.yarn.version>
@@ -858,7 +858,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH551-yarn</id>
+      <id>cdh551-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
         <mahout.version>0.9-cdh5.5.1</mahout.version>
@@ -877,7 +877,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH551</id>
+      <id>cdh551</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.5.1</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.5.1</hadoop.yarn.version>
@@ -903,7 +903,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH550-yarn</id>
+      <id>cdh550-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.5.0</hadoop.version>
         <mahout.version>0.9-cdh5.5.0</mahout.version>
@@ -922,7 +922,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH550</id>
+      <id>cdh550</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.5.0</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.5.0</hadoop.yarn.version>
@@ -948,7 +948,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH548-yarn</id>
+      <id>cdh548-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.8</hadoop.version>
         <mahout.version>0.9-cdh5.4.8</mahout.version>
@@ -961,7 +961,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH548</id>
+      <id>cdh548</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.8</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.8</hadoop.yarn.version>
@@ -983,7 +983,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH547-yarn</id>
+      <id>cdh547-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.7</hadoop.version>
         <mahout.version>0.9-cdh5.4.7</mahout.version>
@@ -996,7 +996,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH547</id>
+      <id>cdh547</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.7</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.7</hadoop.yarn.version>
@@ -1018,7 +1018,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH545-yarn</id>
+      <id>cdh545-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.5</hadoop.version>
         <mahout.version>0.9-cdh5.4.5</mahout.version>
@@ -1032,7 +1032,7 @@
       <dependencies />
     </profile>
     <profile>
-      <id>CDH545</id>
+      <id>cdh545</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.5</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.5</hadoop.yarn.version>
@@ -1054,7 +1054,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH544-yarn</id>
+      <id>cdh544-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.4</hadoop.version>
         <mahout.version>0.9-cdh5.4.4</mahout.version>
@@ -1067,7 +1067,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH544</id>
+      <id>cdh544</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.4</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.4</hadoop.yarn.version>
@@ -1089,7 +1089,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH543-yarn</id>
+      <id>cdh543-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.3</hadoop.version>
         <mahout.version>0.9-cdh5.4.3</mahout.version>
@@ -1102,7 +1102,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH543</id>
+      <id>cdh543</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.3</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.3</hadoop.yarn.version>
@@ -1124,7 +1124,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH542-yarn</id>
+      <id>cdh542-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.2</hadoop.version>
         <mahout.version>0.9-cdh5.4.2</mahout.version>
@@ -1137,7 +1137,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH542</id>
+      <id>cdh542</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.2</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.2</hadoop.yarn.version>
@@ -1159,7 +1159,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH541-yarn</id>
+      <id>cdh541-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.1</hadoop.version>
         <mahout.version>0.9-cdh5.4.1</mahout.version>
@@ -1172,7 +1172,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH541</id>
+      <id>cdh541</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.1</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.1</hadoop.yarn.version>
@@ -1194,7 +1194,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH540-yarn</id>
+      <id>cdh540-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.0</hadoop.version>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
@@ -1207,7 +1207,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH540</id>
+      <id>cdh540</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.0</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.0</hadoop.yarn.version>
@@ -1229,7 +1229,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH533-yarn</id>
+      <id>cdh533-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.3</hadoop.version>
         <mahout.version>0.9-cdh5.3.3</mahout.version>
@@ -1242,7 +1242,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH533</id>
+      <id>cdh533</id>
       <properties>
         <hadoop.version>2.5.0-mr1-cdh5.3.3</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.3</hadoop.yarn.version>
@@ -1264,7 +1264,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH532-yarn</id>
+      <id>cdh532-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.2</hadoop.version>
         <mahout.version>0.9-cdh5.3.2</mahout.version>
@@ -1283,7 +1283,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH532</id>
+      <id>cdh532</id>
       <properties>
         <hadoop.version>2.5.0-mr1-cdh5.3.2</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.2</hadoop.yarn.version>
@@ -1313,7 +1313,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH531-yarn</id>
+      <id>cdh531-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.1</hadoop.version>
         <mahout.version>0.9-cdh5.3.1</mahout.version>
@@ -1332,7 +1332,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH531</id>
+      <id>cdh531</id>
       <properties>
         <hadoop.version>2.5.0-mr1-cdh5.3.1</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.1</hadoop.yarn.version>
@@ -1362,7 +1362,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH530-yarn</id>
+      <id>cdh530-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
@@ -1381,7 +1381,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH530</id>
+      <id>cdh530</id>
       <properties>
         <hadoop.version>2.5.0-mr1-cdh5.3.0</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.0</hadoop.yarn.version>

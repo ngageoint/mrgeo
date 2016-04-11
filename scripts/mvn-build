@@ -122,7 +122,7 @@ run-eclipse() {
 
 PHASE="test"
 MODULE="all"
-BUILD="CDH545"
+BUILD="apache260"
 CONF="/etc/hadoop/conf"
 LICENSE="-DskipLicenses"
 RELEASEPHASE=prepare
@@ -232,32 +232,14 @@ while [ $# -gt 0 ] ; do
         MODULE="python"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPSERVICES $ARGS"
         ;;
-    "apache220")
-        BUILD="apache220"
+    "apache220" | "apache230" | "apache240" | "apache241" )
+        BUILD=$1
         ;;
-    "apache230")
-        BUILD="apache230"
+    "apache250" | "apache251" | "apache252")
+        BUILD=$1
         ;;
-    "apache240")
-        BUILD="apache240"
-        ;;
-    "apache241")
-        BUILD="apache241"
-        ;;
-    "apache250")
-        BUILD="apache250"
-        ;;
-    "apache251")
-        BUILD="apache251"
-        ;;
-    "apache252")
-        BUILD="apache252"
-        ;;
-    "apache260")
-        BUILD="apache260"
-        ;;
-    "apache271")
-        BUILD="apache271"
+    "apache260" | "apache270" | "apache271")
+        BUILD=$1
         ;;
     "emr")
         BUILD="emr"
@@ -266,101 +248,17 @@ while [ $# -gt 0 ] ; do
         echo "*** MapR Hadoop is no longer supported"
         exit
         ;;
-    "cdh530")
-        BUILD="CDH530"
+    "cdh530" | "cdh530-yarn" | "cdh531" | "cdh531-yarn" | "cdh532" | "cdh532-yarn" | "cdh533" | "cdh533-yarn")
+        BUILD=$1
         ;;
-    "cdh530-yarn")
-        BUILD="CDH530-yarn"
+    "cdh540" | "cdh540-yarn" | "cdh541" | "cdh541-yarn" | "cdh542" | "cdh542-yarn" | "cdh543" | "cdh543-yarn" | "cdh544" | "cdh544-yarn" | "cdh545" | "cdh545-yarn" | "cdh547" | "cdh547-yarn" | "cdh548" | "cdh548-yarn")
+        BUILD=$1
         ;;
-    "cdh531")
-        BUILD="CDH531"
+    "cdh550" | "cdh550-yarn" | "cdh551" | "cdh551-yarn" | "cdh552" | "cdh552-yarn")
+        BUILD=$1
         ;;
-    "cdh531-yarn")
-        BUILD="CDH531-yarn"
-        ;;
-    "cdh532")
-        BUILD="CDH532"
-        ;;
-    "cdh532-yarn")
-        BUILD="CDH532-yarn"
-        ;;
-    "cdh533")
-        BUILD="CDH533"
-        ;;
-    "cdh533-yarn")
-        BUILD="CDH533-yarn"
-        ;;
-    "cdh540")
-        BUILD="CDH540"
-        ;;
-    "cdh540-yarn")
-        BUILD="CDH540-yarn"
-        ;;
-    "cdh541")
-        BUILD="CDH541"
-        ;;
-    "cdh541-yarn")
-        BUILD="CDH541-yarn"
-        ;;
-    "cdh542")
-        BUILD="CDH542"
-        ;;
-    "cdh542-yarn")
-        BUILD="CDH542-yarn"
-        ;;
-    "cdh543")
-        BUILD="CDH543"
-        ;;
-    "cdh543-yarn")
-        BUILD="CDH543-yarn"
-        ;;
-    "cdh544")
-        BUILD="CDH544"
-        ;;
-    "cdh544-yarn")
-        BUILD="CDH544-yarn"
-        ;;
-    "cdh545")
-        BUILD="CDH545"
-        ;;
-    "cdh545-yarn")
-        BUILD="CDH545-yarn"
-        ;;
-    "cdh547")
-        BUILD="CDH547"
-        ;;
-    "cdh547-yarn")
-        BUILD="CDH547-yarn"
-        ;;
-    "cdh548")
-        BUILD="CDH548"
-        ;;
-    "cdh548-yarn")
-        BUILD="CDH548-yarn"
-        ;;
-    "cdh550")
-        BUILD="CDH550"
-        ;;
-    "cdh550-yarn")
-        BUILD="CDH550-yarn"
-        ;;
-    "cdh551")
-        BUILD="CDH551"
-        ;;
-    "cdh551-yarn")
-        BUILD="CDH551-yarn"
-        ;;
-    "cdh552")
-        BUILD="CDH552"
-        ;;
-    "cdh552-yarn")
-        BUILD="CDH552-yarn"
-        ;;
-    "cdh560")
-        BUILD="CDH560"
-        ;;
-    "cdh560-yarn")
-        BUILD="CDH560-yarn"
+    "cdh560" | "cdh560-yarn")
+        BUILD=$1
         ;;
     "build")
         PHASE="build"
