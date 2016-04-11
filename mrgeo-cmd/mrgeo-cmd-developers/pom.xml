@@ -63,6 +63,22 @@
         <groupId>com.pyx4j</groupId>
         <artifactId>maven-junction-plugin</artifactId>
       </plugin>
+      <!-- turn off the deploy-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>deploy-artifact</id>
+            <goals>
+              <goal>deploy-file</goal>
+            </goals>
+            <phase>none</phase>
+            <configuration>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
