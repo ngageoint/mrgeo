@@ -257,7 +257,7 @@ while [ $# -gt 0 ] ; do
     "cdh550" | "cdh550-yarn" | "cdh551" | "cdh551-yarn" | "cdh552" | "cdh552-yarn")
         BUILD=$1
         ;;
-    "cdh560" | "cdh560-yarn")
+    "cdh560" | "cdh560-yarn" | "cdh570" | "cdh570-yarn")
         BUILD=$1
         ;;
     "build")
