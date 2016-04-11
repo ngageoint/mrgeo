@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2009-2016 DigitalGlobe, Inc.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~ http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and limitations under the License.
-  ~
-  -->
+     ~ Copyright 2009-2016 DigitalGlobe, Inc.
+     ~
+     ~ Licensed under the Apache License, Version 2.0 (the "License");
+     ~ you may not use this file except in compliance with the License.
+     ~ You may obtain a copy of the License at
+     ~
+     ~ http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+     ~
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
@@ -24,10 +24,8 @@
   <properties>
     <!-- classifier to tag onto the end of the jars -->
     <final.classifier>unknown</final.classifier>
-
     <!-- default location for the hadoop config files, used for testing -->
     <hadoop.config>/etc/hadoop/conf</hadoop.config>
-
     <!-- compiler versions -->
     <java.version>1.7</java.version>
     <scala.version>2.10.4</scala.version>
@@ -113,6 +111,7 @@
     <maven-deploy.version>2.8.2</maven-deploy.version>
     <maven-eclipse.version>2.9</maven-eclipse.version>
     <maven-failsafe.version>2.18.1</maven-failsafe.version>
+    <maven-help.version>2.2</maven-help.version>
     <maven-install.version>2.5.2</maven-install.version>
     <maven-jar.version>2.5</maven-jar.version>
     <maven-javadoc.version>2.9.1</maven-javadoc.version>
@@ -125,15 +124,12 @@
     <maven-surefire.version>2.18.1</maven-surefire.version>
     <maven-war.version>2.6</maven-war.version>
     <scalatest.plugin.version>1.0</scalatest.plugin.version>
-
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
     <!-- repositories -->
     <repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/release</repository.url>
     <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
-
   </properties>
   <repositories>
     <repository>
@@ -202,7 +198,6 @@
     </snapshotRepository>
   </distributionManagement>
   <build>
-      <finalName>${project.artifactId}-${mrgeo.version}</finalName>
     <defaultGoal>install</defaultGoal>
     <testResources>
       <testResource>
@@ -219,6 +214,121 @@
     </extensions>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar.version}</version>
+          <configuration>
+            <excludes>
+              <exclude>lib/**</exclude>
+            </excludes>
+            <archive>
+              <addMavenDescriptor>false</addMavenDescriptor>
+              <manifest>
+                <addClasspath>false</addClasspath>
+              </manifest>
+            </archive>
+          </configuration>
+          <executions>
+            <execution>
+              <id>test-jar</id>
+              <phase>test</phase>
+              <goals>
+                <goal>test-jar</goal>
+              </goals>
+              <configuration>
+                <testClassesDirectory>${project.build.directory}/test-classes</testClassesDirectory>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.mrgeo.plugins</groupId>
+          <artifactId>pomtools-maven-plugin</artifactId>
+          <version>${pomtools-maven.version}</version>
+          <executions>
+            <execution>
+              <id>generate-pom</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>generate-pom</goal>
+              </goals>
+              <configuration>
+                <version>${mrgeo.version}</version>
+                <output>${project.build.directory}/${project.build.finalName}.pom</output>
+              </configuration>
+            </execution>
+            <execution>
+              <id>generate-dependencies</id>
+              <phase />
+              <goals>
+                <goal>list-dependencies</goal>
+              </goals>
+              <configuration>
+                <output>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</output>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${maven-deploy.version}</version>
+          <executions>
+            <!-- Force maven to deploy the effective pom.  -->
+            <execution>
+              <id>deploy-artifact</id>
+              <goals>
+                <goal>deploy-file</goal>
+              </goals>
+              <phase>deploy</phase>
+              <configuration>
+                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
+                <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
+                <repositoryId>mrgeo-repository</repositoryId>
+                <url>${deploy.repository.url}</url>
+                <uniqueVersion>false</uniqueVersion>
+              </configuration>
+            </execution>
+            <execution>
+              <id>default-deploy</id>
+              <goals>
+                <goal>deploy</goal>
+              </goals>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>${build-helper-maven.version}</version>
+          <executions>
+            <execution>
+              <id>check-packaging-for-skip</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>bsh-property</goal>
+              </goals>
+              <configuration>
+                <source>
+                  if (project.version.endsWith("-SNAPSHOT")) {
+                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("snapshot.repository.url", ""));
+                  }
+                  else {
+                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("repository.url", ""));
+                  }
+                </source>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>${maven-install.version}</version>
+        </plugin>
         <!-- make sure scala is before java... -->
         <plugin>
           <groupId>org.scala-tools</groupId>
@@ -272,7 +382,6 @@
               <!--<arg>-target ${java.version}</arg>-->
               <!--<arg>-XDignore.symbol.file=true</arg>-->
             </args>
-
             <sourceDir>${project.basedir}/src/main/scala</sourceDir>
             <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
             <outputDir>${project.build.directory}/classes</outputDir>
@@ -295,25 +404,6 @@
           <version>${maven-release.version}</version>
           <configuration>
             <arguments>${release.arguments}</arguments>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>buildnumber-maven-plugin</artifactId>
-          <version>${buildnumber-maven.version}</version>
-          <executions>
-            <execution>
-              <phase>validate</phase>
-              <goals>
-                <goal>create</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <doCheck>false</doCheck>
-            <doUpdate>false</doUpdate>
-            <revisionOnScmFailure>unknown</revisionOnScmFailure>
-            <timestampFormat>{0,date,yyyy-MM-dd HH:mm:ss}</timestampFormat>
           </configuration>
         </plugin>
         <!-- Make some soft links for the generated products, for convenience -->
@@ -344,15 +434,6 @@
                 <dst>${project.build.directory}/${project.artifactId}.${project.packaging}</dst>
               </link>
             </links>
-          </configuration>
-        </plugin>
-        <plugin>
-          <artifactId>maven-eclipse-plugin</artifactId>
-          <version>${maven-eclipse.version}</version>
-          <configuration>
-            <sourceExcludes>
-              <sourceExclude>**/.svn*/**</sourceExclude>
-            </sourceExcludes>
           </configuration>
         </plugin>
         <plugin>
@@ -496,36 +577,6 @@
           </executions>
         </plugin>
         <plugin>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>${maven-jar.version}</version>
-          <configuration>
-            <excludes>
-              <exclude>lib/**</exclude>
-            </excludes>
-            <archive>
-              <addMavenDescriptor>false</addMavenDescriptor>
-              <manifest>
-                <addClasspath>false</addClasspath>
-              </manifest>
-            </archive>
-          </configuration>
-          <executions>
-            <!-- Package the unit test separately -->
-            <!-- this will make a jar with the unit integration.tests in it, so they can be referenced in other integration.tests
-                 Mainly used for some utility code in the mrgeo core integration.tests -->
-            <execution>
-              <id>test-jar</id>
-              <phase>test</phase>
-              <goals>
-                <goal>test-jar</goal>
-              </goals>
-              <configuration>
-                <testClassesDirectory>${project.build.directory}/test-classes</testClassesDirectory>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>${maven-source.version}</version>
@@ -579,178 +630,6 @@
               <goals>
                 <goal>shade</goal>
               </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <!-- build the effective pom -->
-        <plugin>
-          <groupId>org.mrgeo.plugins</groupId>
-          <artifactId>pomtools-maven-plugin</artifactId>
-          <version>${pomtools-maven.version}</version>
-          <executions>
-            <execution>
-              <id>generate-pom</id>
-              <phase>generate-sources</phase>
-              <goals>
-                <goal>generate-pom</goal>
-              </goals>
-              <configuration>
-                  <version>${mrgeo.version}</version>
-                <output>${project.build.directory}/${project.build.finalName}.pom</output>
-              </configuration>
-            </execution>
-            <execution>
-              <id>generate-dependencies</id>
-              <phase />
-              <goals>
-                <goal>list-dependencies</goal>
-              </goals>
-              <configuration>
-                <output>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</output>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <!-- add the effective pom as an artifact -->
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>build-helper-maven-plugin</artifactId>
-          <version>${build-helper-maven.version}</version>
-          <executions>
-            <execution>
-              <id>attach-effective-pom</id>
-              <phase>package</phase>
-              <goals>
-                <goal>attach-artifact</goal>
-              </goals>
-              <configuration>
-                <skipAttach>${alternate.deploy}</skipAttach>
-                <artifacts>
-                  <artifact>
-                    <file>${project.build.directory}/${project.build.finalName}.pom</file>
-                    <type>pom</type>
-                  </artifact>
-                </artifacts>
-              </configuration>
-            </execution>
-            <!-- skip the attach for pom-only modules, set the repo url as well -->
-            <execution>
-              <id>check-packaging-for-skip</id>
-              <phase>validate</phase>
-              <goals>
-                <goal>bsh-property</goal>
-              </goals>
-              <configuration>
-                <source>
-                  if (project.packaging.equals("pom")) {
-                  project.properties.setProperty("alternate.deploy",  "true");
-                  }
-                  else {
-                  project.properties.setProperty("alternate.deploy",  "false");
-                  }
-
-                  if (project.version.endsWith("-SNAPSHOT")) {
-                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("snapshot.repository.url", ""));
-                  }
-                  else {
-                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("repository.url", ""));
-                  }
-                </source>
-              </configuration>
-            </execution>
-            <execution>
-              <id>build-mrgeo-version</id>
-              <phase>validate</phase>
-              <goals>
-                <goal>bsh-property</goal>
-              </goals>
-              <configuration>
-                <source>
-                  String version = project.version.replaceAll("-SNAPSHOT$", "") + "-" +
-                    project.properties.getProperty("final.classifier", "");
-
-                  if (project.version.endsWith("-SNAPSHOT")) {
-                      version += "-SNAPSHOT";
-                  }
-
-                  project.properties.setProperty("mrgeo.version", version);
-                </source>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>${maven-deploy.version}</version>
-          <executions>
-            <execution>
-              <id>default-deploy</id>
-              <configuration>
-                <skip>${alternate.deploy}</skip>
-                <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
-                <!--<deployAtEnd>true</deployAtEnd>-->
-              </configuration>
-            </execution>
-            <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
-            <execution>
-              <id>deploy-effective-pom</id>
-              <goals>
-                <goal>deploy-file</goal>
-              </goals>
-              <phase>deploy</phase>
-              <inherited>false</inherited>
-              <configuration>
-                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
-                <file>${project.build.directory}/${project.build.finalName}.pom</file>
-                <packaging>pom</packaging>
-                <repositoryId>mrgeo-repository</repositoryId>
-                <url>${deploy.repository.url}</url>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <!-- Force maven to only install the effective pom.  Just for this pom, not children -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-install-plugin</artifactId>
-          <version>${maven-install.version}</version>
-          <executions>
-              <!--
-            <execution>
-              <id>install-effective-pom</id>
-              <goals>
-                <goal>install-file</goal>
-              </goals>
-              <phase>install</phase>
-              <configuration>
-                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
-                <file>${project.build.directory}/${project.build.finalName}.pom</file>
-                <packaging>pom</packaging>
-              </configuration>
-            </execution>
-            -->
-            <execution>
-              <id>install-artifact</id>
-              <goals>
-                <goal>install-file</goal>
-              </goals>
-              <phase>install</phase>
-              <configuration>
-                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
-                <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>${project.artifactId}</artifactId>
-                <version>${mrgeo.version}</version>
-                <packaging>${project.packaging}</packaging>
-              </configuration>
-            </execution>
-            <execution>
-              <id>default-install</id>
-              <configuration>
-                <skip>true</skip>
-                <!--<skip>${alternate.deploy}</skip>-->
-              </configuration>
             </execution>
           </executions>
         </plugin>
@@ -808,14 +687,16 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>${maven-assembly.version}</version>
-          <configuration>
-            <finalName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}</finalName>
-          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
           <version>${maven-clean.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-help-plugin</artifactId>
+          <version>${maven-help.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -825,19 +706,16 @@
         <artifactId>maven-release-plugin</artifactId>
       </plugin>
       <plugin>
-        <artifactId>maven-eclipse-plugin</artifactId>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
+        <artifactId>build-helper-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
+        <artifactId>cobertura-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.mrgeo.plugins</groupId>
@@ -846,6 +724,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.scala-tools</groupId>
@@ -1805,11 +1687,6 @@
       <id>intellij</id>
       <properties>
         <hadoop.scope>compile</hadoop.scope>
-        <!--
-        <alternate.deploy>false</alternate.deploy>
-        <deploy.repository.url>unknown</deploy.repository.url>
-        <skipLicenses>true</skipLicenses>
-        -->
       </properties>
     </profile>
     <!--
@@ -3039,7 +2916,7 @@
         </exclusions>
       </dependency>
       <!-- NOTE:  This is just for testing!!!  We need a better way to correllate the opencv
-                  binaries and the jar.
+           binaries and the jar.
       -->
       <dependency>
         <groupId>${opencv.group}</groupId>
