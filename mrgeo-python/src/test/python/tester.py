@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     # sys.exit(1)
 
-    mrgeo.usedebug()
+    # mrgeo.usedebug()
 
     # images = mrgeo.list_images()
 

@@ -48,7 +48,7 @@ usage() {
     echo "  verify    - run integration tests"
     echo "  deploy    - build and deploy"
     echo "  clean     - clean the build"
-    echo "  version   - change the version within all poms"
+    echo "  version   - change the version within all poms (use 'revert' to revert to previously saved version, if any)"
     echo "  eclipse   - build eclipse files for the project"
     echo "args:"
     echo "  -c  --conf <path>              - location of hadoop conf files (/usr/local/hadoop/conf)"
@@ -62,8 +62,10 @@ usage() {
     echo "  -p  --profile                  - turn on leak detection profiling"
     echo "  -s  --source                   - include source jars of dependencies (if available)"
     echo "  -sh --shade                    - generate the shaded (jar with dependencies) jars"
-    echo "  -v  --version <version>        - hadoop version to use (0.20.2)"
     echo "  -y  --yarn                     - use hadoop YARN (for hadoop 2+, instead of mr1)"
+    echo "  -q  --quiet                    - quiet (no prints from this script)"
+    echo "other:"
+    echo "  buildtype  - return the build type (apache260, cdh560, etc.), no further processing is done"
     echo " "
     echo "  all other args will be passed to maven directly"
     echo " "
@@ -177,6 +179,9 @@ while [ $# -gt 0 ] ; do
     "-h" | "--help" | "-?" | "help")
         usage
         exit 0
+        ;;
+    "buildtype")
+        BUILDTYPE="true"
         ;;
     "all")
         MODULE="all"
@@ -335,7 +340,7 @@ while [ $# -gt 0 ] ; do
         ;;
     "version")
         PHASE="version"
-        POMVERSION=$2
+        VERSION=$2
         shift 1
         ;;
     "cobertura:cobertura")
@@ -364,16 +369,15 @@ while [ $# -gt 0 ] ; do
     "-s" | "--source")
         ARGS=$ARGS" -DdownloadSources=true"
         ;;
-    "-v" | "--version")
-        ARGS=$ARGS" -Dhadoop-version="$2
-        shift 1
-        ;;
     "-jv" | "--javaversion")
         ARGS=$ARGS" -Djava-version="$2
         shift 1
         ;;
     "-y" | "--yarn")
         USEYARN=true
+        ;;
+    "-q" | "--quiet")
+        QUIET="true"
         ;;
     "-g" | "--geowave")
         ARGS=$ARGS" -Pinclude-geowave"
@@ -397,36 +401,39 @@ while [ $# -gt 0 ] ; do
     shift 1
 done
 
+if [ -n "$BUILDTYPE" ]; then
+  echo $BUILD
+  exit 0
+fi
+
+
 if [ -n "$USEYARN" ]; then
     BUILD=$BUILD-yarn
 fi
 
 export HOME=$CWD
 
-MODIFIED=`git diff --shortstat 2> /dev/null | awk '{ print $1 }'`
 
+if [ -z "$QUIET" ]; then
+    echo " "
+    echo "Phase: " $PHASE
+    echo "Module: " $MODULE
+    echo " "
+    echo "Building for " $BUILD
+    echo "-----------------------"
+    echo "  JAVA_HOME:           " $JAVA_HOME
+    echo "  HADOOP_HOME:         " $HADOOP_HOME
+    echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
+    echo "  MRGEO_COMMON_HOME:   " $MRGEO_COMMON_HOME
+    echo "  MRGEO_CONF_DIR:      " $MRGEO_CONF_DIR
+    echo "  MRGEO_HOME:          " $MRGEO_HOME
+    echo "  Build:               " $HOME
+    echo " "
+    echo "  Additional maven args: " $ARGS
+    echo " "
+fi
 
-echo " "
-echo "Phase: " $PHASE
-echo "Module: " $MODULE
-echo " "
-echo "Building for " $BUILD
-echo "  version:   " $VERSION
-echo "  conf:      " $CONF
-echo "-----------------------"
-echo "  JAVA_HOME:           " $JAVA_HOME
-echo "  HADOOP_HOME:         " $HADOOP_HOME
-echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
-echo "  MRGEO_COMMON_HOME:   " $MRGEO_COMMON_HOME
-echo "  MRGEO_CONF_DIR:      " $MRGEO_CONF_DIR
-echo "  MRGEO_HOME:          " $MRGEO_HOME
-echo "  Build:               " $HOME
-echo " "
-echo "  Additional maven args: " $ARGS
-echo " "
-
-
-ARGS="-P$BUILD -Dmodules=$MODULE -DfailIfNoTests=false -DscmModified=$MODIFIED $LICENSE $ARGS"
+ARGS="-P$BUILD -Dmodules=$MODULE -DfailIfNoTests=false $LICENSE $ARGS"
 
 
 case $PHASE in
@@ -446,7 +453,11 @@ case $PHASE in
        ARGS="$ARGS verify"
    ;;
    "version")
-       ARGS="$ARGS versions:set -DnewVersion=$POMVERSION"
+       if [ $VERSION == "revert" ]; then
+           ARGS="$ARGS versions:revert"
+       else
+           ARGS="$ARGS versions:set -DnewVersion=$VERSION"
+       fi
    ;;
    "release")
        ARGS="$SKIPALL $ARGS"
@@ -464,9 +475,10 @@ case $PHASE in
    ;;
 esac
 
-echo "-----------------------"
-echo "  Maven command: "
-echo "mvn $ARGS"
-echo " "
-
+if [ -z "$QUIET" ]; then
+    echo "-----------------------"
+    echo "  Maven command: "
+    echo "mvn $ARGS"
+    echo " "
+fi
 mvn $ARGS
