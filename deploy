@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # Get the existing version of the build
-VERSION=`scripts/mvn-build --quiet help:evaluate -Dexpression=project.version $@ | grep -v '\['`
-#echo $VERSION
+VERSION=`scripts/mvn-build --quiet help:evaluate -Dexpression=project.version $@ | grep -v '\[' | tail -1`
+echo "VERSION" $VERSION
 
 # Get the build type
-BUILD=`scripts/mvn-build --quiet help:evaluate -Dexpression=final.classifier $@ | grep -v '\['`
-#echo $BUILD
+BUILD=`scripts/mvn-build --quiet help:evaluate -Dexpression=final.classifier $@ | grep -v '\[' | tail -1`
+echo "BUILD" $BUILD
 
+exit 1
 
 # Check for SNAPSHOT, and add the BUILD as part of the version name
 if [[ $VERSION == *"-SNAPSHOT" ]]; then
