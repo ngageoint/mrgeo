@@ -8,8 +8,6 @@ echo "VERSION" $VERSION
 BUILD=`scripts/mvn-build --quiet help:evaluate -Dexpression=final.classifier $@ | grep -v '\[' | tail -1`
 echo "BUILD" $BUILD
 
-exit 1
-
 # Check for SNAPSHOT, and add the BUILD as part of the version name
 if [[ $VERSION == *"-SNAPSHOT" ]]; then
   echo "have snapshot"

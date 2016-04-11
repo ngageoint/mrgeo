@@ -269,50 +269,98 @@ while [ $# -gt 0 ] ; do
     "cdh530")
         BUILD="CDH530"
         ;;
+    "cdh530-yarn")
+        BUILD="CDH530-yarn"
+        ;;
     "cdh531")
         BUILD="CDH531"
+        ;;
+    "cdh531-yarn")
+        BUILD="CDH531-yarn"
         ;;
     "cdh532")
         BUILD="CDH532"
         ;;
+    "cdh532-yarn")
+        BUILD="CDH532-yarn"
+        ;;
     "cdh533")
         BUILD="CDH533"
+        ;;
+    "cdh533-yarn")
+        BUILD="CDH533-yarn"
         ;;
     "cdh540")
         BUILD="CDH540"
         ;;
+    "cdh540-yarn")
+        BUILD="CDH540-yarn"
+        ;;
     "cdh541")
         BUILD="CDH541"
+        ;;
+    "cdh541-yarn")
+        BUILD="CDH541-yarn"
         ;;
     "cdh542")
         BUILD="CDH542"
         ;;
+    "cdh542-yarn")
+        BUILD="CDH542-yarn"
+        ;;
     "cdh543")
         BUILD="CDH543"
+        ;;
+    "cdh543-yarn")
+        BUILD="CDH543-yarn"
         ;;
     "cdh544")
         BUILD="CDH544"
         ;;
+    "cdh544-yarn")
+        BUILD="CDH544-yarn"
+        ;;
     "cdh545")
         BUILD="CDH545"
+        ;;
+    "cdh545-yarn")
+        BUILD="CDH545-yarn"
         ;;
     "cdh547")
         BUILD="CDH547"
         ;;
+    "cdh547-yarn")
+        BUILD="CDH547-yarn"
+        ;;
     "cdh548")
         BUILD="CDH548"
+        ;;
+    "cdh548-yarn")
+        BUILD="CDH548-yarn"
         ;;
     "cdh550")
         BUILD="CDH550"
         ;;
+    "cdh550-yarn")
+        BUILD="CDH550-yarn"
+        ;;
     "cdh551")
         BUILD="CDH551"
+        ;;
+    "cdh551-yarn")
+        BUILD="CDH551-yarn"
         ;;
     "cdh552")
         BUILD="CDH552"
         ;;
+    "cdh552-yarn")
+        BUILD="CDH552-yarn"
+        ;;
     "cdh560")
         BUILD="CDH560"
+        ;;
+    "cdh560-yarn")
+        BUILD="CDH560-yarn"
         ;;
     "build")
         PHASE="build"
@@ -408,7 +456,9 @@ fi
 
 
 if [ -n "$USEYARN" ]; then
-    BUILD=$BUILD-yarn
+    if [[ "$BUILD" != *-yarn ]]; then
+      BUILD=$BUILD-yarn
+    fi
 fi
 
 export HOME=$CWD
