@@ -378,6 +378,7 @@ while [ $# -gt 0 ] ; do
         ;;
     "-q" | "--quiet")
         QUIET="true"
+        ARGS=$ARGS" --quiet"
         ;;
     "-g" | "--geowave")
         ARGS=$ARGS" -Pinclude-geowave"

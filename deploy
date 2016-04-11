@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Get the existing version of the build
-VERSION=`scripts/mvn-build --quiet help:evaluate -Dexpression=project.version | grep -v '\['`
+VERSION=`scripts/mvn-build --quiet help:evaluate -Dexpression=project.version $@ | grep -v '\['`
 #echo $VERSION
 
 # Get the build type
-BUILD=`scripts/mvn-build --quiet help:evaluate -Dexpression=final.classifier | grep -v '\['`
+BUILD=`scripts/mvn-build --quiet help:evaluate -Dexpression=final.classifier $@ | grep -v '\['`
 #echo $BUILD
 
 
@@ -23,7 +23,7 @@ fi
 #scripts/mvn-build build $@
 
 # Set the new version
-scripts/mvn-build version $NEWVERSION
+scripts/mvn-build $@ version $NEWVERSION
 
 if [ $? -eq 0 ]; then
 
@@ -36,5 +36,5 @@ fi
 
 # always do this step
 # Set the version back to the original
-scripts/mvn-build version revert
+scripts/mvn-build $@ version revert
 
