@@ -15,8 +15,6 @@ usage() {
     echo "  python       - mrgeo-core/mrgeo-vector/mrgeo-dataprovider/mrgeo-mapalgebra/mrgeo-python"
     echo "build type:"
     echo "  apache    - apache hadoop"
-    echo "  apache220 - Apache hadoop, version 2.2.0"
-    echo "  apache230 - Apache hadoop, version 2.3.0"
     echo "  apache240 - Apache hadoop, version 2.4.0"
     echo "  apache241 - Apache hadoop, version 2.4.1"
     echo "  apache250 - Apache hadoop, version 2.5.0"
@@ -24,10 +22,6 @@ usage() {
     echo "  apache252 - Apache hadoop, version 2.5.2"
     echo "  apache260 - Apache hadoop, version 2.6.0"
     echo "  apache271 - Apache hadoop, version 2.7.1"
-    echo "  cdh530    - Cloudera hadoop 5.3.0"
-    echo "  cdh531    - Cloudera hadoop 5.3.1"
-    echo "  cdh532    - Cloudera hadoop 5.3.2"
-    echo "  cdh533    - Cloudera hadoop 5.3.3"
     echo "  cdh540    - Cloudera hadoop 5.4.0"
     echo "  cdh541    - Cloudera hadoop 5.4.1"
     echo "  cdh542    - Cloudera hadoop 5.4.2"
@@ -40,6 +34,7 @@ usage() {
     echo "  cdh551    - Cloudera hadoop 5.5.1"
     echo "  cdh552    - Cloudera hadoop 5.5.2"
     echo "  cdh560    - Cloudera hadoop 5.6.0"
+    echo "  cdh570    - Cloudera hadoop 5.7.0"
     echo "  emr       - Amazon EMR hadoop 2.4.0 for AMI 3.7.0"
     echo "  mapr      - mapr hadoop"
     echo "phase:"
@@ -247,9 +242,6 @@ while [ $# -gt 0 ] ; do
     "mapr")
         echo "*** MapR Hadoop is no longer supported"
         exit
-        ;;
-    "cdh530" | "cdh530-yarn" | "cdh531" | "cdh531-yarn" | "cdh532" | "cdh532-yarn" | "cdh533" | "cdh533-yarn")
-        BUILD=$1
         ;;
     "cdh540" | "cdh540-yarn" | "cdh541" | "cdh541-yarn" | "cdh542" | "cdh542-yarn" | "cdh543" | "cdh543-yarn" | "cdh544" | "cdh544-yarn" | "cdh545" | "cdh545-yarn" | "cdh547" | "cdh547-yarn" | "cdh548" | "cdh548-yarn")
         BUILD=$1
