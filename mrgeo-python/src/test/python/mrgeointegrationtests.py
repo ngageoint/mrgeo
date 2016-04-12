@@ -120,8 +120,8 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_export(self):
         exp = self.smallelevation.export(self.outputdir + self.name, singleFile=True, format="tiff", overridenodata=-9999)
 
-        self.compareraster(exp, self.name)
         self.comparelocalraster(self.name)
+        self.compareraster(exp, self.name)
 
 
 
