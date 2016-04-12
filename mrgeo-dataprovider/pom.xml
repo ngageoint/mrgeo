@@ -27,30 +27,6 @@
   <name>mrgeo-dataprovider</name>
   <packaging>pom</packaging>
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <executions>
-          <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
-          <execution>
-            <id>deploy-effective-pom</id>
-            <goals>
-              <goal>deploy-file</goal>
-            </goals>
-            <phase>deploy</phase>
-            <inherited>false</inherited>
-            <configuration>
-              <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
-              <file>${project.build.directory}/${project.build.finalName}.pom</file>
-              <packaging>pom</packaging>
-              <repositoryId>mrgeo-repository</repositoryId>
-              <url>${deploy.repository.url}</url>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
   </build>
   <modules>
     <module>mrgeo-dataprovider-accumulo</module>
