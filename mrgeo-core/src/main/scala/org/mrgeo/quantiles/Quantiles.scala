@@ -21,6 +21,7 @@ import java.io.{Externalizable, ObjectInput, ObjectOutput, PrintWriter}
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.ProviderProperties
@@ -131,7 +132,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
     var result = new ListBuffer[Array[Double]]()
     while (b < meta.getBands) {
       val nodata = meta.getDefaultValue(b)
-      val sortedPixelValues = meta.getTileType match {
+      val sortedPixelValues: RDD[AnyVal] = meta.getTileType match {
         case DataBuffer.TYPE_DOUBLE => {
           var pixelValues = rdd.flatMap(U => {
             getDoublePixelValues(RasterWritable.toRaster(U._2), b)
@@ -141,7 +142,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
           if (fraction.isDefined && fraction.get < 1.0f) {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
-          pixelValues.sortBy(x => x)
+          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
         }
         case DataBuffer.TYPE_FLOAT => {
           var pixelValues = rdd.flatMap(U => {
@@ -152,7 +153,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
           if (fraction.isDefined && fraction.get < 1.0f) {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
-          pixelValues.sortBy(x => x)
+          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
         }
         case (DataBuffer.TYPE_INT | DataBuffer.TYPE_USHORT) => {
           var pixelValues = rdd.flatMap(U => {
@@ -163,7 +164,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
           if (fraction.isDefined && fraction.get < 1.0f) {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
-          pixelValues.sortBy(x => x)
+          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
         }
         case DataBuffer.TYPE_SHORT => {
           var pixelValues = rdd.flatMap(U => {
@@ -174,7 +175,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
           if (fraction.isDefined && fraction.get < 1.0f) {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
-          pixelValues.sortBy(x => x)
+          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
         }
         case DataBuffer.TYPE_BYTE => {
           var pixelValues = rdd.flatMap(U => {
@@ -185,7 +186,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
           if (fraction.isDefined && fraction.get < 1.0f) {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
-          pixelValues.sortBy(x => x)
+          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
         }
       }
       val count = sortedPixelValues.count()

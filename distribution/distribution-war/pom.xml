@@ -34,20 +34,6 @@
   <build>
     <finalName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}</finalName>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <inherited>true</inherited>
-        <configuration>
-          <additionalProjectFacets>
-            <jst.web>2.5</jst.web>
-          </additionalProjectFacets>
-          <sourceExcludes>
-            <sourceExclude>**/.svn/**</sourceExclude>
-          </sourceExcludes>
-          <wtpversion>2.0</wtpversion>
-        </configuration>
-      </plugin>
       <!-- make sure this runs before the maven war plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
