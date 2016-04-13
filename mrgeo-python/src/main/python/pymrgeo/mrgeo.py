@@ -647,10 +647,11 @@ class MrGeo(object):
         if self.job.isYarn():
             conf.set("spark.master", "yarn-client")
 
-            mem = jvm.SparkUtils.humantokb(conf.get("spark.executor.memory"))
-            workers = int(conf.get("spark.executor.instances")) + 1  # one for the driver
+            if not conf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = False):
+                mem = jvm.SparkUtils.humantokb(conf.get("spark.executor.memory"))
+                workers = int(conf.get("spark.executor.instances")) + 1  # one for the driver
 
-            conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem / workers), "m"))
+                conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem / workers), "m"))
 
         # for a in conf.getAll():
         #     print(a._1(), a._2())

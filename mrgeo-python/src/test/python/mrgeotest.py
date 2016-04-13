@@ -37,7 +37,7 @@ class MrGeoTests(TestCase):
             # jvm = self.gateway.jvm
             # test = raster.mapop.toDataset(False)
 
-            testimage = self.outputdir + "testimage"
+            testimage = self.outputdir + testname
             raster.export(testimage, singleFile=True, format="tiff", overridenodata=-9999)
             testimage += ".tif"
             test = gdal.Open(testimage)
