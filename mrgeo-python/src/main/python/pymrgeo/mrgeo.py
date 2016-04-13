@@ -361,17 +361,30 @@ class MrGeo(object):
                 if param[4]:
                     call_name, it, et = self.method_name(type_name, "arg")
 
-                    if len(varargcode) == 0:
-                        varargcode += "    array = self.gateway.new_array(self.gateway.jvm." + type_name + ", len(args))\n"
-                        varargcode += "    cnt = 0\n"
-                        call_name = "array"
-
+                    # We assume for now that lists of objects are always lists of
+                    # mapops
                     varargcode += "    for arg in args:\n"
-                    varargcode += "        if not(" + it + "):\n"
-                    varargcode += "            raise Exception('input types differ (TODO: expand this message!)')\n"
+                    varargcode += "        if isinstance(arg, list):\n"
+                    varargcode += "            arg_list = arg\n"
+                    varargcode += "            for arg in arg_list:\n"
+                    varargcode += "                if not(" + it + "):\n"
+                    varargcode += "                    raise Exception('input types differ (TODO: expand this message!)')\n"
+                    varargcode += "        else:\n"
+                    varargcode += "            if not(" + it + "):\n"
+                    varargcode += "                raise Exception('input types differ (TODO: expand this message!)')\n"
+                    varargcode += "    mapops = []\n"
                     varargcode += "    for arg in args:\n"
-                    varargcode += "        array[cnt] = arg.mapop\n"
+                    varargcode += "        if isinstance(arg, list):\n"
+                    varargcode += "            for a in arg:\n"
+                    varargcode += "                mapops.append(a.mapop)\n"
+                    varargcode += "        else :\n"
+                    varargcode += "            mapops.append(arg.mapop)\n"
+                    varargcode += "    array = self.gateway.new_array(self.gateway.jvm." + type_name + ", len(mapops))\n"
+                    varargcode += "    cnt = 0\n"
+                    varargcode += "    for mapop in mapops:\n"
+                    varargcode += "        array[cnt] = mapop\n"
                     varargcode += "        cnt += 1\n"
+                    call_name = "array"
                 else:
                     if firstparam:
                         firstparam = False
