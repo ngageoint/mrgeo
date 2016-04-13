@@ -370,20 +370,13 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   {
     if (version.isLess("1.1.0"))
     {
-      crs = getBoundsParam(allParams, "bbox", bounds);
-      try
-      {
-        crs = getCrsParam(allParams);
-      }
-      catch (Exception e)
-      {
-        return writeError(Response.Status.BAD_REQUEST, e.getMessage());
-      }
+      bounds = getBoundsParam(allParams, "bbox", bounds);
     }
     else
     {
-      crs = getBoundsParam(allParams, "boundingbox", bounds);
+      bounds = getBoundsParam(allParams, "boundingbox", bounds);
     }
+    crs = getCrsParam(allParams);
   }
   catch (Exception e)
   {
@@ -538,7 +531,7 @@ private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
 //  return defaultValue;
 //}
 
-private String getBoundsParam(MultivaluedMap<String, String> allParams, String paramName, Bounds bounds)
+private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName, Bounds bounds)
     throws Exception
 {
   String bbox = getQueryParam(allParams, paramName);
@@ -547,12 +540,7 @@ private String getBoundsParam(MultivaluedMap<String, String> allParams, String p
     throw new Exception("Missing required " + paramName.toUpperCase() + " parameter");
   }
   String[] bboxComponents = bbox.split(",");
-  String crs = null;
-  if (bboxComponents.length == 5)
-  {
-    crs = bboxComponents[4];
-  }
-  else if (bboxComponents.length != 4)
+  if (!(bboxComponents.length == 5 || bboxComponents.length == 4))
   {
     throw new Exception("Invalid \" + paramName.toUpperCase() + \" parameter. Should contain minX, minY, maxX, maxY");
   }
@@ -570,9 +558,12 @@ private String getBoundsParam(MultivaluedMap<String, String> allParams, String p
     }
   }
 
-  bounds = bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+  if (bounds == null)
+  {
+    return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+  }
 
-  return crs;
+  return bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
 }
 
 private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exception
@@ -580,6 +571,16 @@ private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exce
   String crs = getQueryParam(allParams, "crs");
   if (crs == null || crs.isEmpty())
   {
+    // CRS can also be buried in bbox (in earlier versions of the spec)
+    String bbox = getQueryParam(allParams, "bbox");
+    if (bbox != null)
+    {
+      String[] bboxComponents = bbox.split(",");
+      if (bboxComponents.length == 5)
+      {
+        return bboxComponents[4];
+      }
+    }
     return null;
   }
   else

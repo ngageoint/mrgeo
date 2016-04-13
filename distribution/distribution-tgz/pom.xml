@@ -32,7 +32,7 @@
   <name>distribution-tgz</name>
   <url>http://mrgeo.org</url>
   <build>
-    <finalName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}</finalName>
+    <finalName>${project.parent.parent.artifactId}-${project.version}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

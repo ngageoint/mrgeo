@@ -175,24 +175,6 @@ public static Options createOptions()
 
 private void calculateParams(final Dataset image)
 {
-  // calculate zoom level for the image
-  double[] xform = image.GetGeoTransform();
-
-  final double pixelsizeLon = xform[1];
-  final double pixelsizeLat = -xform[5];
-
-  final int zx = TMSUtils.zoomForPixelSize(pixelsizeLon, tilesize);
-  final int zy = TMSUtils.zoomForPixelSize(pixelsizeLat, tilesize);
-
-  if (zoomlevel < zx)
-  {
-    zoomlevel = zx;
-  }
-  if (zoomlevel < zy)
-  {
-    zoomlevel = zy;
-  }
-
   Bounds imageBounds = GDALUtils.getBounds(image);
 
   log.debug("    image bounds: (lon/lat) " +
@@ -208,6 +190,21 @@ private void calculateParams(final Dataset image)
   {
     bounds = bounds.expand(imageBounds);
   }
+
+  // calculate zoom level for the image
+
+  final int zx = TMSUtils.zoomForPixelSize(imageBounds.width() / image.getRasterXSize(), tilesize);
+  final int zy = TMSUtils.zoomForPixelSize(imageBounds.height() / image.getRasterYSize(), tilesize);
+
+  if (zoomlevel < zx)
+  {
+    zoomlevel = zx;
+  }
+  if (zoomlevel < zy)
+  {
+    zoomlevel = zy;
+  }
+
 
   // Calculate some parameters only for the first input file because they should
   // not differ among all the input files for one source.
