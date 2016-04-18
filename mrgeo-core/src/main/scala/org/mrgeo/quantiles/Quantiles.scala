@@ -21,7 +21,7 @@ import java.io.{Externalizable, ObjectInput, ObjectOutput, PrintWriter}
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.ProviderProperties
@@ -122,11 +122,6 @@ object Quantiles extends MrGeoDriver with Externalizable {
   }
 
   def compute(rdd: RasterRDD, numberOfQuantiles: Int, fraction: Option[Float], meta: MrsPyramidMetadata) = {
-    val quantiles = new Array[Float](numberOfQuantiles - 1)
-    for (i <- quantiles.indices) {
-      quantiles(i) = 1.0f / numberOfQuantiles.toFloat * (i + 1).toFloat
-    }
-
     var b: Int = 0
     val dt = meta.getTileType
     var result = new ListBuffer[Array[Double]]()
@@ -190,17 +185,26 @@ object Quantiles extends MrGeoDriver with Externalizable {
         }
       }
       val count = sortedPixelValues.count()
+      // Build an RDD containing an entry for each individual quantile to compute.
+      // The key is the index into the set of sorted pixel values corresponding to
+      // the quantile. The value is the number of the quantile itself.
+      val quantiles = new Array[(Long, Int)](numberOfQuantiles - 1)
+      for (i <- quantiles.indices) {
+        val qFraction = 1.0f / numberOfQuantiles.toFloat * (i + 1).toFloat
+        quantiles(i) = ((qFraction * count).ceil.toLong, i)
+      }
+      val quantilesRdd = new PairRDDFunctions(rdd.context.parallelize(quantiles))
       if (count >= quantiles.length) {
 //        log.info("value count is " + count)
-        // Add an index to the sorted pixel values, but we want it as the key instead
-        // of the value.
+        // Add an index as the key to the sorted pixel values so we can join on that key.
         val sortedWithIndexKey = sortedPixelValues.zipWithIndex().map(_.swap)
         val quantileValues = new Array[Double](quantiles.length)
-        quantiles.zipWithIndex.foreach(q => {
-          val quantileKey: Long = (q._1 * count).ceil.toLong
-          val quantileValue = sortedWithIndexKey.lookup(quantileKey).head.toString.toDouble
-//          log.info("quantile " + q._1 + " is at index " + quantileKey + " and has value " + quantileValue)
-          quantileValues(q._2) = quantileValue
+        // Join the two RDD's and the results contain an entry for each quantile
+        // with the quantile number and the pixel value corresponding to that quantile.
+        val joined = quantilesRdd.join(sortedWithIndexKey)
+        val localJoined = joined.collect()
+        localJoined.foreach(q => {
+          quantileValues(q._2._1) = q._2._2.toString.toDouble
         })
 //        if (log.isInfoEnabled) {
 //          log.info("Setting quantiles for band " + b + " to:")
