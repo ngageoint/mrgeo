@@ -191,19 +191,12 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
       case FocalStatMapOp.Count => neighborhoodValueIndex
       case FocalStatMapOp.Max => computeMax(neighborhoodValues, neighborhoodValueIndex)
       case FocalStatMapOp.Min => computeMin(neighborhoodValues, neighborhoodValueIndex)
-      case FocalStatMapOp.Mean => computeSum(neighborhoodValues, neighborhoodValueIndex) / neighborhoodValueIndex
+      case FocalStatMapOp.Mean => computeStat(neighborhoodValues, neighborhoodValueIndex, stat)
       case FocalStatMapOp.Median => computeMedian(neighborhoodValues, neighborhoodValueIndex)
       case FocalStatMapOp.Range => computeRange(neighborhoodValues, neighborhoodValueIndex)
-      case FocalStatMapOp.StdDev => {
-        val mean = computeSum(neighborhoodValues, neighborhoodValueIndex) / neighborhoodValueIndex
-        val variance = computeVariance(neighborhoodValues, neighborhoodValueIndex, mean)
-        math.sqrt(variance)
-      }
+      case FocalStatMapOp.StdDev => computeStat(neighborhoodValues, neighborhoodValueIndex, stat)
       case FocalStatMapOp.Sum => computeSum(neighborhoodValues, neighborhoodValueIndex)
-      case FocalStatMapOp.Variance => {
-        val mean = computeSum(neighborhoodValues, neighborhoodValueIndex) / neighborhoodValueIndex
-        computeVariance(neighborhoodValues, neighborhoodValueIndex, mean)
-      }
+      case FocalStatMapOp.Variance => computeStat(neighborhoodValues, neighborhoodValueIndex, stat)
     }
   }
 
@@ -270,15 +263,54 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     sumValue
   }
 
-  private def computeVariance(values: Array[Double], maxIndex: Int, mean: Double): Double = {
-    var variance: Double = 0.0
-    var index: Int = 0
-    while (index < maxIndex) {
-      val delta = values(index) - mean
-      variance += (delta * delta)
-      index += 1
+  // The following was adapted from http://www.johndcook.com/blog/standard_deviation/ which in
+  // turn came from Donald Knuth’s Art of Computer Programming, Vol 2, page 232, 3rd edition
+  def computeStat(values: Array[Double], maxIndex: Int, stat: String): Double = {
+    if (maxIndex <= 0 || values.length <= 0) {
+      throw new IllegalArgumentException("computeStat expects at least one input value")
     }
-    variance
+
+    var oldM = values(0)
+    var newM = values(0)
+    var oldS = 0.0
+    var newS: Double = 0.0
+    var n: Int = 1
+    while (n < maxIndex) {
+      val value = values(n)
+      n += 1
+      val delta = (value - oldM)
+      newM = oldM + delta / n
+      newS = oldS + delta * (value - newM)
+      oldM = newM
+      oldS = newS
+    }
+    stat match {
+      case FocalStatMapOp.StdDev => {
+        math.sqrt(if (n > 1) {
+          newS / (n - 1)
+        }
+        else{
+          0.0
+        })
+      }
+      case FocalStatMapOp.Mean => {
+        if (n > 0) {
+          newM
+        }
+        else {
+          0.0
+        }
+      }
+      case FocalStatMapOp.Variance => {
+        if (n > 1) {
+          newS / (n - 1)
+        }
+        else {
+          0.0
+        }
+      }
+      case _ => throw new IllegalArgumentException("computeStat does not handle " + stat)
+    }
   }
 
   override def setup(job: JobArguments, conf:SparkConf): Boolean = true
