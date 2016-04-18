@@ -219,7 +219,7 @@ for z in zones:
 
 response = emr.run_job_flow(Name=cluster_name,
                             LogUri=log_uri,
-                            ReleaseLabel='emr-4.3.0',
+                            ReleaseLabel='emr-4.5.0',
                             #                 AmiVersion='3.10',
                             Instances={
                                 'InstanceGroups': instance_groups,
