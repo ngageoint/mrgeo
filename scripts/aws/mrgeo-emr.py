@@ -271,7 +271,8 @@ response = emr.run_job_flow(Name=cluster_name,
                                     "Properties": {
                                         "spark.yarn.jar": "/usr/lib/spark/lib/spark-assembly.jar",
                                         "spark.network.timeout": "600",
-                                        "spark.driver.maxResultSize": "0"
+                                        "spark.driver.maxResultSize": "0",
+                                        "spark.dynamicAllocation.enabled":"true"
                                     }
                                 }
                             ],
