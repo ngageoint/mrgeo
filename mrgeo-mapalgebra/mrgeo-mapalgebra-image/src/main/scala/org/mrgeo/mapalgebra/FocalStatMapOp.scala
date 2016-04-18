@@ -123,11 +123,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
         outputNoDatas = Some(Array.fill[Number](meta.getBands)(Int.MinValue))
       case FocalStatMapOp.Max | FocalStatMapOp.Min | FocalStatMapOp.Range =>
         outputTileType = Some(meta.getTileType)
-        // Convert nodatas from Double to Number
-        val nodatas = Array.ofDim[Number](meta.getBands)
-        for (i <- nodatas.indices) {
-          nodatas(i) = meta.getDefaultValue(i)
-        }
+        val nodatas = meta.getDefaultValuesNumber
         outputNoDatas = Some(nodatas)
       case FocalStatMapOp.Mean | FocalStatMapOp.Median | FocalStatMapOp.StdDev |
            FocalStatMapOp.Sum | FocalStatMapOp.Variance =>

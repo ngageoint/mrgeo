@@ -122,11 +122,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
-    val nodatas = Array.ofDim[Number](meta.getBands)
-    for (i <- nodatas.indices) {
-      nodatas(i) = meta.getDefaultValue(i)
-    }
-
+    val nodatas = meta.getDefaultValuesNumber
 
     val kernel = method match {
     case KernelMapOp.Gaussian =>
