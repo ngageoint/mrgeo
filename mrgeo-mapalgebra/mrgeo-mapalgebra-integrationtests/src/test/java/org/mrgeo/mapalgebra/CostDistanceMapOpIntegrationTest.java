@@ -64,7 +64,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
   // tests won't be run when is set to true
-  public final static boolean GEN_BASELINE_DATA_ONLY = false;
+  public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
   private static final String ALL_ONES = "all-ones";
   private static final int ALL_ONES_ZOOM = 10;
@@ -74,6 +74,8 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 //  private static final String TOBLER_MEDIUM = "tobler-raw-9tiles";
   private static final int TOBLER_MEDIUM_ZOOM = 10;
   private static String frictionSurface;
+
+private static final String smallElevationName = "small-elevation";
 
   @BeforeClass
   public static void init() throws IOException
@@ -92,6 +94,9 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
     HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), ALL_ONES);
 
     frictionSurface = testUtils.getInputHdfs() + "/" +  TOBLER_MEDIUM;
+
+    HadoopFileUtils
+        .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
   }
 
   @Test
@@ -202,25 +207,47 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 //    }
 //  }
 //
-  @Test
-  @Category(IntegrationTest.class)
-  public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
+{
+  final int lowerZoomLevel = TOBLER_MEDIUM_ZOOM - 1;
+
+  String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
+      + "friction = [" + frictionSurface + "];\n"
+      + "result = CostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
+
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    final int lowerZoomLevel = TOBLER_MEDIUM_ZOOM - 1;
-
-    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
-        + "friction = [" + frictionSurface + "];\n"
-        + "result = CostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
-
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
-    }
+    testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
   }
+  else
+  {
+    testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void directionalCostDistance() throws Exception
+{
+  String exp = "" +
+    "sl = directionalslope([small-elevation]);\n" +
+    //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
+    "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.087)));\n" +
+    //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
+    //"cost = CostDistance(src, pingle, 50000.0);\n" +
+    //"cost = CostDistance(src, tobler, 50000.0);\n" +
+    "";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+  }
+}
 
 //  @Ignore
 //  @Test
