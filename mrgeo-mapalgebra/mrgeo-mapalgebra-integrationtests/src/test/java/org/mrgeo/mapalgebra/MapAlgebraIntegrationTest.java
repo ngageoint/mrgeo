@@ -1811,6 +1811,25 @@ public void slopePercent() throws Exception
   }
 }
 
+@Test
+@Category(IntegrationTest.class)
+public void slope8() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("slope8([%s])", smallElevation), -9999);
+
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("slope8([%s])", smallElevation));
+
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
