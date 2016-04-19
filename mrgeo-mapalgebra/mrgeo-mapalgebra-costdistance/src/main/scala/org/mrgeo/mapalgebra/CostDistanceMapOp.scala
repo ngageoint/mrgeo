@@ -517,7 +517,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                       bottomValues: Array[Float],
                       leftValues: Array[Float],
                       rightValues: Array[Float],
-                      queue: java.util.concurrent.PriorityBlockingQueue[CostPoint]): Unit =
+                      queue: java.util.concurrent.PriorityBlockingQueue[QueueCostPoint]): Unit =
   {
     val currDestTotalCost = destRaster.getSampleFloat(pxDest, pyDest, totalCostBandIndex) // destBuf(numBands * (py * width + px) + totalCostBandIndex)
     val srcTileId = calculateSourceTile(destTileId, zoom, direction)
@@ -542,8 +542,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
       if (pyDest == height - 1) {
         bottomValues(pyDest) = newTotalCost
       }
-      queue.add(new CostPoint(pxDest, pyDest, newTotalCost,
-        destRaster.getSampleFloat(pxDest, pyDest, 0)))
+      queue.add(new QueueCostPoint(pxDest, pyDest, newTotalCost))
     }
   }
 
@@ -553,7 +552,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
    * pixels to the queue which is used for processing the tile later.
    *
    */
-  def propagateNeighborChangesToOuterPixels(queue: java.util.concurrent.PriorityBlockingQueue[CostPoint],
+  def propagateNeighborChangesToOuterPixels(queue: java.util.concurrent.PriorityBlockingQueue[QueueCostPoint],
                                             tileId: Long,
                                             raster: WritableRaster,
                                             width: Int,
@@ -576,7 +575,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
             case CostDistanceMapOp.SELF =>
               // This direction is only used at the start of the algorithm for source
               // points inside of tiles. Just add these changed points to the queue.
-              queue.add(srcPoint)
+              queue.add(new QueueCostPoint(srcPoint.px, srcPoint.py, srcPoint.totalCost))
 
             case CostDistanceMapOp.ABOVE =>
               // The destination tile is above the source tile. If any changed pixels in
@@ -793,7 +792,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
     // tile make up the queue of changed points that need to be processed
     // for this tile.
     val tile1 = TMSUtils.tileid(tileId, zoomLevel)
-    var queue = new java.util.concurrent.PriorityBlockingQueue[CostPoint]()
+    var queue = new java.util.concurrent.PriorityBlockingQueue[QueueCostPoint]()
     propagateNeighborChangesToOuterPixels(queue, tileId, raster, width, height, res, pixelSizeMeters,
       origTopEdgeValues, origBottomEdgeValues, origLeftEdgeValues, origRightEdgeValues, changes)
 
@@ -857,8 +856,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
                 val costIncrease = sourcePixelCost * 0.5f + neighborPixelCost * 0.5f
                 val newNeighborCost = currPoint.totalCost + costIncrease
                 if (isValueSmaller(newNeighborCost, currNeighborTotalCost)) {
-                  val neighborPoint = new CostPoint(pxNeighbor, pyNeighbor, newNeighborCost,
-                    raster.getSampleFloat(pxNeighbor, pyNeighbor, 0))
+                  val neighborPoint = new QueueCostPoint(pxNeighbor, pyNeighbor, newNeighborCost)
                   t0 = System.nanoTime()
                   queue.add(neighborPoint)
                   totalEnqueue = totalEnqueue + (System.nanoTime() - t0)
@@ -1029,13 +1027,9 @@ object TraversalDirection {
 //ordering should be in increasing order by cost so that the PriorityQueue processes
 //minimum cost elements first.
 class CostPoint(var px: Short, var py: Short, var totalCost: Float, var pixelFriction: Float
-                 ) extends Ordered[CostPoint] with Externalizable {
+                 ) extends Externalizable {
   def this() = {
     this(-1, -1, 0.0f, 0.0f)
-  }
-
-  def compare(that: CostPoint): Int = {
-    totalCost.compare(that.totalCost)
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
@@ -1050,6 +1044,28 @@ class CostPoint(var px: Short, var py: Short, var totalCost: Float, var pixelFri
     py = in.readShort()
     totalCost = in.readFloat()
     pixelFriction = in.readFloat()
+  }
+}
+
+class QueueCostPoint(var px: Short, var py: Short, var totalCost: Float) extends Ordered[QueueCostPoint] with Externalizable {
+  def this() = {
+    this(-1, -1, 0.0f)
+  }
+
+  def compare(that: QueueCostPoint): Int = {
+    totalCost.compare(that.totalCost)
+  }
+
+  override def writeExternal(out: ObjectOutput): Unit = {
+    out.writeShort(px)
+    out.writeShort(py)
+    out.writeFloat(totalCost)
+  }
+
+  override def readExternal(in: ObjectInput): Unit = {
+    px = in.readShort()
+    py = in.readShort()
+    totalCost = in.readFloat()
   }
 }
 
