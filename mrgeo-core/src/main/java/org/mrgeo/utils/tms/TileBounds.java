@@ -18,7 +18,9 @@ package org.mrgeo.utils.tms;
 
 import org.mrgeo.utils.LongRectangle;
 
-public class TileBounds
+import java.io.Serializable;
+
+public class TileBounds implements Serializable
 {
   public long n;
   public long s;

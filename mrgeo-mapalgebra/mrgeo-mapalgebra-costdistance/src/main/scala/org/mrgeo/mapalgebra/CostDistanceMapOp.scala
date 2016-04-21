@@ -231,15 +231,20 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable {
           // friction values per direction, then this computation must change as well.
           val stats = frictionMeta.getImageStats(zoomLevel, 0)
           if (stats == null) {
-            throw new IOException(s"No stats for ${frictionMeta.getPyramid}." +
-                " You must either build the pyramid for it or specify the bounds for the cost distance.")
+            frictionMeta.getBounds
+//            throw new IOException(s"No stats for ${frictionMeta.getPyramid}." +
+//                " You must either build the pyramid for it or specify the bounds for the cost distance.")
           }
-
-          CostDistanceMapOp.LOG.info("Calculating tile bounds for maxCost " + maxCost + ", min = " + stats.min + " and bounds " + frictionMeta.getBounds)
-          if (stats.min == Double.MaxValue) {
-            throw new IllegalArgumentException("Invalid stats for the friction surface: " + frictionMeta.getPyramid + ". You will need to explicitly include the bounds in the CostDistance call")
+          else {
+            CostDistanceMapOp.LOG.info(
+              "Calculating tile bounds for maxCost " + maxCost + ", min = " + stats.min + " and bounds " +
+                  frictionMeta.getBounds)
+            if (stats.min == Double.MaxValue) {
+              throw new IllegalArgumentException("Invalid stats for the friction surface: " + frictionMeta.getPyramid +
+                  ". You will need to explicitly include the bounds in the CostDistance call")
+            }
+            calculateBoundsFromCost(maxCost, sourcePointsRDD, stats.min, frictionMeta.getBounds)
           }
-          calculateBoundsFromCost(maxCost, sourcePointsRDD, stats.min, frictionMeta.getBounds)
         }
       case Some(rb) => rb
       }

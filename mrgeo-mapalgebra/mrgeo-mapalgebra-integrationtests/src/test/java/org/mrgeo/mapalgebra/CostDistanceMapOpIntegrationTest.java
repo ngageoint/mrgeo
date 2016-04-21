@@ -33,6 +33,7 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.MapOpTestVectorUtils;
+import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +110,7 @@ private static final String smallElevationName = "small-elevation";
 //        + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
                  + "friction = [" + frictionSurface + "];\n"
-                 + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
+                 + "result = NewCostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
     // Start point in tile tx=702 ty = 348, pixel px = 510 py = 0
 //    String exp = "srcPoint = InlineCsv(\"GEOMETRY\", \"'POINT(9.029234 45.223345)'\");\n"
 //                 + "friction = [/mrgeo/images/dave-tobler-raw-spm_nowater];\n"
@@ -232,13 +233,16 @@ public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
 public void directionalCostDistance() throws Exception
 {
   String exp = "" +
-    "sl = directionalslope([small-elevation]);\n" +
-    //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
-    "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.087)));\n" +
-    //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
-    //"cost = CostDistance(src, pingle, 50000.0);\n" +
-    //"cost = CostDistance(src, tobler, 50000.0);\n" +
-    "";
+      "sl = directionalslope([small-elevation]);\n" +
+      //"cp = crop(sl, 142.1, -18.12, 142.5, -18.13);\n" +
+      //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
+      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.087)));\n" +
+      //"tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(cp + 0.087)));\n" +
+      "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
+      //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.2 -18.0)'\");\n" +
+      //"cost = CostDistance(src, pingle, 50000.0);\n" +
+      "cost = NewCostDistance(src, tobler);\n" +
+      "";
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
@@ -249,6 +253,55 @@ public void directionalCostDistance() throws Exception
   }
 }
 
+@Test
+@Category(IntegrationTest.class)
+public void nondirectionalCostDistance() throws Exception
+{
+  String exp = "" +
+      "sl = slope([small-elevation]);\n" +
+      //"cp = crop(sl, 142.1, -18.12, 142.5, -18.13);\n" +
+      //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
+      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.087)));\n" +
+      //"tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(cp + 0.087)));\n" +
+      "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
+      //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.2 -18.0)'\");\n" +
+      //"cost = CostDistance(src, pingle, 50000.0);\n" +
+      "cost = NewCostDistance(src, tobler);\n" +
+      "";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+  }
+}
+
+//@Test
+//@Category(IntegrationTest.class)
+//public void anotherTestCostDistance() throws Exception
+//{
+//  String exp = "" +
+//      "sl = slope([small-elevation]);\n" +
+//      "cp = crop(sl, 142.1, -18.12, 142.5, -18.13);\n" +
+//      //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
+//      //"tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.087)));\n" +
+//      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(cp + 0.087)));\n" +
+//      "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
+//      //"cost = CostDistance(src, pingle, 50000.0);\n" +
+//      "cost = NewCostDistance(src, tobler, 50000);\n" +
+//      "";
+//  if (GEN_BASELINE_DATA_ONLY)
+//  {
+//    testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+//  }
+//  else
+//  {
+//    testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+//  }
+//}
+//slope
 //  @Ignore
 //  @Test
 //  @Category(IntegrationTest.class)

@@ -121,7 +121,7 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
 
 
       val dist =  TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE
-      val diagdist = Math.sqrt(dist * dist)
+      val diagdist = Math.sqrt(2.0 * dist * dist)
 
       //val up = new Vector3d(0, 0, 1.0)  // z (up) direction
 
