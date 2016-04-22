@@ -1684,6 +1684,21 @@
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
       </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>emr-4.4.0</id>
@@ -1701,6 +1716,21 @@
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
       </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
     </profile>
     <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->
     <profile>
