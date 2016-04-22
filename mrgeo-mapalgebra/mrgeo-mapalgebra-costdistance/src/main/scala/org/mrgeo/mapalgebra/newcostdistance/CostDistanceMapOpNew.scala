@@ -365,9 +365,7 @@ class CostDistanceMapOpNew extends RasterMapOp with Externalizable with Logging 
       changes = changesAccum.value
 
 
-      logDebug("Changes after iteration " + counter)
-      //      changesToProcess.dump(zoomLevel)
-      changes.totalCount()
+      logInfo("Changes after iteration " + counter + ": " + changes.totalCount())
       counter += 1
     } while(changes.size() > 0)
 
@@ -489,11 +487,11 @@ class CostDistanceMapOpNew extends RasterMapOp with Externalizable with Logging 
       new NeighborData(-1, -1, 7, pixelsizediag), // UP_LEFT),
       new NeighborData(0, -1, 0, pixelsize),      // UP),
       new NeighborData(1, -1, 1, pixelsizediag),  // UP_RIGHT),
-      new NeighborData(-1, 0, 2, pixelsize),      // LEFT),
-      new NeighborData(1, 0, 3, pixelsize),       // RIGHT),
-      new NeighborData(-1, 1, 4, pixelsizediag),  // DOWN_LEFT),
-      new NeighborData(0, 1, 5, pixelsize),       // DOWN),
-      new NeighborData (1, 1, 6, pixelsizediag)   // DOWN_RIGHT)
+      new NeighborData(-1, 0, 6, pixelsize),      // LEFT),
+      new NeighborData(1, 0, 2, pixelsize),       // RIGHT),
+      new NeighborData(-1, 1, 5, pixelsizediag),  // DOWN_LEFT),
+      new NeighborData(0, 1, 4, pixelsize),       // DOWN),
+      new NeighborData (1, 1, 3, pixelsizediag)   // DOWN_RIGHT)
     )
 
     def isSmaller(newcost:Float, oldcost:Float): Boolean = {
