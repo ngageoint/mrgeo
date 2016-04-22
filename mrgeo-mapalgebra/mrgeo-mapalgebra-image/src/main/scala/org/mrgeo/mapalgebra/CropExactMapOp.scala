@@ -16,11 +16,13 @@
 
 package org.mrgeo.mapalgebra
 
+import org.apache.spark.rdd.RDD
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.tms.{Pixel, LatLon, Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, LatLon, Pixel, TMSUtils}
 
 object CropExactMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -40,15 +42,15 @@ class CropExactMapOp extends CropMapOp {
   private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double) = {
     this()
 
-    inputMapOp = raster
     cropBounds = new Bounds(w, s, e, n)
+    setInputMapOp(raster)
   }
 
   private[mapalgebra] def this(raster:Option[RasterMapOp], rasterForBounds: Option[RasterMapOp]) = {
     this()
 
-    inputMapOp = raster
     rasterForBoundsMapOp = rasterForBounds
+    setInputMapOp(raster)
   }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
@@ -61,8 +63,9 @@ class CropExactMapOp extends CropMapOp {
   }
 
   override def processTile(tile: (TileIdWritable, RasterWritable),
-                           zoom: Int, tilesize: Int,
-                           nodatas: Array[Double]): TraversableOnce[(TileIdWritable, RasterWritable)] = {
+                           zoom: Int,
+                           tilesize: Int,
+                           nodatas: Array[Double]): (TileIdWritable, RasterWritable) = {
     val pp = calculateCrop(zoom, tilesize)
 
     val t = pp._1.py
@@ -71,10 +74,10 @@ class CropExactMapOp extends CropMapOp {
     val l = pp._2.px
     val tt = TMSUtils.tileid(tile._1.get(), zoom)
     if ((tt.tx == bounds.w) || (tt.tx == bounds.e) || (tt.ty == bounds.s) || (tt.ty == bounds.n)) {
-      var minCopyX:Long = 0
-      var maxCopyX:Long = tilesize
-      var minCopyY:Long = 0
-      var maxCopyY:Long = tilesize
+      var minCopyX: Long = 0
+      var maxCopyX: Long = tilesize
+      var minCopyY: Long = 0
+      var maxCopyY: Long = tilesize
 
       if (tt.tx == bounds.w) {
         minCopyX = l
@@ -97,8 +100,7 @@ class CropExactMapOp extends CropMapOp {
         while (x < raster.getWidth) {
           var b: Int = 0
           while (b < raster.getNumBands) {
-            if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY)
-            {
+            if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY) {
               raster.setSample(x, y, 0, nodatas(b))
             }
             b += 1
@@ -108,11 +110,20 @@ class CropExactMapOp extends CropMapOp {
         y += 1
       }
 
-      Array((tile._1, RasterWritable.toWritable(raster))).iterator
+      (tile._1, RasterWritable.toWritable(raster))
     }
     else {
-      Array(tile).iterator
+      tile
     }
+  }
+
+  protected override def processAllTiles(inputRDD: RasterRDD,
+                                         zoom: Int,
+                                         tilesize: Int,
+                                         nodatas: Array[Double]): RDD[(TileIdWritable, RasterWritable)] = {
+    inputRDD.map(tile => {
+      processTile(tile, zoom, tilesize, nodatas)
+    })
   }
 
   override def getOutputBounds(zoom: Int, tilesize: Int) = {

@@ -18,16 +18,17 @@ package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
-import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 
 object CropMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
@@ -48,23 +49,24 @@ object CropMapOp extends MapOpRegistrar {
 class CropMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
 
-  protected var inputMapOp: Option[RasterMapOp] = None
+  private var inputMapOp: Option[RasterMapOp] = None
   protected var rasterForBoundsMapOp: Option[RasterMapOp] = None
   protected var bounds:TileBounds = null
   protected var cropBounds:Bounds = null
+  private var doFiltering = true
 
   private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double) = {
     this()
 
-    inputMapOp = raster
     cropBounds = new Bounds(w, s, e, n)
+    setInputMapOp(raster)
   }
 
   private[mapalgebra] def this(raster:Option[RasterMapOp], rasterForBounds: Option[RasterMapOp]) = {
     this()
 
-    inputMapOp = raster
     rasterForBoundsMapOp = rasterForBounds
+    setInputMapOp(raster)
   }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
@@ -77,8 +79,6 @@ class CropMapOp extends RasterMapOp with Externalizable {
   }
 
   protected def parseChildren(node: ParserNode, variables: String => Option[ParserNode]) = {
-    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-
     if (node.getNumChildren == 2) {
       rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
     }
@@ -87,6 +87,59 @@ class CropMapOp extends RasterMapOp with Externalizable {
         MapOp.decodeDouble(node.getChild(2), variables).get,
         MapOp.decodeDouble(node.getChild(3), variables).get,
         MapOp.decodeDouble(node.getChild(4), variables).get)
+    }
+    setInputMapOp(RasterMapOp.decodeToRaster(node.getChild(0), variables))
+  }
+
+  /**
+    * Checks to see if the raster input to the crop is a MrsPyramidInputFormat. If so,
+    * it takes advantage of the MrsPyramidMapOp's ability to directly filter the
+    * input image to bounds, which is significantly faster than filtering all of
+    * the image's tiles using the Spark filter function. This is because it limits
+    * the number of splits and tiles while the data is being read rather than having
+    * to push the data through the system to be filtered out during processing.
+    *
+    * Because MrsPyramidMapOps can be shared (when the same input source is referenced
+    * in multiple places in the map algebra), we clone the input map op before
+    * setting the bounds information into it. This prevents affecting any other places
+    * where the same input source is used without the crop.
+    */
+  protected def setInputMapOp(inputMapOp: Option[RasterMapOp]): Unit = {
+    inputMapOp match {
+      case Some(op) => {
+        op match {
+          case op: MrsPyramidMapOp => {
+            rasterForBoundsMapOp match {
+              case Some(bmo) => {
+                val clonedOp = op.clone
+                clonedOp.asInstanceOf[MrsPyramidMapOp].setBounds(bmo)
+                this.inputMapOp = Some(clonedOp)
+                doFiltering = false
+              }
+              case None => {
+                if (cropBounds != null) {
+                  val clonedOp = op.clone
+                  clonedOp.asInstanceOf[MrsPyramidMapOp].setBounds(cropBounds)
+                  this.inputMapOp = Some(clonedOp)
+                  doFiltering = false
+                }
+              }
+            }
+          }
+          case _ => this.inputMapOp = inputMapOp
+        }
+      }
+      case _ => this.inputMapOp = inputMapOp
+    }
+  }
+
+  override def context(cont: SparkContext) = {
+    super.context(cont)
+    this.inputMapOp match {
+      case Some(op) => {
+        op.context(cont)
+      }
+      case None => {}
     }
   }
 
@@ -98,37 +151,50 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
     val input: RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
+    // If we had to clone the input map op, then the Spark context will not be
+    // set in the clone. We need to set the context before accessing the input RDD
+    if (!doFiltering) {
+      input.context(context)
+    }
     val meta = input.metadata() getOrElse
         (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
     val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
-    val nodatas = meta.getDefaultValues
 
     if (rasterForBoundsMapOp.isDefined) {
       cropBounds = rasterForBoundsMapOp.get.metadata().getOrElse(
         throw new IOException("Unable to get metadata for the bounds raster")).getBounds
     }
     bounds = TMSUtils.boundsToTile(cropBounds, zoom, tilesize)
+    val nodatas = meta.getDefaultValues
 
-    //    val filtered = rdd.filter(tile => {
-    //      val t = TMSUtils.tileid(tile._1.get(), zoom)
-    //      (t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)
-    //    })
+    // When doFiltering is true, it means the input raster has not been restricted to
+    // the bounds for the crop, so we need to do that filtering here. When false, it
+    // means that the input raster RDD already contains only tiles within the bounds
+    // of the crop, so no filtering is required.
+    if (doFiltering) {
+      //    val filtered = rdd.filter(tile => {
+      //      val t = TMSUtils.tileid(tile._1.get(), zoom)
+      //      (t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)
+      //    })
 
-
-    rasterRDD = Some(RasterRDD(
-
-      rdd.flatMap(tile => {
-        val t = TMSUtils.tileid(tile._1.get(), zoom)
-        if ((t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)) {
-          processTile(tile, zoom, tilesize, nodatas)
-        }
-        else {
-          Array.empty[(TileIdWritable, RasterWritable)].iterator
-        }
-      })))
+      rasterRDD = Some(RasterRDD(
+        rdd.flatMap(tile => {
+          val t = TMSUtils.tileid(tile._1.get(), zoom)
+          if ((t.tx >= bounds.w) && (t.tx <= bounds.e) && (t.ty >= bounds.s) && (t.ty <= bounds.n)) {
+            Array(processTile(tile, zoom, tilesize, nodatas)).iterator
+          }
+          else {
+            Array.empty[(TileIdWritable, RasterWritable)].iterator
+          }
+        })
+      ))
+    }
+    else {
+      rasterRDD = Some(RasterRDD(processAllTiles(rdd, zoom, tilesize, nodatas)))
+    }
 
     val b = getOutputBounds(zoom, tilesize)
 
@@ -144,9 +210,27 @@ class CropMapOp extends RasterMapOp with Externalizable {
   }
 
   protected def processTile(tile: (TileIdWritable, RasterWritable),
-      zoom: Int, tilesize: Int,
-      nodatas: Array[Double]): TraversableOnce[(TileIdWritable, RasterWritable)] = {
-    Array(tile).iterator
+                            zoom: Int,
+                            tilesize: Int,
+                            nodatas: Array[Double]): (TileIdWritable, RasterWritable) = {
+    tile
+  }
+
+  /**
+    * This function is called when all of the tiles from the input raster RDD
+    * are part of the area being cropped. For the basic crop operation
+    * implemented by this map op, no processing is required on the tiles, we
+    * can simply return the input raster RDD.
+    *
+    * However, this method is protected so that more complicated crop operations
+    * can extend this class and perform processing on the individual tiles in
+    * within the bounds of the crop area if needed.
+    */
+  protected def processAllTiles(inputRDD: RasterRDD,
+                                zoom: Int,
+                                tilesize: Int,
+                                nodats: Array[Double]): RDD[(TileIdWritable, RasterWritable)] = {
+    inputRDD
   }
 
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true

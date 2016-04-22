@@ -793,7 +793,7 @@ public void crop() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format(
-            "crop([%s], 142.05, -17.75, 142.2, -17.65);", smallElevationPath), -9999);
+            "crop([%s], 142.05, -17.75, 142.2, -17.65)", smallElevationPath), -9999);
   }
   else
   {
@@ -801,6 +801,25 @@ public void crop() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "crop([%s],  142.05, -17.75, 142.2, -17.65)", smallElevationPath));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void cropFromDerivedInput() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "crop([%s] + 0, 142.05, -17.75, 142.2, -17.65)", smallElevationPath), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "crop([%s] + 0,  142.05, -17.75, 142.2, -17.65)", smallElevationPath));
   }
 }
 
@@ -820,6 +839,25 @@ public void cropToRaster() throws Exception
                                   TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
                                   String.format(
                                           "crop([%s], [%s])", smallElevationPath, kphforsmallelevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void cropToRasterFromDerivedInput() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "crop([%s] + 0, [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "crop([%s] + 0, [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
@@ -846,6 +884,27 @@ public void cropExact() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void cropExactFromDerivedInput() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "cropExact([%s] + 0,  142.05, -17.75, 142.2, -17.65)",
+                                          smallElevationPath), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "cropExact([%s] + 0,  142.05, -17.75, 142.2, -17.65)",
+                                          smallElevationPath));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void cropExactToRaster() throws Exception
 {
   if (GEN_BASELINE_DATA_ONLY)
@@ -860,6 +919,25 @@ public void cropExactToRaster() throws Exception
                                   TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
                                   String.format(
                                           "cropExact([%s], [%s])", smallElevationPath, kphforsmallelevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void cropExactToRasterFromDerivedInput() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "cropExact([%s] + 0, [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "cropExact([%s] + 0, [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
