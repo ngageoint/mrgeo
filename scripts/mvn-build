@@ -35,7 +35,8 @@ usage() {
     echo "  cdh552    - Cloudera hadoop 5.5.2"
     echo "  cdh560    - Cloudera hadoop 5.6.0"
     echo "  cdh570    - Cloudera hadoop 5.7.0"
-    echo "  emr       - Amazon EMR hadoop 2.4.0 for AMI 3.7.0"
+    echo "  emr-4.5.0 - Amazon EMR hadoop 4.5.0 for EMR 4.5.0"
+    echo "  emr-4.4.0 - Amazon EMR hadoop 4.4.0 for EMR 4.4.0"
     echo "  mapr      - mapr hadoop"
     echo "phase:"
     echo "  build     - build a deployable version"
@@ -236,8 +237,11 @@ while [ $# -gt 0 ] ; do
     "apache260" | "apache270" | "apache271")
         BUILD=$1
         ;;
-    "emr")
-        BUILD="emr"
+    "emr-4.5.0")
+        BUILD="emr-4.5.0"
+        ;;
+    "emr-4.4.0")
+        BUILD="emr-4.4.0"
         ;;
     "mapr")
         echo "*** MapR Hadoop is no longer supported"
