@@ -15,7 +15,7 @@
  */
 
 
-package org.mrgeo.mapalgebra.newcostdistance
+package org.mrgeo.mapalgebra
 
 import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
@@ -33,10 +33,8 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
-import org.mrgeo.mapalgebra.{MapOpRegistrar, _}
 import org.mrgeo.utils.tms._
-import org.mrgeo.utils.{GDALUtils, LatLng, SparkUtils, SparkVectorUtils}
-import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.{LatLng, SparkUtils, SparkVectorUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -82,7 +80,7 @@ import scala.collection.mutable.ListBuffer
 object CostDistanceMapOpNew extends MapOpRegistrar {
 
   override def register: Array[String] = {
-    Array[String]("newcostDistance", "newcd")
+    Array[String]("costDistance", "cd")
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
@@ -811,10 +809,12 @@ class CostDistanceMapOpNew extends RasterMapOp with Externalizable with Logging 
       py += 1
     }
 
-    logDebug("Changes post: " + edgePoints.totalCount() + " " + tile)
-    edgePoints.tileCount().foreach(t => {
-      logDebug(TMSUtils.tileid(t._1, zoom) + " " + t._2)
-    })
+    if (log.isDebugEnabled) {
+      logDebug("Changes post: " + edgePoints.totalCount() + " " + tile)
+      edgePoints.tileCount().foreach(t => {
+        logDebug(TMSUtils.tileid(t._1, zoom) + " " + t._2)
+      })
+    }
 
     if (edgePoints.size() > 0) {
       changesAccum.add(edgePoints)
@@ -824,35 +824,6 @@ class CostDistanceMapOpNew extends RasterMapOp with Externalizable with Logging 
     val totalTime: Double = System.nanoTime() - startTime
   }
 
-  private def getPixelCost(direction: Byte, pixelSizeMeters: Double, pixelFriction: Double): Float =
-  {
-    val distanceMeters = direction match {
-    case (TraversalDirection.DOWN | TraversalDirection.UP |
-          TraversalDirection.LEFT | TraversalDirection.RIGHT) =>
-      // Vertical direction
-      pixelSizeMeters
-    case (TraversalDirection.DOWN_LEFT | TraversalDirection.DOWN_RIGHT |
-          TraversalDirection.UP_LEFT | TraversalDirection.UP_RIGHT) =>
-      Math.sqrt(2.0 * pixelSizeMeters * pixelSizeMeters)
-    }
-    (pixelFriction * distanceMeters).toFloat
-  }
-
-  // Returns true if newValue < origValue. If origValue is NaN, return true
-  // only if newValue is not NaN. If origValue is not NaN, and newValue is
-  // NaN, then return false.
-  def isValueSmaller(newValue: Float, origValue: Float): Boolean = {
-    if (origValue.isNaN)
-    {
-      return !newValue.isNaN
-    }
-    if (newValue.isNaN) {
-      return false
-    }
-
-    // Allow for floating point math inaccuracy
-    newValue < (origValue - 1e-7)
-  }
 
 
   override def writeExternal(out: ObjectOutput): Unit = {
@@ -866,9 +837,6 @@ class CostDistanceMapOpNew extends RasterMapOp with Externalizable with Logging 
   override def registerClasses(): Array[Class[_]] = {
     GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable], classOf[Pixel])
   }
-
-
-  /*   Tim's changes */
 
   def buildInitialPoints(frictionRDD: RDD[(TileIdWritable, RasterWritable)],
       startingPts: mutable.Map[Long, mutable.Set[Pixel]], context:SparkContext, pixelsize:Float) = {

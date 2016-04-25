@@ -65,7 +65,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
   // tests won't be run when is set to true
-  public final static boolean GEN_BASELINE_DATA_ONLY = true;
+  public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
   private static final String ALL_ONES = "all-ones";
   private static final int ALL_ONES_ZOOM = 10;
@@ -110,7 +110,7 @@ private static final String smallElevationName = "small-elevation";
 //        + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
                  + "friction = [" + frictionSurface + "];\n"
-                 + "result = NewCostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
+                 + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
     // Start point in tile tx=702 ty = 348, pixel px = 510 py = 0
 //    String exp = "srcPoint = InlineCsv(\"GEOMETRY\", \"'POINT(9.029234 45.223345)'\");\n"
 //                 + "friction = [/mrgeo/images/dave-tobler-raw-spm_nowater];\n"
@@ -164,7 +164,7 @@ private static final String smallElevationName = "small-elevation";
     String uniformFrictionSurface = testUtils.getInputHdfs() + "/" +  ALL_ONES;
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.135 -17.945)'\");\n"
         + "friction = [" + uniformFrictionSurface + "];\n"
-        + "result = NewCostDistance(src, " + ALL_ONES_ZOOM + ", friction, \"20000.0\");";
+        + "result = CostDistance(src, " + ALL_ONES_ZOOM + ", friction, \"20000.0\");";
 
     if (GEN_BASELINE_DATA_ONLY)
     {
@@ -216,7 +216,7 @@ public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
 
   String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
       + "friction = [" + frictionSurface + "];\n"
-      + "result = NewCostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
+      + "result = CostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
 
   if (GEN_BASELINE_DATA_ONLY)
   {
@@ -241,7 +241,7 @@ public void directionalCostDistance() throws Exception
       "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
       //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.2 -18.0)'\");\n" +
       //"cost = CostDistance(src, pingle, 50000.0);\n" +
-      "cost = NewCostDistance(src, tobler);\n" +
+      "cost = CostDistance(src, tobler);\n" +
       "";
   if (GEN_BASELINE_DATA_ONLY)
   {
@@ -266,7 +266,7 @@ public void nondirectionalCostDistance() throws Exception
       "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
       //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.2 -18.0)'\");\n" +
       //"cost = CostDistance(src, pingle, 50000.0);\n" +
-      "cost = NewCostDistance(src, tobler);\n" +
+      "cost = CostDistance(src, tobler);\n" +
       "";
   if (GEN_BASELINE_DATA_ONLY)
   {
