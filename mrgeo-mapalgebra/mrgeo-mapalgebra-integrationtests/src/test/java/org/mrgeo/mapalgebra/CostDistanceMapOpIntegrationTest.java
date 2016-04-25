@@ -164,7 +164,7 @@ private static final String smallElevationName = "small-elevation";
     String uniformFrictionSurface = testUtils.getInputHdfs() + "/" +  ALL_ONES;
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.135 -17.945)'\");\n"
         + "friction = [" + uniformFrictionSurface + "];\n"
-        + "result = CostDistance(src, " + ALL_ONES_ZOOM + ", friction, \"20000.0\");";
+        + "result = NewCostDistance(src, " + ALL_ONES_ZOOM + ", friction, \"20000.0\");";
 
     if (GEN_BASELINE_DATA_ONLY)
     {
@@ -216,7 +216,7 @@ public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
 
   String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
       + "friction = [" + frictionSurface + "];\n"
-      + "result = CostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
+      + "result = NewCostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
 
   if (GEN_BASELINE_DATA_ONLY)
   {
@@ -278,30 +278,6 @@ public void nondirectionalCostDistance() throws Exception
   }
 }
 
-//@Test
-//@Category(IntegrationTest.class)
-//public void anotherTestCostDistance() throws Exception
-//{
-//  String exp = "" +
-//      "sl = slope([small-elevation]);\n" +
-//      "cp = crop(sl, 142.1, -18.12, 142.5, -18.13);\n" +
-//      //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
-//      //"tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.087)));\n" +
-//      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(cp + 0.087)));\n" +
-//      "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
-//      //"cost = CostDistance(src, pingle, 50000.0);\n" +
-//      "cost = NewCostDistance(src, tobler, 50000);\n" +
-//      "";
-//  if (GEN_BASELINE_DATA_ONLY)
-//  {
-//    testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
-//  }
-//  else
-//  {
-//    testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
-//  }
-//}
-//slope
 //  @Ignore
 //  @Test
 //  @Category(IntegrationTest.class)
