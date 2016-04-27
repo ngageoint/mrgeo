@@ -43,6 +43,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   var zoom: Int = -1
   var column: Option[String] = None
   var bounds: Option[Bounds] = None
+  var rasterForBoundsMapOp: Option[RasterMapOp] = None
 
   override def rdd(): Option[RasterRDD] = {
     rasterRDD
@@ -96,6 +97,10 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   override def execute(context: SparkContext): Boolean = {
     val vectorRDD: VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
       rdd().getOrElse(throw new IOException("Missing vector RDD"))
+    if (rasterForBoundsMapOp.isDefined) {
+      bounds = Some(rasterForBoundsMapOp.get.metadata().getOrElse(
+        throw new IOException("Unable to get metadata for the bounds raster")).getBounds)
+    }
     val result = rasterize(vectorRDD)
     rasterRDD = Some(RasterRDD(result))
     val noData = Double.NaN
@@ -125,11 +130,11 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   }
 
   def initialize(node:ParserNode, variables: String => Option[ParserNode]): Unit = {
-    if (!(node.getNumChildren == 3 || node.getNumChildren == 4 ||
+    val usageMsg = "RasterizeVector and RasterizePoints take these arguments. (source vector, aggregation type, cellsize, [column], [bounds])"
+    if (!(node.getNumChildren == 3 || node.getNumChildren == 4 || node.getNumChildren == 5 ||
       node.getNumChildren == 7 || node.getNumChildren == 8))
     {
-      throw new ParserException(
-        "RasterizeVector takes these arguments. (source vector, aggregation type, cellsize, [column], [bounds])")
+      throw new ParserException(usageMsg)
     }
     vectorMapOp = VectorMapOp.decodeToVector(node.getChild(0), variables)
     if (vectorMapOp.isEmpty) {
@@ -177,59 +182,73 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
         throw new ParserException("Missing cellSize argument")
     }
     zoom = TMSUtils.zoomForPixelSize(cellSize, tilesize)
-    // Check that the column name of the vector is provided when it is needed
-    val nextPosition = aggregationType match {
+
+    if (node.getNumChildren > 3) {
+      node.getNumChildren match {
+        case 4 => {
+          try {
+            rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(3), variables)
+          }
+          catch {
+            case e: ParserException => {
+              // Since the fourth and last argument is not a raster, it must be a column
+              column = MapOp.decodeString(node.getChild(3))
+            }
+          }
+        }
+        case 5 => {
+          rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(4), variables)
+          column = MapOp.decodeString(node.getChild(3))
+        }
+        case 7 => {
+          parseBounds(node, variables, 3)
+        }
+        case 8 => {
+          column = MapOp.decodeString(node.getChild(3))
+          parseBounds(node, variables, 4)
+        }
+        case _ => throw new ParserException(usageMsg)
+      }
+    }
+
+    // All the arguments have been parsed, now validate the column based on the aggregation type
+    aggregationType match {
       case VectorPainter.AggregationType.MASK =>
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
+        if (column.isDefined) {
           throw new ParserException("A column name must not be specified with MASK")
         }
-        3
-      // SUM can be used with or without a column name being specified. If used
-      // with a column name, it sums the values of that column for all features
-      // that intersects that pixel. Without the column, it sums the number of
-      // features that intersects the pixel.
-      case VectorPainter.AggregationType.SUM =>
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
-          column = MapOp.decodeString(node.getChild(3))
-          column match {
-            case None =>
-              throw new ParserException("A column name must be specified")
-            case _ => 4
-          }
-        }
-        else {
-          3
-        }
+      case VectorPainter.AggregationType.SUM => {
+        // SUM can be used with or without a column name being specified. If used
+        // with a column name, it sums the values of that column for all features
+        // that intersects that pixel. Without the column, it sums the number of
+        // features that intersects the pixel.
+      }
       case _ =>
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
-          column = MapOp.decodeString(node.getChild(3))
-          column match {
-            case None =>
-              throw new ParserException("A column name must be specified")
-            case _ => 4
-          }
-        }
-        else {
+        // All other aggregation types require a column name
+        if (column.isEmpty) {
           throw new ParserException("A column name must be specified")
         }
     }
-
-    // Get bounds if they were included
-    if (node.getNumChildren > 4) {
-      val b: Array[Double] = new Array[Double](4)
-      for (i <- nextPosition until nextPosition + 4) {
-        b(i - nextPosition) = MapOp.decodeDouble(node.getChild(i), variables) match {
-          case Some(boundsVal) => boundsVal
-          case None =>
-            throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
-        }
-      }
-      bounds = Some(new Bounds(b(0), b(1), b(2), b(3)))
-    }
   }
 
-  def initialize(vector: Option[VectorMapOp], aggregator: String, cellsize: String, bounds: String,
-      column: String): Unit = {
+  private def parseBounds(node: ParserNode, variables: String => Option[ParserNode], startIndex: Int): Unit = {
+    // Make sure there are enough child nodes
+    if (node.getNumChildren < startIndex + 4) {
+      throw new ParserException("Cannot define bounds from fewer than four values")
+    }
+    val b: Array[Double] = new Array[Double](4)
+    for (i <- 0 until 4) {
+      b(i) = MapOp.decodeDouble(node.getChild(startIndex + i), variables) match {
+        case Some(boundsVal) => boundsVal
+        case None =>
+          throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
+      }
+    }
+    bounds = Some(new Bounds(b(0), b(1), b(2), b(3)))
+  }
+
+  def initialize(vector: Option[VectorMapOp], aggregator: String, cellsize: String,
+                 bounds: Either[String, Option[RasterMapOp]], column: String): Unit = {
     vectorMapOp = vector
     aggregationType =
         try {
@@ -277,8 +296,15 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
       throw new ParserException("A column name must not be specified with " + aggregationType)
     }
 
-    if (bounds != null && bounds.length > 0) {
-      this.bounds = Some(Bounds.fromCommaString(bounds))
+    bounds match {
+      case Left(b) => {
+        if (b != null && b.length > 0) {
+          this.bounds = Some(Bounds.fromCommaString(b))
+        }
+      }
+      case Right(rasterForBoundsMapOp) => {
+        this.rasterForBoundsMapOp = rasterForBoundsMapOp
+      }
     }
   }
 
