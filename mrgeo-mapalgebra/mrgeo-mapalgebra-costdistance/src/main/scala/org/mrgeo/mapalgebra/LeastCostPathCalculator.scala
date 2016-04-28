@@ -48,6 +48,8 @@ object LeastCostPathCalculator {
 
 class LeastCostPathCalculator extends Externalizable
 {
+  case class NeighborData(dx: Int, dy: Int, dist: Float)
+
   private var cdrdd: RasterRDD = null
   private var pointsrdd: VectorRDD = null
   private var zoomLevel: Int = -1
@@ -65,8 +67,7 @@ class LeastCostPathCalculator extends Externalizable
   private var pathMaxSpeed: Double = 0f
   private var numPoints: Long = 0
   private var numTiles: Int = 0
-  private val dx: Array[Short] = Array[Short](-1, 0, 1, 1, 1, 0, -1, -1)
-  private val dy: Array[Short] = Array[Short](-1, -1, -1, 0, 1, 1, 1, 0)
+  private var neighborData = Array[NeighborData]()
   private var tilecache = collection.mutable.Map[Long,Raster]()
   private var sparkContext: SparkContext = null
 
@@ -96,6 +97,18 @@ class LeastCostPathCalculator extends Externalizable
       val startTileId: Long = TMSUtils.tileid(curTile.tx, curTile.ty, zoomLevel)
 
       resolution = TMSUtils.resolution(zoomLevel, tileSize)
+      val pixelDistInMeters = (resolution * LatLng.METERS_PER_DEGREE).toFloat
+      val pixelDiagDistInMeters = (math.sqrt(2) * pixelDistInMeters).toFloat
+      neighborData = Array[NeighborData](
+        new NeighborData(-1, -1, pixelDiagDistInMeters), // UP_LEFT),
+        new NeighborData(0, -1, pixelDistInMeters),      // UP),
+        new NeighborData(1, -1, pixelDiagDistInMeters),  // UP_RIGHT),
+        new NeighborData(-1, 0, pixelDistInMeters),      // LEFT),
+        new NeighborData(1, 0, pixelDistInMeters),       // RIGHT),
+        new NeighborData(-1, 1, pixelDiagDistInMeters),  // DOWN_LEFT),
+        new NeighborData(0, 1, pixelDistInMeters),       // DOWN),
+        new NeighborData (1, 1, pixelDiagDistInMeters)   // DOWN_RIGHT)
+      )
       curTile = TMSUtils.tileid(startTileId, zoomLevel)
       curTileBounds = TMSUtils.tileBounds(curTile.tx, curTile.ty, zoomLevel, tileSize)
       curRaster = getTile(curTile.tx, curTile.ty)
@@ -139,12 +152,11 @@ class LeastCostPathCalculator extends Externalizable
     val tileWidth: Int = tileSize
     val widthMinusOne: Short = (tileWidth - 1).toShort
     var leastValue: Double = curValue
-    var deltaX: Long = 0
-    var deltaY: Long = 0
     var i: Int = 0
+    var minNeighborIndex: Int = -1
     while (i < 8) {
-      var xNeighbor: Short = (curPixel.px + dx(i)).toShort
-      var yNeighbor: Short = (curPixel.py + dy(i)).toShort
+      var xNeighbor: Short = (curPixel.px + neighborData(i).dx).toShort
+      var yNeighbor: Short = (curPixel.py + neighborData(i).dy).toShort
       if (xNeighbor >= 0 && xNeighbor <= widthMinusOne && yNeighbor >= 0 && yNeighbor <= widthMinusOne) {
         candNextRaster = curRaster
         candNextTile = curTile
@@ -198,24 +210,18 @@ class LeastCostPathCalculator extends Externalizable
       }
       val value: Float = candNextRaster.getSampleFloat(xNeighbor, yNeighbor, 0)
       if (!value.isNaN && value >= 0 && value < leastValue) {
+        minNeighborIndex = i
         minXNeighbor = xNeighbor
         minYNeighbor = yNeighbor
         minNextRaster = candNextRaster
         minNextTile = candNextTile
         leastValue = value
-        deltaX = dx(i)
-        deltaY = dy(i)
       }
       i += 1
     }
 
     if (leastValue == curValue) return false
     numPoints += 1
-    val p1 = {
-      val lat: Double = curTileBounds.n - (curPixel.py * resolution)
-      val lon: Double = curTileBounds.w + (curPixel.px * resolution)
-      new LatLng(lat, lon)
-    }
     curPixel = new Pixel(minXNeighbor, minYNeighbor)
     val deltaTime: Double = curValue - leastValue
     curValue = leastValue
@@ -224,15 +230,10 @@ class LeastCostPathCalculator extends Externalizable
       curTile = minNextTile
       curTileBounds = TMSUtils.tileBounds(curTile.tx, curTile.ty, zoomLevel, tileSize)
     }
-    val p2 = {
-      val lat: Double = curTileBounds.n - (curPixel.py * resolution)
-      val lon: Double = curTileBounds.w + (curPixel.px * resolution)
-      new LatLng(lat, lon)
-    }
-    val deltaDistance = LatLng.calculateGreatCircleDistance(p1, p2)
-    pathDistance += deltaDistance.toFloat
+    val distDelta = neighborData(minNeighborIndex).dist
+    pathDistance += distDelta
 
-    val speed: Double = deltaDistance / deltaTime
+    val speed: Double = distDelta / deltaTime
     if (speed < pathMinSpeed) pathMinSpeed = speed
     if (speed > pathMaxSpeed) pathMaxSpeed = speed
 
