@@ -90,10 +90,10 @@ public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
                                                          exp,
                                                          true,
                                                          48064f,
-                                                         62961.5f,
+                                                         70771.1f,
                                                          0.9d,
-                                                         2.0d,
-                                                         1.3d
+                                                         2.2d,
+                                                         1.5d
       );
     } finally
     {
@@ -117,10 +117,10 @@ public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
           exp,
           true,
           48093.8f,
-          63419.7f,
-          0.8d,
-          3.1d,
-          1.3d
+          71182.7f,
+          0.9d,
+          3.7d,
+          1.5d
         );
     }
     catch(JobFailedException e)
