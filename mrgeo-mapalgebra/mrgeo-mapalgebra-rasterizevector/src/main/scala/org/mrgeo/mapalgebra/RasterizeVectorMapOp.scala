@@ -26,9 +26,10 @@ import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Geometry
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 
 import scala.collection.mutable.ListBuffer
 
@@ -41,7 +42,7 @@ object RasterizeVectorMapOp extends MapOpRegistrar {
 
   def create(vector: VectorMapOp, aggregator:String, cellsize:String, column:String = null) =
   {
-    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null)
+    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
   }
 
 }
@@ -53,7 +54,14 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
     this()
 
-    initialize(vector, aggregator, cellsize, bounds, column)
+    initialize(vector, aggregator, cellsize, Left(bounds), column)
+  }
+
+  def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String,
+           rasterForBounds: Option[RasterMapOp]) = {
+    this()
+
+    initialize(vector, aggregator, cellsize, Right(rasterForBounds), column)
   }
 
 
