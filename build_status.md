@@ -10,5 +10,5 @@ Mr Geo Jenkins Build Status:
 * CDH 5.5.2: [![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.5.2-yarn/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.5.2-yarn/)
 * CDH 5.6.0: [![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.6.0-yarn/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.6.0-yarn/)
 * CDH 5.7.0: [![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.7.0-yarn/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.7.0-yarn/)
-* RPM Creation: [![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-dist-generation/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-dist-generation/)
+* RPM Creation: [![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm)
 * PIP pymrgeo: [![Build Status](http://jenkins.dgis-dev.com:8080/job/pymrgeo-build/badge/icon)](http://jenkins.dgis-dev.com:8080/job/pymrgeo-build/)
