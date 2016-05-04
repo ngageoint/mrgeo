@@ -95,7 +95,8 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
       .rdd(zoom).getOrElse(throw new IOException("Invalid RDD for cost distance input"))
     val destrdd = pointsMapOp.getOrElse(throw new IOException("Invalid points input"))
       .rdd().getOrElse(throw new IOException("Invalid RDD for points input"))
-    vectorrdd = Some(LeastCostPathCalculator.run(cdrdd, costDistanceMetadata, zoom, destrdd, context))
+    //vectorrdd = Some(LeastCostPathCalculator.run(cdrdd, costDistanceMetadata, zoom, destrdd, context))
+    vectorrdd = Some(LeastCostPathCalculator.run(costDistanceMapOp.get, destrdd, context))
     true
   }
 

@@ -36,6 +36,7 @@ import org.mrgeo.job.JobCancelledException;
 import org.mrgeo.job.JobFailedException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
+import org.mrgeo.utils.LoggingUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -73,33 +74,63 @@ public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
           LEAST_COST_PATH_OUTPUT);
   }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testLeastCostPath() throws IOException, ParserException, JobFailedException, JobCancelledException {    
+@Test
+@Category(IntegrationTest.class)
+public void testLeastCostPath() throws IOException, ParserException, JobFailedException, JobCancelledException {
 
-    long start = System.currentTimeMillis();
-    try
-    {
-      String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(66.65408 32.13850)'\");\n"
-                   + "cost = [" + costSurface + "];\n"
-                   + "result = LeastCostPath(cost, destPts);";
+  //LoggingUtils.setLogLevel("org.mrgeo.mapalgebra", LoggingUtils.DEBUG);
+  long start = System.currentTimeMillis();
+  try
+  {
+    String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(66.65408 32.13850)'\");\n"
+        + "cost = [" + costSurface + "];\n"
+        + "result = LeastCostPath(cost, destPts);";
 
-      LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
-                                                         testUtils.getOutputHdfs(),
-                                                         "testLeastCostPath",
-                                                         exp,
-                                                         true,
-                                                         48064f,
-                                                         70771.1f,
-                                                         0.9d,
-                                                         2.2d,
-                                                         1.5d
-      );
-    } finally
-    {
-      System.out.println("test took " + (System.currentTimeMillis() - start));
-    }
+    LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
+        testUtils.getOutputHdfs(),
+        "testLeastCostPath",
+        exp,
+        true,
+        48064f,
+        70771.1f,
+        0.9d,
+        2.2d,
+        1.5d
+    );
+  } finally
+  {
+    System.out.println("test took " + (System.currentTimeMillis() - start));
   }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void tester() throws IOException, ParserException, JobFailedException, JobCancelledException {
+
+  //LoggingUtils.setLogLevel("org.mrgeo.mapalgebra", LoggingUtils.DEBUG);
+  long start = System.currentTimeMillis();
+  try
+  {
+    String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(-70.293 -33.750)'\");\n"
+        + "cost = [santiago-costdistance];\n"
+        + "result = LeastCostPath(cost, destPts);";
+
+    LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
+        testUtils.getOutputHdfs(),
+        "testLeastCostPath",
+        exp,
+        true,
+        48064f,
+        70771.1f,
+        0.9d,
+        2.2d,
+        1.5d
+    );
+  } finally
+  {
+    System.out.println("test took " + (System.currentTimeMillis() - start));
+  }
+}
 
   @Test
   @Category(IntegrationTest.class)
@@ -201,11 +232,11 @@ public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
     Geometry geom = reader.get().next();
     Assert.assertNotNull(geom);
 
-    Assert.assertEquals(expectedCost, Double.parseDouble(geom.getAttribute("VALUE")), 0.05);
-    Assert.assertEquals(expectedDistance, Double.parseDouble(geom.getAttribute("DISTANCE")), 0.05);
-    Assert.assertEquals(expectedMinSpeed, Double.parseDouble(geom.getAttribute("MINSPEED")), 0.05);
-    Assert.assertEquals(expectedMaxSpeed, Double.parseDouble(geom.getAttribute("MAXSPEED")), 0.05);
-    Assert.assertEquals(expectedAvgSpeed, Double.parseDouble(geom.getAttribute("AVGSPEED")), 0.05);
+    Assert.assertEquals(expectedCost, Double.parseDouble(geom.getAttribute("COST_S")), 0.05);
+    Assert.assertEquals(expectedDistance, Double.parseDouble(geom.getAttribute("DISTANCE_M")), 0.05);
+    Assert.assertEquals(expectedMinSpeed, Double.parseDouble(geom.getAttribute("MINSPEED_MPS")), 0.05);
+    Assert.assertEquals(expectedMaxSpeed, Double.parseDouble(geom.getAttribute("MAXSPEED_MPS")), 0.05);
+    Assert.assertEquals(expectedAvgSpeed, Double.parseDouble(geom.getAttribute("AVGSPEED_MPS")), 0.05);
 
     // Make sure that the expected path is equal to path gotten above - we check for set comparison
     // and not path equality - it is extremely unlikely that the two paths have the same points 
