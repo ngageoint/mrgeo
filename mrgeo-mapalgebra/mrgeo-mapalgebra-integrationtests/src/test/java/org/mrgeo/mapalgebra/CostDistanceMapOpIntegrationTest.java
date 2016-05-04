@@ -233,11 +233,12 @@ public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
 public void directionalCostDistance() throws Exception
 {
   String exp = "" +
-      "sl = directionalslope([small-elevation]);\n" +
+      "sl = directionalslope([small-elevation], \"gradient\");\n" +
       //"cp = crop(sl, 142.1, -18.12, 142.5, -18.13);\n" +
       //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
-      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.087)));\n" +
-      //"tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(cp + 0.087)));\n" +
+      "raw = 6 * pow(2.718281828, -3.5 * abs(sl + 0.05));\n" +
+      "tobler = con(raw < 0.00001, NaN, 3.6 / raw);\n" +
+      //"tobler = 0.6 * pow(2.718281828, -3.5 * abs(cp + 0.087));\n" +
       "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
       //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.2 -18.0)'\");\n" +
       //"cost = CostDistance(src, pingle, 50000.0);\n" +
@@ -253,20 +254,18 @@ public void directionalCostDistance() throws Exception
   }
 }
 
+
 @Test
 @Category(IntegrationTest.class)
 public void nondirectionalCostDistance() throws Exception
 {
   String exp = "" +
-      "sl = slope([small-elevation]);\n" +
-      //"cp = crop(sl, 142.1, -18.12, 142.5, -18.13);\n" +
+      "sl = slope([small-elevation], \"gradient\");\n" +
       //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
-      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.087)));\n" +
-      //"tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(cp + 0.087)));\n" +
+      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.05)));\n" +
       "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
-      //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.2 -18.0)'\");\n" +
       //"cost = CostDistance(src, pingle, 50000.0);\n" +
-      "cost = CostDistance(src, tobler);\n" +
+      "cost = CostDistance(src, tobler, 50000);\n" +
       "";
   if (GEN_BASELINE_DATA_ONLY)
   {
