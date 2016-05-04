@@ -65,7 +65,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
   // tests won't be run when is set to true
-  public final static boolean GEN_BASELINE_DATA_ONLY = false;
+  public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
   private static final String ALL_ONES = "all-ones";
   private static final int ALL_ONES_ZOOM = 10;
@@ -234,13 +234,9 @@ public void directionalCostDistance() throws Exception
 {
   String exp = "" +
       "sl = directionalslope([small-elevation], \"gradient\");\n" +
-      //"cp = crop(sl, 142.1, -18.12, 142.5, -18.13);\n" +
       //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
-      "raw = 6 * pow(2.718281828, -3.5 * abs(sl + 0.05));\n" +
-      "tobler = con(raw < 0.00001, NaN, 3.6 / raw);\n" +
-      //"tobler = 0.6 * pow(2.718281828, -3.5 * abs(cp + 0.087));\n" +
+      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.05)));\n" +
       "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
-      //"src = InlineCsv(\"GEOMETRY\", \"'POINT(142.2 -18.0)'\");\n" +
       //"cost = CostDistance(src, pingle, 50000.0);\n" +
       "cost = CostDistance(src, tobler);\n" +
       "";
