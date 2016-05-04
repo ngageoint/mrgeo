@@ -272,7 +272,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
         variable match {
         case v: ParserVariableNode =>
           if (MapOpFactory.exists(variable.getName)) {
-            throw new ParserException("Cannot use variable name \"" + name +
+            throw new ParserException("Cannot use variable name \"" + variable.getName +
                 "\" because there is a function of the same name")
           }
           val value = function.getChild(1)
