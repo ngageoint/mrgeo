@@ -60,7 +60,7 @@ public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = false;
+public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
 private static final String smallElevationName = "small-elevation";
 private static String smallElevation = Defs.INPUT + smallElevationName;
@@ -321,6 +321,24 @@ public void aspectRad() throws Exception
         String.format("aspect([%s], \"rad\")", smallElevation));
   }
 }
+
+@Test
+@Category(IntegrationTest.class)
+public void aspectFlat() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("aspect([%s])", allones), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("aspect([%s])", allones));
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
