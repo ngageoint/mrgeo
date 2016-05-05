@@ -39,7 +39,7 @@ object LeastCostPathCalculator extends Logging {
   private val LOG: Logger = LoggerFactory.getLogger(classOf[LeastCostPathCalculator])
 
   @throws(classOf[IOException])
-  def run(costDist:RasterMapOp, destination:VectorRDD, context:SparkContext): VectorRDD = {
+  def run(costDist:RasterMapOp, destination:VectorRDD, context:SparkContext, zoom:Int = -1): VectorRDD = {
 
     val meta = costDist.metadata() getOrElse
         (throw new IOException("Can't load metadata! Ouch! " + costDist.getClass.getName))
@@ -54,27 +54,36 @@ object LeastCostPathCalculator extends Logging {
     val lcps = destination.collect.map(feature => {
       val lcp = GeometryFactory.createLineString()
 
-      val pt = feature._2
-      if (!pt.isInstanceOf[Point]) {
-        throw new IOException("Expected a point to be passed to LeastCostPath, but instead got " + pt)
+      feature._2 match {
+      case pt:Point =>
+        val calculator = new LeastCostPathCalculator (pt, rdd, meta)
+
+        while (calculator.hasnext) {
+          lcp.addPoint (calculator.point)
+        }
+
+        val df: DecimalFormat = new DecimalFormat ("###.###")
+
+        if (lcp.getNumPoints == 0) {
+          lcp.addPoint(pt)
+          lcp.setAttribute ("COST_S", df.format (0.0) )
+          lcp.setAttribute ("DISTANCE_M", df.format (0.0) )
+          lcp.setAttribute ("MINSPEED_MPS", df.format (0.0) )
+          lcp.setAttribute ("MAXSPEED_MPS", df.format (0.0) )
+          lcp.setAttribute ("AVGSPEED_MPS", df.format (0.0) )
+        }
+        else {
+          lcp.setAttribute ("COST_S", df.format (calculator.totalcost) )
+          lcp.setAttribute ("DISTANCE_M", df.format (calculator.totaldist) )
+          lcp.setAttribute ("MINSPEED_MPS", df.format (calculator.minspeed) )
+          lcp.setAttribute ("MAXSPEED_MPS", df.format (calculator.maxspeed) )
+          lcp.setAttribute ("AVGSPEED_MPS", df.format (calculator.totaldist / calculator.totalcost) )
+        }
+
+        (feature._1, lcp.asInstanceOf[Geometry] )
+      case g:Geometry =>
+        throw new IOException("Expected a point to be passed to LeastCostPath, but instead got " + g)
       }
-
-      val calculator = new LeastCostPathCalculator(pt.asInstanceOf[Point], rdd, meta)
-
-      while (calculator.hasnext) {
-        lcp.addPoint(calculator.point)
-      }
-
-      val df: DecimalFormat = new DecimalFormat("###.###")
-
-      lcp.setAttribute("COST_S", df.format(calculator.totalcost))
-      lcp.setAttribute("DISTANCE_M", df.format(calculator.totaldist))
-      lcp.setAttribute("MINSPEED_MPS", df.format(calculator.minspeed))
-      lcp.setAttribute("MAXSPEED_MPS", df.format(calculator.maxspeed))
-      lcp.setAttribute("AVGSPEED_MPS", df.format(calculator.totaldist / calculator.totalcost))
-
-
-      (feature._1, lcp.asInstanceOf[Geometry])
     })
 
     if (localPersist) {
@@ -120,7 +129,6 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
   var minspeed:Float = Float.MaxValue
   var maxspeed:Float = 0
 
-  LoggingUtils.setLogLevel("org.mrgeo.mapalgebra.LeastCostPathCalculatorNew", LoggingUtils.DEBUG)
   def hasnext:Boolean = {
     var direction:Int = -1
     val curcost = getcost(0, 0)
@@ -156,15 +164,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     pt = new Pixel(newx, newy)
     tile = newtile
 
-    if (tile.tx == 1248 && tile.ty == 640 && newx == 101 && newy == 499) {
-      val ll = TMSUtils.tilePixelULToLatLon(newx, newy, tile, zoom, tilesize)
-      println("cost:" + mincost + " lon: " + ll.lon + " lat: " + ll.lat)
-    }
-
-    //val speed = (curcost - mincost) / neighbor.dist
-    val dc = curcost - mincost
-    //val speed = neighbor.dist / (curcost - mincost)
-    val speed = neighbor.dist / dc
+    val speed = neighbor.dist / (curcost - mincost)
     if (speed < minspeed) {
       minspeed = speed
     }
@@ -172,10 +172,6 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
       maxspeed = speed
     }
 
-    val spm = dc / neighbor.dist
-    if (spm < 0.71) {
-      println("foo")
-    }
 
     totaldist += neighbor.dist
 
@@ -220,7 +216,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     val raster = gettile(newtile)
 
     if (raster == null) {
-        Float.MaxValue
+      Float.MaxValue
     }
     else {
       raster.getSampleFloat(newx, newy, 0)
