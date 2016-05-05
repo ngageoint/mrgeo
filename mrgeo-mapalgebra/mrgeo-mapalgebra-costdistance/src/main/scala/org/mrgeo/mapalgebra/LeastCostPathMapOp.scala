@@ -40,31 +40,19 @@ object LeastCostPathMapOp extends MapOpRegistrar {
 class LeastCostPathMapOp extends VectorMapOp with Externalizable
 {
   var costDistanceMapOp: Option[RasterMapOp] = None
-  var costDistanceMetadata: MrsPyramidMetadata = null
   var pointsMapOp: Option[VectorMapOp] = None
-  var zoom: Int = -1
   var vectorrdd: Option[VectorRDD] = None
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
-    if (node.getNumChildren != 2 && node.getNumChildren != 3)
+    if (node.getNumChildren != 2)
     {
       throw new ParserException(
-        "LeastCostPath takes the following arguments ([cost zoom level], cost raster, destination points")
+        "LeastCostPath takes the following arguments (cost raster, destination points")
     }
 
-    var nodeIndex: Int = 0
-    if (node.getNumChildren == 3)
-    {
-      zoom = MapOp.decodeInt(node.getChild(nodeIndex), variables).getOrElse(
-        throw new ParserException("Invalid zoom specified for least cost path: " +
-          MapOp.decodeString(node.getChild(nodeIndex), variables))
-      )
-      nodeIndex += 1
-    }
-    costDistanceMapOp = RasterMapOp.decodeToRaster(node.getChild(nodeIndex), variables)
-    nodeIndex += 1
-    pointsMapOp = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
+    costDistanceMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+    pointsMapOp = VectorMapOp.decodeToVector(node.getChild(1), variables)
   }
 
   override def registerClasses(): Array[Class[_]] = {
@@ -72,41 +60,22 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
   }
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-//    conf.set("spark.kryo.registrationRequired", "true")
     true
   }
 
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def execute(context: SparkContext): Boolean = {
-    //var destPoints: String = null
-    costDistanceMetadata =
-      costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input")).
-        metadata().getOrElse(throw new IOException("Missing metadata for cost distance input"))
-    if (zoom < 0)
-    {
-      zoom = costDistanceMetadata.getMaxZoomLevel
-    }
-    //TODO: Need to instantiate and run LeastCostPathCalculator here
-    // It currently writes the output tsv file directly. That should ideally
-    // be done by the VectorDataProvider, and the LCP calculator (and this map op)
-    // should only create a VectorRDD
-    val cdrdd = costDistanceMapOp.getOrElse(throw new IOException("Invalid cost distance input"))
-      .rdd(zoom).getOrElse(throw new IOException("Invalid RDD for cost distance input"))
     val destrdd = pointsMapOp.getOrElse(throw new IOException("Invalid points input"))
       .rdd().getOrElse(throw new IOException("Invalid RDD for points input"))
-    //vectorrdd = Some(LeastCostPathCalculator.run(cdrdd, costDistanceMetadata, zoom, destrdd, context))
+
     vectorrdd = Some(LeastCostPathCalculator.run(costDistanceMapOp.get, destrdd, context))
     true
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
-    zoom = in.readInt()
-  }
+  override def readExternal(in: ObjectInput): Unit = {}
 
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeInt(zoom)
-  }
+  override def writeExternal(out: ObjectOutput): Unit = {}
 
   override def rdd(): Option[VectorRDD] = vectorrdd
 }
