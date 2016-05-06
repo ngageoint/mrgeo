@@ -104,7 +104,7 @@
                   <artifactId>${project.artifactId}</artifactId>
                   <version>${project.version}</version>
                   <type>tar.gz</type>
-                  <destFileName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}.tar.gz</destFileName>
+                  <destFileName>${project.parent.parent.artifactId}-${project.parent.version}.tar.gz</destFileName>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>${project.parent.build.directory}</outputDirectory>

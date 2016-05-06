@@ -47,7 +47,7 @@ object AutoPersister extends Logging {
   // decrement the ref count, unpersist if needed
   def decrementRef(rdd:RDD[_]):Int = {
     val cnt = references.getOrElse(rdd.id, return 0) - 1
-    logInfo("decrement ref: " + rdd.id + " from: " + (cnt + 1) + " to: " + cnt + (if (cnt <= 0) " unpersisting" else ""))
+    logDebug("decrement ref: " + rdd.id + " from: " + (cnt + 1) + " to: " + cnt + (if (cnt <= 0) " unpersisting" else ""))
 
     references.put(rdd.id, cnt)
     if (cnt <= 0 && rdd.getStorageLevel != StorageLevel.NONE) {
@@ -63,7 +63,7 @@ object AutoPersister extends Logging {
 
     val cnt = references.getOrElseUpdate(rdd.id, 0) + 1
 
-    logInfo("increment ref: " + rdd.id + " from: " + (cnt - 1) + " to: " + cnt + (if (cnt == 2) " persisting" else ""))
+    logDebug("increment ref: " + rdd.id + " from: " + (cnt - 1) + " to: " + cnt + (if (cnt == 2) " persisting" else ""))
     references.put(rdd.id, cnt)
 
     if (cnt == 2 && rdd.getStorageLevel == StorageLevel.NONE) {

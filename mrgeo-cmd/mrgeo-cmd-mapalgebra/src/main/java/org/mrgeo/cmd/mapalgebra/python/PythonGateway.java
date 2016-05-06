@@ -159,7 +159,7 @@ private GatewayServer setupSingleServer(String callbackHost, int callbackPort) t
     throw new IOException("GatewayServer failed to bind");
   }
 
-  log.info("Starting PythonGatewayServer on port " + port);
+  log.info("Starting PythonGatewayServer. Communicating on port " + port);
 
   sendGatewayPort(callbackHost, callbackPort, port);
 
@@ -205,7 +205,7 @@ private void setupThreadedServer(final String callbackHost, final int callbackPo
 private void sendGatewayPort(String callbackHost, int callbackPort, int port) throws IOException
 {
   // Communicate the bound port back to the caller via the caller-specified callback port
-  log.info("Sending GatewayServer port to python driver at " + callbackHost  + ":" + callbackPort);
+  log.info("Sending port number (" + port + ") to pymrgeo running at " + callbackHost  + ":" + callbackPort);
 
   try (Socket callbackSocket = new Socket(callbackHost, callbackPort))
   {

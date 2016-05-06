@@ -273,6 +273,26 @@ public static LatLon pixelToLatLonUL(final long px, final long py, final int zoo
       (pixelsFromTileLeft * resolution));
 }
 
+public static LatLon tilePixelToLatLon(final long px, final long py, final Tile tile, final int zoom,
+    final int tilesize)
+{
+  final Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
+
+  final double resolution = resolution(zoom, tilesize);
+  return new LatLon(bounds.s + (py * resolution), bounds.w +
+      (px * resolution));
+}
+
+public static LatLon tilePixelULToLatLon(final long px, final long py, final Tile tile, final int zoom,
+    final int tilesize)
+{
+  final Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
+
+  final double resolution = resolution(zoom, tilesize);
+  return new LatLon(bounds.n - (py * resolution), bounds.w +
+      (px * resolution));
+}
+
 // Resolution (deg/pixel) for given zoom level (measured at Equator)"
 public static double resolution(final int zoom, final int tilesize)
 {
