@@ -121,6 +121,8 @@ class MrGeo(object):
                 continue
 
             signatures = jvm.MapOpFactory.getSignatures(mapop)
+            # for s in signatures:
+            #     print("signature: " + s)
 
             for method in cls.register():
                 codes = None
@@ -203,6 +205,7 @@ class MrGeo(object):
     def _generate_method_code(self, mapop, name, signatures, instance):
         methods = self._generate_methods(instance, signatures)
 
+        # print("working on " + name)
         jvm = self.gateway.jvm
         client = self.gateway._gateway_client
         cls = JavaClass(mapop, gateway_client=client)
@@ -357,12 +360,14 @@ class MrGeo(object):
                 var_name = param[0]
                 type_name = param[1]
                 call_name = param[2]
+                # print("param => " + str(param))
+                # print("var name: " + var_name)
+                # print("type name: " + type_name)
+                # print("call name: " + call_name)
 
                 if param[4]:
-                    call_name, it, et = self.method_name(type_name, "arg")
+                    call_name, it, et, fieldAccessor = self.method_name(type_name, "arg")
 
-                    # We assume for now that lists of objects are always lists of
-                    # mapops
                     varargcode += "    for arg in args:\n"
                     varargcode += "        if isinstance(arg, list):\n"
                     varargcode += "            arg_list = arg\n"
@@ -372,17 +377,17 @@ class MrGeo(object):
                     varargcode += "        else:\n"
                     varargcode += "            if not(" + it + "):\n"
                     varargcode += "                raise Exception('input types differ (TODO: expand this message!)')\n"
-                    varargcode += "    mapops = []\n"
+                    varargcode += "    elements = []\n"
                     varargcode += "    for arg in args:\n"
                     varargcode += "        if isinstance(arg, list):\n"
                     varargcode += "            for a in arg:\n"
-                    varargcode += "                mapops.append(a.mapop)\n"
+                    varargcode += "                elements.append(a" + fieldAccessor + ")\n"
                     varargcode += "        else :\n"
-                    varargcode += "            mapops.append(arg.mapop)\n"
-                    varargcode += "    array = self.gateway.new_array(self.gateway.jvm." + type_name + ", len(mapops))\n"
+                    varargcode += "            elements.append(arg" + fieldAccessor + ")\n"
+                    varargcode += "    array = self.gateway.new_array(self.gateway.jvm." + type_name + ", len(elements))\n"
                     varargcode += "    cnt = 0\n"
-                    varargcode += "    for mapop in mapops:\n"
-                    varargcode += "        array[cnt] = mapop\n"
+                    varargcode += "    for element in elements:\n"
+                    varargcode += "        array[cnt] = element\n"
                     varargcode += "        cnt += 1\n"
                     call_name = "array"
                 else:
@@ -399,7 +404,7 @@ class MrGeo(object):
                     if call_name == "self":
                         var_name = call_name
 
-                    call_name, it, et = self.method_name(type_name, var_name)
+                    call_name, it, et, fieldAccessor = self.method_name(type_name, var_name)
                     iftest += it
 
                 call += [call_name]
@@ -426,41 +431,49 @@ class MrGeo(object):
             iftest = " type(" + var_name + ") is str"
             call_name = "str(" + var_name + ")"
             excepttest = "not" + iftest
-        elif type_name == "Double" or type_name == "Float":
+            fieldAccessor = ""
+        elif type_name == "double" or type_name == "float":
             iftest = " isinstance(" + var_name + ", (int, long, float))"
             call_name = "float(" + var_name + ")"
             excepttest = "not" + iftest
-        elif type_name == "Long":
+            fieldAccessor = ""
+        elif type_name == "long":
             iftest = " isinstance(" + var_name + ", (int, long, float))"
             call_name = "long(" + var_name + ")"
             excepttest = "not" + iftest
-        elif type_name == "Int" or type_name == "Short" or type_name == "Char":
+            fieldAccessor = ""
+        elif type_name == "int" or type_name == "Short" or type_name == "Char":
             iftest = " isinstance(" + var_name + ", (int, long, float))"
             call_name = "int(" + var_name + ")"
             excepttest = "not" + iftest
-        elif type_name == "Boolean":
+            fieldAccessor = ""
+        elif type_name == "boolean":
             iftest = " isinstance(" + var_name + ", (int, long, float, str))"
             call_name = "True if " + var_name + " else False"
             excepttest = "not" + iftest
+            fieldAccessor = ""
         elif type_name.endswith("MapOp"):
             base_var = var_name
             var_name += ".mapop"
             iftest = " hasattr(" + base_var + ", 'mapop') and self.is_instance_of(" + var_name + ", '" + type_name + "')"
             call_name = var_name
             excepttest = " hasattr(" + base_var + ", 'mapop') and not self.is_instance_of(" + var_name + ", '" + type_name + "')"
+            fieldAccessor = ".mapop"
         else:
             iftest = " self.is_instance_of(" + var_name + ", '" + type_name + "')"
             call_name = var_name
             excepttest = "not" + iftest
+            fieldAccessor = ""
 
-        return call_name, iftest, excepttest
+        return call_name, iftest, excepttest, fieldAccessor
 
     def _generate_methods(self, instance, signatures):
         methods = []
         for sig in signatures:
             found = False
             method = []
-            for variable in sig.split(","):
+            for variable in sig.split("|"):
+                # print("variable: " + variable)
                 names = re.split("[:=]+", variable)
                 new_name = names[0]
                 new_type = names[1]
@@ -512,7 +525,8 @@ class MrGeo(object):
                     else:
                         raise Exception("only default values differ: " + str(s) + ": " + str(param))
                 else:
-                    raise Exception("type parameters differ: " + str(s) + ": " + str(param))
+                    raise Exception("type parameters differ: " + s[1] + ": " + param[1])
+#                    raise Exception("type parameters differ: " + str(s) + ": " + str(param))
         return False
 
     def _generate_signature(self, methods):
@@ -520,6 +534,7 @@ class MrGeo(object):
         dual = len(methods) > 1
         for method in methods:
             for param in method:
+                # print("Param: " + str(param))
                 if not param[2] == "self" and not self._in_signature(param, signature):
                     signature.append(param)
                     if param[4]:
@@ -532,7 +547,10 @@ class MrGeo(object):
                 sig += ["*args"]
             else:
                 if s[3] is not None:
-                    sig += [s[0] + "=" + s[3]]
+                    if (s[3].endswith("NaN")):
+                        sig += [s[0] + "=float('nan')"]
+                    else:
+                        sig += [s[0] + "=" + s[3]]
                 elif dual:
                     sig += [s[0] + "=None"]
                 else:
@@ -647,7 +665,7 @@ class MrGeo(object):
         if self.job.isYarn():
             conf.set("spark.master", "yarn-client")
 
-            if not conf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = False):
+            if not conf.getBoolean("spark.dynamicAllocation.enabled", False):
                 mem = jvm.SparkUtils.humantokb(conf.get("spark.executor.memory"))
                 workers = int(conf.get("spark.executor.instances")) + 1  # one for the driver
 

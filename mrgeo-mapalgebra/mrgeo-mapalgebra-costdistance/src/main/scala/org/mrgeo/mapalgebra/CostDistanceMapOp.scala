@@ -28,7 +28,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.vector.FeatureIdWritable
-import org.mrgeo.geometry.{GeometryFactory, Point}
+import org.mrgeo.geometry.{Geometry, GeometryFactory, Point}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -85,6 +85,12 @@ object CostDistanceMapOp extends MapOpRegistrar {
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new CostDistanceMapOp(node, variables)
+
+  def create(raster:RasterMapOp, maxCost: Double, zoom: Int,
+             sourcePoints: Array[Double]): MapOp = {
+
+    new CostDistanceMapOp(raster, maxCost.toFloat, zoom, sourcePoints)
+  }
 }
 
 
@@ -94,13 +100,23 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
   var friction:Option[RasterMapOp] = None
   var srcVector:Option[VectorMapOp] = None
-
+  var sourcePoints: Option[Array[Double]] = None
   var frictionZoom:Option[Int] = None
   var requestedBounds:Option[Bounds] = None
 
   var numExecutors:Int = -1
 
   var maxCost:Float = -1
+
+  private[mapalgebra] def this(friction: RasterMapOp, maxCost: Float, zoom: Int,
+                               sourcePoints: Array[Double]) = {
+    this()
+
+    this.friction = Some(friction)
+    this.maxCost = maxCost
+    this.sourcePoints = Some(sourcePoints)
+    this.srcVector = None
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -115,6 +131,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
     var nodeIndex: Int = 0
     srcVector = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
+    sourcePoints = None
     nodeIndex += 1
 
     // Check for optional friction zoom level
@@ -177,8 +194,23 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     val t0 = System.nanoTime()
 
     val inputFriction:RasterMapOp = friction getOrElse(throw new IOException("Input MapOp not valid!"))
-    val sourcePointsRDD = srcVector.getOrElse(throw new IOException("Missing source points")).
-        rdd().getOrElse(throw new IOException("Missing source points"))
+    val sourcePointsRDD = srcVector match {
+      case Some(mapOp) => mapOp.rdd().getOrElse(throw new IOException("Missing source points"))
+      case None => {
+        sourcePoints match {
+          case Some(pointsList) => {
+            // Convert the array of lon/let pairs to a VectorRDD
+            var recordData = new ListBuffer[(FeatureIdWritable, Geometry)]()
+            for (i <- 0 until pointsList.length by 2) {
+              val geom = GeometryFactory.createPoint(pointsList(i).toFloat, pointsList(i+1).toFloat)
+              recordData += ((new FeatureIdWritable(i/2), geom))
+            }
+            VectorRDD(context.parallelize(recordData))
+          }
+          case None => throw new IOException("Missing source points")
+        }
+      }
+    }
     val frictionMeta = inputFriction.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + inputFriction.getClass.getName))
 
     val zoom = frictionZoom match {
