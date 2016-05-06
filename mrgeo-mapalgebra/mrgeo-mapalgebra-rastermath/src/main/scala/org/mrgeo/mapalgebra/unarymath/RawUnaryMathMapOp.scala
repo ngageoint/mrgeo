@@ -81,7 +81,7 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
       val width = raster.getWidth
       var b: Int = 0
       while (b < raster.getNumBands) {
-        val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
+        val pixels = raster.getSamples(0, 0, width, raster.getHeight, b, null.asInstanceOf[Array[Double]])
         var y: Int = 0
         while (y < raster.getHeight) {
           var x: Int = 0

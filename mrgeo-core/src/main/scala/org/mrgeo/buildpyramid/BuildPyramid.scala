@@ -162,10 +162,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     val tilesize: Int = metadata.getTilesize
 
-    val nodatas:Array[Number] = Array.ofDim[Number](metadata.getBands)
-    for (i <- nodatas.indices) {
-      nodatas(i) = metadata.getDefaultValueDouble(i)
-    }
+    val nodatas = metadata.getDefaultValuesNumber
 
     DataProviderFactory.saveProviderPropertiesToConfig(providerproperties, context.hadoopConfiguration)
     // build the levels

@@ -730,17 +730,29 @@ public boolean hasPyramids()
   }
 
 
-  @JsonIgnore
-  public short[] getDefaultValuesShort()
+@JsonIgnore
+public short[] getDefaultValuesShort()
+{
+  final short[] defaults = new short[bands];
+  for (int i = 0; i < bands; i++)
   {
-    final short[] defaults = new short[bands];
-    for (int i = 0; i < bands; i++)
-    {
-      defaults[i] = Double.valueOf(defaultValues[i]).shortValue();
-    }
-
-    return defaults;
+    defaults[i] = Double.valueOf(defaultValues[i]).shortValue();
   }
+
+  return defaults;
+}
+
+@JsonIgnore
+public Number[] getDefaultValuesNumber()
+{
+  final Number[] defaults = new Number[bands];
+  for (int i = 0; i < bands; i++)
+  {
+    defaults[i] = defaultValues[i];
+  }
+
+  return defaults;
+}
 
   public ImageMetadata[] getImageMetadata()
   {
