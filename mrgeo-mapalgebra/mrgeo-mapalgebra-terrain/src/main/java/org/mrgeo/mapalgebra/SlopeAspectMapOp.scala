@@ -229,10 +229,7 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
     val tb = TMSUtils.boundsToTile(meta.getBounds, zoom, tilesize)
 
-    val nodatas = Array.ofDim[Number](meta.getBands)
-    for (i <- nodatas.indices) {
-      nodatas(i) = meta.getDefaultValue(i)
-    }
+    val nodatas = meta.getDefaultValuesNumber
 
     val bufferX = 1
     val bufferY = 1

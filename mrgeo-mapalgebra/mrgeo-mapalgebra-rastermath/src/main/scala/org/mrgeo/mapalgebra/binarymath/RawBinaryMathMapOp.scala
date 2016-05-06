@@ -138,7 +138,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
       var b: Int = 0
       while (b < raster.getNumBands) {
-        val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
+        val pixels = raster.getSamples(0, 0, width, raster.getHeight, b, null.asInstanceOf[Array[Double]])
         var y: Int = 0
         while (y < raster.getHeight) {
           var x: Int = 0
@@ -194,7 +194,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
       var b: Int = 0
       while (b < raster.getNumBands) {
-        val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
+        val pixels = raster.getSamples(0, 0, width, raster.getHeight, b, null.asInstanceOf[Array[Double]])
         var y: Int = 0
         while (y < raster.getHeight) {
           var x: Int = 0
@@ -277,8 +277,8 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
         val width = raster1.getWidth
         var b: Int = 0
         while (b < raster1.getNumBands) {
-          val pixels1 = raster1.getSamples(0, 0, width, raster1.getHeight, 0, null.asInstanceOf[Array[Double]])
-          val pixels2 = raster2.getSamples(0, 0, width, raster2.getHeight, 0, null.asInstanceOf[Array[Double]])
+          val pixels1 = raster1.getSamples(0, 0, width, raster1.getHeight, b, null.asInstanceOf[Array[Double]])
+          val pixels2 = raster2.getSamples(0, 0, width, raster2.getHeight, b, null.asInstanceOf[Array[Double]])
           var y: Int = 0
           while (y < raster1.getHeight) {
             var x: Int = 0

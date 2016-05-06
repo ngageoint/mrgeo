@@ -173,7 +173,7 @@
                   <version>${project.version}</version>
                   <type>${project.packaging}</type>
                   <classifier />
-                  <destFileName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}.${project.packaging}</destFileName>
+                  <destFileName>${project.parent.parent.artifactId}-${project.parent.version}.${project.packaging}</destFileName>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>${project.parent.build.directory}</outputDirectory>
