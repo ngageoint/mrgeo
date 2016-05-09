@@ -40,19 +40,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 
-/**
- * testCostDistance gets the full area, which is 13x12 tiles 
- * testCostDistanceWithBounds gets a clipped area of 12x11 tiles, and uses boundsBuffer
- * testCostDistanceWithBoundsAndLowerZoomLevel gets a clipped area of zoom 9 - 7x6 instead of 7x7
- *  and uses boundsBuffer
- * testCostDistanceWithUniformFriction gets a clipped area of 2x2 instead of 3x4 and uses  
- *  auto bounds
- * testCostDistanceWithLeastCostPath uses auto bounds (not sure what clipped area looks like because
- *  we don't store it)
- * testNnd uses auto bounds for a clipped area of 12x11 (just as large as testCostDistanceWithBounds 
- *  but different set of 12x11 tiles)
- *
- */
 @SuppressWarnings("static-method")
 public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 {
@@ -110,7 +97,7 @@ private static final String smallElevationName = "small-elevation";
 //        + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
                  + "friction = [" + frictionSurface + "];\n"
-                 + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
+                 + "result = CostDistance(src, friction, 50000.0);";
     // Start point in tile tx=702 ty = 348, pixel px = 510 py = 0
 //    String exp = "srcPoint = InlineCsv(\"GEOMETRY\", \"'POINT(9.029234 45.223345)'\");\n"
 //                 + "friction = [/mrgeo/images/dave-tobler-raw-spm_nowater];\n"
@@ -210,7 +197,7 @@ private static final String smallElevationName = "small-elevation";
 //
 @Test
 @Category(IntegrationTest.class)
-public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
+public void testCostDistanceWithLowerZoomLevel() throws Exception
 {
   final int lowerZoomLevel = TOBLER_MEDIUM_ZOOM - 1;
 
