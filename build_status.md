@@ -1,4 +1,4 @@
-Mr Geo Jenkins Build Status:
+MrGeo Jenkins Build Status:
 
 * Amazon EMR 4.5.0: [![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws/)
 * Apache 2.4.0: [![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache240/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache240/)

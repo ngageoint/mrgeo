@@ -281,10 +281,11 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // job.
     val repartitioned = if (numExecutors > 1) {
       logInfo("Repartitioning to " + numExecutors + " partitions")
-      if (frictionRDD.getNumPartitions < numExecutors) {
+      val partitions = frictionRDD.partitions.length
+      if (partitions < numExecutors) {
         frictionRDD.repartition(numExecutors)
       }
-      else if (frictionRDD.getNumPartitions > numExecutors) {
+      else if (partitions > numExecutors) {
         frictionRDD.coalesce(numExecutors)
       }
       else {
