@@ -28,7 +28,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.vector.FeatureIdWritable
-import org.mrgeo.geometry.{GeometryFactory, Point}
+import org.mrgeo.geometry.{Geometry, GeometryFactory, Point}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -85,6 +85,12 @@ object CostDistanceMapOp extends MapOpRegistrar {
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new CostDistanceMapOp(node, variables)
+
+  def create(raster:RasterMapOp, maxCost: Double, zoom: Int,
+             sourcePoints: Array[Double]): MapOp = {
+
+    new CostDistanceMapOp(raster, maxCost.toFloat, zoom, sourcePoints)
+  }
 }
 
 
@@ -94,13 +100,22 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
   var friction:Option[RasterMapOp] = None
   var srcVector:Option[VectorMapOp] = None
-
+  var sourcePoints: Option[Array[Double]] = None
   var frictionZoom:Option[Int] = None
-  var requestedBounds:Option[Bounds] = None
 
   var numExecutors:Int = -1
 
   var maxCost:Float = -1
+
+  private[mapalgebra] def this(friction: RasterMapOp, maxCost: Float, zoom: Int,
+                               sourcePoints: Array[Double]) = {
+    this()
+
+    this.friction = Some(friction)
+    this.maxCost = maxCost
+    this.sourcePoints = Some(sourcePoints)
+    this.srcVector = None
+  }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
@@ -115,6 +130,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
     var nodeIndex: Int = 0
     srcVector = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
+    sourcePoints = None
     nodeIndex += 1
 
     // Check for optional friction zoom level
@@ -133,32 +149,13 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     friction = RasterMapOp.decodeToRaster(node.getChild(nodeIndex), variables)
     nodeIndex += 1
 
-    // Check for optional max cost. Both max cost and bounds are optional, so there
-    // must be either 1 argument left or 5 arguments left in order for max cost to
-    // be included.
+    // Check for optional max cost.
     if ((numChildren == (nodeIndex + 1)) || (numChildren == (nodeIndex + 5))) {
       MapOp.decodeDouble(node.getChild(nodeIndex), variables) match {
       case Some(d) =>
         maxCost = if (d < 0) -1 else d.toFloat
         nodeIndex += 1
       case _ =>
-      }
-    }
-
-    // Check for optional bounds
-    if (numChildren > nodeIndex) {
-      if (numChildren == nodeIndex + 4) {
-        val b = Array.ofDim[Double](4)
-        for (i <- 0 until 4) {
-          b(i) = MapOp.decodeDouble(node.getChild(nodeIndex + i), variables) match {
-          case Some(d) => d
-          case _ => throw new ParserException("Can't decode double")
-          }
-        }
-        requestedBounds = Some(new Bounds(b(0), b(1), b(2), b(3)))
-      }
-      else {
-        throw new ParserException("The bounds argument must include minX, minY, maxX and maxY")
       }
     }
   }
@@ -177,8 +174,23 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     val t0 = System.nanoTime()
 
     val inputFriction:RasterMapOp = friction getOrElse(throw new IOException("Input MapOp not valid!"))
-    val sourcePointsRDD = srcVector.getOrElse(throw new IOException("Missing source points")).
-        rdd().getOrElse(throw new IOException("Missing source points"))
+    val sourcePointsRDD = srcVector match {
+      case Some(mapOp) => mapOp.rdd().getOrElse(throw new IOException("Missing source points"))
+      case None => {
+        sourcePoints match {
+          case Some(pointsList) => {
+            // Convert the array of lon/let pairs to a VectorRDD
+            var recordData = new ListBuffer[(FeatureIdWritable, Geometry)]()
+            for (i <- 0 until pointsList.length by 2) {
+              val geom = GeometryFactory.createPoint(pointsList(i).toFloat, pointsList(i+1).toFloat)
+              recordData += ((new FeatureIdWritable(i/2), geom))
+            }
+            VectorRDD(context.parallelize(recordData))
+          }
+          case None => throw new IOException("Missing source points")
+        }
+      }
+    }
     val frictionMeta = inputFriction.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + inputFriction.getClass.getName))
 
     val zoom = frictionZoom match {
@@ -191,39 +203,33 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     }
 
     val outputBounds = {
-      requestedBounds match {
-      case None =>
-        if (maxCost < 0) {
+      if (maxCost < 0) {
+        frictionMeta.getBounds
+      }
+      else {
+        // Find the number of tiles beyond the MBR that need to be included to
+        // cover the maxCost. Pixel values are in meters/sec and the maxCost is
+        // in seconds. We use a worst-case scenario here to ensure that we include
+        // at least as many tiles, and we accomplish that by using the minimum
+        // pixel value.
+        //
+        // NOTE: Currently, we only work with a single band - in other words cost
+        // distance is computed using a single friction value regardless of the
+        // direction of travel. If we ever modify the algorithm to support different
+        // friction values per direction, then this computation must change as well.
+        val stats = frictionMeta.getImageStats(zoom, 0)
+        if (stats == null) {
           frictionMeta.getBounds
         }
         else {
-          // Find the number of tiles beyond the MBR that need to be included to
-          // cover the maxCost. Pixel values are in meters/sec and the maxCost is
-          // in seconds. We use a worst-case scenario here to ensure that we include
-          // at least as many tiles, and we accomplish that by using the minimum
-          // pixel value.
-          //
-          // NOTE: Currently, we only work with a single band - in other words cost
-          // distance is computed using a single friction value regardless of the
-          // direction of travel. If we ever modify the algorithm to support different
-          // friction values per direction, then this computation must change as well.
-          val stats = frictionMeta.getImageStats(zoom, 0)
-          if (stats == null) {
-            frictionMeta.getBounds
-            //            throw new IOException(s"No stats for ${frictionMeta.getPyramid}." +
-            //                " You must either build the pyramid for it or specify the bounds for the cost distance.")
+          logInfo("Calculating tile bounds for maxCost " + maxCost + ", min = " + stats.min + " and bounds " +
+              frictionMeta.getBounds)
+          if (stats.min == Double.MaxValue) {
+            throw new IllegalArgumentException("Invalid stats for the friction surface: " + frictionMeta.getPyramid +
+                ". You will need to specify a maxCost in the CostDistance call")
           }
-          else {
-            logInfo("Calculating tile bounds for maxCost " + maxCost + ", min = " + stats.min + " and bounds " +
-                frictionMeta.getBounds)
-            if (stats.min == Double.MaxValue) {
-              throw new IllegalArgumentException("Invalid stats for the friction surface: " + frictionMeta.getPyramid +
-                  ". You will need to explicitly include the bounds in the CostDistance call")
-            }
-            calculateBoundsFromCost(maxCost, sourcePointsRDD, stats.min, frictionMeta.getBounds)
-          }
+          calculateBoundsFromCost(maxCost, sourcePointsRDD, stats.min, frictionMeta.getBounds)
         }
-      case Some(rb) => rb
       }
     }
 
@@ -270,33 +276,25 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     })
 
 
-    // Limit processing to the tile bounds
-    val filtered = frictionRDD.filter(U => {
-      // Trim the friction surface to only the tiles in our bounds
-      val t = TMSUtils.tileid(U._1.get, zoom)
-      tileBounds.contains(TMSUtils.tileid(U._1.get, zoom))
-    })
-
-
     // After some experimentation with different values for repartitioning, the
     // best performance seems to come from using the number of executors for this
     // job.
     val repartitioned = if (numExecutors > 1) {
       logInfo("Repartitioning to " + numExecutors + " partitions")
-      val partitions = filtered.partitions.length
+      val partitions = frictionRDD.partitions.length
       if (partitions < numExecutors) {
-        filtered.repartition(numExecutors)
+        frictionRDD.repartition(numExecutors)
       }
       else if (partitions > numExecutors) {
-        filtered.coalesce(numExecutors)
+        frictionRDD.coalesce(numExecutors)
       }
       else {
-        filtered
+        frictionRDD
       }
     }
     else {
       //      logInfo("No need to repartition")
-      filtered
+      frictionRDD
     }
 
     val pixelSizeMeters = (res * LatLng.METERS_PER_DEGREE).toFloat
