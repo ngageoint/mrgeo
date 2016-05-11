@@ -47,5 +47,3 @@ Exemplar MrGeo Use Cases:
 *	Raster Storage and Provisioning:  MrGeo has been used to store, index, tile, and pyramid multi-terabyte scale image databases.  Once stored, this data is made available through a simple Tiled Map Services (TMS) and Web Mapping Services (WMS) and can be made available through GeoServer via a [MrGeo plugin](https://github.com/ngageoint/mrgeo-geoserver-plugin).
 *	Large Scale Batch Processing and Serving:  MrGeo has been used to pre-compute global 1 ArcSecond (nominally 30 meters) elevation data (300+ GB) into derivative raster products : slope, aspect, relative elevation, terrain shaded relief (collectively terabytes in size), and Tobler and Pingel friction surfaces
 *	Global Computation of Cost Distance:  Given all pub locations in OpenStreetMap, compute 2 hour drive  times from each location.  The full resolution is  1 ArcSecond (30 meters nominally) 
-
-[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws/)
