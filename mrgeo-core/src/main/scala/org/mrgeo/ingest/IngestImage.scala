@@ -253,19 +253,25 @@ object IngestImage extends MrGeoDriver with Externalizable {
         scaled.SetProjection(GDALUtils.EPSG4326)
 
 
-        var resample: Int = gdalconstConstants.GRA_Bilinear
+        val resample =
         if (categorical) {
           // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
           // in which case we will use GRA_NearestNeighbour
           try {
             val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
             if (mode != null) {
-              resample = mode.getInt()
+              mode.getInt()
+            }
+            else {
+              gdalconstConstants.GRA_NearestNeighbour
             }
           }
           catch {
-            case e: Exception => resample = gdalconstConstants.GRA_NearestNeighbour
+            case e: Exception => gdalconstConstants.GRA_NearestNeighbour
           }
+        }
+        else {
+          gdalconstConstants.GRA_Bilinear
         }
 
         gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)

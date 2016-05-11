@@ -538,16 +538,6 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
 
     List<String> inputs = new LinkedList<>();
 
-    if (line.hasOption("z"))
-    {
-      zoomlevel = Integer.parseInt(line.getOptionValue("z"));
-    }
-
-    if (skippreprocessing && zoomlevel < 1)
-    {
-      log.error("Need to specify zoomlevel to skip preprocessing");
-      return -1;
-    }
 
     tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
@@ -561,6 +551,17 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     catch(IllegalArgumentException e)
     {
       System.out.println(e.getMessage());
+      return -1;
+    }
+
+    if (line.hasOption("z"))
+    {
+      zoomlevel = Integer.parseInt(line.getOptionValue("z"));
+    }
+
+    if (skippreprocessing && zoomlevel < 1)
+    {
+      log.error("Need to specify zoomlevel to skip preprocessing");
       return -1;
     }
 
