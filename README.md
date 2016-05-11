@@ -1,5 +1,5 @@
 ##Origin
-[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm)
+[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm/badge/icon)](https://github.com/ngageoint/mrgeo/wiki/MrGeo-Build-Status)
 
 [![Join the chat at https://gitter.im/ngageoint/mrgeo](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ngageoint/mrgeo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
