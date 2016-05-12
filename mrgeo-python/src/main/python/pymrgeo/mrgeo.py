@@ -10,6 +10,7 @@ from pymrgeo import constants
 from pyspark.context import SparkContext
 
 from rastermapop import RasterMapOp
+from vectormapop import VectorMapOp
 
 from java_gateway import launch_gateway, set_field, is_remote
 
@@ -92,9 +93,10 @@ class MrGeo(object):
         java_import(jvm, "org.mrgeo.job.*")
         java_import(jvm, "org.mrgeo.mapalgebra.MapOpFactory")
         java_import(jvm, "org.mrgeo.mapalgebra.raster.RasterMapOp")
+        java_import(jvm, "org.mrgeo.mapalgebra.vector.VectorMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.raster.MrsPyramidMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.ExportMapOp")
-        java_import(jvm, "org.mrgeo.mapalgebra.vector.VectorMapOp")
+        java_import(jvm, "org.mrgeo.mapalgebra.PointsMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.MapOp")
         java_import(jvm, "org.mrgeo.utils.SparkUtils")
 
@@ -149,11 +151,10 @@ class MrGeo(object):
                         if instance == 'RasterMapOp':
                             setattr(RasterMapOp, method_name, compiled.get(method_name))
                         elif instance == "VectorMapOp":
-                            #  setattr(VectorMapOp, method_name, compiled.get(method_name))
-                            pass
+                            setattr(VectorMapOp, method_name, compiled.get(method_name))
                         elif self.is_instance_of(cls, jvm.MapOp):
                             setattr(RasterMapOp, method_name, compiled.get(method_name))
-                            #  setattr(VectorMapOp, method_name, compiled.get(method_name))
+                            setattr(VectorMapOp, method_name, compiled.get(method_name))
 
     def _generate_operator_code(self, mapop, name, signatures, instance):
         methods = self._generate_methods(instance, signatures)
@@ -606,7 +607,7 @@ class MrGeo(object):
 
         if isinstance(java_object, JavaClass):
             cls = jvm.Class.forName(java_object._fqn)
-        elif isinstance(java_class, JavaObject):
+        elif isinstance(java_object, JavaObject):
             cls = java_object.getClass()
         else:
             raise Exception("java_object must be a JavaClass, or a JavaObject")
@@ -718,3 +719,18 @@ class MrGeo(object):
         # print("loaded " + name)
 
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)
+
+    def create_points(self, coords):
+        jvm = self.gateway.jvm
+
+        # Convert from a python list to a Java array
+        cnt = 0
+        array = self.gateway.new_array(self.gateway.jvm.double, len(coords))
+        for coord in coords:
+            array[cnt] = coord
+            cnt += 1
+
+        mapop = jvm.PointsMapOp.apply(array)
+        mapop.context(self.sparkContext)
+
+        return VectorMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)
