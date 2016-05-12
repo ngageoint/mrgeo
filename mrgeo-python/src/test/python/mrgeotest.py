@@ -62,6 +62,58 @@ class MrGeoTests(TestCase):
         name = self.inputdir + testname
         raster.export(name, singleFile=True, format="tiff", overridenodata=-9999)
 
+    def savevector(self, vector, testname):
+        name = self.inputdir + testname + ".tsv"
+        vector.save(name)
+
+    def comparevector(self, vector, testname, expectations):
+        if self.GENERATE_BASELINE_DATA:
+            self.savevector(vector, str(testname))
+        else:
+            jvm = self.gateway.jvm
+            # test = raster.mapop.toDataset(False)
+
+            testvector = str(self.outputhdfs + testname + ".tsv")
+            vector.ssave(testvector)
+            expectedvector = str(self.inputdir + testname + ".tsv")
+            vdp_expected = jvm.DataProviderFactory.getVectorDataProvider(
+                expectedvector,
+                jvm.DataProviderFactory.AccessMode.READ,
+                jvm.HadoopUtils.createConfiguration())
+            expected_geom_reader = vdp_expected.getVectorReader().get()
+
+            vdp = jvm.DataProviderFactory.getVectorDataProvider(
+                testvector,
+                jvm.DataProviderFactory.AccessMode.READ,
+                jvm.HadoopUtils.createConfiguration())
+            self.assertTrue(vdp is not None)
+            vectorReader = vdp.getVectorReader()
+            self.assertTrue(vectorReader is not None)
+            self.assertTrue(self.mrgeo.is_instance_of(vectorReader, jvm.DelimitedVectorReader))
+            self.assertEquals(vdp_expected.getVectorReader().count(), vectorReader.count())
+            geom_reader = vectorReader.get()
+            self.assertTrue(geom_reader is not None)
+
+            while expected_geom_reader.hasNext():
+                expected_geom = expected_geom_reader.next()
+                geom = geom_reader.next()
+                self.assertTrue(geom is not None)
+                self.assertEquals(expected_geom.type(), geom.type())
+                self.assertAlmostEquals(float(expected_geom.getAttribute("COST_S")),
+                                        float(geom.getAttribute("COST_S")), delta=0.001);
+                self.assertAlmostEquals(float(expected_geom.getAttribute("DISTANCE_M")),
+                                        float(geom.getAttribute("DISTANCE_M")), delta=0.001)
+                self.assertAlmostEquals(float(expected_geom.getAttribute("MINSPEED_MPS")),
+                                        float(geom.getAttribute("MINSPEED_MPS")), delta=0.001);
+                self.assertAlmostEquals(float(expected_geom.getAttribute("MAXSPEED_MPS")),
+                                        float(geom.getAttribute("MAXSPEED_MPS")), delta=0.001);
+                self.assertAlmostEquals(float(expected_geom.getAttribute("AVGSPEED_MPS")),
+                                        float(geom.getAttribute("AVGSPEED_MPS")), delta=0.001);
+
+            # Should not be any more geometries in the actual output
+            self.assertFalse(geom_reader.hasNext())
+            jvm.HadoopFileUtils.delete(testvector)
+
     @classmethod
     def copy(cls, srcfile, srcpath=None, dstpath=None, dstfile=None):
         jvm = cls.gateway.jvm
@@ -127,8 +179,14 @@ class MrGeoTests(TestCase):
         java_import(jvm, "org.mrgeo.core.MrGeoConstants")
         java_import(jvm, "org.mrgeo.core.MrGeoProperties")
         java_import(jvm, "org.mrgeo.hdfs.utils.HadoopFileUtils")
+        java_import(jvm, "org.mrgeo.utils.HadoopUtils")
+        java_import(jvm, "org.apache.hadoop.conf.Configuration")
         java_import(jvm, "org.apache.hadoop.fs.Path")
         java_import(jvm, "org.mrgeo.utils.LoggingUtils")
+        java_import(jvm, "org.mrgeo.data.DataProviderFactory")
+        java_import(jvm, "org.mrgeo.data.vector.VectorDataProvider")
+        java_import(jvm, "org.mrgeo.data.vector.VectorReader")
+        java_import(jvm, "org.mrgeo.hdfs.vector.DelimitedVectorReader")
 
         fs = jvm.HadoopFileUtils.getFileSystem()
         p = jvm.Path(cls._INPUT_BASE).makeQualified(fs)
@@ -221,3 +279,11 @@ def load_tests(loader, tests, pattern):
 if __name__ == '__main__':
     print('running tests')
     main()
+
+class VectorTestExpectation:
+    def __init__(self, cost, distance, minSpeed, maxSpeed, avgSpeed):
+        self.cost = cost
+        self.distance = distance
+        self.minSpeed = minSpeed
+        self.maxSpeed = maxSpeed
+        self.avgSpeed = avgSpeed

@@ -121,7 +121,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     this()
 
     val usage: String = "CostDistance takes the following arguments " +
-        "(source point, [friction zoom level], friction raster, [maxCost], [minX, minY, maxX, maxY])"
+        "(source points, [friction zoom level], friction raster, [maxCost], [minX, minY, maxX, maxY])"
 
     val numChildren = node.getNumChildren
     if (numChildren < 2 || numChildren > 8) {
