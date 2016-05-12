@@ -1,21 +1,63 @@
 ﻿# -*- coding: utf-8 -*-
-
+import json
+import os
 import sys
 
 import math
 from pymrgeo import MrGeo
+from pymrgeo.rastermapop import RasterMapOp
 
 if __name__ == "__main__":
 
+    landsat = {}
+    # find all the landsat images
+    root = '/data/gis-data/images/landsat8/LC80140342014187LGN00'
+    if os.path.exists(root):
+        for dirname, subdirs, files in os.walk(root):
+            for name in files:
+                pathname = os.path.join(dirname, name)
+                base, ext = os.path.splitext(pathname)
+                ext = ext.lower()
+                base = base.lower()
+
+                print(name)
+                if ext == '.tif':
+                    # find the band number
+                    split = base.split('_')
+                    if len(split) != 2:
+                        raise Exception('Bad TIF filename: ' + pathname)
+
+                    print(split[1])
+                    b = split[1]
+                    if b == 'bqa':
+                        landsat[b] = pathname
+                    else:
+                        # strip off the "B"
+                        band = int(b[1:])
+                        landsat[band] = pathname
+                    pass
+                elif ext == '.json':
+                    landsat[ext[1:]] = pathname
+                    pass
+
+
+    print(landsat)
+
+    if not landsat.has_key('json'):
+        raise Exception('No JSON metadata file in ' + root)
+
+    with open(landsat['json']) as metafile:
+        metadata = json.load(metafile)
+
     mrgeo = MrGeo()
-
-    # sys.exit(1)
-
     mrgeo.usedebug()
 
-    # images = mrgeo.list_images()
-
     mrgeo.start()
+
+    red = RasterMapOp()
+    red.ingest(landsat[4])
+
+
 
     # ones = mrgeo.load_image("all-ones-save")
 
@@ -71,7 +113,6 @@ if __name__ == "__main__":
     # # "hill = 255.0 * ((coszen * cos(sl)) + (sinzen * sin(sl) * cos(sunaz - as)))"
     #
     # hill.export("/data/export/hillshade-test", singleFile=True)
-
 
 
     mrgeo.stop()
