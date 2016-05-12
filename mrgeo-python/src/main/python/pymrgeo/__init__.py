@@ -81,9 +81,11 @@ loadlib('pyspark.zip')
 
 from pymrgeo.mrgeo import MrGeo
 from pymrgeo.rastermapop import RasterMapOp
+from pymrgeo.vectormapop import VectorMapOp
 
 
 __all__ = [
     "MrGeo"
     "RasterMapOp"
+    "VectorMapOp"
 ]

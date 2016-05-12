@@ -16,11 +16,9 @@
 
 package org.mrgeo.mapalgebra.save
 
-import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.{RasterMapOp, SaveRasterMapOp}
-import org.mrgeo.mapalgebra.vector.VectorMapOp
+import org.mrgeo.mapalgebra.vector.{SaveVectorMapOp, VectorMapOp}
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object SaveMapOp extends MapOpRegistrar {
@@ -31,8 +29,7 @@ object SaveMapOp extends MapOpRegistrar {
   def create(mapop:MapOp, name:String):MapOp = {
     mapop match {
     case raster:RasterMapOp => new SaveRasterMapOp(Some(raster), name)
-    // TODO:  Uncomment this!
-    //case vector:VectorMapOp => SaveVectorMapOp(vector, name)
+    case vector:VectorMapOp => new SaveVectorMapOp(Some(vector), name)
     case _ => throw new ParserException("MapOp must be a RasterMapOp or VectorMapOp")
     }
   }
@@ -49,13 +46,10 @@ object SaveMapOp extends MapOpRegistrar {
       new SaveRasterMapOp(node, variables)
     }
     catch {
-      case pe: ParserException =>
-        throw pe
-      // TODO:  Uncomment this!
-      //        val vector = VectorMapOp.decodeToRaster(node.getChild(0), variables)
-      //        new SaveVectorMapOp(node, true, variables, protectionLevel)
-      //      }
-
+      case pe: ParserException => {
+        val vector = VectorMapOp.decodeToVector(node.getChild(0), variables)
+        new SaveVectorMapOp(node, variables)
+      }
     }
   }
 }

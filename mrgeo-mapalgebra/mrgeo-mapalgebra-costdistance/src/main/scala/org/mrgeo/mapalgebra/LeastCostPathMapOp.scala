@@ -22,7 +22,6 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.GeometryFactory
-import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -31,6 +30,11 @@ import org.mrgeo.mapalgebra.vector.VectorMapOp
 object LeastCostPathMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("leastCostPath", "lcp")
+  }
+
+  def create(pointsMapOp: VectorMapOp, raster:RasterMapOp): MapOp = {
+
+    new LeastCostPathMapOp(pointsMapOp, raster)
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
@@ -43,7 +47,14 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
   var pointsMapOp: Option[VectorMapOp] = None
   var vectorrdd: Option[VectorRDD] = None
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+  def this(pointsMapOp: VectorMapOp, costDistanceMapOp: RasterMapOp) = {
+    this()
+
+    this.costDistanceMapOp = Some(costDistanceMapOp)
+    this.pointsMapOp = Some(pointsMapOp)
+  }
+
+  def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
     if (node.getNumChildren != 2)
     {
@@ -66,8 +77,10 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
   override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
   override def execute(context: SparkContext): Boolean = {
-    val destrdd = pointsMapOp.getOrElse(throw new IOException("Invalid points input"))
-      .rdd().getOrElse(throw new IOException("Invalid RDD for points input"))
+    val destrdd = pointsMapOp match {
+      case Some(pmo) => pmo.rdd().getOrElse(throw new IOException("Invalid RDD for points input"))
+      case None => throw new IOException("Invalid points input")
+    }
 
     vectorrdd = Some(LeastCostPathCalculator.run(costDistanceMapOp.get, destrdd, context))
     true
