@@ -5,7 +5,31 @@ import sys
 
 import math
 from pymrgeo import MrGeo
-from pymrgeo.rastermapop import RasterMapOp
+
+
+def toa_reflectance(image, metadata, band):
+    scales = metadata['L1_METADATA_FILE']['RADIOMETRIC_RESCALING']
+
+    mult = scales['REFLECTANCE_MULT_BAND_' + str(band)]
+    add = scales['REFLECTANCE_ADD_BAND_' + str(band)]
+
+    print('band: ' + str(band) + ' mult: ' + str(mult) + ' add: ' + str(add))
+
+    rad = ((image * mult) + add)
+    return rad
+
+def toa_radiance(image, metadata, band):
+    scales = metadata['L1_METADATA_FILE']['RADIOMETRIC_RESCALING']
+
+    mult = scales['RADIANCE_MULT_BAND_' + str(band)]
+    add = scales['RADIANCE_ADD_BAND_' + str(band)]
+
+    sun_elev = metadata['L1_METADATA_FILE']['IMAGE_ATTRIBUTES']['SUN_ELEVATION'] * 0.0174533 # degrees to rad
+
+    print('band: ' + str(band) + ' mult: ' + str(mult) + ' add: ' + str(add))
+
+    refl = ((image * mult) + add) / math.sin(sun_elev)
+    return refl
 
 if __name__ == "__main__":
 
@@ -40,9 +64,6 @@ if __name__ == "__main__":
                     landsat[ext[1:]] = pathname
                     pass
 
-
-    print(landsat)
-
     if not landsat.has_key('json'):
         raise Exception('No JSON metadata file in ' + root)
 
@@ -50,13 +71,35 @@ if __name__ == "__main__":
         metadata = json.load(metafile)
 
     mrgeo = MrGeo()
-    mrgeo.usedebug()
+    # mrgeo.usedebug()
 
     mrgeo.start()
 
-    red = RasterMapOp()
-    red.ingest(landsat[4])
+    red = mrgeo.ingest_image(landsat[4])
+    green = mrgeo.ingest_image(landsat[3])
+    blue = mrgeo.ingest_image(landsat[2])
 
+    rgb = red.bandcombine(green, blue)
+    rgb.export('/data/export/landsat-rgb-dn.tif', singleFile=True)
+
+    r_rad = toa_radiance(red, metadata, 4)
+    g_rad = toa_radiance(green, metadata, 3)
+    b_rad = toa_radiance(blue, metadata, 2)
+
+    rgb = r_rad.bandcombine(g_rad, b_rad)
+    rgb.export('/data/export/landsat-rgb-rad.tif', singleFile=True)
+
+    # compute Top of Atmosphere (TOA) Reflectance of the bands (http://landsat.usgs.gov/Landsat8_Using_Product.php)
+    r_refl = toa_reflectance(red, metadata, 4)
+    g_refl = toa_reflectance(green, metadata, 3)
+    b_refl = toa_reflectance(blue, metadata, 2)
+
+    # combine the bands
+    rgb = r_refl.bandcombine(g_refl, b_refl)
+
+    # rgb = rgb.convert('byte', 'fit')
+
+    rgb.export('/data/export/landsat-rgb-refl.tif', singleFile=True)
 
 
     # ones = mrgeo.load_image("all-ones-save")
