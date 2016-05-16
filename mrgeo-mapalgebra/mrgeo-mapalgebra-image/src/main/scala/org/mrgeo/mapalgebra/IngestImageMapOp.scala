@@ -16,7 +16,8 @@
 
 package org.mrgeo.mapalgebra
 
-import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
+import java.io._
+import java.net.URI
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext}
@@ -104,21 +105,59 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val inputs = input.getOrElse(throw new IOException("Inputs not set"))
-
-    val path = new Path(inputs)
-    val fs = HadoopFileUtils.getFileSystem(context.hadoopConfiguration, path)
-
-    val rawfiles = fs.listFiles(path, true)
+    val inputfile = input.getOrElse(throw new IOException("Inputs not set"))
 
     val filebuilder = Array.newBuilder[String]
-    while (rawfiles.hasNext) {
-      val raw = rawfiles.next()
 
-      if (!raw.isDirectory) {
-        filebuilder += raw.getPath.toUri.toString
+    var f: File = null
+    try {
+      f = new File(new URI(inputfile))
+    }
+    catch {
+      case ignored: Any => f = new File(inputfile)
+    }
+
+    def walk(dir:File):Array[String] = {
+      val files = Array.newBuilder[String]
+      val dir: Array[File] = f.listFiles
+      if (dir != null) {
+        for (s <- dir) {
+          try {
+            if (s.isFile) {
+              files += s.toURI.toString
+            }
+            else if (s.isDirectory) {
+              files ++= walk(s)
+            }
+          }
+        }
+      }
+      files.result()
+    }
+
+    if (f.exists()) {
+      if (f.isFile) {
+        filebuilder += f.toURI.toString
+      }
+      else if (f.isDirectory) {
+        filebuilder ++= walk(f)
       }
     }
+    else {
+      val path = new Path(inputfile)
+      val fs = HadoopFileUtils.getFileSystem(context.hadoopConfiguration, path)
+
+      val rawfiles = fs.listFiles(path, true)
+
+      while (rawfiles.hasNext) {
+        val raw = rawfiles.next()
+
+        if (!raw.isDirectory) {
+          filebuilder += raw.getPath.toUri.toString
+        }
+      }
+    }
+
     val tilesize = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT).toInt
 
     if (zoom.isEmpty) {
