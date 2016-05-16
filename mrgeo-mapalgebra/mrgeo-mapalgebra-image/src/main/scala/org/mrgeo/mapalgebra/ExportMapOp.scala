@@ -447,13 +447,13 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
           output += "%d".format(tileid) + "-" + "%03d".format(t.ty) + "-" + "%03d".format(t.tx)
         }
       }
-      if ((format == "tif") && (!output.endsWith(".tif") || !output.endsWith(".tiff"))) {
+      if ((format == "tif") && !(output.endsWith(".tif") || output.endsWith(".tiff"))) {
         output += ".tif"
       }
       else if ((format == "png") && !output.endsWith(".png")) {
         output += ".png"
       }
-      else if ((format == "jpg") && (!output.endsWith(".jpg") || !output.endsWith(".jpeg"))) {
+      else if ((format == "jpg") && !(output.endsWith(".jpg") || output.endsWith(".jpeg"))) {
         output += ".jpg"
       }
       val f: File = new File(output)

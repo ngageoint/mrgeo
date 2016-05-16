@@ -7,7 +7,6 @@ from threading import Lock
 from py4j.java_gateway import java_import, JavaClass, JavaObject
 
 from pymrgeo import constants
-from pyspark.context import SparkContext
 
 from rastermapop import RasterMapOp
 from vectormapop import VectorMapOp
@@ -95,10 +94,12 @@ class MrGeo(object):
         java_import(jvm, "org.mrgeo.mapalgebra.raster.RasterMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.vector.VectorMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.raster.MrsPyramidMapOp")
+        java_import(jvm, "org.mrgeo.mapalgebra.IngestImageMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.ExportMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.PointsMapOp")
         java_import(jvm, "org.mrgeo.mapalgebra.MapOp")
         java_import(jvm, "org.mrgeo.utils.SparkUtils")
+        java_import(jvm, "org.mrgeo.hdfs.utils.HadoopFileUtils")
 
         java_import(jvm, "org.mrgeo.data.*")
 
@@ -171,13 +172,13 @@ class MrGeo(object):
             for param in method:
                 lst = list(param)
                 if lst[1].lower() == 'string' or \
-                    lst[1].lower() == 'double' or \
-                    lst[1].lower() == 'float' or \
-                    lst[1].lower() == 'long' or \
-                    lst[1].lower() == 'int' or \
-                    lst[1].lower() == 'short' or \
-                    lst[1].lower() == 'char' or \
-                    lst[1].lower() == 'boolean':
+                                lst[1].lower() == 'double' or \
+                                lst[1].lower() == 'float' or \
+                                lst[1].lower() == 'long' or \
+                                lst[1].lower() == 'int' or \
+                                lst[1].lower() == 'short' or \
+                                lst[1].lower() == 'char' or \
+                                lst[1].lower() == 'boolean':
                     lst[0] = "other"
                     lst[2] = "other"
                     # need to add this to the start of the list (in case we eventually check other.mapop from the elif
@@ -527,7 +528,7 @@ class MrGeo(object):
                         raise Exception("only default values differ: " + str(s) + ": " + str(param))
                 else:
                     raise Exception("type parameters differ: " + s[1] + ": " + param[1])
-#                    raise Exception("type parameters differ: " + str(s) + ": " + str(param))
+                #                    raise Exception("type parameters differ: " + str(s) + ": " + str(param))
         return False
 
     def _generate_signature(self, methods):
@@ -635,19 +636,22 @@ class MrGeo(object):
     def start(self):
         jvm = self.gateway.jvm
 
-        self.job.addMrGeoProperties()
+        job = self.job
+
+        job.addMrGeoProperties()
         dpf_properties = jvm.DataProviderFactory.getConfigurationFromProviders()
 
         for prop in dpf_properties:
-            self.job.setSetting(prop, dpf_properties[prop])
+            job.setSetting(prop, dpf_properties[prop])
 
-        if self.job.isDebug():
+        if job.isDebug():
             master = "local"
-        elif self.job.isSpark():
+        elif job.isSpark():
             # TODO:  get the master for spark
             master = ""
-        elif self.job.isYarn():
+        elif job.isYarn():
             master = "yarn-client"
+            job.loadYarnSettings()
         else:
             cpus = (multiprocessing.cpu_count() / 4) * 3
             if cpus < 2:
@@ -655,30 +659,39 @@ class MrGeo(object):
             else:
                 master = "local[" + str(cpus) + "]"
 
-        set_field(self.job, "jars",
+        set_field(job, "jars",
                   jvm.StringUtils.concatUnique(
                       jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
                       jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
 
-        conf = jvm.MrGeoDriver.prepareJob(self.job)
+        conf = jvm.MrGeoDriver.prepareJob(job)
 
         # need to override the yarn mode to "yarn-client" for python
-        if self.job.isYarn():
+        if job.isYarn():
             conf.set("spark.master", "yarn-client")
 
             if not conf.getBoolean("spark.dynamicAllocation.enabled", False):
-                mem = jvm.SparkUtils.humantokb(conf.get("spark.executor.memory"))
-                workers = int(conf.get("spark.executor.instances")) + 1  # one for the driver
+                conf.set("spark.executor.instances", str(job.executors()))
 
-                conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem / workers), "m"))
+            conf.set("spark.executor.cores", str(job.cores()))
 
-        # for a in conf.getAll():
-        #     print(a._1(), a._2())
+            mem = job.memoryKb()
+            overhead = mem * 0.1
+            if overhead < 384:
+                overhead = 384
 
-        # jsc = jvm.JavaSparkContext(master, appName, sparkHome, jars)
+            mem -= (overhead * 2)  # overhead is 1x for driver and 1x for application master (am)
+            conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem), "m"))
+
+            # conf.set("spark.yarn.am.cores", str(1))
+            # conf.set("spark.driver.memory", jvm.SparkUtils.kbtohuman(job.executorMemKb(), "m"))
+
+            # print('driver mem: ' + conf.get("spark.driver.memory")) #  + ' cores: ' + conf.get("spark.driver.cores"))
+            # print('executor mem: ' + conf.get("spark.executor.memory") + ' cores: ' + conf.get("spark.executor.cores"))
+
         jsc = jvm.JavaSparkContext(conf)
+        jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
         self.sparkContext = jsc.sc()
-        self.sparkPyContext = SparkContext(master=master, appName=self.job.name(), jsc=jsc, gateway=self.gateway)
 
         # print("started")
 
@@ -719,6 +732,25 @@ class MrGeo(object):
         # print("loaded " + name)
 
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)
+
+    def ingest_image(self, name, zoom=None, categorical=None):
+
+        jvm = self.gateway.jvm
+
+        if zoom is None and categorical is None:
+            mapop = jvm.IngestImageMapOp.create(name)
+        elif zoom is None and categorical is not None:
+            mapop = jvm.IngestImageMapOp.create(name, categorical)
+        elif zoom is not None and categorical is None:
+            mapop = jvm.IngestImageMapOp.create(name, zoom)
+        else:
+            mapop = jvm.IngestImageMapOp.create(name, zoom, categorical)
+
+        if (mapop.setup(self.job, self.sparkContext.getConf()) and
+                mapop.execute(self.sparkContext) and
+                mapop.teardown(self.job, self.sparkContext.getConf())):
+            return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)
+        return None
 
     def create_points(self, coords):
         jvm = self.gateway.jvm
