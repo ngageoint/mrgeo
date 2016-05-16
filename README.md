@@ -1,5 +1,24 @@
+||Apache|||||
+|:---|:---:|:---:|:---:|:---:|:---:|
+|**Version**|2.4.0|2.4.1|2.5.2|2.6.0|2.7.1|
+|**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache240/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache240/)|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache241/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache241/)|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache252/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache252/)|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache260/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache260/)|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache271/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache271/)
+
+||CDH||||
+|:---|:---:|:---:|:---:|:---:|
+|**Version**|5.4.8|5.5.2|5.6.0|5.7.0|
+|**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.4.8-yarn/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.4.8-yarn/)|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.5.2-yarn/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.5.2-yarn/)|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.6.0-yarn/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.6.0-yarn/)|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.7.0-yarn/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.7.0-yarn/)|
+
+||RPM|pyMrGeo|
+|:---|:---:|:---:|
+|**Version**|1.1.0|0.0.1|
+|**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm)|[![Build Status](http://jenkins.dgis-dev.com:8080/job/pymrgeo-build/badge/icon)](http://jenkins.dgis-dev.com:8080/job/pymrgeo-build/)|
+
+||Amazon EMR|
+|:---|:---:|
+|**Version**|4.5.0|
+|**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws/badge/icon)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws/)
+
 ##Origin
-[![Build Status](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm/badge/icon)](https://github.com/ngageoint/mrgeo/wiki/MrGeo-Build-Status)
 
 [![Join the chat at https://gitter.im/ngageoint/mrgeo](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ngageoint/mrgeo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
