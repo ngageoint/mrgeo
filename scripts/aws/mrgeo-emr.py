@@ -107,6 +107,7 @@ if (install_accumulo == 1):
 ec2 = boto3.client('ec2')
 # Get the current spot price
 if (use_spot == 1):
+    use_zone = None
     spot_price = 9999
     print("Checking spot prices")
     for tryZone in zones:
@@ -122,13 +123,18 @@ if (use_spot == 1):
                                                        AvailabilityZone = zone_name,
                                                        ProductDescriptions = [machine])
 
-        zone_spot_price = float(price_result['SpotPriceHistory'][0]['SpotPrice'])
-        print "  " + zone_name + ": " + "{0:.3f}".format(zone_spot_price)
-        if (zone_spot_price < spot_price):
-            spot_price = zone_spot_price
-            use_zone = zone_name
-            bid_price = spot_price * 2
-    print "Using zone " + use_zone + " bidding: " + "{0:.3f}".format(bid_price)
+        if len(price_result['SpotPriceHistory']) > 0:
+            zone_spot_price = float(price_result['SpotPriceHistory'][0]['SpotPrice'])
+            print "  " + zone_name + ": " + "{0:.3f}".format(zone_spot_price)
+            if (zone_spot_price < spot_price):
+                spot_price = zone_spot_price
+                use_zone = zone_name
+                bid_price = spot_price * 2
+    if use_zone is not None:
+        print "Using zone " + use_zone + " bidding: " + "{0:.3f}".format(bid_price)
+    else:
+        print "No spot pricing available. Try a different instance type."
+        sys.exit(-1)
 
 instance_groups = []
 instance_groups.append({
