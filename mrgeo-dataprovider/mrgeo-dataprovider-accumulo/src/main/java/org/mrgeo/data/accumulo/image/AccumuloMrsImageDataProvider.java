@@ -277,7 +277,13 @@ public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 
     return null;
   } // end getResourceName
-  
+
+
+  @Override
+  public String getSimpleResourceName() throws IOException
+  {
+    return getResourceName();
+  }
 
   /**
    * If the resolvedResourceName is null, then it computes it based on the
