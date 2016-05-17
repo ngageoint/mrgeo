@@ -303,7 +303,7 @@ object GDALUtils extends Logging {
     var tmp: Byte = 0
     var i: Int = 0
     gdaldatatype match {
-    // Since it's byte data, there is nothing to swap - do nothing
+      // Since it's byte data, there is nothing to swap - do nothing
     case gdalconstConstants.GDT_Byte =>
     // 2 byte value... swap byte 1 with 2
     case gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 =>
@@ -376,9 +376,20 @@ object GDALUtils extends Logging {
     for (i <- 1 to bands) {
       val band: Band = image.GetRasterBand(i)
       band.GetNoDataValue(v)
-      if (v(0) != null) {
-        nodatas(i - 1) = v(0)
-      }
+      nodatas(i - 1) =
+        if (v(0) != null) {
+          v(0)
+        }
+        else {
+          band.getDataType match {
+          case gdalconstConstants.GDT_Byte |
+               gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 |
+               gdalconstConstants.GDT_UInt32 | gdalconstConstants.GDT_Int32 => 0
+          case gdalconstConstants.GDT_Float32 => Float.NaN
+          case gdalconstConstants.GDT_Float64 => Double.NaN
+          }
+        }
+
     }
 
     nodatas

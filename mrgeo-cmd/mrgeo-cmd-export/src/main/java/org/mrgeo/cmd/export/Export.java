@@ -26,7 +26,9 @@ import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.colorscale.applier.JpegColorScaleApplier;
 import org.mrgeo.colorscale.applier.PngColorScaleApplier;
+import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
@@ -151,8 +153,8 @@ private Bounds parseBounds(String boundsOption)
   return new Bounds(w, s, e, n);
 }
 
-private boolean saveSingleTile(final String output, final MrsImage image, String format,
-    final long tileid, final int zoom, int tilesize)
+private boolean saveSingleTile(final String output, final String pyramidName, final MrsImage image,
+                               String format, final long tileid, final int zoom, int tilesize)
 {
   try
   {
@@ -166,7 +168,7 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
 
     if (raster != null)
     {
-      String out = makeOutputName(output, format, tileid, zoom, tilesize, true);
+      String out = makeOutputName(output, pyramidName, format, tileid, zoom, tilesize, true);
 
       if (colorscale != null || !format.equals("tif"))
       {
@@ -208,7 +210,7 @@ private boolean saveSingleTile(final String output, final MrsImage image, String
 
 
 
-private boolean saveMultipleTiles(String output, String format, final MrsImage image,
+private boolean saveMultipleTiles(String output, String pyramidName, String format, final MrsImage image,
     final long[] tiles)
 {
   try
@@ -263,7 +265,7 @@ private boolean saveMultipleTiles(String output, String format, final MrsImage i
     {
       throw new MrsImageException("Error, could not load any tiles");
     }
-    String out = makeOutputName(output, format, minId, zoomlevel, tilesize, false);
+    String out = makeOutputName(output, pyramidName, format, minId, zoomlevel, tilesize, false);
 
     if (colorscale != null || !format.equals("tif"))
     {
@@ -408,9 +410,12 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
         // The input can be either an image or a vector.
         MrsPyramid imagePyramid;
         MrsPyramid pyramid = null;
+        String pyramidName = "";
         try
         {
-          imagePyramid = MrsPyramid.open(arg, providerProperties);
+          MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(arg, DataProviderFactory.AccessMode.READ, providerProperties);
+          imagePyramid = MrsPyramid.open(dp);
+          pyramidName = dp.getSimpleResourceName();
           pyramid = imagePyramid;
         }
         catch(IOException e)
@@ -452,7 +457,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
             {
               if (imagePyramid != null)
               {
-                saveMultipleTiles(outputbase, format,
+                saveMultipleTiles(outputbase, pyramidName, format,
                     image, ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])));
               }
             }
@@ -482,7 +487,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
 //                    TMSUtils.tileid(t.tx, t.ty, zoomlevel);
                 if (imagePyramid != null)
                 {
-                  saveMultipleTiles(outputbase, format,
+                  saveMultipleTiles(outputbase, pyramidName, format,
                       image, ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])));
                 }
               }
@@ -493,7 +498,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
               {
                 if (imagePyramid != null)
                 {
-                  saveSingleTile(outputbase, image, format, tileid, zoomlevel, tilesize);
+                  saveSingleTile(outputbase, pyramidName, image, format, tileid, zoomlevel, tilesize);
                 }
               }
             }
@@ -552,7 +557,8 @@ private String makeTMSOutputName(String base, String format, long tileid, int zo
   return output;
 }
 
-private String makeOutputName(String template, String format, long tileid, int zoom, int tilesize, boolean reformat) throws IOException
+private String makeOutputName(String template, String imageName, String format,
+                              long tileid, int zoom, int tilesize, boolean reformat) throws IOException
 {
   if (useTMS)
   {
@@ -600,11 +606,29 @@ private String makeOutputName(String template, String format, long tileid, int z
     output = template;
     if (reformat)
     {
-      if (template.endsWith("/"))
+      File f = new File(template);
+      if (template.endsWith(File.separator) || (f.exists() && f.isDirectory()))
       {
+        if (!template.endsWith(File.separator))
+        {
+          output += File.separator;
+        }
         output += "tile-";
       }
       output += String.format("%d", tileid) + "-" + String.format("%03d", t.ty) + "-" + String.format("%03d", t.tx);
+    }
+    else
+    {
+      // If output is a dir, then write imageName.tif to that dir
+      File f = new File(output).getCanonicalFile();
+      if (output.endsWith(File.separator) || (f.exists() && f.isDirectory()))
+      {
+        // If the output is an existing directory, then use the image name (not the full path)
+        // as the name of the output in that directory.
+        File imageFile = new File(imageName);
+        f = new File(f, imageFile.getName());
+        output = f.getPath();
+      }
     }
   }
 

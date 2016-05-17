@@ -115,13 +115,16 @@ def launch_gateway():
         if fork:
             command = [script, "python", "-v", "-h", callback_host, "-p", str(callback_port)]
 
+            environ = os.environ
+            environ['HADOOP_CLIENT_OPTS'] = '-Xmx2G ' + environ.get('HADOOP_CLIENT_OPTS', '')
+
             # Launch the Java gateway.
             # We open a pipe to stdin so that the Java gateway can die when the pipe is broken
             # Don't send ctrl-c / SIGINT to the Java gateway:
             def preexec_func():
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-            proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func)
+            proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=environ)
 
             # We use select() here in order to avoid blocking indefinitely if the subprocess dies
             # before connecting
