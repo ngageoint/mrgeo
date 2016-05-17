@@ -606,24 +606,32 @@ private String makeOutputName(String template, String imageName, String format,
     output = template;
     if (reformat)
     {
-      if (template.endsWith("/"))
+      File f = new File(template);
+      if (template.endsWith(File.separator) || (f.exists() && f.isDirectory()))
       {
+        if (!template.endsWith(File.separator))
+        {
+          output += File.separator;
+        }
         output += "tile-";
       }
       output += String.format("%d", tileid) + "-" + String.format("%03d", t.ty) + "-" + String.format("%03d", t.tx);
     }
+    else
+    {
+      // If output is a dir, then write imageName.tif to that dir
+      File f = new File(output).getCanonicalFile();
+      if (output.endsWith(File.separator) || (f.exists() && f.isDirectory()))
+      {
+        // If the output is an existing directory, then use the image name (not the full path)
+        // as the name of the output in that directory.
+        File imageFile = new File(imageName);
+        f = new File(f, imageFile.getName());
+        output = f.getPath();
+      }
+    }
   }
 
-  File f = new File(output).getCanonicalFile();
-  FileUtils.createDir(f.getParentFile());
-  if (f.exists() && f.isDirectory())
-  {
-    // If the output is an existing directory, then use the image name (not the full path)
-    // as the name of the output in that directory.
-    File imageFile = new File(imageName);
-    f = new File(f, imageFile.getName());
-    output = f.getPath();
-  }
   if (format.equals("tif") && (!output.endsWith(".tif") || !output.endsWith(".tiff")))
   {
     output += ".tif";
@@ -636,6 +644,9 @@ private String makeOutputName(String template, String imageName, String format,
   {
     output += ".jpg";
   }
+
+  File f = new File(output);
+  FileUtils.createDir(f.getParentFile());
 
   return output;
 }
