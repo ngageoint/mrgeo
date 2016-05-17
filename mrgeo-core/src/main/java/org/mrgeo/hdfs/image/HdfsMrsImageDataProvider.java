@@ -60,6 +60,13 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     this.providerProperties = providerProperties;
   }
 
+  @Override
+  public String getSimpleResourceName() throws IOException
+  {
+    Path p = getResourcePath(false);
+    return p.getName();
+  }
+
   public String getResolvedResourceName(final boolean mustExist) throws IOException
   {
     try
