@@ -57,7 +57,7 @@ class RasterMapOp(object):
 
         return False
 
-    def eexport(self,name,singleFile=False,zoom=-1,numTiles=-1,mosaic=-1,format="tif",randomTiles=False,tms=False,colorscale="",tileids="",bounds="",allLevels=False,overridenodata=float('-inf')):
+    def eexport(self, local_name, single_file=False, zoom=-1, num_tiles=-1, mosaic=-1, format="tif", randomTiles=False, tms=False, colorscale="", tileids="", bounds="", allLevels=False, overridenodata=float('-inf')):
         import copy
         from numbers import Number
         import base64
@@ -67,10 +67,9 @@ class RasterMapOp(object):
         from osgeo import gdal
         from py4j.java_gateway import JavaClass
         cls = JavaClass('org.mrgeo.mapalgebra.ExportMapOp', gateway_client=self.gateway._gateway_client)
-        local_name = name
-        name = 'In-Memory'
-        if hasattr(self, 'mapop') and self.is_instance_of(self.mapop, 'org.mrgeo.mapalgebra.raster.RasterMapOp') and type(name) is str and isinstance(singleFile, (int, long, float, str)) and isinstance(zoom, (int, long, float)) and isinstance(numTiles, (int, long, float)) and isinstance(mosaic, (int, long, float)) and type(format) is str and isinstance(randomTiles, (int, long, float, str)) and isinstance(tms, (int, long, float, str)) and type(colorscale) is str and type(tileids) is str and type(bounds) is str and isinstance(allLevels, (int, long, float, str)) and isinstance(overridenodata, (int, long, float)):
-            op = cls.create(self.mapop, str(name), True if singleFile else False, int(zoom), int(numTiles), int(mosaic), str(format), True if randomTiles else False, True if tms else False, str(colorscale), str(tileids), str(bounds), True if allLevels else False, float(overridenodata))
+        remote_name = 'In-Memory'
+        if hasattr(self, 'mapop') and self.is_instance_of(self.mapop, 'org.mrgeo.mapalgebra.raster.RasterMapOp') and type(remote_name) is str and isinstance(single_file, (int, long, float, str)) and isinstance(zoom, (int, long, float)) and isinstance(num_tiles, (int, long, float)) and isinstance(mosaic, (int, long, float)) and type(format) is str and isinstance(randomTiles, (int, long, float, str)) and isinstance(tms, (int, long, float, str)) and type(colorscale) is str and type(tileids) is str and type(bounds) is str and isinstance(allLevels, (int, long, float, str)) and isinstance(overridenodata, (int, long, float)):
+            op = cls.create(self.mapop, str(remote_name), True if single_file else False, int(zoom), int(num_tiles), int(mosaic), str(format), True if randomTiles else False, True if tms else False, str(colorscale), str(tileids), str(bounds), True if allLevels else False, float(overridenodata))
         else:
             raise Exception('input types differ (TODO: expand this message!)')
         if (op.setup(self.job, self.context.getConf()) and

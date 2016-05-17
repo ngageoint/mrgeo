@@ -76,8 +76,7 @@ def loadlib(lib):
 # print(os.environ['PYTHONPATH'].split(os.pathsep))
 # print(sys.path)
 
-#loadlib('py4j-0.8.2.1-src.zip')
-loadlib('pyspark.zip')
+# loadlib('py4j-0.8.2.1-src.zip')
 
 from pymrgeo.mrgeo import MrGeo
 from pymrgeo.rastermapop import RasterMapOp
