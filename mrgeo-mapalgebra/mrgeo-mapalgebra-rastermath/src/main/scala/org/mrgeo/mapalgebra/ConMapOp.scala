@@ -279,8 +279,9 @@ class ConMapOp extends RasterMapOp with Externalizable {
             None
           }
         }
-        else {
-            constMap(i)
+        else constMap(i) match {
+        case Some(nan) if nan.isNaN => Some(nodata)
+        case notnan => notnan
         }
       }
       val done = new Breaks
@@ -311,8 +312,10 @@ class ConMapOp extends RasterMapOp with Externalizable {
                 else if (!RasterMapOp.nearZero(v)) {
                   getValue(i + 1, x, y, b) match {
                   case Some(d) =>
-                    raster.setSample(x, y, b, d)
-                    hasdata = true
+                    if (RasterMapOp.isNotNodata(d, nodatas(i + 1))) {
+                      raster.setSample(x, y, b, d)
+                      hasdata = true
+                    }
                   case _ =>
                   }
                   done.break()
@@ -323,8 +326,10 @@ class ConMapOp extends RasterMapOp with Externalizable {
               // didn't find one in the loop, take the last entry (the else)
               getValue(termCount - 1, x, y, b) match {
               case Some(d) => {
-                raster.setSample(x, y, b, d)
-                hasdata = true
+                if (RasterMapOp.isNotNodata(d, nodatas(termCount - 1))) {
+                  raster.setSample(x, y, b, d)
+                  hasdata = true
+                }
               }
               case _ =>
               }
