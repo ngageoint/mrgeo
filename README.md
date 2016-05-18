@@ -21,6 +21,7 @@
 ##Origin
 
 [![Join the chat at https://gitter.im/ngageoint/mrgeo](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ngageoint/mrgeo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Hex.pm](https://img.shields.io/hexpm/l/plug.svg?maxAge=2592000)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 
 MrGeo was developed at the National Geospatial-Intelligence Agency (NGA) in collaboration with [DigitalGlobe](https://www.digitalglobe.com/). The government has ["unlimited rights"](https://github.com/ngageoint/mrgeo/blob/master/NOTICE) and is releasing this software to increase the impact of government investments by providing developers with the opportunity to take things in new directions. The software use, modification, and distribution rights are stipulated within the [Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0.html).

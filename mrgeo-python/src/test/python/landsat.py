@@ -5,6 +5,7 @@ import sys
 
 import math
 from pymrgeo import MrGeo
+from pymrgeo.rastermapop import RasterMapOp
 
 
 def toa_reflectance(image, metadata, band):
@@ -75,9 +76,23 @@ if __name__ == "__main__":
 
     mrgeo.start()
 
-    red = mrgeo.ingest_image(landsat[4])
-    green = mrgeo.ingest_image(landsat[3])
-    blue = mrgeo.ingest_image(landsat[2])
+    bqa = mrgeo.ingest_image(landsat['bqa'])
+    #bqa.export('/data/export/landsat-bqa.tif', singleFile=True)
+
+    cloud_mask = bqa < 32768  # 0 where clouds, 1 where no clouds
+    #cloud_mask.export('/data/export/landsat-clouds.tif', singleFile=True)
+
+    red = cloud_mask.con(positiveRaster=mrgeo.ingest_image(landsat[4]), negativeConst=RasterMapOp.nan())
+    green = cloud_mask.con(positiveRaster=mrgeo.ingest_image(landsat[3]), negativeConst=RasterMapOp.nan())
+    blue = cloud_mask.con(positiveRaster=mrgeo.ingest_image(landsat[2]), negativeConst=RasterMapOp.nan())
+    # red = mrgeo.ingest_image(landsat[4])
+    # green = mrgeo.ingest_image(landsat[3])
+    # blue = mrgeo.ingest_image(landsat[2])
+
+    red.save('landsat-dn-r')
+    # red.export('/data/export/landsat-dn-r.tif', singleFile=True)
+    # green.export('/data/export/landsat-dn-g.tif', singleFile=True)
+    # blue.export('/data/export/landsat-dn-b.tif', singleFile=True)
 
     rgb = red.bandcombine(green, blue)
     rgb.export('/data/export/landsat-rgb-dn.tif', singleFile=True)
@@ -85,6 +100,10 @@ if __name__ == "__main__":
     r_rad = toa_radiance(red, metadata, 4)
     g_rad = toa_radiance(green, metadata, 3)
     b_rad = toa_radiance(blue, metadata, 2)
+
+    r_rad.export('/data/export/landsat-rad-r.tif', singleFile=True)
+    g_rad.export('/data/export/landsat-rad-g.tif', singleFile=True)
+    b_rad.export('/data/export/landsat-rad-b.tif', singleFile=True)
 
     rgb = r_rad.bandcombine(g_rad, b_rad)
     rgb.export('/data/export/landsat-rgb-rad.tif', singleFile=True)
