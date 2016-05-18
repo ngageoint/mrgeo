@@ -116,7 +116,11 @@ def launch_gateway():
             command = [script, "python", "-v", "-h", callback_host, "-p", str(callback_port)]
 
             environ = os.environ
-            environ['HADOOP_CLIENT_OPTS'] = '-Xmx2G ' + environ.get('HADOOP_CLIENT_OPTS', '')
+            # Add some more memory
+            environ['HADOOP_CLIENT_OPTS'] = '-Xmx12G ' + environ.get('HADOOP_CLIENT_OPTS', '')
+
+            # Allow remote debugging
+            # environ['HADOOP_CLIENT_OPTS'] = '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 ' + environ.get('HADOOP_CLIENT_OPTS', '')
 
             # Launch the Java gateway.
             # We open a pipe to stdin so that the Java gateway can die when the pipe is broken

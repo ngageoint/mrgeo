@@ -41,7 +41,6 @@ class MrGeo(object):
     gateway = None
     lock = Lock()
 
-    sparkPyContext = None
     sparkContext = None
     job = None
 
@@ -148,6 +147,7 @@ class MrGeo(object):
 
                         compiled = {}
                         exec code in compiled
+
 
                         if instance == 'RasterMapOp':
                             setattr(RasterMapOp, method_name, compiled.get(method_name))
@@ -699,10 +699,6 @@ class MrGeo(object):
         if self.sparkContext:
             self.sparkContext.stop()
             self.sparkContext = None
-
-        if self.sparkPyContext:
-            self.sparkPyContext.stop()
-            self.sparkPyContext = None
 
     def list_images(self):
         jvm = self.gateway.jvm
