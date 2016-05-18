@@ -24,7 +24,7 @@ class MrGeo(object):
                  "=": [],  # assignment, can't do!
                  "<": ["__lt__"],
                  "<=": ["__le__"],
-                 ">": ["__lt__"],
+                 ">": ["__gt__"],
                  ">=": ["__ge__"],
                  "==": ["__eq__"],
                  "!=": ["__ne__"],
@@ -41,7 +41,6 @@ class MrGeo(object):
     gateway = None
     lock = Lock()
 
-    sparkPyContext = None
     sparkContext = None
     job = None
 
@@ -144,10 +143,11 @@ class MrGeo(object):
 
                 if codes is not None:
                     for method_name, code in codes.iteritems():
-                        # print(code)
+                        print(code)
 
                         compiled = {}
                         exec code in compiled
+
 
                         if instance == 'RasterMapOp':
                             setattr(RasterMapOp, method_name, compiled.get(method_name))
@@ -699,10 +699,6 @@ class MrGeo(object):
         if self.sparkContext:
             self.sparkContext.stop()
             self.sparkContext = None
-
-        if self.sparkPyContext:
-            self.sparkPyContext.stop()
-            self.sparkPyContext = None
 
     def list_images(self):
         jvm = self.gateway.jvm
