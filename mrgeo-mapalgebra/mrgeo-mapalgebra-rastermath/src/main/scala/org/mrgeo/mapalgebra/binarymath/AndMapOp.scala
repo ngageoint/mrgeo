@@ -24,7 +24,7 @@ import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object AndMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("&&", "&", "and")
+    Array[String]("&&", "and")
   }
 
   def create(raster:RasterMapOp, const:Double):MapOp = {

@@ -24,7 +24,7 @@ import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object XOrMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("xor", "^")
+    Array[String]("xor")
   }
   def create(raster:RasterMapOp, const:Double):MapOp = {
     new XOrMapOp(Some(raster), Some(const))
