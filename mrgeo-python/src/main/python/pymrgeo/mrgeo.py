@@ -144,7 +144,7 @@ class MrGeo(object):
 
                 if codes is not None:
                     for method_name, code in codes.iteritems():
-                        print(code)
+                        # print(code)
 
                         compiled = {}
                         exec code in compiled
