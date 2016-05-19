@@ -24,7 +24,7 @@ import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object OrMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
-    Array[String]("||", "|", "or")
+    Array[String]("||", "or")
   }
   def create(raster:RasterMapOp, const:Double):MapOp = {
     new OrMapOp(Some(raster), Some(const))
