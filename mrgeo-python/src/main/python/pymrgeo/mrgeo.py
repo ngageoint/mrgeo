@@ -34,7 +34,8 @@ class MrGeo(object):
                  "&": [],
                  "||": ["__or__", "__ror__", "__ior__"],
                  "|": [],
-                 "^": ["__xor__", "__rxor__", "__ixor__"],
+                 "~": [],
+                 "^": [],
                  "^=": []}
     reserved = ["or", "and", "str", "int", "long", "float", "bool"]
 
@@ -143,7 +144,7 @@ class MrGeo(object):
 
                 if codes is not None:
                     for method_name, code in codes.iteritems():
-                        # print(code)
+                        print(code)
 
                         compiled = {}
                         exec code in compiled

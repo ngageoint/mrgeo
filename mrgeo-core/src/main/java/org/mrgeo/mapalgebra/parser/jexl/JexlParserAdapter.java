@@ -57,10 +57,12 @@ public class JexlParserAdapter implements ParserAdapter
     twoArgFunctions.put(ASTMulNode.class, "*");
     twoArgFunctions.put(ASTAndNode.class, "&&");
     twoArgFunctions.put(ASTAndNode.class, "and");
-    twoArgFunctions.put(ASTBitwiseAndNode.class, "&");
+    twoArgFunctions.put(ASTOrNode.class, "or");
     twoArgFunctions.put(ASTOrNode.class, "||");
+    twoArgFunctions.put(ASTBitwiseAndNode.class, "&");
     twoArgFunctions.put(ASTBitwiseOrNode.class, "|");
-    twoArgFunctions.put(ASTBitwiseOrNode.class, "or");
+    twoArgFunctions.put(ASTBitwiseXorNode.class, "^");
+    twoArgFunctions.put(ASTBitwiseComplNode.class, "~");
   }
 
   @Override
@@ -253,6 +255,92 @@ public class JexlParserAdapter implements ParserAdapter
         {
           ParserFunctionNode fn = new ParserFunctionNode();
           fn.setName("uminus");
+          fn.setNativeNode(node);
+          n = fn;
+        }
+      }
+      else if (node instanceof ASTBitwiseComplNode)
+      {
+        // Handle negative numbers
+        if (node.jjtGetNumChildren() == 1 && node.jjtGetChild(0) instanceof ASTNumberLiteral)
+        {
+          ParserConstantNode cn = new ParserConstantNode();
+          cn.setNativeNode(node);
+
+          cn.setValue(~(((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue()));
+          cn.setName(cn.getValue().toString());
+          n = cn;
+
+          parentNode = node;
+
+        }
+        else
+        {
+          ParserFunctionNode fn = new ParserFunctionNode();
+          fn.setName("~");
+          fn.setNativeNode(node);
+          n = fn;
+        }
+      }
+      else if (node instanceof ASTBitwiseOrNode) {
+        if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
+            node.jjtGetChild(1) instanceof ASTNumberLiteral) {
+          ParserConstantNode cn = new ParserConstantNode();
+          cn.setNativeNode(node);
+
+          cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() |
+                       ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
+          cn.setName(cn.getValue().toString());
+          n = cn;
+
+          parentNode = node;
+        }
+        else
+        {
+          ParserFunctionNode fn = new ParserFunctionNode();
+          fn.setName("|");
+          fn.setNativeNode(node);
+          n = fn;
+        }
+      }
+      else if (node instanceof ASTBitwiseAndNode) {
+        if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
+            node.jjtGetChild(1) instanceof ASTNumberLiteral) {
+          ParserConstantNode cn = new ParserConstantNode();
+          cn.setNativeNode(node);
+
+          cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() &
+                       ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
+          cn.setName(cn.getValue().toString());
+          n = cn;
+
+          parentNode = node;
+        }
+        else
+        {
+          ParserFunctionNode fn = new ParserFunctionNode();
+          fn.setName("&");
+          fn.setNativeNode(node);
+          n = fn;
+        }
+      }
+      else if (node instanceof ASTBitwiseXorNode) {
+        if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
+            node.jjtGetChild(1) instanceof ASTNumberLiteral) {
+          ParserConstantNode cn = new ParserConstantNode();
+          cn.setNativeNode(node);
+
+          cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() ^
+                       ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
+          cn.setName(cn.getValue().toString());
+          n = cn;
+
+          parentNode = node;
+        }
+        else
+        {
+          ParserFunctionNode fn = new ParserFunctionNode();
+          fn.setName("^");
           fn.setNativeNode(node);
           n = fn;
         }
