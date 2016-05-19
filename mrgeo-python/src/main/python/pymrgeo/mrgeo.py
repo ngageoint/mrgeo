@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import multiprocessing
 import re
+import traceback
+import sys
 from threading import Lock
 
 from py4j.java_gateway import java_import, JavaClass, JavaObject
@@ -13,6 +15,9 @@ from vectormapop import VectorMapOp
 
 from java_gateway import launch_gateway, set_field, is_remote
 
+_mapop_code = {}
+_rastermapop_code = {}
+_vectormapop_code = {}
 
 class MrGeo(object):
     operators = {"+": ["__add__", "__radd__", "__iadd__"],
@@ -43,6 +48,51 @@ class MrGeo(object):
 
     sparkContext = None
     job = None
+
+    @staticmethod
+    def exceptionhook(ex_cls, ex, tb):
+
+        stack = traceback.extract_tb(tb)
+        print(ex_cls.__name__ + ' (' + str(ex) + ")", file=sys.stderr)
+        for st in stack:
+            file = st[0]
+            line = st[1]
+            method = st[2]
+            srccode = st[3]
+            cls = None
+            code = None
+            if file == '<string>':
+                if _rastermapop_code.has_key(method):
+                    code = _rastermapop_code[method]
+                    cls = 'RasterMapOp'
+                elif _vectormapop_code.has_key(method):
+                    code = _rastermapop_code[method]
+                    cls = 'VectorMapOp'
+                elif _mapop_code.has_key(method):
+                    code = _rastermapop_code[method]
+                    cls = 'MapOp'
+                else:
+                    pass
+
+            if code:
+                print('  File <' + cls + '.internal>, line ' +
+                      str(line) + ', in ' + cls + '.' + method.strip(), file=sys.stderr)
+
+                code = code.split("\n")
+                cnt = 1
+                for c in code:
+                    if cnt == line:
+                      print('==> ' + c + ' <==', file=sys.stderr)
+                    else:
+                      print('    ' + c, file=sys.stderr)
+                    cnt += 1
+            else:
+                print('  File "' + file.strip() + '", line ' +
+                      str(line) + ', in ' + method.strip(), file=sys.stderr)
+                print('    ' + srccode.strip(), file=sys.stderr)
+
+            # print(''.join(traceback.format_tb(tb)))
+            # print('{0}: {1}'.format(ex_cls, ex))
 
     def __init__(self, gateway=None):
 
@@ -148,12 +198,14 @@ class MrGeo(object):
                         compiled = {}
                         exec code in compiled
 
-
                         if instance == 'RasterMapOp':
+                            _rastermapop_code[method_name] = code
                             setattr(RasterMapOp, method_name, compiled.get(method_name))
                         elif instance == "VectorMapOp":
+                            _vectormapop_code[method_name] = code
                             setattr(VectorMapOp, method_name, compiled.get(method_name))
                         elif self.is_instance_of(cls, jvm.MapOp):
+                            _mapop_code[method_name] = code
                             setattr(RasterMapOp, method_name, compiled.get(method_name))
                             setattr(VectorMapOp, method_name, compiled.get(method_name))
 
@@ -528,7 +580,7 @@ class MrGeo(object):
                         raise Exception("only default values differ: " + str(s) + ": " + str(param))
                 else:
                     raise Exception("type parameters differ: " + s[1] + ": " + param[1])
-                #                    raise Exception("type parameters differ: " + str(s) + ": " + str(param))
+                    #                    raise Exception("type parameters differ: " + str(s) + ": " + str(param))
         return False
 
     def _generate_signature(self, methods):
@@ -634,6 +686,8 @@ class MrGeo(object):
         self.job.useYarn()
 
     def start(self):
+        sys.excepthook = MrGeo.exceptionhook
+
         jvm = self.gateway.jvm
 
         job = self.job
@@ -751,14 +805,24 @@ class MrGeo(object):
     def create_points(self, coords):
         jvm = self.gateway.jvm
 
+        elements = []
+        for coord in coords:
+            if isinstance(coord, list):
+                for c in coord:
+                    elements.append(c)
+            else:
+                elements.append(coord)
+
         # Convert from a python list to a Java array
         cnt = 0
-        array = self.gateway.new_array(self.gateway.jvm.double, len(coords))
-        for coord in coords:
-            array[cnt] = coord
+        array = self.gateway.new_array(self.gateway.jvm.double, len(elements))
+        for element in elements:
+            array[cnt] = element
             cnt += 1
 
         mapop = jvm.PointsMapOp.apply(array)
         mapop.context(self.sparkContext)
 
         return VectorMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)
+
+

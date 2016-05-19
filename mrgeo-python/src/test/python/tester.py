@@ -4,6 +4,7 @@ import sys
 
 import math
 from pymrgeo import MrGeo
+from pymrgeo.rastermapop import RasterMapOp
 
 if __name__ == "__main__":
 
@@ -17,9 +18,12 @@ if __name__ == "__main__":
 
     mrgeo.start()
 
-    # ones = mrgeo.load_image("all-ones-save")
+    ones = mrgeo.load_image("all-ones-save")
 
-    # slope = ones.slope()
+    # test error handling
+    # foo = 1 / 0
+    # sl = ones.slope(1)
+    # RasterMapOp.slope(ones, 1)
 
     # hundreds = mrgeo.load_image("all-hundreds")
     # aspect = hundreds.aspect()
@@ -71,8 +75,6 @@ if __name__ == "__main__":
     # # "hill = 255.0 * ((coszen * cos(sl)) + (sinzen * sin(sl) * cos(sunaz - as)))"
     #
     # hill.export("/data/export/hillshade-test", singleFile=True)
-
-
 
     mrgeo.stop()
 
