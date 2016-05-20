@@ -4,7 +4,9 @@ from __future__ import print_function
 import traceback
 
 import sys
-from py4j.java_gateway import JavaClass, java_import, JavaObject
+from py4j.java_gateway import JavaClass, java_import
+
+from pymrgeo.instance import is_instance_of
 from pymrgeo.java_gateway import is_remote
 import re
 
@@ -86,42 +88,6 @@ def _exceptionhook(ex_cls, ex, tb):
                 # print('{0}: {1}'.format(ex_cls, ex))
 
 
-def __is_instance_of(clazz, name):
-    if clazz:
-        if clazz.getCanonicalName() == name:
-            return True
-
-        return __is_instance_of(clazz.getSuperclass(), name)
-
-    return False
-
-
-def _is_instance_of(gateway, java_object, java_class):
-    if isinstance(java_class, basestring):
-        name = java_class
-    elif isinstance(java_class, JavaClass):
-        name = java_class._fqn
-    elif isinstance(java_class, JavaObject):
-        name = java_class.getClass()
-    else:
-        raise Exception("java_class must be a string, a JavaClass, or a JavaObject")
-
-    jvm = gateway.jvm
-    name = jvm.Class.forName(name).getCanonicalName()
-
-    if isinstance(java_object, JavaClass):
-        cls = jvm.Class.forName(java_object._fqn)
-    elif isinstance(java_object, JavaObject):
-        cls = java_object.getClass()
-    else:
-        raise Exception("java_object must be a JavaClass, or a JavaObject")
-
-    if cls.getCanonicalName() == name:
-        return True
-
-    return __is_instance_of(cls.getSuperclass(), name)
-
-
 def generate(gateway, gateway_client):
     jvm = gateway.jvm
     client = gateway_client
@@ -148,11 +114,11 @@ def generate(gateway, gateway_client):
 
         cls = JavaClass(mapop, gateway_client=client)
 
-        if _is_instance_of(gateway, cls, jvm.RasterMapOp):
+        if is_instance_of(gateway, cls, jvm.RasterMapOp):
             instance = 'RasterMapOp'
-        elif _is_instance_of(gateway, cls, jvm.VectorMapOp):
+        elif is_instance_of(gateway, cls, jvm.VectorMapOp):
             instance = 'VectorMapOp'
-        elif _is_instance_of(gateway, cls, jvm.MapOp):
+        elif is_instance_of(gateway, cls, jvm.MapOp):
             instance = "MapOp"
         else:
             # raise Exception("mapop (" + mapop + ") is not a RasterMapOp, VectorMapOp, or MapOp")
@@ -179,7 +145,7 @@ def generate(gateway, gateway_client):
                         codes = _generate_method_code(gateway, client, mapop, name, signatures, instance)
 
             if codes is not None:
-                for method_name, code in codes.iteritems():
+                for method_name, code in codes.items():
                     # print(code)
 
                     compiled = {}
@@ -191,7 +157,7 @@ def generate(gateway, gateway_client):
                     elif instance == "VectorMapOp":
                         _vectormapop_code[method_name] = code
                         setattr(VectorMapOp, method_name, compiled.get(method_name))
-                    elif _is_instance_of(gateway, cls, jvm.MapOp):
+                    elif is_instance_of(gateway, cls, jvm.MapOp):
                         _mapop_code[method_name] = code
                         setattr(RasterMapOp, method_name, compiled.get(method_name))
                         setattr(VectorMapOp, method_name, compiled.get(method_name))
@@ -252,7 +218,7 @@ def _generate_method_code(gateway, client, mapop, name, signatures, instance):
     jvm = gateway.jvm
     cls = JavaClass(mapop, gateway_client=client)
 
-    is_export = is_remote() and _is_instance_of(gateway, cls, jvm.ExportMapOp)
+    is_export = is_remote() and is_instance_of(gateway, cls, jvm.ExportMapOp)
 
     if len(methods) == 0:
         return None

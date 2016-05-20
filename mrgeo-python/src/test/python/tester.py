@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     # test error handling
     # foo = 1 / 0
-    # sl = ones.slope(1)
+    sl = ones.slope()
     # RasterMapOp.slope(ones, 1)
 
     # hundreds = mrgeo.load_image("all-hundreds")

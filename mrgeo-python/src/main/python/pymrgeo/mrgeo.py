@@ -1,43 +1,22 @@
 from __future__ import print_function
 
-import multiprocessing
 import sys
 from threading import Lock
 
 from py4j.java_gateway import java_import
 
-from pymrgeo import constants, mapopgenerator
-
+import constants
+import mapopgenerator
+from java_gateway import launch_gateway, set_field
 from rastermapop import RasterMapOp
 from vectormapop import VectorMapOp
 
-from java_gateway import launch_gateway, set_field
+# python3 doesn't have a long type, this masks long to int
+if sys.version_info > (3,):
+    long = int
 
 
 class MrGeo(object):
-(??)    operators = {"+": ["__add__", "__radd__", "__iadd__"],
-(??)                 "-": ["__sub__", "__rsub__", "__isub__"],
-(??)                 "*": ["__mul__", "__rmul__", "__imul__"],
-(??)                 "/": ["__div__", "__truediv__", "__rdiv__", "__rtruediv__", "__idiv__", "__itruediv__"],
-(??)                 "//": [],  # floor div
-(??)                 "**": ["__pow__", "__rpow__", "__ipow__"],  # pow
-(??)                 "=": [],  # assignment, can't do!
-(??)                 "<": ["__lt__"],
-(??)                 "<=": ["__le__"],
-(??)                 ">": ["__gt__"],
-(??)                 ">=": ["__ge__"],
-(??)                 "==": ["__eq__"],
-(??)                 "!=": ["__ne__"],
-(??)                 "<>": [],
-(??)                 "!": [],
-(??)                 "&&": ["__and__", "__rand__", "__iand__"],
-(??)                 "&": [],
-(??)                 "||": ["__or__", "__ror__", "__ior__"],
-(??)                 "|": [],
-(??)                 "^": ["__xor__", "__rxor__", "__ixor__"],
-(??)                 "^=": []}
-(??)    reserved = ["or", "and", "str", "int", "long", "float", "bool"]
-(??)
     gateway = None
     gateway_client = None
     lock = Lock()
@@ -102,20 +81,8 @@ class MrGeo(object):
         for prop in dpf_properties:
             job.setSetting(prop, dpf_properties[prop])
 
-        if job.isDebug():
-            master = "local"
-        elif job.isSpark():
-            # TODO:  get the master for spark
-            master = ""
-        elif job.isYarn():
-            master = "yarn-client"
+        if job.isYarn():
             job.loadYarnSettings()
-        else:
-            cpus = (multiprocessing.cpu_count() / 4) * 3
-            if cpus < 2:
-                master = "local"
-            else:
-                master = "local[" + str(cpus) + "]"
 
         set_field(job, "jars",
                   jvm.StringUtils.concatUnique(
@@ -124,8 +91,8 @@ class MrGeo(object):
 
         conf = jvm.MrGeoDriver.prepareJob(job)
 
-        # need to override the yarn mode to "yarn-client" for python
         if job.isYarn():
+            # need to override the yarn mode to "yarn-client" for python
             conf.set("spark.master", "yarn-client")
 
             if not conf.getBoolean("spark.dynamicAllocation.enabled", False):
@@ -140,12 +107,6 @@ class MrGeo(object):
 
             mem -= (overhead * 2)  # overhead is 1x for driver and 1x for application master (am)
             conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem), "m"))
-
-            # conf.set("spark.yarn.am.cores", str(1))
-            # conf.set("spark.driver.memory", jvm.SparkUtils.kbtohuman(job.executorMemKb(), "m"))
-
-            # print('driver mem: ' + conf.get("spark.driver.memory")) #  + ' cores: ' + conf.get("spark.driver.cores"))
-            # print('executor mem: ' + conf.get("spark.executor.memory") + ' cores: ' + conf.get("spark.executor.cores"))
 
         jsc = jvm.JavaSparkContext(conf)
         jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
@@ -228,5 +189,3 @@ class MrGeo(object):
         mapop.context(self.sparkContext)
 
         return VectorMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self.job)
-
-

@@ -1,5 +1,4 @@
 
-from pymrgeo import MrGeo
 import gdaltest
 
 import os
@@ -7,6 +6,9 @@ from osgeo import gdal
 from py4j.java_gateway import java_import
 import shutil
 from unittest import TestSuite, TestCase, defaultTestLoader, main
+
+from pymrgeo.instance import is_instance_of
+from pymrgeo.mrgeo import MrGeo
 
 
 class MrGeoTests(TestCase):
@@ -57,7 +59,6 @@ class MrGeoTests(TestCase):
             # compare as GDAL Datasets.
             gdaltest.compare_db(self, golden, test)
 
-
     def saveraster(self, raster, testname):
         name = self.inputdir + testname
         raster.export(name, singleFile=True, format="tiff", overridenodata=-9999)
@@ -66,7 +67,7 @@ class MrGeoTests(TestCase):
         name = self.inputdir + testname + ".tsv"
         vector.save(name)
 
-    def comparevector(self, vector, testname, expectations):
+    def comparevector(self, vector, testname):
         if self.GENERATE_BASELINE_DATA:
             self.savevector(vector, str(testname))
         else:
@@ -87,11 +88,11 @@ class MrGeoTests(TestCase):
                 jvm.DataProviderFactory.AccessMode.READ,
                 jvm.HadoopUtils.createConfiguration())
             self.assertTrue(vdp is not None)
-            vectorReader = vdp.getVectorReader()
-            self.assertTrue(vectorReader is not None)
-            self.assertTrue(self.mrgeo.is_instance_of(vectorReader, jvm.DelimitedVectorReader))
-            self.assertEquals(vdp_expected.getVectorReader().count(), vectorReader.count())
-            geom_reader = vectorReader.get()
+            vector_reader = vdp.getVectorReader()
+            self.assertTrue(vector_reader is not None)
+            self.assertTrue(is_instance_of(self.mrgeo.gateway, vector_reader, jvm.DelimitedVectorReader))
+            self.assertEquals(vdp_expected.getVectorReader().count(), vector_reader.count())
+            geom_reader = vector_reader.get()
             self.assertTrue(geom_reader is not None)
 
             while expected_geom_reader.hasNext():
@@ -100,15 +101,15 @@ class MrGeoTests(TestCase):
                 self.assertTrue(geom is not None)
                 self.assertEquals(expected_geom.type(), geom.type())
                 self.assertAlmostEquals(float(expected_geom.getAttribute("COST_S")),
-                                        float(geom.getAttribute("COST_S")), delta=0.001);
+                                        float(geom.getAttribute("COST_S")), delta=0.001)
                 self.assertAlmostEquals(float(expected_geom.getAttribute("DISTANCE_M")),
                                         float(geom.getAttribute("DISTANCE_M")), delta=0.001)
                 self.assertAlmostEquals(float(expected_geom.getAttribute("MINSPEED_MPS")),
-                                        float(geom.getAttribute("MINSPEED_MPS")), delta=0.001);
+                                        float(geom.getAttribute("MINSPEED_MPS")), delta=0.001)
                 self.assertAlmostEquals(float(expected_geom.getAttribute("MAXSPEED_MPS")),
-                                        float(geom.getAttribute("MAXSPEED_MPS")), delta=0.001);
+                                        float(geom.getAttribute("MAXSPEED_MPS")), delta=0.001)
                 self.assertAlmostEquals(float(expected_geom.getAttribute("AVGSPEED_MPS")),
-                                        float(geom.getAttribute("AVGSPEED_MPS")), delta=0.001);
+                                        float(geom.getAttribute("AVGSPEED_MPS")), delta=0.001)
 
             # Should not be any more geometries in the actual output
             self.assertFalse(geom_reader.hasNext())
@@ -121,7 +122,7 @@ class MrGeoTests(TestCase):
         java_import(jvm, "org.apache.hadoop.fs.Path")
 
         if srcpath is not None:
-            src =  srcpath
+            src = srcpath
             if not src.endswith('/'):
                 src += '/'
             src += srcfile
@@ -136,7 +137,7 @@ class MrGeoTests(TestCase):
             raise Exception("Source (" + src + ") is not a file or directory")
 
         if dstfile is not None:
-            dst =  dstfile
+            dst = dstfile
             if not dst.endswith('/'):
                 dst += '/'
             dst += dstfile
@@ -168,7 +169,6 @@ class MrGeoTests(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.classname = cls.__name__
-
 
         # print(cls.classname + " setup")
 
@@ -202,8 +202,8 @@ class MrGeoTests(TestCase):
                 names = os.listdir(dirname)
                 if cls._INPUT in names:
                     break
-                dirname = os.path.abspath(os.path.join(dirname, os.pardir))
-        except:
+                dirname = os.path.abspath(os.path.join(os.pardir, dirname))
+        except OSError:
             pass
 
         basedir = os.path.abspath(dirname)
@@ -246,7 +246,8 @@ class MrGeoTests(TestCase):
         self.mrgeo.stop()
         self._doublebox("Test Finished", self.classname + ":" + self.name)
 
-    def _doublebox(self, text, name):
+    @staticmethod
+    def _doublebox(text, name):
         width = len(name)
         if width < len(text):
             width = len(text)
@@ -267,9 +268,16 @@ class MrGeoTests(TestCase):
         print(fmt.format(""))
         print("")
 
+class VectorTestExpectation:
+    def __init__(self, cost, distance, minSpeed, maxSpeed, avgSpeed):
+        self.cost = cost
+        self.distance = distance
+        self.minSpeed = minSpeed
+        self.maxSpeed = maxSpeed
+        self.avgSpeed = avgSpeed
+
 
 def load_tests(loader, tests, pattern):
-
     suite = TestSuite()
     for all_test_suite in defaultTestLoader.discover('.', pattern='*tests.py'):
         for test_suite in all_test_suite:
@@ -280,10 +288,4 @@ if __name__ == '__main__':
     print('running tests')
     main()
 
-class VectorTestExpectation:
-    def __init__(self, cost, distance, minSpeed, maxSpeed, avgSpeed):
-        self.cost = cost
-        self.distance = distance
-        self.minSpeed = minSpeed
-        self.maxSpeed = maxSpeed
-        self.avgSpeed = avgSpeed
+

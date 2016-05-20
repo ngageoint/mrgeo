@@ -141,7 +141,4 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         cd = self.toblertiny.costdistance(-1.0, -1, 64.75, 30.158)
         destPoints = self.mrgeo.create_points([65.087, 30.194, 65.283, 29.939])
         lcp = destPoints.leastcostpath(cd)
-        expectations = []
-        expectations.append(mrgeotest.VectorTestExpectation(29643.025, 39259.016, 1.141, 1.913, 1.324))
-        expectations.append(mrgeotest.VectorTestExpectation(53390.121, 69605.141, 0.977, 1.903, 1.304))
-        self.comparevector(lcp, self.name, expectations)
+        self.comparevector(lcp, self.name)
