@@ -70,6 +70,7 @@ private static final String greeceName = "greece";
 private static String greece = Defs.INPUT + greeceName;
 
 
+public static TestUtils.ValueTranslator nanTranslatorTo255 = new TestUtils.NaNTranslator(255.0f);;
 protected static final String pointsName = "input1"; // .tsv
 protected static String pointsPath;
 
@@ -2425,6 +2426,74 @@ public void testDataTypeFloat() throws Exception
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
                                     TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
                                     String.format("focalStat(\"count\", [%s], \"4p\", \"false\")", allonesholes));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void bitwiseXor() throws Exception
+  {
+    String stmt = String.format("convert([%s], \"byte\", \"truncate\") ^ (0x80 | 0x60)", allhundredsholes);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    nanTranslatorTo255, nanTranslatorTo255,
+                                    stmt);
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void bitwiseAnd() throws Exception
+  {
+    String stmt = String.format("convert([%s], \"byte\", \"truncate\") & (0x80 | 0x60)", allhundredsholes);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    nanTranslatorTo255, nanTranslatorTo255,
+                                    stmt);
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void bitwiseOr() throws Exception
+  {
+    String stmt = String.format("convert([%s], \"byte\", \"truncate\") | 0x80", allhundredsholes);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    nanTranslatorTo255, nanTranslatorTo255,
+                                    stmt);
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void bitwiseComplement() throws Exception
+  {
+    String stmt = String.format("~convert([%s], \"byte\", \"truncate\")", allhundredsholes);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    nanTranslatorTo255, nanTranslatorTo255,
+                                    stmt);
     }
   }
 

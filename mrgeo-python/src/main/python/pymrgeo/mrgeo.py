@@ -15,6 +15,29 @@ from java_gateway import launch_gateway, set_field
 
 
 class MrGeo(object):
+(??)    operators = {"+": ["__add__", "__radd__", "__iadd__"],
+(??)                 "-": ["__sub__", "__rsub__", "__isub__"],
+(??)                 "*": ["__mul__", "__rmul__", "__imul__"],
+(??)                 "/": ["__div__", "__truediv__", "__rdiv__", "__rtruediv__", "__idiv__", "__itruediv__"],
+(??)                 "//": [],  # floor div
+(??)                 "**": ["__pow__", "__rpow__", "__ipow__"],  # pow
+(??)                 "=": [],  # assignment, can't do!
+(??)                 "<": ["__lt__"],
+(??)                 "<=": ["__le__"],
+(??)                 ">": ["__gt__"],
+(??)                 ">=": ["__ge__"],
+(??)                 "==": ["__eq__"],
+(??)                 "!=": ["__ne__"],
+(??)                 "<>": [],
+(??)                 "!": [],
+(??)                 "&&": ["__and__", "__rand__", "__iand__"],
+(??)                 "&": [],
+(??)                 "||": ["__or__", "__ror__", "__ior__"],
+(??)                 "|": [],
+(??)                 "^": ["__xor__", "__rxor__", "__ixor__"],
+(??)                 "^=": []}
+(??)    reserved = ["or", "and", "str", "int", "long", "float", "bool"]
+(??)
     gateway = None
     gateway_client = None
     lock = Lock()
