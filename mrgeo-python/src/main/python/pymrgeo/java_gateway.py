@@ -79,8 +79,10 @@ def find_script():
 
     raise Exception('Can not find "' + script + '" within MRGEO_COMMON_HOME (' + mrgeo_home + ')')
 
+
 def is_remote():
     return _isremote
+
 
 def launch_gateway():
     global _isremote
@@ -169,7 +171,8 @@ def launch_gateway():
     print("Talking with MrGeo on port " + str(gateway_port))
 
     # Connect to the gateway
-    gateway = JavaGateway(GatewayClient(address=requesthost, port=gateway_port), auto_convert=True)
+    gateway_client = GatewayClient(address=requesthost, port=gateway_port)
+    gateway = JavaGateway(gateway_client=gateway_client, auto_convert=True)
 
     # Import the classes used by MrGeo
     java_import(gateway.jvm, "org.mrgeo.python.*")
@@ -180,7 +183,7 @@ def launch_gateway():
     java_import(gateway.jvm, "org.apache.spark.api.python.*")
     java_import(gateway.jvm, "org.apache.spark.mllib.api.python.*")
 
-    return gateway
+    return gateway, gateway_client
 
     # Scala classes have automatic getters & setters generated for
     # public fields, <field>() is the getter, <field>_$eq(<type>) is the setter
