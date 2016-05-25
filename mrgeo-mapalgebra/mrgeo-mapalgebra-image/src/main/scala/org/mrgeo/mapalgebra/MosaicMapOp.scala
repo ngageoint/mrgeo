@@ -37,7 +37,7 @@ object MosaicMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("mosaic")
   }
-  def create(first:RasterMapOp, others:RasterMapOp*):MapOp =
+  def create(first:RasterMapOp, others: Array[RasterMapOp]):MapOp =
     new MosaicMapOp(List(first) ++ others)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
