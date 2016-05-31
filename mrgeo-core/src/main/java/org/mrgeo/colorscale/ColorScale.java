@@ -17,21 +17,23 @@
 package org.mrgeo.colorscale;
 
 import org.apache.commons.io.IOUtils;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import scala.tools.cmd.gen.AnyVals;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author jason.surratt
@@ -67,6 +69,8 @@ public class ColorScale extends TreeMap<Double, Color>
   private String name = null;
   private String title = null;
   private String description = null;
+
+  private static final Object lock = new Object();
 
   private ColorScale()
   {
@@ -133,18 +137,18 @@ public class ColorScale extends TreeMap<Double, Color>
    *
    * @return ColorScale An object representing the color scale.
    */
-  public static ColorScale createDefault()
+  public synchronized static ColorScale createDefault()
   {
     // Make sure the color scale has been initiated before returning
-    if (_colorScale == null || _colorScale.isEmpty())
+    if (_colorScale == null) //  || _colorScale.isEmpty())
     {
-      _colorScale = new ColorScale();
-      _colorScale.setDefaultValues();
+        _colorScale = new ColorScale();
+        _colorScale.setDefaultValues();
     }
     return (ColorScale) _colorScale.clone();
   }
 
-  public static ColorScale createDefaultGrayScale()
+  public synchronized static ColorScale createDefaultGrayScale()
   {
     // Make sure the color scale has been initiated before returning
     if (_grayScale == null || _grayScale.isEmpty())
@@ -161,7 +165,7 @@ public class ColorScale extends TreeMap<Double, Color>
    *
    * @param colorScale The URI of the color xml file.
    */
-  public static void setDefault(final ColorScale colorScale)
+  public synchronized static void setDefault(final ColorScale colorScale)
   {
     _colorScale = colorScale;
 
@@ -180,12 +184,12 @@ public class ColorScale extends TreeMap<Double, Color>
     {
       throw new IOException("Error parsing XML: There must be three elements in color.");
     }
-    color[0] = Integer.valueOf(colors[0]);
-    color[1] = Integer.valueOf(colors[1]);
-    color[2] = Integer.valueOf(colors[2]);
+    color[0] = Integer.parseInt(colors[0]);
+    color[1] = Integer.parseInt(colors[1]);
+    color[2] = Integer.parseInt(colors[2]);
     if (opacityStr != null && !opacityStr.isEmpty())
     {
-      color[3] = Integer.valueOf(opacityStr);
+      color[3] = Integer.parseInt(opacityStr);
     }
     else
     {
@@ -285,13 +289,19 @@ public class ColorScale extends TreeMap<Double, Color>
     return result;
   }
 
-  public boolean equals(final ColorScale cs)
+@Override
+public boolean equals(Object obj)
+{
+  return obj instanceof ColorScale && equals((ColorScale)obj);
+}
+
+public boolean equals(final ColorScale cs)
   {
     if (min == null && cs.min != null || min != null && cs.min == null)
     {
       return false;
     }
-    if ((min != null && cs.min != null) && Double.compare(min, cs.min) != 0)
+    if ((min != null) && Double.compare(min, cs.min) != 0)
     {
       return false;
     }
@@ -299,7 +309,7 @@ public class ColorScale extends TreeMap<Double, Color>
     {
       return false;
     }
-    if ((max != null && cs.max != null) && Double.compare(max, cs.max) != 0)
+    if ((max != null) && Double.compare(max, cs.max) != 0)
     {
       return false;
     }
@@ -334,22 +344,21 @@ public class ColorScale extends TreeMap<Double, Color>
     {
       return false;
     }
-    final Iterator<Double> iterator1 = cs.keySet().iterator();
-    for (final Double d1 : this.keySet())
+    final Iterator<Double> iterator2 = cs.keySet().iterator();
+    for (Map.Entry<Double, Color> iterator1 : entrySet())
     {
-      final Double d2 = iterator1.next();
-      if (d1.compareTo(d2) != 0)
+      final Double d2 = iterator2.next();
+      if (iterator1.getKey().compareTo(d2) != 0)
       {
         return false;
       }
 
-      final Color value1 = get(d1);
-      final Color value2 = get(d2);
-      if (!value1.equals(value2))
+      if (!iterator1.getValue().equals(get(d2)))
       {
         return false;
       }
     }
+
     return true;
   }
 
@@ -400,12 +409,12 @@ public class ColorScale extends TreeMap<Double, Color>
 
   public int[] getNullColor()
   {
-    return nullColor;
+    return nullColor.clone();
   }
 
   public void setNullColor(final int[] color)
   {
-    nullColor = color;
+    nullColor = color.clone();
   }
 
   final public boolean getReliefShading()
@@ -500,7 +509,7 @@ public class ColorScale extends TreeMap<Double, Color>
       }
       cache = null;
     }
-    catch (final Exception e)
+    catch (XPathExpressionException | IOException e)
     {
       throw new BadXMLException(e);
     }
@@ -600,7 +609,7 @@ public class ColorScale extends TreeMap<Double, Color>
         }
       }
     }
-    catch (final Exception e)
+    catch (IOException e)
     {
       throw new BadJSONException(e);
     }
@@ -608,9 +617,9 @@ public class ColorScale extends TreeMap<Double, Color>
 
   final public int[] lookup(final double v)
   {
-    if (Double.isNaN(v) || v == transparent)
+    if (Double.isNaN(v) || FloatUtils.isEqual(v, transparent))
     {
-      return nullColor;
+      return getNullColor();
     }
     if (cache == null)
     {
@@ -623,7 +632,7 @@ public class ColorScale extends TreeMap<Double, Color>
       {
         return cache[0];
       }
-      return nullColor;
+      return getNullColor();
     }
     else if (v > max)
     {
@@ -631,7 +640,7 @@ public class ColorScale extends TreeMap<Double, Color>
       {
         return cache[CACHE_SIZE - 1];
       }
-      return nullColor;
+      return getNullColor();
     }
     else
     {
@@ -649,25 +658,25 @@ public class ColorScale extends TreeMap<Double, Color>
 
   public void put(final double key, final Color c)
   {
-    put(new Double(key), c);
+    put(Double.valueOf(key), c);
     cache = null;
   }
 
   public void put(final double key, final int r, final int g, final int b)
   {
-    put(new Double(key), new Color(r, g, b));
+    put(Double.valueOf(key), new Color(r, g, b));
     cache = null;
   }
 
   public void put(final double key, final int r, final int g, final int b, final int a)
   {
-    put(new Double(key), new Color(r, g, b, a));
+    put(Double.valueOf(key), new Color(r, g, b, a));
     cache = null;
   }
 
   public void put(final double key, final int[] c)
   {
-    put(new Double(key), new Color(c[0], c[1], c[2], c[3]));
+    put(Double.valueOf(key), new Color(c[0], c[1], c[2], c[3]));
     cache = null;
   }
 

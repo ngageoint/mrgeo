@@ -43,6 +43,13 @@ public class Tile implements Comparable<Tile>
   }
 
   @Override
+  public boolean equals(Object obj)
+  {
+    return obj instanceof Tile &&
+        this.ty == ((Tile)obj).ty && this.tx == ((Tile)obj).tx;
+  }
+
+@Override
   public String toString()
   {
     return "Tile [tx=" + tx + ", ty=" + ty + "]";

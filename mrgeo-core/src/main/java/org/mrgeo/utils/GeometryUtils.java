@@ -137,8 +137,8 @@ public class GeometryUtils
 
   public static boolean colinear(final Point p0, final Point p1, final Point p2)
   {
-    return (p1.getY() - p0.getY()) * (p2.getX() - p1.getX()) == (p2.getY() - p1.getY()) *
-      (p1.getX() - p0.getX());
+    return FloatUtils.isEqual((p1.getY() - p0.getY()) * (p2.getX() - p1.getX()), (p2.getY() - p1.getY()) *
+      (p1.getX() - p0.getX()));
   }
 
   // Take the point P and form a ray that
@@ -262,7 +262,7 @@ public class GeometryUtils
           w = ay + (lby * (cx - ax) / lbx);
 
           // overlapping?
-          if (cy == w && v >= 0 && v <= 1)
+          if (FloatUtils.isEqual(cy, w) && v >= 0 && v <= 1)
           {
             if (intersection != null)
             {

@@ -16,6 +16,8 @@
 
 package org.mrgeo.hdfs.vector.shp.util.jdbc;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -140,15 +142,16 @@ public class JDBCConnection
   }
 
   // send a ping (test the connection)
-  public synchronized void ping() throws SQLException, JDBCPoolException
-  {
-    if (inUse)
-      closeRequest();
-    impl = connectionPool.acquireImpl(db_key, timeout);
-    Connection temp = impl.getConnection();
-    temp.createStatement(); // 1st test
-    closeRequest();
-  }
+//  @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED", justification = "Just need a create, not using it.")
+//  public synchronized void ping() throws SQLException, JDBCPoolException
+//  {
+//    if (inUse)
+//      closeRequest();
+//    impl = connectionPool.acquireImpl(db_key, timeout);
+//    Connection temp = impl.getConnection();
+//    temp.createStatement(); // 1st test
+//    closeRequest();
+//  }
 
   // returns raw sql string for prepared statements
   private String preparedSQL(String originalSQL)

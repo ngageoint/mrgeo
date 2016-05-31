@@ -18,6 +18,7 @@ package org.mrgeo.mapalgebra.raster
 
 import java.io.IOException
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.rdd.RasterRDD
@@ -40,7 +41,8 @@ object MrsPyramidMapOp {
   }
 }
 
-class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider) extends RasterMapOp {
+class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider)
+    extends RasterMapOp with Cloneable {
   private var rasterRDD:Option[RasterRDD] = None
   private var zoomForRDD: Option[Int] = None
   private var maxZoomForRDD: Option[Int] = None
@@ -57,16 +59,14 @@ class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider) exten
     rasterRDD
   }
 
-  override def clone = {
-    MrsPyramidMapOp(dataprovider)
-  }
+  @SuppressFBWarnings(value = Array("CN_IDIOM_NO_SUPER_CALL"), justification = "No need to call super.clone()")
+  override def clone = MrsPyramidMapOp(dataprovider)
 
-  private def getBounds(): Option[Bounds] = {
+  private def getBounds: Option[Bounds] = {
     mapOpForBounds match {
-      case Some(op) => {
+      case Some(op) =>
         Some(op.metadata().getOrElse(
           throw new IOException("Unable to get metadata for the bounds raster")).getBounds)
-      }
       case None => bounds
     }
   }
@@ -135,16 +135,14 @@ class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider) exten
   override def metadata():Option[MrsPyramidMetadata] =  {
     load()
     getBounds match {
-      case Some(b) => {
+      case Some(b) =>
         val meta = super.metadata()
         meta match {
-          case Some(m) => {
+          case Some(m) =>
             m.setBounds(b)
             Some(m)
-          }
           case None => meta
         }
-      }
       case None => super.metadata()
     }
   }

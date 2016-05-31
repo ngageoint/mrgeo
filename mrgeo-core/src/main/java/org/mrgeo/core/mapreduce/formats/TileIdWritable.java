@@ -16,6 +16,8 @@
 
 package org.mrgeo.core.mapreduce.formats;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * This is a backward compatibility class only. There are existing MrGeo
  * outputs that reference this class. The actual class was moved to
@@ -23,6 +25,7 @@ package org.mrgeo.core.mapreduce.formats;
  * to be properly loaded, we include this class.
  */
 @Deprecated
+@SuppressFBWarnings(value = "NM_SAME_SIMPLE_NAME_AS_SUPERCLASS", justification = "Backwards compatibility with very old MrsImages")
 public class TileIdWritable extends org.mrgeo.data.tile.TileIdWritable
 {
   public TileIdWritable() {

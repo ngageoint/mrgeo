@@ -21,6 +21,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 import java.util.Properties
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.lang3.NotImplementedException
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
@@ -33,7 +34,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
-import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
+import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms._
@@ -42,11 +43,17 @@ import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
+@SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION",
+  "NM_METHOD_NAMING_CONVENTION",
+  "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"),
+  justification = "object has no constructor = empty Externalizable prevents object serialization" +
+      "Scala constant naming convention" +
+      "Scala generated code")
 object BuildPyramid extends MrGeoDriver with Externalizable {
 
-  final private val Pyramid = "pyramid"
-  final private val Aggregator = "aggregator"
-  final private val ProviderProperties = "provider.properties"
+  private val Pyramid = "pyramid"
+  private val Aggregator = "aggregator"
+  private val ProviderProperties = "provider.properties"
 
   @BeanProperty
   var MIN_TILES_FOR_SPARK = 1000  // made a var so the tests can muck with it...
@@ -146,7 +153,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     true
   }
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(@transient context: SparkContext): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
@@ -212,7 +219,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
         })
 
 
-        val tileBounds = TMSUtils.boundsToTile(metadata.getBounds, tolevel, tilesize)
+        //val tileBounds = TMSUtils.boundsToTile(metadata.getBounds, tolevel, tilesize)
 
         val wrappedDecimated = new PairRDDFunctions(decimated)
         val mergedTiles = wrappedDecimated.reduceByKey((r1, r2) => {

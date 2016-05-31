@@ -16,6 +16,7 @@
 
 package org.mrgeo.core;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,26 +38,39 @@ private MrGeoProperties() {
 } // end base constructor
 
 
+@SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Ignored exception causes empty properties object, which is fine")
 public static Properties getInstance() {
-
   if( properties == null ) {
     // This reduces concurrency to just when properties need creating, making access more efficient once created
     synchronized (MrGeoProperties.class) {
-      if ( properties == null ) {
-        properties = new Properties();
-        try
-        {
-          String conf = findMrGeoConf();
-          properties.load( new FileInputStream( conf ) );
+      properties = new Properties();
+      FileInputStream fis = null;
+      try
+      {
+        String conf = findMrGeoConf();
+        fis = new FileInputStream(conf);
+        properties.load(fis);
+      }
+      catch (IOException e)
+      {
+        // Try loading from properties file. This is the method used for JBoss deployments
+        try {
+          properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
         }
-        catch (IOException e)
+        catch ( Exception ignored ) {
+          // An empty props object is fine
+        }
+      }
+      finally
+      {
+        if (fis != null)
         {
-          // Try loading from properties file. This is the method used for JBoss deployments
-          try {
-            properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
+          try
+          {
+            fis.close();
           }
-          catch ( Exception ignored ) {
-            // An empty props object is fine
+          catch (IOException ignored)
+          {
           }
         }
       }

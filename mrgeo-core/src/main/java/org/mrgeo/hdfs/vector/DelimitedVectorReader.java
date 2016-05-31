@@ -230,10 +230,12 @@ public class DelimitedVectorReader implements VectorReader
       skipFirstLine = true;
       // Read the column names from the first line of the file
       InputStream in = null;
+      InputStreamReader isr = null;
       try
       {
         in = HadoopFileUtils.open(conf, new Path(fileName)); // fs.open(columnPath);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        isr = new InputStreamReader(in);
+        BufferedReader reader = new BufferedReader(isr);
         String line = reader.readLine();
         String[] columnNames = line.split(Character.toString(delimiter));
         int i = 0;
@@ -257,9 +259,27 @@ public class DelimitedVectorReader implements VectorReader
       }
       finally
       {
+        if (isr != null)
+        {
+          try
+          {
+            isr.close();
+          }
+          catch (IOException ignored)
+          {
+
+          }
+        }
         if (in != null)
         {
-          in.close();
+          try
+          {
+            in.close();
+          }
+          catch (IOException ignored)
+          {
+
+          }
         }
       }
     }

@@ -164,31 +164,31 @@ object GDALUtils extends Logging {
 
     if (ds != null) {
       copyToDataset(ds, raster)
+
+      val xform = new Array[Double](6)
+      if (bounds != null) {
+
+        xform(0) = bounds.w
+        xform(1) = bounds.width / ds.getRasterXSize
+        xform(2) = 0
+        xform(3) = bounds.n
+        xform(4) = 0
+        xform(5) = -bounds.height / ds.getRasterYSize
+
+        ds.SetProjection(GDALUtils.EPSG4326)
+      }
+      else
+      {
+        xform(0) = 0
+        xform(1) = ds.getRasterXSize
+        xform(2) = 0
+        xform(3) = 0
+        xform(4) = 0
+        xform(5) = -ds.getRasterYSize
+      }
+
+      ds.SetGeoTransform(xform)
     }
-
-    val xform = new Array[Double](6)
-    if (bounds != null) {
-
-      xform(0) = bounds.w
-      xform(1) = bounds.width / ds.getRasterXSize
-      xform(2) = 0
-      xform(3) = bounds.n
-      xform(4) = 0
-      xform(5) = -bounds.height / ds.getRasterYSize
-
-      ds.SetProjection(GDALUtils.EPSG4326)
-    }
-    else
-    {
-      xform(0) = 0
-      xform(1) = ds.getRasterXSize
-      xform(2) = 0
-      xform(3) = 0
-      xform(4) = 0
-      xform(5) = -ds.getRasterYSize
-    }
-
-    ds.SetGeoTransform(xform)
 
     ds
   }
@@ -377,18 +377,18 @@ object GDALUtils extends Logging {
       val band: Band = image.GetRasterBand(i)
       band.GetNoDataValue(v)
       nodatas(i - 1) =
-        if (v(0) != null) {
-          v(0)
-        }
-        else {
-          band.getDataType match {
-          case gdalconstConstants.GDT_Byte |
-               gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 |
-               gdalconstConstants.GDT_UInt32 | gdalconstConstants.GDT_Int32 => 0
-          case gdalconstConstants.GDT_Float32 => Float.NaN
-          case gdalconstConstants.GDT_Float64 => Double.NaN
+          if (v(0) != null) {
+            v(0)
           }
-        }
+          else {
+            band.getDataType match {
+            case gdalconstConstants.GDT_Byte |
+                 gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 |
+                 gdalconstConstants.GDT_UInt32 | gdalconstConstants.GDT_Int32 => 0
+            case gdalconstConstants.GDT_Float32 => Float.NaN
+            case gdalconstConstants.GDT_Float64 => Double.NaN
+            }
+          }
 
     }
 

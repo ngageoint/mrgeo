@@ -691,16 +691,32 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
 
         InputStream is = DependencyLoader.class.getResourceAsStream("/" + resource);
 
-        Set<Dependency> d = readDependencies(is);
-        is.close();
+        try
+        {
+          Set<Dependency> d = readDependencies(is);
+          is.close();
 
-        if (deps == null)
-        {
-          deps = d;
+          if (deps == null)
+          {
+            deps = d;
+          }
+          else
+          {
+            deps.addAll(d);
+          }
         }
-        else
+        finally
         {
-          deps.addAll(d);
+          if (is != null)
+          {
+            try
+            {
+              is.close();
+            }
+            catch (IOException ignored)
+            {
+            }
+          }
         }
       }
 

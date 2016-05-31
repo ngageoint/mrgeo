@@ -19,6 +19,7 @@ package org.mrgeo.geometry;
 import com.vividsolutions.jts.algorithm.CGAlgorithms;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
+import org.mrgeo.utils.FloatUtils;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -62,7 +63,9 @@ public void closeRing()
 {
   Point start = points.get(0);
   Point end = points.get(points.size() - 1);
-  if (start.getX() != end.getX() || start.getY() != end.getY() || start.getZ() != end.getZ())
+  if (FloatUtils.isEqual(start.getX(), end.getX()) &&
+      FloatUtils.isEqual(start.getY(), end.getY()) &&
+      FloatUtils.isEqual(start.getZ(), end.getZ()))
   {
     addPoint(start);
   }

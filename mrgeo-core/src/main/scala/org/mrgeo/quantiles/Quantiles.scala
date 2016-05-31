@@ -19,6 +19,7 @@ package org.mrgeo.quantiles
 import java.awt.image.{DataBuffer, Raster}
 import java.io.{Externalizable, ObjectInput, ObjectOutput, PrintWriter}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
@@ -36,6 +37,7 @@ import org.mrgeo.utils.SparkUtils
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
+@SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION"), justification = "object has no constructor, empty Externalizable prevents object serialization")
 object Quantiles extends MrGeoDriver with Externalizable {
   final private val Input = "input"
   final private val Output = "output"

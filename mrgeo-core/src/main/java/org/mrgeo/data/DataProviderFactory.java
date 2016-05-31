@@ -686,13 +686,13 @@ private static Cache<String, VectorDataProvider> vectorProviderCache = CacheBuil
         }).build();
 
 
-protected static Map<String, AdHocDataProviderFactory> adHocProviderFactories;
-protected static Map<String, MrsImageDataProviderFactory> mrsImageProviderFactories;
-protected static Map<String, VectorDataProviderFactory> vectorProviderFactories;
+private static Map<String, AdHocDataProviderFactory> adHocProviderFactories;
+private static Map<String, MrsImageDataProviderFactory> mrsImageProviderFactories;
+private static Map<String, VectorDataProviderFactory> vectorProviderFactories;
 
-protected static String preferredAdHocProviderName = null;
-protected static String preferredImageProviderName = null;
-protected static String preferredVectorProviderName = null;
+static String preferredAdHocProviderName = null;
+static String preferredImageProviderName = null;
+static String preferredVectorProviderName = null;
 
 // public static TileDataProvider getDataProvider(final String name) throws DataProviderNotFound
 // {
@@ -1495,7 +1495,7 @@ protected static String getPrefix(String name)
   return null;
 }
 
-private static Configuration getBasicConfig()
+private synchronized static Configuration getBasicConfig()
 {
   if (basicConf == null)
   {

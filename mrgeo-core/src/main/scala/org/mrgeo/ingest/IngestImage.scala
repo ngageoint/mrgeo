@@ -19,6 +19,7 @@ package org.mrgeo.ingest
 import java.io._
 import java.util
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile
 import org.apache.spark.rdd.PairRDDFunctions
@@ -41,7 +42,7 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-
+@SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION"), justification = "object has no constructor, empty Externalizable prevents object serialization")
 object IngestImage extends MrGeoDriver with Externalizable {
 
   final private val Inputs = "inputs"
@@ -486,7 +487,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     //      provider.getMetadataWriter.write(metadata)
     //    }
     true
-  }
+    }
 
 
   override def readExternal(in: ObjectInput) {}

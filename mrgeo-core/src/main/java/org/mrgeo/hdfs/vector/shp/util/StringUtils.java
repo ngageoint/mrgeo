@@ -217,7 +217,7 @@ public class StringUtils
     String[] temp = null;
     if (delimiter == null || delimiter.length() == 0)
     {
-      temp = new String[0];
+      temp = new String[1];
       temp[0] = str;
     }
     else

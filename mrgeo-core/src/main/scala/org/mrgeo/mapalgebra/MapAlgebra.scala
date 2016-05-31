@@ -20,6 +20,7 @@ import java.io._
 import java.util.regex.Pattern
 import javax.script.ScriptEngineManager
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
@@ -523,7 +524,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
   override def writeExternal(out: ObjectOutput): Unit = {}
 }
 
-
+@SuppressFBWarnings(value=Array("NM_CLASS_NAMING_CONVENTION"), justification = "Well, yes it does!")
 object TestMapAlgebra extends App {
 
   val baseDir: File = new File(System.getProperty("java.io.tmpdir"))

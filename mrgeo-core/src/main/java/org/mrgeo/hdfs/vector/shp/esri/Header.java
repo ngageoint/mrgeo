@@ -35,12 +35,12 @@ public class Header extends java.lang.Object
   // shape types
   protected int fileCode; // should be 9994
   protected int fileLength; // # in 2 byte words
-  protected double Mmax; // 0.0 if unused
-  protected double Mmin; // 0.0 if unused
+  protected double mmax; // 0.0 if unused
+  protected double mmin; // 0.0 if unused
   protected int shapeType;
   protected int version; // should be 1000
-  protected double Zmax; // 0.0 if unused
-  protected double Zmin; // 0.0 if unused
+  protected double zmax; // 0.0 if unused
+  protected double zmin; // 0.0 if unused
 
   /** Creates new Header */
   protected Header()
@@ -81,10 +81,10 @@ public class Header extends java.lang.Object
     double Ymin = Convert.getLEDouble(header, 44);
     double Xmax = Convert.getLEDouble(header, 52);
     double Ymax = Convert.getLEDouble(header, 60);
-    Zmin = Convert.getLEDouble(header, 68);
-    Zmax = Convert.getLEDouble(header, 76);
-    Mmin = Convert.getLEDouble(header, 84);
-    Mmax = Convert.getLEDouble(header, 92);
+    zmin = Convert.getLEDouble(header, 68);
+    zmax = Convert.getLEDouble(header, 76);
+    mmin = Convert.getLEDouble(header, 84);
+    mmax = Convert.getLEDouble(header, 92);
     extent = new JExtent(Xmin, Ymin, Xmax, Ymax);
   }
 
@@ -132,8 +132,8 @@ public class Header extends java.lang.Object
     s = s + "version: " + version + "\n";
     s = s + "shapeType: " + shapeType + "\n";
     s = s + "extent: " + extent + "\n";
-    s = s + "z min,max: " + Zmin + "," + Zmax + "\n";
-    s = s + "m min,max: " + Mmin + "," + Mmax + "\n";
+    s = s + "z min,max: " + zmin + "," + zmax + "\n";
+    s = s + "m min,max: " + mmin + "," + mmax + "\n";
     return s;
   }
 }

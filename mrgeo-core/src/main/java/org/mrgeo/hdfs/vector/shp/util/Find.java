@@ -26,137 +26,138 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class Find
 {
-  public static String CRLF = "\r\n";
+public static String CRLF = "\r\n";
 
-  public static void main(String[] args)
+public static void main(String[] args)
+{
+  try
   {
-    try
+    switch (args.length)
     {
-      switch (args.length)
-      {
-      case 3:
-      {
-        boolean dirs = false;
-        if (args[2].equalsIgnoreCase("Y"))
-          dirs = true;
-        PrintWriter writer = null;
-        if (!args[1].equalsIgnoreCase("null"))
-          writer = new PrintWriter(new FileOutputStream(args[1]));
-        Find f = new Find();
-        f.search(new File(args[0]), writer, dirs, null);
-        break;
-      }
-      case 4:
-      {
-        boolean dirs = false;
-        if (args[2].equalsIgnoreCase("Y"))
-          dirs = true;
-        PrintWriter writer = null;
-        if (!args[1].equalsIgnoreCase("null"))
-          writer = new PrintWriter(new FileOutputStream(args[1]));
-        Find f = new Find();
-        f.search(new File(args[0]), writer, dirs, args[3]);
-        break;
-      }
-      default:
-      {
-        System.out.println("USAGE: FIND <dir> <out> <Y|N> {regex}");
-        System.exit(1);
-      }
-      }
+    case 3:
+    {
+      boolean dirs = false;
+      if (args[2].equalsIgnoreCase("Y"))
+        dirs = true;
+      PrintWriter writer = null;
+      if (!args[1].equalsIgnoreCase("null"))
+        writer = new PrintWriter(new FileOutputStream(args[1]));
+      Find f = new Find();
+      f.search(new File(args[0]), writer, dirs, null);
+      break;
     }
-    catch (Exception e)
+    case 4:
     {
-      e.printStackTrace();
+      boolean dirs = false;
+      if (args[2].equalsIgnoreCase("Y"))
+        dirs = true;
+      PrintWriter writer = null;
+      if (!args[1].equalsIgnoreCase("null"))
+        writer = new PrintWriter(new FileOutputStream(args[1]));
+      Find f = new Find();
+      f.search(new File(args[0]), writer, dirs, args[3]);
+      break;
+    }
+    default:
+    {
+      System.out.println("USAGE: FIND <dir> <out> <Y|N> {regex}");
+      System.exit(1);
+    }
     }
   }
-
-  @SuppressWarnings("rawtypes")
-  private List list = null;
-
-  public Find()
+  catch (Exception e)
   {
+    e.printStackTrace();
   }
+}
 
-  @SuppressWarnings("rawtypes")
-  public synchronized List search(File dir, boolean includedirectories, String regex)
-      throws Exception
-  {
-    return search(dir, includedirectories, regex, false);
-  }
+@SuppressWarnings("rawtypes")
+private List list = null;
 
-  @SuppressWarnings("rawtypes")
-  public synchronized List search(File dir, boolean includedirectories, String regex, boolean delete)
-      throws Exception
-  {
-    if (!dir.isDirectory())
-      throw new Exception("'" + dir.getCanonicalPath() + "' not a directory.");
-    list = new ArrayList();
-    searchInternal(dir, includedirectories, regex, delete);
-    return list;
-  }
+public Find()
+{
+}
 
-  private void searchInternal(File dir, boolean dirs, String regex, boolean delete)
-      throws IOException
+@SuppressWarnings("rawtypes")
+public synchronized List search(File dir, boolean includedirectories, String regex)
+    throws Exception
+{
+  return search(dir, includedirectories, regex, false);
+}
+
+@SuppressWarnings("rawtypes")
+public synchronized List search(File dir, boolean includedirectories, String regex, boolean delete)
+    throws Exception
+{
+  if (!dir.isDirectory())
+    throw new Exception("'" + dir.getCanonicalPath() + "' not a directory.");
+  list = new ArrayList();
+  searchInternal(dir, includedirectories, regex, delete);
+  return list;
+}
+
+private void searchInternal(File dir, boolean dirs, String regex, boolean delete)
+    throws IOException
+{
+  File[] child = dir.listFiles();
+  for (int i = 0; i < child.length; i++)
   {
-    File[] child = dir.listFiles();
-    for (int i = 0; i < child.length; i++)
+    if (regex == null || (child[i].getCanonicalPath().endsWith(regex)))
     {
-      if (regex == null || (child[i].getCanonicalPath().endsWith(regex)))
+      if (child[i].isFile() || (dirs && child[i].isDirectory()))
       {
-        if (child[i].isFile() || (dirs && child[i].isDirectory()))
+        list.add(child[i].getCanonicalPath());
+        if (delete)
         {
-          list.add(child[i].getCanonicalPath());
-          if (delete)
-          {
-            File temp = new File(child[i].getCanonicalPath());
-            temp.delete();
-          }
+          File temp = new File(child[i].getCanonicalPath());
+          if (!temp.delete())
+            throw new IOException("Error deleting: " + child[i].getCanonicalPath());
         }
       }
-      if (child[i].isDirectory())
-      {
-        searchInternal(child[i], dirs, regex, delete);
-      }
     }
-  }
-
-  @SuppressWarnings("rawtypes")
-  private synchronized List search(File dir, PrintWriter writer, boolean dirs, String regex)
-      throws Exception
-  {
-    if (!dir.isDirectory())
-      throw new Exception("'" + dir.getCanonicalPath() + "' not a directory.");
-    list = new ArrayList();
-    searchInternal(dir, writer, dirs, regex);
-    return list;
-  }
-
-  private synchronized void searchInternal(File dir, PrintWriter writer, boolean dirs, String regex)
-      throws Exception
-  {
-    File[] child = dir.listFiles();
-    for (int i = 0; i < child.length; i++)
+    if (child[i].isDirectory())
     {
-      if (regex == null || (child[i].getCanonicalPath().endsWith(regex)))
-      {
-        if (child[i].isFile() || (dirs && child[i].isDirectory()))
-        {
-          if (writer != null)
-          {
-            writer.write(child[i].getCanonicalPath() + CRLF);
-          }
-          else
-          {
-            System.out.println(child[i].getCanonicalPath());
-          }
-          list.add(child[i].getCanonicalPath());
-        }
-      }
-      if (child[i].isDirectory())
-      {
-        searchInternal(child[i], writer, dirs, regex);
-      }
+      searchInternal(child[i], dirs, regex, delete);
     }
   }
+}
+
+@SuppressWarnings("rawtypes")
+private synchronized List search(File dir, PrintWriter writer, boolean dirs, String regex)
+    throws Exception
+{
+  if (!dir.isDirectory())
+    throw new Exception("'" + dir.getCanonicalPath() + "' not a directory.");
+  list = new ArrayList();
+  searchInternal(dir, writer, dirs, regex);
+  return list;
+}
+
+private synchronized void searchInternal(File dir, PrintWriter writer, boolean dirs, String regex)
+    throws Exception
+{
+  File[] child = dir.listFiles();
+  for (int i = 0; i < child.length; i++)
+  {
+    if (regex == null || (child[i].getCanonicalPath().endsWith(regex)))
+    {
+      if (child[i].isFile() || (dirs && child[i].isDirectory()))
+      {
+        if (writer != null)
+        {
+          writer.write(child[i].getCanonicalPath() + CRLF);
+        }
+        else
+        {
+          System.out.println(child[i].getCanonicalPath());
+        }
+        list.add(child[i].getCanonicalPath());
+      }
+    }
+    if (child[i].isDirectory())
+    {
+      searchInternal(child[i], writer, dirs, regex);
+    }
+  }
+}
 }

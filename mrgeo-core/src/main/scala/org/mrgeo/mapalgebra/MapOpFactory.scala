@@ -158,7 +158,7 @@ object MapOpFactory extends Logging {
               }) + {
                 if (term.isParamWithDefault) {
                   val getter = ts member newTermName("create$default$" + (index + 1))
-                  if (getter != NoSymbol) {
+                  if (getter != null && getter != NoSymbol) {
                     "=" + ((im reflectMethod getter.asMethod)() match {
                     case s:String => "\"" + s + "\""
                     case x => x

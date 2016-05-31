@@ -1,0 +1,10 @@
+<FindBugsFilter>
+  <!-- Don't bother with DM_DEFAULT_ENCODING - default encoding -->
+  <Match>
+    <Bug pattern="DM_DEFAULT_ENCODING" />
+  </Match>
+  <!-- Don't bother with DM_CONVERT_CASE - non-localized toupper or tolower -->
+  <Match>
+    <Bug pattern="DM_CONVERT_CASE" />
+  </Match>
+</FindBugsFilter>

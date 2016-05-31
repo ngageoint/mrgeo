@@ -192,7 +192,9 @@ public class FileWrapper implements Serializable
     if (f == null)
       throw new IOException("File Parameter Is Null!  Cannot Save!");
     if (f.exists())
-      f.delete();
+      if (!f.delete())
+        throw new IOException("Error deleting: " + f.getCanonicalPath());
+
 
     // open file stream
     FileOutputStream fos = new FileOutputStream(f);
@@ -233,6 +235,6 @@ public class FileWrapper implements Serializable
     {
       return full + " (" + getSizeLabel() + ")";
     }
-    return null;
+    return "null";
   }
 }

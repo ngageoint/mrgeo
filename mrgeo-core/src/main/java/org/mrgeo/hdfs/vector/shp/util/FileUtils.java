@@ -124,7 +124,7 @@ public class FileUtils extends Object
     for (int i = 0; i < child.length; i++)
     {
       name = child[i].getName();
-      pos = name.indexOf(".");
+//      pos = name.indexOf(".");
       if (pos == -1)
       {
 
@@ -136,7 +136,8 @@ public class FileUtils extends Object
             + newBasename + "." + ext);
       copyFile(child[i].getCanonicalPath(), dir2 + "\\" + newBasename + "." + ext);
       if (move)
-        child[i].delete();
+        if (!child[i].delete())
+          throw new IOException("Error deleting: " + child[i].getCanonicalPath());
     }
   }
 

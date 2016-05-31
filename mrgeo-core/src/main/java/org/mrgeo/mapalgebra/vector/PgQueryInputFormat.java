@@ -45,7 +45,7 @@ public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> impl
 {
   private static final Logger log = LoggerFactory.getLogger(PgQueryInputFormat.class);
 
-  public class ResultSetInputSplit extends InputSplit implements Serializable
+  static public class ResultSetInputSplit extends InputSplit implements Serializable
   {
     private static final long serialVersionUID = 1L;
 
@@ -167,11 +167,12 @@ public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> impl
         if (fs.exists(sqlPath))
         {
           FSDataInputStream in = null;
+          InputStreamReader isr = null;
           try
           {
             in = fs.open(sqlPath);
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            isr = new InputStreamReader(in);
+            BufferedReader br = new BufferedReader(isr);
             String sqlStr = "";
             String tmpStr = null;
             do
@@ -195,9 +196,12 @@ public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> impl
             try
             {
               conn = DriverManager.getConnection(dbconnection, props);
-              st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-              st.executeQuery(sqlStr);
-              rs = st.getResultSet();
+//              st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+//              rs = st.executeQuery(sqlStr);
+
+              st = conn.prepareStatement(sqlStr, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+              rs = ((PreparedStatement)st).executeQuery();
+
             }
             catch (SQLException e)
             {
@@ -208,14 +212,31 @@ public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> impl
               e.printStackTrace();
               throw new IOException("Could not open database.");
             }
+            st.close();
             conn.close();
             return rs;
           }
           finally
           {
+            if (isr != null)
+            {
+              try
+              {
+                isr.close();
+              }
+              catch (IOException ignored)
+              {
+              }
+            }
             if (in != null)
             {
-              in.close();
+              try
+              {
+                in.close();
+              }
+              catch (IOException ignored)
+              {
+              }
             }
           }
         }
@@ -280,7 +301,13 @@ public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> impl
         catch (SQLException e1)
         {
           e1.printStackTrace();
+          throw new IOException(e1);
         }
+      }
+
+      if (rs == null)
+      {
+          throw new IOException("No results");
       }
 
       this.start = ris.startIndex;

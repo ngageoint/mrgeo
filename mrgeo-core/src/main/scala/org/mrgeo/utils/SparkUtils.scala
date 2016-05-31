@@ -660,6 +660,16 @@ object SparkUtils extends Logging {
     }
 
     val result = rdd.aggregate((null.asInstanceOf[Bounds], zero))((entry, t) => {
+
+      def isNotNodata(value:Double, nodata:Double):Boolean = {
+        if (nodata.isNaN) {
+          !value.isNaN
+        }
+        else {
+          nodata != value
+        }
+      }
+
       val bounds = entry._1
       val stats = entry._2
       val tile = TMSUtils.tileid(t._1.get, zoom)
@@ -675,26 +685,25 @@ object SparkUtils extends Logging {
       // Handle the stats
       val raster = RasterWritable.toRaster(t._2)
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
+      var b = 0
+      while (b < raster.getNumBands) {
+        var y = 0
+        val nd = nodata(b).doubleValue()
+        while (y < raster.getHeight) {
+          var x = 0
+          while (x < raster.getWidth) {
             val p = raster.getSampleDouble(x, y, b)
-            if (nodata(b).doubleValue().isNaN) {
-              if (!p.isNaN) {
-                stats(b).count += 1
-                stats(b).sum += p
-                stats(b).max = Math.max(stats(b).max, p)
-                stats(b).min = Math.min(stats(b).min, p)
-              }
-            }
-            else if (p != nodata(b).doubleValue()) {
+            if (isNotNodata(p, nd)) {
               stats(b).count += 1
               stats(b).sum += p
               stats(b).max = Math.max(stats(b).max, p)
               stats(b).min = Math.min(stats(b).min, p)
             }
+            x += 1
           }
+          y += 1
         }
+        b += 1
       }
 
       (tb, stats)

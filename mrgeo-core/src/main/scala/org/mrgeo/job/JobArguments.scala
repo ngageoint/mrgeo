@@ -436,7 +436,7 @@ class JobArguments() extends Logging {
         // YarnClient was here in older versions of YARN
         case cnfe: ClassNotFoundException =>
           cl.loadClass("org.apache.hadoop.yarn.client.YarnClient")
-        case _:Throwable => null
+        case t:Throwable => throw t
       }
 
     val create = client.getMethod("createYarnClient")

@@ -49,7 +49,7 @@ public class DbaseFile extends java.lang.Object
   protected boolean cachemode = false; // cache mode indicator flag
   protected int cachepos; // cache position (inclusive); dynamic access only
   protected int cachesize; // size of cache - represents all rows if not dynamic
-  protected File file = null;
+  //protected File file = null;
   protected byte[] flg = null; // row flags!
   protected DbaseHeader header = null;
   private SeekableDataInput in = null;
@@ -109,7 +109,7 @@ public class DbaseFile extends java.lang.Object
     if (header.recordCount > 0)
       throw new DbaseException(
           "Columns can't be added after records are in the DBF in this version!");
-    name.trim();
+    name = name.trim();
     if (name.length() > 11)
       name = name.substring(0, 10);
     if (getColumn(name) != -1)
@@ -159,7 +159,7 @@ public class DbaseFile extends java.lang.Object
       if (in != null)
       {
         in.close();
-        file = null;
+        //file = null;
         header = null;
         row = null;
         flg = null;
@@ -471,6 +471,6 @@ public class DbaseFile extends java.lang.Object
   @Override
   public String toString()
   {
-    return "\n" + StringUtils.pad("file:", 15) + file + getHeader();
+    return "\n" + getHeader();
   }
 }

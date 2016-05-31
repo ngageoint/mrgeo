@@ -74,7 +74,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    val outputWithZoom: String = provider.getResolvedResourceName(false) + "/" + context.getZoomlevel
+    val outputWithZoom: String = provider.getResolvedResourceName(false) + "/" + context.getZoomLevel
     val outputPath: Path = new Path(outputWithZoom)
 
     val jobconf = try {
@@ -89,8 +89,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
       conf.set("mapreduce.output.fileoutputformat.outputdir", outputPath.toString)
 
       // compress
-      // The constant seems to be missing from at least CDH 5.6.0 (non-yarn), so we'll use the
-      // hard-coded string...
+      // The constant seems to be missing from at least CDH 5.6.0 (non-yarn), so we'll use the hard-coded string...
       //conf.setBoolean(FileOutputFormat.COMPRESS, true)
       conf.setBoolean("mapreduce.output.fileoutputformat.compress", true)
 
@@ -125,7 +124,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
 
     if (sparkPartitioner != null)
     {
-      sparkPartitioner.writeSplits(sorted, context.getOutput, context.getZoomlevel, jobconf)
+      sparkPartitioner.writeSplits(sorted, context.getOutput, context.getZoomLevel, jobconf)
     }
 
   }
@@ -133,7 +132,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
   override def finalizeExternalSave(conf: Configuration): Unit = {
     try {
       val imagePath: String = provider.getResolvedResourceName(true)
-      val outputWithZoom: Path = new Path(imagePath + "/" + context.getZoomlevel)
+      val outputWithZoom: Path = new Path(imagePath + "/" + context.getZoomLevel)
       val split: FileSplit = new FileSplit
       split.generateSplits(outputWithZoom, conf)
       split.writeSplits(outputWithZoom)
@@ -150,7 +149,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
   private def getSparkPartitioner:FileSplitPartitioner = {
     partitioner match {
     case PartitionType.ROW =>
-      new RowPartitioner(context.getBounds, context.getZoomlevel, context.getTilesize)
+      new RowPartitioner(context.getBounds, context.getZoomLevel, context.getTileSize)
     case PartitionType.BLOCKSIZE =>
       new BlockSizePartitioner()
     case _ =>
