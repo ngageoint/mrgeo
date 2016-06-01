@@ -29,6 +29,8 @@ import java.util.*;
  */
 public class LineStringImpl extends GeometryImpl implements WritableLineString
 {
+private static final long serialVersionUID = 1L;
+
 List<WritablePoint> points = new ArrayList<>();
 
 LineStringImpl()

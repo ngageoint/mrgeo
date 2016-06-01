@@ -609,7 +609,7 @@ public boolean equals(final ColorScale cs)
         }
       }
     }
-    catch (IOException e)
+    catch (IOException| NullPointerException e)
     {
       throw new BadJSONException(e);
     }

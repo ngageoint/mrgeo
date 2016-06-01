@@ -31,7 +31,7 @@ import java.io.RandomAccessFile;
 public class ShpFile extends java.lang.Object
 {
   protected ShpData data = null;
-  protected String fileName = null;
+  //protected String fileName = null;
   protected Header header = null;
   private SeekableDataInput in = null;
   private ShxFile index = null;

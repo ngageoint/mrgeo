@@ -16,6 +16,8 @@
 
 package org.mrgeo.hdfs.vector.shp.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -85,14 +87,14 @@ public static void main(String[] args)
 {
   HashMapN map = new HashMapN();
 
-  map.put(ObjectUtils.pack("dog", "cat", "horse", "mule"), new Integer(10));
-  map.put(ObjectUtils.pack("dog", "toad"), new Integer(19));
-  map.put(ObjectUtils.pack("dog", "cat"), new Integer(11));
-  map.put(ObjectUtils.pack("dog", "cat", "donkey", "rat", "cat"), new Integer(20));
-  map.put(ObjectUtils.pack("mule", "rat", "pig", "frog"), new Integer(13));
-  map.put(ObjectUtils.pack("mule", "mole", "piglet"), new Integer(16));
-  map.put(ObjectUtils.pack("mule", "mole", "tiger"), new Integer(16));
-  map.put(ObjectUtils.pack("hawk"), new Integer(15));
+  map.put(ObjectUtils.pack("dog", "cat", "horse", "mule"), 10);
+  map.put(ObjectUtils.pack("dog", "toad"), 19);
+  map.put(ObjectUtils.pack("dog", "cat"), 11);
+  map.put(ObjectUtils.pack("dog", "cat", "donkey", "rat", "cat"), 20);
+  map.put(ObjectUtils.pack("mule", "rat", "pig", "frog"), 13);
+  map.put(ObjectUtils.pack("mule", "mole", "piglet"), 16);
+  map.put(ObjectUtils.pack("mule", "mole", "tiger"), 16);
+  map.put(ObjectUtils.pack("hawk"), 15);
 
   System.out.println("Traversal:");
   System.out.println();
@@ -154,6 +156,7 @@ public void addListener(HashMapNListener listener)
   listeners.add(listener);
 }
 
+@SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Anonymous, not refactoring")
 public void debug()
 {
   HashMapNAdapter adapter = new HashMapNAdapter()
@@ -170,7 +173,8 @@ public void debug()
   removeListener(adapter);
 }
 
-public synchronized Object[] dig(Object[] key)
+@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "API")
+public Object[] dig(Object[] key)
 {
   if (key == null)
     return null;
@@ -180,7 +184,7 @@ public synchronized Object[] dig(Object[] key)
   level = 0;
   route = null;
   digImpl(key, map);
-  return route;
+  return route.clone();
 }
 
 private void digImpl(Object[] key, HashMapV map)
@@ -305,7 +309,7 @@ public void put(Object[] key, Object val)
   }
 }
 
-public synchronized HashMapV remove(Object key[])
+public HashMapV remove(Object key[])
 {
   if (key == null)
     return null;
@@ -340,7 +344,7 @@ public void removeListener(HashMapNAdapter adapter)
 }
 
 @SuppressWarnings("rawtypes")
-public synchronized void reverseTraverse()
+public void reverseTraverse()
 {
   // report
   if (listeners != null)
@@ -373,7 +377,7 @@ private void reverseTraverseImpl(HashMapV map, Object[] key)
       listener.reverseTraversed(map, key);
     }
   }
-  reverseTraversalBag.put(ObjectUtils.debug(key), new Boolean(true));
+  reverseTraversalBag.put(ObjectUtils.debug(key), true);
 
   // dig siblings
   @SuppressWarnings("rawtypes")
@@ -393,7 +397,7 @@ private void reverseTraverseImpl(HashMapV map, Object[] key)
   Object[] temp = new Object[key.length - 1];
   if (temp.length == 0 && !reverseTraversalBag.containsKey(""))
   {
-    reverseTraversalBag.put("", new Boolean(true));
+    reverseTraversalBag.put("", true);
     if (listeners != null)
     {
       for (int i = 0; i < listeners.size(); i++)
@@ -419,6 +423,7 @@ public void traverse()
   traverseImpl(this, "<ROOT>", 1);
 }
 
+@SuppressFBWarnings(value = "WMI_WRONG_MAP_ITERATOR", justification = "I don't know how to improve this")
 private void traverseImpl(HashMapV map, Object key, int lvl)
 {
   if (listeners != null)
@@ -429,11 +434,9 @@ private void traverseImpl(HashMapV map, Object key, int lvl)
       listener.traversed(map, key, lvl);
     }
   }
-  @SuppressWarnings("rawtypes")
-  Iterator iter = map.keySet().iterator();
-  while (iter.hasNext())
+
+  for (Object key2 : map.keySet())
   {
-    Object key2 = iter.next();
     HashMapV temp = (HashMapV) map.get(key2);
     traverseImpl(temp, key2, lvl + 1);
   }

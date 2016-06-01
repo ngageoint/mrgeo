@@ -21,7 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class ObjectWrapper extends java.lang.Object implements java.io.Serializable
+public class ObjectWrapper implements java.io.Serializable
 {
   private static final long serialVersionUID = 1L;
 
@@ -62,7 +62,7 @@ public class ObjectWrapper extends java.lang.Object implements java.io.Serializa
     return wrapper;
   }
 
-  private transient byte[] bytes;
+  private transient byte[] bytes = null;
 
   private Object obj;
 
@@ -72,7 +72,7 @@ public class ObjectWrapper extends java.lang.Object implements java.io.Serializa
   
   public byte[] getBytes()
   {
-    return bytes;
+    return bytes.clone();
   }
 
   public Object getObject()

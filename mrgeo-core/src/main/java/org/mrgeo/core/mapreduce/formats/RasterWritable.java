@@ -28,6 +28,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings(value = "NM_SAME_SIMPLE_NAME_AS_SUPERCLASS", justification = "Backwards compatibility with very old MrsImages")
 public class RasterWritable extends org.mrgeo.data.raster.RasterWritable
 {
+  private static final long serialVersionUID = 1L;
+
   public RasterWritable()
   {
     super();

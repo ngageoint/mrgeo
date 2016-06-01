@@ -16,19 +16,22 @@
 
 package org.mrgeo.hdfs.vector.shp.util.jdbc;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(value = "UWF_NULL_FIELD", justification = "Set in subclasses")
 public class JDBCSource implements java.io.Serializable
 {
   private static final long serialVersionUID = 1L;
-  public String driver; // JDBC driver class name
+  public String driver = null; // JDBC driver class name
   public transient int freeConn = 0; // current number of connections free in
                                      // pool
   public transient int inuseConn = 0; // current number of connections estimated
                                       // in use
   public transient int maxConn = 0; // maximum number of connections (specified)
-  public String name; // pool identifier
-  protected String password; // user name's password
-  public String url; // JDBC database URL
-  public String user; // user name for the pool
+  public String name = null; // pool identifier
+  protected String password = null; // user name's password
+  public String url = null; // JDBC database URL
+  public String user = null; // user name for the pool
 
   public String getDriver()
   {

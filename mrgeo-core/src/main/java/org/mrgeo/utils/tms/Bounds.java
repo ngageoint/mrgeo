@@ -25,6 +25,7 @@ import java.util.Map;
 
 public class Bounds implements Serializable, Cloneable
 {
+private static final long serialVersionUID = 1L;
 
 
 public static final Bounds WORLD = new Bounds(-180, -90, 180, 90);

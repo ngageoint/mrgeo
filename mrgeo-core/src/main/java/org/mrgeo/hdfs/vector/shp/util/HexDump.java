@@ -43,52 +43,54 @@ public class HexDump
     int i;
     int j;
     final int bytesPerLine = 16;
-    String result = "";
+    StringBuffer result = new StringBuffer();
 
     if (length == -1)
       length = data.length;
     for (i = offset; i < (offset + length); i += bytesPerLine)
     {
       // print the offset as a 4 digit hex number
-      result = result + intToHexString(i + printoffset, 4, '0') + "  ";
+      result.append(intToHexString(i + printoffset, 4, '0'));
+      result.append("  ");
 
       // print each byte in hex
       for (j = i; j < (offset + length) && (j - i) < bytesPerLine; j++)
       {
-        result = result + byteToHexString(data[j]) + " ";
+        result.append(byteToHexString(data[j]));
+        result.append(" ");
       }
 
       // skip over to the ascii dump column
       for (; (j - i) < bytesPerLine; j++)
       { // 0!=(j % bytesPerLine)
-        result = result + "   ";
+        result.append("   ");
       }
 
-      result = result + "  |";
+      result.append("  |");
 
       // print each byte in ascii
       for (j = i; j < (offset + length) && (j - i) < bytesPerLine; j++)
       {
         if (((data[j] & 0xff) > 0x001f) && ((data[j] & 0xff) < 0x007f))
         {
-          Character ch = new Character((char) data[j]);
-          result = result + ch;
+          Character ch = (char) data[j];
+          result.append(ch);
         }
         else
         {
-          result = result + ".";
+          result.append(".");
         }
       }
       if ((i + bytesPerLine) < (offset + length))
       {
-        result = result + "|\n";
+        result.append("|\n");
       }
       else
       {
-        result = result + "|";
+        result.append("|");
       }
     }
-    return result;
+    return result.toString();
   } /* hexDump() */
 
   public static String intToHexString(int num, int width, char fill)

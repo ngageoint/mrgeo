@@ -65,15 +65,15 @@ public static void createZipFile(File zipFile, String baseDir, String[] contents
         tempFileName = baseDir + contents[i];
       }
       File fin = new File(tempFileName);
-      FileInputStream ins = new FileInputStream(fin);
-      int bread;
-      byte[] bin = new byte[4096];
-      while ((bread = ins.read(bin, 0, 4096)) != -1)
+      try (FileInputStream ins = new FileInputStream(fin))
       {
-        zos.write(bin, 0, bread);
+        int bread;
+        byte[] bin = new byte[4096];
+        while ((bread = ins.read(bin, 0, 4096)) != -1)
+        {
+          zos.write(bin, 0, bread);
+        }
       }
-
-      ins.close();
 
       zos.closeEntry();
 
@@ -122,40 +122,45 @@ public static void extractFromZipFile(File zipFile, String fileName, String base
       baseDir += separator;
   }
   // get zip object
-  ZipFile zf = new ZipFile(zipFile);
-  // get zip entry
-  ZipEntry ze = zf.getEntry(fileName);
-  // get an input stream for the entry
-  if (ze == null)
-    throw new Exception("FileName Not Found In ZipFile!  Cannot Extract File!");
-  InputStream ins = zf.getInputStream(ze);
-  // create output file stream
-  String tempFileName = null;
-  if (fileName.startsWith(separator))
+  try (ZipFile zf = new ZipFile(zipFile))
   {
-    tempFileName = baseDir + fileName.substring(1);
+    // get zip entry
+    ZipEntry ze = zf.getEntry(fileName);
+    // get an input stream for the entry
+    if (ze == null)
+      throw new Exception("FileName Not Found In ZipFile!  Cannot Extract File!");
+
+    try (InputStream ins = zf.getInputStream(ze))
+    {
+      // create output file stream
+      String tempFileName = null;
+      if (fileName.startsWith(separator))
+      {
+        tempFileName = baseDir + fileName.substring(1);
+      }
+      else
+      {
+        tempFileName = baseDir + fileName;
+      }
+      File tempFile = new File(tempFileName);
+      File tempDir = tempFile.getParentFile();
+      if (!tempDir.exists())
+        if (!tempDir.mkdir())
+          throw new IOException("Error making: " + tempDir.getCanonicalPath());
+      try (FileOutputStream fos = new FileOutputStream(tempFile))
+      {
+        int bread;
+        // transfer buffer
+        byte[] bin = new byte[4096];
+        // loop through reading the zipped file entry and write it to the external
+        // file
+        while ((bread = ins.read(bin, 0, 4096)) > -1)
+        {
+          fos.write(bin, 0, bread);
+        }
+      }
+    }
   }
-  else
-  {
-    tempFileName = baseDir + fileName;
-  }
-  File tempFile = new File(tempFileName);
-  File tempDir = tempFile.getParentFile();
-  if (!tempDir.exists())
-    if (!tempDir.mkdir())
-      throw new IOException("Error making: " + tempDir.getCanonicalPath());
-  FileOutputStream fos = new FileOutputStream(tempFile);
-  int bread;
-  // transfer buffer
-  byte[] bin = new byte[4096];
-  // loop through reading the zipped file entry and write it to the external
-  // file
-  while ((bread = ins.read(bin, 0, 4096)) > -1)
-  {
-    fos.write(bin, 0, bread);
-  }
-  fos.close();
-  ins.close();
 }
 
 public static void extractFromZipFile(String zipFileName, String fileName, String baseDir)
@@ -186,39 +191,41 @@ public static void extractZipFile(File zipFile, String baseDir) throws Exception
       baseDir += separator;
   }
   // get zip object as stream
-  ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
-  ZipEntry ze;
-  // process sequentially
-  while ((ze = zis.getNextEntry()) != null)
+  try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile)))
   {
-    // create output file stream
-    String tempFileName = null;
-    if (ze.getName().startsWith(separator))
+    ZipEntry ze;
+    // process sequentially
+    while ((ze = zis.getNextEntry()) != null)
     {
-      tempFileName = baseDir + ze.getName().substring(1);
+      // create output file stream
+      String tempFileName = null;
+      if (ze.getName().startsWith(separator))
+      {
+        tempFileName = baseDir + ze.getName().substring(1);
+      }
+      else
+      {
+        tempFileName = baseDir + ze.getName();
+      }
+      File tempFile = new File(tempFileName);
+      File tempDir = tempFile.getParentFile();
+      if (!tempDir.exists())
+        if (!tempDir.mkdir())
+          throw new IOException("Error making: " + tempDir.getCanonicalPath());
+      try (FileOutputStream fos = new FileOutputStream(tempFile))
+      {
+        int bread;
+        // transfer buffer
+        byte[] bin = new byte[4096];
+        // loop through reading the zipped file entry and write it to the external
+        // file
+        while ((bread = zis.read(bin, 0, 4096)) > -1)
+        {
+          fos.write(bin, 0, bread);
+        }
+      }
     }
-    else
-    {
-      tempFileName = baseDir + ze.getName();
-    }
-    File tempFile = new File(tempFileName);
-    File tempDir = tempFile.getParentFile();
-    if (!tempDir.exists())
-      if (!tempDir.mkdir())
-        throw new IOException("Error making: " + tempDir.getCanonicalPath());
-    FileOutputStream fos = new FileOutputStream(tempFile);
-    int bread;
-    // transfer buffer
-    byte[] bin = new byte[4096];
-    // loop through reading the zipped file entry and write it to the external
-    // file
-    while ((bread = zis.read(bin, 0, 4096)) > -1)
-    {
-      fos.write(bin, 0, bread);
-    }
-    fos.close();
   }
-  zis.close();
 }
 
 public static void extractZipFile(String zipFileName) throws Exception

@@ -49,7 +49,7 @@ public class Initialization
     String temp = (String) argm.get(key);
     if (temp == null)
       throw new MissingArgumentException("Missing required argument [" + key + "].");
-    return new Boolean(temp).booleanValue();
+    return Boolean.valueOf(temp);
   }
 
   /**
@@ -226,72 +226,72 @@ public class Initialization
    * @param file
    * @return
    */
-  public static String getConfig(String file)
-  {
-    // try reverse engineering from path variable
-    try
-    {
-      String test = getEnvironmentVariable("PATH").toLowerCase();
-      int pos = test.indexOf("orion");
-      if (pos != -1)
-      {
-        int pos2 = test.indexOf(";", pos);
-        int pos3 = test.lastIndexOf(";", pos);
-        if (pos2 == -1)
-        {
-          test = test.substring(pos3 + 1).trim();
-        }
-        else
-        {
-          test = test.substring(pos3 + 1, pos2).trim();
-        }
-        test = test + System.getProperty("file.separator") + file;
-        File f = new File(test);
-        if (f.exists())
-          return test;
-      }
-    }
-    catch (Exception e)
-    {
-    }
-    // try ORION_HOME\bin first
-    try
-    {
-      String test = getEnvironmentVariable("ORION_HOME") + System.getProperty("file.separator")
-          + "bin" + System.getProperty("file.separator") + file;
-      File f = new File(test);
-      if (f.exists())
-        return test;
-    }
-    catch (Exception e)
-    {
-    }
-    // try user dir
-    try
-    {
-      String test = System.getProperty("user.dir") + System.getProperty("file.separator") + file;
-      File f = new File(test);
-      if (f.exists())
-        return test;
-    }
-    catch (Exception e)
-    {
-    }
-    // try User's My Documents
-    try
-    {
-      String test = System.getProperty("user.home") + System.getProperty("file.separator")
-          + "My Documents" + System.getProperty("file.separator") + file;
-      File f = new File(test);
-      if (f.exists())
-        return test;
-    }
-    catch (Exception e)
-    {
-    }
-    // return default (without test)
-    return System.getProperty("user.home") + System.getProperty("file.separator") + file;
-  }
+//  public static String getConfig(String file)
+//  {
+//    // try reverse engineering from path variable
+//    try
+//    {
+//      String test = getEnvironmentVariable("PATH").toLowerCase();
+//      int pos = test.indexOf("orion");
+//      if (pos != -1)
+//      {
+//        int pos2 = test.indexOf(";", pos);
+//        int pos3 = test.lastIndexOf(";", pos);
+//        if (pos2 == -1)
+//        {
+//          test = test.substring(pos3 + 1).trim();
+//        }
+//        else
+//        {
+//          test = test.substring(pos3 + 1, pos2).trim();
+//        }
+//        test = test + System.getProperty("file.separator") + file;
+//        File f = new File(test);
+//        if (f.exists())
+//          return test;
+//      }
+//    }
+//    catch (Exception e)
+//    {
+//    }
+//    // try ORION_HOME\bin first
+//    try
+//    {
+//      String test = getEnvironmentVariable("ORION_HOME") + System.getProperty("file.separator")
+//          + "bin" + System.getProperty("file.separator") + file;
+//      File f = new File(test);
+//      if (f.exists())
+//        return test;
+//    }
+//    catch (Exception e)
+//    {
+//    }
+//    // try user dir
+//    try
+//    {
+//      String test = System.getProperty("user.dir") + System.getProperty("file.separator") + file;
+//      File f = new File(test);
+//      if (f.exists())
+//        return test;
+//    }
+//    catch (Exception e)
+//    {
+//    }
+//    // try User's My Documents
+//    try
+//    {
+//      String test = System.getProperty("user.home") + System.getProperty("file.separator")
+//          + "My Documents" + System.getProperty("file.separator") + file;
+//      File f = new File(test);
+//      if (f.exists())
+//        return test;
+//    }
+//    catch (Exception e)
+//    {
+//    }
+//    // return default (without test)
+//    return System.getProperty("user.home") + System.getProperty("file.separator") + file;
+//  }
 
   /**
    * Returns an environment variable. This operation is costly.
@@ -304,11 +304,13 @@ public class Initialization
       EnvironmentVariableNotFoundException
   {
     Process p = Runtime.getRuntime().exec("CMD /c \"echo %" + key + "%\"");
-    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-    String temp = reader.readLine();
-    if (temp == null || temp.length() == 0)
-      throw new EnvironmentVariableNotFoundException();
-    return temp;
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream())))
+    {
+      String temp = reader.readLine();
+      if (temp == null || temp.length() == 0)
+        throw new EnvironmentVariableNotFoundException();
+      return temp;
+    }
   }
 
   /**

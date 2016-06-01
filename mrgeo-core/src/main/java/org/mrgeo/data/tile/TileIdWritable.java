@@ -24,7 +24,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class TileIdWritable extends LongWritable implements Serializable
-{	 
+{
+private static final long serialVersionUID = 1L;
+
 	public TileIdWritable() {
 		super();
 	}

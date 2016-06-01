@@ -82,7 +82,7 @@ public class XmlUtils
 
   public static Element createTextElement(Element parent, String tagName, int v)
   {
-    return createTextElement(parent, tagName, Integer.valueOf(v).toString());
+    return createTextElement(parent, tagName, Integer.toString(v));
   }
 
   public static Element createTextElement(Element parent, String tagName, String text)

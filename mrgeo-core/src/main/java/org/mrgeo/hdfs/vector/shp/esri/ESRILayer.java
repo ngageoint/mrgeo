@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.vector.shp.esri;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.hdfs.vector.shp.SeekableDataInput;
 import org.mrgeo.hdfs.vector.shp.SeekableRaf;
 import org.mrgeo.hdfs.vector.shp.dbase.DbaseException;
@@ -90,6 +91,7 @@ public class ESRILayer extends java.lang.Object
   protected ShxFile index = null;
   private double maxScale = Long.MAX_VALUE;
   private double minScale = 0;
+  @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "used in subclasses")
   protected String mode = null; // RAF mode
   private String projection = "";
 

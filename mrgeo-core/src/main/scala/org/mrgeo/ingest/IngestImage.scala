@@ -42,21 +42,20 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-@SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION"), justification = "object has no constructor, empty Externalizable prevents object serialization")
 object IngestImage extends MrGeoDriver with Externalizable {
 
-  final private val Inputs = "inputs"
-  final private val Output = "output"
-  final private val Bounds = "bounds"
-  final private val Zoom = "zoom"
-  final private val Tilesize = "tilesize"
-  final private val NoData = "nodata"
-  final private val Tiletype = "tiletype"
-  final private val Bands = "bands"
-  final private val Categorical = "categorical"
-  final private val Tags = "tags"
-  final private val Protection = "protection"
-  final private val ProviderProperties = "provider.properties"
+  private val Inputs = "inputs"
+  private val Output = "output"
+  private val Bounds = "bounds"
+  private val Zoom = "zoom"
+  private val Tilesize = "tilesize"
+  private val NoData = "nodata"
+  private val Tiletype = "tiletype"
+  private val Bands = "bands"
+  private val Categorical = "categorical"
+  private val Tags = "tags"
+  private val Protection = "protection"
+  private val ProviderProperties = "provider.properties"
 
   def ingest(inputs: Array[String], output: String,
       categorical: Boolean, conf: Configuration, bounds: Bounds,
@@ -277,15 +276,10 @@ object IngestImage extends MrGeoDriver with Externalizable {
             // in which case we will use GRA_NearestNeighbour
             try {
               val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
-              if (mode != null) {
-                mode.getInt()
-              }
-              else {
-                gdalconstConstants.GRA_NearestNeighbour
-              }
+              mode.getInt()
             }
             catch {
-              case e: Exception => gdalconstConstants.GRA_NearestNeighbour
+              case _ : RuntimeException | _: Exception => gdalconstConstants.GRA_NearestNeighbour
             }
           }
           else {
@@ -501,17 +495,17 @@ object IngestImage extends MrGeoDriver with Externalizable {
 }
 
 class IngestImage extends MrGeoJob with Externalizable {
-  var inputs: Array[String] = null
-  var output:String = null
-  var bounds:Bounds = null
-  var zoom:Int = -1
-  var bands:Int = -1
-  var tiletype:Int = -1
-  var tilesize:Int = -1
-  var nodata:Array[Number] = null
-  var categorical:Boolean = false
-  var providerproperties:ProviderProperties = null
-  var protectionlevel:String = null
+  private[ingest] var inputs: Array[String] = null
+  private[ingest] var output:String = null
+  private[ingest] var bounds:Bounds = null
+  private[ingest] var zoom:Int = -1
+  private[ingest] var bands:Int = -1
+  private[ingest] var tiletype:Int = -1
+  private[ingest] var tilesize:Int = -1
+  private[ingest] var nodata:Array[Number] = null
+  private[ingest] var categorical:Boolean = false
+  private[ingest] var providerproperties:ProviderProperties = null
+  private[ingest] var protectionlevel:String = null
 
 
   override def registerClasses(): Array[Class[_]] = {

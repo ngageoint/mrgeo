@@ -16,8 +16,11 @@
 
 package org.mrgeo.utils
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+
 import scala.language.implicitConversions
 
+@SuppressFBWarnings(value = Array("DM_FP_NUMBER_CTOR", "DM_NUMBER_CTOR"), justification = "Forcing creation of new values")
 object MrGeoImplicits {
   // value to Either<>
   implicit def left2Either[A,B](a:A):Either[A,B] = Left(a)

@@ -29,6 +29,7 @@ import java.util.*;
  */
 public class PolygonImpl extends GeometryImpl implements WritablePolygon
 {
+private static final long serialVersionUID = 1L;
 
 WritableLinearRing exteriorRing = null;
 List<WritableLinearRing> interiorRings = new ArrayList<>();

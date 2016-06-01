@@ -27,7 +27,7 @@ import java.io.IOException;
 public class ShpPolygon extends java.lang.Object implements ShpData
 {
   protected JPolygon[] p;
-  private ESRILayer parent;
+  private ESRILayer parent = null;
 
   /** Creates new ShpPolygon */
   public ShpPolygon(int initialSize)
@@ -38,10 +38,13 @@ public class ShpPolygon extends java.lang.Object implements ShpData
   @Override
   public void addShape(JShape obj) throws FormatException
   {
-    JPolygon[] temp = new JPolygon[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPolygon) obj;
-    p = temp;
+    if (obj instanceof JPolygon)
+    {
+      JPolygon[] temp = new JPolygon[p.length + 1];
+      System.arraycopy(p, 0, temp, 0, p.length);
+      temp[p.length] = (JPolygon) obj;
+      p = temp;
+    }
   }
 
   @Override

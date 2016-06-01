@@ -16,6 +16,8 @@
 
 package org.mrgeo.hdfs.vector.shp.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -210,6 +212,7 @@ public class StringUtils
     return result.toString();
   }
 
+  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "API")
   public static String[] split(String str, String delimiter)
   {
     if (str == null)

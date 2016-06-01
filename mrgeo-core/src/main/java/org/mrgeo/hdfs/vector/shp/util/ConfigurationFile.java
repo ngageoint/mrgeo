@@ -117,7 +117,7 @@ public boolean getPropertyAsBoolean(String key, boolean defaultValue)
   String temp = props.getProperty(key);
   if (temp != null)
   {
-    return new Boolean(temp).booleanValue();
+    return Boolean.parseBoolean(temp);
   }
   return defaultValue;
 }

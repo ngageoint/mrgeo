@@ -47,9 +47,7 @@ public class GUID extends java.lang.Object implements java.io.Serializable
 
   public GUID() throws Exception
   {
-    hash = generate();
-    if (hash != null)
-      hash = hash.toUpperCase();
+    hash = generate().toUpperCase();
   }
 
   public GUID(String text) throws Exception

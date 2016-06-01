@@ -33,6 +33,8 @@ import java.util.Map;
  */
 public class LinearRingImpl extends LineStringImpl implements WritableLinearRing
 {
+private static final long serialVersionUID = 1L;
+
 LinearRingImpl()
 {
 }
@@ -63,9 +65,9 @@ public void closeRing()
 {
   Point start = points.get(0);
   Point end = points.get(points.size() - 1);
-  if (FloatUtils.isEqual(start.getX(), end.getX()) &&
+  if (!(FloatUtils.isEqual(start.getX(), end.getX()) &&
       FloatUtils.isEqual(start.getY(), end.getY()) &&
-      FloatUtils.isEqual(start.getZ(), end.getZ()))
+      FloatUtils.isEqual(start.getZ(), end.getZ())))
   {
     addPoint(start);
   }

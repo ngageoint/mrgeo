@@ -28,6 +28,8 @@ import java.nio.*;
 
 public class RasterWritable extends BytesWritable implements Serializable
 {
+private static final long serialVersionUID = 1L;
+
 private static int HEADERSIZE = 5;
 
 public static class RasterWritableException extends RuntimeException

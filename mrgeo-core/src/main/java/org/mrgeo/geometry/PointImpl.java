@@ -32,6 +32,7 @@ import java.util.Map;
  */
 public class PointImpl extends GeometryImpl implements WritablePoint
 {
+private static final long serialVersionUID = 1L;
 
 double x;
 double y;

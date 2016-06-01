@@ -25,7 +25,7 @@ import java.io.RandomAccessFile;
 import java.util.Calendar;
 import java.util.Vector;
 
-public class DbaseHeader extends java.lang.Object implements Cloneable
+public class DbaseHeader implements Cloneable
 {
   protected int fieldCount;
   protected Vector<DbaseField> fields;
@@ -38,7 +38,7 @@ public class DbaseHeader extends java.lang.Object implements Cloneable
   protected DbaseHeader()
   {
     super();
-    fields = new Vector<DbaseField>();
+    fields = new Vector<>();
     format = 3; // DBASE III is default for now
     langDriverID = 27; // default, not sure what it means
   }
@@ -58,7 +58,7 @@ public class DbaseHeader extends java.lang.Object implements Cloneable
     return hdr;
   }
 
-  public int getColumn(String name)
+  public synchronized int getColumn(String name)
   {
     int col = -1;
     for (int i = 0; i < fieldCount; i++)
@@ -100,7 +100,7 @@ public class DbaseHeader extends java.lang.Object implements Cloneable
     return (Vector<DbaseField>) fields.clone();
   }
 
-  protected void load(SeekableDataInput is) throws IOException, DbaseException
+  protected synchronized void load(SeekableDataInput is) throws IOException, DbaseException
   {
     byte[] header = new byte[32];
     is.readFully(header, 0, 32);
@@ -148,10 +148,8 @@ public class DbaseHeader extends java.lang.Object implements Cloneable
     is.readFully(marker, 0, 1); // 0Dh
   }
 
-  public void save(RandomAccessFile os) throws IOException
+  public synchronized void save(RandomAccessFile os) throws IOException
   {
-    synchronized (this)
-    {
       // core data
       byte[] header = new byte[32];
       header[0] = (byte) format;
@@ -181,7 +179,6 @@ public class DbaseHeader extends java.lang.Object implements Cloneable
       byte[] marker = new byte[1];
       marker[0] = 13; // 0Dh
       os.write(marker, 0, 1);
-    } // synchronized
   }
 
   @Override

@@ -21,6 +21,8 @@ import java.io.*;
 // Pixel 0, 0 is the lower-left corner of the world grid!
 public class Pixel implements Serializable
 {
+private static final long serialVersionUID = 1L;
+
   final public long px;
   final public long py;
 

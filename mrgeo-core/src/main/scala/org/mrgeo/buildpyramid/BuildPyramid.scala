@@ -43,12 +43,6 @@ import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
-@SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION",
-  "NM_METHOD_NAMING_CONVENTION",
-  "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"),
-  justification = "object has no constructor = empty Externalizable prevents object serialization" +
-      "Scala constant naming convention" +
-      "Scala generated code")
 object BuildPyramid extends MrGeoDriver with Externalizable {
 
   private val Pyramid = "pyramid"

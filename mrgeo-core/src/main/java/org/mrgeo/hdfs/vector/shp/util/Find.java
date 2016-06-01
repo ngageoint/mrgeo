@@ -26,7 +26,7 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class Find
 {
-public static String CRLF = "\r\n";
+final public static String CRLF = "\r\n";
 
 public static void main(String[] args)
 {
@@ -100,24 +100,29 @@ private void searchInternal(File dir, boolean dirs, String regex, boolean delete
     throws IOException
 {
   File[] child = dir.listFiles();
-  for (int i = 0; i < child.length; i++)
+  if (child != null)
   {
-    if (regex == null || (child[i].getCanonicalPath().endsWith(regex)))
+    for (File aChild : child)
     {
-      if (child[i].isFile() || (dirs && child[i].isDirectory()))
+      if (regex == null || (aChild.getCanonicalPath().endsWith(regex)))
       {
-        list.add(child[i].getCanonicalPath());
-        if (delete)
+        if (aChild.isFile() || (dirs && aChild.isDirectory()))
         {
-          File temp = new File(child[i].getCanonicalPath());
-          if (!temp.delete())
-            throw new IOException("Error deleting: " + child[i].getCanonicalPath());
+          list.add(aChild.getCanonicalPath());
+          if (delete)
+          {
+            File temp = new File(aChild.getCanonicalPath());
+            if (!temp.delete())
+            {
+              throw new IOException("Error deleting: " + aChild.getCanonicalPath());
+            }
+          }
         }
       }
-    }
-    if (child[i].isDirectory())
-    {
-      searchInternal(child[i], dirs, regex, delete);
+      if (aChild.isDirectory())
+      {
+        searchInternal(aChild, dirs, regex, delete);
+      }
     }
   }
 }
@@ -137,26 +142,29 @@ private synchronized void searchInternal(File dir, PrintWriter writer, boolean d
     throws Exception
 {
   File[] child = dir.listFiles();
-  for (int i = 0; i < child.length; i++)
+  if (child != null)
   {
-    if (regex == null || (child[i].getCanonicalPath().endsWith(regex)))
+    for (File aChild : child)
     {
-      if (child[i].isFile() || (dirs && child[i].isDirectory()))
+      if (regex == null || (aChild.getCanonicalPath().endsWith(regex)))
       {
-        if (writer != null)
+        if (aChild.isFile() || (dirs && aChild.isDirectory()))
         {
-          writer.write(child[i].getCanonicalPath() + CRLF);
+          if (writer != null)
+          {
+            writer.write(aChild.getCanonicalPath() + CRLF);
+          }
+          else
+          {
+            System.out.println(aChild.getCanonicalPath());
+          }
+          list.add(aChild.getCanonicalPath());
         }
-        else
-        {
-          System.out.println(child[i].getCanonicalPath());
-        }
-        list.add(child[i].getCanonicalPath());
       }
-    }
-    if (child[i].isDirectory())
-    {
-      searchInternal(child[i], writer, dirs, regex);
+      if (aChild.isDirectory())
+      {
+        searchInternal(aChild, writer, dirs, regex);
+      }
     }
   }
 }

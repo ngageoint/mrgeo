@@ -29,6 +29,8 @@ import java.util.*;
  */
 public class GeometryCollectionImpl extends GeometryImpl implements WritableGeometryCollection
 {
+private static final long serialVersionUID = 1L;
+
   List<WritableGeometry> geometries = new ArrayList<WritableGeometry>();
 
   List<String> roles = new ArrayList<String>();

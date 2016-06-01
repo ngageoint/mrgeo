@@ -22,6 +22,8 @@ import java.io.Serializable;
 
 public class TileBounds implements Serializable
 {
+private static final long serialVersionUID = 1L;
+
   public long n;
   public long s;
   public long e;

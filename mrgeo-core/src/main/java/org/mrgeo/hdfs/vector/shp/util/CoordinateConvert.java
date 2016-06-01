@@ -28,8 +28,8 @@ import java.util.StringTokenizer;
 public class CoordinateConvert
 {
   private static transient ConfigurationFile cf;
-  public static String command = "bin/convert.exe";
-  public static String finalmgrs;
+  public final static String command = "bin/convert.exe";
+  static String finalmgrs;
 
   public static String checkMGRS(String string)
   {
@@ -147,26 +147,32 @@ public class CoordinateConvert
 
       // get input stream to read from it
       BufferedReader in = new BufferedReader(new InputStreamReader(child.getInputStream()));
-      String line = null;
-      while ((line = in.readLine()) != null)
+      try
       {
-        if (line.equals("-1"))
-          throw new IOException("MGRS argument could not be converted!");
-        if (line.equals("-2"))
-          throw new IOException("Cannot find '.dat' file!");
-        StringTokenizer st = new StringTokenizer(line, " ");
-        try
+        String line = null;
+        while ((line = in.readLine()) != null)
         {
-          c.x = Double.parseDouble(st.nextToken());
-          c.y = Double.parseDouble(st.nextToken());
+          if (line.equals("-1"))
+            throw new IOException("MGRS argument could not be converted!");
+          if (line.equals("-2"))
+            throw new IOException("Cannot find '.dat' file!");
+          StringTokenizer st = new StringTokenizer(line, " ");
+          try
+          {
+            c.x = Double.parseDouble(st.nextToken());
+            c.y = Double.parseDouble(st.nextToken());
+          }
+          catch (NumberFormatException e)
+          {
+            throw new IOException("Error during conversion!");
+          }
+          break; // only expecting 1 line
         }
-        catch (NumberFormatException e)
-        {
-          throw new IOException("Error during conversion!");
-        }
-        break; // only expecting 1 line
       }
-      in.close();
+      finally
+      {
+        in.close();
+      }
     }
 
     // return
@@ -210,26 +216,32 @@ public class CoordinateConvert
 
       // get input stream to read from it
       BufferedReader in = new BufferedReader(new InputStreamReader(child.getInputStream()));
-      String line = null;
-      while ((line = in.readLine()) != null)
+      try
       {
-        if (line.equals("-1"))
-          throw new IOException("MGRS argument could not be converted!");
-        if (line.equals("-2"))
-          throw new IOException("Cannot find '.dat' file!");
-        StringTokenizer st = new StringTokenizer(line, " ");
-        try
+        String line = null;
+        while ((line = in.readLine()) != null)
         {
-          c.x = Double.parseDouble(st.nextToken());
-          c.y = Double.parseDouble(st.nextToken());
+          if (line.equals("-1"))
+            throw new IOException("MGRS argument could not be converted!");
+          if (line.equals("-2"))
+            throw new IOException("Cannot find '.dat' file!");
+          StringTokenizer st = new StringTokenizer(line, " ");
+          try
+          {
+            c.x = Double.parseDouble(st.nextToken());
+            c.y = Double.parseDouble(st.nextToken());
+          }
+          catch (NumberFormatException e)
+          {
+            throw new IOException("Error during conversion!");
+          }
+          break; // only expecting 1 line
         }
-        catch (NumberFormatException e)
-        {
-          throw new IOException("Error during conversion!");
-        }
-        break; // only expecting 1 line
       }
-      in.close();
+      finally
+      {
+        in.close();
+      }
     }
 
     // return

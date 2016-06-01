@@ -16,6 +16,8 @@
 
 package org.mrgeo.hdfs.vector.shp.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -114,6 +116,7 @@ public class CountLines extends java.lang.Object
     }
   }
 
+  @SuppressFBWarnings(value = "RV_DONT_JUST_NULL_CHECK_READLINE", justification = "just counting lines, no processing")
   private int process(File f)
   {
     // verbose
@@ -126,11 +129,17 @@ public class CountLines extends java.lang.Object
     try
     {
       in = new BufferedReader(new FileReader(f.getPath()));
-      while ((in.readLine()) != null)
+      try
       {
-        count++;
+        while ((in.readLine()) != null)
+        {
+          count++;
+        }
       }
-      in.close();
+      finally
+      {
+        in.close();
+      }
     }
     catch (IOException e)
     {
@@ -201,9 +210,12 @@ public class CountLines extends java.lang.Object
       {
         firstpass = false;
         String[] children = f.list();
-        for (int i = 0; i < children.length; i++)
+        if (children != null)
         {
-          traverse(new File(f, children[i]));
+          for (int i = 0; i < children.length; i++)
+          {
+            traverse(new File(f, children[i]));
+          }
         }
       }
     }
