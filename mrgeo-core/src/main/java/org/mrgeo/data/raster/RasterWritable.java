@@ -76,13 +76,13 @@ public RasterWritable(RasterWritable copy)
 }
 
 // we could use the default serializations here, but instead we'll just do it manually
-private synchronized void writeObject(ObjectOutputStream stream) throws IOException
+private void writeObject(ObjectOutputStream stream) throws IOException
 {
   stream.writeInt(getLength());
   stream.write(getBytes(), 0, getLength());
 }
 
-private synchronized void readObject(ObjectInputStream stream) throws IOException
+private void readObject(ObjectInputStream stream) throws IOException
 {
   int size = stream.readInt();
   byte[] bytes = new byte[size];
@@ -312,8 +312,7 @@ private static Raster read(final byte[] rasterBytes, Writable payload)
 
   final ByteBuffer rasterBuffer = ByteBuffer.wrap(rasterBytes);
 
-  @SuppressWarnings("unused")
-  final int headersize = rasterBuffer.getInt(); // this isn't really used anymore...
+  /*final int headersize =*/ rasterBuffer.getInt(); // this isn't really used anymore...
   final int height = rasterBuffer.getInt();
   final int width = rasterBuffer.getInt();
   final int bands = rasterBuffer.getInt();

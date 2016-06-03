@@ -39,7 +39,7 @@ public class DelimitedVectorRecordReader extends RecordReader<FeatureIdWritable,
   private DelimitedParser delimitedParser;
   private LineRecordReader recordReader;
 
-  public class VectorLineProducer implements LineProducer
+  public static class VectorLineProducer implements LineProducer
   {
     LineRecordReader lineRecordReader;
     public VectorLineProducer(LineRecordReader recordReader)

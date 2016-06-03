@@ -16,16 +16,17 @@
 
 package org.mrgeo.job
 
-import java.io.{IOException, File}
+import java.io.{File, IOException}
 import java.net.URL
 import java.util
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.util.ClassUtil
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.{SparkConf, Logging}
+import org.apache.spark.{Logging, SparkConf}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.raster.RasterWritable
@@ -98,6 +99,7 @@ abstract class MrGeoDriver extends Logging {
 
   def setup(job: JobArguments): Boolean
 
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   def run(name:String, driver:String = this.getClass.getName, args:Map[String, String] = Map[String, String](),
       hadoopConf:Configuration, additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None) = {
     val job = new JobArguments()

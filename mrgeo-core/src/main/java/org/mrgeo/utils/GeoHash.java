@@ -79,7 +79,7 @@ public class GeoHash
   {
     srcHash = srcHash.toLowerCase();
     final char lastChr = srcHash.charAt(srcHash.length() - 1);
-    final int type = (srcHash.length() % 2) == 1 ? ODD : EVEN;
+    final int type = (srcHash.length() % 2) != 0 ? ODD : EVEN;
     String base = srcHash.substring(0, srcHash.length() - 1);
     if (BORDERS[dir][type].indexOf(lastChr) != -1)
     {
@@ -200,7 +200,7 @@ public class GeoHash
     final double lon[] = new double[2];
     int bit = 0;
     int ch = 0;
-    String geohash = "";
+    StringBuilder geohash = new StringBuilder();
 
     lat[0] = -90.0;
     lat[1] = 90.0;
@@ -242,12 +242,12 @@ public class GeoHash
       }
       else
       {
-        geohash += BASE32.charAt(ch);
+        geohash.append(BASE32.charAt(ch));
         bit = 0;
         ch = 0;
       }
     }
-    return geohash;
+    return geohash.toString();
   }
 
   // This algorithm is from:

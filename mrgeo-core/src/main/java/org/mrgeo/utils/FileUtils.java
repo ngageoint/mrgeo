@@ -95,14 +95,19 @@ public static void deleteDir(final File dir, final Boolean recursive) throws IOE
   {
     if (recursive)
     {
-      for (File c : dir.listFiles())
+      File[] files = dir.listFiles();
+      if (files != null)
       {
-        if (c.isDirectory()) {
-          deleteDir(c, true);
-        }
-        else if (!c.delete())
+        for (File c : files)
         {
-          throw new IOException("Error deleting file");
+          if (c.isDirectory())
+          {
+            deleteDir(c, true);
+          }
+          else if (!c.delete())
+          {
+            throw new IOException("Error deleting file");
+          }
         }
       }
 

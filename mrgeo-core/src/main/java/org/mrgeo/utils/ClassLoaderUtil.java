@@ -16,6 +16,7 @@
 
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VirtualFile;
@@ -27,13 +28,15 @@ import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ClassLoaderUtil
 {
-static class Thief extends ClassLoader
+private static class Thief extends ClassLoader
 {
   Thief(ClassLoader cl)
   {
@@ -50,48 +53,54 @@ static class Thief extends ClassLoader
 public static Collection<String> getMostJars()
 {
 
-  ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+  final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
   try
   {
     // this seems to populate more jars. Odd.
     getChildResources("META-INF/services");
     getChildResources("");
     getChildResources("/");
-
-
   }
   catch (Exception e1)
   {
     e1.printStackTrace();
   }
-  Thief t = new Thief(classLoader);
-  Package[] packages = t.getPackages();
-  TreeSet<String> result = new TreeSet<String>();
 
-  for (Package p : packages)
+  final TreeSet<String> result = new TreeSet<>();
+  AccessController.doPrivileged(new PrivilegedAction<Object>()
   {
-    Enumeration<URL> urls;
-    try
+    public Boolean run()
     {
-      String path = p.getName().replace(".", "/");
+      Thief t = new Thief(classLoader);
+      Package[] packages = t.getPackages();
 
-      urls = classLoader.getResources(path);
-      while (urls.hasMoreElements())
+      for (Package p : packages)
       {
-        URL resource = urls.nextElement();
-        if (resource.getProtocol().equalsIgnoreCase("jar"))
+        Enumeration<URL> urls;
+        try
         {
-          JarURLConnection conn = (JarURLConnection) resource.openConnection();
-          JarFile jarFile = conn.getJarFile();
-          result.add(jarFile.getName());
+          String path = p.getName().replace(".", "/");
+
+          urls = classLoader.getResources(path);
+          while (urls.hasMoreElements())
+          {
+            URL resource = urls.nextElement();
+            if (resource.getProtocol().equalsIgnoreCase("jar"))
+            {
+              JarURLConnection conn = (JarURLConnection) resource.openConnection();
+              JarFile jarFile = conn.getJarFile();
+              result.add(jarFile.getName());
+            }
+          }
+        }
+        catch (IOException e)
+        {
+          e.printStackTrace();
         }
       }
+      return true;
     }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    }
-  }
+  });
 
   return result;
 }
@@ -156,7 +165,7 @@ public static List<URL> loadJar(String path, URL resource) throws IOException
   List<URL> result = new LinkedList<URL>();
 
   String p = path;
-  if (p.endsWith("/") == false)
+  if (!p.endsWith("/"))
   {
     p = p + "/";
   }
@@ -203,35 +212,53 @@ public static List<URL> loadDirectory(String filePath) throws IOException
   return result;
 }
 
-private static String indent(int level)
-{
-  String s = "";
-  for (int i = 0; i < level * 3; i++)
-  {
-    s += " ";
-  }
 
-  return s;
+public static void addLibraryPath(final String pathToAdd) throws Exception {
+  final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
+
+  AccessController.doPrivileged(new PrivilegedAction<Object>()
+  {
+    public Boolean run()
+    {
+      try
+      {
+        usrPathsField.setAccessible(true);
+
+        //get array of paths
+        final String[] paths = (String[]) usrPathsField.get(null);
+
+        //check if the path to add is already present
+        for (String path : paths)
+        {
+          if (path.equals(pathToAdd))
+          {
+            return true;
+          }
+        }
+
+        //add the new path
+        final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
+        newPaths[newPaths.length - 1] = pathToAdd;
+        usrPathsField.set(null, newPaths);
+        return true;
+      }
+      catch (IllegalAccessException e)
+      {
+        return false;
+      }
+    }
+  });
 }
 
-public static void addLibraryPath(String pathToAdd) throws Exception{
-  final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
-  usrPathsField.setAccessible(true);
-
-  //get array of paths
-  final String[] paths = (String[])usrPathsField.get(null);
-
-  //check if the path to add is already present
-  for(String path : paths) {
-    if(path.equals(pathToAdd)) {
-      return;
-    }
+private static String indent(int level)
+{
+  StringBuilder s = new StringBuilder();
+  for (int i = 0; i < level * 3; i++)
+  {
+    s.append(" ");
   }
 
-  //add the new path
-  final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
-  newPaths[newPaths.length-1] = pathToAdd;
-  usrPathsField.set(null, newPaths);
+  return s.toString();
 }
 
 

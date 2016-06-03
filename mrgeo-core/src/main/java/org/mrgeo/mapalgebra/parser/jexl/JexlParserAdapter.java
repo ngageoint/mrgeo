@@ -31,7 +31,6 @@ import java.util.Map;
 public class JexlParserAdapter implements ParserAdapter
 {
   private MrGeoJexlEngine engine;
-  private JexlContext context;
   private ASTJexlScript jexlRootNode;
 
   private Map<Class<? extends JexlNode>, String> twoArgFunctions;
@@ -71,7 +70,6 @@ public class JexlParserAdapter implements ParserAdapter
     engine = new MrGeoJexlEngine();
     //engine.setSilent(false);
     //engine.setStrict(true);
-    context = new MapContext();
   }
 
   @Override

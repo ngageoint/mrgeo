@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Vector;
 
 
 public class DbaseFile
@@ -102,7 +103,7 @@ public synchronized void addColumn(String name, int type, int length, int decima
 public synchronized void addColumn(String name, int type, int length, int decimal, int position)
     throws DbaseException
 {
-  if (header.recordCount > 0)
+  if (header.getRecordCount() > 0)
     throw new DbaseException(
         "Columns can't be added after records are in the DBF in this version!");
   name = name.trim();
@@ -115,15 +116,15 @@ public synchronized void addColumn(String name, int type, int length, int decima
   field.type = type;
   field.length = length;
   field.decimal = decimal;
+
   if (position == -1)
   {
-    header.fields.add(field);
+    header.addField(field);
   }
   else
   {
-    header.fields.insertElementAt(field, position);
+    header.insertField(field, position);
   }
-  header.fieldCount++;
   header.update();
 }
 
@@ -135,7 +136,6 @@ public synchronized void addRow(List data)
     System.arraycopy(row, 0, temp, 0, row.length);
     temp[row.length] = data;
     row = temp;
-    header.recordCount++;
   }
   {
     byte[] temp = new byte[flg.length + 1];
@@ -215,7 +215,7 @@ public List getRow(int i)
 
 public int getRowCount()
 {
-  return header.recordCount;
+  return header.getRecordCount();
 }
 
 public byte getRowFlag(int i) throws DbaseException
@@ -251,10 +251,10 @@ private void load(SeekableDataInput is) throws IOException, DbaseException
   is.seek(0L);
   header.load(is);
   // initialize
-  flg = new byte[header.recordCount];
+  flg = new byte[header.getRecordCount()];
   cachepos = -1;
   if (!cachemode)
-    cachesize = header.recordCount;
+    cachesize = header.getRecordCount();
   // read data
   loadRows(is, 0);
 }
@@ -262,91 +262,98 @@ private void load(SeekableDataInput is) throws IOException, DbaseException
 @SuppressWarnings({ "unchecked", "rawtypes" })
 private List loadRow(SeekableDataInput is, int i) throws IOException
 {
-  List arow = new ArrayList(header.fieldCount);
-  byte[] record = new byte[header.recordLength];
+  List arow = new ArrayList(header.getFieldCount());
+  byte[] record = new byte[header.getRecordLength()];
   // read record
-  is.readFully(record, 0, header.recordLength);
+  is.readFully(record, 0, header.getRecordLength());
   if (flg != null)
     flg[i] = record[0];
   // load record
-  for (int j = 0; j < header.fieldCount; j++)
+  for (int j = 0; j < header.getFieldCount(); j++)
   {
-    DbaseField field = header.fields.get(j);
-    String tempStr = null;
-    switch (field.type)
+    try
     {
-    case DbaseField.CHARACTER:
-      // legal: ASCII (OEM code page chars); rest= space, not \0 term
-      // n = 1..254
-      tempStr = Convert.getString(record, field.offset, field.length);
-      arow.add(tempStr);
-      break;
-    case DbaseField.DATE:
-      // legal since db3: "0123456789"
-      // YYYYMMDD
-      // n = 8
-      tempStr = Convert.getString(record, field.offset, field.length);
-      Date date = null;
-      try
+      DbaseField field = header.getField(j);
+      String tempStr = null;
+      switch (field.type)
       {
-        final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd");
-        date = dateFormatter.parse(tempStr);
-      }
-      catch (ParseException ignored)
-      {
-      }
-      arow.add(date);
-      break;
-    case DbaseField.FLOAT:
-      // legal since db4: "-.0123456789"
-      tempStr = Convert.getString(record, field.offset, field.length);
-      arow.add(Double.valueOf(tempStr));
-      break;
-    case DbaseField.LOGICAL:
-      // legal since db3: "YyNnTtFf space"
-      // legal since db4: "YyNnTtFf ?"
-      tempStr = Convert.getString(record, field.offset, field.length);
-      Boolean logic = null;
-      if (tempStr.equalsIgnoreCase("Y") || tempStr.equalsIgnoreCase("T"))
-        logic = true;
-      if (tempStr.equalsIgnoreCase("N") || tempStr.equalsIgnoreCase("F"))
-        logic = false;
-      // note, not sure about space or ?, assuming this means "null"
-      arow.add(logic);
-      break;
-    case DbaseField.NUMERIC:
-      // legal since db3: "-.0123456789", may find empty string or 1 or more
-      // asteriks
-      if (field.decimal == 0)
-      {
-        // int
+      case DbaseField.CHARACTER:
+        // legal: ASCII (OEM code page chars); rest= space, not \0 term
+        // n = 1..254
         tempStr = Convert.getString(record, field.offset, field.length);
+        arow.add(tempStr);
+        break;
+      case DbaseField.DATE:
+        // legal since db3: "0123456789"
+        // YYYYMMDD
+        // n = 8
+        tempStr = Convert.getString(record, field.offset, field.length);
+        Date date = null;
         try
         {
-          arow.add(Integer.valueOf(tempStr));
+          final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd");
+          date = dateFormatter.parse(tempStr);
         }
-        catch (NumberFormatException nfe)
+        catch (ParseException ignored)
         {
-          arow.add(0);
         }
-      }
-      else
-      {
-        // double
+        arow.add(date);
+        break;
+      case DbaseField.FLOAT:
+        // legal since db4: "-.0123456789"
         tempStr = Convert.getString(record, field.offset, field.length);
-        try
+        arow.add(Double.valueOf(tempStr));
+        break;
+      case DbaseField.LOGICAL:
+        // legal since db3: "YyNnTtFf space"
+        // legal since db4: "YyNnTtFf ?"
+        tempStr = Convert.getString(record, field.offset, field.length);
+        Boolean logic = null;
+        if (tempStr.equalsIgnoreCase("Y") || tempStr.equalsIgnoreCase("T"))
+          logic = true;
+        if (tempStr.equalsIgnoreCase("N") || tempStr.equalsIgnoreCase("F"))
+          logic = false;
+        // note, not sure about space or ?, assuming this means "null"
+        arow.add(logic);
+        break;
+      case DbaseField.NUMERIC:
+        // legal since db3: "-.0123456789", may find empty string or 1 or more
+        // asteriks
+        if (field.decimal == 0)
         {
-          arow.add(Double.valueOf(tempStr));
+          // int
+          tempStr = Convert.getString(record, field.offset, field.length);
+          try
+          {
+            arow.add(Integer.valueOf(tempStr));
+          }
+          catch (NumberFormatException nfe)
+          {
+            arow.add(0);
+          }
         }
-        catch (NumberFormatException nfe)
+        else
         {
-          arow.add(0);
+          // double
+          tempStr = Convert.getString(record, field.offset, field.length);
+          try
+          {
+            arow.add(Double.valueOf(tempStr));
+          }
+          catch (NumberFormatException nfe)
+          {
+            arow.add(0);
+          }
         }
+        break;
+      default:
+        arow.add(null);
+        break;
       }
-      break;
-    default:
-      arow.add(null);
-      break;
+    }
+    catch (DbaseException e)
+    {
+      e.printStackTrace();
     }
   }
   // return
@@ -363,9 +370,9 @@ private void loadRows(int i) throws IOException, DbaseException
 private void loadRows(SeekableDataInput is, int i) throws IOException
 {
   // reset row array
-  int max = (((header.recordCount - i) > cachesize) ? cachesize : (header.recordCount - i));
+  int max = (((header.getRecordCount() - i) > cachesize) ? cachesize : (header.getRecordCount() - i));
   resetCache(i, max);
-  int pos = header.headerLength + (header.recordLength * i);
+  int pos = header.getHeaderLength() + (header.getRecordLength() * i);
   is.seek(pos);
   // read data
   for (int j = 0; j < row.length; j++)
@@ -379,7 +386,7 @@ public void purge()
 {
   row = new ArrayList[0];
   flg = new byte[0];
-  header.recordCount = 0;
+  header = new DbaseHeader();
 }
 
 @SuppressWarnings("hiding")
@@ -412,13 +419,12 @@ public void setCacheSize(int size)
 
 public synchronized void setColumns(DbaseFile template) throws DbaseException
 {
-  if (header.recordCount > 0)
+  if (header.getRecordCount() > 0)
     throw new DbaseException("Invalid operation after records are in the DBF!");
   for (int i = 0; i < template.header.getFieldCount(); i++)
   {
     DbaseField field = template.header.getField(i);
-    header.fields.add(field);
-    header.fieldCount++;
+    header.addField(field);
   }
   header.update();
 }

@@ -594,7 +594,7 @@ public static Path unqualifyPath(final Path path)
 
 public static String unqualifyPath(final String path)
 {
-  return new Path((new Path(path)).toUri().getPath().toString()).toString();
+  return new Path((new Path(path)).toUri().getPath()).toString();
 }
 
 private static void cleanDirectory(final FileSystem fs, final Path dir) throws IOException

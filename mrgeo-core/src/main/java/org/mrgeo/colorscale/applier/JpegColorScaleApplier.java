@@ -83,18 +83,6 @@ public class JpegColorScaleApplier extends ColorScaleApplier
       }
     }
 
-    if (colorScale == null)
-    {
-      if (raster.getNumBands() == 1)
-      {
-        colorScale = ColorScale.createDefaultGrayScale();
-      }
-      else
-      {
-        colorScale = ColorScale.createDefault();
-      }
-    }
-
     // if we don't have min/max make the color scale modulo with
     if (extrema == null)
     {

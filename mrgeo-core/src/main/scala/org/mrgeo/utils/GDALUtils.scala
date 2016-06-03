@@ -24,6 +24,7 @@ import java.nio.file.Files
 import java.util.zip.GZIPOutputStream
 import javax.xml.bind.DatatypeConverter
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.ArrayUtils
 import org.apache.hadoop.fs.Path
@@ -63,6 +64,8 @@ class GDALException extends IOException  {
   }
 }
 
+@SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
+@SuppressFBWarnings(value = Array("PZLA_PREFER_ZERO_LENGTH_ARRAYS"), justification = "api")
 object GDALUtils extends Logging {
 
   val EPSG4326: String = osrConstants.SRS_WKT_WGS84
@@ -395,7 +398,7 @@ object GDALUtils extends Logging {
     nodatas
   }
 
-
+  @SuppressFBWarnings(value = Array("REC_CATCH_EXCEPTION"), justification = "GDAL may have throw exceptions enabled")
   def open(imagename: String): Dataset = {
     try {
       val uri: URI = new URI(imagename)

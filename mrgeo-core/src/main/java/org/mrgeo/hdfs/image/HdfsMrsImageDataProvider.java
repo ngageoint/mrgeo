@@ -363,12 +363,9 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     try
     {
       p = resolveName(conf, input, providerProperties, false);
-      if (p != null)
-      {
-        return hasMetadata(conf, p);
-      }
+      return hasMetadata(conf, p);
     }
-    catch (IOException e)
+    catch (IOException ignored)
     {
     }
     return false;

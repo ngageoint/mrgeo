@@ -16,6 +16,8 @@
 
 package org.mrgeo.hdfs.vector.shp.util.jdbc;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -94,6 +96,7 @@ public static class JDBCPool
     return acquireImpl(db_key, 0);
   }
 
+  @SuppressFBWarnings(value = "UW_UNCOND_WAIT", justification = "Guarded by temp in acquireInternal()")
   public JDBCConnectionImpl acquireImpl(String db_key, long timeout) throws SQLException,
       JDBCPoolException
   {
@@ -118,9 +121,9 @@ public static class JDBCPool
       temp = acquireInternal(key);
       if (temp == null)
       {
-        Object obj = new Object();
         @SuppressWarnings("rawtypes")
         List wait = (List) waitMap.get(key);
+        Object obj = new Object();
         synchronized (wait)
         {
           wait.add(obj);
@@ -469,6 +472,7 @@ public static class JDBCPool
   }
 
   // return connection to pool
+  @SuppressFBWarnings(value = "NN_NAKED_NOTIFY", justification = "???")
   public void releaseImpl(JDBCConnectionImpl impl)
   {
     String db_key = impl.getDatabaseName();
@@ -498,7 +502,7 @@ public static class JDBCPool
         {
           synchronized (obj)
           {
-            obj.notify();
+            obj.notifyAll();
           }
         }
       }

@@ -21,6 +21,7 @@ import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util.Properties
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark._
@@ -33,12 +34,13 @@ import org.mrgeo.data.{DataProviderFactory, MrsPyramidInputFormat, ProviderPrope
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{Pixel, Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, Pixel, TMSUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Map, mutable}
 
+@SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
 object SparkUtils extends Logging {
 
   @deprecated("Use RasterRDD method instead", "")
@@ -91,9 +93,9 @@ object SparkUtils extends Logging {
 
   // These 3 methods are taken almost verbatim from Spark's Utils class, but they are all
   // private, so we needed to copy them here
-
   private def loadDefaultSparkProperties(conf: SparkConf, filePath: String = null): String = {
     val path = Option(filePath).getOrElse(getDefaultPropertiesFile())
+
     Option(path).foreach { confFile =>
       getPropertiesFromFile(confFile).filter { case (k, v) =>
         k.startsWith("spark.")
@@ -500,15 +502,7 @@ object SparkUtils extends Logging {
           var b: Int = 0
           while (b < tile.getNumBands) {
             val p = tile.getSampleDouble(x, y, b)
-            if (nodata(b).doubleValue().isNaN) {
-              if (!p.isNaN) {
-                stats(b).count += 1
-                stats(b).sum += p
-                stats(b).max = Math.max(stats(b).max, p)
-                stats(b).min = Math.min(stats(b).min, p)
-              }
-            }
-            else if (p != nodata(b).doubleValue()) {
+            if (FloatUtils.isNotNodata(p, nodata(b).doubleValue())) {
               stats(b).count += 1
               stats(b).sum += p
               stats(b).max = Math.max(stats(b).max, p)
@@ -570,6 +564,8 @@ object SparkUtils extends Logging {
     bounds
   }
 
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"), justification = "Scala generated code")
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   def mergeTiles(rdd: RasterRDD, zoom:Int, tilesize:Int, nodatas:Array[Double], bounds:Bounds = null) = {
 
     val bnds = if (bounds != null) {
@@ -855,7 +851,7 @@ object SparkUtils extends Logging {
       "0"
     }
     else {
-      val suffix = new String("kmgtpe")
+      val suffix = "kmgtpe"
       val unit = 1024
       var exp: Int = (Math.log(kb) / Math.log(unit)).toInt
 
@@ -937,28 +933,28 @@ object SparkUtils extends Logging {
   }
 
 
-  def address(obj: Object): String = {
-    var addr = "0x"
-
-    val array = Array(obj)
-    val f = classOf[sun.misc.Unsafe].getDeclaredField("theUnsafe")
-    f.setAccessible(true)
-    val unsafe = f.get(null).asInstanceOf[sun.misc.Unsafe]
-
-
-    val offset: Long = unsafe.arrayBaseOffset(classOf[Array[Object]])
-    val scale = unsafe.arrayIndexScale(classOf[Array[Object]])
-
-    scale match {
-    case 4 =>
-      val factor = 8
-      val i1 = (unsafe.getInt(array, offset) & 0xFFFFFFFFL) * factor
-      addr += i1.toHexString
-    case 8 =>
-      throw new AssertionError("Not supported")
-    }
-
-    addr
-  }
+//  def address(obj: Object): String = {
+//    var addr = "0x"
+//
+//    val array = Array(obj)
+//    val f = classOf[sun.misc.Unsafe].getDeclaredField("theUnsafe")
+//    f.setAccessible(true)
+//    val unsafe = f.get(null).asInstanceOf[sun.misc.Unsafe]
+//
+//
+//    val offset: Long = unsafe.arrayBaseOffset(classOf[Array[Object]])
+//    val scale = unsafe.arrayIndexScale(classOf[Array[Object]])
+//
+//    scale match {
+//    case 4 =>
+//      val factor = 8
+//      val i1 = (unsafe.getInt(array, offset) & 0xFFFFFFFFL) * factor
+//      addr += i1.toHexString
+//    case 8 =>
+//      throw new AssertionError("Not supported")
+//    }
+//
+//    addr
+//  }
 
 }

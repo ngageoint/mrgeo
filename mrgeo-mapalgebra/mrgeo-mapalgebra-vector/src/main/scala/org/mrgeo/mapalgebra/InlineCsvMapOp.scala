@@ -18,6 +18,7 @@ package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.vector.FeatureIdWritable
@@ -71,6 +72,7 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
   private var delimitedParser: DelimitedParser = null
   private var vectorrdd: Option[VectorRDD] = None
 
+  @SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
   def this(columns:String, values:String) = {
     this()
 
@@ -134,9 +136,11 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
 
   override def execute(context: SparkContext): Boolean = {
     var recordData = new ListBuffer[(FeatureIdWritable, Geometry)]()
-    for ((record, i) <- records.view.zipWithIndex) {
-      val geom = delimitedParser.parse(record)
-      recordData .+= ((new FeatureIdWritable(i), geom))
+    if (records != null) {
+      for ((record, i) <- records.view.zipWithIndex) {
+        val geom = delimitedParser.parse(record)
+        recordData.+=((new FeatureIdWritable(i), geom))
+      }
     }
     vectorrdd = Some(VectorRDD(context.parallelize(recordData)))
     true
@@ -150,6 +154,7 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
     true
   }
 
+  @SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
   def initialize(node:ParserNode, variables: String => Option[ParserNode]): Unit = {
     if (node.getNumChildren != 2)
     {

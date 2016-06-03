@@ -108,10 +108,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
 
     // Repartition the output if the output data provider requires it
     val sorted = RasterRDD(
-      if (sparkPartitioner == null) {
-        raster.sortByKey()
-      }
-      else if (sparkPartitioner.hasFixedPartitions) {
+      if (sparkPartitioner.hasFixedPartitions) {
         raster.sortByKey(numPartitions = sparkPartitioner.calculateNumPartitions(raster, outputWithZoom))
       }
       else {
@@ -122,11 +119,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
     val wrappedForSave = new PairRDDFunctions(sorted)
     wrappedForSave.saveAsNewAPIHadoopDataset(jobconf)
 
-    if (sparkPartitioner != null)
-    {
-      sparkPartitioner.writeSplits(sorted, context.getOutput, context.getZoomLevel, jobconf)
-    }
-
+    sparkPartitioner.writeSplits(sorted, context.getOutput, context.getZoomLevel, jobconf)
   }
 
   override def finalizeExternalSave(conf: Configuration): Unit = {

@@ -108,7 +108,7 @@ public void read(DataInputStream stream) throws IOException
   closeRing();
 }
 
-private synchronized void readObject(ObjectInputStream stream) throws IOException
+private void readObject(ObjectInputStream stream) throws IOException
 {
   DataInputStream dis = new DataInputStream(stream);
   read(dis);

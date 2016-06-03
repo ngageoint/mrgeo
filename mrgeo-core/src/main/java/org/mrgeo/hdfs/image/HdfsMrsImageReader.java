@@ -17,6 +17,7 @@
 package org.mrgeo.hdfs.image;
 
 import com.google.common.cache.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -51,6 +52,8 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+
+@SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "'readerCache' - Needs refactoring to remove")
 public class HdfsMrsImageReader extends MrsImageReader
 {
   @SuppressWarnings("unused")
@@ -195,7 +198,7 @@ public class HdfsMrsImageReader extends MrsImageReader
     return RasterWritable.toRaster(val);
   }
 
-  public class BoundsResultScanner implements KVIterator<Bounds, Raster>
+  public static class BoundsResultScanner implements KVIterator<Bounds, Raster>
   {
     private KVIterator<TileIdWritable, Raster> tileIterator;
     private int zoomLevel;

@@ -35,6 +35,8 @@ import org.mrgeo.utils.StringUtils
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
+@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value=Array("UUF_UNUSED_FIELD"), justification = "Scala constant")
 object MapAlgebra extends MrGeoDriver {
 
   final private val MapAlgebra = "mapalgebra"
@@ -375,7 +377,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     true
   }
 
-
+@SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   private def register(node: ParserNode, job: JobArguments, conf: SparkConf): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
@@ -402,6 +404,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     classes.result()
   }
 
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   private def setup(node: ParserNode, job: JobArguments, conf: SparkConf): Unit = {
     // depth first run
     node.getChildren.foreach(child => {
@@ -495,7 +498,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     false
   }
 
-
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   private def execute(node: ParserNode, context: SparkContext): Unit = {
     // depth first run
     node.getChildren.foreach(child => {
@@ -525,6 +528,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
 }
 
 @SuppressFBWarnings(value=Array("NM_CLASS_NAMING_CONVENTION"), justification = "Well, yes it does!")
+@SuppressFBWarnings(value=Array("DM_EXIT"), justification = "Application, calling sys.exit is appropriate")
 object TestMapAlgebra extends App {
 
   val baseDir: File = new File(System.getProperty("java.io.tmpdir"))

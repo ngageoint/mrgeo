@@ -27,188 +27,208 @@ import java.util.Vector;
 
 public class DbaseHeader implements Cloneable
 {
-  protected int fieldCount;
-  protected Vector<DbaseField> fields;
-  protected int format;
-  protected int headerLength;
-  protected int langDriverID;
-  protected int recordCount;
-  protected int recordLength;
+private Vector<DbaseField> fields;
+private int format;
+private int headerLength;
+private int langDriverID;
+private int recordCount;
+private int recordLength;
 
-  protected DbaseHeader()
+DbaseHeader()
+{
+  super();
+  fields = new Vector<>();
+  format = 3; // DBASE III is default for now
+  langDriverID = 27; // default, not sure what it means
+}
+
+@Override
+public Object clone()
+{
+  DbaseHeader hdr;
+  try
   {
-    super();
-    fields = new Vector<>();
-    format = 3; // DBASE III is default for now
-    langDriverID = 27; // default, not sure what it means
+    hdr = (DbaseHeader) super.clone();
   }
-
-  @Override
-  public Object clone()
+  catch (CloneNotSupportedException e)
   {
-    DbaseHeader hdr;
-    try
-    {
-      hdr = (DbaseHeader) super.clone();
-    }
-    catch (CloneNotSupportedException e)
-    {
-      throw new RuntimeException("Class doesn't implement cloneable");
-    }
-    return hdr;
+    throw new RuntimeException("Class doesn't implement cloneable");
   }
+  return hdr;
+}
 
-  public synchronized int getColumn(String name)
+public synchronized int getColumn(String name)
+{
+  int col = -1;
+  for (int i = 0; i < fields.size(); i++)
   {
-    int col = -1;
-    for (int i = 0; i < fieldCount; i++)
+    DbaseField field = fields.get(i);
+    if (field.name.equalsIgnoreCase(name))
     {
-      DbaseField field = fields.get(i);
-      if (field.name.equalsIgnoreCase(name))
-      {
-        col = i;
-        break;
-      }
-    }
-    return col;
-  }
-
-  public DbaseField getField(int i) throws DbaseException
-  {
-    try
-    {
-      return fields.get(i);
-    }
-    catch (Exception e)
-    {
-      throw new DbaseException("Field number invalid!");
+      col = i;
+      break;
     }
   }
+  return col;
+}
 
-  public int getFieldCount()
+public int getRecordCount() {
+  return recordCount;
+}
+
+public int getRecordLength() {
+ return recordLength;
+}
+
+public int getHeaderLength() {
+  return headerLength;
+}
+
+public synchronized DbaseField getField(int i) throws DbaseException
+{
+  try
   {
-    return fields.size();
+    return fields.get(i);
   }
-
-  public Vector<DbaseField> getFields()
+  catch (Exception e)
   {
-    return fields;
+    throw new DbaseException("Field number invalid!");
   }
+}
 
-  public Vector<DbaseField> getFieldsCopy()
-  {
-    return (Vector<DbaseField>) fields.clone();
-  }
+public synchronized int getFieldCount()
+{
+  return fields.size();
+}
 
-  protected synchronized void load(SeekableDataInput is) throws IOException, DbaseException
+public synchronized Vector<DbaseField> getFields()
+{
+  return fields;
+}
+public void addField(DbaseField newField) {
+  fields.add(newField);
+}
+
+public void insertField(DbaseField field, int position)
+{
+  fields.insertElementAt(field, position);
+}
+
+
+public synchronized Vector<DbaseField> getFieldsCopy()
+{
+  return (Vector<DbaseField>) fields.clone();
+}
+
+protected synchronized void load(SeekableDataInput is) throws IOException, DbaseException
+{
+  byte[] header = new byte[32];
+  is.readFully(header, 0, 32);
+  // core data
+  format = Convert.getByte(header, 0);
+  if (format != 3 && format != 4)
+    throw new DbaseException("DBase 3.x/4.x are only supported!");
+  recordCount = Convert.getLEInteger(header, 4);
+  headerLength = Convert.getLEShort(header, 8);
+  recordLength = Convert.getLEShort(header, 10);
+  langDriverID = Convert.getByte(header, 29);
+  // fields
+  int fieldCount = (headerLength - 32 - 1) / 32;
+  int offset = 1; // would be zero, but there is the deleted flag character
+  for (int i = 0; i < fieldCount; i++)
   {
-    byte[] header = new byte[32];
+    header = new byte[32];
     is.readFully(header, 0, 32);
-    // core data
-    format = Convert.getByte(header, 0);
-    if (format != 3 && format != 4)
-      throw new DbaseException("DBase 3.x/4.x are only supported!");
-    recordCount = Convert.getLEInteger(header, 4);
-    headerLength = Convert.getLEShort(header, 8);
-    recordLength = Convert.getLEShort(header, 10);
-    langDriverID = Convert.getByte(header, 29);
-    // fields
-    fieldCount = (headerLength - 32 - 1) / 32;
-    int offset = 1; // would be zero, but there is the deleted flag character
-    for (int i = 0; i < fieldCount; i++)
+    DbaseField field = new DbaseField();
+    field.name = Convert.getString(header, 0, 10);
+    field.type = Convert.getByte(header, 11);
+    switch (field.type)
     {
-      header = new byte[32];
-      is.readFully(header, 0, 32);
-      DbaseField field = new DbaseField();
-      field.name = Convert.getString(header, 0, 10);
-      field.type = Convert.getByte(header, 11);
-      switch (field.type)
-      {
-      case DbaseField.CHARACTER:
-        break;
-      case DbaseField.DATE:
-        break;
-      case DbaseField.FLOAT:
-        break;
-      case DbaseField.LOGICAL:
-        break;
-      case DbaseField.NUMERIC:
-        break;
-      default:
-        throw new DbaseException("Unsupported DBF type: " + field.type);
-      }
-      field.length = Convert.getByte(header, 16);
-      field.decimal = Convert.getByte(header, 17);
-      field.offset = offset;
-      offset = offset + field.length;
-      fields.add(field);
+    case DbaseField.CHARACTER:
+      break;
+    case DbaseField.DATE:
+      break;
+    case DbaseField.FLOAT:
+      break;
+    case DbaseField.LOGICAL:
+      break;
+    case DbaseField.NUMERIC:
+      break;
+    default:
+      throw new DbaseException("Unsupported DBF type: " + field.type);
     }
-    // read end of header character (keeps fis position correct)
-    byte[] marker = new byte[1];
-    is.readFully(marker, 0, 1); // 0Dh
+    field.length = Convert.getByte(header, 16);
+    field.decimal = Convert.getByte(header, 17);
+    field.offset = offset;
+    offset = offset + field.length;
+    fields.add(field);
   }
+  // read end of header character (keeps fis position correct)
+  byte[] marker = new byte[1];
+  is.readFully(marker, 0, 1); // 0Dh
+}
 
-  public synchronized void save(RandomAccessFile os) throws IOException
+public synchronized void save(RandomAccessFile os) throws IOException
+{
+  // core data
+  byte[] header = new byte[32];
+  header[0] = (byte) format;
+  Calendar now = Calendar.getInstance();
+  header[1] = (byte) (now.get(Calendar.YEAR) - 1900); // year
+  header[2] = (byte) (now.get(Calendar.MONTH) + 1); // month
+  header[3] = (byte) now.get(Calendar.DAY_OF_MONTH); // day
+  header[29] = (byte) langDriverID; // langDriverID
+  update();
+  Convert.setLEShort(header, 10, (short) recordLength);
+  // write core
+  os.write(header, 0, 32);
+  // field headers
+  for (int j = 0; j < fields.size(); j++)
   {
-      // core data
-      byte[] header = new byte[32];
-      header[0] = (byte) format;
-      Calendar now = Calendar.getInstance();
-      header[1] = (byte) (now.get(Calendar.YEAR) - 1900); // year
-      header[2] = (byte) (now.get(Calendar.MONTH) + 1); // month
-      header[3] = (byte) now.get(Calendar.DAY_OF_MONTH); // day
-      header[29] = (byte) langDriverID; // langDriverID
-      update();
-      Convert.setLEShort(header, 10, (short) recordLength);
-      // write core
-      os.write(header, 0, 32);
-      // field headers
-      for (int j = 0; j < fieldCount; j++)
-      {
-        header = new byte[32];
-        DbaseField field = fields.get(j);
-        // set field header
-        Convert.setString(header, 0, 11, field.name);
-        header[11] = (byte) field.type;
-        header[16] = (byte) field.length;
-        header[17] = (byte) field.decimal;
-        // write
-        os.write(header, 0, 32);
-      }
-      // write end of header character
-      byte[] marker = new byte[1];
-      marker[0] = 13; // 0Dh
-      os.write(marker, 0, 1);
+    header = new byte[32];
+    DbaseField field = fields.get(j);
+    // set field header
+    Convert.setString(header, 0, 11, field.name);
+    header[11] = (byte) field.type;
+    header[16] = (byte) field.length;
+    header[17] = (byte) field.decimal;
+    // write
+    os.write(header, 0, 32);
   }
+  // write end of header character
+  byte[] marker = new byte[1];
+  marker[0] = 13; // 0Dh
+  os.write(marker, 0, 1);
+}
 
-  @Override
-  public String toString()
+@Override
+public synchronized String toString()
+{
+  String s = "\n";
+  s = s + StringUtils.pad("format: ", 15) + format + "\n";
+  s = s + StringUtils.pad("recordCount: ", 15) + recordCount + "\n";
+  s = s + StringUtils.pad("headerLength: ", 15) + headerLength + "\n";
+  s = s + StringUtils.pad("recordLength: ", 15) + recordLength + "\n";
+  s = s + StringUtils.pad("fieldCount: ", 15) + fields.size() + "\n";
+  s = s + StringUtils.pad("langDriverID:", 15) + langDriverID + "\n\n";
+  for (int i = 0; i < fields.size(); i++)
   {
-    String s = "\n";
-    s = s + StringUtils.pad("format: ", 15) + format + "\n";
-    s = s + StringUtils.pad("recordCount: ", 15) + recordCount + "\n";
-    s = s + StringUtils.pad("headerLength: ", 15) + headerLength + "\n";
-    s = s + StringUtils.pad("recordLength: ", 15) + recordLength + "\n";
-    s = s + StringUtils.pad("fieldCount: ", 15) + fieldCount + "\n";
-    s = s + StringUtils.pad("langDriverID:", 15) + langDriverID + "\n\n";
-    for (int i = 0; i < fieldCount; i++)
-    {
-      DbaseField field = fields.get(i);
-      s = s + "  " + StringUtils.pad(i + ")", 5) + field.toString() + "\n";
-    }
-    return s;
+    DbaseField field = fields.get(i);
+    s = s + "  " + StringUtils.pad(i + ")", 5) + field.toString() + "\n";
   }
+  return s;
+}
 
-  protected int update()
+protected synchronized int update()
+{
+  recordLength = 1; // deleted/un-deleted flag is a byte, so we start with 1!
+  for (int j = 0; j < fields.size(); j++)
   {
-    recordLength = 1; // deleted/un-deleted flag is a byte, so we start with 1!
-    for (int j = 0; j < fields.size(); j++)
-    {
-      DbaseField field = fields.get(j);
-      field.offset = recordLength;
-      recordLength += field.length;
-    }
-    fieldCount = fields.size();
-    return recordLength;
+    DbaseField field = fields.get(j);
+    field.offset = recordLength;
+    recordLength += field.length;
   }
+  return recordLength;
+}
+
 }

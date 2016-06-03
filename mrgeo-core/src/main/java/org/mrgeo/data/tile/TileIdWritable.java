@@ -40,12 +40,12 @@ private static final long serialVersionUID = 1L;
 	}
 
   // we could use the default serializations here, but instead we'll just do it manually
-  private synchronized void writeObject(ObjectOutputStream stream) throws IOException
+  private void writeObject(ObjectOutputStream stream) throws IOException
   {
     stream.writeLong(get());
   }
 
-  private synchronized void readObject(ObjectInputStream stream) throws IOException
+  private void readObject(ObjectInputStream stream) throws IOException
   {
     set(stream.readLong());
   }

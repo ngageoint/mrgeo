@@ -39,39 +39,36 @@ private MrGeoProperties() {
 
 
 @SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Ignored exception causes empty properties object, which is fine")
-public static Properties getInstance() {
+public static synchronized Properties getInstance() {
   if( properties == null ) {
-    // This reduces concurrency to just when properties need creating, making access more efficient once created
-    synchronized (MrGeoProperties.class) {
-      properties = new Properties();
-      FileInputStream fis = null;
-      try
-      {
-        String conf = findMrGeoConf();
-        fis = new FileInputStream(conf);
-        properties.load(fis);
+    properties = new Properties();
+    FileInputStream fis = null;
+    try
+    {
+      String conf = findMrGeoConf();
+      fis = new FileInputStream(conf);
+      properties.load(fis);
+    }
+    catch (IOException e)
+    {
+      // Try loading from properties file. This is the method used for JBoss deployments
+      try {
+        properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
       }
-      catch (IOException e)
-      {
-        // Try loading from properties file. This is the method used for JBoss deployments
-        try {
-          properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
-        }
-        catch ( Exception ignored ) {
-          // An empty props object is fine
-        }
+      catch ( Exception ignored ) {
+        // An empty props object is fine
       }
-      finally
+    }
+    finally
+    {
+      if (fis != null)
       {
-        if (fis != null)
+        try
         {
-          try
-          {
-            fis.close();
-          }
-          catch (IOException ignored)
-          {
-          }
+          fis.close();
+        }
+        catch (IOException ignored)
+        {
         }
       }
     }

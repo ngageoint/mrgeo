@@ -219,11 +219,10 @@ public class ShpInputFormat extends InputFormat<FeatureIdWritable, Geometry>
       }
 
       return result;
-    } finally {
-      if (gc != null)
-      {
+    }
+    finally
+    {
         gc.close();
-      }
     }
   }
 }

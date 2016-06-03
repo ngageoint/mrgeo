@@ -1,11 +1,14 @@
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class FloatUtils
 {
 
 public static final double DOUBLE_EPSILON = 1.0;
 public static final float FLOAT_EPSILON = 1.0f;
 
+@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "external api")
 static class Floater
 {
   private final int bits;
@@ -33,6 +36,7 @@ static class Floater
   }
 }
 
+@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "external api")
 static class Doubler
 {
   private final long bits;

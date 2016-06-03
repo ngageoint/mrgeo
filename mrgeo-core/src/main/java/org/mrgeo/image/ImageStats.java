@@ -195,6 +195,7 @@ static public ImageStats[] initializeStatsArray(final int bands)
   return stats;
 }
 
+@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "api")
 static public ImageStats[] mergeStats(final ImageStats[] statsA, final ImageStats[] statsB)
 {
   if (statsA == null && statsB == null)

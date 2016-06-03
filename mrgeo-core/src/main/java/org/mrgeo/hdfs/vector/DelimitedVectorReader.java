@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.vector;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -34,13 +35,14 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "'context' kept for completeness")
 public class DelimitedVectorReader implements VectorReader
 {
   private HdfsVectorDataProvider provider;
   private VectorReaderContext context;
   private Configuration conf;
 
-  public class HdfsFileReader implements LineProducer
+  public static class HdfsFileReader implements LineProducer
   {
     private BufferedReader reader;
     private Path sourcePath;
@@ -73,7 +75,7 @@ public class DelimitedVectorReader implements VectorReader
     }
   }
 
-  public class FeatureIdRangeVisitor implements DelimitedReader.DelimitedReaderVisitor
+  public static class FeatureIdRangeVisitor implements DelimitedReader.DelimitedReaderVisitor
   {
     private long minFeatureId = -1;
     private long maxFeatureId = -1;
@@ -118,7 +120,7 @@ public class DelimitedVectorReader implements VectorReader
     }
   }
 
-  public class BoundsVisitor implements DelimitedReader.DelimitedReaderVisitor
+  public static class BoundsVisitor implements DelimitedReader.DelimitedReaderVisitor
   {
     private Bounds bounds;
     

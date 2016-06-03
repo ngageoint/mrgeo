@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-public abstract class JShape extends java.lang.Object implements Serializable
+public abstract class JShape implements Serializable
 {
 public final static byte EDIT = 3; // the shape is being edited but can be
 // drawn

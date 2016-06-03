@@ -171,9 +171,12 @@ public class XmlUtils
       DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
       domFactory.setNamespaceAware(false);
       DocumentBuilder builder = domFactory.newDocumentBuilder();
-      return builder.parse(new FileInputStream(fn));
+      try (FileInputStream fis = new FileInputStream(fn))
+      {
+        return builder.parse(fis);
+      }
     }
-    catch (Exception e)
+    catch (ParserConfigurationException | SAXException e)
     {
       throw new IOException("Error parsing XML Stream", e);
     }
