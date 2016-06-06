@@ -706,7 +706,7 @@ object SparkUtils extends Logging {
     },
       (result1, result2) => {
         // combine the bounds
-        if (result1._1 == null) {
+        val bounds = if (result1._1 == null) {
           result2._1
         }
         else {
@@ -722,7 +722,7 @@ object SparkUtils extends Logging {
           aggstat(b).min = Math.min(aggstat(b).min, result2._2(b).min)
         }
 
-        result1
+        (bounds, aggstat)
       })
     for (i <- result._2.indices) {
       if (result._2(i).count > 0) {

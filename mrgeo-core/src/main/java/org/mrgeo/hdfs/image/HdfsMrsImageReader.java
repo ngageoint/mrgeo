@@ -453,6 +453,7 @@ public class HdfsMrsImageReader extends MrsImageReader
    * @return the reader for the partition specified
    * @throws IOException
    */
+  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
   public MapFile.Reader getReader(final int partitionIndex) throws IOException
   {
     try

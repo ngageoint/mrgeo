@@ -18,6 +18,7 @@ package org.mrgeo.hdfs.output.image
 
 import java.io.IOException
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.{SequenceFile, Writable, WritableComparable}
@@ -29,11 +30,12 @@ import org.mrgeo.data.image.{ImageOutputFormatContext, MrsImageOutputFormatProvi
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
-import org.mrgeo.hdfs.partitioners.{RowPartitioner, BlockSizePartitioner, FileSplitPartitioner}
+import org.mrgeo.hdfs.partitioners.{BlockSizePartitioner, FileSplitPartitioner, RowPartitioner}
 import org.mrgeo.hdfs.tile.FileSplit
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 
 
+@SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION"), justification = "PartitionType is Enumeration")
 class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) extends MrsImageOutputFormatProvider(context) {
 
   private[image] object PartitionType extends Enumeration {
@@ -139,6 +141,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
 
   override def validateProtectionLevel(protectionLevel: String): Boolean = true
 
+  @SuppressFBWarnings(value = Array("DB_DUPLICATE_BRANCHES"), justification = "For now, BlockSizePartitioner is default")
   private def getSparkPartitioner:FileSplitPartitioner = {
     partitioner match {
     case PartitionType.ROW =>

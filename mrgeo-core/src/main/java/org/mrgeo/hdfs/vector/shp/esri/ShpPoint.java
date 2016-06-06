@@ -37,10 +37,13 @@ public class ShpPoint extends java.lang.Object implements ShpData
   @Override
   public void addShape(JShape obj) throws FormatException
   {
-    JPoint[] temp = new JPoint[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPoint) obj;
-    p = temp;
+    if (obj instanceof JPoint)
+    {
+      JPoint[] temp = new JPoint[p.length + 1];
+      System.arraycopy(p, 0, temp, 0, p.length);
+      temp[p.length] = (JPoint) obj;
+      p = temp;
+    }
   }
 
   @Override

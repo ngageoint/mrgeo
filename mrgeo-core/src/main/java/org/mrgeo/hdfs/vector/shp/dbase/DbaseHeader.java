@@ -72,15 +72,15 @@ public synchronized int getColumn(String name)
   return col;
 }
 
-public int getRecordCount() {
+public synchronized int getRecordCount() {
   return recordCount;
 }
 
-public int getRecordLength() {
- return recordLength;
+public synchronized int getRecordLength() {
+  return recordLength;
 }
 
-public int getHeaderLength() {
+public synchronized int getHeaderLength() {
   return headerLength;
 }
 
@@ -105,11 +105,11 @@ public synchronized Vector<DbaseField> getFields()
 {
   return fields;
 }
-public void addField(DbaseField newField) {
+public synchronized void addField(DbaseField newField) {
   fields.add(newField);
 }
 
-public void insertField(DbaseField field, int position)
+public synchronized void insertField(DbaseField field, int position)
 {
   fields.insertElementAt(field, position);
 }

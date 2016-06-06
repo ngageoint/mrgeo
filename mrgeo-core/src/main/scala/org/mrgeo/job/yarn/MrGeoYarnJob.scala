@@ -124,29 +124,36 @@ object MrGeoYarnJob extends Logging {
         MrGeoJob.setupSerializer(mrgeo, conf)
 
         logInfo("Setting up job: " + job.name)
-        mrgeo.setup(job, conf)
+        if (mrgeo.setup(job, conf)) {
+          logInfo("SparkConf parameters")
+          conf.getAll.foreach(kv => {logDebug("  " + kv._1 + ": " + kv._2)})
 
-        logInfo("SparkConf parameters")
-        conf.getAll.foreach(kv => {logDebug("  " + kv._1 + ": " + kv._2)})
+          val context = new SparkContext(conf)
 
-        val context = new SparkContext(conf)
+          //context.addSparkListener(new MrGeoListener)
+          val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
+          try {
+            logInfo("Running job: " + job.name)
+            context.setCheckpointDir(checkpointDir)
+            if (!mrgeo.execute(context)) {
+              logError("Error in execute")
+            }
+          }
+          finally {
+            logInfo("Stopping spark context")
+            context.stop()
 
-        //context.addSparkListener(new MrGeoListener)
-        val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
-        try {
-          logInfo("Running job: " + job.name)
-          context.setCheckpointDir(checkpointDir)
-          mrgeo.execute(context)
+            HadoopFileUtils.delete(context.hadoopConfiguration, checkpointDir)
+          }
+
+          logInfo("Teardown job: " + job.name)
+          if (!mrgeo.teardown(job, conf)) {
+            logError("Error in teardown")
+          }
         }
-        finally {
-          logInfo("Stopping spark context")
-          context.stop()
-
-          HadoopFileUtils.delete(context.hadoopConfiguration, checkpointDir)
+        else {
+          logError("Error in setup")
         }
-
-        logInfo("Teardown job: " + job.name)
-        mrgeo.teardown(job, conf)
       }
     }
   }

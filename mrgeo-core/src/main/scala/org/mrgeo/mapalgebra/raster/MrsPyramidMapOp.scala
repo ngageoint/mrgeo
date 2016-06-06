@@ -41,6 +41,7 @@ object MrsPyramidMapOp {
   }
 }
 
+@SuppressFBWarnings(value = Array("CN_IMPLEMENTS_CLONE_BUT_NOT_CLONEABLE"), justification = "_Does_ implement Cloneable()")
 class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider)
     extends RasterMapOp with Cloneable {
   private var rasterRDD:Option[RasterRDD] = None

@@ -16,8 +16,6 @@
 
 package org.mrgeo.hdfs.vector.shp.util.jdbc;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +58,7 @@ public class JDBCConnection
   }
 
   @SuppressWarnings("rawtypes")
-  public void addBatchRequest(String sql)
+  public synchronized void addBatchRequest(String sql)
   {
     if (batchList == null)
       batchList = new ArrayList();
@@ -68,7 +66,7 @@ public class JDBCConnection
   }
 
   @SuppressWarnings("rawtypes")
-  public void addBatchRequest(String sql, Object[] args)
+  public synchronized void addBatchRequest(String sql, Object[] args)
   {
     if (batchList == null)
       batchList = new ArrayList();
@@ -85,7 +83,7 @@ public class JDBCConnection
     batchList.add(temp);
   }
 
-  public void clearBatchRequest()
+  public synchronized void clearBatchRequest()
   {
     batchList = null;
   }
@@ -123,20 +121,20 @@ public class JDBCConnection
 
   // free resources when object is destroyed
   @Override
-  protected void finalize()
+  protected synchronized void finalize()
   {
     if (inUse)
       closeRequest();
   }
 
-  public JDBCSource getJDBCSource()
+  public synchronized JDBCSource getJDBCSource()
   {
     return connectionPool.getJDBCSource((db_key == null) ? connectionPool.getDefaultDatabase()
         : db_key);
   }
 
   // return the result set of the request
-  public ResultSet getResultSet()
+  public synchronized ResultSet getResultSet()
   {
     return rs;
   }
@@ -154,7 +152,7 @@ public class JDBCConnection
 //  }
 
   // returns raw sql string for prepared statements
-  private String preparedSQL(String originalSQL)
+  private synchronized String preparedSQL(String originalSQL)
   {
     try
     {
@@ -178,7 +176,7 @@ public class JDBCConnection
       sendRequest(lastSql);
   }
 
-  public int[] sendBatchRequest(boolean returnResultSet) throws SQLException, JDBCPoolException
+  public synchronized int[] sendBatchRequest(boolean returnResultSet) throws SQLException, JDBCPoolException
   {
     if (batchList == null || batchList.size() == 0)
       throw new SQLException("No batch statements defined.");
@@ -732,18 +730,18 @@ public class JDBCConnection
   }
 
   // set max rows (limit)
-  public void setMaxRows(int max)
+  public synchronized void setMaxRows(int max)
   {
     maxRows = max;
   }
 
-  public void setNotify(boolean value)
+  public synchronized void setNotify(boolean value)
   {
     notify = value;
   }
 
   // set timeout
-  public void setTimeout(long milliseconds)
+  public synchronized void setTimeout(long milliseconds)
   {
     timeout = milliseconds;
   }

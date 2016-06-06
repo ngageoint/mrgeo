@@ -159,8 +159,6 @@ public static ResultSet loadResultSet(Configuration conf) throws IOException, SQ
   {
     Path sqlPath = new Path(conf.get("mapred.input.dir"));
     FileSystem fs = HadoopFileUtils.getFileSystem(conf, sqlPath);
-    Statement st = null;
-    Connection conn = null;
     ResultSet rs = null;
     if (sqlPath.toString().toLowerCase().endsWith(".sql"))
     {
@@ -192,27 +190,21 @@ public static ResultSet loadResultSet(Configuration conf) throws IOException, SQ
               props.setProperty("password", password);
               props.setProperty("ssl", "true");
 
-              try
+              try (Connection conn = DriverManager.getConnection(dbconnection, props))
               {
-                conn = DriverManager.getConnection(dbconnection, props);
 //              st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 //              rs = st.executeQuery(sqlStr);
 
-                st = conn.prepareStatement(sqlStr.toString(), ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-                rs = ((PreparedStatement) st).executeQuery();
-
+                try (Statement st = conn.prepareStatement(sqlStr.toString(), ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY))
+                {
+                  rs = ((PreparedStatement) st).executeQuery();
+                }
               }
               catch (SQLException e)
               {
-                if (conn != null)
-                {
-                  conn.close();
-                }
-                e.printStackTrace();
-                throw new IOException("Could not open database.");
+                throw new IOException("Could not open database.", e);
               }
-              st.close();
-              conn.close();
+
               return rs;
             }
           }

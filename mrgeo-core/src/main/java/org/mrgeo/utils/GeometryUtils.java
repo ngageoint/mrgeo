@@ -18,6 +18,7 @@ package org.mrgeo.utils;
 
 import com.vividsolutions.jts.geom.TopologyException;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.geometry.*;
 import org.mrgeo.utils.tms.Bounds;
 
@@ -25,6 +26,7 @@ public class GeometryUtils
 {
   final static double epsilon = 0.00000001;
 
+  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "Checking stored type 1st")
   public static Geometry clip(final Geometry geometry, final Polygon clip)
   {
     switch (geometry.type())

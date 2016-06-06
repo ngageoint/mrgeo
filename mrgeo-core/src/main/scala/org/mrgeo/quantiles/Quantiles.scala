@@ -126,7 +126,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
 
   def compute(rdd: RasterRDD, numberOfQuantiles: Int, fraction: Option[Float], meta: MrsPyramidMetadata) = {
     var b: Int = 0
-    val dt = meta.getTileType
+    //val dt = meta.getTileType
     var result = new ListBuffer[Array[Double]]()
     while (b < meta.getBands) {
       val nodata = meta.getDefaultValue(b)

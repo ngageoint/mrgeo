@@ -3,11 +3,16 @@
   <Match>
     <Source name="~.*\.scala" />
     <Or>
-      <Bug pattern="SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION" /> <!-- object has no constructor = empty Externalizable prevents object serialization -->
-      <Bug pattern="NM_METHOD_NAMING_CONVENTION" /> <!-- Scala constant naming convention is uppercase first letter-->
-      <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" /> <!-- Scala generated getter/setters -->
-      <Bug pattern="EI_EXPOSE_REP" />  <!-- Scala generated array getter -->
-      <Bug pattern="EI_EXPOSE_REP2" /> <!-- Scala generated array setter -->
+      <Bug pattern="SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION" />
+      <!-- object has no constructor = empty Externalizable prevents object serialization -->
+      <Bug pattern="NM_METHOD_NAMING_CONVENTION" />
+      <!-- Scala constant naming convention is uppercase first letter-->
+      <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
+      <!-- Scala generated getter/setters -->
+      <Bug pattern="EI_EXPOSE_REP" />
+      <!-- Scala generated array getter -->
+      <Bug pattern="EI_EXPOSE_REP2" />
+      <!-- Scala generated array setter -->
     </Or>
   </Match>
   <!-- Don't bother with DM_DEFAULT_ENCODING - default encoding -->
@@ -17,5 +22,9 @@
   <!-- Don't bother with DM_CONVERT_CASE - non-localized toupper or tolower -->
   <Match>
     <Bug pattern="DM_CONVERT_CASE" />
+  </Match>
+  <!-- Don't bother with NM_CONFUSING - "confusing" names. -->
+  <Match>
+    <Bug pattern="NM_CONFUSING" />
   </Match>
 </FindBugsFilter>

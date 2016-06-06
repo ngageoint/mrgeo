@@ -784,7 +784,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
 
   private static class Dependency
   {
-    public String group;
+    public String group = "<unk>";
     public String artifact;
     public String version;
     public String type;

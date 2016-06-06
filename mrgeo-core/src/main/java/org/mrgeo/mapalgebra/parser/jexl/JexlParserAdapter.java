@@ -107,18 +107,13 @@ public class JexlParserAdapter implements ParserAdapter
     }
     try
     {
-      //@SuppressWarnings("unused")
-      Script script = engine.createScript(expression);
+      engine.createScript(expression);
       jexlRootNode = engine.getScript();
       //jexlRootNode = (ASTJexlScript)engine.createScript(expression);
       ParserNode last = null;
       for (int i = 0; i < jexlRootNode.jjtGetNumChildren(); i++)
       {
         last = convertToMrGeoNode(jexlRootNode.jjtGetChild(i));
-//        if (factory != null)
-//        {
-//          factory.convertToMapOp(last);
-//        }
       }
       return last;
     }

@@ -320,7 +320,7 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
           log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path.toString() + " to be deleted");
           try
           {
-            Thread.sleep(waitPhases[sleepIndex][1] * 1000);
+            Thread.sleep(waitPhases[sleepIndex][1] * 1000L);
           }
           catch (InterruptedException e)
           {
