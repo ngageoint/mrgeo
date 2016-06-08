@@ -30,7 +30,7 @@ import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.tms.{Bounds, Pixel, TMSUtils, Tile}
-import org.mrgeo.utils.{LatLng, LoggingUtils}
+import org.mrgeo.utils.LatLng
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable

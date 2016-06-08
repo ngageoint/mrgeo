@@ -185,6 +185,7 @@ public static List<URL> loadJar(String path, URL resource) throws IOException
   return result;
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "filename comes from classloader")
 public static List<URL> loadDirectory(String filePath) throws IOException
 {
   List<URL> result = new LinkedList<URL>();
@@ -262,6 +263,7 @@ private static String indent(int level)
 }
 
 
+@SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "filename comes from classloader")
 public static void dumpClasspath(ClassLoader loader, int level)
 {
   System.out.println(indent(level) + "Classloader " + loader + ":");

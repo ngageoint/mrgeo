@@ -26,7 +26,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
+import org.mrgeo.utils.logging.LoggingUtils;
 
 import java.io.IOException;
 import java.util.*;

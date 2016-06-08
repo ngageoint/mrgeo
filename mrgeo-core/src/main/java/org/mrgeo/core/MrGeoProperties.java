@@ -38,7 +38,8 @@ private MrGeoProperties() {
 } // end base constructor
 
 
-@SuppressFBWarnings(value = "DE_MIGHT_IGNORE", justification = "Ignored exception causes empty properties object, which is fine")
+@SuppressFBWarnings(value = {"DE_MIGHT_IGNORE",
+    "PATH_TRAVERSAL_IN"}, justification = "Ignored exception causes empty properties object, which is fine, false positive, user can't control the path")
 public static synchronized Properties getInstance() {
   if( properties == null ) {
     properties = new Properties();
@@ -88,6 +89,7 @@ public static boolean isDevelopmentMode()
   return developmentMode;
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "false positive, no user control of path")
 public static String findMrGeoConf() throws IOException
 {
   String conf = System.getenv(MrGeoConstants.MRGEO_CONF_DIR);

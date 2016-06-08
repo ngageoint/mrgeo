@@ -85,40 +85,40 @@ public class ColorScale extends TreeMap<Double, Color>
     return cs;
   }
 
-  public static ColorScale loadFromXML(String filename) throws ColorScaleException
-  {
-    try
-    {
-      InputStream stream = null;
-      try
-      {
-        stream = new FileInputStream(filename);
-        ColorScale cs = new ColorScale();
-        cs.fromXML(stream);
-
-        return cs;
-      }
-      finally
-      {
-        if (stream != null)
-        {
-          IOUtils.closeQuietly(stream);
-        }
-      }
-    }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-      throw new ColorScaleException(e);
-    }
-  }
-
-  public static ColorScale loadFromJSON(InputStream stream) throws ColorScaleException
-  {
-    ColorScale cs = new ColorScale();
-    cs.fromJSON(stream);
-    return cs;
-  }
+//  public static ColorScale loadFromXML(String filename) throws ColorScaleException
+//  {
+//    try
+//    {
+//      InputStream stream = null;
+//      try
+//      {
+//        stream = new FileInputStream(filename);
+//        ColorScale cs = new ColorScale();
+//        cs.fromXML(stream);
+//
+//        return cs;
+//      }
+//      finally
+//      {
+//        if (stream != null)
+//        {
+//          IOUtils.closeQuietly(stream);
+//        }
+//      }
+//    }
+//    catch (IOException e)
+//    {
+//      e.printStackTrace();
+//      throw new ColorScaleException(e);
+//    }
+//  }
+//
+//  public static ColorScale loadFromJSON(InputStream stream) throws ColorScaleException
+//  {
+//    ColorScale cs = new ColorScale();
+//    cs.fromJSON(stream);
+//    return cs;
+//  }
 
   public static ColorScale loadFromJSON(String json) throws ColorScaleException
   {

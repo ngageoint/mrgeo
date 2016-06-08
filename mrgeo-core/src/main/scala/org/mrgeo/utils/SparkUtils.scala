@@ -107,6 +107,7 @@ object SparkUtils extends Logging {
     path
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "only opens files filtered by getDefaultPropertiesFile()")
   /** Load properties present in the given file. */
   private def getPropertiesFromFile(filename: String): Map[String, String] = {
     val file = new File(filename)
@@ -128,6 +129,7 @@ object SparkUtils extends Logging {
     }
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "opening a hardcoded filename")
   private def getDefaultPropertiesFile(env: Map[String, String] = sys.env): String = {
     env.get("SPARK_CONF_DIR")
         .orElse(env.get("SPARK_HOME").map { t => s"$t${File.separator}conf" })
@@ -307,7 +309,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
 
-    log.info("Loading MrsPyramid " + provider.getResourceName)
+    logInfo("Loading MrsPyramid " + provider.getResourceName)
 
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsPyramidInputFormat],
@@ -624,7 +626,7 @@ object SparkUtils extends Logging {
         val start = TMSUtils.latLonToPixelsUL(tb.n, tb.w, zoom, tilesize)
 
         val source = RasterWritable.toRaster(tile._2)
-        log.debug(s"Tile ${id.tx}, ${id.ty} with bounds ${tb.w}, ${tb.s}, ${tb.e}, ${tb.n}" +
+        logDebug(s"Tile ${id.tx}, ${id.ty} with bounds ${tb.w}, ${tb.s}, ${tb.e}, ${tb.n}" +
             s" pasted onto px ${start.px - ul.px} py ${start.py - ul.py}")
 
         merged.setDataElements((start.px - ul.px).toInt, (start.py - ul.py).toInt, source)

@@ -16,6 +16,8 @@
 
 package org.mrgeo.hdfs.vector.shp;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -28,8 +30,7 @@ import org.mrgeo.hdfs.vector.shp.esri.ESRILayer;
 import org.mrgeo.hdfs.vector.shp.esri.FormatException;
 import org.mrgeo.hdfs.vector.shp.esri.geom.*;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -45,7 +46,8 @@ import java.util.NoSuchElementException;
  * @author jason.surratt
  *
  */
-public class ShapefileReader implements GeometryInputStream, ShapefileGeometryCollection
+@SuppressFBWarnings(value = "DESERIALIZATION_GADGET", justification = "verified read/writeObject")
+public class ShapefileReader implements GeometryInputStream, ShapefileGeometryCollection, Serializable
 {
 static class LocalIterator implements Iterator<WritableGeometry>
 {
@@ -417,18 +419,33 @@ public WritableGeometry next()
   throw new NoSuchElementException("End of iterator");
 }
 
-private void readObject(ObjectInputStream is) throws ClassNotFoundException, IOException
+private void writeObject(ObjectOutputStream out) throws IOException
 {
-  // always perform the default de-serialization first
-  is.defaultReadObject();
+  out.writeUTF(fileName);
+  out.writeInt(source.ordinal());
+}
+
+
+@SuppressFBWarnings(value = {"WEAK_FILENAMEUTILS", "PATH_TRAVERSAL_IN"}, justification = "Correctly filtered parameters")
+private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOException
+{
+  fileName = in.readUTF();
+  source = Source.values()[in.readInt()];
 
   if (source == Source.FILE)
   {
-    load(fileName);
+    File f = new File(FilenameUtils.getFullPath(fileName), FilenameUtils.getName(fileName));
+    if (f.exists())
+    {
+      load(fileName);
+    }
   }
   else
   {
-    load(new Path(fileName));
+    if (HadoopFileUtils.exists(fileName))
+    {
+      load(new Path(fileName));
+    }
   }
 }
 

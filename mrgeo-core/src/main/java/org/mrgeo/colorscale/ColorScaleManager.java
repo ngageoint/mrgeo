@@ -19,6 +19,7 @@ package org.mrgeo.colorscale;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.mrgeo.core.MrGeoProperties;
@@ -181,6 +182,7 @@ public class ColorScaleManager
     }
   }
 
+  @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "Using adhoc provider, our class, for the filename")
   public static ColorScale[] getColorScaleList() throws IOException
   {
     try

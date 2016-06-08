@@ -399,6 +399,7 @@ object GDALUtils extends Logging {
   }
 
   @SuppressFBWarnings(value = Array("REC_CATCH_EXCEPTION"), justification = "GDAL may have throw exceptions enabled")
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "GDAL only reads image files")
   def open(imagename: String): Dataset = {
     try {
       val uri: URI = new URI(imagename)
@@ -512,6 +513,7 @@ object GDALUtils extends Logging {
       Math.max(Math.max(c1(1), c2(1)), Math.max(c3(1), c4(1))))
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Temp file used for writing to OutputStream")
   def saveRaster(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
       bounds:Bounds = null, nodata:Double = Double.NegativeInfinity,
       format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit =  {
@@ -670,7 +672,7 @@ object GDALUtils extends Logging {
 
       log.debug("GDAL Projections supported:")
       for (o <- osr.GetProjectionMethods) {
-        log.debug("  " + o)
+        logDebug("  " + o)
       }
     }
   }

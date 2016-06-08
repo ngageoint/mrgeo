@@ -66,7 +66,7 @@ import java.util.Set;
 //import javax.servlet.http.HttpServletRequest;
 //import javax.servlet.http.HttpServletResponse;
 
-//import org.mrgeo.utils.LoggingUtils;
+//import org.mrgeo.utils.logging.LoggingUtils;
 
 /**
  * OGC WMS implementation - See https://107.23.31.196/redmine/projects/mrgeo/wiki/WmsReference for

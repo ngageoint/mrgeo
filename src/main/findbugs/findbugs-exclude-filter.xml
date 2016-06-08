@@ -1,4 +1,8 @@
 <FindBugsFilter>
+  <!-- Remove CRLF Log Injection.  We have a custom Appender Wrapper that encodes ALL logs properly -->
+  <Match>
+    <Bug pattern="CRLF_INJECTION_LOGS" />
+  </Match>
   <!-- Scala code generates these as well -->
   <Match>
     <Source name="~.*\.scala" />

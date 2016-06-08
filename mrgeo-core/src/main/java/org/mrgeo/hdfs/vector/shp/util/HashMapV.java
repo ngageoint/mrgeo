@@ -19,7 +19,7 @@ package org.mrgeo.hdfs.vector.shp.util;
 import java.util.HashMap;
 
 @SuppressWarnings("rawtypes")
-public class HashMapV extends HashMap
+class HashMapV extends HashMap
 {
   private static final long serialVersionUID = 1L;
   public Object value = null;

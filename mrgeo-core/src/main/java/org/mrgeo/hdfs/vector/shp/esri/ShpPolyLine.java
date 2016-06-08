@@ -24,7 +24,7 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPolyLine extends java.lang.Object implements ShpData
+public class ShpPolyLine implements ShpData
 {
   protected JPolyLine[] p;
   private ESRILayer parent = null;

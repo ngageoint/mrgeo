@@ -23,53 +23,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("unchecked")
 public class Find
 {
-final public static String CRLF = "\r\n";
+private final static String CRLF = "\r\n";
 
-public static void main(String[] args)
-{
-  try
-  {
-    switch (args.length)
-    {
-    case 3:
-    {
-      boolean dirs = false;
-      if (args[2].equalsIgnoreCase("Y"))
-        dirs = true;
-      PrintWriter writer = null;
-      if (!args[1].equalsIgnoreCase("null"))
-        writer = new PrintWriter(new FileOutputStream(args[1]));
-      Find f = new Find();
-      f.search(new File(args[0]), writer, dirs, null);
-      break;
-    }
-    case 4:
-    {
-      boolean dirs = false;
-      if (args[2].equalsIgnoreCase("Y"))
-        dirs = true;
-      PrintWriter writer = null;
-      if (!args[1].equalsIgnoreCase("null"))
-        writer = new PrintWriter(new FileOutputStream(args[1]));
-      Find f = new Find();
-      f.search(new File(args[0]), writer, dirs, args[3]);
-      break;
-    }
-    default:
-    {
-      System.out.println("USAGE: FIND <dir> <out> <Y|N> {regex}");
-      System.exit(1);
-    }
-    }
-  }
-  catch (Exception e)
-  {
-    e.printStackTrace();
-  }
-}
 
 @SuppressWarnings("rawtypes")
 private List list = null;
@@ -125,17 +82,6 @@ private void searchInternal(File dir, boolean dirs, String regex, boolean delete
       }
     }
   }
-}
-
-@SuppressWarnings("rawtypes")
-private synchronized List search(File dir, PrintWriter writer, boolean dirs, String regex)
-    throws Exception
-{
-  if (!dir.isDirectory())
-    throw new Exception("'" + dir.getCanonicalPath() + "' not a directory.");
-  list = new ArrayList();
-  searchInternal(dir, writer, dirs, regex);
-  return list;
 }
 
 private synchronized void searchInternal(File dir, PrintWriter writer, boolean dirs, String regex)

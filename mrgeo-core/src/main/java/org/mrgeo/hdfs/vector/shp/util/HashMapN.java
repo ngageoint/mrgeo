@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-public class HashMapN extends HashMapV
+class HashMapN extends HashMapV
 {
 public static final int RELATION_ANCESTOR = 2;
 public static final int RELATION_CHILD = 1;
@@ -83,52 +83,6 @@ public static String getRelationEnum(int relation)
   }
 }
 
-public static void main(String[] args)
-{
-  HashMapN map = new HashMapN();
-
-  map.put(ObjectUtils.pack("dog", "cat", "horse", "mule"), 10);
-  map.put(ObjectUtils.pack("dog", "toad"), 19);
-  map.put(ObjectUtils.pack("dog", "cat"), 11);
-  map.put(ObjectUtils.pack("dog", "cat", "donkey", "rat", "cat"), 20);
-  map.put(ObjectUtils.pack("mule", "rat", "pig", "frog"), 13);
-  map.put(ObjectUtils.pack("mule", "mole", "piglet"), 16);
-  map.put(ObjectUtils.pack("mule", "mole", "tiger"), 16);
-  map.put(ObjectUtils.pack("hawk"), 15);
-
-  System.out.println("Traversal:");
-  System.out.println();
-
-  map.debug();
-
-  System.out.println();
-  System.out.println("Reverse Traversal:");
-  System.out.println();
-
-  HashMapNAdapter adapter = new HashMapNAdapter()
-  {
-    @Override
-    public void reverseTraversed(HashMapV hm, Object[] key)
-    {
-      String padding = StringUtils.pad((key.length + 1) * 4 - 4, ' ') + "|-";
-      System.out.println(padding + key[key.length - 1] + " [" + hm.getValue() + "]");
-    }
-
-    @Override
-    public void reverseTraversedRoot(HashMapV hm)
-    {
-      String padding = StringUtils.pad(0 * 4 - 4, ' ') + "|-";
-      System.out.println(padding + "<ROOT>" + " [" + hm.getValue() + "]");
-    }
-  };
-
-  map.addListener(adapter);
-  map.reverseTraverse();
-  map.removeListener(adapter);
-
-  System.out.println();
-  System.out.println("Done.");
-}
 
 private int level;
 @SuppressWarnings("rawtypes")

@@ -16,11 +16,7 @@
 
 package org.mrgeo.hdfs.vector.shp.util;
 
-import java.io.*;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.InflaterInputStream;
-
-public class ObjectUtils extends java.lang.Object
+class ObjectUtils
 {
 
 public static String debug(Object[] key)
@@ -37,29 +33,6 @@ public static String debug(Object[] key)
   }
   buffer.append(key[key.length - 1]);
   return buffer.toString();
-}
-
-public static void main(String[] args)
-{
-  try
-  {
-    if (args.length < 1)
-    {
-      System.out.println("USAGE: ObjectUtils <objectfile> {compressed}");
-      System.exit(1);
-    }
-    String file = args[0];
-    boolean compressed = false;
-    if (args.length == 2)
-      compressed = Boolean.parseBoolean(args[1]);
-    readObjectFile(file, compressed);
-    System.out.println("OK.");
-  }
-  catch (Exception e)
-  {
-    System.out.println("ERROR!");
-    e.printStackTrace();
-  }
 }
 
 public static Object[] pack(Object obj1)
@@ -107,58 +80,4 @@ public static Object[] pack(Object obj1, Object obj2, Object obj3, Object obj4, 
   return p;
 }
 
-public static Serializable readObjectFile(String fileName, boolean compressed) throws IOException
-{
-  Serializable obj = null;
-
-  FileInputStream fis = new FileInputStream(fileName);
-  BufferedInputStream bis = null;
-  InflaterInputStream iis = null;
-  if (compressed)
-  {
-    iis = new InflaterInputStream(fis);
-    bis = new BufferedInputStream(iis);
-  }
-  else
-  {
-    bis = new BufferedInputStream(fis);
-  }
-  try (ObjectInputStream ois = new ObjectInputStream(bis))
-  {
-    obj = (Serializable) ois.readObject();
-  }
-  catch (ClassNotFoundException e)
-  {
-    throw new IOException();
-  }
-
-
-  return obj;
-}
-
-public static void writeObjectFile(Serializable obj, String fileName, boolean compress)
-    throws IOException
-{
-  FileOutputStream fos = new FileOutputStream(fileName);
-  BufferedOutputStream bos = null;
-  DeflaterOutputStream dos = null;
-  if (compress)
-  {
-    dos = new DeflaterOutputStream(fos);
-    bos = new BufferedOutputStream(dos);
-  }
-  else
-  {
-    bos = new BufferedOutputStream(fos);
-  }
-  try (ObjectOutputStream oos = new ObjectOutputStream(bos))
-  {
-    oos.writeObject(obj);
-  }
-
-  if (dos != null)
-    dos.close();
-  bos.close();
-  fos.close();
-}
 }

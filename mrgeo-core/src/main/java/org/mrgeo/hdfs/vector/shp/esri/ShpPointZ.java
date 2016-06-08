@@ -23,7 +23,7 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPointZ extends java.lang.Object implements ShpData
+public class ShpPointZ implements ShpData
 {
   protected JPointZ[] p;
   private ESRILayer parent = null;

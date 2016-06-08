@@ -29,7 +29,7 @@ import java.io.RandomAccessFile;
  * Could use some refactoring.
  * 
  */
-public class Header extends java.lang.Object
+public class Header
 {
   protected JExtent extent;
   // shape types

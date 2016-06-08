@@ -27,7 +27,7 @@ import org.apache.spark.Logging
 import org.apache.spark.deploy.yarn.YarnSparkHadoopUtil
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.utils.{FileUtils, HadoopUtils, Memory, SparkUtils}
+import org.mrgeo.utils.{FileUtils, HadoopUtils, SparkUtils}
 
 import scala.collection.JavaConversions.{asScalaSet, _}
 import scala.collection.mutable.ArrayBuffer
@@ -372,7 +372,7 @@ class JobArguments() extends Logging {
     }
   }
 
-  def loadYarnSettings() = {
+  def loadYarnSettings():Unit = {
 
     val res = calculateYarnResources()
     val sparkConf = SparkUtils.getConfiguration

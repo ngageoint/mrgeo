@@ -182,7 +182,7 @@ class MrGeoTests(TestCase):
         java_import(jvm, "org.mrgeo.utils.HadoopUtils")
         java_import(jvm, "org.apache.hadoop.conf.Configuration")
         java_import(jvm, "org.apache.hadoop.fs.Path")
-        java_import(jvm, "org.mrgeo.utils.LoggingUtils")
+        java_import(jvm, "org.mrgeo.utils.logging.LoggingUtils")
         java_import(jvm, "org.mrgeo.data.DataProviderFactory")
         java_import(jvm, "org.mrgeo.data.vector.VectorDataProvider")
         java_import(jvm, "org.mrgeo.data.vector.VectorReader")

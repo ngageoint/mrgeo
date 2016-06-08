@@ -16,6 +16,7 @@
 
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -44,6 +45,7 @@ import java.util.UUID;
 /**
  * 
  */
+@SuppressFBWarnings(value = "PREDICTABLE_RANDOM", justification = "Just used for tmp filename generation")
 public class HadoopVectorUtils
 {
   private static final Logger log = LoggerFactory.getLogger(HadoopVectorUtils.class);

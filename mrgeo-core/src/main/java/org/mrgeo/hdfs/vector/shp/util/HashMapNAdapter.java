@@ -16,7 +16,7 @@
 
 package org.mrgeo.hdfs.vector.shp.util;
 
-public class HashMapNAdapter implements HashMapNListener
+class HashMapNAdapter implements HashMapNListener
 {
 
   public HashMapNAdapter()

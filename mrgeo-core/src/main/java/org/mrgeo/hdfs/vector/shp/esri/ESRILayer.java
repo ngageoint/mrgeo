@@ -38,7 +38,7 @@ import java.io.*;
  * This class was ported from the legacy Orion code and has no existing unit
  * tests so it should be questioned if you experience problems.
  */
-public class ESRILayer extends java.lang.Object
+public class ESRILayer
 {
   public static String getBaseName(String fileName)
   {

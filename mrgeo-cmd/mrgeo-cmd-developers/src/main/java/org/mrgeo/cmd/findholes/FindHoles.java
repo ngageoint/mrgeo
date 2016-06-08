@@ -22,7 +22,7 @@ import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.findholes.mapreduce.FindHolesDriver;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
+import org.mrgeo.utils.logging.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

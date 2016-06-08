@@ -25,26 +25,18 @@ import org.opencv.core.Core
 /**
   * Created by tim.tisler on 3/2/16.
   */
-object OpenCVUtils extends Logging {
+object OpenCVUtils {
 
-  private var initialized = false
+  // Monkeypatch the system library path to use the additional paths (for loading libraries)
+  MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, "").
+      split(File.pathSeparator).foreach(path => {
+    ClassLoaderUtil.addLibraryPath(path)
+  })
 
-  if (!initialized) {
-    initialized = true
-    initializeOpenCV()
-  }
+  System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
 
   // empty method to force static initializer
   def register() = {}
 
-  private def initializeOpenCV() = {
-    // Monkeypatch the system library path to use the additional paths (for loading libraries)
-    MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, "").
-        split(File.pathSeparator).foreach(path => {
-      ClassLoaderUtil.addLibraryPath(path)
-    })
-
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
-  }
 
 }

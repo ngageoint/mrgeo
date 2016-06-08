@@ -24,7 +24,7 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPolygon extends java.lang.Object implements ShpData
+public class ShpPolygon implements ShpData
 {
   protected JPolygon[] p;
   private ESRILayer parent = null;

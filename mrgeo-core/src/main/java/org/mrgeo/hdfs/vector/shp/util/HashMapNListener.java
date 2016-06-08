@@ -16,7 +16,7 @@
 
 package org.mrgeo.hdfs.vector.shp.util;
 
-public interface HashMapNListener
+interface HashMapNListener
 {
   void added(HashMapV map, Object value);
 
