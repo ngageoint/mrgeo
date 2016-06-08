@@ -36,6 +36,7 @@ import scala.language.existentials
 import scala.reflect.runtime.universe._
 
 @SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE", "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "not really errors, scan flags them in one case, but not another")
+@SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "decendants() - Filenames come from classpath")
 object MapOpFactory extends Logging {
   val functions = mutable.HashMap.empty[String, MapOpRegistrar]
 
@@ -212,8 +213,6 @@ object MapOpFactory extends Logging {
   }
 
   private def decendants(clazz: Class[_]) = {
-
-
     // get all the URLs for this classpath, filter files by "mrgeo" in development mode, then strip .so files
     // in spark, the main jar is renamed "__app__.jar" (Client.APP_JAR), so we need to include that as well
     val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {

@@ -16,6 +16,7 @@
 
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -63,6 +64,7 @@ public class DependencyLoader
     return deps;
   }
 
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for addinj to HDFS classpath")
   public static Set<String> copyDependencies(final Set<String> localDependencies, Configuration conf) throws IOException
   {
     if (conf == null)
@@ -194,6 +196,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     return deps;
   }
 
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
   private static Set<File> findFilesInClasspath(String base) throws IOException
   {
     Set<File> files = new HashSet<File>();
@@ -326,6 +329,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     return dep.artifact + "-" + dep.version + (dep.classifier == null ? "" : "-" + dep.classifier) + "." + dep.type;
   }
 
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
   private static Set<File> findJarsInClasspath(final Set<String> jars, boolean recurseDirectories) throws IOException
   {
     Set<File> paths = new HashSet<File>();
@@ -493,59 +497,60 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     }
   }
 
-  private static void moveFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
-  {
-    File f = new File(base);
-    if (f.exists())
-    {
-      if (f.isDirectory())
-      {
-        File[] files = f.listFiles();
-        if (files != null)
-        {
-          for (File file : files)
-          {
-            moveFilesToClassPath(conf, existing, fs, hdfsBase, file.getCanonicalPath());
-          }
-        }
-      }
-      else
-      {
-        if (f.getName().endsWith(".jar"))
-        {
-          moveFileToClasspath(conf, existing, fs, hdfsBase, f);
-        }
-      }
-    }
-  }
+//  private static void moveFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
+//  {
+//    File f = new File(base);
+//    if (f.exists())
+//    {
+//      if (f.isDirectory())
+//      {
+//        File[] files = f.listFiles();
+//        if (files != null)
+//        {
+//          for (File file : files)
+//          {
+//            moveFilesToClassPath(conf, existing, fs, hdfsBase, file.getCanonicalPath());
+//          }
+//        }
+//      }
+//      else
+//      {
+//        if (f.getName().endsWith(".jar"))
+//        {
+//          moveFileToClasspath(conf, existing, fs, hdfsBase, f);
+//        }
+//      }
+//    }
+//  }
+//
+//  private static void moveFileToClasspath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, File file) throws IOException
+//  {
+//    Path hdfsPath = new Path(hdfsBase, file.getName());
+//    if (!existing.contains(hdfsPath.toString()))
+//    {
+//      if (fs.exists(hdfsPath))
+//      {
+//        // check the timestamp and exit if the one in hdfs is "newer"
+//        FileStatus status = fs.getFileStatus(hdfsPath);
+//
+//        if (file.lastModified() <= status.getModificationTime())
+//        {
+//          log.debug(file.getPath() + " up to date");
+//
+//          existing.add(hdfsPath.toString());
+//          return;
+//        }
+//      }
+//
+//      // copy the file...
+//      log.debug("Copying " + file.getPath() + " to HDFS for distribution");
+//
+//      fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
+//      existing.add(hdfsPath.toString());
+//    }
+//  }
 
-  private static void moveFileToClasspath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, File file) throws IOException
-  {
-    Path hdfsPath = new Path(hdfsBase, file.getName());
-    if (!existing.contains(hdfsPath.toString()))
-    {
-      if (fs.exists(hdfsPath))
-      {
-        // check the timestamp and exit if the one in hdfs is "newer"
-        FileStatus status = fs.getFileStatus(hdfsPath);
-
-        if (file.lastModified() <= status.getModificationTime())
-        {
-          log.debug(file.getPath() + " up to date");
-
-          existing.add(hdfsPath.toString());
-          return;
-        }
-      }
-
-      // copy the file...
-      log.debug("Copying " + file.getPath() + " to HDFS for distribution");
-
-      fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
-      existing.add(hdfsPath.toString());
-    }
-  }
-
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
   private static void addFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
   {
     File f = new File(base);
@@ -721,6 +726,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     return deps;
   }
 
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
   private static Set<Dependency> loadDependenciesFromJar(final String jarname) throws IOException
   {
     try

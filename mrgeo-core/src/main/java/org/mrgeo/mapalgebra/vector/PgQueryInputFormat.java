@@ -17,6 +17,7 @@
 package org.mrgeo.mapalgebra.vector;
 
 import com.vividsolutions.jts.io.WKTReader;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -153,6 +154,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
   return result;
 }
 
+@SuppressFBWarnings(value = {"SQL_INJECTION_JDBC", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"}, justification = "This is how PGQuery is intended to work.  It is an open-ended query on a database we have no idea what it is")
 public static ResultSet loadResultSet(Configuration conf) throws IOException, SQLException
 {
   if (conf.get("mapred.input.dir") != null)

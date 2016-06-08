@@ -21,6 +21,7 @@ import java.net.URL
 import java.util
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.util.ClassUtil
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
@@ -95,6 +96,7 @@ object MrGeoDriver extends Logging {
 
 }
 
+@SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "addYarnClasses() - Using File() as a shortcut to create a URI")
 abstract class MrGeoDriver extends Logging {
 
   def setup(job: JobArguments): Boolean

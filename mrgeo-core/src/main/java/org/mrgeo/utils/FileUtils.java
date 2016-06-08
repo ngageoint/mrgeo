@@ -17,6 +17,7 @@
 package org.mrgeo.utils;
 
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.core.MrGeoConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,6 +121,7 @@ public static void deleteDir(final File dir, final Boolean recursive) throws IOE
 }
 
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
 public static String resolveURI(final String path)
 {
   try
@@ -142,6 +144,7 @@ public static String resolveURI(final String path)
   return path;
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
 public static String resolveURL(final String path)
 {
   try
@@ -156,10 +159,7 @@ public static String resolveURL(final String path)
     }
     return uri.toURL().toString();
   }
-  catch (URISyntaxException e)
-  {
-  }
-  catch (MalformedURLException e)
+  catch (URISyntaxException | MalformedURLException ignored)
   {
   }
 
