@@ -38,6 +38,7 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils
 @SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION"), justification = "PartitionType is Enumeration")
 class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) extends MrsImageOutputFormatProvider(context) {
 
+  @SerialVersionUID(1L)
   private[image] object PartitionType extends Enumeration {
     val ROW, BLOCKSIZE = Value
   }

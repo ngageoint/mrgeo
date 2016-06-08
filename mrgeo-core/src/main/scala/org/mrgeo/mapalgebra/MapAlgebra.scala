@@ -35,6 +35,7 @@ import org.mrgeo.utils.StringUtils
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
+@SerialVersionUID(1L)
 @SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
 @SuppressFBWarnings(value=Array("UUF_UNUSED_FIELD"), justification = "Scala constant")
 object MapAlgebra extends MrGeoDriver {

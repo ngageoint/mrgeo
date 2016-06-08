@@ -106,7 +106,6 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
   override def writeExternal(out: ObjectOutput): Unit = {}
 }
 
-
 class BuildPyramid extends MrGeoJob with Externalizable {
 
   var pyramidName:String = null
@@ -147,7 +146,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     true
   }
 
-  override def execute(@transient context: SparkContext): Boolean = {
+  override def execute(context: SparkContext): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
@@ -261,6 +260,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
   // this method was stolen from the old Hadoop M/R version of BuildPyramid.  I really haven't looked much
   // into it to see if it really is still OK or could be improved
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "tileIdOrdering() - false positivie")
   private def buildlevellocal(provider:MrsImageDataProvider, inputLevel: Int): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {

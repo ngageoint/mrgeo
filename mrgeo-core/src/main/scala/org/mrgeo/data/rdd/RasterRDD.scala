@@ -20,6 +20,7 @@ import org.apache.spark.rdd.RDD
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 
+@SerialVersionUID(1L)
 object RasterRDD {
   def apply(parent: MrGeoRDD[TileIdWritable, RasterWritable]): RasterRDD = {
     new RasterRDD(parent)
@@ -29,6 +30,7 @@ object RasterRDD {
   }
 }
 
+@SerialVersionUID(1L)
 class RasterRDD(parent: RDD[(TileIdWritable, RasterWritable)]) extends MrGeoRDD[TileIdWritable, RasterWritable](parent) {
 
 }

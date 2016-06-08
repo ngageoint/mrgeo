@@ -108,11 +108,20 @@ public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
     e.printStackTrace();
     throw new IOException("Could not get data from ResultSet.");
   }
-  ResultSetInputSplit giSplit = (ResultSetInputSplit) split;
 
-  PgQueryRecordReader reader = new PgQueryRecordReader(rs, giSplit.getStart(), giSplit.getEnd());
-  reader.initialize(giSplit, context);
-  return reader;
+  if (split instanceof ResultSetInputSplit)
+  {
+    ResultSetInputSplit giSplit = (ResultSetInputSplit) split;
+
+    PgQueryRecordReader reader = new PgQueryRecordReader(rs, giSplit.getStart(), giSplit.getEnd());
+    reader.initialize(giSplit, context);
+    return reader;
+  }
+  else
+  {
+    throw new IOException("input split is not a ResultSetInputSplit");
+  }
+
 }
 
 @Override
@@ -154,7 +163,9 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
   return result;
 }
 
-@SuppressFBWarnings(value = {"SQL_INJECTION_JDBC", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"}, justification = "This is how PGQuery is intended to work.  It is an open-ended query on a database we have no idea what it is")
+@SuppressFBWarnings(value = {"SQL_INJECTION_JDBC", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING",
+    "OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE"}, justification = "1 & 2. This is how PGQuery is intended to work.  It is an open-ended query on a database we have no idea what it is," +
+        "3. rs is closed outside this method. ")
 public static ResultSet loadResultSet(Configuration conf) throws IOException, SQLException
 {
   if (conf.get("mapred.input.dir") != null)
@@ -260,62 +271,69 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
   @Override
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException
   {
-
-    Configuration conf = context.getConfiguration();
-    ResultSetInputSplit ris = (ResultSetInputSplit) split;
-
-    if (rs == null)
+    if (split instanceof ResultSetInputSplit)
     {
-      try
+      Configuration conf = context.getConfiguration();
+      ResultSetInputSplit ris = (ResultSetInputSplit) split;
+
+      if (rs == null)
       {
-        this.rs = loadResultSet(conf);
-      }
-      catch (SQLException e1)
-      {
-        e1.printStackTrace();
-        throw new IOException(e1);
-      }
-    }
-
-    if (rs == null)
-    {
-      throw new IOException("No results");
-    }
-
-    this.start = ris.startIndex;
-    this.end = ris.endIndex;
-    currentIndex = start - 1;
-
-    attributeNames = new ArrayList<String>();
-
-    try
-    {
-      rsMeta = rs.getMetaData();
-      numCols = rsMeta.getColumnCount();
-
-      //get metadata information and set schema
-      try
-      {
-        rs.first();
-        for (int i = 0; i < numCols; i++)
+        try
         {
-          String colName = rsMeta.getColumnName(i+1);
-          attributeNames.add(colName);
+          this.rs = loadResultSet(conf);
         }
+        catch (SQLException e1)
+        {
+          e1.printStackTrace();
+          throw new IOException(e1);
+        }
+      }
 
-        rs.beforeFirst(); //move cursor to the beginning of the row
+      if (rs == null)
+      {
+        throw new IOException("No results");
+      }
+
+      this.start = ris.startIndex;
+      this.end = ris.endIndex;
+      currentIndex = start - 1;
+
+      attributeNames = new ArrayList<String>();
+
+      try
+      {
+        rsMeta = rs.getMetaData();
+        numCols = rsMeta.getColumnCount();
+
+        //get metadata information and set schema
+        try
+        {
+          rs.first();
+          for (int i = 0; i < numCols; i++)
+          {
+            String colName = rsMeta.getColumnName(i + 1);
+            attributeNames.add(colName);
+          }
+
+          rs.beforeFirst(); //move cursor to the beginning of the row
+        }
+        catch (SQLException e)
+        {
+          e.printStackTrace();
+          throw new IOException("Could not get data from ResultSet.");
+        }
       }
       catch (SQLException e)
       {
         e.printStackTrace();
-        throw new IOException("Could not get data from ResultSet.");
+        throw new IOException("Could now get data from ResultSet.");
       }
     }
-    catch (SQLException e)
+    else
     {
-      e.printStackTrace();
-      throw new IOException("Could now get data from ResultSet.");
+      throw new IOException("input split is not a ResultSetInputSplit");
     }
+
   }
 
   @Override

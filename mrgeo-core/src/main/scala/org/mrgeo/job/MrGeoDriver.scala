@@ -18,6 +18,7 @@ package org.mrgeo.job
 
 import java.io.{File, IOException}
 import java.net.URL
+import java.security.{AccessController, PrivilegedAction}
 import java.util
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
@@ -101,7 +102,6 @@ abstract class MrGeoDriver extends Logging {
 
   def setup(job: JobArguments): Boolean
 
-  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   def run(name:String, driver:String = this.getClass.getName, args:Map[String, String] = Map[String, String](),
       hadoopConf:Configuration, additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None) = {
     val job = new JobArguments()
@@ -129,54 +129,62 @@ abstract class MrGeoDriver extends Logging {
       new URL(FileUtils.resolveURL(jar))
     })
 
-    val cl = new URLClassLoader(urls.toSeq, parentLoader)
+    AccessController.doPrivileged(new PrivilegedAction[Any] {
+      @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE","RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "Scala generated code")
+      override def run(): Boolean = {
+        val cl = new URLClassLoader(urls.toSeq, parentLoader)
 
-    setupDriver(job, cl)
+        setupDriver(job, cl)
 
+        setup(job)
 
-    setup(job)
+        if (HadoopUtils.isLocal(hadoopConf)) {
+          if (!job.isDebug) {
+            job.useLocal()
+          }
+          else {
+            job.useDebug()
+          }
+        }
+        else {
+          val cluster = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_CLUSTER, "local")
 
-    if (HadoopUtils.isLocal(hadoopConf)) {
-      if (!job.isDebug) {
-        job.useLocal()
-      }
-      else {
-        job.useDebug()
-      }
-    }
-    else {
-      val cluster = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_CLUSTER, "local")
+          cluster.toLowerCase match {
+          case "yarn" =>
+            job.useYarn()
+            job.loadYarnSettings()
+            addYarnClasses(cl)
 
-      cluster.toLowerCase match {
-      case "yarn" =>
-        job.useYarn()
-        job.loadYarnSettings()
-        addYarnClasses(cl)
+          case "spark" =>
+            val conf = MrGeoDriver.prepareJob(job)
+            val master = conf.get("spark.master", "spark://localhost:7077")
+            job.useSpark(master)
+          case _ => job.useLocal()
+          }
+        }
 
-      case "spark" =>
         val conf = MrGeoDriver.prepareJob(job)
-        val master = conf.get("spark.master", "spark://localhost:7077")
-        job.useSpark(master)
-      case _ => job.useLocal()
+
+        // yarn needs to be run in its own client code, so we'll set up it up separately
+        if (job.isYarn) {
+
+          val jobclass = cl.loadClass(classOf[MrGeoYarnDriver].getCanonicalName)
+          val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoYarnDriver]
+
+          jobinstance.run(job, cl, conf)
+        }
+        else {
+          val jobclass = cl.loadClass(job.driverClass)
+          val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoJob]
+
+          jobinstance.run(job, conf)
+        }
+
+        true
       }
-    }
 
-    val conf = MrGeoDriver.prepareJob(job)
+    })
 
-    // yarn needs to be run in its own client code, so we'll set up it up separately
-    if (job.isYarn) {
-
-      val jobclass = cl.loadClass(classOf[MrGeoYarnDriver].getCanonicalName)
-      val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoYarnDriver]
-
-      jobinstance.run(job, cl, conf)
-    }
-    else {
-      val jobclass = cl.loadClass(job.driverClass)
-      val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoJob]
-
-      jobinstance.run(job, conf)
-    }
   }
 
   private def setupDriver(job:JobArguments, cl: URLClassLoader) = {
