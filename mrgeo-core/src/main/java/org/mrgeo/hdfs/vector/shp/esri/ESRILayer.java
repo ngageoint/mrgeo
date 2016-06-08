@@ -72,6 +72,7 @@ public class ESRILayer
    * @throws IOException
    * @throws FormatException
    */
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only build valid shp file names")
   public static ESRILayer open(String fileName) throws FormatException, IOException, DbaseException
   {
     String fileBase = getBaseName(fileName);

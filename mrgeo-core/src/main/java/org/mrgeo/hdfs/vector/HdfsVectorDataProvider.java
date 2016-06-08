@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.vector;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -313,6 +314,7 @@ private static Path resolveName(final Configuration conf, final String input,
   throw new IOException("Invalid image: " + input);
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
 private static Path resolveNameToPath(final Configuration conf, final String input,
     final ProviderProperties providerProperties, final boolean mustExist) throws IOException
 {

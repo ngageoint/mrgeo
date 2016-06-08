@@ -67,7 +67,8 @@ public class HdfsMrsImageReader extends MrsImageReader
   private boolean canBeCached = true;
 
 
-  public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "check will only be used for reading valid MrsPyramids")
+public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     MrsPyramidReaderContext context) throws IOException
   {
     String path = new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString();
