@@ -27,15 +27,15 @@ import org.gdal.gdal.gdal
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.image.{ImageOutputFormatContext, MrsPyramidWriterContext, MrsImageOutputFormatProvider, MrsImageDataProvider}
+import org.mrgeo.data.image.MrsImageDataProvider
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
-import org.mrgeo.hdfs.partitioners.BlockSizePartitioner
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -80,7 +80,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     val in = context.parallelize(inputs, inputs.length)
 
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
-      IngestImage.makeTiles(input, zoom, tilesize, categorical)
+      IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
     }))
 
     val tiles = rawtiles.reduceByKey((r1, r2) => {
@@ -94,9 +94,20 @@ object IngestImage extends MrGeoDriver with Externalizable {
     val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
 
 
-//    // repartition, because chances are the RDD only has 1 partition (ingest a single file)
-//    val partitioned = tiles.repartition(meta.getTileBounds(zoom).getHeight.toInt)
-    (RasterRDD(tiles), meta)
+    // repartition, because chances are the RDD only has 1 partition (ingest a single file)
+    val numExecutors = math.max(context.getConf.getInt("spark.executor.instances", 0),
+      math.max(tiles.partitions.length, meta.getTileBounds(zoom).getHeight.toInt))
+
+    val repartitioned = if (numExecutors > 0) {
+      logInfo("Repartitioning to " + numExecutors + " partitions")
+      tiles.repartition(numExecutors)
+    }
+    else {
+      //      logInfo("No need to repartition")
+      tiles
+    }
+
+    (RasterRDD(repartitioned), meta)
   }
 
 
@@ -110,7 +121,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     args += Inputs -> input
     args += Output -> output
     if (bounds != null) {
-      args += Bounds -> bounds.toDelimitedString
+      args += Bounds -> bounds.toCommaString
     }
     args += Zoom -> zoomlevel.toString
     args += Tilesize -> tilesize.toString
@@ -170,7 +181,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     )
 
     inputs.foreach(input => {
-      val tiles = IngestImage.makeTiles(input, zoomlevel, tilesize, categorical)
+      val tiles = IngestImage.makeTiles(input, zoomlevel, tilesize, categorical, nodata)
 
       var cnt = 0
       tiles.foreach(kv => {
@@ -198,7 +209,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   private def makeTiles(image: String, zoom: Int, tilesize: Int,
-      categorical: Boolean): TraversableOnce[(TileIdWritable, RasterWritable)] = {
+      categorical: Boolean, nodata: Array[Number]): TraversableOnce[(TileIdWritable, RasterWritable)] = {
 
     val result = ListBuffer[(TileIdWritable, RasterWritable)]()
 
@@ -214,7 +225,13 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
         val bands = src.GetRasterCount()
 
-        val imageBounds = GDALUtils.getBounds(src).getTMSBounds
+        // force the nodata values...
+        for (i <- 1 to bands) {
+          val band = src.GetRasterBand(i)
+          band.SetNoDataValue(nodata(i - 1).doubleValue())
+        }
+
+        val imageBounds = GDALUtils.getBounds(src)
         val tiles = TMSUtils.boundsToTile(imageBounds, zoom, tilesize)
         val tileBounds = TMSUtils.tileBounds(imageBounds, zoom, tilesize)
 
@@ -253,20 +270,26 @@ object IngestImage extends MrGeoDriver with Externalizable {
         scaled.SetProjection(GDALUtils.EPSG4326)
 
 
-        var resample: Int = gdalconstConstants.GRA_Bilinear
-        if (categorical) {
-          // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
-          // in which case we will use GRA_NearestNeighbour
-          try {
-            val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
-            if (mode != null) {
-              resample = mode.getInt()
+        val resample =
+          if (categorical) {
+            // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
+            // in which case we will use GRA_NearestNeighbour
+            try {
+              val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
+              if (mode != null) {
+                mode.getInt()
+              }
+              else {
+                gdalconstConstants.GRA_NearestNeighbour
+              }
+            }
+            catch {
+              case e: Exception => gdalconstConstants.GRA_NearestNeighbour
             }
           }
-          catch {
-            case e: Exception => resample = gdalconstConstants.GRA_NearestNeighbour
+          else {
+            gdalconstConstants.GRA_Bilinear
           }
-        }
 
         gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)
 
@@ -341,7 +364,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     }
     catch {
       case ioe: IOException =>
-       ioe.printStackTrace()  // no op, this can happen in "skip preprocessing" mode
+        ioe.printStackTrace()  // no op, this can happen in "skip preprocessing" mode
     }
 
     if (log.isDebugEnabled) {
@@ -352,128 +375,128 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
 
 
-@throws(classOf[Exception])
-def quickIngest(input: InputStream, output: String, categorical: Boolean, config: Configuration,
-overridenodata: Boolean, protectionLevel: String, nodata: Number): Boolean = {
-//    var conf: Configuration = config
-//    if (conf == null) {
-//      conf = HadoopUtils.createConfiguration
-//    }
-//    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf)
-//    val useProtectionLevel: String = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
-//    val metadata: MrsImagePyramidMetadata = GeotoolsRasterUtils
-//        .calculateMetaData(input, output, false, useProtectionLevel, categorical)
-//    if (overridenodata) {
-//      val defaults: Array[Double] = metadata.getDefaultValues
-//      for (i <- defaults.indices) {
-//        defaults(i) = nodata.doubleValue
-//      }
-//      metadata.setDefaultValues(defaults)
-//    }
-//
-//    val writer: MrsImageWriter = dp.getMrsTileWriter(metadata.getMaxZoomLevel)
-//    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImageFromStream(input)
-//    log.info("  reading: " + input.toString)
-//    if (reader != null) {
-//      val geotoolsImage: GridCoverage2D = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326")
-//      val tilebounds: LongRectangle = GeotoolsRasterUtils
-//          .calculateTiles(reader, metadata.getTilesize, metadata.getMaxZoomLevel)
-//      val zoomlevel: Int = metadata.getMaxZoomLevel
-//      val tilesize: Int = metadata.getTilesize
-//      val defaults: Array[Double] = metadata.getDefaultValues
-//      log.info("    zoomlevel: " + zoomlevel)
-//      val extender: BorderExtender = new BorderExtenderConstant(defaults)
-//      val image: PlanarImage = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
-//        if (categorical) {
-//          Classification.Categorical
-//        }
-//        else {
-//          Classification.Continuous
-//        })
-//
-//      for (ty <- tilebounds.getMinY to tilebounds.getMaxY) {
-//        for (tx <- tilebounds.getMinX to tilebounds.getMaxX) {
-//
-//          val raster =
-//            ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX, tilebounds.getMaxY, tilesize, extender)
-//
-//          writer.append(new TileIdWritable(TMSUtils.tileid(tx, ty, zoomlevel)), raster)
-//        }
-//      }
-//
-//      writer.close()
-//      dp.getMetadataWriter.write(metadata)
-//    }
-true
-}
+  @throws(classOf[Exception])
+  def quickIngest(input: InputStream, output: String, categorical: Boolean, config: Configuration,
+      overridenodata: Boolean, protectionLevel: String, nodata: Number): Boolean = {
+    //    var conf: Configuration = config
+    //    if (conf == null) {
+    //      conf = HadoopUtils.createConfiguration
+    //    }
+    //    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf)
+    //    val useProtectionLevel: String = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
+    //    val metadata: MrsImagePyramidMetadata = GeotoolsRasterUtils
+    //        .calculateMetaData(input, output, false, useProtectionLevel, categorical)
+    //    if (overridenodata) {
+    //      val defaults: Array[Double] = metadata.getDefaultValues
+    //      for (i <- defaults.indices) {
+    //        defaults(i) = nodata.doubleValue
+    //      }
+    //      metadata.setDefaultValues(defaults)
+    //    }
+    //
+    //    val writer: MrsImageWriter = dp.getMrsTileWriter(metadata.getMaxZoomLevel)
+    //    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImageFromStream(input)
+    //    log.info("  reading: " + input.toString)
+    //    if (reader != null) {
+    //      val geotoolsImage: GridCoverage2D = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326")
+    //      val tilebounds: LongRectangle = GeotoolsRasterUtils
+    //          .calculateTiles(reader, metadata.getTilesize, metadata.getMaxZoomLevel)
+    //      val zoomlevel: Int = metadata.getMaxZoomLevel
+    //      val tilesize: Int = metadata.getTilesize
+    //      val defaults: Array[Double] = metadata.getDefaultValues
+    //      log.info("    zoomlevel: " + zoomlevel)
+    //      val extender: BorderExtender = new BorderExtenderConstant(defaults)
+    //      val image: PlanarImage = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
+    //        if (categorical) {
+    //          Classification.Categorical
+    //        }
+    //        else {
+    //          Classification.Continuous
+    //        })
+    //
+    //      for (ty <- tilebounds.getMinY to tilebounds.getMaxY) {
+    //        for (tx <- tilebounds.getMinX to tilebounds.getMaxX) {
+    //
+    //          val raster =
+    //            ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX, tilebounds.getMaxY, tilesize, extender)
+    //
+    //          writer.append(new TileIdWritable(TMSUtils.tileid(tx, ty, zoomlevel)), raster)
+    //        }
+    //      }
+    //
+    //      writer.close()
+    //      dp.getMetadataWriter.write(metadata)
+    //    }
+    true
+  }
 
-@throws(classOf[Exception])
-def quickIngest(input: String, output: String, categorical: Boolean, config: Configuration, overridenodata: Boolean,
-nodata: Number, tags: java.util.Map[String, String], protectionLevel: String,
-providerProperties: ProviderProperties): Boolean = {
-//    val provider: MrsImageDataProvider = DataProviderFactory
-//        .getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
-//    var conf: Configuration = config
-//    if (conf == null) {
-//      conf = HadoopUtils.createConfiguration
-//    }
-//    val useProtectionLevel: String = ProtectionLevelUtils.getAndValidateProtectionLevel(provider, protectionLevel)
-//    val metadata: MrsImagePyramidMetadata = GeotoolsRasterUtils
-//        .calculateMetaData(Array[String](input), output, false, useProtectionLevel, categorical, overridenodata)
-//    if (tags != null) {
-//      metadata.setTags(tags)
-//    }
-//    if (overridenodata) {
-//      val defaults: Array[Double] = metadata.getDefaultValues
-//      for (i <- defaults.indices) {
-//        defaults(i) = nodata.doubleValue
-//      }
-//      metadata.setDefaultValues(defaults)
-//    }
-//
-//    val writer: MrsImageWriter = provider.getMrsTileWriter(metadata.getMaxZoomLevel)
-//    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImage(input)
-//    log.info("  reading: " + input)
-//    if (reader != null) {
-//      val geotoolsImage: GridCoverage2D = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326")
-//      val tilebounds: LongRectangle = GeotoolsRasterUtils
-//          .calculateTiles(reader, metadata.getTilesize, metadata.getMaxZoomLevel)
-//      val zoomlevel: Int = metadata.getMaxZoomLevel
-//      val tilesize: Int = metadata.getTilesize
-//      val defaults: Array[Double] = metadata.getDefaultValues
-//      log.info("    zoomlevel: " + zoomlevel)
-//      val extender: BorderExtender = new BorderExtenderConstant(defaults)
-//      val image: PlanarImage = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
-//        if (categorical) {
-//          Classification.Categorical
-//        }
-//        else {
-//          Classification.Continuous
-//        })
-//      for (ty <- tilebounds.getMinY to tilebounds.getMaxY) {
-//        for (tx <- tilebounds.getMinX to tilebounds.getMaxX) {
-//
-//          val raster =
-//            ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX, tilebounds.getMaxY, tilesize, extender)
-//
-//          writer.append(new TileIdWritable(TMSUtils.tileid(tx, ty, zoomlevel)), raster)
-//        }
-//      }
-//      writer.close()
-//      provider.getMetadataWriter.write(metadata)
-//    }
-true
-}
+  @throws(classOf[Exception])
+  def quickIngest(input: String, output: String, categorical: Boolean, config: Configuration, overridenodata: Boolean,
+      nodata: Number, tags: java.util.Map[String, String], protectionLevel: String,
+      providerProperties: ProviderProperties): Boolean = {
+    //    val provider: MrsImageDataProvider = DataProviderFactory
+    //        .getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
+    //    var conf: Configuration = config
+    //    if (conf == null) {
+    //      conf = HadoopUtils.createConfiguration
+    //    }
+    //    val useProtectionLevel: String = ProtectionLevelUtils.getAndValidateProtectionLevel(provider, protectionLevel)
+    //    val metadata: MrsImagePyramidMetadata = GeotoolsRasterUtils
+    //        .calculateMetaData(Array[String](input), output, false, useProtectionLevel, categorical, overridenodata)
+    //    if (tags != null) {
+    //      metadata.setTags(tags)
+    //    }
+    //    if (overridenodata) {
+    //      val defaults: Array[Double] = metadata.getDefaultValues
+    //      for (i <- defaults.indices) {
+    //        defaults(i) = nodata.doubleValue
+    //      }
+    //      metadata.setDefaultValues(defaults)
+    //    }
+    //
+    //    val writer: MrsImageWriter = provider.getMrsTileWriter(metadata.getMaxZoomLevel)
+    //    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImage(input)
+    //    log.info("  reading: " + input)
+    //    if (reader != null) {
+    //      val geotoolsImage: GridCoverage2D = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326")
+    //      val tilebounds: LongRectangle = GeotoolsRasterUtils
+    //          .calculateTiles(reader, metadata.getTilesize, metadata.getMaxZoomLevel)
+    //      val zoomlevel: Int = metadata.getMaxZoomLevel
+    //      val tilesize: Int = metadata.getTilesize
+    //      val defaults: Array[Double] = metadata.getDefaultValues
+    //      log.info("    zoomlevel: " + zoomlevel)
+    //      val extender: BorderExtender = new BorderExtenderConstant(defaults)
+    //      val image: PlanarImage = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
+    //        if (categorical) {
+    //          Classification.Categorical
+    //        }
+    //        else {
+    //          Classification.Continuous
+    //        })
+    //      for (ty <- tilebounds.getMinY to tilebounds.getMaxY) {
+    //        for (tx <- tilebounds.getMinX to tilebounds.getMaxX) {
+    //
+    //          val raster =
+    //            ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX, tilebounds.getMaxY, tilesize, extender)
+    //
+    //          writer.append(new TileIdWritable(TMSUtils.tileid(tx, ty, zoomlevel)), raster)
+    //        }
+    //      }
+    //      writer.close()
+    //      provider.getMetadataWriter.write(metadata)
+    //    }
+    true
+  }
 
 
-override def readExternal(in: ObjectInput) {}
-override def writeExternal(out: ObjectOutput) {}
+  override def readExternal(in: ObjectInput) {}
+  override def writeExternal(out: ObjectOutput) {}
 
-override def setup(job: JobArguments): Boolean = {
-job.isMemoryIntensive = true
+  override def setup(job: JobArguments): Boolean = {
+    job.isMemoryIntensive = true
 
-true
-}
+    true
+  }
 }
 
 class IngestImage extends MrGeoJob with Externalizable {
@@ -512,11 +535,8 @@ class IngestImage extends MrGeoJob with Externalizable {
     output = job.getSetting(IngestImage.Output)
 
     val boundstr = job.getSetting(IngestImage.Bounds, null)
-    if (boundstr == null) {
-      bounds = new Bounds()
-    }
-    else {
-      bounds = Bounds.fromDelimitedString(boundstr)
+    if (boundstr != null) {
+      bounds = Bounds.fromCommaString(boundstr)
     }
 
     zoom = job.getSetting(IngestImage.Zoom).toInt

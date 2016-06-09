@@ -20,258 +20,255 @@ import java.awt.image.Raster
 import java.io._
 import java.text.DecimalFormat
 
-import org.apache.spark.SparkContext
+import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
 import org.mrgeo.image.MrsPyramidMetadata
-import org.mrgeo.utils.{LatLng, TMSUtils}
+import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.utils.tms.{Bounds, Pixel, TMSUtils, Tile}
+import org.mrgeo.utils.{LatLng, LoggingUtils}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-object LeastCostPathCalculator {
+object LeastCostPathCalculator extends Logging {
   private val LOG: Logger = LoggerFactory.getLogger(classOf[LeastCostPathCalculator])
 
   @throws(classOf[IOException])
-  def run(cdrdd: RasterRDD, cdMetadata: MrsPyramidMetadata, zoomLevel: Int,
-          destrdd: VectorRDD, sparkContext: SparkContext): VectorRDD = {
-    var lcp: LeastCostPathCalculator = null
-    lcp = new LeastCostPathCalculator(cdrdd, cdMetadata.getTilesize, zoomLevel,
-      destrdd, sparkContext)
-    lcp.run()
+  def run(costDist:RasterMapOp, destination:VectorRDD, context:SparkContext, zoom:Int = -1): VectorRDD = {
+
+    val meta = costDist.metadata() getOrElse
+        (throw new IOException("Can't load metadata! Ouch! " + costDist.getClass.getName))
+    val rdd = costDist.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + costDist.getClass.getName))
+
+    val localPersist = rdd.getStorageLevel == StorageLevel.NONE
+
+    if (localPersist) {
+      rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
+    }
+
+    val lcps = destination.collect.map(feature => {
+      val lcp = GeometryFactory.createLineString()
+
+      feature._2 match {
+      case pt:Point =>
+        val calculator = new LeastCostPathCalculator (pt, rdd, meta)
+
+        while (calculator.hasnext) {
+          lcp.addPoint (calculator.point)
+        }
+
+        val df: DecimalFormat = new DecimalFormat ("###.###")
+
+        if (lcp.getNumPoints == 0) {
+          lcp.addPoint(pt)
+          lcp.setAttribute ("COST_S", df.format (0.0) )
+          lcp.setAttribute ("DISTANCE_M", df.format (0.0) )
+          lcp.setAttribute ("MINSPEED_MPS", df.format (0.0) )
+          lcp.setAttribute ("MAXSPEED_MPS", df.format (0.0) )
+          lcp.setAttribute ("AVGSPEED_MPS", df.format (0.0) )
+        }
+        else {
+          lcp.setAttribute ("COST_S", df.format (calculator.totalcost) )
+          lcp.setAttribute ("DISTANCE_M", df.format (calculator.totaldist) )
+          lcp.setAttribute ("MINSPEED_MPS", df.format (calculator.minspeed) )
+          lcp.setAttribute ("MAXSPEED_MPS", df.format (calculator.maxspeed) )
+          lcp.setAttribute ("AVGSPEED_MPS", df.format (calculator.totaldist / calculator.totalcost) )
+        }
+
+        (feature._1, lcp.asInstanceOf[Geometry] )
+      case g:Geometry =>
+        throw new IOException("Expected a point to be passed to LeastCostPath, but instead got " + g)
+      }
+    })
+
+    if (localPersist) {
+      rdd.unpersist()
+    }
+
+    VectorRDD(context.parallelize(lcps))
   }
+
 }
 
-class LeastCostPathCalculator extends Externalizable
-{
-  private var cdrdd: RasterRDD = null
-  private var pointsrdd: VectorRDD = null
-  private var zoomLevel: Int = -1
-  private var tileSize: Int = -1
-  private var curRaster: Raster = null
-  private var curTile: TMSUtils.Tile = null
-  private var curTileBounds: TMSUtils.Bounds = null
-  private var resolution: Double = .0
-  private var curPixel: TMSUtils.Pixel = null
-  private var curValue: Double = 0.0
-  private var pathCost: Double = 0f
-  private var pathDistance: Double = 0f
-  private var df: DecimalFormat = new DecimalFormat("###.#")
-  private var pathMinSpeed: Double = 1000000f
-  private var pathMaxSpeed: Double = 0f
-  private var numPoints: Long = 0
-  private var numTiles: Int = 0
-  private val dx: Array[Short] = Array[Short](-1, 0, 1, 1, 1, 0, -1, -1)
-  private val dy: Array[Short] = Array[Short](-1, -1, -1, 0, 1, 1, 1, 0)
-  private var tilecache = collection.mutable.Map[Long,Raster]()
-  private var sparkContext: SparkContext = null
+private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyramidMetadata) extends Logging {
+  val zoom = meta.getMaxZoomLevel
+  val tilesize = meta.getTilesize
 
-  @throws(classOf[IOException])
-  def this(cdrdd: RasterRDD, tileSize: Int, zoomLevel: Int, destPoint: VectorRDD,
-           sparkContext: SparkContext) {
-    this()
-    this.cdrdd = cdrdd
-    this.tileSize = tileSize
-    this.zoomLevel = zoomLevel
-    this.pointsrdd = destPoint
-    this.sparkContext = sparkContext
+  private val pixelsize = (TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE).toFloat
+  private val pixelsizediag = Math.sqrt(2.0 * pixelsize * pixelsize).toFloat
+
+  private val CACHE_HALFWIDTH = 3
+
+  case class NeighborData(dx: Int, dy: Int, dist: Float)
+  val neighborData = Array[NeighborData](
+    new NeighborData(-1, -1, pixelsizediag), // UP_LEFT),
+    new NeighborData(0, -1, pixelsize),      // UP),
+    new NeighborData(1, -1, pixelsizediag),  // UP_RIGHT),
+    new NeighborData(-1, 0, pixelsize),      // LEFT),
+    new NeighborData(1, 0, pixelsize),       // RIGHT),
+    new NeighborData(-1, 1, pixelsizediag),  // DOWN_LEFT),
+    new NeighborData(0, 1, pixelsize),       // DOWN),
+    new NeighborData (1, 1, pixelsizediag)   // DOWN_RIGHT)
+  )
+
+  var cache = mutable.HashMap.empty[Long, Raster]
+
+
+  val maxPx = tilesize - 1
+
+  var tile = TMSUtils.latLonToTile(start.getY, start.getX, zoom, tilesize)
+  var pt = TMSUtils.latLonToTilePixelUL(start.getY, start.getX, tile.tx, tile.ty, zoom, tilesize)
+
+  var totalcost:Float = getcost(0, 0)
+  var totaldist:Float = 0.0f
+  var minspeed:Float = Float.MaxValue
+  var maxspeed:Float = 0
+
+  def hasnext:Boolean = {
+    var direction:Int = -1
+    val curcost = getcost(0, 0)
+    var mincost:Float = curcost
+
+    if (log.isDebugEnabled) {
+      logDebug("current point = " + pt + " with cost: " + curcost + " and dist: " + totaldist +
+          " minspeed: " + minspeed + " maxspeed: " + maxspeed)
+    }
+
+
+    var ndx = 0
+    while (ndx < neighborData.length) {
+      val neighbor = neighborData(ndx)
+
+      val cost = getcost(neighbor.dx, neighbor.dy)
+
+      if (cost < mincost) {
+        mincost = cost
+        direction = ndx
+      }
+
+      ndx += 1
+    }
+
+    if (direction < 0) {
+      return false
+    }
+
+    val neighbor = neighborData(direction)
+    val (newx, newy, newtile) = newpoint(neighbor.dx, neighbor.dy)
+
+    pt = new Pixel(newx, newy)
+    tile = newtile
+
+    val speed = neighbor.dist / (curcost - mincost)
+    if (speed < minspeed) {
+      minspeed = speed
+    }
+    if (speed > maxspeed) {
+      maxspeed = speed
+    }
+
+
+    totaldist += neighbor.dist
+
+    true
   }
 
-  @throws(classOf[IOException])
-  private def run(): VectorRDD =
-  {
-    try {
-      cdrdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
-      val destGeom = pointsrdd.first()._2
-      if (!destGeom.isInstanceOf[Point]) {
-        throw new IOException("Expected a point to be passed to LeastCostPath, but instead got " + destGeom)
-      }
-      val destPoint = destGeom.asInstanceOf[Point]
-      curTile = TMSUtils.latLonToTile(destPoint.getY, destPoint.getX, zoomLevel, tileSize)
-      curPixel = TMSUtils.latLonToTilePixelUL(destPoint.getY, destPoint.getX, curTile.tx, curTile.ty, zoomLevel, tileSize)
-      val startTileId: Long = TMSUtils.tileid(curTile.tx, curTile.ty, zoomLevel)
-
-      resolution = TMSUtils.resolution(zoomLevel, tileSize)
-      curTile = TMSUtils.tileid(startTileId, zoomLevel)
-      curTileBounds = TMSUtils.tileBounds(curTile.tx, curTile.ty, zoomLevel, tileSize)
-      curRaster = getTile(curTile.tx, curTile.ty)
-      curValue = curRaster.getSampleFloat(curPixel.px.toInt, curPixel.py.toInt, 0)
-      if (curValue.isNaN) {
-        throw new IllegalStateException(String.format("Destination point \"%s\" falls outside cost surface", destPoint))
-      }
-      pathCost = curValue
-      val lcp = GeometryFactory.createLineString()
-      addPixelToOutput(lcp)
-      numPoints += 1
-      while (next) {
-        addPixelToOutput(lcp)
-      }
-      if (LeastCostPathCalculator.LOG.isDebugEnabled) {
-        LeastCostPathCalculator.LOG.debug("Total points = " + numPoints + " and total tiles = " + numTiles)
-      }
-      lcp.setAttribute("VALUE", df.format(pathCost))
-      lcp.setAttribute("DISTANCE", df.format(pathDistance))
-      lcp.setAttribute("MINSPEED", df.format(pathMinSpeed))
-      lcp.setAttribute("MAXSPEED", df.format(pathMaxSpeed))
-      lcp.setAttribute("AVGSPEED", df.format(pathDistance / pathCost))
-      val lcpData = new ListBuffer[(FeatureIdWritable, Geometry)]()
-      lcpData += ((new FeatureIdWritable(1), lcp))
-      VectorRDD(sparkContext.parallelize(lcpData))
-    } finally {
-      cdrdd.unpersist()
-    }
+  def point:Point = {
+    val p = TMSUtils.tilePixelULToLatLon(pt.px, pt.py, tile, zoom, tilesize)
+    GeometryFactory.createPoint(p.lon, p.lat)
   }
 
-  private def next: Boolean = {
-    if (LeastCostPathCalculator.LOG.isDebugEnabled) {
-      LeastCostPathCalculator.LOG.debug("curPixel = " + curPixel + " with value " + curValue)
+  def newpoint(dx:Int, dy:Int) = {
+    val x = (pt.px + dx).toInt
+    val y = (pt.py + dy).toInt
+
+    val (px, t) = if ( x < 0) {
+      (tilesize + x, new Tile(tile.tx - 1, tile.ty))
     }
-    var candNextRaster: Raster = curRaster
-    var candNextTile: TMSUtils.Tile = curTile
-    var minNextRaster: Raster = null
-    var minNextTile: TMSUtils.Tile = null
-    var minXNeighbor: Short = Short.MaxValue
-    var minYNeighbor: Short = Short.MaxValue
-    val tileWidth: Int = tileSize
-    val widthMinusOne: Short = (tileWidth - 1).toShort
-    var leastValue: Double = curValue
-    var deltaX: Long = 0
-    var deltaY: Long = 0
-    var i: Int = 0
-    while (i < 8) {
-      var xNeighbor: Short = (curPixel.px + dx(i)).toShort
-      var yNeighbor: Short = (curPixel.py + dy(i)).toShort
-      if (xNeighbor >= 0 && xNeighbor <= widthMinusOne && yNeighbor >= 0 && yNeighbor <= widthMinusOne) {
-        candNextRaster = curRaster
-        candNextTile = curTile
-      }
-      else if (xNeighbor == -1 && yNeighbor == -1) {
-        candNextTile = new TMSUtils.Tile(curTile.tx - 1, curTile.ty + 1)
-        candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
-        xNeighbor = widthMinusOne
-        yNeighbor = widthMinusOne
-      }
-      else if (xNeighbor >= 0 && xNeighbor <= widthMinusOne && yNeighbor == -1) {
-        candNextTile = new TMSUtils.Tile(curTile.tx, curTile.ty + 1)
-        candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
-        yNeighbor = widthMinusOne
-      }
-      else if (xNeighbor == tileWidth && yNeighbor == -1) {
-        candNextTile = new TMSUtils.Tile(curTile.tx + 1, curTile.ty + 1)
-        candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
-        xNeighbor = 0
-        yNeighbor = widthMinusOne
-      }
-      else if (xNeighbor == tileWidth && yNeighbor >= 0 && yNeighbor <= widthMinusOne) {
-        candNextTile = new TMSUtils.Tile(curTile.tx + 1, curTile.ty)
-        candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
-        xNeighbor = 0
-      }
-      else if (xNeighbor == tileWidth && yNeighbor == tileWidth) {
-        candNextTile = new TMSUtils.Tile(curTile.tx + 1, curTile.ty - 1)
-        candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
-        xNeighbor = 0
-        yNeighbor = 0
-      }
-      else if (xNeighbor >= 0 && xNeighbor <= widthMinusOne && yNeighbor == tileWidth) {
-        candNextTile = new TMSUtils.Tile(curTile.tx, curTile.ty - 1)
-        candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
-        yNeighbor = 0
-      }
-      else if (xNeighbor == -1 && yNeighbor == tileWidth) {
-        candNextTile = new TMSUtils.Tile(curTile.tx - 1, curTile.ty - 1)
-        candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
-        xNeighbor = widthMinusOne
-        yNeighbor = 0
-      }
-      else if (xNeighbor == -1 && yNeighbor >= 0 && yNeighbor <= widthMinusOne) {
-        candNextTile = new TMSUtils.Tile(curTile.tx - 1, curTile.ty)
-        candNextRaster = getTile(candNextTile.tx, candNextTile.ty)
-        xNeighbor = widthMinusOne
-      }
-      else {
-        assert((true))
-      }
-      val value: Float = candNextRaster.getSampleFloat(xNeighbor, yNeighbor, 0)
-      if (!value.isNaN && value >= 0 && value < leastValue) {
-        minXNeighbor = xNeighbor
-        minYNeighbor = yNeighbor
-        minNextRaster = candNextRaster
-        minNextTile = candNextTile
-        leastValue = value
-        deltaX = dx(i)
-        deltaY = dy(i)
-      }
-      i += 1
+    else if (x > maxPx) {
+      (x - tilesize, new Tile(tile.tx + 1, tile.ty))
+    }
+    else {
+      (x, tile)
     }
 
-    if (leastValue == curValue) return false
-    numPoints += 1
-    val p1 = {
-      val lat: Double = curTileBounds.n - (curPixel.py * resolution)
-      val lon: Double = curTileBounds.w + (curPixel.px * resolution)
-      new LatLng(lat, lon)
+    val (py, newtile) = if ( y < 0) {
+      (tilesize + y, new Tile(t.tx, t.ty + 1))
     }
-    curPixel = new TMSUtils.Pixel(minXNeighbor, minYNeighbor)
-    val deltaTime: Double = curValue - leastValue
-    curValue = leastValue
-    if (!(curTile == minNextTile)) {
-      curRaster = minNextRaster
-      curTile = minNextTile
-      curTileBounds = TMSUtils.tileBounds(curTile.tx, curTile.ty, zoomLevel, tileSize)
+    else if (y > maxPx) {
+      (y - tilesize, new Tile(t.tx, t.ty - 1))
     }
-    val p2 = {
-      val lat: Double = curTileBounds.n - (curPixel.py * resolution)
-      val lon: Double = curTileBounds.w + (curPixel.px * resolution)
-      new LatLng(lat, lon)
+    else {
+      (y, t)
     }
-    val deltaDistance = LatLng.calculateGreatCircleDistance(p1, p2)
-    pathDistance += deltaDistance.toFloat
-    val speed: Double = deltaDistance / deltaTime
-    if (speed < pathMinSpeed) pathMinSpeed = speed
-    if (speed > pathMaxSpeed) pathMaxSpeed = speed
-    return true
+
+    (px, py, newtile)
   }
 
-  private def getTile(tx: Long, ty: Long): Raster = {
-    val tileid = TMSUtils.tileid(tx, ty, zoomLevel)
-    val result = tilecache.get(tileid)
-    result match {
-      case Some(r) => r
-      case None => {
-        tilecache.clear()
-        // Each time a tile needs to be loaded into the cache, get a 7 x 7 area
-        // of tiles centered around the requested tile. Because of how LCP works,
-        // it always requests consecutive tiles, so this should limit the number
-        // of times overall that we have to filter the RDD.
-        val filteredRdd = cdrdd.filter(tile => {
-          val checkTile = TMSUtils.tileid(tile._1.get(), zoomLevel)
-          checkTile.tx >= tx - 3 && checkTile.tx <= tx + 3 &&
-            checkTile.ty >= ty - 3 && checkTile.ty <= ty + 3
-        }).collect().foreach(U => {
-          val raster = RasterWritable.toRaster(U._2)
-          tilecache += (U._1.get() -> raster)
-        })
-        tilecache.get(tileid).get
-      }
+  def getcost(dx:Int, dy:Int):Float = {
+    val (newx, newy, newtile) = newpoint(dx, dy)
+
+    val raster = gettile(newtile)
+
+    if (raster == null) {
+      Float.MaxValue
+    }
+    else {
+      raster.getSampleFloat(newx, newy, 0)
     }
   }
 
-  private def addPixelToOutput(lineString: WritableLineString): Unit = {
-    val lat: Double = curTileBounds.n - (curPixel.py * resolution)
-    val lon: Double = curTileBounds.w + (curPixel.px * resolution)
-    val point = GeometryFactory.createPoint(lon, lat)
-    lineString.addPoint(point)
+
+  def gettile(t:Tile):Raster = {
+    val id = TMSUtils.tileid(t.tx, t.ty, zoom)
+
+    cache.get(id) match {
+    case Some(raster) => raster
+    case _ =>
+      updatecache(t)
+      cache.getOrElse(id, null)
+    }
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
-    zoomLevel = in.readInt()
-  }
+  def updatecache(t:Tile) = {
+    val newcache = mutable.HashMap.empty[Long, Raster]
 
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeInt(zoomLevel)
+    val tilebuilder = Array.newBuilder[Long]
+
+    // 1st see if any of the new tiles are already loaded.  If so, just copy them into the new cache.
+    // if not, put them into an array, so the filter can find them
+    var dy = t.ty - CACHE_HALFWIDTH
+    while (dy <= t.ty + CACHE_HALFWIDTH) {
+      var dx = t.tx - CACHE_HALFWIDTH
+      while (dx <= t.tx + CACHE_HALFWIDTH) {
+        val id = TMSUtils.tileid(dx, dy, zoom)
+
+        if (cache.contains(id)) {
+          newcache.put(id, cache(id))
+        }
+        else {
+          tilebuilder += id
+        }
+        dx += 1
+      }
+      dy += 1
+    }
+
+    val tilelist = tilebuilder.result()
+
+    // filter the new tiles and put them into the new cache
+    val z = zoom
+    rdd.filter(tile => {
+      tilelist.contains(tile._1.get)
+    }).collect.foreach(tile => {
+      newcache.put(tile._1.get, RasterWritable.toRaster(tile._2))
+    })
+
+    cache = newcache
   }
 }

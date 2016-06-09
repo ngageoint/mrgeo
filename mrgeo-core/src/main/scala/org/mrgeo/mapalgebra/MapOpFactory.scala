@@ -134,12 +134,27 @@ object MapOpFactory extends Logging {
         case creaters: MethodSymbol =>
           creaters.paramss.head.map(_.asTerm).zipWithIndex.map {
             case (term, index) =>
-              term.name + ":" + (if (term.typeSignature.toString.startsWith("Array")) {
-                val ts = term.typeSignature.toString
-                ts.substring(ts.indexOf("[") + 1, ts.indexOf("]")) + "*"
+              // If the term is a primitive, then use the lower case of the actual type
+              // name because Double in scala equates to double in Java (not Double).
+              // If the term is an array, then do the same for the type of the elements
+              // it stores.
+              term.name + ":" + (if (term.typeSignature.typeSymbol == definitions.ArrayClass) {
+                val arrayElementType = term.typeSignature.asInstanceOf[TypeRefApi].args.head
+                val elementTypeName = if (arrayElementType <:< typeOf[AnyVal]) {
+                  arrayElementType.toString.toLowerCase()
+                }
+                else {
+                  arrayElementType.toString
+                }
+                elementTypeName + "*"
               }
               else {
-                term.typeSignature.toString
+                if (term.typeSignature <:< typeOf[AnyVal]) {
+                  term.typeSignature.toString.toLowerCase
+                }
+                else {
+                  term.typeSignature.toString
+                }
               }) + {
                 if (term.isParamWithDefault) {
                   val getter = ts member newTermName("create$default$" + (index + 1))
@@ -164,7 +179,7 @@ object MapOpFactory extends Logging {
                   ""
                 }
               }
-          }.mkString(",")
+          }.mkString("|")
         case _ => ""
       }
     case _ => Seq.empty[String]
@@ -172,7 +187,6 @@ object MapOpFactory extends Logging {
 
     rawsig.toArray
   }
-
 
   // create a mapop from a function name, called by MapOpFactory("<name>")
   def apply(node: ParserNode, variables: String => Option[ParserNode]): Option[MapOp] = {

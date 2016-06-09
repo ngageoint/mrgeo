@@ -53,11 +53,6 @@ public abstract class MrsImageInputFormatProvider
    * the actual input of data and then transform it into the actual inputs
    * passed to the mappers.
    *
-   * At a more detailed level, the input transformation referred to above
-   * includes constructing a TileCollection which is emitted as the input
-   * to the mappers. It includes surrounding tile neighborhood data (if
-   * required) as well as corresponding tiles from other inputs (if required).
-   *
    * @param input
    * @return
    */

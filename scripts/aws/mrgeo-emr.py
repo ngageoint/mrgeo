@@ -45,6 +45,7 @@ if len(sys.argv) != 2:
 with open(sys.argv[1]) as configFile:
     config = json.load(configFile)
 
+emr_version=config["EmrVersion"]
 use_zone=config["zone"]
 zones = config["zones"]
 machine= "Linux/UNIX"
@@ -65,18 +66,6 @@ if (len(cluster_name) <= 0):
 emr = boto3.client("emr")
 
 # Define bootstrap steps - these execute on every node in the cluster
-# Most of these bootstrap steps were used for spinning up an earlier version of
-# EMR (3.7). They are retained here in case we need to go back to that
-# earlier version. Note that they are referenced in some commented out code
-# for that reason.
-fix_emr_for_mrgeo = {
-    'Name': 'Fixup EMR for MrGeo',
-    'ScriptBootstrapAction': {
-        'Path': 's3://mrgeo-dg/deploy/mrgeo-emr-bootstrap.sh',
-        'Args': []
-    }
-}
-
 install_gdal = {
     'Name': 'Install GDAL',
     'ScriptBootstrapAction': {
@@ -90,32 +79,6 @@ install_opencv = {
     'ScriptBootstrapAction': {
         'Path': config["OpenCVBootstrap"],
         'Args': []
-    }
-}
-
-setup_yarn = {
-    'Name': 'Setup YARN',
-    'ScriptBootstrapAction': {
-        'Path': 's3://mrgeo-dg/deploy/yarn-setup.sh',
-        'Args': []
-    }
-}
-
-install_spark = {
-    'Name': 'Install Spark',
-    'ScriptBootstrapAction': {
-        'Path': 's3://support.elasticmapreduce/spark/install-spark',
-        'Args': ["-l","WARN","-v","1.3.1.d"]
-    }
-}
-
-configure_yarn = {
-    'Name': 'Configure YARN',
-    'ScriptBootstrapAction': {
-        'Path': 's3://elasticmapreduce/bootstrap-actions/configure-hadoop',
-        'Args': ["-y","yarn.nodemanager.pmem-check-enabled=false",
-                 "-y","yarn.nodemanager.vmem-check-enabled=false",
-                 "-y","yarn.log-aggregation-enable=true"]
     }
 }
 
@@ -137,32 +100,14 @@ install_mrgeo_step = {
     }
 }
 
-start_spark_history = {
-    'Name': "Start Spark HistoryServer",
-    'ActionOnFailure': 'TERMINATE_CLUSTER',
-    'HadoopJarStep': {
-        'Jar': 's3://us-west-2.elasticmapreduce/libs/script-runner/script-runner.jar',
-        'Args': ["s3://support.elasticmapreduce/spark/start-history-server"]
-    }
-}
-configure_spark = {
-    'Name': "Configure Spark",
-    'ActionOnFailure': 'TERMINATE_CLUSTER',
-    'HadoopJarStep': {
-        'Jar': 's3://us-west-2.elasticmapreduce/libs/script-runner/script-runner.jar',
-        'Args': ["s3://support.elasticmapreduce/spark/configure-spark.bash", "spark.yarn.jar=/home/hadoop/spark/lib/spark-assembly-1.3.1-hadoop2.4.0.jar"]
-    }
-}
-
-#bootstrap_actions = [fix_emr_for_mrgeo, install_gdal, setup_yarn, install_spark, configure_yarn]
 bootstrap_actions = [install_gdal, install_opencv]
-#bootstrap_actions = []
 if (install_accumulo == 1):
     bootstrap_actions.append(accumulo_bootstrap)
 
 ec2 = boto3.client('ec2')
 # Get the current spot price
 if (use_spot == 1):
+    use_zone = None
     spot_price = 9999
     print("Checking spot prices")
     for tryZone in zones:
@@ -178,13 +123,18 @@ if (use_spot == 1):
                                                        AvailabilityZone = zone_name,
                                                        ProductDescriptions = [machine])
 
-        zone_spot_price = float(price_result['SpotPriceHistory'][0]['SpotPrice'])
-        print "  " + zone_name + ": " + "{0:.3f}".format(zone_spot_price)
-        if (zone_spot_price < spot_price):
-            spot_price = zone_spot_price
-            use_zone = zone_name
-            bid_price = spot_price * 2
-    print "Using zone " + use_zone + " bidding: " + "{0:.3f}".format(bid_price)
+        if len(price_result['SpotPriceHistory']) > 0:
+            zone_spot_price = float(price_result['SpotPriceHistory'][0]['SpotPrice'])
+            print "  " + zone_name + ": " + "{0:.3f}".format(zone_spot_price)
+            if (zone_spot_price < spot_price):
+                spot_price = zone_spot_price
+                use_zone = zone_name
+                bid_price = spot_price * 2
+    if use_zone is not None:
+        print "Using zone " + use_zone + " bidding: " + "{0:.3f}".format(bid_price)
+    else:
+        print "No spot pricing available. Try a different instance type."
+        sys.exit(-1)
 
 instance_groups = []
 instance_groups.append({
@@ -219,19 +169,14 @@ for z in zones:
 
 response = emr.run_job_flow(Name=cluster_name,
                             LogUri=log_uri,
-                            ReleaseLabel='emr-4.3.0',
-                            #                 AmiVersion='3.10',
+                            ReleaseLabel=emr_version,
                             Instances={
                                 'InstanceGroups': instance_groups,
                                 'Ec2KeyName': key_name,
-                                #                   'Placement': {
-                                #                     'AvailabilityZone': ZONE
-                                #                   },
                                 'KeepJobFlowAliveWhenNoSteps': True,
                                 'TerminationProtected': False,
                                 'Ec2SubnetId': subnet_id
                             },
-                            #                 Steps=[install_mrgeo_step, start_spark_history, configure_spark],
                             Steps=[install_mrgeo_step],
                             BootstrapActions = bootstrap_actions,
                             Applications=[
@@ -271,7 +216,8 @@ response = emr.run_job_flow(Name=cluster_name,
                                     "Properties": {
                                         "spark.yarn.jar": "/usr/lib/spark/lib/spark-assembly.jar",
                                         "spark.network.timeout": "600",
-                                        "spark.driver.maxResultSize": "0"
+                                        "spark.driver.maxResultSize": "0",
+                                        "spark.dynamicAllocation.enabled":"true"
                                     }
                                 }
                             ],

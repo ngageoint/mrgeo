@@ -48,14 +48,10 @@ object StatisticsMapOp extends MapOpRegistrar {
     Array[String]("statistics", "stats")
   }
 
-  def create(method:String, first:RasterMapOp, others:Array[AnyRef]):MapOp = {
+  def create(first:RasterMapOp, method:String, rasters:Array[RasterMapOp]):MapOp = {
     val inputs:Seq[Either[Option[RasterMapOp], Option[String]]] =
-      (List(first) ++ others.toList).flatMap(any => {
-        any match {
-        case raster:RasterMapOp => List(Left(Some(raster)))
-        case string:String => List(Right(Some(string)))
-        case _ => List()
-        }
+      (List(first) ++ rasters.toList).flatMap(raster => {
+        List(Left(Some(raster)))
       })
 
     if (method.isEmpty || !methods.exists(_.equals(method.toLowerCase))) {
@@ -65,6 +61,24 @@ object StatisticsMapOp extends MapOpRegistrar {
 
     new StatisticsMapOp(inputs.toArray, method)
   }
+
+  // When generating Python bindings for this map op, it cannot distinguish between
+  // passing an array of RasterMapOp and and Array of String. So we are commenting
+  // out the String version of the method. Python won't need this anyway because it
+  // can do its own wildcarding based on names after calling MrGeo.listImages.
+//  def create(method:String, first:RasterMapOp, names:Array[String]):MapOp = {
+//    val inputs:Seq[Either[Option[RasterMapOp], Option[String]]] =
+//      List(Left(Some(first))) ++ (names.toList).flatMap(name => {
+//        List(Right(Some(name)))
+//      })
+//
+//    if (method.isEmpty || !methods.exists(_.equals(method.toLowerCase))) {
+//      throw new ParserException("Invalid stastics method")
+//    }
+//
+//
+//    new StatisticsMapOp(inputs.toArray, method)
+//  }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new StatisticsMapOp(node, variables)

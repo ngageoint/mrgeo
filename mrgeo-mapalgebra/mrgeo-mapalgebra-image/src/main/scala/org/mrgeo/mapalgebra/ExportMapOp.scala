@@ -31,6 +31,7 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils._
 
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.tms.{Tile, Bounds, TMSUtils}
 
 //import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -82,7 +83,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   private var tms:Boolean = false
   private var colorscale:Option[String] = None
   private var tileids:Option[Seq[Long]] = None
-  private var bounds:Option[TMSUtils.Bounds] = None
+  private var bounds:Option[Bounds] = None
   private var alllevels:Boolean = false
   private var overridenodata:Option[Double] = None
 
@@ -101,7 +102,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     //    this.format = if (format != null && format.length > 0) Some(format) else None
     this.colorscale = if (colorscale != null && colorscale.length > 0) Some(colorscale) else None
     this.tileids = if (tileids != null && tileids.length > 0) Some(tileids.split(",").map(_.toLong).toSeq) else None
-    this.bounds = if (bounds != null && bounds.length > 0) Some(TMSUtils.Bounds.fromCommaString(bounds)) else None
+    this.bounds = if (bounds != null && bounds.length > 0) Some(Bounds.fromCommaString(bounds)) else None
     this.randomtile = randomTiles
     this.singlefile = singleFile
     this.tms = tms
@@ -191,7 +192,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     // Check for optional format string
     if (node.getNumChildren > 11)
       MapOp.decodeString(node.getChild(11), variables) match {
-      case Some(s) => bounds = Some(TMSUtils.Bounds.fromCommaString(s))
+      case Some(s) => bounds = Some(Bounds.fromCommaString(s))
       case _ =>
       }
 
@@ -267,7 +268,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     metadata(raster.get.metadata().get)
 
     if (ExportMapOp.inMemoryTestPath != null) {
-      val output = makeOutputName(ExportMapOp.inMemoryTestPath, format.get, 0, 0, 0, false)
+      val output = makeOutputName(ExportMapOp.inMemoryTestPath, format.get, 0, 0, 0, reformat = false)
       GDALUtils.saveRaster(mergedimage.get, output, null, meta.getDefaultValueDouble(0), format.get)
     }
     true
@@ -410,8 +411,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       makeTMSOutputName(template, format, tileid, zoom)
     }
     else {
-      val t: TMSUtils.Tile = TMSUtils.tileid(tileid, zoom)
-      val bounds: TMSUtils.Bounds = TMSUtils.tileBounds(t.tx, t.ty, zoom, tilesize)
+      val t: Tile = TMSUtils.tileid(tileid, zoom)
+      val bounds: Bounds = TMSUtils.tileBounds(t.tx, t.ty, zoom, tilesize)
       var output: String = null
       if (template.contains(ExportMapOp.X) || template.contains(ExportMapOp.Y) ||
           template.contains(ExportMapOp.ZOOM) || template.contains(ExportMapOp.ID) ||
@@ -446,13 +447,13 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
           output += "%d".format(tileid) + "-" + "%03d".format(t.ty) + "-" + "%03d".format(t.tx)
         }
       }
-      if ((format == "tif") && (!output.endsWith(".tif") || !output.endsWith(".tiff"))) {
+      if ((format == "tif") && !(output.endsWith(".tif") || output.endsWith(".tiff"))) {
         output += ".tif"
       }
       else if ((format == "png") && !output.endsWith(".png")) {
         output += ".png"
       }
-      else if ((format == "jpg") && (!output.endsWith(".jpg") || !output.endsWith(".jpeg"))) {
+      else if ((format == "jpg") && !(output.endsWith(".jpg") || output.endsWith(".jpeg"))) {
         output += ".jpg"
       }
       val f: File = new File(output)
@@ -464,7 +465,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
   @throws(classOf[IOException])
   private def makeTMSOutputName(base: String, format: String, tileid: Long, zoom: Int): String = {
-    val t: TMSUtils.Tile = TMSUtils.tileid(tileid, zoom)
+    val t: Tile = TMSUtils.tileid(tileid, zoom)
     val output: String = "%s/%d/%d/%d.%s".format(base, zoom, t.tx, t.ty,
       format match {
       case "tif" | "tiff" =>

@@ -18,7 +18,7 @@ package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import javax.ws.rs.core.Response;
 

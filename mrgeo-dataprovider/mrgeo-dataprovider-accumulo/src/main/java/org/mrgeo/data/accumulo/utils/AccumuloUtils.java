@@ -41,8 +41,8 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.Base64Utils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -319,7 +319,7 @@ public class AccumuloUtils {
 
         } else if(cf.equals("bounds")){
           // looking at the geospatial bounds of the data
-          Bounds bounds = new Bounds(entry.getValue().toString());
+          Bounds bounds = Bounds.fromCommaString(entry.getValue().toString());
           retMeta.setBounds(bounds);
           
         } else if(cf.equals("tileBounds")){
@@ -458,7 +458,7 @@ public class AccumuloUtils {
   
       // store the geospatial bounds
       Mutation mb = new Mutation(MrGeoAccumuloConstants.MRGEO_ACC_METADATA);
-      mb.put("bounds", ""+zoomLevel, columnVis, new Value(metadata.getBounds().toDelimitedString().getBytes()));
+      mb.put("bounds", ""+zoomLevel, columnVis, new Value(metadata.getBounds().toCommaString().getBytes()));
       bw.addMutation(mb);
       
       // store the tile bounds for the best zoom level

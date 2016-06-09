@@ -34,9 +34,9 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,14 +175,26 @@ public static Options createOptions()
 
 private void calculateParams(final Dataset image)
 {
+  Bounds imageBounds = GDALUtils.getBounds(image);
+
+  log.debug("    image bounds: (lon/lat) " +
+      imageBounds.w + ", " + imageBounds.s + " to " +
+      imageBounds.e + ", " + imageBounds.n);
+
+
+  if (bounds == null)
+  {
+    bounds = imageBounds;
+  }
+  else
+  {
+    bounds = bounds.expand(imageBounds);
+  }
+
   // calculate zoom level for the image
-  double[] xform = image.GetGeoTransform();
 
-  final double pixelsizeLon = xform[1];
-  final double pixelsizeLat = -xform[5];
-
-  final int zx = TMSUtils.zoomForPixelSize(pixelsizeLon, tilesize);
-  final int zy = TMSUtils.zoomForPixelSize(pixelsizeLat, tilesize);
+  final int zx = TMSUtils.zoomForPixelSize(imageBounds.width() / image.getRasterXSize(), tilesize);
+  final int zy = TMSUtils.zoomForPixelSize(imageBounds.height() / image.getRasterYSize(), tilesize);
 
   if (zoomlevel < zx)
   {
@@ -193,21 +205,6 @@ private void calculateParams(final Dataset image)
     zoomlevel = zy;
   }
 
-  Bounds imageBounds = GDALUtils.getBounds(image);
-
-  log.debug("    image bounds: (lon/lat) " +
-      imageBounds.getMinX() + ", " + imageBounds.getMinY() + " to " +
-      imageBounds.getMaxX() + ", " + imageBounds.getMaxY());
-
-
-  if (bounds == null)
-  {
-    bounds = imageBounds;
-  }
-  else
-  {
-    bounds.expand(imageBounds);
-  }
 
   // Calculate some parameters only for the first input file because they should
   // not differ among all the input files for one source.
@@ -224,7 +221,6 @@ private void calculateParams(final Dataset image)
  * parameters that are expected to be the same across all of the input files for
  * this data source - namely bands, tiletype, and nodata.
  *
- * @param image
  */
 private void calculateMinimalParams(final Dataset image)
 {
@@ -542,16 +538,6 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
 
     List<String> inputs = new LinkedList<>();
 
-    if (line.hasOption("z"))
-    {
-      zoomlevel = Integer.parseInt(line.getOptionValue("z"));
-    }
-
-    if (skippreprocessing && zoomlevel < 1)
-    {
-      log.error("Need to specify zoomlevel to skip preprocessing");
-      return -1;
-    }
 
     tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
 
@@ -565,6 +551,17 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     catch(IllegalArgumentException e)
     {
       System.out.println(e.getMessage());
+      return -1;
+    }
+
+    if (line.hasOption("z"))
+    {
+      zoomlevel = Integer.parseInt(line.getOptionValue("z"));
+    }
+
+    if (skippreprocessing && zoomlevel < 1)
+    {
+      log.error("Need to specify zoomlevel to skip preprocessing");
       return -1;
     }
 

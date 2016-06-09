@@ -24,7 +24,7 @@
     <!-- mrgeo jars -->
     <dependencySet>
       <outputDirectory>.</outputDirectory>
-      <outputFileNameMapping>${artifact.artifactId}-${mrgeo.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
       <useProjectArtifact>false</useProjectArtifact>
       <unpack>false</unpack>
       <scope>runtime</scope>

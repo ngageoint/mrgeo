@@ -19,8 +19,8 @@ package org.mrgeo.geometry;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GeoHash;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.*;
 import java.util.Map;
@@ -271,7 +271,7 @@ public Bounds getBounds()
 @Override
 public Geometry clip(Bounds bbox)
 {
-  if (bbox.containsPoint(x, y))
+  if (bbox.contains(x, y))
   {
     return this;
   }

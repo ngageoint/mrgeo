@@ -73,6 +73,14 @@ public String getResourceName()
   return resourceName;
 }
 
+/**
+ * Returns the simple name of the resource. For example, if the resource name for
+ * and HDFS image is /mrgeo/images/myimage, the simple name will be "myimage".
+ *
+ * @return
+ */
+public abstract String getSimpleResourceName() throws IOException;
+
 public abstract void delete() throws IOException;
 
 public abstract void move(String toResource) throws IOException;

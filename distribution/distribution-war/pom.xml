@@ -19,11 +19,11 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>distribution</artifactId>
-    <version>${mrgeo.version}</version>
+    <version>1.1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>distribution-war</artifactId>
-  <version>${mrgeo.version}</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>war</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -32,22 +32,8 @@
   <name>distribution-war</name>
   <url>http://mrgeo.org</url>
   <build>
-    <finalName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}</finalName>
+    <finalName>${project.parent.parent.artifactId}-${project.version}</finalName>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <inherited>true</inherited>
-        <configuration>
-          <additionalProjectFacets>
-            <jst.web>2.5</jst.web>
-          </additionalProjectFacets>
-          <sourceExcludes>
-            <sourceExclude>**/.svn/**</sourceExclude>
-          </sourceExcludes>
-          <wtpversion>2.0</wtpversion>
-        </configuration>
-      </plugin>
       <!-- make sure this runs before the maven war plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -187,7 +173,7 @@
                   <version>${project.version}</version>
                   <type>${project.packaging}</type>
                   <classifier />
-                  <destFileName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}.${project.packaging}</destFileName>
+                  <destFileName>${project.parent.parent.artifactId}-${project.parent.version}.${project.packaging}</destFileName>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>${project.parent.build.directory}</outputDirectory>

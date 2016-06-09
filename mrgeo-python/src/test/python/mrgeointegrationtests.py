@@ -6,10 +6,11 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     allones = None
     allhundreds = None
     smallelevation = None
+    toblertiny = None
 
     @classmethod
     def setUpClass(cls):
-        #cls.GENERATE_BASELINE_DATA = True
+        # cls.GENERATE_BASELINE_DATA = True
 
         super(MrGeoIntegrationTests, cls).setUpClass()
 
@@ -17,6 +18,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         cls.copy("all-hundreds")
         cls.copy("all-ones")
         cls.copy("small-elevation")
+        cls.copy("tobler-raw-tiny")
 
     def setUp(self):
         super(MrGeoIntegrationTests, self).setUp()
@@ -24,6 +26,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.allones = self.mrgeo.load_image("all-ones")
         self.allhundreds = self.mrgeo.load_image("all-hundreds")
         self.smallelevation = self.mrgeo.load_image("small-elevation")
+        self.toblertiny = self.mrgeo.load_image("tobler-raw-tiny")
 
     def test_add(self):
         add = self.allones + self.allhundreds
@@ -36,6 +39,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_add_constB(self):
         add = self.allhundreds + 1
         self.compareraster(add, self.name)
+
 
     def test_add_negconst(self):
         add = self.allhundreds + -1
@@ -120,10 +124,21 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_export(self):
         exp = self.smallelevation.export(self.outputdir + self.name, singleFile=True, format="tiff", overridenodata=-9999)
 
-        self.compareraster(exp, self.name)
         self.comparelocalraster(self.name)
+        self.compareraster(exp, self.name)
 
+    def test_costdistance_two_points(self):
+        cd = self.toblertiny.costdistance(-1.0, -1, 64.75, 30.158, 65.268, 29.983)
+        self.compareraster(cd, self.name)
 
+    def test_costdistance_with_point_list(self):
+        points = [64.75, 30.158]
+        cd = self.toblertiny.costdistance(-1.0, -1, points)
+        self.compareraster(cd, self.name)
 
-
-
+    def test_leastcostpath(self):
+        points = [64.75, 30.158, 65.268, 29.983]
+        cd = self.toblertiny.costdistance(-1.0, -1, 64.75, 30.158)
+        destPoints = self.mrgeo.create_points([65.087, 30.194, 65.283, 29.939])
+        lcp = destPoints.leastcostpath(cd)
+        self.comparevector(lcp, self.name)

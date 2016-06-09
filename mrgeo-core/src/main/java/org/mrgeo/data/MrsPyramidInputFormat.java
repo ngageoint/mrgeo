@@ -25,11 +25,11 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapreduce.splitters.MrsPyramidInputSplit;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -69,7 +69,7 @@ public class MrsPyramidInputFormat extends InputFormat<TileIdWritable, RasterWri
     List<InputSplit> splits = ifProvider.getInputFormat(input).getSplits(context);
     // In order to work with MrGeo and input bounds cropping, the splits must be
     // of type TiledInputSplit.
-    List<TiledInputSplit> result = new ArrayList<TiledInputSplit>(splits.size());
+    List<TiledInputSplit> result = new ArrayList<>(splits.size());
     for (InputSplit split : splits)
     {
       if (split instanceof TiledInputSplit)
@@ -100,22 +100,19 @@ public class MrsPyramidInputFormat extends InputFormat<TileIdWritable, RasterWri
 
     MrsPyramid p = MrsPyramid.open(input, context.getConfiguration());
     String pyramid = p.getName();
-    int zoom = ifContext.getZoomLevel();
     List<TiledInputSplit> nativeSplits = getNativeSplits(context, ifContext, pyramid);
     List<TiledInputSplit> filteredSplits = filterInputSplits(ifContext,
-              nativeSplits, zoom,
-              p.getTileSize());
+              nativeSplits,
+        p.getTileSize());
 
-    List<InputSplit> results = new LinkedList<InputSplit>();
+    List<InputSplit> results = new LinkedList<>();
     // remove the current bounds from the post bounds list.
     // Loop the native splits from this input, and create a new MrsPyramidInputSplit
     // that wraps it and includes the pre/post bounds.
     if (filteredSplits != null)
     {
-      Iterator<TiledInputSplit> iter = filteredSplits.iterator();
-      while (iter.hasNext())
+      for (TiledInputSplit tiledSplit : filteredSplits)
       {
-        TiledInputSplit tiledSplit = iter.next();
         MrsPyramidInputSplit mpsplit = new MrsPyramidInputSplit(tiledSplit, p.getName());
         results.add(mpsplit);
       }
@@ -129,24 +126,18 @@ public class MrsPyramidInputFormat extends InputFormat<TileIdWritable, RasterWri
    * logic is common to all pyramid input formats, regardless of the data provider,
    * so there should be no need to override it in sub-classes.
    *
-   * @param ifContext
-   * @param splits
-   * @param zoomLevel
-   * @param tileSize
-   * @return
    */
   List<TiledInputSplit> filterInputSplits(final ImageInputFormatContext ifContext,
-                                          final List<TiledInputSplit> splits,
-                                          final int zoomLevel,
-                                          final int tileSize)
+      final List<TiledInputSplit> splits,
+      final int tileSize)
   {
     // If there are no splits or no crop region, just return the splits
     if (splits.size() == 0 || ifContext.getBounds() == null)
     {
       return splits;
     }
-    List<TiledInputSplit> result = new ArrayList<TiledInputSplit>();
-    TMSUtils.TileBounds cropBounds = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(ifContext.getBounds()),
+    List<TiledInputSplit> result = new ArrayList<>();
+    TileBounds cropBounds = TMSUtils.boundsToTile(ifContext.getBounds(),
             ifContext.getZoomLevel(), tileSize);
 
     SplitIterator splitIter = new SplitIterator(splits, new RegionSplitVisitor(cropBounds));

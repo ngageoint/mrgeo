@@ -28,8 +28,8 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.TMSUtils.TileBounds
-import org.mrgeo.utils.{Bounds, SparkUtils, TMSUtils}
+import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
+import org.mrgeo.utils.SparkUtils
 
 import scala.util.control.Breaks
 
@@ -37,7 +37,7 @@ object MosaicMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("mosaic")
   }
-  def create(first:RasterMapOp, others:RasterMapOp*):MapOp =
+  def create(first:RasterMapOp, others: Array[RasterMapOp]):MapOp =
     new MosaicMapOp(List(first) ++ others)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
@@ -86,7 +86,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
     var tilesize: Int = -1
     var tiletype: Int = -1
     var numbands: Int = -1
-    val bounds: Bounds = new Bounds()
+    var bounds: Bounds = null
 
     // loop through the inputs and load the pyramid RDDs and metadata
     for (input <- inputs) {
@@ -132,7 +132,12 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
         }
 
         // expand the total bounds
-        bounds.expand(meta.getBounds)
+        if (bounds == null) {
+          bounds = meta.getBounds
+        }
+        else {
+          bounds = bounds.expand(meta.getBounds)
+        }
 
         i += 1
 
@@ -140,7 +145,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
       }
     }
 
-    val tileBounds: TileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+    val tileBounds: TileBounds = TMSUtils.boundsToTile(bounds, zoom, tilesize)
 
     logDebug("Bounds: " + bounds.toString)
     logDebug("TileBounds: " + tileBounds.toString)

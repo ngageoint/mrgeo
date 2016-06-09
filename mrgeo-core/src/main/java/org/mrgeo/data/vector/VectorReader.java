@@ -18,7 +18,7 @@ package org.mrgeo.data.vector;
 
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.geometry.Geometry;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.IOException;
 

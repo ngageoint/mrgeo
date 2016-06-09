@@ -16,7 +16,7 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{WritableRaster, DataBuffer}
+import java.awt.image.{DataBuffer, WritableRaster}
 import java.io.Externalizable
 
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
@@ -25,9 +25,10 @@ import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Point
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.TMSUtils
+import org.mrgeo.utils.tms.{Pixel, TMSUtils}
 
 
 object RasterizePointsMapOp extends MapOpRegistrar {
@@ -37,7 +38,7 @@ object RasterizePointsMapOp extends MapOpRegistrar {
 
   def create(vector: VectorMapOp, aggregator:String, cellsize:String, column:String = null) =
   {
-    new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, null)
+    new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
@@ -60,7 +61,14 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
     this()
 
-    initialize(vector, aggregator, cellsize, bounds, column)
+    initialize(vector, aggregator, cellsize, Left(bounds), column)
+  }
+
+  def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String,
+           rasterForBoundsMapOp:Option[RasterMapOp]) = {
+    this()
+
+    initialize(vector, aggregator, cellsize, Right(rasterForBoundsMapOp), column)
   }
 
   def this(node:ParserNode, variables: String => Option[ParserNode]) = {
@@ -153,7 +161,7 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   }
 
   private def updateRaster(raster: WritableRaster, countRaster: WritableRaster,
-                           pixel: TMSUtils.Pixel, latitude: Double,
+                           pixel: Pixel, latitude: Double,
                           longitude: Double, columnValue: Double,
                           validColumnValue: Boolean): Unit = {
     aggregationType match {

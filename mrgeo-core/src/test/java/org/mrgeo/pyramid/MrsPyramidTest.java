@@ -26,7 +26,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.IOException;
 
@@ -37,7 +37,6 @@ public class MrsPyramidTest
 
   MrsPyramid noPyramids = null;
   MrsPyramidMetadata noPyramidsMeta = null;
-  MrsPyramid pyramid = null;
   ProviderProperties providerProperties;
   
   @Before

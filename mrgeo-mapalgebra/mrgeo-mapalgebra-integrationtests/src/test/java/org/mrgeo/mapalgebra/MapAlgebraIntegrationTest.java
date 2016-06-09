@@ -70,6 +70,7 @@ private static final String greeceName = "greece";
 private static String greece = Defs.INPUT + greeceName;
 
 
+public static TestUtils.ValueTranslator nanTranslatorTo255 = new TestUtils.NaNTranslator(255.0f);;
 protected static final String pointsName = "input1"; // .tsv
 protected static String pointsPath;
 
@@ -321,6 +322,24 @@ public void aspectRad() throws Exception
         String.format("aspect([%s], \"rad\")", smallElevation));
   }
 }
+
+@Test
+@Category(IntegrationTest.class)
+public void aspectFlat() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("aspect([%s])", allones), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("aspect([%s])", allones));
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
@@ -793,7 +812,7 @@ public void crop() throws Exception
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
         String.format(
-            "crop([%s], 142.05, -17.75, 142.2, -17.65);", smallElevationPath), -9999);
+            "crop([%s], 142.05, -17.75, 142.2, -17.65)", smallElevationPath), -9999);
   }
   else
   {
@@ -801,6 +820,25 @@ public void crop() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format(
             "crop([%s],  142.05, -17.75, 142.2, -17.65)", smallElevationPath));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void cropFromDerivedInput() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "crop([%s] + 0, 142.05, -17.75, 142.2, -17.65)", smallElevationPath), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "crop([%s] + 0,  142.05, -17.75, 142.2, -17.65)", smallElevationPath));
   }
 }
 
@@ -820,6 +858,25 @@ public void cropToRaster() throws Exception
                                   TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
                                   String.format(
                                           "crop([%s], [%s])", smallElevationPath, kphforsmallelevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void cropToRasterFromDerivedInput() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "crop([%s] + 0, [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "crop([%s] + 0, [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
@@ -846,6 +903,27 @@ public void cropExact() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void cropExactFromDerivedInput() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "cropExact([%s] + 0,  142.05, -17.75, 142.2, -17.65)",
+                                          smallElevationPath), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "cropExact([%s] + 0,  142.05, -17.75, 142.2, -17.65)",
+                                          smallElevationPath));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void cropExactToRaster() throws Exception
 {
   if (GEN_BASELINE_DATA_ONLY)
@@ -860,6 +938,25 @@ public void cropExactToRaster() throws Exception
                                   TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
                                   String.format(
                                           "cropExact([%s], [%s])", smallElevationPath, kphforsmallelevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void cropExactToRasterFromDerivedInput() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format(
+                                          "cropExact([%s] + 0, [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format(
+                                          "cropExact([%s] + 0, [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
@@ -1811,6 +1908,25 @@ public void slopePercent() throws Exception
   }
 }
 
+@Test
+@Category(IntegrationTest.class)
+public void slope8() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("slope8([%s])", smallElevation), -9999);
+
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("slope8([%s])", smallElevation));
+
+  }
+}
+
 
 @Test
 @Category(IntegrationTest.class)
@@ -2089,6 +2205,295 @@ public void testDataTypeFloat() throws Exception
       testUtils.runRasterExpression(this.conf, testname.getMethodName(),
                                     TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
                                     String.format("tpi([%s])", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatMin() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"min\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"min\", [%s], \"3p\", \"true\")", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatMax() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"max\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"max\", [%s], \"3p\", \"true\")", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatMean() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"mean\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"mean\", [%s], \"3p\", \"true\")", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatMedian() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"median\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"median\", [%s], \"3p\", \"true\")", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatRange() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"range\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"range\", [%s], \"3p\", \"true\")", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatStdDev() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"stddev\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"stddev\", [%s], \"3p\", \"true\")", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatVariance() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("focalStat(\"variance\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"variance\", [%s], \"3p\", \"true\")", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatSumWithNoData() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"sum\", [%s], \"3p\", \"true\")", allonesholes), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"sum\", [%s], \"3p\", \"true\")", allonesholes));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatSumWithoutIgnoreNoData() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"sum\", [%s], \"3p\", \"false\")", allonesholes), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"sum\", [%s], \"3p\", \"false\")", allonesholes));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatMinMetersEvenNeighborhood() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"min\", [%s], \"300m\", \"true\")", smallElevation), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"min\", [%s], \"300m\", \"true\")", smallElevation));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatSumEvenNeighborhood() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"sum\", [%s], \"4p\", \"true\")", allonesholes), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"sum\", [%s], \"4p\", \"true\")", allonesholes));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatCountEvenNeighborhood() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"count\", [%s], \"4p\", \"true\")", allonesholes), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"count\", [%s], \"4p\", \"true\")", allonesholes));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void focalStatCountEvenNeighborhoodWithoutIgnore() throws Exception
+  {
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                    String.format("focalStat(\"count\", [%s], \"4p\", \"false\")", allonesholes), -9999);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                    String.format("focalStat(\"count\", [%s], \"4p\", \"false\")", allonesholes));
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void bitwiseXor() throws Exception
+  {
+    String stmt = String.format("convert([%s], \"byte\", \"truncate\") ^ (0x80 | 0x60)", allhundredsholes);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    nanTranslatorTo255, nanTranslatorTo255,
+                                    stmt);
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void bitwiseAnd() throws Exception
+  {
+    String stmt = String.format("convert([%s], \"byte\", \"truncate\") & (0x80 | 0x60)", allhundredsholes);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    nanTranslatorTo255, nanTranslatorTo255,
+                                    stmt);
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void bitwiseOr() throws Exception
+  {
+    String stmt = String.format("convert([%s], \"byte\", \"truncate\") | 0x80", allhundredsholes);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    nanTranslatorTo255, nanTranslatorTo255,
+                                    stmt);
+    }
+  }
+
+  @Test
+  @Category(IntegrationTest.class)
+  public void bitwiseComplement() throws Exception
+  {
+    String stmt = String.format("~convert([%s], \"byte\", \"truncate\")", allhundredsholes);
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+    }
+    else
+    {
+      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                    nanTranslatorTo255, nanTranslatorTo255,
+                                    stmt);
     }
   }
 

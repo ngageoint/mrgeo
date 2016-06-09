@@ -32,6 +32,7 @@ import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils._
 
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.tms.TMSUtils
 
 
 object KernelMapOp extends MapOpRegistrar {
@@ -121,11 +122,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
-    val nodatas = Array.ofDim[Number](meta.getBands)
-    for (i <- nodatas.indices) {
-      nodatas(i) = meta.getDefaultValue(i)
-    }
-
+    val nodatas = meta.getDefaultValuesNumber
 
     val kernel = method match {
     case KernelMapOp.Gaussian =>

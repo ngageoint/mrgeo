@@ -16,7 +16,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;

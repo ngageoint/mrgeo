@@ -29,8 +29,8 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.awt.image.Raster;
 import java.io.File;

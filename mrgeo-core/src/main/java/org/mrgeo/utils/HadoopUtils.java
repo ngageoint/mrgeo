@@ -30,7 +30,6 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.mapreduce.formats.TileClusterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -399,24 +398,6 @@ public static void adjustLogging()
     return strValues;
   }
 
-  public static TileClusterInfo getTileClusterInfo(final Configuration conf) throws IOException
-  {
-    TileClusterInfo tileClusterInfo = null;
-    final String strTileClusterInfo = conf.get("mrspyramid.tileClusterInfo");
-    if (strTileClusterInfo != null)
-    {
-      try
-      {
-        tileClusterInfo = (TileClusterInfo) Base64Utils.decodeToObject(strTileClusterInfo);
-      }
-      catch (final ClassNotFoundException e)
-      {
-        log.error("Unable to retrieve tile cluster information from job configuration", e);
-      }
-    }
-    return tileClusterInfo;
-  }
-
   public static void setJar(final Job job, Class clazz) throws IOException
   {
     Configuration conf = job.getConfiguration();
@@ -467,19 +448,6 @@ public static void adjustLogging()
     String mr1Local = conf.get("mapred.job.tracker", "local");
     return mr1Local.equals("local");
   }
-
-  public static void setTileClusterInfo(final Configuration conf,
-      final TileClusterInfo tileClusterInfo) throws IOException
-  {
-    conf.set("mrspyramid.tileClusterInfo", Base64Utils.encodeObject(tileClusterInfo));
-  }
-
-  public static void setTileClusterInfo(final Job job, final TileClusterInfo tileClusterInfo)
-      throws IOException
-  {
-    setTileClusterInfo(job.getConfiguration(), tileClusterInfo);
-  }
-
 
   public static void setupLocalRunner(final Configuration config) throws IOException
   {

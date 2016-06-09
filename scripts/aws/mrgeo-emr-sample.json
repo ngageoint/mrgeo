@@ -1,4 +1,5 @@
 {
+  "EmrVersion": "emr-4.5.0",
   "MasterType": "m3.xlarge",
   "WorkerType": "m3.xlarge",
   "WorkerNodes": 3,

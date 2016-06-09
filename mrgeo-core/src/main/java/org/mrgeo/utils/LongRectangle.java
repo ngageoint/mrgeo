@@ -65,7 +65,7 @@ public class LongRectangle implements Serializable
   static public void intersect(final LongRectangle src1, final LongRectangle src2,
       final LongRectangle dest)
   {
-    throw new NotImplementedException("intersect() not implemented");
+    throw new NotImplementedException("intersects() not implemented");
   }
 
   @SuppressWarnings("unused")

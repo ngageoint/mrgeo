@@ -17,7 +17,7 @@
 package org.mrgeo.resources.job;
 
 import org.apache.hadoop.mapreduce.Job;
-import org.mrgeo.mapreduce.job.JobDetails;
+import org.mrgeo.job.JobDetails;
 
 import java.util.*;
 
@@ -53,13 +53,6 @@ public class JobResponseFormatter
   private static void populateJobInfoDetailed(JobInfoDetailedResponse jInfoDetaild, JobDetails jDetails, String jobUri) {
     populateJobInfo(jInfoDetaild, jDetails, jobUri);
     jInfoDetaild.setInstructions(jDetails.getInstructions());
-    Vector<Job> hadoopJobs = jDetails.getHadoopJobs();
-    for (@SuppressWarnings("rawtypes")
-    Iterator iterator = hadoopJobs.iterator(); iterator.hasNext();)
-    {
-      Job job = (Job) iterator.next();
-      jInfoDetaild.addHadoopJob(job);
-    }
   }
   
   private static void populateJobInfo(JobInfoResponse jInfo, JobDetails jDetails, String jobUri) {
@@ -69,7 +62,6 @@ public class JobResponseFormatter
     jInfo.setStatusUrl(jobUri + jDetails.getJobId());
     jInfo.setType(jDetails.getType());
     JobStateResponse jsr = new JobStateResponse();
-    jsr.setPercent(jDetails.getProgress());
     jsr.setState(jDetails.getStatus());
     jsr.setMessage(jDetails.getMessage());
     jsr.setJobFinished(jDetails.isFinished());
@@ -83,7 +75,6 @@ public class JobResponseFormatter
     
     TaskStateResponse tsr = new TaskStateResponse();
     long taskId = jDetails.getJobId(); //task id is the same as job id
-    tsr.setPercent(jDetails.getProgress(taskId));
     tsr.setState(jDetails.getStatus(taskId));
     tsr.setMessage(jDetails.getMessage(taskId));
     tsr.setTaskFinished((jDetails.isFinished(taskId)));

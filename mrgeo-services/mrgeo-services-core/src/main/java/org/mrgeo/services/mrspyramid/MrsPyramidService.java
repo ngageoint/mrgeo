@@ -26,13 +26,13 @@ import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.mapreduce.job.JobManager;
+import org.mrgeo.job.JobManager;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.mrspyramid.rendering.KmlResponseBuilder;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +79,7 @@ public class MrsPyramidService {
     public List<String> getColorScales() throws Exception
     {
       ColorScale[] colorScales = ColorScaleManager.getColorScaleList();
-      List<String> result = new ArrayList<String>(colorScales.length);
+      List<String> result = new ArrayList<>(colorScales.length);
       for (ColorScale cs : colorScales)
       {
         result.add(cs.getName());
@@ -235,7 +235,7 @@ public class MrsPyramidService {
 
     // Function to format the elapsed time (in sec) of the completed WPS job
     public String formatElapsedTime(Double elapsedTime) {
-        List<String> output = new ArrayList<String>();
+        List<String> output = new ArrayList<>();
         int secPerMinute = 60;
         int minPerHour = 60;
         int hourPerDay = 24;

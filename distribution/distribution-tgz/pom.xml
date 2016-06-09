@@ -19,11 +19,11 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>distribution</artifactId>
-    <version>${mrgeo.version}</version>
+    <version>1.1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>distribution-tgz</artifactId>
-  <version>${mrgeo.version}</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -32,7 +32,7 @@
   <name>distribution-tgz</name>
   <url>http://mrgeo.org</url>
   <build>
-    <finalName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}</finalName>
+    <finalName>${project.parent.parent.artifactId}-${project.version}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -104,7 +104,7 @@
                   <artifactId>${project.artifactId}</artifactId>
                   <version>${project.version}</version>
                   <type>tar.gz</type>
-                  <destFileName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}.tar.gz</destFileName>
+                  <destFileName>${project.parent.parent.artifactId}-${project.parent.version}.tar.gz</destFileName>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>${project.parent.build.directory}</outputDirectory>
