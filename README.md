@@ -10,7 +10,7 @@
 
 ||RPM|pyMrGeo|
 |:---|:---:|:---:|
-|**Version**|1.1.0|0.0.1|
+|**Version**|1.1.0|0.0.4|
 |**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-aws-rpm)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=pymrgeo-build)](http://jenkins.dgis-dev.com:8080/job/pymrgeo-build)
 
 ||Amazon EMR|
