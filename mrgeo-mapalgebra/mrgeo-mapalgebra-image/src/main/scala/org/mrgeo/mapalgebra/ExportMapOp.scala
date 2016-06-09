@@ -285,6 +285,12 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       val nodatas = meta.getDefaultValues
       val over = overridenodata.get
 
+      var s = "Overriding nodata ["
+      nodatas.foreach(n => s += n + " ")
+      s += "] with " + over
+
+      logInfo(s)
+
       filtered.map(tile => {
 
         def isNodata(value:Double, nodata:Double):Boolean = {
@@ -292,23 +298,20 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
             value.isNaN
           }
           else {
-            nodata == value
+            FloatUtils.isEqual(nodata, value)
           }
         }
 
         val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
 
-        var y = 0
-        var x = 0
         var b = 0
-
         while (b < raster.getNumBands) {
           val nodata = nodatas(b)
+          var y = 0
           while (y < raster.getHeight) {
+            var x = 0
             while (x < raster.getWidth) {
-              val v = raster.getSampleDouble(x, y, b)
-
-              if (isNodata(v, nodata)) {
+              if (isNodata(raster.getSampleDouble(x, y, b), nodata)) {
                 raster.setSample(x, y, b, over)
               }
               x += 1

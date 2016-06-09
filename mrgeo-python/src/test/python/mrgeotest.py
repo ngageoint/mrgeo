@@ -175,6 +175,7 @@ class MrGeoTests(TestCase):
         cls.mrgeo = MrGeo()
         cls.gateway = cls.mrgeo.gateway
 
+
         jvm = cls.gateway.jvm
         java_import(jvm, "org.mrgeo.core.MrGeoConstants")
         java_import(jvm, "org.mrgeo.core.MrGeoProperties")
@@ -202,7 +203,7 @@ class MrGeoTests(TestCase):
                 names = os.listdir(dirname)
                 if cls._INPUT in names:
                     break
-                dirname = os.path.abspath(os.path.join(os.pardir, dirname))
+                dirname = os.path.abspath(os.path.join(dirname, os.pardir))
         except OSError:
             pass
 
@@ -245,6 +246,22 @@ class MrGeoTests(TestCase):
     def tearDown(self):
         self.mrgeo.stop()
         self._doublebox("Test Finished", self.classname + ":" + self.name)
+
+    def debug_logging(self):
+        jvm = self.gateway.jvm
+        jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.DEBUG)
+
+    def info_logging(self):
+        jvm = self.gateway.jvm
+        jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.INFO)
+
+    def warn_logging(self):
+        jvm = self.gateway.jvm
+        jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.WARN)
+
+    def error_logging(self):
+        jvm = self.gateway.jvm
+        jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
 
     @staticmethod
     def _doublebox(text, name):
