@@ -35,6 +35,7 @@ usage() {
     echo "  cdh552    - Cloudera hadoop 5.5.2"
     echo "  cdh560    - Cloudera hadoop 5.6.0"
     echo "  cdh570    - Cloudera hadoop 5.7.0"
+    echo "  cdh571    - Cloudera hadoop 5.7.1"
     echo "  emr-4.5.0 - Amazon EMR hadoop 4.5.0 for EMR 4.5.0"
     echo "  emr-4.4.0 - Amazon EMR hadoop 4.4.0 for EMR 4.4.0"
     echo "  mapr      - mapr hadoop"
@@ -253,7 +254,10 @@ while [ $# -gt 0 ] ; do
     "cdh550" | "cdh550-yarn" | "cdh551" | "cdh551-yarn" | "cdh552" | "cdh552-yarn")
         BUILD=$1
         ;;
-    "cdh560" | "cdh560-yarn" | "cdh570" | "cdh570-yarn")
+    "cdh560" | "cdh560-yarn")
+        BUILD=$1
+        ;;
+    "cdh570" | "cdh570-yarn" | "cdh571" | "cdh571-yarn")
         BUILD=$1
         ;;
     "build")

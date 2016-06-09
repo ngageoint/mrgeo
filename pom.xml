@@ -90,6 +90,7 @@
     <spring.version>3.2.1.RELEASE</spring.version>
     <!-- testing frameworks -->
     <cpsuite.version>1.2.7</cpsuite.version>
+    <findbugs.version>3.0.1</findbugs.version>
     <hamcrest.version>1.3</hamcrest.version>
     <httpunit.version>1.7</httpunit.version>
     <junit.version>4.8.2</junit.version>
@@ -102,6 +103,8 @@
     <buildnumber-maven.version>1.3</buildnumber-maven.version>
     <cobertura-maven.version>2.6</cobertura-maven.version>
     <exec-maven.version>1.4.0</exec-maven.version>
+    <findbugs-maven.version>3.0.1</findbugs-maven.version>
+    <findsecbugs-plugin.version>LATEST</findsecbugs-plugin.version>
     <license-maven.version>1.8</license-maven.version>
     <pomtools-maven.version>0.2.1</pomtools-maven.version>
     <maven-assembly.version>2.5.4</maven-assembly.version>
@@ -127,10 +130,8 @@
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
     <!-- generated resources -->
     <generatedResources>${project.build.directory}/generated-resources</generatedResources>
-
     <!-- repositories -->
     <repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/release</repository.url>
     <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
@@ -688,6 +689,30 @@
           </executions>
         </plugin>
         <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>${findbugs-maven.version}</version>
+          <configuration>
+            <effort>Max</effort>
+            <threshold>Low</threshold>
+            <failOnError>true</failOnError>
+            <outputDirectory>${project.build.directory}/findbugs</outputDirectory>
+            <xmlOutputDirectory>${project.build.directory}/findbugs</xmlOutputDirectory>
+            <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+            <!--
+            <includeFilterFile>${session.executionRootDirectory}/findbugs-security-include.xml</includeFilterFile>
+            -->
+            <excludeFilterFile>${session.executionRootDirectory}/src/main/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
+            <plugins>
+              <plugin>
+                <groupId>com.h3xstream.findsecbugs</groupId>
+                <artifactId>findsecbugs-plugin</artifactId>
+                <version>${findsecbugs-plugin.version}</version>
+              </plugin>
+            </plugins>
+          </configuration>
+        </plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>${maven-assembly.version}</version>
@@ -771,6 +796,51 @@
          |                    any punctuation (i.e cdh 4.5.0 becomes cdh450), used when ultimately build RPMs
          | release.arguments - any arguments to use for releases, usually blank
     -->
+    <profile>
+      <id>cdh571-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.7.1</hadoop.version>
+        <mahout.version>0.9-cdh5.7.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.7.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.7.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh571</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.7.1</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.7.1</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.7.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.7.1</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.7.1-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
     <profile>
       <id>cdh570-yarn</id>
       <properties>
@@ -1676,7 +1746,7 @@
         <geowave.version>0.9.0</geowave.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-<!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.7.2</final.classifier>
@@ -1708,7 +1778,7 @@
         <geowave.version>0.9.0</geowave.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-<!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.7.1</final.classifier>
@@ -2919,32 +2989,12 @@
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-http</artifactId>
-        <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-io</artifactId>
-        <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-security</artifactId>
-        <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-servlet</artifactId>
-        <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-util</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
@@ -3040,6 +3090,12 @@
         <artifactId>opencv</artifactId>
         <version>${opencv.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>findbugs</artifactId>
+        <version>${findbugs.version}</version>
+        <scope>provided</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -3099,6 +3155,10 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>findbugs</artifactId>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->
