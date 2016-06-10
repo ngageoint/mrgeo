@@ -3,14 +3,14 @@
 |**Version**|2.4.0|2.4.1|2.5.2|2.6.0|2.7.1|
 |**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-apache240)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache240)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-apache241)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache241)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-apache252)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache252)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-apache260)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache260)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-apache271)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-apache271)
 
-||CDH||||
-|:---|:---:|:---:|:---:|:---:|
-|**Version**|5.4.8|5.5.2|5.6.0|5.7.0|
-|**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.4.8-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.4.8-yarn)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.5.2-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.5.2-yarn)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.6.0-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.6.0-yarn)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.7.0-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.7.0-yarn)
+||CDH|||||
+|:---|:---:|:---:|:---:|:---:|:---:|
+|**Version**|5.4.8|5.5.2|5.6.0|5.7.0|5.7.1|
+|**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.4.8-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.4.8-yarn)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.5.2-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.5.2-yarn)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.6.0-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.6.0-yarn)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.7.0-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.7.0-yarn)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-cdh5.7.1-yarn)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-cdh5.7.1-yarn/)|
 
 ||RPM|pyMrGeo|
 |:---|:---:|:---:|
-|**Version**|1.1.0|0.0.1|
+|**Version**|1.1.0|0.0.4|
 |**Status**|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=mrgeo-opensource-aws-rpm)](http://jenkins.dgis-dev.com:8080/job/mrgeo-opensource-aws-rpm)|[![Build Status](http://jenkins.dgis-dev.com:8080/buildStatus/icon?job=pymrgeo-build)](http://jenkins.dgis-dev.com:8080/job/pymrgeo-build)
 
 ||Amazon EMR|
