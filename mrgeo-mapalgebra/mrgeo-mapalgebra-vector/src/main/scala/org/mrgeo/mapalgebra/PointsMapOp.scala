@@ -97,6 +97,7 @@ class PointsMapOp extends VectorMapOp with Externalizable {
       var i: Int = 0
       while (i < coordCount) {
         coords(i) = in.readDouble()
+        i += 1
       }
       Some(coords)
     }

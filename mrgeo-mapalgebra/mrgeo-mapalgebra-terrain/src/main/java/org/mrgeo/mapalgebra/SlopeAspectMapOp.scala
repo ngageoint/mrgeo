@@ -20,6 +20,7 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import javax.vecmath.Vector3d
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -32,23 +33,23 @@ import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils.tms.TMSUtils
 import org.mrgeo.utils.{LatLng, SparkUtils}
 
-object SlopeAspectMapOp {
-  final val Input = "input"
-  final val Output = "output"
-  final val Units = "units"
-  final val Type = "type"
-
-  final val Slope = "slope"
-  final val Aspect = "aspect"
-
-}
+//object SlopeAspectMapOp {
+//  final val Input = "input"
+//  final val Output = "output"
+//  final val Units = "units"
+//  final val Type = "type"
+//
+//  final val Slope = "slope"
+//  final val Aspect = "aspect"
+//
+//}
 
 class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
   final val DEG_2_RAD: Double = 0.0174532925
   final val RAD_2_DEG: Double = 57.2957795
-  final val TWO_PI:Double = 6.28318530718
-  final val THREE_PI_OVER_2:Double = 4.71238898038
+  final val TWO_PI:Double = 2 * Math.PI
+  final val THREE_PI_OVER_2:Double = (3.0 * Math.PI) / 2.0
 
   private var inputMapOp:Option[RasterMapOp] = None
   private var units:String = "rad"
@@ -173,6 +174,7 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         (normal.x, normal.y, normal.z)
       }
 
+      @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
       def calculateAngle(normal: (Double, Double, Double)): Float = {
         if (normal._1.isNaN) {
           return Float.NaN

@@ -17,19 +17,20 @@
 package org.mrgeo.mapalgebra
 
 import java.awt.image.DataBuffer
-import java.io.{IOException, ObjectOutput, ObjectInput, Externalizable}
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
-import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.data.raster.{RasterWritable, RasterUtils}
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import org.apache.spark.{SparkConf, SparkContext}
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.SparkUtils
-
+import org.mrgeo.utils.{FloatUtils, SparkUtils}
 import org.mrgeo.utils.MrGeoImplicits._
 
+@SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
 object ConvertMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("convert")
@@ -103,23 +104,22 @@ object ConvertMapOp extends MapOpRegistrar {
     while (b < newNodata.length) {
       val inputNodata = meta.getDefaultValue(b)
       newNodata(b) = tileType.toLowerCase() match {
-        case "byte" => {
+        case "byte" =>
           if (conversionMethod.equalsIgnoreCase("truncate")) {
-            if (inputNodata.toByte == inputNodata) {
-              inputNodata
+            if (inputNodata >= Byte.MinValue && inputNodata <= Byte.MaxValue) {
+              inputNodata.toByte.toDouble
             }
             else {
-              255.0.toDouble
+              Byte.MaxValue.toDouble
             }
           }
           else {
-            255.0.toDouble
+            Byte.MaxValue.toDouble
           }
-        }
-        case "short" => {
+        case "short" =>
           if (conversionMethod.equalsIgnoreCase("truncate")) {
-            if (inputNodata.toShort == inputNodata) {
-              inputNodata
+            if (inputNodata >= Short.MinValue && inputNodata <= Short.MaxValue) {
+              inputNodata.toShort.toDouble
             }
             else {
               Short.MinValue.toDouble
@@ -128,12 +128,11 @@ object ConvertMapOp extends MapOpRegistrar {
           else {
             Short.MinValue.toDouble
           }
-        }
-        case "int" => {
+        case "int" =>
           if (conversionMethod.equalsIgnoreCase("truncate")) {
-            if (inputNodata.toInt == inputNodata) {
-              meta.getDefaultValue(0)
-            }
+              if (inputNodata >= Int.MinValue && inputNodata <= Int.MaxValue) {
+                inputNodata.toInt.toDouble
+              }
             else {
               Int.MinValue.toDouble
             }
@@ -141,13 +140,8 @@ object ConvertMapOp extends MapOpRegistrar {
           else {
             Int.MinValue.toDouble
           }
-        }
-        case "float32" => {
-          Float.NaN
-        }
-        case "float64" => {
-          Double.NaN
-        }
+        case "float32" => Float.NaN
+        case "float64" => Double.NaN
       }
       b += 1
     }
@@ -155,6 +149,7 @@ object ConvertMapOp extends MapOpRegistrar {
   }
 }
 
+@SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
 class ConvertMapOp extends RasterMapOp with Externalizable {
   // Available tile types in increasing order of range
   def tileTypeSizeOrdering = Array[Int] (
@@ -259,7 +254,6 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
       oldNodata.zipWithIndex.foreach(U => {
         oldNodataIsNan(U._2) = java.lang.Double.isNaN(U._1)
       })
-      val zoom = meta.getMaxZoomLevel
       var stats = meta.getStats
       if (stats == null) {
         stats = SparkUtils.calculateStats(rdd, meta.getBands,
@@ -296,7 +290,7 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
                 }
               }
               else {
-                if (srcVal == oldNodata(b)) {
+                if (FloatUtils.isEqual(srcVal, oldNodata(b))) {
                   newNodata(b).doubleValue()
                 }
                 else {

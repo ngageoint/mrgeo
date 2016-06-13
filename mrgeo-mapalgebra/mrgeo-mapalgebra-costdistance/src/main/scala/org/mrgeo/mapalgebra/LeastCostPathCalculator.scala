@@ -38,7 +38,6 @@ import scala.collection.mutable.ListBuffer
 
 @SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
 object LeastCostPathCalculator extends Logging {
-  private val LOG: Logger = LoggerFactory.getLogger(classOf[LeastCostPathCalculator])
 
   @throws(classOf[IOException])
   def run(costDist:RasterMapOp, destination:VectorRDD, context:SparkContext, zoom:Int = -1): VectorRDD = {
@@ -97,6 +96,8 @@ object LeastCostPathCalculator extends Logging {
 
 }
 
+@SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION", "FE_FLOATING_POINT_EQUALITY", "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
+  justification = "1) false positive - case class NeighborData correctly named, 2 & 3) Scala generated code")
 private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyramidMetadata) extends Logging {
   val zoom = meta.getMaxZoomLevel
   val tilesize = meta.getTilesize
@@ -264,7 +265,6 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     val tilelist = tilebuilder.result()
 
     // filter the new tiles and put them into the new cache
-    val z = zoom
     rdd.filter(tile => {
       tilelist.contains(tile._1.get)
     }).collect.foreach(tile => {
