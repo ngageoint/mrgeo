@@ -16,6 +16,7 @@
 
 package org.mrgeo.resources.mrspyramid;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 
 import javax.ws.rs.GET;
@@ -32,22 +33,23 @@ import java.io.IOException;
 @Path("/metadata")
 public class MetadataResource
 {
-    @Context
-    MrsPyramidService service;
+@Context
+MrsPyramidService service;
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{output: .*+}")
-    public Response getMetadata(@PathParam("output") final String imgName)
+@SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
+@GET
+@Produces(MediaType.APPLICATION_JSON)
+@Path("/{output: .*+}")
+public Response getMetadata(@PathParam("output") final String imgName)
+{
+    try
     {
-        try
-        {
-            return Response.status(Status.OK).entity( service.getMetadata(imgName) ).build();
-        }
-        catch (final IOException e)
-        {
-            final String error = e.getMessage() != null ? e.getMessage() : "";
-            return Response.serverError().entity(error).build();
-        }
+        return Response.status(Status.OK).entity( service.getMetadata(imgName) ).build();
     }
+    catch (final IOException e)
+    {
+        final String error = e.getMessage() != null ? e.getMessage() : "";
+        return Response.serverError().entity(error).build();
+    }
+}
 }
