@@ -81,7 +81,7 @@ public class AccumuloMrsPyramidFileOutputFormat extends FileOutputFormat<Key, Va
 			cv = new ColumnVisibility(pl);
 			vizStr = pl;
 		}
-		if (cv == null | vizStr == null) {
+		if (cv == null || vizStr == null) {
 			vizStr = context.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ);
 			if (vizStr == null) {
 				cv = new ColumnVisibility();

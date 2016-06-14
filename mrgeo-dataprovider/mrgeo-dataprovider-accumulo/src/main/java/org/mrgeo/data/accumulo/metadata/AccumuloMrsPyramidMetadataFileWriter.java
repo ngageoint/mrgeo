@@ -91,13 +91,13 @@ public class AccumuloMrsPyramidMetadataFileWriter implements MrsPyramidMetadataW
   @Override
   public void write(MrsPyramidMetadata metadata) throws IOException{
     // write the metadata object to hdfs
-    Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
-    ColumnVisibility cv;
-    if(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ) == null){
-      cv = new ColumnVisibility();
-    } else {
-      cv = new ColumnVisibility(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
-    }
+//    Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
+//    ColumnVisibility cv;
+//    if(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ) == null){
+//      cv = new ColumnVisibility();
+//    } else {
+//      cv = new ColumnVisibility(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
+//    }
     Path path = new Path(workDir, "meta.rf");
     FileSystem fs = HadoopFileUtils.getFileSystem(path);
     if (fs.exists(path))
