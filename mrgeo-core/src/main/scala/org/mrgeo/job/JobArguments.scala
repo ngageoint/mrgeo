@@ -18,6 +18,7 @@ package org.mrgeo.job
 
 import java.util
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.lang3.SystemUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
@@ -26,23 +27,25 @@ import org.apache.spark.Logging
 import org.apache.spark.deploy.yarn.YarnSparkHadoopUtil
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.utils.{FileUtils, HadoopUtils, Memory, SparkUtils}
+import org.mrgeo.utils.{FileUtils, HadoopUtils, SparkUtils}
 
 import scala.collection.JavaConversions.{asScalaSet, _}
 import scala.collection.mutable.ArrayBuffer
 
+@SuppressFBWarnings(value=Array("UUF_UNUSED_FIELD"), justification = "Scala generated code")
+@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
 class JobArguments() extends Logging {
 
-  final private val NAME:String =  "name"
-  final private val CLUSTER:String =  "cluster"
-  final private val DRIVER:String = "driver"
-  final private val JARS:String =  "jars"
-  final private val DRIVERJAR:String = "driverjar"
-  final private val VERBOSE:String =  "verbose"
-  final private val CORES:String =  "cores"
-  final private val EXECUTORS:String =  "executors"
-  final private val MEMORY:String =  "memory"
-  final private val MRGEO_CONF_PREFIX = "MrGeoConf:"
+  final private val Name:String =  "name"
+  final private val Cluster:String =  "cluster"
+  final private val Driver:String = "driver"
+  final private val Jars:String =  "jars"
+  final private val DriverJar:String = "driverjar"
+  final private val Verbose:String =  "verbose"
+  final private val Cores:String =  "cores"
+  final private val Executors:String =  "executors"
+  final private val Memory:String =  "memory"
+  final private val MrGeoConfPrefix = "MrGeoConf:"
 
   /**
    * Pattern for matching a Windows drive, which contains only a single alphabet character.
@@ -101,15 +104,15 @@ class JobArguments() extends Logging {
   {
     val props = MrGeoProperties.getInstance()
     props.stringPropertyNames().foreach(U => {
-      val key = MRGEO_CONF_PREFIX + U
+      val key = MrGeoConfPrefix + U
       params += key -> props.getProperty(U)
     })
   }
 
   def setSetting(key:String, value:String) = {
-    if (key.startsWith(MRGEO_CONF_PREFIX))
+    if (key.startsWith(MrGeoConfPrefix))
     {
-      val mrGeoKey = key.substring(MRGEO_CONF_PREFIX.length)
+      val mrGeoKey = key.substring(MrGeoConfPrefix.length)
       MrGeoProperties.getInstance().setProperty(mrGeoKey, value)
     }
     else
@@ -168,46 +171,46 @@ class JobArguments() extends Logging {
   def toArray: Array[String] = {
     val args = new ArrayBuffer[String]()
     if (name != null) {
-      args += NAME
+      args += Name
       args += name
     }
 
     if (cluster != null) {
-      args += CLUSTER
+      args += Cluster
       args += cluster
     }
 
     if (driverClass != null) {
-      args += DRIVER
+      args += Driver
       args += driverClass
     }
 
     if (jars != null) {
-      args += JARS
+      args += Jars
       args += jars.mkString(",")
     }
 
     if (driverJar != null) {
-      args += DRIVERJAR
+      args += DriverJar
       args += driverJar
     }
 
     if (verbose) {
-      args += VERBOSE
+      args += Verbose
     }
 
     if (cores > 0) {
-      args += CORES
+      args += Cores
       args += cores.toString
     }
 
     if (executors > 0) {
-      args += EXECUTORS
+      args += Executors
       args += executors.toString
     }
 
     if (memoryKb > 0) {
-      args += MEMORY
+      args += Memory
       args += memoryKb.toString
     }
 
@@ -219,6 +222,7 @@ class JobArguments() extends Logging {
     args.toArray
   }
 
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   private def parse(opts: Seq[String]): Unit = opts match {
   case ("--name") :: value :: tail =>
     name = value
@@ -368,7 +372,7 @@ class JobArguments() extends Logging {
     }
   }
 
-  def loadYarnSettings() = {
+  def loadYarnSettings():Unit = {
 
     val res = calculateYarnResources()
     val sparkConf = SparkUtils.getConfiguration
@@ -397,7 +401,6 @@ class JobArguments() extends Logging {
 
 
   private def configureYarnMemory(cores:Int, nodes:Int, memory:Long, unitMemory:Long, minMemory:Long, maxMemory:Long) = {
-
     val rawMemoryPerNode = memory / nodes
     val rawExecutorsPerNode = cores / nodes
     val rawMemPerExecutor = rawMemoryPerNode / rawExecutorsPerNode
@@ -436,7 +439,7 @@ class JobArguments() extends Logging {
         // YarnClient was here in older versions of YARN
         case cnfe: ClassNotFoundException =>
           cl.loadClass("org.apache.hadoop.yarn.client.YarnClient")
-        case _:Throwable => null
+        case t:Throwable => throw t
       }
 
     val create = client.getMethod("createYarnClient")

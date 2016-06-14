@@ -14,8 +14,11 @@
  *
  */
 
-package org.mrgeo.utils;
+package org.mrgeo.utils.logging;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.log4j.Appender;
+import org.apache.log4j.spi.RootLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +27,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
 
 public class LoggingUtils
 {
@@ -205,12 +210,14 @@ public static void redirect()
 {
   System.setOut(new PrintStream(System.out){
     @Override
-    public void print(String s){ log.info(s);}
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS", justification = "CRLF Neutralized")
+    public void print(String s){ log.info(s.replaceAll("(\\r|\\n)", ""));}
   });
 
   System.setErr(new PrintStream(System.err){
     @Override
-    public void print(String s){ log.error(s);}
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS", justification = "CRLF Neutralized")
+    public void print(String s){ log.error(s.replaceAll("(\\r|\\n)", ""));}
   });
 
 }
@@ -454,19 +461,47 @@ private static void initialize()
         //Class<?> levelClass = Class.forName("org.apache.log4j.Level");
         Method configure = basicConfiguratorClass.getMethod("configure");
         configure.invoke(null);
+
+        System.err.println("LoggingUtils: Initializing log4j logger to use a basic configuration:");
       }
+
+      appenders = (Enumeration)getAppenders.invoke(rootlogger);
+      wrapAppenders(rootlogger, appenders);
     }
     catch (IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchMethodException e)
     {
       e.printStackTrace();
     }
 
-    System.err.println("LoggingUtils: Initializing log4j logger to use a basic configuration:");
+
   }
   else
   {
     throw new UnsupportedOperationException(
         "Only the Log4J & slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
+  }
+}
+
+private static void wrapAppenders(Object rootlogger, Enumeration appenders)
+{
+  RootLogger rl;
+  if (rootlogger instanceof RootLogger)
+  {
+    rl = (RootLogger)rootlogger;
+
+    while (appenders.hasMoreElements())
+    {
+      Object next = appenders.nextElement();
+      if (next instanceof Appender)
+      {
+        Appender app = (Appender)next;
+
+        Appender wrapped = new Log4JAppenderWrapper(app);
+        rl.removeAppender(app);
+        rl.addAppender(wrapped);
+      }
+    }
+
   }
 }
 

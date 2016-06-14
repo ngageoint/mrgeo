@@ -160,7 +160,7 @@ public class JPointZ extends JShape
     {
       return p.toString();
     }
-    return null;
+    return "null";
   }
 
   @Override

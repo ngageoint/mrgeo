@@ -35,7 +35,7 @@ public class HdfsMrsImageDataProviderFactory implements MrsImageDataProviderFact
 {
   private static Configuration conf;
 
-  private class OnlyDirectoriesFilter implements PathFilter
+  private static class OnlyDirectoriesFilter implements PathFilter
   {
     private FileSystem fs;
 

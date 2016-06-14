@@ -29,11 +29,18 @@ public abstract class VectorDataProvider
   private String resourcePrefix;
   private String resourceName;
 
-  public VectorDataProvider(final String inputPrefix, final String input)
-  {
-    resourcePrefix = inputPrefix;
-    resourceName = input;
-  }
+public VectorDataProvider(final String inputPrefix, final String input)
+{
+  resourcePrefix = inputPrefix;
+  resourceName = input;
+}
+
+public VectorDataProvider(final String inputPrefix, final String input, ProviderProperties providerProps)
+{
+  resourcePrefix = inputPrefix;
+  resourceName = input;
+  providerProperties = providerProps;
+}
 
   public String getResourceName()
   {

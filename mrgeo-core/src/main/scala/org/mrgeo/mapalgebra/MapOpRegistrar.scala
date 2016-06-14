@@ -16,8 +16,10 @@
 
 package org.mrgeo.mapalgebra
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.mrgeo.mapalgebra.parser.ParserNode
 
+@SuppressFBWarnings(value = Array("NM_CLASS_NAMING_CONVENTION"), justification = "Well, yes it does!")
 trait MapOpRegistrar {
   def register:Array[String]
 

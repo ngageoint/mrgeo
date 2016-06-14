@@ -277,37 +277,37 @@ public class Column implements Writable
   public String toString()
   {
     StringBuffer result = new StringBuffer();
-    result.append("Name: " + name + "\n");
-    result.append("Type: " + type.toString() + "\n");
-    result.append(String.format("  count: %d\n", count));
+    result.append("Name: " + name + "%n");
+    result.append("Type: " + type.toString() + "%n");
+    result.append(String.format("  count: %d%n", count));
     if (type == FactorType.Numeric)
     {
-      result.append(String.format("  min: %f\n", min));
-      result.append(String.format("  max: %f\n", max));
-      result.append(String.format("  sum: %f\n", sum));
+      result.append(String.format("  min: %f%n", min));
+      result.append(String.format("  max: %f%n", max));
+      result.append(String.format("  sum: %f%n", sum));
       if (isQuartile1Valid())
       {
-        result.append(String.format("  quartile1: %f\n", quartile1));
+        result.append(String.format("  quartile1: %f%n", quartile1));
       }
       else
       {
-        result.append("  quartile1: not available\n");
+        result.append("  quartile1: not available%n");
       }
       if (isQuartile2Valid())
       {
-        result.append(String.format("  quartile2: %f\n", quartile2));
+        result.append(String.format("  quartile2: %f%n", quartile2));
       }
       else
       {
-        result.append("  quartile2: not available\n");
+        result.append("  quartile2: not available%n");
       }
       if (isQuartile3Valid())
       {
-        result.append(String.format("  quartile3: %f\n", quartile3));
+        result.append(String.format("  quartile3: %f%n", quartile3));
       }
       else
       {
-        result.append("  quartile3: not available\n");
+        result.append("  quartile3: not available%n");
       }
     }
     return result.toString();

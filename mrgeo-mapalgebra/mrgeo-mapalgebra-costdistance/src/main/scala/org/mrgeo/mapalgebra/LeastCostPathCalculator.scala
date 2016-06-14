@@ -20,6 +20,7 @@ import java.awt.image.Raster
 import java.io._
 import java.text.DecimalFormat
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
@@ -29,12 +30,13 @@ import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.tms.{Bounds, Pixel, TMSUtils, Tile}
-import org.mrgeo.utils.{LatLng, LoggingUtils}
+import org.mrgeo.utils.LatLng
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
+@SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
 object LeastCostPathCalculator extends Logging {
   private val LOG: Logger = LoggerFactory.getLogger(classOf[LeastCostPathCalculator])
 

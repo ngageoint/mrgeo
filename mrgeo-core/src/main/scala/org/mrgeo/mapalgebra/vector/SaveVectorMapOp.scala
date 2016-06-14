@@ -2,6 +2,7 @@ package org.mrgeo.mapalgebra.vector
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.ProviderProperties
 import org.mrgeo.data.rdd.VectorRDD
@@ -9,6 +10,7 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
 
+@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
 class SaveVectorMapOp extends VectorMapOp with Externalizable {
   private var vectorRDD: Option[VectorRDD] = None
   private var input: Option[VectorMapOp] = None

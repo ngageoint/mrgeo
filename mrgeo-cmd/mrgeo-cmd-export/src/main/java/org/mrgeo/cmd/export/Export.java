@@ -36,6 +36,7 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
+import org.mrgeo.utils.logging.LoggingUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.tms.Tile;

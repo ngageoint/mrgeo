@@ -17,6 +17,7 @@
 package org.mrgeo.mapalgebra.vector.paint;
 
 import org.mrgeo.geometry.Point;
+import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.Gaussian;
 
 import java.awt.*;
@@ -117,7 +118,7 @@ private class GaussianCompositeContext implements CompositeContext
         }
         else
         {
-          if (s == nodata)
+          if (FloatUtils.isEqual(s, nodata))
           {
             sample = d;
           }

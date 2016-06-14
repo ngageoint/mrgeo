@@ -22,6 +22,7 @@ import org.apache.spark.{Partition, TaskContext}
 import org.mrgeo.data.vector.FeatureIdWritable
 import org.mrgeo.geometry.Geometry
 
+@SerialVersionUID(1L)
 object VectorRDD {
   def apply(parent: VectorRDD): VectorRDD = {
     new VectorRDD(parent)
@@ -31,6 +32,7 @@ object VectorRDD {
   }
 }
 
+@SerialVersionUID(1L)
 class VectorRDD(parent: RDD[(FeatureIdWritable, Geometry)]) extends RDD[(FeatureIdWritable, Geometry)](parent) {
   @DeveloperApi
   override def compute(split: Partition, context: TaskContext): Iterator[(FeatureIdWritable, Geometry)] = {

@@ -435,7 +435,7 @@ public class AccumuloUtils {
 	 */
 	public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn, ColumnVisibility cViz){
 	  ColumnVisibility columnVis;
-	  if(cViz == null){
+	  if (cViz != null){
 	    columnVis = cViz;
 	  } else {
 	    columnVis = new ColumnVisibility();

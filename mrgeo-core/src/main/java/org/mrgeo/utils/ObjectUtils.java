@@ -16,57 +16,33 @@
 
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.*;
 
-public class ObjectUtils
+class ObjectUtils
 {
-public static byte[] encodeObject(Object obj) throws IOException
+static byte[] encodeObject(Object obj) throws IOException
 {
-  ByteArrayOutputStream baos = new ByteArrayOutputStream();
-  ObjectOutputStream oos = null;
-  try
+  try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
   {
-    oos = new ObjectOutputStream(baos);
-    oos.writeObject(obj);
-    return baos.toByteArray();
-  }
-  catch (IOException e)
-  {
-    throw e;
-  }
-  finally
-  {
-    if (oos != null)
+    try (ObjectOutputStream oos = new ObjectOutputStream(baos))
     {
-      oos.close();
+      oos.writeObject(obj);
+      return baos.toByteArray();
     }
-    baos.close();
   }
-
 }
 
-public static Object decodeObject(byte[] bytes) throws IOException, ClassNotFoundException
+@SuppressFBWarnings(value = "OBJECT_DESERIALIZATION", justification = "only decoding metadata, and package local")
+static Object decodeObject(byte[] bytes) throws IOException, ClassNotFoundException
 {
-  ByteArrayInputStream bais = null;
-  ObjectInputStream ois = null;
-
-  try
+  try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes))
   {
-    bais = new ByteArrayInputStream(bytes);
-    ois = new ObjectInputStream(bais);
-    return  ois.readObject();
-  }
-  finally
-  {
-    if (ois != null)
+    try (ObjectInputStream ois = new ObjectInputStream(bais))
     {
-      ois.close();
-    }
-    if (bais != null)
-    {
-      bais.close();
+      return ois.readObject();
     }
   }
-
 }
 }

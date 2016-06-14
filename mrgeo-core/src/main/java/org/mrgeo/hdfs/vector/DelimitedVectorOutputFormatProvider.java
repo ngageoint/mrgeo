@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.vector;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -27,6 +28,7 @@ import org.mrgeo.geometry.Geometry;
 
 import java.io.IOException;
 
+@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "'context' kept for completeness")
 public class DelimitedVectorOutputFormatProvider implements VectorOutputFormatProvider
 {
   private HdfsVectorDataProvider provider;

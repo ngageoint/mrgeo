@@ -16,6 +16,8 @@
 
 package org.mrgeo.mapalgebra.vector.paint;
 
+import org.mrgeo.utils.FloatUtils;
+
 import java.awt.*;
 import java.awt.image.ColorModel;
 import java.awt.image.Raster;
@@ -91,11 +93,11 @@ public class MaxCompositeDouble extends WeightedComposite
           }
           else
           {
-            if (d == nodata)
+            if (FloatUtils.isEqual(d, nodata))
             {
               sample = s;           
             }
-            else if (s == nodata)
+            else if (FloatUtils.isEqual(s, nodata))
             {
               sample = d;
             }

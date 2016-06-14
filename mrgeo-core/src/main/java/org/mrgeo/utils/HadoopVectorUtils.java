@@ -16,6 +16,7 @@
 
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
@@ -44,6 +45,7 @@ import java.util.UUID;
 /**
  * 
  */
+@SuppressFBWarnings(value = "PREDICTABLE_RANDOM", justification = "Just used for tmp filename generation")
 public class HadoopVectorUtils
 {
   private static final Logger log = LoggerFactory.getLogger(HadoopVectorUtils.class);
@@ -156,10 +158,10 @@ public class HadoopVectorUtils
     // create a random string of about 1000 characters. This will force the
     // sequence file to split appropriately. Certainly a hack, but shouldn't
     // cause much of a difference in speed, or storage.
-    String randomString = "";
+    StringBuilder randomString = new StringBuilder();
     while (randomString.length() < size)
     {
-      randomString += Long.toHexString(random.nextLong());
+      randomString.append(Long.toHexString(random.nextLong()));
     }
     return randomString.substring(0, size);
   }
@@ -217,7 +219,7 @@ public class HadoopVectorUtils
     if (listDirs != null)
     {
       final String[] dirs = listDirs.split(",");
-      if (dirs != null && dirs.length != 0)
+      if (dirs.length != 0)
       {
         for (int i = 0; i < dirs.length; i++)
         {
@@ -262,59 +264,6 @@ public class HadoopVectorUtils
     return result;
   }
 
-  /**
-   * Formats a string with all of a job's failed task attempts.
-   *
-   * @param jobId
-   *          ID of the job for which to retrieve failed task info
-   * @param showStackTrace
-   *          if true; the entire stack trace will be shown for each failure exception
-   * @param taskLimit
-   *          maximum number of tasks to add to the output message
-   * @return formatted task failure string if job with jobId exists; empty string otherwise
-   * @throws java.io.IOException
-   * @todo will rid of the deprecated code, if I can figure out how to...API is confusing
-   */
-  public static String getFailedTasksString(final String jobId, final boolean showStackTrace,
-    final int taskLimit) throws IOException
-  {
-    final JobClient jobClient = new JobClient(new JobConf(HadoopUtils.createConfiguration()));
-    final RunningJob job = jobClient.getJob(jobId);
-    final TaskCompletionEvent[] taskEvents = job.getTaskCompletionEvents(0);
-    String failedTasksMsg = "";
-    int numTasks = taskEvents.length;
-    if (taskLimit > 0 && taskLimit < numTasks)
-    {
-      numTasks = taskLimit;
-    }
-    int taskCtr = 0;
-    for (int i = 0; i < numTasks; i++)
-    {
-      final TaskCompletionEvent taskEvent = taskEvents[i];
-      if (taskEvent.getTaskStatus().equals(TaskCompletionEvent.Status.FAILED))
-      {
-        final org.apache.hadoop.mapred.TaskAttemptID taskId = taskEvent.getTaskAttemptId();
-        final String[] taskDiagnostics = job.getTaskDiagnostics(taskId);
-        if (taskDiagnostics != null)
-        {
-          taskCtr++;
-          failedTasksMsg += "\nTask " + String.valueOf(taskCtr) + ": ";
-          for (final String taskDiagnostic : taskDiagnostics)
-          {
-            if (showStackTrace)
-            {
-              failedTasksMsg += taskDiagnostic;
-            }
-            else
-            {
-              failedTasksMsg += taskDiagnostic.split("\\n")[0];
-            }
-          }
-        }
-      }
-    }
-    return failedTasksMsg;
-  }
 
   public static int[] getIntArraySetting(final Configuration config, final String propertyName)
   {

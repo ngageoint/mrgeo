@@ -136,7 +136,7 @@ public class JPoint extends JShape
     {
       return p.toString();
     }
-    return null;
+    return "null";
   }
 
   @Override

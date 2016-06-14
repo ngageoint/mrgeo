@@ -18,6 +18,7 @@ package org.mrgeo.data.raster;
 
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.utils.FloatUtils;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
@@ -344,7 +345,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_FLOAT:
   {
     final float p = src.getSampleFloat(x, y, b);
-    if (!Float.isNaN(p) && p != nodata.floatValue())
+    if (FloatUtils.isNotNodata(p, nodata.floatValue()))
     {
       dst.setSample(x, y, b, p);
     }
@@ -354,7 +355,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_DOUBLE:
   {
     final double p = src.getSampleDouble(x, y, b);
-    if (!Double.isNaN(p) && p != nodata.doubleValue())
+    if (FloatUtils.isNotNodata(p, nodata.doubleValue()))
     {
       dst.setSample(x, y, b, p);
     }

@@ -16,6 +16,8 @@
 
 package org.mrgeo.hdfs.vector.shp.esri.geom;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Vector;
 
 /**
@@ -33,6 +35,7 @@ public class SphericalTools
    * 
    * @see esri.geom.CAG#contains(esri.geom.JShape, esri.geom.JShape)
    */
+  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "check type before cast")
   public static boolean contains(JShape shp1, JShape shp2)
   {
     switch (shp1.getType())
@@ -262,6 +265,7 @@ public class SphericalTools
    * 
    * @see esri.geom.CAG#getDistance(esri.geom.Coord, esri.geom.JShape)
    */
+  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "check type before cast")
   public static double getDistance(Coord c, JShape shp)
   {
     switch (shp.getType())
@@ -284,6 +288,7 @@ public class SphericalTools
    * 
    * @see esri.geom.CAG#getDistance(esri.geom.JShape, esri.geom.JShape)
    */
+  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "check type before cast")
   public static double getDistance(JShape shp1, JShape shp2)
   {
     switch (shp1.getType())
@@ -420,7 +425,7 @@ public class SphericalTools
     double distance = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
     double denominator = Math.pow(distance, 2);
     double numerator = (p3.x - p1.x) * (p2.x - p1.x) + (p3.y - p1.y) * (p2.y - p1.y);
-    double u = -1;
+    double u;
     if (denominator == 0)
     {
       u = 0;

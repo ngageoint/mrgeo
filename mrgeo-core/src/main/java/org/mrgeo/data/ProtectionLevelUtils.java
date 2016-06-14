@@ -64,7 +64,7 @@ public class ProtectionLevelUtils
         actualProtectionLevel = "";
       }
     }
-    if (actualProtectionLevel != null && !actualProtectionLevel.isEmpty())
+    if (!actualProtectionLevel.isEmpty())
     {
       if (!validator.validateProtectionLevel(protectionLevel))
       {

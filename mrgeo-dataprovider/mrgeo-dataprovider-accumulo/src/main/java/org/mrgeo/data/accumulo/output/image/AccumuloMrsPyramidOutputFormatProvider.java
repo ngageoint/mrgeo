@@ -100,8 +100,8 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
     }
     log.info("column visibility of: " + this.cv.toString());
     
-    this.zoomLevel = context.getZoomlevel();
-    this.tileSize = context.getTilesize();
+    this.zoomLevel = context.getZoomLevel();
+    this.tileSize = context.getTileSize();
 
     // get the tile bounds
     this.bounds = context.getBounds();
@@ -228,7 +228,7 @@ public boolean bulkJob(){
   {
     try{
       // zoom level - output zoom level
-      zoomLevel = context.getZoomlevel();
+      zoomLevel = context.getZoomLevel();
 //      zoomLevel = conf.getInt("zoomlevel", 0);
       if(zoomLevel != 0){
         conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL, Integer.toString(zoomLevel));

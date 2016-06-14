@@ -808,7 +808,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
 
     }
     return zoomLevel;
-  } // end getZoomlevel
+  } // end getZoomLevel
 
 
 } // end AccumuloMrsImageReader

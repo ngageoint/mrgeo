@@ -27,7 +27,7 @@ import java.awt.image.WritableRaster;
  */
 public class AdditiveComposite implements Composite
 {
-  private class AdditiveCompositeContext implements CompositeContext
+  private static class AdditiveCompositeContext implements CompositeContext
   {
 
     /*
