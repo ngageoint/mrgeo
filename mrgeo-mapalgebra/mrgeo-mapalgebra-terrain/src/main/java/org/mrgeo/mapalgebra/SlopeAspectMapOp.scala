@@ -31,18 +31,7 @@ import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils.tms.TMSUtils
-import org.mrgeo.utils.{LatLng, SparkUtils}
-
-//object SlopeAspectMapOp {
-//  final val Input = "input"
-//  final val Output = "output"
-//  final val Units = "units"
-//  final val Type = "type"
-//
-//  final val Slope = "slope"
-//  final val Aspect = "aspect"
-//
-//}
+import org.mrgeo.utils.{FloatUtils, LatLng, SparkUtils}
 
 class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
@@ -186,13 +175,19 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         else {  // aspect
           // if the z component of the normal is 1.0, the cell is flat, so the aspect is undefined.
           // For now, we'llset it to 0.0, but another value could be more appropriate.
-          if (normal._3 == 1.0) {
+          if (FloatUtils.isEqual(normal._3, 1.0)) {
             0.0
           }
           else {
-            // change from (-Pi to Pi) to (0 to 2Pi), make 0 deg north (+ 3pi/2)
-            // convert to clockwise (2pi -)
-            TWO_PI - (Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
+            // change from (-Pi to Pi) to ( [0 to 2Pi) ), make 0 deg north (+ 3pi/2)
+            // convert to clockwise
+            val t = TWO_PI - (Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
+            if (FloatUtils.isEqual(t, TWO_PI)) {
+              0.0
+            }
+            else {
+              t
+            }
           }
         }
 
