@@ -243,17 +243,17 @@ public int run(String[] args) throws IOException
     Command cmd = spi.getCommandClass().newInstance();
 
     // strip the 1st argument (the command name) and pass the rest to the command
-      ProviderProperties providerProperties = new ProviderProperties();
+    ProviderProperties providerProperties = new ProviderProperties();
     return cmd.run(Arrays.copyOfRange(args, 1, args.length), getConf(), providerProperties);
   }
-  catch (Exception e)
+  catch (InstantiationException | IllegalAccessException e)
   {
     return -1;
   }
 
 }
 
-public class ExtendedGnuParser extends GnuParser
+public static class ExtendedGnuParser extends GnuParser
 {
 
   private boolean ignoreUnrecognizedOption;
