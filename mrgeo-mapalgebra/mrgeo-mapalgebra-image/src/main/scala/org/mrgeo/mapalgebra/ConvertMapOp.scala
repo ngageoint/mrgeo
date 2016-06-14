@@ -110,11 +110,11 @@ object ConvertMapOp extends MapOpRegistrar {
               inputNodata.toByte.toDouble
             }
             else {
-              Byte.MaxValue.toDouble
+              255.0
             }
           }
           else {
-            Byte.MaxValue.toDouble
+            255.0
           }
         case "short" =>
           if (conversionMethod.equalsIgnoreCase("truncate")) {
