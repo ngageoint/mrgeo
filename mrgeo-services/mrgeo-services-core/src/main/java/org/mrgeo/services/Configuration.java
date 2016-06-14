@@ -34,14 +34,11 @@ private static Configuration instance = null;
  * Made Configuration not throw a checked exception
  * @return Configuration
  */
-public static Configuration getInstance()
+public static synchronized Configuration getInstance()
 {
   if (instance == null)
   {
-    // This reduces the concurrency to just when an instance needs creating versus every access
-    synchronized(Configuration.class) {
-      if ( instance == null ) instance = new Configuration();
-    }
+    instance = new Configuration();
   }
   return instance;
 }

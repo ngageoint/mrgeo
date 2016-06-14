@@ -94,7 +94,7 @@ static
   init();
 }
 
-public static void init()
+private static synchronized void init()
 {
   try
   {
@@ -105,8 +105,8 @@ public static void init()
   }
   catch (final IllegalStateException e)
   {
-    log.error(MrGeoConstants.MRGEO_HDFS_IMAGE + " must be specified in the MrGeo configuration file (" + e.getMessage() +
-        ")");
+    log.error(MrGeoConstants.MRGEO_HDFS_IMAGE + " must be specified in the MrGeo configuration file (" +
+        e.getMessage() + ")");
   }
 }
 

@@ -29,7 +29,6 @@ import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
-import org.mrgeo.services.utils.HttpUtil;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
