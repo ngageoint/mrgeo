@@ -24,10 +24,10 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPolyLine extends java.lang.Object implements ShpData
+public class ShpPolyLine implements ShpData
 {
   protected JPolyLine[] p;
-  private ESRILayer parent;
+  private ESRILayer parent = null;
 
   /** Creates new ShpLine */
   public ShpPolyLine(int initialSize)
@@ -38,10 +38,13 @@ public class ShpPolyLine extends java.lang.Object implements ShpData
   @Override
   public void addShape(JShape obj) throws FormatException
   {
-    JPolyLine[] temp = new JPolyLine[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPolyLine) obj;
-    p = temp;
+    if (obj instanceof JPolyLine)
+    {
+      JPolyLine[] temp = new JPolyLine[p.length + 1];
+      System.arraycopy(p, 0, temp, 0, p.length);
+      temp[p.length] = (JPolyLine) obj;
+      p = temp;
+    }
   }
 
   @Override
@@ -107,12 +110,12 @@ public class ShpPolyLine extends java.lang.Object implements ShpData
         }
         else
         {
-          if (j == startingPair[part + 1] - 1)
-          {
-            // path not closed as in the case in ShpPolygon
-            p[i].add(new Coord(px, py));
-          }
-          else
+//          if (j == startingPair[part + 1] - 1)
+//          {
+//            // path not closed as in the case in ShpPolygon
+//            p[i].add(new Coord(px, py));
+//          }
+//          else
           {
             p[i].add(new Coord(px, py));
           }

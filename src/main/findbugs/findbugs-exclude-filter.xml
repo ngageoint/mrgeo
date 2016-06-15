@@ -1,0 +1,39 @@
+<FindBugsFilter>
+  <!-- Remove CRLF Log Injection.  We have a custom Appender Wrapper that encodes ALL logs properly -->
+  <Match>
+    <Bug pattern="CRLF_INJECTION_LOGS" />
+  </Match>
+  <!-- Scala code generates these as well -->
+  <Match>
+    <Source name="~.*\.scala" />
+    <Or>
+      <!-- object has no constructor = empty Externalizable prevents object serialization -->
+      <Bug pattern="SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION" />
+      <!-- Scala constant naming convention is uppercase first letter-->
+      <Bug pattern="NM_METHOD_NAMING_CONVENTION" />
+      <!-- Scala generated getter/setters -->
+      <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
+      <!-- Scala generated array getter -->
+      <Bug pattern="EI_EXPOSE_REP" />
+      <!-- Scala generated array setter -->
+      <Bug pattern="EI_EXPOSE_REP2" />
+      <!-- Spark does intelligent serialization, this is a false positive -->
+      <Bug pattern="SE_BAD_FIELD" />
+      <!-- This just seems to be a false positive on object defs where the class is serializable -->
+      <Bug pattern="SE_NO_SERIALVERSIONID" />
+
+    </Or>
+  </Match>
+  <!-- Don't bother with DM_DEFAULT_ENCODING - default encoding -->
+  <Match>
+    <Bug pattern="DM_DEFAULT_ENCODING" />
+  </Match>
+  <!-- Don't bother with DM_CONVERT_CASE - non-localized toupper or tolower -->
+  <Match>
+    <Bug pattern="DM_CONVERT_CASE" />
+  </Match>
+  <!-- Don't bother with NM_CONFUSING - "confusing" names. -->
+  <Match>
+    <Bug pattern="NM_CONFUSING" />
+  </Match>
+</FindBugsFilter>

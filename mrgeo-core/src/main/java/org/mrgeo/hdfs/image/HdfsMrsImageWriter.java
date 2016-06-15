@@ -17,7 +17,6 @@
 package org.mrgeo.hdfs.image;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
@@ -37,9 +36,6 @@ public class HdfsMrsImageWriter implements MrsImageWriter
 {
   final private HdfsMrsImageDataProvider provider;
   final private MrsPyramidWriterContext context;
-  // Do not use the following variable directly, instead call
-  // getConfiguration() since it is created on-demand
-  private Configuration conf;
 
   private MapFile.Writer writer = null;
 
@@ -59,7 +55,6 @@ public class HdfsMrsImageWriter implements MrsImageWriter
     if (writer == null)
     {
       openWriter();
-
     }
     writer.append(k, RasterWritable.toWritable(raster));
   }
@@ -67,8 +62,7 @@ public class HdfsMrsImageWriter implements MrsImageWriter
 
   private void openWriter() throws IOException
   {
-    //Path imagePath = provider.getResourcePath(true);
-    Path imagePath = provider.getResourcePath(false);
+    Path imagePath;
     if (context != null)
     {
       imagePath = new Path(provider.getResourcePath(true), context.getZoomlevel() + "/part-" + String.format("%05d", context.getPartNum()));
@@ -79,12 +73,10 @@ public class HdfsMrsImageWriter implements MrsImageWriter
       //imagePath = new Path(imagePath, "/part-00000");      
     }
 
-    final FileSystem fs = HadoopFileUtils.getFileSystem(getConfiguration(), imagePath);
-
-    Configuration localConf = HadoopUtils.createConfiguration();
+    Configuration conf = HadoopUtils.createConfiguration();
     // set the packet size way up... this should be a little bigger than the size of 1 512x512x3
     // tile
-    localConf.set("dfs.client.write-packet-size", "786500");
+    conf.set("dfs.client.write-packet-size", "786500");
 
     writer = new MapFile.Writer(conf, imagePath,
         MapFile.Writer.keyClass(TileIdWritable.class.asSubclass(WritableComparable.class)),
@@ -114,15 +106,6 @@ public class HdfsMrsImageWriter implements MrsImageWriter
 
     throw new IOException(
         "Context is not present.  Look at this if it's correct behaviour...  May need to uncomment the line below this...");
-  }
-
-  private Configuration getConfiguration()
-  {
-    if (conf == null)
-    {
-      conf = HadoopUtils.createConfiguration();
-    }
-    return conf;
   }
 
 }

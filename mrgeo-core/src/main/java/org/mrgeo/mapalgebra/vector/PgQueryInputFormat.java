@@ -17,6 +17,7 @@
 package org.mrgeo.mapalgebra.vector;
 
 import com.vividsolutions.jts.io.WKTReader;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -43,231 +44,235 @@ import java.util.*;
  */
 public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> implements Serializable
 {
-  private static final Logger log = LoggerFactory.getLogger(PgQueryInputFormat.class);
+private static final Logger log = LoggerFactory.getLogger(PgQueryInputFormat.class);
 
-  public class ResultSetInputSplit extends InputSplit implements Serializable
+static public class ResultSetInputSplit extends InputSplit implements Serializable
+{
+  private static final long serialVersionUID = 1L;
+
+  long endIndex;
+  long startIndex;
+
+  public ResultSetInputSplit(long start, long end)
   {
-    private static final long serialVersionUID = 1L;
-
-    long endIndex;
-    long startIndex;
-
-    public ResultSetInputSplit(long start, long end)
-    {
-      this.startIndex = start;
-      this.endIndex = end;
-    }
-
-    public long getEnd()
-    {
-      return endIndex;
-    }
-
-    @Override
-    public long getLength()
-    {
-      return endIndex - startIndex;
-    }
-
-    @Override
-    public String[] getLocations() throws IOException
-    {
-      return new String[0];
-    }
-
-    public long getStart()
-    {
-      return startIndex;
-    }
+    this.startIndex = start;
+    this.endIndex = end;
   }
 
-  private static final long serialVersionUID = 1L;
-  private static final String prefix = PgQueryInputFormat.class.getSimpleName();
-  public static final String USERNAME = prefix + ".username";
-  public static final String PASSWORD = prefix + ".password";
-  public static final String DBCONNECTION = prefix + ".dbconnection";
+  public long getEnd()
+  {
+    return endIndex;
+  }
 
-  public final static String RESULT_COLLECTION = "PgQueryInputFormat.ResultCollection";
+  @Override
+  public long getLength()
+  {
+    return endIndex - startIndex;
+  }
+
+  @Override
+  public String[] getLocations() throws IOException
+  {
+    return new String[0];
+  }
+
+  public long getStart()
+  {
+    return startIndex;
+  }
+}
+
+private static final long serialVersionUID = 1L;
+private static final String prefix = PgQueryInputFormat.class.getSimpleName();
+public static final String USERNAME = prefix + ".username";
+public static final String PASSWORD = prefix + ".password";
+public static final String DBCONNECTION = prefix + ".dbconnection";
+
+public final static String RESULT_COLLECTION = "PgQueryInputFormat.ResultCollection";
 
 //  public static void setInput(Configuration conf, ResultSet rs)
 //  {
 //  }
 
-  @Override
-  public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
-      TaskAttemptContext context) throws IOException, InterruptedException
+@Override
+public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
+    TaskAttemptContext context) throws IOException, InterruptedException
+{
+  ResultSet rs = null;
+  try
   {
-    ResultSet rs = null;
-    try
-    {
-      rs = loadResultSet(context.getConfiguration());
-    }
-    catch (SQLException e)
-    {
-      e.printStackTrace();
-      throw new IOException("Could not get data from ResultSet.");
-    }
+    rs = loadResultSet(context.getConfiguration());
+  }
+  catch (SQLException e)
+  {
+    e.printStackTrace();
+    throw new IOException("Could not get data from ResultSet.");
+  }
+
+  if (split instanceof ResultSetInputSplit)
+  {
     ResultSetInputSplit giSplit = (ResultSetInputSplit) split;
 
     PgQueryRecordReader reader = new PgQueryRecordReader(rs, giSplit.getStart(), giSplit.getEnd());
     reader.initialize(giSplit, context);
     return reader;
   }
-
-  @Override
-  public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
+  else
   {
-    Configuration conf = context.getConfiguration();
-    int numSplits = conf.getInt("mapred.map.tasks", 2);
-
-    int size = 0;
-    ResultSet rs;
-    try
-    {
-      rs = loadResultSet(context.getConfiguration());
-      rs.last();
-      size = rs.getRow();
-      rs.beforeFirst();
-    }
-    catch(Exception ex)
-    {
-      throw new IOException("Could not get data from ResultSet.");
-    }
-
-    // make sure there are at least 10k features per node.
-    final int MIN_FEATURES_PER_SPLIT = 10000;
-    if (size / MIN_FEATURES_PER_SPLIT < numSplits)
-    {
-      numSplits = (int) Math.ceil((double) size / (double) MIN_FEATURES_PER_SPLIT);
-    }
-
-    List<InputSplit> result = new LinkedList<InputSplit>();
-
-    for (int i = 0; i < numSplits; i++)
-    {
-      int start = (int) Math.round((double) i * (double) size / numSplits);
-      int end = (int) Math.round((double) (i + 1) * (double) size / numSplits);
-      result.add(new ResultSetInputSplit(start, end));
-    }
-
-    return result;
+    throw new IOException("input split is not a ResultSetInputSplit");
   }
 
-  public static ResultSet loadResultSet(Configuration conf) throws IOException, SQLException
+}
+
+@Override
+public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
+{
+  Configuration conf = context.getConfiguration();
+  int numSplits = conf.getInt("mapred.map.tasks", 2);
+
+  int size = 0;
+  ResultSet rs;
+  try
   {
-    if (conf.get("mapred.input.dir") != null)
+    rs = loadResultSet(context.getConfiguration());
+    rs.last();
+    size = rs.getRow();
+    rs.beforeFirst();
+  }
+  catch (SQLException e)
+  {
+    throw new IOException("Could not get data from ResultSet.", e);
+  }
+
+  // make sure there are at least 10k features per node.
+  final int MIN_FEATURES_PER_SPLIT = 10000;
+  if (size / MIN_FEATURES_PER_SPLIT < numSplits)
+  {
+    numSplits = (int) Math.ceil((double) size / (double) MIN_FEATURES_PER_SPLIT);
+  }
+
+  List<InputSplit> result = new LinkedList<InputSplit>();
+
+  for (int i = 0; i < numSplits; i++)
+  {
+    int start = (int) Math.round((double) i * (double) size / numSplits);
+    int end = (int) Math.round((double) (i + 1) * (double) size / numSplits);
+    result.add(new ResultSetInputSplit(start, end));
+  }
+
+  return result;
+}
+
+@SuppressFBWarnings(value = {"SQL_INJECTION_JDBC", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING",
+    "OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE"}, justification = "1 & 2. This is how PGQuery is intended to work.  It is an open-ended query on a database we have no idea what it is," +
+        "3. rs is closed outside this method. ")
+public static ResultSet loadResultSet(Configuration conf) throws IOException, SQLException
+{
+  if (conf.get("mapred.input.dir") != null)
+  {
+    Path sqlPath = new Path(conf.get("mapred.input.dir"));
+    FileSystem fs = HadoopFileUtils.getFileSystem(conf, sqlPath);
+    ResultSet rs = null;
+    if (sqlPath.toString().toLowerCase().endsWith(".sql"))
     {
-      Path sqlPath = new Path(conf.get("mapred.input.dir"));
-      FileSystem fs = HadoopFileUtils.getFileSystem(conf, sqlPath);
-      Statement st = null;
-      Connection conn = null;
-      ResultSet rs = null;
-      if (sqlPath.toString().toLowerCase().endsWith(".sql"))
+      if (fs.exists(sqlPath))
       {
-        if (fs.exists(sqlPath))
+        try (FSDataInputStream in = fs.open(sqlPath))
         {
-          FSDataInputStream in = null;
-          try
+          try (InputStreamReader isr = new InputStreamReader(in))
           {
-            in = fs.open(sqlPath);
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(in));
-            String sqlStr = "";
-            String tmpStr = null;
-            do
+            try (BufferedReader br = new BufferedReader(isr))
             {
-              tmpStr = br.readLine();
-              if (tmpStr != null)
+              StringBuilder sqlStr = new StringBuilder();
+              String tmpStr = null;
+              do
               {
-                sqlStr += tmpStr;
-              }
-            } while (tmpStr != null);
+                tmpStr = br.readLine();
+                if (tmpStr != null)
+                {
+                  sqlStr.append(tmpStr);
+                }
+              } while (tmpStr != null);
 
-            String username = conf.get(PgQueryInputFormat.USERNAME);
-            String password = conf.get(PgQueryInputFormat.PASSWORD);
-            String dbconnection = conf.get(PgQueryInputFormat.DBCONNECTION);
+              String username = conf.get(PgQueryInputFormat.USERNAME);
+              String password = conf.get(PgQueryInputFormat.PASSWORD);
+              String dbconnection = conf.get(PgQueryInputFormat.DBCONNECTION);
 
-            Properties props = new Properties();
-            props.setProperty("user", username);
-            props.setProperty("password",password);
-            props.setProperty("ssl","true");
+              Properties props = new Properties();
+              props.setProperty("user", username);
+              props.setProperty("password", password);
+              props.setProperty("ssl", "true");
 
-            try
-            {
-              conn = DriverManager.getConnection(dbconnection, props);
-              st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-              st.executeQuery(sqlStr);
-              rs = st.getResultSet();
-            }
-            catch (SQLException e)
-            {
-              if (conn != null)
+              try (Connection conn = DriverManager.getConnection(dbconnection, props))
               {
-                conn.close();
+//              st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+//              rs = st.executeQuery(sqlStr);
+
+                try (Statement st = conn.prepareStatement(sqlStr.toString(), ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY))
+                {
+                  rs = ((PreparedStatement) st).executeQuery();
+                }
               }
-              e.printStackTrace();
-              throw new IOException("Could not open database.");
-            }
-            conn.close();
-            return rs;
-          }
-          finally
-          {
-            if (in != null)
-            {
-              in.close();
+              catch (SQLException e)
+              {
+                throw new IOException("Could not open database.", e);
+              }
+
+              return rs;
             }
           }
         }
       }
     }
-    throw new IllegalArgumentException("Neither a geometry collection or filename was set.");
+  }
+  throw new IllegalArgumentException("Neither a geometry collection or filename was set.");
+}
+
+static public class PgQueryRecordReader extends RecordReader<LongWritable, Geometry>
+{
+  private LongWritable key = new LongWritable(-1);
+  private String _line;
+  private int _geometryCol = -1;
+  private WKTReader _wktReader = null;
+  private ResultSet rs = null;
+  private ResultSetMetaData rsMeta = null;
+  private int numCols = 0;
+  private long currentIndex;
+  private long end;
+  private long start;
+  private List<String> attributeNames;
+  private WritableGeometry feature;
+
+
+  public PgQueryRecordReader()
+  {
   }
 
-  static public class PgQueryRecordReader extends RecordReader<LongWritable, Geometry>
+  PgQueryRecordReader(ResultSet rs, long start, long end)
   {
-    private LongWritable key = new LongWritable(-1);
-    private String _line;
-    private int _geometryCol = -1;
-    private WKTReader _wktReader = null;
-    private ResultSet rs = null;
-    private ResultSetMetaData rsMeta = null;
-    private int numCols = 0;
-    private long currentIndex;
-    private long end;
-    private long start;
-    private List<String> attributeNames;
-    private WritableGeometry feature;
+    this.rs = rs;
+    this.start = start;
+    this.end = end;
+    currentIndex = start - 1;
+  }
 
+  @Override
+  public void close() throws IOException
+  {
+  }
 
-    public PgQueryRecordReader()
+  @Override
+  public float getProgress() throws IOException, InterruptedException
+  {
+    long size = end - start;
+    return (float) (currentIndex - start + 1) / (float) size;
+  }
+
+  @Override
+  public void initialize(InputSplit split, TaskAttemptContext context) throws IOException
+  {
+    if (split instanceof ResultSetInputSplit)
     {
-    }
-
-    PgQueryRecordReader(ResultSet rs, long start, long end)
-    {
-      this.rs = rs;
-      this.start = start;
-      this.end = end;
-      currentIndex = start - 1;
-    }
-
-    @Override
-    public void close() throws IOException
-    {
-    }
-
-    @Override
-    public float getProgress() throws IOException, InterruptedException
-    {
-      long size = end - start;
-      return (float) (currentIndex - start + 1) / (float) size;
-    }
-
-    @Override
-    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException
-    {
-
       Configuration conf = context.getConfiguration();
       ResultSetInputSplit ris = (ResultSetInputSplit) split;
 
@@ -280,7 +285,13 @@ public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> impl
         catch (SQLException e1)
         {
           e1.printStackTrace();
+          throw new IOException(e1);
         }
+      }
+
+      if (rs == null)
+      {
+        throw new IOException("No results");
       }
 
       this.start = ris.startIndex;
@@ -300,7 +311,7 @@ public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> impl
           rs.first();
           for (int i = 0; i < numCols; i++)
           {
-            String colName = rsMeta.getColumnName(i+1);
+            String colName = rsMeta.getColumnName(i + 1);
             attributeNames.add(colName);
           }
 
@@ -318,98 +329,104 @@ public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> impl
         throw new IOException("Could now get data from ResultSet.");
       }
     }
-
-    @Override
-    public boolean nextKeyValue() throws IOException
+    else
     {
-      if (_wktReader == null)
+      throw new IOException("input split is not a ResultSetInputSplit");
+    }
+
+  }
+
+  @Override
+  public boolean nextKeyValue() throws IOException
+  {
+    if (_wktReader == null)
+    {
+      _wktReader = new WKTReader();
+    }
+    boolean result = false;
+    try
+    {
+      currentIndex++;
+      if (currentIndex < end)
       {
-        _wktReader = new WKTReader();
-      }
-      boolean result = false;
-      try
-      {
-        currentIndex++;
-        if (currentIndex < end)
+        if (rs.next() == true)
         {
-          if (rs.next() == true)
+          String wktGeometry = null;
+          Map<String, String> attrs = new HashMap<>();
+
+          String[] values = new String[numCols];
+          for (int i = 0; i < numCols; i++)
           {
-            String wktGeometry = null;
-            Map<String, String> attrs = new HashMap<>();
+            values[i] = rs.getString(i + 1);
+          }
 
-            String[] values = new String[numCols];
-            for (int i = 0; i < numCols; i++)
+          if (values.length == 0)
+          {
+            log.info("Values empty. Weird.");
+          }
+
+          for (int i = 0; i < values.length; i++)
+          {
+            if (i == _geometryCol)
             {
-              values[i] = rs.getString(i + 1);
+              wktGeometry = values[i];
             }
+            attrs.put(attributeNames.get(i), values[i]);
+          }
 
-            if (values.length == 0)
+
+          if (wktGeometry != null)
+          {
+            try
             {
-              log.info("Values empty. Weird.");
+              feature = GeometryFactory.fromJTS(_wktReader.read(wktGeometry), attrs);
             }
-
-            for (int i = 0; i < values.length; i++)
+            catch (Exception e)
             {
-              if (i == _geometryCol)
-              {
-                wktGeometry = values[i];
-              }
-              attrs.put(attributeNames.get(i), values[i]);
-            }
-
-
-            if (wktGeometry != null)
-            {
+              //try to correct wktGeometry if possible
               try
               {
-                feature = GeometryFactory.fromJTS(_wktReader.read(wktGeometry), attrs);
+                feature = GeometryFactory.fromJTS(_wktReader.read(WktGeometryUtils.wktGeometryFixer(wktGeometry)));
               }
-              catch (Exception e)
+              catch (Exception e2)
               {
-                //try to correct wktGeometry if possible
-                try
-                {
-                  feature = GeometryFactory.fromJTS(_wktReader.read(WktGeometryUtils.wktGeometryFixer(wktGeometry)));
-                }
-                catch (Exception e2)
-                {
-                  //could not fix the geometry, so just set to null
-                  log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.");
-                  feature = GeometryFactory.createEmptyGeometry(attrs);
-                }
+                //could not fix the geometry, so just set to null
+                log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.");
+                feature = GeometryFactory.createEmptyGeometry(attrs);
               }
             }
-
-            result = true;
           }
+
+          result = true;
         }
       }
-      catch (SQLException e)
-      {
-        e.printStackTrace();
-        throw new IOException("Could not get data from ResultSet.");
-      }
-      return result;
     }
-
-    @Override
-    public LongWritable getCurrentKey() throws IOException, InterruptedException
+    catch (SQLException e)
     {
-      return key;
+      e.printStackTrace();
+      throw new IOException("Could not get data from ResultSet.");
     }
-
-    @Override
-    public Geometry getCurrentValue() throws IOException, InterruptedException
-    {
-      return feature;
-    }
-
-    @Override
-    public String toString()
-    {
-      return String.format("Current line: %s", _line);
-    }
+    return result;
   }
+
+  @Override
+  public LongWritable getCurrentKey() throws IOException, InterruptedException
+  {
+    return key;
+  }
+
+  @Override
+  public Geometry getCurrentValue() throws IOException, InterruptedException
+  {
+    return feature;
+  }
+
+  @Override
+  public String toString()
+  {
+    return String.format("Current line: %s", _line);
+  }
+}
 }
 
 

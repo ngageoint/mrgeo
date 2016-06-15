@@ -79,7 +79,7 @@ public class GeoHash
   {
     srcHash = srcHash.toLowerCase();
     final char lastChr = srcHash.charAt(srcHash.length() - 1);
-    final int type = (srcHash.length() % 2) == 1 ? ODD : EVEN;
+    final int type = (srcHash.length() % 2) != 0 ? ODD : EVEN;
     String base = srcHash.substring(0, srcHash.length() - 1);
     if (BORDERS[dir][type].indexOf(lastChr) != -1)
     {
@@ -200,7 +200,7 @@ public class GeoHash
     final double lon[] = new double[2];
     int bit = 0;
     int ch = 0;
-    String geohash = "";
+    StringBuilder geohash = new StringBuilder();
 
     lat[0] = -90.0;
     lat[1] = 90.0;
@@ -242,12 +242,12 @@ public class GeoHash
       }
       else
       {
-        geohash += BASE32.charAt(ch);
+        geohash.append(BASE32.charAt(ch));
         bit = 0;
         ch = 0;
       }
     }
-    return geohash;
+    return geohash.toString();
   }
 
   // This algorithm is from:
@@ -300,53 +300,6 @@ public class GeoHash
   public static int getPrecision()
   {
     return precision;
-  }
-
-  public static void main(final String[] args) throws Exception
-  {
-    final int loops = 10000;
-
-    for (precision = 2; precision <= 32; precision++)
-    {
-      double maxerr = 0;
-
-      final long start = System.currentTimeMillis();
-      for (int i = 0; i < loops; i++)
-      {
-        final double lat = (Math.random() * 180.0) - 90.0;
-        final double lon = (Math.random() * 360.0) - 180.0;
-
-        // final String geohash = GeoHash.encode(lat, lon);
-        final long hash = GeoHash.encodeBits(lat, lon);
-
-        // final Bounds b = GeoHash.decode(geohash);
-        final LatLng l = GeoHash.decode(hash);
-
-        final double laterr = Math.abs(lat - l.getLat()) * 111319.458;
-        final double lonerr = Math.abs(lon - l.getLng()) * 111319.458;
-
-        maxerr = Math.max(maxerr, Math.max(laterr, lonerr));
-
-        // System.out.println("lon: " + lon + " lat: " + lat);
-        // System.out.println("geohash: " + geohash);
-        // System.out.println("  pt: x: " + b.getCenterX() + " y: " + b.getCenterY() + " bounds: " +
-        // b.toString());
-        // System.out.println("  diff: x: " + (lon - b.getCenterX()) + " y: " + (lat -
-        // b.getCenterY()));
-        // System.out.println("hash: " + hash);
-        // System.out.println("  lat/lon: lon: " + l.getLng() + " lat: " + l.getLat() + "  binary: "
-        // +
-        // Long.toBinaryString(hash));
-        //
-        // System.out.println("  diff: x: " + (lon - l.getLng()) + " " + lonerr +
-        // "m y: " + (lat - l.getLat()) + " " + laterr + "m");
-        // System.out.println();
-      }
-
-      final long time = System.currentTimeMillis() - start;
-      System.out.println("precision: " + precision + " max lat/lon error: " + maxerr + "m time: " +
-        time + " avg time: " + ((double) (time) / loops) + " ms");
-    }
   }
 
   public static void setPrecision(final int p)

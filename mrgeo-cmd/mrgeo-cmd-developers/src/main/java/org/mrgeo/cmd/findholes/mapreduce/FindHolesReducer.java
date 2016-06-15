@@ -78,13 +78,9 @@ public class FindHolesReducer extends Reducer<LongWritable, LongWritable, Text, 
 	 */
 	public void reduce(LongWritable key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException{
 		
-		int[] valid = new int[(int)width];
 		pw.print(key.toString() + ":");
 		for(LongWritable v : values){
-			int indx = (int)(v.get() - minX);
-			valid[indx]++;
 			pw.print(" " + Long.toString(v.get()));
-			
 		}
 		pw.println();
 		

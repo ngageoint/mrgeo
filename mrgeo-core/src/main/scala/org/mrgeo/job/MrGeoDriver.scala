@@ -16,16 +16,19 @@
 
 package org.mrgeo.job
 
-import java.io.{IOException, File}
+import java.io.{File, IOException}
 import java.net.URL
+import java.security.{AccessController, PrivilegedAction, PrivilegedActionException}
 import java.util
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.util.ClassUtil
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.{SparkConf, Logging}
+import org.apache.spark.{Logging, SparkConf}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.raster.RasterWritable
@@ -94,6 +97,7 @@ object MrGeoDriver extends Logging {
 
 }
 
+@SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "addYarnClasses() - Using File() as a shortcut to create a URI")
 abstract class MrGeoDriver extends Logging {
 
   def setup(job: JobArguments): Boolean
@@ -125,53 +129,68 @@ abstract class MrGeoDriver extends Logging {
       new URL(FileUtils.resolveURL(jar))
     })
 
-    val cl = new URLClassLoader(urls.toSeq, parentLoader)
+    try {
+      AccessController.doPrivileged(new PrivilegedAction[Any] {
+        @SuppressFBWarnings(
+          value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
+          justification = "Scala generated code")
+        override def run(): Boolean = {
+          val cl = new URLClassLoader(urls.toSeq, parentLoader)
 
-    setupDriver(job, cl)
+          setupDriver(job, cl)
 
+          setup(job)
 
-    setup(job)
+          if (HadoopUtils.isLocal(hadoopConf)) {
+            if (!job.isDebug) {
+              job.useLocal()
+            }
+            else {
+              job.useDebug()
+            }
+          }
+          else {
+            val cluster = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_CLUSTER, "local")
 
-    if (HadoopUtils.isLocal(hadoopConf)) {
-      if (!job.isDebug) {
-        job.useLocal()
-      }
-      else {
-        job.useDebug()
-      }
+            cluster.toLowerCase match {
+            case "yarn" =>
+              job.useYarn()
+              job.loadYarnSettings()
+              addYarnClasses(cl)
+
+            case "spark" =>
+              val conf = MrGeoDriver.prepareJob(job)
+              val master = conf.get("spark.master", "spark://localhost:7077")
+              job.useSpark(master)
+            case _ => job.useLocal()
+            }
+          }
+
+          val conf = MrGeoDriver.prepareJob(job)
+
+          // yarn needs to be run in its own client code, so we'll set up it up separately
+          if (job.isYarn) {
+
+            val jobclass = cl.loadClass(classOf[MrGeoYarnDriver].getCanonicalName)
+            val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoYarnDriver]
+
+            jobinstance.run(job, cl, conf)
+          }
+          else {
+            val jobclass = cl.loadClass(job.driverClass)
+            val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoJob]
+
+            jobinstance.run(job, conf)
+          }
+
+          true
+        }
+
+      })
     }
-    else {
-      val cluster = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_CLUSTER, "local")
-
-      cluster.toLowerCase match {
-      case "yarn" =>
-        job.useYarn()
-        job.loadYarnSettings()
-        addYarnClasses(cl)
-
-      case "spark" =>
-        val conf = MrGeoDriver.prepareJob(job)
-        val master = conf.get("spark.master", "spark://localhost:7077")
-        job.useSpark(master)
-      case _ => job.useLocal()
-      }
-    }
-
-    val conf = MrGeoDriver.prepareJob(job)
-
-    // yarn needs to be run in its own client code, so we'll set up it up separately
-    if (job.isYarn) {
-
-      val jobclass = cl.loadClass(classOf[MrGeoYarnDriver].getCanonicalName)
-      val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoYarnDriver]
-
-      jobinstance.run(job, cl, conf)
-    }
-    else {
-      val jobclass = cl.loadClass(job.driverClass)
-      val jobinstance = jobclass.newInstance().asInstanceOf[MrGeoJob]
-
-      jobinstance.run(job, conf)
+    catch {
+      // just unwrap the exception
+      case pae:PrivilegedActionException => throw pae.getException
     }
   }
 

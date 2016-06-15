@@ -16,6 +16,7 @@
 
 package org.mrgeo.mapalgebra.vector.paint;
 
+import org.mrgeo.utils.FloatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +84,7 @@ public class AdditiveCompositeDouble extends WeightedComposite
           }
           else
           {
-            if (d == nodata)
+            if (FloatUtils.isEqual(d, nodata))
             {
               d = 0;
             }

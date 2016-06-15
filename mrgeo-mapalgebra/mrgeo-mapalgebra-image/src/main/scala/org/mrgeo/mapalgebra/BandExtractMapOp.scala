@@ -18,6 +18,7 @@ package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
@@ -59,7 +60,6 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
     }
 
     input = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-    val inputName = node.getChild(0).getName
     val inputMapOp = input.getOrElse(throw new ParserException("Can't load raster! Ouch!"))
     band = MapOp.decodeInt(node.getChild(1)).getOrElse(
       throw new ParserException("Expected a numeric band number in the second argument instead of " +
@@ -72,6 +72,7 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
 
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "tileIdOrdering() - false positivie")
   override def execute(context: SparkContext): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {

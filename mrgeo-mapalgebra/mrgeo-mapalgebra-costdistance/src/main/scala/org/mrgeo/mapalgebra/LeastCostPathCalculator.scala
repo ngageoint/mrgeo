@@ -20,6 +20,7 @@ import java.awt.image.Raster
 import java.io._
 import java.text.DecimalFormat
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
@@ -29,14 +30,14 @@ import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.tms.{Bounds, Pixel, TMSUtils, Tile}
-import org.mrgeo.utils.{LatLng, LoggingUtils}
+import org.mrgeo.utils.LatLng
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
+@SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
 object LeastCostPathCalculator extends Logging {
-  private val LOG: Logger = LoggerFactory.getLogger(classOf[LeastCostPathCalculator])
 
   @throws(classOf[IOException])
   def run(costDist:RasterMapOp, destination:VectorRDD, context:SparkContext, zoom:Int = -1): VectorRDD = {
@@ -95,6 +96,8 @@ object LeastCostPathCalculator extends Logging {
 
 }
 
+@SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION", "FE_FLOATING_POINT_EQUALITY", "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
+  justification = "1) false positive - case class NeighborData correctly named, 2 & 3) Scala generated code")
 private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyramidMetadata) extends Logging {
   val zoom = meta.getMaxZoomLevel
   val tilesize = meta.getTilesize
@@ -262,7 +265,6 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     val tilelist = tilebuilder.result()
 
     // filter the new tiles and put them into the new cache
-    val z = zoom
     rdd.filter(tile => {
       tilelist.contains(tile._1.get)
     }).collect.foreach(tile => {

@@ -275,21 +275,21 @@ public class AccumuloMrsPyramidMetadataReader implements MrsPyramidMetadataReade
   } // end loadMetadata
   
   
-  private String metadataToString(){
-    if(metadata == null){
-      return null;
-    }
-    String retStr = null;
-    try{
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      metadata.save(bos);
-      retStr = new String(bos.toByteArray());
-      bos.close();
-    } catch(IOException ioe){
-      return null;
-    }
-    
-    return retStr;
-  } // end toString
+//  private String metadataToString(){
+//    if(metadata == null){
+//      return null;
+//    }
+//    String retStr = null;
+//    try{
+//      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//      metadata.save(bos);
+//      retStr = new String(bos.toByteArray());
+//      bos.close();
+//    } catch(IOException ioe){
+//      return null;
+//    }
+//
+//    return retStr;
+//  } // end toString
   
 } // end AccumuloMrsPyramidMetadataReader

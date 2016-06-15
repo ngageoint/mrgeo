@@ -17,13 +17,15 @@
 package org.mrgeo.utils.tms;
 
 import com.vividsolutions.jts.geom.Envelope;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.codehaus.jackson.annotate.JsonCreator;
 
 import java.io.*;
 import java.util.Map;
 
-public class Bounds implements Serializable
+public class Bounds implements Serializable, Cloneable
 {
+private static final long serialVersionUID = 1L;
 
 
 public static final Bounds WORLD = new Bounds(-180, -90, 180, 90);
@@ -104,6 +106,7 @@ public Bounds(Map<String, Object> props)
 }
 
 @Override
+@SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")
 public Bounds clone()
 {
   return new Bounds(w, s, e, n);

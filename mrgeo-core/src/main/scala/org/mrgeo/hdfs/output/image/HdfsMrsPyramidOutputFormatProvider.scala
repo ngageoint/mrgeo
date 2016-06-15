@@ -18,6 +18,7 @@ package org.mrgeo.hdfs.output.image
 
 import java.io.IOException
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.{SequenceFile, Writable, WritableComparable}
@@ -29,13 +30,15 @@ import org.mrgeo.data.image.{ImageOutputFormatContext, MrsImageOutputFormatProvi
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
-import org.mrgeo.hdfs.partitioners.{RowPartitioner, BlockSizePartitioner, FileSplitPartitioner}
+import org.mrgeo.hdfs.partitioners.{BlockSizePartitioner, FileSplitPartitioner, RowPartitioner}
 import org.mrgeo.hdfs.tile.FileSplit
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 
 
+@SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION"), justification = "PartitionType is Enumeration")
 class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) extends MrsImageOutputFormatProvider(context) {
 
+  @SerialVersionUID(1L)
   private[image] object PartitionType extends Enumeration {
     val ROW, BLOCKSIZE = Value
   }
@@ -74,7 +77,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    val outputWithZoom: String = provider.getResolvedResourceName(false) + "/" + context.getZoomlevel
+    val outputWithZoom: String = provider.getResolvedResourceName(false) + "/" + context.getZoomLevel
     val outputPath: Path = new Path(outputWithZoom)
 
     val jobconf = try {
@@ -89,8 +92,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
       conf.set("mapreduce.output.fileoutputformat.outputdir", outputPath.toString)
 
       // compress
-      // The constant seems to be missing from at least CDH 5.6.0 (non-yarn), so we'll use the
-      // hard-coded string...
+      // The constant seems to be missing from at least CDH 5.6.0 (non-yarn), so we'll use the hard-coded string...
       //conf.setBoolean(FileOutputFormat.COMPRESS, true)
       conf.setBoolean("mapreduce.output.fileoutputformat.compress", true)
 
@@ -109,10 +111,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
 
     // Repartition the output if the output data provider requires it
     val sorted = RasterRDD(
-      if (sparkPartitioner == null) {
-        raster.sortByKey()
-      }
-      else if (sparkPartitioner.hasFixedPartitions) {
+      if (sparkPartitioner.hasFixedPartitions) {
         raster.sortByKey(numPartitions = sparkPartitioner.calculateNumPartitions(raster, outputWithZoom))
       }
       else {
@@ -123,17 +122,13 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
     val wrappedForSave = new PairRDDFunctions(sorted)
     wrappedForSave.saveAsNewAPIHadoopDataset(jobconf)
 
-    if (sparkPartitioner != null)
-    {
-      sparkPartitioner.writeSplits(sorted, context.getOutput, context.getZoomlevel, jobconf)
-    }
-
+    sparkPartitioner.writeSplits(sorted, context.getOutput, context.getZoomLevel, jobconf)
   }
 
   override def finalizeExternalSave(conf: Configuration): Unit = {
     try {
       val imagePath: String = provider.getResolvedResourceName(true)
-      val outputWithZoom: Path = new Path(imagePath + "/" + context.getZoomlevel)
+      val outputWithZoom: Path = new Path(imagePath + "/" + context.getZoomLevel)
       val split: FileSplit = new FileSplit
       split.generateSplits(outputWithZoom, conf)
       split.writeSplits(outputWithZoom)
@@ -147,10 +142,11 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
 
   override def validateProtectionLevel(protectionLevel: String): Boolean = true
 
+  @SuppressFBWarnings(value = Array("DB_DUPLICATE_BRANCHES"), justification = "For now, BlockSizePartitioner is default")
   private def getSparkPartitioner:FileSplitPartitioner = {
     partitioner match {
     case PartitionType.ROW =>
-      new RowPartitioner(context.getBounds, context.getZoomlevel, context.getTilesize)
+      new RowPartitioner(context.getBounds, context.getZoomLevel, context.getTileSize)
     case PartitionType.BLOCKSIZE =>
       new BlockSizePartitioner()
     case _ =>

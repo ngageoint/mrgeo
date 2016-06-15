@@ -15,6 +15,7 @@
  */
 package org.mrgeo.test;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -92,7 +93,7 @@ public static final class DiffStats
       -Double.MAX_VALUE};
   public double[] minValue = {Double.MAX_VALUE, Double.MIN_VALUE, Double.MIN_VALUE,
       Double.MIN_VALUE};
-  final long noDataValue = -9999;
+  final static long noDataValue = -9999;
   int numBands = 0;
 
   public void calculateExtremes(RenderedImage i1, RenderedImage i2, int tileSize)
@@ -187,23 +188,24 @@ public static final class DiffStats
     }
   }
 
+  @SuppressFBWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION", justification = "Only test code")
   @Override
   public String toString()
   {
-    String result = String.format("\nWidth = %d\n", width);
-    result += String.format("Height = %d\n", height);
-    result += String.format("Max Delta: %.10f\n", maxDelta);
-    result += String.format("Max %% Delta: %.10f\n", maxPercentDelta);
-    result += String.format("Mean Delta: %.10f\n", meanDelta);
-    result += String.format("Mean %% Delta: %.10f\n", meanPercentDelta);
-    result += String.format("NaN Mismatch: %d\n", nanMismatch);
-    result += String.format("Diff Count: %d\n", diffCount);
-    result += String.format("Non-NaN Count: %d\n", count);
-    result += String.format("Pixel %% error: %.10f\n", pixelPercentError);
-    result += String.format("Number of bands: %d\n", numBands);
+    String result = String.format("%nWidth = %d%n", width);
+    result += String.format("Height = %d%n", height);
+    result += String.format("Max Delta: %.10f%n", maxDelta);
+    result += String.format("Max %% Delta: %.10f%n", maxPercentDelta);
+    result += String.format("Mean Delta: %.10f%n", meanDelta);
+    result += String.format("Mean %% Delta: %.10f%n", meanPercentDelta);
+    result += String.format("NaN Mismatch: %d%n", nanMismatch);
+    result += String.format("Diff Count: %d%n", diffCount);
+    result += String.format("Non-NaN Count: %d%n", count);
+    result += String.format("Pixel %% error: %.10f%n", pixelPercentError);
+    result += String.format("Number of bands: %d%n", numBands);
     for(int b=0;b<numBands;b++){
-      result += String.format("Min value[%d]: %.10f\n", b, minValue[b]);
-      result += String.format("Max Value[%d]: %.10f\n", b, maxValue[b]);
+      result += String.format("Min value[%d]: %.10f%n", b, minValue[b]);
+      result += String.format("Max Value[%d]: %.10f%n", b, maxValue[b]);
     }
     return result;
   }
@@ -372,9 +374,14 @@ public static String readPath(Path p) throws IOException
 public static String readFile(File f) throws IOException
 {
   byte[] baselineBuffer = new byte[(int)f.length()];
-  FileInputStream s = new FileInputStream(f);
-  s.read(baselineBuffer);
-  s.close();
+  int read = 0;
+  try (FileInputStream s = new FileInputStream(f))
+  {
+    while (read < f.length())
+    {
+      read = s.read(baselineBuffer);
+    }
+  }
   return new String(baselineBuffer);
 }
 
@@ -864,6 +871,8 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
   BufferedReader br1 = null;
   BufferedReader br2 = null;
 
+  InputStreamReader isr = null;
+
   try
   {
     if (ff1.exists())
@@ -875,7 +884,7 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
     else if (HadoopFileUtils.exists(f1))
     {
       is1 = HadoopFileUtils.open(new Path(f1));
-      InputStreamReader isr = new InputStreamReader(is1);
+      isr = new InputStreamReader(is1);
 
       br1 = new BufferedReader(isr);
     }
@@ -887,13 +896,12 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
     if (ff2.exists())
     {
       fr2 = new FileReader(ff2);
-
       br2 = new BufferedReader(fr2);
     }
     else if (HadoopFileUtils.exists(f2))
     {
       is2 = HadoopFileUtils.open(new Path(f2));
-      InputStreamReader isr = new InputStreamReader(is2);
+      isr = new InputStreamReader(is2);
 
       br2 = new BufferedReader(isr);
     }
@@ -946,6 +954,11 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
     if (br2 != null)
     {
       br2.close();
+    }
+
+    if (isr != null)
+    {
+      isr.close();
     }
 
     if (fr1 != null)

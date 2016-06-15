@@ -57,16 +57,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 //import javax.servlet.http.HttpServlet;
 //import javax.servlet.http.HttpServletRequest;
 //import javax.servlet.http.HttpServletResponse;
 
-//import org.mrgeo.utils.LoggingUtils;
+//import org.mrgeo.utils.logging.LoggingUtils;
 
 /**
  * OGC WMS implementation - See https://107.23.31.196/redmine/projects/mrgeo/wiki/WmsReference for
@@ -115,17 +112,17 @@ public class WmsGenerator
    */
   private String getQueryParam(MultivaluedMap<String, String> allParams, String paramName)
   {
-    for (String key: allParams.keySet())
+    for (Map.Entry<String, List<String> > es: allParams.entrySet())
     {
-      if (key.equalsIgnoreCase(paramName))
+      if (es.getKey().equalsIgnoreCase(paramName))
       {
-        List<String> value = allParams.get(key);
-        if (value.size() == 1)
+        if (es.getValue().size() == 1)
         {
-          return value.get(0);
+          return es.getValue().get(0);
         }
       }
     }
+
     return null;
   }
 
@@ -149,14 +146,15 @@ public class WmsGenerator
   private boolean paramExists(MultivaluedMap<String, String> allParams,
                               String paramName)
   {
-    for (String key: allParams.keySet())
+
+    for (Map.Entry<String, List<String> > es: allParams.entrySet())
     {
-      if (key.equalsIgnoreCase(paramName))
+      if (es.getKey().equalsIgnoreCase(paramName))
       {
-        List<String> value = allParams.get(key);
-        return (value.size() > 0);
+          return (es.getValue().size() > 0);
       }
     }
+
     return false;
   }
 
@@ -184,14 +182,13 @@ public class WmsGenerator
                                  int defaultValue)
           throws NumberFormatException
   {
-    for (String key: allParams.keySet())
+    for (Map.Entry<String, List<String> > es: allParams.entrySet())
     {
-      if (key.equalsIgnoreCase(paramName))
+      if (es.getKey().equalsIgnoreCase(paramName))
       {
-        List<String> value = allParams.get(key);
-        if (value.size() == 1)
+        if (es.getValue().size() == 1)
         {
-          return Integer.parseInt(value.get(0));
+          return Integer.parseInt(es.getValue().get(0));
         }
       }
     }
@@ -209,14 +206,13 @@ public class WmsGenerator
                                        double defaultValue)
           throws NumberFormatException
   {
-    for (String key: allParams.keySet())
+    for (Map.Entry<String, List<String> > es: allParams.entrySet())
     {
-      if (key.equalsIgnoreCase(paramName))
+      if (es.getKey().equalsIgnoreCase(paramName))
       {
-        List<String> value = allParams.get(key);
-        if (value.size() == 1)
+        if (es.getValue().size() == 1)
         {
-          return Double.parseDouble(value.get(0));
+          return Double.parseDouble(es.getValue().get(0));
         }
       }
     }
@@ -284,7 +280,7 @@ public class WmsGenerator
         // this can be resource intensive.
         System.gc();
         final Runtime rt = Runtime.getRuntime();
-        log.debug(String.format("WMS request memory: %.1fMB / %.1fMB\n", (rt.totalMemory() - rt
+        log.debug(String.format("WMS request memory: %.1fMB / %.1fMB%n", (rt.totalMemory() - rt
                 .freeMemory()) / 1e6, rt.maxMemory() / 1e6));
       }
     }
@@ -570,23 +566,23 @@ public class WmsGenerator
     }
   }
 
-  private static ColorScale getDefaultColorScale()
-  {
-    ColorScale cs = null;
-    try
-    {
-      cs = ColorScaleManager.fromName("Default");
-    }
-    catch (ColorScaleException e)
-    {
-      // Do nothing - there may not be a Default color scale defined
-    }
-    if (cs == null)
-    {
-      cs = ColorScale.createDefault();
-    }
-    return cs;
-  }
+//  private static ColorScale getDefaultColorScale()
+//  {
+//    ColorScale cs = null;
+//    try
+//    {
+//      cs = ColorScaleManager.fromName("Default");
+//    }
+//    catch (ColorScaleException e)
+//    {
+//      // Do nothing - there may not be a Default color scale defined
+//    }
+//    if (cs == null)
+//    {
+//      cs = ColorScale.createDefault();
+//    }
+//    return cs;
+//  }
 
   /*
    * Returns a list of all MrsPyramid version 2 data in the home data directory
@@ -782,7 +778,7 @@ public class WmsGenerator
       out.close();
       return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
     }
-    catch (Exception e)
+    catch (TransformerException | IOException e)
     {
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
@@ -855,7 +851,7 @@ public class WmsGenerator
       out.close();
       return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
     }
-    catch (Exception e)
+    catch (InterruptedException | ParserConfigurationException | IOException | TransformerException e)
     {
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
@@ -864,48 +860,48 @@ public class WmsGenerator
   /*
    * Writes OGC spec error messages to the response
    */
-  private Response writeError(Response.Status httpStatus, final Exception e)
-  {
-    try
-    {
-      Document doc;
-      final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-      final DocumentBuilder builder;
-      builder = dBF.newDocumentBuilder();
-      doc = builder.newDocument();
-
-      final Element ser = doc.createElement("ServiceExceptionReport");
-      doc.appendChild(ser);
-      ser.setAttribute("version", WMS_VERSION);
-      final Element se = XmlUtils.createElement(ser, "ServiceException");
-      String msg = e.getLocalizedMessage();
-      if (msg == null || msg.isEmpty())
-      {
-        msg = e.getClass().getName();
-      }
-      final ByteArrayOutputStream strm = new ByteArrayOutputStream();
-      e.printStackTrace(new PrintStream(strm));
-      CDATASection msgNode = doc.createCDATASection(strm.toString());
-      se.appendChild(msgNode);
-      final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-      final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
-      out.close();
-      return Response
-              .status(httpStatus)
-              .header("Content-Type", MediaType.TEXT_XML)
-              .entity(xmlStream.toString())
-              .build();
-    }
-    catch (ParserConfigurationException e1)
-    {
-    }
-    catch (TransformerException e1)
-    {
-    }
-    // Fallback in case there is an XML exception above
-    return Response.status(httpStatus).entity(e.getLocalizedMessage()).build();
-  }
+//  private Response writeError(Response.Status httpStatus, final Exception e)
+//  {
+//    try
+//    {
+//      Document doc;
+//      final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
+//      final DocumentBuilder builder;
+//      builder = dBF.newDocumentBuilder();
+//      doc = builder.newDocument();
+//
+//      final Element ser = doc.createElement("ServiceExceptionReport");
+//      doc.appendChild(ser);
+//      ser.setAttribute("version", WMS_VERSION);
+//      final Element se = XmlUtils.createElement(ser, "ServiceException");
+////      String msg = e.getLocalizedMessage();
+////      if (msg == null || msg.isEmpty())
+////      {
+////        msg = e.getClass().getName();
+////      }
+//      final ByteArrayOutputStream strm = new ByteArrayOutputStream();
+//      e.printStackTrace(new PrintStream(strm));
+//      CDATASection msgNode = doc.createCDATASection(strm.toString());
+//      se.appendChild(msgNode);
+//      final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
+//      final PrintWriter out = new PrintWriter(xmlStream);
+//      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
+//      out.close();
+//      return Response
+//              .status(httpStatus)
+//              .header("Content-Type", MediaType.TEXT_XML)
+//              .entity(xmlStream.toString())
+//              .build();
+//    }
+//    catch (ParserConfigurationException e1)
+//    {
+//    }
+//    catch (TransformerException e1)
+//    {
+//    }
+//    // Fallback in case there is an XML exception above
+//    return Response.status(httpStatus).entity(e.getLocalizedMessage()).build();
+//  }
 
   /*
    * Writes OGC spec error messages to the response
@@ -948,39 +944,39 @@ public class WmsGenerator
   /*
    * Writes OGC spec error messages to the response
    */
-  private Response writeError(Response.Status httpStatus, final String code, final String msg)
-  {
-    try
-    {
-      Document doc;
-      final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-      final DocumentBuilder builder = dBF.newDocumentBuilder();
-      doc = builder.newDocument();
-
-      final Element ser = doc.createElement("ServiceExceptionReport");
-      doc.appendChild(ser);
-      ser.setAttribute("version", WMS_VERSION);
-      final Element se = XmlUtils.createElement(ser, "ServiceException");
-      se.setAttribute("code", code);
-      CDATASection msgNode = doc.createCDATASection(msg);
-      se.appendChild(msgNode);
-      final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-      final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
-      out.close();
-      return Response
-              .status(httpStatus)
-              .header("Content-Type", MediaType.TEXT_XML)
-              .entity(xmlStream.toString())
-              .build();
-    }
-    catch (ParserConfigurationException e1)
-    {
-    }
-    catch (TransformerException e1)
-    {
-    }
-    // Fallback in case there is an XML exception above
-    return Response.status(httpStatus).entity(msg).build();
-  }
+//  private Response writeError(Response.Status httpStatus, final String code, final String msg)
+//  {
+//    try
+//    {
+//      Document doc;
+//      final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
+//      final DocumentBuilder builder = dBF.newDocumentBuilder();
+//      doc = builder.newDocument();
+//
+//      final Element ser = doc.createElement("ServiceExceptionReport");
+//      doc.appendChild(ser);
+//      ser.setAttribute("version", WMS_VERSION);
+//      final Element se = XmlUtils.createElement(ser, "ServiceException");
+//      se.setAttribute("code", code);
+//      CDATASection msgNode = doc.createCDATASection(msg);
+//      se.appendChild(msgNode);
+//      final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
+//      final PrintWriter out = new PrintWriter(xmlStream);
+//      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
+//      out.close();
+//      return Response
+//              .status(httpStatus)
+//              .header("Content-Type", MediaType.TEXT_XML)
+//              .entity(xmlStream.toString())
+//              .build();
+//    }
+//    catch (ParserConfigurationException e1)
+//    {
+//    }
+//    catch (TransformerException e1)
+//    {
+//    }
+//    // Fallback in case there is an XML exception above
+//    return Response.status(httpStatus).entity(msg).build();
+//  }
 }

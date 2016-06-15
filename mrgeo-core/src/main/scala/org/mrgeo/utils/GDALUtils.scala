@@ -24,6 +24,7 @@ import java.nio.file.Files
 import java.util.zip.GZIPOutputStream
 import javax.xml.bind.DatatypeConverter
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.ArrayUtils
 import org.apache.hadoop.fs.Path
@@ -63,6 +64,8 @@ class GDALException extends IOException  {
   }
 }
 
+@SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
+@SuppressFBWarnings(value = Array("PZLA_PREFER_ZERO_LENGTH_ARRAYS"), justification = "api")
 object GDALUtils extends Logging {
 
   val EPSG4326: String = osrConstants.SRS_WKT_WGS84
@@ -164,31 +167,31 @@ object GDALUtils extends Logging {
 
     if (ds != null) {
       copyToDataset(ds, raster)
+
+      val xform = new Array[Double](6)
+      if (bounds != null) {
+
+        xform(0) = bounds.w
+        xform(1) = bounds.width / ds.getRasterXSize
+        xform(2) = 0
+        xform(3) = bounds.n
+        xform(4) = 0
+        xform(5) = -bounds.height / ds.getRasterYSize
+
+        ds.SetProjection(GDALUtils.EPSG4326)
+      }
+      else
+      {
+        xform(0) = 0
+        xform(1) = ds.getRasterXSize
+        xform(2) = 0
+        xform(3) = 0
+        xform(4) = 0
+        xform(5) = -ds.getRasterYSize
+      }
+
+      ds.SetGeoTransform(xform)
     }
-
-    val xform = new Array[Double](6)
-    if (bounds != null) {
-
-      xform(0) = bounds.w
-      xform(1) = bounds.width / ds.getRasterXSize
-      xform(2) = 0
-      xform(3) = bounds.n
-      xform(4) = 0
-      xform(5) = -bounds.height / ds.getRasterYSize
-
-      ds.SetProjection(GDALUtils.EPSG4326)
-    }
-    else
-    {
-      xform(0) = 0
-      xform(1) = ds.getRasterXSize
-      xform(2) = 0
-      xform(3) = 0
-      xform(4) = 0
-      xform(5) = -ds.getRasterYSize
-    }
-
-    ds.SetGeoTransform(xform)
 
     ds
   }
@@ -377,25 +380,26 @@ object GDALUtils extends Logging {
       val band: Band = image.GetRasterBand(i)
       band.GetNoDataValue(v)
       nodatas(i - 1) =
-        if (v(0) != null) {
-          v(0)
-        }
-        else {
-          band.getDataType match {
-          case gdalconstConstants.GDT_Byte |
-               gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 |
-               gdalconstConstants.GDT_UInt32 | gdalconstConstants.GDT_Int32 => 0
-          case gdalconstConstants.GDT_Float32 => Float.NaN
-          case gdalconstConstants.GDT_Float64 => Double.NaN
+          if (v(0) != null) {
+            v(0)
           }
-        }
+          else {
+            band.getDataType match {
+            case gdalconstConstants.GDT_Byte |
+                 gdalconstConstants.GDT_UInt16 | gdalconstConstants.GDT_Int16 |
+                 gdalconstConstants.GDT_UInt32 | gdalconstConstants.GDT_Int32 => 0
+            case gdalconstConstants.GDT_Float32 => Float.NaN
+            case gdalconstConstants.GDT_Float64 => Double.NaN
+            }
+          }
 
     }
 
     nodatas
   }
 
-
+  @SuppressFBWarnings(value = Array("REC_CATCH_EXCEPTION"), justification = "GDAL may have throw exceptions enabled")
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "GDAL only reads image files")
   def open(imagename: String): Dataset = {
     try {
       val uri: URI = new URI(imagename)
@@ -509,6 +513,7 @@ object GDALUtils extends Logging {
       Math.max(Math.max(c1(1), c2(1)), Math.max(c3(1), c4(1))))
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Temp file used for writing to OutputStream")
   def saveRaster(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
       bounds:Bounds = null, nodata:Double = Double.NegativeInfinity,
       format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit =  {
@@ -667,7 +672,7 @@ object GDALUtils extends Logging {
 
       log.debug("GDAL Projections supported:")
       for (o <- osr.GetProjectionMethods) {
-        log.debug("  " + o)
+        logDebug("  " + o)
       }
     }
   }

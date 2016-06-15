@@ -136,10 +136,16 @@
               <goal>deploy-file</goal>
             </goals>
             <phase>none</phase>
-            <configuration>
-            </configuration>
+            <configuration />
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
       </plugin>
     </plugins>
   </build>

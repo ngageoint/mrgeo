@@ -55,8 +55,8 @@ public class CsvOutputFormat extends FileOutputFormat<FeatureIdWritable, Geometr
   {
     // we initialize to avoid a bunch of if (reader != null) code. It will be
     // recreated in the initialize function.
-    LineRecordReader reader = new LineRecordReader();
-    Vector<String> columns = new Vector<String>();
+    //LineRecordReader reader = new LineRecordReader();
+    //Vector<String> columns = new Vector<String>();
     PrintWriter writer;
     boolean first = true;
     boolean writeHeader = false;

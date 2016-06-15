@@ -23,6 +23,7 @@ import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -82,7 +83,7 @@ public class XmlUtils
 
   public static Element createTextElement(Element parent, String tagName, int v)
   {
-    return createTextElement(parent, tagName, Integer.valueOf(v).toString());
+    return createTextElement(parent, tagName, Integer.toString(v));
   }
 
   public static Element createTextElement(Element parent, String tagName, String text)
@@ -164,21 +165,6 @@ public class XmlUtils
     return node.getNodeValue();
   }
 
-  public static Document parseFile(File fn) throws IOException
-  {
-    try
-    {
-      DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
-      domFactory.setNamespaceAware(false);
-      DocumentBuilder builder = domFactory.newDocumentBuilder();
-      return builder.parse(new FileInputStream(fn));
-    }
-    catch (Exception e)
-    {
-      throw new IOException("Error parsing XML Stream", e);
-    }
-  }
-
   /**
    * @param is
    * @return
@@ -192,6 +178,7 @@ public class XmlUtils
     {
       DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
       domFactory.setNamespaceAware(false);
+      domFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       DocumentBuilder builder = domFactory.newDocumentBuilder();
       return builder.parse(is);
     }
@@ -201,25 +188,6 @@ public class XmlUtils
     }
   }
 
-  public static Document parseString(String xml) throws SAXException, IOException,
-      ParserConfigurationException
-  {
-    return parseString(xml, true);
-  }
-
-  public static Document parseString(String xml, boolean namespaceAware) throws SAXException,
-      IOException, ParserConfigurationException
-  {
-    DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
-    domFactory.setNamespaceAware(namespaceAware); // never forget this!
-    DocumentBuilder builder;
-    builder = domFactory.newDocumentBuilder();
-
-    InputSource is = new InputSource();
-    is.setCharacterStream(new StringReader(xml));
-
-    return builder.parse(is);
-  }
 
   public static String documentToString(Document doc) throws IOException
   {
@@ -260,32 +228,4 @@ public class XmlUtils
     out.flush();
   }
 
-  /**
-   * Determines whether the DOM node satisifying the specified query exists
-   *
-   * @param topLevelDomNode Root of the XML DOM to search
-   * @param xpathQuery XPATH query defining the search to execute
-   * @return true if the DOM node satisfying the XPATH query was found; false otherwise
-   * @throws TransformerException
-   * @throws Exception
-   */
-  public static boolean nodeExists(Node topLevelDomNode, String xpathQuery)
-      throws TransformerException
-  {
-    //return XPathAPI.selectNodeList(topLevelDomNode, xpathQuery).getLength() > 0;
-
-    XPathFactory factory = XPathFactory.newInstance();
-    XPath xpath = factory.newXPath();
-    try
-    {
-      String str = xpath.evaluate(xpathQuery, topLevelDomNode);
-
-      return str != null && str.length() > 0;
-    }
-    catch (XPathExpressionException e)
-    {
-    }
-
-    return false;
-  }
 }

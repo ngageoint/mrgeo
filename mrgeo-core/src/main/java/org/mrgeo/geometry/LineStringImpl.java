@@ -29,6 +29,8 @@ import java.util.*;
  */
 public class LineStringImpl extends GeometryImpl implements WritableLineString
 {
+private static final long serialVersionUID = 1L;
+
 List<WritablePoint> points = new ArrayList<>();
 
 LineStringImpl()
@@ -186,14 +188,14 @@ public void write(DataOutputStream stream) throws IOException
   }
 }
 
-private synchronized void writeObject(ObjectOutputStream stream) throws IOException
+private void writeObject(ObjectOutputStream stream) throws IOException
 {
   DataOutputStream dos = new DataOutputStream(stream);
   write(dos);
   writeAttributes(dos);
 }
 
-private synchronized void readObject(ObjectInputStream stream) throws IOException
+private void readObject(ObjectInputStream stream) throws IOException
 {
   DataInputStream dis = new DataInputStream(stream);
   read(dis);

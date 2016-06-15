@@ -50,8 +50,6 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
-    val tb = TMSUtils.boundsToTile(meta.getBounds, zoom, tilesize)
-
     val nodatas = meta.getDefaultValuesNumber
 
     val neighborhoodInfo = getNeighborhoodInfo

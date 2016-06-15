@@ -45,7 +45,6 @@ public DelimitedVectorWriter(HdfsVectorDataProvider provider, Configuration conf
 {
   this.provider = provider;
   this.conf = conf;
-  this.delimiter = delimiter;
 }
 
 @Override

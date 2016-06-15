@@ -23,10 +23,10 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPoint extends java.lang.Object implements ShpData
+public class ShpPoint implements ShpData
 {
   protected JPoint[] p;
-  private ESRILayer parent;
+  private ESRILayer parent = null;
 
   /** Creates new ShpPoint */
   public ShpPoint(int initialSize)
@@ -37,10 +37,13 @@ public class ShpPoint extends java.lang.Object implements ShpData
   @Override
   public void addShape(JShape obj) throws FormatException
   {
-    JPoint[] temp = new JPoint[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPoint) obj;
-    p = temp;
+    if (obj instanceof JPoint)
+    {
+      JPoint[] temp = new JPoint[p.length + 1];
+      System.arraycopy(p, 0, temp, 0, p.length);
+      temp[p.length] = (JPoint) obj;
+      p = temp;
+    }
   }
 
   @Override

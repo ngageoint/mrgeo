@@ -21,6 +21,7 @@ import java.io.{File, FileFilter}
 import java.lang.reflect.Modifier
 import java.net.URL
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.spark.Logging
 import org.mrgeo.core.MrGeoProperties
@@ -34,7 +35,9 @@ import scala.collection.mutable
 import scala.language.existentials
 import scala.reflect.runtime.universe._
 
-
+@SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE", "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "not really errors, scan flags them in one case, but not another")
+@SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "decendants() - Filenames come from classpath")
+@SuppressFBWarnings(value = Array("BC_UNCONFIRMED_CAST_OF_RETURN_VALUE"), justification = "getSignatures(), decendants() - Scala generated code")
 object MapOpFactory extends Logging {
   val functions = mutable.HashMap.empty[String, MapOpRegistrar]
 
@@ -132,7 +135,7 @@ object MapOpFactory extends Logging {
     case symbol: TermSymbol =>
       symbol.alternatives.map {
         case creaters: MethodSymbol =>
-          creaters.paramss.head.map(_.asTerm).zipWithIndex.map {
+        creaters.paramss.head.map(_.asTerm).zipWithIndex.map {
             case (term, index) =>
               // If the term is a primitive, then use the lower case of the actual type
               // name because Double in scala equates to double in Java (not Double).
@@ -158,7 +161,7 @@ object MapOpFactory extends Logging {
               }) + {
                 if (term.isParamWithDefault) {
                   val getter = ts member newTermName("create$default$" + (index + 1))
-                  if (getter != NoSymbol) {
+                  if (getter != null && getter != NoSymbol) {
                     "=" + ((im reflectMethod getter.asMethod)() match {
                     case s:String => "\"" + s + "\""
                     case x => x
@@ -211,8 +214,6 @@ object MapOpFactory extends Logging {
   }
 
   private def decendants(clazz: Class[_]) = {
-
-
     // get all the URLs for this classpath, filter files by "mrgeo" in development mode, then strip .so files
     // in spark, the main jar is renamed "__app__.jar" (Client.APP_JAR), so we need to include that as well
     val urls = (ClasspathHelper.forClassLoader() ++ ClasspathHelper.forJavaClassPath()).filter(url => {

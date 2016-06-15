@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.image;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -198,6 +199,8 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
    * @return
    * @throws IOException
    */
+  @SuppressFBWarnings(value = {"PATH_TRAVERSAL_IN", "WEAK_FILENAMEUTILS"},
+      justification = "check will only be used for reading valid MrsPyramids")
   private static Path resolveNameToPath(final Configuration conf, final String input,
       final ProviderProperties providerProperties, final boolean mustExist,
       final boolean throwExceptionIfInvalid) throws IOException
@@ -363,12 +366,9 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     try
     {
       p = resolveName(conf, input, providerProperties, false);
-      if (p != null)
-      {
-        return hasMetadata(conf, p);
-      }
+      return hasMetadata(conf, p);
     }
-    catch (IOException e)
+    catch (IOException ignored)
     {
     }
     return false;
