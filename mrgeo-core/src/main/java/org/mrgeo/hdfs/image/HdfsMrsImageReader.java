@@ -17,6 +17,7 @@
 package org.mrgeo.hdfs.image;
 
 import com.google.common.cache.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -51,6 +52,8 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+
+@SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "'readerCache' - Needs refactoring to remove")
 public class HdfsMrsImageReader extends MrsImageReader
 {
   @SuppressWarnings("unused")
@@ -64,7 +67,8 @@ public class HdfsMrsImageReader extends MrsImageReader
   private boolean canBeCached = true;
 
 
-  public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "check will only be used for reading valid MrsPyramids")
+public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     MrsPyramidReaderContext context) throws IOException
   {
     String path = new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString();
@@ -195,7 +199,7 @@ public class HdfsMrsImageReader extends MrsImageReader
     return RasterWritable.toRaster(val);
   }
 
-  public class BoundsResultScanner implements KVIterator<Bounds, Raster>
+  public static class BoundsResultScanner implements KVIterator<Bounds, Raster>
   {
     private KVIterator<TileIdWritable, Raster> tileIterator;
     private int zoomLevel;
@@ -450,6 +454,7 @@ public class HdfsMrsImageReader extends MrsImageReader
    * @return the reader for the partition specified
    * @throws IOException
    */
+  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
   public MapFile.Reader getReader(final int partitionIndex) throws IOException
   {
     try

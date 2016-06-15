@@ -139,13 +139,21 @@ public class ShpInputFormat extends InputFormat<FeatureIdWritable, Geometry>
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
         InterruptedException
     {
-      gc = loadGeometryCollection(context.getConfiguration());
+      if (split instanceof GeometryInputSplit)
+      {
+        gc = loadGeometryCollection(context.getConfiguration());
 
-      GeometryInputSplit gis = (GeometryInputSplit) split;
+        GeometryInputSplit gis = (GeometryInputSplit) split;
 
-      this.start = gis.startIndex;
-      this.end = gis.endIndex;
-      currentIndex = start - 1;
+        this.start = gis.startIndex;
+        this.end = gis.endIndex;
+        currentIndex = start - 1;
+      }
+      else
+      {
+        throw new IOException("input split is not a GeometryInputSplit");
+      }
+
     }
 
     @Override
@@ -219,11 +227,10 @@ public class ShpInputFormat extends InputFormat<FeatureIdWritable, Geometry>
       }
 
       return result;
-    } finally {
-      if (gc != null)
-      {
+    }
+    finally
+    {
         gc.close();
-      }
     }
   }
 }

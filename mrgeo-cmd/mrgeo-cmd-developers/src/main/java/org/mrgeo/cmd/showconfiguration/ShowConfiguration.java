@@ -16,6 +16,7 @@
 
 package org.mrgeo.cmd.showconfiguration;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -89,12 +90,7 @@ public String reportMrGeoSettingsProperties()
 {
   StringBuffer sb = new StringBuffer();
   Properties psp = new Properties();
-  InputStream is = MrGeoProperties.class.getClass().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS);
-  if (is == null)
-  {
-    sb.append("MrGeo default file " + MrGeoConstants.MRGEO_SETTINGS + " does not exist.\n");
-  }
-  else
+  try (InputStream is = MrGeoProperties.class.getClass().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS))
   {
     sb.append("Found default configuration file " + MrGeoConstants.MRGEO_SETTINGS + ".\n");
     try
@@ -106,19 +102,26 @@ public String reportMrGeoSettingsProperties()
     {
       sb.append("\tProblem loading " + MrGeoConstants.MRGEO_SETTINGS + " file.\n");
     }
-    sb.append(reportProperties("\t", psp) + "\n");
+    sb.append(reportProperties("\t", psp)).append("\n");
+  }
+  catch (IOException ignored)
+  {
+    sb.append("MrGeo default file " + MrGeoConstants.MRGEO_SETTINGS + " does not exist.\n");
   }
   return sb.toString();
 } // end getMrGeoSettingsProperties
 
 public boolean isMrGeoSettingsPropertiesAvailable()
 {
-  InputStream is = MrGeoProperties.class.getClass().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS);
-  if (is == null)
+  try (InputStream is = MrGeoProperties.class.getClass().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS))
   {
-    return false;
+    return true;
   }
-  return true;
+  catch (IOException ignored)
+  {
+  }
+
+  return false;
 } // end isMrGeoSettingsPropertiesAvailable
 
 public String reportMrGeoConfInfo()
@@ -256,6 +259,7 @@ public String reportProperties(String pad, Properties p)
   return sb.toString();
 } // end showProperties
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() used for existence")
 public boolean isJobJarAvailable()
 {
   String jj = props.getProperty(MrGeoConstants.MRGEO_JAR);

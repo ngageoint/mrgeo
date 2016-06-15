@@ -63,13 +63,13 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     column = hasColumn match {
       case true =>
         Some(in.readUTF())
-      case false => None
+      case _ => None
     }
     val hasBounds = in.readBoolean()
     bounds = hasBounds match {
       case true =>
         Some(new Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
-      case false => None
+      case _ => None
     }
   }
 

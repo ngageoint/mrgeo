@@ -16,17 +16,11 @@
 
 package org.mrgeo.resources.job;
 
-import com.sun.jersey.api.NotFoundException;
-import org.mrgeo.job.JobDetails;
-import org.mrgeo.job.JobManager;
-import org.mrgeo.services.utils.HttpUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 @Path("/job/")

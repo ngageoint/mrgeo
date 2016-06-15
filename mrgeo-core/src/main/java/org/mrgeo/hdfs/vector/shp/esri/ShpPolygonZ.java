@@ -24,10 +24,10 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPolygonZ extends java.lang.Object implements ShpData
+public class ShpPolygonZ implements ShpData
 {
   protected JPolygonZ[] p;
-  private ESRILayer parent;
+  private ESRILayer parent = null;
 
   /** Creates new ShpPolygon */
   public ShpPolygonZ(int initialSize)
@@ -38,10 +38,13 @@ public class ShpPolygonZ extends java.lang.Object implements ShpData
   @Override
   public void addShape(JShape obj) throws FormatException
   {
-    JPolygonZ[] temp = new JPolygonZ[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPolygonZ) obj;
-    p = temp;
+    if (obj instanceof JPolygonZ)
+    {
+      JPolygonZ[] temp = new JPolygonZ[p.length + 1];
+      System.arraycopy(p, 0, temp, 0, p.length);
+      temp[p.length] = (JPolygonZ) obj;
+      p = temp;
+    }
   }
 
   @Override
@@ -123,13 +126,13 @@ public class ShpPolygonZ extends java.lang.Object implements ShpData
         }
         else
         {
-          if (j == startingPair[part + 1] - 1)
-          {
-            // discard, check below will close poly; check below not done or
-            // we'd loose z, m values
-            p[i].add(new Coord(px, py), z, m);
-          }
-          else
+//          if (j == startingPair[part + 1] - 1)
+//          {
+//            // discard, check below will close poly; check below not done or
+//            // we'd loose z, m values
+//            p[i].add(new Coord(px, py), z, m);
+//          }
+//          else
           {
             p[i].add(new Coord(px, py), z, m);
           }

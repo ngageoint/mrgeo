@@ -208,6 +208,7 @@ public void testOldParams()
     }
     catch (final Exception e)
     {
+      e.printStackTrace();
       log.error("Failed to load metadata", e);
       fail("Failed to load metadata");
     }

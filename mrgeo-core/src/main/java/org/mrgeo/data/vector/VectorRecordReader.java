@@ -31,12 +31,19 @@ public class VectorRecordReader extends RecordReader<FeatureIdWritable, Geometry
   @Override
   public void initialize(InputSplit inputSplit, TaskAttemptContext context) throws IOException, InterruptedException
   {
-    VectorInputSplit vis = (VectorInputSplit)inputSplit;
-    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(vis.getVectorName(),
-                                                                      DataProviderFactory.AccessMode.READ,
-                                                                      context.getConfiguration());
-    delegate = dp.getRecordReader();
-    delegate.initialize(vis.getWrappedInputSplit(), context);
+    if (inputSplit instanceof VectorInputSplit)
+    {
+      VectorInputSplit vis = (VectorInputSplit) inputSplit;
+      VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(vis.getVectorName(),
+          DataProviderFactory.AccessMode.READ,
+          context.getConfiguration());
+      delegate = dp.getRecordReader();
+      delegate.initialize(vis.getWrappedInputSplit(), context);
+    }
+    else
+    {
+      throw new IOException("Input split not a VectorInputSplit");
+    }
   }
 
   @Override

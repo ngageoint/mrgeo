@@ -16,6 +16,7 @@
 
 package org.mrgeo.cmd.mapalgebra;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
@@ -86,6 +87,7 @@ public static Options createOptions()
   return result;
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for reading script")
 @Override
 public int run(String[] args, Configuration conf, final ProviderProperties providerProperties)
 {
@@ -129,11 +131,17 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
     if (script != null)
     {
       File f = new File(script);
-      byte[] buffer = new byte[(int) f.length()];
-      FileInputStream fis = new FileInputStream(f);
-      fis.read(buffer);
-      expression = new String(buffer);
-      fis.close();
+      int total = (int) f.length();
+      byte[] buffer = new byte[total];
+      int read = 0;
+      try (FileInputStream fis = new FileInputStream(f))
+      {
+        while (read < total)
+        {
+          read += fis.read(buffer, read, total - read);
+        }
+        expression = new String(buffer);
+      }
     }
 
     String protectionLevel = line.getOptionValue("pl");

@@ -16,6 +16,7 @@
 
 package org.mrgeo.resources.wms;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -175,6 +176,7 @@ public class GetCapabilitiesDocumentGenerator
   /*
    * Adds data layers to the GetCapabilities response
    */
+  @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Just a simple inline comparator")
   private void addLayersToCapability(Element capability, Version version,
       MrsImageDataProvider[] providers) throws InterruptedException, IOException
   {

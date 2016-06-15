@@ -148,7 +148,6 @@ class CropExactMapOp extends CropMapOp {
 
     val bottomRightPt: LatLon = TMSUtils
       .pixelToLatLonUL(bottomRightWorldPixel.px, bottomRightWorldPixel.py, zoom, tilesize)
-    val b: Bounds = new Bounds(cropBounds.w, bottomRightPt.lat, bottomRightPt.lon, cropBounds.n)
 
     (
       TMSUtils.latLonToTilePixelUL(cropBounds.n, bottomRightPt.lon, bounds.e, bounds.n, zoom, tilesize),

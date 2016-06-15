@@ -18,6 +18,7 @@ package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -76,6 +77,7 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
   override def rdd(): Option[RasterRDD] = rasterRDD
 
 
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "tileIdOrdering() - false positivie")
   override def execute(context: SparkContext): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {

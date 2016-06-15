@@ -18,13 +18,14 @@ package org.mrgeo.job.yarn
 
 import java.io.{BufferedReader, InputStreamReader}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{Logging, SparkContext}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoJob}
-import org.mrgeo.spark.MrGeoListener
 import org.mrgeo.utils.SparkUtils
 
+@SuppressFBWarnings(value=Array("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"), justification = "Scala generated code")
 object MrGeoYarnJob extends Logging {
 
   def main(args:Array[String]): Unit = {
@@ -41,49 +42,69 @@ object MrGeoYarnJob extends Logging {
       val filename = new Path(job.getSetting(MrGeoYarnDriver.ARGFILE))
 
       val stream = HadoopFileUtils.open(filename)
-      val input = new BufferedReader(new InputStreamReader(stream))
+      try
+      {
+        val isr = new InputStreamReader(stream)
+        try {
+          val input = new BufferedReader(isr)
+          try {
+            var key: String = ""
+            var value: String = ""
 
-      var key:String = ""
-      var value:String = ""
-
-      key = input.readLine()
-      value = input.readLine()
-
-      while (key != null && value != null) {
-        key = key.replaceFirst("^--", "") // strip initial "--"
-        if (value.startsWith("--")) {
-          // The key is an on/off switch because the value is not really
-          // a value, so continue parsing with the value
-
-          job.setSetting(key, null)
-          key = value.replaceFirst("^--", "") // strip initial "--"
-          value = input.readLine()
-          while (value != null && value.startsWith("--")) {
-            job.setSetting(key, null)
-            key = value.replaceFirst("^--", "") // strip initial "--"
+            key = input.readLine()
             value = input.readLine()
+
+            while (key != null && value != null) {
+              key = key.replaceFirst("^--", "") // strip initial "--"
+              if (value.startsWith("--")) {
+                // The key is an on/off switch because the value is not really
+                // a value, so continue parsing with the value
+
+                job.setSetting(key, null)
+                key = value.replaceFirst("^--", "") // strip initial "--"
+                value = input.readLine()
+                while (value != null && value.startsWith("--")) {
+                  job.setSetting(key, null)
+                  key = value.replaceFirst("^--", "") // strip initial "--"
+                  value = input.readLine()
+                }
+              }
+              else {
+                job.setSetting(key, value)
+              }
+
+              key = input.readLine()
+              value = input.readLine()
+            }
+
+            if (key != null) {
+              job.setSetting(key, null)
+            }
+
+            job.params -= MrGeoYarnDriver.ARGFILE
+
+            logInfo("*******************")
+            logInfo("Arguments")
+            job.params.foreach(kv => {
+              logInfo("  " + kv._1 + ": " + kv._2)
+            })
+            logInfo("*******************")
+          }
+          finally {
+            input.close()
           }
         }
-        else {
-          job.setSetting(key, value)
+        finally
+        {
+          isr.close()
         }
-
-        key = input.readLine()
-        value = input.readLine()
       }
-
-      if (key != null) {
-        job.setSetting(key, null)
+      finally
+      {
+        if (stream != null) {
+          stream.close()
+        }
       }
-
-      job.params -= MrGeoYarnDriver.ARGFILE
-
-      logInfo("*******************")
-      logInfo("Arguments")
-      job.params.foreach(kv => {logInfo("  " + kv._1 + ": " + kv._2)})
-      logInfo("*******************")
-
-      input.close()
       HadoopFileUtils.delete(filename)
 
     }
@@ -103,29 +124,36 @@ object MrGeoYarnJob extends Logging {
         MrGeoJob.setupSerializer(mrgeo, conf)
 
         logInfo("Setting up job: " + job.name)
-        mrgeo.setup(job, conf)
+        if (mrgeo.setup(job, conf)) {
+          logInfo("SparkConf parameters")
+          conf.getAll.foreach(kv => {logDebug("  " + kv._1 + ": " + kv._2)})
 
-        logInfo("SparkConf parameters")
-        conf.getAll.foreach(kv => {logDebug("  " + kv._1 + ": " + kv._2)})
+          val context = new SparkContext(conf)
 
-        val context = new SparkContext(conf)
+          //context.addSparkListener(new MrGeoListener)
+          val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
+          try {
+            logInfo("Running job: " + job.name)
+            context.setCheckpointDir(checkpointDir)
+            if (!mrgeo.execute(context)) {
+              logError("Error in execute")
+            }
+          }
+          finally {
+            logInfo("Stopping spark context")
+            context.stop()
 
-        //context.addSparkListener(new MrGeoListener)
-        val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
-        try {
-          logInfo("Running job: " + job.name)
-          context.setCheckpointDir(checkpointDir)
-          mrgeo.execute(context)
+            HadoopFileUtils.delete(context.hadoopConfiguration, checkpointDir)
+          }
+
+          logInfo("Teardown job: " + job.name)
+          if (!mrgeo.teardown(job, conf)) {
+            logError("Error in teardown")
+          }
         }
-        finally {
-          logInfo("Stopping spark context")
-          context.stop()
-
-          HadoopFileUtils.delete(context.hadoopConfiguration, checkpointDir)
+        else {
+          logError("Error in setup")
         }
-
-        logInfo("Teardown job: " + job.name)
-        mrgeo.teardown(job, conf)
       }
     }
   }

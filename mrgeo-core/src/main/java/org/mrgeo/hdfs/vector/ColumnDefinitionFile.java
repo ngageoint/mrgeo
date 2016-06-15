@@ -128,43 +128,43 @@ public class ColumnDefinitionFile
         Column c = new Column();
         c.setName(s.getAttribute("name"));
         String type = s.getAttribute("type");
-        if (type == null || type.isEmpty())
+        if (type.isEmpty())
         {
           type = FactorType.Unknown.toString();
         }
         c.setType(Column.FactorType.valueOf(type));
         String tmp = s.getAttribute("min");
-        if (tmp.isEmpty() == false)
+        if (!tmp.isEmpty())
         {
           c.setMin(Double.valueOf(tmp));
         }
         tmp = s.getAttribute("max");
-        if (tmp.isEmpty() == false)
+        if (!tmp.isEmpty())
         {
           c.setMax(Double.valueOf(tmp));
         }
         tmp = s.getAttribute("count");
-        if (tmp.isEmpty() == false)
+        if (!tmp.isEmpty())
         {
-          c.setCount(Long.valueOf(tmp));
+          c.setCount(Long.parseLong(tmp));
         }
         tmp = s.getAttribute("sum");
-        if (tmp.isEmpty() == false)
+        if (!tmp.isEmpty())
         {
           c.setSum(Double.valueOf(tmp));
         }
         tmp = s.getAttribute("quartile1");
-        if (tmp.isEmpty() == false)
+        if (!tmp.isEmpty())
         {
           c.setQuartile1(Double.valueOf(tmp));
         }
         tmp = s.getAttribute("quartile2");
-        if (tmp.isEmpty() == false)
+        if (!tmp.isEmpty())
         {
           c.setQuartile2(Double.valueOf(tmp));
         }
         tmp = s.getAttribute("quartile3");
-        if (tmp.isEmpty() == false)
+        if (!tmp.isEmpty())
         {
           c.setQuartile3(Double.valueOf(tmp));
         }
@@ -206,12 +206,15 @@ public class ColumnDefinitionFile
     root.setAttribute("firstLineHeader", firstLineHeader ? "true" : "false");
     doc.appendChild(root);
 
-    String pigLoad = "loaded = LOAD 'filename' USING PigStorage() AS (";
+    StringBuilder pigLoad = new StringBuilder();
+
+    pigLoad.append("loaded = LOAD 'filename' USING PigStorage() AS (");
     String comma = "";
 
     for (Column c : columns)
     {
-      pigLoad += comma + c.getName();
+      pigLoad.append(comma);
+      pigLoad.append(c.getName());
       comma = ", ";
       Element node = doc.createElement("Column");
       root.appendChild(node);
@@ -247,9 +250,9 @@ public class ColumnDefinitionFile
       }
     }
 
-    pigLoad += ");";
+    pigLoad.append(");");
 
-    Comment c = doc.createComment(pigLoad);
+    Comment c = doc.createComment(pigLoad.toString());
     root.appendChild(c);
 
     XmlUtils.writeDocument(doc, new OutputStreamWriter(os));

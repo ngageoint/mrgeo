@@ -16,7 +16,9 @@
 
 package org.mrgeo.hdfs.vector.shp.esri.geom;
 
-public final class Coord extends java.lang.Object implements Cloneable, java.io.Serializable
+import org.mrgeo.utils.FloatUtils;
+
+public final class Coord implements Cloneable, java.io.Serializable
 {
   static final long serialVersionUID = 1L;
   public double x;
@@ -64,7 +66,7 @@ public final class Coord extends java.lang.Object implements Cloneable, java.io.
       try
       {
         Coord p = (Coord) obj;
-        if (p.x == x && p.y == y)
+        if (FloatUtils.isEqual(p.x, x) && FloatUtils.isEqual(p.y, y))
           return true;
       }
       catch (ClassCastException e)

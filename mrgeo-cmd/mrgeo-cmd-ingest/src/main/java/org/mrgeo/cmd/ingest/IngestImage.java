@@ -16,6 +16,7 @@
 
 package org.mrgeo.cmd.ingest;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -281,6 +282,7 @@ private void calculateMinimalParams(final Dataset image)
   }
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() used to find GDAL images only")
 List<String> getInputs(String arg, boolean recurse, final Configuration conf,
     boolean existsCheck, boolean argIsDir)
 {

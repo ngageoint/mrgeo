@@ -33,7 +33,6 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
-import org.mrgeo.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

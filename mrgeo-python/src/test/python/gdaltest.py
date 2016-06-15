@@ -60,6 +60,7 @@ def compare_image_pixels(test, golden_band, test_band):
 
     diffs = 0
     maxdiff = 0
+    nandiff = 0
 
     for line in range(golden_band.YSize):
         gline = golden_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
@@ -73,12 +74,14 @@ def compare_image_pixels(test, golden_band, test_band):
                 t = tline[x]
                 if math.isnan(g) != math.isnan(t):
                     diffs += 1
+                    nandiff += 1
                 elif not math.isnan(g) and g != t:
                     diffs += 1
                     maxdiff = max(maxdiff, gline[x] - tline[x])
 
     test.assertEqual(diffs, 0, 'Pixels Differing: ' + str(diffs) +
-                     'Maximum Pixel Difference: ' + str(maxdiff))
+                     ' Maximum Pixel Difference: ' + str(maxdiff) +
+                     ' NaN Pixels Differing: ' + str(nandiff))
 
 
 #######################################################
@@ -104,9 +107,9 @@ def compare_band(test, golden_band, new_band, id):
     #     print('  Golden: ' + gdal.GetColorInterpretationName(golden_band.GetColorInterpretation()))
     #     print('  New:    ' + gdal.GetColorInterpretationName(new_band.GetColorInterpretation()))
 
-    test.assertEqual( golden_band.Checksum(), new_band.Checksum(), ('Band %s checksum difference:\n' % id) +
-                      '  Golden: ' + str(golden_band.Checksum()) + '\n' +
-                      '  New:    ' + str(new_band.Checksum()))
+    # test.assertEqual( golden_band.Checksum(), new_band.Checksum(), ('Band %s checksum difference:\n' % id) +
+    #                   '  Golden: ' + str(golden_band.Checksum()) + '\n' +
+    #                   '  New:    ' + str(new_band.Checksum()))
 
     compare_image_pixels(test, golden_band, new_band)
 

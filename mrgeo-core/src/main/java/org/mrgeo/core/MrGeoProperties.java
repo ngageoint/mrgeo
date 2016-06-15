@@ -16,6 +16,7 @@
 
 package org.mrgeo.core;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,27 +38,38 @@ private MrGeoProperties() {
 } // end base constructor
 
 
-public static Properties getInstance() {
-
+@SuppressFBWarnings(value = {"DE_MIGHT_IGNORE",
+    "PATH_TRAVERSAL_IN"}, justification = "Ignored exception causes empty properties object, which is fine, false positive, user can't control the path")
+public static synchronized Properties getInstance() {
   if( properties == null ) {
-    // This reduces concurrency to just when properties need creating, making access more efficient once created
-    synchronized (MrGeoProperties.class) {
-      if ( properties == null ) {
-        properties = new Properties();
+    properties = new Properties();
+    FileInputStream fis = null;
+    try
+    {
+      String conf = findMrGeoConf();
+      fis = new FileInputStream(conf);
+      properties.load(fis);
+    }
+    catch (IOException e)
+    {
+      // Try loading from properties file. This is the method used for JBoss deployments
+      try {
+        properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
+      }
+      catch ( Exception ignored ) {
+        // An empty props object is fine
+      }
+    }
+    finally
+    {
+      if (fis != null)
+      {
         try
         {
-          String conf = findMrGeoConf();
-          properties.load( new FileInputStream( conf ) );
+          fis.close();
         }
-        catch (IOException e)
+        catch (IOException ignored)
         {
-          // Try loading from properties file. This is the method used for JBoss deployments
-          try {
-            properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
-          }
-          catch ( Exception ignored ) {
-            // An empty props object is fine
-          }
         }
       }
     }
@@ -77,6 +89,7 @@ public static boolean isDevelopmentMode()
   return developmentMode;
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "false positive, no user control of path")
 public static String findMrGeoConf() throws IOException
 {
   String conf = System.getenv(MrGeoConstants.MRGEO_CONF_DIR);

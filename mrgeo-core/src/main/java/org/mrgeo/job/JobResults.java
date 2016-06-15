@@ -16,6 +16,9 @@
 
 package org.mrgeo.job;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "TODO:  This class needs to be expanded")
 public class JobResults
 {
   private boolean started;

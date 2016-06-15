@@ -29,6 +29,8 @@ import java.util.*;
  */
 public class GeometryCollectionImpl extends GeometryImpl implements WritableGeometryCollection
 {
+private static final long serialVersionUID = 1L;
+
   List<WritableGeometry> geometries = new ArrayList<WritableGeometry>();
 
   List<String> roles = new ArrayList<String>();
@@ -190,14 +192,14 @@ public class GeometryCollectionImpl extends GeometryImpl implements WritableGeom
     }
   }
 
-  private synchronized void writeObject(ObjectOutputStream stream) throws IOException
+  private void writeObject(ObjectOutputStream stream) throws IOException
   {
     DataOutputStream dos = new DataOutputStream(stream);
     write(dos);
     writeAttributes(dos);
   }
 
-  private synchronized void readObject(ObjectInputStream stream) throws IOException
+  private void readObject(ObjectInputStream stream) throws IOException
   {
     DataInputStream dis = new DataInputStream(stream);
     read(dis);

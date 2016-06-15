@@ -28,6 +28,7 @@ import org.mrgeo.utils.tms.Tile;
 
 import java.awt.image.Raster;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 /**
  * HdfsResultScanner is for pulling items from the data store / MapFiles in HDFS in a Iterator
@@ -206,7 +207,7 @@ public boolean hasNext()
         {
           return false;
         }
-        if (!reader.canBeCached() && mapfile != null)
+        if (!reader.canBeCached())
         {
           mapfile.close();
         }
@@ -227,6 +228,11 @@ public boolean hasNext()
 @Override
 public Raster next()
 {
+  if (currentKey == null)
+  {
+    throw new NoSuchElementException();
+  }
+
   try
   {
     return toNonWritable(currentValue);

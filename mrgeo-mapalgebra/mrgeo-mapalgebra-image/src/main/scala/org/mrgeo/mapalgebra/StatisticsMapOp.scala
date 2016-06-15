@@ -66,19 +66,19 @@ object StatisticsMapOp extends MapOpRegistrar {
   // passing an array of RasterMapOp and and Array of String. So we are commenting
   // out the String version of the method. Python won't need this anyway because it
   // can do its own wildcarding based on names after calling MrGeo.listImages.
-//  def create(method:String, first:RasterMapOp, names:Array[String]):MapOp = {
-//    val inputs:Seq[Either[Option[RasterMapOp], Option[String]]] =
-//      List(Left(Some(first))) ++ (names.toList).flatMap(name => {
-//        List(Right(Some(name)))
-//      })
-//
-//    if (method.isEmpty || !methods.exists(_.equals(method.toLowerCase))) {
-//      throw new ParserException("Invalid stastics method")
-//    }
-//
-//
-//    new StatisticsMapOp(inputs.toArray, method)
-//  }
+  //  def create(method:String, first:RasterMapOp, names:Array[String]):MapOp = {
+  //    val inputs:Seq[Either[Option[RasterMapOp], Option[String]]] =
+  //      List(Left(Some(first))) ++ (names.toList).flatMap(name => {
+  //        List(Right(Some(name)))
+  //      })
+  //
+  //    if (method.isEmpty || !methods.exists(_.equals(method.toLowerCase))) {
+  //      throw new ParserException("Invalid stastics method")
+  //    }
+  //
+  //
+  //    new StatisticsMapOp(inputs.toArray, method)
+  //  }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new StatisticsMapOp(node, variables)
@@ -151,56 +151,59 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
     var zoom = 0
     var tilesize = -1
     var layers:Option[Array[String]] = None
-    if (inputs.isDefined) {}
-    inputs.get.foreach {
-      case Left(left) =>
-        left match {
-        case Some(raster) =>
-          mapopbuilder += raster
-
-          val meta = raster.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
-
-          if (zoom <= 0 || zoom > meta.getMaxZoomLevel) {
-            zoom = meta.getMaxZoomLevel
-          }
-
-          if (tilesize < 0) {
-            tilesize = meta.getTilesize
-          }
-
-          nodatabuilder += meta.getDefaultValue(0)
-        case _ =>
-        }
-      case Right(right) =>
-        right match {
-        case Some(str) =>
-          val regex = str.replace("?", ".?").replace("*", ".*?")
-          val hits = layers.getOrElse({
-            layers = Some(DataProviderFactory.listImages(providerProperties))
-            layers.get
-          }).filter(_.matches(regex))
-
-          hits.foreach(layer => {
-            val dp = DataProviderFactory.getMrsImageDataProvider(layer, AccessMode.READ, providerProperties)
-
-            val raster = MrsPyramidMapOp.apply(dp)
-            raster.context(context)
-
+    if (inputs.isDefined) {
+      inputs.get.foreach {
+        case Left(left) =>
+          left match {
+          case Some(raster) =>
             mapopbuilder += raster
 
-            val meta = raster.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+            val meta = raster.metadata() getOrElse
+                (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
 
             if (zoom <= 0 || zoom > meta.getMaxZoomLevel) {
               zoom = meta.getMaxZoomLevel
             }
+
             if (tilesize < 0) {
               tilesize = meta.getTilesize
             }
 
             nodatabuilder += meta.getDefaultValue(0)
-          })
-        case _ =>
-        }
+          case _ =>
+          }
+        case Right(right) =>
+          right match {
+          case Some(str) =>
+            val regex = str.replace("?", ".?").replace("*", ".*?")
+            val hits = layers.getOrElse({
+              layers = Some(DataProviderFactory.listImages(providerProperties))
+              layers.get
+            }).filter(_.matches(regex))
+
+            hits.foreach(layer => {
+              val dp = DataProviderFactory.getMrsImageDataProvider(layer, AccessMode.READ, providerProperties)
+
+              val raster = MrsPyramidMapOp.apply(dp)
+              raster.context(context)
+
+              mapopbuilder += raster
+
+              val meta = raster.metadata() getOrElse
+                  (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+
+              if (zoom <= 0 || zoom > meta.getMaxZoomLevel) {
+                zoom = meta.getMaxZoomLevel
+              }
+              if (tilesize < 0) {
+                tilesize = meta.getTilesize
+              }
+
+              nodatabuilder += meta.getDefaultValue(0)
+            })
+          case _ =>
+          }
+      }
     }
 
     val nodatas = nodatabuilder.result()

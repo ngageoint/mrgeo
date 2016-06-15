@@ -19,6 +19,7 @@ package org.mrgeo.mapalgebra
 import java.io.{ByteArrayOutputStream, DataOutputStream, Externalizable}
 
 import com.vividsolutions.jts.geom.Envelope
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.AccumulatorParam
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.mrgeo.data.raster.RasterWritable
@@ -183,6 +184,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     tiles.toList
   }
 
+  @SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION"), justification = "Scala generated code")
   object MaxSizeAccumulator extends AccumulatorParam[Int]
   {
     override def addInPlace(r1: Int, r2: Int): Int = {

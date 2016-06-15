@@ -21,6 +21,7 @@ import org.mrgeo.geometry.WritableGeometry;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ReprojectedShapefileGeometryCollection implements ShapefileGeometryCollection
 {
@@ -43,6 +44,10 @@ public class ReprojectedShapefileGeometryCollection implements ShapefileGeometry
     @Override
     public WritableGeometry next()
     {
+      if (currentIndex >= parent.size())
+      {
+        throw new NoSuchElementException("End of iterator");
+      }
       return parent.get(currentIndex++);
     }
 

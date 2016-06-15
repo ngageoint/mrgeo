@@ -23,7 +23,7 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShxFile extends java.lang.Object
+public class ShxFile
 {
   public final static int DEFAULT_CACHE_SIZE = 500;
 

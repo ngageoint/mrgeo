@@ -94,8 +94,6 @@ def launch_gateway():
     else:
         # Launch the Py4j gateway using the MrGeo command so that we pick up the proper classpath
 
-        script = find_script()
-
         fork = True
         if "MRGEO_HOST" in os.environ:
             requesthost = os.environ["MRGEO_HOST"]
@@ -115,6 +113,8 @@ def launch_gateway():
         gateway_port = None
 
         if fork:
+            script = find_script()
+
             command = [script, "python", "-v", "-h", callback_host, "-p", str(callback_port)]
 
             environ = os.environ

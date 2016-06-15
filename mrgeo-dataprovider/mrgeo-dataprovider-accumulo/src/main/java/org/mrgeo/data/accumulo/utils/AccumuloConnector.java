@@ -16,6 +16,7 @@
 
 package org.mrgeo.data.accumulo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
@@ -41,7 +42,7 @@ private static Connector conn = null;
 private static Properties connectionInfo = null;
 private static Properties accumuloProperties;
 
-public static void initialize() throws DataProviderException
+public static synchronized void initialize() throws DataProviderException
 {
   if (connectionInfo == null)
   {
@@ -110,6 +111,7 @@ public static boolean isEncoded(String s) {
 
 // TODO: need to make sure the path is correctly set - think about MRGEO
 // environment variables
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() used for existence")
 public static String getAccumuloPropertiesLocation()
 {
   try
@@ -134,7 +136,7 @@ public static String getAccumuloPropertiesLocation()
     {
       return file.getCanonicalPath();
     }
-    log.error(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath());
+    log.error(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath() + ".  This can be ignored if you are not using Accumulo");
 
   }
   catch (IOException e)
@@ -170,7 +172,8 @@ private static boolean copyProp(Map<String, String> src, Properties dst, String 
   return false;
 }
 
-public static Properties getAccumuloProperties() throws DataProviderException
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File must be valid accumulo properties")
+public static synchronized Properties getAccumuloProperties() throws DataProviderException
 {
   if (accumuloProperties == null)
   {
@@ -200,13 +203,12 @@ public static Properties getAccumuloProperties() throws DataProviderException
       log.debug("using " + f.getAbsolutePath());
 
       accumuloProperties = new Properties();
-      try
+      try (FileInputStream fis = new FileInputStream(f))
       {
-        accumuloProperties.load(new FileInputStream(f));
+        accumuloProperties.load(fis);
       }
-      catch (Exception e)
+      catch (IOException e)
       {
-        e.printStackTrace();
         throw new DataProviderException(e);
       }
       return accumuloProperties;
@@ -280,7 +282,7 @@ public static Connector getConnector(Properties p)
   return conn;
 } // end getConnector - File
 
-public static Connector getConnector(String instance, String zookeepers,
+public static synchronized Connector getConnector(String instance, String zookeepers,
     String user, String pass) throws DataProviderException {
 
   if (conn != null) {
@@ -352,8 +354,7 @@ public static String getReadAuthorizations(String curAuths) throws DataProviderE
   Properties props = AccumuloConnector.getAccumuloProperties();
 
   // look for items in the properties
-  if (props != null
-      && props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_DEFAULT_READ_AUTHS)) {
+  if (props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_DEFAULT_READ_AUTHS)) {
     String a = props
         .getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_DEFAULT_READ_AUTHS);
 
@@ -370,7 +371,7 @@ public static String getReadAuthorizations(String curAuths) throws DataProviderE
 
 
 public static boolean deleteTable(String table) throws DataProviderException {
-  ArrayList<String> ignore = AccumuloUtils.getIgnoreTables();
+//  ArrayList<String> ignore = AccumuloUtils.getIgnoreTables();
   try{
     Connector conn = AccumuloConnector.getConnector();
     conn.tableOperations().delete(table);
