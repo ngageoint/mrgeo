@@ -16,6 +16,7 @@
 
 package org.mrgeo.cmd.export;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -36,6 +37,7 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
+import org.mrgeo.utils.logging.LoggingUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.tms.Tile;
@@ -154,7 +156,7 @@ private Bounds parseBounds(String boundsOption)
 }
 
 private boolean saveSingleTile(final String output, final String pyramidName, final MrsImage image,
-                               String format, final long tileid, final int zoom, int tilesize)
+    String format, final long tileid, final int zoom, int tilesize)
 {
   try
   {
@@ -175,20 +177,18 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
         ColorScaleApplier applier = null;
         switch (format)
         {
-        case "tif":
-        case "png":
-          applier = new PngColorScaleApplier();
-          break;
         case "jpg":
         case "jpeg":
           applier = new JpegColorScaleApplier();
           break;
+        case "tif":
+        case "png":
+        default:
+          applier = new PngColorScaleApplier();
+          break;
         }
 
-        if (applier != null)
-        {
-          raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
-        }
+        raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
       }
 
       GDALJavaUtils.saveRasterTile(raster, out, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
@@ -272,20 +272,18 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
       ColorScaleApplier applier = null;
       switch (format)
       {
-      case "tif":
-      case "png":
-        applier = new PngColorScaleApplier();
-        break;
       case "jpg":
       case "jpeg":
         applier = new JpegColorScaleApplier();
         break;
+      case "tif":
+      case "png":
+      default:
+        applier = new PngColorScaleApplier();
+        break;
       }
 
-      if (applier != null)
-      {
-        raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
-      }
+      raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
     }
 
     GDALJavaUtils.saveRaster(raster, out, imageBounds, metadata.getDefaultValue(0), format);
@@ -350,7 +348,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
 
       if (line.hasOption("c"))
       {
-        maxTiles = Integer.valueOf(line.getOptionValue("c"));
+        maxTiles = Integer.parseInt(line.getOptionValue("c"));
       }
 
       useRand = line.hasOption("r");
@@ -360,7 +358,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
       mosaicTiles = line.hasOption("m");
       if (mosaicTiles)
       {
-        mosaicTileCount = Integer.valueOf(line.getOptionValue("m"));
+        mosaicTileCount = Integer.parseInt(line.getOptionValue("m"));
       }
 
       useBounds = line.hasOption("b");
@@ -389,7 +387,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
       int zoomlevel = -1;
       if (line.hasOption("z"))
       {
-        zoomlevel = Integer.valueOf(line.getOptionValue("z"));
+        zoomlevel = Integer.parseInt(line.getOptionValue("z"));
       }
 
       String format = "tif";
@@ -442,11 +440,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
         {
           //final String output = outputbase + (all ? "_" + Integer.toString(zoomlevel) : "");
 
-          MrsImage image = null;
-          if (imagePyramid != null)
-          {
-            image = imagePyramid.getImage(zoomlevel);
-          }
+          MrsImage image = imagePyramid.getImage(zoomlevel);
           try
           {
             final Set<Long> tiles = calculateTiles(pyramid, zoomlevel);
@@ -455,11 +449,8 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
 
             if (singleImage)
             {
-              if (imagePyramid != null)
-              {
-                saveMultipleTiles(outputbase, pyramidName, format,
-                    image, ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])));
-              }
+              saveMultipleTiles(outputbase, pyramidName, format,
+                  image, ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])));
             }
             else if (mosaicTiles && mosaicTileCount > 0)
             {
@@ -485,21 +476,15 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
                 }
 //                final String mosaicOutput = output + "/" + t.ty + "-" + t.tx + "-" +
 //                    TMSUtils.tileid(t.tx, t.ty, zoomlevel);
-                if (imagePyramid != null)
-                {
                   saveMultipleTiles(outputbase, pyramidName, format,
                       image, ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])));
-                }
               }
             }
             else
             {
               for (final Long tileid : tiles)
               {
-                if (imagePyramid != null)
-                {
-                  saveSingleTile(outputbase, pyramidName, image, format, tileid, zoomlevel, tilesize);
-                }
+                saveSingleTile(outputbase, pyramidName, image, format, tileid, zoomlevel, tilesize);
               }
             }
           }
@@ -523,7 +508,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
 
     return 0;
   }
-  catch (Exception e)
+  catch (ColorScale.ColorScaleException | IOException e)
   {
     e.printStackTrace();
   }
@@ -531,6 +516,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
   return -1;
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() constructing a filename and checking for existence")
 private String makeTMSOutputName(String base, String format, long tileid, int zoom) throws IOException
 {
   final Tile t = TMSUtils.tileid(tileid, zoom);
@@ -539,15 +525,16 @@ private String makeTMSOutputName(String base, String format, long tileid, int zo
 
   switch (format)
   {
-  case "tif":
-    output += ".tif";
-    break;
   case "png":
     output += ".png";
     break;
   case "jpg":
   case "jpeg":
     output += ".jpg";
+    break;
+  case "tif":
+  default:
+    output += ".tif";
     break;
   }
 
@@ -557,8 +544,9 @@ private String makeTMSOutputName(String base, String format, long tileid, int zo
   return output;
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() constructing a filename and checking for existence")
 private String makeOutputName(String template, String imageName, String format,
-                              long tileid, int zoom, int tilesize, boolean reformat) throws IOException
+    long tileid, int zoom, int tilesize, boolean reformat) throws IOException
 {
   if (useTMS)
   {
@@ -651,6 +639,7 @@ private String makeOutputName(String template, String imageName, String format,
   return output;
 }
 
+@SuppressFBWarnings(value = "PREDICTABLE_RANDOM", justification = "Random() used to get random tileids")
 private Set<Long> calculateTiles(final MrsPyramid pyramid, int zoomlevel)
 {
   final Set<Long> tiles = new HashSet<>();

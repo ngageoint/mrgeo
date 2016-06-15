@@ -19,6 +19,7 @@ package org.mrgeo.mapalgebra
 import java.io._
 import java.net.URI
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
@@ -68,6 +69,7 @@ object IngestImageMapOp extends MapOpRegistrar {
     new IngestImageMapOp(node, variables)
 }
 
+@SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "File() used for existance.  Actual file must be a geospatial file")
 class IngestImageMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD: Option[RasterRDD] = None

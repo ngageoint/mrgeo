@@ -36,7 +36,6 @@ import org.mrgeo.job.JobCancelledException;
 import org.mrgeo.job.JobFailedException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
-import org.mrgeo.utils.LoggingUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;

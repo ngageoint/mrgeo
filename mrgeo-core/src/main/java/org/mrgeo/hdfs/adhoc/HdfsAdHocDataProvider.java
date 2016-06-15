@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.adhoc;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -143,6 +144,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
   }
 
   @Override
+  @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "adhoc provider, our class, we control the filenames")
   public InputStream get(final String name) throws IOException
   {
     initializeFiles(getConfiguration());

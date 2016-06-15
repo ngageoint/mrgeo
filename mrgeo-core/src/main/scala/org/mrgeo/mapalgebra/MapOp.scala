@@ -16,6 +16,7 @@
 
 package org.mrgeo.mapalgebra
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{Logging, SparkConf, SparkContext}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
@@ -174,6 +175,7 @@ object MapOp {
     }
   }
 
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   def decodeBoolean(node: ParserNode): Option[Boolean] = {
     decodeString(node) match {
     case Some(value) => value.toLowerCase match {

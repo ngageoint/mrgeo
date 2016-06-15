@@ -33,7 +33,7 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
+import org.mrgeo.utils.logging.LoggingUtils;
 import org.mrgeo.utils.LongRectangle;
 
 import java.io.ByteArrayOutputStream;

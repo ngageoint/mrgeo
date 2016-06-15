@@ -19,6 +19,7 @@ package org.mrgeo.quantiles
 import java.awt.image.{DataBuffer, Raster}
 import java.io.{Externalizable, ObjectInput, ObjectOutput, PrintWriter}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
@@ -36,6 +37,8 @@ import org.mrgeo.utils.SparkUtils
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
+@SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION"), justification = "object has no constructor, empty Externalizable prevents object serialization")
+@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
 object Quantiles extends MrGeoDriver with Externalizable {
   final private val Input = "input"
   final private val Output = "output"
@@ -123,7 +126,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
 
   def compute(rdd: RasterRDD, numberOfQuantiles: Int, fraction: Option[Float], meta: MrsPyramidMetadata) = {
     var b: Int = 0
-    val dt = meta.getTileType
+    //val dt = meta.getTileType
     var result = new ListBuffer[Array[Double]]()
     while (b < meta.getBands) {
       val nodata = meta.getDefaultValue(b)

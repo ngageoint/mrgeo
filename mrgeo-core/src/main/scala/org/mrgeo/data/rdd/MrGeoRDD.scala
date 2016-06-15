@@ -23,6 +23,7 @@ import org.apache.spark.{Partition, TaskContext}
 
 import scala.reflect.ClassTag
 
+@SerialVersionUID(1L)
 class MrGeoRDD[K:ClassTag, V:ClassTag](parent: RDD[(K, V)])  extends RDD[(K, V)](parent) {
 
   AutoPersister.incrementRef(this)

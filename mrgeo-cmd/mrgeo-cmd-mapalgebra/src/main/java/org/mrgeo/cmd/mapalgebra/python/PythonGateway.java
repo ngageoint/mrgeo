@@ -16,6 +16,7 @@
 
 package org.mrgeo.cmd.mapalgebra.python;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
@@ -202,6 +203,7 @@ private void setupThreadedServer(final String callbackHost, final int callbackPo
 
 }
 
+@SuppressFBWarnings(value = "UNENCRYPTED_SOCKET", justification = "Returning comms socket unencrypted, Actual comms encrypted")
 private void sendGatewayPort(String callbackHost, int callbackPort, int port) throws IOException
 {
   // Communicate the bound port back to the caller via the caller-specified callback port

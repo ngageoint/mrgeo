@@ -41,8 +41,8 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
       println("    " + info.name)
     })
 
-    val pools = context.getAllPools
-    val rdds = context.getRDDStorageInfo
+//    val pools = context.getAllPools
+//    val rdds = context.getRDDStorageInfo
     val tracker = context.statusTracker
 
      tracker.getActiveJobIds().foreach(id => {
@@ -59,9 +59,9 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
   override def onTaskStart(taskStart: SparkListenerTaskStart): Unit = {
     println("Task Start " + taskStart)
 
-    val pools = context.getAllPools
-    val rdds = context.getRDDStorageInfo
-    val tracker = context.statusTracker
+//    val pools = context.getAllPools
+//    val rdds = context.getRDDStorageInfo
+//    val tracker = context.statusTracker
 
     super.onTaskStart(taskStart)
   }
@@ -74,9 +74,9 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
   override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
     println("Task End " + taskEnd)
 
-    val pools = context.getAllPools
-    val rdds = context.getRDDStorageInfo
-    val tracker = context.statusTracker
+//    val pools = context.getAllPools
+//    val rdds = context.getRDDStorageInfo
+//    val tracker = context.statusTracker
 
     super.onTaskEnd(taskEnd)
   }

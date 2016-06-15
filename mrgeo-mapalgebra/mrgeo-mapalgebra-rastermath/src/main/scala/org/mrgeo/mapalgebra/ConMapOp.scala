@@ -240,7 +240,6 @@ class ConMapOp extends RasterMapOp with Externalizable {
     val nodata = RasterUtils.getDefaultNoDataForType(meta.getTileType)
     val tilesize = meta.getTilesize
     val bands = meta.getBands
-    val zoom = meta.getMaxZoomLevel
 
     rasterRDD = Some(RasterRDD(groups.flatMap(tile => {
 

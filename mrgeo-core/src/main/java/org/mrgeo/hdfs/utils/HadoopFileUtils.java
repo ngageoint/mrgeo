@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -320,7 +321,7 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
           log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path.toString() + " to be deleted");
           try
           {
-            Thread.sleep(waitPhases[sleepIndex][1] * 1000);
+            Thread.sleep(waitPhases[sleepIndex][1] * 1000L);
           }
           catch (InterruptedException e)
           {
@@ -594,7 +595,7 @@ public static Path unqualifyPath(final Path path)
 
 public static String unqualifyPath(final String path)
 {
-  return new Path((new Path(path)).toUri().getPath().toString()).toString();
+  return new Path((new Path(path)).toUri().getPath()).toString();
 }
 
 private static void cleanDirectory(final FileSystem fs, final Path dir) throws IOException
@@ -622,6 +623,7 @@ public static Path resolveName(final String input, boolean checkForExistance) th
   return resolveName(HadoopUtils.createConfiguration(), input, checkForExistance);
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
 public static Path resolveName(final Configuration conf, final String input,
     boolean checkForExistance) throws IOException, URISyntaxException
 {

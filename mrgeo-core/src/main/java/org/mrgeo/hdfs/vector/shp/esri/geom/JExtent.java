@@ -16,155 +16,148 @@
 
 package org.mrgeo.hdfs.vector.shp.esri.geom;
 
-public final class JExtent extends java.lang.Object implements Cloneable, java.io.Serializable
+public final class JExtent implements Cloneable, java.io.Serializable
 {
-  static final long serialVersionUID = 1L;
+static final long serialVersionUID = 1L;
 
-  public static void intersection(JExtent e1, JExtent e2, JExtent result)
-  {
-    if ((e1 != null) && (e2 != null))
-      if (e2.min.x < e1.max.x && e2.max.x > e1.min.x && e2.min.y < e1.max.y && e2.max.y > e1.min.y)
-      {
-        if (result == null)
-          result = new JExtent();
-        result.setExtent(Math.max(e1.min.x, e2.min.x), Math.max(e1.min.y, e2.min.y), Math.min(
-            e1.max.x, e2.max.x), Math.min(e1.max.y, e2.max.y));
-        return;
-      }
-    result = null;
-  }
-
-  public static boolean intersects(JExtent e1, JExtent e2)
-  {
-    if ((e1 != null) && (e2 != null))
-      if (e2.min.x < e1.max.x && e2.max.x > e1.min.x && e2.min.y < e1.max.y && e2.max.y > e1.min.y)
-        return true;
-    return false;
-  }
-
-  public static void union(JExtent e1, JExtent e2, JExtent result)
-  {
-    if ((e1 != null) && (e2 != null))
+public static void intersection(JExtent e1, JExtent e2, JExtent result)
+{
+  if ((e1 != null) && (e2 != null))
+    if (e2.min.x < e1.max.x && e2.max.x > e1.min.x && e2.min.y < e1.max.y && e2.max.y > e1.min.y)
     {
-      if (result == null)
-        result = new JExtent();
-      result.setExtent(Math.min(e1.min.x, e2.min.x), Math.min(e1.min.y, e2.min.y), Math.max(
-          e1.max.x, e2.max.x), Math.max(e1.max.y, e2.max.y));
-      return;
+      if (result != null)
+      result.setExtent(Math.max(e1.min.x, e2.min.x), Math.max(e1.min.y, e2.min.y), Math.min(
+          e1.max.x, e2.max.x), Math.min(e1.max.y, e2.max.y));
     }
-    result = null;
-  }
+}
 
-  protected Coord max;
+public static boolean intersects(JExtent e1, JExtent e2)
+{
+  if ((e1 != null) && (e2 != null))
+    if (e2.min.x < e1.max.x && e2.max.x > e1.min.x && e2.min.y < e1.max.y && e2.max.y > e1.min.y)
+      return true;
+  return false;
+}
 
-  protected Coord min;
-
-  /** Creates new JExtent */
-  public JExtent()
+public static void union(JExtent e1, JExtent e2, JExtent result)
+{
+  if ((e1 != null) && (e2 != null))
   {
-    this(0, 0, 0, 0);
+    if (result != null)
+    result.setExtent(Math.min(e1.min.x, e2.min.x), Math.min(e1.min.y, e2.min.y), Math.max(
+        e1.max.x, e2.max.x), Math.max(e1.max.y, e2.max.y));
   }
+}
 
-  public JExtent(double minx, double miny, double maxx, double maxy)
-  {
-    min = new Coord(minx, miny);
-    max = new Coord(maxx, maxy);
-  }
+Coord max;
+Coord min;
 
-  @Override
-  public Object clone()
-  {
-    try
-    {
-      JExtent extent = (JExtent) super.clone();
-      extent.min = (Coord) min.clone();
-      extent.max = (Coord) max.clone();
-      return extent;
-    }
-    catch (CloneNotSupportedException e)
-    {
-      // note: we don't propagate this exception because JExtent is final
-      throw new InternalError();
-    }
-  }
+/** Creates new JExtent */
+public JExtent()
+{
+  this(0, 0, 0, 0);
+}
 
-  public double getCenterX()
-  {
-    return min.x + (max.x - min.x) / 2;
-  }
+public JExtent(double minx, double miny, double maxx, double maxy)
+{
+  min = new Coord(minx, miny);
+  max = new Coord(maxx, maxy);
+}
 
-  public double getCenterY()
+@Override
+public Object clone()
+{
+  try
   {
-    return min.y + (max.y - min.y) / 2;
+    JExtent extent = (JExtent) super.clone();
+    extent.min = (Coord) min.clone();
+    extent.max = (Coord) max.clone();
+    return extent;
   }
+  catch (CloneNotSupportedException e)
+  {
+    // note: we don't propagate this exception because JExtent is final
+    throw new InternalError();
+  }
+}
 
-  public double getHeight()
-  {
-    return max.y - min.y;
-  }
+public double getCenterX()
+{
+  return min.x + (max.x - min.x) / 2;
+}
 
-  public double getMaxX()
-  {
-    return max.x;
-  }
+public double getCenterY()
+{
+  return min.y + (max.y - min.y) / 2;
+}
 
-  public double getMaxY()
-  {
-    return max.y;
-  }
+public double getHeight()
+{
+  return max.y - min.y;
+}
 
-  public double getMinX()
-  {
-    return min.x;
-  }
+public double getMaxX()
+{
+  return max.x;
+}
 
-  public double getMinY()
-  {
-    return min.y;
-  }
+public double getMaxY()
+{
+  return max.y;
+}
 
-  public double getWidth()
-  {
-    return max.x - min.x;
-  }
+public double getMinX()
+{
+  return min.x;
+}
 
-  public double getX()
-  {
-    return min.x;
-  }
+public double getMinY()
+{
+  return min.y;
+}
 
-  public double getY()
-  {
-    return min.y; // max??
-  }
+public double getWidth()
+{
+  return max.x - min.x;
+}
 
-  public void setExtent(double minx, double miny, double maxx, double maxy)
-  {
-    min.x = minx;
-    min.y = miny;
-    max.x = maxx;
-    max.y = maxy;
-  }
+public double getX()
+{
+  return min.x;
+}
 
-  public void setExtent(JExtent src)
-  {
-    if (src == null)
-    {
-      min.x = 0;
-      min.y = 0;
-      max.x = 0;
-      max.y = 0;
-      return;
-    }
-    min.x = src.min.x;
-    min.y = src.min.y;
-    max.x = src.max.x;
-    max.y = src.max.y;
-  }
+public double getY()
+{
+  return min.y; // max??
+}
 
-  @Override
-  public String toString()
+public void setExtent(double minx, double miny, double maxx, double maxy)
+{
+  min.x = minx;
+  min.y = miny;
+  max.x = maxx;
+  max.y = maxy;
+}
+
+public void setExtent(JExtent src)
+{
+  if (src == null)
   {
-    return min.toString() + "|" + max.toString();
+    min.x = 0;
+    min.y = 0;
+    max.x = 0;
+    max.y = 0;
+    return;
   }
+  min.x = src.min.x;
+  min.y = src.min.y;
+  max.x = src.max.x;
+  max.y = src.max.y;
+}
+
+@Override
+public String toString()
+{
+  return min.toString() + "|" + max.toString();
+}
 }

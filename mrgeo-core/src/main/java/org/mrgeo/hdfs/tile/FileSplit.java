@@ -282,10 +282,6 @@ public void readSplits(InputStream stream) throws SplitException
 
     readSplits(reader);
   }
-  catch (Exception e)
-  {
-    throw new SplitException("This seems to be a corrupt splits file", e);
-  }
 }
 
 public boolean isVersion2(Path splitsfile) throws IOException

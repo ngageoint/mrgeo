@@ -54,7 +54,7 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-//import org.mrgeo.utils.LoggingUtils;
+//import org.mrgeo.utils.logging.LoggingUtils;
 
 public class WmsGeneratorTestAbstract extends JerseyTest
 {

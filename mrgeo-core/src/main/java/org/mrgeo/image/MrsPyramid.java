@@ -18,6 +18,7 @@ package org.mrgeo.image;
 
 import com.google.common.base.Optional;
 import com.google.common.cache.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -308,6 +309,7 @@ public MrsImage getHighestResImage() throws IOException
  * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
  *
  */
+@SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
 public MrsImage getImage(final int level) throws IOException
 {
   try

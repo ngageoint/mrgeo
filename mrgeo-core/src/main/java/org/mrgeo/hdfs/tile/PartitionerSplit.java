@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.tile;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.hdfs.partitioners.SplitGenerator;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -28,7 +29,6 @@ public class PartitionerSplit extends Splits
   private static final String SPACER = " ";
   public static final String SPLIT_FILE = "partitions";
 
-
   public static class PartitionerSplitInfo extends SplitInfo
   {
     private int partition;
@@ -38,6 +38,12 @@ public class PartitionerSplit extends Splits
     {
       this.tileid = tileid;
       this.partition = partition;
+    }
+
+    public PartitionerSplitInfo()
+    {
+      partition = -1;
+      tileid = -1;
     }
 
     @Override

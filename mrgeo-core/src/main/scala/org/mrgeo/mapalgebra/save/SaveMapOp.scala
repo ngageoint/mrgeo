@@ -16,6 +16,7 @@
 
 package org.mrgeo.mapalgebra.save
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.{RasterMapOp, SaveRasterMapOp}
 import org.mrgeo.mapalgebra.vector.{SaveVectorMapOp, VectorMapOp}
@@ -26,10 +27,11 @@ object SaveMapOp extends MapOpRegistrar {
     Array[String]("save")
   }
 
+  @SuppressFBWarnings(value = Array("BC_UNCONFIRMED_CAST"), justification = "Scala generated code")
   def create(mapop:MapOp, name:String):MapOp = {
     mapop match {
-    case raster:RasterMapOp => new SaveRasterMapOp(Some(raster), name)
-    case vector:VectorMapOp => new SaveVectorMapOp(Some(vector), name)
+    case raster: RasterMapOp => new SaveRasterMapOp (Some(raster), name)
+    case vector: VectorMapOp => new SaveVectorMapOp (Some(vector), name)
     case _ => throw new ParserException("MapOp must be a RasterMapOp or VectorMapOp")
     }
   }

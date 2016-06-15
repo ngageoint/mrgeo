@@ -435,7 +435,7 @@ public class AccumuloUtils {
 	 */
 	public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn, ColumnVisibility cViz){
 	  ColumnVisibility columnVis;
-	  if(cViz == null){
+	  if (cViz != null){
 	    columnVis = cViz;
 	  } else {
 	    columnVis = new ColumnVisibility();
@@ -743,10 +743,10 @@ public class AccumuloUtils {
 					Entry<Key, Value> e = it.next();
 					// log.info("building list of tables: " +
 					// e.getKey().toString());
-					String row = e.getKey().getRow().toString();
-					String cf = e.getKey().getColumnFamily().toString();
-					String cq = e.getKey().getColumnQualifier().toString();
-					String v = e.getValue().toString();
+//					String row = e.getKey().getRow().toString();
+//					String cf = e.getKey().getColumnFamily().toString();
+//					String cq = e.getKey().getColumnQualifier().toString();
+//					String v = e.getValue().toString();
 
 					if (e.getKey().getRow().toString()
 							.equals(MrGeoAccumuloConstants.MRGEO_ACC_METADATA)
@@ -793,9 +793,8 @@ public class AccumuloUtils {
 	 * @return
 	 */
 	public static boolean validateProtectionLevel(final String protectionLevel){
-		ColumnVisibility cv;
 		try{
-			cv = new ColumnVisibility(protectionLevel);
+			new ColumnVisibility(protectionLevel);
 		} catch(BadArgumentException bae){
 			return false;
 		}

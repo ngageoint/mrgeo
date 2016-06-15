@@ -19,9 +19,7 @@ package org.mrgeo.utils.tms;
 public class TMSUtils
 {
 
-
-public static int MAXZOOMLEVEL = 22; // max zoom level (the highest X value can be as an int)
-
+public final static int MAXZOOMLEVEL = 22; // max zoom level (the highest X value can be as an int)
 
 // limits bounds to +=180, +=90
 public static Bounds limit(final Bounds bounds)

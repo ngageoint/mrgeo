@@ -20,6 +20,7 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import javax.vecmath.Vector3d
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -30,25 +31,14 @@ import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils.tms.TMSUtils
-import org.mrgeo.utils.{LatLng, SparkUtils}
-
-object SlopeAspectMapOp {
-  final val Input = "input"
-  final val Output = "output"
-  final val Units = "units"
-  final val Type = "type"
-
-  final val Slope = "slope"
-  final val Aspect = "aspect"
-
-}
+import org.mrgeo.utils.{FloatUtils, LatLng, SparkUtils}
 
 class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
   final val DEG_2_RAD: Double = 0.0174532925
   final val RAD_2_DEG: Double = 57.2957795
-  final val TWO_PI:Double = 6.28318530718
-  final val THREE_PI_OVER_2:Double = 4.71238898038
+  final val TWO_PI:Double = 2 * Math.PI
+  final val THREE_PI_OVER_2:Double = (3.0 * Math.PI) / 2.0
 
   private var inputMapOp:Option[RasterMapOp] = None
   private var units:String = "rad"
@@ -173,6 +163,7 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         (normal.x, normal.y, normal.z)
       }
 
+      @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
       def calculateAngle(normal: (Double, Double, Double)): Float = {
         if (normal._1.isNaN) {
           return Float.NaN
@@ -184,13 +175,19 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         else {  // aspect
           // if the z component of the normal is 1.0, the cell is flat, so the aspect is undefined.
           // For now, we'llset it to 0.0, but another value could be more appropriate.
-          if (normal._3 == 1.0) {
+          if (FloatUtils.isEqual(normal._3, 1.0)) {
             0.0
           }
           else {
-            // change from (-Pi to Pi) to (0 to 2Pi), make 0 deg north (+ 3pi/2)
-            // convert to clockwise (2pi -)
-            TWO_PI - (Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
+            // change from (-Pi to Pi) to ( [0 to 2Pi) ), make 0 deg north (+ 3pi/2)
+            // convert to clockwise
+            val t = TWO_PI - (Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
+            if (FloatUtils.isEqual(t, TWO_PI)) {
+              0.0
+            }
+            else {
+              t
+            }
           }
         }
 

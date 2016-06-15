@@ -35,6 +35,7 @@ public class LatLng
    * This is the earth radius at the equator
    */
   public final static double EARTH_RADIUS_EQUATOR = 6378137;
+  final static double EPSILON = 1.0 / EARTH_RADIUS_EQUATOR;
 
   /**
    * While it is technically probably less correct, WMS uses the radius at the equator for its
@@ -62,7 +63,9 @@ public class LatLng
    */
   public static double calculateGreatCircleDistance(final LatLng p1, final LatLng p2)
   {
-    if (p1.getLat() == p2.getLat() && p1.getLng() == p2.getLng())
+
+    if (FloatUtils.isEqual(p1.getLat(), p2.getLat()) &&
+        FloatUtils.isEqual(p1.getLng(), p2.getLng()))
     {
       return 0.0;
     }

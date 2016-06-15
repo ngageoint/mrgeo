@@ -67,7 +67,7 @@ public class ImageOutputFormatContext
     return output;
   }
 
-  public int getZoomlevel()
+  public int getZoomLevel()
   {
     return zoomlevel;
   }
@@ -82,12 +82,12 @@ public class ImageOutputFormatContext
     return bands;
   }
   
-  public int getTilesize()
+  public int getTileSize()
   {
     return tilesize;
   }
 
-  public int getTiletype()
+  public int getTileType()
   {
     return tiletype;
   }

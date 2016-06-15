@@ -16,6 +16,7 @@
 
 package org.mrgeo.resources.version;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.services.version.VersionService;
 
 import javax.ws.rs.GET;
@@ -31,19 +32,20 @@ import javax.ws.rs.core.Response;
 @Path("/")
 public class VersionResource {
 
-    @Context
-    VersionService service;
+@Context
+VersionService service;
 
-    @GET
-    @Produces("application/json")
-    public Response getVersionAtApiRoot() {
-      return Response.ok().entity(service.getVersionJson()).type("application/json").build();
-    }
+@GET
+@Produces("application/json")
+public Response getVersionAtApiRoot() {
+    return Response.ok().entity(service.getVersionJson()).type("application/json").build();
+}
 
-    @GET
-    @Path("/version")
-    @Produces("application/json")
-    public Response getVersion() {
-        return Response.ok().entity( service.getVersionJson() ).type("application/json").build();
-    }
+@SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
+@GET
+@Path("/version")
+@Produces("application/json")
+public Response getVersion() {
+    return Response.ok().entity( service.getVersionJson() ).type("application/json").build();
+}
 }

@@ -27,7 +27,7 @@ public class LeakChecker
   private final Map<Integer, String> leaks = Collections
       .synchronizedMap(new HashMap<Integer, String>());
   
-  public static LeakChecker instance()
+  public synchronized static LeakChecker instance()
   {
     if (checker == null)
     {

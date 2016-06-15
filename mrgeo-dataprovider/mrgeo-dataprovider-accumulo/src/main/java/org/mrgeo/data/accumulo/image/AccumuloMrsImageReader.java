@@ -144,7 +144,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
         props = AccumuloConnector.getAccumuloProperties();
       }
     }
-    catch (Exception e)
+    catch (ClassNotFoundException e)
     {
       log.error("Unable to get Accumulo connection properties", e);
     }
@@ -285,7 +285,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
       this.auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsStr);
 
       if(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS) != null){
-        String tmp = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS);
+        //String tmp = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS);
         useCompression = Boolean.parseBoolean(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS));
       }
 
@@ -340,31 +340,8 @@ public class AccumuloMrsImageReader extends MrsImageReader
       scanner = connector.createScanner(this.table, this.auths);
       batchScanner = connector.createBatchScanner(this.table, this.auths, numQueryThreads);
 
-      if(!mock){
-
-        // I AM MOCKING YOU!!!
-
-        //metadata = loadGenericMetadata();
-
-      }
     }
-    catch (final TableNotFoundException e)
-    {
-      throw new MrsImageException(e);
-    }
-    catch (final IOException e)
-    {
-      throw new MrsImageException(e);
-    }
-    catch (final AccumuloSecurityException e)
-    {
-      throw new MrsImageException(e);
-    }
-    catch (final AccumuloException e)
-    {
-      throw new MrsImageException(e);
-    }
-    catch (final TableExistsException e)
+    catch (final TableNotFoundException | TableExistsException | AccumuloException | AccumuloSecurityException | IOException e)
     {
       throw new MrsImageException(e);
     }
@@ -545,9 +522,9 @@ public class AccumuloMrsImageReader extends MrsImageReader
   public KVIterator<Bounds, Raster> get(final Bounds bounds){
 
     //TODO: make this bounds request work
-    TileBounds tileBounds = TMSUtils.boundsToTile(bounds,
-                                                           zoomLevel,
-                                                           getTileSize());
+//    TileBounds tileBounds = TMSUtils.boundsToTile(bounds,
+//                                                           zoomLevel,
+//                                                           getTileSize());
 
     throw new NotImplementedException("AccumuloReader.get from Bounds not implemented");
   } // end get
@@ -676,15 +653,15 @@ public class AccumuloMrsImageReader extends MrsImageReader
 
     if (log.isDebugEnabled())
     {
-      String authsStr = "";
+      StringBuilder authsStr = new StringBuilder();
       for (byte[] b : auths.getAuthorizations())
       {
-        authsStr += new String(b) + " ";
+        authsStr.append(new String(b) + " ");
       }
       //log.info("startkey = " + startKey.get() + " endkey = " + endKey.get());
       log.debug("accStartkey = " + AccumuloUtils.toLong(sKey.getRow()) +
                 " accEndKey = " + AccumuloUtils.toLong(eKey.getRow()) +
-                " zoomLevel = " + zoomLevel + "\tonetile = " + oneTile + "\tauths = " + authsStr);
+                " zoomLevel = " + zoomLevel + "\tonetile = " + oneTile + "\tauths = " + authsStr.toString());
     }
 
     Range r;
@@ -711,13 +688,13 @@ public class AccumuloMrsImageReader extends MrsImageReader
       //final Iterator<Entry<Key, Value>> it = batchScanner.iterator();
       final Iterator<Map.Entry<Key, Value>> it = scanner.iterator();
       Map.Entry<Key, Value> current = null;
-      Map.Entry<Key, Value> nextCurrent = null;
-      ArrayList<Map.Entry<Key, Value>> vals = new ArrayList<Map.Entry<Key, Value>>();
+      //Map.Entry<Key, Value> nextCurrent = null;
+      //ArrayList<Map.Entry<Key, Value>> vals = new ArrayList<Map.Entry<Key, Value>>();
 
       // this goes false after reading first element
-      private boolean readFirst = true;
+      //private boolean readFirst = true;
 
-      int cnt = 0;
+      //int cnt = 0;
 
       @Override
       public TileIdWritable currentKey(){
@@ -768,13 +745,15 @@ public class AccumuloMrsImageReader extends MrsImageReader
         {
           if(current == null && it.hasNext()){
             current = it.next();
+
+            log.debug("Current key = " + Hex.encodeHexString(current.getKey().getRow().getBytes()));
+            log.debug("Size of value = " + current.getValue().get().length);
+
+
+            return toNonWritable(current.getValue().get(), null, null);
           }
 
-          log.debug("Current key = " + Hex.encodeHexString(current.getKey().getRow().getBytes()));
-          log.debug("Size of value = " + current.getValue().get().length);
-
-
-          return toNonWritable(current.getValue().get(), null, null);
+          return null;
         }
         catch (final IOException e)
         {
@@ -808,7 +787,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
 
     }
     return zoomLevel;
-  } // end getZoomlevel
+  } // end getZoomLevel
 
 
 } // end AccumuloMrsImageReader

@@ -18,6 +18,7 @@ package org.mrgeo.job.yarn
 
 import java.io.{File, PrintWriter}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.SparkConf
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.JobArguments
@@ -66,6 +67,7 @@ class MrGeoYarnDriver {
 
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Using File to strip path from a file")
   def toYarnArgs(job:JobArguments, cl:ClassLoader, conf:SparkConf) :Array[String] = {
     val args = new ArrayBuffer[String]()
 

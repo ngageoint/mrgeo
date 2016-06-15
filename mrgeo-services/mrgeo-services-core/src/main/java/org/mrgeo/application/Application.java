@@ -16,12 +16,14 @@
 
 package org.mrgeo.application;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.reflections.Reflections;
 
 import javax.ws.rs.ApplicationPath;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressFBWarnings(value = "NM_SAME_SIMPLE_NAME_AS_SUPERCLASS", justification = "Used in WEB-INF only")
 @ApplicationPath("/")
 public class Application extends javax.ws.rs.core.Application
 {

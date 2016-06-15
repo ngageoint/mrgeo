@@ -16,20 +16,18 @@
 
 package org.mrgeo.job;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 
 public class JobManager
 {
   private static final Logger _log = LoggerFactory.getLogger(JobManager.class);
-  protected static JobManager theInstance;
+  static JobManager theInstance;
 
   protected JobManager() {
   }
@@ -45,6 +43,8 @@ public class JobManager
 
   private ExecutorService threadPool = Executors.newCachedThreadPool();
 
+@SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_BAD_PRACTICE",
+    justification = "For now, there is no monitoring.  Eventually there should be.")
   public long submitJob(String name, RunnableJob job) {
     // For now, we aren't going to worry about monitoring job status. We can add that
     // later as needed. To do this, we would need the applicationId which can be gotten

@@ -28,10 +28,10 @@ import java.io.RandomAccessFile;
  * Internal class used by ESRILayer. If you're looking to read and write
  * shapefiles use ESRILayer instead.
  */
-public class ShpFile extends java.lang.Object
+public class ShpFile
 {
   protected ShpData data = null;
-  protected String fileName = null;
+  //protected String fileName = null;
   protected Header header = null;
   private SeekableDataInput in = null;
   private ShxFile index = null;

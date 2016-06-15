@@ -21,6 +21,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 import java.util.Properties
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.lang3.NotImplementedException
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
@@ -33,7 +34,7 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
-import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
+import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms._
@@ -44,9 +45,9 @@ import scala.collection.mutable
 
 object BuildPyramid extends MrGeoDriver with Externalizable {
 
-  final private val Pyramid = "pyramid"
-  final private val Aggregator = "aggregator"
-  final private val ProviderProperties = "provider.properties"
+  private val Pyramid = "pyramid"
+  private val Aggregator = "aggregator"
+  private val ProviderProperties = "provider.properties"
 
   @BeanProperty
   var MIN_TILES_FOR_SPARK = 1000  // made a var so the tests can muck with it...
@@ -104,7 +105,6 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
 
   override def writeExternal(out: ObjectOutput): Unit = {}
 }
-
 
 class BuildPyramid extends MrGeoJob with Externalizable {
 
@@ -212,7 +212,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
         })
 
 
-        val tileBounds = TMSUtils.boundsToTile(metadata.getBounds, tolevel, tilesize)
+        //val tileBounds = TMSUtils.boundsToTile(metadata.getBounds, tolevel, tilesize)
 
         val wrappedDecimated = new PairRDDFunctions(decimated)
         val mergedTiles = wrappedDecimated.reduceByKey((r1, r2) => {
@@ -260,6 +260,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
   // this method was stolen from the old Hadoop M/R version of BuildPyramid.  I really haven't looked much
   // into it to see if it really is still OK or could be improved
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "tileIdOrdering() - false positivie")
   private def buildlevellocal(provider:MrsImageDataProvider, inputLevel: Int): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {

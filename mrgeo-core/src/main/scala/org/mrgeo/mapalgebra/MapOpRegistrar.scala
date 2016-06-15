@@ -16,13 +16,21 @@
 
 package org.mrgeo.mapalgebra
 
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.mrgeo.mapalgebra.parser.ParserNode
 
-trait MapOpRegistrar {
+@SuppressFBWarnings(value = Array("NM_CLASS_NAMING_CONVENTION"), justification = "Well, yes it does!")
+trait MapOpRegistrar extends Externalizable {
   def register:Array[String]
 
   // apply should call the mapop constructor, which needs to throw ParserExceptions on errors
   def apply(node: ParserNode, variables: String => Option[ParserNode]):MapOp
 
   override def toString: String = getClass.getSimpleName.replace("$", "")
+
+  // no ops. This prevents accidental serialization
+  override def readExternal(in: ObjectInput): Unit = {}
+  override def writeExternal(out: ObjectOutput): Unit = {}
 }

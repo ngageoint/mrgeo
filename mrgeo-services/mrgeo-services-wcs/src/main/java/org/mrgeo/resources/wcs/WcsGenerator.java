@@ -75,7 +75,7 @@ static {
     {
       public void run()
       {
-        long sleeptime = 60 * 1000 *
+        long sleeptime = 60L * 1000L *
             Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_REFRESH, "5"));
 
         boolean stop = false;
@@ -170,7 +170,7 @@ private Response handleRequest(UriInfo uriInfo)
       // this can be resource intensive.
       System.gc();
       final Runtime rt = Runtime.getRuntime();
-      log.info(String.format("WMS request memory: %.1fMB / %.1fMB\n", (rt.totalMemory() - rt
+      log.info(String.format("WMS request memory: %.1fMB / %.1fMB%n", (rt.totalMemory() - rt
           .freeMemory()) / 1e6, rt.maxMemory() / 1e6));
     }
   }
@@ -183,17 +183,17 @@ private Response handleRequest(UriInfo uriInfo)
  * */
 private String getQueryParam(MultivaluedMap<String, String> allParams, String paramName)
 {
-  for (String key: allParams.keySet())
+  for (Map.Entry<String, List<String> > es: allParams.entrySet())
   {
-    if (key.equalsIgnoreCase(paramName))
+    if (es.getKey().equalsIgnoreCase(paramName))
     {
-      List<String> value = allParams.get(key);
-      if (value.size() == 1)
+      if (es.getValue().size() == 1)
       {
-        return value.get(0);
+        return es.getValue().get(0);
       }
     }
   }
+
   return null;
 }
 
@@ -235,7 +235,7 @@ private Response describeCoverage(UriInfo uriInfo,
     out.close();
     return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
   }
-  catch (Exception e)
+  catch (TransformerException | IOException e)
   {
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
@@ -288,7 +288,7 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
     out.close();
     return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
   }
-  catch (Exception e)
+  catch (InterruptedException | TransformerException | ParserConfigurationException | IOException e)
   {
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
@@ -370,11 +370,11 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   {
     if (version.isLess("1.1.0"))
     {
-      bounds = getBoundsParam(allParams, "bbox", bounds);
+      bounds = getBoundsParam(allParams, "bbox", null);
     }
     else
     {
-      bounds = getBoundsParam(allParams, "boundingbox", bounds);
+      bounds = getBoundsParam(allParams, "boundingbox", null);
     }
     crs = getCrsParam(allParams);
   }
@@ -492,14 +492,13 @@ private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
     int defaultValue)
     throws NumberFormatException
 {
-  for (String key: allParams.keySet())
+  for (Map.Entry<String, List<String> > es: allParams.entrySet())
   {
-    if (key.equalsIgnoreCase(paramName))
+    if (es.getKey().equalsIgnoreCase(paramName))
     {
-      List<String> value = allParams.get(key);
-      if (value.size() == 1)
+      if (es.getValue().size() == 1)
       {
-        return Integer.parseInt(value.get(0));
+        return Integer.parseInt(es.getValue().get(0));
       }
     }
   }

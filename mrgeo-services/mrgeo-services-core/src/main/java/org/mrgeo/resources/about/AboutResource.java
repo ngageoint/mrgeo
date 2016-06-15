@@ -30,7 +30,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.*;
 import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URL;
 import java.security.Principal;
@@ -177,7 +179,7 @@ public class AboutResource
       writer.close();
       return Response.status(Response.Status.ACCEPTED).entity(writer.getBuffer().toString()).build();
     }
-    catch (Exception e)
+    catch (IOException | XMLStreamException e)
     {
       log.error("Got exception", e);
       throw new WebApplicationException(
