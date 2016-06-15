@@ -252,7 +252,7 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     }
 
     val convertr1 = r1.getSampleModel.getDataType != datatype
-    val convertr2 = r2.getSampleModel.getDataType != datatype || !(nodata1 sameElements nodata2)
+    //val convertr2 = r2.getSampleModel.getDataType != datatype || !(nodata1 sameElements nodata2)
 
     // group the RDDs
     val group = new PairRDDFunctions(rdd1).cogroup(rdd2)

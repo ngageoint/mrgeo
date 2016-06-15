@@ -16,6 +16,7 @@
 
 package org.mrgeo.resources.wms;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -41,6 +42,16 @@ import java.util.Comparator;
 public class DescribeTilesDocumentGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(DescribeTilesDocumentGenerator.class);
+
+@SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "Do not need serialization")
+private static class MrsImageComparator implements Comparator<MrsImageDataProvider>
+{
+  @Override
+  public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
+  {
+    return o1.getResourceName().compareTo(o2.getResourceName());
+  }
+}
 
   /*
    * Writes scale information for a layer
@@ -104,14 +115,7 @@ public class DescribeTilesDocumentGenerator
     Document doc = dt.getOwnerDocument();
 
     // sort providers based on resource name
-    Arrays.sort(providers, new Comparator<MrsImageDataProvider>()
-    {
-      @Override
-      public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
-      {
-        return o1.getResourceName().compareTo(o2.getResourceName());
-      }
-    });
+    Arrays.sort(providers, new MrsImageComparator());
 
     for (MrsImageDataProvider provider : providers)
     {

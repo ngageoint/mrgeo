@@ -16,6 +16,7 @@
 
 package org.mrgeo.services.wcs;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.Version;
@@ -35,6 +36,17 @@ import java.util.Comparator;
 public class WcsCapabilities
 {
   private static final Logger log = LoggerFactory.getLogger(WcsCapabilities.class);
+
+
+@SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "Do not need serialization")
+private static class MrsImageComparator implements Comparator<MrsImageDataProvider>
+{
+  @Override
+  public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
+  {
+    return o1.getResourceName().compareTo(o2.getResourceName());
+  }
+}
 
   /**
    * Generates an XML document for a DescribeTiles request
@@ -171,14 +183,7 @@ public class WcsCapabilities
     double miny = Double.MAX_VALUE;
     double maxy = -Double.MAX_VALUE;
 
-    Arrays.sort(providers, new Comparator<MrsImageDataProvider>()
-    {
-      @Override
-      public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
-      {
-        return o1.getResourceName().compareTo(o2.getResourceName());
-      }
-    });
+    Arrays.sort(providers, new MrsImageComparator());
 
     for (MrsImageDataProvider provider : providers)
     {
@@ -208,6 +213,7 @@ public class WcsCapabilities
   /*
    * Adds data layers to the GetCapabilities response
    */
+  @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Just a simple inline comparator")
   private void addLayers100(Element parent, MrsImageDataProvider[] providers) throws IOException
   {
     double minx = Double.MAX_VALUE;

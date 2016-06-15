@@ -74,17 +74,7 @@ public class MrGeoAccumuloConstants
   public static final String MRGEO_ACC_FILE_NAME_BULK_DONE = "bulkDone";
   public static final String MRGEO_ACC_FILE_NAME_BULK_WORKING = "bulkWorking";
 
-  public static final String[] MRGEO_ACC_KEYS_CONNECTION = { 
-                                                             MRGEO_ACC_KEY_INSTANCE,
-                                                             MRGEO_ACC_KEY_ZOOKEEPERS,
-                                                             MRGEO_ACC_KEY_USER,
-                                                             MRGEO_ACC_KEY_PASSWORD
-                                                            };
-  public static final String[] MRGEO_ACC_KEYS_DATA = {
-                                                       MRGEO_ACC_KEY_AUTHS,
-                                                       MRGEO_ACC_KEY_VIZ
-                                                      };
-  
+
   public static final String MRGEO_KEY_PROTECTIONLEVEL = "protectionLevel";
 
   public static final int MRGEO_DEFAULT_NUM_REDUCERS = 4;

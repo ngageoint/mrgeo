@@ -145,7 +145,7 @@ public class AccumuloMrsPyramidMetadataWriter implements MrsPyramidMetadataWrite
     log.debug("Writing metadata for table " + metadata.getPyramid() + " with ColumnVisibility = " + cv.toString());
     
     // this is the name of the image
-    String pyramid = metadata.getPyramid();
+//    String pyramid = metadata.getPyramid();
     Mutation m = new Mutation(MrGeoAccumuloConstants.MRGEO_ACC_METADATA);
     m.put(MrGeoAccumuloConstants.MRGEO_ACC_METADATA, MrGeoAccumuloConstants.MRGEO_ACC_CQALL, cv, new Value(metadataStr.getBytes()));
     BatchWriter bw = null;

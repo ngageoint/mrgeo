@@ -19,6 +19,9 @@
       <Bug pattern="EI_EXPOSE_REP2" />
       <!-- Spark does intelligent serialization, this is a false positive -->
       <Bug pattern="SE_BAD_FIELD" />
+      <!-- This just seems to be a false positive on object defs where the class is serializable -->
+      <Bug pattern="SE_NO_SERIALVERSIONID" />
+
     </Or>
   </Match>
   <!-- Don't bother with DM_DEFAULT_ENCODING - default encoding -->

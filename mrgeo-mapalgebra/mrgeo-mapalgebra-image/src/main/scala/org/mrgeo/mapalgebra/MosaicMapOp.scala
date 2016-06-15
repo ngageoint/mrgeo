@@ -19,6 +19,7 @@ package org.mrgeo.mapalgebra
 import java.awt.image.WritableRaster
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -28,7 +29,7 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 import org.mrgeo.utils.SparkUtils
 
 import scala.util.control.Breaks
@@ -72,6 +73,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
 
   override def rdd(): Option[RasterRDD] = rasterRDD
 
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "tileIdOrdering() - false positivie")
   override def execute(context: SparkContext): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {

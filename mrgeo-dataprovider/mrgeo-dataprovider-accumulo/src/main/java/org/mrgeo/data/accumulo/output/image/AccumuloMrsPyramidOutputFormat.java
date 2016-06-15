@@ -57,15 +57,15 @@ public class AccumuloMrsPyramidOutputFormat extends OutputFormat<TileIdWritable,
   private static boolean outputInfoSet = false;
   private String vizStr = null;
   
-  private static ColumnVisibility colViz = null;
+  private ColumnVisibility colViz = null;
   
   private AccumuloOutputFormat _innerFormat = null;
   private RecordWriter _innerRecordWriter;
   
   // do compression!!!
-  private boolean useCompression = false;
-  private CompressionCodec codec;
-  private Compressor decompressor;
+//  private boolean useCompression = false;
+//  private CompressionCodec codec;
+//  private Compressor decompressor;
 
   private static Job job;
   

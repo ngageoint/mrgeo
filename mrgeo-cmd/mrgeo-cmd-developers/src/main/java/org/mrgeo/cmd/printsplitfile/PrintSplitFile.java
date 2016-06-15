@@ -72,7 +72,7 @@ public class PrintSplitFile extends Command
       int zoomlevel = -1;
       if (line.hasOption("z"))
       {
-        zoomlevel = Integer.valueOf(line.getOptionValue("z"));
+        zoomlevel = Integer.parseInt(line.getOptionValue("z"));
       }
 
       boolean renerate = line.hasOption("r");

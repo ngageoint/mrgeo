@@ -17,6 +17,7 @@
 package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
@@ -37,108 +38,108 @@ import java.io.IOException;
 
 public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 {
-  private static final Logger log = LoggerFactory.getLogger(GeotiffImageResponseWriter.class);
+private static final Logger log = LoggerFactory.getLogger(GeotiffImageResponseWriter.class);
 
-  public GeotiffImageResponseWriter()
+public GeotiffImageResponseWriter()
+{
+}
+
+@Override
+public String[] getMimeTypes()
+{
+  return new String[] { "image/geotiff", "image/geotif" };
+}
+
+@Override
+public String getResponseMimeType()
+{
+  return "image/geotiff";
+}
+
+@Override
+public String[] getWmsFormats()
+{
+  return new String[] { "geotiff", "geotif" };
+}
+
+@Override
+public Response.ResponseBuilder write(final Raster raster)
+{
+  try
   {
-  }
-
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/geotiff", "image/geotif" };
-  }
-
-  @Override
-  public String getResponseMimeType()
-  {
-    return "image/geotiff";
-  }
-
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "geotiff", "geotif" };
-  }
-
-  @Override
-  public Response.ResponseBuilder write(final Raster raster)
-  {
-    try
-    {
-      final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-
-      writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
-
-      return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
-        getResponseMimeType()).header("Content-Disposition", "attachment; filename=image.tif");
-    }
-    catch (final Exception e)
-    {
-      if (e.getMessage() != null)
-      {
-        return Response.serverError().entity(e.getMessage());
-      }
-      return Response.serverError().entity("Internal Error");
-
-    }
-
-  }
-
-  @Override
-  public void write(final Raster raster, final HttpServletResponse response)
-    throws ServletException
-  {
-    response.setContentType(getResponseMimeType());
     final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-    try
-    {
-      writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
-      ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
-    }
-    catch (final IOException e)
-    {
-      throw new ServletException("Error writing raster");
-    }
-  }
 
-  @Override
-  public Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsPyramid pyramid)
+    writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
+
+    return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
+        getResponseMimeType()).header("Content-Disposition", "attachment; filename=image.tif");
+  }
+  catch (final Exception e)
   {
-    try
+    if (e.getMessage() != null)
     {
-      final int tilesize = pyramid.getMetadata().getTilesize();
-
-      final int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
-      final Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
-      final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-
-      writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
-
-      return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
-        getResponseMimeType()).header("Content-Disposition",
-                                      "attachment; filename=" + pyramid.getName() + ".tif");
+      return Response.serverError().entity(e.getMessage());
     }
-    catch (final Exception e)
-    {
-      if (e.getMessage() != null)
-      {
-        return Response.serverError().entity(e.getMessage());
-      }
-      return Response.serverError().entity("Internal Error");
-
-    }
+    return Response.serverError().entity("Internal Error");
 
   }
 
-  @Override
-  public void write(final Raster raster, final int tileColumn, final int tileRow,
-                    final double scale, final MrsPyramid pyramid, final HttpServletResponse response)
+}
+
+@Override
+public void write(final Raster raster, final HttpServletResponse response)
     throws ServletException
+{
+  response.setContentType(getResponseMimeType());
+  final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+  try
   {
-    try
+    writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
+    ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
+  }
+  catch (final IOException e)
+  {
+    throw new ServletException("Error writing raster");
+  }
+}
+
+@Override
+public Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow,
+    final double scale, final MrsPyramid pyramid)
+{
+  try
+  {
+    final int tilesize = pyramid.getMetadata().getTilesize();
+
+    final int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
+    final Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
+    final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+
+    writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
+
+    return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
+        getResponseMimeType()).header("Content-Disposition",
+        "attachment; filename=" + pyramid.getName() + ".tif");
+  }
+  catch (final Exception e)
+  {
+    if (e.getMessage() != null)
     {
+      return Response.serverError().entity(e.getMessage());
+    }
+    return Response.serverError().entity("Internal Error");
+
+  }
+
+}
+
+@Override
+public void write(final Raster raster, final int tileColumn, final int tileRow,
+    final double scale, final MrsPyramid pyramid, final HttpServletResponse response)
+    throws ServletException
+{
+  try
+  {
     final int tilesize = pyramid.getMetadata().getTilesize();
 
     final int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
@@ -146,76 +147,74 @@ public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 
     response.setContentType(getResponseMimeType());
     final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-      writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
-      ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
-    }
-    catch (final IOException e)
-    {
-      throw new ServletException("Error writing raster");
-    }
-
+    writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
+    ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
+  }
+  catch (final IOException e)
+  {
+    throw new ServletException("Error writing raster");
   }
 
-  @Override
-  public Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds)
+}
+
+@Override
+public Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds)
+{
+  try
   {
-    try
-    {
-      final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-
-      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
-          (ProviderProperties) null);
-      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
-
-      writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);
-
-      return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
-        getResponseMimeType()).header("Content-Disposition",
-                                      "attachment; filename=" + imageName + ".tif");
-    }
-    catch (final Exception e)
-    {
-      if (e.getMessage() != null)
-      {
-        return Response.serverError().entity(e.getMessage());
-      }
-      return Response.serverError().entity("Internal Error");
-
-    }
-
-  }
-
-  @Override
-  public void write(final Raster raster, final String imageName, final Bounds bounds,
-    final HttpServletResponse response) throws ServletException
-  {
-    response.setContentType(getResponseMimeType());
     final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-    try
-    {
-      writeStream(raster, bounds, Double.NaN, byteStream);
-      ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
-    }
-    catch (final IOException e)
-    {
-      throw new ServletException("Error writing raster");
-    }
 
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
+        (ProviderProperties) null);
+    MrsPyramidMetadata metadata = dp.getMetadataReader().read();
+
+    writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);
+
+    return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
+        getResponseMimeType()).header("Content-Disposition",
+        "attachment; filename=" + imageName + ".tif");
+  }
+  catch (IOException e)
+  {
+    if (e.getMessage() != null)
+    {
+      return Response.serverError().entity(e.getMessage());
+    }
+    return Response.serverError().entity("Internal Error");
+  }
+}
+
+@Override
+public void write(final Raster raster, final String imageName, final Bounds bounds,
+    final HttpServletResponse response) throws ServletException
+{
+  response.setContentType(getResponseMimeType());
+  final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+  try
+  {
+    writeStream(raster, bounds, Double.NaN, byteStream);
+    ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
+  }
+  catch (final IOException e)
+  {
+    throw new ServletException("Error writing raster");
   }
 
-  @Override
-  public void writeToStream(final Raster raster, double[] defaults, final ByteArrayOutputStream byteStream)
+}
+
+@Override
+public void writeToStream(final Raster raster, double[] defaults, final ByteArrayOutputStream byteStream)
     throws IOException
-  {
-    // no-op. We need a different set so we can write geotiffs (with header info);
-  }
+{
+  // no-op. We need a different set so we can write geotiffs (with header info);
+}
 
-  private void writeStream(final Raster raster, final Bounds bounds, final double nodata,
+private void writeStream(final Raster raster, final Bounds bounds, final double nodata,
     final ByteArrayOutputStream byteStream) throws IOException
-  {
-    GDALJavaUtils.saveRaster(raster, byteStream, bounds, nodata);
+{
+  GDALJavaUtils.saveRaster(raster, byteStream, bounds, nodata);
 
-    byteStream.close();
-  }
+  byteStream.close();
+}
 
 }

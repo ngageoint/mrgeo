@@ -26,6 +26,7 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import MrsPyramidMetadata.Classification
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 
 object ChangeClassificationMapOp extends MapOpRegistrar {
 
@@ -43,6 +44,7 @@ object ChangeClassificationMapOp extends MapOpRegistrar {
     new ChangeClassificationMapOp(node, variables)
 }
 
+@SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
 class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD: Option[RasterRDD] = None

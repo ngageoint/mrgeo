@@ -107,9 +107,9 @@ def compare_band(test, golden_band, new_band, id):
     #     print('  Golden: ' + gdal.GetColorInterpretationName(golden_band.GetColorInterpretation()))
     #     print('  New:    ' + gdal.GetColorInterpretationName(new_band.GetColorInterpretation()))
 
-    test.assertEqual( golden_band.Checksum(), new_band.Checksum(), ('Band %s checksum difference:\n' % id) +
-                      '  Golden: ' + str(golden_band.Checksum()) + '\n' +
-                      '  New:    ' + str(new_band.Checksum()))
+    # test.assertEqual( golden_band.Checksum(), new_band.Checksum(), ('Band %s checksum difference:\n' % id) +
+    #                   '  Golden: ' + str(golden_band.Checksum()) + '\n' +
+    #                   '  New:    ' + str(new_band.Checksum()))
 
     compare_image_pixels(test, golden_band, new_band)
 
