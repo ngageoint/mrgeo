@@ -33,18 +33,6 @@
       <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <inherited>false</inherited>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
   <modules>
     <module>mrgeo-services-core</module>
     <module>mrgeo-services-tms</module>
