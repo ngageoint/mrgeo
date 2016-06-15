@@ -3272,6 +3272,12 @@
         <role>developer</role>
       </roles>
     </developer>
+    <developer>
+      <name>Eric Wood</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
   </developers>
   <contributors>
     <contributor>
