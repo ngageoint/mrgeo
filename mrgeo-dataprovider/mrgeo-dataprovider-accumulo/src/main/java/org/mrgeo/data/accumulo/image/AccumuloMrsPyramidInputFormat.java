@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.accumulo.image;
@@ -31,7 +32,8 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,8 +143,8 @@ public class AccumuloMrsPyramidInputFormat extends InputFormatBase<TileIdWritabl
           );
       retList.add(tis);
       
-      TMSUtils.Tile tile1 = TMSUtils.tileid(sl, tifc.getZoomLevel());
-      TMSUtils.Tile tile2 = TMSUtils.tileid(el, tifc.getZoomLevel());
+      Tile tile1 = TMSUtils.tileid(sl, tifc.getZoomLevel());
+      Tile tile2 = TMSUtils.tileid(el, tifc.getZoomLevel());
       
       log.info("\tSplit starting at " + sl + " ("+tile1.tx+","+tile1.ty+")" + " and ending at " + el + " ("+tile2.tx+","+tile2.ty+")");
       

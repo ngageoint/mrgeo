@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.geometry;
@@ -18,6 +19,7 @@ package org.mrgeo.geometry;
 import com.vividsolutions.jts.algorithm.CGAlgorithms;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
+import org.mrgeo.utils.FloatUtils;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -31,6 +33,8 @@ import java.util.Map;
  */
 public class LinearRingImpl extends LineStringImpl implements WritableLinearRing
 {
+private static final long serialVersionUID = 1L;
+
 LinearRingImpl()
 {
 }
@@ -61,7 +65,9 @@ public void closeRing()
 {
   Point start = points.get(0);
   Point end = points.get(points.size() - 1);
-  if (start.getX() != end.getX() || start.getY() != end.getY() || start.getZ() != end.getZ())
+  if (!(FloatUtils.isEqual(start.getX(), end.getX()) &&
+      FloatUtils.isEqual(start.getY(), end.getY()) &&
+      FloatUtils.isEqual(start.getZ(), end.getZ())))
   {
     addPoint(start);
   }
@@ -102,7 +108,7 @@ public void read(DataInputStream stream) throws IOException
   closeRing();
 }
 
-private synchronized void readObject(ObjectInputStream stream) throws IOException
+private void readObject(ObjectInputStream stream) throws IOException
 {
   DataInputStream dis = new DataInputStream(stream);
   read(dis);

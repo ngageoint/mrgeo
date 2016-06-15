@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector.shp.esri;
@@ -22,10 +23,10 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPoint extends java.lang.Object implements ShpData
+public class ShpPoint implements ShpData
 {
   protected JPoint[] p;
-  private ESRILayer parent;
+  private ESRILayer parent = null;
 
   /** Creates new ShpPoint */
   public ShpPoint(int initialSize)
@@ -36,10 +37,13 @@ public class ShpPoint extends java.lang.Object implements ShpData
   @Override
   public void addShape(JShape obj) throws FormatException
   {
-    JPoint[] temp = new JPoint[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPoint) obj;
-    p = temp;
+    if (obj instanceof JPoint)
+    {
+      JPoint[] temp = new JPoint[p.length + 1];
+      System.arraycopy(p, 0, temp, 0, p.length);
+      temp[p.length] = (JPoint) obj;
+      p = temp;
+    }
   }
 
   @Override

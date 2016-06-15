@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.buildpyramid
@@ -20,6 +21,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 import java.util.Properties
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.lang3.NotImplementedException
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
@@ -32,11 +34,10 @@ import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
-import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
+import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
-import org.mrgeo.mapreduce.job.JobListener
-import org.mrgeo.progress.Progress
 import org.mrgeo.utils._
+import org.mrgeo.utils.tms._
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConversions._
@@ -44,9 +45,9 @@ import scala.collection.mutable
 
 object BuildPyramid extends MrGeoDriver with Externalizable {
 
-  final private val Pyramid = "pyramid"
-  final private val Aggregator = "aggregator"
-  final private val ProviderProperties = "provider.properties"
+  private val Pyramid = "pyramid"
+  private val Aggregator = "aggregator"
+  private val ProviderProperties = "provider.properties"
 
   @BeanProperty
   var MIN_TILES_FOR_SPARK = 1000  // made a var so the tests can muck with it...
@@ -63,19 +64,8 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
     true
   }
 
-  def build(pyramidName: String, aggregator: Aggregator,
-      conf: Configuration, progress: Progress, jobListener: JobListener, providerProperties: ProviderProperties): Boolean = {
-    build(pyramidName, aggregator, conf, providerProperties)
-  }
-
   def buildlevel(pyramidName: String, level: Int, aggregator: Aggregator,
       conf: Configuration, providerProperties: Properties):Boolean = {
-    throw new NotImplementedException("Not yet implemented")
-  }
-
-  def buildlevel(pyramidName: String, level: Int, aggregator: Aggregator,
-      conf: Configuration, progress: Progress, jobListener: JobListener,
-      providerProperties: ProviderProperties): Boolean = {
     throw new NotImplementedException("Not yet implemented")
   }
 
@@ -115,7 +105,6 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
 
   override def writeExternal(out: ObjectOutput): Unit = {}
 }
-
 
 class BuildPyramid extends MrGeoJob with Externalizable {
 
@@ -173,10 +162,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     val tilesize: Int = metadata.getTilesize
 
-    val nodatas:Array[Number] = Array.ofDim[Number](metadata.getBands)
-    for (i <- nodatas.indices) {
-      nodatas(i) = metadata.getDefaultValueDouble(i)
-    }
+    val nodatas = metadata.getDefaultValuesNumber
 
     DataProviderFactory.saveProviderPropertiesToConfig(providerproperties, context.hadoopConfiguration)
     // build the levels
@@ -195,17 +181,17 @@ class BuildPyramid extends MrGeoJob with Externalizable {
           val fromkey = tile._1
           val fromraster = RasterWritable.toRaster(tile._2)
 
-          val fromtile: TMSUtils.Tile = TMSUtils.tileid(fromkey.get, fromlevel)
-          val frombounds: TMSUtils.Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
+          val fromtile: Tile = TMSUtils.tileid(fromkey.get, fromlevel)
+          val frombounds: Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
 
           // calculate the starting pixel for the from-tile (make sure to use the NW coordinate)
-          val fromcorner: TMSUtils.Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
+          val fromcorner: Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
 
-          val totile: TMSUtils.Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
-          val tobounds: TMSUtils.Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
+          val totile: Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
+          val tobounds: Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
 
           // calculate the starting pixel for the to-tile (make sure to use the NW coordinate) in the from-tile's pixel space
-          val tocorner: TMSUtils.Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
+          val tocorner: Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
 
           val tokey = new TileIdWritable(TMSUtils.tileid(totile.tx, totile.ty, tolevel))
 
@@ -226,7 +212,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
         })
 
 
-        val tileBounds = TMSUtils.boundsToTile(metadata.getBounds.getTMSBounds, tolevel, tilesize)
+        //val tileBounds = TMSUtils.boundsToTile(metadata.getBounds, tolevel, tilesize)
 
         val wrappedDecimated = new PairRDDFunctions(decimated)
         val mergedTiles = wrappedDecimated.reduceByKey((r1, r2) => {
@@ -274,6 +260,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
   // this method was stolen from the old Hadoop M/R version of BuildPyramid.  I really haven't looked much
   // into it to see if it really is still OK or could be improved
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "tileIdOrdering() - false positivie")
   private def buildlevellocal(provider:MrsImageDataProvider, inputLevel: Int): Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
@@ -296,13 +283,13 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       val fromraster: Raster = iter.next
 
       val tileid: Long = iter.currentKey.get
-      val inputTile: TMSUtils.Tile = TMSUtils.tileid(tileid, inputLevel)
+      val inputTile: Tile = TMSUtils.tileid(tileid, inputLevel)
 
       val toraster: WritableRaster = fromraster.createCompatibleWritableRaster(tilesize / 2, tilesize / 2)
 
       RasterUtils.decimate(fromraster, toraster, aggregator, metadata)
 
-      val outputTile: TMSUtils.Tile = TMSUtils.calculateTile(inputTile, inputLevel, outputLevel, tilesize)
+      val outputTile: Tile = TMSUtils.calculateTile(inputTile, inputLevel, outputLevel, tilesize)
       val outputkey: TileIdWritable = new TileIdWritable(TMSUtils.tileid(outputTile.tx, outputTile.ty, outputLevel))
       var outputRaster: WritableRaster = null
 
@@ -315,10 +302,10 @@ class BuildPyramid extends MrGeoJob with Externalizable {
         outputRaster = outputTiles(outputkey)
       }
 
-      val outputBounds: TMSUtils.Bounds = TMSUtils.tileBounds(outputTile.tx, outputTile.ty, outputLevel, tilesize)
-      val corner: TMSUtils.Pixel = TMSUtils.latLonToPixelsUL(outputBounds.n, outputBounds.w, outputLevel, tilesize)
-      val inputBounds: TMSUtils.Bounds = TMSUtils.tileBounds(inputTile.tx, inputTile.ty, inputLevel, tilesize)
-      val start: TMSUtils.Pixel = TMSUtils.latLonToPixelsUL(inputBounds.n, inputBounds.w, outputLevel, tilesize)
+      val outputBounds: Bounds = TMSUtils.tileBounds(outputTile.tx, outputTile.ty, outputLevel, tilesize)
+      val corner: Pixel = TMSUtils.latLonToPixelsUL(outputBounds.n, outputBounds.w, outputLevel, tilesize)
+      val inputBounds: Bounds = TMSUtils.tileBounds(inputTile.tx, inputTile.ty, inputLevel, tilesize)
+      val start: Pixel = TMSUtils.latLonToPixelsUL(inputBounds.n, inputBounds.w, outputLevel, tilesize)
       val tox: Int = (start.px - corner.px).toInt
       val toy: Int = (start.py - corner.py).toInt
       logDebug(
@@ -350,12 +337,11 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       ImageStats.computeAndUpdateStats(stats, tile.getValue, metadata.getDefaultValues)
     }
     writer.close()
-    val tb: TMSUtils.TileBounds = TMSUtils
-        .boundsToTile(new TMSUtils.Bounds(bounds.getMinX, bounds.getMinY, bounds.getMaxX, bounds.getMaxY),
-          outputLevel, tilesize)
+    val tb: TileBounds = TMSUtils
+        .boundsToTile(bounds, outputLevel, tilesize)
     val b: LongRectangle = new LongRectangle(tb.w, tb.s, tb.e, tb.n)
-    val psw: TMSUtils.Pixel = TMSUtils.latLonToPixels(bounds.getMinY, bounds.getMinX, outputLevel, tilesize)
-    val pne: TMSUtils.Pixel = TMSUtils.latLonToPixels(bounds.getMaxY, bounds.getMaxX, outputLevel, tilesize)
+    val psw: Pixel = TMSUtils.latLonToPixels(bounds.s, bounds.w, outputLevel, tilesize)
+    val pne: Pixel = TMSUtils.latLonToPixels(bounds.n, bounds.e, outputLevel, tilesize)
 
 
     // while we were running, there is chance the pyramid was removed from the cache and
@@ -376,7 +362,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     val tofp = provider.getTiledOutputFormatProvider(tofc)
     // Don't use teardownForSpark because we built this level in locally, so we want
     // to avoid using Spark at this point
-    tofp.teardown(HadoopUtils.createConfiguration())
+    tofp.finalizeExternalSave(HadoopUtils.createConfiguration())
     true
   }
 

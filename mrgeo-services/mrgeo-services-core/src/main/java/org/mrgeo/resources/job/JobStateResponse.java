@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.resources.job;
@@ -23,7 +24,6 @@ public class JobStateResponse
 {
   private Date _startTime; //time when job was started
   private long _duration; //duration of the jib in ms from start to completion
-  private float _percent;
   private String _message;
   private String _state;
   private boolean _isFinished;
@@ -37,15 +37,6 @@ public class JobStateResponse
     return _startTime;
   }
   
-  public void setPercent(float percent)
-  {
-    this._percent = percent;
-  }
-
-  public float getPercent()
-  {
-    return _percent;
-  } 
   public void setState(String state)
   {
     this._state = state;

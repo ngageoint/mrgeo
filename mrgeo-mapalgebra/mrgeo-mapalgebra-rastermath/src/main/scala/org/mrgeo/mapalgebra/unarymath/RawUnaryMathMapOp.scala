@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra.unarymath
@@ -80,7 +81,7 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
       val width = raster.getWidth
       var b: Int = 0
       while (b < raster.getNumBands) {
-        val pixels = raster.getSamples(0, 0, width, raster.getHeight, 0, null.asInstanceOf[Array[Double]])
+        val pixels = raster.getSamples(0, 0, width, raster.getHeight, b, null.asInstanceOf[Array[Double]])
         var y: Int = 0
         while (y < raster.getHeight) {
           var x: Int = 0

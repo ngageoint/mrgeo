@@ -15,8 +15,6 @@ usage() {
     echo "  python       - mrgeo-core/mrgeo-vector/mrgeo-dataprovider/mrgeo-mapalgebra/mrgeo-python"
     echo "build type:"
     echo "  apache    - apache hadoop"
-    echo "  apache220 - Apache hadoop, version 2.2.0"
-    echo "  apache230 - Apache hadoop, version 2.3.0"
     echo "  apache240 - Apache hadoop, version 2.4.0"
     echo "  apache241 - Apache hadoop, version 2.4.1"
     echo "  apache250 - Apache hadoop, version 2.5.0"
@@ -24,10 +22,6 @@ usage() {
     echo "  apache252 - Apache hadoop, version 2.5.2"
     echo "  apache260 - Apache hadoop, version 2.6.0"
     echo "  apache271 - Apache hadoop, version 2.7.1"
-    echo "  cdh530    - Cloudera hadoop 5.3.0"
-    echo "  cdh531    - Cloudera hadoop 5.3.1"
-    echo "  cdh532    - Cloudera hadoop 5.3.2"
-    echo "  cdh533    - Cloudera hadoop 5.3.3"
     echo "  cdh540    - Cloudera hadoop 5.4.0"
     echo "  cdh541    - Cloudera hadoop 5.4.1"
     echo "  cdh542    - Cloudera hadoop 5.4.2"
@@ -38,7 +32,12 @@ usage() {
     echo "  cdh548    - Cloudera hadoop 5.4.8"
     echo "  cdh550    - Cloudera hadoop 5.5.0"
     echo "  cdh551    - Cloudera hadoop 5.5.1"
-    echo "  emr       - Amazon EMR hadoop 2.4.0 for AMI 3.7.0"
+    echo "  cdh552    - Cloudera hadoop 5.5.2"
+    echo "  cdh560    - Cloudera hadoop 5.6.0"
+    echo "  cdh570    - Cloudera hadoop 5.7.0"
+    echo "  cdh571    - Cloudera hadoop 5.7.1"
+    echo "  emr-4.5.0 - Amazon EMR hadoop 4.5.0 for EMR 4.5.0"
+    echo "  emr-4.4.0 - Amazon EMR hadoop 4.4.0 for EMR 4.4.0"
     echo "  mapr      - mapr hadoop"
     echo "phase:"
     echo "  build     - build a deployable version"
@@ -46,7 +45,7 @@ usage() {
     echo "  verify    - run integration tests"
     echo "  deploy    - build and deploy"
     echo "  clean     - clean the build"
-    echo "  version   - change the version within all poms"
+    echo "  version   - change the version within all poms (use 'revert' to revert to previously saved version, if any)"
     echo "  eclipse   - build eclipse files for the project"
     echo "args:"
     echo "  -c  --conf <path>              - location of hadoop conf files (/usr/local/hadoop/conf)"
@@ -60,8 +59,10 @@ usage() {
     echo "  -p  --profile                  - turn on leak detection profiling"
     echo "  -s  --source                   - include source jars of dependencies (if available)"
     echo "  -sh --shade                    - generate the shaded (jar with dependencies) jars"
-    echo "  -v  --version <version>        - hadoop version to use (0.20.2)"
     echo "  -y  --yarn                     - use hadoop YARN (for hadoop 2+, instead of mr1)"
+    echo "  -q  --quiet                    - quiet (no prints from this script)"
+    echo "other:"
+    echo "  buildtype  - return the build type (apache260, cdh560, etc.), no further processing is done"
     echo " "
     echo "  all other args will be passed to maven directly"
     echo " "
@@ -118,7 +119,7 @@ run-eclipse() {
 
 PHASE="test"
 MODULE="all"
-BUILD="CDH545"
+BUILD="apache260"
 CONF="/etc/hadoop/conf"
 LICENSE="-DskipLicenses"
 RELEASEPHASE=prepare
@@ -176,6 +177,9 @@ while [ $# -gt 0 ] ; do
         usage
         exit 0
         ;;
+    "buildtype")
+        BUILDTYPE="true"
+        ;;
     "all")
         MODULE="all"
         ;;
@@ -225,81 +229,36 @@ while [ $# -gt 0 ] ; do
         MODULE="python"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPSERVICES $ARGS"
         ;;
-    "apache220")
-        BUILD="apache220"
+    "apache220" | "apache230" | "apache240" | "apache241" )
+        BUILD=$1
         ;;
-    "apache230")
-        BUILD="apache230"
+    "apache250" | "apache251" | "apache252")
+        BUILD=$1
         ;;
-    "apache240")
-        BUILD="apache240"
+    "apache260" | "apache270" | "apache271")
+        BUILD=$1
         ;;
-    "apache241")
-        BUILD="apache241"
+    "emr-4.5.0")
+        BUILD="emr-4.5.0"
         ;;
-    "apache250")
-        BUILD="apache250"
-        ;;
-    "apache251")
-        BUILD="apache251"
-        ;;
-    "apache252")
-        BUILD="apache252"
-        ;;
-    "apache260")
-        BUILD="apache260"
-        ;;
-    "apache271")
-        BUILD="apache271"
-        ;;
-    "emr")
-        BUILD="emr"
+    "emr-4.4.0")
+        BUILD="emr-4.4.0"
         ;;
     "mapr")
         echo "*** MapR Hadoop is no longer supported"
         exit
         ;;
-    "cdh530")
-        BUILD="CDH530"
+    "cdh540" | "cdh540-yarn" | "cdh541" | "cdh541-yarn" | "cdh542" | "cdh542-yarn" | "cdh543" | "cdh543-yarn" | "cdh544" | "cdh544-yarn" | "cdh545" | "cdh545-yarn" | "cdh547" | "cdh547-yarn" | "cdh548" | "cdh548-yarn")
+        BUILD=$1
         ;;
-    "cdh531")
-        BUILD="CDH531"
+    "cdh550" | "cdh550-yarn" | "cdh551" | "cdh551-yarn" | "cdh552" | "cdh552-yarn")
+        BUILD=$1
         ;;
-    "cdh532")
-        BUILD="CDH532"
+    "cdh560" | "cdh560-yarn")
+        BUILD=$1
         ;;
-    "cdh533")
-        BUILD="CDH533"
-        ;;
-    "cdh540")
-        BUILD="CDH540"
-        ;;
-    "cdh541")
-        BUILD="CDH541"
-        ;;
-    "cdh542")
-        BUILD="CDH542"
-        ;;
-    "cdh543")
-        BUILD="CDH543"
-        ;;
-    "cdh544")
-        BUILD="CDH544"
-        ;;
-    "cdh545")
-        BUILD="CDH545"
-        ;;
-    "cdh547")
-        BUILD="CDH547"
-        ;;
-    "cdh548")
-        BUILD="CDH548"
-        ;;
-    "cdh550")
-        BUILD="CDH550"
-        ;;
-    "cdh551")
-        BUILD="CDH551"
+    "cdh570" | "cdh570-yarn" | "cdh571" | "cdh571-yarn")
+        BUILD=$1
         ;;
     "build")
         PHASE="build"
@@ -327,7 +286,7 @@ while [ $# -gt 0 ] ; do
         ;;
     "version")
         PHASE="version"
-        POMVERSION=$2
+        VERSION=$2
         shift 1
         ;;
     "cobertura:cobertura")
@@ -356,16 +315,15 @@ while [ $# -gt 0 ] ; do
     "-s" | "--source")
         ARGS=$ARGS" -DdownloadSources=true"
         ;;
-    "-v" | "--version")
-        ARGS=$ARGS" -Dhadoop-version="$2
-        shift 1
-        ;;
     "-jv" | "--javaversion")
         ARGS=$ARGS" -Djava-version="$2
         shift 1
         ;;
     "-y" | "--yarn")
         USEYARN=true
+        ;;
+    "-q" | "--quiet")
+        QUIET="true"
         ;;
     "-g" | "--geowave")
         ARGS=$ARGS" -Pinclude-geowave"
@@ -389,34 +347,41 @@ while [ $# -gt 0 ] ; do
     shift 1
 done
 
+if [ -n "$BUILDTYPE" ]; then
+  echo $BUILD
+  exit 0
+fi
+
+
 if [ -n "$USEYARN" ]; then
-    BUILD=$BUILD-yarn
+    if [[ "$BUILD" != *-yarn ]]; then
+      BUILD=$BUILD-yarn
+    fi
 fi
 
 export HOME=$CWD
 
-MODIFIED=`git diff --shortstat 2> /dev/null | awk '{ print $1 }'`
 
+if [ -z "$QUIET" ]; then
+    echo " "
+    echo "Phase: " $PHASE
+    echo "Module: " $MODULE
+    echo " "
+    echo "Building for " $BUILD
+    echo "-----------------------"
+    echo "  JAVA_HOME:           " $JAVA_HOME
+    echo "  HADOOP_HOME:         " $HADOOP_HOME
+    echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
+    echo "  MRGEO_COMMON_HOME:   " $MRGEO_COMMON_HOME
+    echo "  MRGEO_CONF_DIR:      " $MRGEO_CONF_DIR
+    echo "  MRGEO_HOME:          " $MRGEO_HOME
+    echo "  Build:               " $HOME
+    echo " "
+    echo "  Additional maven args: " $ARGS
+    echo " "
+fi
 
-echo " "
-echo "Phase: " $PHASE
-echo "Module: " $MODULE
-echo " "
-echo "Building for " $BUILD
-echo "  version:   " $VERSION
-echo "  conf:      " $CONF
-echo "-----------------------"
-echo "  JAVA_HOME:           " $JAVA_HOME
-echo "  HADOOP_HOME:         " $HADOOP_HOME
-echo "  HADOOP_PREFIX:       " $HADOOP_PREFIX
-echo "  MRGEO_HOME:          " $MRGEO_HOME
-echo "  Build:               " $HOME
-echo " "
-echo "  Additional maven args: " $ARGS
-echo " "
-
-
-ARGS="-P$BUILD -Dmodules=$MODULE -DfailIfNoTests=false -DscmModified=$MODIFIED $LICENSE $ARGS"
+ARGS="-P$BUILD -Dmodules=$MODULE -DfailIfNoTests=false $LICENSE $ARGS"
 
 
 case $PHASE in
@@ -436,7 +401,11 @@ case $PHASE in
        ARGS="$ARGS verify"
    ;;
    "version")
-       ARGS="$ARGS versions:set -DnewVersion=$POMVERSION"
+       if [ $VERSION == "revert" ]; then
+           ARGS="$ARGS versions:revert"
+       else
+           ARGS="$ARGS versions:set -DnewVersion=$VERSION"
+       fi
    ;;
    "release")
        ARGS="$SKIPALL $ARGS"
@@ -454,9 +423,10 @@ case $PHASE in
    ;;
 esac
 
-echo "-----------------------"
-echo "  Maven command: "
-echo "mvn $ARGS"
-echo " "
-
+if [ -z "$QUIET" ]; then
+    echo "-----------------------"
+    echo "  Maven command: "
+    echo "mvn $ARGS"
+    echo " "
+fi
 mvn $ARGS

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 package org.mrgeo.services.mrspyramid;
 
@@ -25,14 +26,13 @@ import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
-import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.resources.mrspyramid.ColorScaleResourceTest;
 import org.mrgeo.resources.mrspyramid.RasterResourceTest;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
@@ -484,7 +484,7 @@ private void testIslandsElevationFor(String format, final String width,
   ColorScale cs = null;
   Properties mrgeoProperties = MrGeoProperties.getInstance();
   Properties unusedMrgeoProperties = new Properties();
-  mrgeoProperties.put(MrGeoConstants.MRGEO_ENV_HOME, TestUtils.composeInputDir(RasterResourceTest.class));
+  mrgeoProperties.put(MrGeoConstants.MRGEO_COMMON_HOME, TestUtils.composeInputDir(RasterResourceTest.class));
   mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class));
   mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
   MrsPyramidService service = new MrsPyramidService(unusedMrgeoProperties);
@@ -518,14 +518,14 @@ private void testIslandsElevationFor(String format, final String width,
 
   if (zoomLevel != -1)
   {
-    if ( !service.isZoomLevelValid(reqImgName, (ProviderProperties)null, zoomLevel) ) {
+    if ( !service.isZoomLevelValid(reqImgName, null, zoomLevel) ) {
       throw new IllegalArgumentException("Zoom level " + zoomLevel + " is not in pyramid " + reqImgName);
     }
   }
   String goldenPathStr = TestUtils.composeInputDir(RasterResourceTest.class) + goldenImgName;
 
   ImageRenderer renderer = service.getImageRenderer(format);
-  Raster result = renderer.renderImage(reqImgName, bounds, w, h, (ProviderProperties)null, null);
+  Raster result = renderer.renderImage(reqImgName, bounds, w, h, null, null);
 
   double[] extrema = renderer.getExtrema();
   if ( !format.equalsIgnoreCase("TIFF") )
@@ -537,7 +537,7 @@ private void testIslandsElevationFor(String format, final String width,
   if (format.equalsIgnoreCase("jpeg"))
   {
     goldenPathStr = FilenameUtils.removeExtension(goldenPathStr) + ".png";
-    format = "PNG";
+    //format = "PNG";
   }
   if (GEN_BASELINE_DATA_ONLY)
   {
@@ -561,17 +561,16 @@ private void testIslandsElevationFor(final String format, final String width,
   testIslandsElevationFor(format, width, height, bbox, reqImgName, colorScale, -1, goldenImgName);
 }
 
-private String getDefaultColorScale() throws JsonGenerationException, JsonMappingException,
-    IOException
+private String getDefaultColorScale() throws IOException
 {
   // create colorScale json
   final ObjectMapper mapper = new ObjectMapper();
 
-  final Map<String, Object> colorScale = new HashMap<String, Object>();
+  final Map<String, Object> colorScale = new HashMap<>();
   colorScale.put("Scaling", "MinMax");
   colorScale.put("ForceValuesIntoRange", "1");
 
-  final Map<String, String> nullColor = new HashMap<String, String>();
+  final Map<String, String> nullColor = new HashMap<>();
   nullColor.put("color", "0,0,0");
   nullColor.put("opacity", "0");
   colorScale.put("NullColor", nullColor);
@@ -587,22 +586,22 @@ private String getDefaultColorScale() throws JsonGenerationException, JsonMappin
 //    final Map<String, String> color4 = new HashMap<String, String>();
 //    color4.put("value", "1.0");
 //    color4.put("color", "255,255,255");
-  final Map<String, String> color1 = new HashMap<String, String>();
+  final Map<String, String> color1 = new HashMap<>();
   color1.put("value", "0.0");
   color1.put("color", "0,0,127");
-  final Map<String, String> color2 = new HashMap<String, String>();
+  final Map<String, String> color2 = new HashMap<>();
   color2.put("value", "0.2");
   color2.put("color", "0,0,255");
-  final Map<String, String> color3 = new HashMap<String, String>();
+  final Map<String, String> color3 = new HashMap<>();
   color3.put("value", "0.4");
   color3.put("color", "0,255,255");
-  final Map<String, String> color4 = new HashMap<String, String>();
+  final Map<String, String> color4 = new HashMap<>();
   color4.put("value", "0.6");
   color4.put("color", "0,255,0");
-  final Map<String, String> color5 = new HashMap<String, String>();
+  final Map<String, String> color5 = new HashMap<>();
   color5.put("value", "0.8");
   color5.put("color", "255,255,0");
-  final Map<String, String> color6 = new HashMap<String, String>();
+  final Map<String, String> color6 = new HashMap<>();
   color6.put("value", "1.0");
   color6.put("color", "255,0,0");
 
@@ -625,36 +624,36 @@ private String getAspectColorScale() throws JsonGenerationException, JsonMapping
   // create colorScale json
   final ObjectMapper mapper = new ObjectMapper();
 
-  final Map<String, Object> colorScale = new HashMap<String, Object>();
+  final Map<String, Object> colorScale = new HashMap<>();
   colorScale.put("Scaling", "MinMax");
   colorScale.put("ForceValuesIntoRange", "1");
 
-  final Map<String, String> nullColor = new HashMap<String, String>();
+  final Map<String, String> nullColor = new HashMap<>();
   nullColor.put("color", "0,0,0");
   nullColor.put("opacity", "0");
   colorScale.put("NullColor", nullColor);
-  final Map<String, String> color1 = new HashMap<String, String>();
+  final Map<String, String> color1 = new HashMap<>();
   color1.put("value", "0.0");
   color1.put("color", "0,0,255");
   color1.put("opacity", "128");
-  final Map<String, String> color2 = new HashMap<String, String>();
+  final Map<String, String> color2 = new HashMap<>();
   color2.put("value", "0.26");
   color2.put("color", "255,255,0");
   color2.put("opacity", "128");
-  final Map<String, String> color3 = new HashMap<String, String>();
+  final Map<String, String> color3 = new HashMap<>();
   color3.put("value", "0.51");
   color3.put("color", "34,139,34");
   color3.put("opacity", "128");
-  final Map<String, String> color4 = new HashMap<String, String>();
+  final Map<String, String> color4 = new HashMap<>();
   color4.put("value", "0.76");
   color4.put("color", "255,0,0");
   color4.put("opacity", "128");
-  final Map<String, String> color5 = new HashMap<String, String>();
+  final Map<String, String> color5 = new HashMap<>();
   color5.put("value", "1.0");
   color5.put("color", "0,0,255");
   color5.put("opacity", "128");
 
-  final ArrayList<Map<String, String>> colors = new ArrayList<Map<String, String>>();
+  final ArrayList<Map<String, String>> colors = new ArrayList<>();
   colors.add(color1);
   colors.add(color2);
   colors.add(color3);

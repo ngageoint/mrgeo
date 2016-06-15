@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,31 +11,41 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.job
 
+import java.util
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.lang3.SystemUtils
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
+import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.apache.spark.Logging
+import org.apache.spark.deploy.yarn.YarnSparkHadoopUtil
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.utils.{FileUtils, Memory}
+import org.mrgeo.utils.{FileUtils, HadoopUtils, SparkUtils}
 
 import scala.collection.JavaConversions.{asScalaSet, _}
 import scala.collection.mutable.ArrayBuffer
 
+@SuppressFBWarnings(value=Array("UUF_UNUSED_FIELD"), justification = "Scala generated code")
+@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
 class JobArguments() extends Logging {
 
-  final private val NAME:String =  "name"
-  final private val CLUSTER:String =  "cluster"
-  final private val DRIVER:String = "driver"
-  final private val JARS:String =  "jars"
-  final private val DRIVERJAR:String = "driverjar"
-  final private val VERBOSE:String =  "verbose"
-  final private val CORES:String =  "cores"
-  final private val EXECUTORS:String =  "executors"
-  final private val MEMORY:String =  "memory"
-  final private val MRGEO_CONF_PREFIX = "MrGeoConf:"
+  final private val Name:String =  "name"
+  final private val Cluster:String =  "cluster"
+  final private val Driver:String = "driver"
+  final private val Jars:String =  "jars"
+  final private val DriverJar:String = "driverjar"
+  final private val Verbose:String =  "verbose"
+  final private val Cores:String =  "cores"
+  final private val Executors:String =  "executors"
+  final private val Memory:String =  "memory"
+  final private val MrGeoConfPrefix = "MrGeoConf:"
 
   /**
    * Pattern for matching a Windows drive, which contains only a single alphabet character.
@@ -94,15 +104,15 @@ class JobArguments() extends Logging {
   {
     val props = MrGeoProperties.getInstance()
     props.stringPropertyNames().foreach(U => {
-      val key = MRGEO_CONF_PREFIX + U
+      val key = MrGeoConfPrefix + U
       params += key -> props.getProperty(U)
     })
   }
 
   def setSetting(key:String, value:String) = {
-    if (key.startsWith(MRGEO_CONF_PREFIX))
+    if (key.startsWith(MrGeoConfPrefix))
     {
-      val mrGeoKey = key.substring(MRGEO_CONF_PREFIX.length)
+      val mrGeoKey = key.substring(MrGeoConfPrefix.length)
       MrGeoProperties.getInstance().setProperty(mrGeoKey, value)
     }
     else
@@ -161,46 +171,46 @@ class JobArguments() extends Logging {
   def toArray: Array[String] = {
     val args = new ArrayBuffer[String]()
     if (name != null) {
-      args += NAME
+      args += Name
       args += name
     }
 
     if (cluster != null) {
-      args += CLUSTER
+      args += Cluster
       args += cluster
     }
 
     if (driverClass != null) {
-      args += DRIVER
+      args += Driver
       args += driverClass
     }
 
     if (jars != null) {
-      args += JARS
+      args += Jars
       args += jars.mkString(",")
     }
 
     if (driverJar != null) {
-      args += DRIVERJAR
+      args += DriverJar
       args += driverJar
     }
 
     if (verbose) {
-      args += VERBOSE
+      args += Verbose
     }
 
     if (cores > 0) {
-      args += CORES
+      args += Cores
       args += cores.toString
     }
 
     if (executors > 0) {
-      args += EXECUTORS
+      args += Executors
       args += executors.toString
     }
 
     if (memoryKb > 0) {
-      args += MEMORY
+      args += Memory
       args += memoryKb.toString
     }
 
@@ -212,6 +222,7 @@ class JobArguments() extends Logging {
     args.toArray
   }
 
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   private def parse(opts: Seq[String]): Unit = opts match {
   case ("--name") :: value :: tail =>
     name = value
@@ -360,5 +371,131 @@ class JobArguments() extends Logging {
       paths.split(",").map { p => FileUtils.resolveURI(p)}
     }
   }
+
+  def loadYarnSettings():Unit = {
+
+    val res = calculateYarnResources()
+    val sparkConf = SparkUtils.getConfiguration
+
+    val minmemory = sparkConf.getLong(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB)
+    val maxmemory = sparkConf.getLong(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_MB,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_MB)
+
+    val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
+    val mem = res._3
+    val actualoverhead = ((if ((mem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR) > executorMemoryOverhead) mem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR
+    else executorMemoryOverhead) * 0.95).toLong
+
+    cores = res._1
+    executors = res._2 // reserve 1 executor for the driver
+    executorMemKb = (mem - actualoverhead) * 1024 // memory per worker
+    memoryKb = res._4 * 1024  // total memory (includes driver memory)
+
+    logInfo("Configuring job (" + name + ") with " + (executors + 1) + " workers (1 driver, " + executors + " executors)  with " +
+        cores + " threads each and " + SparkUtils.kbtohuman(memoryKb, "m") +
+        " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+        " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+        SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)" )
+  }
+
+
+  private def configureYarnMemory(cores:Int, nodes:Int, memory:Long, unitMemory:Long, minMemory:Long, maxMemory:Long) = {
+    val rawMemoryPerNode = memory / nodes
+    val rawExecutorsPerNode = cores / nodes
+    val rawMemPerExecutor = rawMemoryPerNode / rawExecutorsPerNode
+
+    val rawUnits = Math.floor(rawMemPerExecutor.toDouble / unitMemory)
+
+    val units = {
+      val r = rawUnits * unitMemory
+      if (r > maxMemory)
+      // Make this is a multiple of unitMemory
+        Math.floor(maxMemory.toDouble / unitMemory.toDouble).toInt
+      else if (r < minMemory)
+      // Make this is a multiple of unitMemory
+        Math.ceil(minMemory.toDouble / unitMemory.toDouble).toInt
+      else
+        rawUnits
+    }
+
+    val executorMemory = units * unitMemory
+
+    val executorsPerNode = (rawMemoryPerNode.toDouble / executorMemory).toInt
+    val executors = executorsPerNode * nodes
+
+    (executors.toInt, executorMemory.toLong)
+  }
+
+  private def calculateYarnResources():(Int, Int, Long, Long) = {
+
+    val cl = getClass.getClassLoader
+
+    val client:Class[_] =
+      try {
+        cl.loadClass("org.apache.hadoop.yarn.client.api.YarnClient")
+      }
+      catch {
+        // YarnClient was here in older versions of YARN
+        case cnfe: ClassNotFoundException =>
+          cl.loadClass("org.apache.hadoop.yarn.client.YarnClient")
+        case t:Throwable => throw t
+      }
+
+    val create = client.getMethod("createYarnClient")
+    val init = client.getMethod("init", classOf[Configuration])
+    val start = client.getMethod("start")
+
+
+    val getNodeReports = client.getMethod("getNodeReports", classOf[Array[NodeState]])
+    val stop = client.getMethod("stop")
+
+
+    val conf = HadoopUtils.createConfiguration()
+    val yc = create.invoke(null)
+    init.invoke(yc, conf)
+    start.invoke(yc)
+
+    val na = new Array[NodeState](1)
+    na(0) = NodeState.RUNNING
+
+    val nr = getNodeReports.invoke(yc, na).asInstanceOf[util.ArrayList[NodeReport]]
+
+    var cores:Int = Int.MaxValue
+    var memory:Long = Long.MaxValue
+    var totalmemory:Long = 0
+
+    nr.foreach(rep => {
+      val res = rep.getCapability
+
+      memory = Math.min(memory, res.getMemory)
+      cores = Math.min(cores, res.getVirtualCores)
+      totalmemory += res.getMemory
+
+    })
+
+    val mincores = conf.getInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_VCORES,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_VCORES)
+    val maxcores = conf.getInt(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES)
+
+    cores  = Math.max(Math.min(cores, maxcores), mincores)
+
+    val nodes:Int = nr.length
+
+    stop.invoke(yc)
+
+
+    // returns: (cores per nodes, nodes, memory (mb) per node)
+
+    //  we need a minimum of 2 nodes (one for the worker, 1 for the driver)
+    if (nodes == 1) {
+      (cores - 1, nodes, memory / 2, totalmemory)
+    }
+    else {
+      (cores, nodes, memory, totalmemory)
+    }
+  }
+
 
 }

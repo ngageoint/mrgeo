@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,22 +11,25 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
 
-import java.io.Externalizable
+import java.io.{ByteArrayOutputStream, DataOutputStream, Externalizable}
 
 import com.vividsolutions.jts.geom.Envelope
+import org.apache.spark.AccumulatorParam
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Geometry
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils._
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 
 import scala.collection.mutable.ListBuffer
 
@@ -39,7 +42,7 @@ object RasterizeVectorMapOp extends MapOpRegistrar {
 
   def create(vector: VectorMapOp, aggregator:String, cellsize:String, column:String = null) =
   {
-    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null)
+    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
   }
 
 }
@@ -51,7 +54,14 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
     this()
 
-    initialize(vector, aggregator, cellsize, bounds, column)
+    initialize(vector, aggregator, cellsize, Left(bounds), column)
+  }
+
+  def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String,
+           rasterForBounds: Option[RasterMapOp]) = {
+    this()
+
+    initialize(vector, aggregator, cellsize, Right(rasterForBounds), column)
   }
 
 
@@ -98,17 +108,27 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     * feature to the returned RDD.
     */
   def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)] = {
-    vectorRDD.flatMap(U => {
+    val sizeAccumulator = vectorRDD.context.accumulator(0)(MaxSizeAccumulator)
+    val tiledVectors = vectorRDD.flatMap(U => {
       val geom = U._2
       var result = new ListBuffer[(TileIdWritable, Geometry)]
       // For each geometry, compute the tile(s) that it intersects and output the
       // the geometry to each of those tiles.
       val envelope: Envelope = calculateEnvelope(geom)
-      val b: TMSUtils.Bounds = new TMSUtils.Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
+      val baos = new ByteArrayOutputStream(1024)
+      val dos = new DataOutputStream(baos)
+      try {
+        geom.write(dos)
+        sizeAccumulator.add(baos.size())
+      }
+      finally {
+        dos.close()
+      }
+      val b: Bounds = new Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
 
       bounds match {
       case Some(filterBounds) =>
-        if (filterBounds.intersect(b)) {
+        if (filterBounds.intersects(b)) {
           val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
           for (tileId <- tiles) {
             result += ((tileId, geom))
@@ -122,15 +142,34 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       }
       result
     })
+    // An individual partition cannot serialize to more than Int.MaxValue bytes
+    // because Spark cannot to load the partition into memory, and it results in
+    // java.lang.IllegalArgumentException: Size exceeds Integer.MAX_VALUE
+    // To prevent that, we re-partition based on the maximum serialized size of
+    // the input geometries. This is not ideal because there will likely be a lot
+    // of partially filled partitions
+
+    // Need to materialize the RDD in order for the accumulator to compute the
+    // max geometry size.
+    val count = tiledVectors.count()
+    val maxSize = sizeAccumulator.value
+    log.info("Max geometry serialized size is " + maxSize)
+    // The divide by 2 is not scientific. It simply doubles the number of partitions
+    // which, during testing, significatnly improved performance.
+    val geomsPerPartition = Integer.MAX_VALUE / maxSize / 2
+    log.info("Can fit " + geomsPerPartition + " geometries in a partition")
+    val partitions = (count / geomsPerPartition).toInt + 1
+    log.info("Using " + partitions + " partitions for RasterizeVector")
+    tiledVectors.repartition(partitions)
   }
 
   def calculateEnvelope(f: Geometry): Envelope = {
     f.toJTS.getEnvelopeInternal
   }
 
-  def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: TMSUtils.Bounds): List[TileIdWritable] = {
+  def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: Bounds): List[TileIdWritable] = {
     var tiles = new ListBuffer[TileIdWritable]
-    val tb: TMSUtils.TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
+    val tb: TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
     var tx: Long = tb.w
     while (tx <= tb.e) {
       var ty: Long = tb.s
@@ -142,5 +181,16 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       tx += 1
     }
     tiles.toList
+  }
+
+  object MaxSizeAccumulator extends AccumulatorParam[Int]
+  {
+    override def addInPlace(r1: Int, r2: Int): Int = {
+      Math.max(r1, r2)
+    }
+
+    override def zero(initialValue: Int): Int = {
+      initialValue
+    }
   }
 }

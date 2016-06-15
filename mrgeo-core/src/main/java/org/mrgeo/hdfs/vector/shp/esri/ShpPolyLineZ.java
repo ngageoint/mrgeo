@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector.shp.esri;
@@ -23,10 +24,10 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPolyLineZ extends java.lang.Object implements ShpData
+public class ShpPolyLineZ implements ShpData
 {
   protected JPolyLineZ[] p;
-  private ESRILayer parent;
+  private ESRILayer parent = null;
 
   /** Creates new ShpLine */
   public ShpPolyLineZ(int initialSize)
@@ -37,10 +38,13 @@ public class ShpPolyLineZ extends java.lang.Object implements ShpData
   @Override
   public void addShape(JShape obj) throws FormatException
   {
-    JPolyLineZ[] temp = new JPolyLineZ[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPolyLineZ) obj;
-    p = temp;
+    if (obj instanceof JPolyLineZ)
+    {
+      JPolyLineZ[] temp = new JPolyLineZ[p.length + 1];
+      System.arraycopy(p, 0, temp, 0, p.length);
+      temp[p.length] = (JPolyLineZ) obj;
+      p = temp;
+    }
   }
 
   @Override
@@ -122,12 +126,12 @@ public class ShpPolyLineZ extends java.lang.Object implements ShpData
         }
         else
         {
-          if (j == startingPair[part + 1] - 1)
-          {
-            // path not closed as in the case in ShpPolygon
-            p[i].add(new Coord(px, py), z, m);
-          }
-          else
+//          if (j == startingPair[part + 1] - 1)
+//          {
+//            // path not closed as in the case in ShpPolygon
+//            p[i].add(new Coord(px, py), z, m);
+//          }
+//          else
           {
             p[i].add(new Coord(px, py), z, m);
           }

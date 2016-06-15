@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +11,13 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.image;
 
-import org.mrgeo.utils.Bounds;
+
+import org.mrgeo.utils.tms.Bounds;
 
 public class ImageOutputFormatContext
 {
@@ -35,7 +37,10 @@ public class ImageOutputFormatContext
   public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
   {
     this.output = output;
-    this.bounds = bounds.clone();
+    if (bounds != null)
+    {
+      this.bounds = bounds.clone();
+    }
     this.zoomlevel = zoomlevel;
     this.tilesize = tilesize;
     this.protectionLevel = protectionLevel;
@@ -45,7 +50,10 @@ public class ImageOutputFormatContext
                                   String protectionLevel, int tiletype, int bands)
   {
     this.output = output;
-    this.bounds = bounds.clone();
+    if (bounds != null)
+    {
+      this.bounds = bounds.clone();
+    }
     this.bands = bands;
     this.zoomlevel = zoomlevel;
     this.tilesize =  tilesize;
@@ -59,7 +67,7 @@ public class ImageOutputFormatContext
     return output;
   }
 
-  public int getZoomlevel()
+  public int getZoomLevel()
   {
     return zoomlevel;
   }
@@ -74,12 +82,12 @@ public class ImageOutputFormatContext
     return bands;
   }
   
-  public int getTilesize()
+  public int getTileSize()
   {
     return tilesize;
   }
 
-  public int getTiletype()
+  public int getTileType()
   {
     return tiletype;
   }

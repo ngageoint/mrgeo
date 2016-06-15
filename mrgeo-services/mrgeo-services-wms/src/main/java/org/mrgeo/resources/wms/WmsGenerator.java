@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.resources.wms;
@@ -33,9 +34,9 @@ import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LatLng;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,7 @@ import java.util.Set;
 //import javax.servlet.http.HttpServletRequest;
 //import javax.servlet.http.HttpServletResponse;
 
-//import org.mrgeo.utils.LoggingUtils;
+//import org.mrgeo.utils.logging.LoggingUtils;
 
 /**
  * OGC WMS implementation - See https://107.23.31.196/redmine/projects/mrgeo/wiki/WmsReference for
@@ -74,8 +75,6 @@ import java.util.Set;
 @Path("/wms")
 public class WmsGenerator
 {
-  private static final long serialVersionUID = 1L;
-
   private static final Logger log = LoggerFactory.getLogger(WmsGenerator.class);
 
   //  private static Path basePath = null;
@@ -113,9 +112,6 @@ public class WmsGenerator
    * Returns the value for the specified paramName case-insensitively. If the
    * parameter does not exist, it returns null.
    *
-   * @param allParams
-   * @param paramName
-   * @return
    */
   private String getQueryParam(MultivaluedMap<String, String> allParams, String paramName)
   {
@@ -137,10 +133,6 @@ public class WmsGenerator
    * Returns the value for the specified paramName case-insensitively. If the
    * parameter does not exist, it returns defaultValue.
    *
-   * @param allParams
-   * @param paramName
-   * @param defaultValue
-   * @return
    */
   private String getQueryParam(MultivaluedMap<String, String> allParams,
                                String paramName,
@@ -186,9 +178,6 @@ public class WmsGenerator
    * the parameter value exists, but is not an int, it throws a NumberFormatException.
    * If it does not exist, it returns defaultValue.
    *
-   * @param allParams
-   * @param paramName
-   * @return
    */
   private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
                                  String paramName,
@@ -214,9 +203,6 @@ public class WmsGenerator
    * the parameter value exists, but is not an int, it throws a NumberFormatException.
    * If it does not exist, it returns defaultValue.
    *
-   * @param allParams
-   * @param paramName
-   * @return
    */
   private double getQueryParamAsDouble(MultivaluedMap<String, String> allParams,
                                        String paramName,
@@ -362,7 +348,7 @@ public class WmsGenerator
 //    {
 //      return writeError(Response.Status.BAD_REQUEST, "Missing required STYLES parameter");
 //    }
-    String srs = null;
+    String srs;
     try
     {
       srs = getSrsParam(allParams);
@@ -371,7 +357,7 @@ public class WmsGenerator
     {
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
-    Bounds bounds = null;
+    Bounds bounds;
     try
     {
       bounds = getBoundsParam(allParams, "bbox");
@@ -396,7 +382,7 @@ public class WmsGenerator
     }
     int height = getQueryParamAsInt(allParams, "height", 0);
 
-    ImageRenderer renderer = null;
+    ImageRenderer renderer;
     try
     {
       renderer = (ImageRenderer) ImageHandlerFactory.getHandler(format, ImageRenderer.class);
@@ -446,9 +432,6 @@ public class WmsGenerator
    * exception. If all validation passes, it returns a Bounds object configured with
    * those settings.
    *
-   * @param allParams
-   * @param paramName
-   * @return
    * @throws Exception
    */
   private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName)
@@ -556,7 +539,7 @@ public class WmsGenerator
     {
       return writeError(Response.Status.BAD_REQUEST, "Missing required FORMAT parameter");
     }
-    ImageRenderer renderer = null;
+    ImageRenderer renderer;
     try
     {
       renderer = (ImageRenderer) ImageHandlerFactory.getHandler(format,
@@ -687,7 +670,7 @@ public class WmsGenerator
     {
       return writeError(Response.Status.BAD_REQUEST, "Missing required FORMAT parameter");
     }
-    int tileRow = -1;
+    int tileRow;
     if (paramExists(allParams, "tilerow"))
     {
       tileRow = getQueryParamAsInt(allParams, "tilerow", -1);
@@ -696,7 +679,7 @@ public class WmsGenerator
     {
       return writeError(Response.Status.BAD_REQUEST, "Missing required TILEROW parameter");
     }
-    int tileCol = -1;
+    int tileCol;
     if (paramExists(allParams, "tilecol"))
     {
       tileCol = getQueryParamAsInt(allParams, "tilecol", -1);
@@ -705,7 +688,7 @@ public class WmsGenerator
     {
       return writeError(Response.Status.BAD_REQUEST, "Missing required TILECOL parameter");
     }
-    double scale = 0.0;
+    double scale;
     if (paramExists(allParams, "scale"))
     {
       scale = getQueryParamAsDouble(allParams, "scale", 0.0);

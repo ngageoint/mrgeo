@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra;
@@ -38,19 +39,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 
-/**
- * testCostDistance gets the full area, which is 13x12 tiles 
- * testCostDistanceWithBounds gets a clipped area of 12x11 tiles, and uses boundsBuffer
- * testCostDistanceWithBoundsAndLowerZoomLevel gets a clipped area of zoom 9 - 7x6 instead of 7x7
- *  and uses boundsBuffer
- * testCostDistanceWithUniformFriction gets a clipped area of 2x2 instead of 3x4 and uses  
- *  auto bounds
- * testCostDistanceWithLeastCostPath uses auto bounds (not sure what clipped area looks like because
- *  we don't store it)
- * testNnd uses auto bounds for a clipped area of 12x11 (just as large as testCostDistanceWithBounds 
- *  but different set of 12x11 tiles)
- *
- */
 @SuppressWarnings("static-method")
 public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 {
@@ -63,7 +51,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 
   // only set this to true to generate new baseline images after correcting tests; image comparison
   // tests won't be run when is set to true
-  public final static boolean GEN_BASELINE_DATA_ONLY = false;
+  public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
   private static final String ALL_ONES = "all-ones";
   private static final int ALL_ONES_ZOOM = 10;
@@ -73,6 +61,8 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 //  private static final String TOBLER_MEDIUM = "tobler-raw-9tiles";
   private static final int TOBLER_MEDIUM_ZOOM = 10;
   private static String frictionSurface;
+
+private static final String smallElevationName = "small-elevation";
 
   @BeforeClass
   public static void init() throws IOException
@@ -91,6 +81,9 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
     HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), ALL_ONES);
 
     frictionSurface = testUtils.getInputHdfs() + "/" +  TOBLER_MEDIUM;
+
+    HadoopFileUtils
+        .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
   }
 
   @Test
@@ -103,7 +96,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 //        + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
     String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
                  + "friction = [" + frictionSurface + "];\n"
-                 + "result = CostDistance(src, " + TOBLER_MEDIUM_ZOOM + ", friction, \"50000.0\");";
+                 + "result = CostDistance(src, friction, 50000.0);";
     // Start point in tile tx=702 ty = 348, pixel px = 510 py = 0
 //    String exp = "srcPoint = InlineCsv(\"GEOMETRY\", \"'POINT(9.029234 45.223345)'\");\n"
 //                 + "friction = [/mrgeo/images/dave-tobler-raw-spm_nowater];\n"
@@ -201,25 +194,70 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 //    }
 //  }
 //
-  @Test
-  @Category(IntegrationTest.class)
-  public void testCostDistanceWithBoundsAndLowerZoomLevel() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void testCostDistanceWithLowerZoomLevel() throws Exception
+{
+  final int lowerZoomLevel = TOBLER_MEDIUM_ZOOM - 1;
+
+  String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
+      + "friction = [" + frictionSurface + "];\n"
+      + "result = CostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
+
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    final int lowerZoomLevel = TOBLER_MEDIUM_ZOOM - 1;
-
-    String exp = "src = InlineCsv(\"GEOMETRY\", \"'POINT(67.1875 32.38)'\");\n"
-        + "friction = [" + frictionSurface + "];\n"
-        + "result = CostDistance(src, " + lowerZoomLevel + ",friction, \"50000.0\");";
-
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
-    }
+    testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
   }
+  else
+  {
+    testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void directionalCostDistance() throws Exception
+{
+  String exp = "" +
+      "sl = directionalslope([small-elevation], \"gradient\");\n" +
+      //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
+      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.05)));\n" +
+      "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
+      //"cost = CostDistance(src, pingle, 50000.0);\n" +
+      "cost = CostDistance(src, tobler);\n" +
+      "";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+  }
+}
+
+
+@Test
+@Category(IntegrationTest.class)
+public void nondirectionalCostDistance() throws Exception
+{
+  String exp = "" +
+      "sl = slope([small-elevation], \"gradient\");\n" +
+      //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
+      "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.05)));\n" +
+      "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
+      //"cost = CostDistance(src, pingle, 50000.0);\n" +
+      "cost = CostDistance(src, tobler, 50000);\n" +
+      "";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(conf, testname.getMethodName(), exp);
+  }
+}
 
 //  @Ignore
 //  @Test

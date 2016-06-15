@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,13 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.geometry;
 
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GeometryUtils;
 import org.mrgeo.utils.StringUtils;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -28,7 +29,7 @@ import java.util.TreeMap;
 
 public abstract class GeometryImpl implements WritableGeometry
 {
-Map<String, String> attributes = new HashMap<String, String>();
+Map<String, String> attributes = new HashMap<>();
 
 Bounds bounds = null;
 
@@ -40,7 +41,7 @@ public static Class[] getClasses()
 @Override
 public String toString()
 {
-  StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   result.append(WktConverter.toWkt(this));
   result.append(" {");
   String sep = "";

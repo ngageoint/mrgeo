@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -48,6 +50,7 @@ public class DependencyLoader
   private static final Logger log = LoggerFactory.getLogger(DependencyLoader.class);
   private static final String CLASSPATH_FILES = "mapred.job.classpath.files";
 
+  private static boolean printedMrGeoHomeWarning = false;
   public static Set<String> getDependencies(final Class<?> clazz) throws IOException
   {
     Set<File> files = findDependencies(clazz);
@@ -61,6 +64,7 @@ public class DependencyLoader
     return deps;
   }
 
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for addinj to HDFS classpath")
   public static Set<String> copyDependencies(final Set<String> localDependencies, Configuration conf) throws IOException
   {
     if (conf == null)
@@ -192,6 +196,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     return deps;
   }
 
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
   private static Set<File> findFilesInClasspath(String base) throws IOException
   {
     Set<File> files = new HashSet<File>();
@@ -324,6 +329,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     return dep.artifact + "-" + dep.version + (dep.classifier == null ? "" : "-" + dep.classifier) + "." + dep.type;
   }
 
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
   private static Set<File> findJarsInClasspath(final Set<String> jars, boolean recurseDirectories) throws IOException
   {
     Set<File> paths = new HashSet<File>();
@@ -352,12 +358,25 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
       }
     }
 
-    // prepend MRGEO_HOME
-    String mrgeo = System.getenv(MrGeoConstants.MRGEO_ENV_HOME);
+    // prepend MRGEO_COMMON_HOME
+    String mrgeo = System.getenv(MrGeoConstants.MRGEO_COMMON_HOME);
     if (mrgeo == null)
     {
-      log.info(MrGeoConstants.MRGEO_ENV_HOME + " environment variable is undefined. Trying system property");
-      mrgeo = System.getProperty(MrGeoConstants.MRGEO_ENV_HOME);
+      // try the deprecated MRGEO_HOME
+      mrgeo = System.getenv(MrGeoConstants.MRGEO_HOME);
+
+      if (mrgeo != null && !printedMrGeoHomeWarning)
+      {
+        log.error(MrGeoConstants.MRGEO_HOME + " environment variable has been deprecated.  " +
+            "Use " + MrGeoConstants.MRGEO_CONF_DIR + " and " + MrGeoConstants.MRGEO_COMMON_HOME + " instead");
+        printedMrGeoHomeWarning = true;
+      }
+    }
+
+    if (mrgeo == null)
+    {
+      log.info(MrGeoConstants.MRGEO_COMMON_HOME + " environment variable is undefined. Trying system property");
+      mrgeo = System.getProperty(MrGeoConstants.MRGEO_COMMON_HOME, System.getProperty(MrGeoConstants.MRGEO_HOME));
     }
     if (mrgeo != null)
     {
@@ -372,7 +391,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     }
     else
     {
-      log.error(MrGeoConstants.MRGEO_ENV_HOME + " is not defined, and may result in inability to find dependent JAR files");
+      log.error(MrGeoConstants.MRGEO_COMMON_HOME + " is not defined, and may result in inability to find dependent JAR files");
     }
 
     // now perform any variable replacement in the classpath
@@ -462,71 +481,6 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     }
   }
 
-//  private static void extractDependencies(Properties properties, Dependency master,
-//      Map<String, Dependency> dependencies) throws IOException
-//  {
-//    for (Map.Entry<Object, Object> property : properties.entrySet())
-//    {
-//      String keystr = property.getKey().toString();
-//      String[] key = keystr.split("/");
-//
-//      if (key.length == 1)
-//      {
-//        // this is probably the "master" for the entire jar
-//        addToDependency(master, key[0], property.getValue().toString());
-//      }
-//      else if (key.length != 3)
-//      {
-//        throw new IOException("Error reading property: " + keystr);
-//      }
-//      else
-//      {
-//        String artifact = key[1];
-//        Dependency dep;
-//
-//        if (dependencies.containsKey(artifact))
-//        {
-//          dep = dependencies.get(artifact);
-//        }
-//        else
-//        {
-//          dep = new Dependency();
-//          addToDependency(dep, "groupId", key[0]);
-//          addToDependency(dep, "artifactId", artifact);
-//
-//          dependencies.put(artifact, dep);
-//        }
-//
-//        addToDependency(dep, key[2], property.getValue().toString());
-//      }
-//    }
-//  }
-
-  private static void addToDependency(Dependency dependency, String property, String value)
-  {
-    switch (property)
-    {
-    case "artifactId":
-      dependency.artifact = value;
-      break;
-    case "classifier":
-      dependency.classifier = value;
-      break;
-    case "groupId":
-      dependency.group = value;
-      break;
-    case "scope":
-      dependency.scope = value;
-      break;
-    case "type":
-      dependency.type = value;
-      break;
-    case "version":
-      dependency.version = value;
-      break;
-    }
-  }
-
   private static void addClassPath(Job job, FileSystem fs, Path hdfsBase) throws IOException
   {
     // make sure the jar path exists
@@ -543,59 +497,60 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     }
   }
 
-  private static void moveFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
-  {
-    File f = new File(base);
-    if (f.exists())
-    {
-      if (f.isDirectory())
-      {
-        File[] files = f.listFiles();
-        if (files != null)
-        {
-          for (File file : files)
-          {
-            moveFilesToClassPath(conf, existing, fs, hdfsBase, file.getCanonicalPath());
-          }
-        }
-      }
-      else
-      {
-        if (f.getName().endsWith(".jar"))
-        {
-          moveFileToClasspath(conf, existing, fs, hdfsBase, f);
-        }
-      }
-    }
-  }
+//  private static void moveFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
+//  {
+//    File f = new File(base);
+//    if (f.exists())
+//    {
+//      if (f.isDirectory())
+//      {
+//        File[] files = f.listFiles();
+//        if (files != null)
+//        {
+//          for (File file : files)
+//          {
+//            moveFilesToClassPath(conf, existing, fs, hdfsBase, file.getCanonicalPath());
+//          }
+//        }
+//      }
+//      else
+//      {
+//        if (f.getName().endsWith(".jar"))
+//        {
+//          moveFileToClasspath(conf, existing, fs, hdfsBase, f);
+//        }
+//      }
+//    }
+//  }
+//
+//  private static void moveFileToClasspath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, File file) throws IOException
+//  {
+//    Path hdfsPath = new Path(hdfsBase, file.getName());
+//    if (!existing.contains(hdfsPath.toString()))
+//    {
+//      if (fs.exists(hdfsPath))
+//      {
+//        // check the timestamp and exit if the one in hdfs is "newer"
+//        FileStatus status = fs.getFileStatus(hdfsPath);
+//
+//        if (file.lastModified() <= status.getModificationTime())
+//        {
+//          log.debug(file.getPath() + " up to date");
+//
+//          existing.add(hdfsPath.toString());
+//          return;
+//        }
+//      }
+//
+//      // copy the file...
+//      log.debug("Copying " + file.getPath() + " to HDFS for distribution");
+//
+//      fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
+//      existing.add(hdfsPath.toString());
+//    }
+//  }
 
-  private static void moveFileToClasspath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, File file) throws IOException
-  {
-    Path hdfsPath = new Path(hdfsBase, file.getName());
-    if (!existing.contains(hdfsPath.toString()))
-    {
-      if (fs.exists(hdfsPath))
-      {
-        // check the timestamp and exit if the one in hdfs is "newer"
-        FileStatus status = fs.getFileStatus(hdfsPath);
-
-        if (file.lastModified() <= status.getModificationTime())
-        {
-          log.debug(file.getPath() + " up to date");
-
-          existing.add(hdfsPath.toString());
-          return;
-        }
-      }
-
-      // copy the file...
-      log.debug("Copying " + file.getPath() + " to HDFS for distribution");
-
-      fs.copyFromLocalFile(new Path(file.getCanonicalFile().toURI()), hdfsPath);
-      existing.add(hdfsPath.toString());
-    }
-  }
-
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
   private static void addFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
   {
     File f = new File(base);
@@ -676,16 +631,32 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
 
         InputStream is = DependencyLoader.class.getResourceAsStream("/" + resource);
 
-        Set<Dependency> d = readDependencies(is);
-        is.close();
+        try
+        {
+          Set<Dependency> d = readDependencies(is);
+          is.close();
 
-        if (deps == null)
-        {
-          deps = d;
+          if (deps == null)
+          {
+            deps = d;
+          }
+          else
+          {
+            deps.addAll(d);
+          }
         }
-        else
+        finally
         {
-          deps.addAll(d);
+          if (is != null)
+          {
+            try
+            {
+              is.close();
+            }
+            catch (IOException ignored)
+            {
+            }
+          }
         }
       }
 
@@ -755,6 +726,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
     return deps;
   }
 
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
   private static Set<Dependency> loadDependenciesFromJar(final String jarname) throws IOException
   {
     try
@@ -818,7 +790,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
 
   private static class Dependency
   {
-    public String group;
+    public String group = "<unk>";
     public String artifact;
     public String version;
     public String type;

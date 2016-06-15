@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector;
@@ -27,7 +28,7 @@ public class WktGeometryUtils
     String geometryStr = wktGeometry;
     String regex = "\\(|\\[|\\]|\\)";
     String[] geometryArray = geometryStr.split(regex);
-    String fixedGeometry = "";
+    StringBuilder fixedGeometry = new StringBuilder();
     String geometryType = "";
     if (geometryArray.length > 1)
     {
@@ -37,14 +38,14 @@ public class WktGeometryUtils
         String[] points = geometryArray[1].split(",");
         if (points.length == 4)
         {
-          fixedGeometry = "POLYGON((";
-          fixedGeometry += points[0] + " " + points[1] + ",";
-          fixedGeometry += points[2] + " " + points[1] + ",";
-          fixedGeometry += points[2] + " " + points[3] + ",";
-          fixedGeometry += points[0] + " " + points[3] + ",";
-          fixedGeometry += points[0] + " " + points[1];
-          fixedGeometry += "))";
-          return fixedGeometry;
+          fixedGeometry.append("POLYGON((");
+          fixedGeometry.append(points[0]).append(" ").append(points[1]).append(",");
+          fixedGeometry.append(points[2]).append(" ").append(points[1]).append(",");
+          fixedGeometry.append(points[2]).append(" ").append(points[3]).append(",");
+          fixedGeometry.append(points[0]).append(" ").append(points[3]).append(",");
+          fixedGeometry.append(points[0]).append(" ").append(points[1]);
+          fixedGeometry.append("))");
+          return fixedGeometry.toString();
         }
       }
       else
@@ -57,14 +58,14 @@ public class WktGeometryUtils
           {
             if (fixedGeometry.length() > 0)
             {
-              fixedGeometry += ",";
+              fixedGeometry.append(",");
             }
             String tmpFixed = parsePoints(geometryArray[i], geometryType);
             for (int j = 0; j < parenthesesCount; j++)
             {
               tmpFixed = "(" + tmpFixed + ")";
             }
-            fixedGeometry += tmpFixed;
+            fixedGeometry.append(tmpFixed);
           }
 
           //only count one time. e.g MULTIPOLYGON(((0 0,10 0,10 10,0 10,0 0)),((5 5,7 5,7 7,5 7, 5 5)))
@@ -77,10 +78,9 @@ public class WktGeometryUtils
         }
       }
     }
-    if (!geometryType.isEmpty() && !fixedGeometry.isEmpty())
+    if (!geometryType.isEmpty() && fixedGeometry.length() != 0)
     {
-      fixedGeometry = geometryType + "(" + fixedGeometry + ")";
-      return fixedGeometry;
+      return geometryType + "(" + fixedGeometry.toString() + ")";
     }
     return geometryStr;
   }
@@ -111,20 +111,20 @@ public class WktGeometryUtils
   
   static private String parsePoints(String geometryStr, String geometryType)
   {
-    String geometry = geometryStr;
+    StringBuilder geometry = new StringBuilder(geometryStr);
     String regex = "\\,|\\  |\\\t";
     String[] pointsArray = geometryStr.split(regex);
     
     if (geometryStr.contains("  ") || geometryStr.contains("\t"))
     {
-      geometry = "";
-      for (int i = 0; i < pointsArray.length; i++)
+      geometry = new StringBuilder();
+      for (String pa : pointsArray)
       {
         if (geometry.length() > 0)
         {
-          geometry += ",";
+          geometry.append(",");
         }
-        geometry += pointsArray[i];
+        geometry.append(pa);
       }
     }
 
@@ -132,9 +132,9 @@ public class WktGeometryUtils
     {
       if (!pointsArray[0].trim().equalsIgnoreCase(pointsArray[pointsArray.length-1].trim()))
       {
-        geometry += "," + pointsArray[0];//close the polygon
+        geometry.append(",").append(pointsArray[0]); //close the polygon
       }
     }
-    return geometry;
+    return geometry.toString();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.cmd.mrsimageinfo;
@@ -33,8 +34,8 @@ import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +78,7 @@ public class MrsImageInfo extends Command
       return bytes + "B";
     }
     final int exp = (int) (Math.log(bytes) / Math.log(unit));
-    final char pre = new String("KMGTPE").charAt(exp - 1);
+    final char pre = "KMGTPE".charAt(exp - 1);
 
     return String.format("%.1f%sB", bytes / Math.pow(unit, exp), pre);
   }
@@ -155,7 +156,7 @@ public class MrsImageInfo extends Command
       config = conf;
 
       final Options options = MrsImageInfo.createOptions();
-      CommandLine line = null;
+      CommandLine line;
 
       try
       {
@@ -264,15 +265,15 @@ public class MrsImageInfo extends Command
     final Bounds bounds = metadata.getBounds();
     System.out.println("");
     System.out.print("Bounds: (lon/lat)");
-    System.out.println("  size (" + df.format(bounds.getWidth()) + ", " +
-      df.format(bounds.getHeight()) + ")");
-    System.out.print("  UL (" + df.format(bounds.getMinX()) + ", " + df.format(bounds.getMaxY()) +
+    System.out.println("  size (" + df.format(bounds.width()) + ", " +
+      df.format(bounds.height()) + ")");
+    System.out.print("  UL (" + df.format(bounds.w) + ", " + df.format(bounds.n) +
       ")");
-    System.out.println("  UR (" + df.format(bounds.getMaxX()) + ", " + df.format(bounds.getMaxY()) +
+    System.out.println("  UR (" + df.format(bounds.e) + ", " + df.format(bounds.n) +
       ")");
-    System.out.print("  LL (" + df.format(bounds.getMinX()) + ", " + df.format(bounds.getMinY()) +
+    System.out.print("  LL (" + df.format(bounds.w) + ", " + df.format(bounds.s) +
       ")");
-    System.out.println("  LR (" + df.format(bounds.getMaxX()) + ", " + df.format(bounds.getMinY()) +
+    System.out.println("  LR (" + df.format(bounds.e) + ", " + df.format(bounds.s) +
       ")");
     System.out.println("");
     printTileType(metadata);

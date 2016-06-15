@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -20,7 +21,6 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import javax.vecmath.Vector3d
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
@@ -29,7 +29,8 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
-import org.mrgeo.utils.{LatLng, SparkUtils, TMSUtils}
+import org.mrgeo.utils.tms.TMSUtils
+import org.mrgeo.utils.{LatLng, SparkUtils}
 
 object SlopeAspectMapOp {
   final val Input = "input"
@@ -119,13 +120,8 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
       val zn = 7
       val pn = 8
 
-      val bounds = TMSUtils.tileBounds(TMSUtils.tileid(tile._1.get, zoom), zoom, tilesize)
-
-      // calculate the great circle distance of the tile (through the middle)
-      val midx = bounds.w + ((bounds.e - bounds.w) / 2.0)
-      val midy = bounds.s + ((bounds.n - bounds.s) / 2.0)
-      val dx = LatLng.calculateGreatCircleDistance(new LatLng(midy, bounds.w), new LatLng(midy, bounds.e)) / tilesize
-      val dy = LatLng.calculateGreatCircleDistance(new LatLng(bounds.n, midx), new LatLng(bounds.s, midx)) / tilesize
+      val dx = TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE
+      val dy = dx
 
       val z = Array.ofDim[Double](9)
 
@@ -134,7 +130,6 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
       val normal = new Vector3d()
       val up = new Vector3d(0, 0, 1.0)  // z (up) direction
 
-      var theta:Double = 0.0
 
 
       def isnodata(v:Double, nodata:Double):Boolean = if (nodata.isNaN) v.isNaN  else v == nodata
@@ -183,13 +178,20 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
           return Float.NaN
         }
 
-        if (slope) {
-          theta  = Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
+        val theta = if (slope) {
+           Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
         }
         else {  // aspect
-          // change from (-Pi to Pi) to (0 to 2Pi), make 0 deg north (+ 3pi/2)
-          // convert to clockwise (2pi -)
-          theta = TWO_PI - (Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
+          // if the z component of the normal is 1.0, the cell is flat, so the aspect is undefined.
+          // For now, we'llset it to 0.0, but another value could be more appropriate.
+          if (normal._3 == 1.0) {
+            0.0
+          }
+          else {
+            // change from (-Pi to Pi) to (0 to 2Pi), make 0 deg north (+ 3pi/2)
+            // convert to clockwise (2pi -)
+            TWO_PI - (Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
+          }
         }
 
         units match {
@@ -231,12 +233,9 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(meta.getBounds), zoom, tilesize)
+    val tb = TMSUtils.boundsToTile(meta.getBounds, zoom, tilesize)
 
-    val nodatas = Array.ofDim[Number](meta.getBands)
-    for (i <- nodatas.indices) {
-      nodatas(i) = meta.getDefaultValue(i)
-    }
+    val nodatas = meta.getDefaultValuesNumber
 
     val bufferX = 1
     val bufferY = 1

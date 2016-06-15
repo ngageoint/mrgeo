@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector.shp.esri.geom;
 
-public final class Coord extends java.lang.Object implements Cloneable, java.io.Serializable
+import org.mrgeo.utils.FloatUtils;
+
+public final class Coord implements Cloneable, java.io.Serializable
 {
   static final long serialVersionUID = 1L;
   public double x;
@@ -63,7 +66,7 @@ public final class Coord extends java.lang.Object implements Cloneable, java.io.
       try
       {
         Coord p = (Coord) obj;
-        if (p.x == x && p.y == y)
+        if (FloatUtils.isEqual(p.x, x) && FloatUtils.isEqual(p.y, y))
           return true;
       }
       catch (ClassCastException e)

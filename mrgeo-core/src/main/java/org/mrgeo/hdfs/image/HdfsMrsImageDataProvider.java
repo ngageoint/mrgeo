@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.image;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -57,6 +59,13 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     super(resourceName);
     this.conf = conf;
     this.providerProperties = providerProperties;
+  }
+
+  @Override
+  public String getSimpleResourceName() throws IOException
+  {
+    Path p = getResourcePath(false);
+    return p.getName();
   }
 
   public String getResolvedResourceName(final boolean mustExist) throws IOException
@@ -190,6 +199,8 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
    * @return
    * @throws IOException
    */
+  @SuppressFBWarnings(value = {"PATH_TRAVERSAL_IN", "WEAK_FILENAMEUTILS"},
+      justification = "check will only be used for reading valid MrsPyramids")
   private static Path resolveNameToPath(final Configuration conf, final String input,
       final ProviderProperties providerProperties, final boolean mustExist,
       final boolean throwExceptionIfInvalid) throws IOException
@@ -355,12 +366,9 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
     try
     {
       p = resolveName(conf, input, providerProperties, false);
-      if (p != null)
-      {
-        return hasMetadata(conf, p);
-      }
+      return hasMetadata(conf, p);
     }
-    catch (IOException e)
+    catch (IOException ignored)
     {
     }
     return false;

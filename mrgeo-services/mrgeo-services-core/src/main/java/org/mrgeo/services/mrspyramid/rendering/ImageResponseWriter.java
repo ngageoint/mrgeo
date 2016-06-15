@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,12 +11,13 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
@@ -54,13 +55,6 @@ public interface ImageResponseWriter
   void write(final Raster raster, final int tileColumn, final int tileRow, final double scale,
              final MrsPyramid pyramid, final HttpServletResponse response) throws ServletException, IOException;
 
-  /**
-   * 
-   * @param imageName
-   * @param imageName
-   * @return
-   * @throws IOException
-   */
   Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds);
 
   void write(final Raster raster, final String imageName, final Bounds bounds,

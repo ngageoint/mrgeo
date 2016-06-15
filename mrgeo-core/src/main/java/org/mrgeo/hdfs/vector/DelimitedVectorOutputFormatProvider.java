@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -26,6 +28,7 @@ import org.mrgeo.geometry.Geometry;
 
 import java.io.IOException;
 
+@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "'context' kept for completeness")
 public class DelimitedVectorOutputFormatProvider implements VectorOutputFormatProvider
 {
   private HdfsVectorDataProvider provider;

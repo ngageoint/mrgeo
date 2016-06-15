@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra.vector.paint;
@@ -19,9 +20,9 @@ import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
-import org.mrgeo.utils.Bounds;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.TMSUtils.Tile;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +103,7 @@ public void beforePaintingTile(final long tileId)
   totalRaster = null;
 
   final Tile tile = TMSUtils.tileid(tileId, zoom);
-  final TMSUtils.Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tileSize);
+  final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tileSize);
   Bounds b = new Bounds(tb.w, tb.s, tb.e, tb.n);
   if (aggregationType == AggregationType.AVERAGE)
   {

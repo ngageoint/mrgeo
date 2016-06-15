@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,28 +11,28 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
-import com.vividsolutions.jts.geom.Envelope
-import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.geometry.{Geometry, GeometryFactory}
+import org.mrgeo.geometry.GeometryFactory
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.{LatLng, StringUtils, SparkUtils, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.mrgeo.utils.{LatLng, StringUtils, SparkUtils}
 
-import scala.collection.mutable.ListBuffer
 
 abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externalizable
 {
@@ -42,7 +42,8 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   var tilesize: Int = -1
   var zoom: Int = -1
   var column: Option[String] = None
-  var bounds: Option[TMSUtils.Bounds] = None
+  var bounds: Option[Bounds] = None
+  var rasterForBoundsMapOp: Option[RasterMapOp] = None
 
   override def rdd(): Option[RasterRDD] = {
     rasterRDD
@@ -67,7 +68,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     val hasBounds = in.readBoolean()
     bounds = hasBounds match {
       case true =>
-        Some(new TMSUtils.Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
+        Some(new Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
       case false => None
     }
   }
@@ -96,6 +97,10 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   override def execute(context: SparkContext): Boolean = {
     val vectorRDD: VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
       rdd().getOrElse(throw new IOException("Missing vector RDD"))
+    if (rasterForBoundsMapOp.isDefined) {
+      bounds = Some(rasterForBoundsMapOp.get.metadata().getOrElse(
+        throw new IOException("Unable to get metadata for the bounds raster")).getBounds)
+    }
     val result = rasterize(vectorRDD)
     rasterRDD = Some(RasterRDD(result))
     val noData = Double.NaN
@@ -107,13 +112,12 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   /**
     * The input RDD contains one tuple for each tile that intersects at least one
     * feature. The first element of the tuple is the tile id, and the second element
-    * is an Iterable containing all of the features that intersect that tile id. This
+    * is an Iterable containing all of the features that intersects that tile id. This
     * method is responsible for "painting" the set of features onto a raster of that
     * tile and returning the tile id and raster as a tuple. The returned RDD is the
     * collection of all the tiles containing features along with the "painted" rasters
     * for each of those tiles.
-    * @param vectorRDD
-    * @return
+    *
     */
   def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)]
 
@@ -126,11 +130,11 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   }
 
   def initialize(node:ParserNode, variables: String => Option[ParserNode]): Unit = {
-    if (!(node.getNumChildren == 3 || node.getNumChildren == 4 ||
+    val usageMsg = "RasterizeVector and RasterizePoints take these arguments. (source vector, aggregation type, cellsize, [column], [bounds])"
+    if (!(node.getNumChildren == 3 || node.getNumChildren == 4 || node.getNumChildren == 5 ||
       node.getNumChildren == 7 || node.getNumChildren == 8))
     {
-      throw new ParserException(
-        "RasterizeVector takes these arguments. (source vector, aggregation type, cellsize, [column], [bounds])")
+      throw new ParserException(usageMsg)
     }
     vectorMapOp = VectorMapOp.decodeToVector(node.getChild(0), variables)
     if (vectorMapOp.isEmpty) {
@@ -178,59 +182,73 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
         throw new ParserException("Missing cellSize argument")
     }
     zoom = TMSUtils.zoomForPixelSize(cellSize, tilesize)
-    // Check that the column name of the vector is provided when it is needed
-    val nextPosition = aggregationType match {
+
+    if (node.getNumChildren > 3) {
+      node.getNumChildren match {
+        case 4 => {
+          try {
+            rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(3), variables)
+          }
+          catch {
+            case e: ParserException => {
+              // Since the fourth and last argument is not a raster, it must be a column
+              column = MapOp.decodeString(node.getChild(3))
+            }
+          }
+        }
+        case 5 => {
+          rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(4), variables)
+          column = MapOp.decodeString(node.getChild(3))
+        }
+        case 7 => {
+          parseBounds(node, variables, 3)
+        }
+        case 8 => {
+          column = MapOp.decodeString(node.getChild(3))
+          parseBounds(node, variables, 4)
+        }
+        case _ => throw new ParserException(usageMsg)
+      }
+    }
+
+    // All the arguments have been parsed, now validate the column based on the aggregation type
+    aggregationType match {
       case VectorPainter.AggregationType.MASK =>
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
+        if (column.isDefined) {
           throw new ParserException("A column name must not be specified with MASK")
         }
-        3
-      // SUM can be used with or without a column name being specified. If used
-      // with a column name, it sums the values of that column for all features
-      // that intersect that pixel. Without the column, it sums the number of
-      // features that intersect the pixel.
-      case VectorPainter.AggregationType.SUM =>
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
-          column = MapOp.decodeString(node.getChild(3))
-          column match {
-            case None =>
-              throw new ParserException("A column name must be specified")
-            case _ => 4
-          }
-        }
-        else {
-          3
-        }
+      case VectorPainter.AggregationType.SUM => {
+        // SUM can be used with or without a column name being specified. If used
+        // with a column name, it sums the values of that column for all features
+        // that intersects that pixel. Without the column, it sums the number of
+        // features that intersects the pixel.
+      }
       case _ =>
-        if (node.getNumChildren == 4 || node.getNumChildren == 8) {
-          column = MapOp.decodeString(node.getChild(3))
-          column match {
-            case None =>
-              throw new ParserException("A column name must be specified")
-            case _ => 4
-          }
-        }
-        else {
+        // All other aggregation types require a column name
+        if (column.isEmpty) {
           throw new ParserException("A column name must be specified")
         }
     }
-
-    // Get bounds if they were included
-    if (node.getNumChildren > 4) {
-      val b: Array[Double] = new Array[Double](4)
-      for (i <- nextPosition until nextPosition + 4) {
-        b(i - nextPosition) = MapOp.decodeDouble(node.getChild(i), variables) match {
-          case Some(boundsVal) => boundsVal
-          case None =>
-            throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
-        }
-      }
-      bounds = Some(new TMSUtils.Bounds(b(0), b(1), b(2), b(3)))
-    }
   }
 
-  def initialize(vector: Option[VectorMapOp], aggregator: String, cellsize: String, bounds: String,
-      column: String): Unit = {
+  private def parseBounds(node: ParserNode, variables: String => Option[ParserNode], startIndex: Int): Unit = {
+    // Make sure there are enough child nodes
+    if (node.getNumChildren < startIndex + 4) {
+      throw new ParserException("Cannot define bounds from fewer than four values")
+    }
+    val b: Array[Double] = new Array[Double](4)
+    for (i <- 0 until 4) {
+      b(i) = MapOp.decodeDouble(node.getChild(startIndex + i), variables) match {
+        case Some(boundsVal) => boundsVal
+        case None =>
+          throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
+      }
+    }
+    bounds = Some(new Bounds(b(0), b(1), b(2), b(3)))
+  }
+
+  def initialize(vector: Option[VectorMapOp], aggregator: String, cellsize: String,
+                 bounds: Either[String, Option[RasterMapOp]], column: String): Unit = {
     vectorMapOp = vector
     aggregationType =
         try {
@@ -278,8 +296,15 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
       throw new ParserException("A column name must not be specified with " + aggregationType)
     }
 
-    if (bounds != null && bounds.length > 0) {
-      this.bounds = Some(TMSUtils.Bounds.fromCommaString(bounds))
+    bounds match {
+      case Left(b) => {
+        if (b != null && b.length > 0) {
+          this.bounds = Some(Bounds.fromCommaString(b))
+        }
+      }
+      case Right(rasterForBoundsMapOp) => {
+        this.rasterForBoundsMapOp = rasterForBoundsMapOp
+      }
     }
   }
 

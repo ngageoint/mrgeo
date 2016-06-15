@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.resources.tms;
@@ -20,7 +21,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -99,9 +100,7 @@ public void testRootResourceXml()
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
     String output = writer.getBuffer().toString();
     assertEquals(response, output);
-  } catch (ParserConfigurationException ex) {
-    log.error("Failed to generate root resource xml", ex);
-  } catch (TransformerException ex) {
+  } catch (ParserConfigurationException | TransformerException ex) {
     log.error("Failed to generate root resource xml", ex);
   }
 }
@@ -112,7 +111,7 @@ public void testMrsPyramidToTileMapServiceXml()
 {
   final String response = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><TileMapService services=\"http://localhost:8080/mrgeo-services/api/tms\" version=\"1.0.0\"><Title>Tile Map Service</Title><Abstract>MrGeo MrsPyramid rasters available as TMS</Abstract><TileMaps><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistance\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"CostDistance\"/><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/Elevation\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"Elevation\"/><TileMap href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/HumveeFriction\" profile=\"global-geodetic\" srs=\"EPSG:4326\" title=\"HumveeFriction\"/></TileMaps></TileMapService>";
 
-  List<String> names = new ArrayList<String>();
+  List<String> names = new ArrayList<>();
   names.add("HumveeFriction");
   names.add("CostDistance");
   names.add("Elevation");
@@ -125,11 +124,7 @@ public void testMrsPyramidToTileMapServiceXml()
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
     String output = writer.getBuffer().toString();
     assertEquals(response, output);
-  } catch (ParserConfigurationException ex) {
-    log.error("Failed to convert metadata to TileMapService xml", ex);
-  } catch (TransformerException ex) {
-    log.error("Failed to convert metadata to TileMapService xml", ex);
-  } catch(UnsupportedEncodingException ex) {
+  } catch (ParserConfigurationException | TransformerException | UnsupportedEncodingException ex) {
     log.error("Failed to convert metadata to TileMapService xml", ex);
   }
 }
@@ -156,9 +151,7 @@ public void testMrsPyramidMetadataToTileMapXml()
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
     String output = writer.getBuffer().toString();
     assertEquals(response, output);
-  } catch (ParserConfigurationException ex) {
-    log.error("Failed to convert metadata to TileMap xml", ex);
-  } catch (TransformerException ex) {
+  } catch (ParserConfigurationException | TransformerException ex) {
     log.error("Failed to convert metadata to TileMap xml", ex);
   }
 

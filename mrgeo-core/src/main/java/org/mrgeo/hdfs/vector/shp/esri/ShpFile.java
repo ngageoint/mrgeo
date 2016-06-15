@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector.shp.esri;
@@ -27,10 +28,10 @@ import java.io.RandomAccessFile;
  * Internal class used by ESRILayer. If you're looking to read and write
  * shapefiles use ESRILayer instead.
  */
-public class ShpFile extends java.lang.Object
+public class ShpFile
 {
   protected ShpData data = null;
-  protected String fileName = null;
+  //protected String fileName = null;
   protected Header header = null;
   private SeekableDataInput in = null;
   private ShxFile index = null;

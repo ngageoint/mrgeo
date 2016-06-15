@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-     ~ Copyright 2009-2015 DigitalGlobe, Inc.
+     ~ Copyright 2009-2016 DigitalGlobe, Inc.
      ~
      ~ Licensed under the Apache License, Version 2.0 (the "License");
      ~ you may not use this file except in compliance with the License.
@@ -12,27 +12,24 @@
      ~ distributed under the License is distributed on an "AS IS" BASIS,
      ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
      ~ See the License for the specific language governing permissions and limitations under the License.
+     ~
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
   <artifactId>mrgeo</artifactId>
   <name>MrGeo</name>
-  <version>${mrgeo.version}</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
-    <!-- version -->
-    <mrgeo.version>1.1.0-${final.classifier}-SNAPSHOT</mrgeo.version>
     <!-- classifier to tag onto the end of the jars -->
     <final.classifier>unknown</final.classifier>
     <!-- default location for the hadoop config files, used for testing -->
     <hadoop.config>/etc/hadoop/conf</hadoop.config>
-    <!-- classifier put on the distribution -->
-    <distribution.classifier>CDH530</distribution.classifier>
     <!-- compiler versions -->
     <java.version>1.7</java.version>
     <scala.version>2.10.4</scala.version>
-    <!-- Many of these default/specific to the CDH5.3.0/YARN version,
+    <!-- Many of these default/specific to the cdh5.3.0/YARN version,
          they will be overridden with profiles for the other versions.  -->
     <accumulo.version>1.6.0</accumulo.version>
     <antlr.version>3.1.3</antlr.version>
@@ -40,7 +37,7 @@
     <classutil.version>1.0.5</classutil.version>
     <commons-beanutils.version>1.7.0</commons-beanutils.version>
     <commons-codec.version>1.4</commons-codec.version>
-    <commons-collections.version>3.2.1</commons-collections.version>
+    <commons-collections.version>3.2.2</commons-collections.version>
     <commons-fileupload.version>1.2.1</commons-fileupload.version>
     <commons-io.version>2.4</commons-io.version>
     <commons-jexl.version>2.1.1</commons-jexl.version>
@@ -49,7 +46,7 @@
     <!--<gdal.version>1.11.2</gdal.version>-->
     <gdal.version>1.10.1</gdal.version>
     <geotools.version>12.1</geotools.version>
-    <geowave.version>0.9.0-SNAPSHOT</geowave.version>
+    <geowave.version>0.9.0</geowave.version>
     <gson.version>2.2.2</gson.version>
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
@@ -68,9 +65,11 @@
     <jts.version>1.13</jts.version>
     <kryo.version>2.21</kryo.version>
     <mahout.version>0.9-cdh5.3.0</mahout.version>
+    <opencv.version>2.4.9-7</opencv.version>
+    <opencv.group>nu.pattern</opencv.group>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
-    <py4j.version>0.8.2.1</py4j.version>
+    <py4j.version>0.9.1</py4j.version>
     <reflections.version>0.9.9-RC1</reflections.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spark.version>1.2.0-cdh5.3.0</spark.version>
@@ -91,6 +90,7 @@
     <spring.version>3.2.1.RELEASE</spring.version>
     <!-- testing frameworks -->
     <cpsuite.version>1.2.7</cpsuite.version>
+    <findbugs.version>3.0.1</findbugs.version>
     <hamcrest.version>1.3</hamcrest.version>
     <httpunit.version>1.7</httpunit.version>
     <junit.version>4.8.2</junit.version>
@@ -103,8 +103,10 @@
     <buildnumber-maven.version>1.3</buildnumber-maven.version>
     <cobertura-maven.version>2.6</cobertura-maven.version>
     <exec-maven.version>1.4.0</exec-maven.version>
+    <findbugs-maven.version>3.0.1</findbugs-maven.version>
+    <findsecbugs-plugin.version>LATEST</findsecbugs-plugin.version>
     <license-maven.version>1.8</license-maven.version>
-    <pomtools-maven.version>0.1.2</pomtools-maven.version>
+    <pomtools-maven.version>0.2.1</pomtools-maven.version>
     <maven-assembly.version>2.5.4</maven-assembly.version>
     <maven-clean.version>2.6.1</maven-clean.version>
     <maven-compiler.version>3.2</maven-compiler.version>
@@ -112,6 +114,7 @@
     <maven-deploy.version>2.8.2</maven-deploy.version>
     <maven-eclipse.version>2.9</maven-eclipse.version>
     <maven-failsafe.version>2.18.1</maven-failsafe.version>
+    <maven-help.version>2.2</maven-help.version>
     <maven-install.version>2.5.2</maven-install.version>
     <maven-jar.version>2.5</maven-jar.version>
     <maven-javadoc.version>2.9.1</maven-javadoc.version>
@@ -127,6 +130,8 @@
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- generated resources -->
+    <generatedResources>${project.build.directory}/generated-resources</generatedResources>
     <!-- repositories -->
     <repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/release</repository.url>
     <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
@@ -174,6 +179,13 @@
       <id>mrgeo-maven-plugin</id>
       <name>MrGeo S3 Plugin Repository</name>
       <url>${repository.url}</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </pluginRepository>
   </pluginRepositories>
   <distributionManagement>
@@ -207,6 +219,121 @@
     </extensions>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar.version}</version>
+          <configuration>
+            <excludes>
+              <exclude>lib/**</exclude>
+            </excludes>
+            <archive>
+              <addMavenDescriptor>false</addMavenDescriptor>
+              <manifest>
+                <addClasspath>false</addClasspath>
+              </manifest>
+            </archive>
+          </configuration>
+          <executions>
+            <execution>
+              <id>test-jar</id>
+              <phase>test</phase>
+              <goals>
+                <goal>test-jar</goal>
+              </goals>
+              <configuration>
+                <testClassesDirectory>${project.build.directory}/test-classes</testClassesDirectory>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.mrgeo.plugins</groupId>
+          <artifactId>pomtools-maven-plugin</artifactId>
+          <version>${pomtools-maven.version}</version>
+          <executions>
+            <execution>
+              <id>generate-pom</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>generate-pom</goal>
+              </goals>
+              <configuration>
+                <version>${mrgeo.version}</version>
+                <output>${project.build.directory}/${project.build.finalName}.pom</output>
+              </configuration>
+            </execution>
+            <execution>
+              <id>generate-dependencies</id>
+              <phase>generate-resources</phase>
+              <goals>
+                <goal>list-dependencies</goal>
+              </goals>
+              <configuration>
+                <output>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</output>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${maven-deploy.version}</version>
+          <executions>
+            <!-- Force maven to deploy the effective pom.  -->
+            <execution>
+              <id>deploy-artifact</id>
+              <goals>
+                <goal>deploy-file</goal>
+              </goals>
+              <phase>deploy</phase>
+              <configuration>
+                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
+                <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
+                <repositoryId>mrgeo-repository</repositoryId>
+                <url>${deploy.repository.url}</url>
+                <uniqueVersion>false</uniqueVersion>
+              </configuration>
+            </execution>
+            <execution>
+              <id>default-deploy</id>
+              <goals>
+                <goal>deploy</goal>
+              </goals>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>${build-helper-maven.version}</version>
+          <executions>
+            <execution>
+              <id>check-packaging-for-skip</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>bsh-property</goal>
+              </goals>
+              <configuration>
+                <source>
+                  if (project.version.endsWith("-SNAPSHOT")) {
+                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("snapshot.repository.url", ""));
+                  }
+                  else {
+                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("repository.url", ""));
+                  }
+                </source>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>${maven-install.version}</version>
+        </plugin>
         <!-- make sure scala is before java... -->
         <plugin>
           <groupId>org.scala-tools</groupId>
@@ -255,12 +382,11 @@
               <arg>-target:jvm-${java.version}</arg>
               <arg>-Xmax-classfile-name</arg>
               <arg>143</arg>
+              <arg>-optimize</arg>
+              <!--<arg>-source ${java.version}</arg>-->
+              <!--<arg>-target ${java.version}</arg>-->
+              <!--<arg>-XDignore.symbol.file=true</arg>-->
             </args>
-            <javacArgs>
-              <javacArg>-source ${java.version}</javacArg>
-              <javacArg>-target ${java.version}</javacArg>
-              <javacArg>-XDignore.symbol.file=true</javacArg>
-            </javacArgs>
             <sourceDir>${project.basedir}/src/main/scala</sourceDir>
             <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
             <outputDir>${project.build.directory}/classes</outputDir>
@@ -283,25 +409,6 @@
           <version>${maven-release.version}</version>
           <configuration>
             <arguments>${release.arguments}</arguments>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>buildnumber-maven-plugin</artifactId>
-          <version>${buildnumber-maven.version}</version>
-          <executions>
-            <execution>
-              <phase>validate</phase>
-              <goals>
-                <goal>create</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <doCheck>false</doCheck>
-            <doUpdate>false</doUpdate>
-            <revisionOnScmFailure>unknown</revisionOnScmFailure>
-            <timestampFormat>{0,date,yyyy-MM-dd HH:mm:ss}</timestampFormat>
           </configuration>
         </plugin>
         <!-- Make some soft links for the generated products, for convenience -->
@@ -332,15 +439,6 @@
                 <dst>${project.build.directory}/${project.artifactId}.${project.packaging}</dst>
               </link>
             </links>
-          </configuration>
-        </plugin>
-        <plugin>
-          <artifactId>maven-eclipse-plugin</artifactId>
-          <version>${maven-eclipse.version}</version>
-          <configuration>
-            <sourceExcludes>
-              <sourceExclude>**/.svn*/**</sourceExclude>
-            </sourceExcludes>
           </configuration>
         </plugin>
         <plugin>
@@ -484,36 +582,6 @@
           </executions>
         </plugin>
         <plugin>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>${maven-jar.version}</version>
-          <configuration>
-            <excludes>
-              <exclude>lib/**</exclude>
-            </excludes>
-            <archive>
-              <addMavenDescriptor>false</addMavenDescriptor>
-              <manifest>
-                <addClasspath>false</addClasspath>
-              </manifest>
-            </archive>
-          </configuration>
-          <executions>
-            <!-- Package the unit test separately -->
-            <!-- this will make a jar with the unit integration.tests in it, so they can be referenced in other integration.tests
-                 Mainly used for some utility code in the mrgeo core integration.tests -->
-            <execution>
-              <id>test-jar</id>
-              <phase>test</phase>
-              <goals>
-                <goal>test-jar</goal>
-              </goals>
-              <configuration>
-                <testClassesDir>${project.build.directory}/test-classes</testClassesDir>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>${maven-source.version}</version>
@@ -570,141 +638,6 @@
             </execution>
           </executions>
         </plugin>
-        <!-- build the effective pom -->
-        <plugin>
-          <groupId>org.mrgeo.plugins</groupId>
-          <artifactId>pomtools-maven-plugin</artifactId>
-          <version>${pomtools-maven.version}</version>
-          <executions>
-            <execution>
-              <id>generate-pom</id>
-              <phase>generate-sources</phase>
-              <goals>
-                <goal>generate-pom</goal>
-              </goals>
-              <configuration>
-                <output>${project.build.directory}/${project.build.finalName}.pom</output>
-              </configuration>
-            </execution>
-            <execution>
-              <id>generate-dependencies</id>
-              <phase />
-              <goals>
-                <goal>list-dependencies</goal>
-              </goals>
-              <configuration>
-                <output>${generatedResources}/org/mrgeo/utils/${project.artifactId}-dependencies.properties</output>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <!-- add the effective pom as an artifact -->
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>build-helper-maven-plugin</artifactId>
-          <version>${build-helper-maven.version}</version>
-          <executions>
-            <execution>
-              <id>attach-effective-pom</id>
-              <phase>package</phase>
-              <goals>
-                <goal>attach-artifact</goal>
-              </goals>
-              <configuration>
-                <skipAttach>${alternate.deploy}</skipAttach>
-                <artifacts>
-                  <artifact>
-                    <file>${project.build.directory}/${project.build.finalName}.pom</file>
-                    <type>pom</type>
-                  </artifact>
-                </artifacts>
-              </configuration>
-            </execution>
-            <!-- skip the attach for pom-only modules, set the repo url as well -->
-            <execution>
-              <id>check-packaging-for-skip</id>
-              <phase>validate</phase>
-              <goals>
-                <goal>bsh-property</goal>
-              </goals>
-              <configuration>
-                <source>
-                  if (project.packaging.equals("pom")) {
-                  project.properties.setProperty("alternate.deploy",  "true");
-                  }
-                  else {
-                  project.properties.setProperty("alternate.deploy",  "false");
-                  }
-
-                  if (project.version.endsWith("-SNAPSHOT")) {
-                  project.properties.setProperty("deploy.repository", project.properties.getProperty("snapshot.repository", ""));
-                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("snapshot.repository.url", ""));
-                  }
-                  else {
-                  project.properties.setProperty("deploy.repository", project.properties.getProperty("repository", ""));
-                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("repository.url", ""));
-                  }
-                </source>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>${maven-deploy.version}</version>
-          <executions>
-            <execution>
-              <id>default-deploy</id>
-              <configuration>
-                <skip>${alternate.deploy}</skip>
-                <!--<deployAtEnd>true</deployAtEnd>-->
-              </configuration>
-            </execution>
-            <!-- Force maven to only deploy the effective pom.  Just for this pom, not children -->
-            <execution>
-              <id>deploy-effective-pom</id>
-              <goals>
-                <goal>deploy-file</goal>
-              </goals>
-              <phase>deploy</phase>
-              <inherited>false</inherited>
-              <configuration>
-                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
-                <file>${project.build.directory}/${project.build.finalName}.pom</file>
-                <packaging>pom</packaging>
-                <repositoryId>mrgeo-repository</repositoryId>
-                <url>${deploy.repository.url}</url>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <!-- Force maven to only install the effective pom.  Just for this pom, not children -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-install-plugin</artifactId>
-          <version>${maven-install.version}</version>
-          <executions>
-            <execution>
-              <id>install-effective-pom</id>
-              <goals>
-                <goal>install-file</goal>
-              </goals>
-              <phase>install</phase>
-              <configuration>
-                <pomFile>${project.build.directory}/${project.build.finalName}.pom</pomFile>
-                <file>${project.build.directory}/${project.build.finalName}.pom</file>
-                <packaging>pom</packaging>
-              </configuration>
-            </execution>
-            <execution>
-              <id>default-install</id>
-              <configuration>
-                <skip>${alternate.deploy}</skip>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
@@ -756,17 +689,43 @@
           </executions>
         </plugin>
         <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>${findbugs-maven.version}</version>
+          <configuration>
+            <effort>Max</effort>
+            <threshold>Low</threshold>
+            <failOnError>true</failOnError>
+            <outputDirectory>${project.build.directory}/findbugs</outputDirectory>
+            <xmlOutputDirectory>${project.build.directory}/findbugs</xmlOutputDirectory>
+            <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+            <!--
+            <includeFilterFile>${session.executionRootDirectory}/findbugs-security-include.xml</includeFilterFile>
+            -->
+            <excludeFilterFile>${session.executionRootDirectory}/src/main/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
+            <plugins>
+              <plugin>
+                <groupId>com.h3xstream.findsecbugs</groupId>
+                <artifactId>findsecbugs-plugin</artifactId>
+                <version>${findsecbugs-plugin.version}</version>
+              </plugin>
+            </plugins>
+          </configuration>
+        </plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>${maven-assembly.version}</version>
-          <configuration>
-            <finalName>${project.parent.parent.artifactId}-${project.parent.version}-${final.classifier}</finalName>
-          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
           <version>${maven-clean.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-help-plugin</artifactId>
+          <version>${maven-help.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -776,19 +735,16 @@
         <artifactId>maven-release-plugin</artifactId>
       </plugin>
       <plugin>
-        <artifactId>maven-eclipse-plugin</artifactId>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
+        <artifactId>build-helper-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
+        <artifactId>cobertura-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.mrgeo.plugins</groupId>
@@ -797,6 +753,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.scala-tools</groupId>
@@ -817,7 +777,7 @@
     <!--
          | Profiles defining the various build types.  The template for these are:
          | <profile>
-         |   <id>CDH520-yarn</id>
+         |   <id>cdh520-yarn</id>
          |   <properties>
          |     <hadoop.version></hadoop.version>
          |     <mahout.version></mahout.version>
@@ -833,11 +793,191 @@
          | hadoop.config - the path to the hadoop config files (used for tests), usually /etc/hadoop/conf
          | slf4j.version - the slf4j version to use, this version must not conflict with the hadoop slf4j version
          | final.classifier - the classifier for the final (distribution) artifacts, usually the hadoop version without
-         |                    any punctuation (i.e CDH 4.5.0 becomes CDH450), used when ultimately build RPMs
+         |                    any punctuation (i.e cdh 4.5.0 becomes cdh450), used when ultimately build RPMs
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
-      <id>CDH551-yarn</id>
+      <id>cdh571-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.7.1</hadoop.version>
+        <mahout.version>0.9-cdh5.7.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.7.1</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.7.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh571</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.7.1</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.7.1</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.7.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.7.1</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.7.1-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh570-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.7.0</hadoop.version>
+        <mahout.version>0.9-cdh5.7.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.7.0</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.7.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh570</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.7.0</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.7.0</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.7.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.7.0</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.7.0-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh560-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.6.0</hadoop.version>
+        <mahout.version>0.9-cdh5.6.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.6.0</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.6.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh560</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.6.0</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.6.0</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.6.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.6.0</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.6.0-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh552-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
+        <mahout.version>0.9-cdh5.5.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.2</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.2</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh552</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.5.2</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.5.2</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.5.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.5.0-cdh5.5.1</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.5.2-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh551-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
         <mahout.version>0.9-cdh5.5.1</mahout.version>
@@ -856,7 +996,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH551</id>
+      <id>cdh551</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.5.1</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.5.1</hadoop.yarn.version>
@@ -882,7 +1022,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH550-yarn</id>
+      <id>cdh550-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.5.0</hadoop.version>
         <mahout.version>0.9-cdh5.5.0</mahout.version>
@@ -901,7 +1041,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH550</id>
+      <id>cdh550</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.5.0</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.5.0</hadoop.yarn.version>
@@ -927,7 +1067,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH548-yarn</id>
+      <id>cdh548-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.8</hadoop.version>
         <mahout.version>0.9-cdh5.4.8</mahout.version>
@@ -940,7 +1080,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH548</id>
+      <id>cdh548</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.8</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.8</hadoop.yarn.version>
@@ -962,7 +1102,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH547-yarn</id>
+      <id>cdh547-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.7</hadoop.version>
         <mahout.version>0.9-cdh5.4.7</mahout.version>
@@ -975,7 +1115,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH547</id>
+      <id>cdh547</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.7</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.7</hadoop.yarn.version>
@@ -997,7 +1137,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH545-yarn</id>
+      <id>cdh545-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.5</hadoop.version>
         <mahout.version>0.9-cdh5.4.5</mahout.version>
@@ -1011,7 +1151,7 @@
       <dependencies />
     </profile>
     <profile>
-      <id>CDH545</id>
+      <id>cdh545</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.5</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.5</hadoop.yarn.version>
@@ -1033,7 +1173,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH544-yarn</id>
+      <id>cdh544-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.4</hadoop.version>
         <mahout.version>0.9-cdh5.4.4</mahout.version>
@@ -1046,7 +1186,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH544</id>
+      <id>cdh544</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.4</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.4</hadoop.yarn.version>
@@ -1068,7 +1208,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH543-yarn</id>
+      <id>cdh543-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.3</hadoop.version>
         <mahout.version>0.9-cdh5.4.3</mahout.version>
@@ -1081,7 +1221,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH543</id>
+      <id>cdh543</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.3</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.3</hadoop.yarn.version>
@@ -1103,7 +1243,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH542-yarn</id>
+      <id>cdh542-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.2</hadoop.version>
         <mahout.version>0.9-cdh5.4.2</mahout.version>
@@ -1116,7 +1256,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH542</id>
+      <id>cdh542</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.2</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.2</hadoop.yarn.version>
@@ -1138,7 +1278,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH541-yarn</id>
+      <id>cdh541-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.1</hadoop.version>
         <mahout.version>0.9-cdh5.4.1</mahout.version>
@@ -1151,7 +1291,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH541</id>
+      <id>cdh541</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.1</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.1</hadoop.yarn.version>
@@ -1173,7 +1313,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH540-yarn</id>
+      <id>cdh540-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.4.0</hadoop.version>
         <mahout.version>0.9-cdh5.4.0</mahout.version>
@@ -1186,7 +1326,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH540</id>
+      <id>cdh540</id>
       <properties>
         <hadoop.version>2.6.0-mr1-cdh5.4.0</hadoop.version>
         <hadoop.yarn.version>2.6.0-cdh5.4.0</hadoop.yarn.version>
@@ -1208,7 +1348,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH533-yarn</id>
+      <id>cdh533-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.3</hadoop.version>
         <mahout.version>0.9-cdh5.3.3</mahout.version>
@@ -1221,7 +1361,7 @@
       </properties>
     </profile>
     <profile>
-      <id>CDH533</id>
+      <id>cdh533</id>
       <properties>
         <hadoop.version>2.5.0-mr1-cdh5.3.3</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.3</hadoop.yarn.version>
@@ -1243,7 +1383,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH532-yarn</id>
+      <id>cdh532-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.2</hadoop.version>
         <mahout.version>0.9-cdh5.3.2</mahout.version>
@@ -1262,7 +1402,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH532</id>
+      <id>cdh532</id>
       <properties>
         <hadoop.version>2.5.0-mr1-cdh5.3.2</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.2</hadoop.yarn.version>
@@ -1292,7 +1432,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH531-yarn</id>
+      <id>cdh531-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.1</hadoop.version>
         <mahout.version>0.9-cdh5.3.1</mahout.version>
@@ -1311,7 +1451,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH531</id>
+      <id>cdh531</id>
       <properties>
         <hadoop.version>2.5.0-mr1-cdh5.3.1</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.1</hadoop.yarn.version>
@@ -1341,7 +1481,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH530-yarn</id>
+      <id>cdh530-yarn</id>
       <properties>
         <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
@@ -1360,7 +1500,7 @@
       </dependencies>
     </profile>
     <profile>
-      <id>CDH530</id>
+      <id>cdh530</id>
       <properties>
         <hadoop.version>2.5.0-mr1-cdh5.3.0</hadoop.version>
         <hadoop.yarn.version>2.5.0-cdh5.3.0</hadoop.yarn.version>
@@ -1396,7 +1536,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.2.1</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.2.0</final.classifier>
         <release.arguments />
@@ -1418,7 +1558,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.2.1</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.3.0</final.classifier>
         <release.arguments />
@@ -1440,7 +1580,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.2.1</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.4.0</final.classifier>
         <release.arguments />
@@ -1462,7 +1602,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.2.1</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.4.1</final.classifier>
         <release.arguments />
@@ -1484,7 +1624,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.2.1</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.5.0</final.classifier>
         <release.arguments />
@@ -1506,7 +1646,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.2.1</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.5.1</final.classifier>
         <release.arguments />
@@ -1528,7 +1668,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.2.1</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.5.2</final.classifier>
         <release.arguments />
@@ -1550,7 +1690,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.2.1</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.6.0</final.classifier>
         <release.arguments />
@@ -1572,7 +1712,7 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spark.version>1.6.0</spark.version>
+        <spark.version>1.6.1</spark.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.7.1</final.classifier>
         <release.arguments />
@@ -1599,20 +1739,68 @@
          <skipShade>true</skipShade>
     -->
     <profile>
-      <id>emr</id>
+      <id>emr-4.5.0</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <accumulo.version>1.6.1</accumulo.version>
+        <geowave.version>0.9.0</geowave.version>
+        <mahout.version>0.11.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.7.2</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>1.6.1</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>emr-4.4.0</id>
       <properties>
         <hadoop.version>2.7.1</hadoop.version>
-        <accumulo.version>1.6.1</accumulo.version>
-        <geowave.version>0.9.0-SNAPSHOT</geowave.version>
-        <mahout.version>0.7</mahout.version>
+        <accumulo.version>1.6.0</accumulo.version>
+        <geowave.version>0.9.0</geowave.version>
+        <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
         <spark.scope>compile</spark.scope>
         <final.classifier>2.7.1</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
-        <spark.version>1.6.0</spark.version>
+        <spark.version>1.6.1</spark.version>
       </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
     </profile>
     <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->
     <profile>
@@ -2000,162 +2188,167 @@
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-buildpyramid</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-developers</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-distribution</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-export</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-ingest</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-mapalgebra</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-quantiles</artifactId>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-webserver</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider-accumulo</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider-geowave</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider-distribution</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra</artifactId>
         <type>pom</type>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-image</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-integrationtests</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-rasterizevector</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-rastermath</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-terrain</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-mapalgebra-vector</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-core</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-tms</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-wms</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-services-wcs</artifactId>
-        <version>${mrgeo.version}</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -2865,7 +3058,7 @@
       </dependency>
       <dependency>
         <groupId>mil.nga.giat</groupId>
-        <artifactId>geowave-core-store</artifactId>
+        <artifactId>geowave-core-mapreduce</artifactId>
         <version>${geowave.version}</version>
         <exclusions>
           <exclusion>
@@ -2888,6 +3081,20 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <!-- NOTE:  This is just for testing!!!  We need a better way to correllate the opencv
+           binaries and the jar.
+      -->
+      <dependency>
+        <groupId>${opencv.group}</groupId>
+        <artifactId>opencv</artifactId>
+        <version>${opencv.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>findbugs</artifactId>
+        <version>${findbugs.version}</version>
+        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -2948,6 +3155,10 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>findbugs</artifactId>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->

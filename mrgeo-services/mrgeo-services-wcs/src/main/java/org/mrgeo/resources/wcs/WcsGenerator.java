@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.resources.wcs;
@@ -29,8 +30,8 @@ import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.services.wcs.DescribeCoverageDocumentGenerator;
 import org.mrgeo.services.wcs.WcsCapabilities;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.XmlUtils;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.CDATASection;
@@ -48,7 +49,6 @@ import javax.xml.transform.TransformerException;
 import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -180,10 +180,7 @@ private Response handleRequest(UriInfo uriInfo)
  * Returns the value for the specified paramName case-insensitively. If the
  * parameter does not exist, it returns null.
  *
- * @param allParams
- * @param paramName
- * @return
- */
+ * */
 private String getQueryParam(MultivaluedMap<String, String> allParams, String paramName)
 {
   for (String key: allParams.keySet())
@@ -206,7 +203,7 @@ private Response describeCoverage(UriInfo uriInfo,
 {
   String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
   version = new Version(versionStr);
-  String[] layers = null;
+  String[] layers;
   if (version.isLess("1.1.0"))
   {
     String layer = getQueryParam(allParams, "coverage");
@@ -351,7 +348,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
   version = new Version(versionStr);
 
-  String layer = null;
+  String layer;
   if (version.isLess("1.1.0"))
   {
     layer = getQueryParam(allParams, "coverage");
@@ -367,26 +364,19 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   }
 
 
-  String crs = null;
-  Bounds bounds = new Bounds();
+  String crs;
+  Bounds bounds = null;
   try
   {
     if (version.isLess("1.1.0"))
     {
-      crs = getBoundsParam(allParams, "bbox", bounds);
-      try
-      {
-        crs = getCrsParam(allParams);
-      }
-      catch (Exception e)
-      {
-        return writeError(Response.Status.BAD_REQUEST, e.getMessage());
-      }
+      bounds = getBoundsParam(allParams, "bbox", bounds);
     }
     else
     {
-      crs = getBoundsParam(allParams, "boundingbox", bounds);
+      bounds = getBoundsParam(allParams, "boundingbox", bounds);
     }
+    crs = getCrsParam(allParams);
   }
   catch (Exception e)
   {
@@ -419,7 +409,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
     return writeError(Response.Status.BAD_REQUEST, "HEIGHT parameter must be greater than 0");
   }
 
-  ImageRenderer renderer = null;
+  ImageRenderer renderer;
   try
   {
     renderer = (ImageRenderer) ImageHandlerFactory.getHandler(format, ImageRenderer.class);
@@ -464,10 +454,6 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
  * Returns the value for the specified paramName case-insensitively. If the
  * parameter does not exist, it returns defaultValue.
  *
- * @param allParams
- * @param paramName
- * @param defaultValue
- * @return
  */
 
 private String getQueryParam(MultivaluedMap<String, String> allParams,
@@ -482,27 +468,24 @@ private String getQueryParam(MultivaluedMap<String, String> allParams,
   return defaultValue;
 }
 
-private String getActualQueryParamName(MultivaluedMap<String, String> allParams,
-    String paramName)
-{
-  for (String key: allParams.keySet())
-  {
-    if (key.equalsIgnoreCase(paramName))
-    {
-      return key;
-    }
-  }
-  return null;
-}
+//private String getActualQueryParamName(MultivaluedMap<String, String> allParams,
+//    String paramName)
+//{
+//  for (String key: allParams.keySet())
+//  {
+//    if (key.equalsIgnoreCase(paramName))
+//    {
+//      return key;
+//    }
+//  }
+//  return null;
+//}
 
 /**
  * Returns the int value for the specified paramName case-insensitively. If
  * the parameter value exists, but is not an int, it throws a NumberFormatException.
  * If it does not exist, it returns defaultValue.
  *
- * @param allParams
- * @param paramName
- * @return
  */
 private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
     String paramName,
@@ -528,30 +511,27 @@ private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
  * the parameter value exists, but is not an int, it throws a NumberFormatException.
  * If it does not exist, it returns defaultValue.
  *
- * @param allParams
- * @param paramName
- * @return
  */
-private double getQueryParamAsDouble(MultivaluedMap<String, String> allParams,
-    String paramName,
-    double defaultValue)
-    throws NumberFormatException
-{
-  for (String key: allParams.keySet())
-  {
-    if (key.equalsIgnoreCase(paramName))
-    {
-      List<String> value = allParams.get(key);
-      if (value.size() == 1)
-      {
-        return Double.parseDouble(value.get(0));
-      }
-    }
-  }
-  return defaultValue;
-}
+//private double getQueryParamAsDouble(MultivaluedMap<String, String> allParams,
+//    String paramName,
+//    double defaultValue)
+//    throws NumberFormatException
+//{
+//  for (String key: allParams.keySet())
+//  {
+//    if (key.equalsIgnoreCase(paramName))
+//    {
+//      List<String> value = allParams.get(key);
+//      if (value.size() == 1)
+//      {
+//        return Double.parseDouble(value.get(0));
+//      }
+//    }
+//  }
+//  return defaultValue;
+//}
 
-private String getBoundsParam(MultivaluedMap<String, String> allParams, String paramName, Bounds bounds)
+private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName, Bounds bounds)
     throws Exception
 {
   String bbox = getQueryParam(allParams, paramName);
@@ -560,12 +540,7 @@ private String getBoundsParam(MultivaluedMap<String, String> allParams, String p
     throw new Exception("Missing required " + paramName.toUpperCase() + " parameter");
   }
   String[] bboxComponents = bbox.split(",");
-  String crs = null;
-  if (bboxComponents.length == 5)
-  {
-    crs = bboxComponents[4];
-  }
-  else if (bboxComponents.length != 4)
+  if (!(bboxComponents.length == 5 || bboxComponents.length == 4))
   {
     throw new Exception("Invalid \" + paramName.toUpperCase() + \" parameter. Should contain minX, minY, maxX, maxY");
   }
@@ -583,9 +558,12 @@ private String getBoundsParam(MultivaluedMap<String, String> allParams, String p
     }
   }
 
-  bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+  if (bounds == null)
+  {
+    return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+  }
 
-  return crs;
+  return bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
 }
 
 private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exception
@@ -593,6 +571,16 @@ private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exce
   String crs = getQueryParam(allParams, "crs");
   if (crs == null || crs.isEmpty())
   {
+    // CRS can also be buried in bbox (in earlier versions of the spec)
+    String bbox = getQueryParam(allParams, "bbox");
+    if (bbox != null)
+    {
+      String[] bboxComponents = bbox.split(",");
+      if (bboxComponents.length == 5)
+      {
+        return bboxComponents[4];
+      }
+    }
     return null;
   }
   else
@@ -605,48 +593,48 @@ private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exce
 /*
  * Writes OGC spec error messages to the response
  */
-private Response writeError(Response.Status httpStatus, final Exception e)
-{
-  try
-  {
-    Document doc;
-    final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-    final DocumentBuilder builder;
-    builder = dBF.newDocumentBuilder();
-    doc = builder.newDocument();
-
-    final Element ser = doc.createElement("ServiceExceptionReport");
-    doc.appendChild(ser);
-    ser.setAttribute("version", WCS_VERSION);
-    final Element se = XmlUtils.createElement(ser, "ServiceException");
-    String msg = e.getLocalizedMessage();
-    if (msg == null || msg.isEmpty())
-    {
-      msg = e.getClass().getName();
-    }
-    final ByteArrayOutputStream strm = new ByteArrayOutputStream();
-    e.printStackTrace(new PrintStream(strm));
-    CDATASection msgNode = doc.createCDATASection(strm.toString());
-    se.appendChild(msgNode);
-    final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-    final PrintWriter out = new PrintWriter(xmlStream);
-    DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
-    out.close();
-    return Response
-        .status(httpStatus)
-        .header("Content-Type", MediaType.TEXT_XML)
-        .entity(xmlStream.toString())
-        .build();
-  }
-  catch (ParserConfigurationException e1)
-  {
-  }
-  catch (TransformerException e1)
-  {
-  }
-  // Fallback in case there is an XML exception above
-  return Response.status(httpStatus).entity(e.getLocalizedMessage()).build();
-}
+//private Response writeError(Response.Status httpStatus, final Exception e)
+//{
+//  try
+//  {
+//    Document doc;
+//    final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
+//    final DocumentBuilder builder;
+//    builder = dBF.newDocumentBuilder();
+//    doc = builder.newDocument();
+//
+//    final Element ser = doc.createElement("ServiceExceptionReport");
+//    doc.appendChild(ser);
+//    ser.setAttribute("version", WCS_VERSION);
+//    final Element se = XmlUtils.createElement(ser, "ServiceException");
+//    String msg = e.getLocalizedMessage();
+//    if (msg == null || msg.isEmpty())
+//    {
+//      msg = e.getClass().getName();
+//    }
+//    final ByteArrayOutputStream strm = new ByteArrayOutputStream();
+//    e.printStackTrace(new PrintStream(strm));
+//    CDATASection msgNode = doc.createCDATASection(strm.toString());
+//    se.appendChild(msgNode);
+//    final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
+//    final PrintWriter out = new PrintWriter(xmlStream);
+//    DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
+//    out.close();
+//    return Response
+//        .status(httpStatus)
+//        .header("Content-Type", MediaType.TEXT_XML)
+//        .entity(xmlStream.toString())
+//        .build();
+//  }
+//  catch (ParserConfigurationException e1)
+//  {
+//  }
+//  catch (TransformerException e1)
+//  {
+//  }
+//  // Fallback in case there is an XML exception above
+//  return Response.status(httpStatus).entity(e.getLocalizedMessage()).build();
+//}
 
 /*
  * Writes OGC spec error messages to the response
@@ -686,40 +674,40 @@ private Response writeError(Response.Status httpStatus, final String msg)
 /*
  * Writes OGC spec error messages to the response
  */
-private Response writeError(Response.Status httpStatus, final String code, final String msg)
-{
-  try
-  {
-    Document doc;
-    final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-    final DocumentBuilder builder = dBF.newDocumentBuilder();
-    doc = builder.newDocument();
-
-    final Element ser = doc.createElement("ServiceExceptionReport");
-    doc.appendChild(ser);
-    ser.setAttribute("version", WCS_VERSION);
-    final Element se = XmlUtils.createElement(ser, "ServiceException");
-    se.setAttribute("code", code);
-    CDATASection msgNode = doc.createCDATASection(msg);
-    se.appendChild(msgNode);
-    final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-    final PrintWriter out = new PrintWriter(xmlStream);
-    DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
-    out.close();
-    return Response
-        .status(httpStatus)
-        .header("Content-Type", MediaType.TEXT_XML)
-        .entity(xmlStream.toString())
-        .build();
-  }
-  catch (ParserConfigurationException e1)
-  {
-  }
-  catch (TransformerException e1)
-  {
-  }
-  // Fallback in case there is an XML exception above
-  return Response.status(httpStatus).entity(msg).build();
-}
+//private Response writeError(Response.Status httpStatus, final String code, final String msg)
+//{
+//  try
+//  {
+//    Document doc;
+//    final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
+//    final DocumentBuilder builder = dBF.newDocumentBuilder();
+//    doc = builder.newDocument();
+//
+//    final Element ser = doc.createElement("ServiceExceptionReport");
+//    doc.appendChild(ser);
+//    ser.setAttribute("version", WCS_VERSION);
+//    final Element se = XmlUtils.createElement(ser, "ServiceException");
+//    se.setAttribute("code", code);
+//    CDATASection msgNode = doc.createCDATASection(msg);
+//    se.appendChild(msgNode);
+//    final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
+//    final PrintWriter out = new PrintWriter(xmlStream);
+//    DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
+//    out.close();
+//    return Response
+//        .status(httpStatus)
+//        .header("Content-Type", MediaType.TEXT_XML)
+//        .entity(xmlStream.toString())
+//        .build();
+//  }
+//  catch (ParserConfigurationException e1)
+//  {
+//  }
+//  catch (TransformerException e1)
+//  {
+//  }
+//  // Fallback in case there is an XML exception above
+//  return Response.status(httpStatus).entity(msg).build();
+//}
 
 }

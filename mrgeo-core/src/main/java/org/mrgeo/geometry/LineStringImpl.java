@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,12 +11,13 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.geometry;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.io.*;
 import java.util.*;
@@ -28,6 +29,8 @@ import java.util.*;
  */
 public class LineStringImpl extends GeometryImpl implements WritableLineString
 {
+private static final long serialVersionUID = 1L;
+
 List<WritablePoint> points = new ArrayList<>();
 
 LineStringImpl()
@@ -185,14 +188,14 @@ public void write(DataOutputStream stream) throws IOException
   }
 }
 
-private synchronized void writeObject(ObjectOutputStream stream) throws IOException
+private void writeObject(ObjectOutputStream stream) throws IOException
 {
   DataOutputStream dos = new DataOutputStream(stream);
   write(dos);
   writeAttributes(dos);
 }
 
-private synchronized void readObject(ObjectInputStream stream) throws IOException
+private void readObject(ObjectInputStream stream) throws IOException
 {
   DataInputStream dis = new DataInputStream(stream);
   read(dis);
@@ -238,11 +241,16 @@ public Bounds getBounds()
 {
   if (bounds == null)
   {
-    bounds = new Bounds();
-
     for (Point pt: points)
     {
-      bounds.expand(pt.getX(), pt.getY());
+      if (bounds == null)
+      {
+        bounds = new Bounds(pt.getX(), pt.getY(), pt.getX(), pt.getY());
+      }
+      else
+      {
+        bounds = bounds.expand(pt.getX(), pt.getY());
+      }
     }
   }
 

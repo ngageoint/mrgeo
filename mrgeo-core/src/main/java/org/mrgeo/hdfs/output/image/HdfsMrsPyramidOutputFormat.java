@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.output.image;
@@ -39,33 +40,6 @@ import java.io.IOException;
 public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
 {
   private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidOutputFormat.class);
-
-  public static void setInfo(final Configuration conf, final Job job)
-  {
-    // index every entry
-    conf.set("io.map.index.interval", "1");
-
-    if (job != null)
-    {
-      // compress at a record level
-      SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.RECORD);
-    }
-  }
-
-  public static void setOutputInfo(final Configuration conf, final Job job, final String output)
-  {
-    setInfo(conf, job);
-    if (job != null)
-    {
-      FileOutputFormat.setOutputPath(job, new Path(output));
-    }
-    else
-    {
-//      conf.set(HdfsMrsPyramidOutputFormat.OUTDIR, output);
-      conf.set("mapred.output.dir", output);
-      conf.set("mapreduce.output.fileoutputformat.outputdir", output);
-    }
-  }
 
   @Override
   public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttemptContext context) throws IOException
@@ -112,7 +86,6 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
     public void write(WritableComparable<?> key, Writable value)
         throws IOException
     {
-      log.warn("Writing HDFS record for tile " + key.toString());
       // there may ba a case or two where an extended TileIdWritable is written as the key
       // (buildpyramid does it).  So we strip out any of that information when we write the
       // actual key.

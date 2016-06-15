@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -282,15 +284,62 @@ public static void delete(final Path path) throws IOException
   delete(HadoopUtils.createConfiguration(), path);
 }
 
+/**
+ * Deletes the specified path. If the scheme is s3 or s3n, then it will wait
+ * until the path is gone to return or else throw an IOException indicating
+ * that the path still exists. This is because s3 operates under eventual
+ * consistency so deletes are not guarantted to happen right away.
+ *
+ * @param conf
+ * @param path
+ * @throws IOException
+ */
 public static void delete(final Configuration conf, final Path path) throws IOException
 {
   final FileSystem fs = getFileSystem(conf, path);
   if (fs.exists(path))
   {
+    log.info("Deleting path " + path.toString());
     if (fs.delete(path, true) == false)
     {
       throw new IOException("Error deleting directory " + path.toString());
     }
+    Path qualifiedPath = path.makeQualified(fs);
+    URI pathUri = qualifiedPath.toUri();
+    String scheme = pathUri.getScheme().toLowerCase();
+    if (scheme.equals("s3") || scheme.equals("s3n")) {
+      boolean stillExists = fs.exists(path);
+      int sleepIndex = 0;
+      // Wait for S3 to finish the deletion in phases - initially checking
+      // more frequently and then less frequently as time goes by.
+      int[][] waitPhases = { {60, 1}, {120, 2}, {60, 15} };
+      while (sleepIndex < waitPhases.length) {
+        int waitCount = 0;
+        log.info("Sleep index " + sleepIndex);
+        while (stillExists && waitCount < waitPhases[sleepIndex][0]) {
+          waitCount++;
+          log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path.toString() + " to be deleted");
+          try
+          {
+            Thread.sleep(waitPhases[sleepIndex][1] * 1000L);
+          }
+          catch (InterruptedException e)
+          {
+            log.warn("While waiting for " + path.toString() + " to be deleted", e);
+          }
+          stillExists = fs.exists(path);
+          log.info("After waiting exists = " + stillExists);
+        }
+        sleepIndex++;
+      }
+      if (stillExists) {
+        throw new IOException(path.toString() + " was not deleted within the waiting period");
+      }
+    }
+  }
+  else
+  {
+    log.info("Path already does not exist " + path.toString());
   }
 }
 
@@ -546,7 +595,7 @@ public static Path unqualifyPath(final Path path)
 
 public static String unqualifyPath(final String path)
 {
-  return new Path((new Path(path)).toUri().getPath().toString()).toString();
+  return new Path((new Path(path)).toUri().getPath()).toString();
 }
 
 private static void cleanDirectory(final FileSystem fs, final Path dir) throws IOException
@@ -574,6 +623,7 @@ public static Path resolveName(final String input, boolean checkForExistance) th
   return resolveName(HadoopUtils.createConfiguration(), input, checkForExistance);
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
 public static Path resolveName(final Configuration conf, final String input,
     boolean checkForExistance) throws IOException, URISyntaxException
 {

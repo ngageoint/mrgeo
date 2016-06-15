@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,18 +11,22 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.utils;
 
 import com.vividsolutions.jts.geom.TopologyException;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.geometry.*;
+import org.mrgeo.utils.tms.Bounds;
 
 public class GeometryUtils
 {
   final static double epsilon = 0.00000001;
 
+  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "Checking stored type 1st")
   public static Geometry clip(final Geometry geometry, final Polygon clip)
   {
     switch (geometry.type())
@@ -135,8 +139,8 @@ public class GeometryUtils
 
   public static boolean colinear(final Point p0, final Point p1, final Point p2)
   {
-    return (p1.getY() - p0.getY()) * (p2.getX() - p1.getX()) == (p2.getY() - p1.getY()) *
-      (p1.getX() - p0.getX());
+    return FloatUtils.isEqual((p1.getY() - p0.getY()) * (p2.getX() - p1.getX()), (p2.getY() - p1.getY()) *
+      (p1.getX() - p0.getX()));
   }
 
   // Take the point P and form a ray that
@@ -181,7 +185,7 @@ public class GeometryUtils
   {
     final LinearRing ring = poly.getExteriorRing();
     final Bounds b = ring.getBounds();
-    if (b.containsPoint(p.getX(), p.getY()))
+    if (b.contains(p.getX(), p.getY()))
     {
       boolean odd = false;
 
@@ -260,7 +264,7 @@ public class GeometryUtils
           w = ay + (lby * (cx - ax) / lbx);
 
           // overlapping?
-          if (cy == w && v >= 0 && v <= 1)
+          if (FloatUtils.isEqual(cy, w) && v >= 0 && v <= 1)
           {
             if (intersection != null)
             {
@@ -384,10 +388,10 @@ public class GeometryUtils
   public static LinearRing toRing(final Bounds bounds)
   {
     final WritableLinearRing ring = GeometryFactory.createLinearRing();
-    ring.addPoint(bounds.getMinX(), bounds.getMinY());
-    ring.addPoint(bounds.getMinX(), bounds.getMaxY());
-    ring.addPoint(bounds.getMaxX(), bounds.getMaxY());
-    ring.addPoint(bounds.getMaxX(), bounds.getMinY());
+    ring.addPoint(bounds.w, bounds.s);
+    ring.addPoint(bounds.w, bounds.n);
+    ring.addPoint(bounds.e, bounds.n);
+    ring.addPoint(bounds.e, bounds.s);
 
     ring.closeRing();
     return ring;

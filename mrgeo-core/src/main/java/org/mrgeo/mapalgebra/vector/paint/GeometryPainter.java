@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra.vector.paint;
@@ -18,7 +19,7 @@ package org.mrgeo.mapalgebra.vector.paint;
 import org.mrgeo.geometry.*;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.geometry.Polygon;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,17 +254,16 @@ public void setBackGroundColor(final Color color)
  * Set the real world boundary (e.g. lat/lng) of the image that is being painted. This
  * reconfigures the matrix of the graphics object to make painting in real coordinates work.
  *
- * @param b
  */
 public void setBounds(final Bounds b)
 {
   final Rectangle r = raster.getBounds();
 
-  final double scaleX = r.getWidth() / b.getWidth();
-  final double scaleY = r.getHeight() / b.getHeight();
+  final double scaleX = r.getWidth() / b.width();
+  final double scaleY = r.getHeight() / b.height();
 
-  final double xlateX = -scaleX * b.getMinX();
-  final double xlateY = scaleY * b.getMinY() + r.getHeight();
+  final double xlateX = -scaleX * b.w;
+  final double xlateY = scaleY * b.s + r.getHeight();
 
   // the -1 in scaleY mirrors the values, so 0,0 is the upper left corner, not the lower left.
   transform = new AffineTransform(scaleX, 0.0, 0.0, -scaleY, xlateX, xlateY);

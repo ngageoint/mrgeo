@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector;
@@ -276,37 +277,37 @@ public class Column implements Writable
   public String toString()
   {
     StringBuffer result = new StringBuffer();
-    result.append("Name: " + name + "\n");
-    result.append("Type: " + type.toString() + "\n");
-    result.append(String.format("  count: %d\n", count));
+    result.append("Name: " + name + "%n");
+    result.append("Type: " + type.toString() + "%n");
+    result.append(String.format("  count: %d%n", count));
     if (type == FactorType.Numeric)
     {
-      result.append(String.format("  min: %f\n", min));
-      result.append(String.format("  max: %f\n", max));
-      result.append(String.format("  sum: %f\n", sum));
+      result.append(String.format("  min: %f%n", min));
+      result.append(String.format("  max: %f%n", max));
+      result.append(String.format("  sum: %f%n", sum));
       if (isQuartile1Valid())
       {
-        result.append(String.format("  quartile1: %f\n", quartile1));
+        result.append(String.format("  quartile1: %f%n", quartile1));
       }
       else
       {
-        result.append("  quartile1: not available\n");
+        result.append("  quartile1: not available%n");
       }
       if (isQuartile2Valid())
       {
-        result.append(String.format("  quartile2: %f\n", quartile2));
+        result.append(String.format("  quartile2: %f%n", quartile2));
       }
       else
       {
-        result.append("  quartile2: not available\n");
+        result.append("  quartile2: not available%n");
       }
       if (isQuartile3Valid())
       {
-        result.append(String.format("  quartile3: %f\n", quartile3));
+        result.append(String.format("  quartile3: %f%n", quartile3));
       }
       else
       {
-        result.append("  quartile3: not available\n");
+        result.append("  quartile3: not available%n");
       }
     }
     return result.toString();

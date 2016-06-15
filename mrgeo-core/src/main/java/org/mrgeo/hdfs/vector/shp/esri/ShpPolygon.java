@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector.shp.esri;
@@ -23,10 +24,10 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPolygon extends java.lang.Object implements ShpData
+public class ShpPolygon implements ShpData
 {
   protected JPolygon[] p;
-  private ESRILayer parent;
+  private ESRILayer parent = null;
 
   /** Creates new ShpPolygon */
   public ShpPolygon(int initialSize)
@@ -37,10 +38,13 @@ public class ShpPolygon extends java.lang.Object implements ShpData
   @Override
   public void addShape(JShape obj) throws FormatException
   {
-    JPolygon[] temp = new JPolygon[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPolygon) obj;
-    p = temp;
+    if (obj instanceof JPolygon)
+    {
+      JPolygon[] temp = new JPolygon[p.length + 1];
+      System.arraycopy(p, 0, temp, 0, p.length);
+      temp[p.length] = (JPolygon) obj;
+      p = temp;
+    }
   }
 
   @Override

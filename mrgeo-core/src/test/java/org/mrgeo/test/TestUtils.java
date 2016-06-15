@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,9 +11,11 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 package org.mrgeo.test;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -27,10 +29,12 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapreduce.job.JobCancelledException;
-import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.job.JobCancelledException;
+import org.mrgeo.job.JobFailedException;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.*;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -89,7 +93,7 @@ public static final class DiffStats
       -Double.MAX_VALUE};
   public double[] minValue = {Double.MAX_VALUE, Double.MIN_VALUE, Double.MIN_VALUE,
       Double.MIN_VALUE};
-  final long noDataValue = -9999;
+  final static long noDataValue = -9999;
   int numBands = 0;
 
   public void calculateExtremes(RenderedImage i1, RenderedImage i2, int tileSize)
@@ -184,23 +188,24 @@ public static final class DiffStats
     }
   }
 
+  @SuppressFBWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION", justification = "Only test code")
   @Override
   public String toString()
   {
-    String result = String.format("\nWidth = %d\n", width);
-    result += String.format("Height = %d\n", height);
-    result += String.format("Max Delta: %.10f\n", maxDelta);
-    result += String.format("Max %% Delta: %.10f\n", maxPercentDelta);
-    result += String.format("Mean Delta: %.10f\n", meanDelta);
-    result += String.format("Mean %% Delta: %.10f\n", meanPercentDelta);
-    result += String.format("NaN Mismatch: %d\n", nanMismatch);
-    result += String.format("Diff Count: %d\n", diffCount);
-    result += String.format("Non-NaN Count: %d\n", count);
-    result += String.format("Pixel %% error: %.10f\n", pixelPercentError);
-    result += String.format("Number of bands: %d\n", numBands);
+    String result = String.format("%nWidth = %d%n", width);
+    result += String.format("Height = %d%n", height);
+    result += String.format("Max Delta: %.10f%n", maxDelta);
+    result += String.format("Max %% Delta: %.10f%n", maxPercentDelta);
+    result += String.format("Mean Delta: %.10f%n", meanDelta);
+    result += String.format("Mean %% Delta: %.10f%n", meanPercentDelta);
+    result += String.format("NaN Mismatch: %d%n", nanMismatch);
+    result += String.format("Diff Count: %d%n", diffCount);
+    result += String.format("Non-NaN Count: %d%n", count);
+    result += String.format("Pixel %% error: %.10f%n", pixelPercentError);
+    result += String.format("Number of bands: %d%n", numBands);
     for(int b=0;b<numBands;b++){
-      result += String.format("Min value[%d]: %.10f\n", b, minValue[b]);
-      result += String.format("Max Value[%d]: %.10f\n", b, maxValue[b]);
+      result += String.format("Min value[%d]: %.10f%n", b, minValue[b]);
+      result += String.format("Max Value[%d]: %.10f%n", b, maxValue[b]);
     }
     return result;
   }
@@ -369,9 +374,14 @@ public static String readPath(Path p) throws IOException
 public static String readFile(File f) throws IOException
 {
   byte[] baselineBuffer = new byte[(int)f.length()];
-  FileInputStream s = new FileInputStream(f);
-  s.read(baselineBuffer);
-  s.close();
+  int read = 0;
+  try (FileInputStream s = new FileInputStream(f))
+  {
+    while (read < f.length())
+    {
+      read = s.read(baselineBuffer);
+    }
+  }
   return new String(baselineBuffer);
 }
 
@@ -801,7 +811,7 @@ public void generateBaselineTif(final String testName,
 public void generateBaselineTif(final String testName, final Raster raster)
     throws IOException, JobFailedException, JobCancelledException, ParserException
 {
-  generateBaselineTif( testName, raster, Bounds.world, Double.NaN);
+  generateBaselineTif( testName, raster, Bounds.WORLD, Double.NaN);
 }
 public void generateBaselineTif(final String testName,
     final BufferedImage image, Bounds bounds)
@@ -813,7 +823,7 @@ public void generateBaselineTif(final String testName,
 public void generateBaselineTif(final String testName, final RenderedImage image)
     throws IOException, JobFailedException, JobCancelledException, ParserException
 {
-  generateBaselineTif(testName, image.getData(), Bounds.world, Double.NaN);
+  generateBaselineTif(testName, image.getData(), Bounds.WORLD, Double.NaN);
 }
 
 
@@ -822,16 +832,11 @@ public void generateBaselineTif(final String testName,
     throws IOException, JobFailedException, JobCancelledException, ParserException
 {
 
-  double pixelsize = bounds.getWidth() / raster.getWidth();
+  double pixelsize = bounds.width() / raster.getWidth();
   int zoom = TMSUtils.zoomForPixelSize(pixelsize, raster.getWidth());
-
-  TMSUtils.Bounds tb = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
-      bounds.getMaxY());
-  tb = TMSUtils.tileBounds(tb, zoom, raster.getWidth());
 
   final File baselineTif = new File(new File(inputLocal), testName + ".tif");
   GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), nodata);
-
 }
 
 
@@ -866,6 +871,8 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
   BufferedReader br1 = null;
   BufferedReader br2 = null;
 
+  InputStreamReader isr = null;
+
   try
   {
     if (ff1.exists())
@@ -877,7 +884,7 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
     else if (HadoopFileUtils.exists(f1))
     {
       is1 = HadoopFileUtils.open(new Path(f1));
-      InputStreamReader isr = new InputStreamReader(is1);
+      isr = new InputStreamReader(is1);
 
       br1 = new BufferedReader(isr);
     }
@@ -889,13 +896,12 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
     if (ff2.exists())
     {
       fr2 = new FileReader(ff2);
-
       br2 = new BufferedReader(fr2);
     }
     else if (HadoopFileUtils.exists(f2))
     {
       is2 = HadoopFileUtils.open(new Path(f2));
-      InputStreamReader isr = new InputStreamReader(is2);
+      isr = new InputStreamReader(is2);
 
       br2 = new BufferedReader(isr);
     }
@@ -948,6 +954,11 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
     if (br2 != null)
     {
       br2.close();
+    }
+
+    if (isr != null)
+    {
+      isr.close();
     }
 
     if (fr1 != null)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector;
@@ -138,13 +139,21 @@ public class ShpInputFormat extends InputFormat<FeatureIdWritable, Geometry>
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
         InterruptedException
     {
-      gc = loadGeometryCollection(context.getConfiguration());
+      if (split instanceof GeometryInputSplit)
+      {
+        gc = loadGeometryCollection(context.getConfiguration());
 
-      GeometryInputSplit gis = (GeometryInputSplit) split;
+        GeometryInputSplit gis = (GeometryInputSplit) split;
 
-      this.start = gis.startIndex;
-      this.end = gis.endIndex;
-      currentIndex = start - 1;
+        this.start = gis.startIndex;
+        this.end = gis.endIndex;
+        currentIndex = start - 1;
+      }
+      else
+      {
+        throw new IOException("input split is not a GeometryInputSplit");
+      }
+
     }
 
     @Override
@@ -218,11 +227,10 @@ public class ShpInputFormat extends InputFormat<FeatureIdWritable, Geometry>
       }
 
       return result;
-    } finally {
-      if (gc != null)
-      {
+    }
+    finally
+    {
         gc.close();
-      }
     }
   }
 }

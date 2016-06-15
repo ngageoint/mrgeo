@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.services.wcs;
@@ -23,9 +24,9 @@ import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -83,17 +84,17 @@ public class DescribeCoverageDocumentGenerator
       envelope.setAttribute("crs", "urn:ogc:def:crs:OGC:1.3:CRS84");
       envelope.setAttribute("dimensions", "2");
       XmlUtils.createTextElement2(envelope, "ows:LowerCorner",
-          String.format("%.8f %.8f", bounds.getMinX(), bounds.getMinY()));
+          String.format("%.8f %.8f", bounds.w, bounds.s));
       XmlUtils.createTextElement2(envelope, "ows:UpperCorner",
-          String.format("%.8f %.8f", bounds.getMaxX(), bounds.getMaxY()));
+          String.format("%.8f %.8f", bounds.e, bounds.n));
 
        envelope = XmlUtils.createElement(spatial, "ows:BoundingBox");
       envelope.setAttribute("crs", "urn:ogc:def:crs:EPSG::4326");
       envelope.setAttribute("dimensions", "2");
       XmlUtils.createTextElement2(envelope, "ows:LowerCorner",
-          String.format("%.8f %.8f", bounds.getMinY(), bounds.getMinX()));
+          String.format("%.8f %.8f", bounds.s, bounds.w));
       XmlUtils.createTextElement2(envelope, "ows:UpperCorner",
-          String.format("%.8f %.8f", bounds.getMaxY(), bounds.getMaxX()));
+          String.format("%.8f %.8f", bounds.n, bounds.e));
 
 
 
@@ -103,7 +104,7 @@ public class DescribeCoverageDocumentGenerator
       XmlUtils.createTextElement2(grid, "wcs:GridBaseCRS", "urn:ogc:def:crs:EPSG::4326");
       XmlUtils.createTextElement2(grid, "wcs:GridType", "urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs");
       // origin
-      XmlUtils.createTextElement2(grid, "wcs:GridOrigin", String.format("%.8f %.8f", bounds.getMinX(), bounds.getMinY()));
+      XmlUtils.createTextElement2(grid, "wcs:GridOrigin", String.format("%.8f %.8f", bounds.w, bounds.s));
       XmlUtils.createTextElement2(grid, "wcs:GridCS", "urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS");
 
       // pixel size
@@ -164,9 +165,9 @@ public class DescribeCoverageDocumentGenerator
       Element envelope = XmlUtils.createElement(offering, "lonLatEnvelope");
       envelope.setAttribute("srsName", "WGS84(DD)");
       XmlUtils.createTextElement2(envelope, "gml:pos",
-          String.format("%.8f %.8f", bounds.getMinX(), bounds.getMinY()));
+          String.format("%.8f %.8f", bounds.w, bounds.s));
       XmlUtils.createTextElement2(envelope, "gml:pos",
-          String.format("%.8f %.8f", bounds.getMaxX(), bounds.getMaxY()));
+          String.format("%.8f %.8f", bounds.e, bounds.n));
 
       // spatial data
       Element spatial = XmlUtils.createElement(XmlUtils.createElement(offering, "domainSet"), "spatialDomain");
@@ -175,9 +176,9 @@ public class DescribeCoverageDocumentGenerator
       Element senvelope = XmlUtils.createElement(spatial, "gml:Envelope");
       senvelope.setAttribute("srsName", "EPSG:4326");
       XmlUtils.createTextElement2(senvelope, "gml:pos",
-          String.format("%.8f %.8f", bounds.getMinX(), bounds.getMinY()));
+          String.format("%.8f %.8f", bounds.w, bounds.s));
       XmlUtils.createTextElement2(senvelope, "gml:pos",
-          String.format("%.8f %.8f", bounds.getMaxX(), bounds.getMaxY()));
+          String.format("%.8f %.8f", bounds.e, bounds.n));
 
       Element grid = XmlUtils.createElement(spatial, "gml:RectifiedGrid");
       Element limits = XmlUtils.createElement(grid, "gml:limits");
@@ -198,7 +199,7 @@ public class DescribeCoverageDocumentGenerator
 
       // origin
       Element origin = XmlUtils.createElement(grid, "gml:origin");
-      XmlUtils.createTextElement2(origin, "gml:pos", String.format("%.8f %.8f", bounds.getMinX(), bounds.getMinY()));
+      XmlUtils.createTextElement2(origin, "gml:pos", String.format("%.8f %.8f", bounds.w, bounds.s));
 
       // pixel size
       double res = TMSUtils.resolution(maxzoom, metadata.getTilesize());

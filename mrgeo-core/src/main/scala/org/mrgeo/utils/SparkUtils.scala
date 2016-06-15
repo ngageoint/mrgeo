@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.utils
@@ -20,23 +21,26 @@ import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util.Properties
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark._
-import org.apache.spark.rdd.{OrderedRDDFunctions, PairRDDFunctions, RDD}
-import org.mrgeo.data.image.{ImageOutputFormatContext, ImageInputFormatContext, MrsImageDataProvider}
+import org.apache.spark.rdd.RDD
+import org.mrgeo.data.image.{ImageInputFormatContext, ImageOutputFormatContext, MrsImageDataProvider}
 import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.rdd.{AutoPersister, RasterRDD}
 import org.mrgeo.data.tile._
 import org.mrgeo.data.{DataProviderFactory, MrsPyramidInputFormat, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
-import org.mrgeo.image.{MrsPyramidMetadata, ImageStats, MrsPyramid}
+import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.tms.{Bounds, Pixel, TMSUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.{Map, mutable}
 
+@SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
 object SparkUtils extends Logging {
 
   @deprecated("Use RasterRDD method instead", "")
@@ -89,9 +93,9 @@ object SparkUtils extends Logging {
 
   // These 3 methods are taken almost verbatim from Spark's Utils class, but they are all
   // private, so we needed to copy them here
-
   private def loadDefaultSparkProperties(conf: SparkConf, filePath: String = null): String = {
     val path = Option(filePath).getOrElse(getDefaultPropertiesFile())
+
     Option(path).foreach { confFile =>
       getPropertiesFromFile(confFile).filter { case (k, v) =>
         k.startsWith("spark.")
@@ -103,6 +107,7 @@ object SparkUtils extends Logging {
     path
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "only opens files filtered by getDefaultPropertiesFile()")
   /** Load properties present in the given file. */
   private def getPropertiesFromFile(filename: String): Map[String, String] = {
     val file = new File(filename)
@@ -124,6 +129,7 @@ object SparkUtils extends Logging {
     }
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "opening a hardcoded filename")
   private def getDefaultPropertiesFile(env: Map[String, String] = sys.env): String = {
     env.get("SPARK_CONF_DIR")
         .orElse(env.get("SPARK_HOME").map { t => s"$t${File.separator}conf" })
@@ -273,6 +279,11 @@ object SparkUtils extends Logging {
     (loadMrsPyramid(provider, metadata.getMaxZoomLevel, context), metadata)
   }
 
+  def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, bounds: Bounds, context: SparkContext): (RasterRDD, MrsPyramidMetadata) = {
+    val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
+    (loadMrsPyramid(provider, metadata.getMaxZoomLevel, bounds, context), metadata)
+  }
+
   def loadMrsPyramidAndMetadata(provider: MrsImageDataProvider, zoom:Int, context: SparkContext): (RasterRDD, MrsPyramidMetadata) = {
     val metadata: MrsPyramidMetadata = provider.getMetadataReader.read()
     (loadMrsPyramid(provider, zoom, context), metadata)
@@ -298,7 +309,7 @@ object SparkUtils extends Logging {
     //    log.warn("Running loadPyramid with configuration " + job.getConfiguration + " with input format " +
     //      inputFormatClass.getName)
 
-        log.info("Loading MrsPyramid " + provider.getResourceName)
+    logInfo("Loading MrsPyramid " + provider.getResourceName)
 
     RasterRDD(context.newAPIHadoopRDD(job.getConfiguration,
       classOf[MrsPyramidInputFormat],
@@ -387,23 +398,23 @@ object SparkUtils extends Logging {
 
     val metadata = inputProvider.getMetadataReader.read()
 
-//    val bounds = metadata.getBounds
-//    val bands = metadata.getBands
-//    val tiletype = metadata.getTileType
-//    val tilesize = metadata.getTilesize
-//    val nodatas = metadata.getDefaultValues
-//    val protectionlevel = metadata.getProtectionLevel
+    //    val bounds = metadata.getBounds
+    //    val bands = metadata.getBands
+    //    val tiletype = metadata.getTileType
+    //    val tilesize = metadata.getTilesize
+    //    val nodatas = metadata.getDefaultValues
+    //    val protectionlevel = metadata.getProtectionLevel
 
     // NOTE:  This is a very special case where we are adding levels to a pyramid (i.e. BuildPyramid).
     // The input data provider provides most of the parameters.
-//    saveMrsPyramid(tiles, inputProvider, zoom, tilesize, nodatas, conf,
-//      tiletype, bounds, bands, protectionlevel, providerproperties)
+    //    saveMrsPyramid(tiles, inputProvider, zoom, tilesize, nodatas, conf,
+    //      tiletype, bounds, bands, protectionlevel, providerproperties)
     saveMrsPyramid(tiles, inputProvider, metadata, zoom, conf, providerproperties)
   }
 
   def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider,
       zoom: Int, tilesize: Int, nodatas: Array[Number], conf: Configuration, tiletype: Int = -1,
-      bounds: Bounds = new Bounds(), bands: Int = -1,
+      bounds: Bounds = null, bands: Int = -1,
       protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
     val metadata = new MrsPyramidMetadata
@@ -421,23 +432,21 @@ object SparkUtils extends Logging {
   def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider, metadata:MrsPyramidMetadata,
       zoom:Int, conf: Configuration, providerproperties:ProviderProperties): Unit = {
 
-    implicit val tileIdOrdering = new Ordering[TileIdWritable] {
-      override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
-    }
+    AutoPersister.incrementRef(tiles)
 
-//    val localpersist = if (tiles.getStorageLevel == StorageLevel.NONE) {
-//      tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
-//      true
-//    }
-//    else {
-//      false
-//    }
+    //    val localpersist = if (tiles.getStorageLevel == StorageLevel.NONE) {
+    //      tiles.persist(StorageLevel.MEMORY_AND_DISK_SER)
+    //      true
+    //    }
+    //    else {
+    //      false
+    //    }
 
     val output = outputProvider.getResourceName
 
     val tilesize = metadata.getTilesize
 
-    if (!metadata.getBounds.isValid) {
+    if (metadata.getBounds == null) {
       metadata.setBounds(SparkUtils.calculateBounds(tiles, zoom, tilesize))
     }
     val bounds = metadata.getBounds
@@ -453,45 +462,20 @@ object SparkUtils extends Logging {
 
 
     val bands = metadata.getBands
-    // calculate stats.  Do this after the save to give S3 a chance to finalize the actual files before moving
-    // on.  This can be a problem for fast calculating/small partitions
+
     val stats = SparkUtils.calculateStats(tiles, bands, metadata.getDefaultValues)
-    // val tileBounds = TMSUtils.boundsToTile(bounds.getTMSBounds, zoom, tilesize)
+
     val tofc = new ImageOutputFormatContext(output, bounds, zoom, tilesize,
       metadata.getProtectionLevel, metadata.getTileType, bands)
     val tofp = outputProvider.getTiledOutputFormatProvider(tofc)
-    val sparkPartitioner = tofp.getSparkPartitioner
-    val conf1 = tofp.setupOutput(conf)
 
-    // Repartition the output if the output data provider requires it
-    val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
-    val sorted: RasterRDD = RasterRDD(
-      if (sparkPartitioner != null) {
-        wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
-      }
-      else {
-        wrappedTiles.sortByKey()
-      })
-    //val sorted: RasterRDD = RasterRDD(tiles.sortByKey())
-
-
-    val wrappedForSave = new PairRDDFunctions(sorted)
-    wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
-
-//    if (localpersist) {
-//      tiles.unpersist()
-//    }
-
-    if (sparkPartitioner != null)
-    {
-      sparkPartitioner.writeSplits(sorted, output, zoom, conf1)
-    }
-    tofp.teardownForSpark(conf1)
-
+    tofp.save(tiles, conf)
 
     // calculate and save metadata
     MrsPyramid.calculateMetadata(zoom, outputProvider, stats,
       metadata)
+
+    AutoPersister.decrementRef(tiles)
   }
 
   @deprecated("Use RasterRDD method instead", "")
@@ -520,15 +504,7 @@ object SparkUtils extends Logging {
           var b: Int = 0
           while (b < tile.getNumBands) {
             val p = tile.getSampleDouble(x, y, b)
-            if (nodata(b).doubleValue().isNaN) {
-              if (!p.isNaN) {
-                stats(b).count += 1
-                stats(b).sum += p
-                stats(b).max = Math.max(stats(b).max, p)
-                stats(b).min = Math.min(stats(b).min, p)
-              }
-            }
-            else if (p != nodata(b).doubleValue()) {
+            if (FloatUtils.isNotNodata(p, nodata(b).doubleValue())) {
               stats(b).count += 1
               stats(b).sum += p
               stats(b).max = Math.max(stats(b).max, p)
@@ -567,30 +543,38 @@ object SparkUtils extends Logging {
 
   def calculateBounds(rdd: RasterRDD, zoom: Int, tilesize: Int): Bounds = {
 
-    val bounds = rdd.aggregate(new Bounds())((bounds, t) => {
+    val bounds = rdd.aggregate(null.asInstanceOf[Bounds])((bounds:Bounds, t) => {
       val tile = TMSUtils.tileid(t._1.get, zoom)
+      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize)
 
-      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize).asBounds()
-      tb.expand(bounds)
-
-      tb
+      if (bounds == null) {
+        tb
+      }
+      else {
+        tb.expand(bounds)
+      }
     },
       (tb1, tb2) => {
-        tb1.expand(tb2)
-
-        tb1
+        if (tb1 == null) {
+          tb2
+        }
+        else {
+          tb1.expand(tb2)
+        }
       })
 
     bounds
   }
 
-  def mergeTiles(rdd: RasterRDD, zoom:Int, tilesize:Int, nodatas:Array[Double], bounds:TMSUtils.Bounds = null) = {
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"), justification = "Scala generated code")
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
+  def mergeTiles(rdd: RasterRDD, zoom:Int, tilesize:Int, nodatas:Array[Double], bounds:Bounds = null) = {
 
     val bnds = if (bounds != null) {
       bounds
     }
     else {
-      SparkUtils.calculateBounds(RasterRDD(rdd), zoom, tilesize).getTMSBounds
+      SparkUtils.calculateBounds(RasterRDD(rdd), zoom, tilesize)
     }
 
     val tilebounds = TMSUtils.tileBounds(bnds, zoom, tilesize)
@@ -642,7 +626,7 @@ object SparkUtils extends Logging {
         val start = TMSUtils.latLonToPixelsUL(tb.n, tb.w, zoom, tilesize)
 
         val source = RasterWritable.toRaster(tile._2)
-        log.debug(s"Tile ${id.tx}, ${id.ty} with bounds ${tb.w}, ${tb.s}, ${tb.e}, ${tb.n}" +
+        logDebug(s"Tile ${id.tx}, ${id.ty} with bounds ${tb.w}, ${tb.s}, ${tb.e}, ${tb.n}" +
             s" pasted onto px ${start.px - ul.px} py ${start.py - ul.py}")
 
         merged.setDataElements((start.px - ul.px).toInt, (start.py - ul.py).toInt, source)
@@ -666,63 +650,82 @@ object SparkUtils extends Logging {
   }
 
   def calculateBoundsAndStats(rdd: RasterRDD, bands: Int, zoom: Int, tilesize: Int,
-                              nodata: Array[Number]): (Bounds, Array[ImageStats]) = {
+      nodata: Array[Number]): (Bounds, Array[ImageStats]) = {
     val zero = Array.ofDim[ImageStats](bands)
 
     for (i <- zero.indices) {
       zero(i) = new ImageStats(Double.MaxValue, Double.MinValue, 0, 0)
     }
 
-    val result = rdd.aggregate((new Bounds(), zero))((entry, t) => {
+    val result = rdd.aggregate((null.asInstanceOf[Bounds], zero))((entry, t) => {
+
+      def isNotNodata(value:Double, nodata:Double):Boolean = {
+        if (nodata.isNaN) {
+          !value.isNaN
+        }
+        else {
+          nodata != value
+        }
+      }
+
       val bounds = entry._1
       val stats = entry._2
       val tile = TMSUtils.tileid(t._1.get, zoom)
 
       // Handle the bounds
-      val tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize).asBounds()
-      tb.expand(entry._1)
+      val tb = if (entry._1 == null) {
+        TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize)
+      }
+      else {
+        TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize).expand(entry._1)
+      }
+
       // Handle the stats
       val raster = RasterWritable.toRaster(t._2)
 
-      for (y <- 0 until raster.getHeight) {
-        for (x <- 0 until raster.getWidth) {
-          for (b <- 0 until raster.getNumBands) {
+      var b = 0
+      while (b < raster.getNumBands) {
+        var y = 0
+        val nd = nodata(b).doubleValue()
+        while (y < raster.getHeight) {
+          var x = 0
+          while (x < raster.getWidth) {
             val p = raster.getSampleDouble(x, y, b)
-            if (nodata(b).doubleValue().isNaN) {
-              if (!p.isNaN) {
-                stats(b).count += 1
-                stats(b).sum += p
-                stats(b).max = Math.max(stats(b).max, p)
-                stats(b).min = Math.min(stats(b).min, p)
-              }
-            }
-            else if (p != nodata(b).doubleValue()) {
+            if (isNotNodata(p, nd)) {
               stats(b).count += 1
               stats(b).sum += p
               stats(b).max = Math.max(stats(b).max, p)
               stats(b).min = Math.min(stats(b).min, p)
             }
+            x += 1
           }
+          y += 1
         }
+        b += 1
       }
 
       (tb, stats)
     },
-    (result1, result2) => {
-      // combine the bounds
-      result1._1.expand(result2._1)
-      // combine the stats
-      val aggstat = result1._2.clone()
+      (result1, result2) => {
+        // combine the bounds
+        val bounds = if (result1._1 == null) {
+          result2._1
+        }
+        else {
+          result1._1.expand(result2._1)
+        }
+        // combine the stats
+        val aggstat = result1._2.clone()
 
-      for (b <- aggstat.indices) {
-        aggstat(b).count += result2._2(b).count
-        aggstat(b).sum += result2._2(b).sum
-        aggstat(b).max = Math.max(aggstat(b).max, result2._2(b).max)
-        aggstat(b).min = Math.min(aggstat(b).min, result2._2(b).min)
-      }
+        for (b <- aggstat.indices) {
+          aggstat(b).count += result2._2(b).count
+          aggstat(b).sum += result2._2(b).sum
+          aggstat(b).max = Math.max(aggstat(b).max, result2._2(b).max)
+          aggstat(b).min = Math.min(aggstat(b).min, result2._2(b).min)
+        }
 
-      result1
-    })
+        (bounds, aggstat)
+      })
     for (i <- result._2.indices) {
       if (result._2(i).count > 0) {
         result._2(i).mean = result._2(i).sum / result._2(i).count
@@ -758,7 +761,7 @@ object SparkUtils extends Logging {
   @deprecated("Use RasterRDD method instead", "")
   def saveMrsPyramidRDD(tiles: RDD[(TileIdWritable, RasterWritable)], outputProvider: MrsImageDataProvider,
       zoom: Int, tilesize: Int, nodatas: Array[Number], conf: Configuration, tiletype: Int = -1,
-      bounds: Bounds = new Bounds(), bands: Int = -1,
+      bounds: Bounds = null, bands: Int = -1,
       protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
     saveMrsPyramid(RasterRDD(tiles), outputProvider, zoom, tilesize, nodatas, conf, tiletype, bounds, bands, protectionlevel, providerproperties)
@@ -781,7 +784,7 @@ object SparkUtils extends Logging {
   def calculateMetadata(rdd:RasterRDD, zoom:Int, nodatas:Array[Number], calcStats:Boolean, bounds:Bounds):MrsPyramidMetadata = {
     val meta = new MrsPyramidMetadata
 
-//    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
+    //    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     meta.setPyramid(rdd.name)
     meta.setName(zoom)
@@ -809,11 +812,11 @@ object SparkUtils extends Logging {
 
     meta.setName(zoom, zoom.toString)
 
-    val tb = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(bnds), zoom, tilesize)
+    val tb = TMSUtils.boundsToTile(bnds, zoom, tilesize)
     meta.setTileBounds(zoom, tb.toLongRectangle)
 
-    val pll: TMSUtils.Pixel = TMSUtils.latLonToPixels(bnds.getMinY, bnds.getMinX, zoom, tilesize)
-    val pur: TMSUtils.Pixel = TMSUtils.latLonToPixels(bnds.getMaxY, bnds.getMaxX, zoom, tilesize)
+    val pll: Pixel = TMSUtils.latLonToPixels(bnds.s, bnds.w, zoom, tilesize)
+    val pur: Pixel = TMSUtils.latLonToPixels(bnds.n, bnds.e, zoom, tilesize)
     meta.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py))
 
     if (calcStats) {
@@ -821,7 +824,7 @@ object SparkUtils extends Logging {
 
       meta.setImageStats(zoom, stats)
     }
-    
+
     meta
   }
 
@@ -850,7 +853,7 @@ object SparkUtils extends Logging {
       "0"
     }
     else {
-      val suffix = new String("kmgtpe")
+      val suffix = "kmgtpe"
       val unit = 1024
       var exp: Int = (Math.log(kb) / Math.log(unit)).toInt
 
@@ -932,28 +935,28 @@ object SparkUtils extends Logging {
   }
 
 
-  def address(obj: Object): String = {
-    var addr = "0x"
-
-    val array = Array(obj)
-    val f = classOf[sun.misc.Unsafe].getDeclaredField("theUnsafe")
-    f.setAccessible(true)
-    val unsafe = f.get(null).asInstanceOf[sun.misc.Unsafe]
-
-
-    val offset: Long = unsafe.arrayBaseOffset(classOf[Array[Object]])
-    val scale = unsafe.arrayIndexScale(classOf[Array[Object]])
-
-    scale match {
-    case 4 =>
-      val factor = 8
-      val i1 = (unsafe.getInt(array, offset) & 0xFFFFFFFFL) * factor
-      addr += i1.toHexString
-    case 8 =>
-      throw new AssertionError("Not supported")
-    }
-
-    addr
-  }
+//  def address(obj: Object): String = {
+//    var addr = "0x"
+//
+//    val array = Array(obj)
+//    val f = classOf[sun.misc.Unsafe].getDeclaredField("theUnsafe")
+//    f.setAccessible(true)
+//    val unsafe = f.get(null).asInstanceOf[sun.misc.Unsafe]
+//
+//
+//    val offset: Long = unsafe.arrayBaseOffset(classOf[Array[Object]])
+//    val scale = unsafe.arrayIndexScale(classOf[Array[Object]])
+//
+//    scale match {
+//    case 4 =>
+//      val factor = 8
+//      val i1 = (unsafe.getInt(array, offset) & 0xFFFFFFFFL) * factor
+//      addr += i1.toHexString
+//    case 8 =>
+//      throw new AssertionError("Not supported")
+//    }
+//
+//    addr
+//  }
 
 }

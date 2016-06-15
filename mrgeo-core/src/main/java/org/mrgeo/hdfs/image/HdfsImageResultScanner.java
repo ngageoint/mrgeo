@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.image;
@@ -19,14 +20,15 @@ import org.apache.hadoop.io.MapFile;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.image.HdfsMrsImageReader;
 import org.mrgeo.hdfs.tile.Splits;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 
 import java.awt.image.Raster;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 /**
  * HdfsResultScanner is for pulling items from the data store / MapFiles in HDFS in a Iterator
@@ -183,7 +185,7 @@ public boolean hasNext()
           {
             // if we fall within the boundries return positive, otherwise slerp up the tile and
             // try the next one.
-            final TMSUtils.Tile t = TMSUtils.tileid(currentKey.get(), zoom);
+            final Tile t = TMSUtils.tileid(currentKey.get(), zoom);
             if (t.tx >= rowStart && t.tx <= rowEnd)
             {
               return true;
@@ -205,7 +207,7 @@ public boolean hasNext()
         {
           return false;
         }
-        if (!reader.canBeCached() && mapfile != null)
+        if (!reader.canBeCached())
         {
           mapfile.close();
         }
@@ -226,6 +228,11 @@ public boolean hasNext()
 @Override
 public Raster next()
 {
+  if (currentKey == null)
+  {
+    throw new NoSuchElementException();
+  }
+
   try
   {
     return toNonWritable(currentValue);
@@ -254,7 +261,7 @@ private boolean inRange(TileIdWritable key)
     {
       // if we fall within the boundries return positive, otherwise slerp up the tile and
       // try the next one.
-      final TMSUtils.Tile t = TMSUtils.tileid(key.get(), zoom);
+      final Tile t = TMSUtils.tileid(key.get(), zoom);
       if (t.tx >= rowStart && t.tx <= rowEnd)
       {
         return true;

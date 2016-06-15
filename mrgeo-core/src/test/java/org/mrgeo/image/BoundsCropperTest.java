@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,21 +11,20 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.image;
 
 import junit.framework.Assert;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.TMSUtils.Bounds;
-import org.mrgeo.utils.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ public class BoundsCropperTest
   private static AllOnes ALL_ONES;
   
   @BeforeClass
-  public static void init() throws JsonGenerationException, JsonMappingException, IOException
+  public static void init() throws  IOException
   {
     ALL_ONES = new AllOnes();
     imageMetadata = ALL_ONES.getMetadata();
@@ -62,8 +61,8 @@ public class BoundsCropperTest
         Collections.singletonList(interiorRowsTileBounds), imageMetadata.getMaxZoomLevel());
 
     // compare lat/lon bounds
-    Bounds imageBounds = Bounds.convertOldToNewBounds(imageMetadata.getBounds());
-    Bounds croppedBounds = Bounds.convertOldToNewBounds(croppedMetadata.getBounds());
+    Bounds imageBounds = imageMetadata.getBounds();
+    Bounds croppedBounds = croppedMetadata.getBounds();
 
     Assert.assertTrue(croppedBounds.w == imageBounds.w);
     Assert.assertTrue(croppedBounds.w > interiorRowsTileBounds.w);
@@ -112,15 +111,15 @@ public class BoundsCropperTest
     Bounds subsetBottomRowBounds = new Bounds(bottomRowBounds.w + epsilon, bottomRowBounds.s + epsilon,
                                                bottomRowBounds.e - epsilon, bottomRowBounds.n - epsilon);
    
-    List<Bounds> userBounds = new ArrayList<Bounds>();
+    List<Bounds> userBounds = new ArrayList<>();
     userBounds.add(subsetTopRowBounds);
     userBounds.add(subsetBottomRowBounds);
    
     MrsPyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
                                                                           userBounds, imageMetadata.getMaxZoomLevel());
 
-    Bounds imageBounds = Bounds.convertOldToNewBounds(imageMetadata.getBounds());
-    Bounds croppedBounds = Bounds.convertOldToNewBounds(croppedMetadata.getBounds());
+    Bounds imageBounds = imageMetadata.getBounds();
+    Bounds croppedBounds = croppedMetadata.getBounds();
 
     Assert.assertTrue(croppedBounds.w == imageBounds.w);
     Assert.assertTrue(croppedBounds.w > subsetBottomRowBounds.w);
@@ -147,8 +146,8 @@ public class BoundsCropperTest
     MrsPyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
         Collections.singletonList(Bounds.WORLD), imageMetadata.getMaxZoomLevel());
 
-    Bounds imageBounds = Bounds.convertOldToNewBounds(imageMetadata.getBounds());
-    Bounds croppedBounds = Bounds.convertOldToNewBounds(croppedMetadata.getBounds());
+    Bounds imageBounds = imageMetadata.getBounds();
+    Bounds croppedBounds = croppedMetadata.getBounds();
    
     Assert.assertTrue(croppedBounds.equals(imageBounds));
   }
@@ -174,8 +173,8 @@ public class BoundsCropperTest
     MrsPyramidMetadata croppedMetadata = BoundsCropper.getCroppedMetadata(imageMetadata,
         Collections.singletonList(subsetInteriorRowBounds), imageMetadata.getMaxZoomLevel());
 
-    Bounds imageBounds = Bounds.convertOldToNewBounds(imageMetadata.getBounds());
-    Bounds croppedBounds = Bounds.convertOldToNewBounds(croppedMetadata.getBounds());
+    Bounds imageBounds = imageMetadata.getBounds();
+    Bounds croppedBounds = croppedMetadata.getBounds();
    
     Assert.assertTrue(croppedBounds.n == interiorRowBounds.n);
     Assert.assertTrue(croppedBounds.s == interiorRowBounds.s);

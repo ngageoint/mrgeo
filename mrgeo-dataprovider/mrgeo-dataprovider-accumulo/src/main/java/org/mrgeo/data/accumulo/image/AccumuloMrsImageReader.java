@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.accumulo.image;
@@ -40,10 +41,11 @@ import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -543,10 +545,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
   public KVIterator<Bounds, Raster> get(final Bounds bounds){
 
     //TODO: make this bounds request work
-
-    TMSUtils.Bounds newBounds = TMSUtils.Bounds.convertOldToNewBounds(bounds);
-
-    TMSUtils.TileBounds tileBounds = TMSUtils.boundsToTile(newBounds,
+    TileBounds tileBounds = TMSUtils.boundsToTile(bounds,
                                                            zoomLevel,
                                                            getTileSize());
 
@@ -809,7 +808,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
 
     }
     return zoomLevel;
-  } // end getZoomlevel
+  } // end getZoomLevel
 
 
 } // end AccumuloMrsImageReader

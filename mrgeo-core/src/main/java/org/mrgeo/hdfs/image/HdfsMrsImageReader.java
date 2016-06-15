@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +11,13 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.image;
 
 import com.google.common.cache.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -32,10 +34,12 @@ import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +52,8 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+
+@SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "'readerCache' - Needs refactoring to remove")
 public class HdfsMrsImageReader extends MrsImageReader
 {
   @SuppressWarnings("unused")
@@ -61,7 +67,8 @@ public class HdfsMrsImageReader extends MrsImageReader
   private boolean canBeCached = true;
 
 
-  public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "check will only be used for reading valid MrsPyramids")
+public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     MrsPyramidReaderContext context) throws IOException
   {
     String path = new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString();
@@ -99,14 +106,7 @@ public class HdfsMrsImageReader extends MrsImageReader
     readSplits(modifiedPath);
 
     // set the profile
-    if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
-    {
-      profile = true;
-    }
-    else
-    {
-      profile = false;
-    }
+    profile = System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0;
   }
 
   private MapFile.Reader loadReader(int partitionIndex) throws IOException
@@ -199,7 +199,7 @@ public class HdfsMrsImageReader extends MrsImageReader
     return RasterWritable.toRaster(val);
   }
 
-  public class BoundsResultScanner implements KVIterator<Bounds, Raster>
+  public static class BoundsResultScanner implements KVIterator<Bounds, Raster>
   {
     private KVIterator<TileIdWritable, Raster> tileIterator;
     private int zoomLevel;
@@ -235,9 +235,8 @@ public class HdfsMrsImageReader extends MrsImageReader
     public Bounds currentKey()
     {
       TileIdWritable key = tileIterator.currentKey();
-      TMSUtils.Tile tile = TMSUtils.tileid(key.get(), zoomLevel);
-      TMSUtils.Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tileSize);
-      return TMSUtils.Bounds.convertNewToOldBounds(bounds);
+      Tile tile = TMSUtils.tileid(key.get(), zoomLevel);
+      return TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tileSize);
     }
 
     @Override
@@ -286,17 +285,12 @@ public class HdfsMrsImageReader extends MrsImageReader
         {
           if (dirFile.getPath().getName().equals("index"))
           {
-            SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf);
-            try
+            try (SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf))
             {
               while (index.nextRawKey(key) >= 0)
               {
                 count++;
               }
-            }
-            finally
-            {
-              index.close();
             }
           }
         }
@@ -383,11 +377,7 @@ public class HdfsMrsImageReader extends MrsImageReader
       e.printStackTrace();
       throw new MrsImageException(e);
     }
-    catch (InstantiationException e)
-    {
-      throw new MrsImageException(e);
-    }
-    catch (IllegalAccessException e)
+    catch (InstantiationException | IllegalAccessException e)
     {
       throw new MrsImageException(e);
     }
@@ -410,12 +400,9 @@ public class HdfsMrsImageReader extends MrsImageReader
   @Override
   public KVIterator<Bounds, Raster> get(final Bounds bounds)
   {
-    TMSUtils.Bounds newBounds = TMSUtils.Bounds.convertOldToNewBounds(bounds);
-    TMSUtils.TileBounds tileBounds = TMSUtils.boundsToTile(newBounds, getZoomlevel(),
-                                                           getTileSize());
-    return new BoundsResultScanner(get(new LongRectangle(
-            tileBounds.w, tileBounds.s, tileBounds.e, tileBounds.n)),
-                                   getZoomlevel(), getTileSize());
+    TileBounds tileBounds = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTileSize());
+    return new BoundsResultScanner(get(new LongRectangle(tileBounds.w, tileBounds.s, tileBounds.e, tileBounds.n)),
+        getZoomlevel(), getTileSize());
   }
 
   private void readSplits(final String parent) throws IOException
@@ -467,6 +454,7 @@ public class HdfsMrsImageReader extends MrsImageReader
    * @return the reader for the partition specified
    * @throws IOException
    */
+  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
   public MapFile.Reader getReader(final int partitionIndex) throws IOException
   {
     try

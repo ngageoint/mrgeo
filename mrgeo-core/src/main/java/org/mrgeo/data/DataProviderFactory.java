@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data;
@@ -19,6 +20,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.core.MrGeoProperties;
@@ -119,10 +121,9 @@ public static void saveProviderPropertiesToConfig(final ProviderProperties provi
   // side of a map/reduce 1 job.
   Map<String, String> configSettings = getConfigurationFromProviders();
   log.debug("Saving " + configSettings.size() + " configuration settings from data providers to config");
-  Set<String> keys = configSettings.keySet();
-  for (String key : keys)
+  for ( Map.Entry<String, String> es: configSettings.entrySet())
   {
-    conf.set(DATA_PROVIDER_CONFIG_PREFIX + key, configSettings.get(key));
+    conf.set(DATA_PROVIDER_CONFIG_PREFIX + es.getKey(), es.getValue());
   }
 }
 
@@ -685,13 +686,13 @@ private static Cache<String, VectorDataProvider> vectorProviderCache = CacheBuil
         }).build();
 
 
-protected static Map<String, AdHocDataProviderFactory> adHocProviderFactories;
-protected static Map<String, MrsImageDataProviderFactory> mrsImageProviderFactories;
-protected static Map<String, VectorDataProviderFactory> vectorProviderFactories;
+private static Map<String, AdHocDataProviderFactory> adHocProviderFactories;
+private static Map<String, MrsImageDataProviderFactory> mrsImageProviderFactories;
+private static Map<String, VectorDataProviderFactory> vectorProviderFactories;
 
-protected static String preferredAdHocProviderName = null;
-protected static String preferredImageProviderName = null;
-protected static String preferredVectorProviderName = null;
+static String preferredAdHocProviderName = null;
+static String preferredImageProviderName = null;
+static String preferredVectorProviderName = null;
 
 // public static TileDataProvider getDataProvider(final String name) throws DataProviderNotFound
 // {
@@ -801,6 +802,7 @@ public static AdHocDataProvider getAdHocDataProvider(final String name,
       loadProviderPropertiesFromConfig(conf));
 }
 
+@SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "No, it's not.")
 private static AdHocDataProvider getAdHocDataProvider(final String name,
     final AccessMode mode,
     final Configuration conf,
@@ -992,6 +994,7 @@ public static MrsImageDataProvider getMrsImageDataProvider(final String name,
       loadProviderPropertiesFromConfig(conf));
 }
 
+@SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
 private static MrsImageDataProvider getMrsImageDataProvider(final String name,
     AccessMode accessMode,
     final Configuration conf,
@@ -1057,6 +1060,7 @@ public static VectorDataProvider getVectorDataProvider( final String name,
       loadProviderPropertiesFromConfig(conf));
 }
 
+@SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
 private static VectorDataProvider getVectorDataProvider(final String name,
     AccessMode accessMode,
     final Configuration conf,
@@ -1154,7 +1158,7 @@ public static void delete(final String resource,
   }
 }
 
-protected static void initialize(final Configuration conf) throws DataProviderException
+protected synchronized static void initialize(final Configuration conf) throws DataProviderException
 {
   if (adHocProviderFactories == null)
   {
@@ -1317,11 +1321,7 @@ public static Set<String> getDependencies() throws IOException
     for (final AdHocDataProviderFactory dp : adHocProviderFactories.values())
     {
       log.debug("Getting dependencies for " + dp.getClass().getName());
-      Set<String> d = DependencyLoader.getDependencies(dp.getClass());
-      if (d != null)
-      {
-        dependencies.addAll(d);
-      }
+      dependencies.addAll(DependencyLoader.getDependencies(dp.getClass()));
     }
   }
 
@@ -1330,11 +1330,7 @@ public static Set<String> getDependencies() throws IOException
     for (final MrsImageDataProviderFactory dp : mrsImageProviderFactories.values())
     {
       log.debug("Getting dependencies for " + dp.getClass().getName());
-      Set<String> d = DependencyLoader.getDependencies(dp.getClass());
-      if (d != null)
-      {
-        dependencies.addAll(d);
-      }
+      dependencies.addAll(DependencyLoader.getDependencies(dp.getClass()));
     }
   }
   if (vectorProviderFactories != null)
@@ -1342,11 +1338,7 @@ public static Set<String> getDependencies() throws IOException
     for (final VectorDataProviderFactory dp : vectorProviderFactories.values())
     {
       log.debug("Getting dependencies for " + dp.getClass().getName());
-      Set<String> d = DependencyLoader.getDependencies(dp.getClass());
-      if (d != null)
-      {
-        dependencies.addAll(d);
-      }
+      dependencies.addAll(DependencyLoader.getDependencies(dp.getClass()));
     }
   }
   return dependencies;
@@ -1467,7 +1459,7 @@ protected static String getPrefix(String name)
     // 1st check if the system see's the name as a valid URI
     try
     {
-      URI uri = new URL(name).toURI();
+      new URL(name).toURI();
       return null;
     }
     catch (URISyntaxException | MalformedURLException e)
@@ -1494,7 +1486,7 @@ protected static String getPrefix(String name)
   return null;
 }
 
-private static Configuration getBasicConfig()
+private synchronized static Configuration getBasicConfig()
 {
   if (basicConf == null)
   {

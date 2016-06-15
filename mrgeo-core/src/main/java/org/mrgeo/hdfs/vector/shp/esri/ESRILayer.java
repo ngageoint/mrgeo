@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector.shp.esri;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.hdfs.vector.shp.SeekableDataInput;
 import org.mrgeo.hdfs.vector.shp.SeekableRaf;
 import org.mrgeo.hdfs.vector.shp.dbase.DbaseException;
@@ -36,7 +38,7 @@ import java.io.*;
  * This class was ported from the legacy Orion code and has no existing unit
  * tests so it should be questioned if you experience problems.
  */
-public class ESRILayer extends java.lang.Object
+public class ESRILayer
 {
   public static String getBaseName(String fileName)
   {
@@ -70,6 +72,7 @@ public class ESRILayer extends java.lang.Object
    * @throws IOException
    * @throws FormatException
    */
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only build valid shp file names")
   public static ESRILayer open(String fileName) throws FormatException, IOException, DbaseException
   {
     String fileBase = getBaseName(fileName);
@@ -89,6 +92,7 @@ public class ESRILayer extends java.lang.Object
   protected ShxFile index = null;
   private double maxScale = Long.MAX_VALUE;
   private double minScale = 0;
+  @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "used in subclasses")
   protected String mode = null; // RAF mode
   private String projection = "";
 

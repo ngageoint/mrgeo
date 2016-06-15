@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,14 +11,15 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.services.utils;
 
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,10 +78,10 @@ public class RequestUtils
       double[] c3;
       double[] c4;
 
-      c1 = tx.TransformPoint(bounds.getMinX(), bounds.getMinY());
-      c2 = tx.TransformPoint(bounds.getMinX(), bounds.getMaxY());
-      c3 = tx.TransformPoint(bounds.getMaxX(), bounds.getMinY());
-      c4 = tx.TransformPoint(bounds.getMaxX(), bounds.getMaxY());
+      c1 = tx.TransformPoint(bounds.w, bounds.s);
+      c2 = tx.TransformPoint(bounds.w, bounds.n);
+      c3 = tx.TransformPoint(bounds.e, bounds.s);
+      c4 = tx.TransformPoint(bounds.e, bounds.n);
 
       return new Bounds(Math.min(Math.min(c1[0], c2[0]), Math.min(c3[0], c4[0])),
               Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),

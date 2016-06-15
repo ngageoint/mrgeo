@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,17 +11,15 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.GenericOptionsParser;
@@ -29,16 +27,13 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.mapreduce.formats.TileClusterInfo;
+import org.mrgeo.utils.logging.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -46,6 +41,7 @@ import java.util.*;
 /**
  *
  */
+@SuppressFBWarnings(value = "PREDICTABLE_RANDOM", justification = "Just used for tmp filename generation")
 public class HadoopUtils
 {
   private static final Logger log = LoggerFactory.getLogger(HadoopUtils.class);
@@ -178,10 +174,10 @@ public static void adjustLogging()
     // create a random string of hex characters. This will force the
     // sequence file to split appropriately. Certainly a hack, but shouldn't
     // cause much of a difference in speed, or storage.
-    String randomString = "";
+    StringBuilder randomString = new StringBuilder();
     while (randomString.length() < size)
     {
-      randomString += Long.toHexString(random.nextLong());
+      randomString.append(Long.toHexString(random.nextLong()));
     }
     return randomString.substring(0, size);
   }
@@ -201,19 +197,7 @@ public static void adjustLogging()
     {
       return (TaskAttemptContext) taskAttempt.newInstance(new Object[] { conf, id });
     }
-    catch (final IllegalArgumentException e)
-    {
-      e.printStackTrace();
-    }
-    catch (final InstantiationException e)
-    {
-      e.printStackTrace();
-    }
-    catch (final IllegalAccessException e)
-    {
-      e.printStackTrace();
-    }
-    catch (final InvocationTargetException e)
+    catch (final IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException e)
     {
       e.printStackTrace();
     }
@@ -271,7 +255,7 @@ public static void adjustLogging()
     if (listDirs != null)
     {
       final String[] dirs = listDirs.split(",");
-      if (dirs != null && dirs.length != 0)
+      if (dirs.length != 0)
       {
         for (int i = 0; i < dirs.length; i++)
         {
@@ -316,59 +300,6 @@ public static void adjustLogging()
     return result;
   }
 
-  /**
-   * Formats a string with all of a job's failed task attempts.
-   *
-   * @param jobId
-   *          ID of the job for which to retrieve failed task info
-   * @param showStackTrace
-   *          if true; the entire stack trace will be shown for each failure exception
-   * @param taskLimit
-   *          maximum number of tasks to add to the output message
-   * @return formatted task failure string if job with jobId exists; empty string otherwise
-   * @throws IOException
-   * @todo will rid of the deprecated code, if I can figure out how to...API is confusing
-   */
-  public static String getFailedTasksString(final String jobId, final boolean showStackTrace,
-      final int taskLimit) throws IOException
-  {
-    final JobClient jobClient = new JobClient(new JobConf(HadoopUtils.createConfiguration()));
-    final RunningJob job = jobClient.getJob(jobId);
-    final org.apache.hadoop.mapred.TaskCompletionEvent[] taskEvents = job.getTaskCompletionEvents(0);
-    String failedTasksMsg = "";
-    int numTasks = taskEvents.length;
-    if (taskLimit > 0 && taskLimit < numTasks)
-    {
-      numTasks = taskLimit;
-    }
-    int taskCtr = 0;
-    for (int i = 0; i < numTasks; i++)
-    {
-      final org.apache.hadoop.mapred.TaskCompletionEvent taskEvent = taskEvents[i];
-      if (taskEvent.getTaskStatus().equals(org.apache.hadoop.mapred.TaskCompletionEvent.Status.FAILED))
-      {
-        final org.apache.hadoop.mapred.TaskAttemptID taskId = taskEvent.getTaskAttemptId();
-        final String[] taskDiagnostics = job.getTaskDiagnostics(taskId);
-        if (taskDiagnostics != null)
-        {
-          taskCtr++;
-          failedTasksMsg += "\nTask " + String.valueOf(taskCtr) + ": ";
-          for (final String taskDiagnostic : taskDiagnostics)
-          {
-            if (showStackTrace)
-            {
-              failedTasksMsg += taskDiagnostic;
-            }
-            else
-            {
-              failedTasksMsg += taskDiagnostic.split("\\n")[0];
-            }
-          }
-        }
-      }
-    }
-    return failedTasksMsg;
-  }
 
   public static int[] getIntArraySetting(final Configuration config, final String propertyName)
   {
@@ -396,24 +327,6 @@ public static void adjustLogging()
       strValues[ii] = strValues[ii].trim();
     }
     return strValues;
-  }
-
-  public static TileClusterInfo getTileClusterInfo(final Configuration conf) throws IOException
-  {
-    TileClusterInfo tileClusterInfo = null;
-    final String strTileClusterInfo = conf.get("mrspyramid.tileClusterInfo");
-    if (strTileClusterInfo != null)
-    {
-      try
-      {
-        tileClusterInfo = (TileClusterInfo) Base64Utils.decodeToObject(strTileClusterInfo);
-      }
-      catch (final ClassNotFoundException e)
-      {
-        log.error("Unable to retrieve tile cluster information from job configuration", e);
-      }
-    }
-    return tileClusterInfo;
   }
 
   public static void setJar(final Job job, Class clazz) throws IOException
@@ -466,19 +379,6 @@ public static void adjustLogging()
     String mr1Local = conf.get("mapred.job.tracker", "local");
     return mr1Local.equals("local");
   }
-
-  public static void setTileClusterInfo(final Configuration conf,
-      final TileClusterInfo tileClusterInfo) throws IOException
-  {
-    conf.set("mrspyramid.tileClusterInfo", Base64Utils.encodeObject(tileClusterInfo));
-  }
-
-  public static void setTileClusterInfo(final Job job, final TileClusterInfo tileClusterInfo)
-      throws IOException
-  {
-    setTileClusterInfo(job.getConfiguration(), tileClusterInfo);
-  }
-
 
   public static void setupLocalRunner(final Configuration config) throws IOException
   {
@@ -607,43 +507,12 @@ public static void adjustLogging()
 
       return;
     }
-    catch (final ClassNotFoundException e)
-    {
-    }
-    catch (final SecurityException e)
-    {
-    }
-    catch (final NoSuchMethodException e)
+    catch (final ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
     {
     }
 
     log.error("ERROR!  Can not find a TaskAttempt implementation class!");
     taskAttempt = null;
-  }
-
-  private static Path resolveName(final String input) throws IOException, URISyntaxException
-  {
-    // It could be either HDFS or local file system
-    File f = new File(input);
-    if (f.exists())
-    {
-      try
-      {
-        return new Path(new URI("file://" + input));
-      }
-      catch (URISyntaxException e)
-      {
-        // The URI is invalid, so let's continue to try to open it in HDFS
-      }
-    }
-    URI uri = new URI(input);
-    Path path = new Path(new URI(input));
-    final FileSystem fs = FileSystem.get(uri, HadoopUtils.createConfiguration());
-    if (fs.exists(path))
-    {
-      return path;
-    }
-    throw new IOException("Cannot find: " + input);
   }
 
   public static String findContainingJar(Class clazz) {

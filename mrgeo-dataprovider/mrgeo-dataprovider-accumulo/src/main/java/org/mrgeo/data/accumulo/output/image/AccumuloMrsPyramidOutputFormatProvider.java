@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.accumulo.output.image;
@@ -18,6 +19,7 @@ package org.mrgeo.data.accumulo.output.image;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.Pair;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -34,16 +36,15 @@ import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
-import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.raster.RasterWritable;
+import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.image.ImageOutputFormatContext;
-import org.mrgeo.hdfs.partitioners.FileSplitPartitioner;
 import org.mrgeo.utils.Base64Utils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.TMSUtils;
-import org.mrgeo.utils.TMSUtils.TileBounds;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,12 +100,12 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
     }
     log.info("column visibility of: " + this.cv.toString());
     
-    this.zoomLevel = context.getZoomlevel();
-    this.tileSize = context.getTilesize();
+    this.zoomLevel = context.getZoomLevel();
+    this.tileSize = context.getTileSize();
 
     // get the tile bounds
     this.bounds = context.getBounds();
-    this.tileBounds = TMSUtils.boundsToTile(TMSUtils.Bounds.asTMSBounds(this.bounds), this.zoomLevel, this.tileSize);
+    this.tileBounds = TMSUtils.boundsToTile(this.bounds, this.zoomLevel, this.tileSize);
     
     this.table = context.getOutput();
     if(table.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX)){
@@ -161,7 +162,42 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
     }
   } // end getOutputFormat
 
-  public boolean bulkJob(){
+@Override
+public void save(RasterRDD raster, Configuration conf)
+{
+  // IMPLEMENT THIS SCALA CODE IN JAVA!
+  throw new NotImplementedException("AccumuloMrsPyramidOutputFormatProvider.save not yet implemeted");
+//  val sparkPartitioner = tofp.getSparkPartitioner
+//  val conf1 = tofp.setupOutput(conf)
+//
+//  // Repartition the output if the output data provider requires it
+//  val wrappedTiles = new OrderedRDDFunctions[TileIdWritable, RasterWritable, (TileIdWritable, RasterWritable)](tiles)
+//    val sorted: RasterRDD = RasterRDD(
+//  if (sparkPartitioner != null) {
+//    wrappedTiles.repartitionAndSortWithinPartitions(sparkPartitioner)
+//  }
+//  else {
+//    wrappedTiles.sortByKey()
+//  })
+//  //val sorted: RasterRDD = RasterRDD(tiles.sortByKey())
+//
+//
+//  val wrappedForSave = new PairRDDFunctions(sorted)
+//  wrappedForSave.saveAsNewAPIHadoopDataset(conf1)
+//
+////    if (localpersist) {
+////      tiles.unpersist()
+////    }
+//
+//  if (sparkPartitioner != null)
+//  {
+//    sparkPartitioner.writeSplits(sorted, output, zoom, conf1)
+//  }
+//  tofp.teardownForSpark(conf1)
+
+}
+
+public boolean bulkJob(){
     //return false;
     return doBulk;
   }
@@ -172,14 +208,8 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
 //  } // end getWorkDir
   
   
-  @Override
-  public MrsPyramidMetadataWriter getMetadataWriter()
-  {
-    return provider.getMetadataWriter();
-  }
 
-  @Override
-  public MrsImageDataProvider getImageProvider()
+  private MrsImageDataProvider getImageProvider()
   {
     return provider;
   }
@@ -198,7 +228,7 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
   {
     try{
       // zoom level - output zoom level
-      zoomLevel = context.getZoomlevel();
+      zoomLevel = context.getZoomLevel();
 //      zoomLevel = conf.getInt("zoomlevel", 0);
       if(zoomLevel != 0){
         conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL, Integer.toString(zoomLevel));
@@ -403,13 +433,12 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
 
 
   @Override
-  public void teardown(Configuration conf) throws DataProviderException
+  public void finalizeExternalSave(Configuration conf) throws DataProviderException
   {
     performTeardown(conf);
   }
 
-  @Override
-  public void teardownForSpark(final Configuration conf) throws DataProviderException
+  private void teardownForSpark(final Configuration conf) throws DataProviderException
   {
     performTeardown(conf);
   }
@@ -502,7 +531,7 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
       
     }
     
-  } // end teardown
+  } // end finalizeExternalSave
   
   
   public byte[] longToBytes(long x) {
@@ -517,9 +546,4 @@ public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormat
     return AccumuloUtils.validateProtectionLevel(protectionLevel);
   }
 
-  @Override
-  public FileSplitPartitioner getSparkPartitioner()
-  {
-    return null;
-  }
 } // end AccumuloMrsPyramidOutputFormatProvider

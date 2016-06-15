@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.vector;
@@ -30,12 +31,19 @@ public class VectorRecordReader extends RecordReader<FeatureIdWritable, Geometry
   @Override
   public void initialize(InputSplit inputSplit, TaskAttemptContext context) throws IOException, InterruptedException
   {
-    VectorInputSplit vis = (VectorInputSplit)inputSplit;
-    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(vis.getVectorName(),
-                                                                      DataProviderFactory.AccessMode.READ,
-                                                                      context.getConfiguration());
-    delegate = dp.getRecordReader();
-    delegate.initialize(vis.getWrappedInputSplit(), context);
+    if (inputSplit instanceof VectorInputSplit)
+    {
+      VectorInputSplit vis = (VectorInputSplit) inputSplit;
+      VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(vis.getVectorName(),
+          DataProviderFactory.AccessMode.READ,
+          context.getConfiguration());
+      delegate = dp.getRecordReader();
+      delegate.initialize(vis.getWrappedInputSplit(), context);
+    }
+    else
+    {
+      throw new IOException("Input split not a VectorInputSplit");
+    }
   }
 
   @Override

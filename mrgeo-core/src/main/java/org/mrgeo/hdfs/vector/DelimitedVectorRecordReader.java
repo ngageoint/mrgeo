@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.hdfs.vector;
@@ -38,7 +39,7 @@ public class DelimitedVectorRecordReader extends RecordReader<FeatureIdWritable,
   private DelimitedParser delimitedParser;
   private LineRecordReader recordReader;
 
-  public class VectorLineProducer implements LineProducer
+  public static class VectorLineProducer implements LineProducer
   {
     LineRecordReader lineRecordReader;
     public VectorLineProducer(LineRecordReader recordReader)
@@ -70,21 +71,28 @@ public class DelimitedVectorRecordReader extends RecordReader<FeatureIdWritable,
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
-    FileSplit fsplit = (FileSplit)split;
-    delimitedParser = getDelimitedParser(fsplit.getPath().toString(),
-        context.getConfiguration());
-    recordReader = new LineRecordReader();
-    recordReader.initialize(fsplit, context);
-    // Skip the first 
-    if (delimitedParser.getSkipFirstLine())
+    if (split instanceof FileSplit)
     {
-      // Only skip the first line of the first split. The other
-      // splits are somewhere in the middle of the original file,
-      // so their first lines should not be skipped.
-      if (fsplit.getStart() != 0)
+      FileSplit fsplit = (FileSplit) split;
+      delimitedParser = getDelimitedParser(fsplit.getPath().toString(),
+          context.getConfiguration());
+      recordReader = new LineRecordReader();
+      recordReader.initialize(fsplit, context);
+      // Skip the first
+      if (delimitedParser.getSkipFirstLine())
       {
-        nextKeyValue();
+        // Only skip the first line of the first split. The other
+        // splits are somewhere in the middle of the original file,
+        // so their first lines should not be skipped.
+        if (fsplit.getStart() != 0)
+        {
+          nextKeyValue();
+        }
       }
+    }
+    else
+    {
+      throw new IOException("input split is not a FileSplit");
     }
   }
 

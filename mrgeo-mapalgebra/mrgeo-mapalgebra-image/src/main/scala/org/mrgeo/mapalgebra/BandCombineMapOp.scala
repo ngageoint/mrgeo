@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -24,11 +25,10 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
-import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
+import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.SparkUtils
-import org.mrgeo.utils.Bounds
+import org.mrgeo.utils.tms.Bounds
 
-import scala.annotation.varargs
 import scala.collection.mutable
 
 object BandCombineMapOp extends MapOpRegistrar {
@@ -91,7 +91,7 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
     var tiletype: Int = -1
     var totalbands: Int = 0
 
-    var bounds = new Bounds()
+    var bounds:Bounds = null
     // loop through the inputs and load the pyramid RDDs and metadata
     for (input <- inputs) {
 
@@ -100,7 +100,13 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
         pyramids(i) = pyramid.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + pyramid.getClass.getName))
         val meta = pyramid.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName))
 
-        bounds.expand(meta.getBounds)
+        if (bounds == null) {
+          bounds = meta.getBounds
+        }
+        else {
+          bounds = bounds.expand(meta.getBounds)
+        }
+
         // check for the same max zooms
         if (zoom < 0) {
           zoom = meta.getMaxZoomLevel

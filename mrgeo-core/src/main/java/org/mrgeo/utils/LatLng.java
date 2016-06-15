@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.utils;
@@ -34,6 +35,7 @@ public class LatLng
    * This is the earth radius at the equator
    */
   public final static double EARTH_RADIUS_EQUATOR = 6378137;
+  final static double EPSILON = 1.0 / EARTH_RADIUS_EQUATOR;
 
   /**
    * While it is technically probably less correct, WMS uses the radius at the equator for its
@@ -61,7 +63,9 @@ public class LatLng
    */
   public static double calculateGreatCircleDistance(final LatLng p1, final LatLng p2)
   {
-    if (p1.getLat() == p2.getLat() && p1.getLng() == p2.getLng())
+
+    if (FloatUtils.isEqual(p1.getLat(), p2.getLat()) &&
+        FloatUtils.isEqual(p1.getLng(), p2.getLng()))
     {
       return 0.0;
     }

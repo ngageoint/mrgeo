@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -19,6 +20,7 @@ import java.io._
 import java.util.regex.Pattern
 import javax.script.ScriptEngineManager
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
@@ -33,6 +35,9 @@ import org.mrgeo.utils.StringUtils
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
+@SerialVersionUID(1L)
+@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value=Array("UUF_UNUSED_FIELD"), justification = "Scala constant")
 object MapAlgebra extends MrGeoDriver {
 
   final private val MapAlgebra = "mapalgebra"
@@ -271,7 +276,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
         variable match {
         case v: ParserVariableNode =>
           if (MapOpFactory.exists(variable.getName)) {
-            throw new ParserException("Cannot use variable name \"" + name +
+            throw new ParserException("Cannot use variable name \"" + variable.getName +
                 "\" because there is a function of the same name")
           }
           val value = function.getChild(1)
@@ -373,7 +378,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     true
   }
 
-
+@SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   private def register(node: ParserNode, job: JobArguments, conf: SparkConf): Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
@@ -400,6 +405,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     classes.result()
   }
 
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   private def setup(node: ParserNode, job: JobArguments, conf: SparkConf): Unit = {
     // depth first run
     node.getChildren.foreach(child => {
@@ -493,7 +499,7 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     false
   }
 
-
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
   private def execute(node: ParserNode, context: SparkContext): Unit = {
     // depth first run
     node.getChildren.foreach(child => {
@@ -522,50 +528,3 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
   override def writeExternal(out: ObjectOutput): Unit = {}
 }
 
-
-object TestMapAlgebra extends App {
-
-  val baseDir: File = new File(System.getProperty("java.io.tmpdir"))
-  val username: String = "jython-" + System.getProperty("user.name")
-  val cacheDir: File = new File(baseDir, username)
-
-  //System.setProperty("python.path", "/usr/lib/python2.7")
-  System.setProperty("python.verbose", "debug")
-  System.setProperty("python.cachedir", cacheDir.getCanonicalPath)
-
-
-  //System.setProperty("python.home", "/usr/lib/python2.7/")
-
-  val manager = new ScriptEngineManager()
-  manager.getEngineFactories.foreach(engine => {
-    println(engine.getEngineName + " " + engine.getLanguageName + " " + engine.getNames)
-  })
-
-  println()
-  val engine = manager.getEngineByName("python")
-
-  if (engine != null) {
-    println(engine.getFactory.getEngineName)
-  }
-  else {
-    println("no python")
-  }
-  //  val conf = HadoopUtils.createConfiguration()
-  //  val pp = ProviderProperties.fromDelimitedString("")
-  //
-  //  HadoopUtils.setupLocalRunner(conf)
-  //
-  //  val expression = "x = 100; " +
-  //      "y = [/mrgeo/images/small-elevation]; " +
-  //      "z = 10 / [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] - x + y; " +
-  //      "a = [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation]; " +
-  //      "[/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation] * [/mrgeo/images/small-elevation] + [/mrgeo/images/small-elevation]"
-  //
-  //
-  //  val output = "test-mapalgebra"
-  //  if (MapAlgebra.validate(expression, pp)) {
-  //    //MapAlgebra.mapalgebra(expression, output, conf, pp)
-  //  }
-
-  System.exit(0)
-}

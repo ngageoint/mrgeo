@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.resources;
@@ -21,7 +22,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.Configuration;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -61,11 +62,6 @@ public class KmlGenerator
   {
     private int major, minor, micro;
 
-    /**
-     *
-     *
-     * @param str
-     */
     public Version(String str)
     {
       String[] l = str.split("\\.");
@@ -74,12 +70,6 @@ public class KmlGenerator
       micro = Integer.valueOf(l[2]);
     }
 
-    /**
-     *
-     *
-     * @param str
-     * @return
-     */
     public int compareTo(String str)
     {
       Version other = new Version(str);
@@ -113,30 +103,17 @@ public class KmlGenerator
       return minor;
     }
 
-    /**
-     *
-     *
-     * @param str
-     * @return
-     */
     public boolean isEqual(String str)
     {
       return compareTo(str) == 0;
     }
 
-    /**
-     *
-     *
-     * @param str
-     * @return
-     */
     public boolean isLess(String str)
     {
       return compareTo(str) == -1;
     }
   }
 
-  private static final long serialVersionUID = 1L;
   private String baseUrl;
 
   private static final String KML_MIME_TYPE = "application/vnd.google-earth.kml+xml";
@@ -255,28 +232,28 @@ public class KmlGenerator
       {
         MrsPyramid mp = MrsPyramid.open(f);
 
-        minx = Math.min(minx, mp.getBounds().getMinX());
-        miny = Math.min(miny, mp.getBounds().getMinY());
-        maxx = Math.max(maxx, mp.getBounds().getMaxX());
-        maxy = Math.max(maxy, mp.getBounds().getMaxY());
+        minx = Math.min(minx, mp.getBounds().w);
+        miny = Math.min(miny, mp.getBounds().s);
+        maxx = Math.max(maxx, mp.getBounds().e);
+        maxy = Math.max(maxy, mp.getBounds().n);
 
         if (kmlVersion.isLess("1.3.0"))
         {
           createTextElement(layer, "SRS", "EPSG:4326");
           Element llbb = createElement(layer, "LatLonBoundingBox");
-          llbb.setAttribute("minx", String.valueOf(mp.getBounds().getMinX()));
-          llbb.setAttribute("miny", String.valueOf(mp.getBounds().getMinY()));
-          llbb.setAttribute("maxx", String.valueOf(mp.getBounds().getMaxX()));
-          llbb.setAttribute("maxy", String.valueOf(mp.getBounds().getMaxY()));
+          llbb.setAttribute("minx", String.valueOf(mp.getBounds().w));
+          llbb.setAttribute("miny", String.valueOf(mp.getBounds().s));
+          llbb.setAttribute("maxx", String.valueOf(mp.getBounds().e));
+          llbb.setAttribute("maxy", String.valueOf(mp.getBounds().n));
         }
         else
         {
           createTextElement(layer, "CRS", "CRS:84");
           Element bb = createElement(layer, "EX_GeographicBoundingBox");
-          createTextElement(bb, "westBoundLongitude", String.valueOf(mp.getBounds().getMinX()));
-          createTextElement(bb, "eastBoundLongitude", String.valueOf(mp.getBounds().getMaxX()));
-          createTextElement(bb, "southBoundLatitude", String.valueOf(mp.getBounds().getMinY()));
-          createTextElement(bb, "northBoundLatitude", String.valueOf(mp.getBounds().getMaxY()));
+          createTextElement(bb, "westBoundLongitude", String.valueOf(mp.getBounds().w));
+          createTextElement(bb, "eastBoundLongitude", String.valueOf(mp.getBounds().e));
+          createTextElement(bb, "southBoundLatitude", String.valueOf(mp.getBounds().s));
+          createTextElement(bb, "northBoundLatitude", String.valueOf(mp.getBounds().n));
         }
       }
       catch (IOException e)
@@ -340,13 +317,6 @@ public class KmlGenerator
     transformer.transform(source, result);
   }
 
-  /**
-   *
-   *
-   * @param parent
-   * @param tagName
-   * @return
-   */
   public Element createElement(Element parent, String tagName)
   {
     Document doc = parent.getOwnerDocument();
@@ -355,14 +325,6 @@ public class KmlGenerator
     return e;
   }
 
-  /**
-   *
-   *
-   * @param parent
-   * @param tagName
-   * @param text
-   * @return
-   */
   public Element createTextElement(Element parent, String tagName, String text)
   {
     Document doc = parent.getOwnerDocument();
@@ -808,10 +770,10 @@ public class KmlGenerator
 //    {
 //      throw new IllegalArgumentException("Layer must be specified.");
 //    }
-//    double minX = inputBounds.getMinX();
-//    double minY = inputBounds.getMinY();
-//    double maxX = inputBounds.getMaxX();
-//    double maxY = inputBounds.getMaxY();
+//    double minX = inputBounds.w;
+//    double minY = inputBounds.s;
+//    double maxX = inputBounds.e;
+//    double maxY = inputBounds.n;
 //
 //    String baseDir = HadoopUtils.getDefaultImageBaseDirectory();
 //    Path filePath = new Path(baseDir, layer);
@@ -830,10 +792,10 @@ public class KmlGenerator
 //        Bounds bounds = pyramid.getBounds();
 //        if (bounds.toEnvelope().contains(inputBounds.toEnvelope()))
 //        {
-//          double layerMinX = bounds.getMinX();
-//          double layerMinY = bounds.getMinY();
-//          double layerMaxX = bounds.getMaxX();
-//          double layerMaxY = bounds.getMaxY();
+//          double layerMinX = bounds.w;
+//          double layerMinY = bounds.s;
+//          double layerMaxX = bounds.e;
+//          double layerMaxY = bounds.n;
 //          bbox = layerMinX + "," + layerMinY + "," + layerMaxX + "," + layerMaxY;
 //        }
 //      }
@@ -906,10 +868,10 @@ public class KmlGenerator
     {
       throw new IllegalArgumentException("Layer must be specified.");
     }
-    double minX = inputBounds.getMinX();
-    double minY = inputBounds.getMinY();
-    double maxX = inputBounds.getMaxX();
-    double maxY = inputBounds.getMaxY();
+    double minX = inputBounds.w;
+    double minY = inputBounds.s;
+    double maxX = inputBounds.e;
+    double maxY = inputBounds.n;
 
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(layer, DataProviderFactory.AccessMode.READ, providerProperties);
     MrsPyramid pyramid = MrsPyramid.open(dp);
@@ -919,10 +881,10 @@ public class KmlGenerator
     Bounds bounds = pyramid.getBounds();
     if (bounds.toEnvelope().contains(inputBounds.toEnvelope()))
     {
-      double layerMinX = bounds.getMinX();
-      double layerMinY = bounds.getMinY();
-      double layerMaxX = bounds.getMaxX();
-      double layerMaxY = bounds.getMaxY();
+      double layerMinX = bounds.w;
+      double layerMinY = bounds.s;
+      double layerMaxX = bounds.e;
+      double layerMaxY = bounds.n;
       bbox = layerMinX + "," + layerMinY + "," + layerMaxX + "," + layerMaxY;
     }
 

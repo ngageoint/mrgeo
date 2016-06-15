@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.spark
@@ -40,8 +41,8 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
       println("    " + info.name)
     })
 
-    val pools = context.getAllPools
-    val rdds = context.getRDDStorageInfo
+//    val pools = context.getAllPools
+//    val rdds = context.getRDDStorageInfo
     val tracker = context.statusTracker
 
      tracker.getActiveJobIds().foreach(id => {
@@ -58,9 +59,9 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
   override def onTaskStart(taskStart: SparkListenerTaskStart): Unit = {
     println("Task Start " + taskStart)
 
-    val pools = context.getAllPools
-    val rdds = context.getRDDStorageInfo
-    val tracker = context.statusTracker
+//    val pools = context.getAllPools
+//    val rdds = context.getRDDStorageInfo
+//    val tracker = context.statusTracker
 
     super.onTaskStart(taskStart)
   }
@@ -73,9 +74,9 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
   override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
     println("Task End " + taskEnd)
 
-    val pools = context.getAllPools
-    val rdds = context.getRDDStorageInfo
-    val tracker = context.statusTracker
+//    val pools = context.getAllPools
+//    val rdds = context.getRDDStorageInfo
+//    val tracker = context.statusTracker
 
     super.onTaskEnd(taskEnd)
   }

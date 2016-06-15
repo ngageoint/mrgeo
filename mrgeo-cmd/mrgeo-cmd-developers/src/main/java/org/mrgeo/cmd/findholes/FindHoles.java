@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.cmd.findholes;
@@ -21,7 +22,7 @@ import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.findholes.mapreduce.FindHolesDriver;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LoggingUtils;
+import org.mrgeo.utils.logging.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

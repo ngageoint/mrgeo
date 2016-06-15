@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -22,6 +23,7 @@ import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -63,7 +65,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
   private var nodatas:Array[Double] = null // nodata value for the input data
 
   private val rddMap = mutable.Map.empty[Int, Int]  // maps input order (key) to cogrouped position (value)
-  private val constMap = mutable.Map.empty[Int, Double] // maps input order (key) to constant value
+  private val constMap = mutable.Map.empty[Int, Option[Double]] // maps input order (key) to constant value
 
   private[mapalgebra] def this(test:RasterMapOp, positive:RasterMapOp, negative:RasterMapOp) = {
     this()
@@ -95,7 +97,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
     rddMap.put(0, 0)
     rddMap.put(2, 1)
 
-    constMap.put(1, positive)
+    constMap.put(1, Some(positive))
 
     isRdd = Array.ofDim[Boolean](3)
     isRdd(0) = true
@@ -113,7 +115,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
     rddMap.put(0, 0)
     rddMap.put(1, 1)
 
-    constMap.put(2, negative)
+    constMap.put(2, Some(negative))
 
     isRdd = Array.ofDim[Boolean](3)
     isRdd(0) = true
@@ -129,8 +131,8 @@ class ConMapOp extends RasterMapOp with Externalizable {
 
     rddMap.put(0, 0)
 
-    constMap.put(1, positive)
-    constMap.put(2, negative)
+    constMap.put(1, Some(positive))
+    constMap.put(2, Some(negative))
 
     isRdd = Array.ofDim[Boolean](3)
     isRdd(0) = true
@@ -165,7 +167,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
         inputCnt += 1
       case const: java.lang.Double =>
         isBuilder += false
-        constMap.put(i, const.doubleValue())
+        constMap.put(i, if (const.doubleValue().isNaN) { None } else { Some(const.doubleValue()) })
       case _ =>
       }
     }
@@ -235,11 +237,12 @@ class ConMapOp extends RasterMapOp with Externalizable {
       nodatas(e._1) = m.getDefaultValue(0)
     }
     )
-    val nodata = meta.getDefaultValue(0)
+    val nodata = RasterUtils.getDefaultNoDataForType(meta.getTileType)
     val tilesize = meta.getTilesize
     val bands = meta.getBands
+    val zoom = meta.getMaxZoomLevel
 
-    rasterRDD = Some(RasterRDD(groups.map(tile => {
+    rasterRDD = Some(RasterRDD(groups.flatMap(tile => {
 
       val termCount = isRdd.length
 
@@ -252,32 +255,40 @@ class ConMapOp extends RasterMapOp with Externalizable {
         if (isRdd(i)) {
           val mapped = rddMap(i)
 
-          val ri = rasterInputs(mapped) match {
-          case Some(r) => r
-          case None =>
+          val ri = rasterInputs(mapped) orElse {
             val a = rawInputs(mapped)
-            rasterInputs(mapped) = rawInputs(mapped).head match {
-            case rw: RasterWritable =>
-              Some(RasterWritable.toRaster(rw))
-            case _ =>
+            val r  = if (a.nonEmpty) {
+              a.head match {
+                case rw: RasterWritable =>
+                  Some(RasterWritable.toRaster(rw))
+                case _ =>
+                  None
+              }
+            }
+            else {
               None
             }
-            rasterInputs(mapped).get
+            rasterInputs(mapped) = r
+            r
           }
 
           ri match {
-          case r:Raster =>
+              case Some(r: Raster) =>
             Some(r.getSampleDouble(x, y, b))
-          case a =>
+              case _ =>
             None
           }
         }
-        else {
-          Some(constMap(i))
+        else constMap(i) match {
+        case Some(nan) if nan.isNaN => Some(nodata)
+        case notnan => notnan
         }
       }
       val done = new Breaks
 
+      var hasdata = false
+
+      //NOTE:  the raster is already filled with nodata, no need to do do any setting of resultant pixels with nodata
       var y: Int = 0
       while (y < raster.getHeight) {
         var x: Int = 0
@@ -285,40 +296,43 @@ class ConMapOp extends RasterMapOp with Externalizable {
           var b: Int = 0
           while (b < raster.getNumBands) {
             done.breakable {
-              for (i <- 0 until termCount - 1 by 2) {
+              var i: Int = 0
+              while (i < termCount - 1) {
                 // get the conditional value, either from the rdd or constant
                 val v = getValue(i, x, y, b) match {
                 case Some(d) => d
-                case _ => nodata
+                case _ => done.break()
                 }
-
-                //println(getValue(i, x, y, b))
 
                 // check for nodata
                 if (RasterMapOp.isNodata(v, nodatas(i))) {
-                  raster.setSample(x, y, b, nodata)
                   done.break()
                 }
                 // greater than 0, so take the true case
                 else if (!RasterMapOp.nearZero(v)) {
-                  val v = getValue(i + 1, x, y, b) match {
-                  case Some(d) => d
-                  case _ => nodata
+                  getValue(i + 1, x, y, b) match {
+                  case Some(d) =>
+                    if (RasterMapOp.isNotNodata(d, nodatas(i + 1))) {
+                      raster.setSample(x, y, b, d)
+                      hasdata = true
+                    }
+                  case _ =>
                   }
-
-                  raster.setSample(x, y, b, v)
                   done.break()
                 }
+                i += 2
               }
 
               // didn't find one in the loop, take the last entry (the else)
-              val v = getValue(termCount - 1, x, y, b) match {
-              case Some(d) => d
-              case _ => nodata
+              getValue(termCount - 1, x, y, b) match {
+              case Some(d) => {
+                if (RasterMapOp.isNotNodata(d, nodatas(termCount - 1))) {
+                  raster.setSample(x, y, b, d)
+                  hasdata = true
+                }
               }
-
-              raster.setSample(x, y, b, v)
-
+              case _ =>
+              }
             }
             b += 1
           }
@@ -327,10 +341,17 @@ class ConMapOp extends RasterMapOp with Externalizable {
         y += 1
       }
 
-      (tile._1, RasterWritable.toWritable(raster))
+      if (hasdata)
+        Array((tile._1, RasterWritable.toWritable(raster))).iterator
+      else
+        Array.empty[(TileIdWritable, RasterWritable)].iterator
     })))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
+    val outputNodatas = new Array[Double](meta.getBands)
+    for (i <- outputNodatas.indices) {
+      outputNodatas(i) = nodata
+    }
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, outputNodatas,
       bounds = meta.getBounds, calcStats = false))
 
     true
@@ -437,7 +458,13 @@ class ConMapOp extends RasterMapOp with Externalizable {
     cnt = in.readInt()
     i = 0
     while (i < cnt) {
-      constMap.put(in.readInt(), in.readDouble())
+      val hasValue = in.readBoolean()
+      if (hasValue) {
+        constMap.put(in.readInt(), Some(in.readDouble()))
+      }
+      else {
+        constMap.put(in.readInt(), None)
+      }
       i += 1
     }
 
@@ -468,8 +495,12 @@ class ConMapOp extends RasterMapOp with Externalizable {
     // constmap
     out.writeInt(constMap.size)
     constMap.foreach(e => {
+      val hasValue = e._2.nonEmpty
+      out.writeBoolean(hasValue)
       out.writeInt(e._1)
-      out.writeDouble(e._2)
+      if (hasValue) {
+        out.writeDouble(e._2.get)
+      }
     })
 
     // nodatas

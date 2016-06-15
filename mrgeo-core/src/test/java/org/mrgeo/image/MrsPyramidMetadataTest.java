@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.image;
@@ -52,15 +53,15 @@ public class MrsPyramidMetadataTest
   @Category(UnitTest.class)
   public void testDeserializeMissingStats()
   {
-    final String json = "{\"bounds\":{\"maxY\":41.5,\"maxX\":25,\"minX\":24,\"minY\":40.5},\"imageMetadata\":[{\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"tilesize\":512,\"maxZoomLevel\":3}";
+    final String json = "{\"bounds\":{\"n\":41.5,\"e\":25,\"w\":24,\"s\":40.5},\"imageMetadata\":[{\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"tilesize\":512,\"maxZoomLevel\":3}";
     try
     {
       final InputStream is = new ByteArrayInputStream(json.getBytes());
       final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
-      assertEquals(meta.getBounds().getMaxY(), 41.5, epsilon);
-      assertEquals(meta.getBounds().getMaxX(), 25, epsilon);
-      assertEquals(meta.getBounds().getMinX(), 24, epsilon);
-      assertEquals(meta.getBounds().getMinY(), 40.5, epsilon);
+      assertEquals(meta.getBounds().n, 41.5, epsilon);
+      assertEquals(meta.getBounds().e, 25, epsilon);
+      assertEquals(meta.getBounds().w, 24, epsilon);
+      assertEquals(meta.getBounds().s, 40.5, epsilon);
       assertEquals(meta.getTilesize(), MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
       assertEquals(meta.getBands(), 1);
       assertEquals(meta.getDefaultValues()[0], -32768, epsilon);
@@ -76,7 +77,7 @@ public class MrsPyramidMetadataTest
   @Category(UnitTest.class)
   public void testDeserializeUnknownProperty() throws IOException
   {
-    final String json = "{\"missing\":null,\"bounds\":{\"maxY\":41.5,\"maxX\":25,\"minX\":24,\"minY\":40.5},\"imageMetadata\":[{\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"maxZoomLevel\":3}";
+    final String json = "{\"missing\":null,\"bounds\":{\"n\":41.5,\"e\":25,\"w\":24,\"s\":40.5},\"imageMetadata\":[{\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"maxZoomLevel\":3}";
 
     final InputStream is = new ByteArrayInputStream(json.getBytes());
     MrsPyramidMetadata.load(is);
@@ -86,7 +87,7 @@ public class MrsPyramidMetadataTest
   @Category(UnitTest.class)
   public void testLoadClassification()
   {
-    final String json = "{\"bounds\":{\"maxY\":41.5,\"maxX\":25,\"minX\":24,\"minY\":40.5},\"classification\":\"Categorical\",\"imageMetadata\":[{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"tilesize\":512,\"maxZoomLevel\":9}";
+    final String json = "{\"bounds\":{\"n\":41.5,\"e\":25,\"w\":24,\"s\":40.5},\"classification\":\"Categorical\",\"imageMetadata\":[{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"tilesize\":512,\"maxZoomLevel\":9}";
     try
     {
       final InputStream is = new ByteArrayInputStream(json.getBytes());
@@ -122,24 +123,45 @@ public class MrsPyramidMetadataTest
     }
   }
 
-  @Test
-  @Category(UnitTest.class)
-  public void testLoadStats()
+@Test
+@Category(UnitTest.class)
+public void testLoadStats()
+{
+  final String json = "{\"bounds\":{\"n\":41.5,\"e\":25,\"w\":24,\"s\":40.5},\"imageMetadata\":[{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"tilesize\":512,\"maxZoomLevel\":9}";
+  try
   {
-    final String json = "{\"bounds\":{\"maxY\":41.5,\"maxX\":25,\"minX\":24,\"minY\":40.5},\"imageMetadata\":[{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"tilesize\":512,\"maxZoomLevel\":9}";
-    try
-    {
-      final InputStream is = new ByteArrayInputStream(json.getBytes());
-      final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
-      assertNotNull(meta.getStats());
-      assertNotNull(meta.getStats(0));
-    }
-    catch (final Exception e)
-    {
-      log.error("Failed to load metadata", e);
-      fail("Failed to load metadata");
-    }
+    final InputStream is = new ByteArrayInputStream(json.getBytes());
+    final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
+    assertNotNull(meta.getStats());
+    assertNotNull(meta.getStats(0));
   }
+  catch (final Exception e)
+  {
+    log.error("Failed to load metadata", e);
+    fail("Failed to load metadata");
+  }
+}
+
+@Test
+@Category(UnitTest.class)
+public void testOldParams()
+{
+  final String json = "{\"bounds\":{\"maxY\":41.5,\"maxX\":25,\"minX\":24,\"minY\":40.5},\"imageMetadata\":[{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"name\":null},{\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"name\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"tilesize\":512,\"maxZoomLevel\":9}";
+  try
+  {
+    final InputStream is = new ByteArrayInputStream(json.getBytes());
+    final MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
+    assertEquals(meta.getBounds().n, 41.5, epsilon);
+    assertEquals(meta.getBounds().e, 25, epsilon);
+    assertEquals(meta.getBounds().w, 24, epsilon);
+    assertEquals(meta.getBounds().s, 40.5, epsilon);
+  }
+  catch (final Exception e)
+  {
+    log.error("Failed to load metadata", e);
+    fail("Failed to load metadata");
+  }
+}
 
   // Verify that we can load older format metadata that uses the "image" property
   // rather than "name". This was in place prior to changes for MrsVector support.
@@ -147,7 +169,7 @@ public class MrsPyramidMetadataTest
   @Category(UnitTest.class)
   public void testLoadWithCompatibility()
   {
-    final String json = "{\"bounds\":{\"maxY\":41.5,\"maxX\":25,\"minX\":24,\"minY\":40.5},\"imageMetadata\":[{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"image\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"tilesize\":512,\"maxZoomLevel\":9}";
+    final String json = "{\"bounds\":{\"n\":41.5,\"e\":25,\"w\":24,\"s\":40.5},\"imageMetadata\":[{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":null,\"pixelBounds\":null,\"tileBounds\":null,\"image\":null},{\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"pixelBounds\":{\"maxY\":728,\"maxX\":728,\"minX\":0,\"minY\":0},\"tileBounds\":{\"maxY\":187,\"maxX\":291,\"minX\":290,\"minY\":185},\"image\":\"9\"}],\"bands\":1,\"defaultValues\":[-32768],\"stats\":[{\"min\":-5,\"max\":2193,\"mean\":521.1451838574833}],\"tilesize\":512,\"maxZoomLevel\":9}";
     try
     {
       final InputStream is = new ByteArrayInputStream(json.getBytes());
@@ -186,6 +208,7 @@ public class MrsPyramidMetadataTest
     }
     catch (final Exception e)
     {
+      e.printStackTrace();
       log.error("Failed to load metadata", e);
       fail("Failed to load metadata");
     }

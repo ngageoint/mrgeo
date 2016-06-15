@@ -1,6 +1,6 @@
 package org.mrgeo.data.vector.geowave;
 
-import mil.nga.giat.geowave.datastore.accumulo.mapreduce.input.GeoWaveRecordReader;
+import mil.nga.giat.geowave.datastore.accumulo.mapreduce.GeoWaveAccumuloRecordReader;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -20,17 +20,25 @@ public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, G
   static Logger log = LoggerFactory.getLogger(GeoWaveVectorRecordReader.class);
   public static final String CQL_FILTER = GeoWaveVectorRecordReader.class.getName() + ".cqlFilter";
 
-  private GeoWaveRecordReader<Object> delegateReader;
+  private RecordReader delegateReader;
   private FeatureIdWritable currKey = new FeatureIdWritable();
   private Geometry currValue;
   private Filter cqlFilter;
   private String strCqlFilter;
   private static long featureCount = 0L;
 
+  public GeoWaveVectorRecordReader(RecordReader delegateReader)
+  {
+    this.delegateReader = delegateReader;
+  }
+
   @Override
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
+    delegateReader.initialize(split, context);
+    // No need to initialize the delegateReader since it was already done in the
+    // GeoWaveInputFormat.createRecordReader method
     strCqlFilter = context.getConfiguration().get(CQL_FILTER);
     if (strCqlFilter != null && !strCqlFilter.isEmpty())
     {
@@ -45,10 +53,6 @@ public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, G
         throw new IOException("Unable to instantiate CQL filter for: " + strCqlFilter, e);
       }
     }
-    delegateReader = new GeoWaveRecordReader<Object>();
-    log.info("Calling GeoWave delegate reader initialize()");
-    delegateReader.initialize(split, context);
-    log.info("Done calling GeoWave delegate reader initialize()");
   }
 
   @Override

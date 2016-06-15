@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,15 +11,15 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra.save
 
-import org.apache.spark.{SparkContext, SparkConf}
-import org.mrgeo.job.JobArguments
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.{RasterMapOp, SaveRasterMapOp}
-import org.mrgeo.mapalgebra.vector.VectorMapOp
+import org.mrgeo.mapalgebra.vector.{SaveVectorMapOp, VectorMapOp}
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object SaveMapOp extends MapOpRegistrar {
@@ -27,11 +27,11 @@ object SaveMapOp extends MapOpRegistrar {
     Array[String]("save")
   }
 
+  @SuppressFBWarnings(value = Array("BC_UNCONFIRMED_CAST"), justification = "Scala generated code")
   def create(mapop:MapOp, name:String):MapOp = {
     mapop match {
-    case raster:RasterMapOp => new SaveRasterMapOp(Some(raster), name)
-    // TODO:  Uncomment this!
-    //case vector:VectorMapOp => SaveVectorMapOp(vector, name)
+    case raster: RasterMapOp => new SaveRasterMapOp (Some(raster), name)
+    case vector: VectorMapOp => new SaveVectorMapOp (Some(vector), name)
     case _ => throw new ParserException("MapOp must be a RasterMapOp or VectorMapOp")
     }
   }
@@ -48,13 +48,10 @@ object SaveMapOp extends MapOpRegistrar {
       new SaveRasterMapOp(node, variables)
     }
     catch {
-      case pe: ParserException =>
-        throw pe
-      // TODO:  Uncomment this!
-      //        val vector = VectorMapOp.decodeToRaster(node.getChild(0), variables)
-      //        new SaveVectorMapOp(node, true, variables, protectionLevel)
-      //      }
-
+      case pe: ParserException => {
+        val vector = VectorMapOp.decodeToVector(node.getChild(0), variables)
+        new SaveVectorMapOp(node, variables)
+      }
     }
   }
 }

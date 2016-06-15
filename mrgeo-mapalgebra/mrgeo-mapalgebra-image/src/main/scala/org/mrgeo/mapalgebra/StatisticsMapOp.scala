@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
@@ -47,14 +48,10 @@ object StatisticsMapOp extends MapOpRegistrar {
     Array[String]("statistics", "stats")
   }
 
-  def create(method:String, first:RasterMapOp, others:Array[AnyRef]):MapOp = {
+  def create(first:RasterMapOp, method:String, rasters:Array[RasterMapOp]):MapOp = {
     val inputs:Seq[Either[Option[RasterMapOp], Option[String]]] =
-      (List(first) ++ others.toList).flatMap(any => {
-        any match {
-        case raster:RasterMapOp => List(Left(Some(raster)))
-        case string:String => List(Right(Some(string)))
-        case _ => List()
-        }
+      (List(first) ++ rasters.toList).flatMap(raster => {
+        List(Left(Some(raster)))
       })
 
     if (method.isEmpty || !methods.exists(_.equals(method.toLowerCase))) {
@@ -64,6 +61,24 @@ object StatisticsMapOp extends MapOpRegistrar {
 
     new StatisticsMapOp(inputs.toArray, method)
   }
+
+  // When generating Python bindings for this map op, it cannot distinguish between
+  // passing an array of RasterMapOp and and Array of String. So we are commenting
+  // out the String version of the method. Python won't need this anyway because it
+  // can do its own wildcarding based on names after calling MrGeo.listImages.
+//  def create(method:String, first:RasterMapOp, names:Array[String]):MapOp = {
+//    val inputs:Seq[Either[Option[RasterMapOp], Option[String]]] =
+//      List(Left(Some(first))) ++ (names.toList).flatMap(name => {
+//        List(Right(Some(name)))
+//      })
+//
+//    if (method.isEmpty || !methods.exists(_.equals(method.toLowerCase))) {
+//      throw new ParserException("Invalid stastics method")
+//    }
+//
+//
+//    new StatisticsMapOp(inputs.toArray, method)
+//  }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new StatisticsMapOp(node, variables)
@@ -332,11 +347,13 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val rasters = rasterbuilder.result()
 
+        val valuebuilder = Array.newBuilder[Double]
+        valuebuilder.sizeHint(rasters.length)
         var y: Int = 0
         while (y < result.getHeight) {
           var x: Int = 0
           while (x < result.getWidth) {
-            val valuebuilder = Array.newBuilder[Double]
+            valuebuilder.clear
 
             var ndx: Int = 0
             while (ndx < rasters.length) {
@@ -399,11 +416,13 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val rasters = rasterbuilder.result()
 
+        val valuebuilder = Array.newBuilder[Double]
+        valuebuilder.sizeHint(rasters.length)
         var y: Int = 0
         while (y < result.getHeight) {
           var x: Int = 0
           while (x < result.getWidth) {
-            val valuebuilder = Array.newBuilder[Double]
+            valuebuilder.clear
 
             var ndx: Int = 0
             while (ndx < rasters.length) {

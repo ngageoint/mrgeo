@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,12 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.job.yarn
 
 import java.io.{File, PrintWriter}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.SparkConf
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.JobArguments
@@ -56,16 +58,16 @@ class MrGeoYarnDriver {
           run.invoke(client)
         }
         catch {
-          case e:Exception => {
+          case e:Exception =>
             e.printStackTrace()
             throw e
-          }
         }
       }
     }
 
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Using File to strip path from a file")
   def toYarnArgs(job:JobArguments, cl:ClassLoader, conf:SparkConf) :Array[String] = {
     val args = new ArrayBuffer[String]()
 
@@ -101,11 +103,16 @@ class MrGeoYarnDriver {
     args += "--jar"
     args += driverJar
 
-    //val executors = conf.get("spark.executor.instances", "2").toInt
-    args += "--num-executors"
-    //args += executors.toString
-    args += job.executors.toString
-
+    // if dynamic allocation is _not_ enabled, we need to set the num-executors
+    if (!conf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = false)) {
+      //val executors = conf.get("spark.executor.instances", "2").toInt
+      // For Spark 1.6.0, passing --num-executors no longer works. Instead, you
+      // have to set the spark.executor.instances configuration setting.
+      conf.set("spark.executor.instances", job.executors.toString)
+      args += "--num-executors"
+      //args += executors.toString
+      args += job.executors.toString
+    }
     args += "--executor-cores"
 //    args += conf.get("spark.executor.cores", "1")
     args +=  job.cores.toString

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.services.utils;
@@ -19,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.utils.Bounds;
+import org.mrgeo.utils.tms.Bounds;
 
 public class RequestUtilsTest {
 
@@ -55,10 +56,10 @@ public class RequestUtilsTest {
         Bounds bounds = new Bounds(66.047475576957,33.021709619141,68.594930410941,34.068157373047);
         Bounds prjBounds = RequestUtils.reprojectBounds(bounds, epsg);
 
-        Assert.assertEquals("Bad bounds west", 7352371, prjBounds.getMinX(), 1.0);
-        Assert.assertEquals("Bad bounds south", 3898185, prjBounds.getMinY(), 1.0);
-        Assert.assertEquals("Bad bounds east", 7635952, prjBounds.getMaxX(), 1.0);
-        Assert.assertEquals("Bad bounds north", 4037957, prjBounds.getMaxY(), 1.0);
+        Assert.assertEquals("Bad bounds west", 7352371, prjBounds.w, 1.0);
+        Assert.assertEquals("Bad bounds south", 3898185, prjBounds.s, 1.0);
+        Assert.assertEquals("Bad bounds east", 7635952, prjBounds.e, 1.0);
+        Assert.assertEquals("Bad bounds north", 4037957, prjBounds.n, 1.0);
     }
 
 }

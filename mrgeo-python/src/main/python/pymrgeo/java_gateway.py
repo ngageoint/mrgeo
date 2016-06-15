@@ -23,23 +23,22 @@ https://spark.apache.org/docs/latest/api/python/index.html
 
 """
 
-import atexit
 import fnmatch
 import os
 import sys
 import select
 import signal
-import shlex
 import socket
 import struct
-import platform
 from subprocess import Popen, PIPE
+from py4j.java_gateway import java_import, JavaGateway, GatewayClient, get_method
+from py4j.java_collections import ListConverter
 
 if sys.version >= '3':
     xrange = range
 
-from py4j.java_gateway import java_import, JavaGateway, GatewayClient, get_method
-from py4j.java_collections import ListConverter
+
+_isremote = False
 
 
 # patching ListConverter, or it will convert bytearray into Java ArrayList
@@ -58,27 +57,38 @@ def read_int(stream):
 
 
 def find_script():
-    if "MRGEO_HOME" in os.environ:
-        MRGEO_HOME = os.environ["MRGEO_HOME"]
+    if "MRGEO_COMMON_HOME" in os.environ:
+        mrgeo_home = os.environ["MRGEO_COMMON_HOME"]
+    elif "MRGEO_HOME" in os.environ:
+        mrgeo_home = os.environ["MRGEO_HOME"]
+        print("MRGEO_HOME has been deprecated, use MRGEO_COMMON_HOME and MRGEO_CONF_DIR instead.")
     else:
-        raise Exception("MRGEO_HOME is not set!")
+        raise Exception("MRGEO_COMMON_HOME is not set!")
 
     script = "mrgeo"
 
-    if os.path.isfile(os.path.join(MRGEO_HOME, script)):
-        return os.path.join(MRGEO_HOME, script)
+    if os.path.isfile(os.path.join(mrgeo_home, script)):
+        return os.path.join(mrgeo_home, script)
 
-    if os.path.isfile(os.path.join(MRGEO_HOME + "/bin", script)):
-        return os.path.join(MRGEO_HOME + "/bin", script)
+    if os.path.isfile(os.path.join(mrgeo_home + "/bin", script)):
+        return os.path.join(mrgeo_home + "/bin", script)
 
-    for root, dirnames, filenames in os.walk(MRGEO_HOME):
+    for root, dirnames, filenames in os.walk(mrgeo_home):
         for filename in fnmatch.filter(filenames, script):
             return os.path.join(root, filename)
 
-    raise Exception('Can not find "' + script + '" within MRGEO_HOME (' + MRGEO_HOME + ')')
+    raise Exception('Can not find "' + script + '" within MRGEO_COMMON_HOME (' + mrgeo_home + ')')
+
+
+def is_remote():
+    return _isremote
 
 
 def launch_gateway():
+    global _isremote
+    requesthost = socket.gethostname()
+    requestport = 0
+
     if "MRGEO_GATEWAY_PORT" in os.environ:
         gateway_port = int(os.environ["MRGEO_GATEWAY_PORT"])
     else:
@@ -86,30 +96,65 @@ def launch_gateway():
 
         script = find_script()
 
+        fork = True
+        if "MRGEO_HOST" in os.environ:
+            requesthost = os.environ["MRGEO_HOST"]
+            fork = False
+
+        if "MRGEO_PORT" in os.environ:
+            requestport = int(os.environ["MRGEO_PORT"])
+            fork = False
+
         # Start a socket that will be used by PythonGatewayServer to communicate its port to us
         callback_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         callback_socket.bind(('127.0.0.1', 0))
+
         callback_socket.listen(1)
         callback_host, callback_port = callback_socket.getsockname()
-        env = dict(os.environ)
-        env['_MRGEO_DRIVER_CALLBACK_HOST'] = callback_host
-        env['_MRGEO_DRIVER_CALLBACK_PORT'] = str(callback_port)
-
-        command = [script, "python", "-v", "-h", callback_host, "-p", str(callback_port)]
-
-        # Launch the Java gateway.
-        # We open a pipe to stdin so that the Java gateway can die when the pipe is broken
-        # Don't send ctrl-c / SIGINT to the Java gateway:
-        def preexec_func():
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-        proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=env)
 
         gateway_port = None
-        # We use select() here in order to avoid blocking indefinitely if the subprocess dies
-        # before connecting
-        while gateway_port is None and proc.poll() is None:
-            timeout = 1  # (seconds)
+
+        if fork:
+            command = [script, "python", "-v", "-h", callback_host, "-p", str(callback_port)]
+
+            environ = os.environ
+            # Add some more memory
+            environ['HADOOP_CLIENT_OPTS'] = '-Xmx12G ' + environ.get('HADOOP_CLIENT_OPTS', '')
+
+            # Allow remote debugging
+            # environ['HADOOP_CLIENT_OPTS'] = '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 ' + environ.get('HADOOP_CLIENT_OPTS', '')
+
+            # Launch the Java gateway.
+            # We open a pipe to stdin so that the Java gateway can die when the pipe is broken
+            # Don't send ctrl-c / SIGINT to the Java gateway:
+            def preexec_func():
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+            proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=environ)
+
+            # We use select() here in order to avoid blocking indefinitely if the subprocess dies
+            # before connecting
+            while gateway_port is None and proc.poll() is None:
+                timeout = 1  # (seconds)
+                readable, _, _ = select.select([callback_socket], [], [], timeout)
+                if callback_socket in readable:
+                    gateway_connection = callback_socket.accept()[0]
+                    # Determine which ephemeral port the server started on:
+                    gateway_port = read_int(gateway_connection.makefile(mode="rb"))
+
+                    gateway_connection.close()
+                    callback_socket.close()
+        else:
+            connection_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            connection_socket.connect((requesthost, requestport))
+
+            connection_socket.send(callback_host + "\n")
+            connection_socket.send(str(callback_port) + "\n")
+
+            connection_socket.close()
+
+            timeout = 60  # (seconds)
             readable, _, _ = select.select([callback_socket], [], [], timeout)
             if callback_socket in readable:
                 gateway_connection = callback_socket.accept()[0]
@@ -118,13 +163,16 @@ def launch_gateway():
                 gateway_connection.close()
                 callback_socket.close()
 
+        _isremote = not fork
+
         if gateway_port is None:
-            raise Exception("Java gateway process exited before sending the driver its port number")
+                    raise Exception("Java gateway process exited before sending the driver its port number")
 
     print("Talking with MrGeo on port " + str(gateway_port))
 
     # Connect to the gateway
-    gateway = JavaGateway(GatewayClient(port=gateway_port), auto_convert=True)
+    gateway_client = GatewayClient(address=requesthost, port=gateway_port)
+    gateway = JavaGateway(gateway_client=gateway_client, auto_convert=True)
 
     # Import the classes used by MrGeo
     java_import(gateway.jvm, "org.mrgeo.python.*")
@@ -135,7 +183,7 @@ def launch_gateway():
     java_import(gateway.jvm, "org.apache.spark.api.python.*")
     java_import(gateway.jvm, "org.apache.spark.mllib.api.python.*")
 
-    return gateway
+    return gateway, gateway_client
 
     # Scala classes have automatic getters & setters generated for
     # public fields, <field>() is the getter, <field>_$eq(<type>) is the setter

@@ -2,6 +2,8 @@
 
 MACHINE="Linux/UNIX"
 
+MASTER_TYPE="m3.xlarge"
+
 ZONES="us-east-1a us-east-1b us-east-1c us-east-1e us-west-1b us-west-1c us-west-2a us-west-2b us-west-2c"
 ZONE=
 
@@ -11,7 +13,7 @@ usage() {
     echo "-----------------------------"
     echo "args:"
     echo "  -m   --machine-type       - AMI machine type ($MACHINE)"
-    echo "  -t   --type               -  instance type ($MASTER_TYPE)"
+    echo "  -t   --type               - instance type ($MASTER_TYPE)"
     echo "  -z   --zone               - availability zone ($ZONE)"
 }
 
@@ -53,7 +55,6 @@ if [ -z $ZONE ]
 then
   PRICE=9999
   for Z in $ZONES; do
-    echo "aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE   --availability-zone $Z --start-time $MINUTE_AGO --end-time $NOW 2> /dev/null"
     RESULT=$(aws --output text ec2 describe-spot-price-history --instance-types $TYPE --product-description $MACHINE   --availability-zone $Z --start-time $MINUTE_AGO --end-time $NOW 2> /dev/null)
 
     PRICE=`echo ${RESULT} | awk '{print $5;}'`

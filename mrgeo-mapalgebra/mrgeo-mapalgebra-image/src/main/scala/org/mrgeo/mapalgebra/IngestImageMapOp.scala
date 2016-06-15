@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +11,13 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.mapalgebra
 
-import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
+import java.io._
+import java.net.URI
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext}
@@ -36,6 +38,18 @@ object IngestImageMapOp extends MapOpRegistrar {
   override def register: Array[String] = {
     Array[String]("ingest")
   }
+
+  def create(inputs:Array[String]):MapOp =
+    new IngestImageMapOp(inputs, None, None)
+
+  def create(inputs:Array[String], zoom:Int):MapOp =
+    new IngestImageMapOp(inputs, Some(zoom), None)
+
+  def create(inputs:Array[String], categorical:Boolean):MapOp =
+    new IngestImageMapOp(inputs, None, Some(categorical))
+
+  def create(inputs:Array[String], zoom:Int, categorical:Boolean):MapOp =
+    new IngestImageMapOp(inputs, Some(zoom), Some(categorical))
 
   def create(input:String):MapOp =
     new IngestImageMapOp(input, None, None)
@@ -58,13 +72,22 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD: Option[RasterRDD] = None
 
-  private var input:Option[String] = None
+  private var inputs:Option[Array[String]] = None
   private var categorical:Option[Boolean] = None
   private var zoom:Option[Int] = None
 
   private[mapalgebra] def this(input:String, zoom:Option[Int], categorical:Option[Boolean]) = {
     this()
-    this.input = Some(input)
+    val inputs = Array.ofDim[String](1)
+    inputs(0) = input
+    this.inputs = Some(inputs)
+    this.categorical = categorical
+    this.zoom = zoom
+  }
+
+  private[mapalgebra] def this(inputs:Array[String], zoom:Option[Int], categorical:Option[Boolean]) = {
+    this()
+    this.inputs = Some(inputs)
     this.categorical = categorical
     this.zoom = zoom
   }
@@ -76,7 +99,9 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
       throw new ParserException("Usage: ingest(input(s), [zoom], [categorical]")
     }
 
-    input = MapOp.decodeString(node.getChild(0), variables)
+    val in = Array.ofDim[String](1)
+    in(0) = MapOp.decodeString(node.getChild(0), variables).getOrElse(throw new ParserException("Missing required input"))
+    this.inputs = Some(in)
 
     if (node.getNumChildren >= 2) {
       zoom = MapOp.decodeInt(node.getChild(1), variables)
@@ -103,21 +128,61 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val inputs = input.getOrElse(throw new IOException("Inputs not set"))
-
-    val path = new Path(inputs)
-    val fs = HadoopFileUtils.getFileSystem(context.hadoopConfiguration, path)
-
-    val rawfiles = fs.listFiles(path, true)
+    val inputfiles = inputs.getOrElse(throw new IOException("Inputs not set"))
 
     val filebuilder = Array.newBuilder[String]
-    while (rawfiles.hasNext) {
-      val raw = rawfiles.next()
 
-      if (!raw.isDirectory) {
-        filebuilder += raw.getPath.toUri.toString
+    for (inputfile <- inputfiles) {
+      var f: File = null
+      try {
+        f = new File(new URI(inputfile))
+      }
+      catch {
+        case ignored: Any => f = new File(inputfile)
+      }
+
+      def walk(dir: File): Array[String] = {
+        val files = Array.newBuilder[String]
+        val dir: Array[File] = f.listFiles
+        if (dir != null) {
+          for (s <- dir) {
+            try {
+              if (s.isFile) {
+                files += s.toURI.toString
+              }
+              else if (s.isDirectory) {
+                files ++= walk(s)
+              }
+            }
+          }
+        }
+        files.result()
+      }
+
+      if (f.exists()) {
+        if (f.isFile) {
+          filebuilder += f.toURI.toString
+        }
+        else if (f.isDirectory) {
+          filebuilder ++= walk(f)
+        }
+      }
+      else {
+        val path = new Path(inputfile)
+        val fs = HadoopFileUtils.getFileSystem(context.hadoopConfiguration, path)
+
+        val rawfiles = fs.listFiles(path, true)
+
+        while (rawfiles.hasNext) {
+          val raw = rawfiles.next()
+
+          if (!raw.isDirectory) {
+            filebuilder += raw.getPath.toUri.toString
+          }
+        }
       }
     }
+
     val tilesize = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT).toInt
 
     if (zoom.isEmpty) {

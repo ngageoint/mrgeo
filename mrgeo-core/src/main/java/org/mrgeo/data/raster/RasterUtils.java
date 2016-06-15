@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,12 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.raster;
 
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.utils.FloatUtils;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
@@ -343,7 +345,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_FLOAT:
   {
     final float p = src.getSampleFloat(x, y, b);
-    if (!Float.isNaN(p) && p != nodata.floatValue())
+    if (FloatUtils.isNotNodata(p, nodata.floatValue()))
     {
       dst.setSample(x, y, b, p);
     }
@@ -353,7 +355,7 @@ private static void copyPixel(final int x, final int y, final int b, final Raste
   case DataBuffer.TYPE_DOUBLE:
   {
     final double p = src.getSampleDouble(x, y, b);
-    if (!Double.isNaN(p) && p != nodata.doubleValue())
+    if (FloatUtils.isNotNodata(p, nodata.doubleValue()))
     {
       dst.setSample(x, y, b, p);
     }
@@ -1208,6 +1210,28 @@ public static int getElementSize(final int rasterDataType)
         "Error trying to get element size from raster. Bad raster data type");
   }
   return size;
+}
+
+public static double getDefaultNoDataForType(final int rasterDataType)
+{
+  switch (rasterDataType)
+  {
+    case DataBuffer.TYPE_BYTE:
+      return 255;
+    case DataBuffer.TYPE_FLOAT:
+      return Float.NaN;
+    case DataBuffer.TYPE_DOUBLE:
+      return Double.NaN;
+    case DataBuffer.TYPE_INT:
+      return Integer.MIN_VALUE;
+    case DataBuffer.TYPE_SHORT:
+      return Short.MIN_VALUE;
+    case DataBuffer.TYPE_USHORT:
+      return 65536;  // no ushort constant
+    default:
+      throw new RasterWritable.RasterWritableException(
+              "Error trying to get default nodata value from raster. Bad raster data type " + rasterDataType);
+  }
 }
 
 public static int getElementSize(final Raster r)

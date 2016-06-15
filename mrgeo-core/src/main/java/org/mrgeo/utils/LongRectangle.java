@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.utils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.NotImplementedException;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
@@ -25,7 +27,7 @@ import java.io.Serializable;
 //getters/setters that should not be automatically serialized
 
 @SuppressWarnings("static-method")
-public class LongRectangle implements Serializable
+public class LongRectangle implements Serializable, Cloneable
 {
   private static final long serialVersionUID = 1L;
   
@@ -64,7 +66,7 @@ public class LongRectangle implements Serializable
   static public void intersect(final LongRectangle src1, final LongRectangle src2,
       final LongRectangle dest)
   {
-    throw new NotImplementedException("intersect() not implemented");
+    throw new NotImplementedException("intersects() not implemented");
   }
 
   @SuppressWarnings("unused")
@@ -113,6 +115,7 @@ public class LongRectangle implements Serializable
   }
 
   @Override
+  @SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")
   public Object clone()
   {
     return new LongRectangle(minX, minY, maxX, maxY);
@@ -125,11 +128,7 @@ public class LongRectangle implements Serializable
 
   public boolean contains(final LongRectangle r)
   {
-    if (outcode(r.minX, r.minY) == 0)
-    {
-      return outcode(r.maxX, r.maxY) == 0;
-    }
-    return false;
+    return outcode(r.minX, r.minY) == 0 && outcode(r.maxX, r.maxY) == 0;
   }
 
   @SuppressWarnings("unused")
@@ -242,7 +241,7 @@ public class LongRectangle implements Serializable
     return set;
   }
 
-  public int outcode(final long x, final long y)
+  private int outcode(final long x, final long y)
   {
     int outcode = 0;
     if (x < minX)

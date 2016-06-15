@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.accumulo.utils;
@@ -31,6 +32,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
@@ -39,11 +41,12 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.Base64Utils;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -316,7 +319,7 @@ public class AccumuloUtils {
 
         } else if(cf.equals("bounds")){
           // looking at the geospatial bounds of the data
-          Bounds bounds = new Bounds(entry.getValue().toString());
+          Bounds bounds = Bounds.fromCommaString(entry.getValue().toString());
           retMeta.setBounds(bounds);
           
         } else if(cf.equals("tileBounds")){
@@ -432,7 +435,7 @@ public class AccumuloUtils {
 	 */
 	public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn, ColumnVisibility cViz){
 	  ColumnVisibility columnVis;
-	  if(cViz == null){
+	  if (cViz != null){
 	    columnVis = cViz;
 	  } else {
 	    columnVis = new ColumnVisibility();
@@ -455,7 +458,7 @@ public class AccumuloUtils {
   
       // store the geospatial bounds
       Mutation mb = new Mutation(MrGeoAccumuloConstants.MRGEO_ACC_METADATA);
-      mb.put("bounds", ""+zoomLevel, columnVis, new Value(metadata.getBounds().toDelimitedString().getBytes()));
+      mb.put("bounds", ""+zoomLevel, columnVis, new Value(metadata.getBounds().toCommaString().getBytes()));
       bw.addMutation(mb);
       
       // store the tile bounds for the best zoom level
@@ -836,4 +839,5 @@ public class AccumuloUtils {
 		}
 		return authorizations;
 	}
+
 } // end AccumuloUtils

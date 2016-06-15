@@ -1,104 +1,56 @@
+/*
+ * Copyright 2009-2016 DigitalGlobe, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ *
+ */
+
 package org.mrgeo.hdfs.partitioners
 
-import java.io.{ObjectInput, ObjectOutput, Externalizable}
-import java.util
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
 import org.apache.hadoop.fs.Path
-import org.mrgeo.data.image.ImageOutputFormatContext
-import org.mrgeo.data.raster.RasterUtils
-import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.utils.TMSUtils
 
 
 class BlockSizePartitioner() extends FileSplitPartitioner() with Externalizable {
 
-  var splits:Array[Long] = Array.empty[Long]
+  var partitions:Int = 0
 
-  def this(context: ImageOutputFormatContext) {
-    this()
+  override def numPartitions: Int = { partitions }
 
-    val path = new Path(context.getOutput)
+  def getPartition(key: Any): Int = 0
+
+  override def readExternal(in: ObjectInput): Unit = {}
+  override def writeExternal(out: ObjectOutput): Unit = {}
+
+  def hasFixedPartitions:Boolean = true
+
+  override def calculateNumPartitions(raster:RasterRDD, output:String):Int = {
+    val path = new Path(output)
     val fs = HadoopFileUtils.getFileSystem(path)
     val blocksize = fs.getDefaultBlockSize(path)
 
-    val pixelbytes = RasterUtils.getElementSize(context.getTiletype) * context.getBands
-    val imagebytes = pixelbytes * context.getTilesize * context.getTilesize
+    val tile = RasterWritable.toRaster(raster.first()._2)
+
+    val pixelbytes = RasterUtils.getElementSize(tile.getSampleModel.getDataType) * tile.getNumBands
+    val imagebytes = pixelbytes * tile.getWidth * tile.getHeight
 
     val tilesperblock = (blocksize / imagebytes) - 1  // subtract 1 for the 0-based counting
 
-    val zoom = context.getZoomlevel
-    // There MUST be a better way than this brute force method!
-    val tilebounds = TMSUtils.boundsToTile(context.getBounds.getTMSBounds, zoom, context.getTilesize)
+    partitions = Math.ceil(raster.count() / tilesperblock.toDouble).toInt
 
-    val splitsbuilder = Array.newBuilder[Long]
-    var cnt = 0
-    for (ty <- tilebounds.s to tilebounds.n) {
-      for (tx <- tilebounds.w to tilebounds.e) {
-        if (cnt >= tilesperblock) {
-          splitsbuilder += TMSUtils.tileid(tx, ty, zoom)
-          cnt = 0
-        }
-        else {
-          cnt += 1
-        }
-      }
-    }
-
-    // see if we need to add the last id in...
-    if (cnt > 0) {
-      splitsbuilder += TMSUtils.tileid(tilebounds.e, tilebounds.n, zoom)
-    }
-
-    // reverse sort the array
-    splits = splitsbuilder.result()
-  }
-
-
-  override def numPartitions: Int = { splits.length }
-
-  // Inspired by Sparks RangePartitioner.getPartition()
-  def getPartition(key: Any): Int = {
-    val tid = key.asInstanceOf[TileIdWritable].get()
-    var partition = 0
-
-    // If we have less than 128 partitions naive search
-    if (splits.length <= 128) {
-      val ordering = implicitly[Ordering[Long]]
-      while (partition < splits.length && ordering.gt(tid, splits(partition))) {
-        partition += 1
-      }
-    }
-    else {
-      // Determine which binary search method to use only once.
-      partition = util.Arrays.binarySearch(splits, tid)
-
-      // binarySearch either returns the match location or -[insertion point]-1
-      if (partition < 0) {
-
-        partition = -partition - 1
-      }
-
-      if (partition >= splits.length) {
-        partition = splits.length - 1
-      }
-    }
-
-    partition
-  }
-
-  override def readExternal(in: ObjectInput): Unit = {
-    val splitsbuilder = Array.newBuilder[Long]
-
-    val length = in.readInt()
-    for (i <- 0 until length) {
-      splitsbuilder += in.readLong()
-    }
-    splits = splitsbuilder.result()
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeInt(splits.length)
-    splits.foreach(out.writeLong)
+    partitions
   }
 }

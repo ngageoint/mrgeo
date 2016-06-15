@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.test;
@@ -28,13 +29,13 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.mapreduce.job.JobCancelledException;
-import org.mrgeo.mapreduce.job.JobFailedException;
+import org.mrgeo.job.JobCancelledException;
+import org.mrgeo.job.JobFailedException;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.Bounds;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.TMSUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +106,7 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
     Raster raster = RasterTileMerger.mergeTiles(image);
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
 
-    Bounds tilesBounds = TMSUtils.tileBounds(meta.getBounds().getTMSBounds(), image.getMaxZoomlevel(), image.getTilesize()).asBounds();
+    Bounds tilesBounds = TMSUtils.tileBounds(meta.getBounds(), image.getMaxZoomlevel(), image.getTilesize());
     GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), tilesBounds, nodata);
 
   }
@@ -131,7 +132,7 @@ runRasterExpression(final Configuration conf, final String testName,
     throws ParserException, IOException, JobFailedException, JobCancelledException
 {
   runMapAlgebraExpression(conf, testName, ex);
-  compareRasterOutput(testName, testTranslator, (ProviderProperties) null);
+  compareRasterOutput(testName, testTranslator,  null);
 }
 
 public void
@@ -141,14 +142,14 @@ runRasterExpression(final Configuration conf, final String testName,
 {
   runMapAlgebraExpression(conf, testName, ex);
 
-  compareRasterOutput(testName, baselineTranslator, testTranslator, (ProviderProperties)null);
+  compareRasterOutput(testName, baselineTranslator, testTranslator, null);
 }
 
 
 
 public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator) throws IOException
 {
-  compareRasterOutput(testName, null, testTranslator, (ProviderProperties)null);
+  compareRasterOutput(testName, null, testTranslator, null);
 }
 public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
     final ProviderProperties providerProperties) throws IOException
@@ -203,7 +204,7 @@ public void compareRasterOutput(final String testName, final TestUtils.ValueTran
 }
 public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator) throws IOException
 {
-  compareLocalRasterOutput(testName, null, testTranslator, (ProviderProperties)null);
+  compareLocalRasterOutput(testName, null, testTranslator, null);
 }
 public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
     final ProviderProperties providerProperties) throws IOException
@@ -267,10 +268,6 @@ public void compareLocalRasterOutput(final String testName, final TestUtils.Valu
  * output is done. See other methods in this class like runVectorExpression and
  * runRasterExpression for that capability.
  *
- * @param conf
- * @param testName
- * @param ex
- * @return
  * @throws IOException
  * @throws JobFailedException
  * @throws JobCancelledException

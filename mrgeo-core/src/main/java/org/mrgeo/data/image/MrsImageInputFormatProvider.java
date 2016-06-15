@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 DigitalGlobe, Inc.
+ * Copyright 2009-2016 DigitalGlobe, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
+ *
  */
 
 package org.mrgeo.data.image;
@@ -51,11 +52,6 @@ public abstract class MrsImageInputFormatProvider
    * will be called by the MrsImagePyramidInputFormat class to perform
    * the actual input of data and then transform it into the actual inputs
    * passed to the mappers.
-   *
-   * At a more detailed level, the input transformation referred to above
-   * includes constructing a TileCollection which is emitted as the input
-   * to the mappers. It includes surrounding tile neighborhood data (if
-   * required) as well as corresponding tiles from other inputs (if required).
    *
    * @param input
    * @return
