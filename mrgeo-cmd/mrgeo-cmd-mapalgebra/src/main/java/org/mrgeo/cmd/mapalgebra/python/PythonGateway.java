@@ -29,10 +29,15 @@ import py4j.GatewayServer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class PythonGateway extends Command
 {
 private static final Logger log = LoggerFactory.getLogger(PythonGateway.class);
+
+private boolean hasQueue = false;
+private Queue<Integer> portQueue = new LinkedList<>();
 
 public static Options createOptions()
 {
@@ -45,6 +50,10 @@ public static Options createOptions()
   Option port = new Option("p", "port", true, "Callback or listen port");
   port.setRequired(false);
   result.addOption(port);
+
+  Option portrange = new Option("pr", "port-range", true, "Port range for mail py4j communications (\"minport-maxport\")");
+  portrange.setRequired(false);
+  result.addOption(portrange);
 
   Option remote = new Option("r", "remote", false, "Wait for remote connection");
   remote.setRequired(false);
@@ -65,6 +74,29 @@ public int run(final String[] args, final Configuration conf,
     CommandLine line;
     final CommandLineParser parser = new PosixParser();
     line = parser.parse(options, args);
+
+    if (line.hasOption("pr"))
+    {
+      String rangeStr = line.getOptionValue("pr");
+      if (rangeStr != null)
+      {
+        String[] rng = rangeStr.split("-");
+        if (rng.length == 2)
+        {
+          int min = Integer.parseInt(rng[0]);
+          int max = Integer.parseInt(rng[1]);
+
+          int minPort = Math.min(min, max);
+          int maxPort = Math.max(min, max);
+
+          for (int i = minPort; i <= maxPort; i++)
+          {
+            portQueue.add(i);
+          }
+          hasQueue = true;
+        }
+      }
+    }
 
     if (line.hasOption("h") && line.hasOption("p"))
     {
@@ -123,8 +155,8 @@ private int localConnection(String callbackHost, int callbackPort)
 {
   try
   {
-    setupSingleServer(callbackHost, callbackPort);
-
+    GatewayServer server = setupSingleServer(callbackHost, callbackPort);
+    int port = server.getListeningPort();
     try
     {
       // Exit on EOF or broken pipe to ensure that this process dies when the Python driver dies:
@@ -139,6 +171,11 @@ private int localConnection(String callbackHost, int callbackPort)
     }
     log.info("Exiting");
 
+    if (hasQueue)
+    {
+      portQueue.add(port);
+    }
+
     return 0;
   }
   catch (IOException e)
@@ -151,18 +188,29 @@ private int localConnection(String callbackHost, int callbackPort)
 private GatewayServer setupSingleServer(String callbackHost, int callbackPort) throws IOException
 {
   // Start a GatewayServer on an ephemeral port
-  GatewayServer gateway = new GatewayServer(null, 0);
+  int port = 0;
+  if (hasQueue)
+  {
+    if (portQueue.size() == 0)
+    {
+      throw new IOException("PythonGatewayServer is out of available ports, failing)");
+    }
+
+    port = portQueue.remove();
+  }
+
+  GatewayServer gateway = new GatewayServer(null, port);
   gateway.start();
 
-  int port = gateway.getListeningPort();
-  if (port == -1)
+  int listeningPort = gateway.getListeningPort();
+  if (listeningPort == -1)
   {
     throw new IOException("GatewayServer failed to bind");
   }
 
-  log.info("Starting PythonGatewayServer. Communicating on port " + port);
+  log.info("Starting PythonGatewayServer. Communicating on port " + listeningPort);
 
-  sendGatewayPort(callbackHost, callbackPort, port);
+  sendGatewayPort(callbackHost, callbackPort, listeningPort);
 
   return gateway;
 }
