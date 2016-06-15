@@ -41,11 +41,11 @@ public class AccumuloMrsImageWriter implements MrsImageWriter
   private Connector conn;
   private Properties mrgeoAccProps;
   private ColumnVisibility cv;
-  private String pl;
+  //private String pl;
   private BatchWriter bw;
   protected long memBuf = 1000000L; // bytes to store before sending a batch
-  protected long timeout = 1000L; // milliseconds to wait before sending
-  protected int numThreads = 10;
+  //protected long timeout = 1000L; // milliseconds to wait before sending
+  //protected int numThreads = 10;
 
   /**
    * 
@@ -59,7 +59,7 @@ public class AccumuloMrsImageWriter implements MrsImageWriter
 
     this.provider = provider;
     this.context = context;
-    this.pl = pl;
+    //this.pl = pl;
     try{
       mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
 

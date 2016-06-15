@@ -135,6 +135,8 @@
     <!-- repositories -->
     <repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/release</repository.url>
     <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
+    <!-- findbugs -->
+    <findbugs.basedir>${project.basedir}</findbugs.basedir>
   </properties>
   <repositories>
     <repository>
@@ -702,7 +704,7 @@
             <!--
             <includeFilterFile>${session.executionRootDirectory}/findbugs-security-include.xml</includeFilterFile>
             -->
-            <excludeFilterFile>${session.executionRootDirectory}/src/main/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
+            <excludeFilterFile>${findbugs.basedir}/src/main/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
             <plugins>
               <plugin>
                 <groupId>com.h3xstream.findsecbugs</groupId>

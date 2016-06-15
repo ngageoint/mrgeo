@@ -30,12 +30,12 @@ public class TaskStateResponse
   private boolean _isFinished;
   public void setStartTime(Date startTime)
   {
-    this._startTime = startTime;
+    this._startTime = (Date) startTime.clone();
   }
 
   public Date getStartTime()
   {
-    return _startTime;
+    return (Date) _startTime.clone();
   }
   
   public void setPercent(float percent)

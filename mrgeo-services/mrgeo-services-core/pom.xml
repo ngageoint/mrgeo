@@ -32,6 +32,7 @@
     <build.file>src/main/resources/org/mrgeo/services/build.info</build.file>
     <version.template.file>src/main/resources/org/mrgeo/services/version.properties.template</version.template.file>
     <version.file>target/classes/version.properties</version.file>
+    <findbugs.basedir>${project.parent.parent.basedir}</findbugs.basedir>
   </properties>
   <name>mrgeo-services-core</name>
   <url>http://mrgeo.org</url>

@@ -107,11 +107,8 @@ public boolean isValid()
 {
   try
   {
-    Properties props = AccumuloConnector.getAccumuloProperties();
-    if (props != null)
-    {
-      return true;
-    }
+    AccumuloConnector.getAccumuloProperties();
+    return true;
   }
   catch (DataProviderException e)
   {

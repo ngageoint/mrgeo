@@ -16,6 +16,7 @@
 
 package org.mrgeo.cmd.findholes.mapreduce;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -38,10 +39,11 @@ public class FindHolesDriver {
 	//private Configuration conf = null;
 
 	public FindHolesDriver(){} // end constructor
-	
-	
-	
-	public boolean runJob(String input, String output, int zoom, ProviderProperties props, Configuration conf) throws Exception{
+
+
+
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is generated in code")
+public boolean runJob(String input, String output, int zoom, ProviderProperties props, Configuration conf) throws Exception{
 
 	    System.out.println("Input:     " + input);
 	    System.out.println("Output:    " + output);
@@ -114,25 +116,28 @@ public class FindHolesDriver {
 	        for (int i = 0; i < size; i++)
 	        {
 	          final InputStream stream = ahdp.get(i);
-	          BufferedReader br = new BufferedReader(new InputStreamReader(stream));
-	          // read values out of stream
-	          String line;
-	          while((line = br.readLine()) != null){
+	          try (BufferedReader br = new BufferedReader(new InputStreamReader(stream)))
+            {
+              // read values out of stream
+              String line;
+              while ((line = br.readLine()) != null)
+              {
 
-		          // format is "y: x x x x"
-	        	  String[] vals = line.split(":");
-	        	  int y = Integer.parseInt(vals[0]);
-	        	  
-	        	  if(vals.length == 1){
-	        		  continue;
-	        	  }
-	        	  vals = vals[1].trim().split(" ");
-	        	  for(String v : vals){
-	        		  valid[y - (int)lr.getMinY()][Integer.parseInt(v) - (int)lr.getMinX()] = true;
-	        	  }	        	  
-	          }
-	          
-	          br.close();
+                // format is "y: x x x x"
+                String[] vals = line.split(":");
+                int y = Integer.parseInt(vals[0]);
+
+                if (vals.length == 1)
+                {
+                  continue;
+                }
+                vals = vals[1].trim().split(" ");
+                for (String v : vals)
+                {
+                  valid[y - (int) lr.getMinY()][Integer.parseInt(v) - (int) lr.getMinX()] = true;
+                }
+              }
+            }
 	          stream.close();
 	        }
 	        ahdp.delete();
