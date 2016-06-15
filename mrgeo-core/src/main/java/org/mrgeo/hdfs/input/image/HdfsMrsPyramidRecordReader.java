@@ -41,14 +41,15 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
   private long recordCount = 0;
   private boolean more = true;
 
-  // Option 2 supporting field
+  // Factory for creating instances of SequenceFile.Reader
   private ReaderFactory readerFactory;
 
-  // Option 2 supporting constructors
+  // Default constructor injects Default Reader Factory
   public HdfsMrsPyramidRecordReader() {
     this.readerFactory = new ReaderFactory();
   }
 
+  // Constructor for injecting a ReaderFactory implementation
   public HdfsMrsPyramidRecordReader(ReaderFactory readerFactory) {
     this.readerFactory = readerFactory;
   }
@@ -101,11 +102,8 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
       Path path = fileSplit.getPath();
       FileSystem fs = path.getFileSystem(conf);
 
-      // This line is difficult to mock and makes the method difficult to test.  2 options:
-//      this.reader = new SequenceFile.Reader(fs, path, conf);
-      // Option 1 - delegate creation to a method (see supporting method below).  Then use spy when testing
-      // this.reader = makeReader(fs, path, conf);
-      // Option 2 - inject a factory for reader (see ReaderFactory field and special constructor above
+      // Use a factory to create the reader reader to make this class easier to test and support decoupling the reader
+      // lifecycle from this object's lifecycle.
       this.reader = readerFactory.createReader(fs, path, conf);
 
       try
@@ -144,12 +142,7 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
     return more;
   }
 
-  // Option 1 supporting method
-//  private SequenceFile.Reader makeReader(FileSystem fs, Path path, Configuration config) throws IOException {
-//    return new SequenceFile.Reader(fs, path, config);
-//  }
-
-  // Option 2 supporting class
+  // Default ReaderFactory
   static class ReaderFactory {
     public SequenceFile.Reader createReader(FileSystem fs, Path path, Configuration config) throws IOException {
       return new SequenceFile.Reader(fs, path, config);
