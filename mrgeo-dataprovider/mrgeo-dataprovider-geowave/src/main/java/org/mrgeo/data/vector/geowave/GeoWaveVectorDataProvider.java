@@ -2,45 +2,45 @@ package org.mrgeo.data.vector.geowave;
 
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import mil.nga.giat.geowave.adapter.vector.FeatureDataAdapter;
 import mil.nga.giat.geowave.adapter.vector.query.cql.CQLQuery;
 import mil.nga.giat.geowave.core.geotime.store.query.*;
-import mil.nga.giat.geowave.core.store.DataStore;
-import mil.nga.giat.geowave.core.store.adapter.statistics.DataStatistics;
-import mil.nga.giat.geowave.core.store.adapter.statistics.RowRangeHistogramStatistics;
-import mil.nga.giat.geowave.core.store.dimension.NumericDimensionField;
-import mil.nga.giat.geowave.core.store.index.*;
-import mil.nga.giat.geowave.core.store.query.DistributableQuery;
-import mil.nga.giat.geowave.core.store.query.QueryOptions;
-import mil.nga.giat.geowave.datastore.accumulo.AccumuloDataStore;
-import mil.nga.giat.geowave.datastore.accumulo.AccumuloOperations;
-import mil.nga.giat.geowave.datastore.accumulo.BasicAccumuloOperations;
-import mil.nga.giat.geowave.datastore.accumulo.index.secondary.AccumuloSecondaryIndexDataStore;
-import mil.nga.giat.geowave.datastore.accumulo.mapreduce.GeoWaveAccumuloRecordReader;
-import mil.nga.giat.geowave.datastore.accumulo.metadata.AccumuloAdapterStore;
-import mil.nga.giat.geowave.datastore.accumulo.metadata.AccumuloDataStatisticsStore;
-import mil.nga.giat.geowave.datastore.accumulo.metadata.AccumuloIndexStore;
 import mil.nga.giat.geowave.core.index.ByteArrayId;
 import mil.nga.giat.geowave.core.store.CloseableIterator;
+import mil.nga.giat.geowave.core.store.DataStore;
+import mil.nga.giat.geowave.core.store.GeoWaveStoreFinder;
 import mil.nga.giat.geowave.core.store.adapter.AdapterStore;
 import mil.nga.giat.geowave.core.store.adapter.DataAdapter;
 import mil.nga.giat.geowave.core.store.adapter.statistics.CountDataStatistics;
 import mil.nga.giat.geowave.core.store.adapter.statistics.DataStatisticsStore;
+import mil.nga.giat.geowave.core.store.adapter.statistics.RowRangeHistogramStatistics;
+import mil.nga.giat.geowave.core.store.dimension.NumericDimensionField;
+import mil.nga.giat.geowave.core.store.index.CommonIndexValue;
+import mil.nga.giat.geowave.core.store.index.Index;
+import mil.nga.giat.geowave.core.store.index.IndexStore;
+import mil.nga.giat.geowave.core.store.index.PrimaryIndex;
+import mil.nga.giat.geowave.core.store.operations.remote.options.DataStorePluginOptions;
+import mil.nga.giat.geowave.core.store.operations.remote.options.StoreLoader;
 import mil.nga.giat.geowave.core.store.query.BasicQuery;
+import mil.nga.giat.geowave.core.store.query.DistributableQuery;
 import mil.nga.giat.geowave.core.store.query.Query;
+import mil.nga.giat.geowave.core.store.query.QueryOptions;
+import mil.nga.giat.geowave.mapreduce.MapReduceDataStore;
 import mil.nga.giat.geowave.mapreduce.input.GeoWaveInputFormat;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.util.ClassUtil;
+import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.*;
@@ -49,11 +49,12 @@ import org.opengis.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class GeoWaveVectorDataProvider extends VectorDataProvider
-{
+public class GeoWaveVectorDataProvider extends VectorDataProvider{
   static Logger log = LoggerFactory.getLogger(GeoWaveVectorDataProvider.class);
 
   private static final String PROVIDER_PROPERTIES_SIZE = GeoWaveVectorDataProvider.class.getName() + "providerProperties.size";
@@ -62,10 +63,12 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   private static Map<String, DataSourceEntry> dataSourceEntries = new HashMap<String, DataSourceEntry>();
   private static GeoWaveConnectionInfo connectionInfo;
+  private static final ReentrantReadWriteLock connectionLock = new ReentrantReadWriteLock();
 
   // Package private for unit testing
   static boolean initialized = false;
 
+  private Configuration conf;
   private DataAdapter<?> dataAdapter;
   private PrimaryIndex primaryIndex;
   private DistributableQuery query;
@@ -85,55 +88,88 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     public Map<String, String> settings = new HashMap<String, String>();
   }
 
-  public GeoWaveVectorDataProvider(String inputPrefix, String input, ProviderProperties providerProperties)
+  public GeoWaveVectorDataProvider(Configuration conf, String inputPrefix, String input,
+                                   ProviderProperties providerProperties)
   {
     super(inputPrefix, input);
-    // This constructor is only called from driver-side (i.e. not in
-    // map/reduce tasks), so the connection settings are obtained from
-    // the mrgeo.conf file.
-    getConnectionInfo(); // initializes connectionInfo if needed
     this.providerProperties = providerProperties;
+    this.conf = conf;
   }
 
   public static GeoWaveConnectionInfo getConnectionInfo()
   {
     if (connectionInfo == null)
     {
-      connectionInfo = GeoWaveConnectionInfo.load();
+      log.debug("attempting to load connection info");
+      connectionLock.writeLock().lock();
+      try
+      {
+        if (connectionInfo == null)
+        {
+          connectionInfo = GeoWaveConnectionInfo.load();
+          log.debug("in getConnectionInfo, load returns " + connectionInfo);
+        }
+      }
+      finally {
+        connectionLock.writeLock().unlock();
+      }
     }
-    return connectionInfo;
+    connectionLock.readLock().lock();
+    try
+    {
+      log.debug("returning connection info " + connectionInfo);
+      return connectionInfo;
+    }
+    finally {
+      connectionLock.readLock().unlock();
+    }
   }
 
   static void setConnectionInfo(GeoWaveConnectionInfo connInfo)
   {
-    connectionInfo = connInfo;
+    connectionLock.writeLock().lock();
+    try
+    {
+      connectionInfo = connInfo;
+    }
+    finally {
+      connectionLock.writeLock().unlock();
+    }
   }
 
-  public AdapterStore getAdapterStore() throws AccumuloSecurityException, AccumuloException, IOException
+  public AdapterStore getAdapterStore() throws IOException
   {
     String namespace = getNamespace();
-    initDataSource(namespace);
+    initDataSource(conf, namespace);
     DataSourceEntry entry = getDataSourceEntry(namespace);
     return entry.adapterStore;
   }
 
-  public DataStore getDataStore() throws AccumuloSecurityException, AccumuloException, IOException
+  public DataStore getDataStore() throws IOException
   {
     String namespace = getNamespace();
-    initDataSource(namespace);
+    initDataSource(conf, namespace);
     DataSourceEntry entry = getDataSourceEntry(namespace);
     return entry.dataStore;
   }
 
-  public DataStatisticsStore getStatisticsStore() throws AccumuloSecurityException, AccumuloException, IOException
+  public DataStatisticsStore getStatisticsStore() throws IOException
   {
     String namespace = getNamespace();
-    initDataSource(namespace);
+    initDataSource(conf, namespace);
     DataSourceEntry entry = getDataSourceEntry(namespace);
     return entry.statisticsStore;
   }
 
-  public PrimaryIndex getPrimaryIndex() throws AccumuloSecurityException, AccumuloException, IOException
+  public DataStorePluginOptions getDataStorePluginOptions() throws IOException
+  {
+    String namespace = getNamespace();
+    initDataSource(conf, namespace);
+    DataSourceEntry entry = getDataSourceEntry(namespace);
+    return entry.inputStoreOptions;
+  }
+
+  public PrimaryIndex getPrimaryIndex() throws IOException
   {
     if (primaryIndex != null)
     {
@@ -141,7 +177,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     }
     String namespace = getNamespace();
     String resourceName = getGeoWaveResourceName();
-    initDataSource(namespace);
+    initDataSource(conf, namespace);
     DataSourceEntry entry = getDataSourceEntry(namespace);
     CloseableIterator<Index<?, ?>> indices = entry.indexStore.getIndices();
     try
@@ -242,7 +278,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return results.namespace;
   }
 
-  public DataAdapter<?> getDataAdapter() throws AccumuloSecurityException, AccumuloException, IOException
+  public DataAdapter<?> getDataAdapter() throws IOException
   {
     init();
     return dataAdapter;
@@ -253,35 +289,35 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
    * return a null value.
    *
    * @return
-   * @throws AccumuloSecurityException
-   * @throws AccumuloException
    * @throws IOException
    */
-  public String getCqlFilter() throws AccumuloSecurityException, AccumuloException, IOException
+  public String getCqlFilter() throws IOException
   {
     init();
     return cqlFilter;
   }
 
-  public com.vividsolutions.jts.geom.Geometry getSpatialConstraint() throws AccumuloSecurityException, AccumuloException, IOException
+  public com.vividsolutions.jts.geom.Geometry getSpatialConstraint() throws IOException
   {
     init();
     return spatialConstraint;
   }
 
-  public Date getStartTimeConstraint() throws AccumuloSecurityException, AccumuloException, IOException
+  @SuppressFBWarnings(value="EI_EXPOSE_REP", justification = "Used by trusted code")
+  public Date getStartTimeConstraint() throws IOException
   {
     init();
     return startTimeConstraint;
   }
 
-  public Date getEndTimeConstraint() throws AccumuloSecurityException, AccumuloException, IOException
+  @SuppressFBWarnings(value="EI_EXPOSE_REP", justification = "Used by trusted code")
+  public Date getEndTimeConstraint() throws IOException
   {
     init();
     return endTimeConstraint;
   }
 
-  public DistributableQuery getQuery() throws AccumuloSecurityException, AccumuloException, IOException
+  public DistributableQuery getQuery() throws IOException
   {
     if (query != null)
     {
@@ -301,7 +337,6 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
       {
         log.debug("Using GeoWave SpatialTemporalQuery");
         TemporalConstraints tc = getTemporalConstraints(startTimeConstraint, endTimeConstraint);
-        SpatialTemporalQuery stq = new SpatialTemporalQuery(tc, spatialConstraint);
         query = new SpatialTemporalQuery(tc, spatialConstraint);
       }
       else
@@ -322,6 +357,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return query;
   }
 
+  @SuppressFBWarnings(value="PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "Null return value is valid")
   private String[] getAuthorizations(ProviderProperties providerProperties)
   {
     List<String> userRoles = null;
@@ -341,7 +377,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return null;
   }
 
-  public QueryOptions getQueryOptions(ProviderProperties providerProperties) throws AccumuloSecurityException, AccumuloException, IOException
+  public QueryOptions getQueryOptions(ProviderProperties providerProperties) throws IOException
   {
     QueryOptions queryOptions = new QueryOptions(getDataAdapter(), getPrimaryIndex());
     String[] auths = getAuthorizations(providerProperties);
@@ -560,36 +596,14 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   public VectorReader getVectorReader() throws IOException
   {
     ParseResults results = parseResourceName(getResourceName());
-    try
-    {
-      init(results);
-    }
-    catch (AccumuloSecurityException e)
-    {
-      throw new IOException("AccumuloSecurityException in GeoWave data provider getVectorReader", e);
-    }
-    catch (AccumuloException e)
-    {
-      throw new IOException("AccumuloException in GeoWave data provider getVectorReader", e);
-    }
+    init(results);
     DataSourceEntry entry = getDataSourceEntry(results.namespace);
     Query query = new BasicQuery(new BasicQuery.Constraints());
     CQLQuery cqlQuery = new CQLQuery(query, filter,
                                      (FeatureDataAdapter)entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())));
-    try
-    {
-      return new GeoWaveVectorReader(results.namespace, entry.dataStore,
-                                     entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
-                                     cqlQuery, getPrimaryIndex(), filter, providerProperties);
-    }
-    catch (AccumuloSecurityException e)
-    {
-      throw new IOException(e);
-    }
-    catch (AccumuloException e)
-    {
-      throw new IOException(e);
-    }
+    return new GeoWaveVectorReader(results.namespace, entry.dataStore,
+                                   entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
+                                   cqlQuery, getPrimaryIndex(), filter, providerProperties);
   }
 
   @Override
@@ -610,28 +624,29 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   {
     ParseResults results = parseResourceName(getResourceName());
     DistributableQuery query = null;
-    try
+    init(results);
+    query = getQuery();
+    DataSourceEntry entry = getDataSourceEntry(results.namespace);
+    DataAdapter<?> adapter = getDataAdapter();
+    if (entry.dataStore instanceof MapReduceDataStore)
     {
-      init(results);
-      query = getQuery();
-      DataSourceEntry entry = getDataSourceEntry(results.namespace);
-      DataAdapter<?> adapter = getDataAdapter();
-      RecordReader delegateRecordReader =  new GeoWaveAccumuloRecordReader(
-              query,
-              new QueryOptions(adapter, getPrimaryIndex(), getAuthorizations(getProviderProperties())),
-              false,
-              entry.adapterStore,
-              entry.storeOperations);
-      return new GeoWaveVectorRecordReader(delegateRecordReader);
+      try
+      {
+        RecordReader delegateRecordReader = ((MapReduceDataStore) entry.dataStore).createRecordReader(
+                query,
+                new QueryOptions(adapter, getPrimaryIndex(), getAuthorizations(getProviderProperties())),
+                entry.adapterStore,
+                entry.statisticsStore,
+                entry.indexStore, false, null);
+        return new GeoWaveVectorRecordReader(delegateRecordReader);
+      }
+      catch (InterruptedException e)
+      {
+        throw new IOException(e);
+      }
     }
-    catch (AccumuloSecurityException e)
-    {
-      throw new IOException("AccumuloSecurityException in GeoWave data provider getVectorReader", e);
-    }
-    catch (AccumuloException e)
-    {
-      throw new IOException("AccumuloException in GeoWave data provider getVectorReader", e);
-    }
+    throw new IOException("GeoWave data store " + entry.dataStore.getClass().getName() +
+                          " does not support Hadoop input");
   }
 
   @Override
@@ -668,23 +683,27 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   public static boolean isValid(Configuration conf)
   {
+    // This must be a quick sanity check on the remote side for whether or not
+    // the GeoWave data provider should be used on the remote side.
     initConnectionInfo(conf);
-    return (connectionInfo != null);
+    return (getConnectionInfo() != null);
   }
 
   public static boolean isValid()
   {
+    // This must be a quick sanity check on the client side for whether or not
+    // the GeoWave data provider should be used.
     initConnectionInfo();
-    return (connectionInfo != null);
+    return (getConnectionInfo() != null);
   }
 
-  public static String[] listVectors(final ProviderProperties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
+  public static String[] listVectors(final ProviderProperties providerProperties) throws IOException
   {
     initConnectionInfo();
     List<String> results = new ArrayList<String>();
-    for (String namespace: connectionInfo.getNamespaces())
+    for (String namespace: getConnectionInfo().getNamespaces())
     {
-      initDataSource(namespace);
+      initDataSource(null, namespace);
       DataSourceEntry entry = getDataSourceEntry(namespace);
       CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
       try
@@ -715,14 +734,20 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   }
 
   public static boolean canOpen(String input,
-                                ProviderProperties providerProperties) throws AccumuloException, AccumuloSecurityException, IOException
+                                ProviderProperties providerProperties) throws IOException
   {
+    log.error("Inside canOpen with " + input);
     initConnectionInfo();
     ParseResults results = parseResourceName(input);
     try
     {
-      initDataSource(results.namespace);
+      initDataSource(null, results.namespace);
       DataSourceEntry entry = getDataSourceEntry(results.namespace);
+      CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
+      while (iter.hasNext()) {
+        DataAdapter<?> da = iter.next();
+        log.error("GeoWave adapter: " + da.getAdapterId().toString());
+      }
       ByteArrayId adapterId = new ByteArrayId(results.name);
       DataAdapter<?> adapter = entry.adapterStore.getAdapter(adapterId);
       if (adapter == null)
@@ -740,7 +765,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
 
   private static boolean checkAuthorizations(ByteArrayId adapterId,
                                              String namespace,
-      ProviderProperties providerProperties) throws IOException, AccumuloException, AccumuloSecurityException
+      ProviderProperties providerProperties) throws IOException
   {
     // Check to see if the requester is authorized to see any of the data in
     // the adapter.
@@ -760,10 +785,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
   public static long getAdapterCount(ByteArrayId adapterId,
                                      String namespace,
                                      ProviderProperties providerProperties)
-          throws IOException, AccumuloException, AccumuloSecurityException
+          throws IOException
   {
     initConnectionInfo();
-    initDataSource(namespace);
+    initDataSource(null, namespace);
     DataSourceEntry entry = getDataSourceEntry(namespace);
     List<String> roles = null;
     if (providerProperties != null)
@@ -790,7 +815,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     return 0L;
   }
 
-  private void init() throws AccumuloSecurityException, AccumuloException, IOException
+  private void init() throws IOException
   {
     // Don't initialize more than once.
     if (initialized)
@@ -801,7 +826,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     init(results);
   }
 
-  private void init(ParseResults results) throws AccumuloSecurityException, AccumuloException, IOException
+  private void init(ParseResults results) throws IOException
   {
     // Don't initialize more than once.
     if (initialized)
@@ -843,11 +868,12 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     spatialConstraint = null;
     startTimeConstraint = null;
     endTimeConstraint = null;
-    for (String keyName : settings.keySet())
+    for (Map.Entry<String, String> entry : settings.entrySet())
     {
+      String keyName = entry.getKey();
       if (keyName != null && !keyName.isEmpty())
       {
-        String value = settings.get(keyName);
+        String value = entry.getValue();
         switch(keyName)
         {
           case "spatial":
@@ -931,7 +957,17 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     // loads connection settings from the job configuration.
     if (connectionInfo == null)
     {
-      connectionInfo = GeoWaveConnectionInfo.load(conf);
+      connectionLock.writeLock().lock();
+      try
+      {
+        if (connectionInfo == null)
+        {
+          connectionInfo = GeoWaveConnectionInfo.load(conf);
+        }
+      }
+      finally {
+        connectionLock.writeLock().unlock();
+      }
     }
   }
 
@@ -943,37 +979,80 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     // loads connection settings from the mrgeo.conf file.
     if (connectionInfo == null)
     {
-      connectionInfo = GeoWaveConnectionInfo.load();
+      connectionLock.writeLock().lock();
+      try
+      {
+        if (connectionInfo == null)
+        {
+          connectionInfo = GeoWaveConnectionInfo.load();
+        }
+      }
+      finally {
+        connectionLock.writeLock().unlock();
+      }
     }
   }
 
-  private static void initDataSource(String namespace) throws AccumuloException, AccumuloSecurityException, IOException
+  @SuppressFBWarnings(value="PATH_TRAVERSAL_IN", justification = "It is ok to read the config file here")
+  private static void initDataSource(Configuration conf, String namespace) throws IOException
   {
     DataSourceEntry entry = dataSourceEntries.get(namespace);
     if (entry == null)
     {
       entry = new DataSourceEntry();
-      dataSourceEntries.put(namespace, entry);
-      entry.storeOperations = new BasicAccumuloOperations(
-          connectionInfo.getZookeeperServers(),
-          connectionInfo.getInstanceName(),
-          connectionInfo.getUserName(),
-          connectionInfo.getPassword(),
-          namespace);
-      entry.indexStore = new AccumuloIndexStore(
-          entry.storeOperations);
-      entry.secondaryIndexStore = new AccumuloSecondaryIndexDataStore(
-              entry.storeOperations);
-      entry.statisticsStore = new AccumuloDataStatisticsStore(
-          entry.storeOperations);
-      entry.adapterStore = new AccumuloAdapterStore(
-          entry.storeOperations);
-      entry.dataStore = new AccumuloDataStore(
-          entry.indexStore,
-          entry.adapterStore,
-          entry.statisticsStore,
-          entry.secondaryIndexStore,
-          entry.storeOperations);
+      // Get the geowave store name from the configuration
+      String storeName = null;
+      if (conf != null) {
+        storeName = conf.get(GeoWaveConnectionInfo.GEOWAVE_STORENAME_KEY);
+      }
+      if (storeName == null)
+      {
+        // Since the geowave store name is not in the configuration, then this is being
+        // called from the client side.
+        GeoWaveConnectionInfo connInfo = getConnectionInfo();
+        String inputStore = connInfo.getStoreName();
+        if (inputStore == null)
+        {
+          throw new IOException("To use GeoWave, you must set " +
+                                GeoWaveConnectionInfo.GEOWAVE_STORENAME_KEY +
+                                " in the MrGeo config file");
+        }
+        // TODO: The StoreLoader should only be used on the client side. The "entry" should
+        // be constructed from the Configuration on the remote side
+        StoreLoader inputStoreLoader = new StoreLoader(inputStore);
+
+        if (!inputStoreLoader.loadFromConfig(new File(MrGeoProperties.findMrGeoConf())))
+        {
+          String msg = "Cannot find GeoWave store name: " + inputStoreLoader.getStoreName();
+          log.error(msg);
+          throw new IOException(msg);
+        }
+        DataStorePluginOptions inputStoreOptions = inputStoreLoader.getDataStorePlugin();
+        inputStoreOptions.getFactoryOptions().setGeowaveNamespace(namespace);
+        dataSourceEntries.put(namespace, entry);
+        entry.inputStoreOptions = inputStoreOptions;
+        entry.indexStore = inputStoreOptions.createIndexStore();
+//        entry.secondaryIndexStore = inputStoreOptions.createSecondaryIndexStore();
+        entry.statisticsStore = inputStoreOptions.createDataStatisticsStore();
+        entry.adapterStore = inputStoreOptions.createAdapterStore();
+//        entry.adapterIndexMappingStore = inputStoreOptions.createAdapterIndexMappingStore();
+        entry.dataStore = inputStoreOptions.createDataStore();
+      }
+      else
+      {
+        // The store name was in the configuration, so this is being called from
+        // the remote side. Create a fake JobContext to satisfy the GeoWave API
+        // access to the Hadoop configuration.
+        JobContext context = new JobContextImpl(conf, new JobID());
+        final Map<String, String> configOptions = GeoWaveInputFormat.getStoreConfigOptions(context);
+        entry.inputStoreOptions = new DataStorePluginOptions(storeName, configOptions);
+        entry.indexStore = entry.inputStoreOptions.createIndexStore();
+//        entry.secondaryIndexStore = entry.inputStoreOptions.createSecondaryIndexStore();
+        entry.statisticsStore = entry.inputStoreOptions.createDataStatisticsStore();
+        entry.adapterStore = GeoWaveStoreFinder.createAdapterStore(configOptions);
+//        entry.adapterIndexMappingStore = entry.inputStoreOptions.createAdapterIndexMappingStore();
+        entry.dataStore = GeoWaveStoreFinder.createDataStore(configOptions);
+      }
     }
   }
 
@@ -983,9 +1062,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider
     {
     }
 
-    private AccumuloOperations storeOperations;
+    private DataStorePluginOptions inputStoreOptions;
     private IndexStore indexStore;
-    private SecondaryIndexDataStore secondaryIndexStore;
+//    private SecondaryIndexDataStore secondaryIndexStore;
+//    private AdapterIndexMappingStore adapterIndexMappingStore;
     private AdapterStore adapterStore;
     private DataStatisticsStore statisticsStore;
     private DataStore dataStore;

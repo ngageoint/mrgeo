@@ -1,15 +1,13 @@
 package org.mrgeo.data.vector.geowave;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import mil.nga.giat.geowave.core.geotime.store.query.SpatialQuery;
 import mil.nga.giat.geowave.core.store.CloseableIterator;
 import mil.nga.giat.geowave.core.store.DataStore;
 import mil.nga.giat.geowave.core.store.adapter.DataAdapter;
-import mil.nga.giat.geowave.core.store.index.Index;
 import mil.nga.giat.geowave.core.store.index.PrimaryIndex;
 import mil.nga.giat.geowave.core.store.query.Query;
-import mil.nga.giat.geowave.core.geotime.store.query.SpatialQuery;
 import mil.nga.giat.geowave.core.store.query.QueryOptions;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.geotools.factory.CommonFactoryFinder;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.ProviderProperties;
@@ -57,6 +55,7 @@ public class GeoWaveVectorReader implements VectorReader
   {
   }
 
+  @SuppressFBWarnings(value="NP_LOAD_OF_KNOWN_NULL_VALUE",justification = "Null is a valid value")
   @Override
   public CloseableKVIterator<FeatureIdWritable, Geometry> get()
   {
@@ -73,14 +72,17 @@ public class GeoWaveVectorReader implements VectorReader
     return (get(featureId) != null);
   }
 
+  @SuppressFBWarnings(value="NP_LOAD_OF_KNOWN_NULL_VALUE",justification = "Null is a valid value")
   @Override
   public Geometry get(FeatureIdWritable featureId)
   {
-    FilterFactory ff = CommonFactoryFinder.getFilterFactory();
-    Set<FeatureId> ids = new HashSet<FeatureId>();
-    ids.add(ff.featureId(adapter.getAdapterId().getString() + "." + featureId));
-    Filter idFilter = ff.id(ids);
-    Filter queryFilter = ff.and(idFilter, this.filter);
+    // TODO: Not correctly implemented. Needs some investigation to figure out how to
+    // query by a feature id.
+//    FilterFactory ff = CommonFactoryFinder.getFilterFactory();
+//    Set<FeatureId> ids = new HashSet<FeatureId>();
+//    ids.add(ff.featureId(adapter.getAdapterId().getString() + "." + featureId));
+//    Filter idFilter = ff.id(ids);
+//    Filter queryFilter = ff.and(idFilter, this.filter);
     Integer limit = null; // no limit
     QueryOptions queryOptions = new QueryOptions(adapter, index);
     queryOptions.setLimit(limit);
@@ -98,6 +100,7 @@ public class GeoWaveVectorReader implements VectorReader
     return null;
   }
 
+  @SuppressFBWarnings(value="NP_LOAD_OF_KNOWN_NULL_VALUE",justification = "Null is a valid value")
   @Override
   public CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds)
   {
@@ -111,40 +114,30 @@ public class GeoWaveVectorReader implements VectorReader
     return new GeoWaveVectorIterator(iter);
   }
 
+  @SuppressFBWarnings(value="NP_LOAD_OF_KNOWN_NULL_VALUE",justification = "Null is a valid value")
   @Override
   public long count() throws IOException
   {
-    try
+    if (filter == null)
     {
-      if (filter == null)
-      {
-        return GeoWaveVectorDataProvider.getAdapterCount(adapter.getAdapterId(),
-                                                         namespace,
-                                                         providerProperties);
-      }
-      else
-      {
-        // We must iterate through the returned features to get the count
-        long count = 0L;
-        Integer limit = null; // no limit
-        QueryOptions queryOptions = new QueryOptions(adapter, index);
-        queryOptions.setLimit(limit);
-        CloseableIterator<?> iter = dataStore.query(queryOptions, query);
-        while (iter.hasNext())
-        {
-          count++;
-          iter.next();
-        }
-        return count;
-      }
+      return GeoWaveVectorDataProvider.getAdapterCount(adapter.getAdapterId(),
+                                                       namespace,
+                                                       providerProperties);
     }
-    catch(AccumuloSecurityException e)
+    else
     {
-      throw new IOException(e);
-    }
-    catch(AccumuloException e)
-    {
-      throw new IOException(e);
+      // We must iterate through the returned features to get the count
+      long count = 0L;
+      Integer limit = null; // no limit
+      QueryOptions queryOptions = new QueryOptions(adapter, index);
+      queryOptions.setLimit(limit);
+      CloseableIterator<?> iter = dataStore.query(queryOptions, query);
+      while (iter.hasNext())
+      {
+        count++;
+        iter.next();
+      }
+      return count;
     }
   }
 }
