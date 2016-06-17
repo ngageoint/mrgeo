@@ -25,6 +25,8 @@ import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.tms.Tile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
 import java.io.IOException;
@@ -36,7 +38,7 @@ import java.util.NoSuchElementException;
  */
 public class HdfsImageResultScanner implements CloseableKVIterator<TileIdWritable, Raster>
 {
-//private static final Logger log = LoggerFactory.getLogger(HdfsImageResultScanner.class);
+private static final Logger log = LoggerFactory.getLogger(HdfsImageResultScanner.class);
 
 // reader used for pulling items
 private final HdfsMrsImageReader reader;
@@ -125,6 +127,7 @@ public HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritabl
 @Override
 public TileIdWritable currentKey()
 {
+  // TODO eaw Need null check, especially because key will be null if the tile was not found
   // don't reuse the tileidwritable, spark persist() doesn't like it...
   return new TileIdWritable(currentKey);
 }
@@ -161,6 +164,8 @@ public boolean hasNext()
       return false;
     }
 
+    // TODO eaw - This causes the first call to hasNext after the primeScanner to not advance the key.  This means 2 calls
+    //            to has next are needed in order to get past the first element
     if (readFirstKey)
     {
       readFirstKey = false;
@@ -175,6 +180,8 @@ public boolean hasNext()
        */
     while (true)
     {
+      // TODO eaw - The contract on java.util.Iterator requires that this method implementation not advance the iterator.
+      //            This code should be on next()
       final boolean found = mapfile.next(currentKey, currentValue);
       if (found)
       {
@@ -286,6 +293,7 @@ private void primeScanner(final long startTileId, final long endTileId)
      * position the pointer at the end of the first row and also return the first row in the
      * next() method below.
      */
+  log.debug("start tile id: " + startTileId);
   try
   {
     if (mapfile != null)
@@ -325,10 +333,12 @@ private void primeScanner(final long startTileId, final long endTileId)
       {
         throw new MrsImageException(e);
       }
+      // TODO eaw - need null check before casting value
       currentKey = (TileIdWritable) mapfile.getClosest(startKey, currentValue);
       if (currentKey != null)
       {
         // Did we get a key and have we not run past the end key
+        // TODO eaw - inRange does the first part of this check, so the first condition can be dropped
         if ((currentKey.compareTo(endKey) <= 0) && inRange(currentKey))
         {
           readFirstKey = true;

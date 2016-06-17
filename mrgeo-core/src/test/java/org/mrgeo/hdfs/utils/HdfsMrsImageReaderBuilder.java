@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +24,7 @@ public class HdfsMrsImageReaderBuilder {
     private int maxPartitions;
     private boolean canBeCached;
     private int partitionIndex;
+    private int zoom;
 
     public HdfsMrsImageReaderBuilder() {
         this.hdfsMrsImageReader = mock(HdfsMrsImageReader.class);
@@ -35,27 +37,21 @@ public class HdfsMrsImageReaderBuilder {
         return this;
     }
 
-    public HdfsMrsImageReaderBuilder maxPartitions(int maxPartitions) {
-        this.maxPartitions = maxPartitions;
-
-        return this;
-    }
-
     public HdfsMrsImageReaderBuilder canBeCached(boolean canBeCached) {
         this.canBeCached = canBeCached;
 
         return this;
     }
 
-    public HdfsMrsImageReaderBuilder partitionIndex(int partitionIndex) {
-        this.canBeCached = canBeCached;
+    public HdfsMrsImageReaderBuilder zoom(int zoom) {
+        this.zoom = zoom;
 
         return this;
     }
 
     public HdfsMrsImageReader build() throws IOException {
         // Return the MapFile.Readers for the specified index
-        when(hdfsMrsImageReader.getReader(any(Integer.class))).thenAnswer(new Answer<MapFile.Reader>() {
+        when(hdfsMrsImageReader.getReader(anyInt())).thenAnswer(new Answer<MapFile.Reader>() {
             @Override
             public MapFile.Reader answer(InvocationOnMock invocationOnMock) throws Throwable {
                 int index = (Integer) invocationOnMock.getArguments()[0];
@@ -70,6 +66,8 @@ public class HdfsMrsImageReaderBuilder {
         when(hdfsMrsImageReader.getPartitionIndex(any(TileIdWritable.class))).thenReturn(0);
 
         when(hdfsMrsImageReader.canBeCached()).thenReturn(canBeCached);
+
+        when(hdfsMrsImageReader.getZoomlevel()).thenReturn(zoom);
 
         return hdfsMrsImageReader;
     }
