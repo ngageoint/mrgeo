@@ -63,6 +63,7 @@ object InlineCsvMapOp extends MapOpRegistrar
 }
 
 
+@SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
 class InlineCsvMapOp extends VectorMapOp with Externalizable
 {
   private val recordSeparator = ';'
@@ -72,7 +73,6 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
   private var delimitedParser: DelimitedParser = null
   private var vectorrdd: Option[VectorRDD] = None
 
-  @SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
   def this(columns:String, values:String) = {
     this()
 

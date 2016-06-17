@@ -141,8 +141,6 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     case Some(kernelData) =>
       naiveKernel(focal, kernel, nodatas, context)
     case _ =>
-      val metersPerPixel = TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE
-
       focal.flatMap(tile => {
         kernel.calculate(tile._1.get(), RasterWritable.toRaster(tile._2), nodatas) match {
         case Some(r:Raster) => Array((tile._1, RasterWritable.toWritable(r))).iterator
@@ -165,18 +163,18 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     val kernelW = kernel.getWidth
     val kernelH = kernel.getHeight
 
-    if (log.isDebugEnabled()) {
-      //          val localWeights = kernel.getKernel
-      //          log.info("Kernel w, h " + kernelW + ", " + kernelH)
-      //          for (ky <- 0 until kernelH) {
-      //            // log.info(ky + ": ")
-      //            val sb = new StringBuffer()
-      //            for (kx <- 0 until kernelW) {
-      //              sb.append(localWeights(ky * kernelW + kx) + "     ")
-      //            }
-      //            log.info(sb.toString)
-      //          }
-    }
+//    if (log.isDebugEnabled()) {
+//      val localWeights = kernel.getKernel
+//      log.info("Kernel w, h " + kernelW + ", " + kernelH)
+//      for (ky <- 0 until kernelH) {
+//        // log.info(ky + ": ")
+//        val sb = new StringBuffer()
+//        for (kx <- 0 until kernelW) {
+//          sb.append(localWeights(ky * kernelW + kx) + "     ")
+//        }
+//        log.info(sb.toString)
+//      }
+//    }
 
     val halfKernelW = kernelW / 2 + 1
     val halfKernelH = kernelH / 2 + 1

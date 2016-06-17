@@ -65,14 +65,6 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         aspect = self.smallelevation.aspect("deg")
         self.compareraster(aspect, self.name)
 
-    def test_aspect_gradient(self):
-        aspect = self.smallelevation.aspect("gradient")
-        self.compareraster(aspect, self.name)
-
-    def test_aspect_percent(self):
-        aspect = self.smallelevation.aspect("percent")
-        self.compareraster(aspect, self.name)
-
     def test_aspect_rad(self):
         aspect = self.smallelevation.aspect("rad")
         self.compareraster(aspect, self.name)

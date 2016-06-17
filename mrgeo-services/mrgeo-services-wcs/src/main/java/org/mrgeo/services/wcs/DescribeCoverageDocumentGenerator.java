@@ -238,6 +238,7 @@ public class DescribeCoverageDocumentGenerator
           XmlUtils.createTextElement2(nodata, "singleValue", "" + metadata.getDefaultValueFloat(b));
           break;
         case DataBuffer.TYPE_DOUBLE:
+        default:
           XmlUtils.createTextElement2(nodata, "singleValue", "" + metadata.getDefaultValueDouble(b));
           break;
         }

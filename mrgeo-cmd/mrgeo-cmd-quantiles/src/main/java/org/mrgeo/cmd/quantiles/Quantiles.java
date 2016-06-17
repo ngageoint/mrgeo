@@ -124,7 +124,7 @@ public int run(String[] args, final Configuration conf,
         if (line.hasOption("fraction")) {
           float fraction = Float.parseFloat(line.getOptionValue("fraction"));
           if (!org.mrgeo.quantiles.Quantiles.compute(input, outputPath.toString(),
-                                                     numQuantiles, fraction, conf, providerProperties))
+              numQuantiles, fraction, conf, providerProperties))
           {
             log.error("Quantiles exited with error");
             return -1;
@@ -133,7 +133,7 @@ public int run(String[] args, final Configuration conf,
         }
         else {
           if (!org.mrgeo.quantiles.Quantiles.compute(input, outputPath.toString(),
-                                                     numQuantiles, conf, providerProperties))
+              numQuantiles, conf, providerProperties))
           {
             log.error("Quantiles exited with error");
             return -1;
@@ -145,13 +145,13 @@ public int run(String[] args, final Configuration conf,
         HadoopFileUtils.delete(conf, outputPath);
       }
     }
-
-    catch (Exception e)
+    catch (IOException e)
     {
       e.printStackTrace();
       log.error("BuildPyramid exited with error", e);
       return -1;
     }
+
   }
 
   long end = System.currentTimeMillis();
@@ -170,20 +170,20 @@ public int run(String[] args, final Configuration conf,
   return 0;
 }
 
-  private void printResults(Path outputPath, Configuration conf) throws IOException
-  {
-    InputStream is = HadoopFileUtils.open(conf, outputPath);
-    BufferedReader br = new BufferedReader(new InputStreamReader(is));
-    try {
-      String line = br.readLine();
-      while (line != null) {
-        System.out.println(line);
-        line = br.readLine();
-      }
-    }
-    finally {
-      br.close();
+private void printResults(Path outputPath, Configuration conf) throws IOException
+{
+  InputStream is = HadoopFileUtils.open(conf, outputPath);
+  BufferedReader br = new BufferedReader(new InputStreamReader(is));
+  try {
+    String line = br.readLine();
+    while (line != null) {
+      System.out.println(line);
+      line = br.readLine();
     }
   }
+  finally {
+    br.close();
+  }
+}
 
 }

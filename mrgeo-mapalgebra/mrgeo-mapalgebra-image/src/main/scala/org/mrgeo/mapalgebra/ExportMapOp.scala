@@ -19,7 +19,8 @@ package org.mrgeo.mapalgebra
 import java.awt.image.WritableRaster
 import java.io._
 
-import org.apache.spark.{Logging, SparkContext, SparkConf}
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import org.apache.spark.{Logging, SparkConf, SparkContext}
 import org.gdal.gdal.Dataset
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
@@ -29,9 +30,8 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils._
-
 import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{Tile, Bounds, TMSUtils}
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, Tile}
 
 //import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -69,6 +69,9 @@ object ExportMapOp extends MapOpRegistrar {
 
 }
 
+@SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
+@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value = Array("PREDICTABLE_RANDOM"), justification = "OK, just getting random tileids")
 class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
   private var raster: Option[RasterMapOp] = None
@@ -407,6 +410,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     tiles.result().toSet
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Use File() to get parent directory")
   private def makeOutputName(template: String, format: String, tileid: Long, zoom: Int, tilesize: Int,
       reformat: Boolean): String = {
 
@@ -466,6 +470,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     }
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Use File() to get parent directory")
   @throws(classOf[IOException])
   private def makeTMSOutputName(base: String, format: String, tileid: Long, zoom: Int): String = {
     val t: Tile = TMSUtils.tileid(tileid, zoom)

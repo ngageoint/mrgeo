@@ -19,6 +19,7 @@ package org.mrgeo.mapalgebra
 import java.awt.image.{DataBuffer, Raster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.RasterWritable
@@ -102,6 +103,7 @@ class QuantilesMapOp extends RasterMapOp with Externalizable {
     )
   }
 
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "implicits - false positivie")
   override def execute(context: SparkContext): Boolean = {
 
     implicit val doubleOrdering = new Ordering[Double] {

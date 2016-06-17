@@ -17,6 +17,7 @@
 package org.mrgeo.cmd.server;
 
 import com.sun.jersey.spi.container.servlet.ServletContainer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.eclipse.jetty.server.Server;
@@ -91,28 +92,25 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     }
 
     int httpPort = 8080;
-    if (line != null)
+    if (line.hasOption("p"))
     {
-      if (line.hasOption("p"))
+      try
       {
-        try
-        {
-          httpPort = Integer.parseInt(line.getOptionValue("p", "8080"));
-        }
-        catch (NumberFormatException nfe)
-        {
-          System.err.println("Invalid HTTP port specified: " + line.getOptionValue("p"));
-          return -1;
-        }
+        httpPort = Integer.parseInt(line.getOptionValue("p", "8080"));
       }
-      if (line.hasOption("v"))
+      catch (NumberFormatException nfe)
       {
-        LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+        System.err.println("Invalid HTTP port specified: " + line.getOptionValue("p"));
+        return -1;
       }
-      if (line.hasOption("d"))
-      {
-        LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
-      }
+    }
+    if (line.hasOption("v"))
+    {
+      LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+    }
+    if (line.hasOption("d"))
+    {
+      LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
     }
 
     runWebServer(httpPort);
@@ -140,6 +138,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   return -1;
 }
 
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() checking for existence")
 private Server startWebServer(int httpPort) throws Exception
 {
   System.out.println("Starting embedded web server on port " + httpPort);

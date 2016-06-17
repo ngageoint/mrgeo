@@ -21,6 +21,8 @@ import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -472,6 +474,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     val width = raster.getWidth
     val height = raster.getHeight
 
+    @SuppressFBWarnings(value = Array("FE_FLOATING_POINT_EQUALITY"), justification = "Scala generated code")
+    @SuppressFBWarnings(value = Array("UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS"), justification = "Scala generated code")
     case class NeighborData(dx:Int, dy:Int, multibandNdx: Int, dist:Float)
 
     val UP_LEFT    = 0
@@ -941,6 +945,7 @@ class CostPoint(var px: Short, var py: Short, var cost: Float, var pixelCost: Fl
     diagonal = in.readBoolean()
   }
 
+
   override def compare(that: CostPoint): Int = {
     val tc = cost + pixelCost
     val thattc = that.cost + that.pixelCost
@@ -954,6 +959,17 @@ class CostPoint(var px: Short, var py: Short, var cost: Float, var pixelCost: Fl
     else {
       0
     }
+  }
+
+  override def equals(obj: scala.Any): Boolean = {
+    obj match {
+    case cp: CostPoint => compare(cp) == 0
+    case _ => false
+    }
+  }
+
+  override def hashCode: Int = {
+    new HashCodeBuilder(29, 5).append(px).append(py).append(cost).append(pixelCost).append(diagonal).toHashCode
   }
 }
 

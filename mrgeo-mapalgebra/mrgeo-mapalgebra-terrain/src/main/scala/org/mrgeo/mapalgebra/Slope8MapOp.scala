@@ -2,8 +2,8 @@ package org.mrgeo.mapalgebra
 
 import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
-import javax.vecmath.Vector3d
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -34,13 +34,12 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
 
   final val DEG_2_RAD: Double = 0.0174532925
   final val RAD_2_DEG: Double = 57.2957795
-  final val PI: Double = 3.14159265359
-  final val TWO_PI:Double = 6.28318530718
-  final val THREE_PI_OVER_2:Double = 4.71238898038
+  final val TWO_PI:Double = 2 * Math.PI
+  final val THREE_PI_OVER_2:Double = (3.0 * Math.PI) / 2
 
   private var inputMapOp:Option[RasterMapOp] = None
   private var units:String = "rad"
-  private var slope:Boolean = true
+  //private var slope:Boolean = true
 
   private var rasterRDD:Option[RasterRDD] = None
 
@@ -48,7 +47,6 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
     this()
 
     this.inputMapOp = inputMapOp
-    this.slope = isSlope
 
     if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
         units.equalsIgnoreCase("percent"))) {
@@ -67,8 +65,6 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
     else if (node.getNumChildren > 2) {
       throw new ParserException(node.getName + " requires only one or two arguments")
     }
-
-    slope = isSlope
 
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
@@ -226,6 +222,7 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
         vectors
       }
 
+      @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
       def calculateAngle(offset: (Double, Double)): Float = {
         if (offset._1.isNaN || offset._1 == 0.0) {
           return Float.NaN
@@ -236,7 +233,7 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
           val ang = Math.atan2(offset._2, offset._1)
 
           // if angle is greater than 180, make it negative
-          if (ang > PI) {
+          if (ang > Math.PI) {
             ang - TWO_PI
           }
           else {

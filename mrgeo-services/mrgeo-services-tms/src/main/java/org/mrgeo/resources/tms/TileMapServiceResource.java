@@ -19,6 +19,7 @@
  */
 package org.mrgeo.resources.tms;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.mrgeo.colorscale.ColorScale;
@@ -94,7 +95,7 @@ static
   init();
 }
 
-public static void init()
+private static synchronized void init()
 {
   try
   {
@@ -105,8 +106,8 @@ public static void init()
   }
   catch (final IllegalStateException e)
   {
-    log.error(MrGeoConstants.MRGEO_HDFS_IMAGE + " must be specified in the MrGeo configuration file (" + e.getMessage() +
-        ")");
+    log.error(MrGeoConstants.MRGEO_HDFS_IMAGE + " must be specified in the MrGeo configuration file (" +
+        e.getMessage() + ")");
   }
 }
 
@@ -378,6 +379,7 @@ public Response getRootResource(@Context final HttpServletRequest hsr)
 }
 
 
+@SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @SuppressWarnings("static-method")
 @GET
 @Produces("image/*")
@@ -539,6 +541,7 @@ public Response getTile(@PathParam("version") final String version,
 }
 
 
+@SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
 @Produces("text/xml")
 @Path("/{version}/{raster}")
@@ -568,6 +571,7 @@ public Response getTileMap(@PathParam("version") final String version,
   }
 }
 
+@SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
 @Produces("text/xml")
 @Path("/{version}")
