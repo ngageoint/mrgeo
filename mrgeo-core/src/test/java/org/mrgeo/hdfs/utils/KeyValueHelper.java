@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 public class KeyValueHelper {
     private static final Logger logger = LoggerFactory.getLogger(KeyValueHelper.class);
 
+    // Index of current key
     private int index = 0;
     private Class keyClass;
     private Class valueClass;
@@ -66,6 +67,7 @@ public class KeyValueHelper {
     public boolean next(Writable key, Writable value) throws IOException {
         if (index >= keys.length) return false;
 
+        logger.debug("Reading next key...");
         // Get the key and value
         copyData(keys[index], key);
         copyData(values[index], value);
@@ -73,29 +75,36 @@ public class KeyValueHelper {
         return true;
     }
 
+    /**
+     *
+     * Find the first key larger than the specified key.
+     *
+     * The index will be positioned at this key, such that the next call to next() will return the key after the found key.
+     * @param key The key to find
+     * @param value The value of the closest key
+     * @return the key that was the closest match
+     * @throws IOException
+     */
     public Writable getClosest(WritableComparable key, Writable value) throws IOException {
-
+        logger.debug("getClosest called with key " + key);
         Writable foundKey = null;
         Writable foundValue = null;
+        int keyIndex = -1;
         for (int i = 0; i < keys.length; i++) {
             int result = ((WritableComparable)keys[i]).compareTo(key);
-            if (result == 0) {
+            logger.debug("Result of comparing key " + keys[i] + " with key " + key + " = " + result);
+            if (result >= 0) {
                 foundKey = keys[i];
                 foundValue = values[i];
+                keyIndex = i;
                 break;
-            }
-            else if (result > 0 && i > 0) {
-                foundKey = keys[i - 1];
-                foundValue = values[i - 1];
-                break;
-            }
-            else if (i == 0) {
-                return null;
             }
         }
         if (foundKey != null) {
-            copyData(foundKey, (Writable)key);
             copyData(foundValue, value);
+            // Update the index.
+            index = keyIndex;
+            logger.debug("Found key " + foundKey);
             return foundKey;
         }
         else {
