@@ -19,6 +19,7 @@ package org.mrgeo.hdfs.input.image;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.BlockReaderFactory;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -40,6 +41,19 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
   private long recordCount = 0;
   private boolean more = true;
 
+  // Factory for creating instances of SequenceFile.Reader
+  private ReaderFactory readerFactory;
+
+  // Default constructor injects Default Reader Factory
+  public HdfsMrsPyramidRecordReader() {
+    this.readerFactory = new ReaderFactory();
+  }
+
+  // Constructor for injecting a ReaderFactory implementation
+  public HdfsMrsPyramidRecordReader(ReaderFactory readerFactory) {
+    this.readerFactory = readerFactory;
+  }
+
   @Override
   public TileIdWritable getCurrentKey()
   {
@@ -53,6 +67,7 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
   }
 
   @Override
+  // TODO eaw this should probably throw an UnsupportedOperationException since it does not meet the contract on getProgress because recordCount is never updated
   public float getProgress() throws IOException, InterruptedException
   {
     if (startTileId == endTileId)
@@ -75,16 +90,22 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
       InterruptedException
   {
+    // TODO eaw - Better to use isAssignableFrom so it doesn't break if TiledInputSplit is ever subclassed
     if (split instanceof TiledInputSplit)
     {
       TiledInputSplit tiledInputSplit = (TiledInputSplit)split;
       startTileId = tiledInputSplit.getStartTileId();
       endTileId = tiledInputSplit.getEndTileId();
+      // TODO, can use tiledInputSplit instead of casting split again
       FileSplit fileSplit = (FileSplit)((TiledInputSplit)split).getWrappedSplit();
       Configuration conf = context.getConfiguration();
       Path path = fileSplit.getPath();
       FileSystem fs = path.getFileSystem(conf);
-      this.reader = new SequenceFile.Reader(fs, path, conf);
+
+      // Use a factory to create the reader reader to make this class easier to test and support decoupling the reader
+      // lifecycle from this object's lifecycle.
+      this.reader = readerFactory.createReader(fs, path, conf);
+
       try
       {
         this.key = (TileIdWritable)reader.getKeyClass().newInstance();
@@ -101,6 +122,7 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
     }
     else
     {
+      // TODO eaw - IllegalArgumentException would be more appropriate here
       throw new IOException("Expected a TiledInputSplit but received " + split.getClass().getName());
     }
   }
@@ -108,6 +130,7 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException
   {
+    // TODO eaw evaluate whether it is needed to store more as an instance member.  If not, use a local variable instead
     if (more)
     {
       more = reader.next(key, value);
@@ -117,5 +140,12 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
       }
     }
     return more;
+  }
+
+  // Default ReaderFactory
+  static class ReaderFactory {
+    public SequenceFile.Reader createReader(FileSystem fs, Path path, Configuration config) throws IOException {
+      return new SequenceFile.Reader(fs, path, config);
+    }
   }
 }
