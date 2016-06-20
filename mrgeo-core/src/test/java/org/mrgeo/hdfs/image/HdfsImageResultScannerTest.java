@@ -33,7 +33,7 @@ public class HdfsImageResultScannerTest {
     private HdfsMrsImageReader mockImageReader;
     private MapFile.Reader firstPartitionMockMapFileReader;
     private MapFile.Reader secondPartitionMapFileReader;
-    private LongRectangle bounds = new LongRectangle(0L,0L, 14L, 14L);
+    private LongRectangle bounds = new LongRectangle(0L,0L, 7L, 3L);
     private TileIdWritable[] firstPartitionTileIds = {new TileIdWritable(2L), new TileIdWritable(4L), new TileIdWritable(6L)};
     private TileIdWritable[] secondPartitionTileIds = {new TileIdWritable(8L), new TileIdWritable(10L), new TileIdWritable(12L)};
     private RasterWritable[] firstPartitionRasters = createRasters(0, firstPartitionTileIds.length);
@@ -63,17 +63,18 @@ public class HdfsImageResultScannerTest {
     @Test
     @Category(UnitTest.class)
     public void testConstructionWithZoom() throws Exception {
-        zoom = 2;
+        zoom = 3;
         subject = createDefaultSubject(zoom,bounds);
-        Assert.assertEquals(firstPartitionTileIds[0], subject.currentKey());
+        Assert.assertTrue(subject.hasNext());
+        assertIterateOverTiles(0,firstPartitionTileIds.length + secondPartitionTileIds.length - 1);
     }
 
     @Test
     @Category(UnitTest.class)
     public void testConstructionWithZoomOutOfLeftBound() throws Exception {
-        zoom = 2;
-        bounds = new LongRectangle(2, 0, 14, 14);
-        subject = createDefaultSubject(2, bounds);
+        zoom = 3;
+        bounds = new LongRectangle(1, 0, 7, 2);
+        subject = createDefaultSubject(zoom, bounds);
         Assert.assertTrue(subject.hasNext());
         assertIterateOverTiles(0,firstPartitionTileIds.length + secondPartitionTileIds.length - 1);
     }
@@ -81,9 +82,9 @@ public class HdfsImageResultScannerTest {
     @Test
     @Category(UnitTest.class)
     public void testConstructionWithZoomOutOfRightBound() throws Exception {
-        zoom = 4;
-        bounds = new LongRectangle(0, 0, 8, 8);
-        subject = createDefaultSubject(2, bounds);
+        zoom = 3;
+        bounds = new LongRectangle(0, 0, 3, 2);
+        subject = createDefaultSubject(zoom, bounds);
         Assert.assertTrue(subject.hasNext());
         assertIterateOverTiles(0,firstPartitionTileIds.length + secondPartitionTileIds.length - 1);
     }
@@ -234,7 +235,7 @@ public class HdfsImageResultScannerTest {
                 .keyClass(TileIdWritable.class)
                 .valueClass(RasterWritable.class)
                 .keys(secondPartitionTileIds)
-                .values(firstPartitionRasters)
+                .values(secondPartitionRasters)
                 .build();
         HdfsMrsImageReaderBuilder builder = new HdfsMrsImageReaderBuilder()
                 .canBeCached(canBeCached)

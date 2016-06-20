@@ -333,7 +333,6 @@ private void primeScanner(final long startTileId, final long endTileId)
       {
         throw new MrsImageException(e);
       }
-      // TODO eaw - need null check before casting value
       currentKey = (TileIdWritable) mapfile.getClosest(startKey, currentValue);
       if (currentKey != null)
       {
