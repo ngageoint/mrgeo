@@ -84,7 +84,7 @@ def is_remote():
     return _isremote
 
 
-def launch_gateway():
+def launch_gateway(host=None, port=None):
     global _isremote
     requesthost = socket.gethostname()
     requestport = 0
@@ -95,13 +95,19 @@ def launch_gateway():
         # Launch the Py4j gateway using the MrGeo command so that we pick up the proper classpath
 
         fork = True
-        if "MRGEO_HOST" in os.environ:
-            requesthost = os.environ["MRGEO_HOST"]
-            fork = False
 
-        if "MRGEO_PORT" in os.environ:
-            requestport = int(os.environ["MRGEO_PORT"])
+        if host is not None and port is not None:
+            requesthost = host
+            requestport = port
             fork = False
+        else:
+            if "MRGEO_HOST" in os.environ:
+                requesthost = os.environ["MRGEO_HOST"]
+                fork = False
+
+            if "MRGEO_PORT" in os.environ:
+                requestport = int(os.environ["MRGEO_PORT"])
+                fork = False
 
         # Start a socket that will be used by PythonGatewayServer to communicate its port to us
         callback_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

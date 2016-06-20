@@ -24,8 +24,13 @@ class MrGeo(object):
     sparkContext = None
     job = None
 
-    def __init__(self):
-        MrGeo._ensure_gateway_initialized()
+    _host = None
+    _port = None
+
+    def __init__(self, host=None, port=None):
+        self._host = host
+        self._port = port
+        self._ensure_gateway_initialized(self._host, self._port)
         try:
             self.initialize()
         except:
@@ -33,16 +38,15 @@ class MrGeo(object):
             self.stop()
             raise
 
-    @classmethod
-    def _ensure_gateway_initialized(cls):
+    def _ensure_gateway_initialized(self, host=None, port=None):
         """
         Checks whether a SparkContext is initialized or not.
         Throws error if a SparkContext is already running.
         """
-        with MrGeo.lock:
-            if not MrGeo.gateway:
-                MrGeo.gateway, MrGeo.gateway_client = launch_gateway()
-                MrGeo.jvm = MrGeo.gateway.jvm
+        with self.lock:
+            if not self.gateway:
+                self.gateway, self.gateway_client = launch_gateway(host, port)
+                self.jvm = self.gateway.jvm
 
     def _create_job(self):
         jvm = self.gateway.jvm
@@ -70,6 +74,7 @@ class MrGeo(object):
         self.job.useYarn()
 
     def start(self):
+        self._ensure_gateway_initialized(self._host, self._port)
 
         jvm = self.gateway.jvm
 
@@ -118,6 +123,10 @@ class MrGeo(object):
         if self.sparkContext:
             self.sparkContext.stop()
             self.sparkContext = None
+        if self.gateway:
+            self.gateway.shutdown()
+            self.gateway = None
+            self.gateway_client = None
 
     def list_images(self):
         jvm = self.gateway.jvm
