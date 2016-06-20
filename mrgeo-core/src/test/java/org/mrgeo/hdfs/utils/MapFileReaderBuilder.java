@@ -81,5 +81,4 @@ public class MapFileReaderBuilder {
 
         return mapFileReader;
     }
-
 }
