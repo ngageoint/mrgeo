@@ -127,7 +127,7 @@ public HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritabl
 @Override
 public TileIdWritable currentKey()
 {
-  // TODO eaw Need null check, especially because key will be null if the tile was not found
+  // TODO eaw Should probably have a null check, especially because key will be null if the tile was not found
   // don't reuse the tileidwritable, spark persist() doesn't like it...
   return new TileIdWritable(currentKey);
 }
