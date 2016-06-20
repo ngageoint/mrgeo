@@ -19,6 +19,7 @@ package org.mrgeo.cmd.mapalgebra.python;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.ProviderProperties;
@@ -29,15 +30,17 @@ import py4j.GatewayServer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedList;
+import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 
 public class PythonGateway extends Command
 {
 private static final Logger log = LoggerFactory.getLogger(PythonGateway.class);
 
 private boolean hasQueue = false;
-private Queue<Integer> portQueue = new LinkedList<>();
+private Queue<Integer> portQueue = new ConcurrentLinkedQueue<>();
 
 public static Options createOptions()
 {
@@ -187,16 +190,20 @@ private int localConnection(String callbackHost, int callbackPort)
 
 private GatewayServer setupSingleServer(String callbackHost, int callbackPort) throws IOException
 {
-  // Start a GatewayServer on an ephemeral port
+  // Start a GatewayServer on an ephemeral port, unless we have a port range
   int port = 0;
   if (hasQueue)
   {
-    if (portQueue.size() == 0)
+    try
+    {
+      port = portQueue.remove();
+    }
+    catch (NoSuchElementException e)
     {
       throw new IOException("PythonGatewayServer is out of available ports, failing)");
     }
 
-    port = portQueue.remove();
+
   }
 
   GatewayServer gateway = new GatewayServer(null, port);
@@ -224,19 +231,30 @@ private void setupThreadedServer(final String callbackHost, final int callbackPo
       try
       {
         log.info("Starting thread: " + this.getName() + "(" + this.getId() + ")");
-        setupSingleServer(callbackHost, callbackPort);
+
+        GatewayServer server = setupSingleServer(callbackHost, callbackPort);
+        int port = server.getListeningPort();
 
         try
         {
+          Semaphore semaphore = new Semaphore(1);
+          server.addListener(new ServerListener(semaphore));
           // Exit on EOF or broken pipe to ensure that this process dies when the Python driver dies:
-          while (System.in.read() != -1)
-          {
-            // Do nothing
-            //Thread.sleep(10);
-          }
+
+          // Wait for the shutdown
+          semaphore.acquire();
+//          while (System.in.read() != -1)
+//          {
+//            // Do nothing
+//          }
         }
-        catch (IOException ignored) //  | InterruptedException ignored)
+        catch (InterruptedException ignored)
         {
+        }
+
+        if (hasQueue)
+        {
+          portQueue.add(port);
         }
 
         log.info("Exiting thread: " + this.getName() + "(" + this.getId() + ")");
