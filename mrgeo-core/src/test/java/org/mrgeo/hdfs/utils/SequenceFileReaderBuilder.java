@@ -26,67 +26,49 @@ public class SequenceFileReaderBuilder {
     private static final Logger logger = LoggerFactory.getLogger(SequenceFileReaderBuilder.class);
 
     private SequenceFile.Reader sequenceFileReader;
-    private Class keyClass;
-    private Class valueClass;
-    private Writable[] keys;
-    private Writable[] values;
+    private KeyValueHelper keyValueHelper;
 
     public SequenceFileReaderBuilder() {
         this.sequenceFileReader = mock(SequenceFile.Reader.class);
+        keyValueHelper = new KeyValueHelper();
     }
 
     public SequenceFileReaderBuilder keyClass(Class keyClass) {
-        this.keyClass = keyClass;
+        keyValueHelper.keyClass(keyClass);
 
         return this;
     }
 
     public SequenceFileReaderBuilder valueClass(Class valueClass) {
-        this.valueClass = valueClass;
+        keyValueHelper.valueClass(valueClass);
 
         return this;
     }
 
     public SequenceFileReaderBuilder keys(Writable[] keys) {
-        this.keys = Arrays.copyOf(keys, keys.length);
+        keyValueHelper.keys(keys);
 
         return this;
     }
 
     public SequenceFileReaderBuilder values(Writable[] values) {
-        this.values = Arrays.copyOf(values, values.length);
+        keyValueHelper.values(values);
 
         return this;
     }
 
     public SequenceFile.Reader build() throws IOException {
-        when(sequenceFileReader.getKeyClass()).thenReturn(keyClass);
-        when(sequenceFileReader.getValueClass()).thenReturn(valueClass);
+        when(sequenceFileReader.getKeyClass()).thenReturn(keyValueHelper.getKeyClass());
+        when(sequenceFileReader.getValueClass()).thenReturn(keyValueHelper.getValueClass());
 
         when(sequenceFileReader.next(any(Writable.class), any(Writable.class))).thenAnswer(new Answer<Boolean>() {
-            private int index = 0;
             @Override
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
-                if (index >= keys.length) return false;
-
                 // Get the key and value
                 Object[] args = invocationOnMock.getArguments();
                 Writable key = (Writable)args[0];
                 Writable value = (Writable)args[1];
-                copyData(keys[index], key);
-                copyData(values[index], value);
-                logger.info("Read: key: " + keys[index] + " value: " + values[index] + " Wrote: key: " + key + " value: " + value);
-                ++index;
-                return true;
-            }
-
-            private void copyData(Writable src, Writable tgt) throws IOException {
-                PipedInputStream in = new PipedInputStream();
-                PipedOutputStream out = new PipedOutputStream(in);
-                DataOutputStream dos = new DataOutputStream(out);
-                DataInputStream din = new DataInputStream(in);
-                src.write(dos);
-                tgt.readFields(din);
+                return keyValueHelper.next(key, value);
             }
         });
 

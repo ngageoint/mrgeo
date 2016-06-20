@@ -104,7 +104,7 @@
     <cobertura-maven.version>2.6</cobertura-maven.version>
     <exec-maven.version>1.4.0</exec-maven.version>
     <findbugs-maven.version>3.0.1</findbugs-maven.version>
-    <findsecbugs-plugin.version>LATEST</findsecbugs-plugin.version>
+    <findsecbugs-plugin.version>1.4.6</findsecbugs-plugin.version>
     <license-maven.version>1.8</license-maven.version>
     <pomtools-maven.version>0.2.1</pomtools-maven.version>
     <maven-assembly.version>2.5.4</maven-assembly.version>
@@ -701,9 +701,6 @@
             <outputDirectory>${project.build.directory}/findbugs</outputDirectory>
             <xmlOutputDirectory>${project.build.directory}/findbugs</xmlOutputDirectory>
             <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
-            <!--
-            <includeFilterFile>${session.executionRootDirectory}/findbugs-security-include.xml</includeFilterFile>
-            -->
             <excludeFilterFile>${findbugs.basedir}/src/main/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
             <plugins>
               <plugin>
@@ -713,6 +710,14 @@
               </plugin>
             </plugins>
           </configuration>
+          <executions>
+            <execution>
+              <id>findbugs-check</id>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -763,6 +768,10 @@
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -3268,6 +3277,12 @@
     </developer>
     <developer>
       <name>Jason Goffeney</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Eric Wood</name>
       <roles>
         <role>developer</role>
       </roles>
