@@ -47,7 +47,6 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
     // this RecordWriter is copied from the MapFileOutputFormat, with the addition of
     // the write() method checking for TileIdWritable.  We needed to copy the code
     // because the RecordWriter is actually inline.  yuck!
-    Configuration conf = context.getConfiguration();
     CompressionCodec codec = null;
     SequenceFile.CompressionType compressionType = SequenceFile.CompressionType.NONE;
     if (getCompressOutput(context)) {
