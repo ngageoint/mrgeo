@@ -78,7 +78,7 @@ public static String getZoomName(final HdfsMrsImageDataProvider dp,
   {
     MrsPyramid pyramid = MrsPyramid.open(dp);
     MrsPyramidMetadata metadata = pyramid.getMetadata();
-    String zoomName = pyramid.getMetadata().getName(zoomLevel);
+    String zoomName = metadata.getName(zoomLevel);
     if (zoomName != null)
     {
       return new Path(dp.getResourcePath(true), zoomName).toUri().toString();
