@@ -73,6 +73,7 @@ class MrGeoTests(TestCase):
         else:
             jvm = self.mrgeo._get_jvm()
             # test = raster.mapop.toDataset(False)
+            java_import(jvm, "org.mrgeo.hdfs.vector.DelimitedVectorReader")
 
             testvector = str(self.outputhdfs + testname + ".tsv")
             vector.ssave(testvector)
@@ -231,7 +232,8 @@ class MrGeoTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mrgeo.stop()
+        #cls.mrgeo.stop()
+        pass
 
     def setUp(self):
         self.name = self._testMethodName
@@ -248,6 +250,7 @@ class MrGeoTests(TestCase):
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
 
     def tearDown(self):
+        self.mrgeo.stop()
         self._doublebox("Test Finished", self.classname + ":" + self.name)
 
     def debug_logging(self):

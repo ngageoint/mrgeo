@@ -211,6 +211,7 @@ class MrGeo(object):
 
     def create_points(self, coords):
         jvm = self._get_jvm()
+        job = self._get_job()
 
         elements = []
         for coord in coords:
