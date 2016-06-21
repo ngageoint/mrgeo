@@ -1,7 +1,5 @@
 package org.mrgeo.data.vector.geowave;
 
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
@@ -16,6 +14,7 @@ import java.util.Map;
 public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFactory
 {
   static Logger log = LoggerFactory.getLogger(GeoWaveVectorDataProviderFactory.class);
+  static Configuration conf;
 
   @Override
   public boolean isValid(Configuration conf)
@@ -26,6 +25,10 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   @Override
   public void initialize(Configuration conf) throws DataProviderException
   {
+    if (this.conf == null)
+    {
+      this.conf = conf;
+    }
   }
 
   @Override
@@ -63,41 +66,19 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   public VectorDataProvider createVectorDataProvider(String prefix, String input,
       ProviderProperties providerProperties)
   {
-    return new GeoWaveVectorDataProvider(prefix, input, providerProperties);
+    return new GeoWaveVectorDataProvider(getConf(), prefix, input, providerProperties);
   }
 
   @Override
   public String[] listVectors(final ProviderProperties providerProperties) throws IOException
   {
-    try
-    {
-      return GeoWaveVectorDataProvider.listVectors(providerProperties);
-    }
-    catch (AccumuloException e)
-    {
-      throw new IOException(e);
-    }
-    catch (AccumuloSecurityException e)
-    {
-      throw new IOException(e);
-    }
+    return GeoWaveVectorDataProvider.listVectors(providerProperties);
   }
 
   @Override
   public boolean canOpen(String input, ProviderProperties providerProperties) throws IOException
   {
-    try
-    {
-      return GeoWaveVectorDataProvider.canOpen(input, providerProperties);
-    }
-    catch (AccumuloException e)
-    {
-      throw new IOException(e);
-    }
-    catch (AccumuloSecurityException e)
-    {
-      throw new IOException(e);
-    }
+    return GeoWaveVectorDataProvider.canOpen(input, providerProperties);
   }
 
   @Override
@@ -116,5 +97,14 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   public void delete(String name, ProviderProperties providerProperties) throws IOException
   {
     throw new IOException("GeoWave provider does not support deleting vectors");
+  }
+
+  private static Configuration getConf()
+  {
+    if (conf == null)
+    {
+      throw new IllegalArgumentException("The configuration was not initialized");
+    }
+    return conf;
   }
 }

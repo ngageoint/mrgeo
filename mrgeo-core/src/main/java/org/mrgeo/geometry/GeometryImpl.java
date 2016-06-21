@@ -35,7 +35,7 @@ Bounds bounds = null;
 
 public static Class[] getClasses()
 {
-  return new Class[]{GeometryImpl.class, HashMap.class, Bounds.class};
+  return new Class[]{GeometryImpl.class, Geometry.class, Geometry[].class, HashMap.class, Bounds.class};
 }
 
 @Override
