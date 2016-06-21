@@ -46,7 +46,7 @@ import java.util.List;
 public class HdfsMrsPyramidInputFormat extends InputFormat<TileIdWritable,RasterWritable>
 {
 private static Logger log = LoggerFactory.getLogger(HdfsMrsPyramidInputFormat.class);
-private String input;
+  private String input;
 
 /**
  * This constructor should only be used by the Hadoop framework on the data
@@ -60,7 +60,7 @@ public HdfsMrsPyramidInputFormat()
 
 public HdfsMrsPyramidInputFormat(final String input)
 {
-  this.input = input;
+    this.input = input;
 }
 
 @Override
@@ -77,7 +77,8 @@ public static String getZoomName(final HdfsMrsImageDataProvider dp,
   try
   {
     MrsPyramid pyramid = MrsPyramid.open(dp);
-    String zoomName = pyramid.getMetadata().getName(zoomLevel);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    String zoomName = metadata.getName(zoomLevel);
     if (zoomName != null)
     {
       return new Path(dp.getResourcePath(true), zoomName).toUri().toString();
@@ -85,7 +86,7 @@ public static String getZoomName(final HdfsMrsImageDataProvider dp,
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Error getting zoom name", e);
   }
   return null;
 }
@@ -106,17 +107,17 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   final int zoom = ifContext.getZoomLevel();
   final int tilesize = ifContext.getTileSize();
 
-  HdfsMrsImageDataProvider dp = new HdfsMrsImageDataProvider(context.getConfiguration(),
-      input, null);
+  HdfsMrsImageDataProvider dp = createHdfsMrsImageDataProvider(context.getConfiguration());
   Path inputWithZoom = new Path(dp.getResourcePath(true), "" + zoom);
 
-  org.mrgeo.hdfs.tile.FileSplit splitfile = new org.mrgeo.hdfs.tile.FileSplit();
-  splitfile.readSplits(inputWithZoom);
+  // This appears to never be used
+//  org.mrgeo.hdfs.tile.FileSplit splitfile = createFileSplit();
+//  splitfile.readSplits(inputWithZoom);
 
   MrsPyramidMetadataReader metadataReader = dp.getMetadataReader();
   MrsPyramidMetadata metadata = metadataReader.read();
 
-  org.mrgeo.hdfs.tile.FileSplit fsplit = new org.mrgeo.hdfs.tile.FileSplit();
+  org.mrgeo.hdfs.tile.FileSplit fsplit = createFileSplit();
   fsplit.readSplits(inputWithZoom);
 
   org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo[] splits =
@@ -191,8 +192,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   return result;
 }
 
-
-public static void setInputInfo(final Job job, final String inputWithZoom) throws IOException
+  public static void setInputInfo(final Job job, final String inputWithZoom) throws IOException
 {
 //    job.setInputFormatClass(HdfsMrsPyramidInputFormat.class);
 
@@ -204,23 +204,12 @@ public static void setInputInfo(final Job job, final String inputWithZoom) throw
 }
 
 
-
-private static void findInputs(final FileStatus status, final FileSystem fs,
-    final PathFilter inputFilter, List<FileStatus> result) throws IOException
-{
-  if (status.isDirectory()) {
-    for(FileStatus childStat: fs.listStatus(status.getPath(), inputFilter)) {
-      if (childStat.isDirectory())
-      {
-        findInputs(childStat, fs, inputFilter, result);
-      }
-      else
-      {
-        result.add(childStat);
-      }
-    }
-  } else {
-    result.add(status);
+  protected HdfsMrsImageDataProvider createHdfsMrsImageDataProvider(Configuration config) {
+    return new HdfsMrsImageDataProvider(config, input, null);
   }
-}
+
+  protected org.mrgeo.hdfs.tile.FileSplit createFileSplit() {
+    return new org.mrgeo.hdfs.tile.FileSplit();
+  }
+
 }

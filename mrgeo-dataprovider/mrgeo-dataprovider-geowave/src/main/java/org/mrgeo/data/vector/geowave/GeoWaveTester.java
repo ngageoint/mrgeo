@@ -30,14 +30,14 @@ public class GeoWaveTester
 {
   public static void main(String[] args)
   {
-    try
-    {
-      Filter filter = CQL.toFilter(args[0]);
-    }
-    catch (CQLException e)
-    {
-      e.printStackTrace();
-    }
+//    try
+//    {
+//      Filter filter = CQL.toFilter(args[0]);
+//    }
+//    catch (CQLException e)
+//    {
+//      e.printStackTrace();
+//    }
     if (args.length != 2 && args.length != 3)
     {
       System.err.println("Did not expect " + args.length + " arguments");
@@ -63,12 +63,12 @@ public class GeoWaveTester
         providerProperties = new ProviderProperties("", (List<String>)null);
       }
 
-//      String[] vectors = DataProviderFactory.listVectors(providerProperties);
-//      System.out.println("Vectors available: ");
-//      for (String v: vectors)
-//      {
-//        System.out.println("  " + v);
-//      }
+      String[] vectors = DataProviderFactory.listVectors(providerProperties);
+      System.out.println("Vectors available: ");
+      for (String v: vectors)
+      {
+        System.out.println("  " + v);
+      }
 //      VectorDataProvider vdp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ, providerProperties);
 //      VectorReader vr = vdp.getVectorReader();
 //      System.out.println("Vector Data:");
@@ -126,7 +126,7 @@ public class GeoWaveTester
       try
       {
         Job job = new Job(HadoopUtils.createConfiguration());
-//        HadoopUtils.setupLocalRunner(job.getConfiguration());
+        HadoopUtils.setupLocalRunner(job.getConfiguration());
         HadoopUtils.setJar(job, TestDriver.class);
         job.setMapperClass(TestMapper.class);
         job.setMapOutputKeyClass(Text.class);
