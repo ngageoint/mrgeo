@@ -25,7 +25,7 @@ public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, G
   private Geometry currValue;
   private Filter cqlFilter;
   private String strCqlFilter;
-  private static long featureCount = 0L;
+  private long featureCount = 0L;
 
   public GeoWaveVectorRecordReader(RecordReader delegateReader)
   {
@@ -87,11 +87,8 @@ public class GeoWaveVectorRecordReader extends RecordReader<FeatureIdWritable, G
       result = delegateReader.nextKeyValue();
 //      log.info("Done calling GeoWave delegate reader nextKeyValue() in while loop");
     }
-    if (!result)
-    {
-      currKey = null;
-      currValue = null;
-    }
+    currKey = null;
+    currValue = null;
     return result;
   }
 
