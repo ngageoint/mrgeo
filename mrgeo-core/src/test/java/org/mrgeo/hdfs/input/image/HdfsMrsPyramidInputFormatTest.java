@@ -48,7 +48,7 @@ public class HdfsMrsPyramidInputFormatTest {
         MrsPyramidMetadata pyramidMetadata = new MrsPyramidMetadata();
         MrsPyramidMetadata.ImageMetadata[] imageData = new MrsPyramidMetadata.ImageMetadata[zoomLevel + 1];
         imageData[zoomLevel] = new MrsPyramidMetadata.ImageMetadata();
-        imageData[zoomLevel].setImage(imageString);
+        imageData[zoomLevel].setImage(imageString + zoomLevel);
         pyramidMetadata.setImageMetadata(imageData);
         Path resourcePath = new Path(resourcePathString);
         mockImageDataProvider = new HdfsMrsImageDataProviderBuilder()
@@ -79,10 +79,9 @@ public class HdfsMrsPyramidInputFormatTest {
     @Category(UnitTest.class)
     public void testGetZoomName() throws Exception {
         String returnPath = HdfsMrsPyramidInputFormat.getZoomName(mockImageDataProvider, zoomLevel);
-
         Assert.assertTrue(returnPath.contains(resourcePathString));
         Assert.assertTrue(returnPath.contains(imageString));
-
+        Assert.assertTrue(returnPath.endsWith(String.valueOf(zoomLevel)));
     }
 
     @Test
@@ -92,7 +91,6 @@ public class HdfsMrsPyramidInputFormatTest {
         List<InputSplit> result = subject.getSplits(mockContext);
         Assert.assertEquals(2, result.size());
         verifySplitsAreEqual(result);
-
     }
 
     @Test
@@ -134,11 +132,11 @@ public class HdfsMrsPyramidInputFormatTest {
         doReturn(mockFileSplit).when(subject).createFileSplit();
     }
 
-    private TaskAttemptContext createDefaultTaskAttemptContext() {
+    private TaskAttemptContext createDefaultTaskAttemptContext() throws Exception {
         return createDefaultTaskAttemptContext(null);
     }
 
-    private TaskAttemptContext createDefaultTaskAttemptContext(Bounds bounds) {
+    private TaskAttemptContext createDefaultTaskAttemptContext(Bounds bounds) throws Exception {
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
                 .zoomLevel(2)
                 .tileSize(512);

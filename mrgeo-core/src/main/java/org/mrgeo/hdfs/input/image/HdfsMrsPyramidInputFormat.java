@@ -204,26 +204,6 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
 }
 
 
-
-private static void findInputs(final FileStatus status, final FileSystem fs,
-    final PathFilter inputFilter, List<FileStatus> result) throws IOException
-{
-  if (status.isDirectory()) {
-    for(FileStatus childStat: fs.listStatus(status.getPath(), inputFilter)) {
-      if (childStat.isDirectory())
-      {
-        findInputs(childStat, fs, inputFilter, result);
-      }
-      else
-      {
-        result.add(childStat);
-      }
-    }
-  } else {
-    result.add(status);
-  }
-}
-
   protected HdfsMrsImageDataProvider createHdfsMrsImageDataProvider(Configuration config) {
     return new HdfsMrsImageDataProvider(config, input, null);
   }
