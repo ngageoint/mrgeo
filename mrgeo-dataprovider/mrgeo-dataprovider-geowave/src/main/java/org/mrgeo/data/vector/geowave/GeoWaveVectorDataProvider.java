@@ -83,7 +83,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
 
   private static class ParseResults
   {
-    public String namespace;
+    public String storeName;
     public String name;
     public Map<String, String> settings = new HashMap<String, String>();
   }
@@ -139,33 +139,33 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
 
   public AdapterStore getAdapterStore() throws IOException
   {
-    String namespace = getNamespace();
-    initDataSource(conf, namespace);
-    DataSourceEntry entry = getDataSourceEntry(namespace);
+    String storeName = getStoreName();
+    initDataSource(conf, storeName);
+    DataSourceEntry entry = getDataSourceEntry(storeName);
     return entry.adapterStore;
   }
 
   public DataStore getDataStore() throws IOException
   {
-    String namespace = getNamespace();
-    initDataSource(conf, namespace);
-    DataSourceEntry entry = getDataSourceEntry(namespace);
+    String storeName = getStoreName();
+    initDataSource(conf, storeName);
+    DataSourceEntry entry = getDataSourceEntry(storeName);
     return entry.dataStore;
   }
 
   public DataStatisticsStore getStatisticsStore() throws IOException
   {
-    String namespace = getNamespace();
-    initDataSource(conf, namespace);
-    DataSourceEntry entry = getDataSourceEntry(namespace);
+    String storeName = getStoreName();
+    initDataSource(conf, storeName);
+    DataSourceEntry entry = getDataSourceEntry(storeName);
     return entry.statisticsStore;
   }
 
   public DataStorePluginOptions getDataStorePluginOptions() throws IOException
   {
-    String namespace = getNamespace();
-    initDataSource(conf, namespace);
-    DataSourceEntry entry = getDataSourceEntry(namespace);
+    String storeName = getStoreName();
+    initDataSource(conf, storeName);
+    DataSourceEntry entry = getDataSourceEntry(storeName);
     return entry.inputStoreOptions;
   }
 
@@ -175,10 +175,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     {
       return primaryIndex;
     }
-    String namespace = getNamespace();
+    String storeName = getStoreName();
     String resourceName = getGeoWaveResourceName();
-    initDataSource(conf, namespace);
-    DataSourceEntry entry = getDataSourceEntry(namespace);
+    initDataSource(conf, storeName);
+    DataSourceEntry entry = getDataSourceEntry(storeName);
     CloseableIterator<Index<?, ?>> indices = entry.indexStore.getIndices();
     try
     {
@@ -272,10 +272,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     return results.name;
   }
 
-  public String getNamespace() throws IOException
+  public String getStoreName() throws IOException
   {
     ParseResults results = parseResourceName(getResourceName());
-    return results.namespace;
+    return results.storeName;
   }
 
   public DataAdapter<?> getDataAdapter() throws IOException
@@ -412,7 +412,6 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
    * But the double quotes are not required otherwise.
    *
    * @param input
-   * @return
    */
   private static ParseResults parseResourceName(String input) throws IOException
   {
@@ -427,7 +426,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     {
       if (dotIndex >= 0)
       {
-        results.namespace = input.substring(0, dotIndex);
+        results.storeName = input.substring(0, dotIndex);
         results.name = input.substring(dotIndex + 1, semiColonIndex);
       }
       else
@@ -443,7 +442,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     {
       if (dotIndex >= 0)
       {
-        results.namespace = input.substring(0, dotIndex);
+        results.storeName = input.substring(0, dotIndex);
         results.name = input.substring(dotIndex + 1);
       }
       else
@@ -451,29 +450,29 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
         results.name = input;
       }
     }
-    // If there is no namespace explicitly in the resource name, then we
+    // If there is no datastore explicitly in the resource name, then we
     // check to make sure the GeoWave configuration for MrGeo only has one
-    // namespace specified and use it. If there are multiple namespaces
+    // datastore specified and use it. If there are multiple datastores
     // configured, then throw an exception.
-    if (results.namespace == null || results.namespace.isEmpty())
+    if (results.storeName == null || results.storeName.isEmpty())
     {
       GeoWaveConnectionInfo connectionInfo = getConnectionInfo();
-      String[] namespaces = connectionInfo.getNamespaces();
-      if (namespaces == null || namespaces.length == 0)
+      String[] dataStores = connectionInfo.getStoreNames();
+      if (dataStores == null || dataStores.length == 0)
       {
-        throw new IOException("Missing missing " + GeoWaveConnectionInfo.GEOWAVE_NAMESPACES_KEY +
+        throw new IOException("Missing missing " + GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY +
                               " in the MrGeo configuration");
       }
       else
       {
-        if (namespaces.length > 1)
+        if (dataStores.length > 1)
         {
           throw new IOException(
-                  "You must specify a GeoWave namespace for " + input +
-                  " because multiple GeoWave namespaces are configured in MrGeo (e.g." +
-                  " MyNamespace." + input + ")");
+                  "You must specify a GeoWave data store for " + input +
+                  " because multiple GeoWave data stores are configured in MrGeo (e.g." +
+                  " mystore." + input + ")");
         }
-        results.namespace = namespaces[0];
+        results.storeName = dataStores[0];
       }
     }
     return results;
@@ -597,11 +596,11 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
   {
     ParseResults results = parseResourceName(getResourceName());
     init(results);
-    DataSourceEntry entry = getDataSourceEntry(results.namespace);
+    DataSourceEntry entry = getDataSourceEntry(results.storeName);
     Query query = new BasicQuery(new BasicQuery.Constraints());
     CQLQuery cqlQuery = new CQLQuery(query, filter,
                                      (FeatureDataAdapter)entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())));
-    return new GeoWaveVectorReader(results.namespace, entry.dataStore,
+    return new GeoWaveVectorReader(results.storeName, entry.dataStore,
                                    entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
                                    cqlQuery, getPrimaryIndex(), filter, providerProperties);
   }
@@ -626,7 +625,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     DistributableQuery query = null;
     init(results);
     query = getQuery();
-    DataSourceEntry entry = getDataSourceEntry(results.namespace);
+    DataSourceEntry entry = getDataSourceEntry(results.storeName);
     DataAdapter<?> adapter = getDataAdapter();
     if (entry.dataStore instanceof MapReduceDataStore)
     {
@@ -701,10 +700,10 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
   {
     initConnectionInfo();
     List<String> results = new ArrayList<String>();
-    for (String namespace: getConnectionInfo().getNamespaces())
+    for (String storeName: getConnectionInfo().getStoreNames())
     {
-      initDataSource(null, namespace);
-      DataSourceEntry entry = getDataSourceEntry(namespace);
+      initDataSource(null, storeName);
+      DataSourceEntry entry = getDataSourceEntry(storeName);
       CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
       try
       {
@@ -714,7 +713,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
           if (adapter != null)
           {
             ByteArrayId adapterId = adapter.getAdapterId();
-            if (checkAuthorizations(adapterId, namespace, providerProperties))
+            if (checkAuthorizations(adapterId, storeName, providerProperties))
             {
               results.add(adapterId.getString());
             }
@@ -741,8 +740,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     ParseResults results = parseResourceName(input);
     try
     {
-      initDataSource(null, results.namespace);
-      DataSourceEntry entry = getDataSourceEntry(results.namespace);
+      initDataSource(null, results.storeName);
+      DataSourceEntry entry = getDataSourceEntry(results.storeName);
       CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
       while (iter.hasNext()) {
         DataAdapter<?> da = iter.next();
@@ -754,7 +753,9 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
       {
         return false;
       }
-      return checkAuthorizations(adapterId, results.namespace, providerProperties);
+      return checkAuthorizations(adapterId, results.storeName, providerProperties);
+    }
+    catch(IOException ignored) {
     }
     catch(IllegalArgumentException e)
     {
@@ -835,7 +836,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     }
     initialized = true;
     // Extract the GeoWave adapter name and optional CQL string
-    DataSourceEntry entry = getDataSourceEntry(results.namespace);
+    DataSourceEntry entry = getDataSourceEntry(results.storeName);
     // Now perform initialization for this specific data provider (i.e. for
     // this resource).
     dataAdapter = entry.adapterStore.getAdapter(new ByteArrayId(results.name));
@@ -994,32 +995,29 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
   }
 
   @SuppressFBWarnings(value="PATH_TRAVERSAL_IN", justification = "It is ok to read the config file here")
-  private static void initDataSource(Configuration conf, String namespace) throws IOException
+  private static void initDataSource(Configuration conf, String storeName) throws IOException
   {
-    DataSourceEntry entry = dataSourceEntries.get(namespace);
+    DataSourceEntry entry = dataSourceEntries.get(storeName);
     if (entry == null)
     {
       entry = new DataSourceEntry();
-      // Get the geowave store name from the configuration
-      String storeName = null;
-      if (conf != null) {
-        storeName = conf.get(GeoWaveConnectionInfo.GEOWAVE_STORENAME_KEY);
-      }
-      if (storeName == null)
+      // Check to see if we are running client side or not. If the Hadoop config
+      // contains the storenames property, then we should load geowave resources
+      // based on settings in the Hadoop config. Otherwise, we should load the
+      // geowave resources based on settings in the MrGeo config (on client side).
+      if (conf == null || conf.get(GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY) == null)
       {
         // Since the geowave store name is not in the configuration, then this is being
         // called from the client side.
         GeoWaveConnectionInfo connInfo = getConnectionInfo();
-        String inputStore = connInfo.getStoreName();
-        if (inputStore == null)
+        String[] storeNamesForMrGeo = connInfo.getStoreNames();
+        if (storeNamesForMrGeo == null)
         {
           throw new IOException("To use GeoWave, you must set " +
-                                GeoWaveConnectionInfo.GEOWAVE_STORENAME_KEY +
+                                GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY +
                                 " in the MrGeo config file");
         }
-        // TODO: The StoreLoader should only be used on the client side. The "entry" should
-        // be constructed from the Configuration on the remote side
-        StoreLoader inputStoreLoader = new StoreLoader(inputStore);
+        StoreLoader inputStoreLoader = new StoreLoader(storeName);
 
         if (!inputStoreLoader.loadFromConfig(new File(MrGeoProperties.findMrGeoConf())))
         {
@@ -1028,8 +1026,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
           throw new IOException(msg);
         }
         DataStorePluginOptions inputStoreOptions = inputStoreLoader.getDataStorePlugin();
-        inputStoreOptions.getFactoryOptions().setGeowaveNamespace(namespace);
-        dataSourceEntries.put(namespace, entry);
+//        inputStoreOptions.getFactoryOptions().setGeowaveNamespace(namespace);
+        dataSourceEntries.put(storeName, entry);
         entry.inputStoreOptions = inputStoreOptions;
         entry.indexStore = inputStoreOptions.createIndexStore();
 //        entry.secondaryIndexStore = inputStoreOptions.createSecondaryIndexStore();
