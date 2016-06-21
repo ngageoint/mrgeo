@@ -22,7 +22,7 @@ The interface is inspired by the python interface in Spark (PySpark)
 https://spark.apache.org/docs/latest/api/python/index.html
 
 """
-
+import atexit
 import fnmatch
 import os
 import sys
@@ -38,6 +38,7 @@ if sys.version >= '3':
     xrange = range
 
 
+_forked_proc = None
 _isremote = False
 
 
@@ -47,13 +48,6 @@ def can_convert_list(self, obj):
 
 
 ListConverter.can_convert = can_convert_list
-
-
-def read_int(stream):
-    length = stream.read(4)
-    if not length:
-        raise EOFError
-    return struct.unpack("!i", length)[0]
 
 
 def find_script():
@@ -84,95 +78,121 @@ def is_remote():
     return _isremote
 
 
+def terminate():
+    global _forked_proc
+    if _forked_proc is not None:
+        pid = _forked_proc.pid
+        os.killpg(os.getpgid(pid), signal.SIGTERM)
+        # _forked_proc.kill()
+        _forked_proc = None
+
+
 def launch_gateway(host=None, port=None):
     global _isremote
+    global _forked_proc
     requesthost = socket.gethostname()
     requestport = 0
 
-    if "MRGEO_GATEWAY_PORT" in os.environ:
-        gateway_port = int(os.environ["MRGEO_GATEWAY_PORT"])
+    # Launch the Py4j gateway using the MrGeo command so that we pick up the proper classpath
+
+    fork = True
+
+    if host is not None and port is not None:
+        requesthost = host
+        requestport = port
+        fork = False
     else:
-        # Launch the Py4j gateway using the MrGeo command so that we pick up the proper classpath
-
-        fork = True
-
-        if host is not None and port is not None:
-            requesthost = host
-            requestport = port
+        if "MRGEO_HOST" in os.environ:
+            requesthost = os.environ["MRGEO_HOST"]
             fork = False
-        else:
-            if "MRGEO_HOST" in os.environ:
-                requesthost = os.environ["MRGEO_HOST"]
-                fork = False
 
-            if "MRGEO_PORT" in os.environ:
-                requestport = int(os.environ["MRGEO_PORT"])
-                fork = False
+        if "MRGEO_PORT" in os.environ:
+            requestport = int(os.environ["MRGEO_PORT"])
+            fork = False
 
+    if port is not None and requestport == 0:
+        requestport = port
+
+    # If we didn't get a request port, get one.  We open a socket to make sure we get an unused
+    # port, without guessing,
+    if requestport == 0:
+        tmp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tmp_socket.settimeout(0.01)
+        tmp_socket.bind((requesthost, 0))
+        # tmp_socket.listen(1)
+
+        name, requestport = tmp_socket.getsockname()
+        tmp_socket.close()
+
+    if fork:
         # Start a socket that will be used by PythonGatewayServer to communicate its port to us
-        callback_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        callback_socket.bind(('127.0.0.1', 0))
 
-        callback_socket.listen(1)
-        callback_host, callback_port = callback_socket.getsockname()
+        script = find_script()
 
-        gateway_port = None
+        command = [script, "python", "-v", "-p", str(requestport)]
 
-        if fork:
-            script = find_script()
+        environ = os.environ
+        # Add some more memory
+        environ['HADOOP_CLIENT_OPTS'] = '-Xmx12G ' + environ.get('HADOOP_CLIENT_OPTS', '')
 
-            command = [script, "python", "-v", "-h", callback_host, "-p", str(callback_port)]
+        # Allow remote debugging
+        # environ['HADOOP_CLIENT_OPTS'] = '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 ' + environ.get('HADOOP_CLIENT_OPTS', '')
 
-            environ = os.environ
-            # Add some more memory
-            environ['HADOOP_CLIENT_OPTS'] = '-Xmx12G ' + environ.get('HADOOP_CLIENT_OPTS', '')
+        # Launch the Java gateway.
+        # We open a pipe to stdin so that the Java gateway can die when the pipe is broken
+        # Don't send ctrl-c / SIGINT to the Java gateway:
+        def preexec_func():
+            os.setsid()
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-            # Allow remote debugging
-            # environ['HADOOP_CLIENT_OPTS'] = '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 ' + environ.get('HADOOP_CLIENT_OPTS', '')
+        _forked_proc = Popen(command, stdin=PIPE, stdout=PIPE, preexec_fn=preexec_func, env=environ, bufsize=1, universal_newlines=True)
 
-            # Launch the Java gateway.
-            # We open a pipe to stdin so that the Java gateway can die when the pipe is broken
-            # Don't send ctrl-c / SIGINT to the Java gateway:
-            def preexec_func():
-                signal.signal(signal.SIGINT, signal.SIG_IGN)
+        while True:
+            out = _forked_proc.stdout.read(1)
 
-            proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=environ)
+            # print("[" + out + "] " + str(_forked_proc.poll()))
+            if out != '':
+                break
 
-            # We use select() here in order to avoid blocking indefinitely if the subprocess dies
-            # before connecting
-            while gateway_port is None and proc.poll() is None:
-                timeout = 1  # (seconds)
-                readable, _, _ = select.select([callback_socket], [], [], timeout)
-                if callback_socket in readable:
-                    gateway_connection = callback_socket.accept()[0]
-                    # Determine which ephemeral port the server started on:
-                    gateway_port = read_int(gateway_connection.makefile(mode="rb"))
+            if _forked_proc.poll() is not None:
+                raise Exception("Java gateway process exited before sending the driver its port number: returned: " +
+                                str(_forked_proc.poll()))
 
-                    gateway_connection.close()
-                    callback_socket.close()
-        else:
-            connection_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # time.sleep(5)
+        # We use select() here in order to avoid blocking indefinitely if the subprocess dies
+        # before connecting
+        # while proc.poll() is None:
+        #     pass
 
-            connection_socket.connect((requesthost, requestport))
+        _forked_proc.stdout = sys.stdout
 
-            connection_socket.send(callback_host + "\n")
-            connection_socket.send(str(callback_port) + "\n")
+        atexit.register(terminate)
 
-            connection_socket.close()
 
-            timeout = 60  # (seconds)
-            readable, _, _ = select.select([callback_socket], [], [], timeout)
-            if callback_socket in readable:
-                gateway_connection = callback_socket.accept()[0]
-                # Determine which ephemeral port the server started on:
-                gateway_port = read_int(gateway_connection.makefile(mode="rb"))
-                gateway_connection.close()
-                callback_socket.close()
+    request_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    request_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    request_socket.connect((requesthost, requestport))
 
-        _isremote = not fork
+    timeout = 30  # (seconds)
+    readable, writable, error = select.select([request_socket], [], [], timeout)
 
-        if gateway_port is None:
-                    raise Exception("Java gateway process exited before sending the driver its port number")
+    # read the communication port from the server
+    if request_socket in readable:
+
+        data = ""
+        while len(data) < 4:
+            # keep it to 4 bytes (an int)
+            data += request_socket.recv(4)
+
+        gateway_port = struct.unpack("!i", data)[0]
+        request_socket.close()
+    else:
+        raise Exception("Port is not readable")
+
+    _isremote = not fork
+
+    if gateway_port is None:
+                raise Exception("Java gateway process exited before sending the driver its port number")
 
     print("Talking with MrGeo on port " + str(gateway_port))
 

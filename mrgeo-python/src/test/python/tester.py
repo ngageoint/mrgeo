@@ -8,7 +8,8 @@ from pymrgeo.rastermapop import RasterMapOp
 
 if __name__ == "__main__":
 
-    mrgeo = MrGeo()
+    # mrgeo = MrGeo()  # forked mrgeo
+    mrgeo = MrGeo(host="localhost", port=12345)  # already running, remote mrgeo
 
     # sys.exit(1)
 

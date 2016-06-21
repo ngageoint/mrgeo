@@ -7,7 +7,7 @@ from py4j.java_gateway import java_import
 
 import constants
 import mapopgenerator
-from java_gateway import launch_gateway, set_field
+import java_gateway
 from rastermapop import RasterMapOp
 from vectormapop import VectorMapOp
 
@@ -45,7 +45,7 @@ class MrGeo(object):
         """
         with self.lock:
             if not self.gateway:
-                self.gateway, self.gateway_client = launch_gateway(host, port)
+                self.gateway, self.gateway_client = java_gateway.launch_gateway(host, port)
                 self.jvm = self.gateway.jvm
 
     def _create_job(self):
@@ -58,7 +58,7 @@ class MrGeo(object):
         appname = "PyMrGeo"
 
         self.job = jvm.JobArguments()
-        set_field(self.job, "name", appname)
+        java_gateway.set_field(self.job, "name", appname)
 
         # Yarn in the default
         self.useyarn()
@@ -89,7 +89,7 @@ class MrGeo(object):
         if job.isYarn():
             job.loadYarnSettings()
 
-        set_field(job, "jars",
+        java_gateway.set_field(job, "jars",
                   jvm.StringUtils.concatUnique(
                       jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
                       jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
@@ -127,6 +127,7 @@ class MrGeo(object):
             self.gateway.shutdown()
             self.gateway = None
             self.gateway_client = None
+        java_gateway.terminate()
 
     def list_images(self):
         jvm = self.gateway.jvm
