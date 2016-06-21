@@ -137,6 +137,7 @@
     <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
     <!-- findbugs -->
     <findbugs.basedir>${project.basedir}</findbugs.basedir>
+    <findbugs.skip>false</findbugs.skip>
   </properties>
   <repositories>
     <repository>
@@ -695,6 +696,7 @@
           <artifactId>findbugs-maven-plugin</artifactId>
           <version>${findbugs-maven.version}</version>
           <configuration>
+            <skip>${findbugs.skip}</skip>
             <effort>Max</effort>
             <threshold>Low</threshold>
             <failOnError>true</failOnError>

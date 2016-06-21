@@ -1,11 +1,13 @@
 package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.SequenceFile;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.image.ImageInputFormatContext;
-import org.mrgeo.utils.tms.Bounds;
 
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,17 +16,27 @@ import static org.mockito.Mockito.when;
  */
 public class ConfigurationBuilder {
     // Key names from ImageInputFormatContext
-    private static final String className = ImageInputFormatContext.class.getSimpleName();
-    private static final String ZOOM_LEVEL = className + ".zoomLevel";
-    private static final String TILE_SIZE = className + ".tileSize";
-    private static final String INPUT = className + ".input";
-    private static final String BOUNDS = className + ".bounds";
-    private static final String PROVIDER_PROPERTY_KEY = className + "provProps";
+    private static final String imageInputFormatContextClassName = ImageInputFormatContext.class.getSimpleName();
+    private static final String ZOOM_LEVEL = imageInputFormatContextClassName + ".zoomLevel";
+    private static final String TILE_SIZE = imageInputFormatContextClassName + ".tileSize";
+    private static final String INPUT = imageInputFormatContextClassName + ".input";
+    private static final String BOUNDS = imageInputFormatContextClassName + ".bounds";
+    private static final String PROVIDER_PROPERTY_KEY = imageInputFormatContextClassName + "provProps";
+
+    // Key names from FileOutputFormat
+    private static final String FILE_OUTPT_FORMAT_COMPRESS = "mapreduce.output.fileoutputformat.compress";
+    private static final String FILE_OUTPUT_COMPRESSION_TYPE = "mapreduce.output.fileoutputformat.compress.type";
+    private static final String FILE_OUTPUT_COMPRESSION_CODEC = "mapreduce.output.fileoutputformat.compress.codec";
+    private static final String FILE_OUTPUT_PATH = "mapreduce.output.fileoutputformat.outputdir";
 
     private final Configuration configuration;
     private int zoomLevel;
     private int tileSize;
     private String boundsString;
+    private boolean compressOutput = false;
+    private String outputCompressionType = null;
+    private String outputCompressionCodec = null;
+    private String outputFilePath = null;
 
     public ConfigurationBuilder() {
         this.configuration = mock(Configuration.class);
@@ -48,10 +60,46 @@ public class ConfigurationBuilder {
         return this;
     }
 
+    public ConfigurationBuilder compressOutput(boolean compressOutput) {
+        this.compressOutput = compressOutput;
+
+        return this;
+    }
+
+    public ConfigurationBuilder outputCompressionType(String outputCompressionType) {
+        this.outputCompressionType = outputCompressionType;
+
+        return this;
+    }
+
+    public ConfigurationBuilder ouputCompressionCodec(String outputCompressionCodec) {
+        this.outputCompressionCodec = outputCompressionCodec;
+
+        return this;
+    }
+
+    public ConfigurationBuilder outputFilePath(String outputFilePath) {
+        this.outputFilePath = outputFilePath;
+
+        return this;
+    }
+
     public Configuration build() {
         when(configuration.getInt(ZOOM_LEVEL, 1)).thenReturn(zoomLevel);
         when(configuration.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT)).thenReturn(tileSize);
         when(configuration.get(BOUNDS)).thenReturn(boundsString);
+        when(configuration.getBoolean(FILE_OUTPT_FORMAT_COMPRESS, false)).thenReturn(compressOutput);
+        when(configuration.get(FILE_OUTPUT_COMPRESSION_TYPE, SequenceFile.CompressionType.RECORD.toString())).thenReturn(outputCompressionType);
+        when(configuration.get(FILE_OUTPUT_COMPRESSION_CODEC)).thenReturn(outputCompressionCodec);
+        when(configuration.get(FILE_OUTPUT_PATH)).thenReturn(outputFilePath);
+
+//        when(configuration.getClassByName(anyString())).thenAnswer(new Answer<Class>() {
+//
+//            @Override
+//            public Class answer(InvocationOnMock invocationOnMock) throws Throwable {
+//                return Class.forName(invocationOnMock.getArguments()[0].toString());
+//            }
+//        });
 
         return configuration;
     }
