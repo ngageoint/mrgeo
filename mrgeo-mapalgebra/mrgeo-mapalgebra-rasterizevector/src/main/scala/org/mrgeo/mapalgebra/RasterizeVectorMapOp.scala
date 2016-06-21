@@ -25,7 +25,7 @@ import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.geometry.Geometry
+import org.mrgeo.geometry.{Geometry, GeometryFactory}
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
@@ -70,6 +70,10 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     this()
 
     initialize(node, variables)
+  }
+
+  override def registerClasses(): Array[Class[_]] = {
+    GeometryFactory.getClasses
   }
 
   override def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)] =

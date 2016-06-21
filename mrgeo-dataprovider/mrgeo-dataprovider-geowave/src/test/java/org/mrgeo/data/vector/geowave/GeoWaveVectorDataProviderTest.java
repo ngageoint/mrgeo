@@ -192,7 +192,7 @@ public class GeoWaveVectorDataProviderTest
     String strSettings = "spatial=\"POLYGON((10 20, 10 30, 20 30, 20 20, 10 20))\"";
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", "input", (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", "input", (ProviderProperties)null);
     provider.assignSettings("input", settings);
     Geometry spatial = provider.getSpatialConstraint();
     Assert.assertNull(provider.getCqlFilter());
@@ -223,7 +223,7 @@ public class GeoWaveVectorDataProviderTest
     String strSettings = "spatial=\"POLYGON((10 20, 10 30, 20 30, 20 20))\"";
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", "input", (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", "input", (ProviderProperties)null);
     try
     {
       provider.assignSettings("input", settings);
@@ -243,7 +243,7 @@ public class GeoWaveVectorDataProviderTest
     String strSettings = "startTime=2013-05-05T00:00:00.000+08:00;endTime=2013-05-06T00:00:00.000+08";
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", "input", (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", "input", (ProviderProperties)null);
     provider.assignSettings("input", settings);
 
     // Make sure the start time was correctly parsed and gives back the correct value.
@@ -273,7 +273,7 @@ public class GeoWaveVectorDataProviderTest
     String strSettings = "startTime=2013-05-05;endTime=2013-05-06";
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", "input", (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", "input", (ProviderProperties)null);
     provider.assignSettings("input", settings);
 
     // Make sure the start time was correctly parsed and gives back the correct value.
@@ -301,7 +301,7 @@ public class GeoWaveVectorDataProviderTest
     String strSettings = "startTime=2013-05-05BAD00:00:00.000+08:00";
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", "input", (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", "input", (ProviderProperties)null);
     try
     {
       provider.assignSettings("input", settings);
@@ -321,7 +321,7 @@ public class GeoWaveVectorDataProviderTest
     String strSettings = "startTime=2013-05-05T00:00:00.000+08:00";
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", "input", (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", "input", (ProviderProperties)null);
     try
     {
       provider.assignSettings("input", settings);
@@ -342,7 +342,7 @@ public class GeoWaveVectorDataProviderTest
     String strSettings = "endTime=2013-05-05T00:00:00.000+08:00";
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", "input", (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", "input", (ProviderProperties)null);
     try
     {
       provider.assignSettings("input", settings);
@@ -363,7 +363,7 @@ public class GeoWaveVectorDataProviderTest
     String strSettings = "endTime=2013-05-05BAD00:00:00.000+08:00";
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", "input", (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", "input", (ProviderProperties)null);
     try
     {
       provider.assignSettings("input", settings);
@@ -384,7 +384,7 @@ public class GeoWaveVectorDataProviderTest
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
     String dataSource = "input";
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", dataSource, (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", dataSource, (ProviderProperties)null);
     try
     {
       provider.assignSettings("input", settings);
@@ -407,7 +407,7 @@ public class GeoWaveVectorDataProviderTest
     Map<String, String> settings = new TreeMap<String, String>();
     GeoWaveVectorDataProvider.parseDataSourceSettings(strSettings, settings);
     String dataSource = "input";
-    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider("geowave", dataSource, (ProviderProperties)null);
+    GeoWaveVectorDataProvider provider = new GeoWaveVectorDataProvider(null, "geowave", dataSource, (ProviderProperties)null);
     provider.assignSettings("input", settings);
     String cqlFilter = provider.getCqlFilter();
     Assert.assertNotNull(cqlFilter);
