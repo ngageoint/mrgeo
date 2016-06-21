@@ -71,8 +71,9 @@ class MrGeoTests(TestCase):
         if self.GENERATE_BASELINE_DATA:
             self.savevector(vector, str(testname))
         else:
-            jvm = self.gateway.jvm
+            jvm = self.mrgeo._get_jvm()
             # test = raster.mapop.toDataset(False)
+            java_import(jvm, "org.mrgeo.hdfs.vector.DelimitedVectorReader")
 
             testvector = str(self.outputhdfs + testname + ".tsv")
             vector.ssave(testvector)
@@ -117,7 +118,7 @@ class MrGeoTests(TestCase):
 
     @classmethod
     def copy(cls, srcfile, srcpath=None, dstpath=None, dstfile=None):
-        jvm = cls.gateway.jvm
+        jvm = cls.mrgeo._get_jvm()
         java_import(jvm, "org.mrgeo.hdfs.utils.HadoopFileUtils")
         java_import(jvm, "org.apache.hadoop.fs.Path")
 
@@ -173,17 +174,10 @@ class MrGeoTests(TestCase):
         # print(cls.classname + " setup")
 
         cls.mrgeo = MrGeo()
-        cls.gateway = cls.mrgeo.gateway
 
-
-        jvm = cls.gateway.jvm
-        java_import(jvm, "org.mrgeo.core.MrGeoConstants")
-        java_import(jvm, "org.mrgeo.core.MrGeoProperties")
-        java_import(jvm, "org.mrgeo.hdfs.utils.HadoopFileUtils")
-        java_import(jvm, "org.mrgeo.utils.HadoopUtils")
+        jvm = cls.mrgeo._get_jvm()
         java_import(jvm, "org.apache.hadoop.conf.Configuration")
         java_import(jvm, "org.apache.hadoop.fs.Path")
-        java_import(jvm, "org.mrgeo.utils.logging.LoggingUtils")
         java_import(jvm, "org.mrgeo.data.DataProviderFactory")
         java_import(jvm, "org.mrgeo.data.vector.VectorDataProvider")
         java_import(jvm, "org.mrgeo.data.vector.VectorReader")
@@ -236,6 +230,11 @@ class MrGeoTests(TestCase):
 
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
 
+    @classmethod
+    def tearDownClass(cls):
+        #cls.mrgeo.stop()
+        pass
+
     def setUp(self):
         self.name = self._testMethodName
 
@@ -243,24 +242,31 @@ class MrGeoTests(TestCase):
         self.mrgeo.usedebug()
         self.mrgeo.start()
 
+        jvm = self.mrgeo._get_jvm()
+
+        jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_IMAGE, self.inputhdfs)
+        jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_VECTOR, self.inputhdfs)
+
+        jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
+
     def tearDown(self):
         self.mrgeo.stop()
         self._doublebox("Test Finished", self.classname + ":" + self.name)
 
     def debug_logging(self):
-        jvm = self.gateway.jvm
+        jvm = self.mrgeo._get_jvm()
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.DEBUG)
 
     def info_logging(self):
-        jvm = self.gateway.jvm
+        jvm = self.mrgeo._get_jvm()
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.INFO)
 
     def warn_logging(self):
-        jvm = self.gateway.jvm
+        jvm = self.mrgeo._get_jvm()
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.WARN)
 
     def error_logging(self):
-        jvm = self.gateway.jvm
+        jvm = self.mrgeo._get_jvm()
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
 
     @staticmethod

@@ -43,6 +43,7 @@ _mapop_code = {}
 _rastermapop_code = {}
 _vectormapop_code = {}
 
+_initialized = False
 
 def _exceptionhook(ex_cls, ex, tb):
     stack = traceback.extract_tb(tb)
@@ -89,6 +90,11 @@ def _exceptionhook(ex_cls, ex, tb):
 
 
 def generate(gateway, gateway_client):
+    global _initialized
+
+    if _initialized:
+        return
+
     jvm = gateway.jvm
     client = gateway_client
     java_import(jvm, "org.mrgeo.job.*")
@@ -161,6 +167,8 @@ def generate(gateway, gateway_client):
                         _mapop_code[method_name] = code
                         setattr(RasterMapOp, method_name, compiled.get(method_name))
                         setattr(VectorMapOp, method_name, compiled.get(method_name))
+
+    _initialized = True
 
 
 def _generate_operator_code(mapop, name, signatures, instance):
