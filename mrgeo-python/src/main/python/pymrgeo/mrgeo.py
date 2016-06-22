@@ -134,13 +134,20 @@ class MrGeo(object):
 
             conf.set("spark.executor.cores", str(job.cores()))
 
-            mem = job.memoryKb()
-            overhead = mem * 0.1
+            # in yarn-cluster, this is the total memory in the cluster, but here in yarn-client, it is
+            # the memory per executor.  Go figure!
+            mem = job.executorMemKb()
+
+            overhead = conf.getInt("spark.yarn.executor.memoryOverhead", 384)
+            if (mem * 0.1) > overhead:
+                overhead = mem * 0.1
+
             if overhead < 384:
                 overhead = 384
 
             mem -= (overhead * 2)  # overhead is 1x for driver and 1x for application master (am)
             conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem), "m"))
+
 
         jsc = jvm.JavaSparkContext(conf)
         jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())

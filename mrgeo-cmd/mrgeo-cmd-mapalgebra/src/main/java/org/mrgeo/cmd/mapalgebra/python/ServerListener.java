@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import py4j.GatewayConnection;
 import py4j.GatewayServerListener;
 
+import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.Semaphore;
 
 
@@ -30,22 +32,36 @@ log.warn("Connection error");
 @Override
 public void connectionStarted(GatewayConnection gatewayConnection)
 {
-  log.warn("Connection started");
+  Socket socket = gatewayConnection.getSocket();
 
+  log.warn("Started connection " +
+      socket.getInetAddress().getHostName() +"(" + socket.getInetAddress().getHostAddress() +
+      ")" + ":" + socket.getLocalPort());
 }
 
 @Override
 public void connectionStopped(GatewayConnection gatewayConnection)
 {
-  log.warn("Connection stopped");
+  Socket socket = gatewayConnection.getSocket();
+
+  log.warn("Stopped connection " +
+      socket.getInetAddress().getHostName() +"(" + socket.getInetAddress().getHostAddress() +
+      ")" + ":" + socket.getLocalPort());
 
 }
 
 @Override
 public void serverError(Exception e)
 {
-  log.warn("Server error");
-
+  if (e instanceof SocketException && e.getLocalizedMessage().equals("Socket closed"))
+  {
+    log.warn("Socket closed, probably at the other end");
+  }
+  else
+  {
+    log.error("Server error");
+    e.printStackTrace();
+  }
 }
 
 @Override
