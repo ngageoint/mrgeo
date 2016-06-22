@@ -47,7 +47,6 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
     // this RecordWriter is copied from the MapFileOutputFormat, with the addition of
     // the write() method checking for TileIdWritable.  We needed to copy the code
     // because the RecordWriter is actually inline.  yuck!
-    Configuration conf = context.getConfiguration();
     CompressionCodec codec = null;
     SequenceFile.CompressionType compressionType = SequenceFile.CompressionType.NONE;
     if (getCompressOutput(context)) {
@@ -55,20 +54,31 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
       compressionType = SequenceFileOutputFormat.getOutputCompressionType(context);
 
       // find the right codec
-      Class<?> codecClass = getOutputCompressorClass(context,
-          DefaultCodec.class);
-      codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+      codec = getCompressionCodec(context);
     }
 
     Path file = getDefaultWorkFile(context, "");
 
-    final MapFile.Writer out =  new MapFile.Writer(conf, file,
+    final MapFile.Writer out = createMapFileWriter(context, codec, compressionType, file);
+
+    return new Writer(out);
+  }
+
+  protected MapFile.Writer createMapFileWriter(TaskAttemptContext context, CompressionCodec codec,
+                                             SequenceFile.CompressionType compressionType, Path file) throws IOException {
+    return new MapFile.Writer(context.getConfiguration(), file,
         MapFile.Writer.keyClass(context.getOutputKeyClass().asSubclass(WritableComparable.class)),
         MapFile.Writer.valueClass(context.getOutputValueClass().asSubclass(Writable.class)),
         MapFile.Writer.compression(compressionType, codec),
         MapFile.Writer.progressable(context));
+  }
 
-    return new Writer(out);
+  protected CompressionCodec getCompressionCodec(TaskAttemptContext context) {
+      CompressionCodec codec;
+      Class<?> codecClass = getOutputCompressorClass(context,
+          DefaultCodec.class);
+      codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, context.getConfiguration());
+      return codec;
   }
 
   private static class Writer extends RecordWriter<WritableComparable<?>, Writable>
