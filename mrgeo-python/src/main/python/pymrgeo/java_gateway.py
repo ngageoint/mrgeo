@@ -168,7 +168,6 @@ def launch_gateway(host=None, port=None):
 
         atexit.register(terminate)
 
-
     request_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     request_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     request_socket.connect((requesthost, requestport))
@@ -180,25 +179,25 @@ def launch_gateway(host=None, port=None):
     if request_socket in readable:
 
         data = ""
-        while len(data) < 4:
+        while len(data) < 8:
             # keep it to 4 bytes (an int)
-            data += request_socket.recv(4)
+            data += request_socket.recv(8)
 
-        gateway_port = struct.unpack("!i", data)[0]
+        java_python_port, python_java_port = struct.unpack("!ii", data)
         request_socket.close()
     else:
         raise Exception("Port is not readable")
 
     _isremote = not fork
 
-    if gateway_port is None:
+    if java_python_port is None:
                 raise Exception("Java gateway process exited before sending the driver its port number")
 
-    print("Talking with MrGeo on port " + str(gateway_port))
+    print("Talking with MrGeo on port " + str(java_python_port))
 
     # Connect to the gateway
-    gateway_client = GatewayClient(address=requesthost, port=gateway_port)
-    gateway = JavaGateway(gateway_client=gateway_client, auto_convert=True)
+    gateway_client = GatewayClient(address=requesthost, port=java_python_port)
+    gateway = JavaGateway(gateway_client=gateway_client, auto_convert=True, python_proxy_port=python_java_port)
 
     # Import the classes used by MrGeo
     java_import(gateway.jvm, "org.mrgeo.python.*")

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.NoSuchElementException;
@@ -128,12 +129,21 @@ private int remoteConnection(int listenPort)
 private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
 {
   // Start a GatewayServer on an ephemeral port, unless we have a port range
-  int port = 0;
+  int javaPythonPort = GatewayServer.DEFAULT_PORT;
+  int pythonJavaPort = GatewayServer.DEFAULT_PYTHON_PORT;
   if (portQueue != null)
   {
     try
     {
-      port = portQueue.remove();
+      javaPythonPort = portQueue.remove();
+    }
+    catch (NoSuchElementException e)
+    {
+      throw new IOException("PythonGatewayServer is out of available ports, failing)");
+    }
+    try
+    {
+      pythonJavaPort = portQueue.remove();
     }
     catch (NoSuchElementException e)
     {
@@ -141,18 +151,29 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
     }
   }
 
-  GatewayServer gateway = new GatewayServer(null, port);
+  //GatewayServer gateway = new GatewayServer(null, javaPythonPort);
+
+//  public GatewayServer(Object entryPoint, int port, int pythonPort,
+//  java.net.InetAddress address, InetAddress pythonAddress, int connectTimeout,
+//  int readTimeout, List<Class<? extends py4j.commands.Command>> customCommands) {
+  InetAddress javaPythonAddr = InetAddress.getByName("0.0.0.0");
+  InetAddress pythonJavaAddr = InetAddress.getByName("0.0.0.0");
+
+  int timeout = 30000;  // 30 seconds
+
+  GatewayServer gateway = new GatewayServer(null, javaPythonPort, pythonJavaPort,
+      javaPythonAddr, pythonJavaAddr, timeout, 0, null);
   gateway.start();
 
   int listeningPort = gateway.getListeningPort();
-  if (listeningPort == -1)
+  if (listeningPort == -1 || listeningPort != javaPythonPort)
   {
     throw new IOException("GatewayServer failed to bind");
   }
 
-  log.info("Starting PythonGatewayServer. Communicating on port " + listeningPort);
+  log.info("Starting PythonGatewayServer. Communicating (java->python) on port " + listeningPort);
 
-  sendGatewayPort(clientSocket, listeningPort);
+  sendGatewayPort(clientSocket, javaPythonPort, pythonJavaPort);
 
   return gateway;
 }
@@ -200,16 +221,19 @@ private void setupThreadedServer(final Socket clientSocket) throws IOException
 
 }
 
-private void sendGatewayPort(Socket clientSocket, int port) throws IOException
+private void sendGatewayPort(Socket clientSocket, int javaPythonPort, int pythonJavaPort) throws IOException
 {
   // Communicate the bound port back to the caller via the caller-specified callback port
-  log.info("Sending port number (" + port + ") to pymrgeo running at " + clientSocket.getInetAddress()
-      + ":" + clientSocket.getPort());
+  log.info("Sending java->python port (" + javaPythonPort + ") and python->java port (" + pythonJavaPort +
+      ") to pymrgeo running at " +
+      clientSocket.getInetAddress().getHostName() +"(" + clientSocket.getInetAddress().getHostAddress() +
+      ")" + ":" + clientSocket.getPort());
 
   try
   {
     DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
-    dos.writeInt(port);
+    dos.writeInt(javaPythonPort);
+    dos.writeInt(pythonJavaPort);
     dos.close();
   }
   catch (IOException e)

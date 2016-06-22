@@ -8,7 +8,6 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.DefaultCodec;
-import org.apache.hadoop.io.compress.DeflateCodec;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.junit.Before;
@@ -21,13 +20,7 @@ import org.mrgeo.hdfs.utils.ConfigurationBuilder;
 import org.mrgeo.hdfs.utils.TaskAttemptContextBuilder;
 import org.mrgeo.junit.UnitTest;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
-import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.*;
 
 /**

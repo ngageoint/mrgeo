@@ -64,7 +64,7 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
     return new Writer(out);
   }
 
-  MapFile.Writer createMapFileWriter(TaskAttemptContext context, CompressionCodec codec,
+  protected MapFile.Writer createMapFileWriter(TaskAttemptContext context, CompressionCodec codec,
                                              SequenceFile.CompressionType compressionType, Path file) throws IOException {
     return new MapFile.Writer(context.getConfiguration(), file,
         MapFile.Writer.keyClass(context.getOutputKeyClass().asSubclass(WritableComparable.class)),
@@ -73,7 +73,7 @@ public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
         MapFile.Writer.progressable(context));
   }
 
-  CompressionCodec getCompressionCodec(TaskAttemptContext context) {
+  protected CompressionCodec getCompressionCodec(TaskAttemptContext context) {
       CompressionCodec codec;
       Class<?> codecClass = getOutputCompressorClass(context,
           DefaultCodec.class);
