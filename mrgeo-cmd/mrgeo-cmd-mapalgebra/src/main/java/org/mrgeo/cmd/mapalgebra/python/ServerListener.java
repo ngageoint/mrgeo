@@ -6,6 +6,7 @@ import py4j.GatewayConnection;
 import py4j.GatewayServerListener;
 
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.Semaphore;
 
 
@@ -52,8 +53,15 @@ public void connectionStopped(GatewayConnection gatewayConnection)
 @Override
 public void serverError(Exception e)
 {
-  log.warn("Server error");
-  e.printStackTrace();
+  if (e instanceof SocketException && e.getLocalizedMessage().equals("Socket closed"))
+  {
+    log.warn("Socket closed, probably at the other end");
+  }
+  else
+  {
+    log.error("Server error");
+    e.printStackTrace();
+  }
 }
 
 @Override
