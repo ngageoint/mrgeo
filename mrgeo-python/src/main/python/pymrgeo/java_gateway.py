@@ -31,6 +31,8 @@ import signal
 import socket
 import struct
 from subprocess import Popen, PIPE
+import time
+
 from py4j.java_gateway import java_import, JavaGateway, GatewayClient, get_method
 from py4j.java_collections import ListConverter
 
@@ -145,18 +147,18 @@ def launch_gateway(host=None, port=None):
             os.setsid()
             signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-        _forked_proc = Popen(command, stdin=PIPE, stdout=PIPE, preexec_fn=preexec_func, env=environ, bufsize=1, universal_newlines=True)
+        _forked_proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=environ, bufsize=1, universal_newlines=True)
 
-        while True:
-            out = _forked_proc.stdout.read(1)
-
-            # print("[" + out + "] " + str(_forked_proc.poll()))
-            if out != '':
-                break
-
-            if _forked_proc.poll() is not None:
-                raise Exception("Java gateway process exited before sending the driver its port number: returned: " +
-                                str(_forked_proc.poll()))
+        # while True:
+        #     out = _forked_proc.stdout.read(1)
+        #
+        #     # print("[" + out + "] " + str(_forked_proc.poll()))
+        #     if out != '':
+        #         break
+        #
+        #     if _forked_proc.poll() is not None:
+        #         raise Exception("Java gateway process exited before sending the driver its port number: returned: " +
+        #                         str(_forked_proc.poll()))
 
         # time.sleep(5)
         # We use select() here in order to avoid blocking indefinitely if the subprocess dies
@@ -164,15 +166,23 @@ def launch_gateway(host=None, port=None):
         # while proc.poll() is None:
         #     pass
 
-        _forked_proc.stdout = sys.stdout
+        # _forked_proc.stdout = subprocess.STDOUT
 
         atexit.register(terminate)
 
+    timeout = 30  # (seconds)
     request_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     request_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    request_socket.connect((requesthost, requestport))
 
-    timeout = 30  # (seconds)
+    start = time.time()
+    connected = -1
+    while (time.time() - start) < timeout and connected != 0:
+        connected = request_socket.connect_ex((requesthost, requestport))
+        time.sleep(0.5)
+
+    if connected != 0:
+        raise Exception("Could not connect to the java gateway process")
+
     readable, writable, error = select.select([request_socket], [], [], timeout)
 
     # read the communication port from the server
