@@ -17,7 +17,7 @@
 package org.mrgeo.hdfs.tile;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.mrgeo.hdfs.partitioners.SplitGenerator;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
@@ -130,51 +130,48 @@ public class PartitionerSplit extends Splits
     splits = generator.getPartitions();
   }
 
-  @Override
-  public void readSplits(InputStream stream)
-  {
-    Scanner reader = new Scanner(stream);
-    int count = reader.nextInt();
-    splits = new PartitionerSplitInfo[count];
-
-    for (int i = 0; i < splits.length; i++)
-    {
-      splits[i] = new PartitionerSplitInfo(reader.nextLong(), reader.nextInt());
-    }
-
-    reader.close();
-  }
-
-  @Override
-  public void readSplits(Path parent) throws IOException
-  {
-    super.readSplits(new Path(parent, SPLIT_FILE));
-  }
-
-  @Override
-  public void writeSplits(OutputStream stream) throws SplitException
-  {
-    if (splits == null)
-    {
-      throw new SplitException("Splits not generated, call readSplits() or generateSplits() first");
-    }
-
-    PrintWriter writer = new PrintWriter(stream);
-    writer.println(splits.length);
-    for (SplitInfo split: splits)
-    {
-      writer.print(split.getTileId());
-      writer.print(SPACER);
-      writer.println(split.getPartition());
-    }
-    writer.close();
-  }
-
-  @Override
-  public void writeSplits(Path parent) throws IOException
-  {
-    super.writeSplits(new Path(parent, SPLIT_FILE));
-  }
+  // Looks like reading and writing Partitioner splits to and from a file was never used
+//  public void readSplits(InputStream stream)
+//  {
+//    Scanner reader = new Scanner(stream);
+//    int count = reader.nextInt();
+//    splits = new PartitionerSplitInfo[count];
+//
+//    for (int i = 0; i < splits.length; i++)
+//    {
+//      splits[i] = new PartitionerSplitInfo(reader.nextLong(), reader.nextInt());
+//    }
+//
+//    reader.close();
+//  }
+//
+//  public void readSplits(Path parent) throws IOException
+//  {
+//    readSplits(getInputStream(new Path(parent, SPLIT_FILE)));
+//  }
+//
+//  public void writeSplits(OutputStream stream) throws SplitException
+//  {
+//    if (splits == null)
+//    {
+//      throw new SplitException("Splits not generated, call readSplits() or generateSplits() first");
+//    }
+//
+//    PrintWriter writer = new PrintWriter(stream);
+//    writer.println(splits.length);
+//    for (SplitInfo split: splits)
+//    {
+//      writer.print(split.getTileId());
+//      writer.print(SPACER);
+//      writer.println(split.getPartition());
+//    }
+//    writer.close();
+//  }
+//
+//  public void writeSplits(Path parent) throws IOException
+//  {
+//    writeSplits(getOutputStream(new Path(parent, SPLIT_FILE)));
+//  }
 
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
@@ -187,6 +184,22 @@ public class PartitionerSplit extends Splits
       splits[i] = new PartitionerSplitInfo(in.readLong(), in.readInt());
     }
 
+  }
+
+  protected FileSystem getFileSystem(Path parent) throws IOException {
+    return HadoopFileUtils.getFileSystem(parent);
+  }
+
+  protected boolean fileExists(Path file) throws IOException {
+    return HadoopFileUtils.exists(file);
+  }
+
+  protected InputStream getInputStream(Path path) throws IOException {
+    return getFileSystem(path).open(path);
+  }
+
+  protected OutputStream getOutputStream(Path path) throws IOException {
+    return getFileSystem(path).create(path);
   }
 
 }
