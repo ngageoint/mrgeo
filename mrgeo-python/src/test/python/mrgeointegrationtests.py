@@ -28,6 +28,10 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.smallelevation = self.mrgeo.load_image("small-elevation")
         self.toblertiny = self.mrgeo.load_image("tobler-raw-tiny")
 
+    def test_bitwise_or(self):
+        result = self.allhundreds.convert("byte", "truncate") | 6
+        self.compareraster(result, self.name)
+
     def test_add(self):
         add = self.allones + self.allhundreds
         self.compareraster(add, self.name)

@@ -1,5 +1,7 @@
 package org.mrgeo.mapalgebra.binarymath
 
+import org.apache.spark.SparkContext
+import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
@@ -17,11 +19,11 @@ object BitwiseOrMapOp extends MapOpRegistrar {
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new BitwiseOrMapOp(node, variables)
-
-  var dumped = false
 }
 
 class BitwiseOrMapOp extends RawBinaryMathMapOp {
+
+  val EPSILON: Double = 1e-12
 
   private[binarymath] def this(raster: Option[RasterMapOp], paramB:Option[Any]) = {
     this()
@@ -45,14 +47,50 @@ class BitwiseOrMapOp extends RawBinaryMathMapOp {
     initialize(node, variables)
   }
 
+  override def execute(context: SparkContext): Boolean = {
+    varA match {
+      case Some(a) => {
+        val metadata = a.metadata().getOrElse(throw new ParserException("Uh oh - no metadata available"))
+        if (RasterUtils.isFloatingPoint(metadata.getTileType)) {
+          log.warn("Using a floating point raster like " + metadata.getPyramid + " is not recommended for bitwise operators")
+        }
+      }
+      case None => {}
+    }
+    constA match {
+      case Some(a) => {
+        val remainder = a % 1
+        if (remainder < -EPSILON || remainder > EPSILON) {
+          log.warn("Using floating point values in bitwise operators is not recommended")
+        }
+      }
+      case None => {}
+    }
+    varB match {
+      case Some(b) => {
+        val metadata = b.metadata().getOrElse(throw new ParserException("Uh oh - no metadata available"))
+        if (RasterUtils.isFloatingPoint(metadata.getTileType)) {
+          log.warn("Using a floating point raster like " + metadata.getPyramid + " is not recommended for bitwise operators")
+        }
+      }
+      case None => {}
+    }
+    constB match {
+      case Some(b) => {
+        val remainder = b % 1
+        if (remainder < -EPSILON || remainder > EPSILON) {
+          log.warn("Using floating point values in bitwise operators is not recommended")
+        }
+      }
+      case None => {}
+    }
+    return super.execute(context)
+  }
+
   override private[binarymath] def function(a: Double, b: Double): Double = {
     val aLong = a.toLong
     val bLong = b.toLong
     val result = aLong | bLong
-    if (!BitwiseOrMapOp.dumped) {
-      log.error("OR (" + aLong.toHexString + ", " + bLong.toHexString + ") is " + result.toHexString)
-      BitwiseOrMapOp.dumped = true
-    }
     result.toFloat
   }
 }
