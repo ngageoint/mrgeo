@@ -3409,5 +3409,3 @@
     <connection>scm:git:file://${project.basedir}</connection>
   </scm>
 </project>
-
-<!-- test line -->
