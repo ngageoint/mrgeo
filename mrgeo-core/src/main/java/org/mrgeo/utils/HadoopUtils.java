@@ -41,7 +41,7 @@ import java.util.*;
 /**
  *
  */
-//@SuppressFBWarnings(value = "PREDICTABLE_RANDOM", justification = "Just used for tmp filename generation")
+@SuppressFBWarnings(value = "PREDICTABLE_RANDOM", justification = "Just used for tmp filename generation")
 public class HadoopUtils
 {
   private static final Logger log = LoggerFactory.getLogger(HadoopUtils.class);
