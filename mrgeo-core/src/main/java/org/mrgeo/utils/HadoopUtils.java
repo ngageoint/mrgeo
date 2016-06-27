@@ -44,6 +44,8 @@ import java.util.*;
 @SuppressFBWarnings(value = "PREDICTABLE_RANDOM", justification = "Just used for tmp filename generation")
 public class HadoopUtils
 {
+  Intentional code error, for testing Jenkins
+
   private static final Logger log = LoggerFactory.getLogger(HadoopUtils.class);
   private static Random random = new Random(System.currentTimeMillis());
 
