@@ -176,131 +176,132 @@ public class PartitionerSplitTest
     }
   }
 
-  @Test
-  @Category(UnitTest.class)
-  public void writeSplits() throws IOException
-  {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
-
-    File splitfile = folder.newFile(testName.getMethodName());
-
-    FileOutputStream stream = new FileOutputStream(splitfile);
-    splits.writeSplits(stream);
-
-    stream.close();
-
-    FileInputStream in = new FileInputStream(splitfile);
-    Scanner reader = new Scanner(in);
-
-    Assert.assertEquals("Wrong number written", generated.length, reader.nextInt());
-
-    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
-
-    for (int i = 0; i < generated.length; i++)
-    {
-      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), reader.nextLong());
-      Assert.assertEquals("Partition entry not correct", i, reader.nextLong());
-    }
-
-    reader.close();
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void writeSplitsPath() throws IOException
-  {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
-
-    File splitfile = folder.newFolder(testName.getMethodName());
-
-    splits.writeSplits(new Path(splitfile.toURI()));
-
-    FileInputStream in = new FileInputStream(new File(splitfile, "partitions"));
-    Scanner reader = new Scanner(in);
-
-    Assert.assertEquals("Wrong number written", generated.length, reader.nextInt());
-
-    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
-
-    for (int i = 0; i < generated.length; i++)
-    {
-      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), reader.nextLong());
-      Assert.assertEquals("Partition entry not correct", i, reader.nextLong());
-    }
-
-    reader.close();
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void readSplits() throws IOException
-  {
-    File splitfile = folder.newFile(testName.getMethodName());
-
-    FileOutputStream stream = new FileOutputStream(splitfile);
-    PrintWriter writer = new PrintWriter(stream);
-
-    writer.println(generated.length);
-    for (int i = 0; i < generated.length; i++)
-    {
-      writer.print(generated[i]);
-      writer.print(" ");
-      writer.println(i);
-    }
-
-    writer.close();
-    stream.close();
-
-    FileInputStream in = new FileInputStream(splitfile);
-    Splits splits = new PartitionerSplit();
-    splits.readSplits(in);
-
-    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
-
-    Assert.assertEquals("Splits length not correct", generated.length, si.length);
-    for (int i = 0; i < generated.length; i++)
-    {
-      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), si[i].getTileId());
-    }
-
-    in.close();
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void readSplitsPath() throws IOException
-  {
-    File splitFolder = folder.newFolder(testName.getMethodName());
-    File splitfile = new File(splitFolder, "partitions");
-
-    FileOutputStream stream = new FileOutputStream(splitfile);
-    PrintWriter writer = new PrintWriter(stream);
-
-    writer.println(generated.length);
-    for (int i = 0; i < generated.length; i++)
-    {
-      writer.print(generated[i]);
-      writer.print(" ");
-      writer.println(i);
-    }
-
-    writer.close();
-    stream.close();
-
-    Splits splits = new PartitionerSplit();
-    splits.readSplits(new Path(splitFolder.toURI()));
-
-    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
-
-    Assert.assertEquals("Splits length not correct", generated.length, si.length);
-    for (int i = 0; i < generated.length; i++)
-    {
-      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), si[i].getTileId());
-    }
-
-  }
+  // Tests not needed since the methods were removed
+//  @Test
+//  @Category(UnitTest.class)
+//  public void writeSplits() throws IOException
+//  {
+//    Splits splits = new PartitionerSplit();
+//    splits.generateSplits(new TestGenerator());
+//
+//    File splitfile = folder.newFile(testName.getMethodName());
+//
+//    FileOutputStream stream = new FileOutputStream(splitfile);
+//    splits.writeSplits(stream);
+//
+//    stream.close();
+//
+//    FileInputStream in = new FileInputStream(splitfile);
+//    Scanner reader = new Scanner(in);
+//
+//    Assert.assertEquals("Wrong number written", generated.length, reader.nextInt());
+//
+//    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
+//
+//    for (int i = 0; i < generated.length; i++)
+//    {
+//      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), reader.nextLong());
+//      Assert.assertEquals("Partition entry not correct", i, reader.nextLong());
+//    }
+//
+//    reader.close();
+//  }
+//
+//  @Test
+//  @Category(UnitTest.class)
+//  public void writeSplitsPath() throws IOException
+//  {
+//    Splits splits = new PartitionerSplit();
+//    splits.generateSplits(new TestGenerator());
+//
+//    File splitfile = folder.newFolder(testName.getMethodName());
+//
+//    splits.writeSplits(new Path(splitfile.toURI()));
+//
+//    FileInputStream in = new FileInputStream(new File(splitfile, "partitions"));
+//    Scanner reader = new Scanner(in);
+//
+//    Assert.assertEquals("Wrong number written", generated.length, reader.nextInt());
+//
+//    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
+//
+//    for (int i = 0; i < generated.length; i++)
+//    {
+//      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), reader.nextLong());
+//      Assert.assertEquals("Partition entry not correct", i, reader.nextLong());
+//    }
+//
+//    reader.close();
+//  }
+//
+//  @Test
+//  @Category(UnitTest.class)
+//  public void readSplits() throws IOException
+//  {
+//    File splitfile = folder.newFile(testName.getMethodName());
+//
+//    FileOutputStream stream = new FileOutputStream(splitfile);
+//    PrintWriter writer = new PrintWriter(stream);
+//
+//    writer.println(generated.length);
+//    for (int i = 0; i < generated.length; i++)
+//    {
+//      writer.print(generated[i]);
+//      writer.print(" ");
+//      writer.println(i);
+//    }
+//
+//    writer.close();
+//    stream.close();
+//
+//    FileInputStream in = new FileInputStream(splitfile);
+//    Splits splits = new PartitionerSplit();
+//    splits.readSplits(in);
+//
+//    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
+//
+//    Assert.assertEquals("Splits length not correct", generated.length, si.length);
+//    for (int i = 0; i < generated.length; i++)
+//    {
+//      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), si[i].getTileId());
+//    }
+//
+//    in.close();
+//  }
+//
+//  @Test
+//  @Category(UnitTest.class)
+//  public void readSplitsPath() throws IOException
+//  {
+//    File splitFolder = folder.newFolder(testName.getMethodName());
+//    File splitfile = new File(splitFolder, "partitions");
+//
+//    FileOutputStream stream = new FileOutputStream(splitfile);
+//    PrintWriter writer = new PrintWriter(stream);
+//
+//    writer.println(generated.length);
+//    for (int i = 0; i < generated.length; i++)
+//    {
+//      writer.print(generated[i]);
+//      writer.print(" ");
+//      writer.println(i);
+//    }
+//
+//    writer.close();
+//    stream.close();
+//
+//    Splits splits = new PartitionerSplit();
+//    splits.readSplits(new Path(splitFolder.toURI()));
+//
+//    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
+//
+//    Assert.assertEquals("Splits length not correct", generated.length, si.length);
+//    for (int i = 0; i < generated.length; i++)
+//    {
+//      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), si[i].getTileId());
+//    }
+//
+//  }
 
   private long findSplit(Long[] splits, long value)
   {
