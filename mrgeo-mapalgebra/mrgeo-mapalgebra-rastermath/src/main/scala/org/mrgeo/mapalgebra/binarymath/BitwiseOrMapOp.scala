@@ -1,5 +1,7 @@
 package org.mrgeo.mapalgebra.binarymath
 
+import org.apache.spark.SparkContext
+import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
@@ -17,11 +19,9 @@ object BitwiseOrMapOp extends MapOpRegistrar {
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new BitwiseOrMapOp(node, variables)
-
-  var dumped = false
 }
 
-class BitwiseOrMapOp extends RawBinaryMathMapOp {
+class BitwiseOrMapOp extends BitwiseBinaryMathMapOp {
 
   private[binarymath] def this(raster: Option[RasterMapOp], paramB:Option[Any]) = {
     this()
@@ -49,10 +49,6 @@ class BitwiseOrMapOp extends RawBinaryMathMapOp {
     val aLong = a.toLong
     val bLong = b.toLong
     val result = aLong | bLong
-    if (!BitwiseOrMapOp.dumped) {
-      log.error("OR (" + aLong.toHexString + ", " + bLong.toHexString + ") is " + result.toHexString)
-      BitwiseOrMapOp.dumped = true
-    }
     result.toFloat
   }
 }

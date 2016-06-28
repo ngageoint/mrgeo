@@ -17,12 +17,14 @@
 package org.mrgeo.data.raster;
 
 import org.mrgeo.aggregators.Aggregator;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.FloatUtils;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
+import java.io.IOException;
 import java.nio.*;
 import java.util.Arrays;
 
@@ -64,7 +66,28 @@ public static ColorModel createColorModel(final Raster raster)
   return null;
 }
 
-/**
+public static boolean isFloatingPoint(int dataType)
+{
+  switch (dataType) {
+    case DataBuffer.TYPE_BYTE:
+    case DataBuffer.TYPE_SHORT:
+    case DataBuffer.TYPE_USHORT:
+    case DataBuffer.TYPE_INT:
+      return false;
+
+    case DataBuffer.TYPE_FLOAT:
+    case DataBuffer.TYPE_DOUBLE:
+      return true;
+  }
+  throw new IllegalArgumentException("Invalid raster data type: " + dataType);
+}
+
+public static boolean isFloatingPoint(MrsPyramid pyramid) throws IOException
+{
+  return isFloatingPoint(pyramid.getMetadata().getTileType());
+}
+
+  /**
  * Scan the list of sources for the one that uses the
  * largest data type and return it.
  */
