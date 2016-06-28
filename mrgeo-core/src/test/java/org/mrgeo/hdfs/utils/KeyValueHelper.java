@@ -86,30 +86,7 @@ public class KeyValueHelper {
      * @throws IOException
      */
     public Writable getClosest(WritableComparable key, Writable value) throws IOException {
-        logger.debug("getClosest called with key " + key);
-        Writable foundKey = null;
-        Writable foundValue = null;
-        int keyIndex = -1;
-        for (int i = 0; i < keys.length; i++) {
-            int result = ((WritableComparable)keys[i]).compareTo(key);
-            logger.debug("Result of comparing key " + keys[i] + " with key " + key + " = " + result);
-            if (result >= 0) {
-                foundKey = keys[i];
-                foundValue = values[i];
-                keyIndex = i;
-                break;
-            }
-        }
-        if (foundKey != null) {
-            copyData(foundValue, value);
-            // Update the index.
-            index = keyIndex;
-            logger.debug("Found key " + foundKey);
-            return foundKey;
-        }
-        else {
-            return null;
-        }
+        return getClosest(key, value, false);
     }
 
     private void copyData(Writable src, Writable tgt) throws IOException {
@@ -122,5 +99,50 @@ public class KeyValueHelper {
     }
 
 
+    public Writable getClosest(WritableComparable key, Writable value, boolean returnBefore) throws IOException {
+        logger.debug("getClosest called with key " + key);
+        Writable foundKey = null;
+        Writable foundValue = null;
+        int keyIndex = -1;
+        for (int i = 0; i < keys.length; i++) {
+            int result = ((WritableComparable)keys[i]).compareTo(key);
+            logger.debug("Result of comparing key " + keys[i] + " with key " + key + " = " + result);
+            if (result >= 0) {
+                if (returnBefore) {
+                    if (i > 0) {
+                        foundKey = keys[i - 1];
+                        foundValue = values[i - 1];
+                        keyIndex = i - 1;
+                        break;
+                    }
+                    else if (i == 0) {
+                        // First key is larger than the search key and we are supposed to return the key before the search
+                        // key, so the key is not found
+                        return null;
+                    }
+                }
+                foundKey = keys[i];
+                foundValue = values[i];
+                keyIndex = i;
+                break;
+            }
 
+        }
+        if (returnBefore && keys.length > 0) {
+            // If we didn't find a key but return before is true, the found key is the last key
+            foundKey = keys[keys.length - 1];
+            foundValue = values[keys.length - 1];
+            keyIndex = keys.length - 1;
+        }
+        if (foundKey != null) {
+            copyData(foundValue, value);
+            // Update the index.
+            index = keyIndex;
+            logger.debug("Found key " + foundKey);
+            return foundKey;
+        }
+        else {
+            return null;
+        }
+    }
 }

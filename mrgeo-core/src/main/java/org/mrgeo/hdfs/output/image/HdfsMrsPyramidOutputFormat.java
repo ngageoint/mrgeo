@@ -16,7 +16,6 @@
 
 package org.mrgeo.hdfs.output.image;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
@@ -24,29 +23,24 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.DefaultCodec;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.output.MapFileOutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class HdfsMrsPyramidOutputFormat extends MapFileOutputFormat
+public class HdfsMrsPyramidOutputFormat extends FileOutputFormat<WritableComparable<?>, Writable>
 {
   private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidOutputFormat.class);
 
   @Override
   public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttemptContext context) throws IOException
   {
-    // this RecordWriter is copied from the MapFileOutputFormat, with the addition of
-    // the write() method checking for TileIdWritable.  We needed to copy the code
-    // because the RecordWriter is actually inline.  yuck!
     CompressionCodec codec = null;
     SequenceFile.CompressionType compressionType = SequenceFile.CompressionType.NONE;
     if (getCompressOutput(context)) {

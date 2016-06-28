@@ -166,7 +166,7 @@ public void generateSplits(Path parent, Configuration conf) throws IOException
   List<FileSplitInfo> list = new ArrayList<FileSplitInfo>();
 
   // get a Hadoop file system handle
-  final FileSystem fs = HadoopFileUtils.getFileSystem(parent);
+  final FileSystem fs = getFileSystem(parent);
 
   // get the list of paths of the subdirectories of the parent
   final Path[] paths = FileUtil.stat2Paths(fs.listStatus(parent));
@@ -191,19 +191,11 @@ public void generateSplits(Path parent, Configuration conf) throws IOException
     if (mapfile != null)
     {
       RasterWritable val = new RasterWritable();
-      long first;
-      long last;
-
-      try (MapFile.Reader reader = new MapFile.Reader(mapfile, conf))
-      {
-        first = ((TileIdWritable) reader.getClosest(new TileIdWritable(0), val)).get();
-        last = ((TileIdWritable) reader.getClosest(new TileIdWritable(Long.MAX_VALUE), val, true)).get();
-
-        list.add(new FileSplit.FileSplitInfo(first, last, mapfile.getName(), partition));
-      }
-      catch (NullPointerException e)
-      {
-        // noop.  This is an empty partition
+      MapFile.Reader reader = createMapFileReader(conf, mapfile);
+      TileIdWritable firstKey = (TileIdWritable) reader.getClosest(new TileIdWritable(0), val);
+      TileIdWritable lastKey = (TileIdWritable) reader.getClosest(new TileIdWritable(Long.MAX_VALUE), val, true);
+      if (firstKey != null && lastKey != null) {
+        list.add(new FileSplit.FileSplitInfo(firstKey.get(), lastKey.get(), mapfile.getName(), partition));
       }
 
       partition++;
@@ -213,37 +205,20 @@ public void generateSplits(Path parent, Configuration conf) throws IOException
   splits = list.toArray(new FileSplit.FileSplitInfo[list.size()]);
 }
 
-final public SplitInfo getSplitByName(String name) throws SplitException, SplitNotFoundException
-{
-  if (splits == null)
-  {
-    throw new SplitException("Splits not generated, call readSplits() or generateSplits() first");
-  }
-  for (SplitInfo split: splits)
-  {
-    if (((FileSplitInfo)split).getName().equals(name))
-    {
-      return split;
-    }
-  }
-
-  throw new SplitNotFoundException("Split not found (" + name + ")");
-}
-
 @Override
 public String findSplitFile(Path parent) throws IOException
 {
   Path file = new Path(parent, SPLIT_FILE);
   try
   {
-    if (HadoopFileUtils.exists(file))
+    if (fileExists(file))
     {
       return file.toString();
     }
     else
     {
       file = new Path(parent, OLD_SPLIT_FILE);
-      if (HadoopFileUtils.exists(file))
+      if (fileExists(file))
       {
         return file.toString();
       }
@@ -257,43 +232,45 @@ public String findSplitFile(Path parent) throws IOException
   throw new IOException("Split file not found: " + file.toString());
 }
 
-@Override
+  @Override
 public void generateSplits(SplitGenerator generator)
 {
   splits = generator.getSplits();
 }
 
-@Override
 public void readSplits(InputStream stream) throws SplitException
 {
   try (Scanner reader = new Scanner(stream))
   {
     String first = reader.nextLine();
 
-    if (!first.equals(VERSION))
+    if (first.equals(VERSION))
+    {
+      readSplits(reader);
+    }
+    else
     {
       final long split = ByteBuffer.wrap(DatatypeConverter.parseBase64Binary(first)).getLong();
       if (split == VERSION_2)
       {
         throw new SplitException("Old version 2 splits file, you need to convert it to version 3, " +
-            "this can be done by calling readSplits(path) instead of readSplits(stream)");
+                "this can be done by calling readSplits(path) instead of readSplits(stream)");
+      }
+      else {
+        throw new SplitException("Unrecognized splits");
       }
     }
-
-    readSplits(reader);
   }
 }
 
 public boolean isVersion2(Path splitsfile) throws IOException
 {
-  FileSystem fs = HadoopFileUtils.getFileSystem(splitsfile);
-
-  if (!fs.exists(splitsfile))
+  if (!fileExists(splitsfile))
   {
     // version 2 can have no splits file, meaning only 1 partition
     return true;
   }
-  try (InputStream stream = fs.open(splitsfile))
+  try (InputStream stream = getInputStream(splitsfile))
   {
     Scanner reader = new Scanner(stream);
 
@@ -307,32 +284,7 @@ public boolean isVersion2(Path splitsfile) throws IOException
   }
 }
 
-private void readSplits(Scanner reader)
-{
-  int count = Integer.parseInt(reader.nextLine());
-  List<FileSplitInfo> splitsList = new ArrayList<FileSplitInfo>(count);
 
-  for (int i = 0; i < count; i++)
-  {
-    long startTileId = reader.nextLong();
-    long endTileId = reader.nextLong();
-    String name = reader.next();
-    int partition = reader.nextInt();
-    // There may be partitions with no tiles in them when ingested imagery has
-    // no data within the region of that particular split. We account for that
-    // by ignoring those empty partitions when reading the data so as not to
-    // waste time processing empty partitions. When there are no tiles in the
-    // partition, the startTileId will be greater than the endTileId.
-    if (startTileId <= endTileId)
-    {
-      splitsList.add(new FileSplitInfo(startTileId, endTileId, name, partition));
-    }
-  }
-  splits = new FileSplitInfo[splitsList.size()];
-  splitsList.toArray(splits);
-}
-
-@Override
 public void readSplits(Path parent) throws IOException
 {
   if (isVersion2(new Path(parent, SPLIT_FILE)))
@@ -340,10 +292,9 @@ public void readSplits(Path parent) throws IOException
     generateSplits(parent, HadoopUtils.createConfiguration());
     writeSplits(parent);
   }
-  super.readSplits(new Path(parent, SPLIT_FILE));
+  readSplits(getInputStream(new Path(parent, SPLIT_FILE)));
 }
 
-@Override
 public void writeSplits(OutputStream stream) throws SplitException
 {
   if (splits == null)
@@ -367,13 +318,12 @@ public void writeSplits(OutputStream stream) throws SplitException
   writer.close();
 }
 
-@Override
 public void writeSplits(Path parent) throws IOException
 {
-  super.writeSplits(new Path(parent, SPLIT_FILE));
+  writeSplits(getOutputStream(new Path(parent, SPLIT_FILE)));
 }
 
-@Override
+  @Override
 public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 {
   int count = in.readInt();
@@ -385,5 +335,50 @@ public void readExternal(ObjectInput in) throws IOException, ClassNotFoundExcept
   }
 
 }
+
+  protected MapFile.Reader createMapFileReader(Configuration conf, Path mapfile) throws IOException {
+    return new MapFile.Reader(mapfile, conf);
+  }
+
+  protected FileSystem getFileSystem(Path parent) throws IOException {
+    return HadoopFileUtils.getFileSystem(parent);
+  }
+
+  protected boolean fileExists(Path file) throws IOException {
+    return HadoopFileUtils.exists(file);
+  }
+
+  protected InputStream getInputStream(Path path) throws IOException {
+    return getFileSystem(path).open(path);
+  }
+
+  protected OutputStream getOutputStream(Path path) throws IOException {
+    return getFileSystem(path).create(path);
+  }
+
+  private void readSplits(Scanner reader)
+  {
+    int count = Integer.parseInt(reader.nextLine());
+    List<FileSplitInfo> splitsList = new ArrayList<FileSplitInfo>(count);
+
+    for (int i = 0; i < count; i++)
+    {
+      long startTileId = reader.nextLong();
+      long endTileId = reader.nextLong();
+      String name = reader.next();
+      int partition = reader.nextInt();
+      // There may be partitions with no tiles in them when ingested imagery has
+      // no data within the region of that particular split. We account for that
+      // by ignoring those empty partitions when reading the data so as not to
+      // waste time processing empty partitions. When there are no tiles in the
+      // partition, the startTileId will be greater than the endTileId.
+      if (startTileId <= endTileId)
+      {
+        splitsList.add(new FileSplitInfo(startTileId, endTileId, name, partition));
+      }
+    }
+    splits = new FileSplitInfo[splitsList.size()];
+    splitsList.toArray(splits);
+  }
 
 }
