@@ -2156,6 +2156,24 @@
       </modules>
     </profile>
     <profile>
+      <id>build-all-but-distribution</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>all-but-distribution</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+        <module>mrgeo-mapalgebra</module>
+        <module>mrgeo-dataprovider</module>
+        <module>mrgeo-cmd</module>
+        <module>mrgeo-services</module>
+        <module>mrgeo-python</module>
+      </modules>
+    </profile>
+
+    <profile>
       <id>build-python</id>
       <activation>
         <property>
@@ -3391,5 +3409,3 @@
     <connection>scm:git:file://${project.basedir}</connection>
   </scm>
 </project>
-
-<!-- modified test line -->
