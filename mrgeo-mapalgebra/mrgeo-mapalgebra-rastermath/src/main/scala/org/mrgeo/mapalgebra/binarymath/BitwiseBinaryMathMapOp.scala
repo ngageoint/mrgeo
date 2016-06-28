@@ -4,7 +4,7 @@ import org.apache.spark.SparkContext
 import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.mapalgebra.parser.ParserException
 
-abstract class BitwiseMapOp extends RawBinaryMathMapOp {
+abstract class BitwiseBinaryMathMapOp extends RawBinaryMathMapOp {
 
   val EPSILON: Double = 1e-12
 

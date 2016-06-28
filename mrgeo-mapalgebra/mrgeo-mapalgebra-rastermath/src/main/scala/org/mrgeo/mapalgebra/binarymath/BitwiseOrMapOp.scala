@@ -21,7 +21,7 @@ object BitwiseOrMapOp extends MapOpRegistrar {
     new BitwiseOrMapOp(node, variables)
 }
 
-class BitwiseOrMapOp extends BitwiseMapOp {
+class BitwiseOrMapOp extends BitwiseBinaryMathMapOp {
 
   private[binarymath] def this(raster: Option[RasterMapOp], paramB:Option[Any]) = {
     this()
