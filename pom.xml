@@ -14,6 +14,7 @@
      ~ See the License for the specific language governing permissions and limitations under the License.
      ~
 -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
@@ -31,7 +32,7 @@
     <scala.version>2.10.4</scala.version>
     <!-- Many of these default/specific to the cdh5.3.0/YARN version,
          they will be overridden with profiles for the other versions.  -->
-    <accumulo.version>1.6.0</accumulo.version>
+    <accumulo.version>1.7.0</accumulo.version>
     <antlr.version>3.1.3</antlr.version>
     <axiom.version>1.2.9</axiom.version>
     <classutil.version>1.0.5</classutil.version>
@@ -46,7 +47,7 @@
     <!--<gdal.version>1.11.2</gdal.version>-->
     <gdal.version>1.10.1</gdal.version>
     <geotools.version>12.1</geotools.version>
-    <geowave.version>0.9.0</geowave.version>
+    <geowave.version>0.9.1</geowave.version>
     <gson.version>2.2.2</gson.version>
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
@@ -104,7 +105,7 @@
     <cobertura-maven.version>2.6</cobertura-maven.version>
     <exec-maven.version>1.4.0</exec-maven.version>
     <findbugs-maven.version>3.0.1</findbugs-maven.version>
-    <findsecbugs-plugin.version>LATEST</findsecbugs-plugin.version>
+    <findsecbugs-plugin.version>1.4.6</findsecbugs-plugin.version>
     <license-maven.version>1.8</license-maven.version>
     <pomtools-maven.version>0.2.1</pomtools-maven.version>
     <maven-assembly.version>2.5.4</maven-assembly.version>
@@ -137,6 +138,7 @@
     <snapshot.repository.url>http://mrgeo-maven.s3-website-us-east-1.amazonaws.com/snapshot</snapshot.repository.url>
     <!-- findbugs -->
     <findbugs.basedir>${project.basedir}</findbugs.basedir>
+    <findbugs.skip>false</findbugs.skip>
   </properties>
   <repositories>
     <repository>
@@ -695,15 +697,13 @@
           <artifactId>findbugs-maven-plugin</artifactId>
           <version>${findbugs-maven.version}</version>
           <configuration>
+            <skip>${findbugs.skip}</skip>
             <effort>Max</effort>
             <threshold>Low</threshold>
             <failOnError>true</failOnError>
             <outputDirectory>${project.build.directory}/findbugs</outputDirectory>
             <xmlOutputDirectory>${project.build.directory}/findbugs</xmlOutputDirectory>
             <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
-            <!--
-            <includeFilterFile>${session.executionRootDirectory}/findbugs-security-include.xml</includeFilterFile>
-            -->
             <excludeFilterFile>${findbugs.basedir}/src/main/findbugs/findbugs-exclude-filter.xml</excludeFilterFile>
             <plugins>
               <plugin>
@@ -713,6 +713,14 @@
               </plugin>
             </plugins>
           </configuration>
+          <executions>
+            <execution>
+              <id>findbugs-check</id>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -763,6 +771,10 @@
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -2144,6 +2156,24 @@
       </modules>
     </profile>
     <profile>
+      <id>build-all-but-distribution</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>all-but-distribution</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+        <module>mrgeo-mapalgebra</module>
+        <module>mrgeo-dataprovider</module>
+        <module>mrgeo-cmd</module>
+        <module>mrgeo-services</module>
+        <module>mrgeo-python</module>
+      </modules>
+    </profile>
+
+    <profile>
       <id>build-python</id>
       <activation>
         <property>
@@ -2991,12 +3021,32 @@
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-http</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-io</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-security</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-servlet</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-util</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
@@ -3268,6 +3318,12 @@
     </developer>
     <developer>
       <name>Jason Goffeney</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <name>Eric Wood</name>
       <roles>
         <role>developer</role>
       </roles>

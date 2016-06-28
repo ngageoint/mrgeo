@@ -40,7 +40,6 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         add = self.allhundreds + 1
         self.compareraster(add, self.name)
 
-
     def test_add_negconst(self):
         add = self.allhundreds + -1
         self.compareraster(add, self.name)

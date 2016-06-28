@@ -194,26 +194,28 @@ private int binarySearch(long target, int start, int end)
   }
 }
 
-public abstract void readSplits(InputStream stream) throws SplitException;
-public void readSplits(Path parent) throws IOException
-{
-  FileSystem fs = HadoopFileUtils.getFileSystem(parent);
-  try (InputStream stream = fs.open(parent))
-  {
-    readSplits(stream);
-  }
-}
+  // Put all of the file reading and writing in the file specific subclasses
+//public abstract void readSplits(InputStream stream) throws SplitException;
+//public void readSplits(Path parent) throws IOException
+//{
+//  FileSystem fs = HadoopFileUtils.getFileSystem(parent);
+//  try (InputStream stream = fs.open(parent))
+//  {
+//    readSplits(stream);
+//  }
+//}
+//
+//
+//public abstract void writeSplits(OutputStream stream) throws SplitException;
+//public void writeSplits(Path parent) throws IOException
+//{
+//  FileSystem fs = HadoopFileUtils.getFileSystem(parent);
+//  try (OutputStream stream =  fs.create(parent, true))
+//  {
+//    writeSplits(stream);
+//  }
+//}
 
-
-public abstract void writeSplits(OutputStream stream) throws SplitException;
-public void writeSplits(Path parent) throws IOException
-{
-  FileSystem fs = HadoopFileUtils.getFileSystem(parent);
-  try (OutputStream stream =  fs.create(parent, true))
-  {
-    writeSplits(stream);
-  }
-}
 
 @Override
 final public void writeExternal(ObjectOutput out) throws IOException
