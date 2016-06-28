@@ -12,6 +12,7 @@ import java.io.*;
 import java.util.Arrays;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -76,6 +77,17 @@ public class MapFileReaderBuilder {
                 WritableComparable key = (WritableComparable) args[0];
                 Writable value = (Writable)args[1];
                 return keyValueHelper.getClosest(key, value);
+            }
+        });
+
+        when(mapFileReader.getClosest(any(WritableComparable.class), any(Writable.class), anyBoolean())).thenAnswer(new Answer<Writable>() {
+            @Override
+            public Writable answer(InvocationOnMock invocationOnMock) throws Throwable {
+                // Get the key and value
+                Object[] args = invocationOnMock.getArguments();
+                WritableComparable key = (WritableComparable) args[0];
+                Writable value = (Writable)args[1];
+                return keyValueHelper.getClosest(key, value, (Boolean)args[2]);
             }
         });
 
