@@ -49,7 +49,6 @@ class BitwiseComplementMapOp extends RawUnaryMathMapOp {
   override private[unarymath] def function(a: Double): Double = {
     val aLong = a.toLong
     val result = ~aLong
-    log.error("complement operator " + a + ", long: " + aLong + ", result = " + result)
     result.toFloat
   }
 }
