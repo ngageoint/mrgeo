@@ -29,12 +29,12 @@ _operators = {"+": ["__add__", "__radd__", "__iadd__"],
               "!=": ["__ne__"],
               "<>": [],
               "!": [],
-              "&&": ["__and__", "__rand__", "__iand__"],
-              "&": [],
-              "||": ["__or__", "__ror__", "__ior__"],
-              "|": [],
-              "~": [],
-              "^": [],
+              "&&": ["__rand__", "__iand__"],
+              "&": ["__and__"],
+              "||": ["__ror__", "__ior__"],
+              "|": ["__or__"],
+              "~": ["__invert__"],
+              "^": ["__xor__"],
               # "^": ["__xor__", "__rxor__", "__ixor__"],
               "^=": []}
 _reserved = ["or", "and", "str", "int", "long", "float", "bool"]
@@ -208,7 +208,10 @@ def _generate_operator_code(mapop, name, signatures, instance):
         code = ""
 
         # Signature
-        code += "def " + mname + "(self, other):" + "\n"
+        if len(corrected_methods) == 1:
+            code += "def " + mname + "(self):" + "\n"
+        else:
+            code += "def " + mname + "(self, other):" + "\n"
         # code += "    print('" + name + "')\n"
 
         code += _generate_imports(mapop)

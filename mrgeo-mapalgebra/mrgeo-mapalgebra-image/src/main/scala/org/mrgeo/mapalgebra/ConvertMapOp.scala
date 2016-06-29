@@ -270,7 +270,6 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
         }
         var py = 0
         while (py < src.getHeight) {
-          log.warn("Processing row " + py)
           var px = 0
           while (px < src.getWidth) {
             var b: Int = 0
