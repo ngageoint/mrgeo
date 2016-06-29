@@ -1756,8 +1756,6 @@
       <id>emr-4.5.0</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
-        <accumulo.version>1.6.1</accumulo.version>
-        <geowave.version>0.9.0</geowave.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
@@ -1788,8 +1786,6 @@
       <id>emr-4.4.0</id>
       <properties>
         <hadoop.version>2.7.1</hadoop.version>
-        <accumulo.version>1.6.0</accumulo.version>
-        <geowave.version>0.9.0</geowave.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
