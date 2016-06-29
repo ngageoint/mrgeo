@@ -19,7 +19,7 @@ object BitwiseAndMapOp extends MapOpRegistrar {
     new BitwiseAndMapOp(node, variables)
 }
 
-class BitwiseAndMapOp extends RawBinaryMathMapOp {
+class BitwiseAndMapOp extends BitwiseBinaryMathMapOp {
 
   private[binarymath] def this(raster: Option[RasterMapOp], paramB:Option[Any]) = {
     this()

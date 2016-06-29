@@ -32,15 +32,15 @@ class MrGeoTests(TestCase):
     outputdir = None
     outputhdfs = None
 
-    def compareraster(self, raster, testname):
+    def compareraster(self, raster, testname, nodata=-9999):
         if self.GENERATE_BASELINE_DATA:
-            self.saveraster(raster, testname)
+            self.saveraster(raster, testname, nodata)
         else:
             # jvm = self.gateway.jvm
             # test = raster.mapop.toDataset(False)
 
             testimage = self.outputdir + testname
-            raster.export(testimage, singleFile=True, format="tiff", overridenodata=-9999)
+            raster.export(testimage, singleFile=True, format="tiff", overridenodata=nodata)
             testimage += ".tif"
             test = gdal.Open(testimage)
 
@@ -59,9 +59,9 @@ class MrGeoTests(TestCase):
             # compare as GDAL Datasets.
             gdaltest.compare_db(self, golden, test)
 
-    def saveraster(self, raster, testname):
+    def saveraster(self, raster, testname, nodata=-9999):
         name = self.inputdir + testname
-        raster.export(name, singleFile=True, format="tiff", overridenodata=-9999)
+        raster.export(name, singleFile=True, format="tiff", overridenodata=nodata)
 
     def savevector(self, vector, testname):
         name = self.inputdir + testname + ".tsv"

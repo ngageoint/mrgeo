@@ -197,6 +197,31 @@ public class RasterUtilsTest
     //    compareScaledDownInt(numberedInt, scaled, scale);
   }
 
+  @Test
+  @Category(UnitTest.class)
+  public void testIsFloatingPoint()
+  {
+    Assert.assertTrue(RasterUtils.isFloatingPoint(DataBuffer.TYPE_DOUBLE));
+    Assert.assertTrue(RasterUtils.isFloatingPoint(DataBuffer.TYPE_FLOAT));
+    Assert.assertFalse(RasterUtils.isFloatingPoint(DataBuffer.TYPE_BYTE));
+    Assert.assertFalse(RasterUtils.isFloatingPoint(DataBuffer.TYPE_INT));
+    Assert.assertFalse(RasterUtils.isFloatingPoint(DataBuffer.TYPE_SHORT));
+    Assert.assertFalse(RasterUtils.isFloatingPoint(DataBuffer.TYPE_USHORT));
+  }
+
+  @Test(expected=IllegalArgumentException.class)
+  @Category(UnitTest.class)
+  public void testIsFloatingPointWithBadInput1()
+  {
+    RasterUtils.isFloatingPoint(DataBuffer.TYPE_UNDEFINED);
+  }
+
+  @Test(expected=IllegalArgumentException.class)
+  @Category(UnitTest.class)
+  public void testIsFloatingPointWithBadInput2()
+  {
+    RasterUtils.isFloatingPoint(1000);
+  }
 
   private void compareScaledDownInt(Raster orig, Raster scaled, int scaleFactor)
   {
