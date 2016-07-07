@@ -27,7 +27,11 @@ class SparkLocalRunnerTest
   @Before
   def initLocalRunner(): Unit = {
     sparkConf = new SparkConf()
-    sparkContext = new SparkContext("local", "Test App", sparkConf)
+
+    sparkConf.setMaster("local")
+    sparkConf.setAppName("Test App")
+
+    sparkContext = SparkContext.getOrCreate(sparkConf)
   }
 
   @After
