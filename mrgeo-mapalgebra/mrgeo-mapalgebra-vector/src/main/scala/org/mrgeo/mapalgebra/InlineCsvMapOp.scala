@@ -38,9 +38,9 @@ object InlineCsvMapOp extends MapOpRegistrar
     Array[String]("InlineCsv", "csv")
   }
 
-  def create(columns:String, values:String):MapOp = {
-    new InlineCsvMapOp(columns, values)
-  }
+//  def create(columns:String, values:String):MapOp = {
+//    new InlineCsvMapOp(columns, values)
+//  }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp = {
     new InlineCsvMapOp(node, variables)
