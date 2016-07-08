@@ -128,7 +128,7 @@ object MrGeoYarnJob extends Logging {
           logInfo("SparkConf parameters")
           conf.getAll.foreach(kv => {logDebug("  " + kv._1 + ": " + kv._2)})
 
-          val context = new SparkContext(conf)
+          val context = SparkContext.getOrCreate(conf)
 
           //context.addSparkListener(new MrGeoListener)
           val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
