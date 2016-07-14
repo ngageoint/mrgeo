@@ -19,6 +19,10 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         cls.copy("all-ones")
         cls.copy("small-elevation")
         cls.copy("tobler-raw-tiny")
+        cls.copy("AmbulatoryPt.shp")
+        cls.copy("AmbulatoryPt.prj")
+        cls.copy("AmbulatoryPt.shx")
+        cls.copy("AmbulatoryPt.dbf")
 
     def setUp(self):
         super(MrGeoIntegrationTests, self).setUp()
@@ -27,6 +31,11 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.allhundreds = self.mrgeo.load_image("all-hundreds")
         self.smallelevation = self.mrgeo.load_image("small-elevation")
         self.toblertiny = self.mrgeo.load_image("tobler-raw-tiny")
+
+    def test_rasterize_vector(self):
+        roads = self.mrgeo.load_vector("AmbulatoryPt.shp")
+        result = roads.rasterizevector("MASK", "12z")
+        self.compareraster(result, self.name)
 
     def test_bitwise_or(self):
         result = self.allhundreds.convert("byte", "truncate") | 6
