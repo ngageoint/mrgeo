@@ -40,29 +40,29 @@ object IngestImageMapOp extends MapOpRegistrar {
     Array[String]("ingest")
   }
 
-  def create(inputs:Array[String]):MapOp =
-    new IngestImageMapOp(inputs, None, None)
-
-  def create(inputs:Array[String], zoom:Int):MapOp =
-    new IngestImageMapOp(inputs, Some(zoom), None)
-
-  def create(inputs:Array[String], categorical:Boolean):MapOp =
-    new IngestImageMapOp(inputs, None, Some(categorical))
-
-  def create(inputs:Array[String], zoom:Int, categorical:Boolean):MapOp =
-    new IngestImageMapOp(inputs, Some(zoom), Some(categorical))
-
-  def create(input:String):MapOp =
-    new IngestImageMapOp(input, None, None)
-
-  def create(input:String, zoom:Int):MapOp =
-    new IngestImageMapOp(input, Some(zoom), None)
-
-  def create(input:String, categorical:Boolean):MapOp =
-    new IngestImageMapOp(input, None, Some(categorical))
-
-  def create(input:String, zoom:Int, categorical:Boolean):MapOp =
-    new IngestImageMapOp(input, Some(zoom), Some(categorical))
+//  def create(inputs:Array[String]):MapOp =
+//    new IngestImageMapOp(inputs, None, None)
+//
+//  def create(inputs:Array[String], zoom:Int):MapOp =
+//    new IngestImageMapOp(inputs, Some(zoom), None)
+//
+//  def create(inputs:Array[String], categorical:Boolean):MapOp =
+//    new IngestImageMapOp(inputs, None, Some(categorical))
+//
+//  def create(inputs:Array[String], zoom:Int, categorical:Boolean):MapOp =
+//    new IngestImageMapOp(inputs, Some(zoom), Some(categorical))
+//
+//  def create(input:String):MapOp =
+//    new IngestImageMapOp(input, None, None)
+//
+//  def create(input:String, zoom:Int):MapOp =
+//    new IngestImageMapOp(input, Some(zoom), None)
+//
+//  def create(input:String, categorical:Boolean):MapOp =
+//    new IngestImageMapOp(input, None, Some(categorical))
+//
+//  def create(input:String, zoom:Int, categorical:Boolean):MapOp =
+//    new IngestImageMapOp(input, Some(zoom), Some(categorical))
 
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =

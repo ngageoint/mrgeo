@@ -70,6 +70,7 @@ class MrGeo(object):
         java_import(jvm, "org.mrgeo.job.*")
         java_import(jvm, "org.mrgeo.mapalgebra.*")
         java_import(jvm, "org.mrgeo.mapalgebra.raster.*")
+        java_import(jvm, "org.mrgeo.mapalgebra.vector.*")
         java_import(jvm, "org.mrgeo.utils.*")
         java_import(jvm, "org.mrgeo.utils.logging.*")
 
@@ -219,6 +220,22 @@ class MrGeo(object):
                 mapop.teardown(job, self.sparkContext.getConf())):
             return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=job)
         return None
+
+    def load_vector(self, name):
+        jvm = self._get_jvm()
+        job = self._get_job()
+
+        pstr = job.getSetting(constants.provider_properties, "")
+        pp = jvm.ProviderProperties.fromDelimitedString(pstr)
+
+        dp = jvm.DataProviderFactory.getVectorDataProvider(name, jvm.DataProviderFactory.AccessMode.READ, pp)
+
+        mapop = jvm.VectorDataMapOp.apply(dp)
+        mapop.context(self.sparkContext)
+
+        # print("loaded " + name)
+
+        return VectorMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
     def create_points(self, coords):
         jvm = self._get_jvm()
