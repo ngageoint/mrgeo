@@ -90,29 +90,30 @@ public class HadoopVectorUtils
   @SuppressWarnings("unused")
   public synchronized static Configuration createConfiguration()
   {
-    final Configuration config = new Configuration();
+    Configuration config = new Configuration();
+    final Properties p = MrGeoProperties.getInstance();
+    final String hadoopParams = p.getProperty("hadoop.params");
+
+    // Usage of GenericOptionsParser was inspired by Hadoop's ToolRunner
+    if (hadoopParams != null)
+    {
+      final String[] hadoopParamsAsArray = hadoopParams.split(" ");
+      final GenericOptionsParser parser;
+      try {
+        parser = new GenericOptionsParser(hadoopParamsAsArray);
+        config = parser.getConfiguration();
+      }
+      catch (IOException e) {
+        // If configuration cannot be parsed, then correct behavior is to treat it as a system fault, to be handled by
+        // the application fault barrier
+        throw new RuntimeException("Fatal error parsing configuration options from command line", e);
+      }
+    }
 
     // enables serialization of Serializable objects in Hadoop.
     final String serializations = config.get("io.serializations");
     config.set("io.serializations", serializations + ",org.mrgeo.format.FeatureSerialization" +
-      ",org.apache.hadoop.io.serializer.JavaSerialization");
-    try
-    {
-      final Properties p = MrGeoProperties.getInstance();
-      final String hadoopParams = p.getProperty("hadoop.params");
-      // Usage of GenericOptionsParser was inspired by Hadoop's ToolRunner
-      if (hadoopParams != null)
-      {
-        final String[] hadoopParamsAsArray = hadoopParams.split(" ");
-        final GenericOptionsParser parser = new GenericOptionsParser(config, hadoopParamsAsArray);
-      }
-
-    }
-    catch (final Exception e)
-    {
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
+            ",org.apache.hadoop.io.serializer.JavaSerialization");
     return config;
   }
 
