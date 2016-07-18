@@ -14,13 +14,11 @@
  *
  */
 
-package org.mrgeo.hdfs.vector;
+package org.mrgeo.geometry;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
-import org.mrgeo.geometry.PointFilter;
-import org.mrgeo.geometry.WritablePoint;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
