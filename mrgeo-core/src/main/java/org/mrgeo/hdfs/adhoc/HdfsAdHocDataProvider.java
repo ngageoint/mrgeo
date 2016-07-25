@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class HdfsAdHocDataProvider extends AdHocDataProvider
 {
@@ -63,7 +64,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
    * provider was constructed with. Internal code should *always* call initializeFiles() prior to
    * accessing this data member.
    */
-  private final ArrayList<Path> files = new ArrayList<Path>();
+  private final List<Path> files = new java.util.concurrent.CopyOnWriteArrayList<Path>();
 
   public HdfsAdHocDataProvider(final Configuration conf,
       final ProviderProperties providerProperties) throws IOException
