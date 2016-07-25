@@ -735,7 +735,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
   public static boolean canOpen(String input,
                                 ProviderProperties providerProperties) throws IOException
   {
-    log.error("Inside canOpen with " + input);
+    log.debug("Inside canOpen with " + input);
     initConnectionInfo();
     ParseResults results = parseResourceName(input);
     try
@@ -745,7 +745,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
       CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
       while (iter.hasNext()) {
         DataAdapter<?> da = iter.next();
-        log.error("GeoWave adapter: " + da.getAdapterId().toString());
+        log.debug("GeoWave adapter: " + da.getAdapterId().toString());
       }
       ByteArrayId adapterId = new ByteArrayId(results.name);
       DataAdapter<?> adapter = entry.adapterStore.getAdapter(adapterId);
