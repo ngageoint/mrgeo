@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
+import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
@@ -36,6 +37,7 @@ import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.resources.KmlGenerator;
+import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
@@ -416,15 +418,41 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
         // now change only the resolution for the dst
         final double[] dstxform = new double[6];
 
-        dstxform[0] = bounds.w; /* top left x */
-        dstxform[1] = (bounds.e - bounds.w) / width; /* w-e pixel resolution */
-        dstxform[2] = 0; /* 0 */
-        dstxform[3] = bounds.n; /* top left y */
-        dstxform[4] = 0; /* 0 */
-        dstxform[5] = (bounds.s - bounds.n) / height; /* n-s pixel resolution (negative value) */
+        // default is WGS84
+        String dstcrs = GDALUtils.EPSG4326();
+        if (epsg != null && !epsg.equalsIgnoreCase("epsg:4326"))
+        {
+          SpatialReference scrs = new SpatialReference();
+          scrs.ImportFromEPSG(4326);
+
+          SpatialReference dcrs = new SpatialReference();
+          dcrs.ImportFromEPSG(parseEpsgCode(epsg));
+
+          dstcrs = dcrs.ExportToWkt();
+
+          CoordinateTransformation ct = new CoordinateTransformation(scrs, dcrs);
+
+          double[] ll = ct.TransformPoint(bounds.w, bounds.s);
+          double[] tr = ct.TransformPoint(bounds.e, bounds.n);
+
+          dstxform[0] = ll[0]; /* top left x */
+          dstxform[1] = (tr[0] - ll[0]) / width; /* w-e pixel resolution */
+          dstxform[2] = 0; /* 0 */
+          dstxform[3] = tr[1]; /* top left y */
+          dstxform[4] = 0; /* 0 */
+          dstxform[5] = (ll[1] - tr[1]) / height; /* n-s pixel resolution (negative value) */
+        }
+        else
+        {
+          dstxform[0] = bounds.w; /* top left x */
+          dstxform[1] = (bounds.e - bounds.w) / width; /* w-e pixel resolution */
+          dstxform[2] = 0; /* 0 */
+          dstxform[3] = bounds.n; /* top left y */
+          dstxform[4] = 0; /* 0 */
+          dstxform[5] = (bounds.s - bounds.n) / height; /* n-s pixel resolution (negative value) */
+        }
 
         dst.SetGeoTransform(dstxform);
-
 
         int resample = gdalconstConstants.GRA_Bilinear;
         if (pyramidMetadata.getClassification() == MrsPyramidMetadata.Classification.Categorical)
@@ -440,16 +468,6 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
           {
             resample = gdalconstConstants.GRA_NearestNeighbour;
           }
-        }
-
-        // default is WGS84
-        String dstcrs = GDALUtils.EPSG4326();
-        if (epsg != null && !epsg.equalsIgnoreCase("epsg:4326"))
-        {
-          SpatialReference crs = new SpatialReference();
-          crs.SetWellKnownGeogCS(epsg);
-
-          dstcrs = crs.ExportToWkt();
         }
 
         log.debug("Scaling image...");
@@ -476,6 +494,22 @@ public Raster renderImage(final String pyramidName, final Bounds bounds, final i
       image.close();
     }
   }
+}
+
+private static int parseEpsgCode(String epsg)
+{
+  String prefix = "epsg:";
+  int index = epsg.toLowerCase().indexOf(prefix);
+  if (index >= 0) {
+    try
+    {
+      return Integer.parseInt(epsg.substring(index + prefix.length()));
+    }
+    catch(NumberFormatException nfe)
+    {
+    }
+  }
+  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
 }
 
 /**

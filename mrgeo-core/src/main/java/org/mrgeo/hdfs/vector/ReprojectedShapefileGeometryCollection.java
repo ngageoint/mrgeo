@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.vector;
 
+import org.mrgeo.geometry.Reprojector;
 import org.mrgeo.geometry.WritableGeometry;
 
 import java.io.IOException;

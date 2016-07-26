@@ -26,9 +26,15 @@ import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
+import org.mrgeo.geometry.GeometryFactory;
+import org.mrgeo.geometry.Reprojector;
+import org.mrgeo.geometry.WritablePoint;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Configuration;
@@ -38,7 +44,10 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
 import org.mrgeo.services.tms.TmsService;
+import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
@@ -79,12 +88,22 @@ public class TileMapServiceResource
 private static final Logger log = LoggerFactory.getLogger(TileMapServiceResource.class);
 private static final MimetypesFileTypeMap mimeTypeMap = new MimetypesFileTypeMap();
 private static final String VERSION = "1.0.0";
-private static final String SRS = "EPSG:4326";
 private static final String GENERAL_ERROR = "An error occurred in Tile Map Service";
-private static String imageBaseDir = HadoopUtils.getDefaultImageBaseDirectory();
+
+private String imageBaseDir = HadoopUtils.getDefaultImageBaseDirectory();
 //public static String KML_VERSION = "http://www.opengis.net/kml/2.2";
 //public static String KML_EXTENSIONS = "http://www.google.com/kml/ext/2.2";
 //public static String KML_MIME_TYPE = "application/vnd.google-earth.kml+xml";
+
+private int WGS84 = 0;
+private int WEBMERCATOR = 1;
+
+private final String[] profiles = {"global-geodetic", "global-mercator"};
+private final String[] SRSs = {"EPSG:4326", "EPSG:3857"};
+private final Bounds[] limits = {Bounds.WORLD, new Bounds(-180.0, -85.051129, 180.0, 85.051129)};
+//private final double[] tileXmult = {0.5, 0.5};
+//private final double[] tileYmult = {1.0, 0.5};
+private final double[] tilezOffset = {0.0, -1.0};
 
 @Context
 TmsService service;
@@ -112,7 +131,7 @@ private static synchronized void init()
 }
 
 
-protected static Response createEmptyTile(final ImageResponseWriter writer, final int width,
+private Response createEmptyTile(final ImageResponseWriter writer, final int width,
     final int height)
 {
   // return an empty image
@@ -136,9 +155,47 @@ protected static Response createEmptyTile(final ImageResponseWriter writer, fina
   return writer.write(bufImg.getData()).build();
 }
 
-protected static Document mrsPyramidMetadataToTileMapXml(final String raster, final String url,
+Document mrsPyramidMetadataToTileMapXml(final String raster, final String profilename, final String url,
     final MrsPyramidMetadata mpm) throws ParserConfigurationException
 {
+
+  int index = -1;
+  for (int i = 0; i < profiles.length; i++)
+  {
+    if (profilename.equals(profiles[i]))
+    {
+      index = i;
+      break;
+    }
+  }
+
+  if (index < 0)
+  {
+    throw new ParserConfigurationException("Bad profile name: " + profilename);
+  }
+
+  double maxPixelsize = TMSUtils.resolution(1, mpm.getTilesize());
+
+  Bounds bounds = mpm.getBounds();
+  WritablePoint origin = GeometryFactory.createPoint(Bounds.WORLD.w, Bounds.WORLD.s);
+
+  // need to reproject values?
+  if (index != WGS84) {
+
+    String srs = SRSs[index];
+    bounds = RequestUtils.reprojectBounds(bounds, srs);
+
+    Reprojector reprojector = Reprojector.createFromCode(SRSs[WGS84], srs);
+
+    origin = GeometryFactory.createPoint(limits[index].w, limits[index].s);
+    reprojector.filter(origin);
+
+    WritablePoint pt = GeometryFactory.createPoint(maxPixelsize, 0);
+    reprojector.filter(pt);
+
+    maxPixelsize = pt.getX();
+  }
+
     /*
      * String tileMap = "<?xml version='1.0' encoding='UTF-8' ?>" +
      * "<TileMap version='1.0.0' tilemapservice='http://localhost/mrgeo-services/api/tms/1.0.0'>" +
@@ -172,6 +229,7 @@ protected static Document mrsPyramidMetadataToTileMapXml(final String raster, fi
   final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
   final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
+
   // root elements
   final Document doc = docBuilder.newDocument();
   final Element rootElement = doc.createElement("TileMap");
@@ -180,7 +238,8 @@ protected static Document mrsPyramidMetadataToTileMapXml(final String raster, fi
   v.setValue(VERSION);
   rootElement.setAttributeNode(v);
   final Attr tilemapservice = doc.createAttribute("tilemapservice");
-  tilemapservice.setValue(normalizeUrl(normalizeUrl(url).replace(raster, "")));
+  String root = url.substring(0, url.lastIndexOf("/" + raster));
+  tilemapservice.setValue(normalizeUrl(root));
   rootElement.setAttributeNode(tilemapservice);
 
   // child elements
@@ -193,32 +252,32 @@ protected static Document mrsPyramidMetadataToTileMapXml(final String raster, fi
   rootElement.appendChild(abst);
 
   final Element srs = doc.createElement("SRS");
-  srs.setTextContent(SRS);
+  srs.setTextContent(SRSs[index]);
   rootElement.appendChild(srs);
 
   final Element bbox = doc.createElement("BoundingBox");
   rootElement.appendChild(bbox);
   final Attr minx = doc.createAttribute("minx");
-  minx.setValue(String.valueOf(mpm.getBounds().w));
+  minx.setValue(String.valueOf(bounds.w));
   bbox.setAttributeNode(minx);
   final Attr miny = doc.createAttribute("miny");
-  miny.setValue(String.valueOf(mpm.getBounds().s));
+  miny.setValue(String.valueOf(bounds.s));
   bbox.setAttributeNode(miny);
   final Attr maxx = doc.createAttribute("maxx");
-  maxx.setValue(String.valueOf(mpm.getBounds().e));
+  maxx.setValue(String.valueOf(bounds.e));
   bbox.setAttributeNode(maxx);
   final Attr maxy = doc.createAttribute("maxy");
-  maxy.setValue(String.valueOf(mpm.getBounds().n));
+  maxy.setValue(String.valueOf(bounds.n));
   bbox.setAttributeNode(maxy);
 
-  final Element origin = doc.createElement("Origin");
-  rootElement.appendChild(origin);
+  final Element orign = doc.createElement("Origin");
+  rootElement.appendChild(orign);
   final Attr x = doc.createAttribute("x");
-  x.setValue(String.valueOf(mpm.getBounds().w));
-  origin.setAttributeNode(x);
+  x.setValue(String.valueOf(origin.getX()));
+  orign.setAttributeNode(x);
   final Attr y = doc.createAttribute("y");
-  y.setValue(String.valueOf(mpm.getBounds().s));
-  origin.setAttributeNode(y);
+  y.setValue(String.valueOf(origin.getY()));
+  orign.setAttributeNode(y);
 
   final Element tileformat = doc.createElement("TileFormat");
   rootElement.appendChild(tileformat);
@@ -237,19 +296,20 @@ protected static Document mrsPyramidMetadataToTileMapXml(final String raster, fi
 
   final Element tilesets = doc.createElement("TileSets");
   rootElement.appendChild(tilesets);
+
   final Attr profile = doc.createAttribute("profile");
-  profile.setValue("global-geodetic");
+  profile.setValue(profiles[index]);
   tilesets.setAttributeNode(profile);
 
-  for (int i = 0; i <= mpm.getMaxZoomLevel(); i++)
+  for (int i = 0; i < mpm.getMaxZoomLevel(); i++)
   {
     final Element tileset = doc.createElement("TileSet");
     tilesets.appendChild(tileset);
     final Attr href = doc.createAttribute("href");
-    href.setValue(normalizeUrl(normalizeUrl(url)) + "/" + i);
+    href.setValue(normalizeUrl(normalizeUrl(url)) + "/" + (i + 1));
     tileset.setAttributeNode(href);
     final Attr upp = doc.createAttribute("units-per-pixel");
-    upp.setValue(String.valueOf(180d / 256d / Math.pow(2, i)));
+    upp.setValue(String.valueOf(maxPixelsize / Math.pow(2, i)));
     tileset.setAttributeNode(upp);
     final Attr order = doc.createAttribute("order");
     order.setValue(String.valueOf(i));
@@ -261,7 +321,7 @@ protected static Document mrsPyramidMetadataToTileMapXml(final String raster, fi
 
 
 
-protected static Document mrsPyramidToTileMapServiceXml(final String url,
+Document mrsPyramidToTileMapServiceXml(final String url,
     final List<String> pyramidNames) throws ParserConfigurationException,
     DOMException, UnsupportedEncodingException
 {
@@ -303,35 +363,39 @@ protected static Document mrsPyramidToTileMapServiceXml(final String url,
   rootElement.appendChild(tilesets);
 
   Collections.sort(pyramidNames);
-  for (final String p : pyramidNames)
+  for (int i = 0; i < profiles.length; i++)
   {
-    final Element tileset = doc.createElement("TileMap");
-    tilesets.appendChild(tileset);
-    final Attr href = doc.createAttribute("href");
-    href.setValue(normalizeUrl(url) + "/" + URLEncoder.encode(p, "UTF-8"));
-    tileset.setAttributeNode(href);
-    final Attr maptitle = doc.createAttribute("title");
-    maptitle.setValue(p);
-    tileset.setAttributeNode(maptitle);
-    final Attr srs = doc.createAttribute("srs");
-    srs.setValue(SRS);
-    tileset.setAttributeNode(srs);
-    final Attr profile = doc.createAttribute("profile");
-    profile.setValue("global-geodetic");
-    tileset.setAttributeNode(profile);
+    for (final String pyramid : pyramidNames)
+    {
+      final String profilename = profiles[i];
+      final Element tileset = doc.createElement("TileMap");
+      tilesets.appendChild(tileset);
+      final Attr href = doc.createAttribute("href");
+      href.setValue(normalizeUrl(url) + "/" + URLEncoder.encode(pyramid, "UTF-8") + "/" + URLEncoder.encode(profilename, "UTF-8"));
+      tileset.setAttributeNode(href);
+      final Attr maptitle = doc.createAttribute("title");
+      maptitle.setValue(pyramid);
+      tileset.setAttributeNode(maptitle);
+      final Attr srs = doc.createAttribute("srs");
+      srs.setValue(SRSs[i]);
+      tileset.setAttributeNode(srs);
+      final Attr profile = doc.createAttribute("profile");
+      profile.setValue(profilename);
+      tileset.setAttributeNode(profile);
+    }
   }
 
   return doc;
 }
 
-protected static String normalizeUrl(final String url)
+String normalizeUrl(final String url)
 {
   String newUrl;
   newUrl = (url.lastIndexOf("/") == url.length() - 1) ? url.substring(0, url.length() - 1) : url;
   return newUrl;
 }
 
-protected static Document rootResourceXml(final String url) throws ParserConfigurationException
+Document rootResourceXml(final String url) throws ParserConfigurationException
 {
     /*
      * <?xml version="1.0" encoding="UTF-8" ?> <Services> <TileMapService
@@ -380,16 +444,19 @@ public Response getRootResource(@Context final HttpServletRequest hsr)
 
 
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
-@SuppressWarnings("static-method")
 @GET
 @Produces("image/*")
-@Path("{version}/{raster}/{z}/{x}/{y}.{format}")
+@Path("{version}/{raster}/{profile}/{z}/{x}/{y}.{format}")
 public Response getTile(@PathParam("version") final String version,
-    @PathParam("raster") String pyramid, @PathParam("z") final Integer z,
-    @PathParam("x") final Integer x, @PathParam("y") final Integer y,
+    @PathParam("raster") String pyramid,
+    @PathParam("profile") String profile,
+    @PathParam("z") final Integer z,
+    @PathParam("x") final Integer x,
+    @PathParam("y") final Integer y,
     @PathParam("format") final String format,
     @QueryParam("color-scale-name") final String colorScaleName,
-    @QueryParam("color-scale") final String colorScale, @QueryParam("min") final Double min,
+    @QueryParam("color-scale") final String colorScale,
+    @QueryParam("min") final Double min,
     @QueryParam("max") final Double max,
     @DefaultValue("1") @QueryParam("maskMax") final Double maskMax,
     @QueryParam("mask") final String mask)
@@ -400,20 +467,52 @@ public Response getTile(@PathParam("version") final String version,
 
   try
   {
+    int index = -1;
+    for (int i = 0; i < profiles.length; i++)
+    {
+      if (profile.equals(profiles[i]))
+      {
+        index = i;
+        break;
+      }
+    }
+
+    if (index < 0)
+    {
+      throw new ParserConfigurationException("Bad profile name: " + profile);
+    }
+
     renderer = (ImageRenderer) ImageHandlerFactory.getHandler(format, ImageRenderer.class);
 
     // TODO: Need to construct provider properties from the WebRequest using
     // a new security layer and pass those properties.
     // Apply mask if requested
     ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
-    if (mask != null && !mask.isEmpty())
+
+    if (index == WGS84)
     {
-      raster = renderer.renderImage(pyramid, x, y, z, mask, maskMax, providerProperties);
+      if (mask != null && !mask.isEmpty())
+      {
+        raster = renderer.renderImage(pyramid, x, y, z, mask, maskMax, providerProperties);
+      }
+      else
+      {
+        raster = renderer.renderImage(pyramid, x, y, z, providerProperties);
+      }
     }
     else
     {
-      raster = renderer.renderImage(pyramid, x, y, z, providerProperties);
+//      Bounds b;
+//      b = calcBounds(0, 0, 1, pyramid, providerProperties, index);
+//      b = calcBounds(0, 0, 2, pyramid, providerProperties, index);
+//      b = calcBounds(0, 1, 2, pyramid, providerProperties, index);
+//      b = calcBounds(1, 0, 2, pyramid, providerProperties, index);
+//      b = calcBounds(1, 1, 2, pyramid, providerProperties, index);
+
+      Bounds bounds = calcBounds(x, y, z, pyramid, providerProperties, index);
+      raster = renderer.renderImage(pyramid, bounds, providerProperties, SRSs[index]);
     }
+
     if (!(renderer instanceof TiffImageRenderer) && raster.getNumBands() != 3 &&
         raster.getNumBands() != 4)
     {
@@ -426,10 +525,6 @@ public Response getTile(@PathParam("version") final String version,
       {
         cs = ColorScaleManager.fromJSON(colorScale);
       }
-//        else
-//        {
-//          cs = ColorScaleManager.fromPyramid(pyramid, driver);
-//        }
 
       final double[] extrema = renderer.getExtrema();
 
@@ -540,13 +635,42 @@ public Response getTile(@PathParam("version") final String version,
   return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
 }
 
+private Bounds calcBounds(Integer x, Integer y, Integer z, String pyramid, ProviderProperties providerProperties, int profile)
+    throws IOException
+{
+  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramid,
+      DataProviderFactory.AccessMode.READ, providerProperties);
+  MrsPyramidMetadataReader r = dp.getMetadataReader();
+
+  final MrsPyramidMetadata metadata = r.read();
+
+  double tilesize = metadata.getTilesize();
+
+  double zoom = z + tilezOffset[profile];
+  Bounds world = limits[profile];
+
+  double resh = world.height() / tilesize / Math.pow(2.0, zoom);
+  double resw = world.width() / tilesize / Math.pow(2.0, zoom);
+
+  double multh = tilesize * resh;
+  double multw = tilesize * resw;
+
+  Bounds bounds =  new Bounds(x * multw + world.w, // left/west (lon, x)
+      y * multh + world.s, // lower/south (lat, y)
+      (x + 1) * multw + world.w, // right/east (lon, x)
+      (y + 1) * multh + world.s); // upper/north (lat, y)
+
+  return bounds;
+
+}
+
 
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
 @Produces("text/xml")
-@Path("/{version}/{raster}")
+@Path("/{version}/{raster}/{profile}")
 public Response getTileMap(@PathParam("version") final String version,
-    @PathParam("raster") String raster, @Context final HttpServletRequest hsr)
+    @PathParam("raster") String raster, @PathParam("profile") String profile, @Context final HttpServletRequest hsr)
 {
   try
   {
@@ -554,7 +678,7 @@ public Response getTileMap(@PathParam("version") final String version,
     // Check cache for metadata, if not found read from pyramid
     // and store in cache
     final MrsPyramidMetadata mpm = service.getMetadata(raster);
-    final Document doc = mrsPyramidMetadataToTileMapXml(raster, url, mpm);
+    final Document doc = mrsPyramidMetadataToTileMapXml(raster, profile, url, mpm);
     final DOMSource source = new DOMSource(doc);
 
     return Response.ok(source, "text/xml").header("Content-type", "text/xml").build();
@@ -598,7 +722,7 @@ public Response getTileMapService(@PathParam("version") final String version,
   }
 }
 
-protected Response returnEmptyTile(final int width, final int height,
+Response returnEmptyTile(final int width, final int height,
     final String format) throws Exception
 {
   //return an empty image
