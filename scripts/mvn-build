@@ -358,7 +358,7 @@ fi
 
 
 if [ -n "$USEYARN" ]; then
-    if [[ "$BUILD" != *-yarn ]]; then
+    if [[ "$BUILD" != *-yarn ]] && [[ "$BUILD" != apache* ]]; then
       BUILD=$BUILD-yarn
     fi
 fi
