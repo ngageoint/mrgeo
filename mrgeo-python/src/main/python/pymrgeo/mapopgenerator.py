@@ -14,29 +14,50 @@ from pymrgeo.rastermapop import RasterMapOp
 from pymrgeo.vectormapop import VectorMapOp
 
 
-_operators = {"+": ["__add__", "__radd__", "__iadd__"],
-              "-": ["__sub__", "__rsub__", "__isub__"],
-              "*": ["__mul__", "__rmul__", "__imul__"],
-              "/": ["__div__", "__truediv__", "__rdiv__", "__rtruediv__", "__idiv__", "__itruediv__"],
-              "//": [],  # floor div
-              "**": ["__pow__", "__rpow__", "__ipow__"],  # pow
+# Some MrGeo map ops include operators as their function name. Each
+# of those operators work in command-line map algebra. This data
+# structure determines how/if those operators are overloaded in
+# Python for MrGeo.
+#
+# The key is the name/symbol of the operator. The value is an array
+# of two elements, the first being an array of python "magic methods"
+# to map the operator to when the left-hand operand is "self" (e.g. an
+# image or vector map op). The second element is an array of python
+# "magic methods" to map to the operator when the right-hand operand
+# is "self" (e.g. "2 ** image"). For operators where operand ordering
+# does not matter (e.g. +, *, etc...) or there is only one operand,
+# the second element is an empty array. For operators that cannot be
+# overridden in python, both elements of the array are empty arrays.
+#
+# A scenario where this is important is with the expression "image ** 2"
+# compared to "2 ** image". In the first case, python will invoke the
+# __pow__  magic mathod on the image object (so image is "self" when the
+# method is called. In the second case, python will invoke __rand__ again
+# where "self" is image. However, in that case, our overridden method
+# needs to invoke map algebra on the Java/Scala side with the arguments
+# reversed.
+_operators = {"+": [["__add__", "__iadd__", "__radd__"], []],
+              "-": [["__sub__", "__isub__"], ["__rsub__"]],
+              "*": [["__mul__", "__imul__", "__rmul__"], []],
+              "/": [["__div__", "__truediv__", "__idiv__", "__itruediv__"], ["__rdiv__", "__rtruediv__"]],
+              "//": [[], []],  # floor div
+              "**": [["__pow__", "__ipow__"], ["__rpow__"]], # pow
               "=": [],  # assignment, can't do!
-              "<": ["__lt__"],
-              "<=": ["__le__"],
-              ">": ["__gt__"],
-              ">=": ["__ge__"],
-              "==": ["__eq__"],
-              "!=": ["__ne__"],
-              "<>": [],
-              "!": [],
-              "&&": ["__rand__", "__iand__"],
-              "&": ["__and__"],
-              "||": ["__ror__", "__ior__"],
-              "|": ["__or__"],
-              "~": ["__invert__"],
-              "^": ["__xor__"],
-              # "^": ["__xor__", "__rxor__", "__ixor__"],
-              "^=": []}
+              "<": [["__lt__"], []],
+              "<=": [["__le__"], []],
+              ">": [["__gt__"], []],
+              ">=": [["__ge__"], []],
+              "==": [["__eq__"], []],
+              "!=": [["__ne__"], []],
+              "<>": [[], []],
+              "!": [[], []],
+              "&&": [[], []],  # can't override logical and
+              "&": [["__and__", "__iand__", "__rand__"], []],
+              "||": [[], []],  # can't override logical or
+              "|": [["__or__", "__ior__", "__ror__"], []],
+              "~": [["__invert__"], []],
+              "^": [["__xor__", "__ixor__", "__rxor__"], []],
+              "^=": [[], []]}
 _reserved = ["or", "and", "str", "int", "long", "float", "bool"]
 
 _mapop_code = {}
@@ -235,21 +256,23 @@ def _generate_operator_code(mapop, name, signatures, instance):
         corrected_methods.append(new_method)
 
     codes = {}
-    for mname in _operators[name]:
-        code = ""
+    for op_index in range(0,2):
+        for mname in _operators[name][op_index]:
+            # print("Processing " + mname)
+            code = ""
 
-        # Signature
-        if len(corrected_methods) == 1:
-            code += "def " + mname + "(self):" + "\n"
-        else:
-            code += "def " + mname + "(self, other):" + "\n"
-        # code += "    print('" + name + "')\n"
+            # Signature
+            if len(corrected_methods) == 1:
+                code += "def " + mname + "(self):" + "\n"
+            else:
+                code += "def " + mname + "(self, other):" + "\n"
+            # code += "    print('" + name + "')\n"
 
-        code += _generate_imports(mapop)
-        code += _generate_calls(corrected_methods)
-        code += _generate_run(instance)
+            code += _generate_imports(mapop)
+            code += _generate_calls(corrected_methods, is_reverse=True if op_index == 1 else False)
+            code += _generate_run(instance)
 
-        codes[mname] = code
+            codes[mname] = code
     return codes
 
 
@@ -273,7 +296,7 @@ def _generate_method_code(gateway, client, mapop, name, signatures, instance):
 
     # code += "    print('" + name + "')\n"
     code += _generate_imports(mapop, is_export)
-    code += _generate_calls(methods, is_export)
+    code += _generate_calls(methods, is_export=is_export)
     code += _generate_run(instance, is_export)
     # print(code)
 
@@ -400,7 +423,7 @@ def _generate_imports(mapop, is_export=False):
     return code
 
 
-def _generate_calls(methods, is_export=False):
+def _generate_calls(methods, is_export=False, is_reverse=False):
 
     # Check the input params and call the appropriate create() method
     firstmethod = True
@@ -474,7 +497,10 @@ def _generate_calls(methods, is_export=False):
             iftest += ":\n"
             code += "    " + iftest
 
-        code += "        op = cls.create(" + ", ".join(call) + ')\n'
+        if is_reverse:
+            code += "        op = cls.rcreate(" + ", ".join(call) + ')\n'
+        else:
+            code += "        op = cls.create(" + ", ".join(call) + ')\n'
 
     code += "    else:\n"
     code += "        raise Exception('input types differ (TODO: expand this message!)')\n"
