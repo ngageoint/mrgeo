@@ -30,6 +30,10 @@ public class RequestUtils
 {
   private static final Logger log = LoggerFactory.getLogger(RequestUtils.class);
 
+  {
+    GDALUtils.register();
+  }
+
   /**
    * Parses a geographic bounds from a request parameter value
    *
@@ -87,7 +91,6 @@ public class RequestUtils
               Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),
               Math.max(Math.max(c1[0], c2[0]), Math.max(c3[0], c4[0])),
               Math.max(Math.max(c1[1], c2[1]), Math.max(c3[1], c4[1])));
-
     }
     else
     {
