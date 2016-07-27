@@ -376,8 +376,8 @@ public void testGetTileRgbPngMercator() throws Exception
   String version = "1.0.0";
   String raster = rgbsmall_nopyramids_abs;
   int x = 11346;
-  int y = 5667;
-  int z = 14;
+  int y = 11517; // 11334; // 5667;
+  int z = 15; // 14;
   String format = "png";
 
   when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );

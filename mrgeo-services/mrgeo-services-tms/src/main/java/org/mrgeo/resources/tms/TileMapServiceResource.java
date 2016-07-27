@@ -510,6 +510,8 @@ public Response getTile(@PathParam("version") final String version,
 //      b = calcBounds(1, 1, 2, pyramid, providerProperties, index);
 
       Bounds bounds = calcBounds(x, y, z, pyramid, providerProperties, index);
+      bounds = RequestUtils.reprojectBounds(bounds, SRSs[index]);
+
       raster = renderer.renderImage(pyramid, bounds, providerProperties, SRSs[index]);
     }
 
