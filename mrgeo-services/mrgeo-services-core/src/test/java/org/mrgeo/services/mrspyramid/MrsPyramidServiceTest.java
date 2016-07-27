@@ -537,7 +537,7 @@ private void testIslandsElevationFor(String format, final String width,
   if (format.equalsIgnoreCase("jpeg"))
   {
     goldenPathStr = FilenameUtils.removeExtension(goldenPathStr) + ".png";
-    //format = "PNG";
+    format = "PNG";
   }
   if (GEN_BASELINE_DATA_ONLY)
   {

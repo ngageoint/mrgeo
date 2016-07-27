@@ -128,7 +128,10 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy) {
     quantiles = new double[copy.quantiles.length][];
     for (int b=0; b < copy.quantiles.length; b++)
     {
-      this.quantiles[b] = copy.quantiles[b].clone();
+      if (copy.quantiles[b] != null)
+      {
+        this.quantiles[b] = copy.quantiles[b].clone();
+      }
     }
   }
 
@@ -345,7 +348,10 @@ public void setQuantiles(double[][] quantiles)
     this.quantiles = new double[quantiles.length][];
     for (int i = 0; i < quantiles.length; i++)
     {
-      this.quantiles[i] = ArrayUtils.clone(quantiles[i]);
+      if (quantiles[i] != null)
+      {
+        this.quantiles[i] = ArrayUtils.clone(quantiles[i]);
+      }
     }
   }
 }
@@ -911,7 +917,7 @@ public double[] getExtrema(final int zoomLevel)
   ImageStats st = getImageStats(zoomLevel, 0);
   if (st != null)
   {
-    extrema[0] = Math.max(0.0, st.min);
+    extrema[0] = st.min;
     extrema[1] = st.max;
   }
   else
