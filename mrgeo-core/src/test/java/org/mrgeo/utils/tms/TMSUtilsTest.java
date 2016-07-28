@@ -521,4 +521,22 @@ public class TMSUtilsTest
     Assert.assertEquals(180.0 - resolution, result.lon, 1e-8);
     Assert.assertEquals(-90.0, result.lat, 1e-8);
   }
+
+@Test
+@Category(UnitTest.class)
+public void testLatLonToTilePixelULOOB()
+{
+  zoom = 3;
+  int tilesize = MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT;
+
+  Tile t = TMSUtils.tileid(11, 3);
+
+  Pixel ll = TMSUtils.latLonToTilePixelUL(-44, -44, t.tx, t.ty, zoom, tilesize);
+  Pixel ur = TMSUtils.latLonToTilePixelUL(44, 44, t.tx, t.ty, zoom, tilesize);
+  
+  Assert.assertEquals("Bad lower left x", 11, ll.px);
+  Assert.assertEquals("Bad lower left y", 500, ll.py);
+  Assert.assertEquals("Bad upper right x", 1012, ur.px);
+  Assert.assertEquals("Bad upper right y", -501, ur.py);
+}
 }
