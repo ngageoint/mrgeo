@@ -39,24 +39,13 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         result = roads.rasterizevector("MASK", "12z")
         self.compareraster(result, self.name)
 
-    def test_bitwise_or(self):
-        result = self.allhundreds.convert("byte", "truncate") | 6
-        self.compareraster(result, self.name, nodata=255)
-
-    def test_bitwise_and(self):
-        result = self.allhundreds.convert("byte", "truncate") & 6
-        self.compareraster(result, self.name, nodata=255)
-
-    def test_bitwise_xor(self):
-        result = self.allhundreds.convert("byte", "truncate") ^ 6
-        self.compareraster(result, self.name, nodata=255)
-
-    def test_bitwise_complement(self):
-        result = ~self.allhundreds.convert("byte", "truncate")
-        self.compareraster(result, self.name, nodata=255)
 
     def test_add(self):
         add = self.allones + self.allhundreds
+        self.compareraster(add, self.name)
+
+    def test_add_procedural(self):
+        add = self.mrgeo.add(self.allones, rasterB=self.allhundreds)
         self.compareraster(add, self.name)
 
     def test_add_constA(self):
@@ -134,6 +123,21 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_bandcombineAlt(self):
         bands = self.allhundreds.bc(self.allones)
         self.compareraster(bands, self.name)
+    def test_bitwise_or(self):
+        result = self.allhundreds.convert("byte", "truncate") | 6
+        self.compareraster(result, self.name, nodata=255)
+
+    def test_bitwise_and(self):
+        result = self.allhundreds.convert("byte", "truncate") & 6
+        self.compareraster(result, self.name, nodata=255)
+
+    def test_bitwise_xor(self):
+        result = self.allhundreds.convert("byte", "truncate") ^ 6
+        self.compareraster(result, self.name, nodata=255)
+
+    def test_bitwise_complement(self):
+        result = ~self.allhundreds.convert("byte", "truncate")
+        self.compareraster(result, self.name, nodata=255)
 
     def test_cos(self):
         cos = self.allones.cos()

@@ -112,7 +112,11 @@ def _exceptionhook(ex_cls, ex, tb):
                 # print('{0}: {1}'.format(ex_cls, ex))
 
 
-def generate(gateway, gateway_client):
+# Always setup the hook
+sys.excepthook = _exceptionhook
+
+
+def generate(mrgeo, gateway, gateway_client):
     global _initialized
 
     if _initialized:
@@ -153,7 +157,8 @@ def generate(gateway, gateway_client):
             #     print("signature: " + s)
 
             for method in cls.register():
-                codes = None
+                ooCodes = None
+                procCodes = None
                 if method is not None:
                     name = method.strip().lower()
                     if len(name) > 0:
@@ -162,14 +167,15 @@ def generate(gateway, gateway_client):
                             continue
                         elif name in _operators:
                             # print("operator: " + name)
-                            codes = _generate_operator_code(mapop, name, signatures, instance)
+                            ooCodes = _generate_operator_code(mapop, name, signatures, instance)
                         else:
                             # print("method: " + name)
-                            codes = _generate_method_code(gateway, client, mapop, name, signatures, instance)
+                            ooCodes = _generate_oo_method_code(gateway, client, mapop, name, signatures, instance)
+                            procCodes = _generate_procedural_method_code(gateway, client, mapop, name, signatures, instance)
 
-                if codes is not None:
-                    for method_name, code in codes.items():
-                        print(code.generate())
+                if ooCodes is not None:
+                    for method_name, code in ooCodes.items():
+                        # print(code.generate())
 
                         if instance == 'RasterMapOp':
                             _rastermapop_code[method_name] = code
@@ -181,6 +187,11 @@ def generate(gateway, gateway_client):
                             _mapop_code[method_name] = code
                             setattr(RasterMapOp, method_name, code.compile().get(method_name))
                             setattr(VectorMapOp, method_name, code.compile().get(method_name))
+                if procCodes is not None:
+                    for method_name, code in procCodes.items():
+                        pass
+                        # print(code.generate())
+                        setattr(mrgeo, method_name, code.compile().get(method_name))
 
     _initialized = True
 
@@ -276,7 +287,8 @@ def _generate_operator_code(mapop, name, signatures, instance):
     return codes
 
 
-def _generate_method_code(gateway, client, mapop, name, signatures, instance):
+def _generate_oo_method_code(gateway, client, mapop, name, signatures, instance):
+
     methods = _generate_methods(instance, signatures)
 
     # print("working on " + name)
@@ -288,7 +300,7 @@ def _generate_method_code(gateway, client, mapop, name, signatures, instance):
     if len(methods) == 0:
         return None
 
-    signature = _generate_signature(methods)
+    signature = _generate_oo_signature(methods)
 
     generator = CodeGenerator()
     # Signature
@@ -300,6 +312,38 @@ def _generate_method_code(gateway, client, mapop, name, signatures, instance):
     _generate_run(generator, instance, is_export)
     # print(code)
 
+    return {name: generator}
+
+def _generate_procedural_method_code(gateway, client, mapop, name, signatures, instance):
+    methods = _generate_methods(instance, signatures)
+
+    # print("working on " + name)
+    jvm = gateway.jvm
+    cls = JavaClass(mapop, gateway_client=client)
+
+    is_export = is_remote() and is_instance_of(gateway, cls, jvm.ExportMapOp)
+
+    if len(methods) == 0:
+        return None
+
+    signature, self_method = _generate_proc_signature(methods)
+
+    generator = CodeGenerator()
+    # Signature
+    generator.write("def " + name + "(" + signature + "):", post_indent=True)
+
+    # code += "    print('" + name + "')\n"
+    _generate_imports(generator, mapop, is_export)
+    _generate_calls(generator, methods, is_export=is_export)
+    _generate_run(generator, instance, is_export)
+    # print(code)
+
+    code = generator.generate()
+    code = code.replace("self", self_method)
+
+    generator.begin()
+    for line in code.split("\n"):
+        generator.write(line)
     return {name: generator}
 
 
@@ -336,8 +380,12 @@ def _generate_saveraster():
     generator.write("if (op.setup(self.job, self.context.getConf()) and")
     generator.write("op.execute(self.context) and")
     generator.write("op.teardown(self.job, self.context.getConf())):", post_indent=True)
-    generator.write("new_resource = copy.copy(self)")
-    generator.write("new_resource.mapop = op")
+    generator.write("if is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):", post_indent=True)
+    generator.write("new_resource = RasterMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
+    generator.write("elif is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):", post_indent=True)
+    generator.write("new_resource = VectorMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
+    generator.write("else:", post_indent=True)
+    generator.write("raise Exception('Unable to wrap a python object around returned map op: ' + str(op))", post_unindent=True)
     generator.write("gdalutils = JavaClass('org.mrgeo.utils.GDALUtils', gateway_client=self.gateway._gateway_client)")
     generator.write("java_image = op.image()")
     generator.write("width = java_image.getRasterXSize()")
@@ -403,7 +451,6 @@ def _generate_saveraster():
 
 def _generate_imports(generator, mapop, is_export=False):
     # imports
-    generator.write("import copy")
     generator.write("from pymrgeo.instance import is_instance_of")
     generator.write("from pymrgeo import RasterMapOp")
     generator.write("from pymrgeo import VectorMapOp")
@@ -493,6 +540,9 @@ def _generate_calls(generator, methods, is_export=False, is_reverse=False):
 
             call += [call_name]
 
+        if len(varargcode) > 0:
+            generator.append(varargcode)
+
         if len(iftest) > 0:
             generator.write(iftest + ":")
         generator.indent()
@@ -510,8 +560,6 @@ def _generate_calls(generator, methods, is_export=False, is_reverse=False):
     # code += "    method = inspect.stack()[0][3]\n"
     # code += "    print(method)\n"
 
-    if len(varargcode) > 0:
-        generator.append(varargcode)
 
 def _method_name(type_name, var_name, default_value):
     if type_name == "String":
@@ -631,7 +679,7 @@ def _in_signature(param, signature):
     return False
 
 
-def _generate_signature(methods):
+def _generate_oo_signature(methods):
     signature = []
     dual = len(methods) > 1
     for method in methods:
@@ -660,6 +708,36 @@ def _generate_signature(methods):
 
     return ",".join(sig)
 
+def _generate_proc_signature(methods):
+    signature = []
+    dual = len(methods) > 1
+    self_var = None
+    for method in methods:
+        for param in method:
+            # print("Param: " + str(param))
+            if (not param[2] == "self" or self_var == None) and not _in_signature(param, signature):
+                signature.append(param)
+                if param[2] == "self" and self_var == None:
+                    self_var = param[0]
+                if param[4]:
+                    # var args must be the last parameter
+                    break
 
-# Always setup the hook
-sys.excepthook = _exceptionhook
+    sig = []
+    for s in signature:
+        if s[4]:
+            sig += ["*args"]
+        else:
+            if s[3] is not None:
+                if s[3].endswith("NaN"):
+                    sig += [s[0] + "=float('nan')"]
+                else:
+                    sig += [s[0] + "=" + s[3]]
+            elif dual and s[0] != self_var:
+                sig += [s[0] + "=None"]
+            else:
+                sig += [s[0]]
+
+    return ",".join(sig), self_var
+
+
