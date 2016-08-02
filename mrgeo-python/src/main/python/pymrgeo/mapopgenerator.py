@@ -14,29 +14,50 @@ from pymrgeo.rastermapop import RasterMapOp
 from pymrgeo.vectormapop import VectorMapOp
 
 
-_operators = {"+": ["__add__", "__radd__", "__iadd__"],
-              "-": ["__sub__", "__rsub__", "__isub__"],
-              "*": ["__mul__", "__rmul__", "__imul__"],
-              "/": ["__div__", "__truediv__", "__rdiv__", "__rtruediv__", "__idiv__", "__itruediv__"],
-              "//": [],  # floor div
-              "**": ["__pow__", "__rpow__", "__ipow__"],  # pow
+# Some MrGeo map ops include operators as their function name. Each
+# of those operators work in command-line map algebra. This data
+# structure determines how/if those operators are overloaded in
+# Python for MrGeo.
+#
+# The key is the name/symbol of the operator. The value is an array
+# of two elements, the first being an array of python "magic methods"
+# to map the operator to when the left-hand operand is "self" (e.g. an
+# image or vector map op). The second element is an array of python
+# "magic methods" to map to the operator when the right-hand operand
+# is "self" (e.g. "2 ** image"). For operators where operand ordering
+# does not matter (e.g. +, *, etc...) or there is only one operand,
+# the second element is an empty array. For operators that cannot be
+# overridden in python, both elements of the array are empty arrays.
+#
+# A scenario where this is important is with the expression "image ** 2"
+# compared to "2 ** image". In the first case, python will invoke the
+# __pow__  magic mathod on the image object (so image is "self" when the
+# method is called. In the second case, python will invoke __rand__ again
+# where "self" is image. However, in that case, our overridden method
+# needs to invoke map algebra on the Java/Scala side with the arguments
+# reversed.
+_operators = {"+": [["__add__", "__iadd__", "__radd__"], []],
+              "-": [["__sub__", "__isub__"], ["__rsub__"]],
+              "*": [["__mul__", "__imul__", "__rmul__"], []],
+              "/": [["__div__", "__truediv__", "__idiv__", "__itruediv__"], ["__rdiv__", "__rtruediv__"]],
+              "//": [[], []],  # floor div
+              "**": [["__pow__", "__ipow__"], ["__rpow__"]], # pow
               "=": [],  # assignment, can't do!
-              "<": ["__lt__"],
-              "<=": ["__le__"],
-              ">": ["__gt__"],
-              ">=": ["__ge__"],
-              "==": ["__eq__"],
-              "!=": ["__ne__"],
-              "<>": [],
-              "!": [],
-              "&&": ["__and__", "__rand__", "__iand__"],
-              "&": [],
-              "||": ["__or__", "__ror__", "__ior__"],
-              "|": [],
-              "~": [],
-              "^": [],
-              # "^": ["__xor__", "__rxor__", "__ixor__"],
-              "^=": []}
+              "<": [["__lt__"], []],
+              "<=": [["__le__"], []],
+              ">": [["__gt__"], []],
+              ">=": [["__ge__"], []],
+              "==": [["__eq__"], []],
+              "!=": [["__ne__"], []],
+              "<>": [[], []],
+              "!": [[], []],
+              "&&": [[], []],  # can't override logical and
+              "&": [["__and__", "__iand__", "__rand__"], []],
+              "||": [[], []],  # can't override logical or
+              "|": [["__or__", "__ior__", "__ror__"], []],
+              "~": [["__invert__"], []],
+              "^": [["__xor__", "__ixor__", "__rxor__"], []],
+              "^=": [[], []]}
 _reserved = ["or", "and", "str", "int", "long", "float", "bool"]
 
 _mapop_code = {}
@@ -60,7 +81,7 @@ def _exceptionhook(ex_cls, ex, tb):
                 code = _rastermapop_code[method]
                 cls = 'RasterMapOp'
             elif _vectormapop_code.has_key(method):
-                code = _rastermapop_code[method]
+                code = _vectormapop_code[method]
                 cls = 'VectorMapOp'
             elif _mapop_code.has_key(method):
                 code = _rastermapop_code[method]
@@ -116,60 +137,91 @@ def generate(gateway, gateway_client):
     for rawmapop in mapops:
         mapop = str(rawmapop.getCanonicalName().rstrip('$'))
 
-        java_import(jvm, mapop)
+        # Skip IngestImageMapOp because there is an explicit method defined in
+        # MrGeo class for ingesting an image, and _get_instance_type will raise
+        # an exception when run against that map op.
+        if not mapop.endswith(".IngestImageMapOp") and not mapop.endswith(".InlineCsvMapOp"):
+            java_import(jvm, mapop)
 
-        cls = JavaClass(mapop, gateway_client=client)
+            cls = JavaClass(mapop, gateway_client=client)
 
-        if is_instance_of(gateway, cls, jvm.RasterMapOp):
-            instance = 'RasterMapOp'
-        elif is_instance_of(gateway, cls, jvm.VectorMapOp):
-            instance = 'VectorMapOp'
-        elif is_instance_of(gateway, cls, jvm.MapOp):
-            instance = "MapOp"
-        else:
-            # raise Exception("mapop (" + mapop + ") is not a RasterMapOp, VectorMapOp, or MapOp")
-            print("mapop (" + mapop + ") is not a RasterMapOp, VectorMapOp, or MapOp")
-            continue
+            signatures = jvm.MapOpFactory.getSignatures(mapop)
+            instance = _get_instance_type(signatures, gateway, cls, mapop)
+            # for s in signatures:
+            #     print("signature: " + s)
 
-        signatures = jvm.MapOpFactory.getSignatures(mapop)
-        # for s in signatures:
-        #     print("signature: " + s)
+            for method in cls.register():
+                codes = None
+                if method is not None:
+                    name = method.strip().lower()
+                    if len(name) > 0:
+                        if name in _reserved:
+                            # print("reserved: " + name)
+                            continue
+                        elif name in _operators:
+                            # print("operator: " + name)
+                            codes = _generate_operator_code(mapop, name, signatures, instance)
+                        else:
+                            # print("method: " + name)
+                            codes = _generate_method_code(gateway, client, mapop, name, signatures, instance)
 
-        for method in cls.register():
-            codes = None
-            if method is not None:
-                name = method.strip().lower()
-                if len(name) > 0:
-                    if name in _reserved:
-                        # print("reserved: " + name)
-                        continue
-                    elif name in _operators:
-                        # print("operator: " + name)
-                        codes = _generate_operator_code(mapop, name, signatures, instance)
-                    else:
-                        # print("method: " + name)
-                        codes = _generate_method_code(gateway, client, mapop, name, signatures, instance)
+                if codes is not None:
+                    for method_name, code in codes.items():
+                        # print(code)
 
-            if codes is not None:
-                for method_name, code in codes.items():
-                    # print(code)
+                        compiled = {}
+                        exec code in compiled
 
-                    compiled = {}
-                    exec code in compiled
-
-                    if instance == 'RasterMapOp':
-                        _rastermapop_code[method_name] = code
-                        setattr(RasterMapOp, method_name, compiled.get(method_name))
-                    elif instance == "VectorMapOp":
-                        _vectormapop_code[method_name] = code
-                        setattr(VectorMapOp, method_name, compiled.get(method_name))
-                    elif is_instance_of(gateway, cls, jvm.MapOp):
-                        _mapop_code[method_name] = code
-                        setattr(RasterMapOp, method_name, compiled.get(method_name))
-                        setattr(VectorMapOp, method_name, compiled.get(method_name))
+                        if instance == 'RasterMapOp':
+                            _rastermapop_code[method_name] = code
+                            setattr(RasterMapOp, method_name, compiled.get(method_name))
+                        elif instance == "VectorMapOp":
+                            _vectormapop_code[method_name] = code
+                            setattr(VectorMapOp, method_name, compiled.get(method_name))
+                        elif is_instance_of(gateway, cls, jvm.MapOp):
+                            _mapop_code[method_name] = code
+                            setattr(RasterMapOp, method_name, compiled.get(method_name))
+                            setattr(VectorMapOp, method_name, compiled.get(method_name))
 
     _initialized = True
 
+
+def _get_instance_type(signatures, gateway, cls, mapop):
+    type_map = {'RasterMapOp': 0, 'VectorMapOp': 0, 'MapOp': 0}
+    for sig in signatures:
+        has_type = {'RasterMapOp': False, 'VectorMapOp': False, 'MapOp': False}
+        for variable in sig.split("|"):
+            # print("variable: " + variable)
+            names = re.split("[:=]+", variable)
+            new_type = names[1][names[1].rfind('.')+1:]
+
+            if new_type.endswith("*"):
+                new_type = new_type[:-1]
+
+            if new_type == 'RasterMapOp' or new_type == 'VectorMapOp' or new_type == 'MapOp':
+                has_type[new_type] = True
+        for t,v in has_type.iteritems():
+            if v:
+                type_map[t] += 1
+
+    # Make sure that all of the signatures have an argument of one of the map op types.
+    # If the map op is either RasterMapOp or VectorMapOp, and all of the signatures have
+    # an argument of that type, then use that for the instance type.
+    if is_instance_of(gateway, cls, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):
+        if type_map['RasterMapOp'] == len(signatures):
+            return 'RasterMapOp'
+    elif is_instance_of(gateway, cls, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):
+        if type_map['VectorMapOp'] == len(signatures):
+            return 'VectorMapOp'
+    # There is at least one signature that does not include a parameter of the same type
+    # as the map op itself. Instead, we get a type that is represented in all the signatures.
+    for t,v in type_map.iteritems():
+        if v == len(signatures):
+            return t
+
+    msg = 'Cannot determine an instance type to use for ' + mapop
+    print(msg)
+    raise Exception(msg)
 
 def _generate_operator_code(mapop, name, signatures, instance):
     methods = _generate_methods(instance, signatures)
@@ -204,18 +256,23 @@ def _generate_operator_code(mapop, name, signatures, instance):
         corrected_methods.append(new_method)
 
     codes = {}
-    for mname in _operators[name]:
-        code = ""
+    for op_index in range(0,2):
+        for mname in _operators[name][op_index]:
+            # print("Processing " + mname)
+            code = ""
 
-        # Signature
-        code += "def " + mname + "(self, other):" + "\n"
-        # code += "    print('" + name + "')\n"
+            # Signature
+            if len(corrected_methods) == 1:
+                code += "def " + mname + "(self):" + "\n"
+            else:
+                code += "def " + mname + "(self, other):" + "\n"
+            # code += "    print('" + name + "')\n"
 
-        code += _generate_imports(mapop)
-        code += _generate_calls(corrected_methods)
-        code += _generate_run()
+            code += _generate_imports(mapop)
+            code += _generate_calls(corrected_methods, is_reverse=True if op_index == 1 else False)
+            code += _generate_run(instance)
 
-        codes[mname] = code
+            codes[mname] = code
     return codes
 
 
@@ -239,24 +296,27 @@ def _generate_method_code(gateway, client, mapop, name, signatures, instance):
 
     # code += "    print('" + name + "')\n"
     code += _generate_imports(mapop, is_export)
-    code += _generate_calls(methods, is_export)
-    code += _generate_run(is_export)
+    code += _generate_calls(methods, is_export=is_export)
+    code += _generate_run(instance, is_export)
     # print(code)
 
     return {name: code}
 
 
-def _generate_run(is_export=False):
+def _generate_run(instance, is_export=False):
     code = ""
 
     # Run the MapOp
     code += "    if (op.setup(self.job, self.context.getConf()) and\n"
     code += "        op.execute(self.context) and\n"
     code += "        op.teardown(self.job, self.context.getConf())):\n"
-    # copy the Raster/VectorMapOp (so we got all the monkey patched code) and return it as the new mapop
-    # TODO:  Add VectorMapOp!
-    code += "        new_resource = copy.copy(self)\n"
-    code += "        new_resource.mapop = op\n"
+    # Return a new python RasterMapOp or VectorMapOp to wrap the Java MapOp
+    code += "        if is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):\n"
+    code += "            new_resource = RasterMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)\n"
+    code += "        elif is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):\n"
+    code += "            new_resource = VectorMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)\n"
+    code += "        else:\n"
+    code += "            raise Exception('Unable to wrap a python object around returned map op: ' + str(op))\n"
 
     if is_export:
         code += _generate_saveraster()
@@ -346,6 +406,9 @@ def _generate_imports(mapop, is_export=False):
     code = ""
     # imports
     code += "    import copy\n"
+    code += "    from pymrgeo.instance import is_instance_of\n"
+    code += "    from pymrgeo import RasterMapOp\n"
+    code += "    from pymrgeo import VectorMapOp\n"
     code += "    from numbers import Number\n"
     if is_export:
         code += "    import base64\n"
@@ -360,7 +423,7 @@ def _generate_imports(mapop, is_export=False):
     return code
 
 
-def _generate_calls(methods, is_export=False):
+def _generate_calls(methods, is_export=False, is_reverse=False):
 
     # Check the input params and call the appropriate create() method
     firstmethod = True
@@ -380,13 +443,14 @@ def _generate_calls(methods, is_export=False):
             var_name = param[0]
             type_name = param[1]
             call_name = param[2]
+            default_value = param[3]
             # print("param => " + str(param))
             # print("var name: " + var_name)
             # print("type name: " + type_name)
             # print("call name: " + call_name)
 
             if param[4]:
-                call_name, it, et, accessor = _method_name(type_name, "arg")
+                call_name, it, et, accessor = _method_name(type_name, "arg", None)
 
                 varargcode += "    for arg in args:\n"
                 varargcode += "        if isinstance(arg, list):\n"
@@ -424,7 +488,7 @@ def _generate_calls(methods, is_export=False):
                 if call_name == "self":
                     var_name = call_name
 
-                call_name, it, et, accessor = _method_name(type_name, var_name)
+                call_name, it, et, accessor = _method_name(type_name, var_name, default_value)
                 iftest += it
 
             call += [call_name]
@@ -433,7 +497,10 @@ def _generate_calls(methods, is_export=False):
             iftest += ":\n"
             code += "    " + iftest
 
-        code += "        op = cls.create(" + ", ".join(call) + ')\n'
+        if is_reverse:
+            code += "        op = cls.rcreate(" + ", ".join(call) + ')\n'
+        else:
+            code += "        op = cls.create(" + ", ".join(call) + ')\n'
 
     code += "    else:\n"
     code += "        raise Exception('input types differ (TODO: expand this message!)')\n"
@@ -447,9 +514,13 @@ def _generate_calls(methods, is_export=False):
     return code
 
 
-def _method_name(type_name, var_name):
+def _method_name(type_name, var_name, default_value):
     if type_name == "String":
-        iftest = " type(" + var_name + ") is str"
+        phrase = " type(" + var_name + ") is str"
+        if (default_value is not None and default_value == 'None'):
+            iftest = " (" + var_name + " is None or" + phrase + ")"
+        else:
+            iftest = phrase
         call_name = "str(" + var_name + ")"
         excepttest = "not" + iftest
         accessor = ""
@@ -476,13 +547,21 @@ def _method_name(type_name, var_name):
     elif type_name.endswith("MapOp"):
         base_var = var_name
         var_name += ".mapop"
-        iftest = " hasattr(" + base_var + ", 'mapop') and self.is_instance_of(" + var_name + ", '" + type_name + "')"
+        phrase = " hasattr(" + base_var + ", 'mapop') and self.is_instance_of(" + var_name + ", '" + type_name + "')"
+        if (default_value is not None and default_value == 'None'):
+            iftest = " (" + var_name + " is None or" + phrase + ")"
+        else:
+            iftest = phrase
         call_name = var_name
         excepttest = " hasattr(" + base_var + ", 'mapop') and not self.is_instance_of(" + \
                      var_name + ", '" + type_name + "')"
         accessor = ".mapop"
     else:
-        iftest = " self.is_instance_of(" + var_name + ", '" + type_name + "')"
+        phrase = " self.is_instance_of(" + var_name + ", '" + type_name + "')"
+        if (default_value is not None and default_value == 'None'):
+            iftest = " (" + var_name + " is None or" + phrase + ")"
+        else:
+            iftest = phrase
         call_name = var_name
         excepttest = "not" + iftest
         accessor = ""

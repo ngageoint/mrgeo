@@ -17,13 +17,16 @@
 package org.mrgeo.cmd.mrsimageinfo;
 
 import org.apache.commons.cli.*;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.yarn.util.SystemClock;
 import org.joda.time.format.DateTimeFormat;
 import org.mrgeo.cmd.Command;
+import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
@@ -41,6 +44,8 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.DataBuffer;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 
 public class MrsImageInfo extends Command
@@ -58,14 +63,7 @@ public MrsImageInfo()
 
 public static Options createOptions()
 {
-  final Options result = new Options();
-
-  // Option output = new Option("o", "output", true, "Output directory");
-  // output.setRequired(true);
-  // result.addOption(output);
-
-  result.addOption(new Option("v", "verbose", false, "Verbose"));
-  result.addOption(new Option("d", "debug", false, "Debug (very verbose)"));
+  Options result = MrGeo.createOptions();
 
   return result;
 }
@@ -83,62 +81,62 @@ public static String human(final long bytes)
   return String.format("%.1f%sB", bytes / Math.pow(unit, exp), pre);
 }
 
-private static void printNodata(final MrsPyramidMetadata metadata)
+private static void printNodata(final MrsPyramidMetadata metadata, PrintStream out)
 {
-  System.out.print("NoData: ");
+  out.print("NoData: ");
   for (int band = 0; band < metadata.getBands(); band++)
   {
     if (band > 0)
     {
-      System.out.print(", ");
+      out.print(", ");
     }
     switch (metadata.getTileType())
     {
     case DataBuffer.TYPE_BYTE:
-      System.out.print(metadata.getDefaultValueByte(band));
+      out.print(metadata.getDefaultValueByte(band));
       break;
     case DataBuffer.TYPE_FLOAT:
-      System.out.print(metadata.getDefaultValueFloat(band));
+      out.print(metadata.getDefaultValueFloat(band));
       break;
     case DataBuffer.TYPE_DOUBLE:
-      System.out.print(metadata.getDefaultValueDouble(band));
+      out.print(metadata.getDefaultValueDouble(band));
       break;
     case DataBuffer.TYPE_INT:
-      System.out.print(metadata.getDefaultValueInt(band));
+      out.print(metadata.getDefaultValueInt(band));
       break;
     case DataBuffer.TYPE_SHORT:
     case DataBuffer.TYPE_USHORT:
-      System.out.print(metadata.getDefaultValueShort(band));
+      out.print(metadata.getDefaultValueShort(band));
       break;
     default:
       break;
     }
   }
-  System.out.println("");
+  out.println("");
 }
 
-private static void printTileType(final MrsPyramidMetadata metadata)
+private static void printTileType(final MrsPyramidMetadata metadata, PrintStream out)
 {
-  System.out.print("Type: ");
+  out.print("Type: ");
   switch (metadata.getTileType())
   {
   case DataBuffer.TYPE_BYTE:
-    System.out.println("byte");
+    out.println("byte");
     break;
   case DataBuffer.TYPE_FLOAT:
-    System.out.println("float");
+    out.println("float");
     break;
   case DataBuffer.TYPE_DOUBLE:
-    System.out.println("double");
+    out.println("double");
     break;
   case DataBuffer.TYPE_INT:
-    System.out.println("int");
+    out.println("int");
     break;
   case DataBuffer.TYPE_SHORT:
-    System.out.println("short");
+    out.println("short");
     break;
   case DataBuffer.TYPE_USHORT:
-    System.out.println("unsigned short");
+    out.println("unsigned short");
     break;
   default:
     break;
@@ -179,26 +177,48 @@ public int run(final String[] args, final Configuration conf,
         return 1;
       }
 
-      final Path p = new Path(pyramidName);
-      final FileSystem fs = p.getFileSystem(config);
-      if (!fs.exists(p))
+//      final Path p = new Path(pyramidName);
+//      final FileSystem fs = p.getFileSystem(config);
+//      if (!fs.exists(p))
+//      {
+//        out.println("MrsPyramid does not exist: \"" + pyramidName + "\"");
+//        new HelpFormatter().printHelp("MrsImageInfo <pyramid>", options);
+//        return 1;
+//      }
+
+      try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
       {
-        System.out.println("MrsPyramid does not exist: \"" + pyramidName + "\"");
-        new HelpFormatter().printHelp("MrsImageInfo <pyramid>", options);
-        return 1;
-      }
+        try (PrintStream out = new PrintStream(baos))
+        {
+          try
+          {
+            final MrsImageDataProvider dp =
+                DataProviderFactory.getMrsImageDataProviderNoCache(pyramidName, AccessMode.READ, providerProperties);
 
-      System.out.println("");
-      System.out.println("");
-      System.out.println("MrsPyramid Information");
-      System.out.println("======================");
 
-      final MrsPyramid pyramid = MrsPyramid.open(pyramidName, providerProperties);
-      printMetadata(pyramid.getMetadata(), providerProperties);
+            out.println("");
+            out.println("");
+            out.println("MrsPyramid Information");
+            out.println("======================");
 
-      if (line.hasOption("v"))
-      {
-        printSplitPoints(pyramidName);
+            final MrsPyramid pyramid = MrsPyramid.open(dp);
+
+            //final MrsPyramid pyramid = MrsPyramid.open(pyramidName, providerProperties);
+            printMetadata(pyramid.getMetadata(), providerProperties, out);
+
+            if (line.hasOption("v"))
+            {
+              printSplitPoints(pyramidName, out);
+            }
+          }
+          catch (final DataProviderNotFound dpnf)
+          {
+            out.println("MrsPyramid does not exist: \"" + pyramidName + "\"");
+            new HelpFormatter().printHelp("MrsImageInfo <pyramid>", options);
+            return 1;
+          }
+          System.out.println(new String(baos.toByteArray(), StandardCharsets.UTF_8));
+        }
       }
     }
     catch (final ParseException e)
@@ -218,7 +238,7 @@ public int run(final String[] args, final Configuration conf,
   return -1;
 }
 
-private void printFileInfo(final Path pfile)
+private void printFileInfo(final Path pfile, PrintStream out)
 {
   // TODO: The following is HDFS-sepcific; needs to be re-factored
   try
@@ -226,24 +246,24 @@ private void printFileInfo(final Path pfile)
     final FileSystem fs = pfile.getFileSystem(config);
     final FileStatus stat = fs.getFileStatus(pfile);
 
-    System.out.print("    date: " +
+    out.print("    date: " +
         DateTimeFormat.shortDateTime().print(stat.getModificationTime()));
-    System.out.println("  size: " + human(stat.getLen()));
+    out.println("  size: " + human(stat.getLen()));
 
     final FsPermission p = stat.getPermission();
 
     if (debug)
     {
-      System.out.print("    ");
-      System.out.print(stat.isDir() ? "d" : "f");
-      System.out.print(" u: " + stat.getOwner() + " (" +
+      out.print("    ");
+      out.print(stat.isDir() ? "d" : "f");
+      out.print(" u: " + stat.getOwner() + " (" +
           p.getUserAction().toString().toLowerCase() + ")");
-      System.out.print(" g: " + stat.getGroup() + " (" +
+      out.print(" g: " + stat.getGroup() + " (" +
           p.getGroupAction().toString().toLowerCase() + ")");
-      System.out.print(" o: " + "(" + p.getOtherAction().toString().toLowerCase() + ")");
+      out.print(" o: " + "(" + p.getOtherAction().toString().toLowerCase() + ")");
 
-      System.out.print(" blk: " + human(stat.getBlockSize()));
-      System.out.println(" repl: " + stat.getReplication());
+      out.print(" blk: " + human(stat.getBlockSize()));
+      out.println(" repl: " + stat.getReplication());
     }
   }
   catch (final IOException e)
@@ -253,63 +273,63 @@ private void printFileInfo(final Path pfile)
 }
 
 private void printMetadata(final MrsPyramidMetadata metadata,
-    final ProviderProperties providerProperties) throws DataProviderNotFound
+    final ProviderProperties providerProperties, PrintStream out) throws DataProviderNotFound
 {
-  System.out.println("name: \"" + metadata.getPyramid() + "\"");
+  out.println("name: \"" + metadata.getPyramid() + "\"");
   if (verbose)
   {
-    printFileInfo(new Path(metadata.getPyramid()));
+    printFileInfo(new Path(metadata.getPyramid()), out);
   }
 
   DecimalFormat df = new DecimalFormat(" ##0.00000000;-##0.00000000");
 
   final Bounds bounds = metadata.getBounds();
-  System.out.println("");
-  System.out.print("Bounds: (lon/lat)");
-  System.out.println("  size (" + df.format(bounds.width()) + ", " +
+  out.println("");
+  out.print("Bounds: (lon/lat)");
+  out.println("  pixel size (" + df.format(bounds.width()) + ", " +
       df.format(bounds.height()) + ")");
-  System.out.print("  UL (" + df.format(bounds.w) + ", " + df.format(bounds.n) +
+  out.print("  UL (" + df.format(bounds.w) + ", " + df.format(bounds.n) +
       ")");
-  System.out.println("  UR (" + df.format(bounds.e) + ", " + df.format(bounds.n) +
+  out.println("  UR (" + df.format(bounds.e) + ", " + df.format(bounds.n) +
       ")");
-  System.out.print("  LL (" + df.format(bounds.w) + ", " + df.format(bounds.s) +
+  out.print("  LL (" + df.format(bounds.w) + ", " + df.format(bounds.s) +
       ")");
-  System.out.println("  LR (" + df.format(bounds.e) + ", " + df.format(bounds.s) +
+  out.println("  LR (" + df.format(bounds.e) + ", " + df.format(bounds.s) +
       ")");
-  System.out.println("");
-  printTileType(metadata);
-  System.out.println("Tile size: " + metadata.getTilesize());
-  System.out.println("Bands: " + metadata.getBands());
-  printNodata(metadata);
-  System.out.println("Classification: " + metadata.getClassification().name());
-  System.out.println("Resampling: " + metadata.getResamplingMethod());
-  System.out.println("");
+  out.println("");
+  printTileType(metadata, out);
+  out.println("Tile size: " + metadata.getTilesize());
+  out.println("Bands: " + metadata.getBands());
+  printNodata(metadata, out);
+  out.println("Classification: " + metadata.getClassification().name());
+  out.println("Resampling: " + metadata.getResamplingMethod());
+  out.println("");
   for (int zoom = metadata.getMaxZoomLevel(); zoom >= 1; zoom--)
   {
-    System.out.println("level " + zoom);
-    System.out.println("  image: \"" + metadata.getPyramid() + " " +
+    out.println("level " + zoom);
+    out.println("  image: \"" + metadata.getPyramid() + " " +
         metadata.getName(zoom) + "\"");
     if (verbose)
     {
-      printFileInfo(new Path(metadata.getPyramid(), metadata.getName(zoom)));
+      printFileInfo(new Path(metadata.getPyramid(), metadata.getName(zoom)), out);
     }
 
     final LongRectangle pb = metadata.getPixelBounds(zoom);
 
-    System.out.print("  width: " + pb.getWidth());
-    System.out.print(" height: " + pb.getHeight());
+    out.print("  width: " + pb.getWidth());
+    out.print(" height: " + pb.getHeight());
 
     df = new DecimalFormat("0.00000000");
 
-    System.out.print("  px w: " + df.format(metadata.getPixelWidth(zoom)));
-    System.out.println(" px h: " + df.format(metadata.getPixelWidth(zoom)));
+    out.print("  px w: " + df.format(metadata.getPixelWidth(zoom)));
+    out.println(" px h: " + df.format(metadata.getPixelWidth(zoom)));
 
     final LongRectangle tb = metadata.getTileBounds(zoom);
 
     df = new DecimalFormat("#");
 
-    System.out.print("  Tile Bounds: (x, y)");
-    System.out.print("  size (" + df.format(tb.getWidth()) + ", " + df.format(tb.getHeight()) +
+    out.print("  Tile Bounds: (x, y)");
+    out.print("  size (" + df.format(tb.getWidth()) + ", " + df.format(tb.getHeight()) +
         ")");
     if (verbose)
     {
@@ -321,56 +341,56 @@ private void printMetadata(final MrsPyramidMetadata metadata,
       try
       {
         reader = dp.getMrsTileReader(context);
-        System.out.println(" stored tiles: " + reader.calculateTileCount());
+        out.println(" stored tiles: " + reader.calculateTileCount());
       }
       catch (IOException e)
       {
-        System.out.println("Unable to get tile reader for: " + metadata.getPyramid());
+        out.println("Unable to get tile reader for: " + metadata.getPyramid());
       }
     }
     else
     {
-      System.out.println();
+      out.println();
     }
     if (tb.getWidth() == 1 && tb.getHeight() == 1)
     {
-      System.out
+      out
           .println("    (" + df.format(tb.getMinX()) + ", " + df.format(tb.getMinY()) + ")");
     }
     else
     {
-      System.out.print("    UL (" + df.format(tb.getMinX()) + ", " + df.format(tb.getMaxY()) +
+      out.print("    UL (" + df.format(tb.getMinX()) + ", " + df.format(tb.getMaxY()) +
           ")");
-      System.out.println("  UR (" + df.format(tb.getMaxX()) + ", " + df.format(tb.getMaxY()) +
+      out.println("  UR (" + df.format(tb.getMaxX()) + ", " + df.format(tb.getMaxY()) +
           ")");
-      System.out.print("    LL (" + df.format(tb.getMinX()) + ", " + df.format(tb.getMinY()) +
+      out.print("    LL (" + df.format(tb.getMinX()) + ", " + df.format(tb.getMinY()) +
           ")");
-      System.out.println("  LR (" + df.format(tb.getMaxX()) + ", " + df.format(tb.getMinY()) +
+      out.println("  LR (" + df.format(tb.getMaxX()) + ", " + df.format(tb.getMinY()) +
           ")");
     }
-    System.out.println("  ImageStats:");
+    out.println("  ImageStats:");
     for (int b = 0; b < metadata.getBands(); b++)
     {
-      System.out.print("    ");
+      out.print("    ");
       if (metadata.getBands() > 1)
       {
-        System.out.print("band " + b + ": ");
+        out.print("band " + b + ": ");
       }
 
       df = new DecimalFormat("0.#");
 
       final ImageStats stats = metadata.getImageStats(zoom, b);
-      System.out.println("min: " + df.format(stats.min) + " max: " + df.format(stats.max) +
+      out.println("min: " + df.format(stats.min) + " max: " + df.format(stats.max) +
           " mean: " + df.format(stats.mean) + " sum: " + df.format(stats.sum) + " count: " +
           df.format(stats.count));
     }
 
   }
-  System.out.println("");
-  System.out.println("");
+  out.println("");
+  out.println("");
 }
 
-private void printSplitPoints(final String pyramidName)
+private void printSplitPoints(final String pyramidName, PrintStream out)
 {
 
 }

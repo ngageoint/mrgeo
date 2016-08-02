@@ -811,6 +811,51 @@
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
+      <id>cdh580-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.8.0</hadoop.version>
+        <mahout.version>0.9-cdh5.8.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.8.0</spark.version>
+        <spark.scope>compile</spark.scope>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.8.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh580</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.8.0</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.8.0</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.8.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.8.0</spark.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <final.classifier>cdh5.8.0-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-servlet</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>cdh571-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.7.1</hadoop.version>
@@ -1753,11 +1798,129 @@
          <skipShade>true</skipShade>
     -->
     <profile>
+      <id>emr-4.7.2</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.11.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.7.2</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>1.6.2</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>emr-4.7.1</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.11.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.7.2</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>1.6.1</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>emr-4.7.0</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.11.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.7.2</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>1.6.1</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>emr-4.6.0</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.11.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.7.2</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>1.6.1</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>emr-4.5.0</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
-        <accumulo.version>1.6.1</accumulo.version>
-        <geowave.version>0.9.0</geowave.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
@@ -1788,8 +1951,6 @@
       <id>emr-4.4.0</id>
       <properties>
         <hadoop.version>2.7.1</hadoop.version>
-        <accumulo.version>1.6.0</accumulo.version>
-        <geowave.version>0.9.0</geowave.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->

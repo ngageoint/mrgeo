@@ -108,7 +108,7 @@ abstract class MrGeoJob extends Logging {
     logInfo("Setting up job")
     setup(job, conf)
 
-    val context = new SparkContext(conf)
+    val context = SparkContext.getOrCreate(conf)
 
     //context.addSparkListener(new MrGeoListener(context))
 

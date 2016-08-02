@@ -70,6 +70,7 @@ class MrGeo(object):
         java_import(jvm, "org.mrgeo.job.*")
         java_import(jvm, "org.mrgeo.mapalgebra.*")
         java_import(jvm, "org.mrgeo.mapalgebra.raster.*")
+        java_import(jvm, "org.mrgeo.mapalgebra.vector.*")
         java_import(jvm, "org.mrgeo.utils.*")
         java_import(jvm, "org.mrgeo.utils.logging.*")
 
@@ -104,54 +105,58 @@ class MrGeo(object):
         job = self._get_job()
         job.useYarn()
 
-    def start(self):
-        jvm = self._get_jvm()
-        job = self._get_job()
+    def start(self, context=None):
 
-        job.addMrGeoProperties()
-        dpf_properties = jvm.DataProviderFactory.getConfigurationFromProviders()
+        if not context:
+            jvm = self._get_jvm()
+            job = self._get_job()
 
-        for prop in dpf_properties:
-            job.setSetting(prop, dpf_properties[prop])
+            job.addMrGeoProperties()
+            dpf_properties = jvm.DataProviderFactory.getConfigurationFromProviders()
 
-        if job.isYarn():
-            job.loadYarnSettings()
+            for prop in dpf_properties:
+                job.setSetting(prop, dpf_properties[prop])
 
-
-        java_gateway.set_field(job, "jars",
-                  jvm.StringUtils.concatUnique(
-                      jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
-                      jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
-
-        conf = jvm.MrGeoDriver.prepareJob(job)
-
-        if job.isYarn():
-            # need to override the yarn mode to "yarn-client" for python
-            conf.set("spark.master", "yarn-client")
-
-            if not conf.getBoolean("spark.dynamicAllocation.enabled", False):
-                conf.set("spark.executor.instances", str(job.executors()))
-
-            conf.set("spark.executor.cores", str(job.cores()))
-
-            # in yarn-cluster, this is the total memory in the cluster, but here in yarn-client, it is
-            # the memory per executor.  Go figure!
-            mem = job.executorMemKb()
-
-            overhead = conf.getInt("spark.yarn.executor.memoryOverhead", 384)
-            if (mem * 0.1) > overhead:
-                overhead = mem * 0.1
-
-            if overhead < 384:
-                overhead = 384
-
-            mem -= (overhead * 2)  # overhead is 1x for driver and 1x for application master (am)
-            conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem), "m"))
+            if job.isYarn():
+                job.loadYarnSettings()
 
 
-        jsc = jvm.JavaSparkContext(conf)
-        jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
-        self.sparkContext = jsc.sc()
+            java_gateway.set_field(job, "jars",
+                      jvm.StringUtils.concatUnique(
+                          jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
+                          jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
+
+            conf = jvm.MrGeoDriver.prepareJob(job)
+
+            if job.isYarn():
+                # need to override the yarn mode to "yarn-client" for python
+                conf.set("spark.master", "yarn-client")
+
+                if not conf.getBoolean("spark.dynamicAllocation.enabled", False):
+                    conf.set("spark.executor.instances", str(job.executors()))
+
+                conf.set("spark.executor.cores", str(job.cores()))
+
+                # in yarn-cluster, this is the total memory in the cluster, but here in yarn-client, it is
+                # the memory per executor.  Go figure!
+                mem = job.executorMemKb()
+
+                overhead = conf.getInt("spark.yarn.executor.memoryOverhead", 384)
+                if (mem * 0.1) > overhead:
+                    overhead = mem * 0.1
+
+                if overhead < 384:
+                    overhead = 384
+
+                mem -= (overhead * 2)  # overhead is 1x for driver and 1x for application master (am)
+                conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem), "m"))
+
+
+            jsc = jvm.JavaSparkContext(conf)
+            jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
+            self.sparkContext = jsc.sc()
+        else:
+            self.sparkContext = context
 
         # print("started")
 
@@ -215,6 +220,22 @@ class MrGeo(object):
                 mapop.teardown(job, self.sparkContext.getConf())):
             return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=job)
         return None
+
+    def load_vector(self, name):
+        jvm = self._get_jvm()
+        job = self._get_job()
+
+        pstr = job.getSetting(constants.provider_properties, "")
+        pp = jvm.ProviderProperties.fromDelimitedString(pstr)
+
+        dp = jvm.DataProviderFactory.getVectorDataProvider(name, jvm.DataProviderFactory.AccessMode.READ, pp)
+
+        mapop = jvm.VectorDataMapOp.apply(dp)
+        mapop.context(self.sparkContext)
+
+        # print("loaded " + name)
+
+        return VectorMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
     def create_points(self, coords):
         jvm = self._get_jvm()

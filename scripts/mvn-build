@@ -15,29 +15,26 @@ usage() {
     echo "  python       - mrgeo-core/mrgeo-vector/mrgeo-dataprovider/mrgeo-mapalgebra/mrgeo-python"
     echo "build type:"
     echo "  apache    - apache hadoop"
-    echo "  apache240 - Apache hadoop, version 2.4.0"
-    echo "  apache241 - Apache hadoop, version 2.4.1"
-    echo "  apache250 - Apache hadoop, version 2.5.0"
-    echo "  apache251 - Apache hadoop, version 2.5.1"
-    echo "  apache252 - Apache hadoop, version 2.5.2"
-    echo "  apache260 - Apache hadoop, version 2.6.0"
     echo "  apache271 - Apache hadoop, version 2.7.1"
-    echo "  cdh540    - Cloudera hadoop 5.4.0"
-    echo "  cdh541    - Cloudera hadoop 5.4.1"
-    echo "  cdh542    - Cloudera hadoop 5.4.2"
-    echo "  cdh543    - Cloudera hadoop 5.4.3"
-    echo "  cdh544    - Cloudera hadoop 5.4.4"
-    echo "  cdh545    - Cloudera hadoop 5.4.5"
-    echo "  cdh547    - Cloudera hadoop 5.4.7"
-    echo "  cdh548    - Cloudera hadoop 5.4.8"
-    echo "  cdh550    - Cloudera hadoop 5.5.0"
-    echo "  cdh551    - Cloudera hadoop 5.5.1"
-    echo "  cdh552    - Cloudera hadoop 5.5.2"
-    echo "  cdh560    - Cloudera hadoop 5.6.0"
-    echo "  cdh570    - Cloudera hadoop 5.7.0"
+    echo "  apache260 - Apache hadoop, version 2.6.0"
+    echo "  apache252 - Apache hadoop, version 2.5.2"
+    echo "  apache251 - Apache hadoop, version 2.5.1"
+    echo "  apache250 - Apache hadoop, version 2.5.0"
+    echo "  apache241 - Apache hadoop, version 2.4.1"
+    echo "  apache240 - Apache hadoop, version 2.4.0"
+    echo "  cdh580    - Cloudera hadoop 5.8.0"
     echo "  cdh571    - Cloudera hadoop 5.7.1"
-    echo "  emr-4.5.0 - Amazon EMR hadoop 4.5.0 for EMR 4.5.0"
-    echo "  emr-4.4.0 - Amazon EMR hadoop 4.4.0 for EMR 4.4.0"
+    echo "  cdh570    - Cloudera hadoop 5.7.0"
+    echo "  cdh560    - Cloudera hadoop 5.6.0"
+    echo "  cdh552    - Cloudera hadoop 5.5.2"
+    echo "  cdh551    - Cloudera hadoop 5.5.1"
+    echo "  cdh550    - Cloudera hadoop 5.5.0"
+    echo "  emr-4.7.2 - Amazon EMR hadoop 2.7.2 for EMR 4.7.2"
+    echo "  emr-4.7.1 - Amazon EMR hadoop 2.7.2 for EMR 4.7.1"
+    echo "  emr-4.7.0 - Amazon EMR hadoop 2.7.2 for EMR 4.7.0"
+    echo "  emr-4.6.0 - Amazon EMR hadoop 2.7.2 for EMR 4.6.0"
+    echo "  emr-4.5.0 - Amazon EMR hadoop 2.7.2 for EMR 4.5.0"
+    echo "  emr-4.4.0 - Amazon EMR hadoop 2.7.1 for EMR 4.4.0"
     echo "  mapr      - mapr hadoop"
     echo "phase:"
     echo "  build     - build a deployable version"
@@ -238,6 +235,18 @@ while [ $# -gt 0 ] ; do
     "apache260" | "apache270" | "apache271")
         BUILD=$1
         ;;
+    "emr-4.7.2")
+        BUILD="emr-4.7.2"
+        ;;
+    "emr-4.7.1")
+        BUILD="emr-4.7.1"
+        ;;
+    "emr-4.7.0")
+        BUILD="emr-4.7.0"
+        ;;
+    "emr-4.6.0")
+        BUILD="emr-4.6.0"
+        ;;
     "emr-4.5.0")
         BUILD="emr-4.5.0"
         ;;
@@ -248,9 +257,6 @@ while [ $# -gt 0 ] ; do
         echo "*** MapR Hadoop is no longer supported"
         exit
         ;;
-    "cdh540" | "cdh540-yarn" | "cdh541" | "cdh541-yarn" | "cdh542" | "cdh542-yarn" | "cdh543" | "cdh543-yarn" | "cdh544" | "cdh544-yarn" | "cdh545" | "cdh545-yarn" | "cdh547" | "cdh547-yarn" | "cdh548" | "cdh548-yarn")
-        BUILD=$1
-        ;;
     "cdh550" | "cdh550-yarn" | "cdh551" | "cdh551-yarn" | "cdh552" | "cdh552-yarn")
         BUILD=$1
         ;;
@@ -258,6 +264,9 @@ while [ $# -gt 0 ] ; do
         BUILD=$1
         ;;
     "cdh570" | "cdh570-yarn" | "cdh571" | "cdh571-yarn")
+        BUILD=$1
+        ;;
+    "cdh580" | "cdh580-yarn")
         BUILD=$1
         ;;
     "build")
@@ -354,7 +363,7 @@ fi
 
 
 if [ -n "$USEYARN" ]; then
-    if [[ "$BUILD" != *-yarn ]]; then
+    if [[ "$BUILD" != *-yarn ]] && [[ "$BUILD" != apache* ]]; then
       BUILD=$BUILD-yarn
     fi
 fi
