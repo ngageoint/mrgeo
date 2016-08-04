@@ -179,19 +179,19 @@ def generate(mrgeo, gateway, gateway_client):
 
                         if instance == 'RasterMapOp':
                             _rastermapop_code[method_name] = code
-                            setattr(RasterMapOp, method_name, code.compile().get(method_name))
+                            setattr(RasterMapOp, method_name, code.compile(method_name).get(method_name))
                         elif instance == "VectorMapOp":
                             _vectormapop_code[method_name] = code
-                            setattr(VectorMapOp, method_name, code.compile().get(method_name))
+                            setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
                         elif is_instance_of(gateway, cls, jvm.MapOp):
                             _mapop_code[method_name] = code
-                            setattr(RasterMapOp, method_name, code.compile().get(method_name))
-                            setattr(VectorMapOp, method_name, code.compile().get(method_name))
+                            setattr(RasterMapOp, method_name, code.compile(method_name).get(method_name))
+                            setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
                 if procCodes is not None:
                     for method_name, code in procCodes.items():
                         pass
                         # print(code.generate())
-                        setattr(mrgeo, method_name, code.compile().get(method_name))
+                        setattr(mrgeo, method_name, code.compile(method_name).get(method_name))
 
     _initialized = True
 

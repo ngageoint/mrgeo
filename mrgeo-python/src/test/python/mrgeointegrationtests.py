@@ -39,7 +39,6 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         result = roads.rasterizevector("MASK", "12z")
         self.compareraster(result, self.name)
 
-
     def test_add(self):
         add = self.allones + self.allhundreds
         self.compareraster(add, self.name)
@@ -78,6 +77,10 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
 
     def test_minus_constA(self):
         sub = 1 - self.allhundreds
+        self.compareraster(sub, self.name)
+
+    def test_minus_constA_procedural(self):
+        sub = self.mrgeo.rminus(const=1.0, raster=self.allhundreds)
         self.compareraster(sub, self.name)
 
     def test_minus_constB(self):

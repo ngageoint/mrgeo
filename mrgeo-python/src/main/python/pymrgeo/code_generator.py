@@ -34,9 +34,10 @@ class CodeGenerator(object):
         if post_unindent:
             self.unindent()
 
-    def compile(self):
+    def compile(self, method_name):
         compiled = {}
-        exec self.generate() in compiled
+        exec compile(self.generate(), method_name + ".py", "exec") in compiled
+        #exec self.generate() in compiled
         return compiled
 
     def append(self, other):
