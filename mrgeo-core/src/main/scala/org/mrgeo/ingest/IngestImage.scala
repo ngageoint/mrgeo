@@ -52,21 +52,21 @@ object IngestImage extends MrGeoDriver with Externalizable {
   private val Tiletype = "tiletype"
   private val Bands = "bands"
   private val Categorical = "categorical"
+  private val SkipCategoryLoad = "skipCategoryLoad"
   private val Tags = "tags"
   private val Protection = "protection"
   private val ProviderProperties = "provider.properties"
 
   def ingest(inputs: Array[String], output: String,
-      categorical: Boolean, conf: Configuration, bounds: Bounds,
+      categorical: Boolean, skipCategoryLoad: Boolean, conf: Configuration, bounds: Bounds,
       zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: ProviderProperties): Boolean = {
 
     val name = "IngestImage"
 
-    val args = setupParams(inputs.mkString(","), output, categorical, bounds, zoomlevel, tilesize, nodata, bands,
-      tiletype, tags, protectionLevel,
-      providerProperties)
+    val args = setupParams(inputs.mkString(","), output, categorical, skipCategoryLoad, bounds,
+      zoomlevel, tilesize, nodata, bands, tiletype, tags, protectionLevel, providerProperties)
 
     run(name, classOf[IngestImage].getName, args.toMap, conf)
 
@@ -103,11 +103,12 @@ object IngestImage extends MrGeoDriver with Externalizable {
     true
   }
 
-  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata: Array[Number]) = {
+  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int,
+             categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Number]) = {
     var firstCategories: Map[Int, util.Vector[_]] = null
     var categoryMatchResult: (String, String) = null
 
-    if (categorical) {
+    if (categorical && !skipCategoryLoad) {
       val inputsHead :: inputsTail = inputs.toList
       val firstInput = inputs(0)
       firstCategories = IngestImage.loadCategories(firstInput)
@@ -177,7 +178,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
     val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
     // Store categories in metadata if needed
-    if (categorical && categoryMatchResult._2.isEmpty) {
+    if (categorical && !skipCategoryLoad && categoryMatchResult._2.isEmpty) {
       firstCategories.foreach(catEntry => {
         val categories = new Array[String](catEntry._2.size())
         catEntry._2.zipWithIndex.foreach(cat => {
@@ -231,10 +232,11 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
 
-  private def setupParams(input: String, output: String, categorical: Boolean, bounds: Bounds, zoomlevel: Int,
-      tilesize: Int, nodata: Array[Number],
-      bands: Int, tiletype: Int, tags: util.Map[String, String], protectionLevel: String,
-      providerProperties: ProviderProperties): mutable.Map[String, String] = {
+  private def setupParams(input: String, output: String, categorical: Boolean, skipCategoryLoad: Boolean,
+                          bounds: Bounds, zoomlevel: Int, tilesize: Int, nodata: Array[Number],
+                          bands: Int, tiletype: Int, tags: util.Map[String, String],
+                          protectionLevel: String,
+                          providerProperties: ProviderProperties): mutable.Map[String, String] = {
 
     val args = mutable.Map[String, String]()
 
@@ -251,6 +253,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     args += Bands -> bands.toString
     args += Tiletype -> tiletype.toString
     args += Categorical -> categorical.toString
+    args += SkipCategoryLoad -> skipCategoryLoad.toString
 
     var t: String = ""
     tags.foreach(kv => {
@@ -316,7 +319,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
     writer.close()
 
-    val args = setupParams(tmpname.toUri.toString, output, categorical, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+    val args = setupParams(tmpname.toUri.toString, output, categorical, true, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
       tags, protectionLevel,
       providerProperties)
 
@@ -624,6 +627,7 @@ class IngestImage extends MrGeoJob with Externalizable {
   private[ingest] var tilesize:Int = -1
   private[ingest] var nodata:Array[Number] = null
   private[ingest] var categorical:Boolean = false
+  private[ingest] var skipCategoryLoad:Boolean = false
   private[ingest] var providerproperties:ProviderProperties = null
   private[ingest] var protectionlevel:String = null
 
@@ -665,6 +669,7 @@ class IngestImage extends MrGeoJob with Externalizable {
       nodata = Array.fill[Number](bands)(Double.NaN)
     }
     categorical = job.getSetting(IngestImage.Categorical).toBoolean
+    skipCategoryLoad = job.getSetting(IngestImage.SkipCategoryLoad).toBoolean
 
     protectionlevel = job.getSetting(IngestImage.Protection)
     if (protectionlevel == null)
@@ -680,7 +685,7 @@ class IngestImage extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize, categorical, nodata)
+    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize, categorical, skipCategoryLoad, nodata)
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
     SparkUtils.saveMrsPyramid(ingested._1, dp, ingested._2, zoom, context.hadoopConfiguration, providerproperties)
