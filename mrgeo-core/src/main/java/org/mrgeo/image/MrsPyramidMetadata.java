@@ -134,6 +134,21 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy) {
       }
     }
   }
+  if (copy.categories == null)
+  {
+    this.categories = null;
+  }
+  else
+  {
+    categories = new String[copy.categories.length][];
+    for (int b=0; b < copy.categories.length; b++)
+    {
+      if (copy.categories[b] != null)
+      {
+        this.categories[b] = copy.categories[b].clone();
+      }
+    }
+  }
 
   this.classification = copy.classification;
   this.resamplingMethod = copy.resamplingMethod;
@@ -278,6 +293,41 @@ public double[][] getQuantiles()
   return q;
 }
 
+/**
+ * Returns the categories for the specified band for this image. Note that the return value
+ * can be null.
+ */
+@JsonIgnore
+@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "api")
+public String[] getCategories(int band)
+{
+  if (categories != null && band < getBands())
+  {
+    return categories[band];
+  }
+  return null;
+}
+
+public String[][] getCategories()
+{
+  if (categories == null)
+  {
+    return null;
+  }
+
+
+  String[][] c = new String[categories.length][];
+  for (int i = 0; i < categories.length; i++)
+  {
+    if (categories[i] != null)
+    {
+      c[i] = ArrayUtils.clone(categories[i]);
+    }
+  }
+
+  return c;
+}
+
   /*
    * end get section
    */
@@ -364,6 +414,34 @@ public void setQuantiles(final int band, final double[] quantiles)
   }
   this.quantiles[band] = quantiles.clone();
 }
+
+public void setCategories(String[][] categories)
+{
+  if (categories == null)
+  {
+    this.categories = new String[getBands()][];
+  }
+  else
+  {
+    this.categories = new String[categories.length][];
+    for (int i = 0; i < categories.length; i++)
+    {
+      if (categories[i] != null)
+      {
+        this.categories[i] = ArrayUtils.clone(categories[i]);
+      }
+    }
+  }
+}
+
+@JsonIgnore
+public void setCategories(final int band, final String[] categories)
+{
+  if (this.categories == null) {
+    this.categories = new String[getBands()][];
+  }
+  this.categories[band] = categories.clone();
+}
   /*
    * end set section
    */
@@ -433,6 +511,8 @@ private double[] defaultValues;
 private int tileType; // pixel type for the image
 
 private ImageStats[] stats; // min, max, mean, std dev of pixel values by band for the source resolution level image
+
+private String[][] categories; // categories for each band in the image
 
 private Classification classification = Classification.Continuous;
 

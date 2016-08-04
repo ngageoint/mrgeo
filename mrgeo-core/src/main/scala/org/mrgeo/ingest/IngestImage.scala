@@ -19,12 +19,11 @@ package org.mrgeo.ingest
 import java.io._
 import java.util
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
-import org.gdal.gdal.gdal
+import org.gdal.gdal.{Dataset, gdal}
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
@@ -74,11 +73,94 @@ object IngestImage extends MrGeoDriver with Externalizable {
     true
   }
 
+  private def equalCategories(c1: Map[Int, util.Vector[_]],
+                              c2: Map[Int, util.Vector[_]]): Boolean = {
+    if (c1.size != c2.size) {
+      return false
+    }
+    c1.foreach(c1Entry => {
+      val c1Band = c1Entry._1
+      val c1Cats = c1Entry._2
+      val c2Value = c2.get(c1Band)
+      c2Value match {
+        case Some(c2Cats) => {
+          if (c1Cats.size() != c2Cats.size()) {
+            return false
+          }
+          // The values stored in c1Cats and c2Cats are strings (from GDAL). Do a case
+          // insensitive comparison of them and return false if any don't match.
+          c1Cats.zipWithIndex.foreach(c1Entry => {
+            if (!c1Entry._1.toString.equalsIgnoreCase(c2Cats.get(c1Entry._2).toString)) {
+              return false
+            }
+          })
+        }
+        case None => {
+          return false
+        }
+      }
+    })
+    true
+  }
+
   def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata: Array[Number]) = {
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
     // won't eat up too much memory
-    val in = context.parallelize(inputs, inputs.length)
+    val inputsHead::inputsTail = inputs.toList
 
+    // The value that we are aggregating includes the two input files that
+    // have non-matching categories along with the category mappings.
+    val firstInput = inputs(0)
+    val firstCategories = IngestImage.loadCategories(firstInput)
+    println("First categories for input " + firstInput + ": " + firstCategories.get(0).get.size)
+    // The value that we want to aggregate contains the first input as the first
+    // element of the tuple and a blank string for the second element of the
+    // tuple (which will eventually contain the input whose categories differ
+    // from the the categories of the first input).
+    val zero = (firstInput, "")
+    val inTail = context.parallelize(inputsTail, inputs.length)
+    val result = inTail.aggregate(zero)((combinedValue, input) => {
+      if (combinedValue._2.isEmpty) {
+        // Compare the categories of the first input with those of the current
+        // input being aggregated. If they are different, then return this input
+        // as the one that differs
+        val cats = IngestImage.loadCategories(input)
+        println("Categories for input " + input + ": " + cats.get(0).get.size)
+        if (!equalCategories(firstCategories, cats)) {
+          println("  did not match first categories")
+          (combinedValue._1, input)
+        }
+        else {
+          println("  matched first categories")
+          combinedValue
+        }
+      }
+      else {
+        // Return the inputs with mismatched categories that we already found
+        combinedValue
+      }
+    }, {
+      // When merging just return a value that specifies a difference (i.e.
+      // the second element of the tuple is not empty.
+      (result1, result2) => {
+        println("Combining result1 with " + result1._2 + " with result2 " + result2._2)
+        if (result1._2.length > 0) {
+          result1
+        }
+        else if (result2._2.length > 0) {
+          result2
+        }
+        else {
+          result1
+        }
+      }
+    })
+    println("Result of category comparison - bad match with " + result._2)
+    if (!result._2.isEmpty) {
+      throw new Exception("Categories from input " + result._1 + " are not the same as categories from input " + result._2)
+    }
+
+    val in = context.parallelize(inputs, inputs.length)
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
       IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
     }))
@@ -92,7 +174,15 @@ object IngestImage extends MrGeoDriver with Externalizable {
     })
 
     val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
-
+    if (result._2.isEmpty) {
+      firstCategories.foreach(catEntry => {
+        val categories = new Array[String](catEntry._2.size())
+        catEntry._2.zipWithIndex.foreach(cat => {
+          categories(cat._2) = cat._1.toString
+        })
+        meta.setCategories(catEntry._1, categories)
+      })
+    }
 
     // repartition, because chances are the RDD only has 1 partition (ingest a single file)
     val numExecutors = math.max(context.getConf.getInt("spark.executor.instances", 0),
@@ -108,6 +198,33 @@ object IngestImage extends MrGeoDriver with Externalizable {
     }
 
     (RasterRDD(repartitioned), meta)
+  }
+
+
+  private def loadCategories(input: String): Map[Int, util.Vector[_]] = {
+    var src: Dataset = null
+      try {
+      src = GDALUtils.open(input)
+
+      var result: scala.collection.mutable.Map[Int, util.Vector[_]] = scala.collection.mutable.Map()
+      if (src != null) {
+        val bands = src.GetRasterCount()
+        var b: Integer = 1
+        while (b <= bands) {
+          val band = src.GetRasterBand(b)
+          val categoryNames = band.GetCategoryNames()
+          val c: Int = 0
+          result += ((b - 1) -> categoryNames)
+          b += 1
+        }
+      }
+      result.toMap
+    }
+    finally {
+      if (src != null) {
+        GDALUtils.close(src)
+      }
+    }
   }
 
 
