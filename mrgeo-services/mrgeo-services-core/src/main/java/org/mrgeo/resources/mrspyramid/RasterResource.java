@@ -191,9 +191,6 @@ public Response getImage(@PathParam("output") String imgName,
 
     Bounds bounds = new Bounds(minX, minY, maxX, maxY);
 
-    //Reproject bounds to EPSG:4326 if necessary
-    bounds = RequestUtils.reprojectBounds(bounds, srs);
-
     ColorScale cs = null;
     try
     {
