@@ -104,62 +104,64 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata: Array[Number]) = {
-    // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
-    // won't eat up too much memory
-    val inputsHead::inputsTail = inputs.toList
+    var firstCategories: Map[Int, util.Vector[_]] = null
+    var categoryMatchResult: (String, String) = null
 
-    // The value that we are aggregating includes the two input files that
-    // have non-matching categories along with the category mappings.
-    val firstInput = inputs(0)
-    val firstCategories = IngestImage.loadCategories(firstInput)
-    println("First categories for input " + firstInput + ": " + firstCategories.get(0).get.size)
-    // The value that we want to aggregate contains the first input as the first
-    // element of the tuple and a blank string for the second element of the
-    // tuple (which will eventually contain the input whose categories differ
-    // from the the categories of the first input).
-    val zero = (firstInput, "")
-    val inTail = context.parallelize(inputsTail, inputs.length)
-    val result = inTail.aggregate(zero)((combinedValue, input) => {
-      if (combinedValue._2.isEmpty) {
-        // Compare the categories of the first input with those of the current
-        // input being aggregated. If they are different, then return this input
-        // as the one that differs
-        val cats = IngestImage.loadCategories(input)
-        println("Categories for input " + input + ": " + cats.get(0).get.size)
-        if (!equalCategories(firstCategories, cats)) {
-          println("  did not match first categories")
-          (combinedValue._1, input)
+    if (categorical) {
+      val inputsHead :: inputsTail = inputs.toList
+      val firstInput = inputs(0)
+      firstCategories = IngestImage.loadCategories(firstInput)
+      println("First categories for input " + firstInput + ": " + firstCategories.get(0).get.size)
+      // Initialize the value being aggregated with the name of the first input from
+      // which the baseline categories were read. The second element will be assigned
+      // during aggregation to whichever other input does not match those baseline
+      // categories (or will be left blank if all the inputs' categories match.
+      val zero = (firstInput, "")
+      val inTail = context.parallelize(inputsTail, inputs.length)
+      categoryMatchResult = inTail.aggregate(zero)((combinedValue, input) => {
+        if (combinedValue._2.isEmpty) {
+          // Compare the categories of the first input with those of the current
+          // input being aggregated. If they are different, then return this input
+          // as the one that differs
+          val cats = IngestImage.loadCategories(input)
+          println("Categories for input " + input + ": " + cats.get(0).get.size)
+          if (!equalCategories(firstCategories, cats)) {
+            println("  did not match first categories")
+            (combinedValue._1, input)
+          }
+          else {
+            println("  matched first categories")
+            combinedValue
+          }
         }
         else {
-          println("  matched first categories")
+          // Return the inputs with mismatched categories that we already found
           combinedValue
         }
-      }
-      else {
-        // Return the inputs with mismatched categories that we already found
-        combinedValue
-      }
-    }, {
-      // When merging just return a value that specifies a difference (i.e.
-      // the second element of the tuple is not empty.
-      (result1, result2) => {
-        println("Combining result1 with " + result1._2 + " with result2 " + result2._2)
-        if (result1._2.length > 0) {
-          result1
+      }, {
+        // When merging just return a value that specifies a difference (i.e.
+        // the second element of the tuple is not empty.
+        (result1, result2) => {
+          println("Combining result1 with " + result1._2 + " with result2 " + result2._2)
+          if (result1._2.length > 0) {
+            result1
+          }
+          else if (result2._2.length > 0) {
+            result2
+          }
+          else {
+            result1
+          }
         }
-        else if (result2._2.length > 0) {
-          result2
-        }
-        else {
-          result1
-        }
+      })
+      println("Result of category comparison - bad match with " + categoryMatchResult._2)
+      if (!categoryMatchResult._2.isEmpty) {
+        throw new Exception("Categories from input " + categoryMatchResult._1 + " are not the same as categories from input " + categoryMatchResult._2)
       }
-    })
-    println("Result of category comparison - bad match with " + result._2)
-    if (!result._2.isEmpty) {
-      throw new Exception("Categories from input " + result._1 + " are not the same as categories from input " + result._2)
     }
 
+    // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
+    // won't eat up too much memory
     val in = context.parallelize(inputs, inputs.length)
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
       IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
@@ -174,7 +176,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
     })
 
     val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
-    if (result._2.isEmpty) {
+    // Store categories in metadata if needed
+    if (categorical && categoryMatchResult._2.isEmpty) {
       firstCategories.foreach(catEntry => {
         val categories = new Array[String](catEntry._2.size())
         catEntry._2.zipWithIndex.foreach(cat => {
