@@ -14,7 +14,6 @@
      ~ See the License for the specific language governing permissions and limitations under the License.
      ~
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
@@ -128,6 +127,8 @@
     <maven-surefire.version>2.18.1</maven-surefire.version>
     <maven-war.version>2.6</maven-war.version>
     <scalatest.plugin.version>1.0</scalatest.plugin.version>
+    <!-- maven plugin dependency versions -->
+    <maven.core.version>3.0.5</maven.core.version>
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -415,36 +416,6 @@
             <arguments>${release.arguments}</arguments>
           </configuration>
         </plugin>
-        <!-- Make some soft links for the generated products, for convenience -->
-        <plugin>
-          <groupId>com.pyx4j</groupId>
-          <artifactId>maven-junction-plugin</artifactId>
-          <version>${maven-junction.version}</version>
-          <executions>
-            <execution>
-              <id>link-core</id>
-              <phase>package</phase>
-              <goals>
-                <goal>link</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>unlink</id>
-              <phase>clean</phase>
-              <goals>
-                <goal>unlink</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <links>
-              <link>
-                <src>${project.build.directory}/${project.build.finalName}.${project.packaging}</src>
-                <dst>${project.build.directory}/${project.artifactId}.${project.packaging}</dst>
-              </link>
-            </links>
-          </configuration>
-        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-war-plugin</artifactId>
@@ -485,24 +456,10 @@
               </property>
             </properties>
           </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.surefire</groupId>
-              <artifactId>surefire-junit47</artifactId>
-              <version>${maven-surefire.version}</version>
-            </dependency>
-          </dependencies>
         </plugin>
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
           <version>${maven-failsafe.version}</version>
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.surefire</groupId>
-              <artifactId>surefire-junit47</artifactId>
-              <version>${maven-failsafe.version}</version>
-            </dependency>
-          </dependencies>
           <configuration>
             <runOrder>random</runOrder>
             <groups>org.mrgeo.junit.IntegrationTest</groups>
@@ -2303,7 +2260,6 @@
         <module>mrgeo-python</module>
       </modules>
     </profile>
-
     <profile>
       <id>build-python</id>
       <activation>
@@ -2328,7 +2284,7 @@
   </profiles>
   <!-- DependencyManagement is intended to maintain consistant dependency versioning across all the projects.
        Put dependencies below with version number, then in the child pom, just add the groupId and artifactId
-
+       
        ex.  (added below in dependencyManagement section)
        <dependency>
        <groupId>junit</groupId>
@@ -2336,13 +2292,13 @@
        <version>4.8.2</version>
        <scope>test</scope>
        </dependency>
-
+       
        (added in the child pom's dependencies section)
        <dependency>
        <groupId>junit</groupId>
        <artifactId>junit</artifactId>
        </dependency>
-
+       
        Remember!  if there is a <type></type>, put it in the child pom!
   -->
   <dependencyManagement>
