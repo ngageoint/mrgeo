@@ -32,10 +32,7 @@ import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.image.MrsImage;
-import org.mrgeo.image.MrsImageException;
-import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.image.*;
 import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.GDALUtils;
@@ -253,13 +250,10 @@ public double[] getExtrema()
     if (dp != null)
     {
       MrsPyramidMetadata metadata = dp.getMetadataReader().read();
-      if (zoomLevel == -1)
+      ImageStats stats = metadata.getStats(0);
+      if (stats != null)
       {
-        return metadata.getExtrema(0);
-      }
-      else
-      {
-        return metadata.getExtrema(zoomLevel);
+        return new double[] { stats.min, stats.max };
       }
     }
   }

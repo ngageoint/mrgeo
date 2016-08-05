@@ -1755,6 +1755,36 @@
          <skipShade>true</skipShade>
     -->
     <profile>
+      <id>emr-4.7.2</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.11.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
+        <spark.scope>compile</spark.scope>
+        <final.classifier>2.7.2</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>1.6.2</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>emr-4.7.1</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
