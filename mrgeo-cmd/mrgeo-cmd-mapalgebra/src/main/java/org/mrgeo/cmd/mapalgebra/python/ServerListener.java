@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.GatewayConnection;
 import py4j.GatewayServerListener;
+import py4j.Py4JServerConnection;
 
 import java.net.Socket;
 import java.net.SocketException;
@@ -29,20 +30,21 @@ public void connectionError(Exception e)
 log.warn("Connection error");
 }
 
-@Override
-public void connectionStarted(GatewayConnection gatewayConnection)
-{
-  Socket socket = gatewayConnection.getSocket();
+//  @Override
+//public void connectionStarted(GatewayConnection gatewayConnection)
+//{
+public void connectionStarted(Py4JServerConnection py4JServerConnection) {
+  Socket socket = py4JServerConnection.getSocket();
 
   log.warn("Started connection " +
       socket.getInetAddress().getHostName() +"(" + socket.getInetAddress().getHostAddress() +
       ")" + ":" + socket.getLocalPort());
 }
 
-@Override
-public void connectionStopped(GatewayConnection gatewayConnection)
-{
-  Socket socket = gatewayConnection.getSocket();
+//@Override
+//public void connectionStopped(GatewayConnection gatewayConnection) {
+public void connectionStopped(Py4JServerConnection py4JServerConnection) {
+  Socket socket = py4JServerConnection.getSocket();
 
   log.warn("Stopped connection " +
       socket.getInetAddress().getHostName() +"(" + socket.getInetAddress().getHostAddress() +
