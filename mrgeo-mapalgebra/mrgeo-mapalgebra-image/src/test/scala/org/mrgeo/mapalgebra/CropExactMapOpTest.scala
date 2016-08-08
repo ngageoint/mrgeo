@@ -112,7 +112,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
     }
   }
 
-  it should "set the bounds on the mapop to the crop bounds when the crop bounds are larger then the tile bounds" in {
+  it should "set the bounds on the mapop and expand the image to fill the bounds when the crop bounds are larger then the tile bounds" in {
     val (left, bottom, right, top) = (-89.0, -44.0, 44.0, 44.0)
     subject = CropExactMapOp.create(inputRaster, left, bottom, right, top).asInstanceOf[RasterMapOp]
     subject.execute(subject.context())
@@ -123,7 +123,9 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
     assertResult(left) {
       subject.metadata().get.getBounds.w
     }
-    verifyRastersAreUnchanged(transformedRDD, Array(11, 12, 19, 20))
+//    verifyRastersAreUnchanged(transformedRDD, Array(11, 12, 19, 20))
+    verifyRastersNoData(transformedRDD, Array(11, 12, 19, 20), tileSize, zoomLevel,
+      inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top)
   }
 
   it should "be able to use the bounds of another Raster as the bounds for cropping" in {
