@@ -80,7 +80,7 @@ class MrGeo(object):
             self._create_job()
 
             self._general_imports()
-            mapopgenerator.generate(self.gateway, self.gateway_client)
+            mapopgenerator.generate(self, self.gateway, self.gateway_client)
         except:
             # If an error occurs, clean up in order to allow future SparkContext creation:
             self.stop()
@@ -106,7 +106,6 @@ class MrGeo(object):
         job.useYarn()
 
     def start(self, context=None):
-
         if not context:
             jvm = self._get_jvm()
             job = self._get_job()
