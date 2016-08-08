@@ -27,9 +27,12 @@ object DivMapOp extends MapOpRegistrar {
   def create(raster:RasterMapOp, const:Double):MapOp = {
     new DivMapOp(Some(raster), Some(const))
   }
+
+  // rcreate's parameters (name, type, & order) must be the same as creates
   def rcreate(raster:RasterMapOp, const:Double):MapOp = {
     new DivMapOp(Some(raster), Some(const), true)
   }
+
   def create(rasterA:RasterMapOp, rasterB:RasterMapOp):MapOp = {
     new DivMapOp(Some(rasterA), Some(rasterB))
   }
