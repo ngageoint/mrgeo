@@ -79,8 +79,8 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         sub = 1 - self.allhundreds
         self.compareraster(sub, self.name)
 
-    def test_minus_constA_procedural(self):
-        sub = self.mrgeo.rminus(const=1.0, raster=self.allhundreds)
+    def test_minus_costA_procedural(self):
+        sub = self.mrgeo.rminus(const=1.0, rasterA=self.allhundreds)
         self.compareraster(sub, self.name)
 
     def test_minus_constB(self):
