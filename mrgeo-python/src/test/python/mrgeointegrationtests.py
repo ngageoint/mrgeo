@@ -17,6 +17,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         # copy data to HDFS
         cls.copy("all-hundreds")
         cls.copy("all-ones")
+        cls.copy("all-twos")
         cls.copy("small-elevation")
         cls.copy("tobler-raw-tiny")
         cls.copy("AmbulatoryPt.shp")
@@ -28,6 +29,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         super(MrGeoIntegrationTests, self).setUp()
 
         self.allones = self.mrgeo.load_image("all-ones")
+        self.alltwos = self.mrgeo.load_image("all-twos")
         self.allhundreds = self.mrgeo.load_image("all-hundreds")
         self.smallelevation = self.mrgeo.load_image("small-elevation")
         self.toblertiny = self.mrgeo.load_image("tobler-raw-tiny")
@@ -37,24 +39,12 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         result = roads.rasterizevector("MASK", "12z")
         self.compareraster(result, self.name)
 
-    def test_bitwise_or(self):
-        result = self.allhundreds.convert("byte", "truncate") | 6
-        self.compareraster(result, self.name, nodata=255)
-
-    def test_bitwise_and(self):
-        result = self.allhundreds.convert("byte", "truncate") & 6
-        self.compareraster(result, self.name, nodata=255)
-
-    def test_bitwise_xor(self):
-        result = self.allhundreds.convert("byte", "truncate") ^ 6
-        self.compareraster(result, self.name, nodata=255)
-
-    def test_bitwise_complement(self):
-        result = ~self.allhundreds.convert("byte", "truncate")
-        self.compareraster(result, self.name, nodata=255)
-
     def test_add(self):
         add = self.allones + self.allhundreds
+        self.compareraster(add, self.name)
+
+    def test_add_procedural(self):
+        add = self.mrgeo.add(self.allones, rasterB=self.allhundreds)
         self.compareraster(add, self.name)
 
     def test_add_constA(self):
@@ -81,6 +71,38 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         add = self.allhundreds.add(const=-1)
         self.compareraster(add, self.name)
 
+    def test_minus(self):
+        sub = self.allones - self.allhundreds
+        self.compareraster(sub, self.name)
+
+    def test_minus_constA(self):
+        sub = 1 - self.allhundreds
+        self.compareraster(sub, self.name)
+
+    def test_minus_costA_procedural(self):
+        sub = self.mrgeo.rminus(const=1.0, rasterA=self.allhundreds)
+        self.compareraster(sub, self.name)
+
+    def test_minus_constB(self):
+        sub = self.allhundreds - 1
+        self.compareraster(sub, self.name)
+
+    def test_minus_negconst(self):
+        sub = self.allhundreds - -1
+        self.compareraster(sub, self.name)
+
+    def test_minusAlt(self):
+        sub = self.allones.minus(self.allhundreds)
+        self.compareraster(sub, self.name)
+
+    def test_minusAlt_constA(self):
+        sub = self.allhundreds.minus(const=1)
+        self.compareraster(sub, self.name)
+
+    def test_minusAlt_negconst(self):
+        sub = self.allhundreds.minus(const=-1)
+        self.compareraster(sub, self.name)
+
     def test_aspect(self):
         aspect = self.smallelevation.aspect()
         self.compareraster(aspect, self.name)
@@ -104,6 +126,21 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_bandcombineAlt(self):
         bands = self.allhundreds.bc(self.allones)
         self.compareraster(bands, self.name)
+    def test_bitwise_or(self):
+        result = self.allhundreds.convert("byte", "truncate") | 6
+        self.compareraster(result, self.name, nodata=255)
+
+    def test_bitwise_and(self):
+        result = self.allhundreds.convert("byte", "truncate") & 6
+        self.compareraster(result, self.name, nodata=255)
+
+    def test_bitwise_xor(self):
+        result = self.allhundreds.convert("byte", "truncate") ^ 6
+        self.compareraster(result, self.name, nodata=255)
+
+    def test_bitwise_complement(self):
+        result = ~self.allhundreds.convert("byte", "truncate")
+        self.compareraster(result, self.name, nodata=255)
 
     def test_cos(self):
         cos = self.allones.cos()
@@ -136,6 +173,26 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_divideAlt_constA(self):
         div = self.allhundreds.div(const=2.5)
         self.compareraster(div, self.name)
+
+    def test_pow(self):
+        p = self.allhundreds ** self.alltwos
+        self.compareraster(p, self.name)
+
+    def test_pow_constA(self):
+        p = self.allhundreds ** 2
+        self.compareraster(p, self.name)
+
+    def test_pow_constB(self):
+        p = 2 ** self.alltwos
+        self.compareraster(p, self.name)
+
+    def test_powAlt(self):
+        p = self.allhundreds.pow(self.alltwos)
+        self.compareraster(p, self.name)
+
+    def test_powAlt_constA(self):
+        p = self.allhundreds.pow(const=2)
+        self.compareraster(p, self.name)
 
     def test_export(self):
         exp = self.smallelevation.export(self.outputdir + self.name, singleFile=True, format="tiff", overridenodata=-9999)

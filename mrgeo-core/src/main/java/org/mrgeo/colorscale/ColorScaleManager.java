@@ -162,23 +162,26 @@ public class ColorScaleManager
 
   private static void initializeProvider(final Properties props) throws ColorScale.ColorScaleException
   {
-    final String colorScaleBase = HadoopUtils.getDefaultColorScalesBaseDirectory(props);
-    if (colorScaleBase != null)
+    if (colorscaleProvider == null)
     {
-      try
+      final String colorScaleBase = HadoopUtils.getDefaultColorScalesBaseDirectory(props);
+      if (colorScaleBase != null)
       {
-        colorscaleProvider = DataProviderFactory.getAdHocDataProvider(colorScaleBase,
-            AccessMode.READ,
-            HadoopUtils.createConfiguration());
+        try
+        {
+          colorscaleProvider = DataProviderFactory.getAdHocDataProvider(colorScaleBase,
+                                                                        AccessMode.READ,
+                                                                        HadoopUtils.createConfiguration());
+        }
+        catch (DataProviderNotFound e)
+        {
+          throw new ColorScale.BadSourceException(e);
+        }
       }
-      catch (DataProviderNotFound e)
+      else
       {
-        throw new ColorScale.BadSourceException(e);
+        throw new ColorScale.ColorScaleException("No ColorScaleBase directory configured");
       }
-    }
-    else
-    {
-      throw new ColorScale.ColorScaleException("No ColorScaleBase directory configured");
     }
   }
 

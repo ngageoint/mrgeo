@@ -18,6 +18,7 @@ package org.mrgeo.ingest
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
+import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
 import org.apache.spark.SparkContext
@@ -27,44 +28,18 @@ import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.utils.{HadoopUtils, SparkUtils}
 
 class IngestLocal extends IngestImage with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val input = inputs(0) // there is only 1 input here...
-
-    val format = new SequenceFileInputFormat[TileIdWritable, RasterWritable]
-
-    val job: Job = Job.getInstance(HadoopUtils.createConfiguration())
-
-
-    val rawtiles = context.sequenceFile(input, classOf[TileIdWritable], classOf[RasterWritable])
-
-    // this is stupid, but because the way hadoop input formats may reuse the key/value objects,
-    // if we don't do this, all the data will eventually collapse into a single entry.
-    val mapped = rawtiles.map(tile => {
-      (new TileIdWritable(tile._1), RasterWritable.toWritable(RasterWritable.toRaster(tile._2)))
-    })
-
-    val mergedTiles = RasterRDD(new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
-      val src = RasterWritable.toRaster(r1)
-      val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
-
-      RasterUtils.mosaicTile(src, dst, nodata)
-      RasterWritable.toWritable(dst)
-
-    }))
-
+    val ingested = IngestImage.localingest(context, inputs, zoom, tilesize,
+      categorical, skipCategoryLoad, nodata, protectionlevel)
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
-
-    val raster = RasterWritable.toRaster(mergedTiles.first()._2)
-
-    SparkUtils.saveMrsPyramid(mergedTiles, dp, zoom, tilesize, nodata, context.hadoopConfiguration,
-      bounds = this.bounds, bands = this.bands, tiletype = this.tiletype,
-      protectionlevel = this.protectionlevel, providerproperties = this.providerproperties)
+    SparkUtils.saveMrsPyramid(ingested._1, dp, ingested._2, zoom, context.hadoopConfiguration, providerproperties)
 
     true
   }

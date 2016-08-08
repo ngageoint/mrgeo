@@ -58,207 +58,237 @@ import static org.mockito.Mockito.*;
 
 public class TileMapServiceResourceIntegrationTest extends JerseyTest
 {
-  private static final Logger log = LoggerFactory.getLogger(TileMapServiceResourceIntegrationTest.class);
+private static final Logger log = LoggerFactory.getLogger(TileMapServiceResourceIntegrationTest.class);
 
-  // only set this to true to generate new baseline images after correcting tests; image comparison
-  // tests won't be run when is set to true
-  public final static boolean GEN_BASELINE_DATA_ONLY = false;
-  
-  protected static String baselineInput;
+// only set this to true to generate new baseline images after correcting tests; image comparison
+// tests won't be run when is set to true
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
-  private static String input = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);
-  private static final String rgbsmall_nopyramids = "rgbsmall-nopyramids";
-  private static final String rgbsmall_nopyramids_abs = /*"file://" +*/ input + rgbsmall_nopyramids;
-  private static final String astersmall_nopyramids = "astersmall-nopyramids";
-  private static final String astersmall_nopyramids_abs = /*"file://" +*/ input + astersmall_nopyramids;
+protected static String baselineInput;
 
-  TmsService service;
-  private HttpServletRequest request;
+private static String input = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);
+private static final String rgbsmall_nopyramids = "rgbsmall-nopyramids";
+private static final String rgbsmall_nopyramids_abs = /*"file://" +*/ input + rgbsmall_nopyramids;
+private static final String astersmall_nopyramids = "astersmall-nopyramids";
+private static final String astersmall_nopyramids_abs = /*"file://" +*/ input + astersmall_nopyramids;
+
+TmsService service;
+private HttpServletRequest request;
 
 
-  @Override
-  protected LowLevelAppDescriptor configure()
-  {
-      DefaultResourceConfig resourceConfig = new DefaultResourceConfig();
-      service = mock(TmsService.class);
-      request = mock(HttpServletRequest.class);
+@Override
+protected LowLevelAppDescriptor configure()
+{
+  DefaultResourceConfig resourceConfig = new DefaultResourceConfig();
+  service = mock(TmsService.class);
+  request = mock(HttpServletRequest.class);
 
-      resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, TmsService>(TmsService.class, service) {});
-      resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, HttpServletRequest>(HttpServletRequest.class, request) {});
+  resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, TmsService>(TmsService.class, service) {});
+  resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, HttpServletRequest>(HttpServletRequest.class, request) {});
 
-      resourceConfig.getClasses().add(TileMapServiceResource.class);
-      resourceConfig.getClasses().add(JacksonJsonProvider.class);
+  resourceConfig.getClasses().add(TileMapServiceResource.class);
+  resourceConfig.getClasses().add(JacksonJsonProvider.class);
 
-      return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
-  }
+  return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
+}
 
-  @Override
-  protected TestContainerFactory getTestContainerFactory() throws TestContainerException {
-      return new FilteringInMemoryTestContainerFactory();
-  }
+@Override
+protected TestContainerFactory getTestContainerFactory() throws TestContainerException {
+  return new FilteringInMemoryTestContainerFactory();
+}
 
-  @Override
-  public void setUp() throws Exception {
-      super.setUp();
-      Mockito.reset(request, service);
-      Properties props = MrGeoProperties.getInstance();
-      props.put(MrGeoConstants.MRGEO_HDFS_IMAGE, input);
-      props.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, input + "color-scales");
-      
-      baselineInput = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);
+@Override
+public void setUp() throws Exception {
+  super.setUp();
+  Mockito.reset(request, service);
+  Properties props = MrGeoProperties.getInstance();
+  props.put(MrGeoConstants.MRGEO_HDFS_IMAGE, input);
+  props.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, input + "color-scales");
 
-      TileMapServiceResource.props = props;
-  }
+  baselineInput = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetRootResource() throws Exception {
-    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms"));
+  TileMapServiceResource.props = props;
+}
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms");
-    ClientResponse resp = wr.get(ClientResponse.class);
+@Test
+@Category(UnitTest.class)
+public void testGetRootResource() throws Exception {
+  when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms"));
 
-    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms");
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    verify(request, times(1)).getRequestURL();
-    verifyNoMoreInteractions(request, service);
-  }
+  Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileMapService() throws Exception {
-    String version = "1.0.0";
+  verify(request, times(1)).getRequestURL();
+  verifyNoMoreInteractions(request, service);
+}
 
-    List<String> retval = new ArrayList<String>();
-    retval.add("foo");
-    retval.add("foo2");
-    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms"));
-    when(service.listImages()).thenReturn(retval);
+@Test
+@Category(UnitTest.class)
+public void testGetTileMapService() throws Exception {
+  String version = "1.0.0";
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  List<String> retval = new ArrayList<String>();
+  retval.add("foo");
+  retval.add("foo2");
+  when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms"));
+  when(service.listImages()).thenReturn(retval);
 
-    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    verify(request, times(1)).getRequestURL();
-    verify(service, times(1));
-    service.listImages();
-    verifyNoMoreInteractions(request, service);
-  }
+  Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 
-  private MrsPyramidMetadata getMetadata(String pyramid) throws IOException {
-      return getPyramid(pyramid).getMetadata();
-  }
+  verify(request, times(1)).getRequestURL();
+  verify(service, times(1));
+  service.listImages();
+  verifyNoMoreInteractions(request, service);
+}
 
-  private MrsPyramid getPyramid(String pyramid) throws IOException {
-    return MrsPyramid.open(pyramid, (ProviderProperties)null);
-  }
+private MrsPyramidMetadata getMetadata(String pyramid) throws IOException {
+  return getPyramid(pyramid).getMetadata();
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileMap() throws Exception {
-    String version = "1.0.0";
+private MrsPyramid getPyramid(String pyramid) throws IOException {
+  return MrsPyramid.open(pyramid, (ProviderProperties)null);
+}
 
-    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms/1.0.0/" + rgbsmall_nopyramids_abs));
-    when(service.getMetadata(rgbsmall_nopyramids_abs)).thenReturn( getMetadata(rgbsmall_nopyramids_abs) );
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(rgbsmall_nopyramids_abs, "UTF-8"));
-    ClientResponse resp = wr.get(ClientResponse.class);
+@Test
+@Category(UnitTest.class)
+public void testGetTileMap() throws Exception {
+  String version = "1.0.0";
 
-    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+  when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms/1.0.0/" +
+      rgbsmall_nopyramids_abs + "/global-geodetic"));
+  when(service.getMetadata(rgbsmall_nopyramids_abs)).thenReturn( getMetadata(rgbsmall_nopyramids_abs) );
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(rgbsmall_nopyramids_abs, "UTF-8") + "/global-geodetic");
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    verify(request, times(1)).getRequestURL();
-    verify(service, times(1)).getMetadata(rgbsmall_nopyramids_abs);
-    verify(service, times(0));
-    service.listImages();
-    verifyNoMoreInteractions(request, service);
-  }
+  Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileBadFormat() throws Exception {
-    String version = "1.0.0";
-    String raster = "elevation";
-    int x = 710;
-    int y = 350;
-    int z = 10;
-    String format = "gif";
+  verify(request, times(1)).getRequestURL();
+  verify(service, times(1)).getMetadata(rgbsmall_nopyramids_abs);
+  verify(service, times(0));
+  service.listImages();
+  verifyNoMoreInteractions(request, service);
+}
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
+@Test
+@Category(UnitTest.class)
+public void testGetTileMapMercator() throws Exception {
+  String version = "1.0.0";
 
-    Assert.assertEquals(400, resp.getStatus());
-    Assert.assertEquals("Unsupported image format - gif", resp.getEntity(String.class));
-  }
+  when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms/1.0.0/" +
+      rgbsmall_nopyramids_abs + "/global-mercator"));
+  when(service.getMetadata(rgbsmall_nopyramids_abs)).thenReturn( getMetadata(rgbsmall_nopyramids_abs) );
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(rgbsmall_nopyramids_abs, "UTF-8") + "/global-mercator");
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileMissingRasterTileMap() throws Exception {
-    String version = "1.0.0";
-    String raster = new String("nonexistantpyramid");
+  Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 
-    ExecutionException exception = mock(ExecutionException.class);
-    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms/1.0.0/nonexistantpyramid"));
-    when(service.getMetadata("nonexistantpyramid")).thenThrow(exception);
+  verify(request, times(1)).getRequestURL();
+  verify(service, times(1)).getMetadata(rgbsmall_nopyramids_abs);
+  verify(service, times(0));
+  service.listImages();
+  verifyNoMoreInteractions(request, service);
+}
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8"));
-    ClientResponse resp = wr.get(ClientResponse.class);
+@Test
+@Category(UnitTest.class)
+public void testGetTileBadFormat() throws Exception {
+  String version = "1.0.0";
+  String raster = "elevation";
+  int x = 710;
+  int y = 350;
+  int z = 10;
+  String format = "gif";
 
-    Assert.assertEquals(404, resp.getStatus());
-    Assert.assertEquals("Tile map not found - " + raster, resp.getEntity(String.class));
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    verify(request, times(1)).getRequestURL();
-    verify(service, times(1)).getMetadata("nonexistantpyramid");
-    verifyNoMoreInteractions(request, service);
-  }
+  Assert.assertEquals(400, resp.getStatus());
+  Assert.assertEquals("Unsupported image format - gif", resp.getEntity(String.class));
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileMissingRasterTile() throws Exception {
-    String version = "1.0.0";
-    String raster = new String("nonexistantpyramid");
-    int x = 710;
-    int y = 350;
-    int z = 10;
-    String format = "jpg";
+@Test
+@Category(UnitTest.class)
+public void testGetTileMissingRasterTileMap() throws Exception {
+  String version = "1.0.0";
+  String raster = "nonexistantpyramid";
 
-    ExecutionException exception = mock(ExecutionException.class);
-    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9998/tms/1.0.0/nonexistantpyramid"));
-    when(service.getMetadata("nonexistantpyramid")).thenThrow( exception );
+  ExecutionException exception = mock(ExecutionException.class);
+  when(request.getRequestURL()).thenReturn(
+      new StringBuffer("http://localhost:9998/tms/1.0.0/nonexistantpyramid/global-geodetic"));
+  when(service.getMetadata("nonexistantpyramid")).thenThrow(exception);
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic");
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    Assert.assertEquals(404, resp.getStatus());
-    Assert.assertEquals("Tile map not found - " + new String(raster), resp.getEntity(String.class));
+  Assert.assertEquals(404, resp.getStatus());
+  Assert.assertEquals("Tile map not found - " + raster, resp.getEntity(String.class));
 
-    verify(request, times(0)).getRequestURL();
-    verifyNoMoreInteractions(request, service);
-  }
+  verify(request, times(1)).getRequestURL();
+  verify(service, times(1)).getMetadata("nonexistantpyramid");
+  verifyNoMoreInteractions(request, service);
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileOutOfBounds() throws Exception {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 846;
-    int y = 411;
-    int z = 12;
-    String format = "png";
+@Test
+@Category(UnitTest.class)
+public void testGetTileMissingRasterTile() throws Exception {
+  String version = "1.0.0";
+  String raster = new String("nonexistantpyramid");
+  int x = 710;
+  int y = 350;
+  int z = 10;
+  String format = "jpg";
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid(raster) );
+  ExecutionException exception = mock(ExecutionException.class);
+  when(request.getRequestURL()).thenReturn(
+      new StringBuffer("http://localhost:9998/tms/1.0.0/nonexistantpyramid/global-geodetic"));
+  when(service.getMetadata("nonexistantpyramid")).thenThrow( exception );
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    processImageResponse(resp, format);
+  Assert.assertEquals(404, resp.getStatus());
+  Assert.assertEquals("Tile map not found - " + new String(raster), resp.getEntity(String.class));
+
+  verify(request, times(0)).getRequestURL();
+  verifyNoMoreInteractions(request, service);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testGetTileOutOfBounds() throws Exception {
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 846;
+  int y = 411;
+  int z = 12;
+  String format = "png";
+
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid(raster) );
+
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
+
+  processImageResponse(resp, format);
 
 //    Assert.assertEquals(200, resp.getStatus());
 //
@@ -275,51 +305,53 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //
 //    verify(service, times(1)).getMetadata(raster);
 //    verifyNoMoreInteractions(request, service);
-  }
+}
 
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileNonexistanPyramidLevel() throws Exception {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 710;
-    int y = 350;
-    int z = 10;
-    String format = "jpg";
+@Test
+@Category(UnitTest.class)
+public void testGetTileNonexistanPyramidLevel() throws Exception {
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 710;
+  int y = 350;
+  int z = 10;
+  String format = "jpg";
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    Assert.assertEquals(404, resp.getStatus());
-    Assert.assertEquals("Tile map not found - " + raster + ": 10", 
+  Assert.assertEquals(404, resp.getStatus());
+  Assert.assertEquals("Tile map not found - " + raster + ": 10",
       resp.getEntity(String.class));
 
-    verifyNoMoreInteractions(request, service);
-  }
+  verifyNoMoreInteractions(request, service);
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileRgbPng() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = rgbsmall_nopyramids_abs;
-    int x = 11346;
-    int y = 5667;
-    int z = 14;
-    String format = "png";
+@Test
+@Category(UnitTest.class)
+public void testGetTileRgbPng() throws Exception
+{
+  String version = "1.0.0";
+  String raster = rgbsmall_nopyramids_abs;
+  int x = 11346;
+  int y = 5667;
+  int z = 14;
+  String format = "png";
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
-    
-    processImageResponse(resp, format);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
+
+  processImageResponse(resp, format);
 
 //    MultivaluedMap<String, String> headers = resp.getHeaders();
 //    Assert.assertEquals("[image/png]", headers.get("Content-Type").toString());
@@ -335,27 +367,50 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //    verify(service, times(1)).getColorScale(anyString(), anyString(), anyString(), (ColorScaleInfo.Builder) any());
 //    verify(service, times(1)).getPyramid(raster);
 //    verifyNoMoreInteractions(request, service);
-  }
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileRgbJpg() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = rgbsmall_nopyramids_abs;
-    int x = 11346;
-    int y = 5667;
-    int z = 14;
-    String format = "jpg";
+@Test
+@Category(UnitTest.class)
+public void testGetTileRgbPngMercator() throws Exception
+{
+  String version = "1.0.0";
+  String raster = rgbsmall_nopyramids_abs;
+  int x = 11346;
+  int y = 11517; // 11334; // 5667;
+  int z = 15; // 14;
+  String format = "png";
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-mercator/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    processImageResponse(resp, format);
+  processImageResponse(resp, format);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testGetTileRgbJpg() throws Exception
+{
+  String version = "1.0.0";
+  String raster = rgbsmall_nopyramids_abs;
+  int x = 11346;
+  int y = 5667;
+  int z = 14;
+  String format = "jpg";
+
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
+
+  processImageResponse(resp, format);
 
 //    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 //
@@ -374,48 +429,53 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //    verify(service, times(1)).getColorScale(anyString(), anyString(), anyString(), (ColorScaleInfo.Builder) any());
 //    verify(service, times(1)).getPyramid(raster);
 //    verifyNoMoreInteractions(request, service);
-  }
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileRgbTif() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = rgbsmall_nopyramids_abs;
-    int x = 11346;
-    int y = 5667;
-    int z = 14;
-    String format = "tif";
+@Test
+@Category(UnitTest.class)
+public void testGetTileRgbTif() throws Exception
+{
+  String version = "1.0.0";
+  String raster = rgbsmall_nopyramids_abs;
+  int x = 11346;
+  int y = 5667;
+  int z = 14;
+  String format = "tif";
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
-   
-    processImageResponse(resp, format);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-//    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
-//
-//    MultivaluedMap<String, String> headers = resp.getHeaders();
-//    Assert.assertEquals("[image/tiff]", headers.get("Content-Type").toString());
-//    InputStream is = resp.getEntityInputStream();
-//    ImageInputStream imageInputStream = ImageIO.createImageInputStream(is);
-//    ImageReader reader = ImageUtils.createImageReader("image/tiff");
-//    reader.setInput(imageInputStream, false);
-//    BufferedImage outputImg = reader.read(0);
-//    BufferedImage goldenImg = ImageIO.read(new File(input + "5667.tif"));
-//    TestUtils.compareRenderedImages(goldenImg, outputImg);
-//    IOUtils.closeQuietly(is);
-//
-//    verify(service, times(1)).getMetadata(raster);
-//    verify(service, times(1)).getColorScale(anyString(), anyString(), anyString(), (ColorScaleInfo.Builder) any());
-//    verify(service, times(1)).getPyramid(raster);
-//    verifyNoMoreInteractions(request, service);
-  }
+  processImageResponse(resp, format);
+}
 
-  // There are no longer any default colors scales defined in a pyramid
+@Test
+@Category(UnitTest.class)
+public void testGetTileRgbTifMercator() throws Exception
+{
+  String version = "1.0.0";
+  String raster = rgbsmall_nopyramids_abs;
+  int x = 11346;
+  int y = 11517; // 11334; // 5667;
+  int z = 15; // 14;
+  String format = "tif";
+
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-mercator/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
+
+  processImageResponse(resp, format);
+}
+
+// There are no longer any default colors scales defined in a pyramid
 //  @Test
 //  @Category(UnitTest.class)
 //  public void testGetTileDefColorScalePng() throws Exception
@@ -463,7 +523,7 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 ////    verifyNoMoreInteractions(request, service);
 //  }
 
-  // There are no longer any default colors scales defined in a pyramid
+// There are no longer any default colors scales defined in a pyramid
 //  @Test
 //  @Category(UnitTest.class)
 //  public void testGetTileDefColorScaleJpg() throws Exception
@@ -511,25 +571,26 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 ////    verifyNoMoreInteractions(request, service);
 //  }
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileDefColorScaleTif() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 2846;
-    int y = 1411;
-    int z = 12;
-    String format = "tif";
+@Test
+@Category(UnitTest.class)
+public void testGetTileDefColorScaleTif() throws Exception
+{
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 2846;
+  int y = 1411;
+  int z = 12;
+  String format = "tif";
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    processImageResponse(resp, format);
+  processImageResponse(resp, format);
 
 //    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 //
@@ -550,29 +611,30 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //    verifyNoMoreInteractions(request, service);
 }
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileJsonColorScalePng() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 2846;
-    int y = 1411;
-    int z = 12;
-    String format = "png";
-    String json = "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"ReliefShading\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
+@Test
+@Category(UnitTest.class)
+public void testGetTileJsonColorScalePng() throws Exception
+{
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 2846;
+  int y = 1411;
+  int z = 12;
+  String format = "png";
+  String json = "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"ReliefShading\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
 
-    MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-    params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
+  MultivaluedMap<String, String> params = new MultivaluedMapImpl();
+  params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    processImageResponse(resp, format);
+  processImageResponse(resp, format);
 
 //    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 //
@@ -591,58 +653,60 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //    verify(service, times(1)).getColorScale(anyString(), anyString(), anyString(), (ColorScaleInfo.Builder) any());
 //    verify(service, times(1)).getPyramid(raster);
 //    verifyNoMoreInteractions(request, service);
-  }
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileBadJsonColorScalePng() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 2846;
-    int y = 1411;
-    int z = 12;
-    String format = "png";
-    String json = "{\"foo\":\"bar\"}";
+@Test
+@Category(UnitTest.class)
+public void testGetTileBadJsonColorScalePng() throws Exception
+{
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 2846;
+  int y = 1411;
+  int z = 12;
+  String format = "png";
+  String json = "{\"foo\":\"bar\"}";
 
-    MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-    params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
+  MultivaluedMap<String, String> params = new MultivaluedMapImpl();
+  params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), resp.getStatus());
-    Assert.assertEquals("Unable to parse color scale JSON", resp.getEntity(String.class));
-  }
+  Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+  Assert.assertEquals("Unable to parse color scale JSON", resp.getEntity(String.class));
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileJsonColorScaleMinMaxPng() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 2846;
-    int y = 1411;
-    int z = 12;
-    String format = "png";
-    String json = "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"ReliefShading\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
-    int min = 3000;
-    int max = 4000;
+@Test
+@Category(UnitTest.class)
+public void testGetTileJsonColorScaleMinMaxPng() throws Exception
+{
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 2846;
+  int y = 1411;
+  int z = 12;
+  String format = "png";
+  String json = "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"ReliefShading\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
+  int min = 3000;
+  int max = 4000;
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
-    MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-    params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
-    params.add("min", String.valueOf(min));
-    params.add("max", String.valueOf(max));
+  MultivaluedMap<String, String> params = new MultivaluedMapImpl();
+  params.add("color-scale", URLEncoder.encode(json, "UTF-8"));
+  params.add("min", String.valueOf(min));
+  params.add("max", String.valueOf(max));
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    processImageResponse(resp, format);
+  processImageResponse(resp, format);
 
 //    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 //
@@ -661,31 +725,32 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //    verify(service, times(1)).getColorScale(anyString(), anyString(), anyString(), (ColorScaleInfo.Builder) any());
 //    verify(service, times(1)).getPyramid(raster);
 //    verifyNoMoreInteractions(request, service);
-  }
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileColorScaleNamePng() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 2846;
-    int y = 1411;
-    int z = 12;
-    String format = "png";
-    String colorScaleName = "Default";
+@Test
+@Category(UnitTest.class)
+public void testGetTileColorScaleNamePng() throws Exception
+{
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 2846;
+  int y = 1411;
+  int z = 12;
+  String format = "png";
+  String colorScaleName = "Default";
 
-    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
-    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
+  when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
+  when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
-    MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-    params.add("color-scale-name", colorScaleName);
+  MultivaluedMap<String, String> params = new MultivaluedMapImpl();
+  params.add("color-scale-name", colorScaleName);
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    processImageResponse(resp, format);
+  processImageResponse(resp, format);
 
 //    Assert.assertEquals(Status.OK.getStatusCode(), resp.getStatus());
 //
@@ -704,19 +769,19 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //    verify(service, times(1)).getColorScale(anyString(), anyString(), anyString(), (ColorScaleInfo.Builder) any());
 //    verify(service, times(1)).getPyramid(raster);
 //    verifyNoMoreInteractions(request, service);
-  }
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetTileColorScaleNameNonExistent() throws Exception
-  {
-    String version = "1.0.0";
-    String raster = astersmall_nopyramids_abs;
-    int x = 2846;
-    int y = 1411;
-    int z = 12;
-    String format = "png";
-    String colorScaleName = "Missing";
+@Test
+@Category(UnitTest.class)
+public void testGetTileColorScaleNameNonExistent() throws Exception
+{
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 2846;
+  int y = 1411;
+  int z = 12;
+  String format = "png";
+  String colorScaleName = "Missing";
 
 //    when(service.getMetadata(raster)).thenReturn( getMetadata(raster) );
 //    when(service.getColorScale(anyString(), anyString(), anyString(), (ColorScaleInfo.Builder) any())).thenAnswer(new Answer<ColorScale>() {
@@ -729,53 +794,54 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 //      });
 //    when(service.getPyramid(raster)).thenReturn( getPyramid( raster ));
 
-    MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-    params.add("color-scale-name", colorScaleName);
+  MultivaluedMap<String, String> params = new MultivaluedMapImpl();
+  params.add("color-scale-name", colorScaleName);
 
-    WebResource webResource = resource();
-    WebResource wr =  webResource.path("tms" + "/" + version + "/" + URLEncoder.encode(raster, "UTF-8") + "/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
-    ClientResponse resp = wr.get(ClientResponse.class);
+  WebResource webResource = resource();
+  WebResource wr =  webResource.path("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y  + "." + format).queryParams(params);
+  ClientResponse resp = wr.get(ClientResponse.class);
 
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), resp.getStatus());
-    Assert.assertEquals("Unable to open color scale file", resp.getEntity(String.class));
+  Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+  Assert.assertEquals("Unable to open color scale file", resp.getEntity(String.class));
 
 //    verify(service, times(1)).getMetadata(raster);
 //    verify(service, times(1)).getColorScale(anyString(), anyString(), anyString(), (ColorScaleInfo.Builder) any());
 //    verify(service, times(0)).getPyramid(raster);
 //    verifyNoMoreInteractions(request, service);
-  }
+}
 
 
-  protected static void processImageResponse(final ClientResponse response, final String extension)
-      throws IOException
+protected static void processImageResponse(final ClientResponse response, final String extension)
+    throws IOException
+{
+  try
   {
-    try
+    Assert.assertEquals("Bad response code", Status.OK.getStatusCode(), response.getStatus());
+
+    if (GEN_BASELINE_DATA_ONLY)
     {
-      Assert.assertEquals("Bad response code", Status.OK.getStatusCode(), response.getStatus());
-      
-      if (GEN_BASELINE_DATA_ONLY)
-      {
-        final String outputPath =
-            baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
-                extension;
-        log.info("Generating baseline image: " + outputPath);
-        ImageTestUtils.writeBaselineImage(response, outputPath);
-      }
-      else
-      {
-        final String baselineImageFile =
-            baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
-                extension;
-        log.info("Comparing result to baseline image " + baselineImageFile + " ...");
-        ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
-      }
+      final String outputPath =
+          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+              extension;
+      log.info("Generating baseline image: " + outputPath);
+      ImageTestUtils.writeBaselineImage(response, outputPath);
     }
-    finally
+    else
     {
-      if (response != null)
-      {
-        response.close();
-      }
+      final String baselineImageFile =
+          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+              extension;
+      log.info("Comparing result to baseline image " + baselineImageFile + " ...");
+      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
     }
   }
+  finally
+  {
+    if (response != null)
+    {
+      response.close();
+    }
+  }
+}
 }

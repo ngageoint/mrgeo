@@ -131,7 +131,8 @@ def launch_gateway(host=None, port=None):
 
         script = find_script()
 
-        command = [script, "python", "-v", "-p", str(requestport)]
+        # command = [script, "python", "-v", "-p", str(requestport)]
+        command = [script, "python", "-p", str(requestport)]
 
         environ = os.environ
         # Add some more memory

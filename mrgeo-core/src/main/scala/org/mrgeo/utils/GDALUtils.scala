@@ -31,6 +31,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.Logging
 import org.gdal.gdal.{Band, Dataset, Driver, gdal}
 import org.gdal.gdalconst.gdalconstConstants
+import org.gdal.ogr.ogr
 import org.gdal.osr.{CoordinateTransformation, SpatialReference, osr, osrConstants}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.RasterUtils
@@ -655,6 +656,10 @@ object GDALUtils extends Logging {
 
     if (gdal.GetDriverCount == 0) {
       gdal.AllRegister()
+    }
+
+    if (ogr.GetDriverCount == 0) {
+      ogr.RegisterAll()
     }
 
     val drivers: Int = gdal.GetDriverCount

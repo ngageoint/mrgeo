@@ -19,12 +19,13 @@ package org.mrgeo.ingest
 import java.io._
 import java.util
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile
+import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
-import org.gdal.gdal.gdal
+import org.gdal.gdal.{Dataset, gdal}
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
@@ -34,6 +35,7 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
@@ -53,32 +55,72 @@ object IngestImage extends MrGeoDriver with Externalizable {
   private val Tiletype = "tiletype"
   private val Bands = "bands"
   private val Categorical = "categorical"
+  private val SkipCategoryLoad = "skipCategoryLoad"
   private val Tags = "tags"
   private val Protection = "protection"
   private val ProviderProperties = "provider.properties"
 
   def ingest(inputs: Array[String], output: String,
-      categorical: Boolean, conf: Configuration, bounds: Bounds,
+      categorical: Boolean, skipCategoryLoad: Boolean, conf: Configuration, bounds: Bounds,
       zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: ProviderProperties): Boolean = {
 
     val name = "IngestImage"
 
-    val args = setupParams(inputs.mkString(","), output, categorical, bounds, zoomlevel, tilesize, nodata, bands,
-      tiletype, tags, protectionLevel,
-      providerProperties)
+    val args = setupParams(inputs.mkString(","), output, categorical, skipCategoryLoad, bounds,
+      zoomlevel, tilesize, nodata, bands, tiletype, tags, protectionLevel, providerProperties)
 
     run(name, classOf[IngestImage].getName, args.toMap, conf)
 
     true
   }
 
-  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int, categorical:Boolean, nodata: Array[Number]) = {
+  private def equalCategories(c1: Map[Int, util.Vector[_]],
+                              c2: Map[Int, util.Vector[_]]): Boolean = {
+    if (c1.size != c2.size) {
+      return false
+    }
+    c1.foreach(c1Entry => {
+      val c1Band = c1Entry._1
+      val c1Cats = c1Entry._2
+      val c2Value = c2.get(c1Band)
+      c2Value match {
+        case Some(c2Cats) => {
+          if (c1Cats.size() != c2Cats.size()) {
+            return false
+          }
+          // The values stored in c1Cats and c2Cats are strings (from GDAL). Do a case
+          // insensitive comparison of them and return false if any don't match.
+          c1Cats.zipWithIndex.foreach(c1Entry => {
+            if (!c1Entry._1.toString.equalsIgnoreCase(c2Cats.get(c1Entry._2).toString)) {
+              return false
+            }
+          })
+        }
+        case None => {
+          return false
+        }
+      }
+    })
+    true
+  }
+
+  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int,
+             categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Number],
+             protectionLevel: String) = {
+    var firstCategories: Map[Int, util.Vector[_]] = null
+    var categoriesMatch: Boolean = false
+
+    if (categorical && !skipCategoryLoad) {
+      val checkResult = checkAndLoadCategories(context, inputs)
+      categoriesMatch = checkResult._1
+      firstCategories = checkResult._2
+    }
+
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
     // won't eat up too much memory
     val in = context.parallelize(inputs, inputs.length)
-
     val rawtiles = new PairRDDFunctions(in.flatMap(input => {
       IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
     }))
@@ -92,7 +134,14 @@ object IngestImage extends MrGeoDriver with Externalizable {
     })
 
     val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
-
+    meta.setClassification(if (categorical)
+      MrsPyramidMetadata.Classification.Categorical else
+      MrsPyramidMetadata.Classification.Continuous)
+    meta.setProtectionLevel(protectionLevel)
+    // Store categories in metadata if needed
+    if (categorical && !skipCategoryLoad && categoriesMatch) {
+      setMetadataCategories(meta, firstCategories)
+    }
 
     // repartition, because chances are the RDD only has 1 partition (ingest a single file)
     val numExecutors = math.max(context.getConf.getInt("spark.executor.instances", 0),
@@ -110,11 +159,171 @@ object IngestImage extends MrGeoDriver with Externalizable {
     (RasterRDD(repartitioned), meta)
   }
 
+  def localingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int,
+                  categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Number],
+                  protectionLevel: String) = {
+    var firstCategories: Map[Int, util.Vector[_]] = null
+    var categoriesMatch: Boolean = false
 
-  private def setupParams(input: String, output: String, categorical: Boolean, bounds: Bounds, zoomlevel: Int,
-      tilesize: Int, nodata: Array[Number],
-      bands: Int, tiletype: Int, tags: util.Map[String, String], protectionLevel: String,
-      providerProperties: ProviderProperties): mutable.Map[String, String] = {
+    if (categorical && !skipCategoryLoad) {
+      val checkResult = checkAndLoadCategories(context, inputs)
+      categoriesMatch = checkResult._1
+      firstCategories = checkResult._2
+    }
+
+    val tmpname = HadoopFileUtils.createUniqueTmpPath()
+    val writer = SequenceFile.createWriter(context.hadoopConfiguration,
+      SequenceFile.Writer.file(tmpname),
+      SequenceFile.Writer.keyClass(classOf[TileIdWritable]),
+      SequenceFile.Writer.valueClass(classOf[RasterWritable]),
+      SequenceFile.Writer.compression(SequenceFile.CompressionType.BLOCK)
+    )
+
+    inputs.foreach(input => {
+      val tiles = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
+
+      var cnt = 0
+      tiles.foreach(kv => {
+        writer.append(new TileIdWritable(kv._1.get()), kv._2)
+
+        cnt += 1
+        if (cnt % 1000 == 0) {
+          writer.hflush()
+        }
+      })
+    })
+
+    writer.close()
+
+    val input = inputs(0) // there is only 1 input here...
+
+    val format = new SequenceFileInputFormat[TileIdWritable, RasterWritable]
+
+    val job: Job = Job.getInstance(HadoopUtils.createConfiguration())
+
+
+    val rawtiles = context.sequenceFile(tmpname.toString, classOf[TileIdWritable], classOf[RasterWritable])
+
+    // this is stupid, but because the way hadoop input formats may reuse the key/value objects,
+    // if we don't do this, all the data will eventually collapse into a single entry.
+    val mapped = rawtiles.map(tile => {
+      (new TileIdWritable(tile._1), RasterWritable.toWritable(RasterWritable.toRaster(tile._2)))
+    })
+
+    val mergedTiles = RasterRDD(new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
+      val src = RasterWritable.toRaster(r1)
+      val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
+
+      RasterUtils.mosaicTile(src, dst, nodata)
+      RasterWritable.toWritable(dst)
+
+    }))
+
+    val meta = SparkUtils.calculateMetadata(mergedTiles, zoom, nodata, bounds = null, calcStats = false)
+    meta.setClassification(if (categorical)
+      MrsPyramidMetadata.Classification.Categorical else
+      MrsPyramidMetadata.Classification.Continuous)
+    meta.setProtectionLevel(protectionLevel)
+    if (categorical && !skipCategoryLoad && categoriesMatch) {
+      setMetadataCategories(meta, firstCategories)
+    }
+
+    (mergedTiles, meta)
+  }
+
+  private def loadCategories(input: String): Map[Int, util.Vector[_]] = {
+    var src: Dataset = null
+      try {
+      src = GDALUtils.open(input)
+
+      var result: scala.collection.mutable.Map[Int, util.Vector[_]] = scala.collection.mutable.Map()
+      if (src != null) {
+        val bands = src.GetRasterCount()
+        var b: Integer = 1
+        while (b <= bands) {
+          val band = src.GetRasterBand(b)
+          val categoryNames = band.GetCategoryNames()
+          val c: Int = 0
+          result += ((b - 1) -> categoryNames)
+          b += 1
+        }
+      }
+      result.toMap
+    }
+    finally {
+      if (src != null) {
+        GDALUtils.close(src)
+      }
+    }
+  }
+
+  private def checkAndLoadCategories(context: SparkContext, inputs: Array[String]) =
+  {
+    var firstCategories: Map[Int, util.Vector[_]] = null
+    var categoryMatchResult: (String, String) = null
+    val inputsHead :: inputsTail = inputs.toList
+    val firstInput = inputs(0)
+    firstCategories = IngestImage.loadCategories(firstInput)
+    // Initialize the value being aggregated with the name of the first input from
+    // which the baseline categories were read. The second element will be assigned
+    // during aggregation to whichever other input does not match those baseline
+    // categories (or will be left blank if all the inputs' categories match.
+    val zero = (firstInput, "")
+    val inTail = context.parallelize(inputsTail, inputs.length)
+    categoryMatchResult = inTail.aggregate(zero)((combinedValue, input) => {
+      if (combinedValue._2.isEmpty) {
+        // Compare the categories of the first input with those of the current
+        // input being aggregated. If they are different, then return this input
+        // as the one that differs
+        val cats = IngestImage.loadCategories(input)
+        if (!equalCategories(firstCategories, cats)) {
+          (combinedValue._1, input)
+        }
+        else {
+          combinedValue
+        }
+      }
+      else {
+        // Return the inputs with mismatched categories that we already found
+        combinedValue
+      }
+    }, {
+      // When merging just return a value that specifies a difference (i.e.
+      // the second element of the tuple is not empty.
+      (result1, result2) => {
+        if (result1._2.length > 0) {
+          result1
+        }
+        else if (result2._2.length > 0) {
+          result2
+        }
+        else {
+          result1
+        }
+      }
+    })
+    if (!categoryMatchResult._2.isEmpty) {
+      throw new Exception("Categories from input " + categoryMatchResult._1 + " are not the same as categories from input " + categoryMatchResult._2)
+    }
+    (categoryMatchResult._2.isEmpty, firstCategories)
+  }
+
+  private def setMetadataCategories(meta: MrsPyramidMetadata,
+                                    categoryMap: Map[Int, util.Vector[_]]): Unit = {
+    categoryMap.foreach(catEntry => {
+      val categories = new Array[String](catEntry._2.size())
+      catEntry._2.zipWithIndex.foreach(cat => {
+        categories(cat._2) = cat._1.toString
+      })
+      meta.setCategories(catEntry._1, categories)
+    })
+  }
+
+  private def setupParams(input: String, output: String, categorical: Boolean, skipCategoryLoad: Boolean,
+                          bounds: Bounds, zoomlevel: Int, tilesize: Int, nodata: Array[Number],
+                          bands: Int, tiletype: Int, tags: util.Map[String, String],
+                          protectionLevel: String,
+                          providerProperties: ProviderProperties): mutable.Map[String, String] = {
 
     val args = mutable.Map[String, String]()
 
@@ -131,6 +340,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     args += Bands -> bands.toString
     args += Tiletype -> tiletype.toString
     args += Categorical -> categorical.toString
+    args += SkipCategoryLoad -> skipCategoryLoad.toString
 
     var t: String = ""
     tags.foreach(kv => {
@@ -158,53 +368,22 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   def localIngest(inputs: Array[String], output: String,
-      categorical: Boolean, config: Configuration, bounds: Bounds,
+      categorical: Boolean, skipCategoryLoad: Boolean, config: Configuration, bounds: Bounds,
       zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: ProviderProperties): Boolean = {
-
-    //    val provider: ImageIngestDataProvider = DataProviderFactory
-    //        .getImageIngestDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri.toString, AccessMode.OVERWRITE)
-
 
     var conf: Configuration = config
     if (conf == null) {
       conf = HadoopUtils.createConfiguration
     }
 
-    val tmpname = HadoopFileUtils.createUniqueTmpPath()
-    val writer = SequenceFile.createWriter(conf,
-      SequenceFile.Writer.file(tmpname),
-      SequenceFile.Writer.keyClass(classOf[TileIdWritable]),
-      SequenceFile.Writer.valueClass(classOf[RasterWritable]),
-      SequenceFile.Writer.compression(SequenceFile.CompressionType.BLOCK)
-    )
-
-    inputs.foreach(input => {
-      val tiles = IngestImage.makeTiles(input, zoomlevel, tilesize, categorical, nodata)
-
-      var cnt = 0
-      tiles.foreach(kv => {
-        writer.append(new TileIdWritable(kv._1.get()), kv._2)
-
-        cnt += 1
-        if (cnt % 1000 == 0) {
-          writer.hflush()
-        }
-      })
-    })
-
-    writer.close()
-
-    val args = setupParams(tmpname.toUri.toString, output, categorical, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+    val args = setupParams(inputs.mkString(","), output, categorical, skipCategoryLoad, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
       tags, protectionLevel,
       providerProperties)
 
     val name = "IngestImageLocal"
-
     run(name, classOf[IngestLocal].getName, args.toMap, conf)
-
-
     true
   }
 
@@ -504,6 +683,7 @@ class IngestImage extends MrGeoJob with Externalizable {
   private[ingest] var tilesize:Int = -1
   private[ingest] var nodata:Array[Number] = null
   private[ingest] var categorical:Boolean = false
+  private[ingest] var skipCategoryLoad:Boolean = false
   private[ingest] var providerproperties:ProviderProperties = null
   private[ingest] var protectionlevel:String = null
 
@@ -545,6 +725,7 @@ class IngestImage extends MrGeoJob with Externalizable {
       nodata = Array.fill[Number](bands)(Double.NaN)
     }
     categorical = job.getSetting(IngestImage.Categorical).toBoolean
+    skipCategoryLoad = job.getSetting(IngestImage.SkipCategoryLoad).toBoolean
 
     protectionlevel = job.getSetting(IngestImage.Protection)
     if (protectionlevel == null)
@@ -560,7 +741,8 @@ class IngestImage extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize, categorical, nodata)
+    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize,
+      categorical, skipCategoryLoad, nodata, protectionlevel)
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
     SparkUtils.saveMrsPyramid(ingested._1, dp, ingested._2, zoom, context.hadoopConfiguration, providerproperties)

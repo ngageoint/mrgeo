@@ -178,6 +178,7 @@
         </executions>
       </plugin>
       <!-- Make some soft links for the generated products, for convenience -->
+      <!--
       <plugin>
         <groupId>com.pyx4j</groupId>
         <artifactId>maven-junction-plugin</artifactId>
@@ -194,6 +195,7 @@
           </links>
         </configuration>
       </plugin>
+      -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>findbugs-maven-plugin</artifactId>
