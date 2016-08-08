@@ -65,11 +65,6 @@
           <skipTests>${skip.mrgeo.mapalgebra.integration.tests}</skipTests>
         </configuration>
       </plugin>
-      <!-- Make some soft links for the generated products, for convenience -->
-      <plugin>
-        <groupId>com.pyx4j</groupId>
-        <artifactId>maven-junction-plugin</artifactId>
-      </plugin>
     </plugins>
   </build>
   <dependencies><!-- no dependencies? --></dependencies>
