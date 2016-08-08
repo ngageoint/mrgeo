@@ -32,6 +32,9 @@ object CropExactMapOp extends MapOpRegistrar {
   def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
     new CropExactMapOp(Some(raster), w, s, e, n)
 
+  def create(raster:RasterMapOp, rasterForBounds: RasterMapOp):MapOp =
+    new CropExactMapOp(Some(raster), Some(rasterForBounds))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new CropExactMapOp(node, variables)
 }
@@ -91,6 +94,7 @@ class CropExactMapOp extends CropMapOp {
       if (tt.ty == bounds.n) {
         minCopyY = t
       }
+      println(s"minX -  $minCopyX maxX - $maxCopyX minY -  $minCopyY maxY - $maxCopyY for tile ${tile._1.get}")
 
       val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
 
@@ -101,7 +105,7 @@ class CropExactMapOp extends CropMapOp {
           var b: Int = 0
           while (b < raster.getNumBands) {
             if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY) {
-              raster.setSample(x, y, 0, nodatas(b))
+              raster.setSample(x, y, b, nodatas(b))
             }
             b += 1
           }
@@ -132,6 +136,7 @@ class CropExactMapOp extends CropMapOp {
   }
 
   private def calculateCrop(zoom:Int, tilesize:Int) = {
+    println(s"bounds in calculate crop ${cropBounds.n} ${cropBounds.s} ${cropBounds.e} ${cropBounds.w}")
     var bottomRightWorldPixel: Pixel = TMSUtils
       .latLonToPixelsUL(cropBounds.s, cropBounds.e, zoom, tilesize)
 

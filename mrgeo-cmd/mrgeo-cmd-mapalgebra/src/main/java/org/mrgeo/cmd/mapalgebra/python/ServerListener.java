@@ -30,9 +30,7 @@ public void connectionError(Exception e)
 log.warn("Connection error");
 }
 
-//  @Override
-//public void connectionStarted(GatewayConnection gatewayConnection)
-//{
+@Override
 public void connectionStarted(Py4JServerConnection py4JServerConnection) {
   Socket socket = py4JServerConnection.getSocket();
 
@@ -41,8 +39,7 @@ public void connectionStarted(Py4JServerConnection py4JServerConnection) {
       ")" + ":" + socket.getLocalPort());
 }
 
-//@Override
-//public void connectionStopped(GatewayConnection gatewayConnection) {
+@Override
 public void connectionStopped(Py4JServerConnection py4JServerConnection) {
   Socket socket = py4JServerConnection.getSocket();
 
