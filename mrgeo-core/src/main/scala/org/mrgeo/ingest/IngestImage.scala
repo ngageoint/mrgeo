@@ -21,6 +21,8 @@ import java.util
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.SequenceFile
+import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
 import org.gdal.gdal.{Dataset, gdal}
@@ -33,6 +35,7 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
+import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
@@ -104,61 +107,15 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int,
-             categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Number]) = {
+             categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Number],
+             protectionLevel: String) = {
     var firstCategories: Map[Int, util.Vector[_]] = null
-    var categoryMatchResult: (String, String) = null
+    var categoriesMatch: Boolean = false
 
     if (categorical && !skipCategoryLoad) {
-      val inputsHead :: inputsTail = inputs.toList
-      val firstInput = inputs(0)
-      firstCategories = IngestImage.loadCategories(firstInput)
-      println("First categories for input " + firstInput + ": " + firstCategories.get(0).get.size)
-      // Initialize the value being aggregated with the name of the first input from
-      // which the baseline categories were read. The second element will be assigned
-      // during aggregation to whichever other input does not match those baseline
-      // categories (or will be left blank if all the inputs' categories match.
-      val zero = (firstInput, "")
-      val inTail = context.parallelize(inputsTail, inputs.length)
-      categoryMatchResult = inTail.aggregate(zero)((combinedValue, input) => {
-        if (combinedValue._2.isEmpty) {
-          // Compare the categories of the first input with those of the current
-          // input being aggregated. If they are different, then return this input
-          // as the one that differs
-          val cats = IngestImage.loadCategories(input)
-          println("Categories for input " + input + ": " + cats.get(0).get.size)
-          if (!equalCategories(firstCategories, cats)) {
-            println("  did not match first categories")
-            (combinedValue._1, input)
-          }
-          else {
-            println("  matched first categories")
-            combinedValue
-          }
-        }
-        else {
-          // Return the inputs with mismatched categories that we already found
-          combinedValue
-        }
-      }, {
-        // When merging just return a value that specifies a difference (i.e.
-        // the second element of the tuple is not empty.
-        (result1, result2) => {
-          println("Combining result1 with " + result1._2 + " with result2 " + result2._2)
-          if (result1._2.length > 0) {
-            result1
-          }
-          else if (result2._2.length > 0) {
-            result2
-          }
-          else {
-            result1
-          }
-        }
-      })
-      println("Result of category comparison - bad match with " + categoryMatchResult._2)
-      if (!categoryMatchResult._2.isEmpty) {
-        throw new Exception("Categories from input " + categoryMatchResult._1 + " are not the same as categories from input " + categoryMatchResult._2)
-      }
+      val checkResult = checkAndLoadCategories(context, inputs)
+      categoriesMatch = checkResult._1
+      firstCategories = checkResult._2
     }
 
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
@@ -177,15 +134,13 @@ object IngestImage extends MrGeoDriver with Externalizable {
     })
 
     val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
+    meta.setClassification(if (categorical)
+      MrsPyramidMetadata.Classification.Categorical else
+      MrsPyramidMetadata.Classification.Continuous)
+    meta.setProtectionLevel(protectionLevel)
     // Store categories in metadata if needed
-    if (categorical && !skipCategoryLoad && categoryMatchResult._2.isEmpty) {
-      firstCategories.foreach(catEntry => {
-        val categories = new Array[String](catEntry._2.size())
-        catEntry._2.zipWithIndex.foreach(cat => {
-          categories(cat._2) = cat._1.toString
-        })
-        meta.setCategories(catEntry._1, categories)
-      })
+    if (categorical && !skipCategoryLoad && categoriesMatch) {
+      setMetadataCategories(meta, firstCategories)
     }
 
     // repartition, because chances are the RDD only has 1 partition (ingest a single file)
@@ -204,6 +159,77 @@ object IngestImage extends MrGeoDriver with Externalizable {
     (RasterRDD(repartitioned), meta)
   }
 
+  def localingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int,
+                  categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Number],
+                  protectionLevel: String) = {
+    var firstCategories: Map[Int, util.Vector[_]] = null
+    var categoriesMatch: Boolean = false
+
+    if (categorical && !skipCategoryLoad) {
+      val checkResult = checkAndLoadCategories(context, inputs)
+      categoriesMatch = checkResult._1
+      firstCategories = checkResult._2
+    }
+
+    val tmpname = HadoopFileUtils.createUniqueTmpPath()
+    val writer = SequenceFile.createWriter(context.hadoopConfiguration,
+      SequenceFile.Writer.file(tmpname),
+      SequenceFile.Writer.keyClass(classOf[TileIdWritable]),
+      SequenceFile.Writer.valueClass(classOf[RasterWritable]),
+      SequenceFile.Writer.compression(SequenceFile.CompressionType.BLOCK)
+    )
+
+    inputs.foreach(input => {
+      val tiles = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
+
+      var cnt = 0
+      tiles.foreach(kv => {
+        writer.append(new TileIdWritable(kv._1.get()), kv._2)
+
+        cnt += 1
+        if (cnt % 1000 == 0) {
+          writer.hflush()
+        }
+      })
+    })
+
+    writer.close()
+
+    val input = inputs(0) // there is only 1 input here...
+
+    val format = new SequenceFileInputFormat[TileIdWritable, RasterWritable]
+
+    val job: Job = Job.getInstance(HadoopUtils.createConfiguration())
+
+
+    val rawtiles = context.sequenceFile(tmpname.toString, classOf[TileIdWritable], classOf[RasterWritable])
+
+    // this is stupid, but because the way hadoop input formats may reuse the key/value objects,
+    // if we don't do this, all the data will eventually collapse into a single entry.
+    val mapped = rawtiles.map(tile => {
+      (new TileIdWritable(tile._1), RasterWritable.toWritable(RasterWritable.toRaster(tile._2)))
+    })
+
+    val mergedTiles = RasterRDD(new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
+      val src = RasterWritable.toRaster(r1)
+      val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
+
+      RasterUtils.mosaicTile(src, dst, nodata)
+      RasterWritable.toWritable(dst)
+
+    }))
+
+    val meta = SparkUtils.calculateMetadata(mergedTiles, zoom, nodata, bounds = null, calcStats = false)
+    meta.setClassification(if (categorical)
+      MrsPyramidMetadata.Classification.Categorical else
+      MrsPyramidMetadata.Classification.Continuous)
+    meta.setProtectionLevel(protectionLevel)
+    if (categorical && !skipCategoryLoad && categoriesMatch) {
+      setMetadataCategories(meta, firstCategories)
+    }
+
+    (mergedTiles, meta)
+  }
 
   private def loadCategories(input: String): Map[Int, util.Vector[_]] = {
     var src: Dataset = null
@@ -231,6 +257,67 @@ object IngestImage extends MrGeoDriver with Externalizable {
     }
   }
 
+  private def checkAndLoadCategories(context: SparkContext, inputs: Array[String]) =
+  {
+    var firstCategories: Map[Int, util.Vector[_]] = null
+    var categoryMatchResult: (String, String) = null
+    val inputsHead :: inputsTail = inputs.toList
+    val firstInput = inputs(0)
+    firstCategories = IngestImage.loadCategories(firstInput)
+    // Initialize the value being aggregated with the name of the first input from
+    // which the baseline categories were read. The second element will be assigned
+    // during aggregation to whichever other input does not match those baseline
+    // categories (or will be left blank if all the inputs' categories match.
+    val zero = (firstInput, "")
+    val inTail = context.parallelize(inputsTail, inputs.length)
+    categoryMatchResult = inTail.aggregate(zero)((combinedValue, input) => {
+      if (combinedValue._2.isEmpty) {
+        // Compare the categories of the first input with those of the current
+        // input being aggregated. If they are different, then return this input
+        // as the one that differs
+        val cats = IngestImage.loadCategories(input)
+        if (!equalCategories(firstCategories, cats)) {
+          (combinedValue._1, input)
+        }
+        else {
+          combinedValue
+        }
+      }
+      else {
+        // Return the inputs with mismatched categories that we already found
+        combinedValue
+      }
+    }, {
+      // When merging just return a value that specifies a difference (i.e.
+      // the second element of the tuple is not empty.
+      (result1, result2) => {
+        if (result1._2.length > 0) {
+          result1
+        }
+        else if (result2._2.length > 0) {
+          result2
+        }
+        else {
+          result1
+        }
+      }
+    })
+    if (!categoryMatchResult._2.isEmpty) {
+      throw new Exception("Categories from input " + categoryMatchResult._1 + " are not the same as categories from input " + categoryMatchResult._2)
+    }
+    (categoryMatchResult._2.isEmpty, firstCategories)
+  }
+
+  private def setMetadataCategories(meta: MrsPyramidMetadata,
+                                    categoryMap: Map[Int, util.Vector[_]]): Unit = {
+    categoryMap.foreach(catEntry => {
+      val categories = new Array[String](catEntry._2.size())
+      catEntry._2.zipWithIndex.foreach(cat => {
+        categories(cat._2) = cat._1.toString
+      })
+      meta.setCategories(catEntry._1, categories)
+    })
+  }
 
   private def setupParams(input: String, output: String, categorical: Boolean, skipCategoryLoad: Boolean,
                           bounds: Bounds, zoomlevel: Int, tilesize: Int, nodata: Array[Number],
@@ -281,53 +368,22 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   def localIngest(inputs: Array[String], output: String,
-      categorical: Boolean, config: Configuration, bounds: Bounds,
+      categorical: Boolean, skipCategoryLoad: Boolean, config: Configuration, bounds: Bounds,
       zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: ProviderProperties): Boolean = {
-
-    //    val provider: ImageIngestDataProvider = DataProviderFactory
-    //        .getImageIngestDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri.toString, AccessMode.OVERWRITE)
-
 
     var conf: Configuration = config
     if (conf == null) {
       conf = HadoopUtils.createConfiguration
     }
 
-    val tmpname = HadoopFileUtils.createUniqueTmpPath()
-    val writer = SequenceFile.createWriter(conf,
-      SequenceFile.Writer.file(tmpname),
-      SequenceFile.Writer.keyClass(classOf[TileIdWritable]),
-      SequenceFile.Writer.valueClass(classOf[RasterWritable]),
-      SequenceFile.Writer.compression(SequenceFile.CompressionType.BLOCK)
-    )
-
-    inputs.foreach(input => {
-      val tiles = IngestImage.makeTiles(input, zoomlevel, tilesize, categorical, nodata)
-
-      var cnt = 0
-      tiles.foreach(kv => {
-        writer.append(new TileIdWritable(kv._1.get()), kv._2)
-
-        cnt += 1
-        if (cnt % 1000 == 0) {
-          writer.hflush()
-        }
-      })
-    })
-
-    writer.close()
-
-    val args = setupParams(tmpname.toUri.toString, output, categorical, true, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+    val args = setupParams(inputs.mkString(","), output, categorical, skipCategoryLoad, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
       tags, protectionLevel,
       providerProperties)
 
     val name = "IngestImageLocal"
-
     run(name, classOf[IngestLocal].getName, args.toMap, conf)
-
-
     true
   }
 
@@ -685,7 +741,8 @@ class IngestImage extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize, categorical, skipCategoryLoad, nodata)
+    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize,
+      categorical, skipCategoryLoad, nodata, protectionlevel)
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
     SparkUtils.saveMrsPyramid(ingested._1, dp, ingested._2, zoom, context.hadoopConfiguration, providerproperties)

@@ -617,7 +617,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         else if (local)
         {
           success = org.mrgeo.ingest.IngestImage.localIngest(inputs.toArray(new String[inputs.size()]),
-              output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+              output, categorical, skipCatLoad, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
               tags, protectionLevel, providerProperties);
         }
         else

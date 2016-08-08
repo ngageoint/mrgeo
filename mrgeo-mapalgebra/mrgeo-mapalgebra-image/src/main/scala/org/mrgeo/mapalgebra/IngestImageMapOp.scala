@@ -40,30 +40,13 @@ object IngestImageMapOp extends MapOpRegistrar {
     Array[String]("ingest")
   }
 
-//  def create(inputs:Array[String]):MapOp =
-//    new IngestImageMapOp(inputs, None, None)
-//
-//  def create(inputs:Array[String], zoom:Int):MapOp =
-//    new IngestImageMapOp(inputs, Some(zoom), None)
-//
-//  def create(inputs:Array[String], categorical:Boolean):MapOp =
-//    new IngestImageMapOp(inputs, None, Some(categorical))
-//
-//  def create(inputs:Array[String], zoom:Int, categorical:Boolean):MapOp =
-//    new IngestImageMapOp(inputs, Some(zoom), Some(categorical))
-//
-//  def create(input:String):MapOp =
-//    new IngestImageMapOp(input, None, None)
-//
-//  def create(input:String, zoom:Int):MapOp =
-//    new IngestImageMapOp(input, Some(zoom), None)
-//
-//  def create(input:String, categorical:Boolean):MapOp =
-//    new IngestImageMapOp(input, None, Some(categorical))
-//
-//  def create(input:String, zoom:Int, categorical:Boolean):MapOp =
-//    new IngestImageMapOp(input, Some(zoom), Some(categorical))
+  // Do not define any "create" methods here for the python interface because this map
+  // algebra function is not meant to be exposed to Python. Python users should instead
+  // call MrGeo.ingest_image(). Define createMapOp methods instead so that MrGeo.ingest_image
+  // can call those methods.
 
+  def createMapOp(input:String, zoom:Int, categorical:Boolean, skip_category_load: Boolean):MapOp =
+    new IngestImageMapOp(input, Some(zoom), Some(categorical), Some(skip_category_load))
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new IngestImageMapOp(node, variables)
@@ -75,30 +58,35 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
 
   private var inputs:Option[Array[String]] = None
-  private var categorical:Option[Boolean] = None
-  private var zoom:Option[Int] = None
+  private var categorical: Boolean = false
+  private var skipCategoryLoad = false
+  private var zoom = -1
 
-  private[mapalgebra] def this(input:String, zoom:Option[Int], categorical:Option[Boolean]) = {
+  private[mapalgebra] def this(input:String, zoom:Option[Int], categorical:Option[Boolean],
+                               skipCategoryLoad:Option[Boolean]) = {
     this()
     val inputs = Array.ofDim[String](1)
     inputs(0) = input
     this.inputs = Some(inputs)
-    this.categorical = categorical
-    this.zoom = zoom
+    this.categorical = categorical.getOrElse(false)
+    this.skipCategoryLoad = skipCategoryLoad.getOrElse(false)
+    this.zoom = zoom.getOrElse(-1)
   }
 
-  private[mapalgebra] def this(inputs:Array[String], zoom:Option[Int], categorical:Option[Boolean]) = {
+  private[mapalgebra] def this(inputs:Array[String], zoom:Option[Int], categorical:Option[Boolean],
+                               skipCategoryLoad:Option[Boolean]) = {
     this()
     this.inputs = Some(inputs)
-    this.categorical = categorical
-    this.zoom = zoom
+    this.categorical = categorical.getOrElse(false)
+    this.skipCategoryLoad = skipCategoryLoad.getOrElse(false)
+    this.zoom = zoom.getOrElse(-1)
   }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
-    if (node.getNumChildren < 1 || node.getNumChildren > 3) {
-      throw new ParserException("Usage: ingest(input(s), [zoom], [categorical]")
+    if (node.getNumChildren < 1 || node.getNumChildren > 4) {
+      throw new ParserException("Usage: ingest(input(s), [zoom], [categorical], [skipCategoryLoad]")
     }
 
     val in = Array.ofDim[String](1)
@@ -106,11 +94,15 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     this.inputs = Some(in)
 
     if (node.getNumChildren >= 2) {
-      zoom = MapOp.decodeInt(node.getChild(1), variables)
+      zoom = MapOp.decodeInt(node.getChild(1), variables).getOrElse(-1)
     }
 
     if (node.getNumChildren >= 3) {
-      categorical = MapOp.decodeBoolean(node.getChild(2), variables)
+      categorical = MapOp.decodeBoolean(node.getChild(2), variables).getOrElse(false)
+    }
+
+    if (node.getNumChildren >= 4) {
+      skipCategoryLoad = MapOp.decodeBoolean(node.getChild(3), variables).getOrElse(false)
     }
   }
 
@@ -187,7 +179,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
     val tilesize = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT).toInt
 
-    if (zoom.isEmpty) {
+    if (zoom < 0) {
       var newZoom = 1
       filebuilder.result().foreach(file => {
         val z = GDALUtils.calculateZoom(file, tilesize)
@@ -195,7 +187,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
           newZoom = z
         }
       })
-      zoom = Some(newZoom)
+      zoom = newZoom
     }
 
     var nodatas:Array[Number] = null
@@ -213,11 +205,8 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
       })
     })
 
-    if (categorical.isEmpty) {
-      categorical = Some(false)
-    }
-
-    val result = IngestImage.ingest(context, filebuilder.result(), zoom.get, tilesize, categorical.get, nodatas)
+    val result = IngestImage.ingest(context, filebuilder.result(), zoom, tilesize,
+      categorical, skipCategoryLoad, nodatas, "")
     rasterRDD = result._1 match {
     case rrdd:RasterRDD =>
       rrdd.checkpoint()
