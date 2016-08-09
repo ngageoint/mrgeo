@@ -102,8 +102,7 @@
               <overWriteReleases>true</overWriteReleases>
               <overWriteSnapshots>true</overWriteSnapshots>
               <overWriteIfNewer>true</overWriteIfNewer>
-              <excludeScope>test</excludeScope>
-              <includeScope>runtime</includeScope>
+              <includeScope>test</includeScope>
               <excludeArtifactIds>mrgeo-cmd-core</excludeArtifactIds>
             </configuration>
           </execution>
