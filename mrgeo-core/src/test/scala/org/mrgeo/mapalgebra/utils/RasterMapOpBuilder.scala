@@ -37,8 +37,10 @@ class RasterMapOpBuilder private (var context:SparkContext, numPartitions: Int =
   private var tileSize: Int = 512
   private var imageNodata: Array[Double] = Array()
   private var bounds: Bounds = _
+  private var bands: Int = _
 
   def raster(tileId: Long, raster: Raster): RasterMapOpBuilder = {
+    bands = Math.max(bands, raster.getNumBands)
     rasterMap = rasterMap + (new TileIdWritable(tileId) -> RasterWritable.toWritable(raster))
     this
   }
@@ -70,6 +72,7 @@ class RasterMapOpBuilder private (var context:SparkContext, numPartitions: Int =
     metadata.setTilesize(tileSize)
     metadata.setDefaultValues(imageNodata)
     metadata.setBounds(bounds)
+    metadata.setBands(bands)
     rasterMapOp.metadata(metadata)
     rasterMapOp
   }

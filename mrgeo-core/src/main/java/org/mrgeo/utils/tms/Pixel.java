@@ -27,9 +27,18 @@ private static final long serialVersionUID = 1L;
   final public long py;
 
   public Pixel(final long px, final long py)
+
   {
     this.px = px;
     this.py = py;
+  }
+
+  public long getPy() {
+    return py;
+  }
+
+  public long getPx() {
+    return px;
   }
 
   @Override
