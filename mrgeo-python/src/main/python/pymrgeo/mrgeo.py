@@ -126,19 +126,17 @@ class MrGeo(object):
         for prop in dpf_properties:
             job.setSetting(prop, dpf_properties[prop])
 
+        java_gateway.set_field(job, "jars",
+                               jvm.StringUtils.concatUnique(
+                                   jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
+                                   jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
+
         conf = jvm.MrGeoDriver.prepareJob(job)
 
         if self._localGateway:
-
-            java_gateway.set_field(job, "jars",
-                                   jvm.StringUtils.concatUnique(
-                                       jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
-                                       jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
-
             if job.isYarn():
                 job.loadYarnSettings()
 
-            if job.isYarn():
                 # need to override the yarn mode to "yarn-client" for python
                 conf.set("spark.master", "yarn-client")
 
@@ -161,11 +159,9 @@ class MrGeo(object):
                 mem -= (overhead * 2)  # overhead is 1x for driver and 1x for application master (am)
                 conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem), "m"))
 
-                jsc = jvm.JavaSparkContext(conf)
-                jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
-                self.sparkContext = jsc.sc()
-
-
+            jsc = jvm.JavaSparkContext(conf)
+            jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
+            self.sparkContext = jsc.sc()
 
         # print("started")
 
