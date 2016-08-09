@@ -85,6 +85,10 @@ public static Options createOptions()
   cat.setRequired(false);
   result.addOption(cat);
 
+  Option skipCat = new Option("sc", "skip-cat-load", false, "Do not load categories from source");
+  skipCat.setRequired(false);
+  result.addOption(skipCat);
+
   Option pyramid = new Option("sp", "skippyramid", false, "Skip building pyramids");
   pyramid.setRequired(false);
   result.addOption(pyramid);
@@ -528,6 +532,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
 
 
     boolean categorical = line.hasOption("c");
+    boolean skipCatLoad = line.hasOption("sc");
     boolean skipPyramids = line.hasOption("sp");
     boolean recurse = !line.hasOption("nr");
 
@@ -535,6 +540,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     String output = line.getOptionValue("o");
 
     log.debug("categorical: " + categorical);
+    log.debug("skip category loading: " + skipCatLoad);
     log.debug("skip pyramids: " + skipPyramids);
     log.debug("output: " + output);
 
@@ -611,14 +617,14 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         else if (local)
         {
           success = org.mrgeo.ingest.IngestImage.localIngest(inputs.toArray(new String[inputs.size()]),
-              output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+              output, categorical, skipCatLoad, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
               tags, protectionLevel, providerProperties);
         }
         else
         {
           success = org.mrgeo.ingest.IngestImage.ingest(inputs.toArray(new String[inputs.size()]),
-              output, categorical, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
-              tags, protectionLevel, providerProperties);
+              output, categorical, skipCatLoad, conf, bounds, zoomlevel, tilesize, nodata, bands,
+              tiletype, tags, protectionLevel, providerProperties);
         }
 
         if (!success)

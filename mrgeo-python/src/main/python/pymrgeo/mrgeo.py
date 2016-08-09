@@ -212,18 +212,11 @@ class MrGeo(object):
 
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
-    def ingest_image(self, name, zoom=None, categorical=None):
+    def ingest_image(self, name, zoom=-1, categorical=False, skip_category_load=False):
         jvm = self._get_jvm()
         job = self._get_job()
 
-        if zoom is None and categorical is None:
-            mapop = jvm.IngestImageMapOp.create(name)
-        elif zoom is None and categorical is not None:
-            mapop = jvm.IngestImageMapOp.create(name, categorical)
-        elif zoom is not None and categorical is None:
-            mapop = jvm.IngestImageMapOp.create(name, zoom)
-        else:
-            mapop = jvm.IngestImageMapOp.create(name, zoom, categorical)
+        mapop = jvm.IngestImageMapOp.createMapOp(name, zoom, categorical, skip_category_load)
 
         if (mapop.setup(job, self.sparkContext.getConf()) and
                 mapop.execute(self.sparkContext) and
