@@ -22,15 +22,17 @@ class MrGeo(object):
     lock = Lock()
 
     sparkContext = None
+
+    _localGateway = False
     _job = None
 
     _host = None
     _port = None
 
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=None, port=None, pysparkContext=None):
         self._host = host
         self._port = port
-        self._initialize()
+        self._initialize(pysparkContext)
 
     def _create_gateway(self, host=None, port=None):
         """
@@ -74,9 +76,18 @@ class MrGeo(object):
         java_import(jvm, "org.mrgeo.utils.*")
         java_import(jvm, "org.mrgeo.utils.logging.*")
 
-    def _initialize(self):
+    def _initialize(self, pysparkContext=None):
         try:
-            self._create_gateway(self._host, self._port)
+            if not pysparkContext:
+                print("Initializing gateway")
+                self._create_gateway(self._host, self._port)
+                self._localGateway = True
+            else:
+                print("Using existing gateway")
+                self.gateway = pysparkContext._gateway
+                self.gateway_client = self.gateway.gateway_client
+                self.sparkContext = pysparkContext._jsc.sc()
+
             self._create_job()
 
             self._general_imports()
@@ -105,27 +116,27 @@ class MrGeo(object):
         job = self._get_job()
         job.useYarn()
 
-    def start(self, context=None):
-        if not context:
-            jvm = self._get_jvm()
-            job = self._get_job()
+    def start(self):
+        jvm = self._get_jvm()
+        job = self._get_job()
 
-            job.addMrGeoProperties()
-            dpf_properties = jvm.DataProviderFactory.getConfigurationFromProviders()
+        job.addMrGeoProperties()
+        dpf_properties = jvm.DataProviderFactory.getConfigurationFromProviders()
 
-            for prop in dpf_properties:
-                job.setSetting(prop, dpf_properties[prop])
+        for prop in dpf_properties:
+            job.setSetting(prop, dpf_properties[prop])
+
+        conf = jvm.MrGeoDriver.prepareJob(job)
+
+        if self._localGateway:
+
+            java_gateway.set_field(job, "jars",
+                                   jvm.StringUtils.concatUnique(
+                                       jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
+                                       jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
 
             if job.isYarn():
                 job.loadYarnSettings()
-
-
-            java_gateway.set_field(job, "jars",
-                      jvm.StringUtils.concatUnique(
-                          jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
-                          jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
-
-            conf = jvm.MrGeoDriver.prepareJob(job)
 
             if job.isYarn():
                 # need to override the yarn mode to "yarn-client" for python
@@ -150,25 +161,25 @@ class MrGeo(object):
                 mem -= (overhead * 2)  # overhead is 1x for driver and 1x for application master (am)
                 conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem), "m"))
 
+                jsc = jvm.JavaSparkContext(conf)
+                jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
+                self.sparkContext = jsc.sc()
 
-            jsc = jvm.JavaSparkContext(conf)
-            jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
-            self.sparkContext = jsc.sc()
-        else:
-            self.sparkContext = context
+
 
         # print("started")
 
     def stop(self):
-        if self.sparkContext:
-            self.sparkContext.stop()
-            self.sparkContext = None
-        if self.gateway:
-            self.gateway.shutdown()
-            self.gateway = None
-            self.gateway_client = None
-        self._job = None
-        java_gateway.terminate()
+        if self._localGateway:
+            if self.sparkContext:
+                self.sparkContext.stop()
+                self.sparkContext = None
+            if self.gateway:
+                self.gateway.shutdown()
+                self.gateway = None
+                self.gateway_client = None
+            self._job = None
+            java_gateway.terminate()
 
     def list_images(self):
         jvm = self._get_jvm()
