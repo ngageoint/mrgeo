@@ -250,6 +250,11 @@ abstract class MrGeoDriver extends Logging {
   protected def setupDependencies(job:JobArguments, hadoopConf:Configuration,
       additionalClasses: Option[scala.collection.immutable.Set[Class[_]]] = None): mutable.Set[String] = {
 
+    val oldprint = DependencyLoader.getPrintMissingDependencies
+
+    DependencyLoader.setPrintMissingDependencies(false)
+    DependencyLoader.resetMissingDependencyList()
+
     val dependencies = DependencyLoader.getDependencies(getClass)
     val qualified = DependencyLoader.copyDependencies(dependencies, hadoopConf)
     val jars:StringBuilder = new StringBuilder
@@ -291,6 +296,10 @@ abstract class MrGeoDriver extends Logging {
     }
     job.setJars(jars.toString())
 
+
+    DependencyLoader.printMissingDependencies()
+    DependencyLoader.setPrintMissingDependencies(oldprint)
+    DependencyLoader.resetMissingDependencyList()
     dependencies
   }
 
