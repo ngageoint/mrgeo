@@ -126,12 +126,17 @@ class MrGeo(object):
         for prop in dpf_properties:
             job.setSetting(prop, dpf_properties[prop])
 
+        jvm.DependencyLoader.setPrintMissingDependencies(False)
+        jvm.DependencyLoader.resetMissingDependencyList()
+
         java_gateway.set_field(job, "jars",
                                jvm.StringUtils.concatUnique(
                                    jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
                                    jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
 
         conf = jvm.MrGeoDriver.prepareJob(job)
+
+        jvm.DependencyLoader.printMissingDependencies()
 
         if self._localGateway:
             if job.isYarn():

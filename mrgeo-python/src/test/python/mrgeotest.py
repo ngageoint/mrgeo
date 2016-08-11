@@ -247,8 +247,6 @@ class MrGeoTests(TestCase):
         jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_IMAGE, self.inputhdfs)
         jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_VECTOR, self.inputhdfs)
 
-        jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
-
     def tearDown(self):
         self.mrgeo.stop()
         self._doublebox("Test Finished", self.classname + ":" + self.name)
