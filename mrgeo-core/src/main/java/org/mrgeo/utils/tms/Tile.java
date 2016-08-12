@@ -19,6 +19,7 @@ package org.mrgeo.utils.tms;
 // Tile 0, 0 is the lower-left corner of the world grid!
 public class Tile implements Comparable<Tile>
 {
+
   final public long tx;
   final public long ty;
 
@@ -26,6 +27,14 @@ public class Tile implements Comparable<Tile>
   {
     this.tx = tx;
     this.ty = ty;
+  }
+
+  public long getTx() {
+    return tx;
+  }
+
+  public long getTy() {
+    return ty;
   }
 
   @Override

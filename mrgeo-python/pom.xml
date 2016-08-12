@@ -52,9 +52,30 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <configuration>
-          <skip>${skip.mrgeo.python.integration.tests}</skip>
-        </configuration>
+        <!--<configuration>-->
+          <!--<skip>${skip.mrgeo.python.integration.tests}</skip>-->
+        <!--</configuration>-->
+        <executions>
+          <!-- config for local integration tests (not using external Hadoop or Spark) -->
+          <execution>
+            <configuration>
+              <executable>python</executable>
+              <workingDirectory>src/test/python</workingDirectory>
+              <arguments>
+                <argument>mrgeolocalintegrationtests.py</argument>
+              </arguments>
+              <!--<environmentVariables>-->
+                <!--<PYTHONPATH>$PYTHONPATH</PYTHONPATH>-->
+              <!--</environmentVariables>-->
+              <skip>${skip.mrgeo.python.tests}</skip>
+            </configuration>
+            <id>python-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -63,6 +84,13 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-core</artifactId>
+    </dependency>
+    <!-- need a dependency on mrgeo core test utilities and scalatest which is used by them-->
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
