@@ -61,6 +61,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
 
     def test_addAlt(self):
         add = self.allones.add(self.allhundreds)
+        a2 = add + 1
         self.compareraster(add, self.name)
 
     def test_addAlt_constA(self):
