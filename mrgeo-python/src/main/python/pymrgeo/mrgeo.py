@@ -29,6 +29,8 @@ class MrGeo(object):
     _host = None
     _port = None
 
+    _started = False
+
     def __init__(self, host=None, port=None, pysparkContext=None):
         self._host = host
         self._port = port
@@ -79,11 +81,9 @@ class MrGeo(object):
     def _initialize(self, pysparkContext=None):
         try:
             if not pysparkContext:
-                print("Initializing gateway")
                 self._create_gateway(self._host, self._port)
                 self._localGateway = True
             else:
-                print("Using existing gateway")
                 self.gateway = pysparkContext._gateway
                 self.gateway_client = self.gateway.gateway_client
                 self.sparkContext = pysparkContext._jsc.sc()
@@ -117,6 +117,10 @@ class MrGeo(object):
         job.useYarn()
 
     def start(self):
+        if self._started:
+            # print("MrGeo is already started")
+            return
+
         jvm = self._get_jvm()
         job = self._get_job()
 
@@ -168,6 +172,7 @@ class MrGeo(object):
             jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
             self.sparkContext = jsc.sc()
 
+        self._started = True
         # print("started")
 
     def stop(self):
@@ -181,6 +186,8 @@ class MrGeo(object):
                 self.gateway_client = None
             self._job = None
             java_gateway.terminate()
+
+        self._started = False
 
     def list_images(self):
         jvm = self._get_jvm()
