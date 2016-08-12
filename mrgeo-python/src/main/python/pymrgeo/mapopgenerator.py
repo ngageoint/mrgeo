@@ -177,8 +177,8 @@ def generate(mrgeo, gateway, gateway_client):
 
                 if ooCodes is not None:
                     for method_name, code in ooCodes.items():
-                        # if method_name == "export":
-                        #     print(code.generate())
+                        # if method_name == "add":
+                        #    print(code.generate())
 
                         if instance == 'RasterMapOp':
                             _rastermapop_code[method_name] = code
