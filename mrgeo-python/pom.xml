@@ -58,7 +58,6 @@
           </environmentVariables>
         </configuration>
         <executions>
-          <!-- config for local integration tests (not using external Hadoop or Spark) -->
           <execution>
             <id>python-unit-tests</id>
             <phase>test</phase>
@@ -66,12 +65,11 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <exec.skip>${skip.mrgeo.python.tests}</exec.skip>
-              <skip>true</skip>
+              <skip>${skip.mrgeo.python.tests}</skip>
               <executable>python</executable>
               <workingDirectory>src/test/python/unit</workingDirectory>
               <arguments>
-                <argument>mrgeolocalintegrationtests.py</argument>
+                <argument>testrunner.py</argument>
               </arguments>
             </configuration>
           </execution>
@@ -82,7 +80,7 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <exec.skip>${skip.mrgeo.python.integration.tests}</exec.skip>
+              <skip>${skip.mrgeo.python.integration.tests}</skip>
               <executable>python</executable>
               <workingDirectory>${project.basedir}/src/test/python/integration</workingDirectory>
               <arguments>

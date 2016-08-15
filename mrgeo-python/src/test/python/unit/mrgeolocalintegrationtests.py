@@ -1,5 +1,6 @@
+
 from py4j.java_gateway import java_import
-from unittest import TestLoader, TestCase, TextTestRunner
+from unittest import TestSuite, TestCase, defaultTestLoader, main
 from pymrgeo.mrgeo import MrGeo
 from rastermapoptestsupport import RasterMapOpTestSupport
 
@@ -82,9 +83,11 @@ class MrGeoLocalIntegrationTests(TestCase):
         return self._mrgeo.gateway.new_array(type, size)
 
     def _getSome(self, value):
-        java_import(self.jvm, "scala.Some")
-        return self.jvm.Some(value)
+        java_import(self._jvm, "scala.Some")
+        return self._jvm.Some(value)
 
 
-suite = TestLoader().loadTestsFromTestCase(MrGeoLocalIntegrationTests)
-TextTestRunner(verbosity=2).run(suite)
+
+
+# suite = TestLoader().loadTestsFromTestCase(MrGeoLocalIntegrationTests)
+# TextTestRunner(verbosity=2).run(suite)
