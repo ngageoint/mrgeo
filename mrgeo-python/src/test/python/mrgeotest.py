@@ -232,7 +232,6 @@ class MrGeoTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.mrgeo.stop()
-        pass
 
     def setUp(self):
         self.name = self._testMethodName
@@ -296,18 +295,5 @@ class VectorTestExpectation:
         self.minSpeed = minSpeed
         self.maxSpeed = maxSpeed
         self.avgSpeed = avgSpeed
-
-
-def load_tests(loader, tests, pattern):
-    suite = TestSuite()
-    for all_test_suite in defaultTestLoader.discover('.', pattern='*tests.py'):
-        for test_suite in all_test_suite:
-            suite.addTests(test_suite)
-
-    return suite
-
-if __name__ == '__main__':
-    print('running tests')
-    main()
 
 
