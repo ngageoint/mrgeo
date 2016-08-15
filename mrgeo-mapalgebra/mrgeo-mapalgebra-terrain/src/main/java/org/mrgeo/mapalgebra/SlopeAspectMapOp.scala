@@ -33,65 +33,30 @@ import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils.tms.TMSUtils
 import org.mrgeo.utils.{FloatUtils, LatLng, SparkUtils}
 
-class SlopeAspectMapOp extends RasterMapOp with Externalizable {
+abstract class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
   final val DEG_2_RAD: Double = 0.0174532925
   final val RAD_2_DEG: Double = 57.2957795
-  final val TWO_PI:Double = 2 * Math.PI
-  final val THREE_PI_OVER_2:Double = (3.0 * Math.PI) / 2.0
 
   private var inputMapOp:Option[RasterMapOp] = None
   private var units:String = "rad"
-  private var slope:Boolean = true
 
   private var rasterRDD:Option[RasterRDD] = None
-
-  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], units:String, isSlope:Boolean) = {
-    this()
-
-    this.inputMapOp = inputMapOp
-    this.slope = isSlope
-
-    if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
-        units.equalsIgnoreCase("percent"))) {
-      throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
-    }
-    this.units = units
-
-  }
-
-  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
-    this()
-
-    if (node.getNumChildren < 1) {
-      throw new ParserException(node.getName + " requires at least one argument")
-    }
-    else if (node.getNumChildren > 2) {
-      throw new ParserException(node.getName + " requires only one or two arguments")
-    }
-
-    slope = isSlope
-
-    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-
-    if (node.getNumChildren == 2) {
-      units = MapOp.decodeString(node.getChild(1)) match {
-      case Some(s) => s
-      case _ => throw new ParserException("Error decoding string")
-      }
-
-      if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
-          units.equalsIgnoreCase("percent"))) {
-        throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
-      }
-
-    }
-  }
 
   override def rdd(): Option[RasterRDD] = rasterRDD
 
   override def setup(job: JobArguments, conf: SparkConf): Boolean = {
     true
+  }
+
+  private[mapalgebra] def initialize(inputMapOp: Option[RasterMapOp], units: String): Unit = {
+    this.inputMapOp = inputMapOp
+
+    if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
+      units.equalsIgnoreCase("percent"))) {
+      throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
+    }
+    this.units = units
   }
 
   private def calculate(tiles:RDD[(TileIdWritable, RasterWritable)], bufferX:Int, bufferY: Int, nodata:Double, zoom:Int, tilesize:Int) = {
@@ -118,7 +83,6 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
       val vx = new Vector3d(dx, 0.0, 0.0)
       val vy = new Vector3d(0.0, dy, 0.0)
       val normal = new Vector3d()
-      val up = new Vector3d(0, 0, 1.0)  // z (up) direction
 
 
 
@@ -169,28 +133,7 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
           return Float.NaN
         }
 
-        val theta = if (slope) {
-           Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
-        }
-        else {  // aspect
-          // if the z component of the normal is 1.0, the cell is flat, so the aspect is undefined.
-          // For now, we'llset it to 0.0, but another value could be more appropriate.
-          if (FloatUtils.isEqual(normal._3, 1.0)) {
-            0.0
-          }
-          else {
-            // change from (-Pi to Pi) to ( [0 to 2Pi) ), make 0 deg north (+ 3pi/2)
-            // convert to clockwise
-            val t = TWO_PI - (Math.atan2(normal._2, normal._1) + THREE_PI_OVER_2) % TWO_PI
-            if (FloatUtils.isEqual(t, TWO_PI)) {
-              0.0
-            }
-            else {
-              t
-            }
-          }
-        }
-
+        val theta = computeTheta(normal)
         units match {
         case "deg"  => (theta * RAD_2_DEG).toFloat
         case "rad" => theta.toFloat
@@ -220,6 +163,8 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
     })
   }
 
+
+  def computeTheta(normal: (Double, Double, Double)): Double
 
   override def execute(context: SparkContext): Boolean = {
     val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
@@ -254,12 +199,10 @@ class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
   override def readExternal(in: ObjectInput): Unit = {
     units = in.readUTF()
-    slope = in.readBoolean()
   }
 
   override def writeExternal(out: ObjectOutput): Unit = {
     out.writeUTF(units)
-    out.writeBoolean(slope)
   }
 
 }

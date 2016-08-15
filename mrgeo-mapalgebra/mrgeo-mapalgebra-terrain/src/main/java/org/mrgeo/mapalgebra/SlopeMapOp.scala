@@ -16,9 +16,11 @@
 
 package org.mrgeo.mapalgebra
 
-import org.apache.spark.{SparkContext, SparkConf}
+import javax.vecmath.Vector3d
+
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.job.JobArguments
-import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 
 object SlopeMapOp extends MapOpRegistrar {
@@ -27,13 +29,44 @@ object SlopeMapOp extends MapOpRegistrar {
   }
 
   def create(raster:RasterMapOp, units:String="rad"):MapOp = {
-    new SlopeAspectMapOp(Some(raster), units, true)
+    new SlopeMapOp(Some(raster), units)
   }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
-    new SlopeAspectMapOp(node, true, variables)
+    new SlopeMapOp(node, variables)
 }
 
-// Dummy class definition to allow the python reflection to find the Slope mapop
-abstract class SlopeMapOp extends RasterMapOp {
+class SlopeMapOp extends SlopeAspectMapOp {
+  val up = new Vector3d(0, 0, 1.0)  // z (up) direction
+
+  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], units:String) = {
+    this()
+
+    initialize(inputMapOp, units)
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren < 1) {
+      throw new ParserException(node.getName + " requires at least one argument")
+    }
+    else if (node.getNumChildren > 2) {
+      throw new ParserException(node.getName + " takes only one or two arguments")
+    }
+
+    val inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+    var units: String = "rad"
+    if (node.getNumChildren >= 2) {
+      units = MapOp.decodeString(node.getChild(1)) match {
+        case Some(s) => s
+        case _ => throw new ParserException("Error decoding string")
+      }
+    }
+    initialize(inputMapOp, units)
+  }
+
+  override def computeTheta(normal: (Double, Double, Double)): Double = {
+    Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
+  }
 }
