@@ -1,3 +1,5 @@
+import sys
+sys.path.append("..") # need to add the parent test path...  yuck!
 import mrgeotest
 
 

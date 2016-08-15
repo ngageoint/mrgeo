@@ -1,15 +1,21 @@
 
-from py4j.java_gateway import java_import
-from unittest import TestSuite, TestCase, defaultTestLoader, main
+from unittest import TestCase
 from pymrgeo.mrgeo import MrGeo
-from rastermapoptestsupport import RasterMapOpTestSupport
 
 
 class MrGeoStartTests(TestCase):
 
+    mrgeo = None
+
     @classmethod
     def setUpClass(cls):
+        print("MrGeoStartTests.setUpClass()")
         cls.mrgeo = MrGeo()
+
+    @classmethod
+    def tearDownClass(cls):
+        print("MrGeoStartTests.tearDownClass()")
+        cls.mrgeo.stop()
 
     def setUp(self):
         mrgeo = self.mrgeo
@@ -22,10 +28,9 @@ class MrGeoStartTests(TestCase):
         # mrgeo.start()
         # self._sparkContext = mrgeo.sparkContext
 
-        self._mrgeo = mrgeo
-
     def tearDown(self):
-        self.mrgeo.stop()
+        # self.mrgeo.stop()
+        pass
 
     def test_list_images_without_start(self):
         images = self.mrgeo.list_images()

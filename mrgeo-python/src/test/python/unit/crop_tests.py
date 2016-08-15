@@ -7,9 +7,17 @@ from rastermapoptestsupport import RasterMapOpTestSupport
 
 class CropTests(TestCase):
 
+    _mrgeo = None
+
     @classmethod
     def setUpClass(cls):
+        print("CropTests.setUpClass()")
         cls._mrgeo = MrGeo()
+
+    @classmethod
+    def tearDownClass(cls):
+        print("CropTests.tearDownClass()")
+        cls._mrgeo.stop()
 
     def setUp(self):
         mrgeo = self._mrgeo

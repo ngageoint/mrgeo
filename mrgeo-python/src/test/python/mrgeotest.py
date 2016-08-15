@@ -1,12 +1,11 @@
-
-import integration.gdaltest
-
 import os
-from osgeo import gdal
-from py4j.java_gateway import java_import
 import shutil
+from osgeo import gdal
 from unittest import TestSuite, TestCase, defaultTestLoader, main
 
+from py4j.java_gateway import java_import
+
+import gdaltest
 from pymrgeo.instance import is_instance_of
 from pymrgeo.mrgeo import MrGeo
 
@@ -47,7 +46,7 @@ class MrGeoTests(TestCase):
             golden = gdal.Open(self.inputdir + testname + ".tif")
 
             # compare as GDAL Datasets.
-            integration.gdaltest.compare_db(self, golden, test)
+            gdaltest.compare_db(self, golden, test)
 
             os.remove(testimage)
 
@@ -57,7 +56,7 @@ class MrGeoTests(TestCase):
             test = gdal.Open(self.outputdir + testname + ".tif")
 
             # compare as GDAL Datasets.
-            integration.gdaltest.compare_db(self, golden, test)
+            gdaltest.compare_db(self, golden, test)
 
     def saveraster(self, raster, testname, nodata=-9999):
         name = self.inputdir + testname
