@@ -190,6 +190,10 @@ class MrGeo(object):
         self._started = False
 
     def list_images(self):
+        if not self._started:
+            print("ERROR:  You must call start() before list_images()")
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
@@ -205,6 +209,10 @@ class MrGeo(object):
         return images
 
     def load_image(self, name):
+        if not self._started:
+            print("ERROR:  You must call start() before load_image()")
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
@@ -221,6 +229,10 @@ class MrGeo(object):
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
     def ingest_image(self, name, zoom=-1, categorical=False, skip_category_load=False):
+        if not self._started:
+            print("ERROR:  You must call start() before ingest_image()")
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
@@ -233,6 +245,10 @@ class MrGeo(object):
         return None
 
     def load_vector(self, name):
+        if not self._started:
+            print("ERROR:  You must call start() before load_vector()")
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
@@ -249,6 +265,10 @@ class MrGeo(object):
         return VectorMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
     def create_points(self, coords):
+        if not self._started:
+            print("ERROR:  You must call start() before create_points()")
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
