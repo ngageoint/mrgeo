@@ -299,7 +299,7 @@ def _generate_oo_method_code(gateway, client, mapop, name, signatures, instance)
     jvm = gateway.jvm
     cls = JavaClass(mapop, gateway_client=client)
 
-    is_export = is_instance_of(gateway, cls, jvm.ExportMapOp) # is_remote() and is_instance_of(gateway, cls, jvm.ExportMapOp)
+    is_export = is_remote() and is_instance_of(gateway, cls, jvm.ExportMapOp)
 
     if len(methods) == 0:
         return None

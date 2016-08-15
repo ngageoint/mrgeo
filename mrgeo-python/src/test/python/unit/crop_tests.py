@@ -11,13 +11,13 @@ class CropTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("CropTests.setUpClass()")
+        print("*** CropTests.setUpClass()")
         cls._mrgeo = MrGeo()
 
     @classmethod
     def tearDownClass(cls):
-        print("CropTests.tearDownClass()")
-        cls._mrgeo.stop()
+        print("*** CropTests.tearDownClass()")
+        cls._mrgeo.disconnect()
 
     def setUp(self):
         mrgeo = self._mrgeo

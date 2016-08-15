@@ -3,6 +3,7 @@ import shutil
 from osgeo import gdal
 from unittest import TestSuite, TestCase, defaultTestLoader, main
 
+import sys
 from py4j.java_gateway import java_import
 
 import gdaltest
@@ -168,6 +169,7 @@ class MrGeoTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        print("*** MrGeoTest.setUpClass() ")
         cls.classname = cls.__name__
 
         # print(cls.classname + " setup")
@@ -231,7 +233,8 @@ class MrGeoTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mrgeo.stop()
+        print("*** MrGeoTest.tearDownClass() ")
+        cls.mrgeo.disconnect()
 
     def setUp(self):
         self.name = self._testMethodName
@@ -267,6 +270,9 @@ class MrGeoTests(TestCase):
 
     @staticmethod
     def _doublebox(text, name):
+
+        sys.stdout.flush()
+
         width = len(name)
         if width < len(text):
             width = len(text)
@@ -286,6 +292,8 @@ class MrGeoTests(TestCase):
         fmt = "{:*<" + str(width + 4) + "}"
         print(fmt.format(""))
         print("")
+
+        sys.stdout.flush()
 
 
 class VectorTestExpectation:

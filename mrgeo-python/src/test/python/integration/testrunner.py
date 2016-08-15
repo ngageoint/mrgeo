@@ -10,4 +10,5 @@ def load_tests(loader, tests, pattern):
     return suite
 
 if __name__ == '__main__':
-    main()
+    # verbosity levels:  0 - quiet, 1 = "normal", 2 = verbose
+    main(verbosity=1)

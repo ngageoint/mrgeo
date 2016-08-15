@@ -180,14 +180,19 @@ class MrGeo(object):
             if self.sparkContext:
                 self.sparkContext.stop()
                 self.sparkContext = None
-            if self.gateway:
-                self.gateway.shutdown()
-                self.gateway = None
-                self.gateway_client = None
             self._job = None
-            java_gateway.terminate()
 
         self._started = False
+
+    def disconnect(self):
+        if self._started:
+            self.stop()
+
+        if self.gateway:
+            self.gateway.shutdown()
+            self.gateway = None
+            self.gateway_client = None
+        java_gateway.terminate()
 
     def list_images(self):
         if not self._started:

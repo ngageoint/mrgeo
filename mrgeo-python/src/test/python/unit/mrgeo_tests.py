@@ -9,13 +9,13 @@ class MrGeoStartTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("MrGeoStartTests.setUpClass()")
+        print("*** MrGeoStartTests.setUpClass()")
         cls.mrgeo = MrGeo()
 
     @classmethod
     def tearDownClass(cls):
-        print("MrGeoStartTests.tearDownClass()")
-        cls.mrgeo.stop()
+        print("*** MrGeoStartTests.tearDownClass()")
+        cls.mrgeo.disconnect()
 
     def setUp(self):
         mrgeo = self.mrgeo
