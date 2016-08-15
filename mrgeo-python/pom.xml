@@ -84,7 +84,7 @@
               <executable>python</executable>
               <workingDirectory>${project.basedir}/src/test/python/integration</workingDirectory>
               <arguments>
-                <argument>mrgeotest.py</argument>
+                <argument>testrunner.py</argument>
               </arguments>
             </configuration>
           </execution>

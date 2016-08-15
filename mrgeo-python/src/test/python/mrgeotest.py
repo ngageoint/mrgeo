@@ -1,5 +1,5 @@
 
-import gdaltest
+import integration.gdaltest
 
 import os
 from osgeo import gdal
@@ -47,7 +47,7 @@ class MrGeoTests(TestCase):
             golden = gdal.Open(self.inputdir + testname + ".tif")
 
             # compare as GDAL Datasets.
-            gdaltest.compare_db(self, golden, test)
+            integration.gdaltest.compare_db(self, golden, test)
 
             os.remove(testimage)
 
@@ -57,7 +57,7 @@ class MrGeoTests(TestCase):
             test = gdal.Open(self.outputdir + testname + ".tif")
 
             # compare as GDAL Datasets.
-            gdaltest.compare_db(self, golden, test)
+            integration.gdaltest.compare_db(self, golden, test)
 
     def saveraster(self, raster, testname, nodata=-9999):
         name = self.inputdir + testname
@@ -304,7 +304,7 @@ def load_tests(loader, tests, pattern):
     for all_test_suite in defaultTestLoader.discover('.', pattern='*tests.py'):
         for test_suite in all_test_suite:
             suite.addTests(test_suite)
-            
+
     return suite
 
 if __name__ == '__main__':

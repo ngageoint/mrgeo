@@ -5,7 +5,7 @@ from pymrgeo.mrgeo import MrGeo
 from rastermapoptestsupport import RasterMapOpTestSupport
 
 
-class MrGeoLocalIntegrationTests(TestCase):
+class CropTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
