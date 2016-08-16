@@ -104,15 +104,19 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.compareraster(sub, self.name)
 
     def test_aspect(self):
-        aspect = self.smallelevation.aspect()
+        aspect = self.smallelevation.aspect(flatValue=0.0)
         self.compareraster(aspect, self.name)
 
     def test_aspect_deg(self):
-        aspect = self.smallelevation.aspect("deg")
+        aspect = self.smallelevation.aspect("deg", flatValue=0.0)
+        self.compareraster(aspect, self.name)
+
+    def test_aspect_deg_nan_flatvalue(self):
+        aspect = self.smallelevation.aspect("deg", flatValue=float('nan'))
         self.compareraster(aspect, self.name)
 
     def test_aspect_rad(self):
-        aspect = self.smallelevation.aspect("rad")
+        aspect = self.smallelevation.aspect("rad", flatValue=0.0)
         self.compareraster(aspect, self.name)
 
     def test_bandcombine(self):

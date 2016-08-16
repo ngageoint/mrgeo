@@ -175,6 +175,8 @@ def generate(mrgeo, gateway, gateway_client):
 
                 if ooCodes is not None:
                     for method_name, code in ooCodes.items():
+                        if method_name == 'aspect':
+                            print(code.generate())
                         # print(code.generate())
 
                         if instance == 'RasterMapOp':
