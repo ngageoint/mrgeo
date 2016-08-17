@@ -44,15 +44,19 @@ class MrGeo(object):
         with self.lock:
             if not self.gateway:
                 print("Initializing gateway")
+                sys.stdout.flush()
+
                 self.gateway, self.gateway_client = java_gateway.launch_gateway(host, port)
 
                 jvm = self._get_jvm()
 
             else:
                 print("Gateway already initialized")
+                sys.stdout.flush()
 
     def _create_job(self):
         if not self._job:
+
             jvm = self._get_jvm()
             java_import(jvm, "org.mrgeo.job.*")
 
@@ -180,7 +184,7 @@ class MrGeo(object):
             if self.sparkContext:
                 self.sparkContext.stop()
                 self.sparkContext = None
-            self._job = None
+            # self._job = None
 
         self._started = False
 
@@ -197,6 +201,7 @@ class MrGeo(object):
     def list_images(self):
         if not self._started:
             print("ERROR:  You must call start() before list_images()")
+            sys.stdout.flush()
             return None
 
         jvm = self._get_jvm()
@@ -216,6 +221,7 @@ class MrGeo(object):
     def load_image(self, name):
         if not self._started:
             print("ERROR:  You must call start() before load_image()")
+            sys.stdout.flush()
             return None
 
         jvm = self._get_jvm()
@@ -229,13 +235,13 @@ class MrGeo(object):
         mapop = jvm.MrsPyramidMapOp.apply(dp)
         mapop.context(self.sparkContext)
 
-        # print("loaded " + name)
 
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
     def ingest_image(self, name, zoom=-1, categorical=False, skip_category_load=False):
         if not self._started:
             print("ERROR:  You must call start() before ingest_image()")
+            sys.stdout.flush()
             return None
 
         jvm = self._get_jvm()
@@ -252,6 +258,7 @@ class MrGeo(object):
     def load_vector(self, name):
         if not self._started:
             print("ERROR:  You must call start() before load_vector()")
+            sys.stdout.flush()
             return None
 
         jvm = self._get_jvm()
@@ -272,6 +279,7 @@ class MrGeo(object):
     def create_points(self, coords):
         if not self._started:
             print("ERROR:  You must call start() before create_points()")
+            sys.stdout.flush()
             return None
 
         jvm = self._get_jvm()
