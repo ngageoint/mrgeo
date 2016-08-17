@@ -4,8 +4,6 @@ from __future__ import print_function
 import traceback
 
 import sys
-
-from gio._gio import Error
 from py4j.java_gateway import JavaClass, java_import
 
 from pymrgeo.code_generator import CodeGenerator
@@ -190,7 +188,6 @@ def generate(mrgeo, gateway, gateway_client):
                             _mapop_code[method_name] = code
                             setattr(RasterMapOp, method_name, code.compile(method_name).get(method_name))
                             setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
-
                 if procCodes is not None:
                     for method_name, code in procCodes.items():
                         pass
@@ -214,7 +211,7 @@ def _get_instance_type(signatures, gateway, cls, mapop):
 
             if new_type == 'RasterMapOp' or new_type == 'VectorMapOp' or new_type == 'MapOp':
                 has_type[new_type] = True
-        for t,v in has_type.iteritems():
+        for t, v in has_type.iteritems():
             if v:
                 type_map[t] += 1
 
@@ -229,7 +226,7 @@ def _get_instance_type(signatures, gateway, cls, mapop):
             return 'VectorMapOp'
     # There is at least one signature that does not include a parameter of the same type
     # as the map op itself. Instead, we get a type that is represented in all the signatures.
-    for t,v in type_map.iteritems():
+    for t, v in type_map.iteritems():
         if v == len(signatures):
             return t
 
