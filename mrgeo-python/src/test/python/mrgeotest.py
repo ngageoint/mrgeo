@@ -169,7 +169,6 @@ class MrGeoTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print("*** MrGeoTest.setUpClass() ")
         cls.classname = cls.__name__
 
         # print(cls.classname + " setup")
@@ -233,7 +232,6 @@ class MrGeoTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print("*** MrGeoTest.tearDownClass() ")
         cls.mrgeo.disconnect()
 
     def setUp(self):
