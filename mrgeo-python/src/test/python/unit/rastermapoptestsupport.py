@@ -18,19 +18,15 @@ class RasterMapOpTestSupport(TestCase):
         java_import(jvm, "org.mrgeo.utils.tms.*")
         self._rasterMapOpTestSupport = jvm.StandaloneRasterMapOpTestSupport()
         self._jvm = jvm
+        self._sparkContext = mrgeo.sparkContext
+        self._rasterMapOpTestSupport.useSparkContext(self._sparkContext)
 
-        # Default image no data
+
+    # Default image no data
         self._defaultImageNoData = self._getDoubleArray([0.0])
         # Default image initial data
         self._defaultImageInitialData = self._getDoubleArray([1.0])
 
-
-    def useSparkContext(self, context):
-        self._sparkContext = context
-        self._rasterMapOpTestSupport.useSparkContext(context)
-
-    def stopSparkContext(self):
-        self._rasterMapOpTestSupport.stopSparkContext()
 
     def createRasterMapOp(self, tileIds, zoomLevel, tileSize, imageNoData = None, imageInitialData = None):
         if imageNoData is None:
