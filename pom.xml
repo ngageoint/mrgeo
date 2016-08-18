@@ -501,26 +501,6 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
           <version>${exec-maven.version}</version>
-          <executions>
-            <execution>
-              <id>python-test</id>
-              <phase>integration-test</phase>
-              <goals>
-                <goal>exec</goal>
-              </goals>
-              <configuration>
-                <executable>python</executable>
-                <workingDirectory>${project.basedir}/src/test/python</workingDirectory>
-                <arguments>
-                  <argument>mrgeotest.py</argument>
-                </arguments>
-                <environmentVariables>
-                  <PYTHONPATH>${project.basedir}/src/main/python:${env.SPARK_HOME}/python:${env.SPARK_HOME}/python/lib:${project.basedir}/lib:${env.PYTHONPATH}</PYTHONPATH>
-                  <BASEDIR>${project.basedir}</BASEDIR>
-                </environmentVariables>
-              </configuration>
-            </execution>
-          </executions>
         </plugin>
         <plugin>
           <groupId>org.scalatest</groupId>
@@ -772,7 +752,6 @@
         <mahout.version>0.9-cdh5.8.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.8.0</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.8.0</final.classifier>
         <release.arguments />
@@ -817,7 +796,6 @@
         <mahout.version>0.9-cdh5.7.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.1</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.7.1</final.classifier>
         <release.arguments />
@@ -862,7 +840,6 @@
         <mahout.version>0.9-cdh5.7.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.0</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.7.0</final.classifier>
         <release.arguments />
@@ -907,7 +884,6 @@
         <mahout.version>0.9-cdh5.6.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.6.0</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.6.0</final.classifier>
         <release.arguments />
@@ -952,7 +928,6 @@
         <mahout.version>0.9-cdh5.5.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.2</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.2</final.classifier>
         <release.arguments />
@@ -997,7 +972,6 @@
         <mahout.version>0.9-cdh5.5.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.1</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.1</final.classifier>
         <release.arguments />
@@ -1042,7 +1016,6 @@
         <mahout.version>0.9-cdh5.5.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.0</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.0</final.classifier>
         <release.arguments />
@@ -1087,7 +1060,6 @@
         <mahout.version>0.9-cdh5.4.8</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.8</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.8</final.classifier>
         <release.arguments />
@@ -1122,7 +1094,6 @@
         <mahout.version>0.9-cdh5.4.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.7</final.classifier>
         <release.arguments />
@@ -1157,7 +1128,6 @@
         <mahout.version>0.9-cdh5.4.5</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.5</final.classifier>
         <release.arguments />
@@ -1193,7 +1163,6 @@
         <mahout.version>0.9-cdh5.4.4</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.4</final.classifier>
         <release.arguments />
@@ -1228,7 +1197,6 @@
         <mahout.version>0.9-cdh5.4.3</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.3</final.classifier>
         <release.arguments />
@@ -1263,7 +1231,6 @@
         <mahout.version>0.9-cdh5.4.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.2</final.classifier>
         <release.arguments />
@@ -1298,7 +1265,6 @@
         <mahout.version>0.9-cdh5.4.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.1</final.classifier>
         <release.arguments />
@@ -1333,7 +1299,6 @@
         <mahout.version>0.9-cdh5.4.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.0</final.classifier>
         <release.arguments />
@@ -1368,7 +1333,6 @@
         <mahout.version>0.9-cdh5.3.3</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.3</final.classifier>
         <release.arguments />
@@ -1403,7 +1367,6 @@
         <mahout.version>0.9-cdh5.3.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.2</final.classifier>
         <release.arguments />
@@ -1452,7 +1415,6 @@
         <mahout.version>0.9-cdh5.3.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.1</final.classifier>
         <release.arguments />
@@ -1501,7 +1463,6 @@
         <mahout.version>0.9-cdh5.3.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
-        
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
@@ -1551,7 +1512,6 @@
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.2.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1573,7 +1533,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.3.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1595,7 +1554,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.4.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1617,7 +1575,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.4.1</final.classifier>
         <release.arguments />
       </properties>
@@ -1639,7 +1596,6 @@
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.5.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1661,7 +1617,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.5.1</final.classifier>
         <release.arguments />
       </properties>
@@ -1683,7 +1638,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.5.2</final.classifier>
         <release.arguments />
       </properties>
@@ -1705,7 +1659,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.6.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1727,7 +1680,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        
         <final.classifier>2.7.1</final.classifier>
         <release.arguments />
       </properties>
@@ -1760,7 +1712,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        
         <final.classifier>2.7.2</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
@@ -1790,7 +1741,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        
         <final.classifier>2.7.2</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
@@ -1820,7 +1770,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        
         <final.classifier>2.7.2</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
@@ -1850,7 +1799,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        
         <final.classifier>2.7.2</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
@@ -1880,7 +1828,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        
         <final.classifier>2.7.2</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
@@ -1910,7 +1857,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        
         <final.classifier>2.7.1</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>

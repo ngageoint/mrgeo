@@ -17,6 +17,7 @@
 package org.mrgeo.cmd.mapalgebra.python;
 
 import org.apache.commons.cli.*;
+import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
@@ -38,7 +39,7 @@ public class PythonGateway extends Command
 {
 private static final Logger log = LoggerFactory.getLogger(PythonGateway.class);
 
-private Queue<Integer> portQueue = null;
+Queue<Integer> portQueue = null;
 
 public static Options createOptions()
 {
@@ -60,6 +61,17 @@ public static Options createOptions()
 public int run(final String[] args, final Configuration conf,
     final ProviderProperties providerProperties)
 {
+
+//  try
+//  {
+//    System.out.print("sleeping...");
+//    Thread.sleep(10000);
+//    System.out.println(" done");
+//  }
+//  catch (InterruptedException e)
+//  {
+//    e.printStackTrace();
+//  }
 
   try
   {
@@ -109,6 +121,7 @@ private int remoteConnection(int listenPort)
   {
     // make sure to keep this print on stdout.  The python process uses it in "local" mode for initialization
     System.out.println("Starting...");
+    System.out.flush();
     while (true)
     {
       Socket clientSocket = serverSocket.accept();
@@ -151,7 +164,6 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
     }
   }
 
-  //GatewayServer gateway = new GatewayServer(null, javaPythonPort);
 
 //  public GatewayServer(Object entryPoint, int port, int pythonPort,
 //  java.net.InetAddress address, InetAddress pythonAddress, int connectTimeout,
@@ -159,27 +171,18 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
   InetAddress javaPythonAddr = InetAddress.getByName("0.0.0.0");
   InetAddress pythonJavaAddr = InetAddress.getByName("0.0.0.0");
 
-  int timeout = 30000;  // 30 seconds
-
   GatewayServer gateway = new GatewayServer(null, javaPythonPort, pythonJavaPort,
-      javaPythonAddr, pythonJavaAddr, timeout, 0, null);
-  gateway.start();
+      javaPythonAddr, pythonJavaAddr, 0, 0, null);
 
-  int listeningPort = gateway.getListeningPort();
-  if (listeningPort == -1 || listeningPort != javaPythonPort)
-  {
-    throw new IOException("GatewayServer failed to bind");
-  }
-
-  log.info("Starting PythonGatewayServer. Communicating (java->python) on port " + listeningPort);
-
-  sendGatewayPort(clientSocket, javaPythonPort, pythonJavaPort);
+  PythonGatewayListener listener = new PythonGatewayListener(gateway, clientSocket, javaPythonPort, pythonJavaPort);
+  gateway.addListener(listener);
 
   return gateway;
 }
 
 private void setupThreadedServer(final Socket clientSocket) throws IOException
 {
+
   new Thread()
   {
     public void run()
@@ -189,21 +192,11 @@ private void setupThreadedServer(final Socket clientSocket) throws IOException
         log.info("Starting thread: " + this.getName() + "(" + this.getId() + ")");
 
         GatewayServer server = setupSingleServer(clientSocket);
+
+        // start the server inline (not threaded)
+        server.start(false);
+
         int port = server.getListeningPort();
-
-        // Exit on EOF or broken pipe to ensure that this process dies when the Python driver dies:
-        try
-        {
-          Semaphore semaphore = new Semaphore(1);
-          server.addListener(new ServerListener(semaphore));
-
-          // Wait for the shutdown
-          semaphore.acquire();
-        }
-        catch (InterruptedException ignored)
-        {
-        }
-
         if (portQueue != null)
         {
           portQueue.add(port);
@@ -218,28 +211,5 @@ private void setupThreadedServer(final Socket clientSocket) throws IOException
       }
     }
   }.start();
-
 }
-
-private void sendGatewayPort(Socket clientSocket, int javaPythonPort, int pythonJavaPort) throws IOException
-{
-  // Communicate the bound port back to the caller via the caller-specified callback port
-  log.info("Sending java->python port (" + javaPythonPort + ") and python->java port (" + pythonJavaPort +
-      ") to pymrgeo running at " +
-      clientSocket.getInetAddress().getHostName() +"(" + clientSocket.getInetAddress().getHostAddress() +
-      ")" + ":" + clientSocket.getPort());
-
-  try
-  {
-    DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
-    dos.writeInt(javaPythonPort);
-    dos.writeInt(pythonJavaPort);
-    dos.close();
-  }
-  catch (IOException e)
-  {
-    throw new IOException("Can not write to socket callback socket", e);
-  }
-}
-
 }

@@ -1,22 +1,36 @@
+
 from py4j.java_gateway import java_import
-from unittest import TestLoader, TestCase, TextTestRunner
+from unittest import TestSuite, TestCase, defaultTestLoader, main
 from pymrgeo.mrgeo import MrGeo
 from rastermapoptestsupport import RasterMapOpTestSupport
 
 
-class MrGeoLocalIntegrationTests(TestCase):
+class CropTests(TestCase):
+
+    _mrgeo = None
+
+    @classmethod
+    def setUpClass(cls):
+        print("*** CropTests.setUpClass()")
+        cls._mrgeo = MrGeo()
+
+    @classmethod
+    def tearDownClass(cls):
+        print("*** CropTests.tearDownClass()")
+        cls._mrgeo.disconnect()
 
     def setUp(self):
-        mrgeo = MrGeo()
+        mrgeo = self._mrgeo
+
         # Get the JVM.  This will create the gateway
         self._jvm = mrgeo._get_jvm()
-        self._createSparkContext()
         mrgeo.usedebug()
-        mrgeo.start(self._sparkContext)
+        mrgeo.start()
+
+        self._sparkContext = mrgeo.sparkContext
+
         self._mrgeo = mrgeo
-        rasterMapOpTestSupport = RasterMapOpTestSupport(self._mrgeo)
-        rasterMapOpTestSupport.useSparkContext(self._sparkContext)
-        self._rasterMapOpTestSupport = rasterMapOpTestSupport
+        self._rasterMapOpTestSupport = RasterMapOpTestSupport(self._mrgeo)
         self.createDefaultRaster()
 
     def createDefaultRaster(self):
@@ -71,20 +85,17 @@ class MrGeoLocalIntegrationTests(TestCase):
                                                          right=e, top=n, expectedData= self._imageInitialData)
 
     def tearDown(self):
-       self._rasterMapOpTestSupport.stopSparkContext()
-       self._mrgeo.stop()
-
+        self._mrgeo.stop()
 
     def _getArray(self, type, size):
         return self._mrgeo.gateway.new_array(type, size)
 
     def _getSome(self, value):
-        java_import(self.jvm, "scala.Some")
-        return self.jvm.Some(value)
+        java_import(self._jvm, "scala.Some")
+        return self._jvm.Some(value)
 
-    def _createSparkContext(self):
-        java_import(self._jvm, "org.apache.spark.SparkContext")
-        self._sparkContext = self._jvm.SparkContext("local", "MrGeo Local Python Tests")
 
-suite = TestLoader().loadTestsFromTestCase(MrGeoLocalIntegrationTests)
-TextTestRunner(verbosity=2).run(suite)
+
+
+# suite = TestLoader().loadTestsFromTestCase(MrGeoLocalIntegrationTests)
+# TextTestRunner(verbosity=2).run(suite)

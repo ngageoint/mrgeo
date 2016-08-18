@@ -1,9 +1,12 @@
+import sys
+sys.path.append("..") # need to add the parent test path...  yuck!
 import mrgeotest
 
 
 class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
 
     allones = None
+    alltwos = None
     allhundreds = None
     smallelevation = None
     toblertiny = None
@@ -28,11 +31,20 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def setUp(self):
         super(MrGeoIntegrationTests, self).setUp()
 
-        self.allones = self.mrgeo.load_image("all-ones")
-        self.alltwos = self.mrgeo.load_image("all-twos")
-        self.allhundreds = self.mrgeo.load_image("all-hundreds")
-        self.smallelevation = self.mrgeo.load_image("small-elevation")
-        self.toblertiny = self.mrgeo.load_image("tobler-raw-tiny")
+        if self.allones is None:
+            self.allones = self.mrgeo.load_image("all-ones")
+
+        if self.alltwos is None:
+            self.alltwos = self.mrgeo.load_image("all-twos")
+
+        if self.allhundreds is None:
+            self.allhundreds = self.mrgeo.load_image("all-hundreds")
+
+        if self.smallelevation is None:
+            self.smallelevation = self.mrgeo.load_image("small-elevation")
+
+        if self.toblertiny is None:
+            self.toblertiny = self.mrgeo.load_image("tobler-raw-tiny")
 
     def test_rasterize_vector(self):
         roads = self.mrgeo.load_vector("AmbulatoryPt.shp")
@@ -61,6 +73,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
 
     def test_addAlt(self):
         add = self.allones.add(self.allhundreds)
+        a2 = add + 1
         self.compareraster(add, self.name)
 
     def test_addAlt_constA(self):
@@ -214,8 +227,18 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.compareraster(cd, self.name)
 
     def test_leastcostpath(self):
-        points = [64.75, 30.158, 65.268, 29.983]
+        print(1)
+        sys.stdout.flush()
+        # points = [64.75, 30.158, 65.268, 29.983]
         cd = self.toblertiny.costdistance(-1.0, -1, 64.75, 30.158)
+        print(2)
+        sys.stdout.flush()
         destPoints = self.mrgeo.create_points([65.087, 30.194, 65.283, 29.939])
+        print(3)
+        sys.stdout.flush()
         lcp = destPoints.leastcostpath(cd)
+        print(4)
+        sys.stdout.flush()
         self.comparevector(lcp, self.name)
+        print(5)
+        sys.stdout.flush()
