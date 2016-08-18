@@ -28,7 +28,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.ArrayUtils
 import org.apache.hadoop.fs.Path
-import org.apache.spark.Logging
 import org.gdal.gdal.{Band, Dataset, Driver, gdal}
 import org.gdal.gdalconst.gdalconstConstants
 import org.gdal.ogr.ogr

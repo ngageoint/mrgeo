@@ -23,9 +23,9 @@ import java.net.URL
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.io.filefilter.WildcardFileFilter
-import org.apache.spark.Logging
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.mapalgebra.parser.ParserNode
+import org.mrgeo.utils.Logging
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
