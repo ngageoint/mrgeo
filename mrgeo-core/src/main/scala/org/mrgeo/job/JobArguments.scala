@@ -23,11 +23,10 @@ import org.apache.commons.lang3.SystemUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
-import org.apache.spark.Logging
 import org.apache.spark.deploy.yarn.YarnSparkHadoopUtil
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.utils.{FileUtils, HadoopUtils, SparkUtils}
+import org.mrgeo.utils.{FileUtils, HadoopUtils, Logging, SparkUtils}
 
 import scala.collection.JavaConversions.{asScalaSet, _}
 import scala.collection.mutable.ArrayBuffer

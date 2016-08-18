@@ -36,7 +36,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils.tms._
-import org.mrgeo.utils.{LatLng, SparkUtils, SparkVectorUtils}
+import org.mrgeo.utils.{LatLng, Logging, SparkUtils, SparkVectorUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable

@@ -16,9 +16,9 @@
 
 package org.mrgeo.data.rdd
 
-import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
+import org.mrgeo.utils.Logging
 
 import scala.collection.mutable
 
