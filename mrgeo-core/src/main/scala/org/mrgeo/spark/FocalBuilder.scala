@@ -19,10 +19,11 @@ package org.mrgeo.spark
 import java.awt.image.{Raster, WritableRaster}
 
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
-import org.apache.spark.{Logging, SparkContext}
+import org.apache.spark.SparkContext
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.utils.tms.{Tile, Bounds, TMSUtils}
+import org.mrgeo.utils.Logging
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, Tile}
 
 import scala.collection.mutable.ListBuffer
 

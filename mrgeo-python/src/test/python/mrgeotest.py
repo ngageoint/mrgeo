@@ -1,12 +1,12 @@
-
-import gdaltest
-
 import os
-from osgeo import gdal
-from py4j.java_gateway import java_import
 import shutil
+from osgeo import gdal
 from unittest import TestSuite, TestCase, defaultTestLoader, main
 
+import sys
+from py4j.java_gateway import java_import
+
+import gdaltest
 from pymrgeo.instance import is_instance_of
 from pymrgeo.mrgeo import MrGeo
 
@@ -232,8 +232,7 @@ class MrGeoTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        #cls.mrgeo.stop()
-        pass
+        cls.mrgeo.disconnect()
 
     def setUp(self):
         self.name = self._testMethodName
@@ -246,8 +245,6 @@ class MrGeoTests(TestCase):
 
         jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_IMAGE, self.inputhdfs)
         jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_VECTOR, self.inputhdfs)
-
-        jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
 
     def tearDown(self):
         self.mrgeo.stop()
@@ -271,6 +268,9 @@ class MrGeoTests(TestCase):
 
     @staticmethod
     def _doublebox(text, name):
+
+        sys.stdout.flush()
+
         width = len(name)
         if width < len(text):
             width = len(text)
@@ -291,6 +291,9 @@ class MrGeoTests(TestCase):
         print(fmt.format(""))
         print("")
 
+        sys.stdout.flush()
+
+
 class VectorTestExpectation:
     def __init__(self, cost, distance, minSpeed, maxSpeed, avgSpeed):
         self.cost = cost
@@ -298,17 +301,5 @@ class VectorTestExpectation:
         self.minSpeed = minSpeed
         self.maxSpeed = maxSpeed
         self.avgSpeed = avgSpeed
-
-
-def load_tests(loader, tests, pattern):
-    suite = TestSuite()
-    for all_test_suite in defaultTestLoader.discover('.', pattern='*tests.py'):
-        for test_suite in all_test_suite:
-            suite.addTests(test_suite)
-    return suite
-
-if __name__ == '__main__':
-    print('running tests')
-    main()
 
 

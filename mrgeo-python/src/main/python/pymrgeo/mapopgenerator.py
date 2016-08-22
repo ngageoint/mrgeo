@@ -68,7 +68,7 @@ _vectormapop_code = {}
 _initialized = False
 
 
-def _exceptionhook(ex_cls, ex, tb):
+def _exceptionhook(ex_cls, ex, tb, method_name=None):
     stack = traceback.extract_tb(tb)
     print(ex_cls.__name__ + ' (' + str(ex) + ')', file=sys.stderr)
     for st in stack:
@@ -103,13 +103,13 @@ def _exceptionhook(ex_cls, ex, tb):
                 else:
                     print('    ' + c, file=sys.stderr)
                 cnt += 1
-            else:
-                print('  File "' + file.strip() + '", line ' +
-                      str(line) + ', in ' + method.strip(), file=sys.stderr)
-                print('    ' + srccode.strip(), file=sys.stderr)
+        else:
+            print('  File "' + file.strip() + '", line ' +
+                  str(line) + ', in ' + method.strip(), file=sys.stderr)
+            print('    ' + srccode.strip(), file=sys.stderr)
 
-                # print(''.join(traceback.format_tb(tb)))
-                # print('{0}: {1}'.format(ex_cls, ex))
+            print(''.join(traceback.format_tb(tb)))
+            print('{0}: {1}'.format(ex_cls, ex))
 
 
 # Always setup the hook
@@ -175,7 +175,8 @@ def generate(mrgeo, gateway, gateway_client):
 
                 if ooCodes is not None:
                     for method_name, code in ooCodes.items():
-                        # print(code.generate())
+                        # if method_name == "add":
+                        #    print(code.generate())
 
                         if instance == 'RasterMapOp':
                             _rastermapop_code[method_name] = code
@@ -210,7 +211,7 @@ def _get_instance_type(signatures, gateway, cls, mapop):
 
             if new_type == 'RasterMapOp' or new_type == 'VectorMapOp' or new_type == 'MapOp':
                 has_type[new_type] = True
-        for t,v in has_type.iteritems():
+        for t, v in has_type.iteritems():
             if v:
                 type_map[t] += 1
 
@@ -225,7 +226,7 @@ def _get_instance_type(signatures, gateway, cls, mapop):
             return 'VectorMapOp'
     # There is at least one signature that does not include a parameter of the same type
     # as the map op itself. Instead, we get a type that is represented in all the signatures.
-    for t,v in type_map.iteritems():
+    for t, v in type_map.iteritems():
         if v == len(signatures):
             return t
 
@@ -349,20 +350,22 @@ def _generate_procedural_method_code(gateway, client, mapop, name, signatures, i
 
 def _generate_run(generator, instance, is_export=False):
 
-    # Run the MapOp
-    generator.write("if (op.setup(self.job, self.context.getConf()) and", post_indent=True)
-    generator.write("op.execute(self.context) and")
-    generator.write("op.teardown(self.job, self.context.getConf())):")
-    # Return a new python RasterMapOp or VectorMapOp to wrap the Java MapOp
-    generator.write("if is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):", post_indent=True)
-    generator.write("new_resource = RasterMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
-    generator.write("elif is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):", post_indent=True)
-    generator.write("new_resource = VectorMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
-    generator.write("else:", post_indent=True)
-    generator.write("raise Exception('Unable to wrap a python object around returned map op: ' + str(op))", post_unindent=True)
-
     if is_export:
-        generator.append(_generate_saveraster())
+        ex_generator = _generate_saveraster()
+        generator.append(ex_generator)
+        generator.force_level(generator.get_level() + ex_generator.get_level())
+    else:
+        # Run the MapOp
+        generator.write("if (op.setup(self.job, self.context.getConf()) and", post_indent=True)
+        generator.write("op.execute(self.context) and")
+        generator.write("op.teardown(self.job, self.context.getConf())):")
+        # Return a new python RasterMapOp or VectorMapOp to wrap the Java MapOp
+        generator.write("if is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):", post_indent=True)
+        generator.write("new_resource = RasterMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
+        generator.write("elif is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):", post_indent=True)
+        generator.write("new_resource = VectorMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
+        generator.write("else:", post_indent=True)
+        generator.write("raise Exception('Unable to wrap a python object around returned map op: ' + str(op))", post_unindent=True)
 
     generator.write("return new_resource", post_unindent=True)
     generator.write("return None")
@@ -377,9 +380,9 @@ def _generate_saveraster():
     generator.write("op = cls.create(self.mapop, str(name), True if singleFile else False, int(zoom), int(numTiles), int(mosaic), str(format), True if randomTiles else False, True if tms else False, str(colorscale), str(tileids), str(bounds), True if allLevels else False, float(overridenodata))", post_unindent=True)
     generator.write("else:", post_indent=True)
     generator.write("raise Exception('input types differ (TODO: expand this message!)')", post_unindent=True)
-    generator.write("if (op.setup(self.job, self.context.getConf()) and")
+    generator.write("if (op.setup(self.job, self.context.getConf()) and", post_indent=True)
     generator.write("op.execute(self.context) and")
-    generator.write("op.teardown(self.job, self.context.getConf())):", post_indent=True)
+    generator.write("op.teardown(self.job, self.context.getConf())):")
     generator.write("if is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):", post_indent=True)
     generator.write("new_resource = RasterMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
     generator.write("elif is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):", post_indent=True)
@@ -444,7 +447,6 @@ def _generate_saveraster():
     generator.write("print('elapsed time: ' + str(end - start) + ' sec.')")
     generator.write("band.SetNoDataValue(java_nodatas[i - 1])", post_unindent=True)
     generator.write("local_image.FlushCache()")
-    generator.write("print('flushed cache')")
 
     return generator
 
@@ -548,13 +550,11 @@ def _generate_calls(generator, methods, is_export=False, is_reverse=False):
         generator.indent()
 
         if is_reverse:
-            generator.write("op = cls.rcreate(" + ", ".join(call) + ')')
+            generator.write("op = cls.rcreate(" + ", ".join(call) + ')', post_unindent=True)
         else:
-            generator.write("op = cls.create(" + ", ".join(call) + ')')
-        generator.unindent()
+            generator.write("op = cls.create(" + ", ".join(call) + ')', post_unindent=True)
 
-    generator.unindent()
-    generator.write("else:", unindent=True, post_indent="True")
+    generator.write("else:", post_indent=True)
     generator.write("raise Exception('input types differ (TODO: expand this message!)')", post_unindent=True)
     # code += "    import inspect\n"
     # code += "    method = inspect.stack()[0][3]\n"

@@ -17,9 +17,9 @@
 package org.mrgeo.kernel
 
 import java.awt.image.Raster
-import java.io.{ObjectOutput, ObjectInput, Externalizable}
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
-import org.apache.spark.Logging
+import org.mrgeo.utils.Logging
 
 abstract class Kernel(var kernelWidth:Int, var kernelHeight:Int) extends Externalizable with Logging {
 

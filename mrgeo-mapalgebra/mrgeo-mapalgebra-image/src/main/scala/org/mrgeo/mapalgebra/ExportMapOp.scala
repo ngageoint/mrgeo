@@ -20,7 +20,7 @@ import java.awt.image.WritableRaster
 import java.io._
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
-import org.apache.spark.{Logging, SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.gdal.gdal.Dataset
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD

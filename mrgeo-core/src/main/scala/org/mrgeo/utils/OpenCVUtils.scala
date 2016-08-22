@@ -18,7 +18,6 @@ package org.mrgeo.utils
 
 import java.io.File
 
-import org.apache.spark.Logging
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.opencv.core.Core
 
