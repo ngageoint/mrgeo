@@ -45,8 +45,9 @@ object IngestImageMapOp extends MapOpRegistrar {
   // call MrGeo.ingest_image(). Define createMapOp methods instead so that MrGeo.ingest_image
   // can call those methods.
 
-  def createMapOp(input:String, zoom:Int, categorical:Boolean, skip_category_load: Boolean):MapOp =
-    new IngestImageMapOp(input, Some(zoom), Some(categorical), Some(skip_category_load))
+  def createMapOp(input:String, zoom:Int, categorical:Boolean, skip_category_load: Boolean,
+                  protectionLevel: String):MapOp =
+    new IngestImageMapOp(input, Some(zoom), Some(categorical), Some(skip_category_load), protectionLevel)
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new IngestImageMapOp(node, variables)
@@ -61,9 +62,10 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   private var categorical: Boolean = false
   private var skipCategoryLoad = false
   private var zoom = -1
+  private var protectionLevel: String = ""
 
   private[mapalgebra] def this(input:String, zoom:Option[Int], categorical:Option[Boolean],
-                               skipCategoryLoad:Option[Boolean]) = {
+                               skipCategoryLoad:Option[Boolean], protectionLevel: String) = {
     this()
     val inputs = Array.ofDim[String](1)
     inputs(0) = input
@@ -71,22 +73,24 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     this.categorical = categorical.getOrElse(false)
     this.skipCategoryLoad = skipCategoryLoad.getOrElse(false)
     this.zoom = zoom.getOrElse(-1)
+    this.protectionLevel = protectionLevel
   }
 
   private[mapalgebra] def this(inputs:Array[String], zoom:Option[Int], categorical:Option[Boolean],
-                               skipCategoryLoad:Option[Boolean]) = {
+                               skipCategoryLoad:Option[Boolean], protectionLevel: String) = {
     this()
     this.inputs = Some(inputs)
     this.categorical = categorical.getOrElse(false)
     this.skipCategoryLoad = skipCategoryLoad.getOrElse(false)
     this.zoom = zoom.getOrElse(-1)
+    this.protectionLevel = protectionLevel
   }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
-    if (node.getNumChildren < 1 || node.getNumChildren > 4) {
-      throw new ParserException("Usage: ingest(input(s), [zoom], [categorical], [skipCategoryLoad]")
+    if (node.getNumChildren < 1 || node.getNumChildren > 5) {
+      throw new ParserException("Usage: ingest(input(s), [zoom], [categorical], [skipCategoryLoad], [protectionLevel]")
     }
 
     val in = Array.ofDim[String](1)
@@ -103,6 +107,10 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
     if (node.getNumChildren >= 4) {
       skipCategoryLoad = MapOp.decodeBoolean(node.getChild(3), variables).getOrElse(false)
+    }
+
+    if (node.getNumChildren >= 5) {
+      protectionLevel = MapOp.decodeString(node.getChild(4), variables).getOrElse("")
     }
   }
 
@@ -206,7 +214,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     })
 
     val result = IngestImage.ingest(context, filebuilder.result(), zoom, tilesize,
-      categorical, skipCategoryLoad, nodatas, "")
+      categorical, skipCategoryLoad, nodatas, protectionLevel)
     rasterRDD = result._1 match {
     case rrdd:RasterRDD =>
       rrdd.checkpoint()
