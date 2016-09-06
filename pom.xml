@@ -59,6 +59,7 @@
     <jai-imageio.version>1.1</jai-imageio.version>
     <jaitools.version>1.3.0</jaitools.version>
     <jai.version>1.1.3</jai.version>
+    <jasypt.version>1.9.2</jasypt.version>
     <java3d.version>1.3.2</java3d.version>
     <joda-time.version>2.7</joda-time.version>
     <json.version>20090211</json.version>
@@ -1705,14 +1706,44 @@
          <skipShade>true</skipShade>
     -->
     <profile>
-      <id>emr-4.7.2</id>
+      <id>emr500</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.12.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
+
+        <final.classifier>emr5.0.0</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>2.0.0</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>emr472</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.7.2</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.2</spark.version>
@@ -1734,14 +1765,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.7.1</id>
+      <id>emr471</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.7.1</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -1763,14 +1794,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.7.0</id>
+      <id>emr470</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.7.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -1792,14 +1823,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.6.0</id>
+      <id>emr460</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.6.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -1821,14 +1852,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.5.0</id>
+      <id>emr450</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.5.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -1850,14 +1881,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.4.0</id>
+      <id>emr440</id>
       <properties>
         <hadoop.version>2.7.1</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>2.7.1</final.classifier>
+        <final.classifier>emr4.4.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>

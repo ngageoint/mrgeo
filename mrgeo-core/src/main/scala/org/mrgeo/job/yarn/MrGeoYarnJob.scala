@@ -20,10 +20,10 @@ import java.io.{BufferedReader, InputStreamReader}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{Logging, SparkContext}
+import org.apache.spark.SparkContext
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoJob}
-import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.{Logging, SparkUtils}
 
 @SuppressFBWarnings(value=Array("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"), justification = "Scala generated code")
 object MrGeoYarnJob extends Logging {

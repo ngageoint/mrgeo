@@ -19,22 +19,13 @@ package org.mrgeo.job
 import java.io.{File, IOException}
 import java.net.URL
 import java.security.{AccessController, PrivilegedAction, PrivilegedActionException}
-import java.util
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
-import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.util.ClassUtil
-import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
-import org.apache.hadoop.yarn.conf.YarnConfiguration
-import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.{Logging, SparkConf}
+import org.apache.spark.SparkConf
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.DataProviderFactory
-import org.mrgeo.data.raster.RasterWritable
-import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
-import org.mrgeo.image.ImageStats
 import org.mrgeo.job.yarn.MrGeoYarnDriver
 import org.mrgeo.utils._
 

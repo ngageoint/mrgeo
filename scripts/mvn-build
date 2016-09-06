@@ -29,12 +29,13 @@ usage() {
     echo "  cdh552    - Cloudera hadoop 5.5.2"
     echo "  cdh551    - Cloudera hadoop 5.5.1"
     echo "  cdh550    - Cloudera hadoop 5.5.0"
-    echo "  emr-4.7.2 - Amazon EMR hadoop 2.7.2 for EMR 4.7.2"
-    echo "  emr-4.7.1 - Amazon EMR hadoop 2.7.2 for EMR 4.7.1"
-    echo "  emr-4.7.0 - Amazon EMR hadoop 2.7.2 for EMR 4.7.0"
-    echo "  emr-4.6.0 - Amazon EMR hadoop 2.7.2 for EMR 4.6.0"
-    echo "  emr-4.5.0 - Amazon EMR hadoop 2.7.2 for EMR 4.5.0"
-    echo "  emr-4.4.0 - Amazon EMR hadoop 2.7.1 for EMR 4.4.0"
+    echo "  emr500 - Amazon EMR 5.0.0 with hadoop 2.7.2"
+    echo "  emr472 - Amazon EMR 4.7.2 with hadoop 2.7.2"
+    echo "  emr471 - Amazon EMR 4.7.1 with hadoop 2.7.2"
+    echo "  emr470 - Amazon EMR 4.7.0 with hadoop 2.7.2"
+    echo "  emr460 - Amazon EMR 4.6.0 with hadoop 2.7.2"
+    echo "  emr450 - Amazon EMR 4.5.0 with hadoop 2.7.2"
+    echo "  emr440 - Amazon EMR 4.4.0 with hadoop 2.7.1"
     echo "  mapr      - mapr hadoop"
     echo "phase:"
     echo "  build     - build a deployable version"
@@ -235,23 +236,26 @@ while [ $# -gt 0 ] ; do
     "apache260" | "apache270" | "apache271")
         BUILD=$1
         ;;
-    "emr-4.7.2")
-        BUILD="emr-4.7.2"
+    "emr500")
+        BUILD="emr500"
         ;;
-    "emr-4.7.1")
-        BUILD="emr-4.7.1"
+    "emr472")
+        BUILD="emr472"
         ;;
-    "emr-4.7.0")
-        BUILD="emr-4.7.0"
+    "emr471")
+        BUILD="emr471"
         ;;
-    "emr-4.6.0")
-        BUILD="emr-4.6.0"
+    "emr470")
+        BUILD="emr470"
         ;;
-    "emr-4.5.0")
-        BUILD="emr-4.5.0"
+    "emr460")
+        BUILD="emr460"
         ;;
-    "emr-4.4.0")
-        BUILD="emr-4.4.0"
+    "emr450")
+        BUILD="emr450"
+        ;;
+    "emr440")
+        BUILD="emr440"
         ;;
     "mapr")
         echo "*** MapR Hadoop is no longer supported"
