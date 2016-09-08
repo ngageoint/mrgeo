@@ -3,8 +3,9 @@
 # find the mrgeo tar.  For now, we'll just take the 1st instance,  we
 # should probably take the latest version
 S3_BASE="s3://mrgeo-deploy/"
+VERSION="emr4.5.0"
 
-FILES=`aws s3 ls $S3_BASE | grep 'mrgeo.*\.tar\.gz' | awk '{print $4}'`
+FILES=`aws s3 ls $S3_BASE | awk '{print $4}' | grep '^mrgeo' | grep '\.tar\.gz$' | grep $VERSION`
 
 for FILE in $FILES; do
   echo $FILE
