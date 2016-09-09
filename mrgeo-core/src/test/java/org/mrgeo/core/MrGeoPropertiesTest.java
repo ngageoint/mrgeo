@@ -29,6 +29,8 @@ public class MrGeoPropertiesTest {
 
     @Before
     public void setUp() throws Exception {
+        // Force the properties to null so they get reinitialized
+        MrGeoProperties.properties = null;
     }
 
     @After

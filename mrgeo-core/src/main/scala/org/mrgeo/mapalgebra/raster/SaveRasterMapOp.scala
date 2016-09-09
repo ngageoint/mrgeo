@@ -25,6 +25,8 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
+import org.mrgeo.publisher.MrGeoPublisherFactory
+import scala.collection.JavaConverters._
 
 
 class SaveRasterMapOp extends RasterMapOp with Externalizable {
@@ -32,18 +34,21 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
   private var input: Option[RasterMapOp] = None
   private var output:String = null
+  private var publishImage: Boolean = false
 
-  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], name:String) = {
+  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], name:String, publishImage: Boolean = false) = {
     this()
 
     input = inputMapOp
     output = name
+    this.publishImage = publishImage
+
   }
 
   private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
     this()
 
-    if (node.getNumChildren != 2) {
+    if (node.getNumChildren < 2) {
       throw new ParserException(node.getName + " takes 2 arguments")
     }
 
@@ -51,6 +56,9 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
     output = MapOp.decodeString(node.getChild(1)) match {
     case Some(s) => s
     case _ => throw new ParserException("Error decoding String")
+    }
+    if (node.getNumChildren == 3) {
+      publishImage = MapOp.decodeBoolean(node.getChild(2)).asInstanceOf[Boolean]
     }
 
   }
@@ -69,6 +77,9 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
       metadata(meta)
 
       pyramid.save(output, providerProperties, context)
+      if (publishImage) {
+        MrGeoPublisherFactory.getAllPublishers.asScala.foreach(_.publishImage(output, meta))
+      }
 
     case None => throw new IOException("Error saving raster")
     }

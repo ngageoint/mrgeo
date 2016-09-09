@@ -83,3 +83,46 @@ base.url = http://localhost:8080/mrgeo/
 
 # Size of a mrsimage tile (this should not be changed unless there is a great reason)
 mrsimage.tilesize = 512
+
+# MrGeo Publishing Profiles
+# Each profile should have a name, preceded by mrgeo.publisher.  The prefix and the profile name should precede the
+# properties for that profile.  Currently MrGeo will publish the image to all profiles if the publishImage option
+# passed to the save mapop is true.  Profiles may contain encrypted properties, such as passwords.  Properties can be
+# encrypted with the encrypt script.  Encrypted property values should be surrounded by ENC() The master password used
+# to encrypt properties should be passed in at runtime as a system property
+# (i.e. -Dmrgeo.encryption.masterPassword=<masterPassword>).
+
+
+# Geoserver Publishing Profiles
+# Profiles may be configured to publish images to a Geoserver instance via the geoserver REST interface.  The following
+# properties are required for any geoserver publishing profile
+#
+# Geoserver Base URL - Should be the Geoserver url up to and including the rest/ part.  See the example below
+# mrgeo.publisher.localGeoserver.geoserverUrl = http://localhost:8085/geoserver/rest
+#
+# Geoserver Username
+# mrgeo.publisher.localGeoserver.geoserverUsername = admin
+#
+# Geoserver Password - This will likley be encrypted in production but may be unencrypted in development
+# mrgeo.publisher.localGeoserver.geoserverPassword = geoserver
+#
+# The following properties are optional for a geoserver publishing profile
+#
+# Workspace - The workspace to publish images to.  It will be created if it does not exist.
+# mrgeo.publisher.localGeoserver.workspace = mrgeo-workspace
+#
+# Coverage Store Name - The name of the coverage store to publish images to.  It will be created if it does not exist.
+# mrgeo.publisher.localGeoserver.coverageStore.name = mrgeo-coverage-store
+#
+# Coverage Store Description - A description of the coverage store
+# mrgeo.publisher.localGeoserver.coverageStore.description = "MrGeo data source, automatically (periodically) updated with new layers"
+#
+# Coverage Store Type - The type of the coverage store to publish images to.  This is used by geoserver to create the
+# correct reader for the coverages.  Recommend not setting this and let it use the default.
+# mrgeo.publisher.localGeoserver.coverageStore.type = MrGeo
+#
+# Coverage Store Name - The MrGeo config file the reader should use.  Typically, this will be the default "mrgeo.config",
+# located in the MRGEO_HOME directory but a path or a URL to a config file may be specified
+# mrgeo.publisher.localGeoserver.coverageStore.configUrl = mrgeo.config
+
+

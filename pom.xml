@@ -3304,6 +3304,14 @@
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>findbugs</artifactId>
     </dependency>
+    <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
+     tools to be run form the mrgeo parent directory.-->
+    <dependency>
+      <groupId>org.jasypt</groupId>
+      <artifactId>jasypt</artifactId>
+      <version>${jasypt.version}</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->
   <licenses>
