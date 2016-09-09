@@ -58,7 +58,10 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
     case _ => throw new ParserException("Error decoding String")
     }
     if (node.getNumChildren == 3) {
-      publishImage = MapOp.decodeBoolean(node.getChild(2)).asInstanceOf[Boolean]
+      MapOp.decodeBoolean(node.getChild(2)) match {
+        case Some(b) => publishImage = b;
+        case None => publishImage = false;
+      }
     }
 
   }
