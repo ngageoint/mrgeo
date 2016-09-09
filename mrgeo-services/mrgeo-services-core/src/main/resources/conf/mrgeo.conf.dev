@@ -86,16 +86,20 @@ mrsimage.tilesize = 512
 
 # MrGeo Publishing Profiles
 # Each profile should have a name, preceded by mrgeo.publisher.  The prefix and the profile name should precede the
-# properties for that profile.  Currently MrGeo will publish the image to all profiles if the publishImage option
-# passed to the save mapop is true.  Profiles may contain encrypted properties, such as passwords.  Properties can be
-# encrypted with the encrypt script.  Encrypted property values should be surrounded by ENC() The master password used
-# to encrypt properties should be passed in at runtime as a system property
-# (i.e. -Dmrgeo.encryption.masterPassword=<masterPassword>).
+# properties for that profile.  Every profile must include a class name for the publisher class and the configurator
+# class.  Currently MrGeo will publish the image to all profiles if the publishImage option passed to the save mapop is
+# true.  Profiles may contain encrypted properties, such as passwords.  Properties can be encrypted with the encrypt
+# script.  Encrypted property values should be surrounded by ENC() The master password used to encrypt properties should
+# be passed in at runtime as a system property (i.e. -Dmrgeo.encryption.masterPassword=<masterPassword>).
 
 
 # Geoserver Publishing Profiles
 # Profiles may be configured to publish images to a Geoserver instance via the geoserver REST interface.  The following
 # properties are required for any geoserver publishing profile
+#
+# Geoserver publisher classes
+# mrgeo.publisher.localGeoserver.class=org.mrgoe.publisher.rest.geoserver.GeoserverPublisher
+# mrgeo.publisher.localGeoserver.configuratorClass=org.mrgeo.publisher.rest.geoserver.GeoserverPublisherConfigurator
 #
 # Geoserver Base URL - Should be the Geoserver url up to and including the rest/ part.  See the example below
 # mrgeo.publisher.localGeoserver.geoserverUrl = http://localhost:8085/geoserver/rest
