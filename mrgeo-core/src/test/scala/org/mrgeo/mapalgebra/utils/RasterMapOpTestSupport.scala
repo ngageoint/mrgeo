@@ -35,7 +35,7 @@ trait RasterMapOpTestSupport {
   }
 
   protected def _createRasterMapOp(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512,
-                                   bounds: Option[Bounds], imageNoData: Array[Double] = Array(),
+                                   bounds: Option[Bounds], imageName: String, imageNoData: Array[Double] = Array(),
                                    imageInitialData: Option[ImageDataArray],
                                    rasterGenerator: RasterGenerator = createRaster): RasterMapOp = {
     // Local function to create builder without context
@@ -61,7 +61,8 @@ trait RasterMapOpTestSupport {
       .tileSize(tileSize)
       // If no defaults were specified, use 0.0 for all bands
       .imageNoData(if (!imageNoData.isEmpty) imageNoData
-    else Array.fill[Double](generatedRasters.values.head.getNumBands)(0.0))
+                   else Array.fill[Double](generatedRasters.values.head.getNumBands)(0.0))
+      .imageName(imageName)
       .build
   }
 
@@ -75,11 +76,11 @@ trait RasterMapOpTestSupport {
     * @param rasterGenerator
     * @return
     */
-  def createRasterMapOp(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512,
+  def createRasterMapOp(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512, imageName: String = "",
                         imageNoData: Array[Double] = Array(),
                         imageInitialData: Option[ImageDataArray] = Some(Array(1.0)),
                         rasterGenerator: RasterGenerator = createRaster): RasterMapOp = {
-    _createRasterMapOp(tileIds, zoomLevel, tileSize, None, imageNoData, imageInitialData, rasterGenerator)
+    _createRasterMapOp(tileIds, zoomLevel, tileSize, None, imageName, imageNoData, imageInitialData, rasterGenerator)
   }
 
   /**
@@ -94,10 +95,11 @@ trait RasterMapOpTestSupport {
     * @return
     */
   def createRasterMapOpWithBounds(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512, bounds: Bounds,
-                                  imageNoData: Array[Double] = Array(),
+                                  imageName: String = "", imageNoData: Array[Double] = Array(),
                                   imageInitialData: Option[ImageDataArray] = Some(Array(1.0)),
                                   rasterGenerator: RasterGenerator = createRaster): RasterMapOp = {
-    _createRasterMapOp(tileIds, zoomLevel, tileSize, Some(bounds), imageNoData, imageInitialData, rasterGenerator)
+    _createRasterMapOp(tileIds, zoomLevel, tileSize, Some(bounds), imageName, imageNoData, imageInitialData,
+                       rasterGenerator)
   }
 
   def createRaster(tileId: Long, tileSize: Int, zoomLevel:Int,

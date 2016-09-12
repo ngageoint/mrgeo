@@ -28,9 +28,9 @@ object SaveMapOp extends MapOpRegistrar {
   }
 
   @SuppressFBWarnings(value = Array("BC_UNCONFIRMED_CAST"), justification = "Scala generated code")
-  def create(mapop:MapOp, name:String):MapOp = {
+  def create(mapop:MapOp, name:String, publishImage:Boolean = false):MapOp = {
     mapop match {
-    case raster: RasterMapOp => new SaveRasterMapOp (Some(raster), name)
+    case raster: RasterMapOp => new SaveRasterMapOp (Some(raster), name, publishImage)
     case vector: VectorMapOp => new SaveVectorMapOp (Some(vector), name)
     case _ => throw new ParserException("MapOp must be a RasterMapOp or VectorMapOp")
     }
@@ -38,7 +38,7 @@ object SaveMapOp extends MapOpRegistrar {
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp = {
 
-    if (node.getNumChildren != 2) {
+    if (node.getNumChildren < 2) {
       throw new ParserException(node.getName + " takes 2 arguments")
     }
 
