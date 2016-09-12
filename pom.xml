@@ -14,7 +14,6 @@
      ~ See the License for the specific language governing permissions and limitations under the License.
      ~
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
@@ -60,6 +59,7 @@
     <jai-imageio.version>1.1</jai-imageio.version>
     <jaitools.version>1.3.0</jaitools.version>
     <jai.version>1.1.3</jai.version>
+    <jasypt.version>1.9.2</jasypt.version>
     <java3d.version>1.3.2</java3d.version>
     <joda-time.version>2.7</joda-time.version>
     <json.version>20090211</json.version>
@@ -70,12 +70,12 @@
     <opencv.group>nu.pattern</opencv.group>
     <pngj.version>2.0.1</pngj.version>
     <protobuf.version>2.5.0</protobuf.version>
-    <py4j.version>0.9.1</py4j.version>
+    <py4j.version>0.10.3</py4j.version>
     <reflections.version>0.9.9-RC1</reflections.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spark.version>1.2.0-cdh5.3.0</spark.version>
     <spark.scala.version>2.10</spark.scala.version>
-    <spark.scope>provided</spark.scope>
+    <spark.scope>compile</spark.scope>
     <xerces.version>2.9.1</xerces.version>
     <xml-apis.version>1.3.04</xml-apis.version>
     <xtiff-jai.version>beta-0.3</xtiff-jai.version>
@@ -415,36 +415,6 @@
             <arguments>${release.arguments}</arguments>
           </configuration>
         </plugin>
-        <!-- Make some soft links for the generated products, for convenience -->
-        <plugin>
-          <groupId>com.pyx4j</groupId>
-          <artifactId>maven-junction-plugin</artifactId>
-          <version>${maven-junction.version}</version>
-          <executions>
-            <execution>
-              <id>link-core</id>
-              <phase>package</phase>
-              <goals>
-                <goal>link</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>unlink</id>
-              <phase>clean</phase>
-              <goals>
-                <goal>unlink</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <links>
-              <link>
-                <src>${project.build.directory}/${project.build.finalName}.${project.packaging}</src>
-                <dst>${project.build.directory}/${project.artifactId}.${project.packaging}</dst>
-              </link>
-            </links>
-          </configuration>
-        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-war-plugin</artifactId>
@@ -485,24 +455,10 @@
               </property>
             </properties>
           </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.surefire</groupId>
-              <artifactId>surefire-junit47</artifactId>
-              <version>${maven-surefire.version}</version>
-            </dependency>
-          </dependencies>
         </plugin>
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
           <version>${maven-failsafe.version}</version>
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.surefire</groupId>
-              <artifactId>surefire-junit47</artifactId>
-              <version>${maven-failsafe.version}</version>
-            </dependency>
-          </dependencies>
           <configuration>
             <runOrder>random</runOrder>
             <groups>org.mrgeo.junit.IntegrationTest</groups>
@@ -546,26 +502,6 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
           <version>${exec-maven.version}</version>
-          <executions>
-            <execution>
-              <id>python-test</id>
-              <phase>integration-test</phase>
-              <goals>
-                <goal>exec</goal>
-              </goals>
-              <configuration>
-                <executable>python</executable>
-                <workingDirectory>${project.basedir}/src/test/python</workingDirectory>
-                <arguments>
-                  <argument>mrgeotest.py</argument>
-                </arguments>
-                <environmentVariables>
-                  <PYTHONPATH>${project.basedir}/src/main/python:${env.SPARK_HOME}/python:${env.SPARK_HOME}/python/lib:${project.basedir}/lib:${env.PYTHONPATH}</PYTHONPATH>
-                  <BASEDIR>${project.basedir}</BASEDIR>
-                </environmentVariables>
-              </configuration>
-            </execution>
-          </executions>
         </plugin>
         <plugin>
           <groupId>org.scalatest</groupId>
@@ -817,7 +753,6 @@
         <mahout.version>0.9-cdh5.8.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.8.0</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.8.0</final.classifier>
         <release.arguments />
@@ -862,7 +797,6 @@
         <mahout.version>0.9-cdh5.7.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.7.1</final.classifier>
         <release.arguments />
@@ -907,7 +841,6 @@
         <mahout.version>0.9-cdh5.7.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.0</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.7.0</final.classifier>
         <release.arguments />
@@ -952,7 +885,6 @@
         <mahout.version>0.9-cdh5.6.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.6.0</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.6.0</final.classifier>
         <release.arguments />
@@ -997,7 +929,6 @@
         <mahout.version>0.9-cdh5.5.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.2</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.2</final.classifier>
         <release.arguments />
@@ -1042,7 +973,6 @@
         <mahout.version>0.9-cdh5.5.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.1</final.classifier>
         <release.arguments />
@@ -1087,7 +1017,6 @@
         <mahout.version>0.9-cdh5.5.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.0</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.0</final.classifier>
         <release.arguments />
@@ -1132,7 +1061,6 @@
         <mahout.version>0.9-cdh5.4.8</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.8</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.8</final.classifier>
         <release.arguments />
@@ -1167,7 +1095,6 @@
         <mahout.version>0.9-cdh5.4.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.7</final.classifier>
         <release.arguments />
@@ -1202,7 +1129,6 @@
         <mahout.version>0.9-cdh5.4.5</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.5</final.classifier>
         <release.arguments />
@@ -1238,7 +1164,6 @@
         <mahout.version>0.9-cdh5.4.4</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.4</final.classifier>
         <release.arguments />
@@ -1273,7 +1198,6 @@
         <mahout.version>0.9-cdh5.4.3</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.3</final.classifier>
         <release.arguments />
@@ -1308,7 +1232,6 @@
         <mahout.version>0.9-cdh5.4.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.2</final.classifier>
         <release.arguments />
@@ -1343,7 +1266,6 @@
         <mahout.version>0.9-cdh5.4.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.1</final.classifier>
         <release.arguments />
@@ -1378,7 +1300,6 @@
         <mahout.version>0.9-cdh5.4.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.0</final.classifier>
         <release.arguments />
@@ -1413,7 +1334,6 @@
         <mahout.version>0.9-cdh5.3.3</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.3</final.classifier>
         <release.arguments />
@@ -1448,7 +1368,6 @@
         <mahout.version>0.9-cdh5.3.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.2</final.classifier>
         <release.arguments />
@@ -1497,7 +1416,6 @@
         <mahout.version>0.9-cdh5.3.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.1</final.classifier>
         <release.arguments />
@@ -1546,7 +1464,6 @@
         <mahout.version>0.9-cdh5.3.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
-        <spark.scope>compile</spark.scope>
         <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
@@ -1596,7 +1513,6 @@
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.2.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1618,7 +1534,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.3.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1640,7 +1555,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.4.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1662,7 +1576,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.4.1</final.classifier>
         <release.arguments />
       </properties>
@@ -1684,7 +1597,6 @@
         <protobuf.version>2.4.1</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.5.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1706,7 +1618,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.5.1</final.classifier>
         <release.arguments />
       </properties>
@@ -1728,7 +1639,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.5.2</final.classifier>
         <release.arguments />
       </properties>
@@ -1750,7 +1660,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.6.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1772,7 +1681,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
-        <spark.scope>compile</spark.scope>
         <final.classifier>2.7.1</final.classifier>
         <release.arguments />
       </properties>
@@ -1798,15 +1706,44 @@
          <skipShade>true</skipShade>
     -->
     <profile>
-      <id>emr-4.7.2</id>
+      <id>emr500</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.12.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <!--        <slf4j.version>1.7.5</slf4j.version> -->
+        <slf4j.version>1.7.10</slf4j.version>
+
+        <final.classifier>emr5.0.0</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>2.0.0</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>emr472</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <spark.scope>compile</spark.scope>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.7.2</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.2</spark.version>
@@ -1828,15 +1765,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.7.1</id>
+      <id>emr471</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <spark.scope>compile</spark.scope>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.7.1</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -1858,15 +1794,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.7.0</id>
+      <id>emr470</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <spark.scope>compile</spark.scope>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.7.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -1888,15 +1823,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.6.0</id>
+      <id>emr460</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <spark.scope>compile</spark.scope>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.6.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -1918,15 +1852,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.5.0</id>
+      <id>emr450</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <spark.scope>compile</spark.scope>
-        <final.classifier>2.7.2</final.classifier>
+        <final.classifier>emr4.5.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -1948,15 +1881,14 @@
       </dependencies>
     </profile>
     <profile>
-      <id>emr-4.4.0</id>
+      <id>emr440</id>
       <properties>
         <hadoop.version>2.7.1</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-        <spark.scope>compile</spark.scope>
-        <final.classifier>2.7.1</final.classifier>
+        <final.classifier>emr4.4.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
@@ -2333,7 +2265,6 @@
         <module>mrgeo-python</module>
       </modules>
     </profile>
-
     <profile>
       <id>build-python</id>
       <activation>
@@ -2358,7 +2289,7 @@
   </profiles>
   <!-- DependencyManagement is intended to maintain consistant dependency versioning across all the projects.
        Put dependencies below with version number, then in the child pom, just add the groupId and artifactId
-
+       
        ex.  (added below in dependencyManagement section)
        <dependency>
        <groupId>junit</groupId>
@@ -2366,13 +2297,13 @@
        <version>4.8.2</version>
        <scope>test</scope>
        </dependency>
-
+       
        (added in the child pom's dependencies section)
        <dependency>
        <groupId>junit</groupId>
        <artifactId>junit</artifactId>
        </dependency>
-
+       
        Remember!  if there is a <type></type>, put it in the child pom!
   -->
   <dependencyManagement>

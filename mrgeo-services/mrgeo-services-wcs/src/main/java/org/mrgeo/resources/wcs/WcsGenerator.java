@@ -419,16 +419,6 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
-  // Reproject bounds to EPSG:4326 if necessary
-  try
-  {
-    bounds = RequestUtils.reprojectBounds(bounds, crs);
-  }
-  catch (Exception e)
-  {
-    return writeError(Response.Status.BAD_REQUEST, e.getMessage());
-  }
-
   // Return the resulting image
   try
   {

@@ -32,6 +32,9 @@ object CropExactMapOp extends MapOpRegistrar {
   def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
     new CropExactMapOp(Some(raster), w, s, e, n)
 
+  def create(raster:RasterMapOp, rasterForBounds: RasterMapOp):MapOp =
+    new CropExactMapOp(Some(raster), Some(rasterForBounds))
+
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new CropExactMapOp(node, variables)
 }
@@ -101,7 +104,7 @@ class CropExactMapOp extends CropMapOp {
           var b: Int = 0
           while (b < raster.getNumBands) {
             if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY) {
-              raster.setSample(x, y, 0, nodatas(b))
+              raster.setSample(x, y, b, nodatas(b))
             }
             b += 1
           }

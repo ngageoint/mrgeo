@@ -6,6 +6,7 @@ import traceback
 import sys
 from py4j.java_gateway import JavaClass, java_import
 
+from pymrgeo.code_generator import CodeGenerator
 from pymrgeo.instance import is_instance_of
 from pymrgeo.java_gateway import is_remote
 import re
@@ -66,7 +67,8 @@ _vectormapop_code = {}
 
 _initialized = False
 
-def _exceptionhook(ex_cls, ex, tb):
+
+def _exceptionhook(ex_cls, ex, tb, method_name=None):
     stack = traceback.extract_tb(tb)
     print(ex_cls.__name__ + ' (' + str(ex) + ')', file=sys.stderr)
     for st in stack:
@@ -101,16 +103,20 @@ def _exceptionhook(ex_cls, ex, tb):
                 else:
                     print('    ' + c, file=sys.stderr)
                 cnt += 1
-            else:
-                print('  File "' + file.strip() + '", line ' +
-                      str(line) + ', in ' + method.strip(), file=sys.stderr)
-                print('    ' + srccode.strip(), file=sys.stderr)
+        else:
+            print('  File "' + file.strip() + '", line ' +
+                  str(line) + ', in ' + method.strip(), file=sys.stderr)
+            print('    ' + srccode.strip(), file=sys.stderr)
 
-                # print(''.join(traceback.format_tb(tb)))
-                # print('{0}: {1}'.format(ex_cls, ex))
+            print(''.join(traceback.format_tb(tb)))
+            print('{0}: {1}'.format(ex_cls, ex))
 
 
-def generate(gateway, gateway_client):
+# Always setup the hook
+sys.excepthook = _exceptionhook
+
+
+def generate(mrgeo, gateway, gateway_client):
     global _initialized
 
     if _initialized:
@@ -151,7 +157,8 @@ def generate(gateway, gateway_client):
             #     print("signature: " + s)
 
             for method in cls.register():
-                codes = None
+                ooCodes = None
+                procCodes = None
                 if method is not None:
                     name = method.strip().lower()
                     if len(name) > 0:
@@ -160,28 +167,32 @@ def generate(gateway, gateway_client):
                             continue
                         elif name in _operators:
                             # print("operator: " + name)
-                            codes = _generate_operator_code(mapop, name, signatures, instance)
+                            ooCodes = _generate_operator_code(mapop, name, signatures, instance)
                         else:
                             # print("method: " + name)
-                            codes = _generate_method_code(gateway, client, mapop, name, signatures, instance)
+                            ooCodes = _generate_oo_method_code(gateway, client, mapop, name, signatures, instance)
+                            procCodes = _generate_procedural_method_code(gateway, client, mapop, name, signatures, instance)
 
-                if codes is not None:
-                    for method_name, code in codes.items():
-                        # print(code)
-
-                        compiled = {}
-                        exec code in compiled
+                if ooCodes is not None:
+                    for method_name, code in ooCodes.items():
+                        # if method_name == "add":
+                        #    print(code.generate())
 
                         if instance == 'RasterMapOp':
                             _rastermapop_code[method_name] = code
-                            setattr(RasterMapOp, method_name, compiled.get(method_name))
+                            setattr(RasterMapOp, method_name, code.compile(method_name).get(method_name))
                         elif instance == "VectorMapOp":
                             _vectormapop_code[method_name] = code
-                            setattr(VectorMapOp, method_name, compiled.get(method_name))
+                            setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
                         elif is_instance_of(gateway, cls, jvm.MapOp):
                             _mapop_code[method_name] = code
-                            setattr(RasterMapOp, method_name, compiled.get(method_name))
-                            setattr(VectorMapOp, method_name, compiled.get(method_name))
+                            setattr(RasterMapOp, method_name, code.compile(method_name).get(method_name))
+                            setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
+                if procCodes is not None:
+                    for method_name, code in procCodes.items():
+                        pass
+                        # print(code.generate())
+                        setattr(mrgeo, method_name, code.compile(method_name).get(method_name))
 
     _initialized = True
 
@@ -200,7 +211,7 @@ def _get_instance_type(signatures, gateway, cls, mapop):
 
             if new_type == 'RasterMapOp' or new_type == 'VectorMapOp' or new_type == 'MapOp':
                 has_type[new_type] = True
-        for t,v in has_type.iteritems():
+        for t, v in has_type.iteritems():
             if v:
                 type_map[t] += 1
 
@@ -215,13 +226,14 @@ def _get_instance_type(signatures, gateway, cls, mapop):
             return 'VectorMapOp'
     # There is at least one signature that does not include a parameter of the same type
     # as the map op itself. Instead, we get a type that is represented in all the signatures.
-    for t,v in type_map.iteritems():
+    for t, v in type_map.iteritems():
         if v == len(signatures):
             return t
 
     msg = 'Cannot determine an instance type to use for ' + mapop
     print(msg)
     raise Exception(msg)
+
 
 def _generate_operator_code(mapop, name, signatures, instance):
     methods = _generate_methods(instance, signatures)
@@ -259,24 +271,25 @@ def _generate_operator_code(mapop, name, signatures, instance):
     for op_index in range(0,2):
         for mname in _operators[name][op_index]:
             # print("Processing " + mname)
-            code = ""
+            generator = CodeGenerator()
 
             # Signature
             if len(corrected_methods) == 1:
-                code += "def " + mname + "(self):" + "\n"
+                generator.write("def " + mname + "(self):", post_indent=True)
             else:
-                code += "def " + mname + "(self, other):" + "\n"
+                generator.write( "def " + mname + "(self, other):", post_indent=True)
             # code += "    print('" + name + "')\n"
 
-            code += _generate_imports(mapop)
-            code += _generate_calls(corrected_methods, is_reverse=True if op_index == 1 else False)
-            code += _generate_run(instance)
+            _generate_imports(generator, mapop)
+            _generate_calls(generator, corrected_methods, is_reverse=True if op_index == 1 else False)
+            _generate_run(generator, instance)
 
-            codes[mname] = code
+            codes[mname] = generator
     return codes
 
 
-def _generate_method_code(gateway, client, mapop, name, signatures, instance):
+def _generate_oo_method_code(gateway, client, mapop, name, signatures, instance):
+
     methods = _generate_methods(instance, signatures)
 
     # print("working on " + name)
@@ -288,151 +301,183 @@ def _generate_method_code(gateway, client, mapop, name, signatures, instance):
     if len(methods) == 0:
         return None
 
-    signature = _generate_signature(methods)
+    signature = _generate_oo_signature(methods)
 
-    code = ""
+    generator = CodeGenerator()
     # Signature
-    code += "def " + name + "(" + signature + "):" + "\n"
+    generator.write("def " + name + "(" + signature + "):", post_indent=True)
 
     # code += "    print('" + name + "')\n"
-    code += _generate_imports(mapop, is_export)
-    code += _generate_calls(methods, is_export=is_export)
-    code += _generate_run(instance, is_export)
+    _generate_imports(generator, mapop, is_export)
+    _generate_calls(generator, methods, is_export=is_export)
+    _generate_run(generator, instance, is_export)
     # print(code)
 
-    return {name: code}
+    return {name: generator}
+
+def _generate_procedural_method_code(gateway, client, mapop, name, signatures, instance):
+    methods = _generate_methods(instance, signatures)
+
+    # print("working on " + name)
+    jvm = gateway.jvm
+    cls = JavaClass(mapop, gateway_client=client)
+
+    is_export = is_remote() and is_instance_of(gateway, cls, jvm.ExportMapOp)
+
+    if len(methods) == 0:
+        return None
+
+    signature, self_method = _generate_proc_signature(methods)
+
+    generator = CodeGenerator()
+    # Signature
+    generator.write("def " + name + "(" + signature + "):", post_indent=True)
+
+    # code += "    print('" + name + "')\n"
+    _generate_imports(generator, mapop, is_export)
+    _generate_calls(generator, methods, is_export=is_export)
+    _generate_run(generator, instance, is_export)
+    # print(code)
+
+    code = generator.generate()
+    code = code.replace("self", self_method)
+
+    generator.begin()
+    for line in code.split("\n"):
+        generator.write(line)
+    return {name: generator}
 
 
-def _generate_run(instance, is_export=False):
-    code = ""
-
-    # Run the MapOp
-    code += "    if (op.setup(self.job, self.context.getConf()) and\n"
-    code += "        op.execute(self.context) and\n"
-    code += "        op.teardown(self.job, self.context.getConf())):\n"
-    # Return a new python RasterMapOp or VectorMapOp to wrap the Java MapOp
-    code += "        if is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):\n"
-    code += "            new_resource = RasterMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)\n"
-    code += "        elif is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):\n"
-    code += "            new_resource = VectorMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)\n"
-    code += "        else:\n"
-    code += "            raise Exception('Unable to wrap a python object around returned map op: ' + str(op))\n"
+def _generate_run(generator, instance, is_export=False):
 
     if is_export:
-        code += _generate_saveraster()
+        ex_generator = _generate_saveraster()
+        generator.append(ex_generator)
+        generator.force_level(generator.get_level() + ex_generator.get_level())
+    else:
+        # Run the MapOp
+        generator.write("if (op.setup(self.job, self.context.getConf()) and", post_indent=True)
+        generator.write("op.execute(self.context) and")
+        generator.write("op.teardown(self.job, self.context.getConf())):")
+        # Return a new python RasterMapOp or VectorMapOp to wrap the Java MapOp
+        generator.write("if is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):", post_indent=True)
+        generator.write("new_resource = RasterMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
+        generator.write("elif is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):", post_indent=True)
+        generator.write("new_resource = VectorMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
+        generator.write("else:", post_indent=True)
+        generator.write("raise Exception('Unable to wrap a python object around returned map op: ' + str(op))", post_unindent=True)
 
-    code += "        return new_resource\n"
-    code += "    return None\n"
-    return code
+    generator.write("return new_resource", post_unindent=True)
+    generator.write("return None")
+    return generator
 
 
 def _generate_saveraster():
-    code = ""
-    # code += "        \n"
-    code += "        cls = JavaClass('org.mrgeo.mapalgebra.ExportMapOp', gateway_client=self.gateway._gateway_client)\n"
-    code += "        if hasattr(self, 'mapop') and self.is_instance_of(self.mapop, 'org.mrgeo.mapalgebra.raster.RasterMapOp') and type(name) is str and isinstance(singleFile, (int, long, float, str)) and isinstance(zoom, (int, long, float)) and isinstance(numTiles, (int, long, float)) and isinstance(mosaic, (int, long, float)) and type(format) is str and isinstance(randomTiles, (int, long, float, str)) and isinstance(tms, (int, long, float, str)) and type(colorscale) is str and type(tileids) is str and type(bounds) is str and isinstance(allLevels, (int, long, float, str)) and isinstance(overridenodata, (int, long, float)):\n"
-    code += "            op = cls.create(self.mapop, str(name), True if singleFile else False, int(zoom), int(numTiles), int(mosaic), str(format), True if randomTiles else False, True if tms else False, str(colorscale), str(tileids), str(bounds), True if allLevels else False, float(overridenodata))\n"
-    code += "        else:\n"
-    code += "            raise Exception('input types differ (TODO: expand this message!)')\n"
-    code += "        if (op.setup(self.job, self.context.getConf()) and\n"
-    code += "                op.execute(self.context) and\n"
-    code += "                op.teardown(self.job, self.context.getConf())):\n"
-    code += "            new_resource = copy.copy(self)\n"
-    code += "            new_resource.mapop = op\n"
-    code += "            gdalutils = JavaClass('org.mrgeo.utils.GDALUtils', gateway_client=self.gateway._gateway_client)\n"
-    code += "            java_image = op.image()\n"
-    code += "            width = java_image.getRasterXSize()\n"
-    code += "            height = java_image.getRasterYSize()\n"
-    code += "            options = []\n"
-    code += "            if format == 'jpg' or format == 'jpeg':\n"
-    code += "                driver_name = 'jpeg'\n"
-    code += "                extension = 'jpg'\n"
-    code += "            elif format == 'tif' or format == 'tiff' or format == 'geotif' or format == 'geotiff' or format == 'gtif'  or format == 'gtiff':\n"
-    code += "                driver_name = 'GTiff'\n"
-    code += "                options.append('INTERLEAVE=BAND')\n"
-    code += "                options.append('COMPRESS=DEFLATE')\n"
-    code += "                options.append('PREDICTOR=1')\n"
-    code += "                options.append('ZLEVEL=6')\n"
-    code += "                options.append('TILES=YES')\n"
-    code += "                if width < 2048:\n"
-    code += "                    options.append('BLOCKXSIZE=' + str(width))\n"
-    code += "                else:\n"
-    code += "                    options.append('BLOCKXSIZE=2048')\n"
-    code += "                if height < 2048:\n"
-    code += "                    options.append('BLOCKYSIZE=' + str(height))\n"
-    code += "                else:\n"
-    code += "                    options.append('BLOCKYSIZE=2048')\n"
-    code += "                extension = 'tif'\n"
-    code += "            else:\n"
-    code += "                driver_name = format\n"
-    code += "                extension = format\n"
-    code += "            datatype = java_image.GetRasterBand(1).getDataType()\n"
-    code += "            if not local_name.endswith(extension):\n"
-    code += "                local_name += '.' + extension\n"
-    code += "            driver = gdal.GetDriverByName(driver_name)\n"
-    code += "            local_image = driver.Create(local_name, width, height, java_image.getRasterCount(), datatype, options)\n"
-    code += "            local_image.SetProjection(str(java_image.GetProjection()))\n"
-    code += "            local_image.SetGeoTransform(java_image.GetGeoTransform())\n"
-    code += "            java_nodatas = gdalutils.getnodatas(java_image)\n"
-    code += "            print('saving image to ' + local_name)\n"
-    code += "            print('downloading data... (' + str(gdalutils.getRasterBytes(java_image, 1) * local_image.RasterCount / 1024) + ' kb uncompressed)')\n"
-    code += "            for i in xrange(1, local_image.RasterCount + 1):\n"
-    code += "                start = time.time()\n"
-    code += "                raw_data = gdalutils.getRasterDataAsCompressedBase64(java_image, i, 0, 0, width, height)\n"
-    code += "                print('compressed/encoded data ' + str(len(raw_data)))\n"
-    code += "                decoded_data = base64.b64decode(raw_data)\n"
-    code += "                print('decoded data ' + str(len(decoded_data)))\n"
-    code += "                decompressed_data = zlib.decompress(decoded_data, 16 + zlib.MAX_WBITS)\n"
-    code += "                print('decompressed data ' + str(len(decompressed_data)))\n"
-    code += "                byte_data = numpy.frombuffer(decompressed_data, dtype='b')\n"
-    code += "                print('byte data ' + str(len(byte_data)))\n"
-    code += "                image_data = byte_data.view(gdal_array.GDALTypeCodeToNumericTypeCode(datatype))\n"
-    code += "                print('gdal-type data ' + str(len(image_data)))\n"
-    code += "                image_data = image_data.reshape((-1, width))\n"
-    code += "                print('reshaped ' + str(len(image_data)) + ' x ' + str(len(image_data[0])))\n"
-    code += "                band = local_image.GetRasterBand(i)\n"
-    code += "                print('writing band ' + str(i))\n"
-    code += "                band.WriteArray(image_data)\n"
-    code += "                end = time.time()\n"
-    code += "                print('elapsed time: ' + str(end - start) + ' sec.')\n"
-    code += "                band.SetNoDataValue(java_nodatas[i - 1])\n"
-    code += "            local_image.FlushCache()\n"
-    code += "            print('flushed cache')\n"
+    generator = CodeGenerator()
 
-    return code
+    generator.write("cls = JavaClass('org.mrgeo.mapalgebra.ExportMapOp', gateway_client=self.gateway._gateway_client)")
+    generator.write("if hasattr(self, 'mapop') and self.is_instance_of(self.mapop, 'org.mrgeo.mapalgebra.raster.RasterMapOp') and type(name) is str and isinstance(singleFile, (int, long, float, str)) and isinstance(zoom, (int, long, float)) and isinstance(numTiles, (int, long, float)) and isinstance(mosaic, (int, long, float)) and type(format) is str and isinstance(randomTiles, (int, long, float, str)) and isinstance(tms, (int, long, float, str)) and type(colorscale) is str and type(tileids) is str and type(bounds) is str and isinstance(allLevels, (int, long, float, str)) and isinstance(overridenodata, (int, long, float)):", post_indent=True)
+    generator.write("op = cls.create(self.mapop, str(name), True if singleFile else False, int(zoom), int(numTiles), int(mosaic), str(format), True if randomTiles else False, True if tms else False, str(colorscale), str(tileids), str(bounds), True if allLevels else False, float(overridenodata))", post_unindent=True)
+    generator.write("else:", post_indent=True)
+    generator.write("raise Exception('input types differ (TODO: expand this message!)')", post_unindent=True)
+    generator.write("if (op.setup(self.job, self.context.getConf()) and", post_indent=True)
+    generator.write("op.execute(self.context) and")
+    generator.write("op.teardown(self.job, self.context.getConf())):")
+    generator.write("if is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.raster.RasterMapOp'):", post_indent=True)
+    generator.write("new_resource = RasterMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
+    generator.write("elif is_instance_of(self.gateway, op, 'org.mrgeo.mapalgebra.vector.VectorMapOp'):", post_indent=True)
+    generator.write("new_resource = VectorMapOp(gateway=self.gateway, context=self.context, mapop=op, job=self.job)", post_unindent=True)
+    generator.write("else:", post_indent=True)
+    generator.write("raise Exception('Unable to wrap a python object around returned map op: ' + str(op))", post_unindent=True)
+    generator.write("gdalutils = JavaClass('org.mrgeo.utils.GDALUtils', gateway_client=self.gateway._gateway_client)")
+    generator.write("java_image = op.image()")
+    generator.write("width = java_image.getRasterXSize()")
+    generator.write("height = java_image.getRasterYSize()")
+    generator.write("options = []")
+    generator.write("if format == 'jpg' or format == 'jpeg':", post_indent=True)
+    generator.write("driver_name = 'jpeg'")
+    generator.write("extension = 'jpg'", post_unindent=True)
+    generator.write("elif format == 'tif' or format == 'tiff' or format == 'geotif' or format == 'geotiff' or format == 'gtif'  or format == 'gtiff':", post_indent=True)
+    generator.write("driver_name = 'GTiff'")
+    generator.write("options.append('INTERLEAVE=BAND')")
+    generator.write("options.append('COMPRESS=DEFLATE')")
+    generator.write("options.append('PREDICTOR=1')")
+    generator.write("options.append('ZLEVEL=6')")
+    generator.write("options.append('TILES=YES')")
+    generator.write("if width < 2048:", post_indent=True)
+    generator.write("options.append('BLOCKXSIZE=' + str(width))", post_unindent=True)
+    generator.write("else:", post_indent=True)
+    generator.write("options.append('BLOCKXSIZE=2048')", post_unindent=True)
+    generator.write("if height < 2048:", post_indent=True)
+    generator.write("options.append('BLOCKYSIZE=' + str(height))", post_unindent=True)
+    generator.write("else:", post_indent=True)
+    generator.write("options.append('BLOCKYSIZE=2048')", post_unindent=True)
+    generator.write("extension = 'tif'", post_unindent=True)
+    generator.write("else:", post_indent=True)
+    generator.write("driver_name = format")
+    generator.write("extension = format", post_unindent=True)
+    generator.write("datatype = java_image.GetRasterBand(1).getDataType()")
+    generator.write("if not local_name.endswith(extension):", post_indent=True)
+    generator.write("local_name += '.' + extension", post_unindent=True)
+    generator.write("driver = gdal.GetDriverByName(driver_name)")
+    generator.write("local_image = driver.Create(local_name, width, height, java_image.getRasterCount(), datatype, options)")
+    generator.write("local_image.SetProjection(str(java_image.GetProjection()))")
+    generator.write("local_image.SetGeoTransform(java_image.GetGeoTransform())")
+    generator.write("java_nodatas = gdalutils.getnodatas(java_image)")
+    generator.write("print('saving image to ' + local_name)")
+    generator.write("print('downloading data... (' + str(gdalutils.getRasterBytes(java_image, 1) * local_image.RasterCount / 1024) + ' kb uncompressed)')")
+    generator.write("for i in xrange(1, local_image.RasterCount + 1):", post_indent=True)
+    generator.write("start = time.time()")
+    generator.write("raw_data = gdalutils.getRasterDataAsCompressedBase64(java_image, i, 0, 0, width, height)")
+    generator.write("print('compressed/encoded data ' + str(len(raw_data)))")
+    generator.write("decoded_data = base64.b64decode(raw_data)")
+    generator.write("print('decoded data ' + str(len(decoded_data)))")
+    generator.write("decompressed_data = zlib.decompress(decoded_data, 16 + zlib.MAX_WBITS)")
+    generator.write("print('decompressed data ' + str(len(decompressed_data)))")
+    generator.write("byte_data = numpy.frombuffer(decompressed_data, dtype='b')")
+    generator.write("print('byte data ' + str(len(byte_data)))")
+    generator.write("image_data = byte_data.view(gdal_array.GDALTypeCodeToNumericTypeCode(datatype))")
+    generator.write("print('gdal-type data ' + str(len(image_data)))")
+    generator.write("image_data = image_data.reshape((-1, width))")
+    generator.write("print('reshaped ' + str(len(image_data)) + ' x ' + str(len(image_data[0])))")
+    generator.write("band = local_image.GetRasterBand(i)")
+    generator.write("print('writing band ' + str(i))")
+    generator.write("band.WriteArray(image_data)")
+    generator.write("end = time.time()")
+    generator.write("print('elapsed time: ' + str(end - start) + ' sec.')")
+    generator.write("band.SetNoDataValue(java_nodatas[i - 1])", post_unindent=True)
+    generator.write("local_image.FlushCache()")
+
+    return generator
 
 
-def _generate_imports(mapop, is_export=False):
-    code = ""
+def _generate_imports(generator, mapop, is_export=False):
     # imports
-    code += "    import copy\n"
-    code += "    from pymrgeo.instance import is_instance_of\n"
-    code += "    from pymrgeo import RasterMapOp\n"
-    code += "    from pymrgeo import VectorMapOp\n"
-    code += "    from numbers import Number\n"
+    generator.write("from pymrgeo.instance import is_instance_of")
+    generator.write("from pymrgeo import RasterMapOp")
+    generator.write("from pymrgeo import VectorMapOp")
+    generator.write("from numbers import Number")
     if is_export:
-        code += "    import base64\n"
-        code += "    import numpy\n"
-        code += "    from osgeo import gdal, gdal_array\n"
-        code += "    import time\n"
-        code += "    import zlib\n"
+        generator.write("import base64")
+        generator.write("import numpy")
+        generator.write("from osgeo import gdal, gdal_array")
+        generator.write("import time")
+        generator.write("import zlib")
 
-    code += "    from py4j.java_gateway import JavaClass\n"
+    generator.write("from py4j.java_gateway import JavaClass")
     # Get the Java class
-    code += "    cls = JavaClass('" + mapop + "', gateway_client=self.gateway._gateway_client)\n"
-    return code
+    generator.write("cls = JavaClass('" + mapop + "', gateway_client=self.gateway._gateway_client)")
 
 
-def _generate_calls(methods, is_export=False, is_reverse=False):
+def _generate_calls(generator, methods, is_export=False, is_reverse=False):
 
     # Check the input params and call the appropriate create() method
     firstmethod = True
-    varargcode = ""
-    code = ""
+    varargcode = CodeGenerator()
 
     if is_export:
-        code += "    local_name = name\n"
-        code += "    name = 'In-Memory'\n"
+        generator.write("local_name = name")
+        generator.write("name = 'In-Memory'")
 
     for method in methods:
         iftest = ""
@@ -452,27 +497,31 @@ def _generate_calls(methods, is_export=False, is_reverse=False):
             if param[4]:
                 call_name, it, et, accessor = _method_name(type_name, "arg", None)
 
-                varargcode += "    for arg in args:\n"
-                varargcode += "        if isinstance(arg, list):\n"
-                varargcode += "            arg_list = arg\n"
-                varargcode += "            for arg in arg_list:\n"
-                varargcode += "                if not(" + it + "):\n"
-                varargcode += "                    raise Exception('input types differ (TODO: expand this message!)')\n"
-                varargcode += "        else:\n"
-                varargcode += "            if not(" + it + "):\n"
-                varargcode += "                raise Exception('input types differ (TODO: expand this message!)')\n"
-                varargcode += "    elements = []\n"
-                varargcode += "    for arg in args:\n"
-                varargcode += "        if isinstance(arg, list):\n"
-                varargcode += "            for a in arg:\n"
-                varargcode += "                elements.append(a" + accessor + ")\n"
-                varargcode += "        else :\n"
-                varargcode += "            elements.append(arg" + accessor + ")\n"
-                varargcode += "    array = self.gateway.new_array(self.gateway.jvm." + type_name + ", len(elements))\n"
-                varargcode += "    cnt = 0\n"
-                varargcode += "    for element in elements:\n"
-                varargcode += "        array[cnt] = element\n"
-                varargcode += "        cnt += 1\n"
+                varargcode.write("for arg in args:", post_indent=True)
+                varargcode.write("if isinstance(arg, list):", post_indent=True)
+                varargcode.write("arg_list = arg")
+                varargcode.write("for arg in arg_list:", post_indent=True)
+                varargcode.write("if not(" + it + "):", post_indent=True)
+                varargcode.write("raise Exception('input types differ (TODO: expand this message!)')")
+                varargcode.unindent(3)
+                varargcode.write("else:", post_indent=True)
+                varargcode.write("if not(" + it + "):", post_indent=True)
+                varargcode.write("raise Exception('input types differ (TODO: expand this message!)')")
+                varargcode.unindent(2)
+                varargcode.write("elements = []")
+                varargcode.write("for arg in args:", post_indent=True)
+                varargcode.write("if isinstance(arg, list):", post_indent=True)
+                varargcode.write("for a in arg:", post_indent=True)
+                varargcode.write("elements.append(a" + accessor + ")")
+                varargcode.unindent(2)
+                varargcode.write("else:", post_indent=True)
+                varargcode.write("elements.append(arg" + accessor + ")")
+                varargcode.unindent(2)
+                varargcode.write("array = self.gateway.new_array(self.gateway.jvm." + type_name + ", len(elements))")
+                varargcode.write("cnt = 0")
+                varargcode.write("for element in elements:", post_indent=True)
+                varargcode.write("array[cnt] = element")
+                varargcode.write("cnt += 1")
                 call_name = "array"
             else:
                 if firstparam:
@@ -493,25 +542,23 @@ def _generate_calls(methods, is_export=False, is_reverse=False):
 
             call += [call_name]
 
+        if len(varargcode) > 0:
+            generator.append(varargcode)
+
         if len(iftest) > 0:
-            iftest += ":\n"
-            code += "    " + iftest
+            generator.write(iftest + ":")
+        generator.indent()
 
         if is_reverse:
-            code += "        op = cls.rcreate(" + ", ".join(call) + ')\n'
+            generator.write("op = cls.rcreate(" + ", ".join(call) + ')', post_unindent=True)
         else:
-            code += "        op = cls.create(" + ", ".join(call) + ')\n'
+            generator.write("op = cls.create(" + ", ".join(call) + ')', post_unindent=True)
 
-    code += "    else:\n"
-    code += "        raise Exception('input types differ (TODO: expand this message!)')\n"
+    generator.write("else:", post_indent=True)
+    generator.write("raise Exception('input types differ (TODO: expand this message!)')", post_unindent=True)
     # code += "    import inspect\n"
     # code += "    method = inspect.stack()[0][3]\n"
     # code += "    print(method)\n"
-
-    if len(varargcode) > 0:
-        code = varargcode + code
-
-    return code
 
 
 def _method_name(type_name, var_name, default_value):
@@ -632,7 +679,7 @@ def _in_signature(param, signature):
     return False
 
 
-def _generate_signature(methods):
+def _generate_oo_signature(methods):
     signature = []
     dual = len(methods) > 1
     for method in methods:
@@ -661,6 +708,36 @@ def _generate_signature(methods):
 
     return ",".join(sig)
 
+def _generate_proc_signature(methods):
+    signature = []
+    dual = len(methods) > 1
+    self_var = None
+    for method in methods:
+        for param in method:
+            # print("Param: " + str(param))
+            if (not param[2] == "self" or self_var == None) and not _in_signature(param, signature):
+                signature.append(param)
+                if param[2] == "self" and self_var == None:
+                    self_var = param[0]
+                if param[4]:
+                    # var args must be the last parameter
+                    break
 
-# Always setup the hook
-sys.excepthook = _exceptionhook
+    sig = []
+    for s in signature:
+        if s[4]:
+            sig += ["*args"]
+        else:
+            if s[3] is not None:
+                if s[3].endswith("NaN"):
+                    sig += [s[0] + "=float('nan')"]
+                else:
+                    sig += [s[0] + "=" + s[3]]
+            elif dual and s[0] != self_var:
+                sig += [s[0] + "=None"]
+            else:
+                sig += [s[0]]
+
+    return ",".join(sig), self_var
+
+

@@ -6,14 +6,14 @@ import java.net.URL
 import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.utils.{RasterMapOpBuilder, RasterMapOpTestSupport}
+import org.mrgeo.mapalgebra.utils.{RasterMapOpTestVerifySupport}
 import org.mrgeo.utils.tms.Bounds
 import org.scalatest.{BeforeAndAfter, FlatSpec}
 
 /**
   * Created by ericwood on 7/19/16.
   */
-class CropMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestSupport {
+class CropMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestVerifySupport {
 
   private val tileIds: Array[Long] = Array(11, 12, 19, 20)
 
@@ -27,8 +27,7 @@ class CropMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestSup
   }
 
   after {
-    // Stop the context if it is defined
-    sparkContext.foreach(_.stop)
+    stopSparkContext
   }
 
   behavior of "CropMapOp"
@@ -103,11 +102,25 @@ class CropMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestSup
     }
   }
 
+  it should "set the bounds on the mapop to the crop bounds when the crop bounds are larger then the tile bounds" in {
+    val (left, bottom, right, top) = (-89.0, -44.0, 44.0, 44.0)
+    subject = CropMapOp.create(inputRaster, left, bottom, right, top).asInstanceOf[RasterMapOp]
+    subject.execute(subject.context())
+    val transformedRDD = subject.rdd().get
+    assertResult(4) {
+      transformedRDD.count
+    }
+    assertResult(-90.0) {
+      subject.metadata().get.getBounds.w
+    }
+    verifyRastersAreUnchanged(transformedRDD, Array(11, 12, 19, 20))
+  }
+
   it should "be able to use the bounds of another Raster as the bounds for cropping" in {
     // Create a new raster map op.  Make sure to reuse the current context since you can only have one context active
     // in a JVM
     val rasterMapOpForBounds = createRasterMapOpWithBounds(tileIds = tileIds, zoomLevel = 3, tileSize = 512,
-                                                           bounds = new Bounds(1.0, 1.0, 44.0, 44.0))
+                                                           bounds = new Bounds(10.0, 10.0, 35.0, 35.0))
     subject = CropMapOp.create(inputRaster, rasterMapOpForBounds).asInstanceOf[RasterMapOp]
     subject.execute(subject.context())
     val transformedRDD = subject.rdd().get

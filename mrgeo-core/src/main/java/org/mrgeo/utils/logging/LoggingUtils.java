@@ -48,7 +48,7 @@ private static String defaultLevel = OFF;
 
 static
 {
-  initialize();
+  initializeForReal();
 }
 
 public static void setLogLevel(final String className, final String level)
@@ -438,7 +438,7 @@ private static Object getLog4JLevel(final String level)
   return null;
 }
 
-private static void initialize()
+private static void initializeForReal()
 {
   String loggerClassName = log.getClass().getSimpleName();
 
@@ -524,4 +524,7 @@ private static Object getRootLogger() throws ClassNotFoundException
 
 }
 
+  public static void initialize() {
+    // No need to do anything - just need to invoke static initializer when class is loaded
+  }
 }

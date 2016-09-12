@@ -22,15 +22,19 @@ class MrGeo(object):
     lock = Lock()
 
     sparkContext = None
+
+    _localGateway = False
     _job = None
 
     _host = None
     _port = None
 
-    def __init__(self, host=None, port=None):
+    _started = False
+
+    def __init__(self, host=None, port=None, pysparkContext=None):
         self._host = host
         self._port = port
-        self._initialize()
+        self._initialize(pysparkContext)
 
     def _create_gateway(self, host=None, port=None):
         """
@@ -40,15 +44,19 @@ class MrGeo(object):
         with self.lock:
             if not self.gateway:
                 print("Initializing gateway")
+                sys.stdout.flush()
+
                 self.gateway, self.gateway_client = java_gateway.launch_gateway(host, port)
 
                 jvm = self._get_jvm()
 
             else:
                 print("Gateway already initialized")
+                sys.stdout.flush()
 
     def _create_job(self):
         if not self._job:
+
             jvm = self._get_jvm()
             java_import(jvm, "org.mrgeo.job.*")
 
@@ -74,13 +82,20 @@ class MrGeo(object):
         java_import(jvm, "org.mrgeo.utils.*")
         java_import(jvm, "org.mrgeo.utils.logging.*")
 
-    def _initialize(self):
+    def _initialize(self, pysparkContext=None):
         try:
-            self._create_gateway(self._host, self._port)
+            if not pysparkContext:
+                self._create_gateway(self._host, self._port)
+                self._localGateway = True
+            else:
+                self.gateway = pysparkContext._gateway
+                self.gateway_client = self.gateway.gateway_client
+                self.sparkContext = pysparkContext._jsc.sc()
+
             self._create_job()
 
             self._general_imports()
-            mapopgenerator.generate(self.gateway, self.gateway_client)
+            mapopgenerator.generate(self, self.gateway, self.gateway_client)
         except:
             # If an error occurs, clean up in order to allow future SparkContext creation:
             self.stop()
@@ -105,30 +120,36 @@ class MrGeo(object):
         job = self._get_job()
         job.useYarn()
 
-    def start(self, context=None):
+    def start(self):
+        if self._started:
+            # print("MrGeo is already started")
+            return
 
-        if not context:
-            jvm = self._get_jvm()
-            job = self._get_job()
+        jvm = self._get_jvm()
+        job = self._get_job()
 
-            job.addMrGeoProperties()
-            dpf_properties = jvm.DataProviderFactory.getConfigurationFromProviders()
+        job.addMrGeoProperties()
+        dpf_properties = jvm.DataProviderFactory.getConfigurationFromProviders()
 
-            for prop in dpf_properties:
-                job.setSetting(prop, dpf_properties[prop])
+        for prop in dpf_properties:
+            job.setSetting(prop, dpf_properties[prop])
 
+        jvm.DependencyLoader.setPrintMissingDependencies(False)
+        jvm.DependencyLoader.resetMissingDependencyList()
+
+        java_gateway.set_field(job, "jars",
+                               jvm.StringUtils.concatUnique(
+                                   jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
+                                   jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
+
+        conf = jvm.MrGeoDriver.prepareJob(job)
+
+        jvm.DependencyLoader.printMissingDependencies()
+
+        if self._localGateway:
             if job.isYarn():
                 job.loadYarnSettings()
 
-
-            java_gateway.set_field(job, "jars",
-                      jvm.StringUtils.concatUnique(
-                          jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
-                          jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
-
-            conf = jvm.MrGeoDriver.prepareJob(job)
-
-            if job.isYarn():
                 # need to override the yarn mode to "yarn-client" for python
                 conf.set("spark.master", "yarn-client")
 
@@ -151,27 +172,38 @@ class MrGeo(object):
                 mem -= (overhead * 2)  # overhead is 1x for driver and 1x for application master (am)
                 conf.set("spark.executor.memory", jvm.SparkUtils.kbtohuman(long(mem), "m"))
 
-
             jsc = jvm.JavaSparkContext(conf)
             jsc.setCheckpointDir(jvm.HadoopFileUtils.createJobTmp(jsc.hadoopConfiguration()).toString())
             self.sparkContext = jsc.sc()
-        else:
-            self.sparkContext = context
 
+        self._started = True
         # print("started")
 
     def stop(self):
-        if self.sparkContext:
-            self.sparkContext.stop()
-            self.sparkContext = None
+        if self._localGateway:
+            if self.sparkContext:
+                self.sparkContext.stop()
+                self.sparkContext = None
+            # self._job = None
+
+        self._started = False
+
+    def disconnect(self):
+        if self._started:
+            self.stop()
+
         if self.gateway:
             self.gateway.shutdown()
             self.gateway = None
             self.gateway_client = None
-        self._job = None
         java_gateway.terminate()
 
     def list_images(self):
+        if not self._started:
+            print("ERROR:  You must call start() before list_images()")
+            sys.stdout.flush()
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
@@ -187,6 +219,11 @@ class MrGeo(object):
         return images
 
     def load_image(self, name):
+        if not self._started:
+            print("ERROR:  You must call start() before load_image()")
+            sys.stdout.flush()
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
@@ -198,22 +235,19 @@ class MrGeo(object):
         mapop = jvm.MrsPyramidMapOp.apply(dp)
         mapop.context(self.sparkContext)
 
-        # print("loaded " + name)
 
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
-    def ingest_image(self, name, zoom=None, categorical=None):
+    def ingest_image(self, name, zoom=-1, categorical=False, skip_category_load=False):
+        if not self._started:
+            print("ERROR:  You must call start() before ingest_image()")
+            sys.stdout.flush()
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
-        if zoom is None and categorical is None:
-            mapop = jvm.IngestImageMapOp.create(name)
-        elif zoom is None and categorical is not None:
-            mapop = jvm.IngestImageMapOp.create(name, categorical)
-        elif zoom is not None and categorical is None:
-            mapop = jvm.IngestImageMapOp.create(name, zoom)
-        else:
-            mapop = jvm.IngestImageMapOp.create(name, zoom, categorical)
+        mapop = jvm.IngestImageMapOp.createMapOp(name, zoom, categorical, skip_category_load)
 
         if (mapop.setup(job, self.sparkContext.getConf()) and
                 mapop.execute(self.sparkContext) and
@@ -222,6 +256,11 @@ class MrGeo(object):
         return None
 
     def load_vector(self, name):
+        if not self._started:
+            print("ERROR:  You must call start() before load_vector()")
+            sys.stdout.flush()
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 
@@ -238,6 +277,11 @@ class MrGeo(object):
         return VectorMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
     def create_points(self, coords):
+        if not self._started:
+            print("ERROR:  You must call start() before create_points()")
+            sys.stdout.flush()
+            return None
+
         jvm = self._get_jvm()
         job = self._get_job()
 

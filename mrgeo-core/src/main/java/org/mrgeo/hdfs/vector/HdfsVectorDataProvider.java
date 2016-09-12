@@ -48,6 +48,9 @@ public HdfsVectorDataProvider(final Configuration conf,
     final String prefix, final String resourceName, final ProviderProperties providerProperties)
 {
   super(prefix, resourceName);
+  System.out.println("HdfsVectorDataProvider()");
+  System.out.flush();
+
   this.conf = conf;
   this.providerProperties = providerProperties;
 }
@@ -85,10 +88,19 @@ public VectorMetadataWriter getMetadataWriter()
 @Override
 public VectorReader getVectorReader() throws IOException
 {
+  System.out.println("VectorReader.getVectorReader()");
+  System.out.flush();
   String resourceName = getResolvedResourceName(true);
+  System.out.println("vector reader 1 " + resourceName);
+  System.out.flush();
+
   Path resourcePath = new Path(resourceName);
+  System.out.println("vector reader 2");
+  System.out.flush();
   if (isSourceDelimited(resourcePath, true, getConfiguration()))
   {
+    System.out.println("vector reader 3");
+    System.out.flush();
     return new DelimitedVectorReader(this, new VectorReaderContext(), conf);
   }
   else if (isSourceShapefile(resourcePath))

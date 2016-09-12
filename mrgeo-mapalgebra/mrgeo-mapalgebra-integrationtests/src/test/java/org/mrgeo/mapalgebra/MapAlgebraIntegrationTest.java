@@ -278,13 +278,47 @@ public void aspect() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("aspect([%s])", smallElevation), -9999);
+        String.format("aspect([%s], \"rad\", 0.0)", smallElevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("aspect([%s])", smallElevation));
+        String.format("aspect([%s], \"rad\", 0.0)", smallElevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void aspectDefaultFlatValue() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("aspect([%s], \"rad\")", smallElevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("aspect([%s], \"rad\")", smallElevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void aspectNaNFlatValue() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+                                  String.format("aspect([%s], \"rad\", \"NaN\")", smallElevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+                                  String.format("aspect([%s], \"rad\", \"NaN\")", smallElevation));
   }
 }
 
@@ -295,13 +329,13 @@ public void aspectDeg() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("aspect([%s], \"deg\")", smallElevation), -9999);
+        String.format("aspect([%s], \"deg\", 0.0)", smallElevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("aspect([%s], \"deg\")", smallElevation));
+        String.format("aspect([%s], \"deg\", 0.0)", smallElevation));
   }
 }
 
@@ -312,13 +346,13 @@ public void aspectRad() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("aspect([%s], \"rad\")", smallElevation), -9999);
+        String.format("aspect([%s], \"rad\", 0.0)", smallElevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("aspect([%s], \"rad\")", smallElevation));
+        String.format("aspect([%s], \"rad\", 0.0)", smallElevation));
   }
 }
 
@@ -329,13 +363,13 @@ public void aspectFlat() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("aspect([%s])", allones), -9999);
+        String.format("aspect([%s], \"rad\", 0.0)", allones), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("aspect([%s])", allones));
+        String.format("aspect([%s], \"rad\", 0.0)", allones));
   }
 }
 
@@ -1209,7 +1243,7 @@ public void hillshadeNonLocal() throws Exception
   // hillshading algorithm taken from:
   // http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm
   String exp = String.format("sl = slope([%s], \"rad\"); " +
-          "as = aspect([%s], \"rad\"); " +
+          "as = aspect([%s], \"rad\", 0.0); " +
           "hill = 255.0 * ((%f * cos(sl)) + (%f * sin(sl) * cos(%f - as)))", smallElevation, smallElevation,
       coszen, sinzen, sunaz);
 
@@ -1239,7 +1273,7 @@ public void hillshade() throws Exception
   // hillshading algorithm taken from:
   // http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm
   String exp = String.format("sl = slope([%s], \"rad\"); " +
-          "as = aspect([%s], \"rad\"); " +
+          "as = aspect([%s], \"rad\", 0.0); " +
           "hill = 255.0 * ((%f * cos(sl)) + (%f * sin(sl) * cos(%f - as)))", smallElevation, smallElevation,
       coszen, sinzen, sunaz);
 

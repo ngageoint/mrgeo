@@ -17,9 +17,10 @@
 package org.mrgeo.mapalgebra
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
-import org.apache.spark.{Logging, SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
+import org.mrgeo.utils.Logging
 
 object MapOp {
   def decodeDouble(node: ParserNode): Option[Double] = {
