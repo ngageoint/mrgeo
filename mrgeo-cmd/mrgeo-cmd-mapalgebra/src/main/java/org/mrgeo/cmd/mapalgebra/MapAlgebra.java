@@ -31,6 +31,7 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.raster.RasterWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,95 +92,139 @@ public static Options createOptions()
 @Override
 public int run(String[] args, Configuration conf, final ProviderProperties providerProperties)
 {
-  long t0 = System.currentTimeMillis();
-  System.out.println(log.getClass().getName());
-
-  Options options = MapAlgebra.createOptions();
-  CommandLine line = null;
+  long starttime = System.currentTimeMillis();
   try
   {
-    CommandLineParser parser = new PosixParser();
-    line = parser.parse(options, args);
-  }
-  catch (ParseException e)
-  {
-    System.out.println();
-    new HelpFormatter().printHelp("MapAlgebra", options);
-    return 1;
-  }
+    long t0 = System.currentTimeMillis();
+    System.out.println(log.getClass().getName());
 
-  if (line == null || line.hasOption("h"))
-  {
-    new HelpFormatter().printHelp("MapAlgebra", options);
-    return 1;
-  }
-
-  String expression = line.getOptionValue("e");
-  String output = line.getOptionValue("o");
-  String script = line.getOptionValue("s");
-
-  if (expression == null && script == null)
-  {
-    System.out.println("Either an expression or script must be specified.");
-    System.out.println();
-    new HelpFormatter().printHelp("MapAlgebra", options);
-    return 1;
-  }
-
-  try
-  {
-    if (script != null)
+    Options options = MapAlgebra.createOptions();
+    CommandLine line = null;
+    try
     {
-      File f = new File(script);
-      int total = (int) f.length();
-      byte[] buffer = new byte[total];
-      int read = 0;
-      try (FileInputStream fis = new FileInputStream(f))
+      CommandLineParser parser = new PosixParser();
+      line = parser.parse(options, args);
+    }
+    catch (ParseException e)
+    {
+      System.out.println();
+      new HelpFormatter().printHelp("MapAlgebra", options);
+      return 1;
+    }
+
+    if (line == null || line.hasOption("h"))
+    {
+      new HelpFormatter().printHelp("MapAlgebra", options);
+      return 1;
+    }
+
+    String expression = line.getOptionValue("e");
+    String output = line.getOptionValue("o");
+    String script = line.getOptionValue("s");
+
+    if (expression == null && script == null)
+    {
+      System.out.println("Either an expression or script must be specified.");
+      System.out.println();
+      new HelpFormatter().printHelp("MapAlgebra", options);
+      return 1;
+    }
+
+    try
+    {
+      if (script != null)
       {
-        while (read < total)
+        File f = new File(script);
+        int total = (int) f.length();
+        byte[] buffer = new byte[total];
+        int read = 0;
+        try (FileInputStream fis = new FileInputStream(f))
         {
-          read += fis.read(buffer, read, total - read);
-        }
-        expression = new String(buffer);
-      }
-    }
-
-    String protectionLevel = line.getOptionValue("pl");
-
-    log.debug("expression: " + expression);
-    log.debug("output: " + output);
-
-    Job job = new Job();
-    job.setJobName("MapAlgebra");
-
-    MrsImageDataProvider dp =
-        DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties);
-    String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
-
-
-    boolean valid = org.mrgeo.mapalgebra.MapAlgebra.validate(expression, providerProperties);
-    if (valid) {
-      if (org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
-          providerProperties, useProtectionLevel)) {
-        if (line.hasOption("b"))
-        {
-          System.out.println("Building pyramids...");
-          if (!BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties)) {
-            System.out.println("Building pyramids failed. See YARN logs for more information.");
+          while (read < total)
+          {
+            read += fis.read(buffer, read, total - read);
           }
+          expression = new String(buffer);
         }
-        System.out.println("Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) /1000.0) + " seconds");
+      }
+
+      String protectionLevel = line.getOptionValue("pl");
+
+      log.debug("expression: " + expression);
+      log.debug("output: " + output);
+
+      Job job = new Job();
+      job.setJobName("MapAlgebra");
+
+      MrsImageDataProvider dp =
+          DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties);
+      String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
+
+
+      boolean valid = org.mrgeo.mapalgebra.MapAlgebra.validate(expression, providerProperties);
+      if (valid)
+      {
+        if (org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
+            providerProperties, useProtectionLevel))
+        {
+          if (line.hasOption("b"))
+          {
+            System.out.println("Building pyramids...");
+            if (!BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties))
+            {
+              System.out.println("Building pyramids failed. See YARN logs for more information.");
+            }
+          }
+          System.out.println(
+              "Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) / 1000.0) + " seconds");
+        }
       }
     }
-  }
-  catch (Exception e)
-  {
-    System.out.println("Failure while running map algebra " + e.getMessage());
-    e.printStackTrace();
-    return -1;
-  }
+    catch (Exception e)
+    {
+      System.out.println("Failure while running map algebra " + e.getMessage());
+      e.printStackTrace();
+      return -1;
+    }
 
-  return 0;
+    return 0;
+  }
+  finally
+  {
+    long elapsed = System.currentTimeMillis() - starttime;
+
+    System.out.println("Elapsed time: " + time(elapsed));
+    System.out.println("Time Serializing (toWritable): " + time(RasterWritable.serializeTime) +
+        " (" + String.format("%.2f", 100.0 * (float) RasterWritable.serializeTime / elapsed) + "%)" +
+        " calls: " + RasterWritable.serializeCnt +
+        " avg time/call: " +
+        String.format("%dms", (long) ((double) RasterWritable.serializeTime / RasterWritable.serializeCnt)));
+    System.out.println("Time Deserializing (toRaster): " + time(RasterWritable.deserializeTime) +
+        " (" + String.format("%.2f", 100.0 * (float) RasterWritable.deserializeTime / elapsed) + "%)" +
+        " calls: " + RasterWritable.deserializeCnt +
+        " avg time/call: " +
+        String.format("%dms", (long) ((double) RasterWritable.deserializeTime / RasterWritable.deserializeCnt)));
+
+    long combinedCnt = RasterWritable.serializeCnt + RasterWritable.deserializeCnt;
+    long combinedTime = RasterWritable.serializeTime + RasterWritable.deserializeTime;
+
+    System.out.println("Combined time : " + time(combinedTime) +
+        " (" + String.format("%.2f", 100.0 * (float) combinedTime / elapsed) + "%)" +
+        " calls: " + combinedCnt +
+        " avg time/call: " +
+        String.format("%dms", (long) ((double) combinedTime / combinedCnt)));
+  }
+}
+
+String time(long millis)
+{
+  long second = (millis / 1000) % 60;
+  long minute = (millis / (1000 * 60)) % 60;
+  long hour = (millis / (1000 * 60 * 60)) % 24;
+
+  return String.format("%02d:%02d:%02d", hour, minute, second) +
+      String.format(".%-3d", millis % 1000).replace(' ', '0');
+
 }
 }
 

@@ -32,15 +32,15 @@ object FocalBuilder extends Logging {
   def create(tiles:RDD[(TileIdWritable, RasterWritable)],
       bufferX:Int, bufferY:Int, bounds:Bounds, zoom:Int, nodatas:Array[Number], context:SparkContext):RDD[(TileIdWritable, RasterWritable)] = {
 
-    val sample:Raster = RasterWritable.toRaster(tiles.first()._2)
+    val sample = RasterWritable.toMrGeoRaster(tiles.first()._2)
 
-    val tilesize = sample.getWidth
+    val tilesize = sample.width()
 
     val offsetX = (bufferX / tilesize) + 1
     val offsetY = (bufferY / tilesize) + 1
 
-    val dstW = sample.getWidth + bufferX * 2
-    val dstH = sample.getHeight + bufferY * 2
+    val dstW = sample.width() + bufferX * 2
+    val dstH = sample.height() + bufferY * 2
 
     val tb = TMSUtils.boundsToTile(bounds, zoom, tilesize)
     val minX = tb.w
@@ -56,9 +56,9 @@ object FocalBuilder extends Logging {
       val pieces = ListBuffer[(TileIdWritable, (Int, Int, Int, Int, RasterWritable))]()
       val from = TMSUtils.tileid(tile._1.get(), zoom)
 
-      val src = RasterWritable.toRaster(tile._2)
-      val srcW = src.getWidth
-      val srcH = src.getHeight
+      val src = RasterWritable.toMrGeoRaster(tile._2)
+      val srcW = src.width()
+      val srcH = src.height()
 
       var y: Int = -offsetY
       while (y <= offsetY) {
@@ -102,7 +102,8 @@ object FocalBuilder extends Logging {
               height = srcH
             }
 
-            val piece = src.createChild(srcX, srcY, width, height, 0, 0, null)
+            val piece = src.clip(srcX, srcY, width, height)
+
             pieces.append((new TileIdWritable(TMSUtils.tileid(to.tx, to.ty, zoom)), (dstX, dstY, width, height, RasterWritable.toWritable(piece))))
           }
           x += 1
@@ -114,17 +115,17 @@ object FocalBuilder extends Logging {
     })).groupByKey() // .groupByKey(partitions)
 
     val focal = pieces.map(tile => {
-      val first = RasterWritable.toRaster(tile._2.head._5)
-      val dst: WritableRaster = RasterUtils.createCompatibleEmptyRaster(first, dstW, dstH, nodatas)
+      val first = RasterWritable.toMrGeoRaster(tile._2.head._5)
+      val dst = first.createCompatibleEmptyRaster(dstW, dstH, nodatas)
 
       for (piece <- tile._2) {
         val x = piece._1
         val y = piece._2
         val w = piece._3
         val h = piece._4
-        val src = RasterWritable.toRaster(piece._5)
+        val src = RasterWritable.toMrGeoRaster(piece._5)
 
-        dst.setDataElements(x, y, w, h, src.getDataElements(0, 0, src.getWidth, src.getHeight, null))
+        dst.copy(x, y, w, h, src, 0, 0)
       }
 
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))

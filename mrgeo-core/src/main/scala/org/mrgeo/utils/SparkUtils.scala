@@ -451,11 +451,11 @@ object SparkUtils extends Logging {
     }
     val bounds = metadata.getBounds
 
+    val tile = RasterWritable.toMrGeoRaster(tiles.first()._2)
     if (metadata.getBands <= 0 || metadata.getTileType <= 0) {
-      val tile = RasterWritable.toRaster(tiles.first()._2)
 
-      metadata.setBands(tile.getNumBands)
-      metadata.setTileType(tile.getTransferType)
+      metadata.setBands(tile.bands())
+      metadata.setTileType(tile.datatype())
     }
 
     metadata.setName(zoom, zoom.toString)
@@ -472,8 +472,7 @@ object SparkUtils extends Logging {
     tofp.save(tiles, conf)
 
     // calculate and save metadata
-    MrsPyramid.calculateMetadata(zoom, outputProvider, stats,
-      metadata)
+    MrsPyramid.calculateMetadata(zoom, tile, outputProvider, stats, metadata)
 
     AutoPersister.decrementRef(tiles)
   }
@@ -495,15 +494,15 @@ object SparkUtils extends Logging {
     }
 
     val stats = rdd.aggregate(zero)((stats, t) => {
-      val tile = RasterWritable.toRaster(t._2)
+      val tile = RasterWritable.toMrGeoRaster(t._2); // RasterWritable.toRaster(t._2)
 
       var y: Int = 0
-      while (y < tile.getHeight) {
+      while (y < tile.height()) {
         var x: Int = 0
-        while (x < tile.getWidth) {
+        while (x < tile.width()) {
           var b: Int = 0
-          while (b < tile.getNumBands) {
-            val p = tile.getSampleDouble(x, y, b)
+          while (b < tile.bands()) {
+            val p = tile.getPixelDouble(x, y, b)
             if (FloatUtils.isNotNodata(p, nodata(b).doubleValue())) {
               stats(b).count += 1
               stats(b).sum += p
@@ -791,12 +790,13 @@ object SparkUtils extends Logging {
     meta.setMaxZoomLevel(zoom)
 
     val first = rdd.first()
-    val raster = RasterWritable.toRaster(first._2)
+    //val raster = RasterWritable.toRaster(first._2)
+    val raster = RasterWritable.toMrGeoRaster(first._2)
 
-    meta.setBands(raster.getNumBands)
-    meta.setTileType(raster.getTransferType)
+    meta.setBands(raster.bands())
+    meta.setTileType(raster.datatype())
 
-    val tilesize = raster.getWidth
+    val tilesize = raster.width()
     meta.setTilesize(tilesize)
 
     meta.setDefaultValues(nodatas)

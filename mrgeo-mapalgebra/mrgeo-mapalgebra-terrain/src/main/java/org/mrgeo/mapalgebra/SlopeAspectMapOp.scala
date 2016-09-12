@@ -23,7 +23,7 @@ import javax.vecmath.Vector3d
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
@@ -63,7 +63,7 @@ abstract class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
     tiles.map(tile => {
 
-      val raster = RasterWritable.toRaster(tile._2)
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
       val np = 0
       val zp = 1
@@ -92,7 +92,7 @@ abstract class SlopeAspectMapOp extends RasterMapOp with Externalizable {
 
         // if the origin pixel is nodata, the normal is nodata
 
-        val origin = raster.getSampleDouble(x, y, 0)
+        val origin = raster.getPixelDouble(x, y, 0)
         if (isnodata(origin, nodata)) {
           return (Double.NaN, Double.NaN, Double.NaN)
         }
@@ -104,7 +104,7 @@ abstract class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         while (dy <= y + 1) {
           var dx: Int = x - 1
           while (dx <= x + 1) {
-            z(ndx) = raster.getSampleDouble(dx, dy, 0)
+            z(ndx) = raster.getPixelDouble(dx, dy, 0)
             if (isnodata(z(ndx), nodata)) {
               z(ndx) = origin
             }
@@ -142,10 +142,11 @@ abstract class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      val width = raster.getWidth - bufferX * 2
-      val height = raster.getHeight - bufferY * 2
+      val width = raster.width() - bufferX * 2
+      val height = raster.height() - bufferY * 2
 
-      val answer = RasterUtils.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT) // , Float.NaN)
+      val answer = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT)
+      // val answer = RasterUtils.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT) // , Float.NaN)
 
       var y: Int = 0
       while (y < height) {
@@ -153,7 +154,7 @@ abstract class SlopeAspectMapOp extends RasterMapOp with Externalizable {
         while (x < width) {
           val normal = calculateNormal(x + bufferX, y + bufferY)
 
-          answer.setSample(x, y, 0, calculateAngle(normal))
+          answer.setPixel(x, y, 0, calculateAngle(normal))
           x += 1
         }
         y += 1
