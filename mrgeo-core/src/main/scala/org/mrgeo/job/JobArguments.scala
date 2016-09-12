@@ -390,7 +390,6 @@ class JobArguments() extends Logging {
     val (newCores, newExecutors, newExMem) = adjustYarnParameters(res._1, res._2, res._3, res._4)
     // val (newCores, newExecutors, newExMem) = adjustYarnParameters(80, 10, 241664, 2416640)
 
-    val mem = res._3
     val actualoverhead = ((if ((newExMem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR) > executorMemoryOverhead) newExMem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR
     else executorMemoryOverhead) * 0.95).toLong
 
