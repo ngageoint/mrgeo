@@ -128,4 +128,9 @@ public class MrGeoProperties {
     throw new IOException(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath());
   }
 
+  // Test method only!   Clear the properties object, so it can be reloaded later.
+  static void clearProperties()
+  {
+    properties = null;
+  }
 }

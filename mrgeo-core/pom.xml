@@ -207,8 +207,6 @@
     <dependency>
       <groupId>org.jasypt</groupId>
       <artifactId>jasypt</artifactId>
-      <version>${jasypt.version}</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>
