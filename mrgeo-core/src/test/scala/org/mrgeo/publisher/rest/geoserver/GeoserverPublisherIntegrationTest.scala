@@ -11,7 +11,8 @@ import org.mrgeo.publisher.rest.RestClient
 import org.mrgeo.publisher.rest.geoserver.GeoserverPublisherConfigurator._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 import org.mrgeo.utils.{GDALUtils, LongRectangle}
-import org.scalatest.{BeforeAndAfter, FlatSpec}
+import org.scalatest
+import org.scalatest.{BeforeAndAfter, FlatSpec, Ignore}
 
 import scala.collection.JavaConverters._
 
@@ -25,10 +26,11 @@ import scala.collection.JavaConverters._
   * Note that this test expects geoserver to by at an endpoint geoserver:8080.  You host file may need to be altered
   * to point the alias the geoserver being tested to that endpoint.
   */
+@Ignore
 class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestSupport {
 
   private val profileName = "mrgeo-geoserver-publisher-integration-test"
-  private val geoserverUrl = "http://geoserver:8080/geoserver/rest"
+  private val geoserverUrl = "http://localhost:8080/geoserver/rest" // http://geoserver:8080/geoserver/rest"
   private val workspace = "mrgeo-geoserver-publisher-integration-test-workspace"
   private val namespace = "mrgeo-geoserver-publisher-integration-test-namespace"
   private val namespaceUri = "http://mrgeo-geoserver-publisher-integration-test-namespace-uri"
