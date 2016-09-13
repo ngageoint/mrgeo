@@ -2,6 +2,7 @@ package org.mrgeo.publisher;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoProperties;
@@ -39,6 +40,22 @@ public class MrGeoPublisherFactoryTest {
         // Get the MrGeoProperties instance.  Because a static reference to the properties returned are held by the
         // MrGeoProperties class, we can inject any properties needed for testing
         mrGeoProperties = MrGeoProperties.getInstance();
+
+        // remove any mrgeo publisher tags
+        Set<String> remove = new HashSet<>();
+        for (Object o : mrGeoProperties.keySet())
+        {
+            String key = (String)o;
+            if (key.startsWith(MRGEO_PUBLISHER_PROPERTY_PREFIX))
+            {
+              remove.add(key);
+            };
+        }
+
+        for (String key: remove)
+        {
+          mrGeoProperties.remove(key);
+        }
     }
 
     @After
@@ -51,7 +68,7 @@ public class MrGeoPublisherFactoryTest {
 
     @Test
     @Category(UnitTest.class)
-    public void testGetPublishers() {
+    public void testGetPublishers() {        
         // Basic test case
         mrGeoProperties.put(String.format(String.format(MRGEO_PUBLISHER_PROPERTY_PREFIX + ".%1$s." +
                 MRGEO_PUBLISHER_CLASS_PROP, PROFILE1)), MrGeoTestPublisher1.class.getName());
