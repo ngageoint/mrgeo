@@ -50,7 +50,7 @@ public class ColorScaleManagerTest {
     public void testGetColorScale_ColorScaleBaseDirNotExist() throws Exception
     {
       final Properties mrgeoConf = new Properties();
-      ColorScaleManager.invalidateCache();
+      ColorScaleManager.colorscaleProvider = null;
       @SuppressWarnings("unused")
       final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest", mrgeoConf);
     }
