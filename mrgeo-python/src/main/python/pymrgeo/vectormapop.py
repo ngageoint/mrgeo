@@ -27,7 +27,7 @@ class VectorMapOp(object):
         from py4j.java_gateway import JavaClass
         cls = JavaClass('org.mrgeo.mapalgebra.save.SaveMapOp', gateway_client=self.gateway._gateway_client)
         if hasattr(self, 'mapop') and self.is_instance_of(self.mapop, 'org.mrgeo.mapalgebra.MapOp') and type(name) is str:
-            op = cls.create(self.mapop, str(name))
+            op = cls.create(self.mapop, str(name), False)
         else:
             raise Exception('input types differ (TODO: expand this message!)')
         if (op.setup(self.job, self.context.getConf()) and
