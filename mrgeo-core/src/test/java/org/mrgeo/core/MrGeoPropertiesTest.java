@@ -26,6 +26,7 @@ private String encryptedValue;
 
 @Before
 public void setUp() throws Exception {
+  MrGeoProperties.clearProperties();
 
   StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
   encryptor.setPassword(TEST_MASTER_PASSWORD);
@@ -35,7 +36,6 @@ public void setUp() throws Exception {
 
 @After
 public void tearDown() throws Exception {
-  MrGeoProperties.clearProperties();
   System.clearProperty(MRGEO_ENCRYPTION_MASTER_PASSWORD_PROPERTY);
 }
 
@@ -51,8 +51,6 @@ public void testGettingUnencryptedPropertyWhenMasterPasswordIsSet() {
 @Category(UnitTest.class)
 public void testGettingUnencryptedPropertyWhenMasterPasswordIsNotSet() {
   setUpPropererties(false);
-  Properties props = MrGeoProperties.getInstance();
-
   assertEquals(encryptedValue, MrGeoProperties.getInstance().getProperty(ENCRYPTED_TEST_PROPERTY));
 }
 
