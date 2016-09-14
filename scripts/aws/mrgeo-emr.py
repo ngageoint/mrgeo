@@ -197,6 +197,7 @@ response = emr.run_job_flow(Name=cluster_name,
                                         "yarn.scheduler.minimum-allocation-mb": "1024",
                                         "yarn.app.mapreduce.am.command-opts": "-Xmx820m",
                                         "yarn.nodemanager.aux-services": "spark_shuffle",
+										# "yarn.scheduler.maximum-allocation-vcores": "128",
                                         "yarn.nodemanager.aux-services.spark_shuffle.class": "org.apache.spark.network.yarn.YarnShuffleService"
                                     }
                                 },

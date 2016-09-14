@@ -26,6 +26,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.apache.spark.deploy.yarn.YarnSparkHadoopUtil
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.data.DataProviderFactory
+import org.mrgeo.utils.logging.LoggingUtils
 import org.mrgeo.utils.{FileUtils, HadoopUtils, Logging, SparkUtils}
 
 import scala.collection.JavaConversions.{asScalaSet, _}
@@ -47,16 +48,16 @@ class JobArguments() extends Logging {
   final private val MrGeoConfPrefix = "MrGeoConf:"
 
   /**
-   * Pattern for matching a Windows drive, which contains only a single alphabet character.
-   */
+    * Pattern for matching a Windows drive, which contains only a single alphabet character.
+    */
   final val YARN:String = "yarn"
   final val LOCAL:String = "local"
   final val SPARK:String = "spark://"
 
   val windowsDrive = "([a-zA-Z])".r
   /**
-   * Whether the underlying operating system is Windows.
-   */
+    * Whether the underlying operating system is Windows.
+    */
   val isWindows = SystemUtils.IS_OS_WINDOWS
   var name: String = "foo" // null
   var cluster: String = "local[1]"
@@ -371,60 +372,139 @@ class JobArguments() extends Logging {
     }
   }
 
+
   def loadYarnSettings():Unit = {
 
     val res = calculateYarnResources()
+
     val sparkConf = SparkUtils.getConfiguration
 
-    val minmemory = sparkConf.getLong(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
-      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB)
-    val maxmemory = sparkConf.getLong(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_MB,
-      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_MB)
 
     val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
-    val mem = res._3
-    val actualoverhead = ((if ((mem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR) > executorMemoryOverhead) mem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR
+
+    //    cores = res._1
+    //    executors = res._2 // reserve 1 executor for the driver
+    //    executorMemKb = (mem - actualoverhead) * 1024 // memory per worker
+    //    memoryKb = res._4 * 1024  // total memory (includes driver memory)
+
+    val (newCores, newExecutors, newExMem) = adjustYarnParameters(res._1, res._2, res._3, res._4)
+    // val (newCores, newExecutors, newExMem) = adjustYarnParameters(80, 10, 241664, 2416640)
+
+    val actualoverhead = ((if ((newExMem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR) > executorMemoryOverhead) newExMem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR
     else executorMemoryOverhead) * 0.95).toLong
 
-    cores = res._1
-    executors = res._2 // reserve 1 executor for the driver
-    executorMemKb = (mem - actualoverhead) * 1024 // memory per worker
-    memoryKb = res._4 * 1024  // total memory (includes driver memory)
+    cores = newCores
+    executors = newExecutors
+    executorMemKb = (newExMem - actualoverhead) * 1024
+    memoryKb = res._4 * 1024
 
-    logInfo("Configuring job (" + name + ") with " + (executors + 1) + " workers (1 driver, " + executors + " executors)  with " +
-        cores + " threads each and " + SparkUtils.kbtohuman(memoryKb, "m") +
-        " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
-        " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
-        SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)" )
+    if (sparkConf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = false)) {
+      logInfo("Configuring job (" + name + ") using Spark dynamic allocation, each executor (starting with "
+          + executors + "), using " + cores + " cores, and " + SparkUtils.kbtohuman(memoryKb, "m") +
+          " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+          " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+          SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
+      println("Configuring job (" + name + ") using Spark dynamic allocation, each executor (starting with "
+          + executors + "), using " + cores + " cores, and " + SparkUtils.kbtohuman(memoryKb, "m") +
+          " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+          " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+          SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
+    }
+    else {
+      logInfo("Configuring job (" + name + ") with " + (executors + 1) + " workers (1 driver, " + executors +
+          " executors)  with " +
+          cores + " cores each and " + SparkUtils.kbtohuman(memoryKb, "m") +
+          " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+          " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+          SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
+    }
   }
 
+  private def adjustYarnParameters(origCores: Int, origExecutors: Int, origMemory: Long, totalMemory: Long): (Int, Int, Int) = {
+    val sparkConf = SparkUtils.getConfiguration
+    val hadoopConf = HadoopUtils.createConfiguration()
 
-  private def configureYarnMemory(cores:Int, nodes:Int, memory:Long, unitMemory:Long, minMemory:Long, maxMemory:Long) = {
-    val rawMemoryPerNode = memory / nodes
-    val rawExecutorsPerNode = cores / nodes
-    val rawMemPerExecutor = rawMemoryPerNode / rawExecutorsPerNode
+    val minmemory = hadoopConf.getLong(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB)
+    // val maxmemory = 241664
+    val maxmemory = hadoopConf.getLong(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_MB,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_MB)
 
-    val rawUnits = Math.floor(rawMemPerExecutor.toDouble / unitMemory)
+    val mincores = hadoopConf.getInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_VCORES,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_VCORES)
+    // val maxcores = 16 // 32
+    val maxcores = hadoopConf.getInt(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES)
 
-    val units = {
-      val r = rawUnits * unitMemory
-      if (r > maxMemory)
-      // Make this is a multiple of unitMemory
-        Math.floor(maxMemory.toDouble / unitMemory.toDouble).toInt
-      else if (r < minMemory)
-      // Make this is a multiple of unitMemory
-        Math.ceil(minMemory.toDouble / unitMemory.toDouble).toInt
-      else
-        rawUnits
+    println("Adjusting job parameters - original values: " + origExecutors + " executors (nodes) " +
+        origCores + " cores/node " + origMemory +  " memory/node " +  totalMemory + " total memory")
+    logInfo("Adjusting job parameters - original values: " + origExecutors + " executors (nodes) " +
+        origCores + " cores/node " + origMemory +  " memory/node " +  totalMemory + " total memory")
+
+    var mem = Math.min(Math.max(origMemory, minmemory), maxmemory)
+    var cores = Math.min(Math.max(origCores, mincores), maxcores)
+    var executors = origExecutors
+
+    val memratio = Math.max(origMemory / mem.toDouble, 1.0)
+    val coreratio = Math.max(origCores / cores.toDouble, 1.0)
+
+    println("Adjusting job parameters - min/max values: cores: " + mincores + "/" + maxcores +
+        " memory: " + minmemory + "/" + maxmemory)
+
+    println("Adjusting job parameters - adjusted to min/max values: " + executors + " executors (nodes) " +
+        cores + " cores/node " + mem +  " memory/node " +
+        " mem ratio: " + memratio + " core ratio: " + coreratio)
+
+    if (sparkConf.getBoolean("spark.dynamicAllocation.enabled", false)) {
+      if (memratio > coreratio) {
+        cores = Math.max((origCores / memratio).toInt, 1)
+        executors = Math.max((origExecutors * memratio).toInt, 1)
+      }
+      else if (coreratio > memratio) {
+        executors = Math.max((origExecutors * Math.floor(coreratio)).toInt, 1)
+        mem = Math.max((origMemory / coreratio).toInt, 1)
+      }
+      else {
+        executors = Math.max((origExecutors * coreratio).toInt, 1)
+      }
     }
 
-    val executorMemory = units * unitMemory
+    // if we only have 1 executor, we may need to lower the cores by 1 to reserve space for the driver
+    if ((origExecutors == 1) && (cores > 1) && (cores * executors >= origCores)) {
+      cores = cores - 1
+    }
 
-    val executorsPerNode = (rawMemoryPerNode.toDouble / executorMemory).toInt
-    val executors = executorsPerNode * nodes
+    (cores, executors, mem.toInt)
 
-    (executors.toInt, executorMemory.toLong)
   }
+
+
+  //  private def configureYarnMemory(cores:Int, nodes:Int, memory:Long, unitMemory:Long, minMemory:Long, maxMemory:Long) = {
+  //    val rawMemoryPerNode = memory / nodes
+  //    val rawExecutorsPerNode = cores / nodes
+  //    val rawMemPerExecutor = rawMemoryPerNode / rawExecutorsPerNode
+  //
+  //    val rawUnits = Math.floor(rawMemPerExecutor.toDouble / unitMemory)
+  //
+  //    val units = {
+  //      val r = rawUnits * unitMemory
+  //      if (r > maxMemory)
+  //      // Make this is a multiple of unitMemory
+  //        Math.floor(maxMemory.toDouble / unitMemory.toDouble).toInt
+  //      else if (r < minMemory)
+  //      // Make this is a multiple of unitMemory
+  //        Math.ceil(minMemory.toDouble / unitMemory.toDouble).toInt
+  //      else
+  //        rawUnits
+  //    }
+  //
+  //    val executorMemory = units * unitMemory
+  //
+  //    val executorsPerNode = (rawMemoryPerNode.toDouble / executorMemory).toInt
+  //    val executors = executorsPerNode * nodes
+  //
+  //    (executors.toInt, executorMemory.toLong)
+  //  }
 
   private def calculateYarnResources():(Int, Int, Long, Long) = {
 
@@ -473,28 +553,20 @@ class JobArguments() extends Logging {
 
     })
 
-    val mincores = conf.getInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_VCORES,
-      YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_VCORES)
-    val maxcores = conf.getInt(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES,
-      YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES)
-
-    cores  = Math.max(Math.min(cores, maxcores), mincores)
-
     val nodes:Int = nr.length
 
     stop.invoke(yc)
 
-
-    // returns: (cores per nodes, nodes, memory (mb) per node)
-
-    //  we need a minimum of 2 nodes (one for the worker, 1 for the driver)
-    if (nodes == 1) {
-      (cores - 1, nodes, memory / 2, totalmemory)
-    }
-    else {
-      (cores, nodes, memory, totalmemory)
-    }
+    // returns: (cores per node, nodes, memory(mb) per node, total memory(mb))
+    (cores, nodes, memory, totalmemory)
   }
 
+}
 
+object JobArguments{
+  def main(args: Array[String]): Unit = {
+    LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO)
+    val ja = new JobArguments()
+    ja.loadYarnSettings()
+  }
 }

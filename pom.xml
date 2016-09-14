@@ -1713,7 +1713,6 @@
         <protobuf.version>2.5.0</protobuf.version>
         <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-
         <final.classifier>emr5.0.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
@@ -3240,6 +3239,14 @@
         <version>${findbugs.version}</version>
         <scope>provided</scope>
       </dependency>
+      <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
+           tools to be run form the mrgeo parent directory.-->
+      <dependency>
+        <groupId>org.jasypt</groupId>
+        <artifactId>jasypt</artifactId>
+        <version>${jasypt.version}</version>
+        <scope>compile</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -3304,13 +3311,9 @@
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>findbugs</artifactId>
     </dependency>
-    <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
-     tools to be run form the mrgeo parent directory.-->
     <dependency>
       <groupId>org.jasypt</groupId>
       <artifactId>jasypt</artifactId>
-      <version>${jasypt.version}</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->
