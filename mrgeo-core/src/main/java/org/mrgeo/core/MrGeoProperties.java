@@ -29,7 +29,7 @@ import java.util.Properties;
 
 public class MrGeoProperties {
   static final String MRGEO_ENCRYPTION_MASTER_PASSWORD_PROPERTY = "mrgeo.encryption.masterPassword";
-  private static Properties properties;
+  static Properties properties;
 
 
   private static Logger log = LoggerFactory.getLogger(MrGeoProperties.class);

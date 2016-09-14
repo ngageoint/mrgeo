@@ -3225,12 +3225,6 @@
           </exclusion>
         </exclusions>
       </dependency>
-      <dependency>
-        <groupId>org.jasypt</groupId>
-        <artifactId>jasypt</artifactId>
-        <version>${jasypt.version}</version>
-        <scope>compile</scope>
-      </dependency>
       <!-- NOTE:  This is just for testing!!!  We need a better way to correllate the opencv
            binaries and the jar.
       -->
@@ -3312,6 +3306,14 @@
     <dependency>
       <groupId>org.jasypt</groupId>
       <artifactId>jasypt</artifactId>
+    </dependency>
+    <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
+     tools to be run form the mrgeo parent directory.-->
+    <dependency>
+      <groupId>org.jasypt</groupId>
+      <artifactId>jasypt</artifactId>
+      <version>${jasypt.version}</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->

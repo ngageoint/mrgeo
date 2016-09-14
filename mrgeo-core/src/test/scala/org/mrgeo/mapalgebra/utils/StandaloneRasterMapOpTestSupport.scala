@@ -24,11 +24,11 @@ class StandaloneRasterMapOpTestSupport {
     RasterMapOpTestSupport$.stopSparkContext
   }
 
-  def createRasterMapOp(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512,
+  def createRasterMapOp(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512, name: String = "",
                         imageNoData: Array[Double] = Array(),
                         imageInitialData: Array[Double] = Array()): RasterMapOp = {
     getImageInitialData(imageInitialData)
-    RasterMapOpTestSupport$.createRasterMapOp(tileIds, zoomLevel, tileSize, imageNoData, getImageInitialData(imageInitialData))
+    RasterMapOpTestSupport$.createRasterMapOp(tileIds, zoomLevel, tileSize, name, imageNoData, getImageInitialData(imageInitialData))
   }
 
   /**
@@ -42,10 +42,10 @@ class StandaloneRasterMapOpTestSupport {
     * @param rasterGenerator
     * @return
     */
-  def createRasterMapOpWithBounds(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512, bounds: Bounds,
-                                  imageNoData: Array[Double] = Array(),
+  def createRasterMapOpWithBounds(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512, name: String = "",
+                                  bounds: Bounds, imageNoData: Array[Double] = Array(),
                                   imageInitialData: Array[Double] = Array()): RasterMapOp = {
-    RasterMapOpTestSupport$.createRasterMapOpWithBounds(tileIds, zoomLevel, tileSize, bounds, imageNoData,
+    RasterMapOpTestSupport$.createRasterMapOpWithBounds(tileIds, zoomLevel, tileSize, bounds, name, imageNoData,
                                       getImageInitialData(imageInitialData))
   }
 
