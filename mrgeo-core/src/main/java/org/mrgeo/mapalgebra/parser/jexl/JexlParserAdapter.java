@@ -192,6 +192,22 @@ public class JexlParserAdapter implements ParserAdapter
       cn.setName(cn.getValue().toString());
       n = cn;
     }
+    else if (node instanceof ASTTrueNode)
+    {
+      ParserConstantNode cn = new ParserConstantNode();
+      cn.setNativeNode(node);
+      cn.setValue(Boolean.valueOf(true));
+      cn.setName(cn.getValue().toString());
+      n = cn;
+    }
+    else if (node instanceof ASTFalseNode)
+    {
+      ParserConstantNode cn = new ParserConstantNode();
+      cn.setNativeNode(node);
+      cn.setValue(Boolean.valueOf(false));
+      cn.setName(cn.getValue().toString());
+      n = cn;
+    }
 //    else if (node instanceof ASTAssignment)
 //    {
 //      ParserFunctionNode fn = new ParserFunctionNode();

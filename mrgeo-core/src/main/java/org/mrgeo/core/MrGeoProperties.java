@@ -29,7 +29,7 @@ import java.util.Properties;
 
 public class MrGeoProperties {
   static final String MRGEO_ENCRYPTION_MASTER_PASSWORD_PROPERTY = "mrgeo.encryption.masterPassword";
-  private static Properties properties;
+  static Properties properties;
 
 
   private static Logger log = LoggerFactory.getLogger(MrGeoProperties.class);
@@ -128,4 +128,9 @@ public class MrGeoProperties {
     throw new IOException(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath());
   }
 
+  // Test method only!   Clear the properties object, so it can be reloaded later.
+  static void clearProperties()
+  {
+    properties = null;
+  }
 }

@@ -114,8 +114,7 @@ class MrGeoYarnDriver {
       args += job.executors.toString
     }
     args += "--executor-cores"
-//    args += conf.get("spark.executor.cores", "1")
-    args +=  job.cores.toString
+    args += job.cores.toString
 
     // spark.executor.memory is the total memory available to spark,
     // --executor-memory is the memory per executor.  Go figure...
@@ -124,11 +123,11 @@ class MrGeoYarnDriver {
     args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
     args += "--driver-cores"
-//    args += conf.get("spark.driver.cores", "1")
     args += "1"
 
     args += "--driver-memory"
-    args += SparkUtils.kbtohuman(job.executorMemKb, "m")
+    // don't need that much memory on the driver...
+    args += "1024m" // SparkUtils.kbtohuman(job.executorMemKb, "m")
 
     args += "--name"
     if (job.name != null && job.name.length > 0) {

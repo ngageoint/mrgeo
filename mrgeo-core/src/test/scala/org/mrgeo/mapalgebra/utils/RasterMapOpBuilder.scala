@@ -9,7 +9,9 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.utils.SparkUtils
 import org.mrgeo.utils.tms.Bounds
+import org.mrgeo.utils.MrGeoImplicits._
 
 /**
   * Created by ericwood on 7/1/16.
@@ -38,8 +40,11 @@ class RasterMapOpBuilder private (var context:SparkContext, numPartitions: Int =
   private var imageNodata: Array[Double] = Array()
   private var bounds: Bounds = _
   private var bands: Int = _
+  private var tileType: Int = _
+  private var imageName: String = _
 
   def raster(tileId: Long, raster: Raster): RasterMapOpBuilder = {
+    tileType = raster.getDataBuffer.getDataType
     bands = Math.max(bands, raster.getNumBands)
     rasterMap = rasterMap + (new TileIdWritable(tileId) -> RasterWritable.toWritable(raster))
     this
@@ -65,14 +70,23 @@ class RasterMapOpBuilder private (var context:SparkContext, numPartitions: Int =
     this
   }
 
+  def imageName(imageName: String) : RasterMapOpBuilder = {
+    this.imageName = imageName
+    this
+  }
+
   def build:org.mrgeo.mapalgebra.raster.RasterMapOp = {
     val rasterMapOp = new RasterMapOp(context.makeRDD(this.rasterMap.toSeq, this.numPartitions))
-    val metadata = new MrsPyramidMetadata()
-    metadata.setMaxZoomLevel(zoomLevel)
-    metadata.setTilesize(tileSize)
-    metadata.setDefaultValues(imageNodata)
-    metadata.setBounds(bounds)
-    metadata.setBands(bands)
+//    val metadata = new MrsPyramidMetadata()
+//    metadata.setMaxZoomLevel(zoomLevel)
+//    metadata.setTilesize(tileSize)
+//    metadata.setTileType(tileType)
+//    metadata.setDefaultValues(imageNodata)
+//    metadata.setBounds(bounds)
+//    metadata.setPyramid(imageName)
+//    metadata.setBands(bands)
+
+    val metadata = SparkUtils.calculateMetadata(rasterMapOp.rdd().get, zoomLevel, imageNodata, true, bounds)
     rasterMapOp.metadata(metadata)
     rasterMapOp
   }

@@ -28,7 +28,7 @@ class RasterMapOpTestSupport(TestCase):
         self._defaultImageInitialData = self._getDoubleArray([1.0])
 
 
-    def createRasterMapOp(self, tileIds, zoomLevel, tileSize, imageNoData = None, imageInitialData = None):
+    def createRasterMapOp(self, tileIds, zoomLevel, tileSize, name='', imageNoData=None, imageInitialData=None):
         if imageNoData is None:
             imageNoData = self._defaultImageNoData
         if imageInitialData is None:
@@ -37,18 +37,19 @@ class RasterMapOpTestSupport(TestCase):
         #Capture image initial and nodata to compare against
         self._imageInitialData = imageInitialData
         self._imageNoData = imageNoData
-        mapop = self._rasterMapOpTestSupport.createRasterMapOp(tileIds, zoomLevel, tileSize, imageNoData, imageInitialData)
+        mapop = self._rasterMapOpTestSupport.createRasterMapOp(tileIds, zoomLevel, tileSize, name, imageNoData, imageInitialData)
         return RasterMapOp(mapop=mapop, gateway=self._mrgeo.gateway, context=self._sparkContext)
 
-    def createRasterMapOpWithBounds(self, tileIds, zoomLevel, tileSize, w, s, e, n, imageNoData = None,
-                                    imageInitialData = None):
+    def createRasterMapOpWithBounds(self, tileIds, zoomLevel, tileSize, w, s, e, n, name='', imageNoData=None,
+                                    imageInitialData=None):
         if imageNoData is None:
             imageNoData = self._defaultImageNoData
         if imageInitialData is None:
             imageInitialData = self._defaultImageInitialData
 
         bounds = self._jvm.Bounds(w, s, e, n)
-        mapop = self._rasterMapOpTestSupport.createRasterMapOpWithBounds(tileIds, zoomLevel, tileSize, bounds, imageNoData, imageInitialData)
+        mapop = self._rasterMapOpTestSupport.createRasterMapOpWithBounds(tileIds, zoomLevel, tileSize, name,
+                                                                         bounds, imageNoData, imageInitialData)
         return RasterMapOp(mapop=mapop, gateway=self._mrgeo.gateway, context=self._sparkContext)
 
     def getRDD(self, mapop):
