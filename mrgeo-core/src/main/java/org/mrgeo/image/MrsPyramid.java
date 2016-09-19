@@ -30,6 +30,7 @@ import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImageReader;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
@@ -171,20 +172,6 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
     metadata.setProtectionLevel(protectionLevel);
   }
 
-  calculateMetadata(zoom, provider, levelStats, metadata);
-}
-
-public static void calculateMetadata(final int zoom,
-    final MrsImageDataProvider provider,
-    final ImageStats[] levelStats,
-    final MrsPyramidMetadata metadata) throws IOException
-{
-
-
-  // HACK!!! (kinda...) Need to make metadata is there so the provider can get the
-  //          MrsImageReader (it does a canOpen(), which makes sure metadata is present)
-  MrsPyramidMetadataWriter metadataWriter = provider.getMetadataWriter();
-  metadataWriter.write(metadata);
 
   final MrsImageReader reader = provider.getMrsTileReader(zoom);
   try
@@ -196,41 +183,47 @@ public static void calculateMetadata(final int zoom,
     {
       final Raster raster = rasterIter.next();
 
-      final int tilesize = raster.getWidth();
-
-      final Bounds bounds = metadata.getBounds();
-
-      final TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
-      metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
-
-      final Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
-          tilesize);
-      final Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
-          tilesize);
-      metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
-
-      metadata.setBands(raster.getNumBands());
-      metadata.setTilesize(tilesize);
-      metadata.setTileType(raster.getTransferType());
-
-      metadata.setName(zoom, Integer.toString(zoom));
-      // update the pyramid level stats
-      metadata.setImageStats(zoom, levelStats);
-
-      // set the image level stats too which are the same as the max zoom level
-      metadata.setStats(levelStats);
+      calculateMetadata(zoom, MrGeoRaster.fromRaster(raster), provider, levelStats, metadata);
     }
-    else
-    {
-      log.error("Error calculating MrsPyramid metadata, could not get a valid raster from the MrsImage");
-    }
-
-    provider.getMetadataWriter(null).write(metadata);
   }
   finally
   {
     reader.close();
   }
+}
+
+public static void calculateMetadata(final int zoom,
+    final MrGeoRaster raster,
+    final MrsImageDataProvider provider,
+    final ImageStats[] levelStats,
+    final MrsPyramidMetadata metadata) throws IOException
+{
+
+  final int tilesize = raster.width();
+
+  final Bounds bounds = metadata.getBounds();
+
+  final TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
+  metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
+
+  final Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
+      tilesize);
+  final Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
+      tilesize);
+  metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
+
+  metadata.setBands(raster.bands());
+  metadata.setTilesize(tilesize);
+  metadata.setTileType(raster.datatype());
+
+  metadata.setName(zoom, Integer.toString(zoom));
+  // update the pyramid level stats
+  metadata.setImageStats(zoom, levelStats);
+
+  // set the image level stats too which are the same as the max zoom level
+  metadata.setStats(levelStats);
+
+  provider.getMetadataWriter().write(metadata);
 }
 
 //  public static boolean delete(final String name)

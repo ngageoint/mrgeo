@@ -17,20 +17,52 @@
 package org.mrgeo.data.raster;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.*;
+import org.mrgeo.utils.ByteArrayUtils;
 
 import java.awt.image.*;
 import java.io.*;
 import java.nio.*;
+import java.util.Arrays;
 
-public class RasterWritable extends BytesWritable implements Serializable
+public class RasterWritable implements WritableComparable<RasterWritable>
 {
 private static final long serialVersionUID = 1L;
 
 private static int HEADERSIZE = 5;
+
+public static long serializeTime = 0;
+public static long serializeCnt = 0;
+public static long deserializeTime = 0;
+public static long deserializeCnt = 0;
+
+private static final Object serializeSync = new Object();
+private static final Object deserializeSync = new Object();
+
+private byte[] bytes;
+
+public int compareTo(RasterWritable other)
+{
+  return Arrays.equals(bytes, other.bytes) ? 0 : 1;
+}
+
+@Override
+public void write(DataOutput out) throws IOException
+{
+  out.write(bytes.length);
+  out.write(bytes);
+}
+
+@Override
+public void readFields(DataInput in) throws IOException
+{
+  int len = in.readInt();
+  bytes = new byte[len];
+  in.readFully(bytes);
+}
 
 public static class RasterWritableException extends RuntimeException
 {
@@ -56,6 +88,27 @@ public static class RasterWritableException extends RuntimeException
   }
 }
 
+public static class HeaderData
+{
+  final int width;
+  final int height;
+  final int bands;
+  final int datatype;
+
+  HeaderData(int width, int height, int bands, int datatype)
+  {
+    this.width = width;
+    this.height = height;
+    this.bands = bands;
+    this.datatype = datatype;
+  }
+
+  static int getHeaderLength()
+  {
+    return 16; // (4 ints * 4 bytes apiece)
+  }
+}
+
 enum SampleModelType {
   PIXELINTERLEAVED, BANDED, SINGLEPIXELPACKED, MULTIPIXELPACKED, COMPONENT
 }
@@ -67,34 +120,87 @@ public RasterWritable()
 
 public RasterWritable(final byte[] bytes)
 {
-  super(bytes);
+  this.bytes = bytes;
 }
 
 public RasterWritable(RasterWritable copy)
 {
-  super(copy.copyBytes());
+  this.bytes = copy.bytes;
 }
 
 // we could use the default serializations here, but instead we'll just do it manually
 private void writeObject(ObjectOutputStream stream) throws IOException
 {
-  stream.writeInt(getLength());
-  stream.write(getBytes(), 0, getLength());
+  stream.writeInt(bytes.length);
+  stream.write(bytes, 0, bytes.length);
 }
 
 private void readObject(ObjectInputStream stream) throws IOException
 {
   int size = stream.readInt();
-  byte[] bytes = new byte[size];
+  bytes = new byte[size];
 
   stream.readFully(bytes, 0, size);
-  set(bytes, 0, size);
+}
+
+public int getSize()
+{
+  return bytes.length;
+}
+
+public byte[] getBytes()
+{
+  return bytes;
 }
 
 public byte[] copyBytes()
 {
-  return getBytes().clone();
+  byte[] copy = new byte[bytes.length];
+  System.arraycopy(bytes, 0, copy, 0, bytes.length);
+
+  return copy;
 }
+
+public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IOException
+{
+  long starttime = System.currentTimeMillis();
+  try
+  {
+    byte[] bytes = writable.bytes;
+    HeaderData header = new HeaderData(ByteArrayUtils.getInt(bytes, 0), ByteArrayUtils.getInt(bytes, 4),
+        ByteArrayUtils.getInt(bytes, 8), ByteArrayUtils.getInt(bytes, 12));
+
+    return MrGeoRaster.createRaster(header.width, header.height, header.bands, header.datatype, bytes, HeaderData.getHeaderLength());
+  }
+  finally
+  {
+    synchronized (deserializeSync)
+    {
+      deserializeCnt++;
+      deserializeTime += (System.currentTimeMillis() - starttime);
+    }
+  }
+
+}
+
+public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
+{
+  long starttime = System.currentTimeMillis();
+  try
+  {
+    return new RasterWritable(raster.data());
+  }
+  finally
+  {
+    synchronized (serializeSync)
+    {
+      serializeCnt++;
+      serializeTime += (System.currentTimeMillis() - starttime);
+    }
+  }
+
+}
+
 
 public static Raster toRaster(final RasterWritable writable) throws IOException
 {
@@ -103,7 +209,7 @@ public static Raster toRaster(final RasterWritable writable) throws IOException
 
 public static Raster toRaster(final RasterWritable writable, Writable payload) throws IOException
 {
-  return read(writable.getBytes(), payload);
+  return read(writable.bytes, payload);
 }
 
 public static Raster toRaster(final RasterWritable writable,
@@ -116,7 +222,7 @@ public static Raster toRaster(final RasterWritable writable,
     final CompressionCodec codec, final Decompressor decompressor, Writable payload) throws IOException
 {
   decompressor.reset();
-  final ByteArrayInputStream bis = new ByteArrayInputStream(writable.getBytes(), 0, writable.getLength());
+  final ByteArrayInputStream bis = new ByteArrayInputStream(writable.bytes, 0, writable.bytes.length);
   final CompressionInputStream gis = codec.createInputStream(bis, decompressor);
   final ByteArrayOutputStream baos = new ByteArrayOutputStream();
   IOUtils.copyBytes(gis, baos, 1024 * 1024 * 2, true);
@@ -178,20 +284,32 @@ public static RasterWritable toWritable(final Raster raster) throws IOException
 public static RasterWritable toWritable(final Raster raster, final Writable payload)
     throws IOException
 {
-  final byte[] pixels = rasterToBytes(raster);
-  final ByteArrayInputStream bis = new ByteArrayInputStream(pixels);
-  final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-  writeHeader(raster, baos);
-  IOUtils.copyBytes(bis, baos, pixels.length, false);
-
-  if (payload != null)
+  long starttime = System.currentTimeMillis();
+  try
   {
-    writePayload(payload, baos);
+    final byte[] pixels = rasterToBytes(raster);
+    final ByteArrayInputStream bis = new ByteArrayInputStream(pixels);
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+    writeHeader(raster, baos);
+    IOUtils.copyBytes(bis, baos, pixels.length, false);
+
+    if (payload != null)
+    {
+      writePayload(payload, baos);
+    }
+    bis.close();
+    baos.close();
+    return new RasterWritable(baos.toByteArray());
   }
-  bis.close();
-  baos.close();
-  return new RasterWritable(baos.toByteArray());
+  finally
+  {
+    synchronized (serializeSync)
+    {
+      serializeCnt++;
+      serializeTime += (System.currentTimeMillis() - starttime);
+    }
+  }
 }
 
 public static RasterWritable toWritable(final Raster raster, final CompressionCodec codec,
@@ -297,7 +415,7 @@ private static byte[] rasterToBytes(final Raster raster)
 
 public static byte[] toBytes(Raster raster, Writable payload) throws IOException
 {
-  return RasterWritable.toWritable(raster, payload).getBytes();
+  return RasterWritable.toWritable(raster, payload).bytes;
 }
 
 public static Raster toRaster(final byte[] rasterBytes, Writable payload) throws IOException
@@ -308,149 +426,163 @@ public static Raster toRaster(final byte[] rasterBytes, Writable payload) throws
 private static Raster read(final byte[] rasterBytes, Writable payload)
     throws IOException
 {
-  WritableRaster raster;
-
-  final ByteBuffer rasterBuffer = ByteBuffer.wrap(rasterBytes);
-
-  /*final int headersize =*/ rasterBuffer.getInt(); // this isn't really used anymore...
-  final int height = rasterBuffer.getInt();
-  final int width = rasterBuffer.getInt();
-  final int bands = rasterBuffer.getInt();
-  final int datatype = rasterBuffer.getInt();
-  final SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
-
-  SampleModel model;
-  switch (sampleModelType)
+  long starttime = System.currentTimeMillis();
+  try
   {
-  case BANDED:
-    model = new BandedSampleModel(datatype, width, height, bands);
-    break;
-  case MULTIPIXELPACKED:
-    throw new NotImplementedException("MultiPixelPackedSampleModel not implemented yet");
-    // model = new MultiPixelPackedSampleModel(dataType, w, h, numberOfBits)
-  case PIXELINTERLEAVED:
-  {
-    final int pixelStride = rasterBuffer.getInt();
-    final int scanlineStride = rasterBuffer.getInt();
-    final int bandcnt = rasterBuffer.getInt();
-    final int[] bandOffsets = new int[bandcnt];
-    for (int i = 0; i < bandcnt; i++)
+    WritableRaster raster;
+
+    final ByteBuffer rasterBuffer = ByteBuffer.wrap(rasterBytes);
+
+  /*final int headersize =*/
+    rasterBuffer.getInt(); // this isn't really used anymore...
+    final int height = rasterBuffer.getInt();
+    final int width = rasterBuffer.getInt();
+    final int bands = rasterBuffer.getInt();
+    final int datatype = rasterBuffer.getInt();
+    final SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
+
+    SampleModel model;
+    switch (sampleModelType)
     {
-      bandOffsets[i] = rasterBuffer.getInt();
-    }
-    model = new PixelInterleavedSampleModel(datatype, width, height, pixelStride, scanlineStride,
-        bandOffsets);
-    break;
-  }
-  case SINGLEPIXELPACKED:
-    throw new NotImplementedException("SinglePixelPackedSampleModel not implemented yet");
-    // model = new SinglePixelPackedSampleModel(dataType, w, h, bitMasks);
-  case COMPONENT:
-  {
-    final int pixelStride = rasterBuffer.getInt();
-    final int scanlineStride = rasterBuffer.getInt();
-    final int bandcnt = rasterBuffer.getInt();
-    final int[] bandOffsets = new int[bandcnt];
-    for (int i = 0; i < bandcnt; i++)
+    case BANDED:
+      model = new BandedSampleModel(datatype, width, height, bands);
+      break;
+    case MULTIPIXELPACKED:
+      throw new NotImplementedException("MultiPixelPackedSampleModel not implemented yet");
+      // model = new MultiPixelPackedSampleModel(dataType, w, h, numberOfBits)
+    case PIXELINTERLEAVED:
     {
-      bandOffsets[i] = rasterBuffer.getInt();
+      final int pixelStride = rasterBuffer.getInt();
+      final int scanlineStride = rasterBuffer.getInt();
+      final int bandcnt = rasterBuffer.getInt();
+      final int[] bandOffsets = new int[bandcnt];
+      for (int i = 0; i < bandcnt; i++)
+      {
+        bandOffsets[i] = rasterBuffer.getInt();
+      }
+      model = new PixelInterleavedSampleModel(datatype, width, height, pixelStride, scanlineStride,
+          bandOffsets);
+      break;
     }
-    model = new ComponentSampleModel(datatype, width, height, pixelStride, scanlineStride,
-        bandOffsets);
-    break;
-  }
-  default:
-    throw new RasterWritableException("Unknown RasterSampleModel type");
-  }
-
-  // include the header size param in the count
-  int startdata = rasterBuffer.position();
-
-  // calculate the data size
-  int[] samplesize = model.getSampleSize();
-  int samplebytes = 0;
-  for (int ss : samplesize)
-  {
-    // bits to bytes
-    samplebytes += (ss / 8);
-  }
-  int databytes = model.getHeight() * model.getWidth() * samplebytes;
-
-  // final ByteBuffer rasterBuffer = ByteBuffer.wrap(rasterBytes, headerbytes, databytes);
-  // the corner of the raster is always 0,0
-  raster = Raster.createWritableRaster(model, null);
-
-  switch (datatype)
-  {
-  case DataBuffer.TYPE_BYTE:
-  {
-    // we can't use the byte buffer explicitly because the header info is
-    // still in it...
-    final byte[] bytedata = new byte[databytes];
-    rasterBuffer.get(bytedata);
-
-    raster.setDataElements(0, 0, width, height, bytedata);
-    break;
-  }
-  case DataBuffer.TYPE_FLOAT:
-  {
-    final FloatBuffer floatbuff = rasterBuffer.asFloatBuffer();
-    final float[] floatdata = new float[databytes / RasterUtils.FLOAT_BYTES];
-
-    floatbuff.get(floatdata);
-
-    raster.setDataElements(0, 0, width, height, floatdata);
-    break;
-  }
-  case DataBuffer.TYPE_DOUBLE:
-  {
-    final DoubleBuffer doublebuff = rasterBuffer.asDoubleBuffer();
-    final double[] doubledata = new double[databytes / RasterUtils.DOUBLE_BYTES];
-
-    doublebuff.get(doubledata);
-
-    raster.setDataElements(0, 0, width, height, doubledata);
-
-    break;
-  }
-  case DataBuffer.TYPE_INT:
-  {
-    final IntBuffer intbuff = rasterBuffer.asIntBuffer();
-    final int[] intdata = new int[databytes / RasterUtils.INT_BYTES];
-
-    intbuff.get(intdata);
-
-    raster.setDataElements(0, 0, width, height, intdata);
-
-    break;
-  }
-  case DataBuffer.TYPE_SHORT:
-  case DataBuffer.TYPE_USHORT:
-  {
-    final ShortBuffer shortbuff = rasterBuffer.asShortBuffer();
-    final short[] shortdata = new short[databytes / RasterUtils.SHORT_BYTES];
-    shortbuff.get(shortdata);
-    raster.setDataElements(0, 0, width, height, shortdata);
-    break;
-  }
-  default:
-    throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
-  }
-
-  // should we even try to extract the payload?
-  if (payload != null)
-  {
-    // test to see if this is a raster with a possible payload
-    final int payloadStart = startdata + databytes;
-    if (rasterBytes.length > payloadStart)
+    case SINGLEPIXELPACKED:
+      throw new NotImplementedException("SinglePixelPackedSampleModel not implemented yet");
+      // model = new SinglePixelPackedSampleModel(dataType, w, h, bitMasks);
+    case COMPONENT:
     {
-      // extract the payload
-      final ByteArrayInputStream bais = new ByteArrayInputStream(rasterBytes, payloadStart, rasterBytes.length - payloadStart);
-      final DataInputStream dis = new DataInputStream(bais);
-      payload.readFields(dis);
+      final int pixelStride = rasterBuffer.getInt();
+      final int scanlineStride = rasterBuffer.getInt();
+      final int bandcnt = rasterBuffer.getInt();
+      final int[] bandOffsets = new int[bandcnt];
+      for (int i = 0; i < bandcnt; i++)
+      {
+        bandOffsets[i] = rasterBuffer.getInt();
+      }
+      model = new ComponentSampleModel(datatype, width, height, pixelStride, scanlineStride,
+          bandOffsets);
+      break;
+    }
+    default:
+      throw new RasterWritableException("Unknown RasterSampleModel type");
+    }
+
+    // include the header size param in the count
+    int startdata = rasterBuffer.position();
+
+    // calculate the data size
+    int[] samplesize = model.getSampleSize();
+    int samplebytes = 0;
+    for (int ss : samplesize)
+    {
+      // bits to bytes
+      samplebytes += (ss / 8);
+    }
+    int databytes = model.getHeight() * model.getWidth() * samplebytes;
+
+    // final ByteBuffer rasterBuffer = ByteBuffer.wrap(rasterBytes, headerbytes, databytes);
+    // the corner of the raster is always 0,0
+    raster = Raster.createWritableRaster(model, null);
+
+    switch (datatype)
+    {
+    case DataBuffer.TYPE_BYTE:
+    {
+      // we can't use the byte buffer explicitly because the header info is
+      // still in it...
+      final byte[] bytedata = new byte[databytes];
+      rasterBuffer.get(bytedata);
+
+      raster.setDataElements(0, 0, width, height, bytedata);
+      break;
+    }
+    case DataBuffer.TYPE_FLOAT:
+    {
+      final FloatBuffer floatbuff = rasterBuffer.asFloatBuffer();
+      final float[] floatdata = new float[databytes / RasterUtils.FLOAT_BYTES];
+
+      floatbuff.get(floatdata);
+
+      raster.setDataElements(0, 0, width, height, floatdata);
+      break;
+    }
+    case DataBuffer.TYPE_DOUBLE:
+    {
+      final DoubleBuffer doublebuff = rasterBuffer.asDoubleBuffer();
+      final double[] doubledata = new double[databytes / RasterUtils.DOUBLE_BYTES];
+
+      doublebuff.get(doubledata);
+
+      raster.setDataElements(0, 0, width, height, doubledata);
+
+      break;
+    }
+    case DataBuffer.TYPE_INT:
+    {
+      final IntBuffer intbuff = rasterBuffer.asIntBuffer();
+      final int[] intdata = new int[databytes / RasterUtils.INT_BYTES];
+
+      intbuff.get(intdata);
+
+      raster.setDataElements(0, 0, width, height, intdata);
+
+      break;
+    }
+    case DataBuffer.TYPE_SHORT:
+    case DataBuffer.TYPE_USHORT:
+    {
+      final ShortBuffer shortbuff = rasterBuffer.asShortBuffer();
+      final short[] shortdata = new short[databytes / RasterUtils.SHORT_BYTES];
+      shortbuff.get(shortdata);
+      raster.setDataElements(0, 0, width, height, shortdata);
+      break;
+    }
+    default:
+      throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
+    }
+
+    // should we even try to extract the payload?
+    if (payload != null)
+    {
+      // test to see if this is a raster with a possible payload
+      final int payloadStart = startdata + databytes;
+      if (rasterBytes.length > payloadStart)
+      {
+        // extract the payload
+        final ByteArrayInputStream bais =
+            new ByteArrayInputStream(rasterBytes, payloadStart, rasterBytes.length - payloadStart);
+        final DataInputStream dis = new DataInputStream(bais);
+        payload.readFields(dis);
+      }
+    }
+    return raster;
+  }
+  finally
+  {
+    synchronized (deserializeSync)
+    {
+      deserializeCnt++;
+      deserializeTime += (System.currentTimeMillis() - starttime);
     }
   }
-  return raster;
 }
 
 private static void writeHeader(int width, int height, int bands, int datatype, OutputStream out) throws IOException

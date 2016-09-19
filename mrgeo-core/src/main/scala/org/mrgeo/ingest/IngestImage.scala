@@ -30,7 +30,7 @@ import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
@@ -210,16 +210,27 @@ object IngestImage extends MrGeoDriver with Externalizable {
       (new TileIdWritable(tile._1), RasterWritable.toWritable(RasterWritable.toRaster(tile._2)))
     })
 
-    val mergedTiles = RasterRDD(new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
+    val mergedTiles = new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
       val src = RasterWritable.toRaster(r1)
       val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
 
       RasterUtils.mosaicTile(src, dst, nodata)
+
+      val mrgeoRaster = MrGeoRaster.fromRaster(dst)
+
+      new RasterWritable(mrgeoRaster.data())
       RasterWritable.toWritable(dst)
 
+    })
+
+    val mrgeo = RasterRDD(mergedTiles.map(tile => {
+      val src = RasterWritable.toRaster(tile._2)
+      val mrgeoRaster = MrGeoRaster.fromRaster(src)
+
+      (tile._1, new RasterWritable(mrgeoRaster.data()))
     }))
 
-    val meta = SparkUtils.calculateMetadata(mergedTiles, zoom, nodata, bounds = null, calcStats = false)
+    val meta = SparkUtils.calculateMetadata(mrgeo, zoom, nodata, bounds = null, calcStats = false)
     meta.setClassification(if (categorical)
       MrsPyramidMetadata.Classification.Categorical else
       MrsPyramidMetadata.Classification.Continuous)
@@ -228,7 +239,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
       setMetadataCategories(meta, firstCategories)
     }
 
-    (mergedTiles, meta)
+    (mrgeo, meta)
   }
 
   private def loadCategories(input: String): Map[Int, util.Vector[_]] = {

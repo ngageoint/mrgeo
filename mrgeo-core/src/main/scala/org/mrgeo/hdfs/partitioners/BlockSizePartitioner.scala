@@ -42,10 +42,11 @@ class BlockSizePartitioner() extends FileSplitPartitioner() with Externalizable 
     val fs = HadoopFileUtils.getFileSystem(path)
     val blocksize = fs.getDefaultBlockSize(path)
 
-    val tile = RasterWritable.toRaster(raster.first()._2)
+    // val tile = RasterWritable.toRaster(raster.first()._2)
+    val tile = RasterWritable.toMrGeoRaster(raster.first()._2)
 
-    val pixelbytes = RasterUtils.getElementSize(tile.getSampleModel.getDataType) * tile.getNumBands
-    val imagebytes = pixelbytes * tile.getWidth * tile.getHeight
+    val pixelbytes = RasterUtils.getElementSize(tile.datatype()) * tile.bands()
+    val imagebytes = pixelbytes * tile.width() * tile.height()
 
     val tilesperblock = (blocksize / imagebytes) - 1  // subtract 1 for the 0-based counting
 

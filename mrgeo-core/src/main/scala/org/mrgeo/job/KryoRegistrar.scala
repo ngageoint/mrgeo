@@ -20,8 +20,8 @@ import com.esotericsoftware.kryo.Kryo
 import org.apache.spark.serializer.KryoRegistrator
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.job.serializers.{PixelSerializer, BoundsSerializer, RasterWritableSerializer}
-import org.mrgeo.utils.tms.{Pixel, Bounds}
+import org.mrgeo.job.serializers.{BoundsSerializer, PixelSerializer, RasterWritableSerializer}
+import org.mrgeo.utils.tms.{Bounds, Pixel}
 
 class KryoRegistrar extends KryoRegistrator
 {
@@ -29,7 +29,7 @@ class KryoRegistrar extends KryoRegistrator
     //    kryo.setReferences(false)
 
     kryo.register(classOf[TileIdWritable])
-    kryo.register(classOf[RasterWritable], new RasterWritableSerializer)
+    //kryo.register(classOf[RasterWritable], new RasterWritableSerializer)
 
     kryo.register(classOf[Bounds], new BoundsSerializer)
     kryo.register(classOf[Pixel], new PixelSerializer)
