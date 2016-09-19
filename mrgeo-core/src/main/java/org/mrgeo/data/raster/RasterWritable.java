@@ -16,19 +16,19 @@
 
 package org.mrgeo.data.raster;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.*;
 import org.mrgeo.utils.ByteArrayUtils;
 
 import java.awt.image.*;
 import java.io.*;
 import java.nio.*;
+import java.util.Arrays;
 
-public class RasterWritable extends BytesWritable implements Serializable
+public class RasterWritable implements WritableComparable<RasterWritable>
 {
 private static final long serialVersionUID = 1L;
 
@@ -41,6 +41,28 @@ public static long deserializeCnt = 0;
 
 private static final Object serializeSync = new Object();
 private static final Object deserializeSync = new Object();
+
+private byte[] bytes;
+
+public int compareTo(RasterWritable other)
+{
+  return Arrays.equals(bytes, other.bytes) ? 0 : 1;
+}
+
+@Override
+public void write(DataOutput out) throws IOException
+{
+  out.write(bytes.length);
+  out.write(bytes);
+}
+
+@Override
+public void readFields(DataInput in) throws IOException
+{
+  int len = in.readInt();
+  bytes = new byte[len];
+  in.readFully(bytes);
+}
 
 public static class RasterWritableException extends RuntimeException
 {
@@ -68,10 +90,10 @@ public static class RasterWritableException extends RuntimeException
 
 public static class HeaderData
 {
-  int width;
-  int height;
-  int bands;
-  int datatype;
+  final int width;
+  final int height;
+  final int bands;
+  final int datatype;
 
   HeaderData(int width, int height, int bands, int datatype)
   {
@@ -98,33 +120,45 @@ public RasterWritable()
 
 public RasterWritable(final byte[] bytes)
 {
-  super(bytes);
+  this.bytes = bytes;
 }
 
 public RasterWritable(RasterWritable copy)
 {
-  super(copy.copyBytes());
+  this.bytes = copy.bytes;
 }
 
 // we could use the default serializations here, but instead we'll just do it manually
 private void writeObject(ObjectOutputStream stream) throws IOException
 {
-  stream.writeInt(getLength());
-  stream.write(getBytes(), 0, getLength());
+  stream.writeInt(bytes.length);
+  stream.write(bytes, 0, bytes.length);
 }
 
 private void readObject(ObjectInputStream stream) throws IOException
 {
   int size = stream.readInt();
-  byte[] bytes = new byte[size];
+  bytes = new byte[size];
 
   stream.readFully(bytes, 0, size);
-  set(bytes, 0, size);
+}
+
+public int getSize()
+{
+  return bytes.length;
+}
+
+public byte[] getBytes()
+{
+  return bytes;
 }
 
 public byte[] copyBytes()
 {
-  return getBytes().clone();
+  byte[] copy = new byte[bytes.length];
+  System.arraycopy(bytes, 0, copy, 0, bytes.length);
+
+  return copy;
 }
 
 public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IOException
@@ -132,12 +166,11 @@ public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IO
   long starttime = System.currentTimeMillis();
   try
   {
-    byte[] rawdata = writable.getBytes();
+    byte[] bytes = writable.bytes;
+    HeaderData header = new HeaderData(ByteArrayUtils.getInt(bytes, 0), ByteArrayUtils.getInt(bytes, 4),
+        ByteArrayUtils.getInt(bytes, 8), ByteArrayUtils.getInt(bytes, 12));
 
-    HeaderData header = new HeaderData(ByteArrayUtils.getInt(rawdata, 0), ByteArrayUtils.getInt(rawdata, 4),
-        ByteArrayUtils.getInt(rawdata, 8), ByteArrayUtils.getInt(rawdata, 12));
-
-    return MrGeoRaster.createRaster(header.width, header.height, header.bands, header.datatype, rawdata, HeaderData.getHeaderLength());
+    return MrGeoRaster.createRaster(header.width, header.height, header.bands, header.datatype, bytes, HeaderData.getHeaderLength());
   }
   finally
   {
@@ -176,7 +209,7 @@ public static Raster toRaster(final RasterWritable writable) throws IOException
 
 public static Raster toRaster(final RasterWritable writable, Writable payload) throws IOException
 {
-  return read(writable.getBytes(), payload);
+  return read(writable.bytes, payload);
 }
 
 public static Raster toRaster(final RasterWritable writable,
@@ -189,7 +222,7 @@ public static Raster toRaster(final RasterWritable writable,
     final CompressionCodec codec, final Decompressor decompressor, Writable payload) throws IOException
 {
   decompressor.reset();
-  final ByteArrayInputStream bis = new ByteArrayInputStream(writable.getBytes(), 0, writable.getLength());
+  final ByteArrayInputStream bis = new ByteArrayInputStream(writable.bytes, 0, writable.bytes.length);
   final CompressionInputStream gis = codec.createInputStream(bis, decompressor);
   final ByteArrayOutputStream baos = new ByteArrayOutputStream();
   IOUtils.copyBytes(gis, baos, 1024 * 1024 * 2, true);
@@ -382,7 +415,7 @@ private static byte[] rasterToBytes(final Raster raster)
 
 public static byte[] toBytes(Raster raster, Writable payload) throws IOException
 {
-  return RasterWritable.toWritable(raster, payload).getBytes();
+  return RasterWritable.toWritable(raster, payload).bytes;
 }
 
 public static Raster toRaster(final byte[] rasterBytes, Writable payload) throws IOException

@@ -1,12 +1,16 @@
 package org.mrgeo.data.raster;
 
 import org.mrgeo.utils.ByteArrayUtils;
-
 import java.awt.image.DataBuffer;
 
-class MrGeoShortRaster extends MrGeoRaster
+final class MrGeoShortRaster extends MrGeoRaster
 {
 private static final int BYTES_PER_PIXEL = 2;
+
+MrGeoShortRaster(int width, int height, int bands, byte[] data, int dataOffset)
+{
+  super(width, height, bands, DataBuffer.TYPE_SHORT, data, dataOffset);
+}
 
 public static MrGeoRaster createEmptyRaster(int width, int height, int bands)
 {
@@ -19,21 +23,10 @@ public static MrGeoRaster createEmptyRaster(int width, int height, int bands)
   return new MrGeoShortRaster(width, height, bands, data, RasterWritable.HeaderData.getHeaderLength());
 }
 
-MrGeoShortRaster(int width, int height, int bands, byte[] data, int dataOffset)
-{
-  super(width, height, bands, DataBuffer.TYPE_SHORT, data, dataOffset);
-}
-
-@Override
-int bytesPerPixel()
-{
-  return BYTES_PER_PIXEL;
-}
-
 @Override
 public byte getPixelByte(int x, int y, int band)
 {
-  return (byte)getPixelShort(x, y, band);
+  return (byte)ByteArrayUtils.getShort(data, calculateByteOffset(x, y, band));
 }
 
 @Override
@@ -45,31 +38,32 @@ public short getPixelShort(int x, int y, int band)
 @Override
 public short getPixeUShort(int x, int y, int band)
 {
-  return (short)getPixelShort(x, y, band);
+  return ByteArrayUtils.getShort(data, calculateByteOffset(x, y, band));
 }
 
 @Override
 public int getPixelInt(int x, int y, int band)
 {
-  return (int)getPixelShort(x, y, band);
+  return (int)ByteArrayUtils.getShort(data, calculateByteOffset(x, y, band));
 }
 
 @Override
 public float getPixelFloat(int x, int y, int band)
 {
-  return (float)getPixelShort(x, y, band);
+  return (float)ByteArrayUtils.getShort(data, calculateByteOffset(x, y, band));
 }
+
 //
 @Override
 public double getPixelDouble(int x, int y, int band)
 {
-  return (double)getPixelShort(x, y, band);
+  return (double)ByteArrayUtils.getShort(data, calculateByteOffset(x, y, band));
 }
 
 @Override
 public void setPixel(int x, int y, int band, byte pixel)
 {
-  setPixel(x, y, band, (short)pixel);
+  ByteArrayUtils.setShort((short)pixel, data, calculateByteOffset(x, y, band));
 }
 
 @Override
@@ -81,19 +75,24 @@ public void setPixel(int x, int y, int band, short pixel)
 @Override
 public void setPixe(int x, int y, int band, int pixel)
 {
-  setPixel(x, y, band, (short)pixel);
+  ByteArrayUtils.setShort((short)pixel, data, calculateByteOffset(x, y, band));
 }
 
 @Override
 public void setPixel(int x, int y, int band, float pixel)
 {
-  setPixel(x, y, band, (short)pixel);
-
+  ByteArrayUtils.setShort((short)pixel, data, calculateByteOffset(x, y, band));
 }
 
 @Override
 public void setPixel(int x, int y, int band, double pixel)
 {
-  setPixel(x, y, band, (short)pixel);
+  ByteArrayUtils.setShort((short)pixel, data, calculateByteOffset(x, y, band));
+}
+
+@Override
+int bytesPerPixel()
+{
+  return BYTES_PER_PIXEL;
 }
 }

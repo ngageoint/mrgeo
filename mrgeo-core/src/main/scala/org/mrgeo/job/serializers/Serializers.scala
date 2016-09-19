@@ -25,10 +25,8 @@ class Serializers {}
 
 class RasterWritableSerializer extends Serializer[RasterWritable] {
   override def write(kryo: Kryo, output: Output, rw: RasterWritable) = {
-
-    val bytes = rw.getBytes
-    output.writeInt(bytes.length)
-    output.writeBytes(bytes)
+    output.writeInt(rw.getSize)
+    output.writeBytes(rw.getBytes)
   }
 
   override def read(kryo: Kryo, input: Input, `type`: Class[RasterWritable]): RasterWritable = {

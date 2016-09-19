@@ -110,7 +110,7 @@ public class RasterWritableTest {
 		SequenceFile.Writer writer = SequenceFile.createWriter(fs, conf, rasterFilePath, TileIdWritable.class, RasterWritable.class);
 
 		TileIdWritable key = new TileIdWritable();
-		RasterWritable value = new RasterWritable();
+		RasterWritable value;
 		
 		TileIdWritable payload = null;
 		for(int i=0; i < NUM_ENTRIES; i++) {
@@ -122,7 +122,7 @@ public class RasterWritableTest {
 //			if(compressRaster)
 //				value.set(RasterWritable.toWritable(srcRaster,codec,compressor,payload).get());
 //			else
-				value.set(RasterWritable.toWritable(srcRaster,payload));
+				value = RasterWritable.toWritable(srcRaster,payload);
 
 			writer.append(key, value);
 		}	
