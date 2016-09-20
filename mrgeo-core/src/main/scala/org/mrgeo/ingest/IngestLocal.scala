@@ -18,24 +18,16 @@ package org.mrgeo.ingest
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
-import org.apache.hadoop.io.SequenceFile
-import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.PairRDDFunctions
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
-import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.hdfs.utils.HadoopFileUtils
-import org.mrgeo.utils.{HadoopUtils, SparkUtils}
+import org.mrgeo.utils.SparkUtils
 
 class IngestLocal extends IngestImage with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val ingested = IngestImage.localingest(context, inputs, zoom, tilesize,
+    val ingested = IngestImage.localingest(context, inputs, zoom, skipPreprocessing, tilesize,
       categorical, skipCategoryLoad, nodata, protectionlevel)
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)
@@ -46,7 +38,7 @@ class IngestLocal extends IngestImage with Externalizable {
 
   override def readExternal(in: ObjectInput): Unit = {
     val bands = in.readInt()
-    nodata = Array.ofDim[Number](bands)
+    nodata = Array.ofDim[Double](bands)
     for (band <- 0 until bands) {
       nodata(band) = in.readDouble()
     }

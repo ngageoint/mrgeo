@@ -413,7 +413,7 @@ object SparkUtils extends Logging {
   }
 
   def saveMrsPyramid(tiles: RasterRDD, outputProvider: MrsImageDataProvider,
-      zoom: Int, tilesize: Int, nodatas: Array[Number], conf: Configuration, tiletype: Int = -1,
+      zoom: Int, tilesize: Int, nodatas: Array[Double], conf: Configuration, tiletype: Int = -1,
       bounds: Bounds = null, bands: Int = -1,
       protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
@@ -480,13 +480,13 @@ object SparkUtils extends Logging {
 
   @deprecated("Use RasterRDD method instead", "")
   def calculateStats(rdd: RDD[(TileIdWritable, RasterWritable)], bands: Int,
-      nodata: Array[Number]): Array[ImageStats] = {
+      nodata: Array[Double]): Array[ImageStats] = {
 
     calculateStats(RasterRDD(rdd), bands, nodata)
   }
 
   def calculateStats(rdd: RasterRDD, bands: Int,
-      nodata: Array[Number]): Array[ImageStats] = {
+      nodata: Array[Double]): Array[ImageStats] = {
 
     val zero = Array.ofDim[ImageStats](bands)
 
@@ -650,7 +650,7 @@ object SparkUtils extends Logging {
   }
 
   def calculateBoundsAndStats(rdd: RasterRDD, bands: Int, zoom: Int, tilesize: Int,
-      nodata: Array[Number]): (Bounds, Array[ImageStats]) = {
+      nodata: Array[Double]): (Bounds, Array[ImageStats]) = {
     val zero = Array.ofDim[ImageStats](bands)
 
     for (i <- zero.indices) {
@@ -760,7 +760,7 @@ object SparkUtils extends Logging {
 
   @deprecated("Use RasterRDD method instead", "")
   def saveMrsPyramidRDD(tiles: RDD[(TileIdWritable, RasterWritable)], outputProvider: MrsImageDataProvider,
-      zoom: Int, tilesize: Int, nodatas: Array[Number], conf: Configuration, tiletype: Int = -1,
+      zoom: Int, tilesize: Int, nodatas: Array[Double], conf: Configuration, tiletype: Int = -1,
       bounds: Bounds = null, bands: Int = -1,
       protectionlevel:String = null, providerproperties:ProviderProperties = new ProviderProperties()): Unit = {
 
@@ -781,7 +781,7 @@ object SparkUtils extends Logging {
     calculateMetadata(rdd, zoom, nodatas, calcStats, bounds)
   }
 
-  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodatas:Array[Number], calcStats:Boolean, bounds:Bounds):MrsPyramidMetadata = {
+  def calculateMetadata(rdd:RasterRDD, zoom:Int, nodatas:Array[Double], calcStats:Boolean, bounds:Bounds):MrsPyramidMetadata = {
     val meta = new MrsPyramidMetadata
 
     //    rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
