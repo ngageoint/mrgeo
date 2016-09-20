@@ -153,7 +153,7 @@ public class RasterUtilsTest
 
     scale = 2;
     scaled = RasterUtils.scaleRasterInterp(numberedFloat, 
-        numberedFloat.getWidth() * scale, numberedFloat.getHeight() * scale, Float.NaN);
+        numberedFloat.getWidth() * scale, numberedFloat.getHeight() * scale, Double.NaN);
 
     //    TestUtils.saveRaster(scaled, "TIFF", "scaled.tif");
     //    // scale up

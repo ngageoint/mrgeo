@@ -297,7 +297,7 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
         Some(RasterRDD(calculate(tiles, bufferX, bufferY, nodatas(0).doubleValue(), zoom, tilesize)))
 
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array.fill(8)(Float.NaN.asInstanceOf[Number]),
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array.fill(8)(Double.NaN),
       bounds = meta.getBounds, calcStats = false))
 
     true
