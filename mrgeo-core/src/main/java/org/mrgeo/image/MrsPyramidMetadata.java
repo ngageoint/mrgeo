@@ -858,15 +858,9 @@ public short[] getDefaultValuesShort()
 }
 
 @JsonIgnore
-public Number[] getDefaultValuesNumber()
+public double[] getDefaultValuesNumber()
 {
-  final Number[] defaults = new Number[bands];
-  for (int i = 0; i < bands; i++)
-  {
-    defaults[i] = defaultValues[i];
-  }
-
-  return defaults;
+  return Arrays.copyOf(defaultValues, defaultValues.length);
 }
 
 public ImageMetadata[] getImageMetadata()

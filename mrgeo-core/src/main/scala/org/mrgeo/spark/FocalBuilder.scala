@@ -30,7 +30,7 @@ import scala.collection.mutable.ListBuffer
 object FocalBuilder extends Logging {
 
   def create(tiles:RDD[(TileIdWritable, RasterWritable)],
-      bufferX:Int, bufferY:Int, bounds:Bounds, zoom:Int, nodatas:Array[Number], context:SparkContext):RDD[(TileIdWritable, RasterWritable)] = {
+      bufferX:Int, bufferY:Int, bounds:Bounds, zoom:Int, nodatas:Array[Double], context:SparkContext):RDD[(TileIdWritable, RasterWritable)] = {
 
     val sample = RasterWritable.toMrGeoRaster(tiles.first()._2)
 

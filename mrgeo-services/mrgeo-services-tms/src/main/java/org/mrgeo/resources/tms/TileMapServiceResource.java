@@ -732,19 +732,19 @@ Response returnEmptyTile(final int width, final int height,
   ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
   int bands;
-  Double[] nodatas;
+  double[] nodatas;
   if (format.equalsIgnoreCase("jpg") || format.equalsIgnoreCase("jpeg") )
   {
     bands = 3;
-    nodatas = new Double[]{0.0,0.0,0.0};
+    nodatas = new double[]{0.0,0.0,0.0};
   } else
   {
     bands = 4;
-    nodatas = new Double[]{0.0,0.0,0.0,0.0};
+    nodatas = new double[]{0.0,0.0,0.0,0.0};
   }
 
   Raster raster = RasterUtils.createEmptyRaster(width, height, bands, DataBuffer.TYPE_BYTE, nodatas);
-  writer.writeToStream(raster, ArrayUtils.toPrimitive(nodatas), baos);
+  writer.writeToStream(raster, nodatas, baos);
   byte[] imageData = baos.toByteArray();
   IOUtils.closeQuietly(baos);
 
