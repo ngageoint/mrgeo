@@ -12,16 +12,13 @@ MrGeoFloatRaster(int width, int height, int bands, byte[] data, int dataOffset)
   super(width, height, bands, DataBuffer.TYPE_FLOAT, data, dataOffset);
 }
 
-public static MrGeoRaster createEmptyRaster(int width, int height, int bands)
+static MrGeoRaster createEmptyRaster(int width, int height, int bands)
 {
-  byte[] data = new byte[(width * height * bands * BYTES_PER_PIXEL) + RasterWritable.HeaderData.getHeaderLength()];
+  byte[] data = new byte[(width * height * bands * BYTES_PER_PIXEL) + MrGeoRaster.HEADER_LEN];
 
-  ByteArrayUtils.setInt(width, data, 0);
-  ByteArrayUtils.setInt(height, data, 4);
-  ByteArrayUtils.setInt(bands, data, 8);
-  ByteArrayUtils.setInt(DataBuffer.TYPE_FLOAT, data, 12);
+  MrGeoRaster.writeHeader(width, height, bands, DataBuffer.TYPE_FLOAT, data);
 
-  return new MrGeoFloatRaster(width, height, bands, data, RasterWritable.HeaderData.getHeaderLength());
+  return new MrGeoFloatRaster(width, height, bands, data, MrGeoRaster.HEADER_LEN);
 }
 
 @Override

@@ -114,9 +114,10 @@ object FocalBuilder extends Logging {
 
     })).groupByKey() // .groupByKey(partitions)
 
+    val dnodatas = nodatas.map(_.doubleValue())
     val focal = pieces.map(tile => {
       val first = RasterWritable.toMrGeoRaster(tile._2.head._5)
-      val dst = first.createCompatibleEmptyRaster(dstW, dstH, nodatas)
+      val dst = first.createCompatibleEmptyRaster(dstW, dstH, dnodatas)
 
       for (piece <- tile._2) {
         val x = piece._1

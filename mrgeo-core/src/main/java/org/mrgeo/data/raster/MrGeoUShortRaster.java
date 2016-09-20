@@ -1,25 +1,26 @@
 package org.mrgeo.data.raster;
 
 import org.mrgeo.utils.ByteArrayUtils;
+
 import java.awt.image.DataBuffer;
 
-final class MrGeoShortRaster extends MrGeoRaster
+final class MrGeoUShortRaster extends MrGeoRaster
 {
 
 private static final int BYTES_PER_PIXEL = 2;
 
-MrGeoShortRaster(int width, int height, int bands, byte[] data, int dataOffset)
+MrGeoUShortRaster(int width, int height, int bands, byte[] data, int dataOffset)
 {
-  super(width, height, bands, DataBuffer.TYPE_SHORT, data, dataOffset);
+  super(width, height, bands, DataBuffer.TYPE_USHORT, data, dataOffset);
 }
 
 public static MrGeoRaster createEmptyRaster(int width, int height, int bands)
 {
   byte[] data = new byte[(width * height * bands * BYTES_PER_PIXEL) + MrGeoRaster.HEADER_LEN];
 
-  MrGeoRaster.writeHeader(width, height, bands, DataBuffer.TYPE_SHORT, data);
+  MrGeoRaster.writeHeader(width, height, bands, DataBuffer.TYPE_USHORT, data);
 
-  return new MrGeoShortRaster(width, height, bands, data, MrGeoRaster.HEADER_LEN);
+  return new MrGeoUShortRaster(width, height, bands, data, MrGeoRaster.HEADER_LEN);
 }
 
 @Override
@@ -31,7 +32,7 @@ public byte getPixelByte(int x, int y, int band)
 @Override
 public short getPixelShort(int x, int y, int band)
 {
-  return ByteArrayUtils.getShort(data, calculateByteOffset(x, y, band));
+  return (short)ByteArrayUtils.getShort(data, calculateByteOffset(x, y, band));
 }
 
 @Override

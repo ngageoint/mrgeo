@@ -44,26 +44,6 @@ private static final Object deserializeSync = new Object();
 
 private byte[] bytes;
 
-public int compareTo(RasterWritable other)
-{
-  return Arrays.equals(bytes, other.bytes) ? 0 : 1;
-}
-
-@Override
-public void write(DataOutput out) throws IOException
-{
-  out.write(bytes.length);
-  out.write(bytes);
-}
-
-@Override
-public void readFields(DataInput in) throws IOException
-{
-  int len = in.readInt();
-  bytes = new byte[len];
-  in.readFully(bytes);
-}
-
 public static class RasterWritableException extends RuntimeException
 {
 
@@ -88,28 +68,29 @@ public static class RasterWritableException extends RuntimeException
   }
 }
 
-public static class HeaderData
+public int compareTo(RasterWritable other)
 {
-  final int width;
-  final int height;
-  final int bands;
-  final int datatype;
-
-  HeaderData(int width, int height, int bands, int datatype)
-  {
-    this.width = width;
-    this.height = height;
-    this.bands = bands;
-    this.datatype = datatype;
-  }
-
-  static int getHeaderLength()
-  {
-    return 16; // (4 ints * 4 bytes apiece)
-  }
+  return Arrays.equals(bytes, other.bytes) ? 0 : 1;
 }
 
-enum SampleModelType {
+@Override
+public void write(DataOutput out) throws IOException
+{
+  out.write(bytes.length);
+  out.write(bytes);
+}
+
+@Override
+public void readFields(DataInput in) throws IOException
+{
+  int len = in.readInt();
+  bytes = new byte[len];
+  in.readFully(bytes);
+}
+
+
+@Deprecated
+private enum SampleModelType {
   PIXELINTERLEAVED, BANDED, SINGLEPIXELPACKED, MULTIPIXELPACKED, COMPONENT
 }
 
@@ -166,11 +147,13 @@ public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IO
   long starttime = System.currentTimeMillis();
   try
   {
-    byte[] bytes = writable.bytes;
-    HeaderData header = new HeaderData(ByteArrayUtils.getInt(bytes, 0), ByteArrayUtils.getInt(bytes, 4),
-        ByteArrayUtils.getInt(bytes, 8), ByteArrayUtils.getInt(bytes, 12));
-
-    return MrGeoRaster.createRaster(header.width, header.height, header.bands, header.datatype, bytes, HeaderData.getHeaderLength());
+    int version = ByteArrayUtils.getByte(writable.bytes);
+    if (version == 0)
+    {
+      // this is an old MrsPyramid v2 image, read it into a MrGeoRaster
+      return RasterWritable.convertFromV2(writable.bytes);
+    }
+    return MrGeoRaster.createRaster(writable.bytes);
   }
   finally
   {
@@ -194,30 +177,68 @@ public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
   {
     synchronized (serializeSync)
     {
-      serializeCnt++;
+//      serializeCnt++;
       serializeTime += (System.currentTimeMillis() - starttime);
     }
   }
-
 }
 
+private static MrGeoRaster convertFromV2(byte[] data)
+{
+  final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
 
+  final int headersize = (rasterBuffer.getInt() + 1) * 4; // include the header! ( * sizeof(int) )
+  final int height = rasterBuffer.getInt();
+  final int width = rasterBuffer.getInt();
+  final int bands = rasterBuffer.getInt();
+  final int datatype = rasterBuffer.getInt();
+  final SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
+
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, datatype);
+  switch (sampleModelType)
+  {
+  case BANDED:
+    // this one is easy, just make a new MrGeoRaster and copy the data
+    int srclen = data.length - headersize;
+
+    System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+    break;
+  case MULTIPIXELPACKED:
+    throw new NotImplementedException("MultiPixelPackedSampleModel not implemented yet");
+  case COMPONENT:
+  case PIXELINTERLEAVED:
+  {
+    throw new NotImplementedException("PixelInterleaved and Component not implemented yet");
+  }
+  case SINGLEPIXELPACKED:
+    throw new NotImplementedException("SinglePixelPackedSampleModel not implemented yet");
+  default:
+    throw new RasterWritableException("Unknown RasterSampleModel type");
+  }
+
+  return raster;
+}
+
+@Deprecated
 public static Raster toRaster(final RasterWritable writable) throws IOException
 {
   return toRaster(writable, null);
 }
 
+@Deprecated
 public static Raster toRaster(final RasterWritable writable, Writable payload) throws IOException
 {
   return read(writable.bytes, payload);
 }
 
+@Deprecated
 public static Raster toRaster(final RasterWritable writable,
     final CompressionCodec codec, final Decompressor decompressor) throws IOException
 {
   return toRaster(writable, codec, decompressor, null);
 }
 
+@Deprecated
 public static Raster toRaster(final RasterWritable writable,
     final CompressionCodec codec, final Decompressor decompressor, Writable payload) throws IOException
 {
@@ -230,7 +251,7 @@ public static Raster toRaster(final RasterWritable writable,
   return read(baos.toByteArray(), payload);
 }
 
-public static SampleModelType toSampleModelType(final SampleModel model)
+private static SampleModelType toSampleModelType(final SampleModel model)
 {
   if (model instanceof PixelInterleavedSampleModel)
   {
@@ -256,11 +277,13 @@ public static SampleModelType toSampleModelType(final SampleModel model)
   throw new RasterWritableException("Unknown RasterSampleModel type");
 }
 
+@Deprecated
 public static RasterWritable toWritable(byte[] data, int width, int height, int bands, int datatype) throws IOException
 {
   return toWritable(data, width, height, bands, datatype, null);
 }
 
+@Deprecated
 public static RasterWritable toWritable(byte[] data, int width, int height, int bands, int datatype, Writable payload) throws IOException
 {
   final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -276,11 +299,13 @@ public static RasterWritable toWritable(byte[] data, int width, int height, int 
   return new RasterWritable(baos.toByteArray());
 }
 
+@Deprecated
 public static RasterWritable toWritable(final Raster raster) throws IOException
 {
   return toWritable(raster, null);
 }
 
+@Deprecated
 public static RasterWritable toWritable(final Raster raster, final Writable payload)
     throws IOException
 {
@@ -312,12 +337,14 @@ public static RasterWritable toWritable(final Raster raster, final Writable payl
   }
 }
 
+@Deprecated
 public static RasterWritable toWritable(final Raster raster, final CompressionCodec codec,
     final Compressor compressor) throws IOException
 {
   return toWritable(raster, codec, compressor, null);
 }
 
+@Deprecated
 public static RasterWritable toWritable(final Raster raster, final CompressionCodec codec,
     final Compressor compressor, final Writable payload) throws IOException
 {
@@ -341,6 +368,7 @@ public static RasterWritable toWritable(final Raster raster, final CompressionCo
   return new RasterWritable(baos.toByteArray());
 }
 
+@Deprecated
 private static byte[] rasterToBytes(final Raster raster)
 {
   final int datatype = raster.getTransferType();
@@ -413,16 +441,19 @@ private static byte[] rasterToBytes(final Raster raster)
   return pixels;
 }
 
+@Deprecated
 public static byte[] toBytes(Raster raster, Writable payload) throws IOException
 {
   return RasterWritable.toWritable(raster, payload).bytes;
 }
 
+@Deprecated
 public static Raster toRaster(final byte[] rasterBytes, Writable payload) throws IOException
 {
   return read(rasterBytes, payload);
 }
 
+@Deprecated
 private static Raster read(final byte[] rasterBytes, Writable payload)
     throws IOException
 {
@@ -585,6 +616,7 @@ private static Raster read(final byte[] rasterBytes, Writable payload)
   }
 }
 
+@Deprecated
 private static void writeHeader(int width, int height, int bands, int datatype, OutputStream out) throws IOException
 {
   final DataOutputStream dos = new DataOutputStream(out);
@@ -598,6 +630,7 @@ private static void writeHeader(int width, int height, int bands, int datatype, 
   dos.writeInt(SampleModelType.BANDED.ordinal());
 }
 
+@Deprecated
 private static void writeHeader(final Raster raster, final OutputStream out) throws IOException
 {
   final DataOutputStream dos = new DataOutputStream(out);
@@ -664,6 +697,7 @@ private static void writeHeader(final Raster raster, final OutputStream out) thr
 
 }
 
+@Deprecated
 private static void writePayload(final Writable payload, final OutputStream out) throws IOException
 {
   final DataOutputStream dos = new DataOutputStream(out);
