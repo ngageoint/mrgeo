@@ -16,7 +16,6 @@
 
 package org.mrgeo.buildpyramid
 
-import java.awt.image.{Raster, WritableRaster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 import java.util.Properties
@@ -30,7 +29,7 @@ import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.{ImageOutputFormatContext, MrsImageDataProvider, MrsImageReader, MrsImageWriter}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{CloseableKVIterator, DataProviderFactory, KVIterator, ProviderProperties}
@@ -86,7 +85,7 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
     if (providerProperties != null)
     {
       args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
-        }
+    }
     else
     {
       args += ProviderProperties -> ""
@@ -108,12 +107,12 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
 
 class BuildPyramid extends MrGeoJob with Externalizable {
 
-  var pyramidName:String = null
-  var aggregator:Aggregator = null
-  var providerproperties:ProviderProperties = null
+  var pyramidName:String = _
+  var aggregator:Aggregator = _
+  var providerproperties:ProviderProperties = _
 
   private[buildpyramid] def this(pyramidName: String, aggregator: Aggregator,
-    providerProperties: ProviderProperties) = {
+      providerProperties: ProviderProperties) = {
     this()
 
     this.pyramidName = pyramidName
@@ -162,7 +161,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     val tilesize: Int = metadata.getTilesize
 
-    val nodatas = metadata.getDefaultValuesNumber
+    val nodatas = metadata.getDefaultValuesDouble
 
     DataProviderFactory.saveProviderPropertiesToConfig(providerproperties, context.hadoopConfiguration)
     // build the levels
@@ -179,7 +178,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
         val decimated: RDD[(TileIdWritable, RasterWritable)] = pyramid.map(tile => {
           val fromkey = tile._1
-          val fromraster = RasterWritable.toRaster(tile._2)
+          val fromraster = RasterWritable.toMrGeoRaster(tile._2)
 
           val fromtile: Tile = TMSUtils.tileid(fromkey.get, fromlevel)
           val frombounds: Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
@@ -196,17 +195,12 @@ class BuildPyramid extends MrGeoJob with Externalizable {
           val tokey = new TileIdWritable(TMSUtils.tileid(totile.tx, totile.ty, tolevel))
 
           // create a compatible writable raster
-          val toraster: WritableRaster =
-            RasterUtils.createCompatibleEmptyRaster(fromraster, tilesize, tilesize, nodatas)
-
           logDebug("from  tx: " + fromtile.tx + " ty: " + fromtile.ty + " (" + fromlevel + ") to tx: " + totile.tx +
               " ty: " + totile.ty + " (" + tolevel + ") x: "
               + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
-              " w: " + fromraster.getWidth + " h: " + fromraster.getHeight)
+              " w: " + fromraster.width() + " h: " + fromraster.height())
 
-          RasterUtils.decimate(fromraster, toraster,
-            (fromcorner.px - tocorner.px).toInt / 2, (fromcorner.py - tocorner.py).toInt / 2,
-            aggregator, nodatas)
+          val toraster = fromraster.reduce(2, 2, aggregator, nodatas)
 
           (tokey, RasterWritable.toWritable(toraster))
         })
@@ -216,10 +210,10 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
         val wrappedDecimated = new PairRDDFunctions(decimated)
         val mergedTiles = wrappedDecimated.reduceByKey((r1, r2) => {
-          val src = RasterWritable.toRaster(r1)
-          val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
+          val src = RasterWritable.toMrGeoRaster(r1)
+          val dst = RasterWritable.toMrGeoRaster(r2)
 
-          RasterUtils.mosaicTile(src, dst, metadata.getDefaultValues)
+          src.mosaic(dst, metadata.getDefaultValuesDouble)
 
           RasterWritable.toWritable(dst)
         })
@@ -275,27 +269,24 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
     deletelevel(outputLevel, metadata, provider)
 
-    val outputTiles = new util.TreeMap[TileIdWritable, WritableRaster]()
+    val outputTiles = new util.TreeMap[TileIdWritable, MrGeoRaster]()
 
     val lastImage: MrsImageReader = provider.getMrsTileReader(inputLevel)
-    val iter: KVIterator[TileIdWritable, Raster] = lastImage.get
+    val iter: KVIterator[TileIdWritable, MrGeoRaster] = lastImage.get
     while (iter.hasNext) {
-      val fromraster: Raster = iter.next
+      val fromraster: MrGeoRaster = iter.next
 
       val tileid: Long = iter.currentKey.get
       val inputTile: Tile = TMSUtils.tileid(tileid, inputLevel)
 
-      val toraster: WritableRaster = fromraster.createCompatibleWritableRaster(tilesize / 2, tilesize / 2)
-
-      RasterUtils.decimate(fromraster, toraster, aggregator, metadata)
+      val toraster: MrGeoRaster = fromraster.reduce(2, 2, aggregator, metadata.getDefaultValuesDouble)
 
       val outputTile: Tile = TMSUtils.calculateTile(inputTile, inputLevel, outputLevel, tilesize)
       val outputkey: TileIdWritable = new TileIdWritable(TMSUtils.tileid(outputTile.tx, outputTile.ty, outputLevel))
-      var outputRaster: WritableRaster = null
+      var outputRaster: MrGeoRaster = null
 
       if (!outputTiles.contains(outputkey)) {
-        outputRaster = fromraster.createCompatibleWritableRaster(tilesize, tilesize)
-        RasterUtils.fillWithNodata(outputRaster, metadata)
+        outputRaster = fromraster.createCompatibleEmptyRaster(tilesize, tilesize, metadata.getDefaultValuesDouble)
         outputTiles.put(outputkey, outputRaster)
       }
       else {
@@ -311,7 +302,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       logDebug(
         "Calculating tile from  tx: " + inputTile.tx + " ty: " + inputTile.ty + " (" + inputLevel + ") to tx: " +
             outputTile.tx + " ty: " + outputTile.ty + " (" + outputLevel + ") x: " + tox + " y: " + toy)
-      outputRaster.setDataElements(tox, toy, toraster)
+      outputRaster.copy(tox, toy, toraster.width(), toraster.height(), toraster, 0, 0)
     }
 
     iter match {

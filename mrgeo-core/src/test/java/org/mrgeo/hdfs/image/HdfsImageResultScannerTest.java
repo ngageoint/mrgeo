@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HdfsMrsImageReaderBuilder;
@@ -17,16 +18,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
-/**
- * Created by ericwood on 6/14/16.
- */
 public class HdfsImageResultScannerTest {
     private static final Logger logger = LoggerFactory.getLogger(HdfsImageResultScannerTest.class);
 
@@ -313,8 +311,8 @@ public class HdfsImageResultScannerTest {
         Assert.assertEquals(tile1.get(), tile2.get());
     }
 
-    private void assertRastersAreEqual(Raster raster1, Raster raster2) {
-        Assert.assertEquals(raster1.getDataBuffer().getElem(0), raster2.getDataBuffer().getElem(0));
+    private void assertRastersAreEqual(MrGeoRaster raster1, MrGeoRaster raster2) {
+        Assert.assertTrue(Arrays.equals(raster1.data(), raster2.data()));
     }
 
 }

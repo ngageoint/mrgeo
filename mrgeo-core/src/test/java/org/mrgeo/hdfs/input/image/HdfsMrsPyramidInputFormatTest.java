@@ -16,14 +16,11 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.tms.Bounds;
-import org.mrgeo.utils.tms.TMSUtils;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 /**

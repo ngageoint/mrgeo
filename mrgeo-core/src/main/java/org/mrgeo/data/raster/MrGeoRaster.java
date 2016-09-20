@@ -1,6 +1,10 @@
 package org.mrgeo.data.raster;
 
+import org.mrgeo.aggregators.Aggregator;
+import org.mrgeo.data.raster.Interpolator.Bilinear;
+import org.mrgeo.data.raster.Interpolator.Nearest;
 import org.mrgeo.utils.ByteArrayUtils;
+import org.mrgeo.utils.FloatUtils;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
@@ -203,7 +207,7 @@ final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, doub
 {
   MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
 
-  MrGeoRaster row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
+  MrGeoRaster row;
 
   for (int b = 0; b < bands; b++)
   {
@@ -371,9 +375,248 @@ final public void fill(final double[] values)
       System.arraycopy(row[b].data, headerlen, data, offset, len);
     }
   }
-
 }
 
+// Scaling algorithm taken from: http://willperone.net/Code/codescaling.php and modified to use
+// Rasters. It is an optimized Bresenham's algorithm.
+// Interpolated algorithm was http://tech-algorithm.com/articles/bilinear-image-scaling/
+// Also used was http://www.compuphase.com/graphic/scale.htm, explaining interpolated
+// scaling
+public MrGeoRaster scaleRaster(final int dstWidth,
+    final int dstHeight, final boolean interpolate, final double[] nodatas)
+{
+
+  MrGeoRaster src = this;
+
+  double scaleW = (double) dstWidth / src.width;
+  double scaleH = (double) dstHeight / src.height;
+
+  // bresenham's scalar really doesn't like being scaled more than 2x or 1/3x without the
+  // possibility of artifacts. But it turns out you can scale, then scale, etc. and get
+  // an answer without artifacts. Hence the loop here...
+  while (true)
+  {
+    int dw;
+    int dh;
+
+    final double scale = Math.max(scaleW, scaleH);
+
+    if (scale > 2.0)
+    {
+      dw = (int) (src.width * 2.0);
+      dh = (int) (src.height * 2.0);
+
+    }
+    else if (scale < 0.50)
+    {
+      dw = (int) (src.width * 0.50);
+      dh = (int) (src.height * 0.50);
+    }
+    else
+    {
+      dw = dstWidth;
+      dh = dstHeight;
+    }
+
+    final MrGeoRaster dst = createCompatibleRaster(dw, dh);
+
+    switch (datatype)
+    {
+    case DataBuffer.TYPE_BYTE:
+    case DataBuffer.TYPE_INT:
+    case DataBuffer.TYPE_SHORT:
+    case DataBuffer.TYPE_USHORT:
+      if (interpolate)
+      {
+        Bilinear.scaleInt(this, dst, nodatas);
+      }
+      else
+      {
+        Nearest.scaleInt(src, dst);
+      }
+      break;
+    case DataBuffer.TYPE_FLOAT:
+      if (interpolate)
+      {
+        Bilinear.scaleFloat(src, dst, nodatas);
+      }
+      else
+      {
+        Nearest.scaleFloat(src, dst);
+      }
+      break;
+    case DataBuffer.TYPE_DOUBLE:
+      if (interpolate)
+      {
+        Bilinear.scaleDouble(src, dst, nodatas);
+      }
+      else
+      {
+        Nearest.scaleDouble(src, dst);
+      }
+      break;
+    default:
+      throw new RasterWritable.RasterWritableException("Error trying to scale raster. Bad raster data type");
+    }
+
+    if (dst.width == dstWidth && dst.height == dstHeight)
+    {
+      return dst;
+    }
+
+    src = dst;
+    scaleW = (double) dst.width / src.width;
+    scaleH = (double) dst.height / src.height;
+  }
+}
+
+final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator aggregator, double[] nodatas)
+{
+  MrGeoRaster child = createCompatibleRaster(width / xfactor, height / yfactor);
+
+  final int subsize = xfactor * yfactor;
+  final int[] intsamples = new int[subsize];
+  final float[] floatsamples = new float[subsize];
+  final double[] doublesamples = new double[subsize];
+
+  int ndx;
+
+  for (int b = 0; b < bands; b++)
+  {
+    for (int y = 0; y < height; y += yfactor)
+    {
+      for (int x = 0; x < width; x += xfactor)
+      {
+        switch (datatype)
+        {
+        case DataBuffer.TYPE_BYTE:
+        case DataBuffer.TYPE_INT:
+        case DataBuffer.TYPE_SHORT:
+        case DataBuffer.TYPE_USHORT:
+          ndx = 0;
+          for (int yy = y; yy < y + yfactor; yy++)
+          {
+            for (int xx = x; xx < x + xfactor; xx++)
+            {
+              intsamples[ndx++] = getPixelInt(xx, yy, b);
+            }
+          }
+
+          int intSample = aggregator.aggregate(intsamples, (int)nodatas[b]);
+          child.setPixel(x / xfactor, y / yfactor, b, intSample);
+          break;
+        case DataBuffer.TYPE_FLOAT:
+          ndx = 0;
+          for (int yy = y; yy < y + yfactor; yy++)
+          {
+            for (int xx = x; xx < x + xfactor; xx++)
+            {
+              floatsamples[ndx++] = getPixelInt(xx, yy, b);
+            }
+          }
+
+          float floatsample = aggregator.aggregate(floatsamples, (float)nodatas[b]);
+          child.setPixel(x / xfactor, y / yfactor, b, floatsample);
+          break;
+        case DataBuffer.TYPE_DOUBLE:
+          ndx = 0;
+          for (int yy = y; yy < y + yfactor; yy++)
+          {
+            for (int xx = x; xx < x + xfactor; xx++)
+            {
+              doublesamples[ndx++] = getPixelInt(xx, yy, b);
+            }
+          }
+
+          double doublesample = aggregator.aggregate(doublesamples, nodatas[b]);
+          child.setPixel(x / xfactor, y / yfactor, b, doublesample);
+          break;
+        default:
+          throw new RasterWritable.RasterWritableException(
+              "Error trying to get decimate pixels in the raster. Bad raster data type");
+        }
+      }
+    }
+  }
+
+  return child;
+}
+
+final public void mosaic(MrGeoRaster other, double[] nodata)
+{
+  for (int b = 0; b < bands; b++)
+  {
+    for (int y = 0; y < height; y++)
+    {
+      for (int x = 0; x < width; x++)
+      {
+        switch (datatype)
+        {
+        case DataBuffer.TYPE_BYTE:
+        {
+          final byte p = other.getPixelByte(x, y, b);
+          if (getPixelByte(x, y, b) != nodata[b])
+          {
+            setPixel(x, y, b, p);
+          }
+          break;
+        }
+        case DataBuffer.TYPE_FLOAT:
+        {
+          final float p = other.getPixelFloat(x, y, b);
+          if (FloatUtils.isNotNodata(p, (float)nodata[b]))
+          {
+            setPixel(x, y, b, p);
+          }
+
+          break;
+        }
+        case DataBuffer.TYPE_DOUBLE:
+        {
+          final double p = other.getPixelDouble(x, y, b);
+          if (FloatUtils.isNotNodata(p, nodata[b]))
+          {
+            setPixel(x, y, b, p);
+          }
+
+          break;
+        }
+        case DataBuffer.TYPE_INT:
+        {
+          final int p = other.getPixelInt(x, y, b);
+          if (p != (int)nodata[b])
+          {
+            setPixel(x, y, b, p);
+          }
+
+          break;
+        }
+        case DataBuffer.TYPE_SHORT:
+        {
+          final short p = other.getPixelShort(x, y, b);
+          if (p != (short)nodata[b])
+          {
+            setPixel(x, y, b, p);
+          }
+
+          break;
+        }
+        case DataBuffer.TYPE_USHORT:
+        {
+          final int p = other.getPixeUShort(x, y, b);
+          if (p != (short)nodata[b])
+          {
+            setPixel(x, y, b, p);
+          }
+
+          break;
+        }
+
+        }
+      }
+    }
+  }
+}
 
 abstract int bytesPerPixel();
 

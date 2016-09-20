@@ -1,10 +1,8 @@
 package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

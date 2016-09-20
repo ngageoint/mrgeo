@@ -18,6 +18,7 @@ package org.mrgeo.hdfs.image;
 
 import org.apache.hadoop.io.MapFile;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.Splits;
@@ -28,7 +29,6 @@ import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
  * HdfsResultScanner is for pulling items from the data store / MapFiles in HDFS in a Iterator
  * format.
  */
-public class HdfsImageResultScanner implements CloseableKVIterator<TileIdWritable, Raster>
+class HdfsImageResultScanner implements CloseableKVIterator<TileIdWritable, MrGeoRaster>
 {
 private static final Logger log = LoggerFactory.getLogger(HdfsImageResultScanner.class);
 
@@ -78,13 +78,13 @@ public void close() throws IOException
 }
 
 // For image: return RasterWritable.toRaster(currentValue)
-protected Raster toNonWritable(RasterWritable val) throws IOException
+MrGeoRaster toNonWritable(RasterWritable val) throws IOException
 {
-  return RasterWritable.toRaster(val);
+  return RasterWritable.toMrGeoRaster(val);
 }
 
-public HdfsImageResultScanner(final LongRectangle bounds,
-                              final HdfsMrsImageReader reader)
+HdfsImageResultScanner(final LongRectangle bounds,
+    final HdfsMrsImageReader reader)
 {
   this.reader = reader;
 
@@ -106,8 +106,8 @@ public HdfsImageResultScanner(final LongRectangle bounds,
  * @param reader
  *          the reader being used
  */
-public HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
-                              final HdfsMrsImageReader reader)
+HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
+    final HdfsMrsImageReader reader)
 {
   // this.partitions = partitions;
   this.reader = reader;
@@ -133,7 +133,7 @@ public TileIdWritable currentKey()
 }
 
 @Override
-public Raster currentValue()
+public MrGeoRaster currentValue()
 {
   try
   {
@@ -233,7 +233,7 @@ public boolean hasNext()
  * Get the value from the MapFile and prepares the Raster output.
  */
 @Override
-public Raster next()
+public MrGeoRaster next()
 {
   if (currentKey == null)
   {

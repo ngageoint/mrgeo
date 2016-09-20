@@ -20,12 +20,8 @@ import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Created by ericwood on 6/10/16.
- */
 public class HdfsMrsPyramidRecordReaderTest {
 
 

@@ -24,7 +24,7 @@ import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsPyramidReaderContext;
-import org.mrgeo.data.raster.RasterUtils;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.geom.Rectangle2D;
-import java.awt.image.*;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
@@ -153,13 +152,13 @@ public final double convertToWorldY(final double py)
   return bounds.s + ((getPixelMaxY() - py) * resolution);
 }
 
-public Raster getAnyTile() throws IOException
+public MrGeoRaster getAnyTile() throws IOException
 {
   if (reader == null)
   {
     openReader();
   }
-  final Iterator<Raster> it = reader.get();
+  final Iterator<MrGeoRaster> it = reader.get();
   try
   {
     return it.next();
@@ -302,38 +301,7 @@ public LongRectangle getPixelRect()
   return new LongRectangle(getPixelMinX(), getPixelMinY(), getWidth(), getHeight());
 }
 
-/**
- * Returns a rendered image for the MrsImage data
- *
- * @return rendered image
- * @throws IOException
- */
-public RenderedImage getRenderedImage() throws IOException
-{
-  return getRenderedImage(null);
-}
 
-/**
- * Returns a rendered image for the MrsImage data
- *
- * @param bounds
- *          requested bounds
- * @return rendered image
- */
-public RenderedImage getRenderedImage(final Bounds bounds)
-{
-  Raster mergedRaster = getRaster(bounds);
-  BufferedImage mergedImage = null;
-
-  if (mergedRaster != null)
-  {
-    log.debug("Rendering merged image...");
-    mergedImage = RasterUtils.makeBufferedImage(mergedRaster);
-    log.debug("Merged image rendered.");
-  }
-
-  return mergedImage;
-}
 
 /**
  * Returns a raster for the MrsImage data
@@ -341,7 +309,7 @@ public RenderedImage getRenderedImage(final Bounds bounds)
  * @return raster
  * @throws IOException
  */
-public Raster getRaster() throws IOException
+public MrGeoRaster getRaster() throws IOException
 {
   return getRaster(null);
 }
@@ -353,10 +321,10 @@ public Raster getRaster() throws IOException
  *          requested bounds
  * @return raster
  */
-public Raster getRaster(final Bounds bounds)
+public MrGeoRaster getRaster(final Bounds bounds)
 {
   log.debug("Merging to raster...");
-  Raster mergedRaster = null;
+  MrGeoRaster mergedRaster = null;
   try
   {
     log.debug("Merging tiles...");
@@ -381,15 +349,10 @@ public Raster getRaster(final Bounds bounds)
 }
 
 
-public Raster getTile(final long tx, final long ty) throws TileNotFoundException
+public MrGeoRaster getTile(final long tx, final long ty) throws TileNotFoundException
 {
   if (tx < getMinTileX() || tx > getMaxTileX() || ty < getMinTileY() || ty > getMaxTileY())
   {
-    // throw new IllegalArgumentException("x/y out of range. (" + String.valueOf(tx) + ", " +
-    // String.valueOf(ty) + ") range: " + String.valueOf(getMinTileX()) + ", " +
-    // String.valueOf(getMinTileY()) + " to " + String.valueOf(getMaxTileX()) + ", " +
-    // String.valueOf(getMaxTileY()) + " (inclusive)");
-
     final String msg = String.format(
         "Tile x/y out of range. (%d, %d) range: (%d, %d) to (%d, %d) (inclusive)", tx, ty,
         getMinTileX(), getMinTileY(), getMaxTileX(), getMaxTileY());
@@ -413,7 +376,7 @@ public int getTileHeight()
   return getTilesize();
 }
 
-public KVIterator<TileIdWritable, Raster> getTiles()
+public KVIterator<TileIdWritable, MrGeoRaster> getTiles()
 {
   if (reader == null)
   {
@@ -422,7 +385,7 @@ public KVIterator<TileIdWritable, Raster> getTiles()
   return reader.get();
 }
 
-public KVIterator<TileIdWritable, Raster> getTiles(final LongRectangle tileBounds)
+public KVIterator<TileIdWritable, MrGeoRaster> getTiles(final LongRectangle tileBounds)
 {
   if (reader == null)
   {
@@ -431,7 +394,7 @@ public KVIterator<TileIdWritable, Raster> getTiles(final LongRectangle tileBound
   return reader.get(tileBounds);
 }
 
-public KVIterator<TileIdWritable, Raster> getTiles(final TileIdWritable start,
+public KVIterator<TileIdWritable, MrGeoRaster> getTiles(final TileIdWritable start,
     final TileIdWritable end)
 {
   if (reader == null)
@@ -489,25 +452,9 @@ public boolean isTileEmpty(final long tx, final long ty)
 
 public void setScaleType(final String measurement)
 {
-  // this.measurement = measurement;
-  // final FileSystem fs = HadoopUtils.getFileSystem(toc);
-  // final FSDataOutputStream dos = fs.create(toc);
-  // writeXml(dos);
-  // dos.close();
   throw new NotImplementedException("MrsImage2.setScaleType() Not Implemented");
-
 }
 
-// @SuppressWarnings({ "unchecked", "rawtypes" })
-// protected Hashtable getProperties()
-// {
-// final Hashtable result = new Hashtable();
-// result.put(ValidRegion.PROPERTY_STRING, this);
-// result.put(GeographicTranslator.PROPERTY_STRING, this);
-// result.put(GeoTiffOpImage.NULL_PROPERTY, Double.NaN);
-// result.put(MEASUREMENT_STRING, measurement);
-// return result;
-// }
 
 @Override
 public String toString()

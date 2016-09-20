@@ -18,10 +18,8 @@ package org.mrgeo.hdfs.tile;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.hdfs.partitioners.SplitGenerator;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
 import java.io.*;
 

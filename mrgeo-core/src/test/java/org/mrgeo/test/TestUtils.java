@@ -295,14 +295,6 @@ public Path getTestLocal()
   return testLocal;
 }
 
-public static DiffStats calculateDiffStats(MrsImage baseMImg, MrsImage testMImg, double tolerance)
-    throws IOException
-{
-  final int tileSize = baseMImg.getTilesize();
-
-  return calculateDiffStats(baseMImg.getRenderedImage(), testMImg.getRenderedImage(),
-      tolerance, tileSize);
-}
 
 public static DiffStats calculateDiffStats(RenderedImage i1, RenderedImage i2, double tolerance)
 {

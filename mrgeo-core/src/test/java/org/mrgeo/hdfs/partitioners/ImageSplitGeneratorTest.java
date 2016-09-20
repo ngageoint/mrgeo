@@ -9,11 +9,6 @@ import org.mrgeo.hdfs.tile.SplitInfo;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.LongRectangle;
 
-import static org.junit.Assert.*;
-
-/**
- * Created by ericwood on 6/21/16.
- */
 public class ImageSplitGeneratorTest {
     private ImageSplitGenerator subject;
     private LongRectangle bounds;

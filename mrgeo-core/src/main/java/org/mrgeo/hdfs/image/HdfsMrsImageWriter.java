@@ -23,16 +23,15 @@ import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.mrgeo.data.image.MrsPyramidWriterContext;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.utils.HadoopUtils;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 
-public class HdfsMrsImageWriter implements MrsImageWriter
+class HdfsMrsImageWriter implements MrsImageWriter
 {
   final private HdfsMrsImageDataProvider provider;
   final private MrsPyramidWriterContext context;
@@ -42,7 +41,7 @@ public class HdfsMrsImageWriter implements MrsImageWriter
 
   // image = path to mapfile directory- e.g., /hdfs/path/to/mapfile (will contain data and index
   // dirs)
-  public HdfsMrsImageWriter(HdfsMrsImageDataProvider provider, MrsPyramidWriterContext context)
+  HdfsMrsImageWriter(HdfsMrsImageDataProvider provider, MrsPyramidWriterContext context)
   {
     this.provider = provider;
     this.context = context;
@@ -50,7 +49,7 @@ public class HdfsMrsImageWriter implements MrsImageWriter
   }
 
   @Override
-  public void append(final TileIdWritable k, final Raster raster) throws IOException
+  public void append(final TileIdWritable k, final MrGeoRaster raster) throws IOException
   {
     if (writer == null)
     {

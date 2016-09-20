@@ -28,6 +28,7 @@ import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.image.MrsPyramidReaderContext;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageException;
 import org.mrgeo.data.image.MrsImageReader;
@@ -43,7 +44,6 @@ import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -167,7 +167,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     return tileSize;
   }
 
-  public KVIterator<TileIdWritable, Raster> get(final LongRectangle tileBounds)
+  public KVIterator<TileIdWritable, MrGeoRaster> get(final LongRectangle tileBounds)
   {
     return new HdfsImageResultScanner(tileBounds, this);
   }
@@ -182,7 +182,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
    *
    * @return An Iterable object of tile data for the range requested
    */
-  public KVIterator<TileIdWritable, Raster> get(final TileIdWritable startKey,
+  public KVIterator<TileIdWritable, MrGeoRaster> get(final TileIdWritable startKey,
       final TileIdWritable endKey)
   {
     return new HdfsImageResultScanner(startKey, endKey, this);
@@ -193,19 +193,20 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
   {
     return val.getSize();
   }
-  
-  protected Raster toNonWritable(RasterWritable val) throws IOException
+
+  @Deprecated
+  protected MrGeoRaster toNonWritable(RasterWritable val) throws IOException
   {
-    return RasterWritable.toRaster(val);
+    return RasterWritable.toMrGeoRaster(val);
   }
 
-  public static class BoundsResultScanner implements KVIterator<Bounds, Raster>
+  public static class BoundsResultScanner implements KVIterator<Bounds, MrGeoRaster>
   {
-    private KVIterator<TileIdWritable, Raster> tileIterator;
+    private KVIterator<TileIdWritable, MrGeoRaster> tileIterator;
     private int zoomLevel;
     private int tileSize;
 
-    public BoundsResultScanner(KVIterator<TileIdWritable, Raster> tileIterator,
+    public BoundsResultScanner(KVIterator<TileIdWritable, MrGeoRaster> tileIterator,
                                int zoomLevel, int tileSize)
     {
       this.tileIterator = tileIterator;
@@ -220,7 +221,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     }
 
     @Override
-    public Raster next()
+    public MrGeoRaster next()
     {
       return tileIterator.next();
     }
@@ -240,7 +241,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     }
 
     @Override
-    public Raster currentValue()
+    public MrGeoRaster currentValue()
     {
       return tileIterator.currentValue();
     }
@@ -323,7 +324,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
   }
 
   @Override
-  public KVIterator<TileIdWritable, Raster> get()
+  public KVIterator<TileIdWritable, MrGeoRaster> get()
   {
     return get(null, null);
   }
@@ -337,7 +338,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
    */
   @SuppressWarnings("unchecked")
   @Override
-  public Raster get(final TileIdWritable key)
+  public MrGeoRaster get(final TileIdWritable key)
   {
     MapFile.Reader reader = null;
     try
@@ -398,7 +399,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
   }
 
   @Override
-  public KVIterator<Bounds, Raster> get(final Bounds bounds)
+  public KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds)
   {
     TileBounds tileBounds = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTileSize());
     return new BoundsResultScanner(get(new LongRectangle(tileBounds.w, tileBounds.s, tileBounds.e, tileBounds.n)),

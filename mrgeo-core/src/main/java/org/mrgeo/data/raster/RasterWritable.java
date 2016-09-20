@@ -89,7 +89,6 @@ public void readFields(DataInput in) throws IOException
 }
 
 
-@Deprecated
 private enum SampleModelType {
   PIXELINTERLEAVED, BANDED, SINGLEPIXELPACKED, MULTIPIXELPACKED, COMPONENT
 }
@@ -177,7 +176,7 @@ public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
   {
     synchronized (serializeSync)
     {
-//      serializeCnt++;
+      serializeCnt++;
       serializeTime += (System.currentTimeMillis() - starttime);
     }
   }
