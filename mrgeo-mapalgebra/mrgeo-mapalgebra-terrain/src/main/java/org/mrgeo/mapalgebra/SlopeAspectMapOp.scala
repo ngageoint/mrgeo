@@ -187,7 +187,7 @@ abstract class SlopeAspectMapOp extends RasterMapOp with Externalizable {
     rasterRDD =
         Some(RasterRDD(calculate(tiles, bufferX, bufferY, nodatas(0).doubleValue(), zoom, tilesize)))
 
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array[Number](Float.NaN),
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array[Double](Double.NaN),
       bounds = meta.getBounds, calcStats = false))
 
     true

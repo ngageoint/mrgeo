@@ -85,7 +85,7 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
     }
 
     val pyramids = Array.ofDim[RasterRDD](inputs.length)
-    val nodatabuilder = mutable.ArrayBuilder.make[Number]()
+    val nodatabuilder = mutable.ArrayBuilder.make[Double]()
 
     var i: Int = 0
     var zoom: Int = -1
