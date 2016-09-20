@@ -125,11 +125,13 @@ object IngestImage extends MrGeoDriver with Externalizable {
       IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
     }))
 
+    
     val tiles = rawtiles.reduceByKey((r1, r2) => {
-      val src = RasterWritable.toRaster(r1)
-      val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
+      val src = RasterWritable.toMrGeoRaster(r1)
+      val dst = RasterWritable.toMrGeoRaster(r2)
 
-      RasterUtils.mosaicTile(src, dst, nodata)
+      dst.mosaic(src, nodata)
+
       RasterWritable.toWritable(dst)
     })
 
