@@ -377,14 +377,14 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       // Need to convert our raster to a single band raster for output.
       val h = sourceRaster.height()
       val w = sourceRaster.width()
-      val singleBandRaster = RasterUtils.createEmptyRaster(w, h, 1, DataBuffer.TYPE_FLOAT)
+      val singleBandRaster = MrGeoRaster.createEmptyRaster(w, h, 1, DataBuffer.TYPE_FLOAT)
       val totalCostBand = sourceRaster.bands() - 1
       var y: Int = 0
       while (y < h) {
         var x: Int = 0
         while (x < w) {
           val s: Float = sourceRaster.getPixelFloat(x, y, totalCostBand)
-          singleBandRaster.setSample(x, y, 0, s)
+          singleBandRaster.setPixel(x, y, 0, s)
           x += 1
         }
         y += 1
