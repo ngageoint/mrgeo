@@ -331,6 +331,18 @@ final public MrGeoRaster clip(int x, int y, int width, int height)
   return clipraster;
 }
 
+final public MrGeoRaster clip(int x, int y, int width, int height, int fromBand)
+{
+  MrGeoRaster clipraster = MrGeoRaster.createEmptyRaster(width, height, 1, datatype);
+
+  int[] offsets = calculateByteRangeOffset(x, y, x + width, y + height, fromBand);
+  int dstOffset = clipraster.calculateByteOffset(0, 0, 0);
+
+  System.arraycopy(data, offsets[0], clipraster.data, dstOffset, offsets[1] - offsets[0]);
+
+  return clipraster;
+}
+
 final public void copy(int dstx, int dsty, int width, int height, MrGeoRaster src, int srcx, int srcy)
 {
   for (int b = 0; b < bands; b++)
