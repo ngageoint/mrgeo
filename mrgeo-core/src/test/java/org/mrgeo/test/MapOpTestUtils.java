@@ -106,7 +106,7 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
 
     Bounds tilesBounds = TMSUtils.tileBounds(meta.getBounds(), image.getMaxZoomlevel(), image.getTilesize());
-    GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), tilesBounds, nodata);
+    GDALJavaUtils.saveRaster(raster.toDataset(meta.getBounds(), meta.getDefaultValues()), baselineTif.getCanonicalPath(), tilesBounds, nodata);
   }
   finally
   {
@@ -149,13 +149,14 @@ public void compareRasterOutput(final String testName, final TestUtils.ValueTran
 {
   compareRasterOutput(testName, null, testTranslator, null);
 }
-public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
+
+private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
     final ProviderProperties providerProperties) throws IOException
 {
   compareRasterOutput(testName, null, testTranslator, providerProperties);
 }
 
-public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
+private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
     final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
 {
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
@@ -209,10 +210,10 @@ public void compareLocalRasterOutput(final String testName, final TestUtils.Valu
   compareLocalRasterOutput(testName, null, testTranslator, providerProperties);
 }
 
-public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
+private void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
     final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
 {
-  final File tf = new File(outputLocal);
+  final File tf = new File(getOutputLocal());
   final File testFile = new File(tf, testName + ".tif");
 
   final MrGeoRaster testRaster;
@@ -264,10 +265,6 @@ public void compareLocalRasterOutput(final String testName, final TestUtils.Valu
  * output is done. See other methods in this class like runVectorExpression and
  * runRasterExpression for that capability.
  *
- * @throws IOException
- * @throws JobFailedException
- * @throws JobCancelledException
- * @throws ParserException
  */
 public void runMapAlgebraExpression(final Configuration conf, final String testName, final String ex)
     throws IOException, JobFailedException, JobCancelledException, ParserException
