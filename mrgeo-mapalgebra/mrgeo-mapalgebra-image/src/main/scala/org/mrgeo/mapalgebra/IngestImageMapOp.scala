@@ -17,22 +17,16 @@
 package org.mrgeo.mapalgebra
 
 import java.io._
-import java.net.URI
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
-import org.apache.hadoop.fs.Path
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsPyramidMetadata
-import org.mrgeo.ingest.IngestImage
+import org.mrgeo.ingest.{IngestImage, IngestInputProcessor}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.GDALUtils
-
-import scala.util.control.Breaks
+import org.mrgeo.utils.tms.TMSUtils
 
 object IngestImageMapOp extends MapOpRegistrar {
 
@@ -45,9 +39,21 @@ object IngestImageMapOp extends MapOpRegistrar {
   // call MrGeo.ingest_image(). Define createMapOp methods instead so that MrGeo.ingest_image
   // can call those methods.
 
-  def createMapOp(input:String, zoom:Int, categorical:Boolean, skip_category_load: Boolean,
-                  protectionLevel: String):MapOp =
-    new IngestImageMapOp(input, Some(zoom), Some(categorical), Some(skip_category_load), protectionLevel)
+  def createMapOp(input:String, zoom:Int, skip_preprocessing: Boolean, nodataOverride: Array[Double],
+                  categorical:Boolean, skip_category_load: Boolean, protectionLevel: String):MapOp = {
+    if (nodataOverride == null) {
+      new IngestImageMapOp(input, Some(zoom), None, Some(skip_preprocessing), Some(categorical),
+        Some(skip_category_load), protectionLevel)
+    }
+    else {
+      val ndo = Array.ofDim[Double](nodataOverride.length)
+      nodataOverride.zipWithIndex.foreach(U => {
+        ndo(U._2) = U._1
+      })
+      new IngestImageMapOp(input, Some(zoom), Some(ndo), Some(skip_preprocessing), Some(categorical),
+        Some(skip_category_load), protectionLevel)
+    }
+  }
 
   override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
     new IngestImageMapOp(node, variables)
@@ -59,12 +65,15 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD: Option[RasterRDD] = None
 
   private var inputs:Option[Array[String]] = None
+  private var nodataOverride: Option[Array[Double]] = None
   private var categorical: Boolean = false
+  private var skipPreprocessing: Boolean = false
   private var skipCategoryLoad = false
   private var zoom = -1
   private var protectionLevel: String = ""
 
-  private[mapalgebra] def this(input:String, zoom:Option[Int], categorical:Option[Boolean],
+  private[mapalgebra] def this(input:String, zoom:Option[Int], nodataOverride: Option[Array[Double]],
+                               skipPreprocessing: Option[Boolean], categorical:Option[Boolean],
                                skipCategoryLoad:Option[Boolean], protectionLevel: String) = {
     this()
     val inputs = Array.ofDim[String](1)
@@ -72,17 +81,22 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     this.inputs = Some(inputs)
     this.categorical = categorical.getOrElse(false)
     this.skipCategoryLoad = skipCategoryLoad.getOrElse(false)
+    this.skipPreprocessing = skipPreprocessing.getOrElse(false)
     this.zoom = zoom.getOrElse(-1)
+    this.nodataOverride = nodataOverride
     this.protectionLevel = protectionLevel
   }
 
-  private[mapalgebra] def this(inputs:Array[String], zoom:Option[Int], categorical:Option[Boolean],
+  private[mapalgebra] def this(inputs:Array[String], zoom:Option[Int], nodataOverride: Option[Array[Double]],
+                               skipPreprocessing: Option[Boolean], categorical:Option[Boolean],
                                skipCategoryLoad:Option[Boolean], protectionLevel: String) = {
     this()
     this.inputs = Some(inputs)
     this.categorical = categorical.getOrElse(false)
     this.skipCategoryLoad = skipCategoryLoad.getOrElse(false)
+    this.skipPreprocessing = skipPreprocessing.getOrElse(false)
     this.zoom = zoom.getOrElse(-1)
+    this.nodataOverride = nodataOverride
     this.protectionLevel = protectionLevel
   }
 
@@ -90,7 +104,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     this()
 
     if (node.getNumChildren < 1 || node.getNumChildren > 5) {
-      throw new ParserException("Usage: ingest(input(s), [zoom], [categorical], [skipCategoryLoad], [protectionLevel]")
+      throw new ParserException("Usage: ingest(input(s), [zoom], [skippreprocessing], [nodata values], [categorical], [skipCategoryLoad], [protectionLevel]")
     }
 
     val in = Array.ofDim[String](1)
@@ -98,19 +112,63 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     this.inputs = Some(in)
 
     if (node.getNumChildren >= 2) {
-      zoom = MapOp.decodeInt(node.getChild(1), variables).getOrElse(-1)
+      zoom = MapOp.decodeInt(node.getChild(1), variables).getOrElse(
+        throw new ParserException(f"Expected integer value for zoom instead of ${node.getChild(1).toString}"))
+      if (zoom < 1 || zoom > TMSUtils.MAXZOOMLEVEL) {
+        throw new ParserException(f"Invalid zoom ${node.getChild(1).toString}")
+      }
     }
 
     if (node.getNumChildren >= 3) {
-      categorical = MapOp.decodeBoolean(node.getChild(2), variables).getOrElse(false)
+      skipPreprocessing = MapOp.decodeBoolean(node.getChild(2), variables).getOrElse(
+        throw new ParserException(f"Expected boolean value for skippreprocessing instead of ${node.getChild(2).toString}"))
     }
 
     if (node.getNumChildren >= 4) {
-      skipCategoryLoad = MapOp.decodeBoolean(node.getChild(3), variables).getOrElse(false)
+      val str = MapOp.decodeString(node.getChild(3), variables).getOrElse(throw new ParserException("Missing nodata values"))
+      if (str.trim.length > 0) {
+        val strElements = str.split(",")
+        val nodataOverrideValues = Array.ofDim[Double](strElements.length)
+        for (i <- 0 until nodataOverrideValues.length) {
+          try {
+            nodataOverrideValues(i) = parseNoData(strElements(i));
+          }
+          catch {
+            case nfe: NumberFormatException => {
+              throw new ParserException("Invalid nodata value " + strElements(i))
+            }
+          }
+        }
+        nodataOverride = Some(nodataOverrideValues)
+      }
     }
 
     if (node.getNumChildren >= 5) {
-      protectionLevel = MapOp.decodeString(node.getChild(4), variables).getOrElse("")
+      categorical = MapOp.decodeBoolean(node.getChild(4), variables).getOrElse(
+        throw new ParserException(f"Expected boolean value for categorical instead of ${node.getChild(4).toString}"))
+    }
+
+    if (node.getNumChildren >= 6) {
+      skipCategoryLoad = MapOp.decodeBoolean(node.getChild(5), variables).getOrElse(
+        throw new ParserException(f"Expected boolean value for skipCategoryLoad instead of ${node.getChild(5).toString}"))
+    }
+
+    if (node.getNumChildren >= 7) {
+      protectionLevel = MapOp.decodeString(node.getChild(6), variables).getOrElse(
+        throw new ParserException(f"Expected string value for protectionLevel instead of ${node.getChild(6).toString}"))
+    }
+  }
+
+  private def parseNoData(fromArg: String): Double =
+  {
+    val arg = fromArg.trim();
+    if (arg.compareToIgnoreCase("nan") != 0)
+    {
+      return arg.toDouble
+    }
+    else
+    {
+      return Double.NaN;
     }
   }
 
@@ -131,90 +189,16 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   override def execute(context: SparkContext): Boolean = {
 
     val inputfiles = inputs.getOrElse(throw new IOException("Inputs not set"))
-
-    val filebuilder = Array.newBuilder[String]
-
-    for (inputfile <- inputfiles) {
-      var f: File = null
-      try {
-        f = new File(new URI(inputfile))
-      }
-      catch {
-        case ignored: Any => f = new File(inputfile)
-      }
-
-      def walk(dir: File): Array[String] = {
-        val files = Array.newBuilder[String]
-        val dir: Array[File] = f.listFiles
-        if (dir != null) {
-          for (s <- dir) {
-            try {
-              if (s.isFile) {
-                files += s.toURI.toString
-              }
-              else if (s.isDirectory) {
-                files ++= walk(s)
-              }
-            }
-          }
-        }
-        files.result()
-      }
-
-      if (f.exists()) {
-        if (f.isFile) {
-          filebuilder += f.toURI.toString
-        }
-        else if (f.isDirectory) {
-          filebuilder ++= walk(f)
-        }
-      }
-      else {
-        val path = new Path(inputfile)
-        val fs = HadoopFileUtils.getFileSystem(context.hadoopConfiguration, path)
-
-        val rawfiles = fs.listFiles(path, true)
-
-        while (rawfiles.hasNext) {
-          val raw = rawfiles.next()
-
-          if (!raw.isDirectory) {
-            filebuilder += raw.getPath.toUri.toString
-          }
-        }
-      }
-    }
-
-    val tilesize = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT).toInt
-
-    if (zoom < 0) {
-      var newZoom = 1
-      filebuilder.result().foreach(file => {
-        val z = GDALUtils.calculateZoom(file, tilesize)
-        if (z > newZoom) {
-          newZoom = z
-        }
-      })
-      zoom = newZoom
-    }
-
-    var nodatas:Array[Number] = null
-
-    val done = new Breaks
-    done.breakable({
-      filebuilder.result().foreach(file => {
-        try {
-          nodatas = GDALUtils.getnodatas(file)
-          done.break()
-        }
-        catch {
-          case e:Exception => // ignore and go on
-        }
-      })
+    val iip = new IngestInputProcessor(context.hadoopConfiguration,
+      nodataOverride match {
+        case None => null
+        case Some(ndo) => ndo
+      }, zoom, skipPreprocessing)
+    inputfiles.foreach(input => {
+      iip.processInput(input, true)
     })
-
-    val result = IngestImage.ingest(context, filebuilder.result(), zoom, tilesize,
-      categorical, skipCategoryLoad, nodatas, protectionLevel)
+    val result = IngestImage.ingest(context, iip.getInputs.toArray, iip.getZoomlevel, skipPreprocessing, iip.tilesize,
+      categorical, skipCategoryLoad, iip.getNodata, protectionLevel)
     rasterRDD = result._1 match {
     case rrdd:RasterRDD =>
       rrdd.checkpoint()

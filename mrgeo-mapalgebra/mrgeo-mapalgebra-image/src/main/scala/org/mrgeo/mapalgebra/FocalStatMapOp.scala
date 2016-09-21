@@ -40,7 +40,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
   private var neighborhoodPixels: Int = 0
   private var ignoreNoData: Boolean = false
   private var outputTileType: Option[Int] = None
-  private var outputNoDatas: Option[Array[Number]] = None
+  private var outputNoDatas: Option[Array[Double]] = None
   private var neighborhoodValues: Array[Double] = null
 
   private[mapalgebra] def this(raster:Option[RasterMapOp], stat:String, neighborhoodSize: String,
@@ -120,7 +120,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     stat.toLowerCase match {
       case FocalStatMapOp.Count =>
         outputTileType = Some(DataBuffer.TYPE_INT)
-        outputNoDatas = Some(Array.fill[Number](meta.getBands)(Int.MinValue))
+        outputNoDatas = Some(Array.fill[Double](meta.getBands)(Int.MinValue))
       case FocalStatMapOp.Max | FocalStatMapOp.Min | FocalStatMapOp.Range =>
         outputTileType = Some(meta.getTileType)
         val nodatas = meta.getDefaultValuesNumber
@@ -128,7 +128,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
       case FocalStatMapOp.Mean | FocalStatMapOp.Median | FocalStatMapOp.StdDev |
            FocalStatMapOp.Sum | FocalStatMapOp.Variance =>
         outputTileType = Some(DataBuffer.TYPE_FLOAT)
-        outputNoDatas = Some(Array.fill[Number](meta.getBands)(Float.NaN))
+        outputNoDatas = Some(Array.fill[Double](meta.getBands)(Float.NaN))
     }
   }
 
@@ -143,7 +143,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     }
   }
 
-  override protected def getOutputNoData: Array[Number] = {
+  override protected def getOutputNoData: Array[Double] = {
     outputNoDatas match {
       case Some(nodatas) => nodatas
       case None => throw new IllegalStateException("The output nodata values have not been set")
@@ -327,7 +327,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     val hasNoData = in.readBoolean()
     outputNoDatas = if (hasNoData) {
       val len = in.readInt()
-      val nd = Array.fill[Number](len)(0.0)
+      val nd = Array.fill[Double](len)(0.0)
       for (i <- 0 until len) {
         nd(i) = in.readDouble()
       }

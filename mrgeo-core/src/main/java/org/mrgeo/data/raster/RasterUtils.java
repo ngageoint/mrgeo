@@ -184,7 +184,7 @@ public static RenderedImage getMostSpecificSource(RenderedImage[] sources)
 
 
 public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final int width, final int height,
-    final Number[] nodata)
+    final double[] nodata)
 {
   final WritableRaster newraster = raster.createCompatibleWritableRaster(width, height);
   fillWithNodata(newraster, nodata);
@@ -216,7 +216,7 @@ public static WritableRaster createEmptyRaster(final int width, final int height
 }
 public static WritableRaster createEmptyRaster(final int width, final int height,
     final int bands, final int datatype,
-    final Number[] nodatas)
+    final double[] nodatas)
 {
   final WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
   fillWithNodata(raster, nodatas);
@@ -306,7 +306,7 @@ public static void fillWithNodata(final WritableRaster raster, final double noda
   }
 }
 
-public static void fillWithNodata(final WritableRaster raster, final Number[] nodata)
+public static void fillWithNodata(final WritableRaster raster, final double[] nodata)
 {
   if (raster.getNumBands() != nodata.length)
   {
@@ -327,20 +327,20 @@ public static void fillWithNodata(final WritableRaster raster, final Number[] no
     case DataBuffer.TYPE_SHORT:
     case DataBuffer.TYPE_USHORT:
       final int[] intsamples = new int[elements];
-      final int inodata = nodata[b].intValue();
+      final int inodata = (int)nodata[b];
       Arrays.fill(intsamples, inodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, intsamples);
       break;
     case DataBuffer.TYPE_FLOAT:
       final float[] floatsamples = new float[elements];
 
-      final float fnodata = nodata[b].floatValue();
+      final float fnodata = (float)nodata[b];
       Arrays.fill(floatsamples, fnodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, floatsamples);
       break;
     case DataBuffer.TYPE_DOUBLE:
       final double[] doublesamples = new double[elements];
-      Arrays.fill(doublesamples, nodata[b].doubleValue());
+      Arrays.fill(doublesamples, nodata[b]);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, doublesamples);
       break;
     default:
@@ -351,7 +351,7 @@ public static void fillWithNodata(final WritableRaster raster, final Number[] no
 }
 
 private static void copyPixel(final int x, final int y, final int b, final Raster src,
-    final WritableRaster dst, Number nodata)
+    final WritableRaster dst, Double nodata)
 {
 
   switch (src.getTransferType())
@@ -433,7 +433,7 @@ public static void mosaicTile(final Raster src, final WritableRaster dst, final 
   }
 }
 
-public static void mosaicTile(final Raster src, final WritableRaster dst, final Number[] nodatas)
+public static void mosaicTile(final Raster src, final WritableRaster dst, final Double[] nodatas)
 {
   double[] dnodata = new double[nodatas.length];
   for (int i = 0; i < dnodata.length; i++)
@@ -477,7 +477,7 @@ public static WritableRaster makeRasterWritable(final Raster raster)
 // Also used was http://www.compuphase.com/graphic/scale.htm, explaining interpolated
 // scaling
 public static WritableRaster scaleRaster(final Raster src, final int dstWidth,
-    final int dstHeight, final boolean interpolate, final Number nodata)
+    final int dstHeight, final boolean interpolate, final Double nodata)
 {
   final int type = src.getTransferType();
 
@@ -566,7 +566,7 @@ public static WritableRaster scaleRaster(final Raster src, final int dstWidth,
 }
 
 public static WritableRaster scaleRasterInterp(final Raster src, final int dstWidth,
-    final int dstHeight, final Number nodata)
+    final int dstHeight, final Double nodata)
 {
   return scaleRaster(src, dstWidth, dstHeight, true, nodata);
 }
@@ -1159,12 +1159,12 @@ public static void decimate(final Raster parent, final WritableRaster child, fin
 }
 
 public static void decimate(final Raster parent, final WritableRaster child,
-    final Aggregator aggregator, final Number[] nodatas)
+    final Aggregator aggregator, final double[] nodatas)
 {
   decimate(parent, child, 0, 0, aggregator, nodatas);
 }
 
-public static void decimate(final Raster parent, final WritableRaster child, final int startX, final int startY, final Aggregator aggregator, final Number[] nodatas)
+public static void decimate(final Raster parent, final WritableRaster child, final int startX, final int startY, final Aggregator aggregator, final double[] nodatas)
 {
   final int w = parent.getWidth();
   final int h = parent.getHeight();
@@ -1183,19 +1183,19 @@ public static void decimate(final Raster parent, final WritableRaster child, fin
         case DataBuffer.TYPE_USHORT:
           final int[] intsamples = new int[4];
           parent.getSamples(x, y, 2, 2, b, intsamples);
-          int intSample = aggregator.aggregate(intsamples, nodatas[b].intValue());
+          int intSample = aggregator.aggregate(intsamples, (int)nodatas[b]);
           child.setSample(startX + (x / 2), startY + (y / 2), b, intSample);
           break;
         case DataBuffer.TYPE_FLOAT:
           final float[] floatsamples = new float[4];
           parent.getSamples(x, y, 2, 2, b, floatsamples);
-          float floatSample = aggregator.aggregate(floatsamples, nodatas[b].floatValue());
+          float floatSample = aggregator.aggregate(floatsamples, (float)nodatas[b]);
           child.setSample(startX + (x / 2), startY + (y / 2), b, floatSample);
           break;
         case DataBuffer.TYPE_DOUBLE:
           final double[] doublesamples = new double[4];
           parent.getSamples(x, y, 2, 2, b, doublesamples);
-          double doubleSample = aggregator.aggregate(doublesamples, nodatas[b].doubleValue());
+          double doubleSample = aggregator.aggregate(doublesamples, nodatas[b]);
           child.setSample(startX + (x / 2), startY + (y / 2), b, doubleSample);
           break;
         default:

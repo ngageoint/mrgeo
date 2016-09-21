@@ -155,7 +155,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  def naiveKernel(focal:RDD[(TileIdWritable, RasterWritable)], kernel:Kernel, nodatas:Array[Float],
+  def naiveKernel(focal:RDD[(TileIdWritable, RasterWritable)], kernel:Kernel, nodatas:Array[Double],
       context: SparkContext):RDD[(TileIdWritable, RasterWritable)] = {
 
     val weights = context.broadcast(kernel.getKernel.get)

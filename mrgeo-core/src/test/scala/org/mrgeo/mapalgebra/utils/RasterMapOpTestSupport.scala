@@ -107,7 +107,7 @@ trait RasterMapOpTestSupport {
     // default implementation doesn't use tileId.  It's there for a generator that might.
     case Some(dataArray) => {
       val raster = RasterUtils.createEmptyRaster(tileSize, tileSize, dataArray.size, DataBuffer.TYPE_DOUBLE)
-      RasterUtils.fillWithNodata(raster, dataArray.map(java.lang.Double.valueOf(_)).asInstanceOf[Array[java.lang.Number]])
+      RasterUtils.fillWithNodata(raster, dataArray.map(java.lang.Double.valueOf(_)).asInstanceOf[Array[Double]])
       raster
     }
 
