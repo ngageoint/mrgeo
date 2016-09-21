@@ -21,7 +21,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
@@ -260,8 +260,8 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
           meta.getDefaultValues)
       }
       val result = rdd.map(U => {
-        val src = RasterWritable.toRaster(U._2)
-        val dst = RasterUtils.createEmptyRaster(meta.getTilesize, meta.getTilesize, meta.getBands,
+        val src = RasterWritable.toMrGeoRaster(U._2)
+        val dst = MrGeoRaster.createEmptyRaster(meta.getTilesize, meta.getTilesize, meta.getBands,
           newTileType, newNodata)
         val converter = cm match {
           case "truncate" => ConvertMapOp.truncateValue(_, _, _, _)
@@ -269,12 +269,15 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
           case "fit" => ConvertMapOp.fitValue(_, _, _, _)
         }
         var py = 0
-        while (py < src.getHeight) {
+        val h = src.height()
+        val w = src.width()
+        val bands = src.bands()
+        while (py < h) {
           var px = 0
-          while (px < src.getWidth) {
+          while (px < w) {
             var b: Int = 0
-            while (b < src.getNumBands) {
-              val srcVal = src.getSampleDouble(px, py, b)
+            while (b < bands) {
+              val srcVal = src.getPixelDouble(px, py, b)
               val dstVal = if (oldNodataIsNan(b)) {
                 if (java.lang.Double.isNaN(srcVal)) {
                   newNodata(b).doubleValue()
@@ -296,7 +299,7 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
                   converter(srcVal, stats(b).min, stats(b).max, newTileType)
                 }
               }
-              dst.setSample(px, py, b, dstVal)
+              dst.setPixel(px, py, b, dstVal)
               b += 1
             }
             px += 1
