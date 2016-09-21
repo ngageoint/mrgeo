@@ -434,7 +434,7 @@ final public void fill(final int band, final double value)
 // Interpolated algorithm was http://tech-algorithm.com/articles/bilinear-image-scaling/
 // Also used was http://www.compuphase.com/graphic/scale.htm, explaining interpolated
 // scaling
-public MrGeoRaster scaleRaster(final int dstWidth,
+public MrGeoRaster scale(final int dstWidth,
     final int dstHeight, final boolean interpolate, final double[] nodatas)
 {
 
