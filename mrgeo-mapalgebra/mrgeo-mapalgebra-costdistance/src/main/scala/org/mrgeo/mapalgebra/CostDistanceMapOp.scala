@@ -17,7 +17,7 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 
@@ -26,7 +26,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.vector.FeatureIdWritable
@@ -338,7 +338,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
           // This tile has changes to process. Update the pixel values within the
           // tile accordingly while accumulating changes to this tile's neighbors.
-          val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+          val raster = RasterWritable.toMrGeoRaster(tile._2)
 
           processTile(tileid, raster, tileChanges, changesAccum, zoom, pixelSizeMeters, tileBounds)
 
@@ -372,18 +372,18 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
 
     rasterRDD = Some(RasterRDD(costs.map(tile => {
-      val sourceRaster = RasterWritable.toRaster(tile._2)
+      val sourceRaster = RasterWritable.toMrGeoRaster(tile._2)
 
       // Need to convert our raster to a single band raster for output.
-      val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, sourceRaster.getWidth,
-        sourceRaster.getHeight, 1)
-      val singleBandRaster = Raster.createWritableRaster(model, null)
-      val totalCostBand = sourceRaster.getNumBands - 1
+      val h = sourceRaster.height()
+      val w = sourceRaster.width()
+      val singleBandRaster = RasterUtils.createEmptyRaster(w, h, 1, DataBuffer.TYPE_FLOAT)
+      val totalCostBand = sourceRaster.bands() - 1
       var y: Int = 0
-      while (y < sourceRaster.getHeight) {
+      while (y < h) {
         var x: Int = 0
-        while (x < sourceRaster.getWidth) {
-          val s: Float = sourceRaster.getSampleFloat(x, y, totalCostBand)
+        while (x < w) {
+          val s: Float = sourceRaster.getPixelFloat(x, y, totalCostBand)
           singleBandRaster.setSample(x, y, 0, s)
           x += 1
         }
@@ -454,7 +454,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
 
   def processTile(tileid: Long,
-      raster: WritableRaster,
+      raster: MrGeoRaster,
       changes: List[CostPoint],
       changesAccum:Accumulator[NeighborChangedPoints],
       zoom:Int,
@@ -468,11 +468,11 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // length of the pixel diagonal
     val pixelsizediag = Math.sqrt(2.0 * pixelsize * pixelsize).toFloat
 
-    val costBand = raster.getNumBands - 1 // cost band is the last band in the raster
+    val costBand = raster.bands() - 1 // cost band is the last band in the raster
     val multiband = costBand > 1 // if there are more than 2 bands, it is multiband friction
 
-    val width = raster.getWidth
-    val height = raster.getHeight
+    val width = raster.width()
+    val height = raster.height()
 
     @SuppressFBWarnings(value = Array("FE_FLOATING_POINT_EQUALITY"), justification = "Scala generated code")
     @SuppressFBWarnings(value = Array("UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS"), justification = "Scala generated code")
@@ -514,10 +514,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       }
 
       val friction = if (multiband) {
-        raster.getSampleFloat(px, py, neighborData(direction).multibandNdx)
+        raster.getPixelFloat(px, py, neighborData(direction).multibandNdx)
       }
       else {
-        raster.getSampleFloat(px, py, 0)
+        raster.getPixelFloat(px, py, 0)
       }
       val pixelcost = if (multiband) {
         friction * dist
@@ -557,15 +557,15 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
     var px: Int = 0
     while (px < width) {
-      origTopEdgeValues(px) = raster.getSampleFloat(px, 0, costBand)
-      origBottomEdgeValues(px) = raster.getSampleFloat(px, height - 1, costBand)
+      origTopEdgeValues(px) = raster.getPixelFloat(px, 0, costBand)
+      origBottomEdgeValues(px) = raster.getPixelFloat(px, height - 1, costBand)
       px += 1
     }
 
     var py: Int = 0
     while (py < height) {
-      origLeftEdgeValues(py) = raster.getSampleFloat(0, py, costBand)
-      origRightEdgeValues(py) = raster.getSampleFloat(width - 1, py, costBand)
+      origLeftEdgeValues(py) = raster.getPixelFloat(0, py, costBand)
+      origRightEdgeValues(py) = raster.getPixelFloat(width - 1, py, costBand)
       py += 1
     }
 
@@ -573,12 +573,12 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     val queue = new java.util.PriorityQueue[CostPoint]()
     changes.foreach(pt => {
       // we'll do the cost check here since maintaining the priority queue is expensive
-      val currentCost = raster.getSampleFloat(pt.px, pt.py, costBand)
+      val currentCost = raster.getPixelFloat(pt.px, pt.py, costBand)
 
       // in the single band friction, the edge point (point.pixelCost) has 1/2 the total cost,
       // calculate the rest.  Add the other part...
       if (!multiband) {
-        val friction = raster.getSampleFloat(pt.px, pt.py, 0)
+        val friction = raster.getPixelFloat(pt.px, pt.py, 0)
         pt.pixelCost += (friction * (if (pt.diagonal) pixelsizediag else pixelsize) * 0.5f)
       }
 
@@ -632,11 +632,11 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       totalDequeue = totalDequeue + (System.nanoTime() - t0)
 
       val newCost =  point.cost + point.pixelCost
-      val currentCost = raster.getSampleFloat(point.px, point.py, costBand)
+      val currentCost = raster.getPixelFloat(point.px, point.py, costBand)
 
       // check for a lower cost
       if (isSmallerMaxCost(newCost, currentCost)) {
-        raster.setSample(point.px, point.py, costBand, newCost)
+        raster.setPixel(point.px, point.py, costBand, newCost)
 
         // Since this point has a new cost, check to see if the cost to each
         // of its neighbors is smaller than the current cost assigned to those
@@ -655,15 +655,15 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
             // compute the new cost to the neighbor
             val friction = if (multiband) {
               // multiband friction
-              raster.getSampleFloat(point.px, point.py, direction.multibandNdx)
+              raster.getPixelFloat(point.px, point.py, direction.multibandNdx)
             }
             else {
-              (raster.getSampleFloat(point.px, point.py, 0) +
-                  raster.getSampleFloat(pxNeighbor, pyNeighbor, 0)) * 0.5f
+              (raster.getPixelFloat(point.px, point.py, 0) +
+                  raster.getPixelFloat(pxNeighbor, pyNeighbor, 0)) * 0.5f
             }
 
             if (!friction.isNaN) {
-              val currentNeighborCost = raster.getSampleFloat(pxNeighbor, pyNeighbor, costBand)
+              val currentNeighborCost = raster.getPixelFloat(pxNeighbor, pyNeighbor, costBand)
               val pixelCost = friction * direction.dist
               val neighborCost = newCost + pixelCost
 
@@ -697,7 +697,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // Find edge pixels that have changed so we know how to send messages
     px = 0
     while (px < width) {
-      val currentTopCost = raster.getSampleFloat(px, 0, costBand)
+      val currentTopCost = raster.getPixelFloat(px, 0, costBand)
       val oldTopCost = origTopEdgeValues(px)
 
       if (isSmaller(currentTopCost, oldTopCost)) {
@@ -727,7 +727,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         }
       }
 
-      val currentBottomCost = raster.getSampleFloat(px, height - 1, costBand)
+      val currentBottomCost = raster.getPixelFloat(px, height - 1, costBand)
       val oldBottomCost = origBottomEdgeValues(px)
 
       if (isSmaller(currentBottomCost, oldBottomCost)) {
@@ -761,7 +761,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // Don't process corner pixels again (already handled as part of top/bottom processing)
     py = 0
     while (py < height) {
-      val currentLeftCost = raster.getSampleFloat(0, py, costBand)
+      val currentLeftCost = raster.getPixelFloat(0, py, costBand)
       val oldLeftCost = origLeftEdgeValues(py)
 
       if (isSmaller(currentLeftCost, oldLeftCost)) {
@@ -782,7 +782,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         }
       }
 
-      val currentRightCost = raster.getSampleFloat(width - 1, py, costBand)
+      val currentRightCost = raster.getPixelFloat(width - 1, py, costBand)
       val oldRightCost = origRightEdgeValues(py)
 
       if (isSmaller(currentRightCost, oldRightCost)) {
@@ -871,42 +871,36 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
   def makeRasters(frictionRDD: RDD[(TileIdWritable, RasterWritable)]) = {
     frictionRDD.map(tile => {
       val tileid = tile._1.get()
-      val raster = RasterWritable.toRaster(tile._2)
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
       (new TileIdWritable(tileid), RasterWritable.toWritable(addCostBand(raster)))
     })
   }
 
-  def addCostBand(raster:Raster) = {
-    val srcBands = raster.getNumBands
+  def addCostBand(raster:MrGeoRaster) = {
+    val srcBands = raster.bands()
     val dstBands = srcBands + 1
 
-    val height = raster.getHeight
-    val width = raster.getWidth
+    val height = raster.height()
+    val width = raster.width()
 
-    val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, dstBands)
-    val dstRaster = Raster.createWritableRaster(model, null)
+    val dstRaster = MrGeoRaster.createEmptyRaster(width, height, dstBands, DataBuffer.TYPE_FLOAT)
 
-    val sourceValue: Array[Float] = new Array[Float](srcBands)
-    val newValue: Array[Float] = new Array[Float](dstBands)
-
+    val totalCostBand = dstBands - 1
     var y: Int = 0
     while (y < height) {
       var x: Int = 0
       while (x < width) {
-        // read all the bands into an array
-        raster.getPixel(x, y, sourceValue)
-
         // copy the bands...
         var b: Int = 0
         while (b < srcBands) {
-          newValue(b) = sourceValue(b)
+          // read all the bands into an array
+          val v = raster.getPixelFloat(x, y, b)
+          dstRaster.setPixel(x, y, b, v)
           b += 1
         }
-        // the last band is the total cost, initialize it to NaN
-        newValue(dstBands - 1) = Float.NaN
-
-        dstRaster.setPixel(x, y, newValue)
+        // initial the total cost to NaN
+        dstRaster.setPixel(x, y, totalCostBand, Float.NaN)
         x += 1
       }
       y += 1
