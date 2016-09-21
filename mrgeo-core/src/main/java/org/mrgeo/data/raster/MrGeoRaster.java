@@ -396,6 +396,25 @@ final public void fill(final double[] values)
   }
 }
 
+final public void fill(final int band, final double value)
+{
+  MrGeoRaster row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
+  for (int x = 0; x < width; x++)
+  {
+    row.setPixel(x, 0, 0, value);
+  }
+
+  int headerlen = bandoffset;
+  int len = row.data.length - headerlen;
+
+  for (int y = 0; y < height; y++)
+  {
+    int offset = calculateByteOffset(0, y, band);
+
+    System.arraycopy(row.data, headerlen, data, offset, len);
+  }
+}
+
 // Scaling algorithm taken from: http://willperone.net/Code/codescaling.php and modified to use
 // Rasters. It is an optimized Bresenham's algorithm.
 // Interpolated algorithm was http://tech-algorithm.com/articles/bilinear-image-scaling/
