@@ -16,7 +16,6 @@
 
 package org.mrgeo.utils
 
-import java.awt.image.Raster
 import java.io.{File, FileInputStream, IOException, InputStreamReader}
 import java.net.URL
 import java.util.Properties
@@ -33,7 +32,6 @@ import org.mrgeo.data.tile._
 import org.mrgeo.data.{DataProviderFactory, MrsPyramidInputFormat, ProviderProperties}
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo
 import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
-import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.tms.{Bounds, Pixel, TMSUtils}
 
 import scala.collection.JavaConversions._
@@ -586,29 +584,8 @@ object SparkUtils extends Logging {
 
     log.debug("w: {} h: {}", width, height)
 
-    val sample = RasterWritable.toRaster(rdd.first()._2)
-
-    val model = sample.getSampleModel.createCompatibleSampleModel(width, height)
-
-    val merged = Raster.createWritableRaster(model, null)
-
-    // Initialize the full raster to the default values for the image
-    if (nodatas != null && nodatas.length > 0)
-    {
-      var y: Int = 0
-      while (y < merged.getHeight) {
-        var x: Int = 0
-        while (x < merged.getWidth) {
-          var b: Int = 0
-          while (b < nodatas.length) {
-            merged.setSample(x, y, b, nodatas(b))
-            b += 1
-          }
-          x += 1
-        }
-        y += 1
-      }
-    }
+    val sample = RasterWritable.toMrGeoRaster(rdd.first()._2)
+    val merged = sample.createCompatibleEmptyRaster(width, height, nodatas)
 
     // because the data is distributed. and could be large, we need to collect a single partition at a time...
     rdd.partitions.foreach(partition => {
@@ -624,11 +601,11 @@ object SparkUtils extends Logging {
         // make sure we use the upper-left lat/lon
         val start = TMSUtils.latLonToPixelsUL(tb.n, tb.w, zoom, tilesize)
 
-        val source = RasterWritable.toRaster(tile._2)
+        val source = RasterWritable.toMrGeoRaster(tile._2)
         logDebug(s"Tile ${id.tx}, ${id.ty} with bounds ${tb.w}, ${tb.s}, ${tb.e}, ${tb.n}" +
             s" pasted onto px ${start.px - ul.px} py ${start.py - ul.py}")
 
-        merged.setDataElements((start.px - ul.px).toInt, (start.py - ul.py).toInt, source)
+        merged.copy((start.px - ul.px).toInt, (start.py - ul.py).toInt, source.width(), source.height(), source, 0, 0)
       })
     })
 
@@ -640,8 +617,8 @@ object SparkUtils extends Logging {
 
     // if we need to, crop the image
     if (finalul != ul || finallr != lr || finalwidth != width || finalheight != height) {
-      merged.createWritableChild((finalul.px - ul.px).toInt, (finalul.py - ul.py).toInt,
-        finalwidth, finalheight, 0, 0, null)
+      merged.clip((finalul.px - ul.px).toInt, (finalul.py - ul.py).toInt,
+        finalwidth, finalheight)
     }
     else {
       merged
@@ -680,16 +657,16 @@ object SparkUtils extends Logging {
       }
 
       // Handle the stats
-      val raster = RasterWritable.toRaster(t._2)
+      val raster = RasterWritable.toMrGeoRaster(t._2)
 
       var b = 0
-      while (b < raster.getNumBands) {
+      while (b < raster.bands()) {
         var y = 0
         val nd = nodata(b).doubleValue()
-        while (y < raster.getHeight) {
+        while (y < raster.height()) {
           var x = 0
-          while (x < raster.getWidth) {
-            val p = raster.getSampleDouble(x, y, b)
+          while (x < raster.width()) {
+            val p = raster.getPixelDouble(x, y, b)
             if (isNotNodata(p, nd)) {
               stats(b).count += 1
               stats(b).sum += p
@@ -774,9 +751,9 @@ object SparkUtils extends Logging {
 
   def calculateMetadata(rdd:RasterRDD, zoom:Int, nodata:Double, calcStats:Boolean, bounds:Bounds):MrsPyramidMetadata = {
     val first = rdd.first()
-    val raster = RasterWritable.toRaster(first._2)
+    val raster = RasterWritable.toMrGeoRaster(first._2)
 
-    val nodatas = Array.fill[Double](raster.getNumBands)(nodata)
+    val nodatas = Array.fill[Double](raster.bands())(nodata)
     calculateMetadata(rdd, zoom, nodatas, calcStats, bounds)
   }
 
