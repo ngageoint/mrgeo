@@ -24,7 +24,6 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.raster.MrGeoRaster;
@@ -37,7 +36,6 @@ import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -123,22 +121,6 @@ public boolean hasPyramids()
   return metadata.hasPyramids();
 }
 
-public static void calculateMetadataWithProvider(final String pyramidname, final int zoom,
-    final MrsImageDataProvider provider,
-    final AdHocDataProvider statsProvider,
-    final double[] defaultValues,
-    final Bounds bounds, final String protectionLevel) throws IOException
-{
-  // update the pyramid level stats
-  if (statsProvider != null)
-  {
-    ImageStats[] levelStats = ImageStats.readStats(statsProvider);
-
-    calculateMetadata(pyramidname, zoom, provider, levelStats, defaultValues,
-        bounds, protectionLevel);
-  }
-}
-
 public static void calculateMetadata(final String pyramidname, final int zoom,
     final MrsImageDataProvider provider,
     final ImageStats[] levelStats,
@@ -174,13 +156,13 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
   try
   {
 
-    final KVIterator<TileIdWritable, Raster> rasterIter = reader.get();
+    final KVIterator<TileIdWritable, MrGeoRaster> rasterIter = reader.get();
 
     if (rasterIter != null && rasterIter.hasNext())
     {
-      final Raster raster = rasterIter.next();
+      final MrGeoRaster raster = rasterIter.next();
 
-      calculateMetadata(zoom, MrGeoRaster.fromRaster(raster), provider, levelStats, metadata);
+      calculateMetadata(zoom, raster, provider, levelStats, metadata);
     }
   }
   finally
