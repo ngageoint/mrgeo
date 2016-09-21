@@ -1,5 +1,6 @@
 package org.mrgeo.data.raster;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
@@ -13,10 +14,11 @@ import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
 
 import java.awt.*;
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
+import java.awt.image.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.nio.*;
 
 public abstract class MrGeoRaster
 {
@@ -727,18 +729,76 @@ final public Raster toRaster()
 {
   WritableRaster raster = Raster.createBandedRaster(datatype, width, height, bands, new Point(0,0));
 
-  for (int b = 0; b < bands; b++)
+  final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
+  // skip over the header in the data buffer
+  for (int i = 0; i < HEADER_LEN; i++)
   {
-    for (int y = 0; y < height; y++)
-    {
-      for(int x = 0; x < width; x++)
-      {
-        raster.setDataElements();
-      }
-    }
+    rasterBuffer.get();
   }
+
+  int databytes = data.length - HEADER_LEN;
+
+  switch (datatype)
+  {
+  case DataBuffer.TYPE_BYTE:
+  {
+    // we can't use the byte buffer explicitly because the header info is
+    // still in it...
+    final byte[] bytedata = new byte[databytes];
+    rasterBuffer.get(bytedata);
+
+    raster.setDataElements(0, 0, width, height, bytedata);
+    break;
+  }
+  case DataBuffer.TYPE_FLOAT:
+  {
+    final FloatBuffer floatbuff = rasterBuffer.asFloatBuffer();
+    final float[] floatdata = new float[databytes / bytesPerPixel()];
+
+    floatbuff.get(floatdata);
+
+    raster.setDataElements(0, 0, width, height, floatdata);
+    break;
+  }
+  case DataBuffer.TYPE_DOUBLE:
+  {
+    final DoubleBuffer doublebuff = rasterBuffer.asDoubleBuffer();
+    final double[] doubledata = new double[databytes / bytesPerPixel()];
+
+    doublebuff.get(doubledata);
+
+    raster.setDataElements(0, 0, width, height, doubledata);
+
+    break;
+  }
+  case DataBuffer.TYPE_INT:
+  {
+    final IntBuffer intbuff = rasterBuffer.asIntBuffer();
+    final int[] intdata = new int[databytes / bytesPerPixel()];
+
+    intbuff.get(intdata);
+
+    raster.setDataElements(0, 0, width, height, intdata);
+
+    break;
+  }
+  case DataBuffer.TYPE_SHORT:
+  case DataBuffer.TYPE_USHORT:
+  {
+    final ShortBuffer shortbuff = rasterBuffer.asShortBuffer();
+    final short[] shortdata = new short[databytes / bytesPerPixel()];
+    shortbuff.get(shortdata);
+    raster.setDataElements(0, 0, width, height, shortdata);
+    break;
+  }
+  default:
+    throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+  }
+
   return raster;
 }
+
+
 public abstract byte getPixelByte(int x, int y, int band);
 public abstract short getPixelShort(int x, int y, int band);
 public abstract short getPixeUShort(int x, int y, int band);
