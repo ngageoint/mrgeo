@@ -43,7 +43,7 @@ import scala.collection.JavaConversions._
 
 
 class GDALException extends IOException  {
-  private var origException: Exception = null
+  private var origException: Exception = _
 
   def this(e: Exception) {
     this()
