@@ -260,13 +260,12 @@ public class HdfsImageResultScannerTest {
     private RasterWritable[] createRasters(int seed, int count) {
         RasterWritable[] rasters = new RasterWritable[count];
         for (int i = 0; i < count; i++) {
-            ByteBuffer buffer = ByteBuffer.allocate(7 * 4);
-            buffer.putInt(0); // header size
-            buffer.putInt(1); // height
+            ByteBuffer buffer = ByteBuffer.allocate(12 + 4);
+            buffer.put((byte)0x03); // version
             buffer.putInt(1); // width
-            buffer.putInt(1); // number of bands
-            buffer.putInt(DataBuffer.TYPE_BYTE); // datatype
-            buffer.putInt(1); // Model type = Banded
+            buffer.putInt(1); // height
+            buffer.putShort((short)1); // number of bands
+            buffer.put((byte)DataBuffer.TYPE_BYTE); // datatype
             buffer.putInt(i + seed); // data
             rasters[i] = new RasterWritable(buffer.array());
         }
