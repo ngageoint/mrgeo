@@ -14,7 +14,7 @@
  *
  */
 
-package org.mrgeo.data.raster.ingest
+package org.mrgeo.ingest
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 

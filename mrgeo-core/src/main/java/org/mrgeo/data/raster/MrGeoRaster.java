@@ -1,10 +1,15 @@
 package org.mrgeo.data.raster;
 
+import org.gdal.gdal.Band;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.gdal;
+import org.gdal.gdalconst.gdalconstConstants;
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.data.raster.Interpolator.Bilinear;
 import org.mrgeo.data.raster.Interpolator.Nearest;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.FloatUtils;
+import org.mrgeo.utils.GDALUtils;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
@@ -617,6 +622,39 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
     }
   }
 }
+
+public static MrGeoRaster fromDataset(Dataset dataset)
+{
+  return fromDataset(dataset, 0, 0, dataset.GetRasterXSize(), dataset.GetRasterYSize());
+}
+
+public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width, final int height)
+{
+  int datatype = dataset.GetRasterBand(1).getDataType();
+  int bands = dataset.GetRasterCount();
+  int datasize = gdal.GetDataTypeSize(datatype) / 8;
+
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(datatype));
+
+  for (int b = 0; b < bands; b++)
+  {
+    Band band = dataset.GetRasterBand(b + 1); // gdal bands are 1's based
+    byte[] data = new byte[datasize * width * height];
+
+    int success = band.ReadRaster(x, y, width, height, data);
+
+    if (success != gdalconstConstants.CE_None)
+    {
+      System.out.println("Failed reading raster. gdal error: " + success);
+    }
+    GDALUtils.swapBytes(data, datatype);
+
+    System.arraycopy(data, 0, raster.data, raster.calculateByteOffset(0, 0, b), data.length);
+  }
+
+  return raster;
+}
+
 
 abstract int bytesPerPixel();
 

@@ -14,7 +14,7 @@
  *
  */
 
-package org.mrgeo.data.raster.ingest
+package org.mrgeo.ingest
 
 import java.io._
 import java.util
@@ -564,28 +564,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
             val y: Int = dty * tilesize
 
             //val start = System.currentTimeMillis()
+            val raster = MrGeoRaster.fromDataset(scaled, x, y, tilesize, tilesize)
 
-            val raster = MrGeoRaster.createEmptyRaster(tilesize, tilesize, bands, GDALUtils.toRasterDataBufferType(datatype))
-
-            var b:Int = 0
-            while (b < bands) {
-
-              val band = scaled.GetRasterBand(b + 1) // gdal bands are 1's based
-
-              val data = Array.ofDim[Byte](datasize * tilesize * tilesize)
-
-              val success = band.ReadRaster(x, y, tilesize, tilesize, data)
-
-              if (success != gdalconstConstants.CE_None) {
-                println("Failed reading raster" + success)
-              }
-
-              // switch the byte order...
-              GDALUtils.swapBytes(data, datatype)
-
-              System.arraycopy(data, 0, raster.data, raster.calculateByteOffset(0, 0, b), data.length)
-              b += 1
-            }
             val writable = RasterWritable.toWritable(raster)
 
             // save the tile...
