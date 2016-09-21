@@ -10,16 +10,17 @@ import org.mrgeo.data.raster.Interpolator.Nearest;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.GDALUtils$;
 import org.mrgeo.utils.tms.Bounds;
 
+import java.awt.*;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.IOException;
 
 public abstract class MrGeoRaster
 {
-public final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
+final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
 private final static int VERSION_OFFSET = 0;    // start
 private final static int WIDTH_OFFSET = 1;      // byte (VERSION)
 private final static int HEIGHT_OFFSET = 5;     // byte (VERSION) + int (width)
@@ -722,6 +723,22 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
   return ds;
 }
 
+final public Raster toRaster()
+{
+  WritableRaster raster = Raster.createBandedRaster(datatype, width, height, bands, new Point(0,0));
+
+  for (int b = 0; b < bands; b++)
+  {
+    for (int y = 0; y < height; y++)
+    {
+      for(int x = 0; x < width; x++)
+      {
+        raster.setDataElements();
+      }
+    }
+  }
+  return raster;
+}
 public abstract byte getPixelByte(int x, int y, int band);
 public abstract short getPixelShort(int x, int y, int band);
 public abstract short getPixeUShort(int x, int y, int band);

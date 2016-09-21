@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
 
