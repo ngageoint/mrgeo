@@ -259,22 +259,13 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
     val quantiles = metadata.getQuantiles(0)
-    // Make sure each quantile value is different than what would be expected
-    // from the quantile computation based on the full set of data. But they should
-    // at least be within a close range of those values.
-    // NOTE: theoretically, the SAMPLED_EPSILON should be calculated using some
-    // statistical principals.
-    validateQuantileEstimate(67.483246, 0, quantiles)
+    // Check to see if the quantile values are at least close to the values that would
+    // be returned when all of the pixels are used in the quantiles computation. We
+    // may need to revisit this check if we start to see this test fail because the
+    // resulting quantiles will be different every time the test is run (since it
+    // used random pixel values).
     Assert.assertEquals(67.483246, quantiles(0), QuantilesMapOpTest.SAMPLED_EPSILON)
-    validateQuantileEstimate(87.27524, 1, quantiles)
     Assert.assertEquals(87.27524, quantiles(1), QuantilesMapOpTest.SAMPLED_EPSILON)
-    validateQuantileEstimate(110.95636, 2, quantiles)
     Assert.assertEquals(110.95636, quantiles(2), QuantilesMapOpTest.SAMPLED_EPSILON)
-  }
-
-  private def validateQuantileEstimate(exactValue: Double, quantile:Int, quantiles: Array[Double]): Unit = {
-    Assert.assertTrue(s"Quantile ${quantile + 1} should not match the exact quantile value",
-      ((quantiles(quantile) < (exactValue - QuantilesMapOpTest.EPSILON)) ||
-        (quantiles(quantile) > (exactValue + QuantilesMapOpTest.EPSILON))))
   }
 }

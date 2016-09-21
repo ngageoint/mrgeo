@@ -14,7 +14,7 @@
  *
  */
 
-package org.mrgeo.ingest
+package org.mrgeo.data.raster.ingest
 
 import java.io._
 import java.util
@@ -24,13 +24,13 @@ import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
 import org.apache.spark.rdd.PairRDDFunctions
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{AccumulatorParam, SparkConf, SparkContext}
 import org.gdal.gdal.{Dataset, gdal}
 import org.gdal.gdalconst.gdalconstConstants
 import org.mrgeo.data
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.image.MrsImageDataProvider
-import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProperties}
@@ -39,10 +39,57 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+
+class NodataArray extends Externalizable with Logging
+{
+  var nodata: Array[Double] = null
+
+  def this(nodataValues: Array[Double])
+  {
+    this()
+    nodata = nodataValues
+  }
+
+  override def readExternal(in: ObjectInput): Unit =
+  {
+    val len = in.readInt()
+    nodata = Array.ofDim[Double](len)
+    var i: Int = 0
+    while (i < len) {
+      nodata(i) = in.readDouble()
+      i += 1
+    }
+  }
+
+  override def writeExternal(out: ObjectOutput): Unit =
+  {
+    out.writeInt(nodata.length)
+    var i: Int = 0
+    while (i < nodata.length) {
+      out.writeDouble(nodata(i))
+      i += 1
+    }
+  }
+}
+
+object NodataAccumulator extends AccumulatorParam[NodataArray]
+{
+  val log: Logger = LoggerFactory.getLogger(NodataAccumulator.getClass)
+  override def addInPlace(r1: NodataArray,
+                          r2: NodataArray): NodataArray = {
+    val result = if (r1 == null) { new NodataArray(r2.nodata) } else { r1 }
+    result
+  }
+
+  override def zero(initialValue: NodataArray): NodataArray = {
+    null
+  }
+}
 
 object IngestImage extends MrGeoDriver with Externalizable {
 
@@ -62,7 +109,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
   def ingest(inputs: Array[String], output: String,
       categorical: Boolean, skipCategoryLoad: Boolean, conf: Configuration, bounds: Bounds,
-      zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
+      zoomlevel: Int, tilesize: Int, nodata: Array[Double], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: ProviderProperties): Boolean = {
 
@@ -106,8 +153,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
     true
   }
 
-  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int,
-             categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Number],
+  def ingest(context: SparkContext, inputs:Array[String], zoom:Int, skipPreprocessing: Boolean,
+             tilesize:Int, categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Double],
              protectionLevel: String) = {
     var firstCategories: Map[Int, util.Vector[_]] = null
     var categoriesMatch: Boolean = false
@@ -121,19 +168,28 @@ object IngestImage extends MrGeoDriver with Externalizable {
     // force 1 partition per file, this will keep the size of each ingest task as small as possible, so we
     // won't eat up too much memory
     val in = context.parallelize(inputs, inputs.length)
-    val rawtiles = new PairRDDFunctions(in.flatMap(input => {
-      IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
-    }))
+    val nodataAccum = context.accumulator(null.asInstanceOf[NodataArray])(NodataAccumulator)
+    val rawtiles = in.flatMap(input => {
+      val result = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
+      nodataAccum.add(new NodataArray(result._2))
+      result._1
+    })
 
-    val tiles = rawtiles.reduceByKey((r1, r2) => {
-      val src = RasterWritable.toRaster(r1)
-      val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
+    
+    // Need to materialize rawtiles in order for the accumulator to work
+    rawtiles.count()
 
-      RasterUtils.mosaicTile(src, dst, nodata)
+    val actualNodata = if (nodataAccum.value != null) nodataAccum.value.nodata else null
+    val tiles = new PairRDDFunctions(rawtiles).reduceByKey((r1, r2) => {
+      val src = RasterWritable.toMrGeoRaster(r1)
+      val dst = RasterWritable.toMrGeoRaster(r2)
+
+      dst.mosaic(src, nodata)
+
       RasterWritable.toWritable(dst)
     })
 
-    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, nodata, bounds = null, calcStats = false)
+    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, actualNodata, bounds = null, calcStats = false)
     meta.setClassification(if (categorical)
       MrsPyramidMetadata.Classification.Categorical else
       MrsPyramidMetadata.Classification.Continuous)
@@ -159,8 +215,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
     (RasterRDD(repartitioned), meta)
   }
 
-  def localingest(context: SparkContext, inputs:Array[String], zoom:Int, tilesize:Int,
-                  categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Number],
+  def localingest(context: SparkContext, inputs:Array[String], zoom:Int, skipPreprocessing: Boolean,
+                  tilesize:Int, categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Double],
                   protectionLevel: String) = {
     var firstCategories: Map[Int, util.Vector[_]] = null
     var categoriesMatch: Boolean = false
@@ -179,11 +235,13 @@ object IngestImage extends MrGeoDriver with Externalizable {
       SequenceFile.Writer.compression(SequenceFile.CompressionType.BLOCK)
     )
 
+    val nodataAccum = context.accumulator(null.asInstanceOf[NodataArray])(NodataAccumulator)
     inputs.foreach(input => {
-      val tiles = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
+      val result = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
+      nodataAccum.add(new NodataArray(result._2))
 
       var cnt = 0
-      tiles.foreach(kv => {
+      result._1.foreach(kv => {
         writer.append(new TileIdWritable(kv._1.get()), kv._2)
 
         cnt += 1
@@ -194,6 +252,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
     })
 
     writer.close()
+    val actualNodata = if (nodataAccum.value != null) nodataAccum.value.nodata else null
 
     val input = inputs(0) // there is only 1 input here...
 
@@ -204,33 +263,17 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
     val rawtiles = context.sequenceFile(tmpname.toString, classOf[TileIdWritable], classOf[RasterWritable])
 
-    // this is stupid, but because the way hadoop input formats may reuse the key/value objects,
-    // if we don't do this, all the data will eventually collapse into a single entry.
-    val mapped = rawtiles.map(tile => {
-      (new TileIdWritable(tile._1), RasterWritable.toWritable(RasterWritable.toRaster(tile._2)))
-    })
+    val mergedTiles = RasterRDD(new PairRDDFunctions(rawtiles).reduceByKey((r1, r2) => {
+      val src = RasterWritable.toMrGeoRaster(r1)
+      val dst = RasterWritable.toMrGeoRaster(r2)
 
-    val mergedTiles = new PairRDDFunctions(mapped).reduceByKey((r1, r2) => {
-      val src = RasterWritable.toRaster(r1)
-      val dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(r2))
+      dst.mosaic(src, actualNodata)
 
-      RasterUtils.mosaicTile(src, dst, nodata)
-
-      val mrgeoRaster = MrGeoRaster.fromRaster(dst)
-
-      new RasterWritable(mrgeoRaster.data())
       RasterWritable.toWritable(dst)
-
-    })
-
-    val mrgeo = RasterRDD(mergedTiles.map(tile => {
-      val src = RasterWritable.toRaster(tile._2)
-      val mrgeoRaster = MrGeoRaster.fromRaster(src)
-
-      (tile._1, new RasterWritable(mrgeoRaster.data()))
     }))
 
-    val meta = SparkUtils.calculateMetadata(mrgeo, zoom, nodata, bounds = null, calcStats = false)
+
+    val meta = SparkUtils.calculateMetadata(mergedTiles, zoom, nodata, bounds = null, calcStats = false)
     meta.setClassification(if (categorical)
       MrsPyramidMetadata.Classification.Categorical else
       MrsPyramidMetadata.Classification.Continuous)
@@ -239,7 +282,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
       setMetadataCategories(meta, firstCategories)
     }
 
-    (mrgeo, meta)
+    (mergedTiles, meta)
   }
 
   private def loadCategories(input: String): Map[Int, util.Vector[_]] = {
@@ -331,7 +374,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   private def setupParams(input: String, output: String, categorical: Boolean, skipCategoryLoad: Boolean,
-                          bounds: Bounds, zoomlevel: Int, tilesize: Int, nodata: Array[Number],
+                          bounds: Bounds, zoomlevel: Int, tilesize: Int, nodata: Array[Double],
                           bands: Int, tiletype: Int, tags: util.Map[String, String],
                           protectionLevel: String,
                           providerProperties: ProviderProperties): mutable.Map[String, String] = {
@@ -380,7 +423,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
   def localIngest(inputs: Array[String], output: String,
       categorical: Boolean, skipCategoryLoad: Boolean, config: Configuration, bounds: Bounds,
-      zoomlevel: Int, tilesize: Int, nodata: Array[Number], bands: Int, tiletype: Int,
+      zoomlevel: Int, tilesize: Int, nodata: Array[Double], bands: Int, tiletype: Int,
       tags: java.util.Map[String, String], protectionLevel: String,
       providerProperties: ProviderProperties): Boolean = {
 
@@ -398,10 +441,11 @@ object IngestImage extends MrGeoDriver with Externalizable {
     true
   }
 
-  private def makeTiles(image: String, zoom: Int, tilesize: Int,
-      categorical: Boolean, nodata: Array[Number]): TraversableOnce[(TileIdWritable, RasterWritable)] = {
+  private def makeTiles(image: String, zoom: Int, tilesize: Int, categorical: Boolean,
+                        nodata: Array[Double]): (TraversableOnce[(TileIdWritable, RasterWritable)], Array[Double]) = {
 
     val result = ListBuffer[(TileIdWritable, RasterWritable)]()
+    var actualNoData = Array.ofDim[Double](0)
 
     //val start = System.currentTimeMillis()
 
@@ -414,11 +458,28 @@ object IngestImage extends MrGeoDriver with Externalizable {
         val datasize = gdal.GetDataTypeSize(datatype) / 8
 
         val bands = src.GetRasterCount()
+        actualNoData = Array.ofDim[Double](bands)
+        // The number of nodata values has to match the number of bands in the source image or
+        // there can be only one nodata value in which case it will be used for all the bands
+        if (nodata.length == 1) {
+          for (i <- 0 until bands) {
+            actualNoData(i) = nodata(0)
+          }
+        }
+        else if (nodata.length < bands) {
+          throw new Exception(f"There are too few nodata values (${nodata.length}) compared to the number of bands in $image%s ($bands%d)")
+        }
+        else {
+          log.warn(f"There are more nodata values (${nodata.length}) than bands ($bands) in $image%s")
+          for (i <- 0 until bands) {
+            actualNoData(i) = nodata(i)
+          }
+        }
 
         // force the nodata values...
         for (i <- 1 to bands) {
           val band = src.GetRasterBand(i)
-          band.SetNoDataValue(nodata(i - 1).doubleValue())
+          band.SetNoDataValue(actualNoData(i - 1).doubleValue())
         }
 
         val imageBounds = GDALUtils.getBounds(src)
@@ -490,22 +551,11 @@ object IngestImage extends MrGeoDriver with Externalizable {
         // close the image
         GDALUtils.close(src)
 
-        val bandlist = Array.ofDim[Int](bands)
-        var x: Int = 0
-        while (x < bands) {
-          bandlist(x) = x + 1 // bands are ones based
-          x += 1
-        }
-
-
-        val buffer = Array.ofDim[Byte](datasize * tilesize * tilesize * bands)
 
         var dty: Int = 0
         while (dty < tiles.height.toInt) {
           var dtx: Int = 0
           while (dtx < tiles.width.toInt) {
-
-            //val start = System.currentTimeMillis()
 
             val tx: Long = dtx + tiles.w
             val ty: Long = tiles.n - dty
@@ -513,17 +563,30 @@ object IngestImage extends MrGeoDriver with Externalizable {
             val x: Int = dtx * tilesize
             val y: Int = dty * tilesize
 
-            val success = scaled.ReadRaster(x, y, tilesize, tilesize, tilesize, tilesize, datatype, buffer, null)
+            //val start = System.currentTimeMillis()
 
-            if (success != gdalconstConstants.CE_None) {
-              println("Failed reading raster" + success)
+            val raster = MrGeoRaster.createEmptyRaster(tilesize, tilesize, bands, GDALUtils.toRasterDataBufferType(datatype))
+
+            var b:Int = 0
+            while (b < bands) {
+
+              val band = scaled.GetRasterBand(b + 1) // gdal bands are 1's based
+
+              val data = Array.ofDim[Byte](datasize * tilesize * tilesize)
+
+              val success = band.ReadRaster(x, y, tilesize, tilesize, data)
+
+              if (success != gdalconstConstants.CE_None) {
+                println("Failed reading raster" + success)
+              }
+
+              // switch the byte order...
+              GDALUtils.swapBytes(data, datatype)
+
+              System.arraycopy(data, 0, raster.data, raster.calculateByteOffset(0, 0, b), data.length)
+              b += 1
             }
-
-            // switch the byte order...
-            GDALUtils.swapBytes(buffer, datatype)
-
-            val writable = RasterWritable.toWritable(buffer, tilesize, tilesize,
-              bands, GDALUtils.toRasterDataBufferType(datatype))
+            val writable = RasterWritable.toWritable(raster)
 
             // save the tile...
             //        GDALUtils.saveRaster(RasterWritable.toRaster(writable),
@@ -555,124 +618,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
     if (log.isDebugEnabled) {
       logDebug("Ingested " + result.length + " tiles from " + image)
     }
-    result.iterator
+    (result.iterator, actualNoData)
   }
-
-
-
-  @throws(classOf[Exception])
-  def quickIngest(input: InputStream, output: String, categorical: Boolean, config: Configuration,
-      overridenodata: Boolean, protectionLevel: String, nodata: Number): Boolean = {
-    //    var conf: Configuration = config
-    //    if (conf == null) {
-    //      conf = HadoopUtils.createConfiguration
-    //    }
-    //    val dp: MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, conf)
-    //    val useProtectionLevel: String = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel)
-    //    val metadata: MrsImagePyramidMetadata = GeotoolsRasterUtils
-    //        .calculateMetaData(input, output, false, useProtectionLevel, categorical)
-    //    if (overridenodata) {
-    //      val defaults: Array[Double] = metadata.getDefaultValues
-    //      for (i <- defaults.indices) {
-    //        defaults(i) = nodata.doubleValue
-    //      }
-    //      metadata.setDefaultValues(defaults)
-    //    }
-    //
-    //    val writer: MrsImageWriter = dp.getMrsTileWriter(metadata.getMaxZoomLevel)
-    //    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImageFromStream(input)
-    //    log.info("  reading: " + input.toString)
-    //    if (reader != null) {
-    //      val geotoolsImage: GridCoverage2D = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326")
-    //      val tilebounds: LongRectangle = GeotoolsRasterUtils
-    //          .calculateTiles(reader, metadata.getTilesize, metadata.getMaxZoomLevel)
-    //      val zoomlevel: Int = metadata.getMaxZoomLevel
-    //      val tilesize: Int = metadata.getTilesize
-    //      val defaults: Array[Double] = metadata.getDefaultValues
-    //      log.info("    zoomlevel: " + zoomlevel)
-    //      val extender: BorderExtender = new BorderExtenderConstant(defaults)
-    //      val image: PlanarImage = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
-    //        if (categorical) {
-    //          Classification.Categorical
-    //        }
-    //        else {
-    //          Classification.Continuous
-    //        })
-    //
-    //      for (ty <- tilebounds.getMinY to tilebounds.getMaxY) {
-    //        for (tx <- tilebounds.getMinX to tilebounds.getMaxX) {
-    //
-    //          val raster =
-    //            ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX, tilebounds.getMaxY, tilesize, extender)
-    //
-    //          writer.append(new TileIdWritable(TMSUtils.tileid(tx, ty, zoomlevel)), raster)
-    //        }
-    //      }
-    //
-    //      writer.close()
-    //      dp.getMetadataWriter.write(metadata)
-    //    }
-    true
-  }
-
-  @throws(classOf[Exception])
-  def quickIngest(input: String, output: String, categorical: Boolean, config: Configuration, overridenodata: Boolean,
-      nodata: Number, tags: java.util.Map[String, String], protectionLevel: String,
-      providerProperties: ProviderProperties): Boolean = {
-    //    val provider: MrsImageDataProvider = DataProviderFactory
-    //        .getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
-    //    var conf: Configuration = config
-    //    if (conf == null) {
-    //      conf = HadoopUtils.createConfiguration
-    //    }
-    //    val useProtectionLevel: String = ProtectionLevelUtils.getAndValidateProtectionLevel(provider, protectionLevel)
-    //    val metadata: MrsImagePyramidMetadata = GeotoolsRasterUtils
-    //        .calculateMetaData(Array[String](input), output, false, useProtectionLevel, categorical, overridenodata)
-    //    if (tags != null) {
-    //      metadata.setTags(tags)
-    //    }
-    //    if (overridenodata) {
-    //      val defaults: Array[Double] = metadata.getDefaultValues
-    //      for (i <- defaults.indices) {
-    //        defaults(i) = nodata.doubleValue
-    //      }
-    //      metadata.setDefaultValues(defaults)
-    //    }
-    //
-    //    val writer: MrsImageWriter = provider.getMrsTileWriter(metadata.getMaxZoomLevel)
-    //    val reader: AbstractGridCoverage2DReader = GeotoolsRasterUtils.openImage(input)
-    //    log.info("  reading: " + input)
-    //    if (reader != null) {
-    //      val geotoolsImage: GridCoverage2D = GeotoolsRasterUtils.getImageFromReader(reader, "EPSG:4326")
-    //      val tilebounds: LongRectangle = GeotoolsRasterUtils
-    //          .calculateTiles(reader, metadata.getTilesize, metadata.getMaxZoomLevel)
-    //      val zoomlevel: Int = metadata.getMaxZoomLevel
-    //      val tilesize: Int = metadata.getTilesize
-    //      val defaults: Array[Double] = metadata.getDefaultValues
-    //      log.info("    zoomlevel: " + zoomlevel)
-    //      val extender: BorderExtender = new BorderExtenderConstant(defaults)
-    //      val image: PlanarImage = GeotoolsRasterUtils.prepareForCutting(geotoolsImage, zoomlevel, tilesize,
-    //        if (categorical) {
-    //          Classification.Categorical
-    //        }
-    //        else {
-    //          Classification.Continuous
-    //        })
-    //      for (ty <- tilebounds.getMinY to tilebounds.getMaxY) {
-    //        for (tx <- tilebounds.getMinX to tilebounds.getMaxX) {
-    //
-    //          val raster =
-    //            ImageUtils.cutTile(image, tx, ty, tilebounds.getMinX, tilebounds.getMaxY, tilesize, extender)
-    //
-    //          writer.append(new TileIdWritable(TMSUtils.tileid(tx, ty, zoomlevel)), raster)
-    //        }
-    //      }
-    //      writer.close()
-    //      provider.getMetadataWriter.write(metadata)
-    //    }
-    true
-    }
-
 
   override def readExternal(in: ObjectInput) {}
   override def writeExternal(out: ObjectOutput) {}
@@ -692,9 +639,10 @@ class IngestImage extends MrGeoJob with Externalizable {
   private[ingest] var bands:Int = -1
   private[ingest] var tiletype:Int = -1
   private[ingest] var tilesize:Int = -1
-  private[ingest] var nodata:Array[Number] = null
+  private[ingest] var nodata:Array[Double] = null
   private[ingest] var categorical:Boolean = false
   private[ingest] var skipCategoryLoad:Boolean = false
+  private[ingest] var skipPreprocessing:Boolean = false
   private[ingest] var providerproperties:ProviderProperties = null
   private[ingest] var protectionlevel:String = null
 
@@ -730,10 +678,10 @@ class IngestImage extends MrGeoJob with Externalizable {
     tiletype = job.getSetting(IngestImage.Tiletype).toInt
     tilesize = job.getSetting(IngestImage.Tilesize).toInt
     if (job.hasSetting(IngestImage.NoData)) {
-      nodata = job.getSetting(IngestImage.NoData).split(" ").map(_.toDouble.asInstanceOf[Number])
+      nodata = job.getSetting(IngestImage.NoData).split(" ").map(_.toDouble.asInstanceOf[Double])
     }
     else {
-      nodata = Array.fill[Number](bands)(Double.NaN)
+      nodata = Array.fill[Double](bands)(Double.NaN)
     }
     categorical = job.getSetting(IngestImage.Categorical).toBoolean
     skipCategoryLoad = job.getSetting(IngestImage.SkipCategoryLoad).toBoolean
@@ -752,7 +700,7 @@ class IngestImage extends MrGeoJob with Externalizable {
 
   override def execute(context: SparkContext): Boolean = {
 
-    val ingested = IngestImage.ingest(context, inputs, zoom, tilesize,
+    val ingested = IngestImage.ingest(context, inputs, zoom, skipPreprocessing, tilesize,
       categorical, skipCategoryLoad, nodata, protectionlevel)
 
     val dp = DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerproperties)

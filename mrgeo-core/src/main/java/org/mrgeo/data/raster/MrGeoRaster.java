@@ -17,7 +17,7 @@ private final static int WIDTH_OFFSET = 1;      // byte (VERSION)
 private final static int HEIGHT_OFFSET = 5;     // byte (VERSION) + int (width)
 private final static int BANDS_OFFSET = 9;      // byte (VERSION) + int (width) + int (height)
 private final static int DATATYPE_OFFSET = 11;  // byte (VERSION) + int (width) + int (height) + short (bands)
-final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
+public final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
 
 
 private final static byte VERSION = 0x03;  // MUST NOT BE 0!
