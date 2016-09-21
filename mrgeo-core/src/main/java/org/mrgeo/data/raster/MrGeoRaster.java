@@ -10,6 +10,8 @@ import org.mrgeo.data.raster.Interpolator.Nearest;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.GDALUtils;
+import org.mrgeo.utils.GDALUtils$;
+import org.mrgeo.utils.tms.Bounds;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
@@ -17,21 +19,18 @@ import java.io.IOException;
 
 public abstract class MrGeoRaster
 {
+public final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
 private final static int VERSION_OFFSET = 0;    // start
 private final static int WIDTH_OFFSET = 1;      // byte (VERSION)
 private final static int HEIGHT_OFFSET = 5;     // byte (VERSION) + int (width)
 private final static int BANDS_OFFSET = 9;      // byte (VERSION) + int (width) + int (height)
 private final static int DATATYPE_OFFSET = 11;  // byte (VERSION) + int (width) + int (height) + short (bands)
-public final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
-
-
 private final static byte VERSION = 0x03;  // MUST NOT BE 0!
+final byte[] data;
 private final int width;
 private final int height;
 private final int bands;
 private final int datatype;
-
-final byte[] data;
 private final int dataoffset;
 private final int bandoffset;
 
@@ -46,28 +45,6 @@ MrGeoRaster(int width, int height, int bands, int datatype, byte[] data, int dat
 
   this.bandoffset = width * height;
 }
-
-static int writeHeader(final int width, final int height, final int bands, final int datatype, byte[] data)
-{
-  ByteArrayUtils.setByte(VERSION, data, VERSION_OFFSET);
-  ByteArrayUtils.setInt(width, data, WIDTH_OFFSET);
-  ByteArrayUtils.setInt(height, data, HEIGHT_OFFSET);
-  ByteArrayUtils.setShort((short) bands, data, BANDS_OFFSET);
-  ByteArrayUtils.setByte((byte) datatype, data, DATATYPE_OFFSET);
-  return HEADER_LEN;
-}
-
-static int[] readHeader(byte[] data) {
-  return new int[] {
-      ByteArrayUtils.getByte(data, VERSION_OFFSET),
-      ByteArrayUtils.getInt(data, WIDTH_OFFSET),
-      ByteArrayUtils.getInt(data, HEIGHT_OFFSET),
-      ByteArrayUtils.getShort(data, BANDS_OFFSET),
-      ByteArrayUtils.getByte(data, DATATYPE_OFFSET),
-      HEADER_LEN
-  };
-}
-
 
 public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype)
 {
@@ -114,12 +91,6 @@ public static MrGeoRaster createEmptyRaster(int width, int height, int bands, in
   MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
   raster.fill(nodatas);
   return raster;
-}
-
-static MrGeoRaster createRaster(byte[] data)
-{
-  final int[] header = MrGeoRaster.readHeader(data);
-  return createRaster(header[1], header[2], header[3], header[4], data, header[5]);
 }
 
 public static MrGeoRaster createRaster(int width, int height, int bands, int datatype, byte[] data, int dataOffset)
@@ -190,11 +161,69 @@ public static MrGeoRaster fromRaster(Raster raster) throws IOException
   return mrgeo;
 }
 
+public static MrGeoRaster fromDataset(Dataset dataset)
+{
+  return fromDataset(dataset, 0, 0, dataset.GetRasterXSize(), dataset.GetRasterYSize());
+}
+
+public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width, final int height)
+{
+  int datatype = dataset.GetRasterBand(1).getDataType();
+  int bands = dataset.GetRasterCount();
+  int datasize = gdal.GetDataTypeSize(datatype) / 8;
+
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(datatype));
+
+  for (int b = 0; b < bands; b++)
+  {
+    Band band = dataset.GetRasterBand(b + 1); // gdal bands are 1's based
+    byte[] data = new byte[datasize * width * height];
+
+    int success = band.ReadRaster(x, y, width, height, data);
+
+    if (success != gdalconstConstants.CE_None)
+    {
+      System.out.println("Failed reading raster. gdal error: " + success);
+    }
+    GDALUtils.swapBytes(data, datatype);
+
+    System.arraycopy(data, 0, raster.data, raster.calculateByteOffset(0, 0, b), data.length);
+  }
+
+  return raster;
+}
+
+static int writeHeader(final int width, final int height, final int bands, final int datatype, byte[] data)
+{
+  ByteArrayUtils.setByte(VERSION, data, VERSION_OFFSET);
+  ByteArrayUtils.setInt(width, data, WIDTH_OFFSET);
+  ByteArrayUtils.setInt(height, data, HEIGHT_OFFSET);
+  ByteArrayUtils.setShort((short) bands, data, BANDS_OFFSET);
+  ByteArrayUtils.setByte((byte) datatype, data, DATATYPE_OFFSET);
+  return HEADER_LEN;
+}
+
+static int[] readHeader(byte[] data) {
+  return new int[] {
+      ByteArrayUtils.getByte(data, VERSION_OFFSET),
+      ByteArrayUtils.getInt(data, WIDTH_OFFSET),
+      ByteArrayUtils.getInt(data, HEIGHT_OFFSET),
+      ByteArrayUtils.getShort(data, BANDS_OFFSET),
+      ByteArrayUtils.getByte(data, DATATYPE_OFFSET),
+      HEADER_LEN
+  };
+}
+
+static MrGeoRaster createRaster(byte[] data)
+{
+  final int[] header = MrGeoRaster.readHeader(data);
+  return createRaster(header[1], header[2], header[3], header[4], data, header[5]);
+}
+
 final public MrGeoRaster createCompatibleRaster(int width, int height)
 {
   return createEmptyRaster(width, height, bands, datatype);
 }
-
 
 final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, double nodata)
 {
@@ -250,33 +279,6 @@ final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, doub
 
   return raster;
 }
-
-
-final int calculateByteOffset(final int x, final int y, final int band)
-{
-  return ((y * width + x) + band * bandoffset) * bytesPerPixel() + dataoffset;
-}
-
-final int[] calculateByteRangeOffset(final int startx, final int starty, final int endx, final int endy, final int band)
-{
-  final int bpp = bytesPerPixel();
-  final int bandoffset = band * this.bandoffset;
-
-  return new int[] {
-      ((starty * width + startx) + bandoffset) * bpp + dataoffset,
-      ((endy   * width + endx)   + bandoffset) * bpp + dataoffset};
-}
-
-final int[] calculateByteRangeOffset(final int startx, final int starty, final int startband,
-    final int endx, final int endy, final int endband)
-{
-  final int bpp = bytesPerPixel();
-
-  return new int[] {
-      ((starty * width + startx) + (startband * bandoffset)) * bpp + dataoffset,
-      ((endy   * width + endx)   + (endband * bandoffset)) * bpp + dataoffset};
-}
-
 
 final public int width()
 {
@@ -405,6 +407,25 @@ final public void fill(final double[] values)
 
       System.arraycopy(row[b].data, headerlen, data, offset, len);
     }
+  }
+}
+
+final public void fill(final int band, final double value)
+{
+  MrGeoRaster row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
+  for (int x = 0; x < width; x++)
+  {
+    row.setPixel(x, 0, 0, value);
+  }
+
+  int headerlen = bandoffset;
+  int len = row.data.length - headerlen;
+
+  for (int y = 0; y < height; y++)
+  {
+    int offset = calculateByteOffset(0, y, band);
+
+    System.arraycopy(row.data, headerlen, data, offset, len);
   }
 }
 
@@ -649,40 +670,57 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
   }
 }
 
-public static MrGeoRaster fromDataset(Dataset dataset)
+final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
 {
-  return fromDataset(dataset, 0, 0, dataset.GetRasterXSize(), dataset.GetRasterYSize());
-}
+  int gdaltype = GDALUtils.toGDALDataType(datatype);
 
-public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width, final int height)
-{
-  int datatype = dataset.GetRasterBand(1).getDataType();
-  int bands = dataset.GetRasterCount();
-  int datasize = gdal.GetDataTypeSize(datatype) / 8;
+  Dataset ds = GDALUtils.createEmptyMemoryRaster(width, height, bands, gdaltype, nodatas);
 
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(datatype));
+  double[] xform = new double[6];
+  if (bounds != null) {
+
+    xform[0] = bounds.w;
+    xform[1] = bounds.width() / width;
+    xform[2] = 0;
+    xform[3] = bounds.n;
+    xform[4] = 0;
+    xform[5] = -bounds.height() / height;
+
+    ds.SetProjection(GDALUtils.EPSG4326());
+  }
+  else
+  {
+    xform[0] = 0;
+    xform[1] = width;
+    xform[2] = 0;
+    xform[3] = 0;
+    xform[4] = 0;
+    xform[5] = -height;
+  }
+  ds.SetGeoTransform(xform);
+
+  byte[] data = new byte[datasize() * width * height];
 
   for (int b = 0; b < bands; b++)
   {
-    Band band = dataset.GetRasterBand(b + 1); // gdal bands are 1's based
-    byte[] data = new byte[datasize * width * height];
+    Band band = ds.GetRasterBand(b + 1); // gdal bands are 1's based
+    band.SetNoDataValue(nodatas[b]);
 
-    int success = band.ReadRaster(x, y, width, height, data);
+
+    System.arraycopy(this.data ,calculateByteOffset(0, 0, b), data, 0, data.length);
+    GDALUtils.swapBytes(data, gdaltype);
+
+    int success = band.WriteRaster(0, 0, width, height, data);
 
     if (success != gdalconstConstants.CE_None)
     {
-      System.out.println("Failed reading raster. gdal error: " + success);
+      System.out.println("Failed writing raster. gdal error: " + success);
     }
-    GDALUtils.swapBytes(data, datatype);
 
-    System.arraycopy(data, 0, raster.data, raster.calculateByteOffset(0, 0, b), data.length);
   }
 
-  return raster;
+  return ds;
 }
-
-
-abstract int bytesPerPixel();
 
 public abstract byte getPixelByte(int x, int y, int band);
 public abstract short getPixelShort(int x, int y, int band);
@@ -696,6 +734,34 @@ public abstract void setPixel(int x, int y, int band, short pixel);
 public abstract void setPixe(int x, int y, int band, int pixel);
 public abstract void setPixel(int x, int y, int band, float pixel);
 public abstract void setPixel(int x, int y, int band, double pixel);
+
+
+final int calculateByteOffset(final int x, final int y, final int band)
+{
+  return ((y * width + x) + band * bandoffset) * bytesPerPixel() + dataoffset;
+}
+
+final int[] calculateByteRangeOffset(final int startx, final int starty, final int endx, final int endy, final int band)
+{
+  final int bpp = bytesPerPixel();
+  final int bandoffset = band * this.bandoffset;
+
+  return new int[] {
+      ((starty * width + startx) + bandoffset) * bpp + dataoffset,
+      ((endy   * width + endx)   + bandoffset) * bpp + dataoffset};
+}
+
+final int[] calculateByteRangeOffset(final int startx, final int starty, final int startband,
+    final int endx, final int endy, final int endband)
+{
+  final int bpp = bytesPerPixel();
+
+  return new int[] {
+      ((starty * width + startx) + (startband * bandoffset)) * bpp + dataoffset,
+      ((endy   * width + endx)   + (endband * bandoffset)) * bpp + dataoffset};
+}
+
+abstract int bytesPerPixel();
 
 
 

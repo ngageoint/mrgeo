@@ -479,7 +479,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
         // force the nodata values...
         for (i <- 1 to bands) {
           val band = src.GetRasterBand(i)
-          band.SetNoDataValue(actualNoData(i - 1).doubleValue())
+          band.SetNoDataValue(actualNoData(i - 1))
         }
 
         val imageBounds = GDALUtils.getBounds(src)

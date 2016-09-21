@@ -23,10 +23,10 @@ import org.gdal.gdal.Dataset;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.image.RasterTileMerger;
 import org.mrgeo.mapalgebra.MapAlgebra;
 import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.job.JobCancelledException;
@@ -39,7 +39,6 @@ import org.mrgeo.utils.tms.TMSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
@@ -103,12 +102,11 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
 
   try
   {
-    Raster raster = RasterTileMerger.mergeTiles(image);
+    MrGeoRaster raster = image.getRaster();
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
 
     Bounds tilesBounds = TMSUtils.tileBounds(meta.getBounds(), image.getMaxZoomlevel(), image.getTilesize());
     GDALJavaUtils.saveRaster(raster, baselineTif.getCanonicalPath(), tilesBounds, nodata);
-
   }
   finally
   {
@@ -172,7 +170,7 @@ public void compareRasterOutput(final String testName, final TestUtils.ValueTran
     final File baselineTif = new File(file, testName + ".tif");
     if (baselineTif.exists())
     {
-      TestUtils.compareRasters(baselineTif, baselineTranslator, RasterTileMerger.mergeTiles(image), testTranslator);
+      TestUtils.compareRasters(baselineTif, baselineTranslator, image.getRaster(), testTranslator);
     }
     else
     {
@@ -182,8 +180,7 @@ public void compareRasterOutput(final String testName, final TestUtils.ValueTran
       final MrsImage goldenImage = goldenPyramid.getImage(image.getZoomlevel());
       try
       {
-        TestUtils
-            .compareRasters(RasterTileMerger.mergeTiles(goldenImage), RasterTileMerger.mergeTiles(image));
+        TestUtils.compareRasters(goldenImage.getRaster(), image.getRaster());
       }
       finally
       {
@@ -218,11 +215,11 @@ public void compareLocalRasterOutput(final String testName, final TestUtils.Valu
   final File tf = new File(outputLocal);
   final File testFile = new File(tf, testName + ".tif");
 
-  final Raster testRaster;
+  final MrGeoRaster testRaster;
   if (testFile.exists())
   {
     Dataset d = GDALUtils.open(testFile.getCanonicalPath());
-    testRaster = GDALUtils.toRaster(d);
+    testRaster = MrGeoRaster.fromDataset(d);
   }
   else
   {
@@ -230,7 +227,7 @@ public void compareLocalRasterOutput(final String testName, final TestUtils.Valu
     final MrsPyramid testPyramid = MrsPyramid.open(inputLocalAbs + "/" + testName,
                                                    providerProperties);
     final MrsImage testImage = testPyramid.getImage(testPyramid.getMaximumLevel());
-    testRaster = RasterTileMerger.mergeTiles(testImage);
+    testRaster = testImage.getRaster();
   }
 
   // The output against which to compare could either be a tif or a MrsPyramid.
@@ -249,8 +246,7 @@ public void compareLocalRasterOutput(final String testName, final TestUtils.Valu
     final MrsImage goldenImage = goldenPyramid.getImage(goldenPyramid.getMaximumLevel());
     try
     {
-      TestUtils
-          .compareRasters(RasterTileMerger.mergeTiles(goldenImage), testRaster);
+      TestUtils.compareRasters(goldenImage.getRaster(), testRaster);
     }
     finally
     {

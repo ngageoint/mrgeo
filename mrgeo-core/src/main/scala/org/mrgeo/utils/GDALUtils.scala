@@ -514,7 +514,7 @@ object GDALUtils extends Logging {
   }
 
   @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Temp file used for writing to OutputStream")
-  def saveRaster(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
+  def saveRaster(raster: Dataset, output:Either[String, OutputStream],
       bounds:Bounds = null, nodata:Double = Double.NegativeInfinity,
       format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit =  {
 
@@ -523,39 +523,8 @@ object GDALUtils extends Logging {
     case Right(stream) => File.createTempFile("tmp-file", "").getCanonicalPath
     }
 
-    val dataset = raster match {
-    case Left(r) =>
-      val ds = toDataset(r, nodata)
 
-      val xform = new Array[Double](6)
-
-      if (bounds != null) {
-        xform(0) = bounds.w
-        xform(1) = bounds.width / ds.getRasterXSize
-        xform(2) = 0
-        xform(3) = bounds.n
-        xform(4) = 0
-        xform(5) = -bounds.height / ds.getRasterYSize
-
-        ds.SetProjection(GDALUtils.EPSG4326)
-      }
-      else
-      {
-        xform(0) = 0
-        xform(1) = ds.getRasterXSize
-        xform(2) = 0
-        xform(3) = 0
-        xform(4) = 0
-        xform(5) = -ds.getRasterYSize
-      }
-
-      ds.SetGeoTransform(xform)
-
-      ds
-    case Right(d) => d
-    }
-
-    saveRaster(dataset, filename, format, options)
+    saveRaster(raster, filename, format, options)
 
     output match {
     case Right(stream) =>
@@ -567,23 +536,12 @@ object GDALUtils extends Logging {
     case _ =>
     }
 
-    raster match {
-    case Left(r) => dataset.delete()
-    case Right(d) =>
-    }
-
   }
 
-  def saveRasterTile(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
+  def saveRasterTile(raster: Dataset, output:Either[String, OutputStream],
       tx:Long, ty:Long, zoom:Int, nodata:Double = Double.NegativeInfinity,
       format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit = {
-
-    val tilesize = raster match {
-    case Left(r) => r.getWidth
-    case Right(d) => d.getRasterXSize
-    }
-
-    val bounds = TMSUtils.tileBounds(tx, ty, zoom, tilesize)
+    val bounds = TMSUtils.tileBounds(tx, ty, zoom, raster.getRasterXSize)
 
     saveRaster(raster, output, bounds, nodata, format, options)
   }
