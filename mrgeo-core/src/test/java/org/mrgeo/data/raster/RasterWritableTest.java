@@ -27,11 +27,10 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.HadoopUtils;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.io.IOException;
 
 /* This test handles all four cases of RasterWritable:
@@ -49,120 +48,81 @@ import java.io.IOException;
  * 		-Djava.library.path=/usr/local/hadoop/bin/../lib/native/Linux-amd64-64
  *  
  */
-public class RasterWritableTest {
-	Raster srcRaster;
-	int RASTER_SIZE = 10;
-	double PIXEL_VALUE = 1.0;
-	int NUM_ENTRIES = 5;
+public class RasterWritableTest extends LocalRunnerTest
+{
+private MrGeoRaster srcRaster;
 
-	Configuration conf;
+private int RASTER_SIZE = 10;
+private double PIXEL_VALUE = 1.0;
+private int NUM_ENTRIES = 5;
 
 //	private CompressionCodec codec;
 //	private Decompressor decompressor;
 //	private Compressor compressor;
-	
-	private static Path outputHdfs;
 
-	@BeforeClass
-	public static void init() throws IOException
-	{
-	   outputHdfs = TestUtils.composeOutputHdfs(RasterWritableTest.class);
-	}
+private static Path outputHdfs;
 
-	@Before 
-	public void setUp() throws IOException {
-		conf = HadoopUtils.createConfiguration();
-    HadoopUtils.setupLocalRunner(conf);
-		srcRaster = RasterUtils.createEmptyRaster(RASTER_SIZE, RASTER_SIZE, 1, DataBuffer.TYPE_FLOAT, PIXEL_VALUE);
-	}
+@BeforeClass
+public static void init() throws IOException
+{
+  outputHdfs = TestUtils.composeOutputHdfs(RasterWritableTest.class);
+}
 
+@Before
+public void setUp() throws IOException
+{
+  srcRaster = TestUtils.createConstRaster(RASTER_SIZE, RASTER_SIZE,
+      DataBuffer.TYPE_FLOAT, PIXEL_VALUE);
+}
 
-	@Test
-	@Category(UnitTest.class)
-	public void testNoCompressNoPayloadRaster() throws IOException {
-		testRaster(false,false, "testNoCompressNoPayloadRaster");
-	}	
+@Test
+@Category(UnitTest.class)
+public void testNoCompressNoPayloadRaster() throws IOException
+{
+  testRaster("testNoCompressNoPayloadRaster");
+}
 
-	@Test
-	@Category(UnitTest.class)
-	public void testNoCompressPayloadRaster() throws IOException {
-		testRaster(false,true, "testNoCompressPayloadRaster");
-	}	
+private void testRaster(String testName) throws IOException
+{
+  Path rasterFilePath = new Path(outputHdfs, "raster" + testName + ".seq");
 
-	@Test
-	@Category(UnitTest.class)
-	public void testPayloadNoCompressedRaster() throws IOException {
-		testRaster(true,false, "testPayloadNoCompressedRaster");
-	}	
+  FileSystem fs = rasterFilePath.getFileSystem(conf);
+  SequenceFile.Writer writer =
+      SequenceFile.createWriter(fs, conf, rasterFilePath, TileIdWritable.class, RasterWritable.class);
 
-	@Test
-	@Category(UnitTest.class)
-	public void testPayloadCompressedRaster() throws IOException {
-		testRaster(true,true, "testPayloadCompressedRaster");
-	}
-	
-	private void testRaster(boolean compressRaster, boolean usePayload, String testName) throws IOException 
-	{
+  TileIdWritable key = new TileIdWritable();
+  RasterWritable value;
 
-    Path rasterFilePath = new Path(outputHdfs, "raster" + testName + ".seq");
+  TileIdWritable payload = null;
+  for (int i = 0; i < NUM_ENTRIES; i++)
+  {
+    key.set(i);
 
-		FileSystem fs = rasterFilePath.getFileSystem(conf);
-		SequenceFile.Writer writer = SequenceFile.createWriter(fs, conf, rasterFilePath, TileIdWritable.class, RasterWritable.class);
+    value = RasterWritable.toWritable(srcRaster);
 
-		TileIdWritable key = new TileIdWritable();
-		RasterWritable value;
-		
-		TileIdWritable payload = null;
-		for(int i=0; i < NUM_ENTRIES; i++) {
-			key.set(i);
+    writer.append(key, value);
+  }
 
-			// initialize the payload if we're using it
-			if(usePayload)
-				payload = key;
-//			if(compressRaster)
-//				value.set(RasterWritable.toWritable(srcRaster,codec,compressor,payload).get());
-//			else
-				value = RasterWritable.toWritable(srcRaster,payload);
+  writer.close();
 
-			writer.append(key, value);
-		}	
-			
-		writer.close();
+  int foundNumEntries = 0;
+  TileIdWritable foundKey = new TileIdWritable();
+  RasterWritable foundValue = new RasterWritable();
 
-		int foundNumEntries = 0;
-		TileIdWritable foundKey = new TileIdWritable();
-		RasterWritable foundValue = new RasterWritable();
-		
-		payload = new TileIdWritable();
-		SequenceFile.Reader reader = new SequenceFile.Reader(fs, rasterFilePath, conf);
-		while(reader.next(foundKey,foundValue)) {
-			// check key 
-			Assert.assertEquals(foundNumEntries, foundKey.get());
+  payload = new TileIdWritable();
+  SequenceFile.Reader reader = new SequenceFile.Reader(fs, rasterFilePath, conf);
+  while (reader.next(foundKey, foundValue))
+  {
+    // check key
+    Assert.assertEquals(foundNumEntries, foundKey.get());
 
-			// check if api returns no payload raster (compressed/uncompressed) correctly
-			Raster destRaster = null;
-//			if(compressRaster)
-//				destRaster = RasterWritable.toRaster(foundValue,codec,decompressor);
-//			else  
-				destRaster = RasterWritable.toRaster(foundValue);
+    // check if api returns no payload raster (compressed/uncompressed) correctly
+    MrGeoRaster destRaster = RasterWritable.toMrGeoRaster(foundValue);
+    TestUtils.compareRasters(srcRaster, destRaster);
 
-			TestUtils.compareRasters(srcRaster, destRaster);
-
-			// check if api returns raster (compressed/uncompressed) and (with/without) payload
-			Raster destRaster2 = null;
-//			if(compressRaster)
-//				destRaster2 = RasterWritable.toRaster(foundValue,codec,decompressor,payload);
-//			else  
-				destRaster2 = RasterWritable.toRaster(foundValue,payload);
-
-			// check if the payload component is correct if one was provided
-			if(usePayload)
-				Assert.assertEquals(payload.get(), foundNumEntries);
-			
-			TestUtils.compareRasters(srcRaster, destRaster2);			
-			foundNumEntries++;
-		}
-		reader.close();
-		Assert.assertEquals(NUM_ENTRIES, foundNumEntries);
-	}
+    foundNumEntries++;
+  }
+  reader.close();
+  Assert.assertEquals(NUM_ENTRIES, foundNumEntries);
+}
 }

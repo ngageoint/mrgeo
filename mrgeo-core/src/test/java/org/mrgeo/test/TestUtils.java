@@ -318,18 +318,18 @@ public static void compareRasterToConstant(MrGeoRaster raster, double constant, 
   }
 }
 
-public static MrGeoRaster createConstRaster(int width, int height, double c)
+public static MrGeoRaster createConstRaster(int width, int height, int datatype, double c)
 {
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, DataBuffer.TYPE_DOUBLE, 1);
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, datatype, 1);
   raster.fill(c);
 
   return raster;
 }
 
-public static MrGeoRaster createConstRasterWithNodata(int width, int height, double c, double nodata,
+public static MrGeoRaster createConstRasterWithNodata(int width, int height, int datatype, double c, double nodata,
     int nodataFrequency)
 {
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, DataBuffer.TYPE_DOUBLE, 1);
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, datatype, 1);
 
   for (int x = 0; x < width; x++)
   {
@@ -343,9 +343,9 @@ public static MrGeoRaster createConstRasterWithNodata(int width, int height, dou
   return raster;
 }
 
-public static MrGeoRaster createNumberedRaster(int width, int height)
+public static MrGeoRaster createNumberedRaster(int width, int height, int datatype)
 {
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, DataBuffer.TYPE_DOUBLE, 1);
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, datatype, 1);
 
   for (int x = 0; x < width; x++)
   {
