@@ -16,14 +16,13 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.Raster
 import java.io._
 import java.text.DecimalFormat
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.geometry.{Geometry, GeometryFactory, Point}
 import org.mrgeo.image.MrsPyramidMetadata
@@ -116,7 +115,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     new NeighborData (1, 1, pixelsizediag)   // DOWN_RIGHT)
   )
 
-  var cache = mutable.HashMap.empty[Long, Raster]
+  var cache = mutable.HashMap.empty[Long, MrGeoRaster]
 
 
   val maxPx = tilesize - 1
@@ -219,12 +218,12 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
       Float.MaxValue
     }
     else {
-      raster.getSampleFloat(newx, newy, 0)
+      raster.getPixelFloat(newx, newy, 0)
     }
   }
 
 
-  def gettile(t:Tile):Raster = {
+  def gettile(t:Tile):MrGeoRaster = {
     val id = TMSUtils.tileid(t.tx, t.ty, zoom)
 
     cache.get(id) match {
@@ -236,7 +235,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
   }
 
   def updatecache(t:Tile) = {
-    val newcache = mutable.HashMap.empty[Long, Raster]
+    val newcache = mutable.HashMap.empty[Long, MrGeoRaster]
 
     val tilebuilder = Array.newBuilder[Long]
 
@@ -265,7 +264,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     rdd.filter(tile => {
       tilelist.contains(tile._1.get)
     }).collect.foreach(tile => {
-      newcache.put(tile._1.get, RasterWritable.toRaster(tile._2))
+      newcache.put(tile._1.get, RasterWritable.toMrGeoRaster(tile._2))
     })
 
     cache = newcache
