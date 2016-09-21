@@ -1,4 +1,4 @@
-package org.mrgeo.ingest
+package org.mrgeo.data.raster.ingest
 
 import java.io.{File, IOException}
 import java.net.URI
