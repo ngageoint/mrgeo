@@ -102,6 +102,20 @@ public static MrGeoRaster createEmptyRaster(int width, int height, int bands, in
   }
 }
 
+public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype, double nodata)
+{
+  MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
+  raster.fill(nodata);
+  return raster;
+}
+
+public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype, double[] nodatas)
+{
+  MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
+  raster.fill(nodatas);
+  return raster;
+}
+
 static MrGeoRaster createRaster(byte[] data)
 {
   final int[] header = MrGeoRaster.readHeader(data);
