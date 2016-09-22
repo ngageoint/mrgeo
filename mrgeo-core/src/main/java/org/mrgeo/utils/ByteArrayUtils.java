@@ -26,53 +26,53 @@ public static void setByte(byte value, byte[] bytes)
 public static short getShort(byte[] bytes, int offset)
 {
   return (short)
-      (   (bytes[offset + 1] <<  8) |
-          (bytes[offset    ]));
+      (   ((bytes[offset + 1] & 0xff) <<  8) |
+          ( bytes[offset    ] & 0xff));
 }
 
 public static short getShort(byte[] bytes)
 {
   return (short)
-      (   (bytes[1] <<  8) |
-          (bytes[0]));
+      (   ((bytes[1] & 0xff) <<  8) |
+          ( bytes[0] & 0xff));
 }
 
 public static void setShort(short value, byte[] bytes, int offset)
 {
-  bytes[offset + 1] = (byte)((value & 0xff00) >>  8);
-  bytes[offset    ] = (byte)(value & 0xff);
+  bytes[offset + 1] = (byte)( value >>  8);
+  bytes[offset    ] = (byte)( value & 0x00ff);
 }
 
 public static void setShort(short value, byte[] bytes)
 {
-  bytes[1] = (byte)((value & 0xff00) >>  8);
-  bytes[0] = (byte)(value & 0xff);
+  bytes[1] = (byte)( value >>  8);
+  bytes[0] = (byte)( value & 0x00ff);
 }
 
 public static int getInt(byte[] bytes, int offset)
 {
   return
-      (   (bytes[offset + 3]) << 24) |
-          (bytes[offset + 2] << 16) |
-          (bytes[offset + 1] <<  8) |
-          (bytes[offset    ]);
+      (   ((bytes[offset + 3] & 0xff) << 24) |
+          ((bytes[offset + 2] & 0xff) << 16) |
+          ((bytes[offset + 1] & 0xff) <<  8) |
+          ( bytes[offset    ] & 0xff));
 }
 
 public static int getInt(byte[] bytes)
 {
   return
-      (   (bytes[3]) << 24) |
-          (bytes[2] << 16) |
-          (bytes[1] <<  8) |
-          (bytes[0]);
+      (   ((bytes[3] & 0xff) << 24) |
+          ((bytes[2] & 0xff) << 16) |
+          ((bytes[1] & 0xff) <<  8) |
+          ( bytes[0] & 0xff));
 }
 
 public static void setInt(int value, byte[] bytes, int offset)
 {
-  bytes[offset + 3] = (byte)(value >> 24);
+  bytes[offset + 3] = (byte)( value >> 24);
   bytes[offset + 2] = (byte)((value & 0x00ff0000) >> 16);
   bytes[offset + 1] = (byte)((value & 0x0000ff00) >>  8);
-  bytes[offset    ] = (byte)(value & 0xff);
+  bytes[offset    ] = (byte)( value & 0x000000ff);
 }
 
 public static void setInt(int value, byte[] bytes)
@@ -80,33 +80,33 @@ public static void setInt(int value, byte[] bytes)
   bytes[3] = (byte)(value >> 24);
   bytes[2] = (byte)((value & 0x00ff0000) >> 16);
   bytes[1] = (byte)((value & 0x0000ff00) >>  8);
-  bytes[0] = (byte)(value & 0xff);
+  bytes[0] = (byte)( value & 0x000000ff);
 }
 
 public static long getLong(byte[] bytes, int offset)
 {
   return
-      (   ((long)bytes[offset + 7] << 56) |
-          ((long)bytes[offset + 6] << 48) |
-          ((long)bytes[offset + 5] << 40) |
-          ((long)bytes[offset + 4] << 32) |
-          ((long)bytes[offset + 3] << 24) |
-          ((long)bytes[offset + 2] << 16) |
-          ((long)bytes[offset + 1] <<  8) |
-          ((long)bytes[offset    ]));
+      (   ((long)(bytes[offset + 7] & 0xff) << 56) |
+          ((long)(bytes[offset + 6] & 0xff) << 48) |
+          ((long)(bytes[offset + 5] & 0xff) << 40) |
+          ((long)(bytes[offset + 4] & 0xff) << 32) |
+          ((long)(bytes[offset + 3] & 0xff) << 24) |
+          ((long)(bytes[offset + 2] & 0xff) << 16) |
+          ((long)(bytes[offset + 1] & 0xff) <<  8) |
+          ((long)(bytes[offset    ] & 0xff)));
 }
 
 public static long getLong(byte[] bytes)
 {
   return
-      (   ((long)bytes[7] << 56) |
-          ((long)bytes[6] << 48) |
-          ((long)bytes[5] << 40) |
-          ((long)bytes[4] << 32) |
-          ((long)bytes[3] << 24) |
-          ((long)bytes[2] << 16) |
-          ((long)bytes[1] <<  8) |
-          ((long)bytes[0]));
+      (   ((long)(bytes[7] & 0xff) << 56) |
+          ((long)(bytes[6] & 0xff) << 48) |
+          ((long)(bytes[5] & 0xff) << 40) |
+          ((long)(bytes[4] & 0xff) << 32) |
+          ((long)(bytes[3] & 0xff) << 24) |
+          ((long)(bytes[2] & 0xff) << 16) |
+          ((long)(bytes[1] & 0xff) <<  8) |
+          ((long)(bytes[0] & 0xff)));
 }
 
 public static void setLong(long value, byte[] bytes, int offset)
@@ -136,29 +136,29 @@ public static void setLong(long value, byte[] bytes)
 public static float getFloat(byte[] bytes, int offset)
 {
   return Float.intBitsToFloat(
-      (   bytes[offset + 3] << 24 |
-          bytes[offset + 2] << 16 |
-          bytes[offset + 1] << 8 |
-          bytes[offset    ]));
+      (   (bytes[offset + 3] & 0xff) << 24 |
+          (bytes[offset + 2] & 0xff) << 16 |
+          (bytes[offset + 1] & 0xff) << 8 |
+          (bytes[offset    ] & 0xff)));
 }
 
 public static float getFloat(byte[] bytes)
 {
   return Float.intBitsToFloat(
-      (   bytes[3] << 24 |
-          bytes[2] << 16 |
-          bytes[1] << 8 |
-          bytes[0]));
+      (   (bytes[3] & 0xff) << 24 |
+          (bytes[2] & 0xff) << 16 |
+          (bytes[1] & 0xff) << 8 |
+          (bytes[0] & 0xff)));
 }
 
 public static void setFloat(float value, byte[] bytes, int offset)
 {
   int intval = Float.floatToRawIntBits(value);
 
-  bytes[offset + 3] = (byte)(intval >> 24);
+  bytes[offset + 3] = (byte)( intval >> 24);
   bytes[offset + 2] = (byte)((intval & 0x00ff0000) >> 16);
   bytes[offset + 1] = (byte)((intval & 0x0000ff00) >>  8);
-  bytes[offset    ] = (byte)(intval & 0xff);
+  bytes[offset    ] = (byte)( intval & 0x000000ff);
 }
 
 public static void setFloat(float value, byte[] bytes)
@@ -168,33 +168,33 @@ public static void setFloat(float value, byte[] bytes)
   bytes[3] = (byte)(intval >> 24);
   bytes[2] = (byte)((intval & 0x00ff0000) >> 16);
   bytes[1] = (byte)((intval & 0x0000ff00) >>  8);
-  bytes[0] = (byte)(intval & 0xff);
+  bytes[0] = (byte)( intval & 0x000000ff);
 }
 
 public static double getDouble(byte[] bytes, int offset)
 {
   return Double.longBitsToDouble(
-      (   ((long)bytes[offset + 7] << 56) |
-          ((long)bytes[offset + 6] << 48) |
-          ((long)bytes[offset + 5] << 40) |
-          ((long)bytes[offset + 4] << 32) |
-          ((long)bytes[offset + 3] << 24) |
-          ((long)bytes[offset + 2] << 16) |
-          ((long)bytes[offset + 1] << 8) |
-          ((long)bytes[offset    ])));
+      (   ((long)(bytes[offset + 7] & 0xff) << 56) |
+          ((long)(bytes[offset + 6] & 0xff) << 48) |
+          ((long)(bytes[offset + 5] & 0xff) << 40) |
+          ((long)(bytes[offset + 4] & 0xff) << 32) |
+          ((long)(bytes[offset + 3] & 0xff) << 24) |
+          ((long)(bytes[offset + 2] & 0xff) << 16) |
+          ((long)(bytes[offset + 1] & 0xff) << 8) |
+          ((long)(bytes[offset    ] & 0xff))));
 }
 
 public static double getDouble(byte[] bytes)
 {
   return Double.longBitsToDouble(
-      (   ((long)bytes[7] << 56) |
-          ((long)bytes[6] << 48) |
-          ((long)bytes[5] << 40) |
-          ((long)bytes[4] << 32) |
-          ((long)bytes[3] << 24) |
-          ((long)bytes[2] << 16) |
-          ((long)bytes[1] << 8) |
-          ((long)bytes[0])));
+      (   ((long)(bytes[7] & 0xff) << 56) |
+          ((long)(bytes[6] & 0xff) << 48) |
+          ((long)(bytes[5] & 0xff) << 40) |
+          ((long)(bytes[4] & 0xff) << 32) |
+          ((long)(bytes[3] & 0xff) << 24) |
+          ((long)(bytes[2] & 0xff) << 16) |
+          ((long)(bytes[1] & 0xff) << 8) |
+          ((long)(bytes[0] & 0xff))));
 }
 
 public static void setDouble(double value, byte[] bytes, int offset)
