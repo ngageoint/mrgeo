@@ -370,8 +370,7 @@ final public void fill(final double value)
     row.setPixel(x, 0, 0, value);
   }
 
-  int headerlen = bandoffset;
-  int len = row.data.length - headerlen;
+  int len = row.data.length - dataoffset;
 
   for (int b = 0; b < bands; b++)
   {
@@ -379,7 +378,7 @@ final public void fill(final double value)
     {
       int offset = calculateByteOffset(0, y, b);
 
-      System.arraycopy(row.data, headerlen, data, offset, len);
+      System.arraycopy(row.data, dataoffset, data, offset, len);
     }
   }
 
