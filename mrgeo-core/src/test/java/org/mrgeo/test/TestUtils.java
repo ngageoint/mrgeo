@@ -347,9 +347,9 @@ public static MrGeoRaster createNumberedRaster(int width, int height, int dataty
 {
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 1, datatype);
 
-  for (int x = 0; x < width; x++)
+  for (int y = 0; y < height; y++)
   {
-    for (int y = 0; y < height; y++)
+    for (int x = 0; x < width; x++)
     {
       int pixelId = getPixelId(x, y, width);
       raster.setPixel(x, y, 0, (double) pixelId);

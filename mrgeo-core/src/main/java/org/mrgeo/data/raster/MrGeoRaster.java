@@ -482,7 +482,7 @@ public MrGeoRaster scale(final int dstWidth,
     case DataBuffer.TYPE_USHORT:
       if (interpolate)
       {
-        Bilinear.scaleInt(this, dst, nodatas);
+        Bilinear.scaleInt(src, dst, nodatas);
       }
       else
       {
@@ -519,8 +519,9 @@ public MrGeoRaster scale(final int dstWidth,
     }
 
     src = dst;
-    scaleW = (double) dst.width / src.width;
-    scaleH = (double) dst.height / src.height;
+
+    scaleW = (double) dstWidth / src.width;
+    scaleH = (double) dstHeight / src.height;
   }
 }
 
