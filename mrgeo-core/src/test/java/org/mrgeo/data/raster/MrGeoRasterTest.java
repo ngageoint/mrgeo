@@ -74,7 +74,46 @@ public void setUp() throws Exception
 
 @Test
 @Category(UnitTest.class)
-public void toFromDataset() throws IOException
+public void toFromDatasetByte() throws IOException
+{
+  MrGeoRaster src = TestUtils.createConstRaster(10, 10, DataBuffer.TYPE_BYTE, 1);
+
+  Dataset ds = src.toDataset();
+
+  MrGeoRaster dst = MrGeoRaster.fromDataset(ds);
+
+  TestUtils.compareRasters(src, dst);
+}
+
+@Test
+@Category(UnitTest.class)
+public void toFromDatasetShort() throws IOException
+{
+  MrGeoRaster src = TestUtils.createConstRaster(10, 10, DataBuffer.TYPE_SHORT, 1);
+
+  Dataset ds = src.toDataset();
+
+  MrGeoRaster dst = MrGeoRaster.fromDataset(ds);
+
+  TestUtils.compareRasters(src, dst);
+}
+
+@Test
+@Category(UnitTest.class)
+public void toFromDatasetUShort() throws IOException
+{
+  MrGeoRaster src = TestUtils.createConstRaster(10, 10, DataBuffer.TYPE_USHORT, 1);
+
+  Dataset ds = src.toDataset();
+
+  MrGeoRaster dst = MrGeoRaster.fromDataset(ds);
+
+  TestUtils.compareRasters(src, dst);
+}
+
+@Test
+@Category(UnitTest.class)
+public void toFromDatasetInt() throws IOException
 {
   MrGeoRaster src = TestUtils.createConstRaster(10, 10, DataBuffer.TYPE_INT, 1);
 
@@ -82,11 +121,35 @@ public void toFromDataset() throws IOException
 
   MrGeoRaster dst = MrGeoRaster.fromDataset(ds);
 
-  Assert.assertEquals("bad width",  src.width(), dst.width());
-  Assert.assertEquals("bad height", src.height(), dst.height());
+  TestUtils.compareRasters(src, dst);
+}
+
+@Test
+@Category(UnitTest.class)
+public void toFromDatasetFloat() throws IOException
+{
+  MrGeoRaster src = TestUtils.createConstRaster(10, 10, DataBuffer.TYPE_FLOAT, 1);
+
+  Dataset ds = src.toDataset();
+
+  MrGeoRaster dst = MrGeoRaster.fromDataset(ds);
 
   TestUtils.compareRasters(src, dst);
 }
+
+@Test
+@Category(UnitTest.class)
+public void toFromDatasetDouble() throws IOException
+{
+  MrGeoRaster src = TestUtils.createConstRaster(10, 10, DataBuffer.TYPE_DOUBLE, 1);
+
+  Dataset ds = src.toDataset();
+
+  MrGeoRaster dst = MrGeoRaster.fromDataset(ds);
+
+  TestUtils.compareRasters(src, dst);
+}
+
 
 @Test
 @Category(UnitTest.class)
@@ -134,16 +197,14 @@ public void scaleRasterNearestFloat() throws IOException
 
 private void compareResult(double scale, MrGeoRaster orig, MrGeoRaster scaled) throws IOException
 {
-  Assert.assertEquals("bad width",  (int)(orig.width() * scale), scaled.width());
-  Assert.assertEquals("bad height", (int)(orig.height() * scale), scaled.height());
-
+  String name = testname.getMethodName() + String.format("-%.3f", scale);
   if (GEN_BASELINE_DATA_ONLY)
   {
-    testutils.saveBaselineTif(testname.getMethodName() + String.format("-%.3f", scale), scaled);
+    testutils.saveBaselineTif(name, scaled);
   }
   else
   {
-    testutils.compareRasters(testname.getMethodName() + String.format("-%.3f", scale), scaled);
+    testutils.compareRasters(name, scaled);
   }
 }
 
