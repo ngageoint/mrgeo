@@ -76,16 +76,27 @@ public int compareTo(RasterWritable other)
 @Override
 public void write(DataOutput out) throws IOException
 {
-  out.writeInt(bytes.length);
-  out.write(bytes);
+  if (bytes == null)
+  {
+    out.writeInt(0);
+  }
+  else
+  {
+    out.writeInt(bytes.length);
+    out.write(bytes);
+  }
+
 }
 
 @Override
 public void readFields(DataInput in) throws IOException
 {
   int len = in.readInt();
-  bytes = new byte[len];
-  in.readFully(bytes);
+  if (len > 0)
+  {
+    bytes = new byte[len];
+    in.readFully(bytes);
+  }
 }
 
 
