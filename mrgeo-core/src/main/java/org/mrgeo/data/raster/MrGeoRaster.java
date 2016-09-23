@@ -171,24 +171,25 @@ public static MrGeoRaster fromDataset(Dataset dataset)
 
 public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width, final int height)
 {
-  int datatype = dataset.GetRasterBand(1).getDataType();
+  int gdaltype = dataset.GetRasterBand(1).getDataType();
   int bands = dataset.GetRasterCount();
-  int datasize = gdal.GetDataTypeSize(datatype) / 8;
+  int datasize = gdal.GetDataTypeSize(gdaltype) / 8;
 
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(datatype));
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(gdaltype));
 
   for (int b = 0; b < bands; b++)
   {
     Band band = dataset.GetRasterBand(b + 1); // gdal bands are 1's based
     byte[] data = new byte[datasize * width * height];
 
-    int success = band.ReadRaster(x, y, width, height, data);
+    int success = band.ReadRaster(x, y, width, height, width, height, gdaltype, data);
+
 
     if (success != gdalconstConstants.CE_None)
     {
       System.out.println("Failed reading raster. gdal error: " + success);
     }
-    GDALUtils.swapBytes(data, datatype);
+    //GDALUtils.swapBytes(data, gdaltype);
 
     System.arraycopy(data, 0, raster.data, raster.calculateByteOffset(0, 0, b), data.length);
   }
@@ -445,9 +446,6 @@ public MrGeoRaster scale(final int dstWidth,
   double scaleW = (double) dstWidth / src.width;
   double scaleH = (double) dstHeight / src.height;
 
-  // bresenham's scalar really doesn't like being scaled more than 2x or 1/3x without the
-  // possibility of artifacts. But it turns out you can scale, then scale, etc. and get
-  // an answer without artifacts. Hence the loop here...
   while (true)
   {
     int dw;
@@ -455,16 +453,27 @@ public MrGeoRaster scale(final int dstWidth,
 
     final double scale = Math.max(scaleW, scaleH);
 
-    if (scale > 2.0)
+    // bresenham's scalar really doesn't like being scaled more than 2x or 1/2x without the
+    // possibility of artifacts. But it turns out you can scale, then scale, etc. and get
+    // an answer without artifacts. Hence the loop here...
+    if (interpolate)
     {
-      dw = (int) (src.width * 2.0);
-      dh = (int) (src.height * 2.0);
+      if (scale > 2.0)
+      {
+        dw = (int) (src.width * 2.0);
+        dh = (int) (src.height * 2.0);
 
-    }
-    else if (scale < 0.50)
-    {
-      dw = (int) (src.width * 0.50);
-      dh = (int) (src.height * 0.50);
+      }
+      else if (scale < 0.50)
+      {
+        dw = (int) (src.width * 0.50);
+        dh = (int) (src.height * 0.50);
+      }
+      else
+      {
+        dw = dstWidth;
+        dh = dstHeight;
+      }
     }
     else
     {
@@ -673,9 +682,15 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
   }
 }
 
+final public Dataset toDataset()
+{
+  return toDataset(null, null);
+}
+
 final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
 {
   int gdaltype = GDALUtils.toGDALDataType(datatype);
+
 
   Dataset ds = GDALUtils.createEmptyMemoryRaster(width, height, bands, gdaltype, nodatas);
 
@@ -702,19 +717,18 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
   }
   ds.SetGeoTransform(xform);
 
-  byte[] data = new byte[datasize() * width * height];
+  byte[] data = new byte[bytesPerPixel() * width * height];
 
   for (int b = 0; b < bands; b++)
   {
     Band band = ds.GetRasterBand(b + 1); // gdal bands are 1's based
-    band.SetNoDataValue(nodatas[b]);
-
+    if (nodatas != null)
+    {
+      band.SetNoDataValue(nodatas[b]);
+    }
 
     System.arraycopy(this.data ,calculateByteOffset(0, 0, b), data, 0, data.length);
-    GDALUtils.swapBytes(data, gdaltype);
-
-    int success = band.WriteRaster(0, 0, width, height, data);
-
+    int success = band.WriteRaster(0, 0, width, height, width, height, gdaltype, data);
     if (success != gdalconstConstants.CE_None)
     {
       System.out.println("Failed writing raster. gdal error: " + success);

@@ -24,8 +24,11 @@ import org.junit.Assert;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.image.MrsImage;
+import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.job.JobCancelledException;
 import org.mrgeo.job.JobFailedException;
@@ -34,6 +37,7 @@ import org.mrgeo.utils.FileUtils;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
 
 import java.awt.image.DataBuffer;
 import java.io.*;
@@ -596,9 +600,17 @@ public void compareRasters(String testName, ValueTranslator t1, MrGeoRaster r2, 
   compareRasters(baselineTif, t1, r2, t2);
 }
 
-public void generateBaselineTif(final String testName,
+public void saveBaselineTif(final String testName,
+    final MrGeoRaster raster)
+    throws IOException
+{
+  final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+  GDALJavaUtils.saveRaster(raster.toDataset(), baselineTif.getCanonicalPath());
+}
+
+public void saveBaselineTif(final String testName,
     final MrGeoRaster raster, Bounds bounds, double nodata)
-    throws IOException, JobFailedException, JobCancelledException, ParserException
+    throws IOException
 {
   double[] nodatas = new double[raster.bands()];
   Arrays.fill(nodatas, nodata);

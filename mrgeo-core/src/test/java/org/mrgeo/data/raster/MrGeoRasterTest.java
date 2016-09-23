@@ -17,21 +17,25 @@
 package org.mrgeo.data.raster;
 
 import junit.framework.Assert;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.gdal.gdal.Dataset;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TestName;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 
 import java.awt.image.DataBuffer;
+import java.io.IOException;
 
 @SuppressWarnings("static-method")
 public class MrGeoRasterTest
 {
-//private static int noDataModValue = 7;
-private static double NON_NAN_NODATA_VALUE = -32767.0;
+@Rule
+public TestName testname = new TestName();
+
+private static boolean GEN_BASELINE_DATA_ONLY = false;
+
+private TestUtils testutils;
 
 private static int width;
 private static int height;
@@ -39,27 +43,18 @@ private static int height;
 private static MrGeoRaster numberedInt;
 private static MrGeoRaster numberedFloat;
 private static MrGeoRaster numberedDouble;
-//private static MrGeoRaster numberedWithNoData;
-//private static MrGeoRaster numberedWithNanNoData;
 
 @BeforeClass
 public static void init()
 {
-  width = 10;
-  height = 10;
+  width = 13;
+  height = 13;
 
-//  numberedInt = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_INT);
-//  numberedFloat = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT);
-//  numberedDouble = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_DOUBLE);
-//  numberedWithNoData = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_DOUBLE);
-//  numberedWithNanNoData = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_DOUBLE);
 
   numberedInt = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_INT);
   numberedFloat = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_FLOAT);
   numberedDouble = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_DOUBLE);
 
-//  numberedWithNoData = TestUtils.createNumberedRasterWithNodata(width, height, NON_NAN_NODATA_VALUE, noDataModValue);
-//  numberedWithNanNoData = TestUtils.createNumberedRasterWithNodata(width, height, Double.NaN, noDataModValue);
 }
 
 
@@ -69,60 +64,108 @@ public static void tearDown() throws Exception
   numberedInt = null;
   numberedFloat = null;
   numberedDouble = null;
-
-//  numberedWithNoData = null;
-//  numberedWithNanNoData = null;
 }
 
 @Before
 public void setUp() throws Exception
 {
+  testutils = new TestUtils(MrGeoRasterTest.class);
 }
-
 
 @Test
 @Category(UnitTest.class)
-public void scaleRasterNearest()
+public void toFromDataset() throws IOException
+{
+  MrGeoRaster src = TestUtils.createConstRaster(10, 10, DataBuffer.TYPE_INT, 1);
+
+  Dataset ds = src.toDataset();
+
+  MrGeoRaster dst = MrGeoRaster.fromDataset(ds);
+
+  Assert.assertEquals("bad width",  src.width(), dst.width());
+  Assert.assertEquals("bad height", src.height(), dst.height());
+
+  TestUtils.compareRasters(src, dst);
+}
+
+@Test
+@Category(UnitTest.class)
+public void scaleRasterNearestInt() throws IOException
 {
   int scale;
   MrGeoRaster scaled;
 
   // scale up
-  for (scale = 3; scale < 5; scale++)
-  //  for (scale = 1; scale < 5; scale++)
+  for (scale = 1; scale < 15; scale++)
   {
-    scaled = numberedFloat.scale(width * scale, height * scale, false, new double[]{ NON_NAN_NODATA_VALUE });
-
-    Assert.assertEquals("bad width",  numberedFloat.width() * scale, scaled.width());
-    Assert.assertEquals("bad height",  numberedFloat.height() * scale, scaled.height());
-
-    compareScaledFloat(numberedFloat, scaled, scale);
-
-    scaled = numberedDouble.scale(width * scale, height * scale, false, new double[]{ NON_NAN_NODATA_VALUE });
-
-    Assert.assertEquals("bad width",  numberedDouble.width() * scale, scaled.width());
-    Assert.assertEquals("bad height",  numberedDouble.height() * scale, scaled.height());
-
-    compareScaledDouble(numberedDouble, scaled, scale);
-
-    scaled = numberedInt.scale(width * scale, height * scale, false, new double[]{ NON_NAN_NODATA_VALUE });
-
-    Assert.assertEquals("bad width",  numberedInt.width() * scale, scaled.width());
-    Assert.assertEquals("bad height",  numberedInt.height() * scale, scaled.height());
-
-
-    compareScaledInt(numberedInt, scaled, scale);
+    scaled = numberedInt.scale(width * scale, height * scale, false, new double[]{ Double.NaN });
+    compareResult(scale, numberedInt, scaled);
   }
 
   // scale down
-  for (scale = 2; scale < 8; scale += 2)
+  for (scale = 2; scale < 8; scale++)
   {
-    scaled = numberedInt.scale(width / scale, height / scale, false, new double[]{ NON_NAN_NODATA_VALUE });
+    scaled = numberedInt.scale(width / scale, height / scale, false, new double[]{ Double.NaN });
+    compareResult(1.0 / scale, numberedInt, scaled);
+  }
+}
 
-    Assert.assertEquals("bad width",  numberedInt.width() / scale, scaled.width());
-    Assert.assertEquals("bad height",  numberedInt.height() / scale, scaled.height());
+@Test
+@Category(UnitTest.class)
+public void scaleRasterNearestFloat() throws IOException
+{
+  int scale;
+  MrGeoRaster scaled;
 
-    compareScaledDownInt(numberedInt, scaled, scale);
+  // scale up
+  for (scale = 1; scale < 15; scale++)
+  {
+    scaled = numberedFloat.scale(width * scale, height * scale, false, new double[]{ Double.NaN });
+    compareResult(scale, numberedFloat, scaled);
+  }
+
+  // scale down
+  for (scale = 2; scale < 8; scale++)
+  {
+    scaled = numberedFloat.scale(width / scale, height / scale, false, new double[]{ Double.NaN });
+    compareResult(1.0 / scale, numberedFloat, scaled);
+  }
+}
+
+private void compareResult(double scale, MrGeoRaster orig, MrGeoRaster scaled) throws IOException
+{
+  Assert.assertEquals("bad width",  (int)(orig.width() * scale), scaled.width());
+  Assert.assertEquals("bad height", (int)(orig.height() * scale), scaled.height());
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testutils.saveBaselineTif(testname.getMethodName() + String.format("-%.3f", scale), scaled);
+  }
+  else
+  {
+    testutils.compareRasters(testname.getMethodName() + String.format("-%.3f", scale), scaled);
+  }
+}
+
+@Test
+@Category(UnitTest.class)
+public void scaleRasterNearestDouble() throws IOException
+{
+  int scale;
+  MrGeoRaster scaled;
+
+  // scale up
+  for (scale = 1; scale < 15; scale++)
+  {
+    scaled = numberedDouble.scale(width * scale, height * scale, false, new double[]{ Double.NaN });
+    compareResult(scale, numberedDouble, scaled);
+  }
+
+  // scale down
+  for (scale = 2; scale < 8; scale += 1)
+  {
+    scaled = numberedDouble.scale(width / scale, height / scale, false, new double[]{ Double.NaN });
+    compareResult(1.0 / scale, numberedDouble, scaled);
   }
 }
 
@@ -137,97 +180,6 @@ public void scaleRasterNearest()
 //  scaled = RasterUtils.scaleRasterInterp(numberedFloat,
 //      numberedFloat.width() * scale, numberedFloat.height() * scale, Double.NaN);
 //}
-
-private void compareScaledDownInt(MrGeoRaster orig, MrGeoRaster scaled, int scaleFactor)
-{
-  for (int x = 0; x < scaled.width(); x++)
-  {
-    for (int y = 0; y < scaled.height(); y++)
-
-      for (int band = 0; band < scaled.bands(); band++)
-      {
-        int v1 = scaled.getPixelInt(x, y, band);
-        int v2 = orig.getPixelInt(x * scaleFactor, y * scaleFactor, band);
-
-        Assert.assertEquals("Pixel value mismatch: scale: 1/" + scaleFactor + "  px: " + x + " py: " +  y
-            + " b: " + band + " v1: " + v1 + " v2: " + v2,  v1, v2);
-      }
-  }
-}
-
-private void compareScaledInt(MrGeoRaster orig, MrGeoRaster scaled, int scaleFactor)
-{
-  for (int band = 0; band < scaled.bands(); band++)
-  {
-    for (int y = 0; y < scaled.height(); y++)
-    {
-      for (int x = 0; x < scaled.width(); x++)
-      {
-        int v1 = scaled.getPixelInt(x, y, band);
-        int v2 = orig.getPixelInt(x / scaleFactor, y / scaleFactor, band);
-
-        Assert.assertEquals("Pixel value mismatch: px: " + x + " py: " +  y
-            + " b: " + band + " v1: " + v1 + " v2: " + v2,  v1, v2);
-      }
-    }
-  }
-}
-
-private void compareScaledFloat(MrGeoRaster orig, MrGeoRaster scaled, int scaleFactor)
-{
-  for (int band = 0; band < scaled.bands(); band++)
-  {
-    for (int y = 0; y < scaled.height(); y++)
-    {
-      for (int x = 0; x < scaled.width(); x++)
-      {
-
-        float v1 = orig.getPixelFloat(x / scaleFactor, y / scaleFactor, band);
-        float v2 = scaled.getPixelFloat(x, y, band);
-
-        System.out.println(x + " " + y + " " + v1 + " " + v2);
-//        Assert.assertEquals("Pixel NaN mismatch: px: " + x + " py: " +  y
-//            + " b: " + band + " v1: " + v1 + " v2: " + v2,  Float.isNaN(v1), Float.isNaN(v2));
-//
-//        // make delta something reasonable relative to the data
-//
-//        //NOTE: this formula is not very reliable.  An error of 2e-3f for
-//        //    pixel v1=1 fails, but passes for v1=2.
-//        float delta = Math.max(Math.abs(v1 * 1e-3f), 1e-3f);
-//        Assert.assertEquals("Pixel value mismatch: px: " + x + " py: " +  y
-//            + " b: " + band + " v1: " + v1 + " v2: " + v2,  v1, v2, delta);
-
-      }
-    }
-  }
-}
-
-private void compareScaledDouble(MrGeoRaster orig, MrGeoRaster scaled, int scaleFactor)
-{
-  for (int band = 0; band < scaled.bands(); band++)
-  {
-    for (int y = 0; y < scaled.height(); y++)
-    {
-      for (int x = 0; x < scaled.width(); x++)
-      {
-        double v1 = scaled.getPixelDouble(x, y, band);
-        double v2 = orig.getPixelDouble(x / scaleFactor, y / scaleFactor, band);
-
-        Assert.assertEquals("Pixel NaN mismatch: px: " + x + " py: " + y
-            + " b: " + band + " v1: " + v1 + " v2: " + v2, Double.isNaN(v1), Double.isNaN(v2));
-
-        // make delta something reasonable relative to the data
-
-        //NOTE: this formula is not very reliable.  An error of 2e-3f for
-        //    pixel v1=1 fails, but passes for v1=2.
-        double delta = Math.max(Math.abs(v1 * 1e-3f), 1e-3f);
-        Assert.assertEquals("Pixel value mismatch: px: " + x + " py: " + y
-            + " b: " + band + " v1: " + v1 + " v2: " + v2, v1, v2, delta);
-
-      }
-    }
-  }
-}
 
 
 

@@ -4,22 +4,35 @@ import org.mrgeo.data.raster.MrGeoRaster;
 
 public class Nearest
 {
+public static double EPSILON = 1e-6f;
+
 public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst)
 {
-  final float x_ratio = (float) src.width() / dst.width();
-  final float y_ratio = (float) src.height() / dst.height();
+  final double x_ratio = (double) src.width() / dst.width();
+  final double y_ratio = (double) src.height() / dst.height();
 
-  float srcX;
-  float srcY = 0;
+  double startX = 0.0;
+  double startY = 0.0;
+  if (x_ratio >= 2.0)
+  {
+    startX = x_ratio / 2;
+  }
+  if (y_ratio >= 2.0)
+  {
+    startY = y_ratio / 2;
+  }
+
+  double srcX;
+  double srcY = startY;
 
   for (int b = 0; b < src.bands(); b++)
   {
     for (int y = 0; y < dst.height(); y++)
     {
-      srcX = 0;
+      srcX = startX;
       for (int x = 0; x < dst.width(); x++)
       {
-        dst.setPixel(x, y, b, src.getPixelInt((int)srcX, (int)srcY, b));
+        dst.setPixel(x, y, b, src.getPixelInt((int)(srcX + EPSILON), (int)(srcY + EPSILON), b));
         srcX += x_ratio;
       }
       srcY += y_ratio;
@@ -29,11 +42,11 @@ public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst)
 
 public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst)
 {
-  final float x_ratio = (float) src.width() / dst.width();
-  final float y_ratio = (float) src.height() / dst.height();
+  final double x_ratio = (double) src.width() / dst.width();
+  final double y_ratio = (double) src.height() / dst.height();
 
-  float srcX;
-  float srcY = 0;
+  double srcX;
+  double srcY = 0;
 
   for (int b = 0; b < src.bands(); b++)
   {
@@ -42,7 +55,8 @@ public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst)
       srcX = 0;
       for (int x = 0; x < dst.width(); x++)
       {
-        dst.setPixel(x, y, b, src.getPixelFloat((int)srcX, (int)srcY, b));
+
+        dst.setPixel(x, y, b, src.getPixelFloat((int)(srcX + EPSILON), (int)(srcY + EPSILON), b));
         srcX += x_ratio;
       }
       srcY += y_ratio;
@@ -52,11 +66,11 @@ public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst)
 
 public static void scaleDouble(final MrGeoRaster src, final MrGeoRaster dst)
 {
-  final float x_ratio = (float) src.width() / dst.width();
-  final float y_ratio = (float) src.height() / dst.height();
+  final double x_ratio = (double) src.width() / dst.width();
+  final double y_ratio = (double) src.height() / dst.height();
 
-  float srcX;
-  float srcY = 0;
+  double srcX;
+  double srcY = 0;
 
   for (int b = 0; b < src.bands(); b++)
   {
@@ -65,7 +79,7 @@ public static void scaleDouble(final MrGeoRaster src, final MrGeoRaster dst)
       srcX = 0;
       for (int x = 0; x < dst.width(); x++)
       {
-        dst.setPixel(x, y, b, src.getPixelDouble((int)srcX, (int)srcY, b));
+        dst.setPixel(x, y, b, src.getPixelDouble((int)(srcX + EPSILON), (int)(srcY + EPSILON), b));
         srcX += x_ratio;
       }
       srcY += y_ratio;
