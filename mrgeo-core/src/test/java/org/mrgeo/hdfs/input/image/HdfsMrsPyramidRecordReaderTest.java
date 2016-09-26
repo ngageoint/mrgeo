@@ -12,11 +12,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.*;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
+import org.mrgeo.test.TestUtils;
 
 import java.io.IOException;
 
@@ -136,8 +138,11 @@ public class HdfsMrsPyramidRecordReaderTest {
 
         for (int i = 0; i < tileIds.length; i++) {
             Assert.assertTrue("more key values exist", subject.nextKeyValue());
-            Assert.assertEquals(subject.getCurrentKey(), tileIds[i]);
-            Assert.assertEquals(subject.getCurrentValue(), rasters[i]);
+            for (int b = 0; b < rasters[i].getSize(); b++)
+            {
+                Assert.assertEquals(rasters[i].getBytes()[b], subject.getCurrentValue().getBytes()[b]);
+            }
+            Assert.assertEquals(tileIds[i].get(), subject.getCurrentKey().get());
         }
         Assert.assertFalse("no more key values exist", subject.nextKeyValue());
     }

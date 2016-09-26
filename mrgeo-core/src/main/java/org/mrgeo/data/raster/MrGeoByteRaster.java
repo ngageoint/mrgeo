@@ -6,7 +6,7 @@ import java.awt.image.DataBuffer;
 
 final class MrGeoByteRaster extends MrGeoRaster
 {
-private static final int BYTES_PER_PIXEL = 2;
+private static final int BYTES_PER_PIXEL = 1;
 
 MrGeoByteRaster(int width, int height, int bands, byte[] data, int dataOffset)
 {

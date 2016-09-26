@@ -1,5 +1,6 @@
 package org.mrgeo.data.raster;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
@@ -10,16 +11,18 @@ import org.mrgeo.data.raster.Interpolator.Nearest;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.GDALUtils$;
 import org.mrgeo.utils.tms.Bounds;
 
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
+import java.awt.*;
+import java.awt.image.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.nio.*;
 
 public abstract class MrGeoRaster
 {
-public final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
+final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
 private final static int VERSION_OFFSET = 0;    // start
 private final static int WIDTH_OFFSET = 1;      // byte (VERSION)
 private final static int HEIGHT_OFFSET = 5;     // byte (VERSION) + int (width)
@@ -168,24 +171,25 @@ public static MrGeoRaster fromDataset(Dataset dataset)
 
 public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width, final int height)
 {
-  int datatype = dataset.GetRasterBand(1).getDataType();
+  int gdaltype = dataset.GetRasterBand(1).getDataType();
   int bands = dataset.GetRasterCount();
-  int datasize = gdal.GetDataTypeSize(datatype) / 8;
+  int datasize = gdal.GetDataTypeSize(gdaltype) / 8;
 
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(datatype));
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(gdaltype));
 
   for (int b = 0; b < bands; b++)
   {
     Band band = dataset.GetRasterBand(b + 1); // gdal bands are 1's based
     byte[] data = new byte[datasize * width * height];
 
-    int success = band.ReadRaster(x, y, width, height, data);
+    int success = band.ReadRaster(x, y, width, height, width, height, gdaltype, data);
+
 
     if (success != gdalconstConstants.CE_None)
     {
       System.out.println("Failed reading raster. gdal error: " + success);
     }
-    GDALUtils.swapBytes(data, datatype);
+    //GDALUtils.swapBytes(data, gdaltype);
 
     System.arraycopy(data, 0, raster.data, raster.calculateByteOffset(0, 0, b), data.length);
   }
@@ -367,8 +371,7 @@ final public void fill(final double value)
     row.setPixel(x, 0, 0, value);
   }
 
-  int headerlen = bandoffset;
-  int len = row.data.length - headerlen;
+  int len = row.data.length - dataoffset;
 
   for (int b = 0; b < bands; b++)
   {
@@ -376,7 +379,7 @@ final public void fill(final double value)
     {
       int offset = calculateByteOffset(0, y, b);
 
-      System.arraycopy(row.data, headerlen, data, offset, len);
+      System.arraycopy(row.data, dataoffset, data, offset, len);
     }
   }
 
@@ -443,9 +446,6 @@ public MrGeoRaster scale(final int dstWidth,
   double scaleW = (double) dstWidth / src.width;
   double scaleH = (double) dstHeight / src.height;
 
-  // bresenham's scalar really doesn't like being scaled more than 2x or 1/3x without the
-  // possibility of artifacts. But it turns out you can scale, then scale, etc. and get
-  // an answer without artifacts. Hence the loop here...
   while (true)
   {
     int dw;
@@ -453,16 +453,27 @@ public MrGeoRaster scale(final int dstWidth,
 
     final double scale = Math.max(scaleW, scaleH);
 
-    if (scale > 2.0)
+    // bresenham's scalar really doesn't like being scaled more than 2x or 1/2x without the
+    // possibility of artifacts. But it turns out you can scale, then scale, etc. and get
+    // an answer without artifacts. Hence the loop here...
+    if (interpolate)
     {
-      dw = (int) (src.width * 2.0);
-      dh = (int) (src.height * 2.0);
+      if (scale > 2.0)
+      {
+        dw = (int) (src.width * 2.0);
+        dh = (int) (src.height * 2.0);
 
-    }
-    else if (scale < 0.50)
-    {
-      dw = (int) (src.width * 0.50);
-      dh = (int) (src.height * 0.50);
+      }
+      else if (scale < 0.50)
+      {
+        dw = (int) (src.width * 0.50);
+        dh = (int) (src.height * 0.50);
+      }
+      else
+      {
+        dw = dstWidth;
+        dh = dstHeight;
+      }
     }
     else
     {
@@ -480,7 +491,7 @@ public MrGeoRaster scale(final int dstWidth,
     case DataBuffer.TYPE_USHORT:
       if (interpolate)
       {
-        Bilinear.scaleInt(this, dst, nodatas);
+        Bilinear.scaleInt(src, dst, nodatas);
       }
       else
       {
@@ -517,8 +528,9 @@ public MrGeoRaster scale(final int dstWidth,
     }
 
     src = dst;
-    scaleW = (double) dst.width / src.width;
-    scaleH = (double) dst.height / src.height;
+
+    scaleW = (double) dstWidth / src.width;
+    scaleH = (double) dstHeight / src.height;
   }
 }
 
@@ -670,9 +682,15 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
   }
 }
 
+final public Dataset toDataset()
+{
+  return toDataset(null, null);
+}
+
 final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
 {
   int gdaltype = GDALUtils.toGDALDataType(datatype);
+
 
   Dataset ds = GDALUtils.createEmptyMemoryRaster(width, height, bands, gdaltype, nodatas);
 
@@ -699,19 +717,18 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
   }
   ds.SetGeoTransform(xform);
 
-  byte[] data = new byte[datasize() * width * height];
+  byte[] data = new byte[bytesPerPixel() * width * height];
 
   for (int b = 0; b < bands; b++)
   {
     Band band = ds.GetRasterBand(b + 1); // gdal bands are 1's based
-    band.SetNoDataValue(nodatas[b]);
-
+    if (nodatas != null)
+    {
+      band.SetNoDataValue(nodatas[b]);
+    }
 
     System.arraycopy(this.data ,calculateByteOffset(0, 0, b), data, 0, data.length);
-    GDALUtils.swapBytes(data, gdaltype);
-
-    int success = band.WriteRaster(0, 0, width, height, data);
-
+    int success = band.WriteRaster(0, 0, width, height, width, height, gdaltype, data);
     if (success != gdalconstConstants.CE_None)
     {
       System.out.println("Failed writing raster. gdal error: " + success);
@@ -721,6 +738,80 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
 
   return ds;
 }
+
+final public Raster toRaster()
+{
+  WritableRaster raster = Raster.createBandedRaster(datatype, width, height, bands, new Point(0,0));
+
+  final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
+  // skip over the header in the data buffer
+  for (int i = 0; i < HEADER_LEN; i++)
+  {
+    rasterBuffer.get();
+  }
+
+  int databytes = data.length - HEADER_LEN;
+
+  switch (datatype)
+  {
+  case DataBuffer.TYPE_BYTE:
+  {
+    // we can't use the byte buffer explicitly because the header info is
+    // still in it...
+    final byte[] bytedata = new byte[databytes];
+    rasterBuffer.get(bytedata);
+
+    raster.setDataElements(0, 0, width, height, bytedata);
+    break;
+  }
+  case DataBuffer.TYPE_FLOAT:
+  {
+    final FloatBuffer floatbuff = rasterBuffer.asFloatBuffer();
+    final float[] floatdata = new float[databytes / bytesPerPixel()];
+
+    floatbuff.get(floatdata);
+
+    raster.setDataElements(0, 0, width, height, floatdata);
+    break;
+  }
+  case DataBuffer.TYPE_DOUBLE:
+  {
+    final DoubleBuffer doublebuff = rasterBuffer.asDoubleBuffer();
+    final double[] doubledata = new double[databytes / bytesPerPixel()];
+
+    doublebuff.get(doubledata);
+
+    raster.setDataElements(0, 0, width, height, doubledata);
+
+    break;
+  }
+  case DataBuffer.TYPE_INT:
+  {
+    final IntBuffer intbuff = rasterBuffer.asIntBuffer();
+    final int[] intdata = new int[databytes / bytesPerPixel()];
+
+    intbuff.get(intdata);
+
+    raster.setDataElements(0, 0, width, height, intdata);
+
+    break;
+  }
+  case DataBuffer.TYPE_SHORT:
+  case DataBuffer.TYPE_USHORT:
+  {
+    final ShortBuffer shortbuff = rasterBuffer.asShortBuffer();
+    final short[] shortdata = new short[databytes / bytesPerPixel()];
+    shortbuff.get(shortdata);
+    raster.setDataElements(0, 0, width, height, shortdata);
+    break;
+  }
+  default:
+    throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+  }
+
+  return raster;
+}
+
 
 public abstract byte getPixelByte(int x, int y, int band);
 public abstract short getPixelShort(int x, int y, int band);

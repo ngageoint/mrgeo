@@ -76,16 +76,27 @@ public int compareTo(RasterWritable other)
 @Override
 public void write(DataOutput out) throws IOException
 {
-  out.write(bytes.length);
-  out.write(bytes);
+  if (bytes == null)
+  {
+    out.writeInt(0);
+  }
+  else
+  {
+    out.writeInt(bytes.length);
+    out.write(bytes);
+  }
+
 }
 
 @Override
 public void readFields(DataInput in) throws IOException
 {
   int len = in.readInt();
-  bytes = new byte[len];
-  in.readFully(bytes);
+  if (len > 0)
+  {
+    bytes = new byte[len];
+    in.readFully(bytes);
+  }
 }
 
 
@@ -194,12 +205,12 @@ private static MrGeoRaster convertFromV2(byte[] data)
   final SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
 
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, datatype);
+  int srclen = data.length - headersize;
+
   switch (sampleModelType)
   {
   case BANDED:
     // this one is easy, just make a new MrGeoRaster and copy the data
-    int srclen = data.length - headersize;
-
     System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
     break;
   case MULTIPIXELPACKED:
@@ -207,7 +218,15 @@ private static MrGeoRaster convertFromV2(byte[] data)
   case COMPONENT:
   case PIXELINTERLEAVED:
   {
-    throw new NotImplementedException("PixelInterleaved and Component not implemented yet");
+    if (bands == 1)
+    {
+      System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+    }
+    else
+    {
+      throw new NotImplementedException("Component and PixelInterleavedSampleModel (multi-band) not implemented yet");
+    }
+    break;
   }
   case SINGLEPIXELPACKED:
     throw new NotImplementedException("SinglePixelPackedSampleModel not implemented yet");

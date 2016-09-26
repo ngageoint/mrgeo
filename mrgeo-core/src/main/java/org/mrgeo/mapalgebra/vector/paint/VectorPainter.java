@@ -16,6 +16,7 @@
 
 package org.mrgeo.mapalgebra.vector.paint;
 
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.geometry.Geometry;
@@ -35,7 +36,7 @@ import java.io.IOException;
 
 public class VectorPainter
 {
-static final Logger log = LoggerFactory.getLogger(VectorPainter.class);
+private static final Logger log = LoggerFactory.getLogger(VectorPainter.class);
 
 public enum AggregationType {
   SUM, MASK, MIN, MAX, AVERAGE, GAUSSIAN
@@ -181,7 +182,7 @@ public RasterWritable afterPaintingTile() throws IOException
     averageRaster(raster, totalRaster);
   }
 
-  return RasterWritable.toWritable(raster);
+  return RasterWritable.toWritable(MrGeoRaster.fromRaster(raster));
 }
 
 

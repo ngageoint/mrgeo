@@ -1,17 +1,12 @@
 package org.mrgeo.mapalgebra.utils
 
-import java.awt.image.Raster
-
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.image.MrsPyramidMetadata
-import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.SparkUtils
 import org.mrgeo.utils.tms.Bounds
-import org.mrgeo.utils.MrGeoImplicits._
 
 /**
   * Created by ericwood on 7/1/16.
@@ -43,9 +38,9 @@ class RasterMapOpBuilder private (var context:SparkContext, numPartitions: Int =
   private var tileType: Int = _
   private var imageName: String = _
 
-  def raster(tileId: Long, raster: Raster): RasterMapOpBuilder = {
-    tileType = raster.getDataBuffer.getDataType
-    bands = Math.max(bands, raster.getNumBands)
+  def raster(tileId: Long, raster: MrGeoRaster): RasterMapOpBuilder = {
+    tileType = raster.datatype()
+    bands = Math.max(bands, raster.bands())
     rasterMap = rasterMap + (new TileIdWritable(tileId) -> RasterWritable.toWritable(raster))
     this
   }
@@ -77,13 +72,6 @@ class RasterMapOpBuilder private (var context:SparkContext, numPartitions: Int =
 
   def build:org.mrgeo.mapalgebra.raster.RasterMapOp = {
     val rasterMapOp = new RasterMapOp(context.makeRDD(this.rasterMap.toSeq, this.numPartitions))
-//    val metadata = new MrsPyramidMetadata()
-//    metadata.setMaxZoomLevel(zoomLevel)
-//    metadata.setTilesize(tileSize)
-//    metadata.setTileType(tileType)
-//    metadata.setDefaultValues(imageNodata)
-//    metadata.setBounds(bounds)
-//    metadata.setPyramid(imageName)
 //    metadata.setBands(bands)
 
     val metadata = SparkUtils.calculateMetadata(rasterMapOp.rdd().get, zoomLevel, imageNodata, true, bounds)
@@ -95,8 +83,8 @@ class RasterMapOpBuilder private (var context:SparkContext, numPartitions: Int =
     override def rdd() = {Some(RasterRDD(this.wrappedRDD))}
 
     // Noop these since this op exists only to wrap data, not to manipulate it.
-    def execute(context: org.apache.spark.SparkContext): Boolean = ???
-    def setup(job: org.mrgeo.job.JobArguments,conf: org.apache.spark.SparkConf): Boolean = ???
-    def teardown(job: org.mrgeo.job.JobArguments,conf: org.apache.spark.SparkConf): Boolean = ???
+    def execute(context: org.apache.spark.SparkContext): Boolean = { true }
+    def setup(job: org.mrgeo.job.JobArguments,conf: org.apache.spark.SparkConf): Boolean = { true }
+    def teardown(job: org.mrgeo.job.JobArguments,conf: org.apache.spark.SparkConf): Boolean = { true }
   }
 }
