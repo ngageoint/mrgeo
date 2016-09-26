@@ -16,16 +16,9 @@
 
 package org.mrgeo.data.raster;
 
-import org.mrgeo.aggregators.Aggregator;
-import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.FloatUtils;
-
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
-import java.io.IOException;
-import java.nio.*;
 import java.util.Arrays;
 
 /**
@@ -67,28 +60,6 @@ public static ColorModel createColorModel(final Raster raster)
 }
 
 
-public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final int width, final int height,
-    final double[] nodata)
-{
-  final WritableRaster newraster = raster.createCompatibleWritableRaster(width, height);
-  fillWithNodata(newraster, nodata);
-  return newraster;
-}
-
-public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final int width, final int height,
-    final double nodata)
-{
-  final WritableRaster newraster = raster.createCompatibleWritableRaster(width, height);
-  fillWithNodata(newraster, nodata);
-  return newraster;
-}
-
-public static WritableRaster createCompatibleEmptyRaster(final Raster raster, final double nodata)
-{
-  final WritableRaster newraster = raster.createCompatibleWritableRaster();
-  fillWithNodata(newraster, nodata);
-  return newraster;
-}
 
 public static WritableRaster createEmptyRaster(final int width, final int height,
     final int bands, final int datatype,
@@ -113,30 +84,6 @@ public static WritableRaster createEmptyRaster(final int width, final int height
   // we'll force the empty raster to be a banded model, for simplicity of the code.
   final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
   return Raster.createWritableRaster(model, null);
-}
-
-public static WritableRaster createGBRRaster(final int width, final int height)
-{
-  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-      width * 3, 3, new int[]{2, 1, 0}, null);
-}
-
-public static WritableRaster createAGBRRaster(final int width, final int height)
-{
-  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-      width * 4, 4, new int[]{3, 2, 1, 0}, null);
-}
-
-public static WritableRaster createRGBARaster(final int width, final int height)
-{
-  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-      width * 4, 4, new int[]{0, 1, 2, 3}, null);
-}
-
-public static WritableRaster createRGBRaster(final int width, final int height)
-{
-  return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,
-      width * 3, 3, new int[]{0, 1, 2}, null);
 }
 
 

@@ -20,9 +20,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 
-import java.awt.image.DataBuffer;
-import java.awt.image.WritableRaster;
-
 import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("static-method")
