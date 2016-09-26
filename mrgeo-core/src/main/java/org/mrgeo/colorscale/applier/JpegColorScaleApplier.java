@@ -34,12 +34,6 @@ public class JpegColorScaleApplier extends ColorScaleApplier
   @SuppressWarnings("unused")
   private static final Logger log = LoggerFactory.getLogger(JpegColorScaleApplier.class);
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ColorScaleApplier#renderImage(java.awt.image.RenderedImage,
-   * ColorScale, double[], double)
-   */
   @Override
   public Raster applyColorScale(final Raster raster, ColorScale colorScale, final double[] extrema,
     final double[] defaultValues) throws Exception

@@ -23,7 +23,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.util.DefaultPrettyPrinter;
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
@@ -32,7 +31,6 @@ import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.DataBuffer;
 import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -573,114 +571,6 @@ public static MrsPyramidMetadata load(final InputStream stream) throws IOExcepti
   final ObjectMapper mapper = new ObjectMapper();
   return mapper.readValue(stream, MrsPyramidMetadata.class);
 } // end load - InputStream
-
-
-  /*
-   * Helper functions for types used in rasters and databuffers
-   */
-
-public static int toBytes(final int tiletype)
-{
-  switch (tiletype)
-  {
-  case DataBuffer.TYPE_BYTE:
-  {
-    return 1;
-  }
-  case DataBuffer.TYPE_FLOAT:
-  {
-    return RasterUtils.FLOAT_BYTES;
-  }
-  case DataBuffer.TYPE_DOUBLE:
-  {
-    return RasterUtils.DOUBLE_BYTES;
-  }
-  case DataBuffer.TYPE_INT:
-  {
-    return RasterUtils.INT_BYTES;
-  }
-  case DataBuffer.TYPE_SHORT:
-  {
-    return RasterUtils.SHORT_BYTES;
-  }
-  case DataBuffer.TYPE_USHORT:
-  {
-    return RasterUtils.USHORT_BYTES;
-  }
-  }
-
-  return 0;
-} // end toBytes
-
-
-public static int toTileType(final String tiletype)
-{
-  if (tiletype.equals("Byte"))
-  {
-    return DataBuffer.TYPE_BYTE;
-  }
-  if (tiletype.equals("Float"))
-  {
-    return DataBuffer.TYPE_FLOAT;
-  }
-  if (tiletype.equals("Double"))
-  {
-    return DataBuffer.TYPE_DOUBLE;
-  }
-  if (tiletype.equals("Int"))
-  {
-    return DataBuffer.TYPE_INT;
-  }
-  if (tiletype.equals("Short"))
-  {
-    return DataBuffer.TYPE_SHORT;
-  }
-  if (tiletype.equals("UShort"))
-  {
-    return DataBuffer.TYPE_USHORT;
-  }
-
-  return DataBuffer.TYPE_UNDEFINED;
-} // end toTileType
-
-
-public static String toTileTypeText(final int tiletype)
-{
-  switch (tiletype)
-  {
-  case DataBuffer.TYPE_BYTE:
-  {
-    return "Byte";
-  }
-  case DataBuffer.TYPE_FLOAT:
-  {
-    return "Float";
-  }
-  case DataBuffer.TYPE_DOUBLE:
-  {
-    return "Double";
-  }
-  case DataBuffer.TYPE_INT:
-  {
-    return "Int";
-  }
-  case DataBuffer.TYPE_SHORT:
-  {
-    return "Short";
-  }
-  case DataBuffer.TYPE_USHORT:
-  {
-    return "UShort";
-  }
-  }
-
-  return "Undefined";
-} // end toTileTypeText
-
-
-  /*
-   * end helper functions
-   */
 
 
 public int getBands()

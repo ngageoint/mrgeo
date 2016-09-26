@@ -19,7 +19,7 @@ package org.mrgeo.hdfs.partitioners
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
 import org.apache.hadoop.fs.Path
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 
@@ -45,10 +45,8 @@ class BlockSizePartitioner() extends FileSplitPartitioner() with Externalizable 
     // val tile = RasterWritable.toRaster(raster.first()._2)
     val tile = RasterWritable.toMrGeoRaster(raster.first()._2)
 
-    val pixelbytes = RasterUtils.getElementSize(tile.datatype()) * tile.bands()
-    val imagebytes = pixelbytes * tile.width() * tile.height()
 
-    val tilesperblock = (blocksize / imagebytes) - 1  // subtract 1 for the 0-based counting
+    val tilesperblock = (blocksize / tile.data().length) - 1  // subtract 1 for the 0-based counting
 
     partitions = Math.ceil(raster.count() / tilesperblock.toDouble).toInt
 

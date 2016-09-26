@@ -28,7 +28,6 @@ import org.mrgeo.utils.FloatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -185,27 +184,6 @@ static public ImageStats[] initializeStatsArray(final int bands)
   return stats;
 }
 
-/**
- * Deserialize a Raster into an array of ImageStats objects. Used to reduce tile stats emitted by
- * a mapper.
- *
- * @param raster
- *          the raster containing stats measures as pixel values
- * @return an array of ImageStats objects
- */
-static public ImageStats[] rasterToStats(final Raster raster)
-{
-  final int bands = raster.getHeight();
-  final ImageStats[] stats = initializeStatsArray(bands);
-  for (int i = 0; i < bands; i++)
-  {
-    stats[i].min = raster.getSampleDouble(0, i, 0);
-    stats[i].max = raster.getSampleDouble(1, i, 0);
-    stats[i].sum = raster.getSampleDouble(2, i, 0);
-    stats[i].count = raster.getSample(3, i, 0);
-  }
-  return stats;
-}
 
 
 static public void writeStats(final AdHocDataProvider provider, final ImageStats[] stats)
@@ -240,26 +218,6 @@ static public void writeStats(final AdHocDataProvider provider, final ImageStats
   }
 }
 
-public void calculateStats(final Raster r)
-{
-  count = 0;
-  sum = 0;
-  for (int py = r.getMinY(); py < r.getMinY() + r.getHeight(); py++)
-  {
-    for (int px = r.getMinX(); px < r.getMinX() + r.getWidth(); px++)
-    {
-      final double v = r.getSampleDouble(px, py, 0);
-      min = Math.min(min, v);
-      max = Math.max(max, v);
-      if (!Double.isNaN(v))
-      {
-        sum += v;
-        count++;
-      }
-    }
-  }
-  mean = sum / count;
-}
 
 @Override
 @SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")

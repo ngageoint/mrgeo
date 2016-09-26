@@ -3,7 +3,7 @@ package org.mrgeo.mapalgebra.utils
 import java.awt.image.DataBuffer
 
 import org.apache.spark.SparkContext
-import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils}
+import org.mrgeo.data.raster.MrGeoRaster
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.tms.Bounds
 
