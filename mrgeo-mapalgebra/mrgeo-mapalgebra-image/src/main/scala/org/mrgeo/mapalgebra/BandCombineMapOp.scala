@@ -166,15 +166,15 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
       var startband = 0
       for (wr <- group._2) {
         if (wr != null && wr.nonEmpty) {
-          val raster = RasterWritable.toRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
+          val raster = RasterWritable.toMrGeoRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
 
           var y: Int = 0
-          while (y < raster.getHeight) {
+          while (y < raster.height()) {
             var x: Int = 0
-            while (x < raster.getWidth) {
+            while (x < raster.width()) {
               var b: Int = 0
-              while (b < raster.getNumBands) {
-                val v = raster.getSampleDouble(x, y, b)
+              while (b < raster.bands()) {
+                val v = raster.getPixelDouble(x, y, b)
                 dst.setPixel(x, y, startband + b, v)
                 b += 1
               }
@@ -182,7 +182,7 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
             }
             y += 1
           }
-          startband += raster.getNumBands
+          startband += raster.bands()
         }
       }
 

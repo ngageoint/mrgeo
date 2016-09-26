@@ -16,21 +16,20 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{Raster, DataBuffer}
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
-import org.mrgeo.kernel.{Kernel, LaplacianGeographicKernel, GaussianGeographicKernel}
+import org.mrgeo.kernel.{GaussianGeographicKernel, Kernel, LaplacianGeographicKernel}
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils._
-
 import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.tms.TMSUtils
 
@@ -142,8 +141,8 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       naiveKernel(focal, kernel, nodatas, context)
     case _ =>
       focal.flatMap(tile => {
-        kernel.calculate(tile._1.get(), RasterWritable.toRaster(tile._2), nodatas) match {
-        case Some(r:Raster) => Array((tile._1, RasterWritable.toWritable(r))).iterator
+        kernel.calculate(tile._1.get(), RasterWritable.toMrGeoRaster(tile._2), nodatas) match {
+        case Some(r:MrGeoRaster) => Array((tile._1, RasterWritable.toWritable(r))).iterator
         case _ => Array.empty[(TileIdWritable, RasterWritable)].iterator
         }
       })
@@ -198,31 +197,30 @@ class KernelMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      val src = RasterWritable.toRaster(tile._2)
-      val tileWidth = src.getWidth
-
+      val src = RasterWritable.toMrGeoRaster(tile._2)
+      val tileWidth = src.width()
       val tilesize = tileWidth - kernelW + 1
-
-      val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT)
+      val dst = MrGeoRaster.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT)
       val dstValues = Array.fill[Float](tilesize * tilesize)(Float.NaN)
-
       val useWeights = weights.value
+      val notNodataValues = MrGeoRaster.createEmptyRaster(src.width(), src.height(), 1, DataBuffer.TYPE_BYTE)
 
-      val srcValues = src.getSamples(0, 0, src.getWidth, src.getHeight, 0, null.asInstanceOf[Array[Float]])
-      val notNodataValues = new Array[Boolean](srcValues.length)
-
-
-      var i: Int = 0
-      while (i < srcValues.length) {
-        if (isNodata(srcValues(i))) {
-          srcValues(i) = 0
-          notNodataValues(i) = false
+      var y: Int = 0
+      var x: Int = 0
+      while (y < src.height()) {
+        x = 0
+        while (x < src.width()) {
+          if (isNodata(src.getPixelDouble(x, y, 0))) {
+            notNodataValues.setPixel(x, y, 0, 0.toByte)
+          }
+          else {
+            notNodataValues.setPixel(x, y, 0, 1.toByte)
+          }
+          x += 1
         }
-        else {
-          notNodataValues(i) = true
-        }
-        i += 1
+        y += 1
       }
+
       val tileStart = System.currentTimeMillis()
 
       var loopMin: Long = Long.MaxValue
@@ -230,8 +228,8 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       var loopTot: Long = 0
       var loopRuns: Long = 0
 
-      var y: Int = 0
-      var x: Int = 0
+      y = 0
+      x = 0
       var result: Float = 0.0f
       var weight: Float = 0.0f
       var kx: Int = 0
@@ -240,7 +238,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
         x = 0
         val off = (y + halfKernelH) * tileWidth + halfKernelW
         while (x < tilesize) {
-          if (notNodataValues(off + x)) {
+          if (notNodataValues.getPixelByte(x, y, 0) == 1) {
             val loopStart = System.currentTimeMillis()
 
             result = 0.0f
@@ -249,13 +247,17 @@ class KernelMapOp extends RasterMapOp with Externalizable {
             ky = 0
             while (ky < kernelH) {
               kx = 0
-              val off2 = (y + ky) * tileWidth + x
-              val off3 = ky * kernelW
               while (kx < kernelW) {
-                val w = useWeights(off3 + kx)
+                val w = useWeights((ky * kernelW) + kx)
                 if (w != 0.0) {
                   weight += w
-                  result += srcValues(off2 + kx) * w
+                  val v = if (notNodataValues.getPixelByte(x + kx, y + ky, 0) == 1) {
+                    src.getPixelFloat(x + kx, y + ky, 0)
+                  }
+                  else {
+                    0.0f
+                  }
+                  result += v * w
                 }
                 kx += 1
               }
@@ -269,15 +271,13 @@ class KernelMapOp extends RasterMapOp with Externalizable {
               loopRuns += 1
             }
             if (weight != 0.0) {
-              dstValues(y * tilesize + x) = result / weight
+              dst.setPixel(x, y, 0, (result / weight))
             }
           }
           x += 1
         }
         y += 1
       }
-
-      dst.setSamples(0, 0, tilesize, tilesize, 0, dstValues)
 
       if (log.isDebugEnabled()) {
         val endTime = System.currentTimeMillis()
