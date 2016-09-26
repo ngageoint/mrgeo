@@ -18,7 +18,7 @@ package org.mrgeo.kernel
 
 import java.awt.image.{DataBuffer, Raster}
 
-import org.mrgeo.data.raster.RasterUtils
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils}
 import org.mrgeo.utils.tms.TMSUtils
 import org.mrgeo.utils.{LatLng, OpenCVUtils}
 import org.opencv.core.{CvType, Mat}
@@ -56,7 +56,7 @@ abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:I
 
   override def get2DKernel: Option[Array[Array[Float]]] = None
 
-  override def calculate(tileId: Long, raster: Raster, nodatas:Array[Double]): Option[Raster] = {
+  override def calculate(tileId: Long, raster: MrGeoRaster, nodatas:Array[Double]): Option[MrGeoRaster] = {
 
     val nodata = nodatas(0).doubleValue()
     def isNodata(value:Double):Boolean = {
@@ -68,22 +68,20 @@ abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:I
       }
     }
 
-    val tilesize = raster.getWidth - getWidth + 1
+    val tilesize = raster.width() - getWidth + 1
 
     val tileStart = System.currentTimeMillis()
     OpenCVUtils.register()
 
-    val srcValues = raster.getSamples(0, 0, raster.getWidth, raster.getHeight, 0, null.asInstanceOf[Array[Float]])
-
-    val data = new Mat(raster.getWidth, raster.getHeight, CvType.CV_32F)
+    val data = new Mat(raster.width(), raster.height(), CvType.CV_32F)
     val mask = Mat.zeros(data.width(), data.height(), CvType.CV_8U)
 
-    val tileWidth = raster.getWidth
+    val tileWidth = raster.width()
     var row, col:Int = 0
-    while (row < raster.getHeight) {
+    while (row < raster.height()) {
       col = 0
       while (col < tileWidth) {
-        val v = srcValues(row * tileWidth + col)
+        val v = raster.getPixelDouble(col, row, 0)
         if (isNodata(v) ) {
           data.put(col, row, 0)
           mask.put(col, row, 1)  // set the mask pixel on
@@ -129,7 +127,7 @@ abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:I
 
     val blurEnd = System.currentTimeMillis()
 
-    val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT)
+    val dst = MrGeoRaster.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT)
 
 
     //        {
@@ -169,12 +167,12 @@ abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:I
 
         // the source pixel was Nodata, make the output pixel nodata (NaN), as well
         if (b(0) == 1) {
-          dst.setSample(col, row, 0, Float.NaN)
+          dst.setPixel(col, row, 0, Float.NaN)
         }
         else {
           data.get(col + halfKernelW, row + halfKernelH, d)
 
-          dst.setSample(col, row, 0,d(0))
+          dst.setPixel(col, row, 0,d(0))
         }
         col += 1
       }
