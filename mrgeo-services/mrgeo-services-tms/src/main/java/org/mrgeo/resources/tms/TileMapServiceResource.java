@@ -30,6 +30,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.geometry.GeometryFactory;
@@ -68,7 +69,6 @@ import javax.xml.transform.dom.DOMSource;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -135,24 +135,8 @@ private Response createEmptyTile(final ImageResponseWriter writer, final int wid
     final int height)
 {
   // return an empty image
-  final int dataType;
-  if (writer.getResponseMimeType().equals("image/jpeg"))
-  {
-    dataType = BufferedImage.TYPE_3BYTE_BGR;
-  }
-  else
-  {
-    // dataType = BufferedImage.TYPE_INT_ARGB;
-    dataType = BufferedImage.TYPE_4BYTE_ABGR;
-  }
-
-  final BufferedImage bufImg = new BufferedImage(width, height, dataType);
-  final Graphics2D g = bufImg.createGraphics();
-  g.setColor(new Color(0, 0, 0, 0));
-  g.fillRect(0, 0, width, height);
-  g.dispose();
-
-  return writer.write(bufImg.getData()).build();
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, DataBuffer.TYPE_BYTE, 0);
+  return writer.write(raster).build();
 }
 
 Document mrsPyramidMetadataToTileMapXml(final String raster, final String profilename, final String url,
@@ -463,7 +447,7 @@ public Response getTile(@PathParam("version") final String version,
 {
 
   final ImageRenderer renderer;
-  Raster raster;
+  MrGeoRaster raster;
 
   try
   {
@@ -515,8 +499,8 @@ public Response getTile(@PathParam("version") final String version,
       raster = renderer.renderImage(pyramid, bounds, providerProperties, SRSs[index]);
     }
 
-    if (!(renderer instanceof TiffImageRenderer) && raster.getNumBands() != 3 &&
-        raster.getNumBands() != 4)
+    if (!(renderer instanceof TiffImageRenderer) && raster.bands() != 3 &&
+        raster.bands() != 4)
     {
       ColorScale cs = null;
       if (colorScaleName != null)
@@ -657,12 +641,10 @@ private Bounds calcBounds(Integer x, Integer y, Integer z, String pyramid, Provi
   double multh = tilesize * resh;
   double multw = tilesize * resw;
 
-  Bounds bounds =  new Bounds(x * multw + world.w, // left/west (lon, x)
+  return new Bounds(x * multw + world.w, // left/west (lon, x)
       y * multh + world.s, // lower/south (lat, y)
       (x + 1) * multw + world.w, // right/east (lon, x)
       (y + 1) * multh + world.s); // upper/north (lat, y)
-
-  return bounds;
 
 }
 
@@ -743,7 +725,7 @@ Response returnEmptyTile(final int width, final int height,
     nodatas = new double[]{0.0,0.0,0.0,0.0};
   }
 
-  Raster raster = RasterUtils.createEmptyRaster(width, height, bands, DataBuffer.TYPE_BYTE, nodatas);
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, DataBuffer.TYPE_BYTE, nodatas);
   writer.writeToStream(raster, nodatas, baos);
   byte[] imageData = baos.toByteArray();
   IOUtils.closeQuietly(baos);
