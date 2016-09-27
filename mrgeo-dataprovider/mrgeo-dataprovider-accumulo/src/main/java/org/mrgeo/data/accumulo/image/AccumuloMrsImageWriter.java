@@ -25,11 +25,11 @@ import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsPyramidWriterContext;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.tile.TileIdWritable;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -94,7 +94,7 @@ public class AccumuloMrsImageWriter implements MrsImageWriter
   } // end constructor
 
   @Override
-  public void append(final TileIdWritable k, final Raster raster) throws IOException
+  public void append(final TileIdWritable k, final MrGeoRaster raster) throws IOException
   {
 	  if(cv == null){
 		  cv = provider.getColumnVisibility();

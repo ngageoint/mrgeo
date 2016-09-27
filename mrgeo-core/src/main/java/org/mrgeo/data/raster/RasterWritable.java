@@ -17,7 +17,11 @@
 package org.mrgeo.data.raster;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionInputStream;
+import org.apache.hadoop.io.compress.Decompressor;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.GDALUtils;
@@ -171,6 +175,18 @@ public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IO
     }
   }
 
+}
+
+public static MrGeoRaster toMrGeoRaster(final RasterWritable writable,
+                                        final CompressionCodec codec, final Decompressor decompressor) throws IOException
+{
+  decompressor.reset();
+  final ByteArrayInputStream bis = new ByteArrayInputStream(writable.getBytes(), 0, writable.getSize());
+  final CompressionInputStream gis = codec.createInputStream(bis, decompressor);
+  final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  IOUtils.copyBytes(gis, baos, 1024 * 1024 * 2, true);
+
+  return toMrGeoRaster(new RasterWritable(baos.toByteArray()));
 }
 
 public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
