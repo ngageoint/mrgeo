@@ -30,6 +30,7 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
@@ -47,7 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
@@ -2544,11 +2544,11 @@ public void testDataTypeFloat() throws Exception
   MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
   org.junit.Assert.assertNotNull("Can't load image", image);
 
-  KVIterator<TileIdWritable, Raster> iter = image.getTiles();
+  KVIterator<TileIdWritable, MrGeoRaster> iter = image.getTiles();
   while (iter.hasNext())
   {
-    Raster raster = iter.currentValue();
-    org.junit.Assert.assertEquals("Bad tile type", type, raster.getSampleModel().getDataType());
+    MrGeoRaster raster = iter.currentValue();
+    org.junit.Assert.assertEquals("Bad tile type", type, raster.datatype());
 
     iter.next();
   }
