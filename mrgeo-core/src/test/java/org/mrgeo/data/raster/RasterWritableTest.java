@@ -98,7 +98,8 @@ private void testRaster(String testName) throws IOException
   {
     key.set(i);
 
-    value = RasterWritable.toWritable(srcRaster);
+    value = RasterWritable.toWritable(TestUtils.createConstRaster(RASTER_SIZE, RASTER_SIZE,
+        DataBuffer.TYPE_FLOAT, i));
 
     writer.append(key, value);
   }
@@ -118,7 +119,8 @@ private void testRaster(String testName) throws IOException
 
     // check if api returns no payload raster (compressed/uncompressed) correctly
     MrGeoRaster destRaster = RasterWritable.toMrGeoRaster(foundValue);
-    TestUtils.compareRasters(srcRaster, destRaster);
+
+    TestUtils.compareRasterToConstant(destRaster, foundNumEntries, -1);
 
     foundNumEntries++;
   }
