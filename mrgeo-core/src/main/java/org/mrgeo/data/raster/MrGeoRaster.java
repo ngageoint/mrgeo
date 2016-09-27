@@ -837,7 +837,7 @@ public abstract double getPixelDouble(int x, int y, int band);
 
 public abstract void setPixel(int x, int y, int band, byte pixel);
 public abstract void setPixel(int x, int y, int band, short pixel);
-public abstract void setPixe(int x, int y, int band, int pixel);
+public abstract void setPixel(int x, int y, int band, int pixel);
 public abstract void setPixel(int x, int y, int band, float pixel);
 public abstract void setPixel(int x, int y, int band, double pixel);
 

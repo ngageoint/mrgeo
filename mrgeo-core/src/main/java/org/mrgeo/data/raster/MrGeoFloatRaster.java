@@ -70,7 +70,7 @@ public void setPixel(int x, int y, int band, short pixel)
 }
 
 @Override
-public void setPixe(int x, int y, int band, int pixel)
+public void setPixel(int x, int y, int band, int pixel)
 {
   ByteArrayUtils.setFloat((float)pixel, data, calculateByteOffset(x, y, band));
 }
