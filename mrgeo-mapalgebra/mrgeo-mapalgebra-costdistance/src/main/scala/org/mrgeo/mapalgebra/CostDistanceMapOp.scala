@@ -26,7 +26,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.vector.FeatureIdWritable
@@ -842,17 +842,17 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     frictionRDD.foreach(tile => {
       val tileid = tile._1.get()
       if (startingPts.contains(tileid)) {
-        val raster = RasterWritable.toRaster(tile._2)
+        val raster = RasterWritable.toMrGeoRaster(tile._2)
         val pointsInTile = startingPts.get(tileid).get
 
         val costPoints = new ListBuffer[CostPoint]()
         for (startPixel <- pointsInTile) {
-          val pixelcost = if (raster.getNumBands > 2) {
+          val pixelcost = if (raster.bands() > 2) {
             0.0f
           }
           else {
             // add a negative 1/2 friction, so the start point cost calculatation will be zero
-            -raster.getSampleFloat(startPixel.px.toInt, startPixel.py.toInt, 0) * pixelsize * 0.5f
+            -raster.getPixelFloat(startPixel.px.toInt, startPixel.py.toInt, 0) * pixelsize * 0.5f
           }
 
           // starting pixel has no initial cost and no friction to get to that point
