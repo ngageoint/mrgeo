@@ -18,7 +18,9 @@ package org.mrgeo.data.raster;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.io.serializer.Serialization;
 import org.mrgeo.utils.ByteArrayUtils;
+import org.mrgeo.utils.GDALUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -26,8 +28,6 @@ import java.util.Arrays;
 
 public class RasterWritable implements WritableComparable<RasterWritable>
 {
-private static final long serialVersionUID = 1L;
-
 private static int HEADERSIZE = 5;
 
 public static long serializeTime = 0;
@@ -102,12 +102,13 @@ private enum SampleModelType {
 
 public RasterWritable()
 {
-  super();
+  this.bytes = null;
 }
 
 public RasterWritable(final byte[] bytes)
 {
   this.bytes = bytes;
+
 }
 
 public RasterWritable(RasterWritable copy)
@@ -122,7 +123,7 @@ private void writeObject(ObjectOutputStream stream) throws IOException
   stream.write(bytes, 0, bytes.length);
 }
 
-private void readObject(ObjectInputStream stream) throws IOException
+private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
 {
   int size = stream.readInt();
   bytes = new byte[size];
@@ -200,6 +201,10 @@ private static MrGeoRaster convertFromV2(byte[] data)
   final int datatype = rasterBuffer.getInt();
   final SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
 
+  // The old data was big-endian, ours is little-endian.  The RasterWritable may persisted, so
+  // we can't just swap the source.  Instead, we need to swap _after_ the copy.  We'll just swap
+  // the data in the MrGeoRaster inplace.
+
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, datatype);
   int srclen = data.length - headersize;
 
@@ -208,6 +213,7 @@ private static MrGeoRaster convertFromV2(byte[] data)
   case BANDED:
     // this one is easy, just make a new MrGeoRaster and copy the data
     System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+    ByteArrayUtils.swapBytes(raster.data, datatype, raster.dataoffset());
     break;
   case MULTIPIXELPACKED:
     throw new NotImplementedException("MultiPixelPackedSampleModel not implemented yet");
@@ -217,6 +223,7 @@ private static MrGeoRaster convertFromV2(byte[] data)
     if (bands == 1)
     {
       System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+      ByteArrayUtils.swapBytes(raster.data, datatype, raster.dataoffset());
     }
     else
     {
