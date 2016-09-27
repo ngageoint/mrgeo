@@ -31,6 +31,7 @@ import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.DataBuffer;
 import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -861,6 +862,12 @@ public int getTileType()
   return tileType;
 }
 
+
+@JsonIgnore
+public boolean isFloatingPoint()
+{
+  return (tileType == DataBuffer.TYPE_FLOAT || tileType == DataBuffer.TYPE_DOUBLE);
+}
 
 public Classification getClassification()
 {
