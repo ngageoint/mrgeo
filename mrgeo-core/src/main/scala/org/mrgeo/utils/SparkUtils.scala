@@ -605,7 +605,7 @@ object SparkUtils extends Logging {
         logDebug(s"Tile ${id.tx}, ${id.ty} with bounds ${tb.w}, ${tb.s}, ${tb.e}, ${tb.n}" +
             s" pasted onto px ${start.px - ul.px} py ${start.py - ul.py}")
 
-        merged.copy((start.px - ul.px).toInt, (start.py - ul.py).toInt, source.width(), source.height(), source, 0, 0)
+        merged.copyFrom(0, 0, source.width(), source.height(), source, (start.px - ul.px).toInt, (start.py - ul.py).toInt)
       })
     })
 

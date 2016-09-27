@@ -16,7 +16,6 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.WritableRaster
 import java.io._
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
@@ -29,8 +28,8 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils._
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils, Tile}
 
 //import scala.collection.JavaConverters._
@@ -305,17 +304,17 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
           }
         }
 
-        val raster = RasterWritable.toRaster(tile._2).asInstanceOf[WritableRaster]
+        val raster = RasterWritable.toMrGeoRaster(tile._2)
 
         var b = 0
-        while (b < raster.getNumBands) {
+        while (b < raster.bands()) {
           val nodata = nodatas(b)
           var y = 0
-          while (y < raster.getHeight) {
+          while (y < raster.height()) {
             var x = 0
-            while (x < raster.getWidth) {
-              if (isNodata(raster.getSampleDouble(x, y, b), nodata)) {
-                raster.setSample(x, y, b, over)
+            while (x < raster.width()) {
+              if (isNodata(raster.getPixelDouble(x, y, b), nodata)) {
+                raster.setPixel(x, y, b, over)
               }
               x += 1
             }
@@ -340,11 +339,11 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     val image = SparkUtils.mergeTiles(RasterRDD(replaced), zoom.get, meta.getTilesize, nd)
 
     if (name == ExportMapOp.IN_MEMORY) {
-      mergedimage = Some(GDALUtils.toDataset(image, nd, bnds))
+      mergedimage = Some(image.toDataset(bnds, nd))
     }
     else {
       val output = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
-      GDALUtils.saveRaster(image, output, bnds, nd(0), format.get)
+      GDALUtils.saveRaster(image.toDataset(bnds, nd), output, bnds, nd(0), format.get)
     }
   }
 

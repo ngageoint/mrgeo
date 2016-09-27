@@ -124,7 +124,7 @@ object FocalBuilder extends Logging {
         val h = piece._4
         val src = RasterWritable.toMrGeoRaster(piece._5)
 
-        dst.copy(x, y, w, h, src, 0, 0)
+        dst.copyFrom(0, 0, w, h, src, x, y)
       }
 
       (new TileIdWritable(tile._1), RasterWritable.toWritable(dst))
