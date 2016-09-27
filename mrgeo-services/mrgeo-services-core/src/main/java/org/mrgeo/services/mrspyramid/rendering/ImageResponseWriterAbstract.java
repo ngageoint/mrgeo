@@ -16,6 +16,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.tms.Bounds;
@@ -25,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
-import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -38,13 +38,13 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
   private static final Logger log = LoggerFactory.getLogger(ImageResponseWriterAbstract.class);
 
   @Override
-  public Response.ResponseBuilder write(final Raster raster)
+  public Response.ResponseBuilder write(final MrGeoRaster raster)
   {
     return write(raster, (double[])(null));
   }
 
   @Override
-  public Response.ResponseBuilder write(final Raster raster, double[] defaults)
+  public Response.ResponseBuilder write(final MrGeoRaster raster, double[] defaults)
   {
     try
     {
@@ -66,13 +66,13 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
   }
 
   @Override
-  public void write(final Raster raster, final HttpServletResponse response) throws ServletException
+  public void write(final MrGeoRaster raster, final HttpServletResponse response) throws ServletException
   {
     write(raster, null, response);
   }
 
   @Override
-  public void write(final Raster raster, double[] defaults, final HttpServletResponse response) throws ServletException
+  public void write(final MrGeoRaster raster, double[] defaults, final HttpServletResponse response) throws ServletException
   {
     response.setContentType(getResponseMimeType());
     final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -88,14 +88,14 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
   }
 
   @Override
-  public Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow,
+  public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileColumn, final int tileRow,
     final double scale, final MrsPyramid pyramid) throws IOException
   {
     return write(raster, pyramid.getMetadata().getDefaultValues());
   }
 
   @Override
-  public void write(final Raster raster, final int tileColumn, final int tileRow,
+  public void write(final MrGeoRaster raster, final int tileColumn, final int tileRow,
                     final double scale, final MrsPyramid pyramid, final HttpServletResponse response)
       throws ServletException, IOException
   {
@@ -103,13 +103,13 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
     }
 
   @Override
-  public Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds)
+  public Response.ResponseBuilder write(final MrGeoRaster raster, final String imageName, final Bounds bounds)
   {
     return write(raster);
   }
 
   @Override
-  public void write(final Raster raster, final String imageName, final Bounds bounds,
+  public void write(final MrGeoRaster raster, final String imageName, final Bounds bounds,
     final HttpServletResponse response) throws ServletException
     {
     write(raster, response);

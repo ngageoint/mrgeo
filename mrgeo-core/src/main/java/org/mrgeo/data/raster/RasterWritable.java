@@ -17,15 +17,11 @@
 package org.mrgeo.data.raster;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.hadoop.io.IOUtils;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.io.compress.*;
 import org.mrgeo.utils.ByteArrayUtils;
 
-import java.awt.image.*;
 import java.io.*;
-import java.nio.*;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class RasterWritable implements WritableComparable<RasterWritable>

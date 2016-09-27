@@ -18,11 +18,7 @@ package org.mrgeo.aggregators;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.junit.UnitTest;
-
-import java.awt.image.DataBuffer;
-import java.awt.image.WritableRaster;
 
 import static org.junit.Assert.assertEquals;
 
@@ -127,28 +123,4 @@ public class NearestAggregatorTest
  
   }
 
-  @Test
-  @Category(UnitTest.class)
-  public void testGetSamples()
-  {
-    int[] samples = new int[4];
-
-    WritableRaster raster = RasterUtils.createEmptyRaster(4, 4, 1, DataBuffer.TYPE_DOUBLE);
-
-    raster.setPixels(0, 0, 4, 4, new double[] {1, 1, 2, 2, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 4, 4});
-    raster.getSamples(1, 1, 2, 2, 0, samples);
-    
-    //verify the order of sample pixels is
-    //---------
-    //| 0 | 1 |
-    //---------
-    //| 2 | 3 |
-    //---------
-
-    assertEquals(1,samples[0]);
-    assertEquals(2,samples[1]);
-    assertEquals(3,samples[2]);
-    assertEquals(4,samples[3]);
-
-  }
 }

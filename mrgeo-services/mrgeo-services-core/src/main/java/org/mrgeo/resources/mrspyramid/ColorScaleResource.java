@@ -18,18 +18,16 @@ package org.mrgeo.resources.mrspyramid;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.xml.parsers.ParserConfigurationException;
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.List;
 
@@ -58,7 +56,7 @@ MrsPyramidService service;
 @GET
 @Produces(MediaType.APPLICATION_JSON)
 public ColorScaleList get()
-    throws SAXException, ParserConfigurationException, Exception
+    throws Exception
 {
   log.info("Retrieving color scales file list...");
 
@@ -73,9 +71,6 @@ public ColorScaleList get()
  * This is a poorly differentiated REST path, it really should have been /swatch to separate
  * it in namespace from the above. As is, only the query param separates these two.
  *
- * @param colorScalePath
- * @param width
- * @param height
  */
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
@@ -88,7 +83,7 @@ public Response getColorScaleSwatch(@PathParam("path") String colorScalePath,
 {
   try {
     String format = "png";
-    Raster ri = service.createColorScaleSwatch(colorScalePath, format, width, height);
+    MrGeoRaster ri = service.createColorScaleSwatch(colorScalePath, format, width, height);
 
     return service.getImageResponseWriter(format).write(ri).build();
   } catch (Exception ex) {

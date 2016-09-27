@@ -22,6 +22,7 @@ import org.codehaus.jettison.json.JSONStringer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapalgebra.MapAlgebraJob;
 import org.mrgeo.resources.job.JobInfoResponse;
@@ -264,7 +265,7 @@ public Response getImage(@PathParam("output") String imgName,
       }
       // TODO: Need to construct provider properties from the WebRequest using
       // a new security layer and pass those properties.
-      Raster result = renderer.renderImage(imgName, bounds, width, height,
+      MrGeoRaster result = renderer.renderImage(imgName, bounds, width, height,
           SecurityUtils.getProviderProperties(), srs);
 
       if (!(renderer instanceof TiffImageRenderer))

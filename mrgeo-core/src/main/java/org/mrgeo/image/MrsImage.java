@@ -33,7 +33,6 @@ import org.mrgeo.utils.tms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.geom.Rectangle2D;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashSet;
@@ -44,7 +43,7 @@ import java.util.Set;
  * @author tim.tisler
  *
  */
-public class MrsImage
+public class MrsImage implements AutoCloseable
 {
 
 private static final Logger log = LoggerFactory.getLogger(MrsImage.class);
@@ -216,10 +215,6 @@ public long getHeight()
   return getMetadata().getPixelBounds(getZoomlevel()).getHeight();
 }
 
-public Rectangle2D getImageBounds()
-{
-  return new Rectangle2D.Double(getPixelMinX(), getPixelMinY(), getWidth(), getHeight());
-}
 
 public long getMaxTileX()
 {
