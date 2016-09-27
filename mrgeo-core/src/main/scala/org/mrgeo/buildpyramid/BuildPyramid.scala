@@ -302,7 +302,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       logDebug(
         "Calculating tile from  tx: " + inputTile.tx + " ty: " + inputTile.ty + " (" + inputLevel + ") to tx: " +
             outputTile.tx + " ty: " + outputTile.ty + " (" + outputLevel + ") x: " + tox + " y: " + toy)
-      outputRaster.copy(tox, toy, toraster.width(), toraster.height(), toraster, 0, 0)
+      outputRaster.copyFrom(0, 0, toraster.width(), toraster.height(), toraster, tox, toy)
     }
 
     iter match {

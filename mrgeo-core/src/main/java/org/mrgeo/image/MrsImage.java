@@ -16,7 +16,6 @@
 
 package org.mrgeo.image;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.DataProviderFactory;
@@ -586,8 +585,8 @@ public MrGeoRaster getRaster(final Tile[] tiles)
         log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,
             tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);
 
-        merged.copy(0, 0, source.width(), source.height(),
-            source, (int) (start.px - ul.px), (int) (start.py - ul.py));
+        merged.copyFrom(0, 0, source.width(), source.height(),
+                        source, (int) (start.px - ul.px), (int) (start.py - ul.py));
       }
     }
     catch (final TileNotFoundException e)
@@ -649,8 +648,8 @@ public MrGeoRaster getRaster(final TileBounds tileBounds)
         log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,
             tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);
 
-        merged.copy(0, 0, source.width(), source.height(),
-            source, (int) (start.px - ul.px), (int) (start.py - ul.py));
+        merged.copyFrom(0, 0, source.width(), source.height(),
+                        source, (int) (start.px - ul.px), (int) (start.py - ul.py));
       }
     }
     if (iter instanceof CloseableKVIterator)

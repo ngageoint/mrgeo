@@ -337,19 +337,22 @@ final public MrGeoRaster clip(int x, int y, int width, int height)
   return clipraster;
 }
 
-final public MrGeoRaster clip(int x, int y, int width, int height, int fromBand)
+final public MrGeoRaster clip(int x, int y, int width, int height, int band)
 {
   MrGeoRaster clipraster = MrGeoRaster.createEmptyRaster(width, height, 1, datatype);
 
-  int[] offsets = calculateByteRangeOffset(x, y, x + width, y + height, fromBand);
-  int dstOffset = clipraster.calculateByteOffset(0, 0, 0);
+  for (int yy = 0; yy < height; yy++)
+  {
+    int[] offsets = calculateByteRangeOffset(x, yy + y, x + width, yy + y, band);
+    int dstOffset = clipraster.calculateByteOffset(0, yy, band);
 
-  System.arraycopy(data, offsets[0], clipraster.data, dstOffset, offsets[1] - offsets[0]);
+    System.arraycopy(data, offsets[0], clipraster.data, dstOffset, offsets[1] - offsets[0]);
+  }
 
   return clipraster;
 }
 
-final public void copy(int dstx, int dsty, int width, int height, MrGeoRaster src, int srcx, int srcy)
+final public void copyFrom(int srcx, int srcy, int width, int height, MrGeoRaster src, int dstx, int dsty)
 {
   for (int b = 0; b < bands; b++)
   {
@@ -360,6 +363,18 @@ final public void copy(int dstx, int dsty, int width, int height, MrGeoRaster sr
 
       System.arraycopy(src.data, srcoffcets[0], data, dstOffset, srcoffcets[1] - srcoffcets[0]);
     }
+  }
+}
+
+final public void copyFrom(int srcx, int srcy, int srcBand, int width, int height, MrGeoRaster src,
+                           int dstx, int dsty, int dstBand)
+{
+  for (int yy = 0; yy < height; yy++)
+  {
+    int[] srcoffcets = src.calculateByteRangeOffset(srcx, yy + srcy, srcx + width, yy + srcy, srcBand);
+    int dstOffset = calculateByteOffset(dstx, yy + dsty, dstBand);
+
+    System.arraycopy(src.data, srcoffcets[0], data, dstOffset, srcoffcets[1] - srcoffcets[0]);
   }
 }
 
