@@ -1,5 +1,8 @@
 package org.mrgeo.utils;
 
+import java.awt.image.DataBuffer;
+
+// Bytes here are assumed to be little-endian...
 public class ByteArrayUtils
 {
 
@@ -223,7 +226,77 @@ public static void setDouble(double value, byte[] bytes)
   bytes[2] = (byte)((longval & 0x0000000000ff0000L) >> 16);
   bytes[1] = (byte)((longval & 0x000000000000ff00L) >>  8);
   bytes[0] = (byte)( longval & 0x00000000000000ffL);
-
 }
+
+public static void swapBytes(byte[] bytes, int datatype, int offset)
+{
+  byte tmp;
+  int i = offset;
+
+  switch (datatype)
+  {
+  case DataBuffer.TYPE_BYTE:
+    break;  // nothing to do
+  case DataBuffer.TYPE_SHORT:
+  case DataBuffer.TYPE_USHORT:
+    // 2 byte value... 1, 2 becomes 2, 1  (swap byte 1 with 2)
+    while (i + 1 < bytes.length)
+    {
+      // swap 0 & 1
+      tmp = bytes[i];
+      bytes[i] = bytes[i + 1];
+      bytes[i + 1] = tmp;
+      i += 2;
+    }
+    break;
+  // 4 byte value... 1, 2, 3, 4 becomes 4, 3, 2, 1  (swap bytes 1 & 4, 2 & 3)
+  case DataBuffer.TYPE_FLOAT:
+  case DataBuffer.TYPE_INT:
+    while (i + 3 < bytes.length)
+    {
+      // swap 0 & 3
+      tmp = bytes[i];
+      bytes[i] = bytes[i + 3];
+      bytes[i + 3] = tmp;
+
+      // swap 1 & 2
+      tmp = bytes[i + 1];
+      bytes[i + 1] = bytes[i + 2];
+      bytes[i + 2] = tmp;
+      i += 4;
+    }
+    break;
+  case DataBuffer.TYPE_DOUBLE:
+    // 8 byte value... 1, 2, 3, 4, 5, 6, 7 becomes 7, 6, 5, 4, 3, 2, 1
+    // (swap bytes 1 & 8, 2 & 7, 3 & 6, 4 & 5)
+    while (i + 7 < bytes.length)
+    {
+      // swap 0 & 7
+      tmp = bytes[i];
+      bytes[i] = bytes[i + 7];
+      bytes[i + 7] = tmp;
+
+      // swap 1 & 6
+      tmp = bytes[i + 1];
+      bytes[i + 1] = bytes[i + 6];
+      bytes[i + 6] = tmp;
+
+      // swap 2 & 5
+      tmp = bytes[i + 2];
+      bytes[i + 2] = bytes[i + 5];
+      bytes[i + 5] = tmp;
+
+      // swap 3 $ 4
+      tmp = bytes[i + 3];
+      bytes[i + 3] = bytes[i + 4];
+      bytes[i + 4] = tmp;
+
+      i += 8;
+    }
+
+    break;
+  }
+}
+
 
 }
