@@ -227,7 +227,7 @@ private static String packageName(Class<?> c)
   return name.substring(0, li);
 }
 
-private static void compareRasters(File r1, MrGeoRaster r2) throws IOException
+public static void compareRasters(File r1, MrGeoRaster r2) throws IOException
 {
   Dataset d = GDALUtils.open(r1.getCanonicalPath());
   MrGeoRaster r = MrGeoRaster.fromDataset(d);
@@ -600,6 +600,13 @@ public void compareRasters(String testName, ValueTranslator t1, MrGeoRaster r2, 
   compareRasters(baselineTif, t1, r2, t2);
 }
 
+public void saveBaselineRaster(final String testName,
+    final MrGeoRaster raster, String format)
+    throws IOException
+{
+  final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+  GDALJavaUtils.saveRaster(raster.toDataset(), baselineTif.getCanonicalPath());
+}
 public void saveBaselineTif(final String testName,
     final MrGeoRaster raster)
     throws IOException

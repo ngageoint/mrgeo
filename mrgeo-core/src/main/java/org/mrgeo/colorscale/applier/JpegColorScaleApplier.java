@@ -34,7 +34,7 @@ public class JpegColorScaleApplier extends ColorScaleApplier
 private static final Logger log = LoggerFactory.getLogger(JpegColorScaleApplier.class);
 
 @Override
-public Dataset applyColorScale(final MrGeoRaster raster, ColorScale colorScale, final double[] extrema,
+public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorScale, final double[] extrema,
     final double[] defaultValues) throws Exception
 {
   Dataset colored = GDALUtils.createEmptyMemoryRaster(raster.width(), raster.height(), 3,
@@ -42,7 +42,7 @@ public Dataset applyColorScale(final MrGeoRaster raster, ColorScale colorScale, 
 
   setupExtrema(colorScale, extrema, defaultValues[0]);
   apply(raster, colored, colorScale);
-  return colored;
+  return MrGeoRaster.fromDataset(colored);
 }
 
 @Override

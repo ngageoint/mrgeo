@@ -99,7 +99,7 @@ void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue)
  * Applies a color scale to a rendered image
  *
  */
-public abstract Dataset applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
+public abstract MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
     double[] defaultValue) throws Exception;
 
 /**

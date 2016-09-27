@@ -44,7 +44,7 @@ import java.util.Set;
  * @author tim.tisler
  *
  */
-public class MrsImage
+public class MrsImage implements AutoCloseable
 {
 
 private static final Logger log = LoggerFactory.getLogger(MrsImage.class);

@@ -20,17 +20,16 @@ import com.google.common.io.ByteStreams;
 import com.meterware.httpunit.WebResponse;
 import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Assert;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.*;
 
 import static org.junit.Assert.assertTrue;
 
-//import javax.imageio.ImageIO;
 
 public class ImageTestUtils
 {
@@ -45,7 +44,7 @@ public class ImageTestUtils
 
     log.debug("Response content length: " + response.getContentLength());
 
-    Raster raster = GDALUtils.toRaster(GDALUtils.open(response.getInputStream()));
+    MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.getInputStream()));
     Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
 
     TestUtils.compareRasters(baseline, raster);
@@ -59,7 +58,7 @@ public class ImageTestUtils
     assertTrue(baseline.exists());
 
     log.debug("Response content length: " + response.getLength());
-    Raster raster = GDALUtils.toRaster(GDALUtils.open(response.getEntityInputStream()));
+    MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.getEntityInputStream()));
     Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
 
     TestUtils.compareRasters(baseline, raster);

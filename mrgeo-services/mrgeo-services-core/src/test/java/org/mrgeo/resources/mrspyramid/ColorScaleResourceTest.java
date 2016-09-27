@@ -35,6 +35,7 @@ import org.mockito.stubbing.Answer;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScale.ColorScaleException;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
@@ -48,7 +49,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -120,7 +120,7 @@ public class ColorScaleResourceTest extends JerseyTest
   @Test
   @Category(UnitTest.class)
   public void testGetAll() throws Exception {
-    List<String> retvals = new ArrayList<String>();
+    List<String> retvals = new ArrayList<>();
       retvals.add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow-transparent.xml");
       retvals.add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml");
       retvals.add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/dir1/brewer-green-log.xml");
@@ -188,8 +188,7 @@ public class ColorScaleResourceTest extends JerseyTest
       InputStream inputStream = resp.getEntityInputStream();
 
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-      DocumentBuilder db = null;
-      db = dbf.newDocumentBuilder();
+      DocumentBuilder db = dbf.newDocumentBuilder();
       Document doc = db.parse(inputStream);
 
       Assert.assertEquals(1, doc.getElementsByTagName("img").getLength());
@@ -216,8 +215,7 @@ public class ColorScaleResourceTest extends JerseyTest
       InputStream inputStream = resp.getEntityInputStream();
 
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-      DocumentBuilder db = null;
-      db = dbf.newDocumentBuilder();
+      DocumentBuilder db = dbf.newDocumentBuilder();
       Document doc = db.parse(inputStream);
 
       Assert.assertEquals(doc.getElementsByTagName("img").getLength(), 1);
@@ -245,8 +243,7 @@ public class ColorScaleResourceTest extends JerseyTest
       InputStream inputStream = resp.getEntityInputStream();
 
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-      DocumentBuilder db = null;
-      db = dbf.newDocumentBuilder();
+      DocumentBuilder db = dbf.newDocumentBuilder();
       Document doc = db.parse(inputStream);
 
       Assert.assertEquals(doc.getElementsByTagName("img").getLength(), 1);
@@ -272,19 +269,18 @@ public class ColorScaleResourceTest extends JerseyTest
       InputStream inputStream = resp.getEntityInputStream();
 
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-      DocumentBuilder db = null;
-      db = dbf.newDocumentBuilder();
+      DocumentBuilder db = dbf.newDocumentBuilder();
       Document doc = db.parse(inputStream);
 
       Assert.assertEquals(doc.getElementsByTagName("img").getLength(), 1);
       Assert.assertTrue(doc.getElementsByTagName("div").getLength() > 1);
   }
 
-  private Raster getRaster(String dir, String file) throws IOException {
-    return GDALUtils.toRaster(GDALUtils.open(new File(dir, file).getCanonicalPath()));
+  private MrGeoRaster getRaster(String dir, String file) throws IOException {
+    return MrGeoRaster.fromDataset(GDALUtils.open(new File(dir, file).getCanonicalPath()));
   }
 
-  String input = TestUtils.composeInputDir(ColorScaleResourceTest.class);
+  private String input = TestUtils.composeInputDir(ColorScaleResourceTest.class);
 
   @Test
   @Category(UnitTest.class)
@@ -304,14 +300,16 @@ public class ColorScaleResourceTest extends JerseyTest
     ClientResponse resp = wr.get(ClientResponse.class);
     MultivaluedMap<String, String> headers = resp.getHeaders();
     Assert.assertEquals("[image/png]", headers.get("Content-Type").toString());
-    InputStream is = resp.getEntityInputStream();
+    try (InputStream is = resp.getEntityInputStream())
+    {
 
-    Raster raster = GDALUtils.toRaster(GDALUtils.open(is));
+      MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(is));
+      MrGeoRaster golden = getRaster(input, "colorswatch.png");
+      TestUtils.compareRasters(golden, raster);
 
-    TestUtils.compareRasters(new File(input + "colorswatch.png"), raster);
-    Assert.assertEquals(100, raster.getWidth());
-    Assert.assertEquals(10, raster.getHeight());
-    is.close();
+      Assert.assertEquals(100, raster.width());
+      Assert.assertEquals(10, raster.height());
+    }
   }
 
   @Test
@@ -320,9 +318,7 @@ public class ColorScaleResourceTest extends JerseyTest
   {
       Mockito.when(service.createColorScaleSwatch(Mockito.anyString(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt())).thenAnswer(new Answer() {
           public Object answer(InvocationOnMock invocation) {
-              StringBuilder builder = new StringBuilder();
-              builder.append("Base path \"").append(invocation.getArguments()[0]).append("\" does not exist.");
-              throw new NotFoundException(builder.toString());
+            throw new NotFoundException("Base path \"" + invocation.getArguments()[0] + "\" does not exist.");
           }
       });
 
