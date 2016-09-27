@@ -344,7 +344,7 @@ final public MrGeoRaster clip(int x, int y, int width, int height, int band)
   for (int yy = 0; yy < height; yy++)
   {
     int[] offsets = calculateByteRangeOffset(x, yy + y, x + width, yy + y, band);
-    int dstOffset = clipraster.calculateByteOffset(0, yy, band);
+    int dstOffset = clipraster.calculateByteOffset(0, yy, 0);
 
     System.arraycopy(data, offsets[0], clipraster.data, dstOffset, offsets[1] - offsets[0]);
   }
