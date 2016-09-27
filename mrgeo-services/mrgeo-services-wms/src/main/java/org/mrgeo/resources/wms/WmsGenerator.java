@@ -18,12 +18,12 @@ package org.mrgeo.resources.wms;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mrgeo.colorscale.ColorScale;
-import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.SecurityUtils;
@@ -33,7 +33,6 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
 import org.mrgeo.services.utils.DocumentUtils;
-import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -52,10 +51,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.*;
 
@@ -78,12 +75,12 @@ public class WmsGenerator
 //  private static Path colorScaleBasePath = null;
   // private static CoordinateReferenceSystem coordSys = null;
 
-  public static final String JPEG_MIME_TYPE = "image/jpeg";
-  public static final String PNG_MIME_TYPE = "image/png";
-  public static final String TIFF_MIME_TYPE = "image/tiff";
+  static final String JPEG_MIME_TYPE = "image/jpeg";
+  static final String PNG_MIME_TYPE = "image/png";
+  static final String TIFF_MIME_TYPE = "image/tiff";
 
   private Version version = new Version(WMS_VERSION);
-  public static final String WMS_VERSION = "1.3.0";
+  private static final String WMS_VERSION = "1.3.0";
   private static final String WMS_SERVICE = "wms";
 
   public WmsGenerator()
@@ -391,7 +388,7 @@ public class WmsGenerator
     // Return the resulting image
     try
     {
-      Raster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
+      MrGeoRaster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
 
       result = colorRaster(layerNames[0],
           (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
@@ -418,7 +415,6 @@ public class WmsGenerator
    * exception. If all validation passes, it returns a Bounds object configured with
    * those settings.
    *
-   * @throws Exception
    */
   private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName)
           throws Exception
@@ -537,7 +533,7 @@ public class WmsGenerator
     }
     try
     {
-      Raster result = renderer.renderImage(layerNames[0], bounds, providerProperties, srs);
+      MrGeoRaster result = renderer.renderImage(layerNames[0], bounds, providerProperties, srs);
       result = colorRaster(layerNames[0],
                            (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
                            format,
@@ -696,7 +692,7 @@ public class WmsGenerator
     }
     try
     {
-      Raster result = renderer.renderImage(layer, tileCol, tileRow, scale, providerProperties);
+      MrGeoRaster result = renderer.renderImage(layer, tileCol, tileRow, scale, providerProperties);
 
       result = colorRaster(layer, style, format, renderer, result);
 
@@ -713,8 +709,8 @@ public class WmsGenerator
     }
   }
 
-  private static Raster colorRaster(String layer, String style, String imageFormat, ImageRenderer renderer,
-      Raster result) throws Exception
+  private static MrGeoRaster colorRaster(String layer, String style, String imageFormat, ImageRenderer renderer,
+      MrGeoRaster result) throws Exception
   {
     if (!(renderer instanceof TiffImageRenderer))
     {
@@ -921,10 +917,7 @@ public class WmsGenerator
               .entity(xmlStream.toString())
               .build();
     }
-    catch (ParserConfigurationException e1)
-    {
-    }
-    catch (TransformerException e1)
+    catch (ParserConfigurationException | TransformerException e1)
     {
     }
     // Fallback in case there is an XML exception above
