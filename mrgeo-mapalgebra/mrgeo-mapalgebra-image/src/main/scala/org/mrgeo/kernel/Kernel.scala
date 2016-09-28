@@ -16,7 +16,6 @@
 
 package org.mrgeo.kernel
 
-import java.awt.image.Raster
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
 import org.mrgeo.data.raster.MrGeoRaster

@@ -16,15 +16,11 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{DataBuffer, Raster}
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
-import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
