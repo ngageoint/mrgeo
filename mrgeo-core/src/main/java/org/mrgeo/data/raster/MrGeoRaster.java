@@ -1,6 +1,5 @@
 package org.mrgeo.data.raster;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
@@ -14,9 +13,9 @@ import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
 
 import java.awt.*;
-import java.awt.image.*;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.*;
