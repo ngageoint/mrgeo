@@ -22,9 +22,9 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.io.compress.Decompressor;
-import org.apache.hadoop.io.serializer.Serialization;
 import org.mrgeo.utils.ByteArrayUtils;
-import org.mrgeo.utils.GDALUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.image.DataBuffer;
 import java.io.*;
@@ -33,7 +33,7 @@ import java.util.Arrays;
 
 public class RasterWritable implements WritableComparable<RasterWritable>, Serializable
 {
-private static int HEADERSIZE = 5;
+private static final Logger log = LoggerFactory.getLogger(RasterWritable.class);
 
 public static long serializeTime = 0;
 public static long serializeCnt = 0;
@@ -58,8 +58,7 @@ public static class RasterWritableException extends RuntimeException
 
   public RasterWritableException(final String msg)
   {
-    final Exception e = new Exception(msg);
-    this.origException = e;
+    this.origException = new Exception(msg);
   }
 
   @Override
@@ -245,7 +244,25 @@ private static MrGeoRaster convertFromV2(byte[] data)
   {
     if (bands == 1)
     {
-      System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+      if (srclen < raster.datasize())
+      {
+        log.warn(String.format("Input raster data size (%dB) is " +
+            "less then than the calculated data size (%dB), " +
+            "only copying (%dB)", srclen, raster.datasize(), srclen));
+        System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+
+      }
+      else if (srclen > raster.datasize())
+      {
+        log.warn(String.format("Input raster data size (%dB) is " +
+            "less then than the calculated data size (%dB), " +
+            "only copying (%dB)", srclen, raster.datasize(), raster.datasize()));
+        System.arraycopy(data, headersize, raster.data, raster.dataoffset(), raster.datasize());
+      }
+      else
+      {
+        System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+      }
     }
     else
     {
