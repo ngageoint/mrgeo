@@ -240,7 +240,7 @@ final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, doub
     row.setPixel(x, 0, 0, nodata);
   }
 
-  int headerlen = raster.bandoffset;
+  int headerlen = raster.dataoffset;
   int len = row.data.length - headerlen;
 
   for (int b = 0; b < bands; b++)
