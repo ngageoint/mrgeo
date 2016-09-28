@@ -26,6 +26,7 @@ import org.apache.hadoop.io.serializer.Serialization;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.GDALUtils;
 
+import java.awt.image.DataBuffer;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -217,9 +218,6 @@ private static MrGeoRaster convertFromV2(byte[] data)
   final int datatype = rasterBuffer.getInt();
   final SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
 
-  // The old data was big-endian, ours is little-endian.  The RasterWritable may persisted, so
-  // we can't just swap the source.  Instead, we need to swap _after_ the copy.  We'll just swap
-  // the data in the MrGeoRaster inplace.
 
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, datatype);
   int srclen = data.length - headersize;
@@ -229,7 +227,6 @@ private static MrGeoRaster convertFromV2(byte[] data)
   case BANDED:
     // this one is easy, just make a new MrGeoRaster and copy the data
     System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
-    ByteArrayUtils.swapBytes(raster.data, datatype, raster.dataoffset());
     break;
   case MULTIPIXELPACKED:
     throw new NotImplementedException("MultiPixelPackedSampleModel not implemented yet");
@@ -239,11 +236,46 @@ private static MrGeoRaster convertFromV2(byte[] data)
     if (bands == 1)
     {
       System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
-      ByteArrayUtils.swapBytes(raster.data, datatype, raster.dataoffset());
     }
     else
     {
-      throw new NotImplementedException("Component and PixelInterleavedSampleModel (multi-band) not implemented yet");
+      int offset = headersize;
+      int bpp = raster.bytesPerPixel();
+      double pixel;
+      for (int y = 0; y < height; y++)
+      {
+        for (int x = 0; x < width; x++)
+        {
+          for (int b = 0; b < bands; b++)
+          {
+            switch (datatype)
+            {
+            case DataBuffer.TYPE_BYTE:
+              pixel = ByteArrayUtils.getByte(data, offset);
+              break;
+            case DataBuffer.TYPE_SHORT:
+            case DataBuffer.TYPE_USHORT:
+              pixel = ByteArrayUtils.getShort(data, offset);
+              break;
+            case DataBuffer.TYPE_INT:
+              pixel = ByteArrayUtils.getInt(data, offset);
+              break;
+            case DataBuffer.TYPE_FLOAT:
+              pixel = ByteArrayUtils.getFloat(data, offset);
+              break;
+            case DataBuffer.TYPE_DOUBLE:
+              pixel = ByteArrayUtils.getDouble(data, offset);
+              break;
+            default:
+              throw new RasterWritableException("Bad data type");
+            }
+
+            raster.setPixel(x, y, b, pixel);
+
+            offset += bpp;
+          }
+        }
+      }
     }
     break;
   }
@@ -252,6 +284,11 @@ private static MrGeoRaster convertFromV2(byte[] data)
   default:
     throw new RasterWritableException("Unknown RasterSampleModel type");
   }
+
+  // The old data was big-endian, ours is little-endian.  The RasterWritable may persisted, so
+  // we can't just swap the source.  Instead, we need to swap _after_ the copy.  We'll just swap
+  // the data in the MrGeoRaster inplace.
+  ByteArrayUtils.swapBytes(raster.data, datatype, raster.dataoffset());
 
   return raster;
 }
