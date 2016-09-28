@@ -31,7 +31,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class RasterWritable implements WritableComparable<RasterWritable>
+public class RasterWritable implements WritableComparable<RasterWritable>, Serializable
 {
 private static int HEADERSIZE = 5;
 
@@ -124,16 +124,26 @@ public RasterWritable(RasterWritable copy)
 // we could use the default serializations here, but instead we'll just do it manually
 private void writeObject(ObjectOutputStream stream) throws IOException
 {
-  stream.writeInt(bytes.length);
-  stream.write(bytes, 0, bytes.length);
+  if (bytes == null)
+  {
+    stream.writeInt(0);
+  }
+  else
+  {
+    stream.writeInt(bytes.length);
+    stream.write(bytes, 0, bytes.length);
+  }
 }
 
 private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
 {
-  int size = stream.readInt();
-  bytes = new byte[size];
+  int len = stream.readInt();
 
-  stream.readFully(bytes, 0, size);
+  if (len > 0)
+  {
+    bytes = new byte[len];
+    stream.readFully(bytes, 0, len);
+  }
 }
 
 public int getSize()

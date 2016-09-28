@@ -18,9 +18,10 @@ import java.awt.image.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.*;
 
-public abstract class MrGeoRaster
+public abstract class MrGeoRaster implements Serializable
 {
 final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
 private final static int VERSION_OFFSET = 0;    // start
