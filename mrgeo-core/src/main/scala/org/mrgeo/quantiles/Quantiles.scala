@@ -103,6 +103,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
 
     var cnt = 0
     while (y < height) {
+      x = 0
       while (x < width) {
         data(cnt) = raster.getPixelDouble(x, y, band)
         cnt += 1
@@ -126,8 +127,10 @@ object Quantiles extends MrGeoDriver with Externalizable {
 
     var cnt = 0
     while (y < height) {
+      x = 0
       while (x < width) {
         data(cnt) = raster.getPixelFloat(x, y, band)
+
         cnt += 1
 
         x += 1
@@ -149,6 +152,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
 
     var cnt = 0
     while (y < height) {
+      x = 0
       while (x < width) {
         data(cnt) = raster.getPixelInt(x, y, band)
         cnt += 1
@@ -172,6 +176,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
 
     var cnt = 0
     while (y < height) {
+      x = 0
       while (x < width) {
         data(cnt) = raster.getPixelShort(x, y, band)
         cnt += 1
@@ -195,6 +200,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
 
     var cnt = 0
     while (y < height) {
+      x = 0
       while (x < width) {
         data(cnt) = raster.getPixelByte(x, y, band)
         cnt += 1
@@ -230,10 +236,12 @@ object Quantiles extends MrGeoDriver with Externalizable {
         }).filter(value => {
           !RasterMapOp.isNodata(value, nodata)
         })
+        println(pixelValues.count())
         if (fraction.isDefined && fraction.get < 1.0f) {
           pixelValues = pixelValues.sample(false, fraction.get)
         }
         pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
+
       case (DataBuffer.TYPE_INT | DataBuffer.TYPE_USHORT) =>
         var pixelValues = rdd.flatMap(U => {
           getIntPixelValues(RasterWritable.toMrGeoRaster(U._2), b)
