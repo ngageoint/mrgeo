@@ -31,31 +31,31 @@ public byte getPixelByte(int x, int y, int band)
 @Override
 public short getPixelShort(int x, int y, int band)
 {
-  return (short)ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band));
+  return (short)(ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band)) & 0xff);
 }
 
 @Override
 public short getPixeUShort(int x, int y, int band)
 {
-  return (short)ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band));
+  return (short)(ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band)) & 0xff);
 }
 
 @Override
 public int getPixelInt(int x, int y, int band)
 {
-  return (int)ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band));
+  return (int)(ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band)) & 0xff);
 }
 
 @Override
 public float getPixelFloat(int x, int y, int band)
 {
-  return (float)ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band));
+  return (float)(ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band)) & 0xff);
 }
 
 @Override
 public double getPixelDouble(int x, int y, int band)
 {
-  return (double)ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band));
+  return (double)(ByteArrayUtils.getByte(data, calculateByteOffset(x, y, band)) & 0xff);
 }
 
 @Override
