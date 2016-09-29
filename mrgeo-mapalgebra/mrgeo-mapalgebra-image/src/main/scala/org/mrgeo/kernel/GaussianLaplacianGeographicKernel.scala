@@ -16,9 +16,9 @@
 
 package org.mrgeo.kernel
 
-import java.awt.image.{DataBuffer, Raster}
+import java.awt.image.DataBuffer
 
-import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils}
+import org.mrgeo.data.raster.MrGeoRaster
 import org.mrgeo.utils.tms.TMSUtils
 import org.mrgeo.utils.{LatLng, OpenCVUtils}
 import org.opencv.core.{CvType, Mat}

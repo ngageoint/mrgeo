@@ -125,7 +125,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
     case Some(const) =>
       val src = RasterWritable.toMrGeoRaster(rdd.first()._2)
       val constRaster = src.createCompatibleRaster(src.width(), src.height())
-      constRaster.fill(nodata)
+      constRaster.fill(const)
 
       val joined = new PairRDDFunctions(test).leftOuterJoin(rdd)
       joined.map(tile => {

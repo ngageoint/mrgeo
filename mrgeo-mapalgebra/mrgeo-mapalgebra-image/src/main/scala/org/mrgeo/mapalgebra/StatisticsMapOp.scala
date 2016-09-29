@@ -16,13 +16,13 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{DataBuffer, Raster, WritableRaster}
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.DataProviderFactory.AccessMode
-import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.job.JobArguments

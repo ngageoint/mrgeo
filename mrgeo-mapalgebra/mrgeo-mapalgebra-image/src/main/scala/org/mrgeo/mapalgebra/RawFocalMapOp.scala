@@ -172,10 +172,10 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
       }
       // For performance, construct an array of booleans indicating whether or not each
       // pixel value in the source raster is nodata or not
-      val notnodata = MrGeoRaster.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_BYTE)
       val rasterWidth = raster.width()
       val rasterHeight = raster.height()
       var band: Int = 0
+      val notnodata = MrGeoRaster.createEmptyRaster(rasterWidth, rasterHeight, 1, DataBuffer.TYPE_BYTE)
       while (band < raster.bands()) {
         val outputNoDataForBand = outputNoData(band).doubleValue()
         var py = 0
@@ -185,10 +185,10 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
           while (px < rasterWidth) {
             val v = raster.getPixelDouble(px, py, band)
             if (!isNoData(v, nodatas(band))) {
-              notnodata.setPixel(px, py, band, 1.toByte)
+              notnodata.setPixel(px, py, 0, 1.toByte)
             }
             else {
-              notnodata.setPixel(px, py, band, 0.toByte)
+              notnodata.setPixel(px, py, 0, 0.toByte)
             }
             px += 1
           }
@@ -202,7 +202,7 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
             val srcX = px + bufferX
             val srcY = py + bufferY
             // If the source pixel is nodata, skip it
-            if (notnodata.getPixelByte(px, py, band) == 1) {
+            if (notnodata.getPixelByte(srcX, srcY, band) == 1) {
               answer.setPixel(px, py, band,
                 computePixelValue(raster, notnodata, outputNoDataForBand,
                   rasterWidth, srcX, srcY, band, xLeftOffset, neighborhoodWidth,
