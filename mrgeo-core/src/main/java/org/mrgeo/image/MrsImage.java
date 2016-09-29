@@ -522,7 +522,6 @@ public MrGeoRaster getRaster(final Tile[] tiles)
 {
   getMetadata(); // make sure metadata is loaded
 
-  final int zoom = metadata.getMaxZoomLevel();
   final int tilesize = metadata.getTilesize();
 
   // 1st calculate the pixel size of the merged image.
@@ -531,7 +530,7 @@ public MrGeoRaster getRaster(final Tile[] tiles)
   for (final Tile tile : tiles)
   {
     log.debug("tx: {} ty: {}", tile.tx, tile.ty);
-    final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
+    final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
     try
     {
       // expand the image bounds by the tile
@@ -556,8 +555,8 @@ public MrGeoRaster getRaster(final Tile[] tiles)
     throw new MrsImageException("Error, could not calculate the bounds of the tiles");
   }
 
-  final Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, zoom, tilesize);
-  final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, zoom, tilesize);
+  final Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
+  final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
 
   MrGeoRaster merged = MrGeoRaster.createEmptyRaster((int) (lr.px - ul.px), (int) (lr.py - ul.py),
       metadata.getBands(), metadata.getTileType());
@@ -565,11 +564,11 @@ public MrGeoRaster getRaster(final Tile[] tiles)
 
   for (final Tile tile : tiles)
   {
-    final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
+    final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
 
     // calculate the starting pixel for the source
     // make sure we use the upper-left lat/lon
-    final Pixel start = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize);
+    final Pixel start = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
 
     try
     {
@@ -598,14 +597,13 @@ public MrGeoRaster getRaster(final TileBounds tileBounds)
 {
   getMetadata(); // make sure metadata is loaded
 
-  final int zoom = metadata.getMaxZoomLevel();
   final int tilesize = metadata.getTilesize();
 
   // 1st calculate the pixel size of the merged image.
-  final Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoom, tilesize);
+  final Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoomlevel, tilesize);
 
-  final Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, zoom, tilesize);
-  final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, zoom, tilesize);
+  final Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
+  final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
 
 
   MrGeoRaster merged = MrGeoRaster.createEmptyRaster((int) (lr.px - ul.px), (int) (lr.py - ul.py),
@@ -613,17 +611,17 @@ public MrGeoRaster getRaster(final TileBounds tileBounds)
   merged.fill(metadata.getDefaultValuesDouble());
 
 
-  log.debug("Merging tiles: zoom: {}  {}, {} ({}) to {}, {} ({})", zoom, tileBounds.w, tileBounds.s,
-      TMSUtils.tileid(tileBounds.w, tileBounds.s, zoom),
-      tileBounds.e, tileBounds.n, TMSUtils.tileid(tileBounds.e, tileBounds.n, zoom));
+  log.debug("Merging tiles: zoom: {}  {}, {} ({}) to {}, {} ({})", zoomlevel, tileBounds.w, tileBounds.s,
+      TMSUtils.tileid(tileBounds.w, tileBounds.s, zoomlevel),
+      tileBounds.e, tileBounds.n, TMSUtils.tileid(tileBounds.e, tileBounds.n, zoomlevel));
 
   // the iterator is _much_ faster than requesting individual tiles...
   // final KVIterator<TileIdWritable, Raster> iter = image.getTiles(TileBounds
   // .convertToLongRectangle(tileBounds));
   for (long row = tileBounds.s; row <= tileBounds.n; row++)
   {
-    final TileIdWritable rowStart = new TileIdWritable(TMSUtils.tileid(tileBounds.w, row, zoom));
-    final TileIdWritable rowEnd = new TileIdWritable(TMSUtils.tileid(tileBounds.e, row, zoom));
+    final TileIdWritable rowStart = new TileIdWritable(TMSUtils.tileid(tileBounds.w, row, zoomlevel));
+    final TileIdWritable rowEnd = new TileIdWritable(TMSUtils.tileid(tileBounds.e, row, zoomlevel));
 
     final KVIterator<TileIdWritable, MrGeoRaster> iter = getTiles(rowStart, rowEnd);
     while (iter.hasNext())
@@ -631,14 +629,14 @@ public MrGeoRaster getRaster(final TileBounds tileBounds)
       final MrGeoRaster source = iter.currentValue();
       if (source != null)
       {
-        final Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoom);
+        final Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoomlevel);
 
-        final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tilesize);
+        final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
 
         // calculate the starting pixel for the source
         // make sure we use the upper-left lat/lon
         final Pixel start = TMSUtils
-            .latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize);
+            .latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
 
         log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,
             tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);

@@ -326,8 +326,7 @@ public void testGetTileNonexistanPyramidLevel() throws Exception {
   ClientResponse resp = wr.get(ClientResponse.class);
 
   Assert.assertEquals(404, resp.getStatus());
-  Assert.assertEquals("Tile map not found - " + raster + ": 10",
-      resp.getEntity(String.class));
+  Assert.assertEquals("Tile map not found - " + raster, resp.getEntity(String.class));
 
   verifyNoMoreInteractions(request, service);
 }
