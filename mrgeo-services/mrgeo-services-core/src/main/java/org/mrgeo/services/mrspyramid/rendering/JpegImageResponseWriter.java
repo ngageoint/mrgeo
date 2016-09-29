@@ -58,7 +58,7 @@ public class JpegImageResponseWriter extends ImageResponseWriterAbstract
   public void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
     throws IOException
   {
-    GDALJavaUtils.saveRaster(raster.toDataset(), byteStream, "jpeg");
+    GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "jpeg");
     byteStream.close();
   }
 }

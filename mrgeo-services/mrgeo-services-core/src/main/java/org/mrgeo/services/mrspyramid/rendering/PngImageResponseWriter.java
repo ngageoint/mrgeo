@@ -59,7 +59,7 @@ public class PngImageResponseWriter extends ImageResponseWriterAbstract
   public void writeToStream(final MrGeoRaster raster, final double[] defaults,
     final ByteArrayOutputStream byteStream) throws IOException
   {
-    GDALJavaUtils.saveRaster(raster.toDataset(), byteStream, "png");
+    GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "png");
     byteStream.close();
 
 //    // final long start = System.currentTimeMillis();

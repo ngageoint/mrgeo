@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 {
@@ -208,7 +209,10 @@ public void writeToStream(final MrGeoRaster raster, double[] defaults, final Byt
 private void writeStream(final MrGeoRaster raster, final Bounds bounds, final double nodata,
     final ByteArrayOutputStream byteStream) throws IOException
 {
-  GDALJavaUtils.saveRaster(raster.toDataset(), byteStream, bounds, nodata);
+  double nodatas[] = new double[raster.bands()];
+  Arrays.fill(nodatas, nodata);
+
+  GDALJavaUtils.saveRaster(raster.toDataset(bounds, nodatas), byteStream, bounds, nodata);
 
   byteStream.close();
 }

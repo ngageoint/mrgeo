@@ -172,7 +172,9 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
         raster = colorRaster(image, format, raster);
       }
 
-      GDALJavaUtils.saveRasterTile(raster.toDataset(), out, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
+      Bounds bnds = TMSUtils.tileBounds(t.tx, t.ty, image.getZoomlevel(), metadata.getTilesize());
+      GDALJavaUtils.saveRasterTile(raster.toDataset(bnds, metadata.getDefaultValues()),
+          out, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
 
       System.out.println("Wrote output to " + out);
       return true;
@@ -255,7 +257,7 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
       raster = colorRaster(image, format, raster);
     }
 
-    GDALJavaUtils.saveRaster(raster.toDataset(), out, imageBounds, metadata.getDefaultValue(0), format);
+    GDALJavaUtils.saveRaster(raster.toDataset(imageBounds, metadata.getDefaultValues()), out, null, metadata.getDefaultValue(0), format);
 
     System.out.println("Wrote output to " + out);
     return true;

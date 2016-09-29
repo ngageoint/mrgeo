@@ -59,7 +59,7 @@ public class TiffImageResponseWriter extends ImageResponseWriterAbstract
   @Override
   public void writeToStream(MrGeoRaster raster, double[] defaults, ByteArrayOutputStream byteStream) throws IOException
   {
-    GDALJavaUtils.saveRaster(raster.toDataset(), byteStream, "Tiff");
+    GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "Tiff");
     byteStream.close();
   }
 }
