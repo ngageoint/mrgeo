@@ -730,7 +730,7 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
   }
   ds.SetGeoTransform(xform);
 
-  byte[] data = new byte[bytesPerPixel() * width * height];
+  byte[] banddata = new byte[bytesPerPixel() * width * height];
 
   for (int b = 0; b < bands; b++)
   {
@@ -747,8 +747,8 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
       }
     }
 
-    System.arraycopy(this.data ,calculateByteOffset(0, 0, b), data, 0, data.length);
-    int success = band.WriteRaster(0, 0, width, height, width, height, gdaltype, data);
+    System.arraycopy(this.data ,calculateByteOffset(0, 0, b), banddata, 0, banddata.length);
+    int success = band.WriteRaster(0, 0, width, height, width, height, gdaltype, banddata);
     if (success != gdalconstConstants.CE_None)
     {
       System.out.println("Failed writing raster. gdal error: " + success);
