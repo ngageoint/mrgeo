@@ -139,7 +139,12 @@ object GDALUtils extends Logging {
       if (nodatas != null) {
         var i: Int = 1
         while (i <= dataset.getRasterCount) {
-          val nodata: Double = nodatas(i - 1)
+          val nodata: Double = if (i < nodatas.length) {
+            nodatas(i - 1)
+          }
+          else {
+            nodatas(nodatas.length - 1)
+          }
           val band: Band = dataset.GetRasterBand(i)
           band.Fill(nodata)
           band.SetNoDataValue(nodata)

@@ -705,8 +705,6 @@ final public Dataset toDataset()
 final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
 {
   int gdaltype = GDALUtils.toGDALDataType(datatype);
-
-
   Dataset ds = GDALUtils.createEmptyMemoryRaster(width, height, bands, gdaltype, nodatas);
 
   double[] xform = new double[6];
@@ -739,7 +737,14 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
     Band band = ds.GetRasterBand(b + 1); // gdal bands are 1's based
     if (nodatas != null)
     {
-      band.SetNoDataValue(nodatas[b]);
+      if (b < nodatas.length)
+      {
+        band.SetNoDataValue(nodatas[b]);
+      }
+      else
+      {
+        band.SetNoDataValue(nodatas[nodatas.length - 1]);
+      }
     }
 
     System.arraycopy(this.data ,calculateByteOffset(0, 0, b), data, 0, data.length);

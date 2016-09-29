@@ -44,9 +44,9 @@ protected void apply(final MrGeoRaster source, final MrGeoRaster dest, ColorScal
 
   int[] color = new int[4];
 
-  for (int y = 0; y < source.height(); y++)
+  for (int y = 0; y < dest.height(); y++)
   {
-    for (int x = 0; x < source.width(); x++)
+    for (int x = 0; x < dest.width(); x++)
     {
       colorScale.lookup(source.getPixelDouble(x, y, 0), color);
 
