@@ -620,9 +620,9 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
       return image.getTile(tileColumn, tileRow);
     }
   }
-  catch (final IOException e)
+  catch (IOException | NullPointerException e)
   {
-    throw new IOException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName));
+    throw new IOException("Unable to open image: " + HadoopFileUtils.unqualifyPath(pyramidName));
   }
 }
 

@@ -28,8 +28,6 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.resources.mrspyramid.ColorScaleResourceTest;
-import org.mrgeo.resources.mrspyramid.RasterResourceTest;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.tms.Bounds;
@@ -44,10 +42,6 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author Steve Ingram
- *         Date: 10/26/13
- */
 @SuppressWarnings("static-method")
 public class MrsPyramidServiceTest {
 @Rule
@@ -120,19 +114,44 @@ public void testFormatValue()
 @Category(UnitTest.class)
 public void testCreateColorSwatch() throws Exception
 {
-  String input = TestUtils.composeInputDir(ColorScaleResourceTest.class);
+  String format = "png";
   MrsPyramidService testInstance = new MrsPyramidService(new Properties());
   int width = 100;
   int height = 10;
 
+  MrGeoRaster ri = testInstance.createColorScaleSwatch(createRainbowColorScale(), format, width, height);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testutils.saveBaselineRaster(testname.getMethodName(), ri, format);
+  }
+  else
+  {
+    testutils.compareRasters(testname.getMethodName(), ri, format);
+  }
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCreateColorSwatchVertical() throws Exception
+{
+  String format = "png";
+  MrsPyramidService testInstance = new MrsPyramidService(new Properties());
+  int width = 20;
+  int height = 200;
+
   MrGeoRaster ri = testInstance.createColorScaleSwatch(createRainbowColorScale(), "png", width, height);
-  TestUtils.compareRasters(new File(input + "colorswatch.png"), ri);
 
-  width = 20;
-  height = 200;
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testutils.saveBaselineRaster(testname.getMethodName(), ri, format);
+  }
+  else
+  {
+    testutils.compareRasters(testname.getMethodName(), ri, format);
+  }
 
-  ri = testInstance.createColorScaleSwatch(createRainbowColorScale(), "png", width, height);
-  TestUtils.compareRasters(new File(input + "colorswatchvertical.png"), ri);
 }
 
 private ColorScale createRainbowColorScale() throws ColorScaleException {
@@ -211,7 +230,7 @@ public void testGetRasterJpgSingleSourceTileAspectColorScaleWithZoom() throws Ex
 public void testGetRasterOutOfBoundsJpgWithZoom() throws Exception
 {
   // test out of bounds jpg
-  testIslandsElevationFor("jpg",
+  testIslandsElevationFor("jpeg",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
       islandsElevation_unqualified, getAspectColorScale(), -1);
@@ -474,9 +493,9 @@ private void testIslandsElevationFor(String format, final String width,
   ColorScale cs = null;
   Properties mrgeoProperties = MrGeoProperties.getInstance();
   Properties unusedMrgeoProperties = new Properties();
-  mrgeoProperties.put(MrGeoConstants.MRGEO_COMMON_HOME, TestUtils.composeInputDir(RasterResourceTest.class));
-  mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class));
-  mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
+  mrgeoProperties.put(MrGeoConstants.MRGEO_COMMON_HOME, testutils.getInputLocal());
+  mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, "file://" + testutils.getInputLocal());
+  mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + testutils.getInputLocal() + "color-scales");
   MrsPyramidService service = new MrsPyramidService(unusedMrgeoProperties);
 
   String[] bBoxValues = bbox.split(",");
@@ -515,13 +534,20 @@ private void testIslandsElevationFor(String format, final String width,
   if ( !format.equalsIgnoreCase("TIFF") )
     result = service.applyColorScaleToImage(format, result, cs, renderer, extrema);
 
+  // if we are jpeg, we sant to use the golden image as a png, because jpeg compression may deliver different
+  // results after saving/loading
+  if (format.equalsIgnoreCase("jpeg"))
+  {
+    format = "png";
+  }
+
   if (GEN_BASELINE_DATA_ONLY)
   {
-    testutils.saveBaselineTif(testname.getMethodName(), result);
+    testutils.saveBaselineRaster(testname.getMethodName(), result, format);
   }
   else
   {
-    testutils.compareRasters(testname.getMethodName(), result);
+    testutils.compareRasters(testname.getMethodName(), result, format);
   }
 }
 

@@ -135,7 +135,9 @@ private Response createEmptyTile(final ImageResponseWriter writer, final int wid
     final int height)
 {
   // return an empty image
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, DataBuffer.TYPE_BYTE, 0);
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 4, DataBuffer.TYPE_BYTE);
+  raster.fill(0);
+
   return writer.write(raster).build();
 }
 

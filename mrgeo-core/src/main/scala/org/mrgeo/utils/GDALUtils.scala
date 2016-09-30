@@ -139,7 +139,12 @@ object GDALUtils extends Logging {
       if (nodatas != null) {
         var i: Int = 1
         while (i <= dataset.getRasterCount) {
-          val nodata: Double = nodatas(i - 1)
+          val nodata: Double = if (i < nodatas.length) {
+            nodatas(i - 1)
+          }
+          else {
+            nodatas(nodatas.length - 1)
+          }
           val band: Band = dataset.GetRasterBand(i)
           band.Fill(nodata)
           band.SetNoDataValue(nodata)
@@ -402,7 +407,7 @@ object GDALUtils extends Logging {
     }
 
 
-    saveRaster(raster, filename, format, options)
+    saveRaster(raster, filename, format, bounds, options)
 
     output match {
     case Right(stream) =>
@@ -461,7 +466,7 @@ object GDALUtils extends Logging {
     }
   }
 
-  private def saveRaster(ds:Dataset, file:String, format:String, options:Array[String]): Unit = {
+  private def saveRaster(ds:Dataset, file:String, format:String, bounds:Bounds, options:Array[String]): Unit = {
     val fmt = mapType(format)
     val driver = gdal.GetDriverByName(fmt)
 
@@ -485,6 +490,57 @@ object GDALUtils extends Logging {
     }
 
     val copy: Dataset = driver.CreateCopy(file, ds, 1, moreoptions)
+
+    // add the bounds, if sent in.  Reproject if needed
+    val xform: Array[Double] = new Array[Double](6)
+    if (bounds != null) {
+      val proj = ds.GetProjection()
+      if (proj.length > 0) {
+
+        val dst = new SpatialReference(proj)
+        val src = new SpatialReference(EPSG4326)
+
+        val tx = new CoordinateTransformation(src, dst)
+
+        var c1: Array[Double] = null
+        var c2: Array[Double] = null
+        var c3: Array[Double] = null
+        var c4: Array[Double] = null
+
+        if (tx != null) {
+          c1 = tx.TransformPoint(bounds.w, bounds.n)
+          c2 = tx.TransformPoint(bounds.e, bounds.s)
+          c3 = tx.TransformPoint(bounds.e, bounds.n)
+          c4 = tx.TransformPoint(bounds.w, bounds.s)
+        }
+
+        val xformed = new Bounds(Math.min(Math.min(c1(0), c2(0)), Math.min(c3(0), c4(0))),
+          Math.min(Math.min(c1(1), c2(1)), Math.min(c3(1), c4(1))),
+          Math.max(Math.max(c1(0), c2(0)), Math.max(c3(0), c4(0))),
+          Math.max(Math.max(c1(1), c2(1)), Math.max(c3(1), c4(1))))
+
+
+        xform(0) = xformed.w
+        xform(1) = xformed.width / copy.GetRasterXSize()
+        xform(2) = 0
+        xform(3) = xformed.n
+        xform(4) = 0
+        xform(5) = -xformed.height / copy.GetRasterYSize()
+
+        copy.SetProjection(proj)
+      }
+      else {
+        xform(0) = bounds.w
+        xform(1) = bounds.width / copy.GetRasterXSize()
+        xform(2) = 0
+        xform(3) = bounds.n
+        xform(4) = 0
+        xform(5) = -bounds.height / copy.GetRasterYSize()
+
+        copy.SetProjection(EPSG4326)
+      }
+      copy.SetGeoTransform(xform)
+    }
 
     if (pamEnabled != null) {
       gdal.SetConfigOption(GDAL_PAM_ENABLED, pamEnabled)

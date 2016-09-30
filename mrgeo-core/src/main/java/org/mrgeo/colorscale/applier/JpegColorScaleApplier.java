@@ -19,6 +19,7 @@ package org.mrgeo.colorscale.applier;
 import org.gdal.gdal.Dataset;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.raster.MrGeoRaster;
+import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,12 +38,12 @@ private static final Logger log = LoggerFactory.getLogger(JpegColorScaleApplier.
 public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorScale, final double[] extrema,
     final double[] defaultValues) throws Exception
 {
-  Dataset colored = GDALUtils.createEmptyMemoryRaster(raster.width(), raster.height(), 3,
-      GDALUtils.toGDALDataType(DataBuffer.TYPE_BYTE), defaultValues);
+  MrGeoRaster colored = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), 3, DataBuffer.TYPE_BYTE);
+  colored.fill(RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE));
 
   setupExtrema(colorScale, extrema, defaultValues[0]);
   apply(raster, colored, colorScale);
-  return MrGeoRaster.fromDataset(colored);
+  return colored;
 }
 
 @Override

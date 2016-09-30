@@ -594,6 +594,30 @@ public void compareRasters(String testName, MrGeoRaster r2) throws IOException
   compareRasters(baselineTif, r2);
 }
 
+public void compareRasters(String testName, MrGeoRaster r2, String format) throws IOException
+{
+  File baselineTif = new File(new File(inputLocal), testName);
+  String ext = "";
+  String name = baselineTif.getCanonicalPath();
+
+  if (format.equalsIgnoreCase("tiff") && !name.endsWith(".tif"))
+  {
+    ext += ".tif";
+  }
+  else if (format.equalsIgnoreCase("jpeg") && !name.endsWith(".jpg"))
+  {
+    ext += ".jpg";
+  }
+  else if (format.equalsIgnoreCase("png") && !name.endsWith(".png"))
+  {
+    ext += ".png";
+  }
+
+  baselineTif = new File(new File(inputLocal), testName + ext);
+  compareRasters(baselineTif, r2);
+}
+
+
 public void compareRasters(String testName, ValueTranslator t1, MrGeoRaster r2, ValueTranslator t2) throws IOException
 {
   final File baselineTif = new File(new File(inputLocal), testName + ".tif");
@@ -604,9 +628,24 @@ public void saveBaselineRaster(final String testName,
     final MrGeoRaster raster, String format)
     throws IOException
 {
-  final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-  GDALJavaUtils.saveRaster(raster.toDataset(), baselineTif.getCanonicalPath());
+  final File baselineTif = new File(new File(inputLocal), testName);
+  String name = baselineTif.getCanonicalPath();
+
+  if (format.equalsIgnoreCase("tiff") && !name.endsWith(".tif"))
+  {
+    name += ".tif";
+  }
+  else if (format.equalsIgnoreCase("jpeg") && !name.endsWith(".jpg"))
+  {
+    name += ".jpg";
+  }
+  else if (format.equalsIgnoreCase("png") && !name.endsWith(".png"))
+  {
+    name += ".png";
+  }
+  GDALJavaUtils.saveRaster(raster.toDataset(), name, format);
 }
+
 public void saveBaselineTif(final String testName,
     final MrGeoRaster raster)
     throws IOException

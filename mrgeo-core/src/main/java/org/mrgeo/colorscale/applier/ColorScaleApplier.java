@@ -29,52 +29,35 @@ import org.mrgeo.data.raster.MrGeoRaster;
  */
 public abstract class ColorScaleApplier
 {
-protected void apply(final MrGeoRaster source, final Dataset dest, ColorScale colorScale)
+protected void apply(final MrGeoRaster source, final MrGeoRaster dest, ColorScale colorScale)
 {
-  if (source.bands() == 3 || source.bands() == 4)
+  if (source.bands() == dest.bands() && (source.bands() == 3 || source.bands() == 4))
   {
-
-    byte px[] = new byte[1];
-
-    for (int b = 0; b < 3; b++)
-    {
-      Band band = dest.GetRasterBand(b + 1);
-
-      for (int y = 0; y < source.height(); y++)
-      {
-        for (int x = 0; x < source.width(); x++)
-        {
-          px[0] = source.getPixelByte(x, y, b);
-          band.WriteRaster(x, y, 1, 1, gdalconstConstants.GDT_Byte, px);
-        }
-      }
-    }
+    dest.copyFrom(0, 0, source.width(), source.height(), source, 0, 0);
     return;
   }
 
   if (colorScale == null)
   {
-    if (source.bands() == 1)
-    {
-      colorScale = ColorScale.createDefaultGrayScale();
-    }
-    else
-    {
-      colorScale = ColorScale.createDefault();
-    }
+    colorScale = ColorScale.createDefaultGrayScale();
   }
 
-  int[] px_row = new int[source.width() * 4];
+  int[] color = new int[4];
 
-  for (int y = 0; y < source.height(); y++)
+  for (int y = 0; y < dest.height(); y++)
   {
-    for (int x = 0; x < source.width(); x++)
+    for (int x = 0; x < dest.width(); x++)
     {
-      colorScale.lookup(source.getPixelDouble(x, y, 0), px_row, x * 4);
-    }
+      colorScale.lookup(source.getPixelDouble(x, y, 0), color);
 
-    dest.WriteRaster(0, y, source.width(), 1, source.width(), 1, gdalconstConstants.GDT_Int32,
-        px_row, null);
+      for (int b = 0; b < color.length; b++)
+      {
+        if (dest.bands() > b)
+        {
+          dest.setPixel(x, y, b, color[b]);
+        }
+      }
+    }
   }
 }
 
