@@ -9,6 +9,7 @@
   "bands" : 1,
   "defaultValues" : [ -32768.0 ],
   "maxZoomLevel" : 10,
+  "tileType" : 2,
   "imageMetadata" : [ {
     "pixelBounds" : null,
     "tileBounds" : null,
