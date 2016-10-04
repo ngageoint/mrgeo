@@ -1,0 +1,75 @@
+{
+  "bounds" : {
+    "w" : -135.0,
+    "s" : -45.0,
+    "n" : 0.0,
+    "e" : -90.0
+  },
+  "tilesize" : 512,
+  "maxZoomLevel" : 3,
+  "tags" : {
+  },
+  "protectionLevel" : "",
+  "bands" : 1,
+  "quantiles" : null,
+  "defaultValues" : [
+    -9999.0
+  ],
+  "tileType" : 4,
+  "stats" : [
+    {
+      "min" : 0.0,
+      "max" : 262143.0,
+      "mean" : 131071.5,
+      "sum" : 3.4359607296E10,
+      "count" : 262144
+    }
+  ],
+  "categories" : null,
+  "classification" : "Continuous",
+  "resamplingMethod" : null,
+  "imageMetadata" : [
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : null,
+      "name" : null,
+      "pixelBounds" : null,
+      "stats" : null
+    },
+    {
+      "tileBounds" : {
+        "minX" : 1,
+        "minY" : 1,
+        "maxX" : 1,
+        "maxY" : 1
+      },
+      "name" : "3",
+      "pixelBounds" : {
+        "minX" : 0,
+        "minY" : 0,
+        "maxX" : 512,
+        "maxY" : 512
+      },
+      "stats" : [
+        {
+          "min" : 0.0,
+          "max" : 262143.0,
+          "mean" : 131071.5,
+          "sum" : 3.4359607296E10,
+          "count" : 262144
+        }
+      ]
+    }
+  ]
+}

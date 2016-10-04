@@ -261,7 +261,12 @@ object IngestImage extends MrGeoDriver with Externalizable {
     val job: Job = Job.getInstance(HadoopUtils.createConfiguration())
 
 
-    val rawtiles = context.sequenceFile(tmpname.toString, classOf[TileIdWritable], classOf[RasterWritable])
+    val seqtiles = context.sequenceFile(tmpname.toString, classOf[TileIdWritable], classOf[RasterWritable])
+
+    // yuck!  The sequence file reuses the key/value objects, so we need to clone them here
+    val rawtiles = seqtiles.map(tile => {
+      (new TileIdWritable(tile._1.get()), new RasterWritable(tile._2.copyBytes()))
+    })
 
     val mergedTiles = RasterRDD(new PairRDDFunctions(rawtiles).reduceByKey((r1, r2) => {
       val src = RasterWritable.toMrGeoRaster(r1)
@@ -271,7 +276,6 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
       RasterWritable.toWritable(dst)
     }))
-
 
     val meta = SparkUtils.calculateMetadata(mergedTiles, zoom, nodata, bounds = null, calcStats = false)
     meta.setClassification(if (categorical)

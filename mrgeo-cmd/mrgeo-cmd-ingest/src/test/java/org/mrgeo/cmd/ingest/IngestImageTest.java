@@ -51,6 +51,10 @@ public class IngestImageTest
 {
   @Rule public TestName testname = new TestName();
 
+// only set this to true to generate new baseline images after correcting tests; image comparison
+// tests won't be run when is set to true
+public final static boolean GEN_BASELINE_DATA_ONLY = true;
+
   private static TestUtils testUtils;
 
   private static String input;
@@ -171,6 +175,8 @@ public class IngestImageTest
     LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
     long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
     Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+
+    testUtils.compareRasterToConstant(testname.getMethodName(), 1.0);
   }
   
   @Test
@@ -209,6 +215,9 @@ public class IngestImageTest
     LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
     long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
     Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+
+    testUtils.compareRasterToConstant(testname.getMethodName(), 1.0);
+
   }
   
   @Test
@@ -247,6 +256,8 @@ public class IngestImageTest
     LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
     long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
     Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+
+    testUtils.compareRasterToConstant(testname.getMethodName(), 1.0);
   }
   
   @Test
@@ -277,6 +288,8 @@ public class IngestImageTest
       image = pyramid.getImage(level);
       Assert.assertNull("MrsImage found for level " + level, image);
     }
+
+    testUtils.compareRasterToConstant(testname.getMethodName(), 1.0);
   }
 
   @Test
@@ -295,20 +308,19 @@ public class IngestImageTest
     Assert.assertEquals(-1, res);
     Assert.assertTrue("Unexpected output: " + outContent.toString(),
         outContent.toString().contains("Missing required option: pl"));
+
   }
 
-  // ignored because it _always_ times out during the 0.20.2 integration tests...
-  @Ignore
-  @Test(timeout=250000)
+  @Test
   @Category(IntegrationTest.class)
-  public void ingestPerformanceRegression() throws Exception
+  public void ingestAster() throws Exception
   {
     String inputAster = new Path(inputHdfs, aster_sample).toString();
-    String outputAster = new Path(outputHdfs, aster_sample).toString();
-    String[] args = { inputAster, "-o", outputAster, "-sp", "-l" };
+    String outputAster = new Path(outputHdfs, testname.getMethodName()).toString();
+    String[] args = { inputAster, "-o", outputAster, "-sp", "-l" , "-nd" , "0"};
     int res= new IngestImage().run(args, conf, providerProperties);
 
-    Assert.assertEquals("IngestImageOld command exited with error", 0, res);
+    Assert.assertEquals("IngestImage command exited with error", 0, res);
     
     MrsPyramid pyramid = MrsPyramid.open(outputAster, providerProperties);
     Assert.assertNotNull("MrsPyramid not loaded", pyramid);
@@ -327,6 +339,16 @@ public class IngestImageTest
       image = pyramid.getImage(level);
       Assert.assertNull("MrsImage found for level " + level, image);
     }
+
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.saveBaselineTif(testname.getMethodName());
+    }
+    else
+    {
+      testUtils.compareRasters(testname.getMethodName());
+    }
+
   }
 
 }
