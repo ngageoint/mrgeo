@@ -315,9 +315,11 @@ public final static boolean GEN_BASELINE_DATA_ONLY = false;
   @Category(IntegrationTest.class)
   public void ingestAster() throws Exception
   {
+    int zoom = 7;
+
     String inputAster = new Path(inputHdfs, aster_sample).toString();
     String outputAster = new Path(outputHdfs, testname.getMethodName()).toString();
-    String[] args = { inputAster, "-o", outputAster, "-sp", "-l" , "-nd" , "0"};
+    String[] args = { inputAster, "-o", outputAster, "-sp", "-l" , "-nd" , "-32767", "-sk", "-z", Integer.toString(zoom)};
     int res= new IngestImage().run(args, conf, providerProperties);
 
     Assert.assertEquals("IngestImage command exited with error", 0, res);
@@ -328,7 +330,7 @@ public final static boolean GEN_BASELINE_DATA_ONLY = false;
     MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("MrsPyramid metadata not loaded", metadata);
     
-    Assert.assertEquals("Wrong max zoom level", 12, metadata.getMaxZoomLevel());
+    Assert.assertEquals("Wrong max zoom level", zoom, metadata.getMaxZoomLevel());
     
     MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
     Assert.assertNotNull("MrsImage image missing for level " + metadata.getMaxZoomLevel(), image);

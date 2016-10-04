@@ -11,6 +11,7 @@ import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.GDALJavaUtils;
@@ -55,7 +56,7 @@ public void setup() throws IOException
 }
 
 @Test
-@Category(IntegrationTest.class)
+@Category(UnitTest.class)
 public void ingestOneTile() throws IOException
 {
 
@@ -93,7 +94,7 @@ public void ingestOneTile() throws IOException
 }
 
 @Test
-@Category(IntegrationTest.class)
+@Category(UnitTest.class)
 public void ingestFourTiles() throws IOException
 {
 
@@ -161,7 +162,7 @@ public void ingestFourTiles() throws IOException
 
 
 @Test
-@Category(IntegrationTest.class)
+@Category(UnitTest.class)
 public void ingestTileShifted() throws IOException
 {
 
