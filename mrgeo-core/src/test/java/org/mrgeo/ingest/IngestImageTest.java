@@ -1,5 +1,6 @@
 package org.mrgeo.ingest;
 
+import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.gdal.gdal.Dataset;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
@@ -27,6 +28,8 @@ public class IngestImageTest extends LocalRunnerTest
 @Rule
 public TestName testname = new TestName();
 
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
+
 private static TestUtils testUtils;
 
 private String onetile = "onetile.tif";
@@ -44,45 +47,6 @@ private String[] fourtiles = {
 public static void init() throws IOException
 {
   testUtils = new TestUtils(IngestImageTest.class);
-
-  // Create rasters to ingest
-//  MrGeoRaster raster = TestUtils.createNumberedRaster(512, 512, DataBuffer.TYPE_FLOAT);
-//  for (int y = 1; y < 3; y++)
-//  {
-//    for (int x = 1; x < 3; x++)
-//    {
-//       Bounds b = TMSUtils.tileBounds(x, y, 3, 512);
-//       GDALJavaUtils.saveRaster(raster.toDataset(b, new double[]{-9999}),
-//           "/data/export/tiles/fourtiles-" + x + "-" + y + ".tif", b, -9999);
-//    }
-//  }
-//
-//   Bounds b = TMSUtils.tileBounds(1, 1, 3, 512);
-//  double hw = b.width() / 2.0;
-//  double hh = b.height() / 2.0;
-//
-//  b = new Bounds(b.w + hw, b.s + hh, b.e + hw, b.n + hh);
-//   GDALJavaUtils.saveRaster(raster.toDataset(b, new double[]{-9999}),
-//       "/data/export/tiles/shiftedtile.tif", b, -9999);
-//
-  Dataset file = GDALUtils.open("/home/tim.tisler/projects/mrgeo/mrgeo-opensource/mrgeo-cmd/mrgeo-cmd-ingest/testFiles/org.mrgeo.cmd.ingest/IngestImageTest/AsterSample/ASTGTM2_N33E069_dem.tif");
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(file.GetRasterXSize(), file.GetRasterYSize(), 1, DataBuffer.TYPE_FLOAT);
-
-  for (int b = 0; b < raster.bands(); b++)
-  {
-    for (int y = 0; y < raster.height(); y++)
-    {
-      for (int x = 0; x < raster.width(); x++)
-      {
-        int pixelId =  x + (y * raster.width());
-        raster.setPixel(x, y, b, pixelId);
-      }
-    }
-  }
-  Bounds b = TMSUtils.tileBounds(GDALUtils.getBounds(file), 12, 512);
-  GDALJavaUtils.saveRaster(raster.toDataset(b, new double[]{-32767}),
-      "/data/export/tiles/bigtile.tif", b, -32767);
-
 }
 
 @Before
@@ -230,7 +194,6 @@ public void ingestTileShifted() throws IOException
   try (MrsImage image = ingested.getImage(zoom))
   {
     MrGeoRaster raster = image.getRaster();
-    testUtils.saveBaselineTif(testname.getMethodName(), raster, TMSUtils.tileBounds(bounds, zoom, tilesize), -9999);
 
     int pixelId = 0;
     for (int y = 0; y < raster.height(); y++)
@@ -272,7 +235,7 @@ public void ingestBigtile() throws IOException
   int zoom = GDALUtils.calculateZoom(input, tilesize);
 
   Bounds bounds = GDALUtils.getBounds(GDALUtils.open(input));
-  IngestImage.localIngest(new String[]{input}, output, true, false, getConfiguration(),
+  IngestImage.localIngest(new String[]{input}, output, false, false, getConfiguration(),
       bounds, zoom, tilesize, new double[]{-9999}, 1, DataBuffer.TYPE_FLOAT,
       new HashMap<String, String>(), "", new ProviderProperties());
 
@@ -289,27 +252,13 @@ public void ingestBigtile() throws IOException
   {
     MrGeoRaster raster = image.getRaster();
 
-
-    testUtils.saveBaselineTif(testname.getMethodName(), raster, TMSUtils.tileBounds(bounds, zoom, tilesize), -9999);
-
-    int pixelId = 0;
-    for (int y = 0; y < raster.height(); y++)
+    if (GEN_BASELINE_DATA_ONLY)
     {
-      for (int x = 0; x < raster.width(); x++)
-      {
-        int px = raster.getPixelInt(x, y, 0);
-        if (px != -9999)
-        {
-          Assert.assertEquals("Bad pixel px: " + x + " py: " + y + " expected: " + pixelId + " actual: " + raster.getPixelInt(x, y, 0),
-              pixelId, raster.getPixelInt(x, y, 0));
-
-          pixelId++;
-        }
-//        else
-//        {
-//          System.out.println("px: " + x + " py: " + y);
-//        }
-      }
+      testUtils.saveBaselineTif(testname.getMethodName(), raster, TMSUtils.tileBounds(bounds, zoom, tilesize), -9999);
+    }
+    else
+    {
+      testUtils.compareRasters(testname.getMethodName(), raster);
     }
 
   }
