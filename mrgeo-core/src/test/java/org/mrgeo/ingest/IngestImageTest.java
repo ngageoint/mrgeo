@@ -46,7 +46,7 @@ public static void init() throws IOException
   testUtils = new TestUtils(IngestImageTest.class);
 
   // Create rasters to ingest
-  MrGeoRaster raster = TestUtils.createNumberedRaster(512, 512, DataBuffer.TYPE_FLOAT);
+//  MrGeoRaster raster = TestUtils.createNumberedRaster(512, 512, DataBuffer.TYPE_FLOAT);
 //  for (int y = 1; y < 3; y++)
 //  {
 //    for (int x = 1; x < 3; x++)
@@ -65,23 +65,23 @@ public static void init() throws IOException
 //   GDALJavaUtils.saveRaster(raster.toDataset(b, new double[]{-9999}),
 //       "/data/export/tiles/shiftedtile.tif", b, -9999);
 //
-//  Dataset file = GDALUtils.open("/home/tim.tisler/projects/mrgeo/mrgeo-opensource/mrgeo-cmd/mrgeo-cmd-ingest/testFiles/org.mrgeo.cmd.ingest/IngestImageTest/AsterSample/ASTGTM2_N33E069_dem.tif");
-//  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(file.GetRasterXSize(), file.GetRasterYSize(), 1, DataBuffer.TYPE_FLOAT);
-//
-//  for (int b = 0; b < raster.bands(); b++)
-//  {
-//    for (int y = 0; y < raster.height(); y++)
-//    {
-//      for (int x = 0; x < raster.width(); x++)
-//      {
-//        int pixelId =  x + (y * raster.width());
-//        raster.setPixel(x, y, b, pixelId);
-//      }
-//    }
-//  }
-//  Bounds b = GDALUtils.getBounds(file);
-//  GDALJavaUtils.saveRaster(raster.toDataset(b, new double[]{-32767}),
-//      "/data/export/tiles/bigtile.tif", b, -32767);
+  Dataset file = GDALUtils.open("/home/tim.tisler/projects/mrgeo/mrgeo-opensource/mrgeo-cmd/mrgeo-cmd-ingest/testFiles/org.mrgeo.cmd.ingest/IngestImageTest/AsterSample/ASTGTM2_N33E069_dem.tif");
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(file.GetRasterXSize(), file.GetRasterYSize(), 1, DataBuffer.TYPE_FLOAT);
+
+  for (int b = 0; b < raster.bands(); b++)
+  {
+    for (int y = 0; y < raster.height(); y++)
+    {
+      for (int x = 0; x < raster.width(); x++)
+      {
+        int pixelId =  x + (y * raster.width());
+        raster.setPixel(x, y, b, pixelId);
+      }
+    }
+  }
+  Bounds b = TMSUtils.tileBounds(GDALUtils.getBounds(file), 12, 512);
+  GDALJavaUtils.saveRaster(raster.toDataset(b, new double[]{-32767}),
+      "/data/export/tiles/bigtile.tif", b, -32767);
 
 }
 
