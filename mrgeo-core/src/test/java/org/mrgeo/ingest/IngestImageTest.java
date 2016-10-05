@@ -29,7 +29,7 @@ public class IngestImageTest extends LocalRunnerTest
 @Rule
 public TestName testname = new TestName();
 
-public final static boolean GEN_BASELINE_DATA_ONLY = true;
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
 private static TestUtils testUtils;
 
