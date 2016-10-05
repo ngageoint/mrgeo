@@ -19,6 +19,7 @@ package org.mrgeo.mapalgebra
 import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
@@ -154,6 +155,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
     true
   }
 
+  @SuppressFBWarnings(value = Array[String]("URF_UNREAD_FIELD"), justification = "Scala generated code, fields are actually used")
   def naiveKernel(focal:RDD[(TileIdWritable, RasterWritable)], kernel:Kernel, nodatas:Array[Double],
       context: SparkContext):RDD[(TileIdWritable, RasterWritable)] = {
 
