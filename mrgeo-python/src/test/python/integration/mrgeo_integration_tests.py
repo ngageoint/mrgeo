@@ -227,18 +227,8 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.compareraster(cd, self.name)
 
     def test_leastcostpath(self):
-        print(1)
-        sys.stdout.flush()
         # points = [64.75, 30.158, 65.268, 29.983]
         cd = self.toblertiny.costdistance(-1.0, -1, 64.75, 30.158)
-        print(2)
-        sys.stdout.flush()
         destPoints = self.mrgeo.create_points([65.087, 30.194, 65.283, 29.939])
-        print(3)
-        sys.stdout.flush()
         lcp = destPoints.leastcostpath(cd)
-        print(4)
-        sys.stdout.flush()
         self.comparevector(lcp, self.name)
-        print(5)
-        sys.stdout.flush()

@@ -3,8 +3,8 @@ from pymrgeo.rastermapop import RasterMapOp
 from unittest import TestCase
 from functools import partial
 
-class RasterMapOpTestSupport(TestCase):
 
+class RasterMapOpTestSupport(TestCase):
     def __init__(self, mrgeo):
         self._mrgeo = mrgeo
         jvm = self._mrgeo._get_jvm()
@@ -21,12 +21,10 @@ class RasterMapOpTestSupport(TestCase):
         self._sparkContext = mrgeo.sparkContext
         self._rasterMapOpTestSupport.useSparkContext(self._sparkContext)
 
-
-    # Default image no data
+        # Default image no data
         self._defaultImageNoData = self._getDoubleArray([0.0])
         # Default image initial data
         self._defaultImageInitialData = self._getDoubleArray([1.0])
-
 
     def createRasterMapOp(self, tileIds, zoomLevel, tileSize, name='', imageNoData=None, imageInitialData=None):
         if imageNoData is None:
@@ -34,10 +32,11 @@ class RasterMapOpTestSupport(TestCase):
         if imageInitialData is None:
             imageInitialData = self._defaultImageInitialData
 
-        #Capture image initial and nodata to compare against
+        # Capture image initial and nodata to compare against
         self._imageInitialData = imageInitialData
         self._imageNoData = imageNoData
-        mapop = self._rasterMapOpTestSupport.createRasterMapOp(tileIds, zoomLevel, tileSize, name, imageNoData, imageInitialData)
+        mapop = self._rasterMapOpTestSupport.createRasterMapOp(tileIds, zoomLevel, tileSize, name, imageNoData,
+                                                               imageInitialData)
         return RasterMapOp(mapop=mapop, gateway=self._mrgeo.gateway, context=self._sparkContext)
 
     def createRasterMapOpWithBounds(self, tileIds, zoomLevel, tileSize, w, s, e, n, name='', imageNoData=None,
@@ -59,7 +58,7 @@ class RasterMapOpTestSupport(TestCase):
     # tiles Raster.  A verifier should be a function that takes a long and a Raster and returns nothing.  If a verifier
     # is associated with a key not found in the RDD, then the method should fail the test
     # if failOnMissingKey is true
-    def verifyRasters(self, rdd, verifiers, failOnMissingKey = True):
+    def verifyRasters(self, rdd, verifiers, failOnMissingKey=True):
         rasters = rdd.collect()
         # Rasters should be an array of tuples of TileIdWritable, and RasterWritable
         for raster in rasters:
@@ -71,10 +70,9 @@ class RasterMapOpTestSupport(TestCase):
         if (failOnMissingKey and len(verifiers) != 0):
             self.fail("Keys missing from RDD: {0}".format(verifiers.keys()))
 
-
-    def verifyRastersAreUnchanged(self, rdd, tileIds, imageInitialData = None):
+    def verifyRastersAreUnchanged(self, rdd, tileIds, imageInitialData=None):
         verifier = partial(self.verifyRasterhasImageInitialData,
-                           imageInitialData = self._imageInitialData if imageInitialData is None else imageInitialData)
+                           imageInitialData=self._imageInitialData if imageInitialData is None else imageInitialData)
         verifiers = dict()
         for tileId in tileIds:
             verifiers[tileId] = verifier
@@ -87,32 +85,31 @@ class RasterMapOpTestSupport(TestCase):
 
         # Loop over every band.
         for b in range(bands):
-            self.assertTrue(self._rasterMapOpTestSupport.verifySamples(raster, 0, 0, width, height, b, imageInitialData[b]),
-                            "Samples at band {0} do not match expected value of {1}".format(b, imageInitialData[b]))
+            self.assertTrue(
+                self._rasterMapOpTestSupport.verifySamples(raster, 0, 0, width, height, b, imageInitialData[b]),
+                "Samples at band {0} do not match expected value of {1}".format(b, imageInitialData[b]))
 
-        # Iterating over a large number of samples seems to cause the python gateway to hang as of 0.10.3
-        # self.forEachSampleInRaster(raster, lambda b, x, y, s: (self.assertEquals(s, imageInitialData[b])))
-
+            # Iterating over a large number of samples seems to cause the python gateway to hang as of 0.10.3
+            # self.forEachSampleInRaster(raster, lambda b, x, y, s: (self.assertEquals(s, imageInitialData[b])))
 
     # Verifies the rasters in the RDD do not have data outside of the specified bounds, optionally verifying the
     # expectedData inside the bounds
     def verifyRastersNoData(self, rdd, tileIds, tileSize, zoomLevel, left, bottom, right, top,
-                            nodatas = None, expectedData = None):
+                            nodatas=None, expectedData=None):
         if nodatas is None:
             nodatas = self._imageNoData
-        verifier = partial(self.verifyRasterNoData, zoomLevel = zoomLevel, tileSize = tileSize,
-                           left = left, right = right, top = top, bottom = bottom,
-                           nodatas = nodatas, expectedData=expectedData)
+        verifier = partial(self.verifyRasterNoData, zoomLevel=zoomLevel, tileSize=tileSize,
+                           left=left, right=right, top=top, bottom=bottom,
+                           nodatas=nodatas, expectedData=expectedData)
         verifiers = dict()
         for tileId in tileIds:
             verifiers[tileId] = verifier
         self.verifyRasters(rdd, verifiers)
 
-
     # Verifies that the data outside the the specified bounds is nodata, optionally verifying that all other samples
     # are in accordance with expectedData
     def verifyRasterNoData(self, tileId, raster, zoomLevel, tileSize, left, right, top, bottom,
-                           nodatas, expectedData = None):
+                           nodatas, expectedData=None):
         tile = self._jvm.TMSUtils.tileid(tileId, zoomLevel)
         tileX = tile.getTx()
         tileY = tile.getTy()
@@ -126,14 +123,13 @@ class RasterMapOpTestSupport(TestCase):
 
         bands = raster.getNumBands();
 
-        #capture max and min for expected data check
+        # capture max and min for expected data check
         minX = 0
         minY = 0
         maxX = tileSize
         maxY = tileSize
         # Loop over every band.
         for b in range(bands):
-
 
             # Verify the top nodata rect in raster coords (0,0 at top left, + x to the right, +y down)
             if 0 < rtPy < tileSize:
@@ -148,7 +144,7 @@ class RasterMapOpTestSupport(TestCase):
                 lbPy = int(lbPy)
                 maxY = lbPy
                 self.assertTrue(self._rasterMapOpTestSupport.verifySamples(raster, 0, lbPy + 1, tileSize,
-                                                           tileSize-(lbPy + 1), b, nodatas[b]),
+                                                                           tileSize - (lbPy + 1), b, nodatas[b]),
                                 "Raster did not have expected nodata below the bottom bounds")
 
             # Verify the left nodata rect in raster coords (0,0 at top left, + x to the right, +y down)
@@ -156,7 +152,7 @@ class RasterMapOpTestSupport(TestCase):
                 lbPx = int(lbPx)
                 minX = lbPx
                 self.assertTrue(self._rasterMapOpTestSupport.verifySamples(raster, 0, minY, lbPx - 1,
-                                                          maxY - minY, b, nodatas[b]),
+                                                                           maxY - minY, b, nodatas[b]),
                                 "Raster did not have expected nodata left of the left bounds")
 
             # Verify the right nodata rect in raster coords (0,0 at top left, + x to the right, +y down)
@@ -164,15 +160,14 @@ class RasterMapOpTestSupport(TestCase):
                 rtPx = int(rtPx)
                 maxX = rtPx
                 self.assertTrue(self._rasterMapOpTestSupport.verifySamples(raster, rtPx + 1, minY,
-                                                           tileSize - (rtPx + 1),
-                                                           maxY - minY, b, nodatas[b]),
+                                                                           tileSize - (rtPx + 1),
+                                                                           maxY - minY, b, nodatas[b]),
                                 "Raster did not have expected nodata right the right bounds")
             # Verify expected data if specified
             if expectedData is not None:
                 self.assertTrue(self._rasterMapOpTestSupport.verifySamples(raster, minX, minY, maxX - minX, maxY - minY,
                                                                            b, expectedData[b]),
                                 "Raster did not have expected data within the bounds")
-
 
     def forEachSampleInRaster(self, raster, fun):
         width = raster.getWidth();
@@ -188,12 +183,10 @@ class RasterMapOpTestSupport(TestCase):
                     fun(b, x, y, samples[offset])
                     offset += 1
 
-
     def _getSamples(self, raster, width, height, b):
         return raster.getSamples(0, 0, width, height, b, None)
 
-
-    def _getArray(self, type, values = []):
+    def _getArray(self, type, values=[]):
         cnt = 0
         array = self._getEmptyArray(type, len(values))
         for value in values:
@@ -201,7 +194,7 @@ class RasterMapOpTestSupport(TestCase):
             cnt += 1
         return array
 
-    def _getDoubleArray(self, values = []):
+    def _getDoubleArray(self, values=[]):
         return self._getArray(self._jvm.double, values)
 
     def _getEmptyArray(self, type, size):
