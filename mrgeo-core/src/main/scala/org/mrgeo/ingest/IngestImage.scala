@@ -265,7 +265,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
     // yuck!  The sequence file reuses the key/value objects, so we need to clone them here
     val rawtiles = seqtiles.map(tile => {
-      (new TileIdWritable(tile._1.get()), new RasterWritable(tile._2.copyBytes()))
+      (new TileIdWritable(tile._1.get()), tile._2.copy)
     })
 
     val mergedTiles = RasterRDD(new PairRDDFunctions(rawtiles).reduceByKey((r1, r2) => {

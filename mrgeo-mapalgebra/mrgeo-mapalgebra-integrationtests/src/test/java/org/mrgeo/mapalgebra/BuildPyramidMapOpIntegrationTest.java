@@ -46,11 +46,11 @@ public class BuildPyramidMapOpIntegrationTest extends LocalRunnerTest
 
   private static MapOpTestUtils testUtils;
 
-  private static String smallElevation = "small-elevation";
-  private static Path smallElevationPath;
+  private String smallElevation = "small-elevation";
+  private Path smallElevationPath;
 
-  private static String smallElevationNoPyramids = "small-elevation-nopyramids";
-  private static Path smallElevationNoPyramidsPath;
+  private String smallElevationNoPyramids = "small-elevation-nopyramids";
+  private Path smallElevationNoPyramidsPath;
 
   private ProviderProperties providerProperties;
 

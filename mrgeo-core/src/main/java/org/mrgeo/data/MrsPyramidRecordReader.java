@@ -150,6 +150,6 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
     key = new TileIdWritable(tileid);
     // The copy operation is required below for Spark RDD creation to prevent all the
     // raster tiles in an RDD (for one split) looking like the last tile in the split.
-    value = new RasterWritable(tileValue.copyBytes());
+    value = tileValue.copy();
   }
 }

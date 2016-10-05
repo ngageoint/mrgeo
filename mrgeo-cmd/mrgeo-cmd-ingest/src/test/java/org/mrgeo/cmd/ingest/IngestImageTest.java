@@ -62,8 +62,8 @@ public final static boolean GEN_BASELINE_DATA_ONLY = false;
   private static Path outputHdfs;
 
   private final static String all_ones = "all-ones";
-  private static String all_ones_input = Defs.INPUT + all_ones + ".tif";
-  private static String all_ones_output;
+  private String all_ones_input = Defs.INPUT + all_ones + ".tif";
+  private String all_ones_output;
   private final static String aster_sample = "AsterSample";
 
   private static Configuration conf;
@@ -96,10 +96,6 @@ public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
     HadoopFileUtils.copyToHdfs(input, inputHdfs, aster_sample);
 
-    File file = new File(all_ones_input);
-    all_ones_input = "file://" + file.getAbsolutePath();
-
-    all_ones_output = new Path(outputHdfs, all_ones).toString();
   }
 
   @After
@@ -139,6 +135,9 @@ public final static boolean GEN_BASELINE_DATA_ONLY = false;
   public void setUp()
   {
     providerProperties = null;
+
+    File file = new File(all_ones_input);
+    all_ones_input = "file://" + file.getAbsolutePath();
 
     // tack on the test name to the output
     all_ones_output = new Path(outputHdfs, testname.getMethodName()).toString();

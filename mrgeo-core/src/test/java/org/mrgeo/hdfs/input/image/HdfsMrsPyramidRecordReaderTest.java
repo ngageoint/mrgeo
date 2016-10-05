@@ -20,7 +20,9 @@ import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.test.TestUtils;
 
+import java.awt.image.DataBuffer;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import static org.mockito.Mockito.*;
 
@@ -37,14 +39,23 @@ private TileIdWritable mockTileId;
 private RasterWritable mockRaster;
 private FileSplit mockFileSplit;
 private Path mockPath;
-private TileIdWritable[] tileIds = {new TileIdWritable(1L), new TileIdWritable(2L), new TileIdWritable(3L)};
-private RasterWritable[] rasters = {new RasterWritable("ABCD".getBytes()),
-    new RasterWritable("EFGH".getBytes()),
-    new RasterWritable("IJKL".getBytes())};
+private TileIdWritable[] tileIds = {
+    new TileIdWritable(1L),
+    new TileIdWritable(2L),
+    new TileIdWritable(3L)
+};
+private RasterWritable[] rasters = {
+    RasterWritable.fromBytes("ABCD".getBytes()),
+    RasterWritable.fromBytes("EFGH".getBytes()),
+    RasterWritable.fromBytes("IJKL".getBytes())
+};
+
+
 
 @Before
 public void setUp() throws Exception {
-    // Create Mocks
+
+  // Create Mocks
     mockContext = new TaskAttemptContextBuilder().configuration(
         new ConfigurationBuilder().build()
     ).build();
@@ -137,9 +148,11 @@ public void testNextKeyValue() throws Exception {
 
     for (int i = 0; i < tileIds.length; i++) {
         Assert.assertTrue("more key values exist", subject.nextKeyValue());
+      byte[] r1 = rasters[i].copyBytes();
+      byte[] r2 = subject.getCurrentValue().copyBytes();
         for (int b = 0; b < rasters[i].getSize(); b++)
         {
-            Assert.assertEquals(rasters[i].getBytes()[b], subject.getCurrentValue().getBytes()[b]);
+            Assert.assertEquals(r1[b], r2[b]);
         }
         Assert.assertEquals(tileIds[i].get(), subject.getCurrentKey().get());
     }

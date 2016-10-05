@@ -24,6 +24,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -430,10 +431,16 @@ public class AccumuloMrsImageReader extends MrsImageReader
   protected MrGeoRaster toNonWritable(byte[] val, CompressionCodec codec, Decompressor decompressor)
       throws IOException
   {
+    DataInputBuffer dib = new DataInputBuffer();
+    dib.reset(val, val.length);
+
+    RasterWritable rw = new RasterWritable();
+    rw.readFields(dib);
+
     if(codec == null || decompressor == null){
-      return RasterWritable.toMrGeoRaster(new RasterWritable(val));
+      return RasterWritable.toMrGeoRaster(rw);
     }
-    return RasterWritable.toMrGeoRaster(new RasterWritable(val), codec, decompressor);
+    return RasterWritable.toMrGeoRaster(rw, codec, decompressor);
   }
 
   @Override

@@ -6,6 +6,7 @@ import java.awt.image.DataBuffer;
 
 final class MrGeoUShortRaster extends MrGeoRaster
 {
+private static final long serialVersionUID = 1L;
 
 private static final int BYTES_PER_PIXEL = 2;
 

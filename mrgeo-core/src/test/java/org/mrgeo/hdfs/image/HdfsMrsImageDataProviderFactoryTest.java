@@ -16,6 +16,7 @@
 
 package org.mrgeo.hdfs.image;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -184,6 +185,7 @@ public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
     factory.canWrite( null, providerProperties);
   }
 
+  @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Test code")
   @Test
   @Category(UnitTest.class)
   public void testListImages() throws Exception

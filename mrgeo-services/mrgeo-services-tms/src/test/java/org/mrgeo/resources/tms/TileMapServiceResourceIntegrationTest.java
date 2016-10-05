@@ -25,6 +25,7 @@ import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import com.sun.jersey.test.framework.spi.container.TestContainerException;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import junit.framework.Assert;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.junit.Test;
@@ -64,7 +65,7 @@ private static final Logger log = LoggerFactory.getLogger(TileMapServiceResource
 // tests won't be run when is set to true
 public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
-protected static String baselineInput;
+protected String baselineInput;
 
 private static String input = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);
 private static final String rgbsmall_nopyramids = "rgbsmall-nopyramids";
@@ -97,6 +98,7 @@ protected TestContainerFactory getTestContainerFactory() throws TestContainerExc
   return new FilteringInMemoryTestContainerFactory();
 }
 
+@SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "Test setup")
 @Override
 public void setUp() throws Exception {
   super.setUp();
@@ -811,7 +813,7 @@ public void testGetTileColorScaleNameNonExistent() throws Exception
 }
 
 
-protected static void processImageResponse(final ClientResponse response, final String extension)
+protected void processImageResponse(final ClientResponse response, final String extension)
     throws IOException
 {
   try

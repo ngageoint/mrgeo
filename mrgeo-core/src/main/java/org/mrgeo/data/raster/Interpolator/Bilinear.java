@@ -261,11 +261,11 @@ public static void scaleDouble(final MrGeoRaster src, final MrGeoRaster dst, fin
           r1 = A * (1 - x_diff) + B * (x_diff);
         }
 
-        if (C == nodata)
+        if (FloatUtils.isNodata(C, nodata))
         {
           r2 = D;
         }
-        else if (D == nodata)
+        else if (FloatUtils.isNodata(D, nodata))
         {
           r2 = C;
         }
