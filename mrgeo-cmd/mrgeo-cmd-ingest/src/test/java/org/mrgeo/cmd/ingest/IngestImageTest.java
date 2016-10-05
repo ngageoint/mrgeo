@@ -314,7 +314,7 @@ public final static boolean GEN_BASELINE_DATA_ONLY = false;
   @Category(IntegrationTest.class)
   public void ingestAster() throws Exception
   {
-    int zoom = 7;
+    int zoom = 6;
 
     String inputAster = new Path(inputHdfs, aster_sample).toString();
     String outputAster = new Path(outputHdfs, testname.getMethodName()).toString();

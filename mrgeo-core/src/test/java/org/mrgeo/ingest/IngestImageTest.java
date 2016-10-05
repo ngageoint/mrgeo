@@ -29,7 +29,7 @@ public class IngestImageTest extends LocalRunnerTest
 @Rule
 public TestName testname = new TestName();
 
-public final static boolean GEN_BASELINE_DATA_ONLY = false;
+public final static boolean GEN_BASELINE_DATA_ONLY = true;
 
 private static TestUtils testUtils;
 
@@ -233,7 +233,7 @@ public void ingestBigtile() throws IOException
   String output = testUtils.getOutputHdfsFor(testname.getMethodName()).toString();
 
   int tilesize = 512;
-  int zoom = GDALUtils.calculateZoom(input, tilesize);
+  int zoom = 9; // GDALUtils.calculateZoom(input, tilesize);
 
   Bounds bounds = GDALUtils.getBounds(GDALUtils.open(input));
   IngestImage.localIngest(new String[]{input}, output, false, false, getConfiguration(),
@@ -246,7 +246,7 @@ public void ingestBigtile() throws IOException
   Assert.assertEquals("Bad zoom", zoom, meta.getMaxZoomLevel());
 
   LongRectangle tb = meta.getTileBounds(zoom);
-  Assert.assertEquals("Wrong number of tiles", 144, tb.getWidth() * tb.getHeight());
+  Assert.assertEquals("Wrong number of tiles", 6, tb.getWidth() * tb.getHeight());
 
 
   try (MrsImage image = ingested.getImage(zoom))
