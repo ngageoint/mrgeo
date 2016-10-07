@@ -25,6 +25,9 @@ import org.opencv.core.{CvType, Mat}
 
 abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:Int, sigmaMult:Int) extends Kernel(kernelWidth, kernelHeight) {
 
+  private var data: Mat = null
+  private var mask: Array[Array[Boolean]] = null
+
   def this(sigma: Double, sigmaMult:Int, zoom:Int, tilesize:Int) = {
     this({
       val resolution = TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE
@@ -75,8 +78,12 @@ abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:I
 
     val srcValues = raster.getSamples(0, 0, raster.getWidth, raster.getHeight, 0, null.asInstanceOf[Array[Float]])
 
-    val data = new Mat(raster.getWidth, raster.getHeight, CvType.CV_32F)
-    val mask = Mat.zeros(data.width(), data.height(), CvType.CV_8U)
+    if (data == null) {
+      data = new Mat(raster.getWidth, raster.getHeight, CvType.CV_32F)
+    }
+    if (mask == null) {
+      mask = Array.ofDim[Boolean](raster.getWidth, raster.getHeight)
+    }
 
     val tileWidth = raster.getWidth
     var row, col:Int = 0
@@ -86,10 +93,11 @@ abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:I
         val v = srcValues(row * tileWidth + col)
         if (isNodata(v) ) {
           data.put(col, row, 0)
-          mask.put(col, row, 1)  // set the mask pixel on
+          mask(col)(row) = true  // set the mask pixel on
         }
         else {
           data.put(col, row, v)
+          mask(col)(row) = false  // set the mask pixel off
         }
         //data.get(col, row, d)
         //print("%.5f (%.5f) ".format(d(0), srcValues(row * tileWidth + col)))
@@ -158,17 +166,14 @@ abstract class GaussianLaplacianGeographicKernel(kernelWidth:Int, kernelHeight:I
     val halfKernelW = getWidth / 2 + 1
     val halfKernelH = getHeight / 2 + 1
 
-    val b = Array.ofDim[Byte](1)
     val d = Array.ofDim[Float](1)
 
     row = 0
     while (row < tilesize) {
       col = 0
       while (col < tilesize) {
-        mask.get(col + halfKernelW, row + halfKernelH, b)
-
         // the source pixel was Nodata, make the output pixel nodata (NaN), as well
-        if (b(0) == 1) {
+        if (mask(col + halfKernelW)(row + halfKernelH)) {
           dst.setSample(col, row, 0, Float.NaN)
         }
         else {
