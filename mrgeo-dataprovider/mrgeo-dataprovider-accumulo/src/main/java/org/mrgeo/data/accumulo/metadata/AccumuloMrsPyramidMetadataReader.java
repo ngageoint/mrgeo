@@ -68,12 +68,8 @@ public class AccumuloMrsPyramidMetadataReader implements MrsPyramidMetadataReade
                                           MrsPyramidMetadataReaderContext context){
     this.dataProvider = dataProvider;
     this.name = dataProvider.getResourceName();
-    if(dataProvider.getColumnVisibility() == null){
-    	this.cv = new ColumnVisibility();
-    } else {
-    	this.cv = dataProvider.getColumnVisibility();
-    }
- 
+    this.cv = dataProvider.getColumnVisibility();
+
   } // end constructor
   
   public AccumuloMrsPyramidMetadataReader(String name){
