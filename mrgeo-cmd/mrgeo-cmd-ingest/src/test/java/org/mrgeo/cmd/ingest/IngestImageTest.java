@@ -318,7 +318,7 @@ public final static boolean GEN_BASELINE_DATA_ONLY = false;
 
     String inputAster = new Path(inputHdfs, aster_sample).toString();
     String outputAster = new Path(outputHdfs, testname.getMethodName()).toString();
-    String[] args = { inputAster, "-o", outputAster, "-sp", "-l" , "-nd" , "-32767", "-sk", "-z", Integer.toString(zoom)};
+    String[] args = { inputAster, "-o", outputAster, "-sp" , "-nd" , "-32767", "-sk", "-z", Integer.toString(zoom)};
     int res= new IngestImage().run(args, conf, providerProperties);
 
     Assert.assertEquals("IngestImage command exited with error", 0, res);

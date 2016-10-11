@@ -24,6 +24,7 @@ import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat
 import org.apache.spark.rdd.PairRDDFunctions
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{AccumulatorParam, SparkConf, SparkContext}
 import org.gdal.gdal.{Dataset, gdal}
 import org.gdal.gdalconst.gdalconstConstants
@@ -170,26 +171,28 @@ object IngestImage extends MrGeoDriver with Externalizable {
     val in = context.parallelize(inputs, inputs.length)
     val nodataAccum = context.accumulator(null.asInstanceOf[NodataArray])(NodataAccumulator)
     val rawtiles = in.flatMap(input => {
-      val result = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
-      nodataAccum.add(new NodataArray(result._2))
-      result._1
-    })
+      val (tile, actualnodata) = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
+      nodataAccum.add(new NodataArray(actualnodata))
+      tile
+    }).persist(StorageLevel.MEMORY_AND_DISK)
 
     
     // Need to materialize rawtiles in order for the accumulator to work
     rawtiles.count()
 
     val actualNodata = if (nodataAccum.value != null) nodataAccum.value.nodata else null
-    val tiles = new PairRDDFunctions(rawtiles).reduceByKey((r1, r2) => {
+
+    val tiles = RasterRDD(new PairRDDFunctions(rawtiles).reduceByKey((r1, r2) => {
       val src = RasterWritable.toMrGeoRaster(r1)
       val dst = RasterWritable.toMrGeoRaster(r2)
 
-      dst.mosaic(src, nodata)
+      dst.mosaic(src, actualNodata)
 
       RasterWritable.toWritable(dst)
-    })
+    }))
 
-    val meta = SparkUtils.calculateMetadata(RasterRDD(tiles), zoom, actualNodata, bounds = null, calcStats = false)
+
+    val meta = SparkUtils.calculateMetadata(tiles, zoom, actualNodata, bounds = null, calcStats = false)
     meta.setClassification(if (categorical)
       MrsPyramidMetadata.Classification.Categorical else
       MrsPyramidMetadata.Classification.Continuous)
@@ -198,6 +201,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
     if (categorical && !skipCategoryLoad && categoriesMatch) {
       setMetadataCategories(meta, firstCategories)
     }
+
+    rawtiles.unpersist()
 
     // repartition, because chances are the RDD only has 1 partition (ingest a single file)
     val numExecutors = math.max(context.getConf.getInt("spark.executor.instances", 0),

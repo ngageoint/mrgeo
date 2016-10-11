@@ -197,7 +197,7 @@ response = emr.run_job_flow(Name=cluster_name,
                                         "yarn.scheduler.minimum-allocation-mb": "1024",
                                         "yarn.app.mapreduce.am.command-opts": "-Xmx820m",
                                         "yarn.nodemanager.aux-services": "spark_shuffle",
-										# "yarn.scheduler.maximum-allocation-vcores": "128",
+										"yarn.scheduler.maximum-allocation-vcores": "32",
                                         "yarn.nodemanager.aux-services.spark_shuffle.class": "org.apache.spark.network.yarn.YarnShuffleService"
                                     }
                                 },
@@ -220,7 +220,33 @@ response = emr.run_job_flow(Name=cluster_name,
                                         "spark.driver.maxResultSize": "0",
                                         "spark.dynamicAllocation.enabled":"true"
                                     }
-                                }
+                                },
+                                {
+									"Classification": "hadoop-env", 
+									"Configurations": [
+										{
+											"Classification": "export", 
+											"Configurations": [], 
+											"Properties": {
+												"JAVA_HOME": "/usr/lib/jvm/java-1.8.0"
+											}
+										}
+									], 
+									"Properties": {}
+								}, 
+								{
+									"Classification": "spark-env", 
+									"Configurations": [
+										{
+											"Classification": "export", 
+											"Configurations": [], 
+											"Properties": {
+												"JAVA_HOME": "/usr/lib/jvm/java-1.8.0"
+											}
+										}
+									], 
+									"Properties": {}
+								}
                             ],
                             JobFlowRole = 'EMR_EC2_DefaultRole',
                             ServiceRole = 'EMR_DefaultRole',

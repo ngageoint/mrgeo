@@ -417,6 +417,12 @@ class JobArguments() extends Logging {
           " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
           " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
           SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
+      println("Configuring job (" + name + ") with " + (executors + 1) + " workers (1 driver, " + executors +
+          " executors)  with " +
+          cores + " cores each and " + SparkUtils.kbtohuman(memoryKb, "m") +
+          " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+          " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+          SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
     }
   }
 
@@ -436,10 +442,10 @@ class JobArguments() extends Logging {
     val maxcores = hadoopConf.getInt(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES,
       YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES)
 
-    println("Adjusting job parameters - original values: " + origExecutors + " executors (nodes) " +
-        origCores + " cores/node " + origMemory +  " memory/node " +  totalMemory + " total memory")
-    logInfo("Adjusting job parameters - original values: " + origExecutors + " executors (nodes) " +
-        origCores + " cores/node " + origMemory +  " memory/node " +  totalMemory + " total memory")
+    println("Adjusting job parameters - original values: " + origExecutors + " executors (workers) " +
+        origCores + " cores/worker " + origMemory +  "m  memory/worker " +  totalMemory + "m  total memory")
+    logInfo("Adjusting job parameters - original values: " + origExecutors + " executors (workers) " +
+        origCores + " cores/worker " + origMemory +  "m  memory/worker " +  totalMemory + "m  total memory")
 
     var mem = Math.min(Math.max(origMemory, minmemory), maxmemory)
     var cores = Math.min(Math.max(origCores, mincores), maxcores)
@@ -451,28 +457,26 @@ class JobArguments() extends Logging {
     println("Adjusting job parameters - min/max values: cores: " + mincores + "/" + maxcores +
         " memory: " + minmemory + "/" + maxmemory)
 
-    println("Adjusting job parameters - adjusted to min/max values: " + executors + " executors (nodes) " +
-        cores + " cores/node " + mem +  " memory/node " +
-        " mem ratio: " + memratio + " core ratio: " + coreratio)
-
-    if (sparkConf.getBoolean("spark.dynamicAllocation.enabled", false)) {
-      if (memratio > coreratio) {
-        cores = Math.max((origCores / memratio).toInt, 1)
-        executors = Math.max((origExecutors * memratio).toInt, 1)
-      }
-      else if (coreratio > memratio) {
-        executors = Math.max((origExecutors * Math.floor(coreratio)).toInt, 1)
-        mem = Math.max((origMemory / coreratio).toInt, 1)
-      }
-      else {
-        executors = Math.max((origExecutors * coreratio).toInt, 1)
-      }
+    if (memratio > coreratio) {
+      cores = Math.max((origCores / memratio).toInt, 1)
+      executors = Math.max((origExecutors * memratio).toInt, 1)
+    }
+    else if (coreratio > memratio) {
+      executors = Math.max((origExecutors * Math.floor(coreratio)).toInt, 1)
+      mem = Math.max((origMemory / coreratio).toInt, 1)
+    }
+    else {
+      executors = Math.max((origExecutors * coreratio).toInt, 1)
     }
 
     // if we only have 1 executor, we may need to lower the cores by 1 to reserve space for the driver
     if ((origExecutors == 1) && (cores > 1) && (cores * executors >= origCores)) {
       cores = cores - 1
     }
+
+    println("Adjusting job parameters - adjusted to min/max values: " + executors + " executors (workers) " +
+        cores + " cores/worker " + mem +  "m  memory/worker " +
+        " mem ratio: " + memratio + " core ratio: " + coreratio)
 
     (cores, executors, mem.toInt)
 
