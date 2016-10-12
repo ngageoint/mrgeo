@@ -98,22 +98,14 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
                                              (ProviderProperties)null);
   MrsPyramidMetadata meta = pyramid.getMetadata();
-  final MrsImage image = pyramid.getImage(meta.getMaxZoomLevel());
 
-  try
+  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
   {
     MrGeoRaster raster = image.getRaster();
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
 
     Bounds tilesBounds = TMSUtils.tileBounds(meta.getBounds(), image.getMaxZoomlevel(), image.getTilesize());
     GDALJavaUtils.saveRaster(raster.toDataset(meta.getBounds(), meta.getDefaultValues()), baselineTif.getCanonicalPath(), tilesBounds, nodata);
-  }
-  finally
-  {
-    if (image != null)
-    {
-      image.close();
-    }
   }
 }
 

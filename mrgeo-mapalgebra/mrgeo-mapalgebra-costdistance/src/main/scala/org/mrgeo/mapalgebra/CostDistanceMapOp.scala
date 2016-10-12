@@ -345,7 +345,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
           (tile._1, RasterWritable.toWritable(raster))
         }
         else {
-          (tile._1, new RasterWritable(tile._2))
+          (tile._1, tile._2.copy())
         }
       }).persist(StorageLevel.MEMORY_AND_DISK_SER)
 

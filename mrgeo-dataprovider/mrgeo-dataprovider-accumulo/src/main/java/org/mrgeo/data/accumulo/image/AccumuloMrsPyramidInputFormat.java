@@ -21,6 +21,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -310,7 +311,12 @@ public static RecordReader<TileIdWritable, RasterWritable> makeRecordReader(){
         log.info("Processing " + id + " -> " + entry.getValue().getSize());
 
         currentK = new TileIdWritable(id);
-        currentV = new RasterWritable(entry.getValue().get());
+        DataInputBuffer dib = new DataInputBuffer();
+        byte[] data = entry.getValue().get();
+        dib.reset(data, data.length);
+
+        currentV = new RasterWritable();
+        currentV.readFields(dib);
 
         //log.info("current key = " + id);
 //          if (log.isTraceEnabled())

@@ -6,6 +6,8 @@ import java.awt.image.DataBuffer;
 
 final class MrGeoDoubleRaster extends MrGeoRaster
 {
+private static final long serialVersionUID = 1L;
+
 private static final int BYTES_PER_PIXEL = 8;
 
 MrGeoDoubleRaster(int width, int height, int bands, byte[] data, int dataOffset)

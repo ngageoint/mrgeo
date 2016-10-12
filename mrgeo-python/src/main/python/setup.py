@@ -11,7 +11,7 @@ with open(path.join(here, 'README'), encoding='utf-8') as f:
 setup(
   name= 'pymrgeo',
   packages= ['pymrgeo'], # this must be the same as the name above
-  version= '0.0.6',
+  version= '0.0.7',
   description='MrGeo (pronounced "Mister Geo") is an open source geospatial toolkit designed to provide raster-based geospatial processing capabilities performed at scale. MrGeo enables global geospatial big data image processing and analytics.',
   long_description=long_description,
   author= 'Tim Tisler and Dave Johnson',

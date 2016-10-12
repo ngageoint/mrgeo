@@ -77,12 +77,6 @@ public void close() throws IOException
   }
 }
 
-// For image: return RasterWritable.toRaster(currentValue)
-MrGeoRaster toNonWritable(RasterWritable val) throws IOException
-{
-  return RasterWritable.toMrGeoRaster(val);
-}
-
 HdfsImageResultScanner(final LongRectangle bounds,
     final HdfsMrsImageReader reader)
 {
@@ -137,7 +131,7 @@ public MrGeoRaster currentValue()
 {
   try
   {
-    return toNonWritable(currentValue);
+    return RasterWritable.toMrGeoRaster(currentValue);
   }
   catch (final IOException e)
   {
@@ -242,7 +236,7 @@ public MrGeoRaster next()
 
   try
   {
-    return toNonWritable(currentValue);
+    return RasterWritable.toMrGeoRaster(currentValue);
   }
   catch (final IOException e)
   {

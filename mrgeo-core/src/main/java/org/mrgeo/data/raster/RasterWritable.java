@@ -16,13 +16,16 @@
 
 package org.mrgeo.data.raster;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.io.compress.Decompressor;
 import org.mrgeo.utils.ByteArrayUtils;
+import org.mrgeo.utils.SparkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,9 +34,12 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class RasterWritable implements WritableComparable<RasterWritable>, Serializable
+@SuppressFBWarnings(value = "MS_PKGPROTECT", justification = "Serializer/Deserializers only!  Need to be removed after testing")
+public class RasterWritable implements WritableComparable<RasterWritable>, Serializable, Cloneable
 {
 private static final Logger log = LoggerFactory.getLogger(RasterWritable.class);
+
+private static final long serialVersionUID = 1L;
 
 public static long serializeTime = 0;
 public static long serializeCnt = 0;
@@ -45,18 +51,19 @@ private static final Object deserializeSync = new Object();
 
 private byte[] bytes;
 
+
 public static class RasterWritableException extends RuntimeException
 {
-
   private static final long serialVersionUID = 1L;
+
   private final Exception origException;
 
-  public RasterWritableException(final Exception e)
-  {
-    this.origException = e;
-  }
+//  public RasterWritableException(final Exception e)
+//  {
+//    this.origException = e;
+//  }
 
-  public RasterWritableException(final String msg)
+  RasterWritableException(final String msg)
   {
     this.origException = new Exception(msg);
   }
@@ -71,6 +78,20 @@ public static class RasterWritableException extends RuntimeException
 public int compareTo(RasterWritable other)
 {
   return Arrays.equals(bytes, other.bytes) ? 0 : 1;
+}
+
+@Override
+public boolean equals(Object other)
+{
+  return other instanceof RasterWritable && Arrays.equals(bytes, ((RasterWritable) other).bytes);
+}
+
+@Override
+public int hashCode()
+{
+  return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
+      // if deriving: appendSuper(super.hashCode()).
+          appendSuper(super.hashCode()).toHashCode();
 }
 
 @Override
@@ -109,15 +130,21 @@ public RasterWritable()
   this.bytes = null;
 }
 
-public RasterWritable(final byte[] bytes)
+protected RasterWritable(final byte[] bytes)
 {
   this.bytes = bytes;
-
 }
 
-public RasterWritable(RasterWritable copy)
+@SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")
+@Override
+public Object clone()
 {
-  this.bytes = copy.bytes;
+  return new RasterWritable(copyBytes());
+}
+
+public RasterWritable copy()
+{
+  return new RasterWritable(copyBytes());
 }
 
 // we could use the default serializations here, but instead we'll just do it manually
@@ -137,7 +164,6 @@ private void writeObject(ObjectOutputStream stream) throws IOException
 private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
 {
   int len = stream.readInt();
-
   if (len > 0)
   {
     bytes = new byte[len];
@@ -147,20 +173,30 @@ private void readObject(ObjectInputStream stream) throws IOException, ClassNotFo
 
 public int getSize()
 {
+  if (bytes == null)
+  {
+    return 0;
+  }
   return bytes.length;
-}
-
-public byte[] getBytes()
-{
-  return bytes;
 }
 
 public byte[] copyBytes()
 {
+  if (bytes == null)
+  {
+    return null;
+  }
+
   byte[] copy = new byte[bytes.length];
   System.arraycopy(bytes, 0, copy, 0, bytes.length);
 
   return copy;
+}
+
+// should this do a copy of the bytes?
+public static RasterWritable fromBytes(byte[] bytes)
+{
+  return new RasterWritable(bytes);
 }
 
 public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IOException
@@ -188,10 +224,10 @@ public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IO
 }
 
 public static MrGeoRaster toMrGeoRaster(final RasterWritable writable,
-                                        final CompressionCodec codec, final Decompressor decompressor) throws IOException
+    final CompressionCodec codec, final Decompressor decompressor) throws IOException
 {
   decompressor.reset();
-  final ByteArrayInputStream bis = new ByteArrayInputStream(writable.getBytes(), 0, writable.getSize());
+  final ByteArrayInputStream bis = new ByteArrayInputStream(writable.bytes, 0, writable.getSize());
   final CompressionInputStream gis = codec.createInputStream(bis, decompressor);
   final ByteArrayOutputStream baos = new ByteArrayOutputStream();
   IOUtils.copyBytes(gis, baos, 1024 * 1024 * 2, true);
@@ -235,7 +271,28 @@ private static MrGeoRaster convertFromV2(byte[] data)
   {
   case BANDED:
     // this one is easy, just make a new MrGeoRaster and copy the data
-    System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+    //System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+
+    if (srclen < raster.datasize())
+    {
+      log.warn(String.format("Input raster data size (%dB) is " +
+          "less then than the calculated data size (%dB), " +
+          "only copying (%dB)", srclen, raster.datasize(), srclen));
+      System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+
+    }
+    else if (srclen > raster.datasize())
+    {
+      log.warn(String.format("Input raster data size (%dB) is " +
+          "less then than the calculated data size (%dB), " +
+          "only copying (%dB)", srclen, raster.datasize(), raster.datasize()));
+      System.arraycopy(data, headersize, raster.data, raster.dataoffset(), raster.datasize());
+    }
+    else
+    {
+      System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+    }
+
     break;
   case MULTIPIXELPACKED:
     throw new NotImplementedException("MultiPixelPackedSampleModel not implemented yet");

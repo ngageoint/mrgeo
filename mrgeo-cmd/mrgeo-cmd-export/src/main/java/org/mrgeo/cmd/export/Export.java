@@ -49,7 +49,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-class Export extends Command
+public class Export extends Command
 {
 private static Logger log = LoggerFactory.getLogger(Export.class);
 

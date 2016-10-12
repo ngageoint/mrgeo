@@ -1,6 +1,7 @@
 package org.mrgeo.publisher.rest.geoserver
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -178,6 +179,7 @@ class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter wit
       ))
     }
 
+    @SuppressFBWarnings(value = Array[String]("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
     def verifyDimensions = {
       val dimensionsNode = coverageNode.get("dimensions")
       dimensionsNode.get("coverageDimension").asScala.zipWithIndex.foreach{case (dimensionNode, bandIndex) => {

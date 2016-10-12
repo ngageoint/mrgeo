@@ -234,6 +234,21 @@ public static void compareRasters(File r1, MrGeoRaster r2) throws IOException
   compareRasters(r, null, r2, null);
 }
 
+public void compareRasters(String testName) throws IOException
+{
+  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
+      (ProviderProperties)null);
+  MrsPyramidMetadata meta = pyramid.getMetadata();
+
+  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
+  {
+    MrGeoRaster raster = image.getRaster();
+    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+    compareRasters(baselineTif, raster);
+  }
+
+}
+
 static void compareRasters(File r1, ValueTranslator t1, MrGeoRaster r2, ValueTranslator t2) throws IOException
 {
   Dataset d = GDALUtils.open(r1.getCanonicalPath());
@@ -294,6 +309,20 @@ public static void compareRasters(MrGeoRaster r1, ValueTranslator r1Translator,
   }
 }
 
+public void compareRasterToConstant(String testName, double constant) throws IOException
+{
+  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
+      (ProviderProperties)null);
+  MrsPyramidMetadata meta = pyramid.getMetadata();
+
+  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
+  {
+    MrGeoRaster raster = image.getRaster();
+    compareRasterToConstant(raster, constant, meta.getDefaultValueDouble(0));
+  }
+
+}
+
 public static void compareRasterToConstant(MrGeoRaster raster, double constant, double nodata)
 {
   int dataType = raster.datatype();
@@ -321,6 +350,21 @@ public static void compareRasterToConstant(MrGeoRaster raster, double constant, 
     }
   }
 }
+
+public static void compareNumberedRaster(MrGeoRaster raster)
+{
+  for (int y = 0; y < raster.height(); y++)
+  {
+    for (int x = 0; x < raster.width(); x++)
+    {
+      int pixelId = getPixelId(x, y, raster.width());
+
+      Assert.assertEquals("Bad pixel px: " + x + " py: " + y +  " expected: " + pixelId + " actual: " +  raster.getPixelDouble(x, y, 0),
+          pixelId, raster.getPixelDouble(x, y, 0), 1e-8);
+    }
+  }
+}
+
 
 public static MrGeoRaster createConstRaster(int width, int height, int datatype, double c)
 {
@@ -664,6 +708,46 @@ public void saveBaselineTif(final String testName,
   final File baselineTif = new File(new File(inputLocal), testName + ".tif");
   GDALJavaUtils.saveRaster(raster.toDataset(bounds, nodatas), baselineTif.getCanonicalPath(), nodata);
 }
+
+public void saveBaselineTif(final String testName,
+    Bounds bounds, double nodata)
+    throws IOException
+{
+  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
+      (ProviderProperties)null);
+  MrsPyramidMetadata meta = pyramid.getMetadata();
+
+  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
+  {
+    MrGeoRaster raster = image.getRaster();
+
+    double[] nodatas = new double[raster.bands()];
+    Arrays.fill(nodatas, nodata);
+
+    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+    GDALJavaUtils.saveRaster(raster.toDataset(bounds, nodatas), baselineTif.getCanonicalPath(), nodata);
+  }
+}
+
+public void saveBaselineTif(final String testName)
+    throws IOException
+{
+  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
+      (ProviderProperties)null);
+  MrsPyramidMetadata meta = pyramid.getMetadata();
+
+  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
+  {
+    MrGeoRaster raster = image.getRaster();
+
+    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+
+    GDALJavaUtils.saveRaster(raster.toDataset(meta.getBounds(), meta.getDefaultValues()),
+        baselineTif.getCanonicalPath(), meta.getDefaultValuesDouble()[0]);
+  }
+
+}
+
 
 public interface ValueTranslator
 {

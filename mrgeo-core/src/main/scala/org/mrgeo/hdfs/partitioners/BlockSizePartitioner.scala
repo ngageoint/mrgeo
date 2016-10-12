@@ -46,7 +46,7 @@ class BlockSizePartitioner() extends FileSplitPartitioner() with Externalizable 
     val tile = RasterWritable.toMrGeoRaster(raster.first()._2)
 
 
-    val tilesperblock = (blocksize / tile.data().length) - 1  // subtract 1 for the 0-based counting
+    val tilesperblock = (blocksize / tile.datalength()) - 1  // subtract 1 for the 0-based counting
 
     partitions = Math.ceil(raster.count() / tilesperblock.toDouble).toInt
 

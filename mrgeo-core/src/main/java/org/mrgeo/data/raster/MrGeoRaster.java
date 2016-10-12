@@ -304,7 +304,7 @@ final public int datatype()
   return datatype;
 }
 
-final public byte[] data()
+final byte[] data()
 {
   return data;
 }
@@ -318,6 +318,8 @@ final public int datasize()
 {
   return data.length - dataoffset;
 }
+
+final public int datalength() { return data.length; }
 
 final public MrGeoRaster clip(int x, int y, int width, int height)
 {
@@ -634,7 +636,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_BYTE:
         {
           final byte p = other.getPixelByte(x, y, b);
-          if (getPixelByte(x, y, b) != nodata[b])
+          if (getPixelByte(x, y, b) != (byte)nodata[b])
           {
             setPixel(x, y, b, p);
           }

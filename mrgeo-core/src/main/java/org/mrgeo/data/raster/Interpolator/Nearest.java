@@ -4,7 +4,7 @@ import org.mrgeo.data.raster.MrGeoRaster;
 
 public class Nearest
 {
-public static double EPSILON = 1e-6f;
+final public static double EPSILON = 1e-6f;
 
 public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst)
 {

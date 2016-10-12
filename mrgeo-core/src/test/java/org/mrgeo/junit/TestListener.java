@@ -16,6 +16,7 @@
 
 package org.mrgeo.junit;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.Assert;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
@@ -121,6 +122,7 @@ public class TestListener extends RunListener
   }
 
 
+  @SuppressFBWarnings(value = "DM_GC", justification = "Used for testing")
   private static void memorybox(final String line1, final String line2) throws Exception
   {
     StringBuilder builder = new StringBuilder();
@@ -179,27 +181,28 @@ public class TestListener extends RunListener
 
       Process p = Runtime.getRuntime().exec("lsof -p " + pid + "");
 
-      BufferedReader stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
-      String line = stdout.readLine();
-      while (line != null)
+      try (BufferedReader stdout = new BufferedReader(new InputStreamReader(p.getInputStream())))
       {
-        String[] args = line.split("\\s+");
-        if (args.length >= 9)
+        String line = stdout.readLine();
+        while (line != null)
         {
-          String file = args[8];
-
-          if (file.contains(":50010"))
+          String[] args = line.split("\\s+");
+          if (args.length >= 9)
           {
-            openhandles++;
+            String file = args[8];
+
+            if (file.contains(":50010"))
+            {
+              openhandles++;
+            }
           }
+
+          line = stdout.readLine();
         }
-
-        line = stdout.readLine();
+        p.getErrorStream().close();
+        p.getInputStream().close();
+        p.getOutputStream().close();
       }
-      p.getErrorStream().close();
-      p.getInputStream().close();
-      p.getOutputStream().close();
-
     }
     catch (IOException e)
     {
@@ -215,9 +218,9 @@ public class TestListener extends RunListener
 
     if (!leaks.isEmpty())
     {
-      for (Integer i: leaks.keySet())
+      for (Map.Entry<Integer, String> kv: leaks.entrySet())
       {
-        log.error("Leak found!...: " + Integer.toHexString(i) + "\n" + leaks.get(i));
+        log.error("Leak found!...: " + Integer.toHexString(kv.getKey()) + "\n" + kv.getValue());
       }
         Assert.fail("There were leaks in the system!  See stack traces...");
 
@@ -234,6 +237,7 @@ public class TestListener extends RunListener
     return false;
   }
 
+  @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "Setup tests")
   @Override
   public void testRunStarted(Description description) throws Exception 
   {
@@ -276,6 +280,7 @@ public class TestListener extends RunListener
     }
   }
 
+  @SuppressFBWarnings(value = "DM_EXIT", justification = "Force fast exit (fail fast)")
   @Override
   public void testFailure(Failure failure) throws Exception 
   {
