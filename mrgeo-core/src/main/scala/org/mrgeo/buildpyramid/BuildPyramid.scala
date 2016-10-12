@@ -194,31 +194,32 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
           val tokey = new TileIdWritable(TMSUtils.tileid(totile.tx, totile.ty, tolevel))
 
+          val reduced = fromraster.reduce(2, 2, aggregator, nodatas)
+
           // create a compatible writable raster
           logDebug("from  tx: " + fromtile.tx + " ty: " + fromtile.ty + " (" + fromlevel + ") to tx: " + totile.tx +
               " ty: " + totile.ty + " (" + tolevel + ") x: "
               + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
-              " w: " + fromraster.width() + " h: " + fromraster.height())
+              " w: " + reduced.width() + " h: " + reduced.height())
 
-          val toraster = fromraster.reduce(2, 2, aggregator, nodatas)
+          val toraster = fromraster.createCompatibleRaster(tilesize, tilesize)
+          toraster.copyFrom(0, 0, reduced.width(), reduced.height(), reduced,
+            (fromcorner.px - tocorner.px).toInt / 2, (fromcorner.py - tocorner.py).toInt / 2)
 
           (tokey, RasterWritable.toWritable(toraster))
         })
 
-
-        //val tileBounds = TMSUtils.boundsToTile(metadata.getBounds, tolevel, tilesize)
-
-        val wrappedDecimated = new PairRDDFunctions(decimated)
-        val mergedTiles = wrappedDecimated.reduceByKey((r1, r2) => {
+        val mergedTiles = new PairRDDFunctions(decimated).reduceByKey((r1, r2) => {
           val src = RasterWritable.toMrGeoRaster(r1)
           val dst = RasterWritable.toMrGeoRaster(r2)
 
-          src.mosaic(dst, metadata.getDefaultValuesDouble)
+          dst.mosaic(src, nodatas)
 
           RasterWritable.toWritable(dst)
         })
 
-        // while we were running, there is chance the pyramid was removed from the cache and
+        // while we were running,
+        // there is chance the pyramid was removed from the cache and
         // reopened by another process. Re-opening it here will avoid some potential conflicts.
         metadata = MrsPyramid.open(provider).getMetadata
 
