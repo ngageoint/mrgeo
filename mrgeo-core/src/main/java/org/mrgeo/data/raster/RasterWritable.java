@@ -99,12 +99,10 @@ public void write(DataOutput out) throws IOException
 {
   if (bytes == null)
   {
-    System.out.println("w: (null)");
     out.writeInt(0);
   }
   else
   {
-    System.out.println("w: " + SparkUtils.kbtohuman(bytes.length / 1024, "g"));
     out.writeInt(bytes.length);
     out.write(bytes);
   }
@@ -115,7 +113,6 @@ public void write(DataOutput out) throws IOException
 public void readFields(DataInput in) throws IOException
 {
   int len = in.readInt();
-  System.out.println("rf: " + SparkUtils.kbtohuman(len / 1024, "g"));
   if (len > 0)
   {
     bytes = new byte[len];
@@ -155,12 +152,10 @@ private void writeObject(ObjectOutputStream stream) throws IOException
 {
   if (bytes == null)
   {
-    System.out.println("wo: (null)");
     stream.writeInt(0);
   }
   else
   {
-    System.out.println("wo: " + SparkUtils.kbtohuman(bytes.length / 1024, "g"));
     stream.writeInt(bytes.length);
     stream.write(bytes, 0, bytes.length);
   }
@@ -169,7 +164,6 @@ private void writeObject(ObjectOutputStream stream) throws IOException
 private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
 {
   int len = stream.readInt();
-  System.out.println("ro: " + SparkUtils.kbtohuman(len / 1024, "g"));
   if (len > 0)
   {
     bytes = new byte[len];
@@ -192,7 +186,7 @@ public byte[] copyBytes()
   {
     return null;
   }
-  
+
   byte[] copy = new byte[bytes.length];
   System.arraycopy(bytes, 0, copy, 0, bytes.length);
 
