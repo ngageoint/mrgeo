@@ -25,6 +25,7 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.io.compress.Decompressor;
 import org.mrgeo.utils.ByteArrayUtils;
+import org.mrgeo.utils.SparkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,10 +99,12 @@ public void write(DataOutput out) throws IOException
 {
   if (bytes == null)
   {
+    System.out.println("w: (null)");
     out.writeInt(0);
   }
   else
   {
+    System.out.println("w: " + SparkUtils.kbtohuman(bytes.length / 1024, "g"));
     out.writeInt(bytes.length);
     out.write(bytes);
   }
@@ -112,6 +115,7 @@ public void write(DataOutput out) throws IOException
 public void readFields(DataInput in) throws IOException
 {
   int len = in.readInt();
+  System.out.println("rf: " + SparkUtils.kbtohuman(len / 1024, "g"));
   if (len > 0)
   {
     bytes = new byte[len];
@@ -151,10 +155,12 @@ private void writeObject(ObjectOutputStream stream) throws IOException
 {
   if (bytes == null)
   {
+    System.out.println("wo: (null)");
     stream.writeInt(0);
   }
   else
   {
+    System.out.println("wo: " + SparkUtils.kbtohuman(bytes.length / 1024, "g"));
     stream.writeInt(bytes.length);
     stream.write(bytes, 0, bytes.length);
   }
@@ -163,7 +169,7 @@ private void writeObject(ObjectOutputStream stream) throws IOException
 private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
 {
   int len = stream.readInt();
-
+  System.out.println("ro: " + SparkUtils.kbtohuman(len / 1024, "g"));
   if (len > 0)
   {
     bytes = new byte[len];
@@ -173,11 +179,20 @@ private void readObject(ObjectInputStream stream) throws IOException, ClassNotFo
 
 public int getSize()
 {
+  if (bytes == null)
+  {
+    return 0;
+  }
   return bytes.length;
 }
 
 public byte[] copyBytes()
 {
+  if (bytes == null)
+  {
+    return null;
+  }
+  
   byte[] copy = new byte[bytes.length];
   System.arraycopy(bytes, 0, copy, 0, bytes.length);
 
@@ -262,7 +277,28 @@ private static MrGeoRaster convertFromV2(byte[] data)
   {
   case BANDED:
     // this one is easy, just make a new MrGeoRaster and copy the data
-    System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+    //System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+
+    if (srclen < raster.datasize())
+    {
+      log.warn(String.format("Input raster data size (%dB) is " +
+          "less then than the calculated data size (%dB), " +
+          "only copying (%dB)", srclen, raster.datasize(), srclen));
+      System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+
+    }
+    else if (srclen > raster.datasize())
+    {
+      log.warn(String.format("Input raster data size (%dB) is " +
+          "less then than the calculated data size (%dB), " +
+          "only copying (%dB)", srclen, raster.datasize(), raster.datasize()));
+      System.arraycopy(data, headersize, raster.data, raster.dataoffset(), raster.datasize());
+    }
+    else
+    {
+      System.arraycopy(data, headersize, raster.data, raster.dataoffset(), srclen);
+    }
+
     break;
   case MULTIPIXELPACKED:
     throw new NotImplementedException("MultiPixelPackedSampleModel not implemented yet");
