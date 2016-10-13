@@ -367,6 +367,7 @@ public static void compareNumberedRaster(MrGeoRaster raster)
 
 
 public static MrGeoRaster createConstRaster(int width, int height, int datatype, double c)
+    throws MrGeoRaster.MrGeoRasterException
 {
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 1, datatype);
   raster.fill(c);
@@ -375,7 +376,7 @@ public static MrGeoRaster createConstRaster(int width, int height, int datatype,
 }
 
 public static MrGeoRaster createConstRasterWithNodata(int width, int height, int datatype, double c, double nodata,
-    int nodataFrequency)
+    int nodataFrequency) throws MrGeoRaster.MrGeoRasterException
 {
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 1, datatype);
 
@@ -392,6 +393,7 @@ public static MrGeoRaster createConstRasterWithNodata(int width, int height, int
 }
 
 public static MrGeoRaster createNumberedRaster(int width, int height, int datatype)
+    throws MrGeoRaster.MrGeoRasterException
 {
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 1, datatype);
 
@@ -408,6 +410,7 @@ public static MrGeoRaster createNumberedRaster(int width, int height, int dataty
 }
 
 public static MrGeoRaster createNumberedRasterWithNodata(int width, int height, double nodata, int nodataFrequency)
+    throws MrGeoRaster.MrGeoRasterException
 {
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_DOUBLE);
 

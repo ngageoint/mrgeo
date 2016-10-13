@@ -477,19 +477,19 @@ public static Set<Long> getTileIdsFromBounds(final Bounds bounds, final int zoom
   return tileIds;
 }
 
-public MrGeoRaster getRaster()
+public MrGeoRaster getRaster() throws MrGeoRaster.MrGeoRasterException
 {
   return getRaster(getTileBounds());
 }
 
-public MrGeoRaster getRaster(final Bounds bounds)
+public MrGeoRaster getRaster(final Bounds bounds) throws MrGeoRaster.MrGeoRasterException
 {
   final TileBounds tb = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTilesize());
 
   return getRaster(tb);
 }
 
-public MrGeoRaster getRaster(final long[] tiles)
+public MrGeoRaster getRaster(final long[] tiles) throws MrGeoRaster.MrGeoRasterException
 {
   final Tile[] tileids = new Tile[tiles.length];
   for (int i = 0; i < tiles.length; i++)
@@ -500,14 +500,14 @@ public MrGeoRaster getRaster(final long[] tiles)
   return getRaster(tileids);
 }
 
-public MrGeoRaster getRaster(final LongRectangle tileBounds)
+public MrGeoRaster getRaster(final LongRectangle tileBounds) throws MrGeoRaster.MrGeoRasterException
 {
   final TileBounds tb = new TileBounds(tileBounds.getMinX(), tileBounds
       .getMinY(), tileBounds.getMaxX(), tileBounds.getMaxY());
   return getRaster(tb);
 }
 
-public MrGeoRaster getRaster(final TileIdWritable[] tiles)
+public MrGeoRaster getRaster(final TileIdWritable[] tiles) throws MrGeoRaster.MrGeoRasterException
 {
   final Tile[] tileids = new Tile[tiles.length];
   for (int i = 0; i < tiles.length; i++)
@@ -518,7 +518,7 @@ public MrGeoRaster getRaster(final TileIdWritable[] tiles)
   return getRaster(tileids);
 }
 
-public MrGeoRaster getRaster(final Tile[] tiles)
+public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterException
 {
   getMetadata(); // make sure metadata is loaded
 
@@ -593,7 +593,7 @@ public MrGeoRaster getRaster(final Tile[] tiles)
   return merged;
 }
 
-public MrGeoRaster getRaster(final TileBounds tileBounds)
+public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRaster.MrGeoRasterException
 {
   getMetadata(); // make sure metadata is loaded
 

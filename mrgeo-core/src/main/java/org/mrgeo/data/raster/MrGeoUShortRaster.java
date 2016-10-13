@@ -15,9 +15,16 @@ MrGeoUShortRaster(int width, int height, int bands, byte[] data, int dataOffset)
   super(width, height, bands, DataBuffer.TYPE_USHORT, data, dataOffset);
 }
 
-public static MrGeoRaster createEmptyRaster(int width, int height, int bands)
+public static MrGeoRaster createEmptyRaster(int width, int height, int bands) throws MrGeoRasterException
 {
-  byte[] data = new byte[(width * height * bands * BYTES_PER_PIXEL) + MrGeoRaster.HEADER_LEN];
+  long bytes = ((long)width * (long)height * (long)bands * (long)BYTES_PER_PIXEL) + MrGeoRaster.HEADER_LEN;
+  if (bytes > (long)Integer.MAX_VALUE)
+  {
+    throw new MrGeoRasterException(String.format("Error creating unsigned short raster.  Raster too large: width: %d " +
+            "height: %d  bands: %d  (%d bytes per pixel, %d byte header length) (%d total bytes)",
+        width, height, bands, BYTES_PER_PIXEL, MrGeoRaster.HEADER_LEN, bytes));
+  }
+  byte[] data = new byte[(int)bytes];
 
   MrGeoRaster.writeHeader(width, height, bands, DataBuffer.TYPE_USHORT, data);
 

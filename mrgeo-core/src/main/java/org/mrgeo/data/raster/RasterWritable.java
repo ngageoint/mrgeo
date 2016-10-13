@@ -25,7 +25,6 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.io.compress.Decompressor;
 import org.mrgeo.utils.ByteArrayUtils;
-import org.mrgeo.utils.SparkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -252,7 +251,7 @@ public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
   }
 }
 
-private static MrGeoRaster convertFromV2(byte[] data)
+private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRaster.MrGeoRasterException
 {
   final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
 
@@ -262,7 +261,6 @@ private static MrGeoRaster convertFromV2(byte[] data)
   final int bands = rasterBuffer.getInt();
   final int datatype = rasterBuffer.getInt();
   final SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
-
 
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, datatype);
   int srclen = data.length - headersize;
@@ -284,7 +282,7 @@ private static MrGeoRaster convertFromV2(byte[] data)
     else if (srclen > raster.datasize())
     {
       log.warn(String.format("Input raster data size (%dB) is " +
-          "less then than the calculated data size (%dB), " +
+          "greater then than the calculated data size (%dB), " +
           "only copying (%dB)", srclen, raster.datasize(), raster.datasize()));
       System.arraycopy(data, headersize, raster.data, raster.dataoffset(), raster.datasize());
     }
@@ -312,7 +310,7 @@ private static MrGeoRaster convertFromV2(byte[] data)
       else if (srclen > raster.datasize())
       {
         log.warn(String.format("Input raster data size (%dB) is " +
-            "less then than the calculated data size (%dB), " +
+            "greater then than the calculated data size (%dB), " +
             "only copying (%dB)", srclen, raster.datasize(), raster.datasize()));
         System.arraycopy(data, headersize, raster.data, raster.dataoffset(), raster.datasize());
       }

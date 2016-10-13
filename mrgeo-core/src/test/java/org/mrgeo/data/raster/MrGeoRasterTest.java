@@ -45,7 +45,7 @@ private static MrGeoRaster numberedFloat;
 private static MrGeoRaster numberedDouble;
 
 @BeforeClass
-public static void init()
+public static void init() throws MrGeoRaster.MrGeoRasterException
 {
   width = 13;
   height = 13;
