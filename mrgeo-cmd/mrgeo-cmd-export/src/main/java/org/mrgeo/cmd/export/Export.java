@@ -227,7 +227,7 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
     final int zoomlevel = image.getZoomlevel();
     for (final long lid : tiles)
     {
-//      if (minId > lid)
+      if (minId > lid)
       {
         minId = lid;
       }
