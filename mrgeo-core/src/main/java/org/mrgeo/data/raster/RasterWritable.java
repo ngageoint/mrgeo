@@ -251,7 +251,7 @@ public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
   }
 }
 
-private static MrGeoRaster convertFromV2(byte[] data)
+private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRaster.MrGeoRasterException
 {
   final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
 

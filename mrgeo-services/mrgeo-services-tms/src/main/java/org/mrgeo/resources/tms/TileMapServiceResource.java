@@ -132,7 +132,7 @@ private static synchronized void init()
 
 
 private Response createEmptyTile(final ImageResponseWriter writer, final int width,
-    final int height)
+    final int height) throws MrGeoRaster.MrGeoRasterException
 {
   // return an empty image
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 4, DataBuffer.TYPE_BYTE);

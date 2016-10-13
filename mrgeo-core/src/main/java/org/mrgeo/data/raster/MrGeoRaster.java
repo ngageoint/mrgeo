@@ -37,6 +37,23 @@ private final int datatype;
 private final int dataoffset;
 private final int bandoffset;
 
+public static class MrGeoRasterException extends IOException
+{
+  private static final long serialVersionUID = 1L;
+
+  private final Exception origException;
+  MrGeoRasterException(final String msg)
+  {
+    this.origException = new Exception(msg);
+  }
+
+  @Override
+  public void printStackTrace()
+  {
+    origException.printStackTrace();
+  }
+}
+
 MrGeoRaster(int width, int height, int bands, int datatype, byte[] data, int dataoffset)
 {
   this.width = width;
@@ -49,7 +66,7 @@ MrGeoRaster(int width, int height, int bands, int datatype, byte[] data, int dat
   this.bandoffset = width * height;
 }
 
-public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype)
+public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype) throws MrGeoRasterException
 {
   switch (datatype)
   {
@@ -83,6 +100,7 @@ public static MrGeoRaster createEmptyRaster(int width, int height, int bands, in
 }
 
 public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype, double nodata)
+    throws MrGeoRasterException
 {
   MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
   raster.fill(nodata);
@@ -90,6 +108,7 @@ public static MrGeoRaster createEmptyRaster(int width, int height, int bands, in
 }
 
 public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype, double[] nodatas)
+    throws MrGeoRasterException
 {
   MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
   raster.fill(nodatas);
@@ -164,12 +183,13 @@ public static MrGeoRaster fromRaster(Raster raster) throws IOException
   return mrgeo;
 }
 
-public static MrGeoRaster fromDataset(Dataset dataset)
+public static MrGeoRaster fromDataset(Dataset dataset) throws MrGeoRasterException
 {
   return fromDataset(dataset, 0, 0, dataset.GetRasterXSize(), dataset.GetRasterYSize());
 }
 
 public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width, final int height)
+    throws MrGeoRasterException
 {
   int gdaltype = dataset.GetRasterBand(1).getDataType();
   int bands = dataset.GetRasterCount();
@@ -224,12 +244,12 @@ static MrGeoRaster createRaster(byte[] data)
   return createRaster(header[1], header[2], header[3], header[4], data, header[5]);
 }
 
-final public MrGeoRaster createCompatibleRaster(int width, int height)
+final public MrGeoRaster createCompatibleRaster(int width, int height) throws MrGeoRasterException
 {
   return createEmptyRaster(width, height, bands, datatype);
 }
 
-final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, double nodata)
+final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, double nodata) throws MrGeoRasterException
 {
   MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
 
@@ -255,7 +275,7 @@ final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, doub
   return raster;
 }
 
-final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, double[] nodata)
+final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, double[] nodata) throws MrGeoRasterException
 {
   MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
 
@@ -321,7 +341,7 @@ final public int datasize()
 
 final public int datalength() { return data.length; }
 
-final public MrGeoRaster clip(int x, int y, int width, int height)
+final public MrGeoRaster clip(int x, int y, int width, int height) throws MrGeoRasterException
 {
   MrGeoRaster clipraster = MrGeoRaster.createEmptyRaster(width, height, bands, datatype);
 
@@ -339,7 +359,7 @@ final public MrGeoRaster clip(int x, int y, int width, int height)
   return clipraster;
 }
 
-final public MrGeoRaster clip(int x, int y, int width, int height, int band)
+final public MrGeoRaster clip(int x, int y, int width, int height, int band) throws MrGeoRasterException
 {
   MrGeoRaster clipraster = MrGeoRaster.createEmptyRaster(width, height, 1, datatype);
 
@@ -380,7 +400,7 @@ final public void copyFrom(int srcx, int srcy, int srcBand, int width, int heigh
   }
 }
 
-final public void fill(final double value)
+final public void fill(final double value) throws MrGeoRasterException
 {
   MrGeoRaster row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
   for (int x = 0; x < width; x++)
@@ -402,7 +422,7 @@ final public void fill(final double value)
 
 }
 
-final public void fill(final double[] values)
+final public void fill(final double[] values) throws MrGeoRasterException
 {
   MrGeoRaster row[] = new MrGeoRaster[bands];
 
@@ -416,21 +436,22 @@ final public void fill(final double[] values)
     }
   }
 
-  int headerlen = dataoffset();
+  int headerlen = dataoffset;
   int len = row[0].data.length - headerlen;
 
   for (int b = 0; b < bands; b++)
   {
+    int offset = headerlen + (b * bandoffset * bytesPerPixel());
     for (int y = 0; y < height; y++)
     {
-      int offset = calculateByteOffset(0, y, b);
-
       System.arraycopy(row[b].data, headerlen, data, offset, len);
+
+      offset += len;
     }
   }
 }
 
-final public void fill(final int band, final double value)
+final public void fill(final int band, final double value) throws MrGeoRasterException
 {
   MrGeoRaster row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
   for (int x = 0; x < width; x++)
@@ -438,14 +459,15 @@ final public void fill(final int band, final double value)
     row.setPixel(x, 0, 0, value);
   }
 
-  int headerlen = bandoffset;
+  int headerlen = dataoffset;
   int len = row.data.length - headerlen;
 
+  int offset = headerlen + (band * bandoffset * bytesPerPixel());
   for (int y = 0; y < height; y++)
   {
-    int offset = calculateByteOffset(0, y, band);
 
     System.arraycopy(row.data, headerlen, data, offset, len);
+    offset += len;
   }
 }
 
@@ -455,7 +477,7 @@ final public void fill(final int band, final double value)
 // Also used was http://www.compuphase.com/graphic/scale.htm, explaining interpolated
 // scaling
 public MrGeoRaster scale(final int dstWidth,
-    final int dstHeight, final boolean interpolate, final double[] nodatas)
+    final int dstHeight, final boolean interpolate, final double[] nodatas) throws MrGeoRasterException
 {
 
   MrGeoRaster src = this;
@@ -552,6 +574,7 @@ public MrGeoRaster scale(final int dstWidth,
 }
 
 final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator aggregator, double[] nodatas)
+    throws MrGeoRasterException
 {
   MrGeoRaster child = createCompatibleRaster(width / xfactor, height / yfactor);
 
