@@ -615,7 +615,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
           {
             for (int xx = x; xx < x + xfactor; xx++)
             {
-              floatsamples[ndx++] = getPixelInt(xx, yy, b);
+              floatsamples[ndx++] = getPixelFloat(xx, yy, b);
             }
           }
 
@@ -628,7 +628,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
           {
             for (int xx = x; xx < x + xfactor; xx++)
             {
-              doublesamples[ndx++] = getPixelInt(xx, yy, b);
+              doublesamples[ndx++] = getPixelDouble(xx, yy, b);
             }
           }
 
