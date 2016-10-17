@@ -1,0 +1,135 @@
+---
+# .about.yml project metadata
+#
+# Copy this template into your project repository's root directory as
+# .about.yml and fill in the fields as described below.
+
+# This is a short name of your project that can be used as a URL slug.
+# (required)
+name: MrGeo
+
+# This is the display name of your project. (required)
+full_name: MrGeo
+
+# What is the problem your project solves? What is the solution? Use the
+# format shown below. Ref. [CNSSI 1254, #19][NIST SP800-37] (required) 
+description: MrGeo is an open source geospatial toolkit designed to provide raster-based geospatial processing capabilities performed at scale. MrGeo enables global geospatial big data image processing and analytics.
+
+# What is the measurable impact of your project? Use the format shown below. (required)
+impact: high
+
+# What kind of team owns the repository? (required)
+# values: guild, working-group, project
+owner_type: project
+
+# What is your project's current status? (required)
+# values: discovery, alpha, beta, production
+stage: beta
+
+# Should this repo have automated tests? If so, set to `true`. (required)
+# values: true, false
+testable: true
+
+# What are the licenses that apply to the project and/or its components?
+# (required)
+# Items by property name pattern:
+#   .*:
+#     name: Name of the license from the Software Package Data Exchange (SPDX): https://spdx.org/licenses/
+#     url: URL for the text of the license
+licenses:
+  mrgeo:
+  name: Apache License 2.0
+  url: https://spdx.org/licenses/Apache-2.0.html
+
+# Who is the partner for your project? (Use the full name of the partner)
+partners:
+- 
+
+# The main point of contact(s) and/or the issue reporting system for your
+# project, and either a `mailto:` link or URL for each contact.
+# Items:
+# - url: URL for the link
+#   text: Anchor text for the link
+contact:
+- 
+
+# Who are the team members on your project? You can specify GitHub usernames,
+# email addresses, or other organizational usernames. (required)
+# Items:
+# - github: GitHub user name
+#   id: Internal team identifier/user name
+#   role: Team member's role; leads should be designated as 'lead'
+team:
+- github: ttislerdg
+  role: lead
+  github: djohnson729
+  role: lead
+
+# What kind of content is contained in the project repository?
+# values: app, data, policy
+type:
+
+# What are the key milestones you've achieved recently?
+milestones:
+- 
+
+# Name of the main project repo if this is a sub-repo; name of the grouplet
+# repo if this is a working group/guild subproject
+parent:
+
+# What are the links to key artifacts associated with your project? e.g. the
+# production site, SSP documentation, control summary, and network diagram.
+# Items:
+# - url: URL for the link
+#   text: Anchor text for the link
+#   category: Type of the link
+links:
+- 
+
+# What technologies are used in this project? Ref. [CNSSI 1254, All Core RMF-#3,SSP-#7] [SP800-37] (required)
+# Or multiple stacks 
+# stack: 
+# - python:2.8
+# stacks: 
+#  - 
+#    pythonstack: 
+#      - "python:3.5.0" 
+#  - 
+#    gostack: 
+#      - "go:1.6.1"
+stack:
+- Python:2.7
+- pip:8.1.1
+- py4j:0.10.2.1
+- Java:8
+- Boto:3
+- Apache Spark:1.6.1
+- Hadoop:2.7.2
+- Pymrgeo:0.0.7
+- GDAL:1.11.1
+- OpenCV:2.4.9
+
+# What are the services used to supply project status information? Ref. [CNSSI 1254, All Core RMF-#3,SSP-#7] [SP800-37] (required)
+# Items:
+# - name: Name of the service
+#   category: Type of the service
+#   url: URL for detailed information
+#   badge: URL for the status badge
+services:
+- name: Jenkins
+  category: build
+  url: https://jenkins.devops.geointservices.io/job/DigitalGlobe/job/MrGeo/job/Build-MrGeo/
+- name: SonarQube
+  category: scan
+  url: https://jenkins.devops.geointservices.io/job/DigitalGlobe/job/MrGeo/job/SonarQube-Scan/
+- name: HP Fortify
+  category: scan
+
+# Organizations or individuals who have adopted the project for their own use
+# Items:
+# - id: The name of the organization or individual
+#   url: A URL to the user's version of the project
+users:
+- 
+
+---
