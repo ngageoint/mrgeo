@@ -347,6 +347,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
       boolean useTileSet = line.hasOption("t");
       if (useTileSet)
       {
+        tileset = new HashSet<Long>();
         final String tileIdOption = line.getOptionValue("t");
         final String[] tileIds = tileIdOption.split(",");
         for (final String tileId : tileIds)
