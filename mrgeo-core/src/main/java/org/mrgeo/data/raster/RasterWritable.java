@@ -179,6 +179,7 @@ public int getSize()
   return bytes.length;
 }
 
+@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "API")
 public byte[] copyBytes()
 {
   if (bytes == null)

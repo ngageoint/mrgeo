@@ -34,6 +34,8 @@ import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils.tms.TMSUtils
 import org.mrgeo.utils.{LatLng, SparkUtils}
 
+@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value=Array("UUF_UNUSED_FIELD"), justification = "Scala constant")
 object SlopeAspectMapOp {
 
   final val RAD_2_DEG: Double = 57.2957795
