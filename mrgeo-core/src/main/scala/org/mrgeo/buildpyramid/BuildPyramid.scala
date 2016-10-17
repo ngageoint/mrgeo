@@ -202,7 +202,11 @@ class BuildPyramid extends MrGeoJob with Externalizable {
               + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
               " w: " + reduced.width() + " h: " + reduced.height())
 
+          //println("x: " + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2))
+
           val toraster = fromraster.createCompatibleRaster(tilesize, tilesize)
+          toraster.fill(nodatas)
+
           toraster.copyFrom(0, 0, reduced.width(), reduced.height(), reduced,
             (fromcorner.px - tocorner.px).toInt / 2, (fromcorner.py - tocorner.py).toInt / 2)
 
@@ -280,7 +284,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       val tileid: Long = iter.currentKey.get
       val inputTile: Tile = TMSUtils.tileid(tileid, inputLevel)
 
-      val toraster: MrGeoRaster = fromraster.reduce(2, 2, aggregator, metadata.getDefaultValuesDouble)
+      val reduced: MrGeoRaster = fromraster.reduce(2, 2, aggregator, metadata.getDefaultValuesDouble)
 
       val outputTile: Tile = TMSUtils.calculateTile(inputTile, inputLevel, outputLevel, tilesize)
       val outputkey: TileIdWritable = new TileIdWritable(TMSUtils.tileid(outputTile.tx, outputTile.ty, outputLevel))
@@ -303,7 +307,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       logDebug(
         "Calculating tile from  tx: " + inputTile.tx + " ty: " + inputTile.ty + " (" + inputLevel + ") to tx: " +
             outputTile.tx + " ty: " + outputTile.ty + " (" + outputLevel + ") x: " + tox + " y: " + toy)
-      outputRaster.copyFrom(0, 0, toraster.width(), toraster.height(), toraster, tox, toy)
+      outputRaster.copyFrom(0, 0, reduced.width(), reduced.height(), reduced, tox, toy)
     }
 
     iter match {
