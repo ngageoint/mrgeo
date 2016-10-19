@@ -101,9 +101,8 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
       bounds = Some(rasterForBoundsMapOp.get.metadata().getOrElse(
         throw new IOException("Unable to get metadata for the bounds raster")).getBounds)
     }
-    val result = rasterize(vectorRDD)
-    rasterRDD = Some(RasterRDD(result))
-    val noData = Double.NaN
+    rasterRDD = Some(RasterRDD(rasterize(vectorRDD)))
+    val noData = Float.NaN
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData,
       bounds = null, calcStats = false))
     true
