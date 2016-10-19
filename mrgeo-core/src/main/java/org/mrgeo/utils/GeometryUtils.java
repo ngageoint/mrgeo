@@ -16,10 +16,17 @@
 
 package org.mrgeo.utils;
 
-import com.vividsolutions.jts.geom.TopologyException;
+import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.geometry.*;
+import org.mrgeo.geometry.Geometry;
+import org.mrgeo.geometry.GeometryCollection;
+import org.mrgeo.geometry.GeometryFactory;
+import org.mrgeo.geometry.LineString;
+import org.mrgeo.geometry.LinearRing;
+import org.mrgeo.geometry.Point;
+import org.mrgeo.geometry.Polygon;
 import org.mrgeo.utils.tms.Bounds;
 
 public class GeometryUtils
@@ -215,6 +222,14 @@ public class GeometryUtils
     }
 
     return false;
+  }
+
+  public static boolean intersects(final Polygon polygon, final Geometry geometry)
+  {
+    final com.vividsolutions.jts.geom.Polygon jtsPoly = polygon.toJTS();
+    final com.vividsolutions.jts.geom.Geometry jtsGeom = geometry.toJTS();
+
+    return jtsGeom.within(jtsPoly) || jtsGeom.contains(jtsPoly) || jtsGeom.intersects(jtsPoly);
   }
 
   public static boolean intersects(final Point A, final Point B, final Point C, final Point D)
