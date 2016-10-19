@@ -421,7 +421,12 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
 
             if (singleImage)
             {
-              saveMultipleTiles(outputbase, pyramidName, format,
+              String ob = outputbase;
+              if (all)
+              {
+                ob += "-" + zoomlevel;
+              }
+              saveMultipleTiles(ob, pyramidName, format,
                   image, ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])));
             }
             else if (mosaicTiles && mosaicTileCount > 0)
