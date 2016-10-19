@@ -30,7 +30,8 @@ import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
+import org.mrgeo.utils.GeometryUtils
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, Tile, TileBounds}
 
 import scala.collection.mutable.ListBuffer
 
@@ -78,10 +79,8 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
 
   override def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)] =
   {
-    val tiledVectors = vectorsToTiledRDD(vectorRDD)
-    val localRdd = new PairRDDFunctions(tiledVectors)
-    val groupedGeometries = localRdd.groupByKey()
-    rasterize(groupedGeometries)
+    val tiledVectors = new PairRDDFunctions(vectorsToTiledRDD(vectorRDD)).groupByKey()
+    rasterize(tiledVectors)
   }
 
   def rasterize(groupedGeometries: RDD[(TileIdWritable, Iterable[Geometry])]): RDD[(TileIdWritable, RasterWritable)] = {
@@ -119,7 +118,6 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       var result = new ListBuffer[(TileIdWritable, Geometry)]
       // For each geometry, compute the tile(s) that it intersects and output the
       // the geometry to each of those tiles.
-      val envelope: Envelope = calculateEnvelope(geom)
       val baos = new ByteArrayOutputStream(1024)
       val dos = new DataOutputStream(baos)
       try {
@@ -129,20 +127,31 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       finally {
         dos.close()
       }
-      val b: Bounds = new Bounds(envelope.getMinX, envelope.getMinY, envelope.getMaxX, envelope.getMaxY)
+
+      val b: Bounds = geom.getBounds
 
       bounds match {
       case Some(filterBounds) =>
         if (filterBounds.intersects(b)) {
           val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
           for (tileId <- tiles) {
-            result += ((tileId, geom))
+            // make sure the geometry actually intersects this tile
+            val t = TMSUtils.tileid(tileId.get(), zoom)
+            val tb = GeometryUtils.toPoly(TMSUtils.tileBounds(t, zoom, tilesize))
+            if (GeometryUtils.intersects(tb, geom)) {
+              result += ((tileId, geom))
+            }
           }
         }
       case None =>
         val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, b)
         for (tileId <- tiles) {
-          result += ((tileId, geom))
+          // make sure the geometry actually intersects this tile
+          val t = TMSUtils.tileid(tileId.get(), zoom)
+          val tb = GeometryUtils.toPoly(TMSUtils.tileBounds(t, zoom, tilesize))
+          if (GeometryUtils.intersects(tb, geom)) {
+            result += ((tileId, geom))
+          }
         }
       }
       result
@@ -166,10 +175,6 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val partitions = (count / geomsPerPartition).toInt + 1
     log.info("Using " + partitions + " partitions for RasterizeVector")
     tiledVectors.repartition(partitions)
-  }
-
-  def calculateEnvelope(f: Geometry): Envelope = {
-    f.toJTS.getEnvelopeInternal
   }
 
   def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: Bounds): List[TileIdWritable] = {
