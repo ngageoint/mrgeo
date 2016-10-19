@@ -115,6 +115,11 @@ private Options createOptions()
   tileIds.setRequired(false);
   result.addOption(tileIds);
 
+  final Option points = new Option("p", "points", true,
+                                    "A comma separated list of lon, lat, lon, lat, ... for which to export tiles");
+  points.setRequired(false);
+  result.addOption(points);
+
   final Option bounds = new Option("b", "bounds", true,
       "Returns the tiles intersecting and interior to"
           + "the bounds specified.  Lat/Lon Bounds in w, s, e, n format "
@@ -289,9 +294,9 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
       }
 
       if (line.hasOption("b") &&
-          (line.hasOption("t") || line.hasOption("c") || line.hasOption("r")))
+          (line.hasOption("t") || line.hasOption("c") || line.hasOption("r") || line.hasOption("p")))
       {
-        log.debug("Option -b is currently incompatible with -t, -c, and -r");
+        log.debug("Option -b is currently incompatible with -t, -c, -p, and -r");
         throw new ParseException("Incorrect combination of arguments");
       }
 
@@ -411,6 +416,24 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
         while (zoomlevel >= end)
         {
           //final String output = outputbase + (all ? "_" + Integer.toString(zoomlevel) : "");
+
+          // If tile id's were not specified with -t, but -p is specified, then we
+          // need to re-compute the tiles for the specified points for each zoom level.
+          if (!useTileSet && line.hasOption("p")) {
+            tileset = new HashSet<Long>();
+            final String pointsOption = line.getOptionValue("p");
+            final String[] points = pointsOption.split(",");
+            if (points.length % 2 != 0) {
+              throw new IOException("The -p option requires lon/lat pairs");
+            }
+            for (int i=0; i < points.length; i += 2)
+            {
+              double lon = Double.valueOf(points[i].trim());
+              double lat = Double.valueOf(points[i+1].trim());
+              Tile pointTile = TMSUtils.latLonToTile(lat, lon, zoomlevel, pyramid.getTileSize());
+              tileset.add(Long.valueOf(TMSUtils.tileid(pointTile.getTx(), pointTile.getTy(), zoomlevel)));
+            }
+          }
 
           MrsImage image = imagePyramid.getImage(zoomlevel);
           try
