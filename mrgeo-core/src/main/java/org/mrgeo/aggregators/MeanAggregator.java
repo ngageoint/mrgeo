@@ -20,6 +20,8 @@
 package org.mrgeo.aggregators;
 
 
+import org.mrgeo.utils.FloatUtils;
+
 /**
  * Uses the mean pixel value for the resampled pixel. No data values are excluded.
  */
@@ -33,7 +35,7 @@ public class MeanAggregator implements Aggregator
     int count = 0;
     for (final double value : values)
     {
-      if (Double.compare(value, nodata) != 0)
+      if (FloatUtils.isNotNodata(value, nodata))
       {
         sum += value;
         count++;
@@ -50,11 +52,11 @@ public class MeanAggregator implements Aggregator
     double s0;
     double s1;
 
-    if (Double.compare(values[0][0], nodata) == 0)
+    if (FloatUtils.isNotNodata(values[0][0], nodata))
     {
       s0 = values[0][1];
     }
-    else if (Double.compare(values[0][1], nodata) == 0)
+    else if (FloatUtils.isNotNodata(values[0][1], nodata))
     {
       s0 = values[0][0];
     }
@@ -63,11 +65,11 @@ public class MeanAggregator implements Aggregator
       s0 = (values[0][1] - values[0][0]) * weightx + values[0][0];
     }
 
-    if (Double.compare(values[1][0], nodata) == 0)
+    if (FloatUtils.isNotNodata(values[1][0], nodata))
     {
       s1 = values[1][1];
     }
-    else if (Double.compare(values[1][1], nodata) == 0)
+    else if (FloatUtils.isNotNodata(values[1][1], nodata))
     {
       s1 = values[1][0];
     }
@@ -77,11 +79,11 @@ public class MeanAggregator implements Aggregator
     }
 
 
-    if (Double.compare(s0, nodata) == 0)
+    if (FloatUtils.isNotNodata(s0, nodata))
     {
       return s1;
     }
-    else if (Double.compare(s1, nodata) == 0)
+    else if (FloatUtils.isNotNodata(s1, nodata))
     {
       return s0;
     }
@@ -98,7 +100,7 @@ public class MeanAggregator implements Aggregator
     int count = 0;
     for (final float value : values)
     {
-      if (Float.compare(value, nodata) != 0)
+      if (FloatUtils.isNotNodata(value, nodata))
       {
         sum += value;
         count++;
@@ -114,11 +116,11 @@ public class MeanAggregator implements Aggregator
     float s0;
     float s1;
 
-    if (Float.compare(values[0][0], nodata) == 0)
+    if (FloatUtils.isNotNodata(values[0][0], nodata))
     {
       s0 = values[0][1];
     }
-    else if (Float.compare(values[0][1], nodata) == 0)
+    else if (FloatUtils.isNotNodata(values[0][1], nodata))
     {
       s0 = values[0][0];
     }
@@ -127,11 +129,11 @@ public class MeanAggregator implements Aggregator
       s0 = (float) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
     }
 
-    if (Float.compare(values[1][0], nodata) == 0)
+    if (FloatUtils.isNotNodata(values[1][0], nodata))
     {
       s1 = values[1][1];
     }
-    else if (Float.compare(values[1][1], nodata) == 0)
+    else if (FloatUtils.isNotNodata(values[1][1], nodata))
     {
       s1 = values[1][0];
     }
@@ -141,11 +143,11 @@ public class MeanAggregator implements Aggregator
     }
 
 
-    if (Float.compare(s0, nodata) == 0)
+    if (FloatUtils.isNotNodata(s0, nodata))
     {
       return s1;
     }
-    else if (Float.compare(s1, nodata) == 0)
+    else if (FloatUtils.isNotNodata(s1, nodata))
     {
       return s0;
     }

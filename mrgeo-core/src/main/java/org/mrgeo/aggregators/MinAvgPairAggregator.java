@@ -20,6 +20,7 @@
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.mrgeo.utils.FloatUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,51 +37,51 @@ public class MinAvgPairAggregator implements Aggregator
   @Override
   public double aggregate(double[] values, double nodata)
   {
-    boolean data0 = Double.compare(values[0], nodata) != 0;
-    boolean data1 = Double.compare(values[1], nodata) != 0;
-    boolean data2 = Double.compare(values[2], nodata) != 0;
-    boolean data3 = Double.compare(values[3], nodata) != 0;
+    boolean data0 = FloatUtils.isNotNodata(values[0], nodata);
+    boolean data1 = FloatUtils.isNotNodata(values[1], nodata);
+    boolean data2 = FloatUtils.isNotNodata(values[2], nodata);
+    boolean data3 = FloatUtils.isNotNodata(values[3], nodata);
     
     Collection<Double> averages = new ArrayList<Double>();
     if (data0 && data1)
-      averages.add(Double.valueOf((values[0] + values[1]) / 2));
+      averages.add((values[0] + values[1]) / 2);
     if (data0 && data2)
-      averages.add(Double.valueOf((values[0] + values[2]) / 2));
+      averages.add((values[0] + values[2]) / 2);
     if (data0 && data3)
-      averages.add(Double.valueOf((values[0] + values[3]) / 2));
+      averages.add((values[0] + values[3]) / 2);
     if (data1 && data2)
-      averages.add(Double.valueOf((values[1] + values[2]) / 2));
+      averages.add((values[1] + values[2]) / 2);
     if (data1 && data3)
-      averages.add(Double.valueOf((values[1] + values[3]) / 2));
+      averages.add((values[1] + values[3]) / 2);
     if (data2 && data3)
-      averages.add(Double.valueOf((values[2] + values[3]) / 2));
+      averages.add((values[2] + values[3]) / 2);
     
-    return (averages.isEmpty()) ? nodata : Collections.min(averages).doubleValue();
+    return (averages.isEmpty()) ? nodata : Collections.min(averages);
   }
 
   @Override
   public float aggregate(float[] values, float nodata)
   {
-    boolean data0 = Float.compare(values[0], nodata) != 0;
-    boolean data1 = Float.compare(values[1], nodata) != 0;
-    boolean data2 = Float.compare(values[2], nodata) != 0;
-    boolean data3 = Float.compare(values[3], nodata) != 0;
+    boolean data0 = FloatUtils.isNotNodata(values[0], nodata);
+    boolean data1 = FloatUtils.isNotNodata(values[1], nodata);
+    boolean data2 = FloatUtils.isNotNodata(values[2], nodata);
+    boolean data3 = FloatUtils.isNotNodata(values[3], nodata);
     
     Collection<Float> averages = new ArrayList<Float>();
     if (data0 && data1)
-      averages.add(Float.valueOf((values[0] + values[1]) / 2));
+      averages.add((values[0] + values[1]) / 2);
     if (data0 && data2)
-      averages.add(Float.valueOf((values[0] + values[2]) / 2));
+      averages.add((values[0] + values[2]) / 2);
     if (data0 && data3)
-      averages.add(Float.valueOf((values[0] + values[3]) / 2));
+      averages.add((values[0] + values[3]) / 2);
     if (data1 && data2)
-      averages.add(Float.valueOf((values[1] + values[2]) / 2));
+      averages.add((values[1] + values[2]) / 2);
     if (data1 && data3)
-      averages.add(Float.valueOf((values[1] + values[3]) / 2));
+      averages.add((values[1] + values[3]) / 2);
     if (data2 && data3)
-      averages.add(Float.valueOf((values[2] + values[3]) / 2));
+      averages.add((values[2] + values[3]) / 2);
     
-    return (averages.isEmpty()) ? nodata : Collections.min(averages).floatValue();
+    return (averages.isEmpty()) ? nodata : Collections.min(averages);
   }
 
   @Override
@@ -93,19 +94,19 @@ public class MinAvgPairAggregator implements Aggregator
     
     Collection<Integer> averages = new ArrayList<Integer>();
     if (data0 && data1)
-      averages.add(Integer.valueOf((values[0] + values[1]) / 2));
+      averages.add((values[0] + values[1]) / 2);
     if (data0 && data2)
-      averages.add(Integer.valueOf((values[0] + values[2]) / 2));
+      averages.add((values[0] + values[2]) / 2);
     if (data0 && data3)
-      averages.add(Integer.valueOf((values[0] + values[3]) / 2));
+      averages.add((values[0] + values[3]) / 2);
     if (data1 && data2)
-      averages.add(Integer.valueOf((values[1] + values[2]) / 2));
+      averages.add((values[1] + values[2]) / 2);
     if (data1 && data3)
-      averages.add(Integer.valueOf((values[1] + values[3]) / 2));
+      averages.add((values[1] + values[3]) / 2);
     if (data2 && data3)
-      averages.add(Integer.valueOf((values[2] + values[3]) / 2));
+      averages.add((values[2] + values[3]) / 2);
     
-    return (averages.isEmpty()) ? nodata : Collections.min(averages).intValue();
+    return (averages.isEmpty()) ? nodata : Collections.min(averages);
   }
 
   @Override

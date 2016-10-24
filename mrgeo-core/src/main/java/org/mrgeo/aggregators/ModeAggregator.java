@@ -20,6 +20,7 @@
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.mrgeo.utils.FloatUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class ModeAggregator implements Aggregator
     HashMap<Double,Integer> freqs = new HashMap<Double,Integer>();
 
     for (double val : values) {
-      if (Double.compare(val, nodata) != 0)
+      if (FloatUtils.isNotNodata(val, nodata))
       {
         Integer freq = freqs.get(val);
         freqs.put(val, (freq == null ? 1 : freq+1));
@@ -64,7 +65,7 @@ public class ModeAggregator implements Aggregator
     HashMap<Float,Integer> freqs = new HashMap<Float,Integer>();
 
     for (float val : values) {
-      if (Float.compare(val, nodata) != 0)
+      if (FloatUtils.isNotNodata(val, nodata))
       {
         Integer freq = freqs.get(val);
         freqs.put(val, (freq == null ? 1 : freq+1));

@@ -20,6 +20,7 @@
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.mrgeo.utils.FloatUtils;
 
 /**
  * Uses the sum of pixel values for the resampled pixel.
@@ -35,7 +36,7 @@ public class SumAggregator implements Aggregator
     int count = 0;
     for (int i=0; i<values.length; i++)
     {
-      if (Double.compare(values[i], nodata) != 0)
+      if (FloatUtils.isNotNodata(values[i], nodata))
       {
         sum += values[i];
         count++;
@@ -51,7 +52,7 @@ public class SumAggregator implements Aggregator
     int count = 0;
     for (int i=0; i<values.length; i++)
     {
-      if (Float.compare(values[i], nodata) != 0)
+      if (FloatUtils.isNotNodata(values[i], nodata))
       {
         sum += values[i];
         count++;

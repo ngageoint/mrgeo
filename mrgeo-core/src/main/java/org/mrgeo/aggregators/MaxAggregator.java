@@ -20,6 +20,7 @@
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.mrgeo.utils.FloatUtils;
 
 /**
  * Uses the maximum pixel value for the resampled pixel.
@@ -34,8 +35,10 @@ public class MaxAggregator implements Aggregator
     double max = -Double.MAX_VALUE;
     for (int i=0; i<values.length; i++)
     {
-      if (Double.compare(values[i], nodata) != 0)
+      if (FloatUtils.isNotNodata(values[i], nodata))
+      {
         max = Math.max(max, values[i]);
+      }
     }
     return (max == -Double.MAX_VALUE) ? nodata : max;
   }
@@ -46,8 +49,10 @@ public class MaxAggregator implements Aggregator
     Float max = -Float.MAX_VALUE;
     for (int i=0; i<values.length; i++)
     {
-      if (Float.compare(values[i], nodata) != 0)
+      if (FloatUtils.isNotNodata(values[i], nodata))
+      {
         max = Math.max(max, values[i]);
+      }
     }
     return (max == -Float.MAX_VALUE) ? nodata : max;
   }
@@ -59,7 +64,9 @@ public class MaxAggregator implements Aggregator
     for (int i=0; i<values.length; i++)
     {
       if (values[i] != nodata)
+      {
         max = Math.max(max, values[i]);
+      }
     }
     return (max == -Integer.MAX_VALUE) ? nodata : max;
   }

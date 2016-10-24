@@ -20,6 +20,7 @@
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.mrgeo.utils.FloatUtils;
 
 /**
  * Uses the minimum pixel value for the resampled pixel.
@@ -34,7 +35,7 @@ public class MinAggregator implements Aggregator
     double min = Double.MAX_VALUE;
     for (int i=0; i<values.length; i++)
     {
-      if (Double.compare(values[i], nodata) != 0)
+      if (FloatUtils.isNotNodata(values[i], nodata))
         min = Math.min(min, values[i]);
     }
     return (min == Double.MAX_VALUE) ? nodata : min;
@@ -46,7 +47,7 @@ public class MinAggregator implements Aggregator
     Float min = Float.MAX_VALUE;
     for (int i=0; i<values.length; i++)
     {
-      if (Float.compare(values[i], nodata) != 0)
+      if (FloatUtils.isNotNodata(values[i], nodata))
         min = Math.min(min, values[i]);
     }
     return (min == Float.MAX_VALUE) ? nodata : min;

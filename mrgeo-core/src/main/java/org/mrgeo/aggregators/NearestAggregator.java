@@ -21,6 +21,7 @@ package org.mrgeo.aggregators;
 
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.mrgeo.utils.FloatUtils;
 
 /**
  * Use a preference model to assign the destination pixel with a neighboring 
@@ -38,10 +39,10 @@ public class NearestAggregator implements Aggregator
   @Override
   public double aggregate(double[] values, double nodata)
   {
-    boolean data0 = Double.compare(values[0], nodata) != 0;
-    boolean data1 = Double.compare(values[1], nodata) != 0;
-    boolean data2 = Double.compare(values[2], nodata) != 0;
-    boolean data3 = Double.compare(values[3], nodata) != 0;
+    boolean data0 = FloatUtils.isNotNodata(values[0], nodata);
+    boolean data1 = FloatUtils.isNotNodata(values[1], nodata);
+    boolean data2 = FloatUtils.isNotNodata(values[2], nodata);
+    boolean data3 = FloatUtils.isNotNodata(values[3], nodata);
     
     if (data0)
       return values[0];
@@ -58,10 +59,10 @@ public class NearestAggregator implements Aggregator
   @Override
   public float aggregate(float[] values, float nodata)
   {
-    boolean data0 = Float.compare(values[0], nodata) != 0;
-    boolean data1 = Float.compare(values[1], nodata) != 0;
-    boolean data2 = Float.compare(values[2], nodata) != 0;
-    boolean data3 = Float.compare(values[3], nodata) != 0;
+    boolean data0 = FloatUtils.isNotNodata(values[0], nodata);
+    boolean data1 = FloatUtils.isNotNodata(values[1], nodata);
+    boolean data2 = FloatUtils.isNotNodata(values[2], nodata);
+    boolean data3 = FloatUtils.isNotNodata(values[3], nodata);
     
     if (data0)
       return values[0];
