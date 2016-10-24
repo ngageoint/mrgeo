@@ -21,6 +21,7 @@ import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
+import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.tms.Tile;
@@ -193,9 +194,13 @@ public RasterWritable afterPaintingTile() throws IOException
   }
 
   int type = raster.getTransferType();
+  double nodata = Float.NaN;
   if (aggregationType == AggregationType.MASK || aggregationType == AggregationType.MASK2)
   {
     type = DataBuffer.TYPE_BYTE;
+
+    nodata = RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE);
+
   }
 
   MrGeoRaster mrgeo = MrGeoRaster.createEmptyRaster(raster.getWidth(), raster.getHeight(),
@@ -205,11 +210,25 @@ public RasterWritable afterPaintingTile() throws IOException
   {
     for (int x = 0; x < raster.getWidth(); x++)
     {
-      mrgeo.setPixel(x, y, 0, raster.getSample(x, y, 0));
+      if (aggregationType == AggregationType.MASK)
+      {
+        float v = raster.getSampleFloat(x, y, 0);
+        if (Float.isNaN(v))
+        {
+          mrgeo.setPixel(x, y, 0, nodata);
+        }
+        else
+        {
+          mrgeo.setPixel(x, y, 0, v);
+        }
+      }
+      else {
+        mrgeo.setPixel(x, y, 0, raster.getSampleFloat(x, y, 0));
+      }
     }
   }
 
-  return RasterWritable.toWritable(MrGeoRaster.fromRaster(raster));
+  return RasterWritable.toWritable(mrgeo);
 }
 
 
