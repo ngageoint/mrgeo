@@ -17,7 +17,6 @@
 package org.mrgeo.buildpyramid
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
-import java.util
 import java.util.Properties
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
@@ -33,14 +32,12 @@ import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
-import org.mrgeo.image.{ImageStats, MrsPyramid, MrsPyramidMetadata}
+import org.mrgeo.image.{ImageStats,  MrsPyramidMetadata}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms._
 
 import scala.beans.BeanProperty
-import scala.collection.JavaConversions._
-import scala.collection.immutable.TreeMap
 import scala.collection.mutable
 
 object BuildPyramid extends MrGeoDriver with Externalizable {
@@ -227,10 +224,9 @@ class BuildPyramid extends MrGeoJob with Externalizable {
             RasterWritable.toWritable(dst)
           })
 
-          // while we were running,
-          // there is chance the pyramid was removed from the cache and
-          // reopened by another process. Re-opening it here will avoid some potential conflicts.
-          metadata = MrsPyramid.open(provider).getMetadata
+          // while we were running, there is chance the pyramid was removed from the cache and
+          // reopened by another process. Re-loading it here will avoid some potential conflicts.
+          metadata = provider.getMetadataReader.reload()
 
           // make sure the level is deleted
           deletelevel(tolevel, metadata, provider)
@@ -288,7 +284,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     val tilesize: Int = metadata.getTilesize
 
     var fromlevel = maxlevel
-    while (fromlevel >= minlevel) {
+    while (fromlevel > minlevel) {
       val tolevel = fromlevel - 1
 
       deletelevel(tolevel, metadata, provider)
@@ -342,14 +338,15 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       val pne: Pixel = TMSUtils.latLonToPixels(bounds.n, bounds.e, tolevel, tilesize)
 
 
-      // while we were running, there is chance the pyramid was removed from the cache and
-      // reopened by another process. Re-opening it here will avoid some potential conflicts.
-      metadata = MrsPyramid.open(provider).getMetadata
+      metadata = provider.getMetadataReader.reload()
 
       metadata.setPixelBounds(tolevel, new LongRectangle(0, 0, pne.px - psw.px, pne.py - psw.py))
       metadata.setTileBounds(tolevel, b)
       metadata.setName(tolevel)
       metadata.setImageStats(tolevel, stats)
+      if (tolevel == metadata.getMaxZoomLevel) {
+        metadata.setStats(stats)
+      }
       metadata.setResamplingMethod(AggregatorRegistry.aggregatorRegistry.inverse.get(aggregator.getClass))
 
       provider.getMetadataWriter(null).write()

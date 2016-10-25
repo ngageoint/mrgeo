@@ -200,7 +200,10 @@ public static void calculateMetadata(final int zoom,
   metadata.setImageStats(zoom, levelStats);
 
   // set the image level stats too which are the same as the max zoom level
-  metadata.setStats(levelStats);
+  if (zoom == metadata.getMaxZoomLevel())
+  {
+    metadata.setStats(levelStats);
+  }
 
   provider.getMetadataWriter().write(metadata);
 }
