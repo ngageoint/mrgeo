@@ -579,6 +579,8 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
   MrGeoRaster child = createCompatibleRaster(width / xfactor, height / yfactor);
 
   final int subsize = xfactor * yfactor;
+  final byte[] bytesamples = new byte[subsize];
+  final short[] shortsamples = new short[subsize];
   final int[] intsamples = new int[subsize];
   final float[] floatsamples = new float[subsize];
   final double[] doublesamples = new double[subsize];
@@ -591,13 +593,48 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
     {
       for (int x = 0; x < width; x += xfactor)
       {
+        ndx = 0;
         switch (datatype)
         {
         case DataBuffer.TYPE_BYTE:
-        case DataBuffer.TYPE_INT:
+          for (int yy = y; yy < y + yfactor; yy++)
+          {
+            for (int xx = x; xx < x + xfactor; xx++)
+            {
+              bytesamples[ndx++] = getPixelByte(xx, yy, b);
+            }
+          }
+
+          byte bytesample = aggregator.aggregate(bytesamples, (byte)nodatas[b]);
+          child.setPixel(x / xfactor, y / yfactor, b, bytesample);
+          break;
+
+
         case DataBuffer.TYPE_SHORT:
+          for (int yy = y; yy < y + yfactor; yy++)
+          {
+            for (int xx = x; xx < x + xfactor; xx++)
+            {
+              shortsamples[ndx++] = getPixelShort(xx, yy, b);
+            }
+          }
+
+          short shortsample = aggregator.aggregate(shortsamples, (short)nodatas[b]);
+          child.setPixel(x / xfactor, y / yfactor, b, shortsample);
+          break;
         case DataBuffer.TYPE_USHORT:
-          ndx = 0;
+          for (int yy = y; yy < y + yfactor; yy++)
+          {
+            for (int xx = x; xx < x + xfactor; xx++)
+            {
+              shortsamples[ndx++] = getPixelShort(xx, yy, b);
+            }
+          }
+
+          int ushortsample = aggregator.aggregate(shortsamples, (short)nodatas[b]);
+          child.setPixel(x / xfactor, y / yfactor, b, ushortsample);
+          break;
+        case DataBuffer.TYPE_INT:
           for (int yy = y; yy < y + yfactor; yy++)
           {
             for (int xx = x; xx < x + xfactor; xx++)
@@ -610,7 +647,6 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
           child.setPixel(x / xfactor, y / yfactor, b, intSample);
           break;
         case DataBuffer.TYPE_FLOAT:
-          ndx = 0;
           for (int yy = y; yy < y + yfactor; yy++)
           {
             for (int xx = x; xx < x + xfactor; xx++)
@@ -623,7 +659,6 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
           child.setPixel(x / xfactor, y / yfactor, b, floatsample);
           break;
         case DataBuffer.TYPE_DOUBLE:
-          ndx = 0;
           for (int yy = y; yy < y + yfactor; yy++)
           {
             for (int xx = x; xx < x + xfactor; xx++)
@@ -659,7 +694,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_BYTE:
         {
           final byte p = other.getPixelByte(x, y, b);
-          if (getPixelByte(x, y, b) != (byte)nodata[b])
+          if (getPixelByte(x, y, b) == (byte)nodata[b])
           {
             setPixel(x, y, b, p);
           }
@@ -688,7 +723,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_INT:
         {
           final int p = other.getPixelInt(x, y, b);
-          if (p != (int)nodata[b])
+          if (getPixelInt(x, y, b) == (int)nodata[b])
           {
             setPixel(x, y, b, p);
           }
@@ -698,7 +733,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_SHORT:
         {
           final short p = other.getPixelShort(x, y, b);
-          if (p != (short)nodata[b])
+          if (getPixelShort(x, y, b) == (short)nodata[b])
           {
             setPixel(x, y, b, p);
           }
@@ -708,7 +743,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_USHORT:
         {
           final int p = other.getPixeUShort(x, y, b);
-          if (p != (short)nodata[b])
+          if (getPixeUShort(x, y, b) == (short)nodata[b])
           {
             setPixel(x, y, b, p);
           }

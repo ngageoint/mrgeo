@@ -23,6 +23,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.lang3.NotImplementedException
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data
@@ -32,7 +33,7 @@ import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
-import org.mrgeo.image.{ImageStats,  MrsPyramidMetadata}
+import org.mrgeo.image.{ImageStats, MrsPyramidMetadata}
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms._
@@ -180,10 +181,10 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
           val decimated: RDD[(TileIdWritable, RasterWritable)] = pyramid.map(tile => {
             val fromkey = tile._1
-            val fromraster = RasterWritable.toMrGeoRaster(tile._2)
-
             val fromtile: Tile = TMSUtils.tileid(fromkey.get, fromlevel)
             val frombounds: Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
+
+            val fromraster = RasterWritable.toMrGeoRaster(tile._2)
 
             // calculate the starting pixel for the from-tile (make sure to use the NW coordinate)
             val fromcorner: Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
@@ -203,8 +204,6 @@ class BuildPyramid extends MrGeoJob with Externalizable {
                 " ty: " + totile.ty + " (" + tolevel + ") x: "
                 + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
                 " w: " + reduced.width() + " h: " + reduced.height())
-
-            //println("x: " + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2))
 
             val toraster = fromraster.createCompatibleRaster(tilesize, tilesize)
             toraster.fill(nodatas)
