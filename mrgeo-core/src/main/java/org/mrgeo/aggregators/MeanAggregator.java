@@ -157,68 +157,198 @@ public class MeanAggregator implements Aggregator
     }
   }
 
-  @Override
-  public int aggregate(final int[] values, final int nodata)
+@Override
+public int aggregate(final int[] values, final int nodata)
+{
+  int sum = 0;
+  int count = 0;
+  for (final int value : values)
   {
-    int sum = 0;
-    int count = 0;
-    for (final int value : values)
+    if (value != nodata)
     {
-      if (value != nodata)
-      {
-        sum += value;
-        count++;
-      }
-    }
-    return (count == 0) ? nodata : (sum / count);
-  }
-
-  
-  @Override
-  public int aggregate(final int[][] values, final double weightx, final double weighty,
-      final int nodata)
-  {
-
-    int s0;
-    int s1;
-
-    if (values[0][0] == nodata)
-    {
-      s0 = values[0][1];
-    }
-    else if (values[0][1] == nodata)
-    {
-      s0 = values[0][0];
-    }
-    else
-    {
-      s0 = (int) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
-    }
-
-    if (Double.compare(values[1][0], nodata) == 0)
-    {
-      s1 = values[1][1];
-    }
-    else if (Double.compare(values[1][1], nodata) == 0)
-    {
-      s1 = values[1][0];
-    }
-    else
-    {
-      s1 = (int) ((values[1][1] - values[1][0]) * weightx + values[1][0]);
-    }
-
-    if (Double.compare(s0, nodata) == 0)
-    {
-      return s1;
-    }
-    else if (Double.compare(s1, nodata) == 0)
-    {
-      return s0;
-    }
-    else
-    {
-      return (int) ((s1 - s0) * weighty + s0);
+      sum += value;
+      count++;
     }
   }
+  return (count == 0) ? nodata : (sum / count);
+}
+
+
+@Override
+public int aggregate(final int[][] values, final double weightx, final double weighty,
+    final int nodata)
+{
+
+  int s0;
+  int s1;
+
+  if (values[0][0] == nodata)
+  {
+    s0 = values[0][1];
+  }
+  else if (values[0][1] == nodata)
+  {
+    s0 = values[0][0];
+  }
+  else
+  {
+    s0 = (int) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
+  }
+
+  if (values[1][0] !=  nodata)
+  {
+    s1 = values[1][1];
+  }
+  else if (values[1][1] !=  nodata)
+  {
+    s1 = values[1][0];
+  }
+  else
+  {
+    s1 = (int) ((values[1][1] - values[1][0]) * weightx + values[1][0]);
+  }
+
+  if (s0 != nodata)
+  {
+    return s1;
+  }
+  if (s1 != nodata)
+  {
+    return s0;
+  }
+  else
+  {
+    return (int) ((s1 - s0) * weighty + s0);
+  }
+}
+
+@Override
+public short aggregate(final short[] values, final short nodata)
+{
+  short sum = 0;
+  short count = 0;
+  for (final short value : values)
+  {
+    if (value != nodata)
+    {
+      sum += value;
+      count++;
+    }
+  }
+  return (count == 0) ? nodata : (short)(sum / count);
+}
+
+
+@Override
+public short aggregate(final short[][] values, final double weightx, final double weighty,
+    final short nodata)
+{
+
+  short s0;
+  short s1;
+
+  if (values[0][0] == nodata)
+  {
+    s0 = values[0][1];
+  }
+  else if (values[0][1] == nodata)
+  {
+    s0 = values[0][0];
+  }
+  else
+  {
+    s0 = (short) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
+  }
+
+  if (values[1][0] !=  nodata)
+  {
+    s1 = values[1][1];
+  }
+  else if (values[1][1] !=  nodata)
+  {
+    s1 = values[1][0];
+  }
+  else
+  {
+    s1 = (short) ((values[1][1] - values[1][0]) * weightx + values[1][0]);
+  }
+
+  if (s0 != nodata)
+  {
+    return s1;
+  }
+  else if (s1 != nodata)
+  {
+    return s0;
+  }
+  else
+  {
+    return (short) ((s1 - s0) * weighty + s0);
+  }
+}
+
+@Override
+public byte aggregate(final byte[] values, final byte nodata)
+{
+  byte sum = 0;
+  byte count = 0;
+  for (final byte value : values)
+  {
+    if (value != nodata)
+    {
+      sum += value;
+      count++;
+    }
+  }
+  return (count == 0) ? nodata : (byte)(sum / count);
+}
+
+
+@Override
+public byte aggregate(final byte[][] values, final double weightx, final double weighty,
+    final byte nodata)
+{
+
+  byte s0;
+  byte s1;
+
+  if (values[0][0] == nodata)
+  {
+    s0 = values[0][1];
+  }
+  else if (values[0][1] == nodata)
+  {
+    s0 = values[0][0];
+  }
+  else
+  {
+    s0 = (byte) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
+  }
+
+  if (values[1][0] !=  nodata)
+  {
+    s1 = values[1][1];
+  }
+  else if (values[1][1] !=  nodata)
+  {
+    s1 = values[1][0];
+  }
+  else
+  {
+    s1 = (byte) ((values[1][1] - values[1][0]) * weightx + values[1][0]);
+  }
+
+  if (s0 != nodata)
+  {
+    return s1;
+  }
+  if (s1 != nodata)
+  {
+    return s0;
+  }
+  else
+  {
+    return (byte) ((s1 - s0) * weighty + s0);
+  }
+}
 }
