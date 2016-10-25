@@ -134,30 +134,24 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
     final long endTileId = split.getEndId();
     final long startTileId = split.getStartId();
 
-    final Tile startTile = TMSUtils.tileid(startTileId, zoom);
-    final Tile endTile = TMSUtils.tileid(endTileId, zoom);
-
-    final TileBounds partFileTileBounds =
-        new TileBounds(startTile.tx, startTile.ty, endTile.tx, endTile.ty);
-
-    final Bounds partFileBounds = TMSUtils.tileToBounds(partFileTileBounds, zoom, tilesize);
-
     if (requestedBounds != null)
     {
-      // Only include the split if it intersects the requested bounds.
-      if (requestedBounds.intersects(partFileBounds, false /* include adjacent splits */))
+      // Do not include splits that can't possibly intersect the requested bounds. This
+      // is an HDFS-specific efficiency to avoid needlessly processing splits.
+      final Tile startTile = TMSUtils.tileid(startTileId, zoom);
+      final Bounds startTileBounds = TMSUtils.tileBounds(startTile, zoom, tilesize);
+      final Tile endTile = TMSUtils.tileid(endTileId, zoom);
+      final Bounds endTileBounds = TMSUtils.tileBounds(endTile, zoom, tilesize);
+
+      if (startTileBounds.s > requestedBounds.n || endTileBounds.n < requestedBounds.s)
       {
-        Bounds intersected = requestedBounds.intersection(partFileBounds, false);
-
-        TileBounds tb = TMSUtils.boundsToTile(intersected, zoom, tilesize);
-
-        // If the tile bounds of the actual split intersects the user bounds,
-        // then return the actual split bounds (instead of the full theoretical
-        // range allowed).
-        long s = TMSUtils.tileid(tb.w, tb.s, zoom);
-        long e = TMSUtils.tileid(tb.e, tb.n, zoom);
-        result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null), s, e,
-            zoom, metadata.getTilesize()));
+        // Ignore the split because it's either completely above or completey below
+        // the requested bounds.
+      }
+      else
+      {
+        result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null), startTileId, endTileId,
+                                       zoom, metadata.getTilesize()));
       }
     }
     else
@@ -165,7 +159,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
       // If no bounds were specified by the caller, then we include
       // all splits.
       result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null),
-              startTileId, endTileId, zoom, metadata.getTilesize()));
+                                     startTileId, endTileId, zoom, metadata.getTilesize()));
     }
   }
 

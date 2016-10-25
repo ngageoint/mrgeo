@@ -382,7 +382,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
     var datatype = -1
 
     var i: Int = if (useOutputs) 1 else 0
-    while (i < inputs.length) {
+    while (i < isRdd.length) {
       if (isRdd(i)) {
         // look up the rdd in the input->rdd map
         val input = inputs(rddMap(i))
@@ -435,7 +435,8 @@ class ConMapOp extends RasterMapOp with Externalizable {
           datatype = dt
         }
       }
-      i += 2
+      // Make sure we process the last element, which is always the "else" element
+      i += (if (i == isRdd.length - 2) { 1 } else { 2 })
     }
 
     (index, datatype)
