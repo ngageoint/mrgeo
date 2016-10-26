@@ -336,10 +336,6 @@ class BuildPyramid extends MrGeoJob with Externalizable {
         logDebug("  writing tile: " + tile._1.get)
         writer.append(tile._1, tile._2)
         ImageStats.computeAndUpdateStats(stats, tile._2, nodatas)
-
-        val t = TMSUtils.tileid(tile._1.get(), tolevel)
-        val b = TMSUtils.tileBounds(t.tx, t.ty, tolevel, tilesize)
-
       })
       writer.close()
 
