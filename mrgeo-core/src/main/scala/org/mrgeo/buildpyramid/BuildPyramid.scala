@@ -23,7 +23,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.lang3.NotImplementedException
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
-import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.{Aggregator, AggregatorRegistry, MeanAggregator}
 import org.mrgeo.data
@@ -265,19 +264,14 @@ class BuildPyramid extends MrGeoJob with Externalizable {
   // into it to see if it really is still OK or could be improved
   @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "tileIdOrdering() - false positivie")
   private def buildlevellocal(provider:MrsImageDataProvider, pyramid:RasterRDD, maxlevel: Int, minlevel:Int): Boolean = {
-
-    implicit val tileIdOrdering = new Ordering[TileIdWritable] {
-      override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
-    }
-
     var inputTiles = mutable.HashMap.empty[TileIdWritable, MrGeoRaster]
-    val outputTiles = mutable.HashMap.empty[TileIdWritable, MrGeoRaster]
 
     pyramid.collect.foreach(tile => {
       inputTiles.put(tile._1, RasterWritable.toMrGeoRaster(tile._2))
     })
 
     var metadata: MrsPyramidMetadata = provider.getMetadataReader.read
+    val nodatas = metadata.getDefaultValuesDouble
 
     val bounds: Bounds = metadata.getBounds
     val tilesize: Int = metadata.getTilesize
@@ -288,54 +282,83 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
       deletelevel(tolevel, metadata, provider)
 
+      val outputTiles = mutable.HashMap.empty[TileIdWritable, MrGeoRaster]
+
       inputTiles.foreach(tile => {
-        val fromraster: MrGeoRaster = tile._2
-        val tileid: Long = tile._1.get()
+        val fromkey = tile._1
+        val fromtile: Tile = TMSUtils.tileid(fromkey.get, fromlevel)
+        val frombounds: Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
 
-        val inputTile: Tile = TMSUtils.tileid(tileid, fromlevel)
+        val fromraster = tile._2
 
-        val reduced: MrGeoRaster = fromraster.reduce(2, 2, aggregator, metadata.getDefaultValuesDouble)
+        // calculate the starting pixel for the from-tile (make sure to use the NW coordinate)
+        val fromcorner: Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
 
-        val outputTile: Tile = TMSUtils.calculateTile(inputTile, fromlevel, tolevel, tilesize)
-        val outputkey: TileIdWritable = new TileIdWritable(TMSUtils.tileid(outputTile.tx, outputTile.ty, tolevel))
-        var outputRaster: MrGeoRaster = null
+        val totile: Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
+        val tobounds: Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
 
-        if (!outputTiles.contains(outputkey)) {
-          outputRaster = fromraster.createCompatibleEmptyRaster(tilesize, tilesize, metadata.getDefaultValuesDouble)
-          outputTiles.put(outputkey, outputRaster)
+        // calculate the starting pixel for the to-tile (make sure to use the NW coordinate)
+        // in the from-tile's pixel space
+        val tocorner: Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
+
+        val tokey = new TileIdWritable(TMSUtils.tileid(totile.tx, totile.ty, tolevel))
+
+        val reduced = fromraster.reduce(2, 2, aggregator, nodatas)
+
+        // create a compatible writable raster
+        logDebug("from  tx: " + fromtile.tx + " ty: " + fromtile.ty + " (" + fromlevel + ") to tx: " + totile.tx +
+            " ty: " + totile.ty + " (" + tolevel + ") x: "
+            + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
+            " w: " + reduced.width() + " h: " + reduced.height())
+
+//        println("from  tx: " + fromtile.tx + " ty: " + fromtile.ty + " (" + fromlevel + ") to tx: " + totile.tx +
+//            " ty: " + totile.ty + " (" + tolevel + ") x: "
+//            + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
+//            " w: " + reduced.width() + " h: " + reduced.height())
+
+        println("z: " + tolevel + " tile: " + tokey.get)
+
+        val toraster = if (!outputTiles.contains(tokey)) {
+          val raster = fromraster.createCompatibleRaster(tilesize, tilesize)
+          raster.fill(nodatas)
+
+          outputTiles.put(tokey, raster)
+          raster
         }
         else {
-          outputRaster = outputTiles(outputkey)
+          outputTiles(tokey)
         }
 
-        val outputBounds: Bounds = TMSUtils.tileBounds(outputTile.tx, outputTile.ty, tolevel, tilesize)
-        val corner: Pixel = TMSUtils.latLonToPixelsUL(outputBounds.n, outputBounds.w, tolevel, tilesize)
-        val inputBounds: Bounds = TMSUtils.tileBounds(inputTile.tx, inputTile.ty, fromlevel, tilesize)
-        val start: Pixel = TMSUtils.latLonToPixelsUL(inputBounds.n, inputBounds.w, tolevel, tilesize)
-        val tox: Int = (start.px - corner.px).toInt
-        val toy: Int = (start.py - corner.py).toInt
-        logDebug(
-          "Calculating tile from  tx: " + inputTile.tx + " ty: " + inputTile.ty + " (" + fromlevel + ") to tx: " +
-              outputTile.tx + " ty: " + outputTile.ty + " (" + tolevel + ") x: " + tox + " y: " + toy)
-        outputRaster.copyFrom(0, 0, reduced.width(), reduced.height(), reduced, tox, toy)
+        toraster.copyFrom(0, 0, reduced.width(), reduced.height(), reduced,
+          (fromcorner.px - tocorner.px).toInt / 2, (fromcorner.py - tocorner.py).toInt / 2)
       })
 
       val stats: Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
+
       log.debug("Writing output file: " + provider.getResourceName + " level: " + tolevel)
+      println("Writing output file: " + provider.getResourceName + " level: " + tolevel)
+
       val writer: MrsImageWriter = provider.getMrsTileWriter(tolevel, metadata.getProtectionLevel)
 
       outputTiles.toSeq.sortBy(_._1.get()).foreach(tile => {
         logDebug("  writing tile: " + tile._1.get)
+        println("z: " + tolevel + " tile: " + tile._1.get)
         writer.append(tile._1, tile._2)
-        ImageStats.computeAndUpdateStats(stats, tile._2, metadata.getDefaultValues)
+        ImageStats.computeAndUpdateStats(stats, tile._2, nodatas)
+
+        val t = TMSUtils.tileid(tile._1.get(), tolevel)
+        val b = TMSUtils.tileBounds(t.tx, t.ty, tolevel, tilesize)
+
+        if (!bounds.contains(b)) {
+          println("fooey!")
+        }
       })
       writer.close()
-      val tb: TileBounds = TMSUtils
-          .boundsToTile(bounds, tolevel, tilesize)
+
+      val tb: TileBounds = TMSUtils.boundsToTile(bounds, tolevel, tilesize)
       val b: LongRectangle = new LongRectangle(tb.w, tb.s, tb.e, tb.n)
       val psw: Pixel = TMSUtils.latLonToPixels(bounds.s, bounds.w, tolevel, tilesize)
       val pne: Pixel = TMSUtils.latLonToPixels(bounds.n, bounds.e, tolevel, tilesize)
-
 
       metadata = provider.getMetadataReader.reload()
 
@@ -343,6 +366,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       metadata.setTileBounds(tolevel, b)
       metadata.setName(tolevel)
       metadata.setImageStats(tolevel, stats)
+
       if (tolevel == metadata.getMaxZoomLevel) {
         metadata.setStats(stats)
       }
@@ -358,6 +382,7 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       tofp.finalizeExternalSave(HadoopUtils.createConfiguration())
 
       inputTiles = outputTiles
+
       fromlevel -= 1
     }
 
