@@ -221,8 +221,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
 
     // All the arguments have been parsed, now validate the column based on the aggregation type
     aggregationType match {
-    case VectorPainter.AggregationType.MASK =>
-    case VectorPainter.AggregationType.MASK2 =>
+    case VectorPainter.AggregationType.MASK | VectorPainter.AggregationType.MASK2 =>
       if (column.isDefined) {
         throw new ParserException("A column name must not be specified with MASK or MASK2")
       }

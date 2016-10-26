@@ -64,7 +64,7 @@ object VectorMapOp {
       case variable: ParserVariableNode =>
         MapOp.decodeVariable(variable, variables).getOrElse(throw new ParserException("Variable \"" + node + " has not been assigned")) match {
           case func: ParserFunctionNode => func.getMapOp match {
-            case raster: VectorMapOp => Some(raster)
+            case vector: VectorMapOp => Some(vector)
             case _ => throw new ParserException("Term \"" + node + "\" is not a vector input")
           }
           case _ => throw new ParserException("Term \"" + node + "\" is not a vector input")
