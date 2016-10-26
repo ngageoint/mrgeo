@@ -23,9 +23,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-/**
- * Created by ericwood on 6/16/16.
- */
 public class HdfsMrsPyramidInputFormatTest {
     private HdfsMrsPyramidInputFormat subject;
     private HdfsMrsImageDataProvider mockImageDataProvider;
@@ -34,8 +31,9 @@ public class HdfsMrsPyramidInputFormatTest {
     private String imageString = HdfsMrsPyramidInputFormatTest.class.getName() + "-testImage";
     private int zoomLevel = 2;
 
-    private FileSplit.FileSplitInfo[] splits = {new FileSplit.FileSplitInfo(1L, 3L, "split1", 0),
-                                                new FileSplit.FileSplitInfo(5L, 7L, "split2", 1)};
+//private FileSplit.FileSplitInfo[] splits = {new FileSplit.FileSplitInfo(1L, 3L, "split1", 0),
+//    new FileSplit.FileSplitInfo(5L, 7L, "split2", 1)};
+private FileSplit.FileSplitInfo[] splits = {new FileSplit.FileSplitInfo(1L, 3L, "split1", 0)};
     @Before
     public void setUp() throws Exception {
         HdfsMrsPyramidInputFormat spySubject = new HdfsMrsPyramidInputFormat();
@@ -53,10 +51,13 @@ public class HdfsMrsPyramidInputFormatTest {
                 .resourcePath(resourcePath)
                 .build();
 
+//        mockFileSplit = new MrGeoFileSplitBuilder()
+//            .split(splits[0])
+//            .split(splits[1])
+//            .build();
         mockFileSplit = new MrGeoFileSplitBuilder()
-                .split(splits[0])
-                .split(splits[1])
-                .build();
+            .split(splits[0])
+            .build();
 
         // When spying, need to make sure all mocks are setup before calling doReturn
         prepareSubject();
@@ -86,14 +87,14 @@ public class HdfsMrsPyramidInputFormatTest {
     public void getSplitsNoBounds() throws Exception {
         TaskAttemptContext mockContext = createDefaultTaskAttemptContext();
         List<InputSplit> result = subject.getSplits(mockContext);
-        Assert.assertEquals(2, result.size());
+        Assert.assertEquals(1, result.size());
         verifySplitsAreEqual(result);
     }
 
     @Test
     @Category(UnitTest.class)
     public void getSplitsWithBoundsNoIntersection() throws Exception {
-        Bounds bounds = new Bounds(-180, -90, -90, 90);
+        Bounds bounds = new Bounds(-180, 10, -100, 90);
         TaskAttemptContext mockContext = createDefaultTaskAttemptContext(bounds);
         List<InputSplit> result = subject.getSplits(mockContext);
         Assert.assertEquals(0, result.size());
@@ -107,16 +108,6 @@ public class HdfsMrsPyramidInputFormatTest {
         List<InputSplit> result = subject.getSplits(mockContext);
         Assert.assertEquals(1, result.size());
         verifySplitsAreEqual(0, 0, result);
-    }
-
-    @Test
-    @Category(UnitTest.class)
-    public void getSplitsWithBoundsIntersectSecondSplit() throws Exception {
-        Bounds bounds = new Bounds(-180, 0, 180, 90);
-        TaskAttemptContext mockContext = createDefaultTaskAttemptContext(bounds);
-        List<InputSplit> result = subject.getSplits(mockContext);
-        Assert.assertEquals(1, result.size());
-        verifySplitsAreEqual(1, 0, result);
     }
 
     @Test
@@ -147,7 +138,6 @@ public class HdfsMrsPyramidInputFormatTest {
 
     private void verifySplitsAreEqual(List<InputSplit> result) {
         verifySplitsAreEqual(0, 0, result);
-        verifySplitsAreEqual(1, 1, result);
     }
 
     private void verifySplitsAreEqual(int partitionIndex, int resultIndex, List<InputSplit> result) {
