@@ -311,13 +311,6 @@ class BuildPyramid extends MrGeoJob with Externalizable {
             + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
             " w: " + reduced.width() + " h: " + reduced.height())
 
-//        println("from  tx: " + fromtile.tx + " ty: " + fromtile.ty + " (" + fromlevel + ") to tx: " + totile.tx +
-//            " ty: " + totile.ty + " (" + tolevel + ") x: "
-//            + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
-//            " w: " + reduced.width() + " h: " + reduced.height())
-
-        println("z: " + tolevel + " tile: " + tokey.get)
-
         val toraster = if (!outputTiles.contains(tokey)) {
           val raster = fromraster.createCompatibleRaster(tilesize, tilesize)
           raster.fill(nodatas)
@@ -336,22 +329,17 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       val stats: Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
 
       log.debug("Writing output file: " + provider.getResourceName + " level: " + tolevel)
-      println("Writing output file: " + provider.getResourceName + " level: " + tolevel)
 
       val writer: MrsImageWriter = provider.getMrsTileWriter(tolevel, metadata.getProtectionLevel)
 
       outputTiles.toSeq.sortBy(_._1.get()).foreach(tile => {
         logDebug("  writing tile: " + tile._1.get)
-        println("z: " + tolevel + " tile: " + tile._1.get)
         writer.append(tile._1, tile._2)
         ImageStats.computeAndUpdateStats(stats, tile._2, nodatas)
 
         val t = TMSUtils.tileid(tile._1.get(), tolevel)
         val b = TMSUtils.tileBounds(t.tx, t.ty, tolevel, tilesize)
 
-        if (!bounds.contains(b)) {
-          println("fooey!")
-        }
       })
       writer.close()
 
