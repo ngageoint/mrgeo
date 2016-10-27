@@ -21,7 +21,7 @@ import java.io.IOException
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.PairRDDFunctions
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.parser.ParserNode
@@ -74,12 +74,11 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     val bounds = getOutputBounds(meta)
     val tb = TMSUtils.boundsToTile(bounds, zoom, meta.getTilesize)
     val allTiles = RasterMapOp.createEmptyRasterRDD(context, tb, zoom)
-    val src = RasterWritable.toRaster(rdd.first()._2)
+    val src = RasterWritable.toMrGeoRaster(rdd.first()._2)
     // If there are tiles missing from the input that are within the bounds,
     // output a tile with all zeros (meaning all pixels are nodata).
-    val missingRaster = RasterWritable.toWritable(
-      RasterUtils.createEmptyRaster(src.getWidth, src.getHeight,
-        src.getNumBands, DataBuffer.TYPE_BYTE, 1))
+    val missingRaster = MrGeoRaster.createEmptyRaster(src.width(), src.height(), src.bands(),
+      DataBuffer.TYPE_BYTE, 1)
 
     val joined = new PairRDDFunctions(allTiles).leftOuterJoin(rdd)
     rasterRDD = Some(RasterRDD(joined.map(tile => {
@@ -87,18 +86,19 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
         case Some(s) =>
           // The input rdd has a tile, so process each pixel, setting it to 1 if the
           // source pixel is nodata, and 0 otherwise
-          val raster = RasterWritable.toRaster(s)
-          val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, DataBuffer.TYPE_BYTE, 0)
+          val raster = RasterWritable.toMrGeoRaster(s)
+          val output = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), raster.bands(),
+            DataBuffer.TYPE_BYTE, 0)
 
           var y: Int = 0
-          while (y <  raster.getHeight) {
+          while (y <  raster.height()) {
             var x: Int = 0
-            while (x < raster.getWidth) {
+            while (x < raster.width()) {
               var b: Int = 0
-              while (b < raster.getNumBands) {
-                val v = raster.getSampleDouble(x, y, b)
+              while (b < raster.bands()) {
+                val v = raster.getPixelDouble(x, y, b)
                 if (RasterMapOp.isNodata(v, nodatas(b))) {
-                  output.setSample(x, y, b, 1)
+                  output.setPixel(x, y, b, 1)
                 }
                 b += 1
               }
@@ -109,7 +109,7 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
           (tile._1, RasterWritable.toWritable(output))
         case None =>
           // Output a tile of all ones
-          (tile._1, new RasterWritable(missingRaster))
+          (tile._1, RasterWritable.toWritable(missingRaster))
       }
     })))
 

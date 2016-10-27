@@ -37,25 +37,18 @@ import org.mockito.stubbing.Answer;
 import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.mapalgebra.MapAlgebraJob;
-import org.mrgeo.job.JobDetails;
-import org.mrgeo.job.JobManager;
-import org.mrgeo.resources.job.JobInfoResponse;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.utils.tms.Bounds;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import java.awt.image.Raster;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -165,7 +158,7 @@ public void setUp() throws Exception
 //  // so no further assertions
 //}
 
-String returnXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+private String returnXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
     "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" +
     "<Document>\n" +
     "<Region>\n" +
@@ -322,7 +315,7 @@ public void testGetImagePng() throws Exception
 
   ImageResponseWriter writer = mock(ImageResponseWriter.class);
   //Mockito.when(writer.getMimeType()).thenReturn( typ );
-  when(writer.write((Raster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
+  when(writer.write((MrGeoRaster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
 
   when(service.getImageResponseWriter(anyString())).thenReturn(writer);
   final WebResource webResource = resource();
@@ -366,7 +359,7 @@ public void testGetImageTiff() throws Exception
 
   ImageResponseWriter writer = mock(ImageResponseWriter.class);
   //Mockito.when(writer.getMimeType()).thenReturn( typ );
-  when(writer.write((Raster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
+  when(writer.write((MrGeoRaster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
 
   when(service.getImageResponseWriter(anyString())).thenReturn(writer);
   final WebResource webResource = resource();

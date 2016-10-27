@@ -20,7 +20,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
@@ -79,11 +79,6 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
       override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
     }
 
-    var zoom: Int = -1
-    var tilesize: Int = -1
-    var tiletype: Int = -1
-    var totalbands: Int = 0
-
     input match {
       case Some(pyramid) =>
         val meta = pyramid.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName))
@@ -91,45 +86,13 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
         if (band >= meta.getBands) {
           throw new ParserException(s"The input raster has ${meta.getBands} bands. Cannot extract band $band")
         }
-        // check for the same max zooms
-        if (zoom < 0) {
-          zoom = meta.getMaxZoomLevel
-        }
-        else if (zoom != meta.getMaxZoomLevel) {
-          throw new IllegalArgumentException("All images must have the same max zoom level. " +
-            "one is " + meta.getMaxZoomLevel + ", others are " + zoom)
-        }
+        val zoom = meta.getMaxZoomLevel
 
-        if (tilesize < 0) {
-          tilesize = meta.getTilesize
-        }
-        else if (tilesize != meta.getTilesize) {
-          throw new IllegalArgumentException("All images must have the same tilesize. " +
-            "one is " + meta.getTilesize + ", others are " + tilesize)
-        }
-
-        if (tiletype < 0) {
-          tiletype = meta.getTileType
-        }
-        else if (tiletype != meta.getTileType) {
-          throw new IllegalArgumentException("All images must have the same tile type. " +
-            "one is " + meta.getTileType + ", others are " + tiletype)
-        }
-        val nodata = meta.getDefaultValue(band)
         val inputRDD = pyramid.rdd().getOrElse(throw new IOException("Can't load RDD! Ouch!"))
         rasterRDD = Some(RasterRDD(inputRDD.map(U => {
-          val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, tiletype, nodata)
-          val sourceRaster = RasterWritable.toRaster(U._2)
-          var y: Int = 0
-          while (y < sourceRaster.getHeight) {
-            var x: Int = 0
-            while (x < sourceRaster.getWidth) {
-              val v = sourceRaster.getSampleDouble(x, y, band)
-              dst.setSample(x, y, 0, v)
-              x += 1
-            }
-            y += 1
-          }
+          val sourceRaster = RasterWritable.toMrGeoRaster(U._2)
+          // Create a new raster containing all the pixels of the specified band of the source
+          val dst = sourceRaster.clip(0, 0, sourceRaster.width(), sourceRaster.height(), band)
           (U._1, RasterWritable.toWritable(dst))
         })))
 

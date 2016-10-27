@@ -18,15 +18,9 @@ package org.mrgeo.hdfs.partitioners
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
-import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
-import org.mrgeo.hdfs.output.image.HdfsMrsPyramidOutputFormatProvider
-import org.mrgeo.hdfs.tile.{FileSplit, PartitionerSplit}
-import org.mrgeo.utils.tms.{TileBounds, Bounds, TMSUtils}
-import org.mrgeo.utils.{SparkUtils}
+import org.mrgeo.hdfs.tile.PartitionerSplit
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 
 @SerialVersionUID(-1)
 class RowPartitioner() extends FileSplitPartitioner() with Externalizable

@@ -1,7 +1,6 @@
 package org.mrgeo.mapalgebra.unarymath
 
 import org.apache.spark.SparkContext
-import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
@@ -37,7 +36,7 @@ class BitwiseComplementMapOp extends RawUnaryMathMapOp {
     input match {
       case Some(r) => {
         val metadata = r.metadata().getOrElse(throw new ParserException("Uh oh - no metadata available"))
-        if (RasterUtils.isFloatingPoint(metadata.getTileType)) {
+        if (metadata.isFloatingPoint) {
           log.warn("Using a floating point raster like " + metadata.getPyramid + " is not recommended for bitwise operators")
         }
       }

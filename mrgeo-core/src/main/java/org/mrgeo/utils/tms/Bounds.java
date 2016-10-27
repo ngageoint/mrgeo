@@ -487,4 +487,8 @@ public double height()
   return n - s;
 }
 
+public LatLon center()
+{
+  return new LatLon(s + ((n - s) / 2), w + ((e - w) / 2));
+}
 }

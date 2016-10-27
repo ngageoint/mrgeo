@@ -16,6 +16,7 @@
 
 package org.mrgeo.image;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.codehaus.jackson.map.exc.UnrecognizedPropertyException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -266,6 +267,7 @@ public void testOldParams()
     assertEquals(11 + 1, metadata.getImageMetadata().length);
   }
 
+  @SuppressFBWarnings(value = "NP_LOAD_OF_KNOWN_NULL_VALUE", justification = "Should be NULL for testing")
   @Test
   @Category(UnitTest.class)
   public void testSetProtectionLevel()

@@ -23,21 +23,6 @@ import org.mrgeo.utils.tms.{Pixel, Bounds}
 
 class Serializers {}
 
-class RasterWritableSerializer extends Serializer[RasterWritable] {
-  override def write(kryo: Kryo, output: Output, rw: RasterWritable) = {
-
-    val bytes = rw.getBytes
-    output.writeInt(bytes.length)
-    output.writeBytes(bytes)
-  }
-
-  override def read(kryo: Kryo, input: Input, `type`: Class[RasterWritable]): RasterWritable = {
-
-    val length = input.readInt()
-    new RasterWritable(input.readBytes(length))
-  }
-}
-
 class BoundsSerializer extends Serializer[Bounds] {
   override def write(kryo: Kryo, output: Output, bounds: Bounds): Unit = {
     output.writeDouble(bounds.w)

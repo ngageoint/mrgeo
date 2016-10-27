@@ -1,11 +1,9 @@
 package org.mrgeo.hdfs.utils;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

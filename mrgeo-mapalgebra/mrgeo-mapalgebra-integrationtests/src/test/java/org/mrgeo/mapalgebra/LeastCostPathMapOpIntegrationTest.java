@@ -190,46 +190,46 @@ public static void runLeastCostPath(Configuration conf,
 //    }
 
 }
-private static PathCost getPathCost(Path outputFilePath, Configuration conf) throws IOException {
-  FSDataInputStream fdis = outputFilePath.getFileSystem(conf).open(outputFilePath);
-  BufferedReader br = new BufferedReader(new InputStreamReader(fdis));
-  // Skip the header line
-  String strLine = br.readLine();
-  strLine = br.readLine();
-  String[] splits = strLine.split("\t");
-  String lineString = splits[0];
-  String lineStringSub = lineString.substring(lineString.indexOf('(')+1, lineString.indexOf(')'));
-  String[] gotPixelsStrs = lineStringSub.split(",");
-  Set<String> gotPixels = new HashSet<String>();
-  for(String pixel : gotPixelsStrs) {
-    gotPixels.add(pixel);
-  }
-  br.close();
-  return new PathCost(gotPixels, Float.parseFloat(splits[1]),
-      Float.parseFloat(splits[2]),
-      Double.parseDouble(splits[3]),
-      Double.parseDouble(splits[4]),
-      Double.parseDouble(splits[5])
-  );
-}
-
-private static class PathCost {
-  Set<String> path;
-  float cost;
-  float distance;
-  double minSpeed;
-  double maxSpeed;
-  double avgSpeed;
-  public PathCost(Set<String> path, float cost, float distance, double minSpeed, double maxSpeed, double avgSpeed)
-  {
-    super();
-    this.path = path;
-    this.cost = cost;
-    this.distance = distance;
-    this.minSpeed = minSpeed;
-    this.maxSpeed = maxSpeed;
-    this.avgSpeed = avgSpeed;
-  }
-}
+//private static PathCost getPathCost(Path outputFilePath, Configuration conf) throws IOException {
+//  FSDataInputStream fdis = outputFilePath.getFileSystem(conf).open(outputFilePath);
+//  BufferedReader br = new BufferedReader(new InputStreamReader(fdis));
+//  // Skip the header line
+//  String strLine = br.readLine();
+//  strLine = br.readLine();
+//  String[] splits = strLine.split("\t");
+//  String lineString = splits[0];
+//  String lineStringSub = lineString.substring(lineString.indexOf('(')+1, lineString.indexOf(')'));
+//  String[] gotPixelsStrs = lineStringSub.split(",");
+//  Set<String> gotPixels = new HashSet<String>();
+//  for(String pixel : gotPixelsStrs) {
+//    gotPixels.add(pixel);
+//  }
+//  br.close();
+//  return new PathCost(gotPixels, Float.parseFloat(splits[1]),
+//      Float.parseFloat(splits[2]),
+//      Double.parseDouble(splits[3]),
+//      Double.parseDouble(splits[4]),
+//      Double.parseDouble(splits[5])
+//  );
+//}
+//
+//private static class PathCost {
+//  Set<String> path;
+//  float cost;
+//  float distance;
+//  double minSpeed;
+//  double maxSpeed;
+//  double avgSpeed;
+//  public PathCost(Set<String> path, float cost, float distance, double minSpeed, double maxSpeed, double avgSpeed)
+//  {
+//    super();
+//    this.path = path;
+//    this.cost = cost;
+//    this.distance = distance;
+//    this.minSpeed = minSpeed;
+//    this.maxSpeed = maxSpeed;
+//    this.avgSpeed = avgSpeed;
+//  }
+//}
 
 }

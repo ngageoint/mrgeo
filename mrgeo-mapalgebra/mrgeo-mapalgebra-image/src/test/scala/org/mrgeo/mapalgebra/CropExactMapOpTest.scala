@@ -1,13 +1,11 @@
 package org.mrgeo.mapalgebra
 
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.utils.{RasterMapOpTestVerifySupport}
+import org.mrgeo.mapalgebra.utils.RasterMapOpTestVerifySupport
 import org.mrgeo.utils.tms.Bounds
 import org.scalatest.{BeforeAndAfter, FlatSpec}
 
-/**
-  * Created by ericwood on 7/19/16.
-  */
+
 class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestVerifySupport {
 
   private val tileIds: Array[Long] = Array(11, 12, 19, 20)
@@ -39,7 +37,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(11, 12, 19, 20), tileSize, zoomLevel,
-        inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top, Some(expectedData))
+        inputRaster.metadata().get.getDefaultValues, left, right, bottom, top, Some(expectedData))
   }
 
   it should "keep the top two tiles when the bounds excludes the bottom two" in {
@@ -51,7 +49,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(19, 20), tileSize, zoomLevel,
-      inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top)
+      inputRaster.metadata().get.getDefaultValues, left, right, bottom, top)
   }
 
   it should "keep the right two tiles when the bounds excludes the left two" in {
@@ -63,7 +61,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(12, 20), tileSize, zoomLevel,
-      inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top)
+      inputRaster.metadata().get.getDefaultValues, left, right, bottom, top)
   }
 
   it should "keep the left two tiles when the bounds excludes the right two" in {
@@ -75,7 +73,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(11, 19), tileSize, zoomLevel,
-      inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top)
+      inputRaster.metadata().get.getDefaultValues, left, right, bottom, top)
   }
 
   it should "keep the bottom two tiles when the bounds excludes the top two" in {
@@ -87,7 +85,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(11, 12), tileSize, zoomLevel,
-      inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top)
+      inputRaster.metadata().get.getDefaultValues, left, right, bottom, top)
   }
 
   it should "keep the top right tiles when the bounds excludes the other 3" in {
@@ -99,7 +97,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(20), tileSize, zoomLevel,
-      inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top)
+      inputRaster.metadata().get.getDefaultValues, left, right, bottom, top)
   }
 
   // TODO unignore this test once the issue with empty result images is addressed
@@ -125,7 +123,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
     }
 //    verifyRastersAreUnchanged(transformedRDD, Array(11, 12, 19, 20))
     verifyRastersNoData(transformedRDD, Array(11, 12, 19, 20), tileSize, zoomLevel,
-      inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top)
+      inputRaster.metadata().get.getDefaultValues, left, right, bottom, top)
   }
 
   it should "be able to use the bounds of another Raster as the bounds for cropping" in {
@@ -141,7 +139,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(20), tileSize, zoomLevel,
-      inputRaster.metadata.get.getDefaultValues(), left, right, bottom, top)
+      inputRaster.metadata().get.getDefaultValues, left, right, bottom, top)
   }
 
   it should "fill all bands of the image outside of the bounds with nodata" in {
@@ -156,6 +154,6 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(11, 12, 19, 20), tileSize, zoomLevel,
-      rasterMapOpWithBands.metadata.get.getDefaultValues(), left, right, bottom, top, Some(imageData))
+      rasterMapOpWithBands.metadata().get.getDefaultValues, left, right, bottom, top, Some(imageData))
   }
 }

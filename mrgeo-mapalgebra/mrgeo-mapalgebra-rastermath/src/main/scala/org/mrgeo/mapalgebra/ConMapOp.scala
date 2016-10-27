@@ -16,12 +16,12 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{DataBuffer, Raster}
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
@@ -246,9 +246,9 @@ class ConMapOp extends RasterMapOp with Externalizable {
       val termCount = isRdd.length
 
       val rawInputs = tile._2
-      val rasterInputs = Array.fill[Option[Raster]](rawInputs.length)(None)
+      val rasterInputs = Array.fill[Option[MrGeoRaster]](rawInputs.length)(None)
 
-      val raster = RasterUtils.createEmptyRaster(tilesize, tilesize, bands, datatype, nodata)
+      val raster = MrGeoRaster.createEmptyRaster(tilesize, tilesize, bands, datatype, nodata)
 
       def getValue(i: Int, x: Int, y: Int, b: Int): Option[Double] = {
         if (isRdd(i)) {
@@ -259,7 +259,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
             val r  = if (a.nonEmpty) {
               a.head match {
                 case rw: RasterWritable =>
-                  Some(RasterWritable.toRaster(rw))
+                  Some(RasterWritable.toMrGeoRaster(rw))
                 case _ =>
                   None
               }
@@ -272,8 +272,8 @@ class ConMapOp extends RasterMapOp with Externalizable {
           }
 
           ri match {
-              case Some(r: Raster) =>
-            Some(r.getSampleDouble(x, y, b))
+              case Some(r: MrGeoRaster) =>
+            Some(r.getPixelDouble(x, y, b))
               case _ =>
             None
           }
@@ -289,11 +289,11 @@ class ConMapOp extends RasterMapOp with Externalizable {
 
       //NOTE:  the raster is already filled with nodata, no need to do do any setting of resultant pixels with nodata
       var y: Int = 0
-      while (y < raster.getHeight) {
+      while (y < raster.height()) {
         var x: Int = 0
-        while (x < raster.getWidth) {
+        while (x < raster.width()) {
           var b: Int = 0
-          while (b < raster.getNumBands) {
+          while (b < raster.bands()) {
             done.breakable {
               var i: Int = 0
               while (i < termCount - 1) {
@@ -312,7 +312,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
                   getValue(i + 1, x, y, b) match {
                   case Some(d) =>
                     if (RasterMapOp.isNotNodata(d, nodatas(i + 1))) {
-                      raster.setSample(x, y, b, d)
+                      raster.setPixel(x, y, b, d)
                       hasdata = true
                     }
                   case _ =>
@@ -326,7 +326,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
               getValue(termCount - 1, x, y, b) match {
               case Some(d) => {
                 if (RasterMapOp.isNotNodata(d, nodatas(termCount - 1))) {
-                  raster.setSample(x, y, b, d)
+                  raster.setPixel(x, y, b, d)
                   hasdata = true
                 }
               }
@@ -382,7 +382,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
     var datatype = -1
 
     var i: Int = if (useOutputs) 1 else 0
-    while (i < inputs.length) {
+    while (i < isRdd.length) {
       if (isRdd(i)) {
         // look up the rdd in the input->rdd map
         val input = inputs(rddMap(i))
@@ -435,7 +435,8 @@ class ConMapOp extends RasterMapOp with Externalizable {
           datatype = dt
         }
       }
-      i += 2
+      // Make sure we process the last element, which is always the "else" element
+      i += (if (i == isRdd.length - 2) { 1 } else { 2 })
     }
 
     (index, datatype)

@@ -19,12 +19,11 @@ package org.mrgeo.mapalgebra
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 object NormalizeMapOp extends MapOpRegistrar {
@@ -115,17 +114,17 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
     val range = max - min
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
       var y: Int = 0
-      while (y < raster.getHeight) {
+      while (y < raster.height()) {
         var x: Int = 0
-        while (x < raster.getWidth) {
+        while (x < raster.width()) {
           var b: Int = 0
-          while (b < raster.getNumBands) {
-            val v = raster.getSampleDouble(x, y, b)
+          while (b < raster.bands()) {
+            val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodata)) {
-              raster.setSample(x, y, b, (v - min) / range)
+              raster.setPixel(x, y, b, (v - min) / range)
             }
             b += 1
           }

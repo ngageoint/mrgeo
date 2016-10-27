@@ -26,7 +26,7 @@ object AutoPersister extends Logging {
 
   val references = mutable.Map.empty[Int, Int]
 
-  val defaultStorageLevel = StorageLevel.MEMORY_AND_DISK_SER
+  val defaultStorageLevel = StorageLevel.MEMORY_AND_DISK
 
   def getRef(rdd:RDD[_]): Int = {
     references.getOrElse(rdd.id, 0)

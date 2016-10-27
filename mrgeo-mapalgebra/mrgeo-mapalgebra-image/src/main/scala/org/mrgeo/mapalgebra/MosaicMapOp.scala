@@ -16,21 +16,19 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.WritableRaster
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 
 import scala.util.control.Breaks
 
@@ -171,7 +169,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
         false
       }
 
-      var dst: WritableRaster = null
+      var dst: MrGeoRaster = null
       var dstnodata: Array[Double] = null
 
       val done = new Breaks
@@ -182,7 +180,7 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
             val writable = wr.asInstanceOf[Seq[RasterWritable]].head
 
             if (dst == null) {
-              dst = RasterUtils.makeRasterWritable(RasterWritable.toRaster(writable))
+              dst = RasterWritable.toMrGeoRaster(writable)
               dstnodata = nodata(img)
 
               val looper = new Breaks
@@ -190,12 +188,12 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
               // check if there are any nodatas in the 1st tile
               looper.breakable {
                 var y: Int = 0
-                while (y < dst.getHeight) {
+                while (y < dst.height()) {
                   var x: Int = 0
-                  while (x < dst.getWidth) {
+                  while (x < dst.width()) {
                     var b: Int = 0
-                    while (b < dst.getNumBands) {
-                      if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
+                    while (b < dst.bands()) {
+                      if (isnodata(dst.getPixelDouble(x, y, b), dstnodata(b))) {
                         looper.break()
                       }
                       b += 1
@@ -213,23 +211,23 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
               var hasnodata = false
 
               // the tile conversion is a WritableRaster, we can just typecast here
-              val src = RasterUtils.makeRasterWritable(RasterWritable.toRaster(writable))
+              val src = RasterWritable.toMrGeoRaster(writable)
               val srcnodata = nodata(img)
 
               var y: Int = 0
-              while (y < dst.getHeight) {
+              while (y < dst.height()) {
                 var x: Int = 0
-                while (x < dst.getWidth) {
+                while (x < dst.width()) {
                   var b: Int = 0
-                  while (b < dst.getNumBands) {
-                    if (isnodata(dst.getSampleDouble(x, y, b), dstnodata(b))) {
-                      val sample = src.getSampleDouble(x, y, b)
+                  while (b < dst.bands()) {
+                    if (isnodata(dst.getPixelDouble(x, y, b), dstnodata(b))) {
+                      val sample = src.getPixelDouble(x, y, b)
                       // if the src is also nodata, remember this, we still have to look in other tiles
                       if (isnodata(sample, srcnodata(b))) {
                         hasnodata = true
                       }
                       else {
-                        dst.setSample(x, y, b, sample)
+                        dst.setPixel(x, y, b, sample)
                       }
                     }
                     b += 1

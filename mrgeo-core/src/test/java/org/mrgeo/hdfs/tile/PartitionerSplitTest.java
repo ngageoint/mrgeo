@@ -17,7 +17,6 @@
 package org.mrgeo.hdfs.tile;
 
 import junit.framework.Assert;
-import org.apache.hadoop.fs.Path;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -26,15 +25,13 @@ import org.junit.rules.TestName;
 import org.mrgeo.hdfs.partitioners.SplitGenerator;
 import org.mrgeo.junit.UnitTest;
 
-import java.io.*;
 import java.util.Random;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class PartitionerSplitTest
 {
-  static Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
+  static private Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
   @Rule public TemporaryFolder folder = new TemporaryFolder();
   @Rule public TestName testName = new TestName();
 

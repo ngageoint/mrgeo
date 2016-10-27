@@ -1,12 +1,7 @@
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{DataBuffer, Raster}
-import java.net.URL
-
-import org.mrgeo.data.raster.RasterUtils
-import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.mapalgebra.utils.{RasterMapOpTestVerifySupport}
+import org.mrgeo.mapalgebra.utils.RasterMapOpTestVerifySupport
 import org.mrgeo.utils.tms.Bounds
 import org.scalatest.{BeforeAndAfter, FlatSpec}
 
