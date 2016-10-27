@@ -17,11 +17,11 @@
 package org.mrgeo.data.image;
 
 import org.mrgeo.data.KVIterator;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -41,12 +41,11 @@ public abstract class MrsImageReader
    * @param packageName
    *          package to look into
    * @return list of classes in the package
-   * @throws ClassNotFoundException
    */
-  protected static List<Class<?>> findClasses(final File directory, final String packageName)
+  private static List<Class<?>> findClasses(final File directory, final String packageName)
     throws ClassNotFoundException
   {
-    final List<Class<?>> classes = new ArrayList<Class<?>>();
+    final List<Class<?>> classes = new ArrayList<>();
     if (!directory.exists())
     {
       return classes;
@@ -79,8 +78,6 @@ public abstract class MrsImageReader
    * @param packageName
    *          where to look in the java space
    * @return an array of classes found
-   * @throws IOException
-   * @throws ClassNotFoundException
    */
   protected static Class<?>[] getClasses(final String packageName) throws IOException,
     ClassNotFoundException
@@ -96,14 +93,14 @@ public abstract class MrsImageReader
     final Enumeration<URL> resources = cl.getResources(pkgP);
 
     // go through the resources and add to the list of classes
-    final List<File> dirs = new ArrayList<File>();
+    final List<File> dirs = new ArrayList<>();
     while (resources.hasMoreElements())
     {
       final URL resource = resources.nextElement();
       dirs.add(new File(resource.getFile()));
     }
 
-    final ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+    final ArrayList<Class<?>> classes = new ArrayList<>();
     for (final File directory : dirs)
     {
       classes.addAll(findClasses(directory, packageName));
@@ -119,7 +116,7 @@ public abstract class MrsImageReader
    *          item to retrieve
    * @return the result of the query
    */
-  public abstract Raster get(TileIdWritable key);
+  public abstract MrGeoRaster get(TileIdWritable key);
 
   /**
    * Need to know the zoom level of the data being used
@@ -145,11 +142,11 @@ public abstract class MrsImageReader
    */
   public abstract boolean exists(TileIdWritable key);
 
-  public abstract KVIterator<TileIdWritable, Raster> get();
+  public abstract KVIterator<TileIdWritable, MrGeoRaster> get();
 
-  public abstract KVIterator<TileIdWritable, Raster> get(final LongRectangle tileBounds);
+  public abstract KVIterator<TileIdWritable, MrGeoRaster> get(final LongRectangle tileBounds);
 
-  public abstract KVIterator<Bounds, Raster> get(final Bounds bounds);
+  public abstract KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds);
 
   /**
    * Need to be able to pull a series of items from the data store
@@ -160,7 +157,7 @@ public abstract class MrsImageReader
    *          where to end (inclusive)
    * @return an Iterator through the data
    */
-  public abstract KVIterator<TileIdWritable, Raster> get(TileIdWritable startKey,
+  public abstract KVIterator<TileIdWritable, MrGeoRaster> get(TileIdWritable startKey,
     TileIdWritable endKey);
 
   /**
@@ -168,7 +165,6 @@ public abstract class MrsImageReader
    * return false if this reader requires a resource that is limited, like
    * a connection to a backend data source.
    *
-   * @return
    */
   public abstract boolean canBeCached();
 }

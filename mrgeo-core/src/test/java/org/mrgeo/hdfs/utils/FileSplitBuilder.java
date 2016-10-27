@@ -3,7 +3,6 @@ package org.mrgeo.hdfs.utils;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

@@ -16,10 +16,12 @@
 
 package org.mrgeo.mapalgebra.vector.paint;
 
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Point;
+import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
 import org.mrgeo.utils.tms.Tile;
@@ -35,10 +37,10 @@ import java.io.IOException;
 
 public class VectorPainter
 {
-static final Logger log = LoggerFactory.getLogger(VectorPainter.class);
+private static final Logger log = LoggerFactory.getLogger(VectorPainter.class);
 
 public enum AggregationType {
-  SUM, MASK, MIN, MAX, AVERAGE, GAUSSIAN
+  SUM, MASK, MIN, MAX, AVERAGE, GAUSSIAN, MASK2
 }
 
 private AggregationType aggregationType;
@@ -82,7 +84,16 @@ public void beforePaintingTile(final long tileId)
     // 1.0 in each pixel that overlaps the feature. The MaskComposite will
     // write a 0.0 to each pixel that was originally painted, and if any
     // polygon holes are painted after that, those are written as NaN.
-    composite = new MaskComposite(1.0, 0.0, Double.NaN);
+    composite = new MaskComposite(1.0, 0.0, Float.NaN);
+  }
+  else if (aggregationType == AggregationType.MASK2)
+  {
+    // A secondary mask type, 1.0 for overlap, 0.0 for none
+    // When a feature is painted in MASK mode, the src raster will contain
+    // 1.0 in each pixel that overlaps the feature. The MaskComposite will
+    // write a 1.0 to each pixel that was originally painted, and if any
+    // polygon holes are painted after that, those are written as 0.0.
+    composite = new MaskComposite(1.0, 1.0, 0.0);
   }
   else if (aggregationType == AggregationType.GAUSSIAN)
   {
@@ -98,7 +109,7 @@ public void beforePaintingTile(final long tileId)
   // There is no way to paint NaN values onto the raster using the GeometryPainter
   // so the non-masked pixels will be set to a value of 0 (which can be painted).
   raster = RasterUtils.createEmptyRaster(tileSize, tileSize, 1,
-      DataBuffer.TYPE_DOUBLE, Double.NaN);
+      DataBuffer.TYPE_FLOAT, Float.NaN);
 
   totalRaster = null;
 
@@ -132,7 +143,7 @@ public void beforePaintingTile(final long tileId)
 
 public void paintGeometry(Geometry g)
 {
-  if (valueColumn == null || aggregationType == AggregationType.MASK)
+  if (valueColumn == null || aggregationType == AggregationType.MASK || aggregationType == AggregationType.MASK2)
   {
     rasterPainter.paint(g);
   }
@@ -176,12 +187,48 @@ public void paintEllipse(Point center, double majorWidth, double minorWidth, dou
 
 public RasterWritable afterPaintingTile() throws IOException
 {
+
   if (aggregationType == AggregationType.AVERAGE)
   {
     averageRaster(raster, totalRaster);
   }
 
-  return RasterWritable.toWritable(raster);
+  int type = raster.getTransferType();
+  double nodata = Float.NaN;
+  if (aggregationType == AggregationType.MASK || aggregationType == AggregationType.MASK2)
+  {
+    type = DataBuffer.TYPE_BYTE;
+
+    nodata = RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE);
+
+  }
+
+  MrGeoRaster mrgeo = MrGeoRaster.createEmptyRaster(raster.getWidth(), raster.getHeight(),
+      raster.getNumBands(), type);
+
+  for (int y = 0; y < raster.getHeight(); y++)
+  {
+    for (int x = 0; x < raster.getWidth(); x++)
+    {
+      if (aggregationType == AggregationType.MASK)
+      {
+        float v = raster.getSampleFloat(x, y, 0);
+        if (Float.isNaN(v))
+        {
+          mrgeo.setPixel(x, y, 0, nodata);
+        }
+        else
+        {
+          mrgeo.setPixel(x, y, 0, v);
+        }
+      }
+      else {
+        mrgeo.setPixel(x, y, 0, raster.getSampleFloat(x, y, 0));
+      }
+    }
+  }
+
+  return RasterWritable.toWritable(mrgeo);
 }
 
 
@@ -193,14 +240,14 @@ private static void averageRaster(final WritableRaster raster, final Raster coun
     {
       for (int b = 0; b < raster.getNumBands(); b++)
       {
-        double v = raster.getSampleDouble(x, y, b);
-        final double c = count.getSampleDouble(x, y, b);
+        float v = raster.getSampleFloat(x, y, b);
+        final float c = count.getSampleFloat(x, y, b);
 
-        if (!Double.isNaN(v))
+        if (!Float.isNaN(v))
         {
           if (c == 0.0)
           {
-            v = Double.NaN;
+            v = Float.NaN;
           }
           else
           {

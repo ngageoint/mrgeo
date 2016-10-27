@@ -2,18 +2,12 @@ package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.SequenceFile;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.image.ImageInputFormatContext;
 
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by ericwood on 6/10/16.
- */
 public class ConfigurationBuilder {
     // Key names from ImageInputFormatContext
     private static final String imageInputFormatContextClassName = ImageInputFormatContext.class.getSimpleName();

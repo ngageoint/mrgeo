@@ -20,7 +20,7 @@ import java.awt.image.{DataBuffer, WritableRaster}
 import java.io.Externalizable
 
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.Point
@@ -90,9 +90,9 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   {
     val result = groupedGeometries.map(U => {
       val tileId = U._1
-      val raster = RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_DOUBLE, Double.NaN)
+      val raster = MrGeoRaster.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_DOUBLE, Double.NaN)
       val countRaster = if (aggregationType == VectorPainter.AggregationType.AVERAGE) {
-        RasterUtils.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_DOUBLE, 0.0)
+        MrGeoRaster.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_DOUBLE, 0.0)
       }
       else {
         null
@@ -105,13 +105,13 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       }
       if (aggregationType == VectorPainter.AggregationType.AVERAGE) {
         var x: Int = 0
-        while (x < raster.getWidth) {
+        while (x < raster.width()) {
           var y: Int = 0
-          while (y < raster.getHeight) {
-            val v = raster.getSampleDouble(x, y, 0)
+          while (y < raster.height()) {
+            val v = raster.getPixelDouble(x, y, 0)
             if (!v.isNaN) {
-              val c = countRaster.getSampleDouble(x, y, 0)
-              raster.setSample(x, y, 0, v / c)
+              val c = countRaster.getPixelDouble(x, y, 0)
+              raster.setPixel(x, y, 0, v / c)
             }
             y += 1
           }
@@ -160,48 +160,48 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     })
   }
 
-  private def updateRaster(raster: WritableRaster, countRaster: WritableRaster,
+  private def updateRaster(raster: MrGeoRaster, countRaster: MrGeoRaster,
                            pixel: Pixel, latitude: Double,
                           longitude: Double, columnValue: Double,
                           validColumnValue: Boolean): Unit = {
     aggregationType match {
       case VectorPainter.AggregationType.AVERAGE =>
         if (!columnValue.isNaN) {
-          val c = countRaster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0) + 1
-          countRaster.setSample(pixel.px.toInt, pixel.py.toInt, 0, c)
-          var v = raster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0)
+          val c = countRaster.getPixelDouble(pixel.px.toInt, pixel.py.toInt, 0) + 1
+          countRaster.setPixel(pixel.px.toInt, pixel.py.toInt, 0, c)
+          var v = raster.getPixelDouble(pixel.px.toInt, pixel.py.toInt, 0)
           if (v.isNaN) {
             v = 0.0
           }
           v = v + columnValue
-          raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, v)
+          raster.setPixel(pixel.px.toInt, pixel.py.toInt, 0, v)
         }
 
       case VectorPainter.AggregationType.MASK =>
-        raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, 0.0)
+        raster.setPixel(pixel.px.toInt, pixel.py.toInt, 0, 0.0)
 
       case VectorPainter.AggregationType.MAX =>
         if (!columnValue.isNaN) {
-          var v = raster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0)
+          var v = raster.getPixelDouble(pixel.px.toInt, pixel.py.toInt, 0)
           if (v.isNaN) {
             v = columnValue
           }
           else {
             v = Math.max(v, columnValue)
           }
-          raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, v)
+          raster.setPixel(pixel.px.toInt, pixel.py.toInt, 0, v)
         }
 
       case VectorPainter.AggregationType.MIN =>
         if (!columnValue.isNaN) {
-          var v = raster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0)
+          var v = raster.getPixelDouble(pixel.px.toInt, pixel.py.toInt, 0)
           if (v.isNaN) {
             v = columnValue
           }
           else {
             v = Math.min(v, columnValue)
           }
-          raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, v)
+          raster.setPixel(pixel.px.toInt, pixel.py.toInt, 0, v)
         }
 
       case VectorPainter.AggregationType.SUM =>
@@ -214,14 +214,14 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
           1.0
         }
         if (!colVal.isNaN) {
-          var v = raster.getSampleDouble(pixel.px.toInt, pixel.py.toInt, 0)
+          var v = raster.getPixelDouble(pixel.px.toInt, pixel.py.toInt, 0)
           if (v.isNaN) {
             v = colVal
           }
           else {
             v = v + colVal
           }
-          raster.setSample(pixel.px.toInt, pixel.py.toInt, 0, v)
+          raster.setPixel(pixel.px.toInt, pixel.py.toInt, 0, v)
         }
       case _ =>
     }

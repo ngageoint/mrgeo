@@ -6,7 +6,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
@@ -92,7 +92,7 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
 
     tiles.map(tile => {
 
-      val raster = RasterWritable.toRaster(tile._2)
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
       //      val tb = TMSUtils.tileBounds(TMSUtils.tileid(tile._1.get(), zoom), zoom, tilesize)
 
@@ -127,7 +127,7 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
         val vectors = Array.ofDim[(Double, Double)](8)
 
         // if the origin pixel is nodata, the vectors are nodata
-        val origin = raster.getSampleDouble(x, y, 0)
+        val origin = raster.getPixelDouble(x, y, 0)
         if (isnodata(origin, nodata)) {
           var ndx = 0
           while (ndx < 8) {
@@ -147,7 +147,7 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
             // just skip the center
             if (ndx != in_c) {
               val dz = {
-                val e = raster.getSampleDouble(dx, dy, 0)
+                val e = raster.getPixelDouble(dx, dy, 0)
                 if (isnodata(e, nodata)) {
                   0
                 }
@@ -249,10 +249,10 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      val width = raster.getWidth - bufferX * 2
-      val height = raster.getHeight - bufferY * 2
+      val width = raster.width() - bufferX * 2
+      val height = raster.height() - bufferY * 2
 
-      val answer = RasterUtils.createEmptyRaster(width, height, 8, DataBuffer.TYPE_FLOAT) // , Float.NaN)
+      val answer = MrGeoRaster.createEmptyRaster(width, height, 8, DataBuffer.TYPE_FLOAT) // , Float.NaN)
 
       var y: Int = 0
       while (y < height) {
@@ -261,8 +261,8 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
           val vectors = calculateOffsets(x + bufferX, y + bufferY)
 
           var band = 0
-          while (band < answer.getNumBands) {
-            answer.setSample(x, y, band, calculateAngle(vectors(band)))
+          while (band < answer.bands()) {
+            answer.setPixel(x, y, band, calculateAngle(vectors(band)))
             band += 1
           }
           x += 1

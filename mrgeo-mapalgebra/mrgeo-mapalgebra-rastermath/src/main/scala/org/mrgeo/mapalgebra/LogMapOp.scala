@@ -20,7 +20,7 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
@@ -92,22 +92,22 @@ class LogMapOp extends RasterMapOp with Externalizable {
     val outputnodata = Array.fill[Double](meta.getBands)(Float.NaN)
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2)
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
-      val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, DataBuffer.TYPE_FLOAT)
+      val output = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), raster.bands(), DataBuffer.TYPE_FLOAT)
 
       var y: Int = 0
-      while (y < raster.getHeight) {
+      while (y < raster.height()) {
         var x: Int = 0
-        while (x < raster.getWidth) {
+        while (x < raster.width()) {
           var b: Int = 0
-          while (b < raster.getNumBands) {
-            val v = raster.getSampleDouble(x, y, b)
+          while (b < raster.bands()) {
+            val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodata(b))) {
-              output.setSample(x, y, b, Math.log(v) / baseVal)
+              output.setPixel(x, y, b, Math.log(v) / baseVal)
             }
             else {
-              output.setSample(x, y, b, outputnodata(b))
+              output.setPixel(x, y, b, outputnodata(b))
             }
             b += 1
           }

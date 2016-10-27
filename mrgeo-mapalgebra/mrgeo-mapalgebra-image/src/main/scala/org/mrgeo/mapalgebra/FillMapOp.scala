@@ -123,8 +123,9 @@ class FillMapOp extends RasterMapOp with Externalizable {
 
     rasterRDD = Some(RasterRDD(constFill match {
     case Some(const) =>
-      val src = RasterWritable.toRaster(rdd.first()._2)
-      val constRaster = RasterWritable.toWritable(RasterUtils.createCompatibleEmptyRaster(src, const))
+      val src = RasterWritable.toMrGeoRaster(rdd.first()._2)
+      val constRaster = src.createCompatibleRaster(src.width(), src.height())
+      constRaster.fill(const)
 
       val joined = new PairRDDFunctions(test).leftOuterJoin(rdd)
       joined.map(tile => {
@@ -133,15 +134,15 @@ class FillMapOp extends RasterMapOp with Externalizable {
         case Some(s) =>
           (tile._1, s)
         case None =>
-          (tile._1, new RasterWritable(constRaster))
+          (tile._1, RasterWritable.toWritable(constRaster))
         }
       })
     case None =>
       val fill:RasterMapOp = fillMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
       val fillrdd = fill.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
-      val src = RasterWritable.toRaster(rdd.first()._2)
-      val nodataRaster = RasterWritable.toWritable(RasterUtils.createCompatibleEmptyRaster(src, nodata))
+      val src = RasterWritable.toMrGeoRaster(rdd.first()._2)
+      val nodataRaster = src.createCompatibleEmptyRaster(src.width(), src.height(), nodata)
 
       val joined = new PairRDDFunctions(test).cogroup(rdd, fillrdd)
       joined.map(tile => {
@@ -156,7 +157,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
         }
         else {
           //the src and fill tiles are emtpy, now what? (nodata?)
-          (tile._1, new RasterWritable(nodataRaster))
+          (tile._1, RasterWritable.toWritable(nodataRaster))
         }
       })
     }))

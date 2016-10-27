@@ -167,66 +167,126 @@ for z in zones:
     if (z["zone"] == use_zone):
         subnet_id = z["subnetId"]
 
-response = emr.run_job_flow(Name=cluster_name,
-                            LogUri=log_uri,
-                            ReleaseLabel=emr_version,
-                            Instances={
-                                'InstanceGroups': instance_groups,
-                                'Ec2KeyName': key_name,
-                                'KeepJobFlowAliveWhenNoSteps': True,
-                                'TerminationProtected': False,
-                                'Ec2SubnetId': subnet_id
-                            },
-                            Steps=[install_mrgeo_step],
-                            BootstrapActions = bootstrap_actions,
-                            Applications=[
-                                #                   {
-                                #                     "Name": "Hadoop"
-                                #                   }
-                                #                   ,
-                                {
-                                    "Name": "Spark"
-                                }
-                            ],
-                            Configurations=[
-                                {
-                                    "Classification": "yarn-site",
-                                    "Properties": {
-                                        "yarn.nodemanager.pmem-check-enabled": "false",
-                                        "yarn.nodemanager.vmem-check-enabled": "false",
-                                        "yarn.scheduler.minimum-allocation-mb": "1024",
-                                        "yarn.app.mapreduce.am.command-opts": "-Xmx820m",
-                                        "yarn.nodemanager.aux-services": "spark_shuffle",
-										# "yarn.scheduler.maximum-allocation-vcores": "128",
-                                        "yarn.nodemanager.aux-services.spark_shuffle.class": "org.apache.spark.network.yarn.YarnShuffleService"
-                                    }
-                                },
-                                {
-                                    "Classification": "mapred-site",
-                                    "Properties": {
-                                        "yarn.app.mapreduce.am.resource.mb" : "1024"
-                                    }
-                                },
-                                #                   {
-                                #                     "Classification": "core-site",
-                                #                     "Properties": {
-                                #                     }
-                                #                   },
-                                {
-                                    "Classification": "spark-defaults",
-                                    "Properties": {
-                                        "spark.yarn.jar": "/usr/lib/spark/lib/spark-assembly.jar",
-                                        "spark.network.timeout": "600",
-                                        "spark.driver.maxResultSize": "0",
-                                        "spark.dynamicAllocation.enabled":"true"
-                                    }
-                                }
-                            ],
-                            JobFlowRole = 'EMR_EC2_DefaultRole',
-                            ServiceRole = 'EMR_DefaultRole',
-                            VisibleToAllUsers = True,
-                            Tags = config["tags"]
-                            )
+job = {}
+job['Name']=cluster_name
+job['LogUri']=log_uri
+job['ReleaseLabel']=emr_version
+job['Instances']={
+              'InstanceGroups': instance_groups,
+              'Ec2KeyName': key_name,
+              'KeepJobFlowAliveWhenNoSteps': True,
+              'TerminationProtected': False,
+              'Ec2SubnetId': subnet_id
+          }
+job['Steps']=[install_mrgeo_step]
+job['BootstrapActions'] = bootstrap_actions
+job['Applications']=[
+                 #                   {
+                 #                     "Name": "Hadoop"
+                 #                   }
+                 #                   ,
+                 {
+                     "Name": "Spark"
+                 }
+             ]
+job['Configurations']=[]
+configs = job['Configurations']
+
+localConfigs = config['localConfiguration']
+
+yarnsite = {"Classification":"yarn-site",
+            "Properties":{
+                "yarn.nodemanager.pmem-check-enabled": "false",
+                "yarn.nodemanager.vmem-check-enabled": "false",
+                "yarn.scheduler.minimum-allocation-mb": "1024",
+                "yarn.app.mapreduce.am.command-opts": "-Xmx820m",
+                "yarn.nodemanager.aux-services": "spark_shuffle",
+                "yarn.scheduler.maximum-allocation-vcores": "10",
+                "yarn.nodemanager.aux-services.spark_shuffle.class": "org.apache.spark.network.yarn.YarnShuffleService"
+                },
+            "Configurations": []
+            }
+yarnsiteprops = yarnsite['Properties']
+if "yarn-site" in localConfigs:
+    print(localConfigs['yarn-site'])
+    for k,v in localConfigs['yarn-site'].iteritems():
+      yarnsiteprops[k] = v
+configs.append(yarnsite)
+
+mapredsite = {"Classification": "mapred-site",
+              "Properties":{
+                  "yarn.app.mapreduce.am.resource.mb" : "1024"
+               },
+              "Configurations": []
+              }
+mapredsiteprops = mapredsite['Properties']
+if "mapred-site" in localConfigs:
+    for k, v in localConfigs['mapred-site'].iteritems():
+        mapredsiteprops[k] = v
+configs.append(mapredsite)
+
+# no core-site here, check the local config section
+if "core-site" in localConfigs:
+    coresite =  {"Classification": "core-site",
+                 "Properties": {},
+                 "Configurations": []
+                 }
+    coresiteprops = coresite['Properties']
+    for k,v in localConfigs['core-site'].iteritems():
+        coresiteprops[k] = v
+    configs.append(coresite)
+
+
+sparkdefaults = {"Classification": "spark-defaults",
+                 "Properties": {
+                     "spark.yarn.jar": "/usr/lib/spark/lib/spark-assembly.jar",
+                     "spark.network.timeout": "600",
+                     "spark.driver.maxResultSize": "0",
+                     "spark.dynamicAllocation.enabled":"true",
+                     },
+                 "Configurations": []
+                 }
+
+sparkdefaultsprops = sparkdefaults['Properties']
+if "spark-defaults" in localConfigs:
+    for k,v in localConfigs['spark-defaults'].iteritems():
+        sparkdefaultsprops[k] = v
+configs.append(sparkdefaults)
+
+
+hadoopenv = {"Classification": "hadoop-env",
+            "Properties": {},
+             "Configurations": [{
+                 "Classification": "export",
+                 "Configurations": [],
+                 "Properties": {
+                     "JAVA_HOME": "/usr/lib/jvm/java-1.8.0"
+                     }
+                 }
+                 ]
+             }
+configs.append(hadoopenv)
+
+sparkenv = {"Classification": "spark-env",
+            "Properties": {},
+            "Configurations": [{
+                "Classification": "export",
+                "Configurations": [],
+                "Properties": {
+                    "JAVA_HOME": "/usr/lib/jvm/java-1.8.0"
+                    }
+                }
+                ]
+            }
+configs.append(sparkenv)
+
+
+job['JobFlowRole'] = 'EMR_EC2_DefaultRole'
+job['ServiceRole'] = 'EMR_DefaultRole'
+job['VisibleToAllUsers'] = True
+job['Tags'] = config["tags"]
+
+response = emr.run_job_flow(**job)
 
 cluster_id = response['JobFlowId']
 

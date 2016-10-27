@@ -16,6 +16,7 @@
 
 package org.mrgeo.data.accumulo.image;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import junit.framework.Assert;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableExistsException;
@@ -62,6 +63,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
     
   } // end setup
   
+  @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "Test")
   @Before
   public void init() throws Exception{
     

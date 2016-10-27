@@ -16,13 +16,11 @@
 
 package org.mrgeo.hdfs.tile;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.fs.*;
 import org.mrgeo.hdfs.partitioners.SplitGenerator;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
 import java.io.*;
-import java.util.Scanner;
 
 public class PartitionerSplit extends Splits
 {

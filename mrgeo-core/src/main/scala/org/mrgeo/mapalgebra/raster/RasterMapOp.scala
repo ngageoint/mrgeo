@@ -156,7 +156,6 @@ abstract class RasterMapOp extends MapOp {
       TMSUtils.tileBounds(meta.getBounds, zoom, tilesize)
     }
 
-    GDALUtils.toDataset(raster, meta.getDefaultValue(0), bounds)
-
+    raster.toDataset(bounds, meta.getDefaultValuesDouble)
   }
 }

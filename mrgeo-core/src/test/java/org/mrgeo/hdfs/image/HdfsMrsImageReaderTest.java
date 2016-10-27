@@ -24,6 +24,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.image.MrsPyramidReaderContext;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.junit.UnitTest;
@@ -32,7 +33,6 @@ import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
@@ -115,7 +115,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   {
     LongRectangle tiles = new LongRectangle(915, 203, 917, 206);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int ndx = 0;
     while(iter.hasNext())
@@ -132,7 +132,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
     LongRectangle tiles = new LongRectangle(Integer.MIN_VALUE, Integer.MIN_VALUE,
         Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int ndx = 0;
     while(iter.hasNext())
@@ -148,7 +148,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   {
     LongRectangle tiles = new LongRectangle(915, 203, Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int ndx = 0;
     while(iter.hasNext())
@@ -165,7 +165,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
     LongRectangle tiles = new LongRectangle(Integer.MIN_VALUE, Integer.MIN_VALUE,
         917, 206);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int ndx = 0;
     while(iter.hasNext())
@@ -181,7 +181,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   {
     LongRectangle tiles = new LongRectangle(915, 203, 917, 204);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int ndx = 0;
     while(iter.hasNext())
@@ -199,7 +199,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
     LongRectangle tiles = new LongRectangle(Integer.MIN_VALUE, Integer.MIN_VALUE,
         917, 204);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int ndx = 0;
     while(iter.hasNext())
@@ -215,7 +215,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   {
     LongRectangle tiles = new LongRectangle(915, 205, 917, 206);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int start = 6;
     int ndx = start;
@@ -234,7 +234,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
     LongRectangle tiles = new LongRectangle(915, 205,
         Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int start = 6;
     int ndx = start;
@@ -253,7 +253,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   {
     LongRectangle tiles = new LongRectangle(915, 210, 917, 215);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int cnt = 0;
     while(iter.hasNext())
@@ -270,7 +270,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   {
     LongRectangle tiles = new LongRectangle(915, 100, 917, 110);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int cnt = 0;
     while(iter.hasNext())
@@ -287,7 +287,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   {
     LongRectangle tiles = new LongRectangle(900, 190, 910, 200);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     int cnt = 0;
     while (iter.hasNext())
@@ -302,7 +302,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetAllTileid() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(208787),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(208787),
         new TileIdWritable(211861));
 
     int ndx = 0;
@@ -317,7 +317,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetAllTileidMinMax() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(Long.MIN_VALUE),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(Long.MIN_VALUE),
         new TileIdWritable(Long.MAX_VALUE));
 
 
@@ -333,7 +333,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetAllTileidMax() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(208787),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(208787),
         new TileIdWritable(Long.MAX_VALUE));
 
     int ndx = 0;
@@ -348,7 +348,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetAllTileidMin() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(Long.MIN_VALUE),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(Long.MIN_VALUE),
         new TileIdWritable(211861));
 
     int ndx = 0;
@@ -363,7 +363,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGet1stHalfTileid() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(208787),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(208787),
         new TileIdWritable(209813));
 
     int ndx = 0;
@@ -379,7 +379,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGet1stHalfTileidMin() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(Long.MIN_VALUE),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(Long.MIN_VALUE),
         new TileIdWritable(209813));
 
     int ndx = 0;
@@ -394,7 +394,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetLastHalfTileid() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(210835),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(210835),
         new TileIdWritable(211861));
 
     int start = 6;
@@ -411,7 +411,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testGetLastHalfTileidMax() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(210835),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(210835),
         new TileIdWritable(Long.MAX_VALUE));
 
     int start = 6;
@@ -429,7 +429,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testTileidGetOutOfBoundsHigh() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(222222),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(222222),
         new TileIdWritable(223222));
 
     int cnt = 0;
@@ -445,7 +445,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   @Category(UnitTest.class)
   public void testTileidGetOutOfBoundsLow() throws Exception
   {
-    KVIterator<TileIdWritable, Raster> iter = reader.get(new TileIdWritable(111111),
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(new TileIdWritable(111111),
         new TileIdWritable(112111));
 
     int cnt = 0;
@@ -465,7 +465,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
       LongRectangle tiles = new LongRectangle(Integer.MIN_VALUE, Integer.MIN_VALUE,
           Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-      KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+      KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
       while(iter.hasNext())
       {
@@ -486,12 +486,12 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
     LongRectangle tiles = new LongRectangle(Integer.MIN_VALUE, Integer.MIN_VALUE,
         Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-    KVIterator<TileIdWritable, Raster> iter = reader.get(tiles);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = reader.get(tiles);
 
     while(iter.hasNext())
     {
       RasterWritable writable = RasterWritable.toWritable(iter.currentValue());
-      Raster raster = reader.toNonWritable(writable);
+      MrGeoRaster raster = reader.toNonWritable(writable);
 
       TestUtils.compareRasters(iter.currentValue(), raster);
 
@@ -508,7 +508,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   public void testGetWithBoundsOutsideToLeft() throws Exception
   {
     Bounds bounds = new Bounds(120.0, -18.0, 122.0, -17.0);
-    KVIterator<Bounds, Raster> results = reader.get(bounds);
+    KVIterator<Bounds, MrGeoRaster> results = reader.get(bounds);
     Assert.assertFalse(results.hasNext());
   }
 
@@ -517,7 +517,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   public void testGetWithBoundsOutsideToRight() throws Exception
   {
     Bounds bounds = new Bounds(150.0, -18.0, 152.0, -17.0);
-    KVIterator<Bounds, Raster> results = reader.get(bounds);
+    KVIterator<Bounds, MrGeoRaster> results = reader.get(bounds);
     Assert.assertFalse(results.hasNext());
   }
 
@@ -526,7 +526,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   public void testGetWithBoundsOutsideAbove() throws Exception
   {
     Bounds bounds = new Bounds(141.5, -16.0, 142.5, -15.0);
-    KVIterator<Bounds, Raster> results = reader.get(bounds);
+    KVIterator<Bounds, MrGeoRaster> results = reader.get(bounds);
     Assert.assertFalse(results.hasNext());
   }
 
@@ -535,7 +535,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   public void testGetWithBoundsOutsideBelow() throws Exception
   {
     Bounds bounds = new Bounds(141.5, -20.0, 142.5, -19.0);
-    KVIterator<Bounds, Raster> results = reader.get(bounds);
+    KVIterator<Bounds, MrGeoRaster> results = reader.get(bounds);
     Assert.assertFalse(results.hasNext());
   }
 
@@ -544,7 +544,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   public void testGetWithBoundsSingleTile() throws Exception
   {
     Bounds bounds = new Bounds(141.8, -18.0, 141.9, -17.9);
-    KVIterator<Bounds, Raster> results = reader.get(bounds);
+    KVIterator<Bounds, MrGeoRaster> results = reader.get(bounds);
     Assert.assertTrue(results.hasNext());
     int count = 0;
     while (results.hasNext())
@@ -559,7 +559,7 @@ public class HdfsMrsImageReaderTest extends LocalRunnerTest
   public void testGetWithBoundsAcrossTiles() throws Exception
   {
     Bounds bounds = new Bounds(141.95, -18.6, 142.1, -18.3);
-    KVIterator<Bounds, Raster> results = reader.get(bounds);
+    KVIterator<Bounds, MrGeoRaster> results = reader.get(bounds);
     int count = 0;
     while (results.hasNext())
     {

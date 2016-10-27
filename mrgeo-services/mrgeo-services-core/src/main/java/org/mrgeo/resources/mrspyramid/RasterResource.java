@@ -17,20 +17,14 @@
 package org.mrgeo.resources.mrspyramid;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONStringer;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapalgebra.MapAlgebraJob;
-import org.mrgeo.resources.job.JobInfoResponse;
-import org.mrgeo.resources.job.JobResponseFormatter;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
-import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,10 +36,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-import java.awt.image.Raster;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URISyntaxException;
 
 //import org.mrgeo.services.mrspyramid.MrsPyramidService;
 
@@ -264,7 +255,7 @@ public Response getImage(@PathParam("output") String imgName,
       }
       // TODO: Need to construct provider properties from the WebRequest using
       // a new security layer and pass those properties.
-      Raster result = renderer.renderImage(imgName, bounds, width, height,
+      MrGeoRaster result = renderer.renderImage(imgName, bounds, width, height,
           SecurityUtils.getProviderProperties(), srs);
 
       if (!(renderer instanceof TiffImageRenderer))

@@ -15,6 +15,7 @@
  */
 package org.mrgeo.colorscale;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import junit.framework.Assert;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -45,6 +46,7 @@ public class ColorScaleManagerTest {
       ColorScaleManager.invalidateCache();
     }
     
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "Force for test")
     @Test(expected = Exception.class)
     @Category(UnitTest.class)
     public void testGetColorScale_ColorScaleBaseDirNotExist() throws Exception

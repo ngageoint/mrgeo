@@ -16,14 +16,14 @@
 
 package org.mrgeo.data.image;
 
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.tile.TileIdWritable;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 
 public interface MrsImageWriter
 {
-  public void append(final TileIdWritable k, final Raster tile) throws IOException;
+  public void append(final TileIdWritable k, final MrGeoRaster tile) throws IOException;
   public void close() throws IOException;
 
   public String getName() throws IOException;

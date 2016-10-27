@@ -17,28 +17,25 @@
 package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
-import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 {
-private static final Logger log = LoggerFactory.getLogger(GeotiffImageResponseWriter.class);
 
 public GeotiffImageResponseWriter()
 {
@@ -63,7 +60,7 @@ public String[] getWmsFormats()
 }
 
 @Override
-public Response.ResponseBuilder write(final Raster raster)
+public Response.ResponseBuilder write(final MrGeoRaster raster)
 {
   try
   {
@@ -87,7 +84,7 @@ public Response.ResponseBuilder write(final Raster raster)
 }
 
 @Override
-public void write(final Raster raster, final HttpServletResponse response)
+public void write(final MrGeoRaster raster, final HttpServletResponse response)
     throws ServletException
 {
   response.setContentType(getResponseMimeType());
@@ -104,7 +101,7 @@ public void write(final Raster raster, final HttpServletResponse response)
 }
 
 @Override
-public Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow,
+public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileColumn, final int tileRow,
     final double scale, final MrsPyramid pyramid)
 {
   try
@@ -134,7 +131,7 @@ public Response.ResponseBuilder write(final Raster raster, final int tileColumn,
 }
 
 @Override
-public void write(final Raster raster, final int tileColumn, final int tileRow,
+public void write(final MrGeoRaster raster, final int tileColumn, final int tileRow,
     final double scale, final MrsPyramid pyramid, final HttpServletResponse response)
     throws ServletException
 {
@@ -158,7 +155,7 @@ public void write(final Raster raster, final int tileColumn, final int tileRow,
 }
 
 @Override
-public Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds)
+public Response.ResponseBuilder write(final MrGeoRaster raster, final String imageName, final Bounds bounds)
 {
   try
   {
@@ -185,7 +182,7 @@ public Response.ResponseBuilder write(final Raster raster, final String imageNam
 }
 
 @Override
-public void write(final Raster raster, final String imageName, final Bounds bounds,
+public void write(final MrGeoRaster raster, final String imageName, final Bounds bounds,
     final HttpServletResponse response) throws ServletException
 {
   response.setContentType(getResponseMimeType());
@@ -203,16 +200,19 @@ public void write(final Raster raster, final String imageName, final Bounds boun
 }
 
 @Override
-public void writeToStream(final Raster raster, double[] defaults, final ByteArrayOutputStream byteStream)
+public void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
     throws IOException
 {
   // no-op. We need a different set so we can write geotiffs (with header info);
 }
 
-private void writeStream(final Raster raster, final Bounds bounds, final double nodata,
+private void writeStream(final MrGeoRaster raster, final Bounds bounds, final double nodata,
     final ByteArrayOutputStream byteStream) throws IOException
 {
-  GDALJavaUtils.saveRaster(raster, byteStream, bounds, nodata);
+  double nodatas[] = new double[raster.bands()];
+  Arrays.fill(nodatas, nodata);
+
+  GDALJavaUtils.saveRaster(raster.toDataset(bounds, nodatas), byteStream, bounds, nodata);
 
   byteStream.close();
 }

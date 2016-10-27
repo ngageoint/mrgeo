@@ -16,13 +16,13 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.utils.tms.Bounds;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
-import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -44,22 +44,22 @@ public interface ImageResponseWriter
 
   String[] getWmsFormats();
 
-  Response.ResponseBuilder write(final Raster raster);
-  void write(final Raster raster, final HttpServletResponse response) throws ServletException;
+  Response.ResponseBuilder write(final MrGeoRaster raster);
+  void write(final MrGeoRaster raster, final HttpServletResponse response) throws ServletException;
   
-  Response.ResponseBuilder write(final Raster raster, double[] defaults);
-  void write(final Raster raster, double[] defaults, final HttpServletResponse response) throws ServletException;
+  Response.ResponseBuilder write(final MrGeoRaster raster, double[] defaults);
+  void write(final MrGeoRaster raster, double[] defaults, final HttpServletResponse response) throws ServletException;
 
-  Response.ResponseBuilder write(final Raster raster, final int tileColumn, final int tileRow, final double scale,
+  Response.ResponseBuilder write(final MrGeoRaster raster, final int tileColumn, final int tileRow, final double scale,
     final MrsPyramid pyramid) throws IOException;
-  void write(final Raster raster, final int tileColumn, final int tileRow, final double scale,
+  void write(final MrGeoRaster raster, final int tileColumn, final int tileRow, final double scale,
              final MrsPyramid pyramid, final HttpServletResponse response) throws ServletException, IOException;
 
-  Response.ResponseBuilder write(final Raster raster, final String imageName, final Bounds bounds);
+  Response.ResponseBuilder write(final MrGeoRaster raster, final String imageName, final Bounds bounds);
 
-  void write(final Raster raster, final String imageName, final Bounds bounds,
+  void write(final MrGeoRaster raster, final String imageName, final Bounds bounds,
     final HttpServletResponse response) throws ServletException;
   
-  void writeToStream(final Raster raster, double[] defaults, final ByteArrayOutputStream byteStream)
+  void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
       throws IOException;
 }

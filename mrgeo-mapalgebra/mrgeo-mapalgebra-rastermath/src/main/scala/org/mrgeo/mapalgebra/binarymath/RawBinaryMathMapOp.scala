@@ -21,7 +21,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
@@ -121,34 +121,36 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     // copy this here to avoid serializing the whole mapop
     val nodatas = meta.getDefaultValues
 
-    val r1 = RasterWritable.toRaster(rdd.first()._2)
+    val r1 = RasterWritable.toMrGeoRaster(rdd.first()._2)
 
-    val outputnodata = if (datatype == r1.getSampleModel.getDataType) {
+    val outputnodata = if (datatype == r1.datatype()) {
       nodatas
     }
     else {
-      Array.fill[Double](r1.getNumBands)(nodata())
+      Array.fill[Double](r1.bands())(nodata())
     }
 
     val answer = RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2)
-      val width = raster.getWidth
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
-      val output = RasterUtils.createEmptyRaster(width, raster.getHeight, raster.getNumBands, datatype())
+      val width = raster.width()
+      val height = raster.height()
+      val bands = raster.bands()
+
+      val output = MrGeoRaster.createEmptyRaster(width, height, bands, datatype())
 
       var b: Int = 0
-      while (b < raster.getNumBands) {
-        val pixels = raster.getSamples(0, 0, width, raster.getHeight, b, null.asInstanceOf[Array[Double]])
+      while (b < bands) {
         var y: Int = 0
-        while (y < raster.getHeight) {
+        while (y < height) {
           var x: Int = 0
           while (x < width) {
-            val v = pixels(y * width + x)
+            val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodatas(b))) {
-              output.setSample(x, y, b, function(const, v))
+              output.setPixel(x, y, b, function(const, v))
             }
             else {
-              output.setSample(x, y, b, outputnodata(b))
+              output.setPixel(x, y, b, outputnodata(b))
             }
 
             x += 1
@@ -176,35 +178,36 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     // copy this here to avoid serializing the whole mapop
     val nodatas = meta.getDefaultValues
 
-    val r1 = RasterWritable.toRaster(rdd.first()._2)
+    val r1 = RasterWritable.toMrGeoRaster(rdd.first()._2)
 
-    val outputnodata = if (datatype == r1.getSampleModel.getDataType) {
+    val outputnodata = if (datatype == r1.datatype()) {
       nodatas
     }
     else {
-      Array.fill[Double](r1.getNumBands)(nodata())
+      Array.fill[Double](r1.bands())(nodata())
     }
 
     val answer = RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2)
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
-      val width = raster.getWidth
+      val width = raster.width()
+      val height = raster.height()
+      val bands= raster.bands()
 
-      val output = RasterUtils.createEmptyRaster(width, raster.getHeight, raster.getNumBands, datatype())
+      val output = MrGeoRaster.createEmptyRaster(width, height, bands, datatype())
 
       var b: Int = 0
-      while (b < raster.getNumBands) {
-        val pixels = raster.getSamples(0, 0, width, raster.getHeight, b, null.asInstanceOf[Array[Double]])
+      while (b < bands) {
         var y: Int = 0
-        while (y < raster.getHeight) {
+        while (y < height) {
           var x: Int = 0
           while (x < width) {
-            val v = pixels(y * width + x)
+            val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodatas(b))) {
-              output.setSample(x, y, b, function(v, const))
+              output.setPixel(x, y, b, function(v, const))
             }
             else {
-              output.setSample(x, y, b, outputnodata(b))
+              output.setPixel(x, y, b, outputnodata(b))
             }
             x += 1
           }
@@ -226,32 +229,32 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     val rdd1 = raster1.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster1.getClass.getName))
     val rdd2 = raster2.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster2.getClass.getName))
 
-    val r1 = RasterWritable.toRaster(rdd1.first()._2)
-    val r2 = RasterWritable.toRaster(rdd2.first()._2)
+    val r1 = RasterWritable.toMrGeoRaster(rdd1.first()._2)
+    val r2 = RasterWritable.toMrGeoRaster(rdd2.first()._2)
 
     // copy this here to avoid serializing the whole mapop
     val nodata1 = raster1.metadata() match {
     case Some(metadata) => metadata.getDefaultValues
     case _ =>
-      Array.fill[Double](r1.getNumBands)(Double.NaN)
+      Array.fill[Double](r1.bands())(Double.NaN)
     }
     val nodata2 = raster2.metadata() match {
     case Some(metadata) => metadata.getDefaultValues
     case _ =>
-      Array.fill[Double](r2.getNumBands)(Double.NaN)
+      Array.fill[Double](r2.bands())(Double.NaN)
     }
 
-    val outputnodata = if (datatype == r1.getSampleModel.getDataType) {
+    val outputnodata = if (datatype == r1.datatype()) {
       nodata1
     }
-    else if (datatype == r2.getSampleModel.getDataType) {
+    else if (datatype == r2.datatype()) {
       nodata2
     }
     else {
-      Array.fill[Double](r1.getNumBands)(nodata())
+      Array.fill[Double](r1.bands())(nodata())
     }
 
-    val convertr1 = r1.getSampleModel.getDataType != datatype
+    val convertr1 = r1.datatype() != datatype
     //val convertr2 = r2.getSampleModel.getDataType != datatype || !(nodata1 sameElements nodata2)
 
     // group the RDDs
@@ -264,38 +267,36 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       // if raster 1 or 2 is missing, we can't do the binary math
       if (iter1.nonEmpty && iter2.nonEmpty) {
         // we know there are only 1 item in each group's iterator, so we can use head()
-        val raster1 = RasterWritable.toRaster(iter1.head)
-        val raster2 = RasterWritable.toRaster(iter2.head)
+        val raster1 = RasterWritable.toMrGeoRaster(iter1.head)
+        val raster2 = RasterWritable.toMrGeoRaster(iter2.head)
 
         val output = if (convertr1) {
-          RasterUtils.createEmptyRaster(raster1.getWidth, raster1.getHeight, raster1.getNumBands, datatype())
+          MrGeoRaster.createEmptyRaster(raster1.width(), raster1.height(), raster1.bands(), datatype())
         }
         else {
-          RasterUtils.makeRasterWritable(raster1)
+          raster1
         }
 
-        val width = raster1.getWidth
+        val width = raster1.width()
         var b: Int = 0
-        while (b < raster1.getNumBands) {
-          val pixels1 = raster1.getSamples(0, 0, width, raster1.getHeight, b, null.asInstanceOf[Array[Double]])
-          val pixels2 = raster2.getSamples(0, 0, width, raster2.getHeight, b, null.asInstanceOf[Array[Double]])
+        while (b < raster1.bands()) {
           var y: Int = 0
-          while (y < raster1.getHeight) {
+          while (y < raster1.height()) {
             var x: Int = 0
             while (x < width) {
-              val v1 = pixels1(y * width + x)
+              val v1 = raster1.getPixelDouble(x, y, b)
               if (RasterMapOp.isNotNodata(v1, nodata1(b))) {
-                val v2 = pixels2(y * width + x)
+                val v2 = raster2.getPixelDouble(x, y, b)
                 if (RasterMapOp.isNotNodata(v2, nodata2(b))) {
-                  output.setSample(x, y, b, function(v1, v2))
+                  output.setPixel(x, y, b, function(v1, v2))
                 }
                 else {
                   // if raster2 is nodata, we need to set raster1's pixel to nodata as well
-                  output.setSample(x, y, b, outputnodata(b))
+                  output.setPixel(x, y, b, outputnodata(b))
                 }
               }
               else if (convertr1) {
-                output.setSample(x, y, b, outputnodata(b))
+                output.setPixel(x, y, b, outputnodata(b))
               }
               x += 1
             }

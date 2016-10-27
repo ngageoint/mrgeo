@@ -44,7 +44,7 @@ public class VersionService {
         {
             props.load( getClass().getClassLoader().getResourceAsStream("version.properties") );
         }
-        catch (IOException e)
+        catch (Exception e)
         {
             log.error("Version error: " + e.getMessage(), e);
         }

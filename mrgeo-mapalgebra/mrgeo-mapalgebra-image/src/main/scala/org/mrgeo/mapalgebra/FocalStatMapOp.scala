@@ -4,6 +4,7 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
 import org.apache.spark.SparkConf
+import org.mrgeo.data.raster.MrGeoRaster
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
@@ -150,16 +151,16 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     }
   }
 
-  override def computePixelValue(rasterValues: Array[Double], notnodata: Array[Boolean],
+  override def computePixelValue(raster: MrGeoRaster, notnodata: MrGeoRaster,
                                  outNoData: Double, rasterWidth: Int,
-                                 processX: Int, processY: Int,
+                                 processX: Int, processY: Int, processBand: Int,
                                  xLeftOffset: Int, neighborhoodWidth: Int,
                                  yAboveOffset: Int, neighborhoodHeight: Int, tileId: Long): Double = {
     var x: Int = processX - xLeftOffset
     val maxX = x + neighborhoodWidth
     var y: Int = processY - yAboveOffset
     val maxY = y + neighborhoodHeight
-    val processPixel: Double = rasterValues(calculateRasterIndex(rasterWidth, processX, processY))
+    val processPixel: Double = raster.getPixelDouble(processX, processY, processBand)
     var sum: Double = 0.0
     if (neighborhoodValues == null) {
       neighborhoodValues = Array.ofDim[Double](neighborhoodWidth * neighborhoodHeight)
@@ -168,9 +169,8 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     while (y < maxY) {
       x = processX - xLeftOffset
       while (x < maxX) {
-        val index = calculateRasterIndex(rasterWidth, x, y)
-        if (notnodata(index)) {
-          neighborhoodValues(neighborhoodValueIndex) = rasterValues(index)
+        if (notnodata.getPixelByte(x, y, 0) == 1) {
+          neighborhoodValues(neighborhoodValueIndex) = raster.getPixelDouble(x, y, processBand)
           neighborhoodValueIndex += 1
         }
         else if (!ignoreNoData) {

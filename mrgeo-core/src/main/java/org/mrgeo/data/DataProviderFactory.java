@@ -510,17 +510,9 @@ private static class VectorLoader implements Callable<VectorDataProvider>
   @Override
   public VectorDataProvider call() throws Exception
   {
-    System.out.println("VectorDataProvider.call()");
-    System.out.flush();
-
     initialize(conf);
 
-    System.out.println("VectorDataProvider 1");
-    System.out.flush();
-
     final VectorDataProviderFactory factory = findFactory();
-    System.out.println("VectorDataProvider 2");
-    System.out.flush();
     if (accessMode == AccessMode.READ)
     {
       if (factory != null)
@@ -535,8 +527,6 @@ private static class VectorLoader implements Callable<VectorDataProvider>
           {
             log.debug("Factory " + factory.getClass().getName() + " is able to open vector " + name);
           }
-          System.out.println("VectorDataProvider 3");
-          System.out.flush();
           return factory.createVectorDataProvider(prefix, name, props);
         }
         else
@@ -1061,18 +1051,12 @@ public static VectorDataProvider getVectorDataProvider(final String name,
     AccessMode accessMode,
     ProviderProperties providerProperties) throws DataProviderNotFound
 {
-  System.out.println("DataProviderFactory.getVectorDataProvider() 3");
-  System.out.flush();
-
   return getVectorDataProvider(name, accessMode, getBasicConfig(), providerProperties);
 }
 
 public static VectorDataProvider getVectorDataProvider( final String name,
     AccessMode accessMode, final Configuration conf) throws DataProviderNotFound
 {
-  System.out.println("DataProviderFactory.getVectorDataProvider() 2");
-  System.out.flush();
-
   return getVectorDataProvider(name, accessMode, conf,
       loadProviderPropertiesFromConfig(conf));
 }
@@ -1083,9 +1067,6 @@ private static VectorDataProvider getVectorDataProvider(final String name,
     final Configuration conf,
     final ProviderProperties providerProperties) throws DataProviderNotFound
 {
-  System.out.println("DataProviderFactory.getVectorDataProvider() 3");
-  System.out.flush();
-
   try
   {
     // Make sure that vector resources are cached uniquely by user
@@ -1097,8 +1078,6 @@ private static VectorDataProvider getVectorDataProvider(final String name,
     {
       vectorProviderCache.invalidate(cacheKey);
     }
-    System.out.println("getVectorDataProvider.get - in cache if no calls to VectorDataProvider.call() following");
-    System.out.flush();
     return vectorProviderCache.get(cacheKey,
         new VectorLoader(name, accessMode, conf, providerProperties));
   }

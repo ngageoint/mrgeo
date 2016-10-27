@@ -11,7 +11,7 @@ class RasterMapOpTestSupport(TestCase):
         # Import the raster map op test support class and all other needed classes
         java_import(jvm, "org.mrgeo.core.*")
         java_import(jvm, "org.mrgeo.data.*")
-        java_import(jvm, "org.mrgeo.data.raster.RasterWritable")
+        java_import(jvm, "org.mrgeo.data.raster.*")
         java_import(jvm, "org.mrgeo.mapalgebra.utils.StandaloneRasterMapOpTestSupport")
         java_import(jvm, "org.mrgeo.mapalgebra.raster.RasterMapOp")
         java_import(jvm, "org.apache.spark.rdd.RDD")
@@ -66,7 +66,7 @@ class RasterMapOpTestSupport(TestCase):
             tileId = raster._1().get()
             if tileId in verifiers:
                 verifier = verifiers.pop(tileId, None)
-                verifier(tileId, self._jvm.RasterWritable.toRaster(raster._2()))
+                verifier(tileId, self._jvm.RasterWritable.toMrGeoRaster(raster._2()))
         if (failOnMissingKey and len(verifiers) != 0):
             self.fail("Keys missing from RDD: {0}".format(verifiers.keys()))
 
@@ -79,9 +79,9 @@ class RasterMapOpTestSupport(TestCase):
         self.verifyRasters(rdd, verifiers)
 
     def verifyRasterhasImageInitialData(self, tileId, raster, imageInitialData):
-        width = raster.getWidth();
-        height = raster.getHeight();
-        bands = raster.getNumBands();
+        width = raster.width()
+        height = raster.height()
+        bands = raster.bands()
 
         # Loop over every band.
         for b in range(bands):
@@ -121,7 +121,7 @@ class RasterMapOpTestSupport(TestCase):
         rtPx = pixelRightTop.getPx()
         rtPy = pixelRightTop.getPy()
 
-        bands = raster.getNumBands();
+        bands = raster.bands()
 
         # capture max and min for expected data check
         minX = 0
@@ -170,9 +170,9 @@ class RasterMapOpTestSupport(TestCase):
                                 "Raster did not have expected data within the bounds")
 
     def forEachSampleInRaster(self, raster, fun):
-        width = raster.getWidth();
-        height = raster.getHeight();
-        bands = raster.getNumBands();
+        width = raster.width()
+        height = raster.height()
+        bands = raster.bands()
 
         # Loop over every sample.
         for b in range(bands):
