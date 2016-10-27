@@ -432,7 +432,7 @@ object GDALUtils extends Logging {
   private def initializeGDAL() = {
     // Monkeypatch the system library path to use the gdal paths (for loading the gdal libraries
     MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, "").
-        split(File.pathSeparator).foreach(path => {
+        split(File.pathSeparator).reverse.foreach(path => {
       ClassLoaderUtil.addLibraryPath(path)
     })
 
@@ -450,6 +450,16 @@ object GDALUtils extends Logging {
     if (drivers == 0) {
       log.error("GDAL libraries were not loaded!  This probibly an error.")
     }
+
+    log.info(gdal.VersionInfo("--version"))
+    println(gdal.VersionInfo("--version"))
+
+    val klass = classOf[gdal]
+    val location = klass.getResource('/' + klass.getName().replace('.', '/') + ".class");    osr.UseExceptions()
+    log.info("GDAL jar location: " + location)
+    println("GDAL jar location: " + location)
+
+    println("Java library path: " + System.getProperty("java.library.path"));
 
     if (log.isDebugEnabled) {
       log.debug("GDAL Drivers supported:")
