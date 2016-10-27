@@ -470,8 +470,9 @@ class JobArguments() extends Logging {
     }
 
     // if we only have 1 executor, we may need to lower the cores by 1 to reserve space for the driver
-    if ((origExecutors == 1) && (cores > 1) && (cores * executors >= origCores)) {
+    if ((origExecutors == 1) && (cores > 1)) {
       cores = cores - 1
+      mem /= 2
     }
 
     println("Adjusting job parameters - adjusted to min/max values: " + executors + " executors (workers) " +
