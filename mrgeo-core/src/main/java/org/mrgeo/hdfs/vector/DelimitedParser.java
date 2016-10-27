@@ -101,7 +101,17 @@ public class DelimitedParser implements Externalizable
     String wktGeometry = null;
     Map<String, String> attrs = new HashMap<>();
 
-    String[] values = split(line, delimiter, encapsulator);
+    // if there is only 1 column, we don't need to split
+    String[] values;
+    if (attributeNames.size() == 1)
+    {
+      // use the whole line, but still take out the encapsulator
+      values = split(line, '\n', encapsulator);
+    }
+    else
+    {
+      values = split(line, delimiter, encapsulator);
+    }
     if (values.length == 0)
     {
       log.info("Values empty. Weird.");

@@ -15,15 +15,10 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by ericwood on 6/14/16.
- */
 public class HdfsMrsImageReaderBuilder {
     private HdfsMrsImageReader hdfsMrsImageReader;
     private List<MapFile.Reader> mapFileReaders = new ArrayList<>();
-    private int maxPartitions;
     private boolean canBeCached;
-    private int partitionIndex;
     private int zoom;
 
     public HdfsMrsImageReaderBuilder() {

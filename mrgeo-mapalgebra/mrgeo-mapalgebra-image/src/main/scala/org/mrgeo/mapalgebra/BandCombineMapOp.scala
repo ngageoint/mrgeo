@@ -21,7 +21,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
@@ -162,27 +162,27 @@ class BandCombineMapOp extends RasterMapOp with Externalizable {
 
     rasterRDD = Some(RasterRDD(groups.map(group => {
 
-      val dst = RasterUtils.createEmptyRaster(tilesize, tilesize, totalbands, tiletype, nodata)
+      val dst = MrGeoRaster.createEmptyRaster(tilesize, tilesize, totalbands, tiletype, nodata)
       var startband = 0
       for (wr <- group._2) {
         if (wr != null && wr.nonEmpty) {
-          val raster = RasterWritable.toRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
+          val raster = RasterWritable.toMrGeoRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
 
           var y: Int = 0
-          while (y < raster.getHeight) {
+          while (y < raster.height()) {
             var x: Int = 0
-            while (x < raster.getWidth) {
+            while (x < raster.width()) {
               var b: Int = 0
-              while (b < raster.getNumBands) {
-                val v = raster.getSampleDouble(x, y, b)
-                dst.setSample(x, y, startband + b, v)
+              while (b < raster.bands()) {
+                val v = raster.getPixelDouble(x, y, b)
+                dst.setPixel(x, y, startband + b, v)
                 b += 1
               }
               x += 1
             }
             y += 1
           }
-          startband += raster.getNumBands
+          startband += raster.bands()
         }
       }
 

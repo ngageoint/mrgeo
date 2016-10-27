@@ -238,12 +238,26 @@ public static void addLibraryPath(final String pathToAdd) throws Exception {
         }
 
         //add the new path
-        final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
-        newPaths[newPaths.length - 1] = pathToAdd;
+        final String[] newPaths = new String[paths.length + 1];
+        System.arraycopy(paths, 0, newPaths, 1, paths.length);
+        //final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
+        newPaths[0] = pathToAdd;
         usrPathsField.set(null, newPaths);
+
+
+        System.setProperty("java.library.path", StringUtils.join(newPaths, ":"));
+        final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
+        sysPathsField.setAccessible(true);
+        sysPathsField.set(null, null);
+
+
         return true;
       }
       catch (IllegalAccessException e)
+      {
+        return false;
+      }
+      catch (NoSuchFieldException e)
       {
         return false;
       }

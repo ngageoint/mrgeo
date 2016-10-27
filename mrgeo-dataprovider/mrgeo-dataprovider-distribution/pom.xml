@@ -19,11 +19,11 @@
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo-dataprovider</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>mrgeo-dataprovider-distribution</artifactId>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.2.0-SNAPSHOT</version>
   <name>mrgeo-dataprovider-distribution</name>
   <packaging>jar</packaging>
   <licenses>
@@ -136,7 +136,7 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-dataprovider-accumulo</artifactId>
-      <version>1.1.0-SNAPSHOT</version>
+      <version>1.2.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>

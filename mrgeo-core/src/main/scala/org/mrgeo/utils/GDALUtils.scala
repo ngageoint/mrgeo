@@ -16,7 +16,7 @@
 
 package org.mrgeo.utils
 
-import java.awt.image._
+import java.awt.image.DataBuffer
 import java.io._
 import java.net.URI
 import java.nio._
@@ -33,7 +33,6 @@ import org.gdal.gdalconst.gdalconstConstants
 import org.gdal.ogr.ogr
 import org.gdal.osr.{CoordinateTransformation, SpatialReference, osr, osrConstants}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
-import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
@@ -43,7 +42,7 @@ import scala.collection.JavaConversions._
 
 
 class GDALException extends IOException  {
-  private var origException: Exception = null
+  private var origException: Exception = _
 
   def this(e: Exception) {
     this()
@@ -140,7 +139,12 @@ object GDALUtils extends Logging {
       if (nodatas != null) {
         var i: Int = 1
         while (i <= dataset.getRasterCount) {
-          val nodata: Double = nodatas(i - 1)
+          val nodata: Double = if (i < nodatas.length) {
+            nodatas(i - 1)
+          }
+          else {
+            nodatas(nodatas.length - 1)
+          }
           val band: Band = dataset.GetRasterBand(i)
           band.Fill(nodata)
           band.SetNoDataValue(nodata)
@@ -153,48 +157,6 @@ object GDALUtils extends Logging {
     null
   }
 
-  def toDataset(raster: Raster, nodata: Double = Double.NegativeInfinity,
-      bounds:Bounds = null): Dataset = {
-    val nodatas = if (nodata == Double.NegativeInfinity) null else Array.fill[Double](raster.getNumBands)(nodata)
-    toDataset(raster, nodatas, bounds)
-  }
-
-  def toDataset(raster: Raster, nodatas: Array[Double],
-      bounds: Bounds): Dataset = {
-    val datatype = toGDALDataType(raster.getTransferType)
-
-    val ds = GDALUtils.createEmptyMemoryRaster(raster.getWidth, raster.getHeight, raster.getNumBands, datatype, nodatas)
-
-    if (ds != null) {
-      copyToDataset(ds, raster)
-
-      val xform = new Array[Double](6)
-      if (bounds != null) {
-
-        xform(0) = bounds.w
-        xform(1) = bounds.width / ds.getRasterXSize
-        xform(2) = 0
-        xform(3) = bounds.n
-        xform(4) = 0
-        xform(5) = -bounds.height / ds.getRasterYSize
-
-        ds.SetProjection(GDALUtils.EPSG4326)
-      }
-      else
-      {
-        xform(0) = 0
-        xform(1) = ds.getRasterXSize
-        xform(2) = 0
-        xform(3) = 0
-        xform(4) = 0
-        xform(5) = -ds.getRasterYSize
-      }
-
-      ds.SetGeoTransform(xform)
-    }
-
-    ds
-  }
 
   def toGDALDataType(rasterType: Int): Int = {
     rasterType match {
@@ -221,85 +183,6 @@ object GDALUtils extends Logging {
     }
   }
 
-  def toRaster(image: Dataset):Raster = {
-    val bands: Int = image.getRasterCount
-
-    val bandlist = Array.range(1, image.getRasterCount + 1)
-
-    val datatype = image.GetRasterBand(1).getDataType
-    val pixelsize = gdal.GetDataTypeSize(datatype) / 8
-
-    val width = image.getRasterXSize
-    val height = image.getRasterYSize
-
-    val pixelstride = pixelsize * bands
-    val linestride = pixelstride * width
-
-    val rastersize = linestride * height
-
-    val data: ByteBuffer = ByteBuffer.allocateDirect(rastersize)
-    data.order(ByteOrder.nativeOrder)
-
-    // read the data interleaved (it _should_ be much more efficient reading)
-    image.ReadRaster_Direct(0, 0, width, height, width, height, datatype, data,
-      bandlist, pixelstride, linestride, pixelsize)
-
-    data.rewind
-
-    toRaster(height, width, bands, datatype, data)
-  }
-
-  def toRaster(height: Int, width: Int, bands: Int, gdaldatatype: Int, data: Array[Byte]): Raster = {
-    toRaster(height, width, bands, gdaldatatype, ByteBuffer.wrap(data))
-  }
-
-  def toRaster(height: Int, width: Int, bands: Int, gdaldatatype: Int, data: ByteBuffer): Raster = {
-    val datatype = toRasterDataBufferType(gdaldatatype)
-    val bandbytes = height * width * (gdal.GetDataTypeSize(gdaldatatype) / 8)
-
-    val databytes = bandbytes * bands
-    val bandoffsets = Array.range(0, bands)
-
-    // keep the raster interleaved
-    val sm = new PixelInterleavedSampleModel(datatype, width, height, bands, bands * width, bandoffsets)
-
-    val db =
-      datatype match {
-      case DataBuffer.TYPE_BYTE =>
-        val bytedata: Array[Byte] = new Array[Byte](databytes)
-        data.get(bytedata)
-        new DataBufferByte(bytedata, bytedata.length)
-      case DataBuffer.TYPE_FLOAT =>
-        val floatbuff: FloatBuffer = data.asFloatBuffer
-        val floatdata: Array[Float] = new Array[Float](databytes / RasterUtils.FLOAT_BYTES)
-        floatbuff.get(floatdata)
-        new DataBufferFloat(floatdata, floatdata.length)
-      case DataBuffer.TYPE_DOUBLE =>
-        val doublebuff: DoubleBuffer = data.asDoubleBuffer
-        val doubledata: Array[Double] = new Array[Double](databytes / RasterUtils.DOUBLE_BYTES)
-        doublebuff.get(doubledata)
-        new DataBufferDouble(doubledata, doubledata.length)
-      case DataBuffer.TYPE_INT =>
-        val intbuff: IntBuffer = data.asIntBuffer
-        val intdata: Array[Int] = new Array[Int](databytes / RasterUtils.INT_BYTES)
-        intbuff.get(intdata)
-        new DataBufferInt(intdata, intdata.length)
-      case DataBuffer.TYPE_SHORT =>
-        val shortbuff: ShortBuffer = data.asShortBuffer
-        val shortdata: Array[Short] = new Array[Short](databytes / RasterUtils.SHORT_BYTES)
-        shortbuff.get(shortdata)
-        new DataBufferShort(shortdata, shortdata.length)
-      case DataBuffer.TYPE_USHORT =>
-        val ushortbuff: ShortBuffer = data.asShortBuffer
-        val ushortdata: Array[Short] = new Array[Short](databytes / RasterUtils.SHORT_BYTES)
-        ushortbuff.get(ushortdata)
-        new DataBufferUShort(ushortdata, ushortdata.length)
-      case _ =>
-        throw new GDALException("Error trying to read raster.  Bad raster data type")
-      }
-
-    Raster.createWritableRaster(sm, db, null)
-  }
 
   def swapBytes(bytes: Array[Byte], gdaldatatype: Int) = {
 
@@ -514,7 +397,7 @@ object GDALUtils extends Logging {
   }
 
   @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Temp file used for writing to OutputStream")
-  def saveRaster(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
+  def saveRaster(raster: Dataset, output:Either[String, OutputStream],
       bounds:Bounds = null, nodata:Double = Double.NegativeInfinity,
       format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit =  {
 
@@ -523,39 +406,8 @@ object GDALUtils extends Logging {
     case Right(stream) => File.createTempFile("tmp-file", "").getCanonicalPath
     }
 
-    val dataset = raster match {
-    case Left(r) =>
-      val ds = toDataset(r, nodata)
 
-      val xform = new Array[Double](6)
-
-      if (bounds != null) {
-        xform(0) = bounds.w
-        xform(1) = bounds.width / ds.getRasterXSize
-        xform(2) = 0
-        xform(3) = bounds.n
-        xform(4) = 0
-        xform(5) = -bounds.height / ds.getRasterYSize
-
-        ds.SetProjection(GDALUtils.EPSG4326)
-      }
-      else
-      {
-        xform(0) = 0
-        xform(1) = ds.getRasterXSize
-        xform(2) = 0
-        xform(3) = 0
-        xform(4) = 0
-        xform(5) = -ds.getRasterYSize
-      }
-
-      ds.SetGeoTransform(xform)
-
-      ds
-    case Right(d) => d
-    }
-
-    saveRaster(dataset, filename, format, options)
+    saveRaster(raster, filename, format, bounds, options)
 
     output match {
     case Right(stream) =>
@@ -567,87 +419,20 @@ object GDALUtils extends Logging {
     case _ =>
     }
 
-    raster match {
-    case Left(r) => dataset.delete()
-    case Right(d) =>
-    }
-
   }
 
-  def saveRasterTile(raster:Either[Raster, Dataset], output:Either[String, OutputStream],
+  def saveRasterTile(raster: Dataset, output:Either[String, OutputStream],
       tx:Long, ty:Long, zoom:Int, nodata:Double = Double.NegativeInfinity,
       format:String = "GTiff", options:Array[String] = Array.empty[String]): Unit = {
-
-    val tilesize = raster match {
-    case Left(r) => r.getWidth
-    case Right(d) => d.getRasterXSize
-    }
-
-    val bounds = TMSUtils.tileBounds(tx, ty, zoom, tilesize)
+    val bounds = TMSUtils.tileBounds(tx, ty, zoom, raster.getRasterXSize)
 
     saveRaster(raster, output, bounds, nodata, format, options)
-  }
-
-  private def copyToDataset(ds: Dataset, raster: Raster) {
-    val datatype = GDALUtils.toGDALDataType(raster.getTransferType)
-    val bands = raster.getNumBands
-
-    val width = raster.getWidth
-    val height = raster.getHeight
-
-    val bandlist = Array.range(1, raster.getNumBands + 1)
-
-    val pixelsize = gdal.GetDataTypeSize(datatype) / 8
-    val pixelstride = pixelsize * bands
-    val linestride = pixelstride * width
-    val bandstride = pixelsize
-
-    ds.SetProjection(GDALUtils.EPSG4326)
-
-    val imagesize = pixelsize.toLong * linestride * height
-    if (imagesize < 2147483648L) {
-      val elements = raster.getDataElements(raster.getMinX, raster.getMinY, raster.getWidth, raster.getHeight, null)
-
-      val bytes = ByteBuffer.allocateDirect(imagesize.toInt)
-      bytes.order(ByteOrder.nativeOrder)
-
-      elements match {
-      case bb: Array[Byte] => bytes.put(bb)
-      case sb: Array[Short] => bytes.asShortBuffer().put(sb)
-      case ib: Array[Int] => bytes.asIntBuffer().put(ib)
-      case fb: Array[Float] => bytes.asFloatBuffer().put(fb)
-      case db: Array[Double] => bytes.asDoubleBuffer().put(db)
-      }
-
-      bytes.rewind()
-      ds.WriteRaster_Direct(0, 0, width, height, width, height, datatype, bytes, bandlist,
-        pixelstride, linestride, bandstride)
-    }
-    else {
-      val bytes: ByteBuffer = ByteBuffer.allocateDirect(linestride.toInt)
-      bytes.order(ByteOrder.nativeOrder)
-      var y: Int = 0
-      while (y < height) {
-        bytes.rewind()
-        val elements: AnyRef = raster.getDataElements(raster.getMinX, raster.getMinY + y, raster.getWidth, 1, null)
-        elements match {
-        case bb: Array[Byte] => bytes.put(bb)
-        case sb: Array[Short] => bytes.asShortBuffer().put(sb)
-        case ib: Array[Int] => bytes.asIntBuffer().put(ib)
-        case fb: Array[Float] => bytes.asFloatBuffer().put(fb)
-        case db: Array[Double] => bytes.asDoubleBuffer().put(db)
-        }
-        ds.WriteRaster_Direct(0, y, width, 1, width, 1, datatype, bytes, bandlist, pixelstride, linestride,
-          bandstride)
-        y += 1
-      }
-    }
   }
 
   private def initializeGDAL() = {
     // Monkeypatch the system library path to use the gdal paths (for loading the gdal libraries
     MrGeoProperties.getInstance().getProperty(MrGeoConstants.GDAL_PATH, "").
-        split(File.pathSeparator).foreach(path => {
+        split(File.pathSeparator).reverse.foreach(path => {
       ClassLoaderUtil.addLibraryPath(path)
     })
 
@@ -666,6 +451,16 @@ object GDALUtils extends Logging {
       log.error("GDAL libraries were not loaded!  This probibly an error.")
     }
 
+    log.info(gdal.VersionInfo("--version"))
+    println(gdal.VersionInfo("--version"))
+
+    val klass = classOf[gdal]
+    val location = klass.getResource('/' + klass.getName().replace('.', '/') + ".class");    osr.UseExceptions()
+    log.info("GDAL jar location: " + location)
+    println("GDAL jar location: " + location)
+
+    println("Java library path: " + System.getProperty("java.library.path"));
+
     if (log.isDebugEnabled) {
       log.debug("GDAL Drivers supported:")
 
@@ -681,7 +476,7 @@ object GDALUtils extends Logging {
     }
   }
 
-  private def saveRaster(ds:Dataset, file:String, format:String, options:Array[String]): Unit = {
+  private def saveRaster(ds:Dataset, file:String, format:String, bounds:Bounds, options:Array[String]): Unit = {
     val fmt = mapType(format)
     val driver = gdal.GetDriverByName(fmt)
 
@@ -705,6 +500,57 @@ object GDALUtils extends Logging {
     }
 
     val copy: Dataset = driver.CreateCopy(file, ds, 1, moreoptions)
+
+    // add the bounds, if sent in.  Reproject if needed
+    val xform: Array[Double] = new Array[Double](6)
+    if (bounds != null) {
+      val proj = ds.GetProjection()
+      if (proj.length > 0) {
+
+        val dst = new SpatialReference(proj)
+        val src = new SpatialReference(EPSG4326)
+
+        val tx = new CoordinateTransformation(src, dst)
+
+        var c1: Array[Double] = null
+        var c2: Array[Double] = null
+        var c3: Array[Double] = null
+        var c4: Array[Double] = null
+
+        if (tx != null) {
+          c1 = tx.TransformPoint(bounds.w, bounds.n)
+          c2 = tx.TransformPoint(bounds.e, bounds.s)
+          c3 = tx.TransformPoint(bounds.e, bounds.n)
+          c4 = tx.TransformPoint(bounds.w, bounds.s)
+        }
+
+        val xformed = new Bounds(Math.min(Math.min(c1(0), c2(0)), Math.min(c3(0), c4(0))),
+          Math.min(Math.min(c1(1), c2(1)), Math.min(c3(1), c4(1))),
+          Math.max(Math.max(c1(0), c2(0)), Math.max(c3(0), c4(0))),
+          Math.max(Math.max(c1(1), c2(1)), Math.max(c3(1), c4(1))))
+
+
+        xform(0) = xformed.w
+        xform(1) = xformed.width / copy.GetRasterXSize()
+        xform(2) = 0
+        xform(3) = xformed.n
+        xform(4) = 0
+        xform(5) = -xformed.height / copy.GetRasterYSize()
+
+        copy.SetProjection(proj)
+      }
+      else {
+        xform(0) = bounds.w
+        xform(1) = bounds.width / copy.GetRasterXSize()
+        xform(2) = 0
+        xform(3) = bounds.n
+        xform(4) = 0
+        xform(5) = -bounds.height / copy.GetRasterYSize()
+
+        copy.SetProjection(EPSG4326)
+      }
+      copy.SetGeoTransform(xform)
+    }
 
     if (pamEnabled != null) {
       gdal.SetConfigOption(GDAL_PAM_ENABLED, pamEnabled)

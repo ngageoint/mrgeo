@@ -16,9 +16,9 @@
 
 package org.mrgeo.kernel
 
-import java.awt.image.Raster
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
+import org.mrgeo.data.raster.MrGeoRaster
 import org.mrgeo.utils.Logging
 
 abstract class Kernel(var kernelWidth:Int, var kernelHeight:Int) extends Externalizable with Logging {
@@ -29,7 +29,7 @@ abstract class Kernel(var kernelWidth:Int, var kernelHeight:Int) extends Externa
   def getKernel:Option[Array[Float]]
   def get2DKernel:Option[Array[Array[Float]]]
 
-  def calculate(tileId:Long, tile:Raster, nodatas:Array[Double]):Option[Raster]
+  def calculate(tileId:Long, tile:MrGeoRaster, nodatas:Array[Double]):Option[MrGeoRaster]
 
   def this() = {
     this(-1, -1)

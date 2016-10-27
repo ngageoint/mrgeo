@@ -20,7 +20,7 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
@@ -64,34 +64,33 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
 
     val rdd = input.get.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + input.getClass.getName))
 
-    val r = RasterWritable.toRaster(rdd.first()._2)
-    val convert = datatype() != DataBuffer.TYPE_UNDEFINED && r.getSampleModel.getDataType != datatype()
+    val r = RasterWritable.toMrGeoRaster(rdd.first()._2)
+    val convert = datatype() != DataBuffer.TYPE_UNDEFINED && r.datatype() != datatype()
 
     // copy this here to avoid serializing the whole mapop
     val nodatas = meta.getDefaultValues
 
     val outputnodata = if (convert)  Array.fill[Double](meta.getBands)(nodata()) else nodatas
-    val outputdatatype = if (convert) datatype() else r.getSampleModel.getDataType
+    val outputdatatype = if (convert) datatype() else r.datatype()
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2)
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
-      val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, outputdatatype)
+      val output = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), raster.bands(), outputdatatype)
 
-      val width = raster.getWidth
+      val width = raster.width()
       var b: Int = 0
-      while (b < raster.getNumBands) {
-        val pixels = raster.getSamples(0, 0, width, raster.getHeight, b, null.asInstanceOf[Array[Double]])
+      while (b < raster.bands()) {
         var y: Int = 0
-        while (y < raster.getHeight) {
+        while (y < raster.height()) {
           var x: Int = 0
           while (x < width) {
-            val v = pixels(y * width + x)
+            val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodatas(b))) {
-              output.setSample(x, y, b, function(v))
+              output.setPixel(x, y, b, function(v))
             }
             else {
-              output.setSample(x, y, b, outputnodata(b))
+              output.setPixel(x, y, b, outputnodata(b))
             }
             x += 1
           }

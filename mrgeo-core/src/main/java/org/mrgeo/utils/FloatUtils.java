@@ -176,4 +176,26 @@ public static boolean isNotNodata(double v, double nodata)
   return !isEqual(v, nodata, 1);
 }
 
+
+public static boolean isNodata(float v, float nodata)
+{
+  if (Float.isNaN(nodata))
+  {
+    return Float.isNaN(v);
+  }
+
+  return isEqual(v, nodata, 1);
+}
+
+
+public static boolean isNotNodata(float v, float nodata)
+{
+  if (Float.isNaN(nodata))
+  {
+    return !Float.isNaN(v);
+  }
+
+  return !isEqual(v, nodata, 1);
+}
+
 }

@@ -8,7 +8,7 @@
   "tilesize" : 512,
   "bands" : 1,
   "defaultValues" : [ -9999.0 ],
-  "tileType" : 0,
+  "tileType" : 4,
   "maxZoomLevel" : 10,
   "stats" : [ {
     "min" : 0.0,

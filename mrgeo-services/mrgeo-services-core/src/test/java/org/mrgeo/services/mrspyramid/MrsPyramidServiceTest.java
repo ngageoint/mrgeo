@@ -15,26 +15,23 @@
  */
 package org.mrgeo.services.mrspyramid;
 
-import org.apache.commons.io.FilenameUtils;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TestName;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.junit.UnitTest;
-import org.mrgeo.resources.mrspyramid.ColorScaleResourceTest;
-import org.mrgeo.resources.mrspyramid.RasterResourceTest;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
 
-import java.awt.image.Raster;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -45,16 +42,14 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author Steve Ingram
- *         Date: 10/26/13
- */
 @SuppressWarnings("static-method")
 public class MrsPyramidServiceTest {
+@Rule
+public TestName testname = new TestName();
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = false;
+private final static boolean GEN_BASELINE_DATA_ONLY = false;
 
 private static String islandsElevation = "IslandsElevation-v2-2";
 private static String islandsElevationColorScale = "IslandsElevation-v2-2-color-scale";
@@ -64,17 +59,24 @@ private static String islandsElevationColorScale_unqualified = islandsElevationC
 private static String islandsElevationNoPyramid_unqualified = islandsElevationNoPyramid;
 private static String islandsElevationNonExistant = "IslandsElevation-Non-Existent";
 // bounds is completely outside of the image bounds
-public final static String ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS = "160.312500,-12.656250,161.718750,-11.250000";
+private final static String ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS = "160.312500,-12.656250,161.718750,-11.250000";
 // bounds is within the image bounds and results in a single source tile being
 // accessed;
 // zoom level = 8
-public final static String ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE = "160.312500,-11.250000,163.125000,-8.437500";
+private final static String ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE = "160.312500,-11.250000,163.125000,-8.437500";
 // bounds is within the image bounds and results in multiple source tiles
 // being accessed;
 // zoom level = 9
-public final static String ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES = "160.312500,-11.250000,161.718750,-9.843750";
+private final static String ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES = "160.312500,-11.250000,161.718750,-9.843750";
 
+private TestUtils testutils;
 public MrsPyramidServiceTest() {
+}
+
+@Before
+public void setUp() throws Exception
+{
+  testutils = new TestUtils(MrsPyramidServiceTest.class);
 }
 
 @Test
@@ -112,23 +114,44 @@ public void testFormatValue()
 @Category(UnitTest.class)
 public void testCreateColorSwatch() throws Exception
 {
-  String input = TestUtils.composeInputDir(ColorScaleResourceTest.class);
+  String format = "png";
   MrsPyramidService testInstance = new MrsPyramidService(new Properties());
   int width = 100;
   int height = 10;
 
-  Raster ri = testInstance.createColorScaleSwatch(createRainbowColorScale(), "png", width, height);
-  assertEquals(ri.getWidth(), width);
-  assertEquals(ri.getHeight(), height);
-  TestUtils.compareRasters(new File(input + "colorswatch.png"), ri);
+  MrGeoRaster ri = testInstance.createColorScaleSwatch(createRainbowColorScale(), format, width, height);
 
-  width = 20;
-  height = 200;
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testutils.saveBaselineRaster(testname.getMethodName(), ri, format);
+  }
+  else
+  {
+    testutils.compareRasters(testname.getMethodName(), ri, format);
+  }
 
-  ri = testInstance.createColorScaleSwatch(createRainbowColorScale(), "png", width, height);
-  assertEquals(ri.getWidth(), width);
-  assertEquals(ri.getHeight(), height);
-  TestUtils.compareRasters(new File(input + "colorswatchvertical.png"), ri);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCreateColorSwatchVertical() throws Exception
+{
+  String format = "png";
+  MrsPyramidService testInstance = new MrsPyramidService(new Properties());
+  int width = 20;
+  int height = 200;
+
+  MrGeoRaster ri = testInstance.createColorScaleSwatch(createRainbowColorScale(), "png", width, height);
+
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testutils.saveBaselineRaster(testname.getMethodName(), ri, format);
+  }
+  else
+  {
+    testutils.compareRasters(testname.getMethodName(), ri, format);
+  }
+
 }
 
 private ColorScale createRainbowColorScale() throws ColorScaleException {
@@ -154,7 +177,7 @@ public void testGetRasterNonExistent() throws Exception
   testIslandsElevationFor("jpeg",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevationNonExistant, null, "testGetRasterJpgMultipleSourceTiles.jpg");
+      islandsElevationNonExistant, null);
 }
 
 @Test
@@ -165,8 +188,7 @@ public void testGetRasterJpgMultipleSourceTilesAspectColorScale() throws Excepti
   testIslandsElevationFor("jpeg",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevation_unqualified, getAspectColorScale(),
-      "testGetRasterJpgMultipleSourceTilesAspectColorScale.jpg");
+      islandsElevation_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -177,8 +199,7 @@ public void testGetRasterJpgMultipleSourceTilesAspectColorScaleWithZoom() throws
   testIslandsElevationFor("jpeg",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevation_unqualified, getAspectColorScale(), 8,
-      "testGetRasterJpgMultipleSourceTilesAspectColorScale.jpg");
+      islandsElevation_unqualified, getAspectColorScale(), 8);
 }
 
 
@@ -190,8 +211,7 @@ public void testGetRasterJpgSingleSourceTileAspectColorScale() throws Exception
   testIslandsElevationFor("jpeg",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getAspectColorScale(),
-      "testGetRasterJpgSingleSourceTileAspectColorScale.jpg");
+      islandsElevation_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -202,8 +222,7 @@ public void testGetRasterJpgSingleSourceTileAspectColorScaleWithZoom() throws Ex
   testIslandsElevationFor("jpeg",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getAspectColorScale(), 7,
-      "testGetRasterJpgSingleSourceTileAspectColorScale.jpg");
+      islandsElevation_unqualified, getAspectColorScale(), 7);
 }
 
 @Test
@@ -211,10 +230,10 @@ public void testGetRasterJpgSingleSourceTileAspectColorScaleWithZoom() throws Ex
 public void testGetRasterOutOfBoundsJpgWithZoom() throws Exception
 {
   // test out of bounds jpg
-  testIslandsElevationFor("jpg",
+  testIslandsElevationFor("jpeg",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
-      islandsElevation_unqualified, getAspectColorScale(), -1, "testGetRasterOutOfBoundsJpg.jpg");
+      islandsElevation_unqualified, getAspectColorScale(), -1);
 }
 
 @Test
@@ -224,7 +243,7 @@ public void testGetRasterOutOfBoundsPng() throws Exception
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
-      islandsElevation_unqualified, getAspectColorScale(), "testGetRasterOutOfBoundsPng.png");
+      islandsElevation_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -235,7 +254,7 @@ public void testGetRasterOutOfBoundsPngWithZoom() throws Exception
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
-      islandsElevation_unqualified, getAspectColorScale(), -1, "testGetRasterOutOfBoundsPng.png");
+      islandsElevation_unqualified, getAspectColorScale(), -1);
 }
 
 @Test
@@ -245,7 +264,7 @@ public void testGetRasterOutOfBoundsTif() throws Exception
   testIslandsElevationFor("tiff",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
-      islandsElevation_unqualified, getAspectColorScale(), "testGetRasterOutOfBoundsTif.tif");
+      islandsElevation_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -256,7 +275,7 @@ public void testGetRasterOutOfBoundsTifWithZoom() throws Exception
   testIslandsElevationFor("tiff",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS,
-      islandsElevation_unqualified, getAspectColorScale(), -1, "testGetRasterOutOfBoundsTif.tif");
+      islandsElevation_unqualified, getAspectColorScale(), -1);
 }
 
 @Test
@@ -266,7 +285,7 @@ public void testGetRasterPngLargerThanTileSize() throws Exception
   testIslandsElevationFor("png",
       "1024", "1024",
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getDefaultColorScale(), "testGetRasterPngLargerThanTileSize.png");
+      islandsElevation_unqualified, getDefaultColorScale());
 }
 
 @Test
@@ -276,7 +295,7 @@ public void testGetRasterPngMultipleSourceTiles() throws Exception
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevation_unqualified, getDefaultColorScale(), "testGetRasterPngMultipleSourceTiles.png");
+      islandsElevation_unqualified, getDefaultColorScale());
 }
 
 @Test
@@ -287,8 +306,7 @@ public void testGetRasterPngMultipleSourceTilesWithAspectColorScale() throws Exc
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevation_unqualified, getAspectColorScale(),
-      "testGetRasterPngMultipleSourceTilesWithAspectColorScale.png");
+      islandsElevation_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -299,8 +317,7 @@ public void testGetRasterPngMultipleSourceTilesWithColorScale() throws Exception
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevationColorScale_unqualified, getDefaultColorScale(),
-      "testGetRasterPngMultipleSourceTilesWithColorScale.png");
+      islandsElevationColorScale_unqualified, getDefaultColorScale());
 }
 
 @Test
@@ -311,8 +328,7 @@ public void testGetRasterPngMultipleSourceTilesWithColorScaleWithZoom() throws E
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevationColorScale_unqualified, getDefaultColorScale(), 8,
-      "testGetRasterPngMultipleSourceTilesWithColorScale.png");
+      islandsElevationColorScale_unqualified, getDefaultColorScale(), 8);
 }
 
 @Test
@@ -323,7 +339,7 @@ public void testGetRasterPngMultipleSourceTilesWithZoom() throws Exception
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevation_unqualified, getDefaultColorScale(), 8, "testGetRasterPngMultipleSourceTiles.png");
+      islandsElevation_unqualified, getDefaultColorScale(), 8);
 }
 
 @Test
@@ -334,8 +350,7 @@ public void testGetRasterPngNonExistingZoomLevelAboveWithoutPyramids() throws Ex
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevationNoPyramid_unqualified, getAspectColorScale(),
-      "testGetRasterPngNonExistingZoomLevelAboveWithoutPyramids.png");
+      islandsElevationNoPyramid_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -343,7 +358,7 @@ public void testGetRasterPngNonExistingZoomLevelAboveWithoutPyramids() throws Ex
 public void testGetRasterPngRectangularTileSize() throws Exception
 {
   testIslandsElevationFor("png", "700", "300", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getDefaultColorScale(), "testGetRasterPngRectangularTileSize.png");
+      islandsElevation_unqualified, getDefaultColorScale());
 }
 
 @Test
@@ -353,7 +368,7 @@ public void testGetRasterPngSingleSourceTile() throws Exception
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getDefaultColorScale(), "testGetRasterPngSingleSourceTile.png");
+      islandsElevation_unqualified, getDefaultColorScale());
 }
 
 @Test
@@ -364,8 +379,7 @@ public void testGetRasterPngSingleSourceTileWithAspectColorScale() throws Except
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getAspectColorScale(),
-      "testGetRasterPngSingleSourceTileWithAspectColorScale.png");
+      islandsElevation_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -376,8 +390,7 @@ public void testGetRasterPngSingleSourceTileWithAspectColorScaleWithZoom() throw
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getAspectColorScale(), 7,
-      "testGetRasterPngSingleSourceTileWithAspectColorScale.png");
+      islandsElevation_unqualified, getAspectColorScale(), 7);
 }
 
 @Test
@@ -388,8 +401,7 @@ public void testGetRasterPngSingleSourceTileWithColorScale() throws Exception
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevationColorScale_unqualified, getDefaultColorScale(),
-      "testGetRasterPngSingleSourceTileWithColorScale.png");
+      islandsElevationColorScale_unqualified, getDefaultColorScale());
 }
 
 @Test
@@ -400,8 +412,7 @@ public void testGetRasterPngSingleSourceTileWithColorScaleWithZoom() throws Exce
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevationColorScale_unqualified, getDefaultColorScale(), 7,
-      "testGetRasterPngSingleSourceTileWithColorScale.png");
+      islandsElevationColorScale_unqualified, getDefaultColorScale(), 7);
 }
 
 @Test
@@ -412,7 +423,7 @@ public void testGetRasterPngSingleSourceTileWithZoom() throws Exception
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getDefaultColorScale(), 7, "testGetRasterPngSingleSourceTile.png");
+      islandsElevation_unqualified, getDefaultColorScale(), 7);
 }
 
 @Test
@@ -423,7 +434,7 @@ public void testGetRasterTifMultipleSourceTiles() throws Exception
   testIslandsElevationFor("tiff",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevation_unqualified, getAspectColorScale(), "testGetRasterTifMultipleSourceTiles.tif");
+      islandsElevation_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -434,7 +445,7 @@ public void testGetRasterTifMultipleSourceTilesWithZoom() throws Exception
   testIslandsElevationFor("tiff",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevation_unqualified, getAspectColorScale(), 8, "testGetRasterTifMultipleSourceTiles.tif");
+      islandsElevation_unqualified, getAspectColorScale(), 8);
 }
 
 @Test
@@ -445,7 +456,7 @@ public void testGetRasterTifSingleSourceTile() throws Exception
   testIslandsElevationFor("tiff",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getAspectColorScale(), "testGetRasterTifSingleSourceTile.tif");
+      islandsElevation_unqualified, getAspectColorScale());
 }
 
 @Test
@@ -456,7 +467,7 @@ public void testGetRasterTifSingleSourceTileWithZoom() throws Exception
   testIslandsElevationFor("tiff",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getAspectColorScale(), 7, "testGetRasterTifSingleSourceTile.tif");
+      islandsElevation_unqualified, getAspectColorScale(), 7);
 }
 
 
@@ -468,8 +479,7 @@ public void testGetRasterPngMultipleSourceTilesWithAspectColorScaleWithZoom() th
   testIslandsElevationFor("png",
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
-      islandsElevation_unqualified, getAspectColorScale(), 8,
-      "testGetRasterPngMultipleSourceTilesWithAspectColorScale.png");
+      islandsElevation_unqualified, getAspectColorScale(), 8);
 }
   /*
    * TODO: move these color scale related tests to a new test or merge with the
@@ -478,15 +488,14 @@ public void testGetRasterPngMultipleSourceTilesWithAspectColorScaleWithZoom() th
 
 private void testIslandsElevationFor(String format, final String width,
     final String height, final String bbox,
-    final String reqImgName, final String colorScale, final int zoomLevel,
-    final String goldenImgName) throws Exception
+    final String reqImgName, final String colorScale, final int zoomLevel) throws Exception
 {
   ColorScale cs = null;
   Properties mrgeoProperties = MrGeoProperties.getInstance();
   Properties unusedMrgeoProperties = new Properties();
-  mrgeoProperties.put(MrGeoConstants.MRGEO_COMMON_HOME, TestUtils.composeInputDir(RasterResourceTest.class));
-  mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class));
-  mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(RasterResourceTest.class) + "color-scales");
+  mrgeoProperties.put(MrGeoConstants.MRGEO_COMMON_HOME, testutils.getInputLocal());
+  mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, "file://" + testutils.getInputLocal());
+  mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + testutils.getInputLocal() + "color-scales");
   MrsPyramidService service = new MrsPyramidService(unusedMrgeoProperties);
 
   String[] bBoxValues = bbox.split(",");
@@ -508,11 +517,6 @@ private void testIslandsElevationFor(String format, final String width,
   if (colorScale != null)
   {
     cs = service.getColorScaleFromJSON(colorScale);
-  } else {
-    // TODO: Not sure if the following is correct. It used to get the color scale
-    // defined for the pyramid itself. That is no longer supported.
-//      cs = service.getColorScaleFromPyramid(pyramidPathStr);
-//      cs = ColorScaleManager.fromJSON(getDefaultColorScale());
   }
 
 
@@ -522,43 +526,36 @@ private void testIslandsElevationFor(String format, final String width,
       throw new IllegalArgumentException("Zoom level " + zoomLevel + " is not in pyramid " + reqImgName);
     }
   }
-  String goldenPathStr = TestUtils.composeInputDir(RasterResourceTest.class) + goldenImgName;
 
   ImageRenderer renderer = service.getImageRenderer(format);
-  Raster result = renderer.renderImage(reqImgName, bounds, w, h, null, null);
+  MrGeoRaster result = renderer.renderImage(reqImgName, bounds, w, h, null, null);
 
   double[] extrema = renderer.getExtrema();
   if ( !format.equalsIgnoreCase("TIFF") )
     result = service.applyColorScaleToImage(format, result, cs, renderer, extrema);
 
-  // saving a jpeg to disk recompresses the data, so the golden image will not be the
-  // same as the in-memory copy.  We'll save the image in a lossless format (png) so
-  // the compare is valid.
+  // if we are jpeg, we sant to use the golden image as a png, because jpeg compression may deliver different
+  // results after saving/loading
   if (format.equalsIgnoreCase("jpeg"))
   {
-    goldenPathStr = FilenameUtils.removeExtension(goldenPathStr) + ".png";
-    format = "PNG";
+    format = "png";
   }
+
   if (GEN_BASELINE_DATA_ONLY)
   {
-    TestUtils.saveRaster(result, format, goldenPathStr);
+    testutils.saveBaselineRaster(testname.getMethodName(), result, format);
   }
   else
   {
-    Raster golden = GDALUtils.toRaster(GDALUtils.open(goldenPathStr));
-
-//    TestUtils.saveRaster(golden, format,
-//        FilenameUtils.removeExtension(goldenPathStr) + "-golden." + FilenameUtils.getExtension(goldenPathStr));
-
-    TestUtils.compareRasters(golden, result);
+    testutils.compareRasters(testname.getMethodName(), result, format);
   }
 }
 
 private void testIslandsElevationFor(final String format, final String width,
     final String height, final String bbox,
-    final String reqImgName, final String colorScale, final String goldenImgName) throws Exception
+    final String reqImgName, final String colorScale) throws Exception
 {
-  testIslandsElevationFor(format, width, height, bbox, reqImgName, colorScale, -1, goldenImgName);
+  testIslandsElevationFor(format, width, height, bbox, reqImgName, colorScale, -1);
 }
 
 private String getDefaultColorScale() throws IOException
@@ -605,7 +602,7 @@ private String getDefaultColorScale() throws IOException
   color6.put("value", "1.0");
   color6.put("color", "255,0,0");
 
-  final ArrayList<Map<String, String>> colors = new ArrayList<Map<String, String>>();
+  final ArrayList<Map<String, String>> colors = new ArrayList<>();
   colors.add(color1);
   colors.add(color2);
   colors.add(color3);
@@ -618,8 +615,7 @@ private String getDefaultColorScale() throws IOException
   return mapper.writeValueAsString(colorScale);
 }
 
-private String getAspectColorScale() throws JsonGenerationException, JsonMappingException,
-    IOException
+private String getAspectColorScale() throws IOException
 {
   // create colorScale json
   final ObjectMapper mapper = new ObjectMapper();

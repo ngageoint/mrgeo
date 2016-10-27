@@ -75,8 +75,6 @@ public class HdfsVectorDataProviderFactory implements VectorDataProviderFactory
   @Override
   public VectorDataProvider createVectorDataProvider(String prefix, String input, ProviderProperties providerProperties)
   {
-    System.out.println("HdfsVectorDataProvider.createVectorDataProvider()");
-    System.out.flush();
     return new HdfsVectorDataProvider(getConf(), prefix, input, providerProperties);
   }
 

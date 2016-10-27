@@ -2,7 +2,6 @@ package org.mrgeo.hdfs.tile;
 
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
@@ -22,9 +21,6 @@ import java.util.Scanner;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Created by ericwood on 6/21/16.
- */
 public class FileSplitTest {
     private FileSplit subject;
 

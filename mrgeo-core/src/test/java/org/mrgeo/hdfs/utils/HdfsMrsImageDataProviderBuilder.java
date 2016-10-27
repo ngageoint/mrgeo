@@ -1,16 +1,13 @@
 package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.fs.Path;
-import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by ericwood on 6/16/16.

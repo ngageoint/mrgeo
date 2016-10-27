@@ -21,13 +21,13 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.utils.DocumentUtils;
-import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.services.wcs.DescribeCoverageDocumentGenerator;
 import org.mrgeo.services.wcs.WcsCapabilities;
 import org.mrgeo.utils.XmlUtils;
@@ -46,7 +46,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -60,7 +59,7 @@ public class WcsGenerator
 {
 private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 
-public static final String WCS_VERSION = "1.1.0";
+private static final String WCS_VERSION = "1.1.0";
 private static final String WCS_SERVICE = "wcs";
 
 private Version version = new Version(WCS_VERSION);
@@ -365,7 +364,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
 
 
   String crs;
-  Bounds bounds = null;
+  Bounds bounds;
   try
   {
     if (version.isLess("1.1.0"))
@@ -423,7 +422,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   try
   {
     log.info("Rendering " + layer);
-    Raster result = renderer.renderImage(layer, bounds, width, height, providerProperties, crs);
+    MrGeoRaster result = renderer.renderImage(layer, bounds, width, height, providerProperties, crs);
 
     log.info("Generating response");
     Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory

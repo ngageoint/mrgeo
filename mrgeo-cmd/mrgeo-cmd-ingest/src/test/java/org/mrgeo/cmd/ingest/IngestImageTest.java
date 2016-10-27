@@ -51,6 +51,10 @@ public class IngestImageTest
 {
   @Rule public TestName testname = new TestName();
 
+// only set this to true to generate new baseline images after correcting tests; image comparison
+// tests won't be run when is set to true
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
+
   private static TestUtils testUtils;
 
   private static String input;
@@ -58,8 +62,8 @@ public class IngestImageTest
   private static Path outputHdfs;
 
   private final static String all_ones = "all-ones";
-  private static String all_ones_input = Defs.INPUT + all_ones + ".tif";
-  private static String all_ones_output;
+  private String all_ones_input = Defs.INPUT + all_ones + ".tif";
+  private String all_ones_output;
   private final static String aster_sample = "AsterSample";
 
   private static Configuration conf;
@@ -92,10 +96,6 @@ public class IngestImageTest
 
     HadoopFileUtils.copyToHdfs(input, inputHdfs, aster_sample);
 
-    File file = new File(all_ones_input);
-    all_ones_input = "file://" + file.getAbsolutePath();
-
-    all_ones_output = new Path(outputHdfs, all_ones).toString();
   }
 
   @After
@@ -136,6 +136,9 @@ public class IngestImageTest
   {
     providerProperties = null;
 
+    File file = new File(all_ones_input);
+    all_ones_input = "file://" + file.getAbsolutePath();
+
     // tack on the test name to the output
     all_ones_output = new Path(outputHdfs, testname.getMethodName()).toString();
   }
@@ -171,6 +174,8 @@ public class IngestImageTest
     LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
     long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
     Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+
+    testUtils.compareRasterToConstant(testname.getMethodName(), 1.0);
   }
   
   @Test
@@ -209,6 +214,9 @@ public class IngestImageTest
     LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
     long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
     Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+
+    testUtils.compareRasterToConstant(testname.getMethodName(), 1.0);
+
   }
   
   @Test
@@ -247,6 +255,8 @@ public class IngestImageTest
     LongRectangle tb = metadata.getTileBounds(metadata.getMaxZoomLevel());
     long numTiles = (tb.getMaxX() - tb.getMinX() + 1) * (tb.getMaxY() - tb.getMinY() + 1);
     Assert.assertEquals("Wrong number of tiles", 12L, numTiles);
+
+    testUtils.compareRasterToConstant(testname.getMethodName(), 1.0);
   }
   
   @Test
@@ -277,6 +287,8 @@ public class IngestImageTest
       image = pyramid.getImage(level);
       Assert.assertNull("MrsImage found for level " + level, image);
     }
+
+    testUtils.compareRasterToConstant(testname.getMethodName(), 1.0);
   }
 
   @Test
@@ -295,20 +307,21 @@ public class IngestImageTest
     Assert.assertEquals(-1, res);
     Assert.assertTrue("Unexpected output: " + outContent.toString(),
         outContent.toString().contains("Missing required option: pl"));
+
   }
 
-  // ignored because it _always_ times out during the 0.20.2 integration tests...
-  @Ignore
-  @Test(timeout=250000)
+  @Test
   @Category(IntegrationTest.class)
-  public void ingestPerformanceRegression() throws Exception
+  public void ingestAster() throws Exception
   {
+    int zoom = 6;
+
     String inputAster = new Path(inputHdfs, aster_sample).toString();
-    String outputAster = new Path(outputHdfs, aster_sample).toString();
-    String[] args = { inputAster, "-o", outputAster, "-sp", "-l" };
+    String outputAster = new Path(outputHdfs, testname.getMethodName()).toString();
+    String[] args = { inputAster, "-o", outputAster, "-sp" , "-nd" , "-32767", "-sk", "-z", Integer.toString(zoom)};
     int res= new IngestImage().run(args, conf, providerProperties);
 
-    Assert.assertEquals("IngestImageOld command exited with error", 0, res);
+    Assert.assertEquals("IngestImage command exited with error", 0, res);
     
     MrsPyramid pyramid = MrsPyramid.open(outputAster, providerProperties);
     Assert.assertNotNull("MrsPyramid not loaded", pyramid);
@@ -316,7 +329,7 @@ public class IngestImageTest
     MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("MrsPyramid metadata not loaded", metadata);
     
-    Assert.assertEquals("Wrong max zoom level", 12, metadata.getMaxZoomLevel());
+    Assert.assertEquals("Wrong max zoom level", zoom, metadata.getMaxZoomLevel());
     
     MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
     Assert.assertNotNull("MrsImage image missing for level " + metadata.getMaxZoomLevel(), image);
@@ -327,6 +340,16 @@ public class IngestImageTest
       image = pyramid.getImage(level);
       Assert.assertNull("MrsImage found for level " + level, image);
     }
+
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      testUtils.saveBaselineTif(testname.getMethodName());
+    }
+    else
+    {
+      testUtils.compareRasters(testname.getMethodName());
+    }
+
   }
 
 }

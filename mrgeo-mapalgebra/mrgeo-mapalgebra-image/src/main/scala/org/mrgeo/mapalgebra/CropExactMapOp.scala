@@ -17,7 +17,7 @@
 package org.mrgeo.mapalgebra
 
 import org.apache.spark.rdd.RDD
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
@@ -95,16 +95,19 @@ class CropExactMapOp extends CropMapOp {
         minCopyY = t
       }
 
-      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
       var y: Int = 0
-      while (y < raster.getHeight) {
+      val h = raster.height()
+      val w = raster.width()
+      val bands = raster.bands()
+      while (y < h) {
         var x: Int = 0
-        while (x < raster.getWidth) {
+        while (x < w) {
           var b: Int = 0
-          while (b < raster.getNumBands) {
+          while (b < bands) {
             if (x < minCopyX || x > maxCopyX || y < minCopyY || y > maxCopyY) {
-              raster.setSample(x, y, b, nodatas(b))
+              raster.setPixel(x, y, b, nodatas(b))
             }
             b += 1
           }

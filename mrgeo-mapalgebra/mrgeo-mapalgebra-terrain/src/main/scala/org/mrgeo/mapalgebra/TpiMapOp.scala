@@ -16,9 +16,7 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{WritableRaster, Raster}
-
-import org.mrgeo.image.MrsPyramidMetadata
+import org.mrgeo.data.raster.MrGeoRaster
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 
@@ -60,9 +58,9 @@ class TpiMapOp extends RawFocalMapOp
     inputMapOp = input
   }
 
-  override protected def computePixelValue(rasterValues: Array[Double], notnodata: Array[Boolean],
+  override protected def computePixelValue(raster: MrGeoRaster, notnodata: MrGeoRaster,
                                            outNoData: Double, rasterWidth: Int,
-                                           processX: Int, processY: Int,
+                                           processX: Int, processY: Int, processBand: Int,
                                            xLeftOffset: Int, neighborhoodWidth: Int,
                                            yAboveOffset: Int, neighborhoodHeight: Int, tileId: Long): Double =
   {
@@ -70,16 +68,16 @@ class TpiMapOp extends RawFocalMapOp
     val maxX = x + neighborhoodWidth
     var y: Int = processY - yAboveOffset
     val maxY = y + neighborhoodHeight
-    val processPixel: Double = rasterValues(calculateRasterIndex(rasterWidth, processX, processY))
+    val processPixel = raster.getPixelDouble(processX, processY, processBand)
     var sum: Double = 0.0
     var count: Int = 0
     while (y < maxY) {
       x = processX - xLeftOffset
       while (x < maxX) {
         if (x != processX || y != processY) {
-          if (notnodata(y * rasterWidth + x)) {
+          if (notnodata.getPixelByte(x, y, 0) == 1) {
             count += 1
-            sum += rasterValues(calculateRasterIndex(rasterWidth, x, y))
+            sum += raster.getPixelDouble(x, y, processBand)
           }
         }
         x += 1

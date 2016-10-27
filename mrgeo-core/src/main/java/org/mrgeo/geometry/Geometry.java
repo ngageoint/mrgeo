@@ -35,27 +35,27 @@ public interface Geometry extends Serializable
     POINT, LINESTRING, LINEARRING, POLYGON, COLLECTION
   }
 
-  public WritableGeometry createWritableClone();
-  public WritableGeometry asWritable();
+  WritableGeometry createWritableClone();
+  WritableGeometry asWritable();
 
-  public Map<String, String> getAllAttributes();
-  public TreeMap<String, String> getAllAttributesSorted();
-  public String getAttribute(String key);
-  public boolean hasAttribute(String key);
-  public boolean hasAttribute(String key, String value);
+  Map<String, String> getAllAttributes();
+  TreeMap<String, String> getAllAttributesSorted();
+  String getAttribute(String key);
+  boolean hasAttribute(String key);
+  boolean hasAttribute(String key, String value);
 
-  public Bounds getBounds();
+  Bounds getBounds();
 
-  public boolean isValid();
-  public boolean isEmpty();
+  boolean isValid();
+  boolean isEmpty();
 
-  public com.vividsolutions.jts.geom.Geometry toJTS();
+  com.vividsolutions.jts.geom.Geometry toJTS();
 
-  public Type type();
+  Type type();
 
-  public Geometry clip(Bounds bbox);
-  public Geometry clip(Polygon geom);
+  Geometry clip(Bounds bbox);
+  Geometry clip(Polygon geom);
   
-  public void write(DataOutputStream stream) throws IOException;
-  public void writeAttributes(DataOutputStream stream) throws IOException;
+  void write(DataOutputStream stream) throws IOException;
+  void writeAttributes(DataOutputStream stream) throws IOException;
 }

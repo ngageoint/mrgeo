@@ -24,6 +24,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -36,6 +37,7 @@ import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsPyramidReaderContext;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
@@ -49,7 +51,6 @@ import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -427,13 +428,19 @@ public class AccumuloMrsImageReader extends MrsImageReader
     return true;
   }
 
-  protected Raster toNonWritable(byte[] val, CompressionCodec codec, Decompressor decompressor)
+  protected MrGeoRaster toNonWritable(byte[] val, CompressionCodec codec, Decompressor decompressor)
       throws IOException
   {
+    DataInputBuffer dib = new DataInputBuffer();
+    dib.reset(val, val.length);
+
+    RasterWritable rw = new RasterWritable();
+    rw.readFields(dib);
+
     if(codec == null || decompressor == null){
-      return RasterWritable.toRaster(new RasterWritable(val));
+      return RasterWritable.toMrGeoRaster(rw);
     }
-    return RasterWritable.toRaster(new RasterWritable(val), codec, decompressor);
+    return RasterWritable.toMrGeoRaster(rw, codec, decompressor);
   }
 
   @Override
@@ -470,7 +477,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
   public boolean exists(final TileIdWritable key){
 
     // TODO: scan for the item
-    Raster t = get(key);
+    MrGeoRaster t = get(key);
     if(t != null){
       return true;
     } else {
@@ -487,7 +494,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
    * @return iterator through all rasters for an image
    */
   @Override
-  public KVIterator<TileIdWritable, Raster> get()
+  public KVIterator<TileIdWritable, MrGeoRaster> get()
   {
     return get(null, null);
   } // end get()
@@ -499,7 +506,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
    * @return an iterator over the rasters needed to satisfy request
    */
   @Override
-  public KVIterator<TileIdWritable, Raster> get(final LongRectangle tileBounds){
+  public KVIterator<TileIdWritable, MrGeoRaster> get(final LongRectangle tileBounds){
 
     // TODO: make this work for specific varying ranges that will come out of this request
 
@@ -519,7 +526,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
    * @param bounds is a bounding box to be used for queries
    */
   @Override
-  public KVIterator<Bounds, Raster> get(final Bounds bounds){
+  public KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds){
 
     //TODO: make this bounds request work
 //    TileBounds tileBounds = TMSUtils.boundsToTile(bounds,
@@ -538,7 +545,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
    * @return the raster of the data
    */
   @Override
-  public Raster get(final TileIdWritable key)
+  public MrGeoRaster get(final TileIdWritable key)
   {
     log.debug("getting single (no zoom level) tile of id = " + key.get());
 
@@ -589,7 +596,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
    * @return an iterator through the list of items to pull
    */
   @Override
-  public KVIterator<TileIdWritable, Raster> get(final TileIdWritable startKey,
+  public KVIterator<TileIdWritable, MrGeoRaster> get(final TileIdWritable startKey,
                                            final TileIdWritable endKey)
   {
 
@@ -683,7 +690,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
      * it is important to realize that the core does not work like a traditional
      * iterator.  This is just the way they did it.
      */
-    return new KVIterator<TileIdWritable, Raster>()
+    return new KVIterator<TileIdWritable, MrGeoRaster>()
     {
       //final Iterator<Entry<Key, Value>> it = batchScanner.iterator();
       final Iterator<Map.Entry<Key, Value>> it = scanner.iterator();
@@ -702,7 +709,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
       } // end currentKey
 
       @Override
-      public Raster currentValue()
+      public MrGeoRaster currentValue()
       {
         try
         {
@@ -739,7 +746,7 @@ public class AccumuloMrsImageReader extends MrsImageReader
 
 
       @Override
-      public Raster next()
+      public MrGeoRaster next()
       {
         try
         {

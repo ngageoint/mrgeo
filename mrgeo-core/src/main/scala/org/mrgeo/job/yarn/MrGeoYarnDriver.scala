@@ -125,9 +125,10 @@ class MrGeoYarnDriver {
     args += "--driver-cores"
     args += "1"
 
+    // since in YARN, the driver is just another executor, we give it the same memory as a worker.  Anything
+    // less would just be wasted, unused memory.
     args += "--driver-memory"
-    // don't need that much memory on the driver...
-    args += "1024m" // SparkUtils.kbtohuman(job.executorMemKb, "m")
+    args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
     args += "--name"
     if (job.name != null && job.name.length > 0) {
