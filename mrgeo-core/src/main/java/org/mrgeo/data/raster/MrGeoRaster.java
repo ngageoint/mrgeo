@@ -389,7 +389,7 @@ final public void copyFrom(int srcx, int srcy, int width, int height, MrGeoRaste
 }
 
 final public void copyFrom(int srcx, int srcy, int srcBand, int width, int height, MrGeoRaster src,
-                           int dstx, int dsty, int dstBand)
+    int dstx, int dsty, int dstBand)
 {
   for (int yy = 0; yy < height; yy++)
   {
@@ -821,9 +821,11 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
 
 final public Raster toRaster()
 {
-  WritableRaster raster = Raster.createBandedRaster(datatype, width, height, bands, new Point(0,0));
-
+  WritableRaster raster = RasterUtils.createEmptyRaster(width, height, bands, datatype);
+  
   final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
+  rasterBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
   // skip over the header in the data buffer
   for (int i = 0; i < HEADER_LEN; i++)
   {
