@@ -259,7 +259,7 @@ public long getMinTileY()
 
 public String getName()
 {
-  return metadata.getName(zoomlevel);
+  return metadata.getName(getZoomlevel());
 }
 
 public long getNumXTiles()
@@ -527,6 +527,7 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterE
   // 1st calculate the pixel size of the merged image.
   Bounds imageBounds = null;
 
+  int zoomlevel = getZoomlevel();
   for (final Tile tile : tiles)
   {
     log.debug("tx: {} ty: {}", tile.tx, tile.ty);
@@ -599,6 +600,7 @@ public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRaster.MrG
 
   final int tilesize = metadata.getTilesize();
 
+  int zoomlevel = getZoomlevel();
   // 1st calculate the pixel size of the merged image.
   final Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoomlevel, tilesize);
 
