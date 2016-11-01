@@ -1731,6 +1731,26 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <id>apache272</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.7</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.1</spark.version>
+        <final.classifier>2.7.2</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
     <!--
          | Profiles defining the various build options.  The template for these are:
          | <profile>
@@ -2662,6 +2682,12 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-aws</artifactId>
+        <version>${hadoop.version}</version>
+        <scope>${hadoop.scope}</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-yarn-api</artifactId>
         <version>${hadoop.yarn.version}</version>
         <scope>${hadoop.scope}</scope>
@@ -3284,6 +3310,10 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-aws</artifactId>
     </dependency>
     <!-- and spark-yarn, now we've converted everything to that -->
     <dependency>

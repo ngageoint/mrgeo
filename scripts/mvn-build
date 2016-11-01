@@ -15,6 +15,7 @@ usage() {
     echo "  python       - mrgeo-core/mrgeo-vector/mrgeo-dataprovider/mrgeo-mapalgebra/mrgeo-python"
     echo "build type:"
     echo "  apache    - apache hadoop"
+    echo "  apache272 - Apache hadoop, version 2.7.2"
     echo "  apache271 - Apache hadoop, version 2.7.1"
     echo "  apache260 - Apache hadoop, version 2.6.0"
     echo "  apache252 - Apache hadoop, version 2.5.2"
@@ -235,7 +236,7 @@ while [ $# -gt 0 ] ; do
     "apache250" | "apache251" | "apache252")
         BUILD=$1
         ;;
-    "apache260" | "apache270" | "apache271")
+    "apache260" | "apache270" | "apache271" | "apache272")
         BUILD=$1
         ;;
     "emr500")
