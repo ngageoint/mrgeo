@@ -221,15 +221,25 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
 {
   try
   {
+    final int tilesize = image.getTilesize();
+    final int zoomlevel = image.getZoomlevel();
+
     final MrsPyramidMetadata metadata = image.getMetadata();
 
-    MrGeoRaster raster = image.getRaster(tiles);
+    MrGeoRaster raster;
+    if (useBounds)
+    {
+      TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
+      raster = image.getRaster(tb);
+    }
+    else
+    {
+       raster = image.getRaster(tiles);
+    }
 
     Bounds imageBounds = null;
 
     long minId = tiles[0];
-    final int tilesize = image.getTilesize();
-    final int zoomlevel = image.getZoomlevel();
     for (final long lid : tiles)
     {
       if (minId > lid)
