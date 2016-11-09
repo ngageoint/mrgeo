@@ -16,6 +16,7 @@
 
 package org.mrgeo.resources.mrspyramid;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.sun.jersey.api.NotFoundException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
@@ -98,7 +99,7 @@ public class ColorScaleResourceTest extends JerseyTest
         resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, MrsPyramidService>(MrsPyramidService.class, service) {});
 
         resourceConfig.getClasses().add(ColorScaleResource.class);
-        //resourceConfig.getClasses().add(JacksonJsonProvider.class);
+       resourceConfig.getClasses().add(JacksonJsonProvider.class);
 
         return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
     }

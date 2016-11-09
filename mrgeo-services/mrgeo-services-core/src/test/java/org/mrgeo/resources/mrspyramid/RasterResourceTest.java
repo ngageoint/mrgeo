@@ -16,6 +16,7 @@
 
 package org.mrgeo.resources.mrspyramid;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.core.DefaultResourceConfig;
@@ -75,7 +76,7 @@ protected LowLevelAppDescriptor configure()
   resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, HttpServletRequest>(HttpServletRequest.class, request) {});
 
   resourceConfig.getClasses().add(RasterResource.class);
-  //resourceConfig.getClasses().add(JacksonJsonProvider.class);
+  resourceConfig.getClasses().add(JacksonJsonProvider.class);
 
   return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
 }
