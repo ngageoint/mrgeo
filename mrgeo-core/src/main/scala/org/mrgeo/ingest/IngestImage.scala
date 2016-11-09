@@ -40,7 +40,6 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
-import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -48,7 +47,7 @@ import scala.collection.mutable.ListBuffer
 
 class NodataArray extends Externalizable with Logging
 {
-  var nodata: Array[Double] = null
+  var nodata: Array[Double] = _
 
   def this(nodataValues: Array[Double])
   {
@@ -70,21 +69,42 @@ class NodataArray extends Externalizable with Logging
   override def writeExternal(out: ObjectOutput): Unit =
   {
     out.writeInt(nodata.length)
-    var i: Int = 0
-    while (i < nodata.length) {
-      out.writeDouble(nodata(i))
-      i += 1
-    }
+    nodata.foreach(out.writeDouble)
   }
 }
 
-object NodataAccumulator extends AccumulatorParam[NodataArray]
+object NodataAccumulator extends AccumulatorParam[NodataArray] with Logging
 {
-  val log: Logger = LoggerFactory.getLogger(NodataAccumulator.getClass)
   override def addInPlace(r1: NodataArray,
-                          r2: NodataArray): NodataArray = {
-    val result = if (r1 == null) { new NodataArray(r2.nodata) } else { r1 }
-    result
+      r2: NodataArray): NodataArray = {
+    if (r1 == null) {
+      new NodataArray(r2.nodata)
+    }
+    else if (r2 == null) {
+      new NodataArray(r1.nodata)
+    }
+    else if (r1.nodata.length != r2.nodata.length) {
+      logInfo("Nodata lengths differ nd 1 len: " + r1.nodata.length + " nd 2 len: " + r2.nodata.length)
+
+      if (r1.nodata.length > r2.nodata.length) {
+        new NodataArray(r1.nodata)
+      }
+      else {
+        new NodataArray(r2.nodata)
+      }
+    }
+    else {
+      if (log.isInfoEnabled) {
+        for (i <- r1.nodata.indices) {
+          if (FloatUtils.isEqual(r1.nodata(i), r2.nodata(i))) {
+            logInfo("Nodata values differ (band " + i + ") nd 1: " + r1.nodata(i) + " nd 2: " + r2.nodata(i))
+          }
+        }
+      }
+      new NodataArray(r1.nodata)
+    }
+    //    val result = if (r1 == null) { new NodataArray(r2.nodata) } else { r1 }
+    //    result
   }
 
   override def zero(initialValue: NodataArray): NodataArray = {
@@ -125,7 +145,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   private def equalCategories(c1: Map[Int, util.Vector[_]],
-                              c2: Map[Int, util.Vector[_]]): Boolean = {
+      c2: Map[Int, util.Vector[_]]): Boolean = {
     if (c1.size != c2.size) {
       return false
     }
@@ -134,29 +154,27 @@ object IngestImage extends MrGeoDriver with Externalizable {
       val c1Cats = c1Entry._2
       val c2Value = c2.get(c1Band)
       c2Value match {
-        case Some(c2Cats) => {
-          if (c1Cats.size() != c2Cats.size()) {
-            return false
-          }
-          // The values stored in c1Cats and c2Cats are strings (from GDAL). Do a case
-          // insensitive comparison of them and return false if any don't match.
-          c1Cats.zipWithIndex.foreach(c1Entry => {
-            if (!c1Entry._1.toString.equalsIgnoreCase(c2Cats.get(c1Entry._2).toString)) {
-              return false
-            }
-          })
-        }
-        case None => {
+      case Some(c2Cats) =>
+        if (c1Cats.size() != c2Cats.size()) {
           return false
         }
+        // The values stored in c1Cats and c2Cats are strings (from GDAL). Do a case
+        // insensitive comparison of them and return false if any don't match.
+        c1Cats.zipWithIndex.foreach(c1Entry => {
+          if (!c1Entry._1.toString.equalsIgnoreCase(c2Cats.get(c1Entry._2).toString)) {
+            return false
+          }
+        })
+      case None =>
+        return false
       }
     })
     true
   }
 
   def ingest(context: SparkContext, inputs:Array[String], zoom:Int, skipPreprocessing: Boolean,
-             tilesize:Int, categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Double],
-             protectionLevel: String) = {
+      tilesize:Int, categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Double],
+      protectionLevel: String) = {
     var firstCategories: Map[Int, util.Vector[_]] = null
     var categoriesMatch: Boolean = false
 
@@ -172,15 +190,24 @@ object IngestImage extends MrGeoDriver with Externalizable {
     val nodataAccum = context.accumulator(null.asInstanceOf[NodataArray])(NodataAccumulator)
     val rawtiles = in.flatMap(input => {
       val (tile, actualnodata) = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
-      nodataAccum.add(new NodataArray(actualnodata))
+      if (tile.nonEmpty) {
+        nodataAccum.add(new NodataArray(actualnodata))
+      }
       tile
     }).persist(StorageLevel.MEMORY_AND_DISK)
 
-    
+
     // Need to materialize rawtiles in order for the accumulator to work
     rawtiles.count()
 
-    val actualNodata = if (nodataAccum.value != null) nodataAccum.value.nodata else null
+    val actualNodata = if (nodataAccum.value != null) {
+      nodataAccum.value.nodata
+    }
+    else {
+      val nd = Array.ofDim[Double](1)
+
+      nd
+    }
 
     val tiles = RasterRDD(new PairRDDFunctions(rawtiles).reduceByKey((r1, r2) => {
       val src = RasterWritable.toMrGeoRaster(r1)
@@ -221,8 +248,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   def localingest(context: SparkContext, inputs:Array[String], zoom:Int, skipPreprocessing: Boolean,
-                  tilesize:Int, categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Double],
-                  protectionLevel: String) = {
+      tilesize:Int, categorical:Boolean, skipCategoryLoad: Boolean, nodata: Array[Double],
+      protectionLevel: String) = {
     var firstCategories: Map[Int, util.Vector[_]] = null
     var categoriesMatch: Boolean = false
 
@@ -242,18 +269,21 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
     val nodataAccum = context.accumulator(null.asInstanceOf[NodataArray])(NodataAccumulator)
     inputs.foreach(input => {
-      val result = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
-      nodataAccum.add(new NodataArray(result._2))
+      val (tile, actualnodata) = IngestImage.makeTiles(input, zoom, tilesize, categorical, nodata)
 
-      var cnt = 0
-      result._1.foreach(kv => {
-        writer.append(new TileIdWritable(kv._1.get()), kv._2)
+      if (tile.nonEmpty) {
+        nodataAccum.add(new NodataArray(actualnodata))
 
-        cnt += 1
-        if (cnt % 1000 == 0) {
-          writer.hflush()
-        }
-      })
+        var cnt = 0
+        tile.foreach(kv => {
+          writer.append(new TileIdWritable(kv._1.get()), kv._2)
+
+          cnt += 1
+          if (cnt % 1000 == 0) {
+            writer.hflush()
+          }
+        })
+      }
     })
 
     writer.close()
@@ -296,7 +326,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
   private def loadCategories(input: String): Map[Int, util.Vector[_]] = {
     var src: Dataset = null
-      try {
+    try {
       src = GDALUtils.open(input)
 
       var result: scala.collection.mutable.Map[Int, util.Vector[_]] = scala.collection.mutable.Map()
@@ -372,7 +402,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   private def setMetadataCategories(meta: MrsPyramidMetadata,
-                                    categoryMap: Map[Int, util.Vector[_]]): Unit = {
+      categoryMap: Map[Int, util.Vector[_]]): Unit = {
     categoryMap.foreach(catEntry => {
       val categories = new Array[String](catEntry._2.size())
       catEntry._2.zipWithIndex.foreach(cat => {
@@ -383,10 +413,10 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   private def setupParams(input: String, output: String, categorical: Boolean, skipCategoryLoad: Boolean,
-                          bounds: Bounds, zoomlevel: Int, tilesize: Int, nodata: Array[Double],
-                          bands: Int, tiletype: Int, tags: util.Map[String, String],
-                          protectionLevel: String,
-                          providerProperties: ProviderProperties): mutable.Map[String, String] = {
+      bounds: Bounds, zoomlevel: Int, tilesize: Int, nodata: Array[Double],
+      bands: Int, tiletype: Int, tags: util.Map[String, String],
+      protectionLevel: String,
+      providerProperties: ProviderProperties): mutable.Map[String, String] = {
 
     val args = mutable.Map[String, String]()
 
@@ -451,10 +481,10 @@ object IngestImage extends MrGeoDriver with Externalizable {
   }
 
   private def makeTiles(image: String, zoom: Int, tilesize: Int, categorical: Boolean,
-                        nodata: Array[Double]): (TraversableOnce[(TileIdWritable, RasterWritable)], Array[Double]) = {
+      nodata: Array[Double]): (TraversableOnce[(TileIdWritable, RasterWritable)], Array[Double]) = {
 
     val result = ListBuffer[(TileIdWritable, RasterWritable)]()
-    var actualNoData = Array.ofDim[Double](0)
+    var actualNoData:Array[Double] = null
 
     //val start = System.currentTimeMillis()
 
@@ -594,9 +624,9 @@ object IngestImage extends MrGeoDriver with Externalizable {
         GDALUtils.close(scaled)
       }
       else {
-        if (log.isDebugEnabled) {
-          logDebug("Could not open " + image)
-        }
+        //if (log.isDebugEnabled) {
+          logError("Could not open " + image)
+        //}
       }
     }
     catch {
@@ -621,19 +651,19 @@ object IngestImage extends MrGeoDriver with Externalizable {
 }
 
 class IngestImage extends MrGeoJob with Externalizable {
-  private[ingest] var inputs: Array[String] = null
-  private[ingest] var output:String = null
-  private[ingest] var bounds:Bounds = null
+  private[ingest] var inputs: Array[String] = _
+  private[ingest] var output:String = _
+  private[ingest] var bounds:Bounds = _
   private[ingest] var zoom:Int = -1
   private[ingest] var bands:Int = -1
   private[ingest] var tiletype:Int = -1
   private[ingest] var tilesize:Int = -1
-  private[ingest] var nodata:Array[Double] = null
+  private[ingest] var nodata:Array[Double] = _
   private[ingest] var categorical:Boolean = false
   private[ingest] var skipCategoryLoad:Boolean = false
   private[ingest] var skipPreprocessing:Boolean = false
-  private[ingest] var providerproperties:ProviderProperties = null
-  private[ingest] var protectionlevel:String = null
+  private[ingest] var providerproperties:ProviderProperties = _
+  private[ingest] var protectionlevel:String = _
 
 
   override def registerClasses(): Array[Class[_]] = {
@@ -667,7 +697,7 @@ class IngestImage extends MrGeoJob with Externalizable {
     tiletype = job.getSetting(IngestImage.Tiletype).toInt
     tilesize = job.getSetting(IngestImage.Tilesize).toInt
     if (job.hasSetting(IngestImage.NoData)) {
-      nodata = job.getSetting(IngestImage.NoData).split(" ").map(_.toDouble.asInstanceOf[Double])
+      nodata = job.getSetting(IngestImage.NoData).split(" ").map(_.toDouble)
     }
     else {
       nodata = Array.fill[Double](bands)(Double.NaN)
