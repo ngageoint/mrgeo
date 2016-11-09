@@ -26,7 +26,6 @@ import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
 import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.Test;
@@ -76,7 +75,7 @@ protected LowLevelAppDescriptor configure()
   resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, HttpServletRequest>(HttpServletRequest.class, request) {});
 
   resourceConfig.getClasses().add(RasterResource.class);
-  resourceConfig.getClasses().add(JacksonJsonProvider.class);
+  //resourceConfig.getClasses().add(JacksonJsonProvider.class);
 
   return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
 }

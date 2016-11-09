@@ -26,7 +26,6 @@ import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
 import junit.framework.Assert;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
@@ -99,7 +98,7 @@ public class ColorScaleResourceTest extends JerseyTest
         resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, MrsPyramidService>(MrsPyramidService.class, service) {});
 
         resourceConfig.getClasses().add(ColorScaleResource.class);
-        resourceConfig.getClasses().add(JacksonJsonProvider.class);
+        //resourceConfig.getClasses().add(JacksonJsonProvider.class);
 
         return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
     }

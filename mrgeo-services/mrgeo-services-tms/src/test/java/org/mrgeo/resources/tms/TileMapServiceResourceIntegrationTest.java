@@ -27,7 +27,6 @@ import com.sun.jersey.test.framework.spi.container.TestContainerException;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import junit.framework.Assert;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
@@ -88,7 +87,7 @@ protected LowLevelAppDescriptor configure()
   resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, HttpServletRequest>(HttpServletRequest.class, request) {});
 
   resourceConfig.getClasses().add(TileMapServiceResource.class);
-  resourceConfig.getClasses().add(JacksonJsonProvider.class);
+  //resourceConfig.getClasses().add(JacksonJsonProvider.class);
 
   return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
 }

@@ -16,6 +16,7 @@
 
 package org.mrgeo.resources.mrspyramid;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.NotFoundException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -25,8 +26,6 @@ import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
 import junit.framework.Assert;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
@@ -57,7 +56,7 @@ public class MetadataResourceTest extends JerseyTest
         resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, MrsPyramidService>(MrsPyramidService.class, service) {});
 
         resourceConfig.getClasses().add(MetadataResource.class);
-        resourceConfig.getClasses().add(JacksonJsonProvider.class);
+        //resourceConfig.getClasses().add(JacksonJsonProvider.class);
 
         return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
     }
@@ -92,9 +91,10 @@ public class MetadataResourceTest extends JerseyTest
     Assert.assertEquals("Path does not exist - " + resultImg, res.getEntity(String.class));
   }
 
+
   private String getMetaData() {
       return "{\"bounds\":" +
-      "{\"minY\":-18.373333333333342,\"minX\":141.7066666666667,\"maxY\":-17.52000000000001,\"maxX\":142.56000000000003},\"maxZoomLevel\":10,\"imageMetadata\":" +
+      "{\"s\":-18.373333333333342,\"w\":141.7066666666667,\"n\":-17.52000000000001,\"e\":142.56000000000003},\"maxZoomLevel\":10,\"imageMetadata\":" +
       "[{\"pixelBounds\":null,\"tileBounds\":null,\"image\":null}," +
       "{\"pixelBounds\":{\"minY\":0,\"minX\":0,\"maxY\":3,\"maxX\":2}," +
       "\"tileBounds\":{\"minY\":0,\"minX\":1,\"maxY\":0,\"maxX\":1}," +

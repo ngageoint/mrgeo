@@ -16,13 +16,10 @@
 
 package org.mrgeo.image;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.util.DefaultPrettyPrinter;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
@@ -538,8 +535,6 @@ public enum Classification {
  *
  * @param file metadata file on the local file system to load
  * @return a valid MrsPyramidMetadata object
- * @throws JsonGenerationException
- * @throws JsonMappingException
  * @throws IOException
  */
 @Deprecated
@@ -563,8 +558,6 @@ public static MrsPyramidMetadata load(final File file) throws IOException
  *
  * @param stream - the stream attached to the metadata input
  * @return a valid MrsPyramidMetadata object
- * @throws JsonGenerationException
- * @throws JsonMappingException
  * @throws IOException
  */
 public static MrsPyramidMetadata load(final InputStream stream) throws IOException
@@ -920,11 +913,7 @@ public void save(final OutputStream stream) throws IOException
   final ObjectMapper mapper = new ObjectMapper();
   try
   {
-    DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-    pp.indentArraysWith(new DefaultPrettyPrinter.Lf2SpacesIndenter());
-
-    //mapper.prettyPrintingWriter(pp).writeValue(stream, this);
-    mapper.writer(pp).writeValue(stream, this);
+    mapper.writerWithDefaultPrettyPrinter().writeValue(stream, this);
   }
   catch (NoSuchMethodError e)
   {

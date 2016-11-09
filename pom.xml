@@ -34,6 +34,7 @@
     <accumulo.version>1.7.0</accumulo.version>
     <antlr.version>3.1.3</antlr.version>
     <axiom.version>1.2.9</axiom.version>
+    <aws.version>1.7.4</aws.version>
     <classutil.version>1.0.5</classutil.version>
     <commons-beanutils.version>1.7.0</commons-beanutils.version>
     <commons-codec.version>1.4</commons-codec.version>
@@ -55,7 +56,7 @@
     <hadoop.yarn.version>${hadoop.version}</hadoop.yarn.version>
     <hppc.version>0.5.2</hppc.version>
     <imageio.version>1.1.7</imageio.version>
-    <jackson.version>1.9.2</jackson.version>
+    <jackson.version>2.4.4</jackson.version>
     <jai-imageio.version>1.1</jai-imageio.version>
     <jaitools.version>1.3.0</jaitools.version>
     <jai.version>1.1.3</jai.version>
@@ -1958,6 +1959,17 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <id>enable-s3a</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-aws</artifactId>
+          <version>${hadoop.version}</version>
+          <scope>${hadoop.scope}</scope>
+        </dependency>
+      </dependencies>
+    </profile>
     <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->
     <profile>
       <id>hadoop-conf-for-eclipse</id>
@@ -2592,16 +2604,29 @@
         <artifactId>jul-to-slf4j</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
-      <!--  hadoop uses various versions, we need 1.9.2 -->
       <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-mapper-asl</artifactId>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
       </dependency>
-      <!--  hadoop uses various versions, we need 1.9.2 -->
       <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-core-asl</artifactId>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.jaxrs</groupId>
+        <artifactId>jackson-jaxrs-json-provider</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-jaxb-annotations</artifactId>
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
@@ -2674,17 +2699,19 @@
             <artifactId>paranamer</artifactId>
           </exclusion>
           <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
         <!--<scope>provided</scope>-->
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-aws</artifactId>
-        <version>${hadoop.version}</version>
-        <scope>${hadoop.scope}</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -2719,6 +2746,14 @@
           <exclusion>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-jaxrs</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-xc</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -2775,6 +2810,14 @@
           <exclusion>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -3050,6 +3093,24 @@
         <groupId>com.sun.jersey</groupId>
         <artifactId>jersey-json</artifactId>
         <version>${jersey.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-jaxrs</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-xc</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.sun.jersey.jersey-test-framework</groupId>
@@ -3310,10 +3371,6 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-aws</artifactId>
     </dependency>
     <!-- and spark-yarn, now we've converted everything to that -->
     <dependency>
