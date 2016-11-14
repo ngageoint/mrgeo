@@ -753,7 +753,10 @@ Response returnEmptyTile(final int width, final int height,
   IOUtils.closeQuietly(baos);
 
   final String type = mimeTypeMap.getContentType("output." + format);
-  return Response.ok(imageData).build();
+  return Response.ok()
+      .entity(imageData)
+      .header("Content-Type", type)
+      .build();
 
   // A 404 - Not Found response may be the most appropriate, but results in pink tiles,
   // maybe change that behavior on the OpenLayers client?
