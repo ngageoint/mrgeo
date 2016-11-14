@@ -19,20 +19,22 @@ package org.mrgeo.resources.mrspyramid;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import java.io.IOException;
 
 
 @Path("/metadata")
 public class MetadataResource
 {
+
+@Context
+Providers providers;
 @Context
 MrsPyramidService service;
 
@@ -42,14 +44,32 @@ MrsPyramidService service;
 @Path("/{output: .*+}")
 public Response getMetadata(@PathParam("output") final String imgName)
 {
-    try
-    {
-        return Response.status(Status.OK).entity( service.getMetadata(imgName) ).build();
-    }
-    catch (final IOException e)
-    {
-        final String error = e.getMessage() != null ? e.getMessage() : "";
-        return Response.serverError().entity(error).build();
-    }
+  try
+  {
+    getService();
+    return Response.status(Status.OK).entity( service.getMetadata(imgName) ).build();
+  }
+  catch (final NotFoundException e)
+  {
+    final String error = e.getMessage() != null ? e.getMessage() : "";
+    return Response.status(Status.NOT_FOUND).entity(error).build();
+  }
+  catch (Exception e1)
+  {
+    final String error = e1.getMessage() != null ? e1.getMessage() : "";
+    return Response.serverError().entity(error).build();
+  }
 }
+
+private void getService()
+{
+  if (service == null)
+  {
+    ContextResolver<MrsPyramidService> resolver =
+        providers.getContextResolver(MrsPyramidService.class, MediaType.WILDCARD_TYPE);
+    if (resolver != null)
+      service = resolver.getContext(MrsPyramidService.class);
+  }
+}
+
 }

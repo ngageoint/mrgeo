@@ -18,7 +18,7 @@ package org.mrgeo.services.utils;
 
 import com.google.common.io.ByteStreams;
 import com.meterware.httpunit.WebResponse;
-import com.sun.jersey.api.client.ClientResponse;
+import org.glassfish.jersey.client.ClientResponse;
 import org.junit.Assert;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.test.TestUtils;
@@ -26,6 +26,7 @@ import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.Response;
 import java.io.*;
 
 import static org.junit.Assert.assertTrue;
@@ -35,22 +36,7 @@ public class ImageTestUtils
 {
   private static final Logger log = LoggerFactory.getLogger(ImageTestUtils.class);
 
-  public static void outputImageMatchesBaseline(final WebResponse response,
-    final String baselineImage) throws IOException
-  {
-    final File baseline = new File(baselineImage);
-
-    assertTrue(baseline.exists());
-
-    log.debug("Response content length: " + response.getContentLength());
-
-    MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.getInputStream()));
-    Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
-
-    TestUtils.compareRasters(baseline, raster);
-  }
-  
-  public static void outputImageMatchesBaseline(final ClientResponse response,
+  public static void outputImageMatchesBaseline(final Response response,
     final String baselineImage) throws IOException
   {
     final File baseline = new File(baselineImage);
@@ -58,17 +44,33 @@ public class ImageTestUtils
     assertTrue(baseline.exists());
 
     log.debug("Response content length: " + response.getLength());
-    MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.getEntityInputStream()));
+
+    MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.readEntity(InputStream.class)));
     Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
 
     TestUtils.compareRasters(baseline, raster);
   }
+  
+//  public static void outputImageMatchesBaseline(final ClientResponse response,
+//    final String baselineImage) throws IOException
+//  {
+//    final File baseline = new File(baselineImage);
+//
+//    assertTrue(baseline.exists());
+//
+//    log.debug("Response content length: " + response.getLength());
+//    response.
+//    MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.getEntityInputStream()));
+//    Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
+//
+//    TestUtils.compareRasters(baseline, raster);
+//  }
 
-  public static void writeBaselineImage(final ClientResponse response, final String path)
-    throws IOException
-  {
-    writeBaselineImage(response.getEntityInputStream(), path);
-  }
+//  public static void writeBaselineImage(final ClientResponse response, final String path)
+//    throws IOException
+//  {
+//    writeBaselineImage(response.getEntityInputStream(), path);
+//  }
 
   public static void writeBaselineImage(final InputStream stream, final String path)
     throws IOException
@@ -79,9 +81,9 @@ public class ImageTestUtils
 
   }
 
-  public static void writeBaselineImage(final WebResponse response, final String path)
+  public static void writeBaselineImage(final Response response, final String path)
     throws IOException
   {
-    writeBaselineImage(response.getInputStream(), path);
+    writeBaselineImage(response.readEntity(InputStream.class), path);
   }
 }

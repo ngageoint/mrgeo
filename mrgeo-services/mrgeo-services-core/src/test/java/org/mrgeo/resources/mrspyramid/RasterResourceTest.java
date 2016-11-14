@@ -17,24 +17,19 @@
 package org.mrgeo.resources.mrspyramid;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
-import com.sun.jersey.test.framework.JerseyTest;
-import com.sun.jersey.test.framework.LowLevelAppDescriptor;
-import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
 import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLUnit;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
+import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.MrGeoRaster;
@@ -46,6 +41,7 @@ import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.utils.tms.Bounds;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -65,27 +61,26 @@ public class RasterResourceTest extends JerseyTest
 private MrsPyramidService service;
 private HttpServletRequest request;
 
-@Override
-protected LowLevelAppDescriptor configure()
-{
-  DefaultResourceConfig resourceConfig = new DefaultResourceConfig();
-  service = mock(MrsPyramidService.class);
-  request = mock(HttpServletRequest.class);
-
-  resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, MrsPyramidService>(MrsPyramidService.class, service) {});
-  resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, HttpServletRequest>(HttpServletRequest.class, request) {});
-
-  resourceConfig.getClasses().add(RasterResource.class);
-  resourceConfig.getClasses().add(JacksonJsonProvider.class);
-
-  return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
-}
 
 @Override
-protected TestContainerFactory getTestContainerFactory()
+protected Application configure()
 {
-  return new FilteringInMemoryTestContainerFactory();
+  service = Mockito.mock(MrsPyramidService.class);
+  request = Mockito.mock(HttpServletRequest.class);
+
+  ResourceConfig config = new ResourceConfig();
+  config.register(RasterResource.class);
+  config.register(new AbstractBinder()
+  {
+    @Override
+    protected void configure()
+    {
+      bind(service).to(MrsPyramidService.class);
+    }
+  });
+  return config;
 }
+
 
 @Override
 public void setUp() throws Exception
@@ -93,70 +88,6 @@ public void setUp() throws Exception
   super.setUp();
   Mockito.reset(service, request);
 }
-
-//@Test
-//@Category(UnitTest.class)
-//public void testCreateJob() throws Exception
-//{
-//  JobManager jobManager = mock(JobManager.class);
-//  when(jobManager.submitJob(anyString(), (MapAlgebraJob) any())).thenReturn(5L);
-//  when(jobManager.getJob(Mockito.anyLong())).thenAnswer(new Answer() {
-//    public Object answer(InvocationOnMock invocation) {
-//      JobDetails details = mock(JobDetails.class);
-//      when(details.getJobId()).thenReturn(5L);
-//      return details;
-//    }
-//  });
-//
-//  when(service.getJobManager()).thenReturn(jobManager);
-////    when(service.getOutputImageStr(anyString(), anyString())).thenReturn("/foo/bar");
-//  when(request.getScheme()).thenReturn("http");
-//  when(request.getHeader(anyString())).thenReturn(null);
-//
-//  final WebResource webResource = resource();
-//  final String ma = ("a = [some points]; RasterizeVector(a, \"LAST\", 0.3, \"c\") ");
-//
-//  final JobInfoResponse res = webResource.path("raster/testCreateJob/mapalgebra")
-//      .queryParam("basePath", "/foo/bar").type(MediaType.TEXT_PLAIN)
-//      .put(JobInfoResponse.class, ma);
-//  Assert.assertTrue(res.getJobId() != 0);
-//  Assert.assertTrue(res.getStatusUrl().startsWith("http:"));
-//  final long jobId = res.getJobId();
-//  assertEquals(jobId, 5L);
-//}
-
-//@Test
-//@Category(UnitTest.class)
-//public void testCreateJobHttpsStatus() throws Exception
-//{
-//  JobManager jobManager = mock(JobManager.class);
-//  when(jobManager.submitJob(anyString(), (MapAlgebraJob) any())).thenReturn(5L);
-//  when(jobManager.getJob(Mockito.anyLong())).thenAnswer(new Answer() {
-//    public Object answer(InvocationOnMock invocation) {
-//      JobDetails details = mock(JobDetails.class);
-//      when(details.getJobId()).thenReturn(5L);
-//      return details;
-//    }
-//  });
-//
-//  when(service.getJobManager()).thenReturn(jobManager);
-////    when(service.getOutputImageStr(anyString(), anyString())).thenReturn("/foo/bar");
-//  when(request.getScheme()).thenReturn("http");
-//  when(request.getHeader(anyString())).thenReturn("on");
-//
-//  final WebResource webResource = resource();
-//  final String ma = "a = [some points]; RasterizeVector(a, \"LAST\", 0.3, \"c\") ";
-//
-//  final JobInfoResponse res = webResource.path("raster/testCreateJob/mapalgebra")
-//      .queryParam("basePath", "/foo/bar").type(MediaType.TEXT_PLAIN)
-//      .header("X-Forwarded-SSL", "on").put(JobInfoResponse.class, ma);
-//  Assert.assertTrue(res.getJobId() != 0);
-//  Assert.assertTrue("Status URL does not start with 'https:', was '" + res.getStatusUrl() + "'",
-//      res.getStatusUrl().startsWith("https:"));
-//
-//  // we only care about the status URL being changed
-//  // so no further assertions
-//}
 
 private String returnXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
     "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" +
@@ -204,18 +135,16 @@ public void testGetImageAsKML() throws Exception
   when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
       .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
 
-  final WebResource webResource = resource();
-  // retrieve kml
-  final MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-  params.add("format", "kml");
-  params.add("bbox", "141, -18, 142, -17");
-  final ClientResponse resp = webResource.path("raster/some/raster/path")
-      .queryParams(params)
-      .get(ClientResponse.class);
-  final MultivaluedMap<String, String> headers = resp.getHeaders();
-  assertEquals("[application/vnd.google-earth.kml+xml]", headers.get("Content-Type")
-      .toString());
-  final InputStream is = resp.getEntityInputStream();
+  Response response = target("raster/some/raster/path")
+      .queryParam("format", "kml")
+      .queryParam("bbox", "141, -18, 142, -17")
+      .request().get();
+
+  Assert.assertEquals("application/vnd.google-earth.kml+xml", response.getHeaderString("Content-Type"));
+  ;
+
+  final InputStream is = response.readEntity(InputStream.class);
+
   final StringWriter writer = new StringWriter();
   IOUtils.copy(is, writer);
   XMLUnit.setIgnoreWhitespace(true);
@@ -238,21 +167,17 @@ public void testGetImageBadColorScaleName() throws Exception
   when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
       .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
 
-  final WebResource webResource = resource();
+  Response response = target("raster/some/raster/path")
+      .queryParam("format", "png")
+      .queryParam("width", "400")
+      .queryParam("height", "200")
+      .queryParam("bbox", "142,-18, 143,-17")
+      .queryParam("color-scale-name", "bad-color-scale")
+      .request().get();
 
-  // retrieve jpg
-  final MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-  params.add("format", "png");
-  params.add("width", "400");
-  params.add("height", "200");
-  params.add("bbox", "142,-18, 143,-17");
-  params.add("color-scale-name", "bad-color-scale");
-
-  final WebResource wr = webResource.path("raster/some/raster/path").queryParams(params);
-  final ClientResponse resp = wr.get(ClientResponse.class);
-  assertEquals(400, resp.getStatus());
-  assertEquals("File does not exist: /mrgeo/color-scales/bad-color-scale.xml",
-      resp.getEntity(String.class));
+  Assert.assertEquals(400, response.getStatus());
+  Assert.assertEquals("File does not exist: /mrgeo/color-scales/bad-color-scale.xml",
+      response.readEntity(String.class));
 }
 
 @Test
@@ -263,19 +188,16 @@ public void testGetImageBadFormat() throws Exception
   when(pyramidMock.getBounds()).thenReturn(Bounds.fromCommaString("142,-18, 143,-17"));
   when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
   when(service.getImageRenderer(anyString())).thenThrow(new IllegalArgumentException("INVALID FORMAT"));
-  final WebResource webResource = resource();
 
-  // retrieve jpg
-  final MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-  params.add("format", "png-invalid");
-  params.add("width", "400");
-  params.add("height", "200");
-  params.add("bbox", "142,-18, 143,-17");
+  Response response = target("raster/some/raster/path")
+      .queryParam("format", "png-invalid")
+      .queryParam("width", "400")
+      .queryParam("height", "200")
+      .queryParam("bbox", "142,-18, 143,-17")
+      .request().get();
 
-  final WebResource wr = webResource.path("raster/foo/bar").queryParams(params);
-  final ClientResponse resp = wr.get(ClientResponse.class);
-  assertEquals(400, resp.getStatus());
-  assertEquals("Unsupported image format - png-invalid", resp.getEntity(String.class));
+  Assert.assertEquals(400, response.getStatus());
+  assertEquals("Unsupported image format - png-invalid", response.readEntity(String.class));
 }
 
 @Test
@@ -284,16 +206,14 @@ public void testGetImageNotExist() throws Exception
 {
   when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
       .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
-  final WebResource webResource = resource();
   final String resultImage = "badpathtest";
-  // deleteMrsPyramid(resultImage);
 
-  final MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-  params.add("format", "png");
-  final ClientResponse resp = webResource.path("raster/" + resultImage).queryParams(params)
-      .get(ClientResponse.class);
-  assertEquals(404, resp.getStatus());
-  assertEquals(resultImage + " not found", resp.getEntity(String.class));
+  Response response = target("raster/" + resultImage)
+      .queryParam("format", "png-invalid")
+      .request().get();
+
+  assertEquals(404, response.getStatus());
+  assertEquals(resultImage + " not found", response.readEntity(String.class));
 }
 
 @Test
@@ -306,8 +226,7 @@ public void testGetImagePng() throws Exception
   when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
   when(service.getColorScaleFromName(anyString())).thenReturn(null);
   ImageRenderer renderer = mock(ImageRenderer.class);
-  // TODO: Source a legit PNG
-  //Mockito.when(renderer.getMimeType()).thenReturn( typ );
+
   when(renderer.renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (ProviderProperties)anyObject(), anyString()))
       .thenReturn(null); // Nothing to return, we aren't validating response
 
@@ -318,26 +237,16 @@ public void testGetImagePng() throws Exception
   when(writer.write((MrGeoRaster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
 
   when(service.getImageResponseWriter(anyString())).thenReturn(writer);
-  final WebResource webResource = resource();
 
-  // retrieve jpg
-  final MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-  params.add("format", "png");
-  params.add("width", "400");
-  params.add("height", "200");
-  params.add("bbox", "142,-18, 143,-17");
+  Response response = target("raster/foo/bar")
+      .queryParam("format", "png")
+      .queryParam("width", "400")
+      .queryParam("height", "200")
+      .queryParam("bbox", "142,-18, 143,-17")
+      .request().get();
 
-  final WebResource wr = webResource.path("raster/foo/bar").queryParams(params);
+  assertEquals(typ, response.getHeaderString("Content-Type"));
 
-  final ClientResponse resp = wr.get(ClientResponse.class);
-  final MultivaluedMap<String, String> headers = resp.getHeaders();
-  assertEquals("[image/png]", headers.get("Content-Type").toString());
-//    final InputStream is = resp.getEntityInputStream();
-//    final BufferedImage image = readImageFromStream(is, ImageUtils.createImageReader("image/png"));
-//    is.close();
-//
-//    // note the color scale will translate the ones to 255 (white)
-//    TestUtils.compareRenderedImageToConstant(image, 255, 0);
 }
 
 @Test
@@ -350,8 +259,7 @@ public void testGetImageTiff() throws Exception
   when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
   when(service.getColorScaleFromName(anyString())).thenReturn(null);
   ImageRenderer renderer = mock(ImageRenderer.class);
-  // TODO: Source a legit TIFF
-  //Mockito.when(renderer.getMimeType()).thenReturn( typ );
+
   when(renderer.renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (ProviderProperties)anyObject(), anyString()))
       .thenReturn(null); // Nothing to return, we aren't validating response
 
@@ -362,19 +270,14 @@ public void testGetImageTiff() throws Exception
   when(writer.write((MrGeoRaster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
 
   when(service.getImageResponseWriter(anyString())).thenReturn(writer);
-  final WebResource webResource = resource();
 
-  // retrieve jpg
-  final MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-  params.add("format", "tiff");
-  params.add("width", "400");
-  params.add("height", "200");
-  params.add("bbox", "142,-18, 143,-17");
+  Response response = target("raster/foo/bar")
+      .queryParam("format", "tiff")
+      .queryParam("width", "400")
+      .queryParam("height", "200")
+      .queryParam("bbox", "142,-18, 143,-17")
+      .request().get();
 
-  final WebResource wr = webResource.path("raster/foo/bar").queryParams(params);
-
-  final ClientResponse resp = wr.get(ClientResponse.class);
-  final MultivaluedMap<String, String> headers = resp.getHeaders();
-  assertEquals("[image/tiff]", headers.get("Content-Type").toString());
+  assertEquals(typ, response.getHeaderString("Content-Type"));
 }
 }

@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.inject.Singleton;
 import javax.ws.rs.core.Response;
 import java.awt.image.DataBuffer;
 import java.io.ByteArrayOutputStream;
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.Properties;
 
 @SuppressWarnings("static-method")
+@Singleton
 public class MrsPyramidService {
 
 private static final Logger log = LoggerFactory.getLogger(MrsPyramidService.class);
@@ -56,7 +58,6 @@ private Properties config;
 
 public MrsPyramidService(Properties configuration) {
   config = configuration;
-
 }
 
 public JobManager getJobManager() { return jobManager; }

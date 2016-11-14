@@ -16,7 +16,6 @@
 
 package org.mrgeo.resources.wms;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,9 +52,9 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
     }
   }
 
-  private ClientResponse testGetMapWithVariant(String format) throws IOException, SAXException
+  private Response testGetMapWithVariant(String format) throws IOException, SAXException
   {
-    ClientResponse response = resource().path("/wms")
+    Response response = target("wms")
         .queryParam("SERVICE", "WMS")
         .queryParam("REQUEST", "getmap")
         .queryParam("LAYERS", "IslandsElevation-v2")
@@ -63,23 +62,24 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
         .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
         .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
         .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .get(ClientResponse.class);
+        .request().get();
+
     return response;
   }
 
   /*
    * These are variants from the standard mime types we're allowing to be flexible.  Its debatable
    * how useful this test is, since it requires maintenance every time a new image format is added.
-   * Often, non-standard mime types are passed into WMS requests, so keeping this test for now.  
-   * Here only GetMap requests are being tested since the image format parsing code path is the 
-   * same for all WMS request types.  Also, only a non-zero response length is checked for here, 
+   * Often, non-standard mime types are passed into WMS requests, so keeping this test for now.
+   * Here only GetMap requests are being tested since the image format parsing code path is the
+   * same for all WMS request types.  Also, only a non-zero response length is checked for here,
    * rather than a full image comparison, since that coverage is in other tests.
    */
   @Test
   @Category(IntegrationTest.class)
   public void testVariants() throws Exception
   {
-    ClientResponse response  = null;
+    Response response  = null;
     try
     {
       //correct format is "image/png"
@@ -95,7 +95,7 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
         {
           Assert.assertNotNull(response);
           assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-          assertFalse(response.getEntity(String.class).contains("Invalid format"));
+          assertFalse(response.readEntity(String.class).contains("Invalid format"));
           response.close();
         }
       }
@@ -113,7 +113,7 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
         {
           Assert.assertNotNull(response);
           assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-          assertFalse(response.getEntity(String.class).contains("Invalid format"));
+          assertFalse(response.readEntity(String.class).contains("Invalid format"));
           response.close();
         }
       }
@@ -132,7 +132,7 @@ public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
         {
           Assert.assertNotNull(response);
           assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-          assertFalse(response.getEntity(String.class).contains("Invalid format"));
+          assertFalse(response.readEntity(String.class).contains("Invalid format"));
           response.close();
         }
       }
