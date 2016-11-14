@@ -78,6 +78,9 @@ object MrGeoDriver extends Logging {
             "1"
           })
     }
+    else {
+      conf.set("spark.ui.enabled", "false")
+    }
 
     //    val fracs = calculateMemoryFractions(job)
     //    conf.set("spark.storage.memoryFraction", fracs._1.toString)

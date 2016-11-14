@@ -1,7 +1,5 @@
 package org.mrgeo.ingest;
 
-import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
-import org.gdal.gdal.Dataset;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
@@ -14,7 +12,6 @@ import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.TestUtils;
-import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
