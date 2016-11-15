@@ -28,6 +28,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import java.io.IOException;
 import java.util.List;
 
@@ -41,9 +43,12 @@ public class ColorScaleResource
 {
 private static final Logger log = LoggerFactory.getLogger(ColorScaleResource.class);
 
+
+@Context
+Providers providers;
+
 @Context
 MrsPyramidService service;
-
 /**
  * Recursively returns all MrGeo color scale files in the file system.
  *
@@ -60,6 +65,7 @@ public ColorScaleList get()
 {
   log.info("Retrieving color scales file list...");
 
+  getService();
   List<String> files = service.getColorScales();
 
   log.info("Color scales file list retrieved.");
@@ -82,6 +88,8 @@ public Response getColorScaleSwatch(@PathParam("path") String colorScalePath,
 )
 {
   try {
+    getService();
+
     String format = "png";
     MrGeoRaster ri = service.createColorScaleSwatch(colorScalePath, format, width, height);
 
@@ -105,6 +113,8 @@ public Response getColorScaleLegend(@PathParam("name") String name,
 )
 {
   try {
+    getService();
+
     ColorScale cs = service.getColorScaleFromName(name);
     int fontSize = 12;
     String position;
@@ -198,10 +208,26 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     }
     html.append("</div>");
     html.append("</div>");
-    return Response.ok(html.toString()).header("Content-Type", "text/html").build();
+    return Response.ok()
+        .entity(html.toString())
+        .header("Content-Type", "text/html")
+        .build();
   } catch (Exception ex) {
     log.error("Color scale file not found: " + name, ex);
     return Response.status(Status.BAD_REQUEST).entity("Color scale not found: " + name).build();
   }
 }
+
+private void getService()
+{
+  if (service == null)
+  {
+    ContextResolver<MrsPyramidService> resolver =
+        providers.getContextResolver(MrsPyramidService.class, MediaType.WILDCARD_TYPE);
+    if (resolver != null)
+      service = resolver.getContext(MrsPyramidService.class);
+  }
+}
+
+
 }

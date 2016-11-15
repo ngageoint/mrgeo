@@ -16,6 +16,7 @@
 
 package org.mrgeo.data.accumulo.metadata;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Predicates;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
@@ -25,7 +26,6 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
@@ -104,7 +104,7 @@ public class AccumuloMrsPyramidMetadataReader implements MrsPyramidMetadataReade
     if(metadata == null){
     	log.info("Did not read metadata for " + name);
       Thread.dumpStack();
-        throw new IOException("Can not load metadata, resource name is empty!");
+//        throw new IOException("Can not load metadata, resource name is empty!");
     } else {
     	metadata.setPyramid(name);        
     	log.info("Read metadata for " + name + " with max zoom level at " + metadata.getMaxZoomLevel());

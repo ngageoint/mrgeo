@@ -16,14 +16,8 @@
 
 package org.mrgeo.resources.job;
 
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
-import com.sun.jersey.test.framework.JerseyTest;
-import com.sun.jersey.test.framework.LowLevelAppDescriptor;
-import com.sun.jersey.test.framework.spi.container.TestContainerException;
-import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
+import org.glassfish.jersey.test.JerseyTest;
 import org.mockito.Mockito;
-import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.job.JobTestManager;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,22 +25,22 @@ import javax.ws.rs.core.Context;
 
 public class JobResourceTest extends JerseyTest
 {
-    private HttpServletRequest requestMock;
-
-       @Override
-       protected LowLevelAppDescriptor configure() {
-           requestMock = Mockito.mock(HttpServletRequest.class);
-           DefaultResourceConfig resourceConfig = new DefaultResourceConfig();
-           resourceConfig.getClasses().add( JobResource.class );
-           resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, HttpServletRequest>(HttpServletRequest.class, requestMock){} );
-           return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
-       }
-
-
-       @Override
-       protected TestContainerFactory getTestContainerFactory() throws TestContainerException {
-           return new FilteringInMemoryTestContainerFactory();
-       }
+//    private HttpServletRequest requestMock;
+//
+//       @Override
+//       protected LowLevelAppDescriptor configure() {
+//           requestMock = Mockito.mock(HttpServletRequest.class);
+//           DefaultResourceConfig resourceConfig = new DefaultResourceConfig();
+//           resourceConfig.getClasses().add( JobResource.class );
+//           resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, HttpServletRequest>(HttpServletRequest.class, requestMock){} );
+//           return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
+//       }
+//
+//
+//       @Override
+//       protected TestContainerFactory getTestContainerFactory() throws TestContainerException {
+//           return new FilteringInMemoryTestContainerFactory();
+//       }
 
   @Override
   public void setUp() throws Exception
@@ -54,10 +48,10 @@ public class JobResourceTest extends JerseyTest
     // TODO Auto-generated method stub
     super.setUp();
 
-     Mockito.reset(requestMock);
-
-    JobTestManager.getInstance();
-
+//     Mockito.reset(requestMock);
+//
+//    JobTestManager.getInstance();
+//
 //    JobManager.getInstance().createJob("job 1", "instructions 1", "type 1");
 //    JobManager.getInstance().createJob("job 2 no inst", null, "type 2");
 //    JobManager.getInstance().createJob("", "instructions 3 no name", " type 3");
@@ -78,7 +72,7 @@ public class JobResourceTest extends JerseyTest
   {
     // TODO Auto-generated method stub
     super.tearDown();
-    JobTestManager.reset();
+//    JobTestManager.reset();
   }
 
 //  @Test

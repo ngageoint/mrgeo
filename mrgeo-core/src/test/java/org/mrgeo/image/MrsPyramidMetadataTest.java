@@ -16,8 +16,8 @@
 
 package org.mrgeo.image;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.codehaus.jackson.map.exc.UnrecognizedPropertyException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

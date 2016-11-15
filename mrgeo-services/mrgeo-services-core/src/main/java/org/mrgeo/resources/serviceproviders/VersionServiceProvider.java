@@ -16,10 +16,10 @@
 
 package org.mrgeo.resources.serviceproviders;
 
-import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
 import org.mrgeo.services.version.VersionService;
 
 import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
 /**
@@ -27,11 +27,14 @@ import javax.ws.rs.ext.Provider;
  *         Date: 11/18/13
  */
 @Provider
-public class VersionServiceProvider extends SingletonTypeInjectableProvider<Context, VersionService> {
-
+public class VersionServiceProvider implements
+    ContextResolver<VersionService>
+{
     private static final VersionService instance = new VersionService();
 
-    public VersionServiceProvider() {
-        super(VersionService.class, instance);
-    }
+@Override
+public VersionService getContext(Class<?> type)
+{
+  return instance;
+}
 }

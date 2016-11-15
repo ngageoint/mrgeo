@@ -16,9 +16,9 @@
 
 package org.mrgeo.utils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.NotImplementedException;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.awt.geom.Rectangle2D;
 import java.io.Serializable;

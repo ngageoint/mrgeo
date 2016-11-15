@@ -25,6 +25,7 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
 
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * @author Steve Ingram
  *         Date: 11/1/13
  */
+@Singleton
 public class TmsService {
 
     private LoadingCache<String, MrsPyramidMetadata> metadataCache;
@@ -63,7 +65,6 @@ public class TmsService {
 
     public List<String> listImages() throws IOException
     {
-        //FIXME: replace with call to mdcatalog to lookup V2 pyramids
       return Arrays.asList(DataProviderFactory.listImages(SecurityUtils.getProviderProperties()));
     }
 }

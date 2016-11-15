@@ -16,7 +16,7 @@
 
 package org.mrgeo.colorscale;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.w3c.dom.Document;

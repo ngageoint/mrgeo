@@ -16,23 +16,23 @@
 
 package org.mrgeo.resources.serviceproviders;
 
-import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 
 import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
-/**
- * @author Steve Ingram
- *         Date: 10/26/13
- */
 @Provider
-public class MrsPyramidServiceProvider extends SingletonTypeInjectableProvider<Context, MrsPyramidService> {
+public class MrsPyramidServiceProvider implements ContextResolver<MrsPyramidService>
+{
+private static final MrsPyramidService instance =
+    new MrsPyramidService(Configuration.getInstance().getProperties());
 
-    private static final MrsPyramidService instance = new MrsPyramidService(Configuration.getInstance().getProperties());
+@Override
+public MrsPyramidService getContext(Class type)
+{
+  return instance;
+}
 
-    public MrsPyramidServiceProvider() {
-        super(MrsPyramidService.class, instance);
-    }
 }

@@ -16,7 +16,6 @@
 
 package org.mrgeo.resources.wms;
 
-import com.sun.jersey.api.client.ClientResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -53,9 +52,6 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
       mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, inputHdfs.toString());
       mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, inputHdfs.toString());
 
-//    WmsGenerator.setBasePath(inputHdfs);
-//    WmsGenerator.setColorScaleBasePath(inputHdfs);
-
     }
     catch (Exception e)
     {
@@ -72,10 +68,10 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)
   public void testDescribeTilesEmptyVersion() throws Exception
   {
-    ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "describetiles")
-            .get(ClientResponse.class);
+    Response response = target("wms")
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "describetiles")
+        .request().get();
 
     processXMLResponse(response, "DescribeTiles.xml");
   }
@@ -84,11 +80,11 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)
   public void testDescribeTilesLessThan140() throws Exception
   {
-    ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "describetiles")
-            .queryParam("VERSION", "1.3.0")
-            .get(ClientResponse.class);
+    Response response = target("wms")
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "describetiles")
+        .queryParam("VERSION", "1.3.0")
+        .request().get();
 
     processXMLResponse(response, "DescribeTilesEarlyVersion.xml", Response.Status.BAD_REQUEST);
   }
@@ -97,11 +93,12 @@ public class DescribeTilesTest extends WmsGeneratorTestAbstract
   @Category(IntegrationTest.class)
   public void testDescribeTiles140() throws Exception
   {
-    ClientResponse response = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "describetiles")
-            .queryParam("VERSION", "1.4.0")
-            .get(ClientResponse.class);
+    Response response = target("wms")
+        .queryParam("SERVICE", "WMS")
+        .queryParam("REQUEST", "describetiles")
+        .queryParam("VERSION", "1.4.0")
+        .request().get();
+
     processXMLResponse(response, "DescribeTiles.xml");
   }
 }

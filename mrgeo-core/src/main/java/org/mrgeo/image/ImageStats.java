@@ -16,11 +16,11 @@
 
 package org.mrgeo.image;
 
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.util.DefaultPrettyPrinter;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable.RasterWritableException;
@@ -198,10 +198,7 @@ static public void writeStats(final AdHocDataProvider provider, final ImageStats
     final ObjectMapper mapper = new ObjectMapper();
     try
     {
-      DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-      pp.indentArraysWith(new DefaultPrettyPrinter.Lf2SpacesIndenter());
-
-      mapper.prettyPrintingWriter(pp).writeValue(stream, stats);
+      mapper.writerWithDefaultPrettyPrinter().writeValue(stream, stats);
     }
     catch (final NoSuchMethodError e)
     {
