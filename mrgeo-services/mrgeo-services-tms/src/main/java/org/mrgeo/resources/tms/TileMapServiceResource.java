@@ -14,14 +14,10 @@
  *
  */
 
-/**
- *
- */
 package org.mrgeo.resources.tms;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
@@ -31,7 +27,6 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.MrGeoRaster;
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.Reprojector;
@@ -60,14 +55,15 @@ import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -106,7 +102,11 @@ private final Bounds[] limits = {Bounds.WORLD, new Bounds(-180.0, -85.051129, 18
 private final double[] tilezOffset = {0.0, -1.0};
 
 @Context
+Providers providers;
+
+@Context
 TmsService service;
+
 static Properties props;
 
 static
@@ -116,6 +116,9 @@ static
 
 private static synchronized void init()
 {
+//  ContextResolver<TmsService> resolver =
+//      providers.getContextResolver(TmsService.class, MediaType.WILDCARD_TYPE);
+//  TmsService service = resolver.getContext(TmsService.class);
   try
   {
     if (props == null)
@@ -418,14 +421,12 @@ public Response getRootResource(@Context final HttpServletRequest hsr)
     final String url = hsr.getRequestURL().toString();
     final Document doc = rootResourceXml(url);
     final DOMSource source = new DOMSource(doc);
-    return Response.ok(source, "text/xml").header("Content-type", "text/xml").build();
-
+    return Response.ok(source, "text/xml").build();
   }
   catch (final ParserConfigurationException ex)
   {
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
-
 }
 
 
@@ -447,6 +448,8 @@ public Response getTile(@PathParam("version") final String version,
     @DefaultValue("1") @QueryParam("maskMax") final Double maskMax,
     @QueryParam("mask") final String mask)
 {
+
+  getService();
 
   final ImageRenderer renderer;
   MrGeoRaster raster;
@@ -658,6 +661,8 @@ private Bounds calcBounds(Integer x, Integer y, Integer z, String pyramid, Provi
 public Response getTileMap(@PathParam("version") final String version,
     @PathParam("raster") String raster, @PathParam("profile") String profile, @Context final HttpServletRequest hsr)
 {
+  getService();
+
   try
   {
     final String url = hsr.getRequestURL().toString();
@@ -667,7 +672,7 @@ public Response getTileMap(@PathParam("version") final String version,
     final Document doc = mrsPyramidMetadataToTileMapXml(raster, profile, url, mpm);
     final DOMSource source = new DOMSource(doc);
 
-    return Response.ok(source, "text/xml").header("Content-type", "text/xml").build();
+    return Response.ok(source, "text/xml").build();
 
   }
   catch (final ExecutionException e)
@@ -681,6 +686,19 @@ public Response getTileMap(@PathParam("version") final String version,
   }
 }
 
+private void getService()
+{
+  if (service == null)
+  {
+    ContextResolver<TmsService> resolver =
+        providers.getContextResolver(TmsService.class, MediaType.WILDCARD_TYPE);
+    if (resolver != null)
+    {
+      service = resolver.getContext(TmsService.class);
+    }
+  }
+}
+
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
 @Produces("text/xml")
@@ -688,13 +706,15 @@ public Response getTileMap(@PathParam("version") final String version,
 public Response getTileMapService(@PathParam("version") final String version,
     @Context final HttpServletRequest hsr)
 {
+  getService();
+
   try
   {
     final String url = hsr.getRequestURL().toString();
     final Document doc = mrsPyramidToTileMapServiceXml(url, service.listImages());
     final DOMSource source = new DOMSource(doc);
 
-    return Response.ok(source, "text/xml").header("Content-type", "text/xml").build();
+    return Response.ok(source, "text/xml").build();
 
   }
   catch (final IOException e)
@@ -733,7 +753,10 @@ Response returnEmptyTile(final int width, final int height,
   IOUtils.closeQuietly(baos);
 
   final String type = mimeTypeMap.getContentType("output." + format);
-  return Response.ok(imageData).header("Content-Type", type).build();
+  return Response.ok()
+      .entity(imageData)
+      .header("Content-Type", type)
+      .build();
 
   // A 404 - Not Found response may be the most appropriate, but results in pink tiles,
   // maybe change that behavior on the OpenLayers client?

@@ -16,11 +16,11 @@
 
 package org.mrgeo.hdfs.metadata;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Predicates;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.image.MrsPyramidMetadataReaderContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;

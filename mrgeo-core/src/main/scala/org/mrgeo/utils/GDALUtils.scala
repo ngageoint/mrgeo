@@ -91,20 +91,24 @@ object GDALUtils extends Logging {
   }
 
   def open(stream: InputStream): Dataset = {
+    open(IOUtils.toByteArray(stream))
+  }
+
+  def open(bytes:Array[Byte]): Dataset = {
     val imagename: String = "stream" + HadoopUtils.createRandomString(5)
-    val bytes: Array[Byte] = IOUtils.toByteArray(stream)
 
     gdal.FileFromMemBuffer(VSI_PREFIX + imagename, bytes)
 
     val image = gdal.Open(VSI_PREFIX + imagename)
     if (image != null) {
       logDebug("  Image loaded successfully: " + imagename)
-      return image
+      image
     }
-
-    logInfo(
-      "Image not loaded, but unfortunately no exceptions were thrown, look for a logged explanation somewhere above")
-    null
+    else {
+      logInfo(
+        "Image not loaded, but unfortunately no exceptions were thrown, look for a logged explanation somewhere above")
+      null
+    }
   }
 
   def createEmptyMemoryRaster(src: Dataset, width: Int, height: Int): Dataset = {

@@ -16,8 +16,6 @@
 
 package org.mrgeo.resources.wms;
 
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,6 +26,7 @@ import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
@@ -54,9 +53,9 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
     }
   }
 
-  private void testGetMapMissingParam(String paramName) throws Exception
+private void testGetMapMissingParam(String paramName) throws Exception
   {
-    WebResource webResource = resource().path("/wms")
+    WebTarget webResource = target().path("/wms")
             .queryParam("SERVICE", "WMS")
             .queryParam("REQUEST", "getmap");
     if (!paramName.equals("LAYERS"))
@@ -80,7 +79,7 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
       webResource = webResource.queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
     }
 
-    ClientResponse response = webResource.get(ClientResponse.class);
+    Response response = webResource.request().get();
     processXMLResponse(response, "testGetMapMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
   }
 
@@ -105,7 +104,7 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
 
   private void testGetMosaicMissingParam(String paramName) throws Exception
   {
-    WebResource webResource = resource().path("/wms")
+    WebTarget webResource = target().path("/wms")
             .queryParam("SERVICE", "WMS")
             .queryParam("REQUEST", "getmosaic");
     if (!paramName.equals("LAYERS"))
@@ -121,7 +120,7 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
       webResource = webResource.queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750");
     }
 
-    ClientResponse response = webResource.get(ClientResponse.class);
+    Response response = webResource.request().get();
 
     processXMLResponse(response, "testGetMosaicMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
   }
@@ -145,7 +144,7 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
 
   private void testGetTileMissingParam(String paramName) throws Exception
   {
-    WebResource webResource = resource().path("/wms")
+    WebTarget webResource = target().path("/wms")
             .queryParam("SERVICE", "WMS")
             .queryParam("REQUEST", "gettile");
     if (!paramName.equals("LAYER"))
@@ -169,7 +168,7 @@ public class MissingParamsTest extends WmsGeneratorTestAbstract
       webResource = webResource.queryParam("SCALE", "272989.38673277234");
     }
 
-    ClientResponse response = webResource.get(ClientResponse.class);
+    Response response = webResource.request().get();
 
     processXMLResponse(response, "testGetTileMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
   }

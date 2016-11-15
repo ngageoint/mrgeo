@@ -51,6 +51,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMSource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -94,13 +95,13 @@ public class WmsGenerator
    *          source data
    * @return scale resolution
    */
-  public static double calculateScale(final MrsImage image)
-  {
-    // WMS defines a pixel as .28mm
-    final double h = TMSUtils.resolution(image.getZoomlevel(), image.getTilesize()) *
-        LatLng.METERS_PER_DEGREE;
-    return h / 2.8e-4;
-  }
+//  public static double calculateScale(final MrsImage image)
+//  {
+//    // WMS defines a pixel as .28mm
+//    final double h = TMSUtils.resolution(image.getZoomlevel(), image.getTilesize()) *
+//        LatLng.METERS_PER_DEGREE;
+//    return h / 2.8e-4;
+//  }
 
   /**
    * Returns the value for the specified paramName case-insensitively. If the
@@ -299,14 +300,19 @@ public class WmsGenerator
       cacheControl.setNoStore(true);
       cacheControl.setNoCache(true);
       // This is retained from the original WmsGenerator, but it seems wrong.
-      return builder.cacheControl(cacheControl).expires(new Date(0));
+      //return builder.cacheControl(cacheControl).expires(DateTime.now().toDate());
+      return builder.cacheControl(cacheControl);
     }
     else
     {
-      // This is retained from the original WmsGenerator, but it seems wrong.
+//      DateTime future = DateTime.now().plusSeconds(3600);
+
       cacheControl.setMaxAge(3600);
       cacheControl.setNoCache(false);
-      return builder.cacheControl(cacheControl).expires(new Date(3600));
+
+      // This is retained from the original WmsGenerator, but it seems wrong.
+      //return builder.cacheControl(cacheControl).expires(future.toDate());
+      return builder.cacheControl(cacheControl);
     }
   }
 
@@ -757,14 +763,10 @@ public class WmsGenerator
       final Document doc = docGen.generateDoc(version, uriInfo.getRequestUri().toString(),
                                               getPyramidFilesList(providerProperties));
 
-      ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-      final PrintWriter out = new PrintWriter(xmlStream);
-      // DocumentUtils.checkForErrors(doc);
-      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
-      out.close();
-      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
+      DOMSource source = new DOMSource(doc);
+      return Response.ok(source, MediaType.APPLICATION_XML).build();
     }
-    catch (TransformerException | IOException e)
+    catch (IOException e)
     {
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
@@ -830,64 +832,14 @@ public class WmsGenerator
       final Document doc = docGen.generateDoc(version, builder.build().toString(),
                                               getPyramidFilesList(providerProperties));
 
-      ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-      final PrintWriter out = new PrintWriter(xmlStream);
-      // DocumentUtils.checkForErrors(doc);
-      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
-      out.close();
-      return Response.ok(xmlStream.toString()).type(MediaType.APPLICATION_XML).build();
+      DOMSource source = new DOMSource(doc);
+      return Response.ok(source, MediaType.APPLICATION_XML).build();
     }
-    catch (InterruptedException | ParserConfigurationException | IOException | TransformerException e)
+    catch (InterruptedException | ParserConfigurationException | IOException e)
     {
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
-
-  /*
-   * Writes OGC spec error messages to the response
-   */
-//  private Response writeError(Response.Status httpStatus, final Exception e)
-//  {
-//    try
-//    {
-//      Document doc;
-//      final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-//      final DocumentBuilder builder;
-//      builder = dBF.newDocumentBuilder();
-//      doc = builder.newDocument();
-//
-//      final Element ser = doc.createElement("ServiceExceptionReport");
-//      doc.appendChild(ser);
-//      ser.setAttribute("version", WMS_VERSION);
-//      final Element se = XmlUtils.createElement(ser, "ServiceException");
-////      String msg = e.getLocalizedMessage();
-////      if (msg == null || msg.isEmpty())
-////      {
-////        msg = e.getClass().getName();
-////      }
-//      final ByteArrayOutputStream strm = new ByteArrayOutputStream();
-//      e.printStackTrace(new PrintStream(strm));
-//      CDATASection msgNode = doc.createCDATASection(strm.toString());
-//      se.appendChild(msgNode);
-//      final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-//      final PrintWriter out = new PrintWriter(xmlStream);
-//      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
-//      out.close();
-//      return Response
-//              .status(httpStatus)
-//              .header("Content-Type", MediaType.TEXT_XML)
-//              .entity(xmlStream.toString())
-//              .build();
-//    }
-//    catch (ParserConfigurationException e1)
-//    {
-//    }
-//    catch (TransformerException e1)
-//    {
-//    }
-//    // Fallback in case there is an XML exception above
-//    return Response.status(httpStatus).entity(e.getLocalizedMessage()).build();
-//  }
 
   /*
    * Writes OGC spec error messages to the response
@@ -907,59 +859,14 @@ public class WmsGenerator
       final Element se = XmlUtils.createElement(ser, "ServiceException");
       CDATASection msgNode = doc.createCDATASection(msg);
       se.appendChild(msgNode);
-      final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-      final PrintWriter out = new PrintWriter(xmlStream);
-      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
-      out.close();
-      return Response
-              .status(httpStatus)
-              .header("Content-Type", MediaType.TEXT_XML)
-              .entity(xmlStream.toString())
-              .build();
+
+      DOMSource source = new DOMSource(doc);
+      return Response.status(httpStatus).entity(source).build();
     }
-    catch (ParserConfigurationException | TransformerException e1)
+    catch (ParserConfigurationException ignored)
     {
     }
     // Fallback in case there is an XML exception above
     return Response.status(httpStatus).entity(msg).build();
   }
-
-  /*
-   * Writes OGC spec error messages to the response
-   */
-//  private Response writeError(Response.Status httpStatus, final String code, final String msg)
-//  {
-//    try
-//    {
-//      Document doc;
-//      final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-//      final DocumentBuilder builder = dBF.newDocumentBuilder();
-//      doc = builder.newDocument();
-//
-//      final Element ser = doc.createElement("ServiceExceptionReport");
-//      doc.appendChild(ser);
-//      ser.setAttribute("version", WMS_VERSION);
-//      final Element se = XmlUtils.createElement(ser, "ServiceException");
-//      se.setAttribute("code", code);
-//      CDATASection msgNode = doc.createCDATASection(msg);
-//      se.appendChild(msgNode);
-//      final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-//      final PrintWriter out = new PrintWriter(xmlStream);
-//      DocumentUtils.writeDocument(doc, version, WMS_SERVICE, out);
-//      out.close();
-//      return Response
-//              .status(httpStatus)
-//              .header("Content-Type", MediaType.TEXT_XML)
-//              .entity(xmlStream.toString())
-//              .build();
-//    }
-//    catch (ParserConfigurationException e1)
-//    {
-//    }
-//    catch (TransformerException e1)
-//    {
-//    }
-//    // Fallback in case there is an XML exception above
-//    return Response.status(httpStatus).entity(msg).build();
-//  }
 }

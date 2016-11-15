@@ -68,8 +68,13 @@ public Response.ResponseBuilder write(final MrGeoRaster raster)
 
     writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
 
-    return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
-        getResponseMimeType()).header("Content-Disposition", "attachment; filename=image.tif");
+    Response.ResponseBuilder response = Response.ok();
+    response.entity(byteStream.toByteArray());
+    response.encoding(getResponseMimeType());
+    response.header("Content-type", getResponseMimeType());
+    response.header("Content-Disposition", "attachment; filename=image.tif");
+
+    return response;
   }
   catch (final Exception e)
   {
@@ -114,9 +119,12 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileCo
 
     writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
 
-    return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
-        getResponseMimeType()).header("Content-Disposition",
-        "attachment; filename=" + pyramid.getName() + ".tif");
+    Response.ResponseBuilder response = Response.ok().entity(byteStream.toByteArray())
+        .encoding(getResponseMimeType())
+        .header("Content-type", getResponseMimeType())
+        .header("Content-Disposition", "attachment; filename=" + pyramid.getName() + ".tif");
+
+    return response;
   }
   catch (final Exception e)
   {
@@ -167,9 +175,13 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final String ima
 
     writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);
 
-    return Response.ok(byteStream.toByteArray(), getResponseMimeType()).header("Content-type",
-        getResponseMimeType()).header("Content-Disposition",
-        "attachment; filename=" + imageName + ".tif");
+    Response.ResponseBuilder response = Response.ok().entity(byteStream.toByteArray())
+        .encoding(getResponseMimeType())
+        .header("Content-type", getResponseMimeType())
+        .header("Content-Disposition", "attachment; filename=" + imageName + ".tif");
+
+    return response;
+
   }
   catch (IOException e)
   {

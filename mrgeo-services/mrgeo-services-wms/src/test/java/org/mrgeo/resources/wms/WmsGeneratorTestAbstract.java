@@ -20,20 +20,19 @@ import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 import com.meterware.servletunit.ServletUnitClient;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.test.framework.AppDescriptor;
-import com.sun.jersey.test.framework.JerseyTest;
-import com.sun.jersey.test.framework.LowLevelAppDescriptor;
-import com.sun.jersey.test.framework.spi.container.TestContainerException;
-import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
-import com.sun.jersey.test.framework.spi.container.grizzly2.GrizzlyTestContainerFactory;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.custommonkey.xmlunit.XMLAssert;
+import org.custommonkey.xmlunit.XMLUnit;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.mockito.Mockito;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
@@ -46,6 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.net.MalformedURLException;
@@ -94,21 +95,15 @@ static String imageStretch2Unqualified;
 private static String small3band = "small-3band";
 static String small3bandUnqualified;
 
-@Override
-protected AppDescriptor configure()
-{
-  DefaultResourceConfig resourceConfig = new DefaultResourceConfig();
-  resourceConfig.getClasses().add(WmsGenerator.class);
-  return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
-}
 
 @Override
-protected TestContainerFactory getTestContainerFactory() throws TestContainerException
+protected Application configure()
 {
-//    return new FilteringInMemoryTestContainerFactory();
-  return new GrizzlyTestContainerFactory();
-//    return new InMemoryTestContainerFactory();
+  ResourceConfig config = new ResourceConfig();
+  config.register(WmsGenerator.class);
+  return config;
 }
+
 
 @BeforeClass
 public static void setUpForJUnit()
@@ -221,77 +216,24 @@ protected static void copyInputData() throws IOException
       HadoopFileUtils.unqualifyPath(new Path(inputHdfs, small3band)).toString();
 }
 
-protected static WebRequest createRequest() throws MalformedURLException
-{
-  return new GetMethodWebRequest(
-      new URL(
-          MrGeoProperties.getInstance().getProperty("base.url", "http://localhost:8080")
-              .replaceAll("/mrgeo-services/", "")),
-      "/mrgeo-services/wms");
-}
+//protected static WebRequest createRequest() throws MalformedURLException
+//{
+//  return new GetMethodWebRequest(
+//      new URL(
+//          MrGeoProperties.getInstance().getProperty("base.url", "http://localhost:8080")
+//              .replaceAll("/mrgeo-services/", "")),
+//      "/mrgeo-services/wms");
+//}
 
-//  protected static void launchServlet()
-//  {
-//    servletRunner = new ServletRunner();
-//    servletRunner.registerServlet(
-//        "/mrgeo-services/WmsGenerator", WmsGenerator.class.getName());
-//    webClient = servletRunner.newClient();
-////    WmsGenerator.setBasePath(inputHdfs);
-////    WmsGenerator.setColorScaleBasePath(inputHdfs);
-//
-//    MrGeoProperties.getInstance().setProperty(HadoopUtils.IMAGE_BASE, inputHdfs.toString());
-//    MrGeoProperties.getInstance().setProperty(HadoopUtils.COLOR_SCALE_BASE, inputHdfs.toString());
-//  }
 
-protected static void processImageResponse(final WebResponse response, final String extension)
+protected void processImageResponse(final Response response, final String contentType, final String extension)
     throws IOException
 {
   try
   {
-    assertEquals(response.getResponseCode(), 200);
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      final String outputPath =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
-              extension;
-      log.info("Generating baseline image: " + outputPath);
-      ImageTestUtils.writeBaselineImage(response, outputPath);
-    }
-    else
-    {
-      final String baselineImageFile =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
-              extension;
-      log.info("Comparing result to baseline image " + baselineImageFile + " ...");
-      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
-    }
-  }
-  finally
-  {
-    if (response != null)
-    {
-      response.close();
-    }
-  }
-}
+    Assert.assertEquals("Bad response code", Response.Status.OK.getStatusCode(), response.getStatus());
+    Assert.assertEquals(contentType, response.getHeaders().getFirst("Content-Type"));
 
-protected static void processImageResponse(final ClientResponse response,
-    final String contentType, final String extension)
-    throws IOException
-{
-  try
-  {
-    if (response.getStatus() != Response.Status.OK.getStatusCode())
-    {
-      // Because of how junit works, we check for the failure case before calling
-      // assertEquals because it will trigger the code that computes the message (the
-      // first argument), which reads the content, and then the content would not be
-      // readable for the success case (to get the image bytes).
-      String content = response.getEntity(String.class);
-      assertEquals("Unexpected response status " + response.getStatus() + " with content " + content,
-          Response.Status.OK.getStatusCode(), response.getStatus());
-    }
-    assertEquals(contentType, response.getHeaders().getFirst("Content-Type"));
     if (GEN_BASELINE_DATA_ONLY)
     {
       final String outputPath =
@@ -319,17 +261,17 @@ protected static void processImageResponse(final ClientResponse response,
 }
 
 
-protected static void processXMLResponse(final ClientResponse response,
+protected static void processXMLResponse(final Response response,
     final String baselineFileName) throws IOException, SAXException {
   processXMLResponse(response, baselineFileName, Response.Status.OK);
 }
 
-protected static void processXMLResponse(final ClientResponse response,
+protected static void processXMLResponse(final Response response,
     final String baselineFileName, Response.Status status)
     throws IOException, SAXException {
   try
   {
-    String content = response.getEntity(String.class);
+    String content = response.readEntity(String.class);
     if (response.getStatus() != status.getStatusCode())
     {
       assertEquals("Unexpected response status " + response.getStatus() + " with content " + content,
@@ -356,9 +298,11 @@ protected static void processXMLResponse(final ClientResponse response,
       final InputStream inputStream = new FileInputStream(new File(baselineFile));
       try
       {
+        XMLUnit.setIgnoreWhitespace(true);
         // log.debug(response.getText());
         log.info("Comparing result to baseline text in " + baselineFile + " ...");
-        //assertEquals(IOUtils.toString(inputStream), content);
+        //Assert.assertEquals(IOUtils.toString(inputStream), content);
+
         XMLAssert.assertXMLEqual(IOUtils.toString(inputStream), content);
       }
       finally

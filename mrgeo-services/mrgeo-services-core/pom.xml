@@ -149,9 +149,6 @@
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-core</artifactId>
     </dependency>
-    <!-- Jetty has dependencies for servlet-api...  We need to make the scope "provided" to make sure those
-         jars are not included in the final war (tomcat will provide it...)
-    -->
     <dependency>
       <groupId>org.jvnet</groupId>
       <artifactId>mimepull</artifactId>
@@ -168,14 +165,6 @@
     <dependency>
       <groupId>rhino</groupId>
       <artifactId>js</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.sun.jersey.jersey-test-framework</groupId>
-      <artifactId>jersey-test-framework-grizzly2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.sun.jersey.jersey-test-framework</groupId>
-      <artifactId>jersey-test-framework-inmemory</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

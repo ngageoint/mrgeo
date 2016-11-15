@@ -16,9 +16,12 @@
 
 package org.mrgeo.utils.tms;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.vividsolutions.jts.geom.Envelope;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.codehaus.jackson.annotate.JsonCreator;
 
 import java.io.*;
 import java.util.Map;
@@ -27,22 +30,12 @@ public class Bounds implements Serializable, Cloneable
 {
 private static final long serialVersionUID = 1L;
 
-
 public static final Bounds WORLD = new Bounds(-180, -90, 180, 90);
 
 final public double w;
 final public double s;
 final public double n;
 final public double e;
-
-//private boolean set = false;
-//private int individualParamSet = 0;
-
-
-//public Bounds()
-//{
-//  clear();
-//}
 
 public Bounds(final double w, final double s, final double e, final double n)
 {
@@ -54,49 +47,48 @@ public Bounds(final double w, final double s, final double e, final double n)
   //set = true;
 }
 
-
 @JsonCreator
-public Bounds(Map<String, Object> props)
+public Bounds(Map<String, Object> delegate)
 {
   double n = Double.NaN;
   double s = Double.NaN;
   double e = Double.NaN;
   double w = Double.NaN;
 
-  if (props.containsKey("w"))
+  if (delegate.containsKey("w"))
   {
-    w = Double.parseDouble(props.get("w").toString());
+    w = Double.parseDouble(delegate.get("w").toString());
   }
-  else if (props.containsKey("minX"))
+  else if (delegate.containsKey("minX"))
   {
-    w = Double.parseDouble(props.get("minX").toString());
-  }
-
-  if (props.containsKey("s"))
-  {
-    s = Double.parseDouble(props.get("s").toString());
-  }
-  else if (props.containsKey("minY"))
-  {
-    s = Double.parseDouble(props.get("minY").toString());
+    w = Double.parseDouble(delegate.get("minX").toString());
   }
 
-  if (props.containsKey("e"))
+  if (delegate.containsKey("s"))
   {
-    e = Double.parseDouble(props.get("e").toString());
+    s = Double.parseDouble(delegate.get("s").toString());
   }
-  else if (props.containsKey("maxX"))
+  else if (delegate.containsKey("minY"))
   {
-    e = Double.parseDouble(props.get("maxX").toString());
+    s = Double.parseDouble(delegate.get("minY").toString());
   }
 
-  if (props.containsKey("n"))
+  if (delegate.containsKey("e"))
   {
-    n = Double.parseDouble(props.get("n").toString());
+    e = Double.parseDouble(delegate.get("e").toString());
   }
-  else if (props.containsKey("maxY"))
+  else if (delegate.containsKey("maxX"))
   {
-    n = Double.parseDouble(props.get("maxY").toString());
+    e = Double.parseDouble(delegate.get("maxX").toString());
+  }
+
+  if (delegate.containsKey("n"))
+  {
+    n = Double.parseDouble(delegate.get("n").toString());
+  }
+  else if (delegate.containsKey("maxY"))
+  {
+    n = Double.parseDouble(delegate.get("maxY").toString());
   }
 
   this.n = n;
@@ -119,7 +111,7 @@ public Envelope toEnvelope()
   return new Envelope(w, e, s, n);
 }
 
-
+@JsonIgnore
 public static Bounds combine(Bounds... bounds)
 {
   Bounds answer = null;
@@ -137,125 +129,11 @@ public static Bounds combine(Bounds... bounds)
   return answer;
 }
 
-//public void clear()
-//{
-//  w = Double.MAX_VALUE;
-//  s = Double.MAX_VALUE;
-//  e = -Double.MAX_VALUE;
-//  n = -Double.MAX_VALUE;
-//
-//  set = false;
-//}
-//
-//
-//// Getters/Setters are _ONLY_ for JSON serialization, they should never be used outside there.  So they are private...
-//@SuppressWarnings("unused")
-//private double getE()
-//{
-//  return e;
-//}
-//
-//@SuppressWarnings("unused")
-//private double getN()
-//{
-//  return n;
-//}
-//
-//@SuppressWarnings("unused")
-//private double getW()
-//{
-//  return w;
-//}
-//
-//@SuppressWarnings("unused")
-//private double getS()
-//{
-//  return s;
-//}
-//
-//@SuppressWarnings("unused")
-//private void setMaxX(double maxX)
-//{
-//  individualParamSet |= 1;
-//  set = set | individualParamSet == 15;
-//
-//  this.e = maxX;
-//}
-//
-//@SuppressWarnings("unused")
-//private void setMaxY(double maxY)
-//{
-//  individualParamSet |= 2;
-//  set = set | individualParamSet == 15;
-//
-//  this.n = maxY;
-//}
-//
-//@SuppressWarnings("unused")
-//private void setMinX(double minX)
-//{
-//  individualParamSet |= 4;
-//  set = set | individualParamSet == 15;
-//
-//  this.w = minX;
-//}
-//
-//@SuppressWarnings("unused")
-//private void setMinY(double minY)
-//{
-//  individualParamSet |= 8;
-//  set = set | individualParamSet == 15;
-//
-//  this.s = minY;
-//}
-//
-//@SuppressWarnings("unused")
-//private void setE(double e)
-//{
-//  individualParamSet |= 1;
-//  set = set | individualParamSet == 15;
-//
-//  this.e = e;
-//}
-//
-//@SuppressWarnings("unused")
-//private void setN(double n)
-//{
-//  individualParamSet |= 2;
-//  set = set | individualParamSet == 15;
-//
-//  this.n = n;
-//}
-//
-//@SuppressWarnings("unused")
-//private void setW(double w)
-//{
-//  individualParamSet |= 4;
-//  set = set | individualParamSet == 15;
-//
-//  this.w = w;
-//}
-//
-//@SuppressWarnings("unused")
-//private void setS(double s)
-//{
-//  individualParamSet |= 8;
-//  set = set | individualParamSet == 15;
-//
-//  this.s = s;
-//}
 
 public boolean contains(final Bounds b)
 {
   return contains(b, true);
 }
-
-//@JsonIgnore
-//public boolean isValid()
-//{
-//  return (set && (w != Double.MAX_VALUE) && (s != Double.MAX_VALUE)
-//      && (e != -Double.MAX_VALUE) && (n != -Double.MAX_VALUE));
-//}
 
 /**
  * Is the bounds fully contained within this bounds. Edges are included iff includeAdjacent is
@@ -429,6 +307,7 @@ public String toCommaString()
   return w + "," + s + "," + e + "," + n;
 }
 
+@JsonIgnore
 public static Bounds fromCommaString(String str)
 {
   String[] split = str.split(",");

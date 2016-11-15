@@ -32,6 +32,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import javax.inject.Singleton;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -57,6 +58,7 @@ import java.util.Comparator;
 import java.util.zip.ZipOutputStream;
 
 @Path("/kml")
+@Singleton
 public class KmlGenerator
 {
 
@@ -343,7 +345,7 @@ public Element createTextElement(Element parent, String tagName, String text)
 
 @SuppressFBWarnings(value = {"SERVLET_QUERY_STRING",
     "SERVLET_PARAMETER"}, justification = "1) QueryString only checked for not null, 2) SERVICE & REQUEST validated")
-@GET
+// @GET
 public void doGet(@Context HttpServletRequest request, @Context HttpServletResponse response)
     throws ServletException, IOException
 {
@@ -435,7 +437,7 @@ public void doGet(@Context HttpServletRequest request, @Context HttpServletRespo
   }
 }
 
-@POST
+// @POST
 public void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
 {

@@ -36,6 +36,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import java.io.FileNotFoundException;
 
 //import org.mrgeo.services.mrspyramid.MrsPyramidService;
@@ -47,10 +49,14 @@ public class RasterResource
 UriInfo uriInfo;
 
 @Context
-HttpServletRequest request;
+Providers providers;
 
 @Context
 MrsPyramidService service;
+
+@Context
+HttpServletRequest request;
+
 
 private static final String TIFF_MIME_TYPE = "image/tiff";
 private static final String KML_INPUT_FORMAT = "kml";
@@ -80,6 +86,7 @@ public Response createMapAlgebraJob(@PathParam("output") String outputId,
 {
   try
   {
+    getService();
     // TODO: After MrsPyramid 2.0 is complete, we will no longer specify a
     // full path but instead just the resource name. This is because there is no concept of
     // paths in Accumulo.
@@ -183,6 +190,8 @@ public Response getImage(@PathParam("output") String imgName,
     Bounds bounds = new Bounds(minX, minY, maxX, maxY);
 
     ColorScale cs = null;
+
+    getService();
     try
     {
       if (colorScaleName != null)
@@ -237,7 +246,9 @@ public Response getImage(@PathParam("output") String imgName,
         log.debug("request bounds does not intersects image bounds");
         byte imageData[] = service.getEmptyTile(width, height, format);
         String type = service.getContentType(format);
-        return Response.ok(imageData).header("Content-Type", type).build();
+        return Response.ok(imageData)
+            .header("Content-Type", type)
+            .build();
       }
       ImageRenderer renderer;
       try
@@ -287,5 +298,17 @@ public Response getImage(@PathParam("output") String imgName,
   }
   return Response.serverError().entity(error).build();
 }
+
+private void getService()
+{
+  if (service == null)
+  {
+    ContextResolver<MrsPyramidService> resolver =
+        providers.getContextResolver(MrsPyramidService.class, MediaType.WILDCARD_TYPE);
+    if (resolver != null)
+      service = resolver.getContext(MrsPyramidService.class);
+  }
+}
+
 
 }
