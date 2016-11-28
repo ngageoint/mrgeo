@@ -80,6 +80,9 @@ public static final String MRGEO_MAX_PROCESSING_MEM = "max.processing.memory";
 public static final String MRGEO_SHUFFLE_FRACTION = "shuffle.fraction";
 
 
+public static final String MRGEO_AUTOPERSISTANCE = "autopersistance";
+
+
 /*
  * Runtime configuration keys
  */
