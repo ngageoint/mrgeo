@@ -93,6 +93,7 @@ public static void copyFileToHdfs(final String fromFile, final String toFile) th
   copyFileToHdfs(fromFile, toFile, true);
 }
 
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 public static void copyFileToHdfs(final String fromFile, final String toFile,
     final boolean overwrite) throws IOException
 {
@@ -159,6 +160,7 @@ public static void copyToHdfs(final String fromDir, final Path toDir, final Stri
   copyToHdfs(fromDir, toDir, fileName);
 }
 
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 public static void copyToHdfs(final String fromDir, final String toDir) throws IOException
 {
   final Path toPath = new Path(toDir);
@@ -198,6 +200,7 @@ public static Path createUniqueTmp() throws IOException
  * @return
  * @throws IOException
  */
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 public static Path createUniqueTmp(Configuration conf) throws IOException
 {
   // create a corresponding tmp directory for the job
@@ -243,6 +246,7 @@ public static void create(final Configuration conf, final Path path) throws IOEx
   create(conf, path, null);
 }
 
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 public static void create(final Configuration conf, final Path path, final String mode) throws IOException
 {
   final FileSystem fs = HadoopFileUtils.getFileSystem(conf, path);
