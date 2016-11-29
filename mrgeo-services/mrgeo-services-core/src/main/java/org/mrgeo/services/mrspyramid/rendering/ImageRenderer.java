@@ -28,6 +28,7 @@ import org.mrgeo.utils.tms.Bounds;
  */
 public interface ImageRenderer
 {
+
 /**
  * Returns the default value used in the source raster data
  *

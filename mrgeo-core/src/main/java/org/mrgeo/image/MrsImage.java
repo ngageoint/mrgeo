@@ -584,7 +584,7 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterE
                         source, (int) (start.px - ul.px), (int) (start.py - ul.py));
       }
     }
-    catch (final TileNotFoundException e)
+    catch (final TileNotFoundException ignored)
     {
       // bad tile - tile could be out of bounds - ignore it
     }
@@ -655,7 +655,7 @@ public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRaster.MrG
       }
       catch (IOException e)
       {
-        e.printStackTrace();
+        log.error("Exception Thrown {}", e);
       }
     }
   }

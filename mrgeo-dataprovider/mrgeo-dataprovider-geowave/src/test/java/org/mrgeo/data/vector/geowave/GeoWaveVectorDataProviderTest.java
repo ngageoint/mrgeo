@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class GeoWaveVectorDataProviderTest
 {
   private static final double EPSILON = 1e-5;

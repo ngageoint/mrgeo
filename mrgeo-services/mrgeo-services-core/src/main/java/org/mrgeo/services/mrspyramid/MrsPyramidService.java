@@ -83,8 +83,17 @@ public List<String> getColorScales() throws Exception
 
 public MrGeoRaster createColorScaleSwatch(String name, String format, int width, int height) throws Exception
 {
-  ColorScale cs = getColorScaleFromName(name);
-  return createColorScaleSwatch(cs, format, width, height);
+  ColorScale cs = null;
+  try
+  {
+    cs = getColorScaleFromName(name);
+    return createColorScaleSwatch(cs, format, width, height);
+  }
+  catch (Exception e)
+  {
+    log.error("Exception thrown {}", e);
+    throw new Exception(e);
+  }
 }
 
 public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int width, int height) throws Exception

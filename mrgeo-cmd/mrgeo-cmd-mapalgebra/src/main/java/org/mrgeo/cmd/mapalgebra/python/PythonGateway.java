@@ -110,7 +110,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (ParseException e)
   {
-    e.printStackTrace();
+    log.error("Exception Thrown {}", e);
     return -1;
   }
 }
@@ -133,8 +133,7 @@ private int remoteConnection(int listenPort)
   }
   catch (IOException e)
   {
-    log.error("Can not establish listening socket");
-    e.printStackTrace();
+    log.error("Can not establish listening socket {}", e);
     return -1;
   }
 }
@@ -207,7 +206,7 @@ private void setupThreadedServer(final Socket clientSocket) throws IOException
       catch (IOException e)
       {
         log.error("Error in thread: " + this.getName() + "(" + this.getId() + "), exiting");
-        e.printStackTrace();
+        log.error("Exception Thrown {}", e);
       }
     }
   }.start();

@@ -18,6 +18,7 @@ package org.mrgeo.data.accumulo;
 
 import java.io.File;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class AccumuloDefs
 {
   /*

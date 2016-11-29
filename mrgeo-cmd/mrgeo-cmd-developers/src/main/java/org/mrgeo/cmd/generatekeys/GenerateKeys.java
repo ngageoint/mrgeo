@@ -234,7 +234,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (ParseException e)
   {
-    e.printStackTrace();
+    log.error("Exception Thrown {}", e);
   }
 
   return -1;

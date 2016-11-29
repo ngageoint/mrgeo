@@ -255,7 +255,7 @@ public static void importDirectory(String workDir, String tableName, Configurati
     }
     catch (TableExistsException tee)
     {
-      tee.printStackTrace();
+      log.error("Exception thrown {}", tee);
     }
   }
   connector.tableOperations().importDirectory(tableName, workDir + "/files", workDir + "/failures", false);
@@ -304,15 +304,7 @@ public static MrsPyramidMetadata getMetadataFromTable(String table, Connector co
     }
 
   }
-  catch (TableNotFoundException tnfe)
-  {
-
-  }
-  catch (ClassNotFoundException cnfe)
-  {
-
-  }
-  catch (IOException ioe)
+  catch (TableNotFoundException | IOException | ClassNotFoundException ignored)
   {
 
   }
@@ -435,7 +427,7 @@ public static MrsPyramidMetadata buildMetadataFromTable(String table, Connector 
 
 
   }
-  catch (TableNotFoundException tnfe)
+  catch (TableNotFoundException ignored)
   {
 
   }
@@ -586,15 +578,7 @@ public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata me
     bw.flush();
     bw.close();
   }
-  catch (IOException ioe)
-  {
-    return false;
-  }
-  catch (MutationsRejectedException mre)
-  {
-    return false;
-  }
-  catch (TableNotFoundException tnfe)
+  catch (IOException | MutationsRejectedException | TableNotFoundException ignored)
   {
     return false;
   }
@@ -653,7 +637,7 @@ public static RasterWritable getRaster(String table, long tid, int zl, Connector
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return retRaster;
@@ -687,16 +671,12 @@ public static Set<String> getListOfTables(Properties properties) throws DataProv
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
         token);
   }
-  catch (AccumuloSecurityException ase)
+  catch (AccumuloSecurityException | AccumuloException ase)
   {
-    ase.printStackTrace();
+    log.error("Exception thrown {}", ase);
     return null;
   }
-  catch (AccumuloException ae)
-  {
-    ae.printStackTrace();
-    return null;
-  } //catch (DataProviderException dpe) {
+  //catch (DataProviderException dpe) {
   //dpe.printStackTrace();
   //return null;
   //}
@@ -786,16 +766,12 @@ public static Hashtable<String, String> getGeoTables(Properties providerProperti
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
         token);
   }
-  catch (AccumuloSecurityException ase)
+  catch (AccumuloSecurityException | AccumuloException ase)
   {
-    ase.printStackTrace();
+    log.error("Exception thrown {}", ase);
     return null;
   }
-  catch (AccumuloException ae)
-  {
-    ae.printStackTrace();
-    return null;
-  } //catch (DataProviderException dpe) {
+  //catch (DataProviderException dpe) {
   //dpe.printStackTrace();
   //return null;
   //}
@@ -901,13 +877,9 @@ public static Hashtable<String, String> getGeoTables(String ignore, Authenticati
       scann.clearColumns();
 
     }
-    catch (TableNotFoundException tnfe)
-    {
-      tnfe.printStackTrace();
-    }
     catch (Exception e)
     {
-      e.printStackTrace();
+      log.error("Exception thrown {}", e);
     }
 
   } // end for loop
@@ -928,7 +900,7 @@ public static boolean validateProtectionLevel(final String protectionLevel)
   {
     new ColumnVisibility(protectionLevel);
   }
-  catch (BadArgumentException bae)
+  catch (BadArgumentException ignored)
   {
     return false;
   }

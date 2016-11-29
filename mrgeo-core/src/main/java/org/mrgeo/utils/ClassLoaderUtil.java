@@ -20,6 +20,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VirtualFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +38,8 @@ import java.util.jar.JarFile;
 
 public class ClassLoaderUtil
 {
+private static final Logger log = LoggerFactory.getLogger(ClassLoaderUtil.class);
+
 private static class Thief extends ClassLoader
 {
   Thief(ClassLoader cl)
@@ -95,7 +99,7 @@ public static Collection<String> getMostJars()
         }
         catch (IOException e)
         {
-          e.printStackTrace();
+          log.error("Exception Thrown {}", e);
         }
       }
       return true;
@@ -151,7 +155,7 @@ public static List<URL> loadVfs( URL resource ) throws IOException
     }
   } catch (URISyntaxException e) {
     System.out.println( "Problem reading resource '" + resource + "':\n " + e.getMessage() );
-    e.printStackTrace();
+    log.error("Exception Thrown {}", e);
   }
 
   return result;
@@ -253,11 +257,7 @@ public static void addLibraryPath(final String pathToAdd) throws Exception {
 
         return true;
       }
-      catch (IllegalAccessException e)
-      {
-        return false;
-      }
-      catch (NoSuchFieldException e)
+      catch (IllegalAccessException | NoSuchFieldException ignored)
       {
         return false;
       }

@@ -458,6 +458,7 @@ private static Logger log = LoggerFactory.getLogger(GeometryUtils.class);
       catch (final TopologyException e1)
       {
         log.error("JTS Topology problem: clip area: " + jtsClip.toString() + " geom: " + jtsGeom.toString() + " message: " + e1.getMessage());
+        log.error("Exception Thrown {}", e1);
 
         return new com.vividsolutions.jts.geom.GeometryFactory().createPoint((Coordinate)null);
       }
