@@ -623,7 +623,7 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
   }
   catch (IOException | NullPointerException e)
   {
-    throw new IOException("Unable to open image: " + HadoopFileUtils.unqualifyPath(pyramidName));
+    throw new IOException("Unable to open image: " + HadoopFileUtils.unqualifyPath(pyramidName), e);
   }
 }
 
@@ -680,7 +680,7 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
   }
   catch (final IOException e)
   {
-    throw new IOException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName));
+    throw new IOException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName), e);
   }
   // don't need to close, the image cache will take care of it...
   // finally

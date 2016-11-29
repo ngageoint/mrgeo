@@ -275,6 +275,7 @@ public static void importDirectory(String workDir, String tableName, Configurati
  * @param auths is the authorizations to use when pulling metadata
  * @return the metadata object
  */
+@SuppressWarnings("squid:S1166") // Exceptions are caught and ignored.  This is OK
 public static MrsPyramidMetadata getMetadataFromTable(String table, Connector conn, String auths)
 {
   MrsPyramidMetadata retMeta = null;
@@ -486,6 +487,7 @@ public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata me
  * @param metadata - the MrsImagePyramidMetadata object to be stored
  * @param conn     - the Accumulo connector to use
  */
+@SuppressWarnings("squid:S1166") // Exceptions are caught and returned as false
 public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn,
     ColumnVisibility cViz)
 {
@@ -600,6 +602,7 @@ public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata me
  * @return
  */
 @Deprecated
+@SuppressWarnings("squid:S1166") // TableNotFoundException are caught and ignored.  This is OK
 public static RasterWritable getRaster(String table, long tid, int zl, Connector conn, String auths)
 {
   RasterWritable retRaster = null;
@@ -671,9 +674,9 @@ public static Set<String> getListOfTables(Properties properties) throws DataProv
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
         token);
   }
-  catch (AccumuloSecurityException | AccumuloException ase)
+  catch (AccumuloSecurityException | AccumuloException e)
   {
-    log.error("Exception thrown {}", ase);
+    log.error("Exception thrown {}", e);
     return null;
   }
   //catch (DataProviderException dpe) {
@@ -894,6 +897,7 @@ public static Hashtable<String, String> getGeoTables(String ignore, Authenticati
  * @param protectionLevel
  * @return
  */
+@SuppressWarnings("squid:S1166") // BadArgumentException exception is caught and returned as false
 public static boolean validateProtectionLevel(final String protectionLevel)
 {
   try

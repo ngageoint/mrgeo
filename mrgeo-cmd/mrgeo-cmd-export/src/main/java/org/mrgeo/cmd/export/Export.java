@@ -195,7 +195,7 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
   return false;
 }
 
-private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raster) throws Exception
+private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raster)
 {
   final ColorScaleApplier applier;
   switch (format)
@@ -211,7 +211,15 @@ private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raste
     break;
   }
 
-  raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
+  try
+  {
+    raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
+  }
+  catch (Exception e)
+  {
+    log.error("Exception thrown {}", e);
+  }
+
   return raster;
 }
 

@@ -217,7 +217,7 @@ public static List<URL> loadDirectory(String filePath) throws IOException
   return result;
 }
 
-
+@SuppressWarnings("squid:S1166") // exceptions are caught and returned as false
 public static void addLibraryPath(final String pathToAdd) throws Exception {
   final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
 
