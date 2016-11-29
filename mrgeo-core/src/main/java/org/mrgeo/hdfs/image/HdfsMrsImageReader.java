@@ -61,7 +61,7 @@ public class HdfsMrsImageReader extends MrsImageReader
   private final static int READER_CACHE_SIZE = 100;
   private final static int READER_CACHE_EXPIRE = 10; // minutes
 
-  final private HdfsMrsImageDataProvider provider;
+  //final private HdfsMrsImageDataProvider provider;
   final private MrsPyramidReaderContext context;
   final int tileSize;
   private boolean canBeCached = true;
@@ -73,7 +73,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
   {
     String path = new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString();
 
-    this.provider = provider;
+//    this.provider = provider;
     this.context = context;
     tileSize = provider.getMetadataReader().read().getTilesize();
 
@@ -98,7 +98,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     Path qualifiedImagePath = imagePath.makeQualified(fs);
     URI imagePathUri = qualifiedImagePath.toUri();
     String imageScheme = imagePathUri.getScheme().toLowerCase();
-    if (imageScheme.equals("s3") || imageScheme.equals("s3n"))
+    if ("s3".equals(imageScheme) || "s3n".equals(imageScheme))
     {
       canBeCached = false;
     }
@@ -142,6 +142,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
                       }
                       catch (IOException e)
                       {
+                        log.error("IOException removing HdfsMrsImageReader from cache: " + e.getMessage());
                         e.printStackTrace();
                       }
                     }
@@ -277,20 +278,21 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
       final FileSystem fs = imagePath.getFileSystem(conf);
       final Path[] names = FileUtil.stat2Paths(fs.listStatus(imagePath));
       Arrays.sort(names);
-      final DataOutputBuffer key = new DataOutputBuffer();
-
-      for (final Path name : names)
+      try (DataOutputBuffer key = new DataOutputBuffer())
       {
-        final FileStatus[] dirFiles = fs.listStatus(name);
-        for (final FileStatus dirFile : dirFiles)
+        for (final Path name : names)
         {
-          if (dirFile.getPath().getName().equals("index"))
+          final FileStatus[] dirFiles = fs.listStatus(name);
+          for (final FileStatus dirFile : dirFiles)
           {
-            try (SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf))
+            if (dirFile.getPath().getName().equals("index"))
             {
-              while (index.nextRawKey(key) >= 0)
+              try (SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf))
               {
-                count++;
+                while (index.nextRawKey(key) >= 0)
+                {
+                  count++;
+                }
               }
             }
           }
@@ -360,7 +362,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
           return toNonWritable(val);
         }
       }
-      catch (final IllegalStateException e)
+      catch (final IllegalStateException ignored)
       {
         // no-op. Accumulo's Value class will return an IllegalStateException if the reader
         // returned no data, but you try to do a get or getSize. We'll trap it here and return
@@ -374,8 +376,6 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     catch (final IOException e)
     {
       log.error("Got IOException when reading tile", e);
-      System.err.println("Got IOException when reading tile");
-      e.printStackTrace();
       throw new MrsImageException(e);
     }
     catch (InstantiationException | IllegalAccessException e)
@@ -413,7 +413,7 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
       splits.readSplits(new Path(parent));
       return;
     }
-    catch(FileNotFoundException fnf)
+    catch(FileNotFoundException ignored)
     {
       // When there is no splits file, the whole image is a single split
     }

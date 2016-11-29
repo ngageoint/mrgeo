@@ -227,7 +227,7 @@ public Configuration setupOutput(final Configuration conf) throws DataProviderEx
   return conf2;
 }
 
-
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 private void setupConfig(final Configuration conf, final Job job) throws DataProviderException
 {
   try{
@@ -442,7 +442,7 @@ public void finalizeExternalSave(Configuration conf) throws DataProviderExceptio
 //  {
 //    performTeardown(conf);
 //  }
-
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 private void performTeardown(final Configuration conf) throws DataProviderException
 {
   String myJobType = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel));

@@ -117,23 +117,7 @@ public static Options createOptions()
 {
   Options result = new Options();
 
-  Option mm = new Option("mm", "memory-multiplier", true, "memory multiplier, " +
-      "multiple of the \"yarn.scheduler.minimum-allocation-mb\" parameter to allocate each worker " +
-      "in a spark job.  This parameter overrides the setting in mrgeo.conf");
-  mm.setRequired(false);
-  result.addOption(mm);
-
-  Option minmem = new Option("mem", "memory", true, "Amount of memory to allocate to MrGeo processes " +
-      "from total allocated for each worker.  The remaining memory is allocated to the shuffle and " +
-      "storage caches.  This parameter overrides the setting in mrgeo.conf");
-  minmem.setRequired(false);
-  result.addOption(minmem);
-
-  Option sf = new Option("sf", "shuffle-fraction", true, "Fraction of the cache to allocated to " +
-      "the shuffle cache (0.0 - 1.0).  The remaining fraction is allocated to the storage cache." +
-      "  This parameter overrides the setting in mrgeo.conf");
-  sf.setRequired(false);
-  result.addOption(sf);
+  result.addOption(new Option("np", "no-persistance", false, "Disable Spark Autopersisting MrGeo RDDs"));
 
   result.addOption(new Option("l", "local-runner", false, "Use Hadoop & Spark's local runner (used for debugging)"));
   result.addOption(new Option("v", "verbose", false, "Verbose logging"));
@@ -183,6 +167,11 @@ public int run(String[] args) throws IOException
   }
   else
   {
+    if (line.hasOption("np"))
+    {
+      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_AUTOPERSISTANCE, "false");
+    }
+
     if (line.hasOption("d"))
     {
       LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
