@@ -68,6 +68,7 @@ public DelimitedVectorRecordReader()
 }
 
 @Override
+@SuppressWarnings("squid:S2095") // recordReader is closed explictly in the close() method
 public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
     InterruptedException
 {

@@ -536,6 +536,7 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
 }
 
 @Override
+@SuppressWarnings("squid:S2583")  // false positive, "if (metadata==null)" will _not_ always evaluate true
 public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
     final double scale, final String maskName, final double maskMax,
     ProviderProperties providerProperties) throws Exception
