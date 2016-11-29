@@ -63,6 +63,7 @@ public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
   private static String frictionSurface;
 
 private static final String smallElevationName = "small-elevation";
+  private static String smallElevation;
 
   @BeforeClass
   public static void init() throws IOException
@@ -84,6 +85,7 @@ private static final String smallElevationName = "small-elevation";
 
     HadoopFileUtils
         .copyToHdfs(new Path(Defs.INPUT), testUtils.getInputHdfs(), smallElevationName);
+    smallElevation = testUtils.getInputHdfs() + "/" +  smallElevationName;
   }
 
   @Test
@@ -219,7 +221,7 @@ public void testCostDistanceWithLowerZoomLevel() throws Exception
 public void directionalCostDistance() throws Exception
 {
   String exp = "" +
-      "sl = directionalslope([small-elevation], \"gradient\");\n" +
+      "sl = directionalslope([" + smallElevation + "], \"gradient\");\n" +
       //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
       "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.05)));\n" +
       "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
@@ -242,7 +244,7 @@ public void directionalCostDistance() throws Exception
 public void nondirectionalCostDistance() throws Exception
 {
   String exp = "" +
-      "sl = slope([small-elevation], \"gradient\");\n" +
+      "sl = slope([" + smallElevation + "], \"gradient\");\n" +
       //"pingle = 3.6 / (112 * pow(2.718281828, -8.3 * abs(sl)));\n" +
       "tobler = 3.6 / (6 * pow(2.718281828, -3.5 * abs(sl + 0.05)));\n" +
       "src = InlineCsv(\"GEOMETRY\", \"'POINT(142.4115 -18.1222)'\");\n" +
