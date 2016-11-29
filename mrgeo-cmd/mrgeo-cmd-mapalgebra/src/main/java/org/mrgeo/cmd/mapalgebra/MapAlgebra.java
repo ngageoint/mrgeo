@@ -192,27 +192,7 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
   finally
   {
     long elapsed = System.currentTimeMillis() - starttime;
-
     System.out.println("Elapsed time: " + time(elapsed));
-    System.out.println("Time Serializing (toWritable): " + time(RasterWritable.serializeTime) +
-        " (" + String.format("%.2f", 100.0 * (float) RasterWritable.serializeTime / elapsed) + "%)" +
-        " calls: " + RasterWritable.serializeCnt +
-        " avg time/call: " +
-        String.format("%dms", (long) ((double) RasterWritable.serializeTime / RasterWritable.serializeCnt)));
-    System.out.println("Time Deserializing (toRaster): " + time(RasterWritable.deserializeTime) +
-        " (" + String.format("%.2f", 100.0 * (float) RasterWritable.deserializeTime / elapsed) + "%)" +
-        " calls: " + RasterWritable.deserializeCnt +
-        " avg time/call: " +
-        String.format("%dms", (long) ((double) RasterWritable.deserializeTime / RasterWritable.deserializeCnt)));
-
-    long combinedCnt = RasterWritable.serializeCnt + RasterWritable.deserializeCnt;
-    long combinedTime = RasterWritable.serializeTime + RasterWritable.deserializeTime;
-
-    System.out.println("Combined time : " + time(combinedTime) +
-        " (" + String.format("%.2f", 100.0 * (float) combinedTime / elapsed) + "%)" +
-        " calls: " + combinedCnt +
-        " avg time/call: " +
-        String.format("%dms", (long) ((double) combinedTime / combinedCnt)));
   }
 }
 
