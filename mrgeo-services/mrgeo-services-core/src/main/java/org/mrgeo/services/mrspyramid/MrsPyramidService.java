@@ -81,7 +81,7 @@ public List<String> getColorScales() throws Exception
   return result;
 }
 
-public MrGeoRaster createColorScaleSwatch(String name, String format, int width, int height) throws Exception
+public MrGeoRaster createColorScaleSwatch(String name, String format, int width, int height) throws IOException
 {
   ColorScale cs = null;
   try
@@ -92,35 +92,49 @@ public MrGeoRaster createColorScaleSwatch(String name, String format, int width,
   catch (Exception e)
   {
     log.error("Exception thrown {}", e);
-    throw new Exception(e);
+    throw new IOException("Error creating color scale " + name, e);
   }
 }
 
-public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int width, int height) throws Exception
+public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int width, int height) throws IOException
 {
   double[] extrema = {0, 0};
 
-  MrGeoRaster wr = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT);
+  try
+  {
+    MrGeoRaster wr = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT);
 
-  if (width > height) {
-    extrema[1] = width-1;
-    for (int w=0; w < width; w++) {
-      for (int h=0; h < height; h++) {
-        wr.setPixel(w, h, 0, w);
+    if (width > height)
+    {
+      extrema[1] = width - 1;
+      for (int w = 0; w < width; w++)
+      {
+        for (int h = 0; h < height; h++)
+        {
+          wr.setPixel(w, h, 0, w);
+        }
       }
     }
-  } else {
-    extrema[1] = height-1;
-    for (int h=0; h < height; h++) {
-      for (int w=0; w < width; w++) {
-        wr.setPixel(w, h, 0, extrema[1] - h);
+    else
+    {
+      extrema[1] = height - 1;
+      for (int h = 0; h < height; h++)
+      {
+        for (int w = 0; w < width; w++)
+        {
+          wr.setPixel(w, h, 0, extrema[1] - h);
+        }
       }
     }
+
+    ColorScaleApplier applier = (ColorScaleApplier) ImageHandlerFactory.getHandler(format, ColorScaleApplier.class);
+
+    return applier.applyColorScale(wr, cs, extrema, new double[]{-9999, 0});
   }
-
-  ColorScaleApplier applier = (ColorScaleApplier)ImageHandlerFactory.getHandler(format, ColorScaleApplier.class);
-
-  return applier.applyColorScale(wr, cs, extrema, new double[]{-9999,0});
+  catch (Exception e)
+  {
+    throw new IOException("Error creating color scale swatch", e);
+  }
 }
 
 public boolean isZoomLevelValid(String pyramid,

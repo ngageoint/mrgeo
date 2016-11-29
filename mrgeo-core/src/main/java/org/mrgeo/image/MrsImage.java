@@ -63,7 +63,7 @@ private MrsPyramidReaderContext context;
 private MrsImage(MrsImageDataProvider provider, final int zoomlevel)
 {
   context = new MrsPyramidReaderContext();
-  context.setZoomlevel(zoomlevel);
+//  context.setZoomlevel(zoomlevel);
   this.provider = provider;
 
   openReader();
@@ -77,6 +77,7 @@ private MrsImage(MrsImageDataProvider provider, final int zoomlevel)
   }
 }
 
+@SuppressWarnings("squid:S1166") // Exceptions are ignored.  This is OK.
 public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) throws IOException
 {
   try
