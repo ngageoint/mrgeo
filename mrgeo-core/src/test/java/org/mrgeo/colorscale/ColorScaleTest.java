@@ -23,7 +23,7 @@ import org.mrgeo.junit.UnitTest;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class ColorScaleTest 
 {
 

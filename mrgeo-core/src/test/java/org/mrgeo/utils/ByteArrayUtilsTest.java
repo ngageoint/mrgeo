@@ -7,6 +7,7 @@ import org.mrgeo.junit.UnitTest;
 
 import java.util.Random;
 
+@SuppressWarnings("all") // test code, not included in production
 public class ByteArrayUtilsTest
 {
 @Test

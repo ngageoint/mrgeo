@@ -22,6 +22,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.tms.Bounds;
 
+@SuppressWarnings("all") // test code, not included in production
 public class PointImplTest
 {
   private static final double EPSILON = 1e-12;

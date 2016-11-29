@@ -22,7 +22,7 @@ import org.mrgeo.geometry.GeometryFactory;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.junit.UnitTest;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class GeometryUtilsTest
 {
 

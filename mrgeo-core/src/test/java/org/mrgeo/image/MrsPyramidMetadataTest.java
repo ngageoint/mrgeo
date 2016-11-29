@@ -33,7 +33,7 @@ import java.io.*;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class MrsPyramidMetadataTest
 {
   private static final Logger log = LoggerFactory.getLogger(MrsPyramidMetadataTest.class);

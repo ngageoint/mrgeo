@@ -24,7 +24,7 @@ import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.utils.GeometryUtils;
 import org.mrgeo.utils.tms.Bounds;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class LineStringImplTest extends LocalRunnerTest
 {
   private static final double EPSILON = 1e-12;

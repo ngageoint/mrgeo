@@ -39,11 +39,7 @@ import org.mrgeo.utils.HadoopVectorUtils;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * @author jason.surratt
- * 
- */
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class PgQueryInputFormatTest 
 {    
 

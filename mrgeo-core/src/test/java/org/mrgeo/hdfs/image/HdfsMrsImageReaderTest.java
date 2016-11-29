@@ -36,6 +36,7 @@ import org.mrgeo.utils.tms.Bounds;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsMrsImageReaderTest extends LocalRunnerTest
 {
 

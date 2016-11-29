@@ -27,7 +27,7 @@ import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.*;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class TMSUtilsTest
 {
   private Bounds b;

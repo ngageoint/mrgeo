@@ -26,10 +26,8 @@ import java.nio.ByteBuffer;
 
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsMrsPyramidRecordReaderTest {
-
-
-
 private TaskAttemptContext mockContext;
 private SequenceFile.Reader mockReader;
 private Configuration mockConfig;

@@ -40,6 +40,7 @@ import org.mrgeo.test.LocalRunnerTest;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsMrsImageDataProviderTest extends LocalRunnerTest
 {
   private static String all_ones = Defs.INPUT + "all-ones";

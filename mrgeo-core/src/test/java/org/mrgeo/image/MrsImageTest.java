@@ -32,7 +32,7 @@ import org.mrgeo.utils.tms.TMSUtils;
 import java.io.File;
 import java.io.IOException;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class MrsImageTest extends LocalRunnerTest
 {
   private static final double epsilon = 0.000001;

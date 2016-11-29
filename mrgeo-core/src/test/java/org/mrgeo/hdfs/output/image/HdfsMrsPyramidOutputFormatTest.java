@@ -24,9 +24,7 @@ import org.mrgeo.junit.UnitTest;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Created by ericwood on 6/20/16.
- */
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsMrsPyramidOutputFormatTest {
     private HdfsMrsPyramidOutputFormat subject;
     private TaskAttemptContext mockContext;

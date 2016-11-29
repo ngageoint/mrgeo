@@ -48,6 +48,7 @@ import java.io.IOException;
  * 		-Djava.library.path=/usr/local/hadoop/bin/../lib/native/Linux-amd64-64
  *  
  */
+@SuppressWarnings("all") // test code, not included in production
 public class RasterWritableTest extends LocalRunnerTest
 {
 private MrGeoRaster srcRaster;

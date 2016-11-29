@@ -17,9 +17,7 @@ import static org.mrgeo.publisher.MrGeoPublisherFactory.MRGEO_PUBLISHER_CLASS_PR
 import static org.mrgeo.publisher.MrGeoPublisherFactory.MRGEO_PUBLISHER_CONFIGURATOR_CLASS_PROP;
 import static org.mrgeo.publisher.PublisherProfileConfigProperties.MRGEO_PUBLISHER_PROPERTY_PREFIX;
 
-/**
- * Created by ericwood on 8/15/16.
- */
+@SuppressWarnings("all") // test code, not included in production
 public class MrGeoPublisherFactoryTest {
     private static final String PROFILE1 = "profile1";
     private static final String PROFILE2 = "profile2";

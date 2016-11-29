@@ -24,7 +24,7 @@ import org.mrgeo.test.LocalRunnerTest;
 
 import java.util.Collection;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class PolygonImplTest extends LocalRunnerTest
 {
   private static final double COORDINATE_EPSILON = 0.00001;

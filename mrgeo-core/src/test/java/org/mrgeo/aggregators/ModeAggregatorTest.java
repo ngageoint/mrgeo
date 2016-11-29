@@ -26,7 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class ModeAggregatorTest
 {
   private static double epsilon = 0.0000001;

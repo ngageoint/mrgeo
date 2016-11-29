@@ -32,7 +32,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
 
-public class TestListener extends RunListener 
+@SuppressWarnings("all") // test code, not included in production
+public class TestListener extends RunListener
 {  
   private static final Logger log = LoggerFactory.getLogger(TestListener.class);
 

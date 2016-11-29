@@ -18,7 +18,7 @@ package org.mrgeo.data.image;
 
 import org.junit.Ignore;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 @Ignore
 public class MrsImageWriterHDFSTest
 {

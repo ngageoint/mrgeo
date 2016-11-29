@@ -10,6 +10,7 @@ import org.scalatest.Assertions
 /**
   * Created by ericwood on 8/2/16.
   */
+@SuppressWarnings(Array("all")) // test code, not included in production
 trait RasterMapOpTestVerifySupport extends RasterMapOpTestSupport {
 
   type RasterVerifier = (MrGeoRaster) => Unit

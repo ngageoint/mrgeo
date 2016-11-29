@@ -12,6 +12,7 @@ import org.mrgeo.utils.tms.Bounds
 /**
   * This exists to allow non-Scala code (i.e. Python) to use the methods in the RasterMapOpTestSupport trait
   */
+@SuppressWarnings(Array("all")) // test code, not included in production
 class StandaloneRasterMapOpTestSupport {
   object RasterMapOpTestSupport$ extends RasterMapOpTestSupport {}
 

@@ -27,6 +27,7 @@ import org.mrgeo.utils.tms.TileBounds;
 
 import java.io.IOException;
 
+@SuppressWarnings("all") // test code, not included in production
 public abstract class TestFiles
 {
   private int cols,rows;

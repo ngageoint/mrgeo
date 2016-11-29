@@ -28,6 +28,7 @@ import scala.collection.JavaConverters._
   * to point the alias the geoserver being tested to that endpoint.
   */
 @Ignore
+@SuppressWarnings(Array("all")) // test code, not included in production
 class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestSupport {
 
   private val profileName = "mrgeo-geoserver-publisher-integration-test"

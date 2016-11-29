@@ -28,7 +28,7 @@ import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.io.IOException;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class MrGeoRasterTest
 {
 @Rule

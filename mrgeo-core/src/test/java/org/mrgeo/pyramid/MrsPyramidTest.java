@@ -30,7 +30,7 @@ import org.mrgeo.utils.tms.Bounds;
 
 import java.io.IOException;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class MrsPyramidTest
 {
   final String smallElevation = Defs.CWD + "/" + Defs.INPUT + "small-elevation-nopyramids";

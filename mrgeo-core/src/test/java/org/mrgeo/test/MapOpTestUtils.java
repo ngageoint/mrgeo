@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("all") // test code, not included in production
 public class MapOpTestUtils extends TestUtils
 {
 private static final Logger log = LoggerFactory.getLogger(MapOpTestUtils.class);

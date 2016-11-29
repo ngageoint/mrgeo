@@ -39,7 +39,7 @@ import java.io.IOException;
  * @author jason.surratt
  *
  */
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class ShpInputFormatTest
 {
 

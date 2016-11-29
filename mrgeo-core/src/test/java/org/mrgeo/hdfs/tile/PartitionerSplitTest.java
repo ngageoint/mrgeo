@@ -29,6 +29,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
+@SuppressWarnings("all") // test code, not included in production
 public class PartitionerSplitTest
 {
   static private Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
