@@ -30,6 +30,7 @@ import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class ExportMapOpTest extends LocalRunnerTest
 {
 @Rule

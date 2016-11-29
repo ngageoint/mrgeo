@@ -29,7 +29,7 @@ import javax.ws.rs.core.Response;
  * The WmsGenerator originally had some issues with requests that spanned more than one source
  * tile, therefore to be safe, GetMap/GetMosaic tests are done both for types of requests.
  */
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
 {
   @SuppressWarnings("unused")

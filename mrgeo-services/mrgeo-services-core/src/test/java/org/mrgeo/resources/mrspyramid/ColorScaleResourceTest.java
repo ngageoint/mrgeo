@@ -51,6 +51,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class ColorScaleResourceTest extends JerseyTest
 {
 private MrsPyramidService service;

@@ -32,7 +32,7 @@ package org.mrgeo.resources.wms;
  import static org.junit.Assert.assertEquals;
  import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("static-method")
+ @SuppressWarnings("all") // Test code, not included in production
 public class GetMosaicTest extends WmsGeneratorTestAbstract
 {
   @SuppressWarnings("unused")

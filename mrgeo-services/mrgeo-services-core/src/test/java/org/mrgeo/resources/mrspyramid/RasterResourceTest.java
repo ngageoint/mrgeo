@@ -54,6 +54,7 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class RasterResourceTest extends JerseyTest
 {
 //private static final Logger log = LoggerFactory.getLogger(RasterResourceTest.class);

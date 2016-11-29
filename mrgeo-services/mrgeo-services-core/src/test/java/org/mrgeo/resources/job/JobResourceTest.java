@@ -23,6 +23,7 @@ import org.mrgeo.job.JobTestManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class JobResourceTest extends JerseyTest
 {
 //    private HttpServletRequest requestMock;

@@ -42,7 +42,7 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class MrsPyramidServiceTest {
 @Rule
 public TestName testname = new TestName();

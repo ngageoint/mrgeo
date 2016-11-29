@@ -23,6 +23,7 @@ import org.mrgeo.junit.UnitTest
 import org.mrgeo.test.LocalRunnerTest
 import org.scalatest.junit.AssertionsForJUnit
 
+@SuppressWarnings(Array("all")) // Test code, not included in production
 class InlineCsvMapOpTest extends LocalRunnerTest with AssertionsForJUnit
 {
   val providerProperties = new ProviderProperties()

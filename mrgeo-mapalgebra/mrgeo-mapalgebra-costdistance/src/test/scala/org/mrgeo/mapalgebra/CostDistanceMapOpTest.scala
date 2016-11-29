@@ -19,11 +19,12 @@ package org.mrgeo.mapalgebra
 import org.mrgeo.utils.LatLng
 import org.scalatest.FlatSpec
 
+@SuppressWarnings(Array("all")) // Test code, not included in production
 class CostDistanceMapOpTest extends FlatSpec {
   behavior of "bounds calculation (with maxCost of METERS_PER_DEGREE seconds/meter and min friction value of 0.5"
 
-  val maxCost: Double = LatLng.METERS_PER_DEGREE
-  val minPixelValue: Double = 0.5
+  val maxCost = LatLng.METERS_PER_DEGREE
+  val minPixelValue = 0.5
   val EPSILON = 1e-5
 
   // With the maxCost value set to METERS_PER_DEGREE and the minPixelValue at 0.5, the bounds

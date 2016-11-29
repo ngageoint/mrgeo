@@ -51,10 +51,7 @@ import java.awt.image.DataBuffer;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author jason.surratt
- *
- */
+@SuppressWarnings("all") // Test code, not included in production
 public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
 // only set this to true to generate new baseline images after correcting tests; image comparison

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 @Ignore
+@SuppressWarnings("all") // Test code, not included in production
 public class BuildPyramidMapOpTest
 {
 @SuppressWarnings("unused")

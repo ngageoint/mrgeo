@@ -32,6 +32,7 @@ import java.io.*;
 import static org.junit.Assert.assertTrue;
 
 
+@SuppressWarnings("all") // Test code, not included in production
 public class ImageTestUtils
 {
   private static final Logger log = LoggerFactory.getLogger(ImageTestUtils.class);

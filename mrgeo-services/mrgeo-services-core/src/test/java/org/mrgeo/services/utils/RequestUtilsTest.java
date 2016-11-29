@@ -22,6 +22,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.tms.Bounds;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class RequestUtilsTest {
 
     @Test

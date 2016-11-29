@@ -41,6 +41,7 @@ import javax.ws.rs.core.Response;
 import java.awt.image.DataBuffer;
 
 
+@SuppressWarnings("all") // Test code, not included in production
 public class MetadataResourceTest extends JerseyTest
 {
 private MrsPyramidService service;

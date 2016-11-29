@@ -30,7 +30,7 @@ import javax.ws.rs.core.Response;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class GetTileTest extends WmsGeneratorTestAbstract
 {
   @SuppressWarnings("unused")

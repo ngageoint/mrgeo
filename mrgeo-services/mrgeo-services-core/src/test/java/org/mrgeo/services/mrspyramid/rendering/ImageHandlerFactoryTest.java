@@ -27,7 +27,7 @@ import org.mrgeo.test.LocalRunnerTest;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class ImageHandlerFactoryTest extends LocalRunnerTest
 {  
   @BeforeClass 
