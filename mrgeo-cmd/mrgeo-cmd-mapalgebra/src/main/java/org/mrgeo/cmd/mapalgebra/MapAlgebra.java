@@ -88,8 +88,9 @@ public static Options createOptions()
   return result;
 }
 
-@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for reading script")
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and error message printed
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for reading script")
 public int run(String[] args, Configuration conf, final ProviderProperties providerProperties)
 {
   long starttime = System.currentTimeMillis();
@@ -182,8 +183,8 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
     }
     catch (Exception e)
     {
-      System.out.println("Failure while running map algebra " + e.getMessage());
       e.printStackTrace();
+      System.out.println("Failure while running map algebra " + e.getMessage());
       return -1;
     }
 

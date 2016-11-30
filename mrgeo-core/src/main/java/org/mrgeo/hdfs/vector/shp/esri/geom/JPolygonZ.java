@@ -411,34 +411,34 @@ public boolean remove(int i)
       ok = true;
       break;
     }
-    // check part step ok
-    if (!ok)
-      return false;
-    // shift coords
-    if (point.length == 1)
-    {
-      point = new Coord[0];
-    }
-    else
-    {
-      Coord[] temp = new Coord[point.length - 1];
-      System.arraycopy(point, 0, temp, 0, i);
-      System.arraycopy(point, i + 1, temp, i, point.length - i - 1);
-      point = temp;
-      double[] temp2 = new double[point.length - 1];
-      System.arraycopy(zarr, 0, temp2, 0, i);
-      System.arraycopy(zarr, i + 1, temp2, i, zarr.length - i - 1);
-      zarr = temp2;
-      double[] temp3 = new double[point.length - 1];
-      System.arraycopy(marr, 0, temp3, 0, i);
-      System.arraycopy(marr, i + 1, temp3, i, marr.length - i - 1);
-      marr = temp3;
-    }
-    // reset sizes, extent, and return
-    nparts = part.length;
-    npoints = point.length;
-    status = UNKNOWN;
   }
+  // check part step ok
+  if (!ok)
+    return false;
+  // shift coords
+  if (point.length == 1)
+  {
+    point = new Coord[0];
+  }
+  else
+  {
+    Coord[] temp = new Coord[point.length - 1];
+    System.arraycopy(point, 0, temp, 0, i);
+    System.arraycopy(point, i + 1, temp, i, point.length - i - 1);
+    point = temp;
+    double[] temp2 = new double[point.length - 1];
+    System.arraycopy(zarr, 0, temp2, 0, i);
+    System.arraycopy(zarr, i + 1, temp2, i, zarr.length - i - 1);
+    zarr = temp2;
+    double[] temp3 = new double[point.length - 1];
+    System.arraycopy(marr, 0, temp3, 0, i);
+    System.arraycopy(marr, i + 1, temp3, i, marr.length - i - 1);
+    marr = temp3;
+  }
+  // reset sizes, extent, and return
+  nparts = part.length;
+  npoints = point.length;
+  status = UNKNOWN;
   return true;
 }
 

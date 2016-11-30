@@ -63,7 +63,7 @@ private MrsPyramidReaderContext context;
 private MrsImage(MrsImageDataProvider provider, final int zoomlevel)
 {
   context = new MrsPyramidReaderContext();
-//  context.setZoomlevel(zoomlevel);
+  context.setZoomlevel(zoomlevel);
   this.provider = provider;
 
   openReader();

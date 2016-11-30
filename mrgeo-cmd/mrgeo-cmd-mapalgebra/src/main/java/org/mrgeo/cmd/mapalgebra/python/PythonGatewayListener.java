@@ -64,7 +64,7 @@ public void serverError(Exception e)
   }
   else
   {
-    log.error("Server error");
+    log.error("Server error {}", e);
     e.printStackTrace();
     System.out.flush();
   }
@@ -100,7 +100,7 @@ public void serverStarted()
   }
   catch (IOException e)
   {
-    log.error("Gateway error: " + e.getMessage());
+    log.error("Gateway error {}", e);
   }
 
 }
@@ -110,7 +110,6 @@ public void serverStopped()
 {
   log.warn("Server stopped");
   System.out.flush();
-
 }
 
 private void sendGatewayPort(Socket clientSocket, int javaPythonPort, int pythonJavaPort) throws IOException

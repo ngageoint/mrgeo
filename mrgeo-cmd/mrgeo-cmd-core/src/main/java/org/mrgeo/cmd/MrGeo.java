@@ -27,6 +27,8 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.logging.LoggingUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -36,7 +38,7 @@ import java.util.*;
  */
 public class MrGeo extends Configured implements Tool
 {
-//private static Logger log = LoggerFactory.getLogger(MrGeo.class);
+private static Logger log = LoggerFactory.getLogger(MrGeo.class);
 private static Map<String, CommandSpi> commands = null;
 
 /**
@@ -101,7 +103,7 @@ public static void main(String[] args)
   }
   catch (Exception e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
     System.exit(-1);
   }
 
@@ -237,6 +239,7 @@ public int run(String[] args) throws IOException
   }
   catch (InstantiationException | IllegalAccessException e)
   {
+    log.error("Exception thrown {}", e);
     return -1;
   }
 

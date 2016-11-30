@@ -76,6 +76,7 @@ public static Options createOptions()
 
 
 @Override
+@SuppressWarnings("squid:S1166") // Catching exceptions and logging error
 public int run(String[] args, final Configuration conf,
     final ProviderProperties providerProperties)
 {

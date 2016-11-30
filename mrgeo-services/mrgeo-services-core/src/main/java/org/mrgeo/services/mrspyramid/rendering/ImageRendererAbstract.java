@@ -644,6 +644,7 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
 }
 
 @Override
+@SuppressWarnings("squid:S2583") // metadata may be null when TileNotFoundException is thrown, need to check...
 public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
     final int zoom, final String maskName, final double maskMax,
     final ProviderProperties providerProperties) throws ImageRendererException

@@ -179,6 +179,7 @@ private double parseNoData(String fromArg) throws NumberFormatException
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // Exceptions caught and error message printed
 public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
 {
   try

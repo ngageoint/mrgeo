@@ -104,11 +104,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
       connectionLock.writeLock().lock();
       try
       {
-        if (connectionInfo == null)
-        {
           connectionInfo = GeoWaveConnectionInfo.load();
           log.debug("in getConnectionInfo, load returns " + connectionInfo);
-        }
       }
       finally {
         connectionLock.writeLock().unlock();
@@ -961,10 +958,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
       connectionLock.writeLock().lock();
       try
       {
-        if (connectionInfo == null)
-        {
           connectionInfo = GeoWaveConnectionInfo.load(conf);
-        }
       }
       finally {
         connectionLock.writeLock().unlock();
@@ -983,10 +977,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
       connectionLock.writeLock().lock();
       try
       {
-        if (connectionInfo == null)
-        {
           connectionInfo = GeoWaveConnectionInfo.load();
-        }
       }
       finally {
         connectionLock.writeLock().unlock();

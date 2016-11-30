@@ -64,6 +64,7 @@ public static Options createOptions()
 
 
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and error message printed
 public int run(String[] args, final Configuration conf,
     final ProviderProperties providerProperties)
 {
@@ -148,7 +149,7 @@ public int run(String[] args, final Configuration conf,
     catch (IOException e)
     {
       e.printStackTrace();
-      log.error("BuildPyramid exited with error", e);
+      log.error("Quantiles exited with error", e);
       return -1;
     }
 

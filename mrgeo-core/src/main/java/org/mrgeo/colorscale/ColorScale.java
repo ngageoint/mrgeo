@@ -17,6 +17,7 @@
 package org.mrgeo.colorscale;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.w3c.dom.Document;
@@ -297,6 +298,22 @@ public boolean equals(Object obj)
   return obj instanceof ColorScale && equals((ColorScale)obj);
 }
 
+@Override
+public int hashCode()
+{
+  return new HashCodeBuilder(29, 5)
+      .append(interpolate)
+      .append(min)
+      .append(max)
+      .append(reliefShading)
+      .append(nullColor)
+      .append(forceValuesIntoRange)
+      .append(transparent)
+      .append(name)
+      .append(title)
+      .append(description).toHashCode();
+}
+
 public boolean equals(final ColorScale cs)
 {
   if (min == null && cs.min != null || min != null && cs.min == null)
@@ -558,7 +575,6 @@ public void fromJSON(final InputStream stream) throws ColorScaleException
   }
   catch (IOException e)
   {
-    e.printStackTrace();
     throw new ColorScaleException(e);
   }
 

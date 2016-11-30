@@ -41,7 +41,7 @@ private static final Logger log = LoggerFactory.getLogger(PythonGateway.class);
 
 Queue<Integer> portQueue = null;
 
-public static Options createOptions()
+private static Options createOptions()
 {
   Options result = MrGeo.createOptions();
 
@@ -138,6 +138,7 @@ private int remoteConnection(int listenPort)
   }
 }
 
+@SuppressWarnings("squid:S1313") // Hardcoded IP gets local hostname...
 private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
 {
   // Start a GatewayServer on an ephemeral port, unless we have a port range
@@ -151,7 +152,7 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
     }
     catch (NoSuchElementException e)
     {
-      throw new IOException("PythonGatewayServer is out of available ports, failing)");
+      throw new IOException("PythonGatewayServer is out of available ports, failing)", e);
     }
     try
     {
@@ -159,7 +160,7 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
     }
     catch (NoSuchElementException e)
     {
-      throw new IOException("PythonGatewayServer is out of available ports, failing)");
+      throw new IOException("PythonGatewayServer is out of available ports, failing)", e);
     }
   }
 

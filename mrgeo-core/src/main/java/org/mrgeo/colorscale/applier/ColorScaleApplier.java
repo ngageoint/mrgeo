@@ -16,9 +16,6 @@
 
 package org.mrgeo.colorscale.applier;
 
-import org.gdal.gdal.Band;
-import org.gdal.gdal.Dataset;
-import org.gdal.gdalconst.gdalconstConstants;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.raster.MrGeoRaster;
 
@@ -83,7 +80,7 @@ void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue)
  *
  */
 public abstract MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
-    double[] defaultValue) throws Exception;
+    double[] defaultValue) throws ColorScale.ColorScaleException;
 
 /**
  * Returns the mime type for the color scale applier

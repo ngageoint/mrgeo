@@ -188,9 +188,9 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
     log.info("no raster!");
 
   }
-  catch (final Exception e)
+  catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
   return false;
 }
@@ -285,9 +285,9 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
     System.out.println("Wrote output to " + out);
     return true;
   }
-  catch (final Exception e)
+  catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
   return false;
 }
@@ -528,7 +528,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
   }
   catch (ColorScale.ColorScaleException | IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return -1;
