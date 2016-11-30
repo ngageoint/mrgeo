@@ -109,7 +109,7 @@ public static String asKml(final String pyrName, final Bounds bounds, String req
  * @return a zoom level
  */
 private static int getZoomLevel(final MrsPyramidMetadata metadata, final Bounds bounds,
-    final int width, final int height) throws Exception
+    final int width, final int height)
 {
   log.debug("Determining zoom level for {}", metadata.getPyramid());
   final double pixelSizeLon = bounds.width() / width;
@@ -184,13 +184,14 @@ public double[] getDefaultValues()
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return new double[]{-1.0};
 }
 
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private MrsImageDataProvider getDataProvider()
 {
   if (imageName != null)
@@ -235,7 +236,7 @@ public double[] getExtrema()
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown", e);
   }
 
   return null;
@@ -261,6 +262,7 @@ public boolean outputIsTransparent()
  * @param height      requested height
  * @return image rendering of the requested bounds at the requested size
  */
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "GDAL may have throw exception enabled")
 @Override
 public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBounds, final int width,

@@ -66,6 +66,7 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
     }
     catch (final Exception e)
     {
+      log.error("Exception thrown {}", e);
       if (e.getMessage() != null)
       {
         return Response.serverError().entity(e.getMessage());
@@ -92,7 +93,7 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
     }
     catch (IOException e)
     {
-      throw new ServletException("Error writing raster");
+      throw new ServletException("Error writing raster", e);
     }
   }
 
