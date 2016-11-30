@@ -908,6 +908,7 @@ public void setResamplingMethod(String resamplingMethod)
 
 
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public void save(final OutputStream stream) throws IOException
 {
   final ObjectMapper mapper = new ObjectMapper();
@@ -915,7 +916,7 @@ public void save(final OutputStream stream) throws IOException
   {
     mapper.writerWithDefaultPrettyPrinter().writeValue(stream, this);
   }
-  catch (NoSuchMethodError e)
+  catch (NoSuchMethodError ignored)
   {
     // if we don't have the pretty printer, just write the json
     mapper.writeValue(stream, this);

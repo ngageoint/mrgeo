@@ -1452,6 +1452,7 @@ private static void setValue(String value, final Configuration conf, final Strin
 }
 
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 protected static String getPrefix(String name)
 {
   int ndx = name.indexOf(PREFIX_CHAR);
@@ -1463,7 +1464,7 @@ protected static String getPrefix(String name)
       new URL(name).toURI();
       return null;
     }
-    catch (URISyntaxException | MalformedURLException e)
+    catch (URISyntaxException | MalformedURLException ignored)
     {
       // no op
     }

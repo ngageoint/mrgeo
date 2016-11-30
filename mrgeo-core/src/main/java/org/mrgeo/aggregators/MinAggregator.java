@@ -37,7 +37,7 @@ public double aggregate(double[] values, double nodata)
       min = Math.min(min, value);
     }
   }
-  return FloatUtils.isEqual(min, -Double.MAX_VALUE) ? nodata : min;
+  return FloatUtils.isEqual(min, Double.MAX_VALUE) ? nodata : min;
 }
 
 @Override
@@ -51,7 +51,7 @@ public float aggregate(float[] values, float nodata)
       min = Math.min(min, value);
     }
   }
-  return FloatUtils.isEqual(min, -Float.MAX_VALUE) ? nodata : min;
+  return FloatUtils.isEqual(min, Float.MAX_VALUE) ? nodata : min;
 }
 
 @Override

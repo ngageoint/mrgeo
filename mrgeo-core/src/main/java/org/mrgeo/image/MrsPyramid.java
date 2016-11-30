@@ -121,6 +121,7 @@ public boolean hasPyramids()
   return metadata.hasPyramids();
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public static void calculateMetadata(final String pyramidname, final int zoom,
     final MrsImageDataProvider provider,
     final ImageStats[] levelStats,
@@ -224,6 +225,7 @@ public static void calculateMetadata(final int zoom,
 //    return false;
 //  }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public static boolean isValid(final String name, final ProviderProperties providerProperties)
 {
   try
@@ -336,33 +338,10 @@ private MrsPyramidMetadata getMetadataInternal()
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return null;
 }
-
-//  public static void reloadMetadata(String pyramid) throws IOException
-//  {
-//    if (pyramid != null && !pyramid.isEmpty())
-//    {
-//      //    System.out.println("invalidating cache for : " + pyramid);
-//      //    pyramidCache.invalidate(pyramid);
-//
-//      // just like the open, we need to unqualify the pyramid name to remove any hdfs://... stuff
-//      Path unqualified = HadoopFileUtils.unqualifyPath(new Path(pyramid));
-//      MrsPyramid py = pyramidCache.getIfPresent(unqualified.toString());
-//
-//      if (py != null)
-//      {
-//        MrsPyramidMetadata metadata = py.getMetadata();
-//        metadata.reload();
-//      }
-//
-//      log.debug("invalidating pyramid cache: " + unqualified.toString());
-//    }
-//  }
-
-
 
 }

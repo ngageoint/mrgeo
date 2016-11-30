@@ -110,13 +110,9 @@ public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, Ras
         this.key = (TileIdWritable)reader.getKeyClass().newInstance();
         this.value = (RasterWritable)reader.getValueClass().newInstance();
       }
-      catch (InstantiationException e)
+      catch (InstantiationException | IllegalAccessException e)
       {
-        e.printStackTrace();
-      }
-      catch (IllegalAccessException e)
-      {
-        e.printStackTrace();
+        throw new IOException(e);
       }
     }
     else

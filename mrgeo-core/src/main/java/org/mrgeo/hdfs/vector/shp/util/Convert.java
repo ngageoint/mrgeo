@@ -16,6 +16,8 @@
 
 package org.mrgeo.hdfs.vector.shp.util;
 
+import org.mrgeo.utils.FloatUtils;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
@@ -35,7 +37,7 @@ public final class Convert
   public static short getByte(byte[] b, int j)
   {
     int ch1 = b[j] & 0xff;
-    return (short) (ch1 << 0);
+    return (short)ch1;
   }
 
   public static double getDouble(byte[] b, int j)
@@ -51,7 +53,7 @@ public final class Convert
     int ch2 = b[j + 1] & 0xff;
     int ch3 = b[j + 2] & 0xff;
     int ch4 = b[j + 3] & 0xff;
-    return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+    return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4));
   }
 
   public static double getLEDouble(byte[] b, int j)
@@ -67,7 +69,7 @@ public final class Convert
     int ch2 = b[j + 1] & 0xff;
     int ch3 = b[j + 2] & 0xff;
     int ch4 = b[j + 3] & 0xff;
-    return ((ch4 << 24) | (ch3 << 16) | (ch2 << 8) | (ch1 << 0));
+    return ((ch4 << 24) | (ch3 << 16) | (ch2 << 8) | (ch1));
   }
 
   public static long getLELong(byte[] b, int j)
@@ -82,7 +84,7 @@ public final class Convert
     long ch7 = b[j + 6] & 0xff;
     long ch8 = b[j + 7] & 0xff;
     return ((ch8 << 56) | (ch7 << 48) | (ch6 << 40) | (ch5 << 32) | (ch4 << 24) | (ch3 << 16)
-        | (ch2 << 8) | (ch1 << 0));
+        | (ch2 << 8) | (ch1));
   }
 
   public static short getLEShort(byte[] b, int j)
@@ -90,7 +92,7 @@ public final class Convert
     // little endian (byte order)
     int ch1 = b[j] & 0xff;
     int ch2 = b[j + 1] & 0xff;
-    return (short) ((ch2 << 8) | (ch1 << 0));
+    return (short) ((ch2 << 8) | (ch1));
   }
 
   public static long getLong(byte[] b, int j)
@@ -105,7 +107,7 @@ public final class Convert
     long ch7 = b[j + 6] & 0xff;
     long ch8 = b[j + 7] & 0xff;
     return ((ch1 << 56) + (ch2 << 48) + (ch3 << 40) + (ch4 << 32) + (ch5 << 24) + (ch6 << 16)
-        + (ch7 << 8) + (ch8 << 0));
+        + (ch7 << 8) + (ch8));
   }
 
   public static short getShort(byte[] b, int j)
@@ -113,7 +115,7 @@ public final class Convert
     // big endian (byte order)
     int ch1 = b[j] & 0xff;
     int ch2 = b[j + 1] & 0xff;
-    return (short) ((ch1 << 8) + (ch2 << 0));
+    return (short) ((ch1 << 8) + (ch2));
   }
 
   /** GET'S **/
@@ -146,7 +148,7 @@ public final class Convert
     if (d >= 0)
     {
       String temp = pdf.format(d);
-      if (Math.abs(d) < 1 && d != 0)
+      if (Math.abs(d) < 1 && !FloatUtils.isEqual(d, 0))
       {
         return temp;
       }
@@ -163,10 +165,10 @@ public final class Convert
   public static void setInteger(byte[] b, int j, int n)
   {
     // big endian (byte order)
-    b[j + 0] = (byte) ((n >>> 24) & 0xFF);
+    b[j    ] = (byte) ((n >>> 24) & 0xFF);
     b[j + 1] = (byte) ((n >>> 16) & 0xFF);
     b[j + 2] = (byte) ((n >>> 8) & 0xFF);
-    b[j + 3] = (byte) ((n >>> 0) & 0xFF);
+    b[j + 3] = (byte) ((n      ) & 0xFF);
   }
 
   public static void setLEDouble(byte[] b, int j, double n)
@@ -178,7 +180,7 @@ public final class Convert
   public static void setLEInteger(byte[] b, int j, int n)
   {
     // little endian (byte order)
-    b[j + 0] = (byte) ((n >>> 0) & 0xFF);
+    b[j    ] = (byte) ((n      ) & 0xFF);
     b[j + 1] = (byte) ((n >>> 8) & 0xFF);
     b[j + 2] = (byte) ((n >>> 16) & 0xFF);
     b[j + 3] = (byte) ((n >>> 24) & 0xFF);
@@ -187,7 +189,7 @@ public final class Convert
   public static void setLELong(byte[] b, int j, long n)
   {
     // little endian (byte order)
-    b[j + 0] = (byte) ((n >>> 0) & 0xFF);
+    b[j    ] = (byte) ((n      ) & 0xFF);
     b[j + 1] = (byte) ((n >>> 8) & 0xFF);
     b[j + 2] = (byte) ((n >>> 16) & 0xFF);
     b[j + 3] = (byte) ((n >>> 24) & 0xFF);
@@ -200,7 +202,7 @@ public final class Convert
   public static void setLEShort(byte[] b, int j, short n)
   {
     // little endian (byte order)
-    b[j + 0] = (byte) ((n >>> 0) & 0xFF);
+    b[j    ] = (byte) ((n      ) & 0xFF);
     b[j + 1] = (byte) ((n >>> 8) & 0xFF);
   }
 
@@ -213,14 +215,14 @@ public final class Convert
   public static void setLong(byte[] b, int j, long n)
   {
     // big endian (byte order)
-    b[j + 0] = (byte) ((n >>> 56) & 0xFF);
+    b[j    ] = (byte) ((n >>> 56) & 0xFF);
     b[j + 1] = (byte) ((n >>> 48) & 0xFF);
     b[j + 2] = (byte) ((n >>> 40) & 0xFF);
     b[j + 3] = (byte) ((n >>> 32) & 0xFF);
     b[j + 4] = (byte) ((n >>> 24) & 0xFF);
     b[j + 5] = (byte) ((n >>> 16) & 0xFF);
     b[j + 6] = (byte) ((n >>> 8) & 0xFF);
-    b[j + 7] = (byte) ((n >>> 0) & 0xFF);
+    b[j + 7] = (byte) ((n      ) & 0xFF);
   }
 
   public static void setRBytes(byte[] b, int j, byte[] s)
@@ -249,8 +251,8 @@ public final class Convert
   public static void setShort(byte[] b, int j, short n)
   {
     // big endian (byte order)
-    b[j + 0] = (byte) ((n >>> 8) & 0xFF);
-    b[j + 1] = (byte) ((n >>> 0) & 0xFF);
+    b[j    ] = (byte) ((n >>> 8) & 0xFF);
+    b[j + 1] = (byte) ((n      ) & 0xFF);
   }
 
   public static void setSingle(byte[] b, int j, float n)

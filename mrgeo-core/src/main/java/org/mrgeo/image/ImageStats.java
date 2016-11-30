@@ -186,6 +186,7 @@ static public ImageStats[] initializeStatsArray(final int bands)
 
 
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 static public void writeStats(final AdHocDataProvider provider, final ImageStats[] stats)
     throws IOException
 {

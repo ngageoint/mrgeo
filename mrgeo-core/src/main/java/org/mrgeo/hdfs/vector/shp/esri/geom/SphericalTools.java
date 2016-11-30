@@ -467,32 +467,6 @@ public class SphericalTools
     return sum;
   }
 
-  public static Coord getPointFromNotation(String s) throws Exception
-  {
-    // latitude
-    int latN = s.indexOf('N');
-    int latS = s.indexOf('S');
-    if ((latN > 0 && latS > 0) || (latN == 0 && latS == 0))
-      throw new Exception("Invalid N-S format");
-    int latPos = Math.max(latN, latS);
-    String lat = s.substring(0, latPos);
-    double latitude = Double.parseDouble(lat);
-    if (latS > 0)
-      latitude = latitude * -1;
-    // longitude
-    int lonE = s.indexOf('E');
-    int lonW = s.indexOf('W');
-    if ((lonE > 0 && lonW > 0) || (lonE == 0 && lonW == 0))
-      throw new Exception("Invalid E-W format!");
-    int lonPos = Math.max(lonE, lonW);
-    String lon = s.substring(latPos + 1, lonPos);
-    double longitude = Double.parseDouble(lon);
-    if (lonW > 0)
-      longitude = longitude * -1;
-    // create point
-    return new Coord(longitude, latitude);
-  }
-
   /*
    * (non-Javadoc)
    * 

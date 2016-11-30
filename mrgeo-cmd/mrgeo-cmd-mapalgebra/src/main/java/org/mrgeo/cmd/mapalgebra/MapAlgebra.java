@@ -28,6 +28,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -181,7 +183,7 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
         }
       }
     }
-    catch (Exception e)
+    catch (IOException e)
     {
       e.printStackTrace();
       System.out.println("Failure while running map algebra " + e.getMessage());

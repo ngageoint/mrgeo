@@ -45,6 +45,7 @@ public class HdfsMrsImageDataProviderFactory implements MrsImageDataProviderFact
     }
 
     @Override
+    @SuppressWarnings("squid:S1166") // Exception caught and ignored
     public boolean accept(Path item)
     {
       try
@@ -54,7 +55,7 @@ public class HdfsMrsImageDataProviderFactory implements MrsImageDataProviderFact
           return true;
         }
       }
-      catch (IOException e)
+      catch (IOException ignored)
       {
       }
       return false;
@@ -68,11 +69,11 @@ public class HdfsMrsImageDataProviderFactory implements MrsImageDataProviderFact
   }
 
   @Override
-  public void initialize(Configuration conf)
+  public void initialize(Configuration config)
   {
-    if (this.conf == null)
+    if (conf == null)
     {
-      this.conf = conf;
+      conf = config;
     }
   }
 
