@@ -93,7 +93,7 @@ public void addRow(int i, JShape obj)
       }
       catch (Exception e)
       {
-        throw new RuntimeException("Can't Lookup SHX Record!");
+        throw new RuntimeException("Can't Lookup SHX Record!", e);
       }
     }
   }

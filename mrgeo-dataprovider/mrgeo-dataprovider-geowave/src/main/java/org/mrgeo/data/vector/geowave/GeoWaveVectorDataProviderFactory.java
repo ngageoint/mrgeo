@@ -23,11 +23,12 @@ public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFacto
   }
 
   @Override
-  public void initialize(Configuration conf) throws DataProviderException
+  @SuppressWarnings("squid:S2696") // Exception caught and handled
+  public void initialize(Configuration config) throws DataProviderException
   {
-    if (this.conf == null)
+    if (conf == null)
     {
-      this.conf = conf;
+      conf = config;
     }
   }
 

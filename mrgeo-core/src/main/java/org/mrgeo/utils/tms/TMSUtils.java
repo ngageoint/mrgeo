@@ -147,8 +147,8 @@ public static Tile calculateTile(final Tile tile, final int srcZoom, final int d
 
 public static boolean isValidTile(final long tx, final long ty, final int zoomlevel)
 {
-  return tx >= 0 && tx < (long) Math.pow(2.0, zoomlevel - 1) * 2 && ty >= 0 &&
-      ty < (long) Math.pow(2.0, zoomlevel - 1);
+  return tx >= 0 && tx < (long) Math.pow(2.0, zoomlevel - 1.0) * 2 && ty >= 0 &&
+      ty < (long) Math.pow(2.0, zoomlevel - 1.0);
 }
 
 // Converts lat/lon to pixel coordinates in given zoom of the EPSG:4326
@@ -213,7 +213,7 @@ public static long numXTiles(final int zoomlevel)
 
 public static long numYTiles(final int zoomlevel)
 {
-  return (long) Math.pow(2.0, zoomlevel - 1);
+  return (long) Math.pow(2.0, zoomlevel - 1.0);
 }
 
 /**
@@ -296,7 +296,7 @@ public static double resolution(final int zoom, final int tilesize)
 {
   if (zoom > 0)
   {
-    return 180.0 / tilesize / Math.pow(2.0, zoom - 1);
+    return 180.0 / tilesize / Math.pow(2.0, zoom - 1.0);
   }
 
   return 0.0;

@@ -729,7 +729,8 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     return results.toArray(resultArray);
   }
 
-  public static boolean canOpen(String input,
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public static boolean canOpen(String input,
                                 ProviderProperties providerProperties) throws IOException
   {
     log.debug("Inside canOpen with " + input);
@@ -756,7 +757,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     }
     catch(IllegalArgumentException e)
     {
-      log.info("Unable to open " + input + " with the GeoWave data provider: " + e.getMessage());
+      log.info("Unable to open " + input + " with the GeoWave data provider", e);
     }
     return false;
   }
@@ -824,6 +825,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
     init(results);
   }
 
+  @SuppressWarnings("squid:S2696") // static used for 1 time initialization.  Yuck!
   private void init(ParseResults results) throws IOException
   {
     // Don't initialize more than once.
@@ -884,7 +886,7 @@ public class GeoWaveVectorDataProvider extends VectorDataProvider{
             catch (ParseException e)
             {
               throw new IOException("Invalid WKT specified for spatial property of GeoWave data source " +
-                                    name);
+                                    name, e);
             }
             break;
           }
