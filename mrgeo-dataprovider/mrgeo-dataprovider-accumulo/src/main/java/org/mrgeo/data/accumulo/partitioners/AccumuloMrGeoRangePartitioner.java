@@ -55,6 +55,8 @@ public class AccumuloMrGeoRangePartitioner extends Partitioner<TileIdWritable, W
   /**
    * 
    */
+  @Override
+  @SuppressWarnings("squid:S00112") // This overrides another class, so this is the best way the rethrow an exception
   public int getPartition(TileIdWritable key, Writable value, int numPartitions) {
     try {
       return findPartition(key, getCutPoints(), getNumSubBins());
@@ -70,7 +72,7 @@ public class AccumuloMrGeoRangePartitioner extends Partitioner<TileIdWritable, W
    * @param numSubBins
    * @return
    */
-  int findPartition(TileIdWritable key, TileIdWritable[] array, int numSubBins) {
+  private int findPartition(TileIdWritable key, TileIdWritable[] array, int numSubBins) {
     // find the bin for the range, and guarantee it is positive
     int index = Arrays.binarySearch(array, key);
     index = index < 0 ? (index + 1) * -1 : index;

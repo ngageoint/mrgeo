@@ -642,6 +642,7 @@ private static void addFileToClasspath(Configuration conf, Set<String> existing,
   }
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private static Set<Dependency> loadDependenciesByReflection(Class<?> clazz) throws IOException
 {
   String jar = ClassUtil.findContainingJar(clazz);
@@ -817,7 +818,6 @@ private static Set<Dependency> loadDependenciesFromJar(final String jarname) thr
   }
   catch (IOException e)
   {
-    e.printStackTrace();
     throw new IOException("Error Loading dependency properties file", e);
   }
 

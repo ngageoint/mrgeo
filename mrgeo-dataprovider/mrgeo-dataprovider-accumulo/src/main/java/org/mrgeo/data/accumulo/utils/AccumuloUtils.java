@@ -323,6 +323,7 @@ public static MrsPyramidMetadata getMetadataFromTable(String table, Connector co
  * @return the metadata object
  */
 @Deprecated
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public static MrsPyramidMetadata buildMetadataFromTable(String table, Connector conn, String auths)
 {
   MrsPyramidMetadata retMeta = new MrsPyramidMetadata();
@@ -897,7 +898,7 @@ public static Hashtable<String, String> getGeoTables(String ignore, Authenticati
  * @param protectionLevel
  * @return
  */
-@SuppressWarnings("squid:S1166") // BadArgumentException exception is caught and returned as false
+@SuppressWarnings({"squid:S1166", "squid:S1848"}) // BadArgumentException exception is caught and returned as false, Using object creation for valid check
 public static boolean validateProtectionLevel(final String protectionLevel)
 {
   try

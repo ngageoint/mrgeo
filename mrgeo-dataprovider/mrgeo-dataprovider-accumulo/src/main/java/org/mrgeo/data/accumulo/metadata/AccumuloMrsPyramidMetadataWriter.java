@@ -40,64 +40,59 @@ import java.util.Properties;
 public class AccumuloMrsPyramidMetadataWriter implements MrsPyramidMetadataWriter
 {
 
-  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidMetadataWriter.class);
-  
-  private final MrsImageDataProvider provider;
-  
-  private Connector conn = null;
-  
-  /**
-   * Constructor for HdfsMrsPyramidMetadataWriter.
-   * @param provider MrsImageDataProvider
-   * @param context MrsPyramidMetadataWriterContext
-   */
-  public AccumuloMrsPyramidMetadataWriter(MrsImageDataProvider provider,
-                                          MrsPyramidMetadataWriterContext context)
-  {
-    this.provider = provider;
-    
-  } // end constructor
-  
+private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidMetadataWriter.class);
 
-  /**
-   * Write the (already loaded) metadata for the provider to Accumulo
-   * @throws IOException
-   * @see MrsPyramidMetadataWriter#write()
-   */
-  @Override
-  public void write() throws IOException
-  {
-    MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
+private final MrsImageDataProvider provider;
 
-    write(metadata);
-  } // end write
-  
-  /**
-   * 
-   * need to know the type of table/image this is
-   * if it is a standalone - then there is one table
-   * if not - we write to a table that has a bunch of data in it
-   * 
-   * 
-   * 
-   * 
-   * 
-   */
-  @Override
-  public void write(MrsPyramidMetadata metadata) throws IOException{
-    Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
+private Connector conn = null;
 
-    String pl = metadata.getProtectionLevel();
-    
-    if(conn == null){
-      try {
-        conn = AccumuloConnector.getConnector();
-      } catch(DataProviderException dpe){
-        dpe.printStackTrace();
-        throw new RuntimeException("No connection to Accumulo!");
-      }
-      
-    }
+/**
+ * Constructor for HdfsMrsPyramidMetadataWriter.
+ * @param provider MrsImageDataProvider
+ * @param context MrsPyramidMetadataWriterContext
+ */
+public AccumuloMrsPyramidMetadataWriter(MrsImageDataProvider provider,
+    MrsPyramidMetadataWriterContext context)
+{
+  this.provider = provider;
+
+} // end constructor
+
+
+/**
+ * Write the (already loaded) metadata for the provider to Accumulo
+ * @throws IOException
+ * @see MrsPyramidMetadataWriter#write()
+ */
+@Override
+public void write() throws IOException
+{
+  MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
+
+  write(metadata);
+} // end write
+
+/**
+ *
+ * need to know the type of table/image this is
+ * if it is a standalone - then there is one table
+ * if not - we write to a table that has a bunch of data in it
+ *
+ *
+ *
+ *
+ *
+ */
+@Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public void write(MrsPyramidMetadata metadata) throws IOException{
+  Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
+
+  String pl = metadata.getProtectionLevel();
+
+  if(conn == null){
+    conn = AccumuloConnector.getConnector();
+  }
     
     /*
      *  need to know the type of table/image this is
@@ -108,22 +103,18 @@ public class AccumuloMrsPyramidMetadataWriter implements MrsPyramidMetadataWrite
      *  
      */
 
-    String table = provider.getResourceName();
-    if(table == null || table.length() == 0){
-      throw new RuntimeException("Can not load metadata, resource name is empty!");
-    }
+  String table = provider.getResourceName();
+  if(table == null || table.length() == 0){
+    throw new IOException("Can not load metadata, resource name is empty!");
+  }
 
-    
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
+  {
     String metadataStr = null;
-    try{
-      metadata.save(baos);
-      metadataStr = baos.toString();
-      baos.close();
-      
-    } catch(IOException ioe){
-      throw new RuntimeException(ioe.getMessage());
-    }
+    metadata.save(baos);
+    metadataStr = baos.toString();
+    baos.close();
+
 
     /**
      * TODO: when the protection levels are in the metadata
@@ -131,43 +122,49 @@ public class AccumuloMrsPyramidMetadataWriter implements MrsPyramidMetadataWrite
      * fields.
      */
     ColumnVisibility cv;
-    if(pl == null){
-    
-    	if(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ) == null){
-    		cv = new ColumnVisibility();
-    	} else {
-    		cv = new ColumnVisibility(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
-    	}
-    } else {
-    	cv = new ColumnVisibility(pl);
+    if (pl == null)
+    {
+
+      if (mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ) == null)
+      {
+        cv = new ColumnVisibility();
+      }
+      else
+      {
+        cv = new ColumnVisibility(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
+      }
+    }
+    else
+    {
+      cv = new ColumnVisibility(pl);
     }
 
     log.debug("Writing metadata for table " + metadata.getPyramid() + " with ColumnVisibility = " + cv.toString());
-    
+
     // this is the name of the image
 //    String pyramid = metadata.getPyramid();
     Mutation m = new Mutation(MrGeoAccumuloConstants.MRGEO_ACC_METADATA);
-    m.put(MrGeoAccumuloConstants.MRGEO_ACC_METADATA, MrGeoAccumuloConstants.MRGEO_ACC_CQALL, cv, new Value(metadataStr.getBytes()));
+    m.put(MrGeoAccumuloConstants.MRGEO_ACC_METADATA, MrGeoAccumuloConstants.MRGEO_ACC_CQALL, cv,
+        new Value(metadataStr.getBytes()));
+
     BatchWriter bw = null;
-    try{
       bw = conn.createBatchWriter(table, 10000000L, 1000, 2);
       bw.addMutation(m);
       bw.flush();
       bw.close();
-    } catch(TableNotFoundException tnfe){
-      //throw new DataProviderException("Table for " + table + " does not exist. " + tnfe.getLocalizedMessage());
-    } catch(MutationsRejectedException mre){
-      
-    }
-    
-    provider.getMetadataReader(null).reload();
-    
-  } // end write
-  
-  
-  public void setConnector(Connector conn){
-	  this.conn = conn;
-  } // end setConnector
+  }
+  catch (TableNotFoundException | MutationsRejectedException e)
+  {
+  }
 
-  
+  provider.getMetadataReader(null).reload();
+
+} // end write
+
+
+public void setConnector(Connector conn){
+  this.conn = conn;
+} // end setConnector
+
+
 } // end AccumuloMrsPyramidMetadataWriter

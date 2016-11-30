@@ -76,7 +76,8 @@ public InputFormat<TileIdWritable, RasterWritable> getInputFormat(String input)
 {
 
   table = input;
-  if(table.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX)){
+  if (table.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX))
+  {
     table = table.replaceFirst(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX, "");
   }
 
@@ -113,7 +114,7 @@ public Configuration setupSparkJob(final Configuration conf, final MrsImageDataP
     log.info("Accumulo IFP returning configuration " + job.getConfiguration());
     return job.getConfiguration();
   }
-  catch(IOException e)
+  catch (IOException e)
   {
     throw new DataProviderException("Error while configuring Accumulo input format provider for " +
         provider.getResourceName(), e);
@@ -130,6 +131,8 @@ public void setupJob(Job job,
   setupConfig(job, provider);
 }
 
+@SuppressWarnings("squid:S00112")
+// If the configuration isn't found, throw a runtime error.  The caller can determine whether to continue or not
 private void setupConfig(final Job job,
     final MrsImageDataProvider provider) throws DataProviderException
 {
@@ -137,20 +140,24 @@ private void setupConfig(final Job job,
   //zoomLevelsInPyramid = new ArrayList<Integer>();
 
   // lets look into the properties coming in
-  if(oldProviderProperties != null){
+  if (oldProviderProperties != null)
+  {
     Set<Object> k1 = oldProviderProperties.keySet();
     ArrayList<String> k2 = new ArrayList<String>();
-    for(Object o : k1){
+    for (Object o : k1)
+    {
       k2.add(o.toString());
     }
     Collections.sort(k2);
-    for(int x = 0; x < k2.size(); x++){
-      log.info("Provider property " + x + ": k='" + k2.get(x) + "' v='" + oldProviderProperties.getProperty(k2.get(x)) + "'");
+    for (int x = 0; x < k2.size(); x++)
+    {
+      log.info("Provider property " + x + ": k='" + k2.get(x) + "' v='" + oldProviderProperties.getProperty(k2.get(x)) +
+          "'");
     }
   }
 
   // set the needed information
-  if(props == null)
+  if (props == null)
   {
     props = new Properties();
     props.putAll(AccumuloConnector.getAccumuloProperties());
@@ -159,22 +166,24 @@ private void setupConfig(final Job job,
   String connUser = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
   log.info("Connecting to accumulo as user " + connUser);
 
-  if(oldProviderProperties != null){
+  if (oldProviderProperties != null)
+  {
     props.putAll(oldProviderProperties);
   }
-  if(props.size() == 0){
+  if (props.size() == 0)
+  {
     throw new RuntimeException("No configuration for Accumulo!");
   }
 
   // just in case this gets overwritten
-    job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
-        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
-    job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
-        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
-    job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
-        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
-    job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
-        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
+  job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
+      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
+  job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
+      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+  job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
+      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
+  job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
+      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
 
   job.getConfiguration().setIfUnset(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS,
       props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS));
@@ -182,9 +191,12 @@ private void setupConfig(final Job job,
       props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
 
 
-  if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE) == null){
+  if (props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE) == null)
+  {
     job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE, this.table);
-  } else {
+  }
+  else
+  {
     job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE,
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE));
   }
@@ -194,7 +206,8 @@ private void setupConfig(final Job job,
   String isEnc = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
   String pwDec = pw;
 
-  if(isEnc.equalsIgnoreCase("true")){
+  if (isEnc.equalsIgnoreCase("true"))
+  {
     job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
 
@@ -211,7 +224,9 @@ private void setupConfig(final Job job,
         pwDec);
 
 
-  } else {
+  }
+  else
+  {
 
     try
     {
@@ -228,7 +243,8 @@ private void setupConfig(final Job job,
   }
 
   // get the visualizations
-  if(job.getConfiguration().get("protectionLevel") != null){
+  if (job.getConfiguration().get("protectionLevel") != null)
+  {
     job.getConfiguration().set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ,
         job.getConfiguration().get("protectionLevel"));
   }
@@ -268,15 +284,18 @@ private void setupConfig(final Job job,
   log.info("scan authorizations are " + auths);
   log.info("authorizations from config = " + job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS));
 
-  try{
+  try
+  {
     AccumuloMrsPyramidInputFormat.setConnectorInfo(
         job,
         connUser,
         //props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
         //job.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
         pt);
-  } catch(AccumuloSecurityException ase){
-    log.info("problem with authentication elements.");
+  }
+  catch (AccumuloSecurityException ase)
+  {
+    log.info("problem with authentication elements.", ase);
     return;
   }
   AccumuloInputFormat.setScanAuthorizations(job, auths);
@@ -297,7 +316,7 @@ private void setupConfig(final Job job,
   // think about scanners - set the zoom level of the job
   IteratorSetting regex = new IteratorSetting(51, "regex", RegExFilter.class);
   RegExFilter.setRegexs(regex, null, Integer.toString(context.getZoomLevel()), null, null, false);
-  Collection<Pair<Text, Text>> colFamColQual = new ArrayList<Pair<Text,Text>>();
+  Collection<Pair<Text, Text>> colFamColQual = new ArrayList<Pair<Text, Text>>();
   Pair<Text, Text> p1 = new Pair<Text, Text>(new Text(Integer.toString(context.getZoomLevel())), null);
   colFamColQual.add(p1);
   AccumuloMrsPyramidInputFormat.fetchColumns(job, colFamColQual);

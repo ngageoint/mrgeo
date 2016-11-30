@@ -248,6 +248,7 @@ private void setupConfig(final Configuration conf) throws DataProviderException
  * @return The name of the resource being utilized.
  */
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public String getResourceName()
 {
   try
@@ -269,7 +270,7 @@ public String getResourceName()
   }
   catch (ClassNotFoundException | IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return null;

@@ -41,56 +41,59 @@ import java.util.Properties;
 public class AccumuloMrsPyramidMetadataFileWriter implements MrsPyramidMetadataWriter
 {
 
-  
-  private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidMetadataFileWriter.class);
-  
-  private final MrsImageDataProvider provider;
 
-  private String workDir = null;
-  
+private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidMetadataFileWriter.class);
 
-  public AccumuloMrsPyramidMetadataFileWriter(String workDir, MrsImageDataProvider provider,
-                                              MrsPyramidMetadataWriterContext context)
-  {
-    //this.provider = (AccumuloMrsImageDataProvider)provider;
-    this.workDir = workDir;
-    this.provider = provider;
-    //this.context = context;
-  }
-  
-  /**
-   * Constructor for HdfsMrsPyramidMetadataWriter.
-   * @param provider MrsImageDataProvider
-   * @param context MrsPyramidMetadataWriterContext
-   */
-  public AccumuloMrsPyramidMetadataFileWriter(MrsImageDataProvider provider,
-                                              MrsPyramidMetadataWriterContext context)
-  {
-    //this.provider = (AccumuloMrsImageDataProvider)provider;
-    this.provider = provider;
-    //this.context = context;
-  }
-  
-  
-  /**
-   * Write the (already loaded) metadata for the provider to Accumulo
-   * @throws IOException
-   * @see MrsPyramidMetadataWriter#write()
-   */
-  @Override
-  public void write() throws IOException
-  {
-    MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
+private final MrsImageDataProvider provider;
 
-    // need to determine if the write is to a bulk dir
-    
-    write(metadata);
-  } // end write
-  
-  
-  @Override
-  public void write(MrsPyramidMetadata metadata) throws IOException{
-    // write the metadata object to hdfs
+private String workDir = null;
+
+
+public AccumuloMrsPyramidMetadataFileWriter(String workDir, MrsImageDataProvider provider,
+    MrsPyramidMetadataWriterContext context)
+{
+  //this.provider = (AccumuloMrsImageDataProvider)provider;
+  this.workDir = workDir;
+  this.provider = provider;
+  //this.context = context;
+}
+
+/**
+ * Constructor for HdfsMrsPyramidMetadataWriter.
+ *
+ * @param provider MrsImageDataProvider
+ * @param context  MrsPyramidMetadataWriterContext
+ */
+public AccumuloMrsPyramidMetadataFileWriter(MrsImageDataProvider provider,
+    MrsPyramidMetadataWriterContext context)
+{
+  //this.provider = (AccumuloMrsImageDataProvider)provider;
+  this.provider = provider;
+  //this.context = context;
+}
+
+
+/**
+ * Write the (already loaded) metadata for the provider to Accumulo
+ *
+ * @throws IOException
+ * @see MrsPyramidMetadataWriter#write()
+ */
+@Override
+public void write() throws IOException
+{
+  MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
+
+  // need to determine if the write is to a bulk dir
+
+  write(metadata);
+} // end write
+
+
+@Override
+public void write(MrsPyramidMetadata metadata) throws IOException
+{
+  // write the metadata object to hdfs
 //    Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
 //    ColumnVisibility cv;
 //    if(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ) == null){
@@ -98,38 +101,33 @@ public class AccumuloMrsPyramidMetadataFileWriter implements MrsPyramidMetadataW
 //    } else {
 //      cv = new ColumnVisibility(mrgeoAccProps.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
 //    }
-    Path path = new Path(workDir, "meta.rf");
-    FileSystem fs = HadoopFileUtils.getFileSystem(path);
-    if (fs.exists(path))
-    {
-      fs.delete(path, false);
-    }
-    
-    log.debug("Saving metadata to " + path.toString());
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    String metadataStr = null;
-    try{
-      metadata.save(baos);
-      metadataStr = baos.toString();
-      baos.close();
-      
-    } catch(IOException ioe){
-      throw new RuntimeException(ioe.getMessage());
-    }
-    
-    
-    FileSKVWriter metaWrite = FileOperations.getInstance().openWriter(path.toString(), fs, fs.getConf(), AccumuloConfiguration.getDefaultConfiguration());
-    
-    metaWrite.startDefaultLocalityGroup();
-    
-    Key metKey = new Key(MrGeoAccumuloConstants.MRGEO_ACC_METADATA,
-        MrGeoAccumuloConstants.MRGEO_ACC_METADATA,
-        MrGeoAccumuloConstants.MRGEO_ACC_CQALL);
-    Value metValue = new Value(metadataStr.getBytes());
-    metaWrite.append(metKey, metValue);
-    metaWrite.close();  
-    
-  } // end write
+  Path path = new Path(workDir, "meta.rf");
+  FileSystem fs = HadoopFileUtils.getFileSystem(path);
+  if (fs.exists(path))
+  {
+    fs.delete(path, false);
+  }
 
-  
+  log.debug("Saving metadata to " + path.toString());
+  ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  String metadataStr = null;
+  metadata.save(baos);
+  metadataStr = baos.toString();
+  baos.close();
+
+  FileSKVWriter metaWrite = FileOperations.getInstance()
+      .openWriter(path.toString(), fs, fs.getConf(), AccumuloConfiguration.getDefaultConfiguration());
+
+  metaWrite.startDefaultLocalityGroup();
+
+  Key metKey = new Key(MrGeoAccumuloConstants.MRGEO_ACC_METADATA,
+      MrGeoAccumuloConstants.MRGEO_ACC_METADATA,
+      MrGeoAccumuloConstants.MRGEO_ACC_CQALL);
+  Value metValue = new Value(metadataStr.getBytes());
+  metaWrite.append(metKey, metValue);
+  metaWrite.close();
+
+} // end write
+
+
 } // end AccumuloMrsPyramidMetadataFileWriter

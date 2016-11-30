@@ -33,7 +33,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
-public class AccumuloConnector {
+public class AccumuloConnector
+{
 
 private static Logger log = LoggerFactory
     .getLogger(AccumuloConnector.class);
@@ -54,16 +55,19 @@ public static synchronized void initialize() throws DataProviderException
   }
 }
 
-public static String encodeAccumuloProperties(String r) throws DataProviderException {
+public static String encodeAccumuloProperties(String r) throws DataProviderException
+{
   StringBuffer sb = new StringBuffer();
   // sb.append(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX);
   Properties props = getAccumuloProperties();
   props.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE, r);
   Enumeration<?> e = props.keys();
-  while (e.hasMoreElements()) {
+  while (e.hasMoreElements())
+  {
     String k = (String) e.nextElement();
     String v = props.getProperty(k);
-    if (sb.length() > 0) {
+    if (sb.length() > 0)
+    {
       sb.append(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_DELIM);
     }
     sb.append(k + "=" + v);
@@ -85,7 +89,8 @@ public static Properties decodeAccumuloProperties(String s) throws IOException, 
 {
   Properties retProps = new Properties();
 
-  if (!s.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX)) {
+  if (!s.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX))
+  {
     return retProps;
   }
   String enc = s.replaceFirst(
@@ -93,11 +98,15 @@ public static Properties decodeAccumuloProperties(String s) throws IOException, 
   String dec = Base64Utils.decodeToString(enc);
   String[] pairs = dec
       .split(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_DELIM);
-  for (String p : pairs) {
+  for (String p : pairs)
+  {
     String[] els = p.split("=");
-    if (els.length == 1) {
+    if (els.length == 1)
+    {
       retProps.setProperty(els[0], "");
-    } else {
+    }
+    else
+    {
       retProps.setProperty(els[0], els[1]);
     }
   }
@@ -105,12 +114,13 @@ public static Properties decodeAccumuloProperties(String s) throws IOException, 
   return retProps;
 } // end decodeAccumuloProperties
 
-public static boolean isEncoded(String s) {
+public static boolean isEncoded(String s)
+{
   return s.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX);
 }
 
-// TODO: need to make sure the path is correctly set - think about MRGEO
-// environment variables
+// TODO: need to make sure the path is correctly set - think about MRGEO environment variables
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() used for existence")
 public static String getAccumuloPropertiesLocation()
 {
@@ -136,10 +146,11 @@ public static String getAccumuloPropertiesLocation()
     {
       return file.getCanonicalPath();
     }
-    log.error(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath() + ".  This can be ignored if you are not using Accumulo");
+    log.error(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath() +
+        ".  This can be ignored if you are not using Accumulo");
 
   }
-  catch (IOException e)
+  catch (IOException ignored)
   {
   }
 
@@ -233,14 +244,17 @@ public static Map<String, String> getAccumuloPropertiesAsMap()
   }
   catch (DataProviderException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
+
   return result;
 }
 
-public static Connector getConnector() throws DataProviderException {
+public static Connector getConnector() throws DataProviderException
+{
 
-  if (checkMock()) {
+  if (checkMock())
+  {
     return getMockConnector();
   }
 
@@ -250,20 +264,23 @@ public static Connector getConnector() throws DataProviderException {
     Properties p = getAccumuloProperties();
     return getConnector(p);
   }
-  catch(Exception e)
+  catch (Exception e)
   {
     throw new DataProviderException(e);
   }
 } // end getConnector
 
 public static Connector getConnector(Properties p)
-    throws DataProviderException {
+    throws DataProviderException
+{
   String pw = p
       .getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
   String pwenc = p
       .getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64);
-  if (pwenc != null) {
-    if (pwenc.toLowerCase().equals("true")) {
+  if (pwenc != null)
+  {
+    if (pwenc.toLowerCase().equals("true"))
+    {
       try
       {
         pw = Base64Utils.decodeToString(pw);
@@ -275,7 +292,7 @@ public static Connector getConnector(Properties p)
     }
   }
 
-  Connector conn =  getConnector(
+  Connector conn = getConnector(
       p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
       p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS),
       p.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER), pw);
@@ -283,35 +300,42 @@ public static Connector getConnector(Properties p)
 } // end getConnector - File
 
 public static synchronized Connector getConnector(String instance, String zookeepers,
-    String user, String pass) throws DataProviderException {
+    String user, String pass) throws DataProviderException
+{
 
-  if (conn != null) {
+  if (conn != null)
+  {
     return conn;
   }
-  if (checkMock()) {
+  if (checkMock())
+  {
     return getMockConnector(instance, user, pass);
   }
 
   Instance inst = new ZooKeeperInstance(instance, zookeepers);
-  try {
+  try
+  {
     conn = inst.getConnector(user, new PasswordToken(pass.getBytes()));
     return conn;
-  } catch (Exception e) {
-    e.printStackTrace();
-    throw new DataProviderException("problem creating connector "
-        + e.getMessage());
+  }
+  catch (Exception e)
+  {
+    throw new DataProviderException("problem creating connector", e);
   }
 } // end getConnector
 
-public static boolean checkMock() {
-  if (System.getProperty("mock") != null) {
+public static boolean checkMock()
+{
+  if (System.getProperty("mock") != null)
+  {
     return true;
   }
 
   return false;
 } // end checkMock
 
-public static Connector getMockConnector() throws DataProviderException {
+public static Connector getMockConnector() throws DataProviderException
+{
 
   return getMockConnector(
       System.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE),
@@ -329,23 +353,29 @@ public static Connector getMockConnector() throws DataProviderException {
  * @return
  */
 public static Connector getMockConnector(String instance, String user,
-    String pass) throws DataProviderException {
+    String pass) throws DataProviderException
+{
   Instance mock = new MockInstance(instance);
   Connector conn = null;
-  try {
+  try
+  {
     conn = mock.getConnector(user, pass.getBytes());
-  } catch (Exception e) {
+  }
+  catch (Exception e)
+  {
     throw new DataProviderException(
-        "problem creating mock connector - " + e.getMessage());
+        "problem creating mock connector - " + e.getMessage(), e);
   }
 
   return conn;
 } // end getMockConnector
 
-public static String getReadAuthorizations(String curAuths) throws DataProviderException {
+public static String getReadAuthorizations(String curAuths) throws DataProviderException
+{
 
   // if the incoming string is valid - use that
-  if (curAuths != null) {
+  if (curAuths != null)
+  {
     return curAuths;
   }
 
@@ -354,12 +384,14 @@ public static String getReadAuthorizations(String curAuths) throws DataProviderE
   Properties props = AccumuloConnector.getAccumuloProperties();
 
   // look for items in the properties
-  if (props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_DEFAULT_READ_AUTHS)) {
+  if (props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_DEFAULT_READ_AUTHS))
+  {
     String a = props
         .getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_DEFAULT_READ_AUTHS);
 
     // check if the default read is "null"
-    if (!a.equals("null")) {
+    if (!a.equals("null"))
+    {
       // ah - valid defaults
       retStr = a;
     }
@@ -370,21 +402,25 @@ public static String getReadAuthorizations(String curAuths) throws DataProviderE
 } // end getReadAuthorizations
 
 
-public static boolean deleteTable(String table) throws DataProviderException {
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public static boolean deleteTable(String table) throws DataProviderException
+{
 //  ArrayList<String> ignore = AccumuloUtils.getIgnoreTables();
-  try{
+  try
+  {
     Connector conn = AccumuloConnector.getConnector();
     conn.tableOperations().delete(table);
     return true;
-  } catch(Exception e){
-    e.printStackTrace();
+  }
+  catch (Exception e)
+  {
   }
   return false;
 } // end deleteTable
 
 
-
-public static void main(String args[]) throws Exception {
+public static void main(String args[]) throws Exception
+{
   // String myEnc = AccumuloConnector.encodeAccumuloProperties("rrr");
   // System.out.println("Encoded: " + myEnc);
   // Properties props = AccumuloConnector.decodeAccumuloProperties(myEnc);

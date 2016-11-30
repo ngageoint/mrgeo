@@ -138,12 +138,13 @@ public static String resolveURI(final String path)
   }
   catch (URISyntaxException e)
   {
-    e.printStackTrace();
+    log.error("Execption thrown {}", e);
   }
 
   return path;
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
 public static String resolveURL(final String path)
 {
