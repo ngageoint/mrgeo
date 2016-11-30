@@ -38,6 +38,7 @@ public Coord(double x, double y)
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public Object clone()
 {
   try

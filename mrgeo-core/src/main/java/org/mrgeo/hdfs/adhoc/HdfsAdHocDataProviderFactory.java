@@ -35,6 +35,7 @@ public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
   }
 
   @Override
+  @SuppressWarnings("squid:S2696") // need to keep the conf static, but want to only set it with the object.  yuck!
   public void initialize(Configuration config)
   {
     if (conf == null)

@@ -165,7 +165,6 @@ public int run(String[] args, final Configuration conf,
 
     catch (Exception e)
     {
-      e.printStackTrace();
       log.error("BuildPyramid exited with error", e);
       return -1;
     }

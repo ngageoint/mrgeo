@@ -266,6 +266,7 @@ private void printFileInfo(final Path pfile, PrintStream out) throws IOException
     }
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private void printMetadata(final MrsPyramidMetadata metadata,
     final ProviderProperties providerProperties, PrintStream out) throws IOException
 {

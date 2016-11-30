@@ -66,7 +66,7 @@ public static String getTypeLiteral(byte type)
 }
 
 @SuppressWarnings("rawtypes")
-protected List data; // data list
+protected transient List data; // data list
 protected JExtent extent; // the extent of the shape
 protected int id; // shape id
 protected byte status; // status flag
@@ -90,7 +90,7 @@ public void addData(List v)
   addData(v, false);
 }
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public void addData(List v, boolean clear)
 {
   if (v == null)
@@ -152,6 +152,7 @@ public List getData()
   return data;
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public Serializable getData(int i)
 {
   try

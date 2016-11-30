@@ -48,282 +48,283 @@ import java.util.Map;
  */
 public class DelimitedParser implements Externalizable
 {
-  static final Logger log = LoggerFactory.getLogger(DelimitedParser.class);
+static final Logger log = LoggerFactory.getLogger(DelimitedParser.class);
 
-  private List<String> attributeNames;
-  private int xCol;
-  private int yCol;
-  private int geometryCol;
-  private char delimiter;
-  private char encapsulator;
-  private boolean skipFirstLine;
-  private WKTReader _wktReader;
+private List<String> attributeNames;
+private int xCol;
+private int yCol;
+private int geometryCol;
+private char delimiter;
+private char encapsulator;
+private boolean skipFirstLine;
+private WKTReader _wktReader;
 
-  /**
-   * Should only be used for serialization.
-   */
-  public DelimitedParser()
+/**
+ * Should only be used for serialization.
+ */
+public DelimitedParser()
+{
+}
+
+public DelimitedParser(List<String> attributeNames, int xCol, int yCol,
+    int geometryCol, char delimiter, char encapsulator, boolean skipFirstLine)
+{
+  this.attributeNames = attributeNames;
+  this.xCol = xCol;
+  this.yCol = yCol;
+  this.delimiter = delimiter;
+  this.encapsulator = encapsulator;
+  this.geometryCol = geometryCol;
+  this.skipFirstLine = skipFirstLine;
+}
+
+public char getDelimiter()
+{
+  return delimiter;
+}
+
+public boolean getSkipFirstLine()
+{
+  return skipFirstLine;
+}
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public Geometry parse(String line)
+{
+  if (_wktReader == null)
   {
+    _wktReader = new WKTReader();
   }
 
-  public DelimitedParser(List<String> attributeNames, int xCol, int yCol,
-      int geometryCol, char delimiter, char encapsulator, boolean skipFirstLine)
+  Geometry feature = null;
+
+  Double x = null, y = null;
+  String wktGeometry = null;
+  Map<String, String> attrs = new HashMap<>();
+
+  // if there is only 1 column, we don't need to split
+  String[] values;
+  if (attributeNames.size() == 1)
   {
-    this.attributeNames = attributeNames;
-    this.xCol = xCol;
-    this.yCol = yCol;
-    this.delimiter = delimiter;
-    this.encapsulator = encapsulator;
-    this.geometryCol = geometryCol;
-    this.skipFirstLine = skipFirstLine;
+    // use the whole line, but still take out the encapsulator
+    values = split(line, '\n', encapsulator);
+  }
+  else
+  {
+    values = split(line, delimiter, encapsulator);
+  }
+  if (values.length == 0)
+  {
+    log.info("Values empty. Weird.");
   }
 
-  public char getDelimiter()
+  if (geometryCol < 0 && xCol < 0 && yCol < 0)
   {
-    return delimiter;
-  }
-
-  public boolean getSkipFirstLine()
-  {
-    return skipFirstLine;
-  }
-
-  public Geometry parse(String line)
-  {
-    if (_wktReader == null)
-    {
-      _wktReader = new WKTReader();
-    }
-
-    Geometry feature = null;
-
-    Double x = null, y = null;
-    String wktGeometry = null;
-    Map<String, String> attrs = new HashMap<>();
-
-    // if there is only 1 column, we don't need to split
-    String[] values;
-    if (attributeNames.size() == 1)
-    {
-      // use the whole line, but still take out the encapsulator
-      values = split(line, '\n', encapsulator);
-    }
-    else
-    {
-      values = split(line, delimiter, encapsulator);
-    }
-    if (values.length == 0)
-    {
-      log.info("Values empty. Weird.");
-    }
-
-    if (geometryCol < 0 && xCol < 0 && yCol < 0)
-    {
-      for (int i = 0; i < values.length; i++)
-      {
-        if (WktGeometryUtils.isValidWktGeometry(values[i]))
-        {
-          attributeNames = new ArrayList<>(values.length);
-          for (int j = 0; j < values.length; j++)
-          {
-            if (j == i)
-            {
-              geometryCol = i;
-            }
-
-            attributeNames.add(Integer.toString(i));
-          }
-          break;
-        }
-      }
-    }
-
     for (int i = 0; i < values.length; i++)
     {
-      if (i == geometryCol)
+      if (WktGeometryUtils.isValidWktGeometry(values[i]))
       {
-        wktGeometry = values[i];
-      }
-      else if (i == xCol)// && values[i] != null && values[i].length() > 0)
-      {
-        try
+        attributeNames = new ArrayList<>(values.length);
+        for (int j = 0; j < values.length; j++)
         {
-          if (values[i].trim().length() > 0)
+          if (j == i)
           {
-            x = Double.parseDouble(values[i]);
+            geometryCol = i;
           }
-          else
-          {
-            x = null;
-          }
-        } catch (NumberFormatException e)
-        {
-          log.error("Invalid numeric value for x: " + values[i] + ". Continuing with null x value.");
-          x = null;
+
+          attributeNames.add(Integer.toString(i));
         }
-      }
-      else if (i == yCol)// && values[i] != null && values[i].length() > 0)
-      {
-        try
-        {
-          if (values[i].trim().length() > 0)
-          {
-            y = Double.parseDouble(values[i]);
-          }
-          else
-          {
-            y = null;
-          }
-        } catch (NumberFormatException e)
-        {
-          log.error("Invalid numeric value for y: " + values[i] + ". Continuing with null y value.");
-          y = null;
-        }
-      }
-      if (i < attributeNames.size())
-      {
-        attrs.put(attributeNames.get(i), values[i]);
+        break;
       }
     }
+  }
 
-    if (wktGeometry != null)
+  for (int i = 0; i < values.length; i++)
+  {
+    if (i == geometryCol)
+    {
+      wktGeometry = values[i];
+    }
+    else if (i == xCol)// && values[i] != null && values[i].length() > 0)
     {
       try
       {
-        feature = GeometryFactory.fromJTS(_wktReader.read(wktGeometry), attrs);
-      }
-      catch (Exception e)
-      {
-        //try to correct wktGeometry if possible
-        try
+        if (values[i].trim().length() > 0)
         {
-          feature = GeometryFactory.fromJTS(_wktReader.read(WktGeometryUtils.wktGeometryFixer(wktGeometry)));
+          x = Double.parseDouble(values[i]);
         }
-        catch (Exception e2)
+        else
         {
-          //could not fix the geometry, so just set to null
-          log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.");
+          x = null;
         }
-      }
-    }
-    else if (geometryCol == -1 && xCol >= 0 && yCol >= 0)
-    {
-      if (x != null && y != null)
+      } catch (NumberFormatException e)
       {
-        feature = GeometryFactory.createPoint(x, y, attrs);
+        log.error("Invalid numeric value for x: " + values[i] + ". Continuing with null x value.");
+        x = null;
       }
     }
-
-    if (feature == null)
+    else if (i == yCol)// && values[i] != null && values[i].length() > 0)
     {
-      feature = GeometryFactory.createEmptyGeometry(attrs);
+      try
+      {
+        if (values[i].trim().length() > 0)
+        {
+          y = Double.parseDouble(values[i]);
+        }
+        else
+        {
+          y = null;
+        }
+      } catch (NumberFormatException e)
+      {
+        log.error("Invalid numeric value for y: " + values[i] + ". Continuing with null y value.");
+        y = null;
+      }
     }
-
-    return feature;
+    if (i < attributeNames.size())
+    {
+      attrs.put(attributeNames.get(i), values[i]);
+    }
   }
 
-  static String[] split(String line, char delimiter, char encapsulator)
+  if (wktGeometry != null)
   {
-    ArrayList<String> result = new ArrayList<String>();
-
-    StringBuffer buf = new StringBuffer();
-
-    for (int i = 0; i < line.length(); i++)
+    try
     {
-      char c = line.charAt(i);
-      if (c == delimiter)
+      feature = GeometryFactory.fromJTS(_wktReader.read(wktGeometry), attrs);
+    }
+    catch (Exception e)
+    {
+      //try to correct wktGeometry if possible
+      try
       {
-        result.add(buf.toString());
-        buf.delete(0, buf.length());
+        feature = GeometryFactory.fromJTS(_wktReader.read(WktGeometryUtils.wktGeometryFixer(wktGeometry)));
       }
-      else if (c == encapsulator)
+      catch (Exception e2)
       {
-        // skip the first encapsulator
-        i++;
-        // clear out the buffer
-        buf.delete(0, buf.length());
-        // add data until we hit another encapsulator
-        while (i < line.length() && line.charAt(i) != encapsulator)
-        {
-          c = line.charAt(i++);
-          buf.append(c);
-        }
+        //could not fix the geometry, so just set to null
+        log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.");
+      }
+    }
+  }
+  else if (geometryCol == -1 && xCol >= 0 && yCol >= 0)
+  {
+    if (x != null && y != null)
+    {
+      feature = GeometryFactory.createPoint(x, y, attrs);
+    }
+  }
 
-        // add the encapsulated string
-        result.add(buf.toString());
-        // clear out the buffer
-        buf.delete(0, buf.length());
-        // skip the last encapsulator
-        i++;
+  if (feature == null)
+  {
+    feature = GeometryFactory.createEmptyGeometry(attrs);
+  }
 
-        if (i >= line.length())
-        {
+  return feature;
+}
+
+static String[] split(String line, char delimiter, char encapsulator)
+{
+  ArrayList<String> result = new ArrayList<String>();
+
+  StringBuffer buf = new StringBuffer();
+
+  for (int i = 0; i < line.length(); i++)
+  {
+    char c = line.charAt(i);
+    if (c == delimiter)
+    {
+      result.add(buf.toString());
+      buf.delete(0, buf.length());
+    }
+    else if (c == encapsulator)
+    {
+      // skip the first encapsulator
+      i++;
+      // clear out the buffer
+      buf.delete(0, buf.length());
+      // add data until we hit another encapsulator
+      while (i < line.length() && line.charAt(i) != encapsulator)
+      {
+        c = line.charAt(i++);
+        buf.append(c);
+      }
+
+      // add the encapsulated string
+      result.add(buf.toString());
+      // clear out the buffer
+      buf.delete(0, buf.length());
+      // skip the last encapsulator
+      i++;
+
+      if (i >= line.length())
+      {
 //          log.error("Missing token end character (" + encapsulator +
 //              ") in line: " + line);
 
-          // need to return here, or we will add a blank field on the end of the result
-          return result.toArray(new String[result.size()]);
-        }
-
-        // find the next delimiter. There may be white space or something between.
-        while (i < line.length() && line.charAt(i) != delimiter)
-        {
-          i++;
-        }
+        // need to return here, or we will add a blank field on the end of the result
+        return result.toArray(new String[result.size()]);
       }
-      else
+
+      // find the next delimiter. There may be white space or something between.
+      while (i < line.length() && line.charAt(i) != delimiter)
       {
-        buf.append(c);
-      }
-    }
-
-    result.add(buf.toString());
-
-    return result.toArray(new String[result.size()]);
-  }
-
-  @Override
-  public void writeExternal(ObjectOutput out) throws IOException
-  {
-    if (attributeNames != null)
-    {
-      out.writeBoolean(true);
-      out.writeInt(attributeNames.size());
-      for (String name: attributeNames)
-      {
-        out.writeUTF(name);
+        i++;
       }
     }
     else
     {
-      out.writeBoolean(false);
+      buf.append(c);
     }
-    out.writeInt(xCol);
-    out.writeInt(yCol);
-    out.writeInt(geometryCol);
-    out.writeChar(delimiter);
-    out.writeChar(encapsulator);
-    out.writeBoolean(skipFirstLine);
   }
 
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+  result.add(buf.toString());
+
+  return result.toArray(new String[result.size()]);
+}
+
+@Override
+public void writeExternal(ObjectOutput out) throws IOException
+{
+  if (attributeNames != null)
   {
-    boolean hasAttributes = in.readBoolean();
-    if (hasAttributes)
+    out.writeBoolean(true);
+    out.writeInt(attributeNames.size());
+    for (String name: attributeNames)
     {
-      attributeNames = new ArrayList<String>();
-      int count = in.readInt();
-      for (int i=0; i < count; i++)
-      {
-        attributeNames.add(in.readUTF());
-      }
+      out.writeUTF(name);
     }
-    xCol = in.readInt();
-    yCol = in.readInt();
-    geometryCol = in.readInt();
-    delimiter = in .readChar();
-    encapsulator = in.readChar();
-    skipFirstLine = in.readBoolean();
   }
+  else
+  {
+    out.writeBoolean(false);
+  }
+  out.writeInt(xCol);
+  out.writeInt(yCol);
+  out.writeInt(geometryCol);
+  out.writeChar(delimiter);
+  out.writeChar(encapsulator);
+  out.writeBoolean(skipFirstLine);
+}
+
+@Override
+public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+{
+  boolean hasAttributes = in.readBoolean();
+  if (hasAttributes)
+  {
+    attributeNames = new ArrayList<String>();
+    int count = in.readInt();
+    for (int i=0; i < count; i++)
+    {
+      attributeNames.add(in.readUTF());
+    }
+  }
+  xCol = in.readInt();
+  yCol = in.readInt();
+  geometryCol = in.readInt();
+  delimiter = in .readChar();
+  encapsulator = in.readChar();
+  skipFirstLine = in.readBoolean();
+}
 }

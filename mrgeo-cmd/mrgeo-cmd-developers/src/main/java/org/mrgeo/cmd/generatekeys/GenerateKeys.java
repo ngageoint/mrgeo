@@ -69,19 +69,12 @@ public static List<Long> getRandom(String randomKeyFileDir, String allKeyFile, i
   return randomKeys;
 }
 
-public static List<Long> getRandom(String file, int num, long min, long max, Random r)
+private static List<Long> getRandom(String file, int num, long min, long max, Random r) throws IOException
 {
   log.info("getRandom: Start generating keys");
 
   List<Long> allKeysList;
-  try
-  {
-    allKeysList = getAllKeys(file, num * 1000);
-  }
-  catch (Exception e)
-  {
-    throw new RuntimeException(e);
-  }
+  allKeysList = getAllKeys(file, num * 1000);
   int indexMin = -1, indexMax = -1;
   for (int i = 0; i < allKeysList.size(); i++)
   {

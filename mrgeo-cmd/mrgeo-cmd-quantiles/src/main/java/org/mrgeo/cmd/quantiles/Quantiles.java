@@ -148,7 +148,6 @@ public int run(String[] args, final Configuration conf,
     }
     catch (IOException e)
     {
-      e.printStackTrace();
       log.error("Quantiles exited with error", e);
       return -1;
     }

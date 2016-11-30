@@ -293,6 +293,7 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public int run(final String[] args, Configuration conf, ProviderProperties providerProperties)
 {
   log.info("Export");

@@ -17,6 +17,7 @@
 package org.mrgeo.hdfs.vector;
 
 import org.apache.hadoop.io.Writable;
+import org.mrgeo.utils.FloatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,27 +190,27 @@ public class Column implements Writable
   
   public boolean isMaxValid()
   {
-    return max != -Double.MAX_VALUE;
+    return !FloatUtils.isEqual(max, -Double.MAX_VALUE);
   }
 
   public boolean isMinValid()
   {
-    return min != Double.MAX_VALUE;
+    return !FloatUtils.isEqual(min, Double.MAX_VALUE);
   }
   
   public boolean isQuartile1Valid()
   {
-    return quartile1 != Double.MAX_VALUE;
+    return !FloatUtils.isEqual(quartile1, Double.MAX_VALUE);
   }
 
   public boolean isQuartile2Valid()
   {
-    return quartile2 != Double.MAX_VALUE;
+    return !FloatUtils.isEqual(quartile2, Double.MAX_VALUE);
   }
 
   public boolean isQuartile3Valid()
   {
-    return quartile3 != Double.MAX_VALUE;
+    return !FloatUtils.isEqual(quartile3, Double.MAX_VALUE);
   }
 
   @Override

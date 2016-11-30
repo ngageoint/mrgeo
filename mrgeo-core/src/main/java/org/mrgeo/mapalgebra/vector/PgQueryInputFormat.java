@@ -333,6 +333,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
   }
 
   @Override
+  @SuppressWarnings("squid:S1166") // Exception caught and handled
   public boolean nextKeyValue() throws IOException
   {
     if (_wktReader == null)
@@ -377,7 +378,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
             {
               feature = GeometryFactory.fromJTS(_wktReader.read(wktGeometry), attrs);
             }
-            catch (Exception e)
+            catch (Exception ignored)
             {
               //try to correct wktGeometry if possible
               try

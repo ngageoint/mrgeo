@@ -65,6 +65,7 @@ public JExtent(double minx, double miny, double maxx, double maxy)
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public Object clone()
 {
   try

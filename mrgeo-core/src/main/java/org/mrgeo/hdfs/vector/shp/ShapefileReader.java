@@ -29,6 +29,8 @@ import org.mrgeo.hdfs.vector.shp.dbase.DbaseException;
 import org.mrgeo.hdfs.vector.shp.esri.ESRILayer;
 import org.mrgeo.hdfs.vector.shp.esri.FormatException;
 import org.mrgeo.hdfs.vector.shp.esri.geom.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Iterator;
@@ -49,6 +51,8 @@ import java.util.NoSuchElementException;
 @SuppressFBWarnings(value = "DESERIALIZATION_GADGET", justification = "verified read/writeObject")
 public class ShapefileReader implements GeometryInputStream, ShapefileGeometryCollection, Serializable
 {
+private static Logger log = LoggerFactory.getLogger(ShapefileReader.class);
+
 static class LocalIterator implements Iterator<WritableGeometry>
 {
   private int currentIndex = 0;
@@ -301,7 +305,7 @@ public WritableGeometry get(int index)
   }
   catch (Exception e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
     return null;
   }
   String[] columns = shpFile.getDataColumns();
@@ -482,7 +486,7 @@ public void close()
     }
     catch (IOException e)
     {
-      e.printStackTrace();
+      log.error("Exception thrown {}", e);
     }
 
     shpFile = null;
@@ -490,6 +494,7 @@ public void close()
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 protected void finalize()
 {
   if (shpFile != null)

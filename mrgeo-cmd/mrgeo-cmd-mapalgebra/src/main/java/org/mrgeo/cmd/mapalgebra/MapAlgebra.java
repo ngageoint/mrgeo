@@ -185,7 +185,6 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
     }
     catch (IOException e)
     {
-      e.printStackTrace();
       System.out.println("Failure while running map algebra " + e.getMessage());
       return -1;
     }

@@ -398,7 +398,6 @@ public MrGeoRaster get(final TileIdWritable key)
 }
 
 @Override
-@SuppressWarnings("squid:S1166") // Exception caught and handled
 public KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds)
 {
   TileBounds tileBounds = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTileSize());
@@ -406,6 +405,7 @@ public KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds)
       getZoomlevel(), getTileSize());
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private void readSplits(final String parent) throws IOException
 {
   try

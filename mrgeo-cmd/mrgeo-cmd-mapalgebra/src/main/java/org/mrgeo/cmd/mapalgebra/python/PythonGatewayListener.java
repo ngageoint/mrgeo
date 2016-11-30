@@ -55,6 +55,7 @@ public void connectionStopped(Py4JServerConnection py4JServerConnection) {
 }
 
 @Override
+@SuppressWarnings("squid:S1148") // Exception handler
 public void serverError(Exception e)
 {
   if (e instanceof SocketException && e.getLocalizedMessage().equals("Socket closed"))

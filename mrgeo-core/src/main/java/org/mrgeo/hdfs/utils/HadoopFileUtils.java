@@ -629,6 +629,7 @@ public static Path resolveName(final String input, boolean checkForExistance) th
   return resolveName(HadoopUtils.createConfiguration(), input, checkForExistance);
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
 public static Path resolveName(final Configuration conf, final String input,
     boolean checkForExistance) throws IOException, URISyntaxException

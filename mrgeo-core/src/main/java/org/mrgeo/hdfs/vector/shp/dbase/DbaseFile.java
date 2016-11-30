@@ -16,23 +16,23 @@
 
 package org.mrgeo.hdfs.vector.shp.dbase;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.hdfs.vector.shp.SeekableDataInput;
 import org.mrgeo.hdfs.vector.shp.util.Convert;
-import org.mrgeo.hdfs.vector.shp.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Vector;
 
 
 public class DbaseFile
 {
+private static Logger log = LoggerFactory.getLogger(DbaseFile.class);
+
 public final static int DEFAULT_CACHE_SIZE = 1000;
 private final static byte ROW_DELETED = 42;
 private final static byte ROW_OK = 32;
@@ -194,7 +194,7 @@ public DbaseHeader getHeader()
   return header;
 }
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public List getRow(int i)
 {
   try
@@ -226,7 +226,7 @@ public byte getRowFlag(int i) throws DbaseException
   }
   catch (Exception e)
   {
-    throw new DbaseException(e.getMessage());
+    throw new DbaseException(e);
   }
 }
 
@@ -353,7 +353,7 @@ private List loadRow(SeekableDataInput is, int i) throws IOException
     }
     catch (DbaseException e)
     {
-      e.printStackTrace();
+      log.error("Exception thrown {}", e);
     }
   }
   // return
@@ -446,7 +446,7 @@ public void setRow(List data, int i) throws DbaseException
     }
     catch (Exception e)
     {
-      throw new DbaseException("Row is invalid!");
+      throw new DbaseException("Row is invalid!", e);
     }
     if (data != null)
     {

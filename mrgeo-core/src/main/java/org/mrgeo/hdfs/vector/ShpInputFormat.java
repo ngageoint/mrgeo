@@ -65,7 +65,7 @@ public class ShpInputFormat extends InputFormat<FeatureIdWritable, Geometry>
     @Override
     public long getLength() throws IOException
     {
-      return endIndex - startIndex;
+      return (long)endIndex - startIndex;
     }
 
     @Override

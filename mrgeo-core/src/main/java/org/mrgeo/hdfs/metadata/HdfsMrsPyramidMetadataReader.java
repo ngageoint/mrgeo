@@ -65,7 +65,6 @@ public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
 
   /**
    * Return the MrsPyramidMetadate for the supplied HDFS resource
-   * @see org.mrgeo.pyramid.MrsImagePyramidMetadataReader#read()
    */
   @Override
   public MrsPyramidMetadata read() throws IOException
@@ -91,7 +90,6 @@ public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
 
   /**
    * Check for existence and load the metadata
-   * @throws IOException
    */
   private MrsPyramidMetadata loadMetadata() throws IOException
   {
@@ -103,8 +101,7 @@ public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
     {
       // load the file from HDFS
       log.debug("Physically loading image metadata from " + metapath.toString());
-      final InputStream is = HadoopFileUtils.open(conf, metapath); // fs.open(path);
-      try
+      try (InputStream is = HadoopFileUtils.open(conf, metapath))
       {
         // load the metadata from the input stream
         MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
@@ -117,14 +114,6 @@ public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
 
         return meta;
       }
-      catch (Exception e)
-      {
-        throw new IOException(e);
-      }
-      finally
-      {
-        is.close();
-      }
     }
 
     throw new IOException("No metadata file found! (resource name: " + dataProvider.getResourceName() + ")");
@@ -134,9 +123,8 @@ public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
    * Reload the metadata.  Uses the existing object and sets all the parameters (getters/setters) to the 
    * new values.  This allows anyone holding a reference to an existing metadata object to see the
    * updated values without having to reload the metadata themselves.
-   * @see org.mrgeo.pyramid.MrsImagePyramidMetadataReader#reload()
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "squid:S1166"}) // Exception caught and handled
   @Override
   public MrsPyramidMetadata reload() throws IOException
   {
@@ -202,13 +190,7 @@ public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
           {
             setter.invoke(metadata, getter.invoke(copy, new Object[] {}));
           }
-          catch (IllegalAccessException e)
-          {
-          }
-          catch (IllegalArgumentException e)
-          {
-          }
-          catch (InvocationTargetException e)
+          catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ignore)
           {
           }
           break;
